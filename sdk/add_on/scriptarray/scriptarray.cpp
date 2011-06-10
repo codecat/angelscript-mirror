@@ -72,7 +72,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 		if( (flags & asOBJ_VALUE) && !(flags & asOBJ_POD) )
 		{
 			// Verify that there is a default constructor
-			for( int n = 0; n < subtype->GetBehaviourCount(); n++ )
+			for( asUINT n = 0; n < subtype->GetBehaviourCount(); n++ )
 			{
 				asEBehaviours beh;
 				int funcId = subtype->GetBehaviourByIndex(n, &beh);
@@ -92,7 +92,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 		else if( (flags & asOBJ_REF) )
 		{
 			// Verify that there is a default factory
-			for( int n = 0; n < subtype->GetFactoryCount(); n++ )
+			for( asUINT n = 0; n < subtype->GetFactoryCount(); n++ )
 			{
 				int funcId = subtype->GetFactoryIdByIndex(n);
 				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
@@ -930,7 +930,7 @@ void CScriptArray::Precache()
 
 		if( subType )
 		{
-			for( int i = 0; i < subType->GetMethodCount(); i++ )
+			for( asUINT i = 0; i < subType->GetMethodCount(); i++ )
 			{
 				asIScriptFunction *func = subType->GetMethodDescriptorByIndex(i);
 

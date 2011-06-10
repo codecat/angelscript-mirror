@@ -91,7 +91,7 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 			if( objType->GetBaseType() )
 				inheritance += objType->GetBaseType()->GetName();
 
-			for( int i = 0; i < objType->GetInterfaceCount(); i++ )
+			for( asUINT i = 0; i < objType->GetInterfaceCount(); i++ )
 			{
 				if( inheritance.length() )
 					inheritance += ", ";
@@ -120,7 +120,7 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 	}
 
 	// Show factory functions
-	for( int f = 0; f < objType->GetFactoryCount(); f++ )
+	for( asUINT f = 0; f < objType->GetFactoryCount(); f++ )
 	{
 		s << " " << engine->GetFunctionDescriptorById(objType->GetFactoryIdByIndex(f))->GetDeclaration() << endl;
 	}
@@ -128,7 +128,7 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 	if( !( objType->GetFlags() & asOBJ_SCRIPT_OBJECT ) )
 	{
 		// Show behaviours
-		for( int b = 0; b < objType->GetBehaviourCount(); b++ )
+		for( asUINT b = 0; b < objType->GetBehaviourCount(); b++ )
 		{
 			asEBehaviours beh;
 			int bid = objType->GetBehaviourByIndex(b, &beh);
@@ -137,13 +137,13 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 	}
 
 	// Show methods
-	for( int m = 0; m < objType->GetMethodCount(); m++ )
+	for( asUINT m = 0; m < objType->GetMethodCount(); m++ )
 	{
 		s << " " << objType->GetMethodDescriptorByIndex(m)->GetDeclaration(false) << endl;
 	}
 
 	// Show properties
-	for( int p = 0; p < objType->GetPropertyCount(); p++ )
+	for( asUINT p = 0; p < objType->GetPropertyCount(); p++ )
 	{
 		s << " " << objType->GetPropertyDeclaration(p) << endl;
 	}

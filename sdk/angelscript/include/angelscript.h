@@ -596,17 +596,17 @@ public:
 	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
 
 	// Functions
-	virtual int                GetFunctionCount() const = 0;
-	virtual int                GetFunctionIdByIndex(int index) const = 0;
+	virtual asUINT             GetFunctionCount() const = 0;
+	virtual int                GetFunctionIdByIndex(asUINT index) const = 0;
 	virtual int                GetFunctionIdByName(const char *name) const = 0;
 	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(int index) const = 0;
+	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
 	virtual int                RemoveFunction(int funcId) = 0;
 
 	// Global variables
 	virtual int         ResetGlobalVars(asIScriptContext *ctx = 0) = 0;
-	virtual int         GetGlobalVarCount() const = 0;
+	virtual asUINT      GetGlobalVarCount() const = 0;
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
 	virtual const char *GetGlobalVarDeclaration(asUINT index) const = 0;
@@ -615,27 +615,27 @@ public:
 	virtual int         RemoveGlobalVar(asUINT index) = 0;
 
 	// Type identification
-	virtual int            GetObjectTypeCount() const = 0;
+	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 
 	// Enums
-	virtual int         GetEnumCount() const = 0;
+	virtual asUINT      GetEnumCount() const = 0;
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) const = 0;
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
 	// Typedefs
-	virtual int         GetTypedefCount() const = 0;
+	virtual asUINT      GetTypedefCount() const = 0;
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) const = 0;
 
 	// Dynamic binding between modules
-	virtual int         GetImportedFunctionCount() const = 0;
+	virtual asUINT      GetImportedFunctionCount() const = 0;
 	virtual int         GetImportedFunctionIndexByDecl(const char *decl) const = 0;
-	virtual const char *GetImportedFunctionDeclaration(int importIndex) const = 0;
-	virtual const char *GetImportedFunctionSourceModule(int importIndex) const = 0;
-	virtual int         BindImportedFunction(int importIndex, int funcId) = 0;
-	virtual int         UnbindImportedFunction(int importIndex) = 0;
+	virtual const char *GetImportedFunctionDeclaration(asUINT importIndex) const = 0;
+	virtual const char *GetImportedFunctionSourceModule(asUINT importIndex) const = 0;
+	virtual int         BindImportedFunction(asUINT importIndex, int funcId) = 0;
+	virtual int         UnbindImportedFunction(asUINT importIndex) = 0;
 	virtual int         BindAllImportedFunctions() = 0;
 	virtual int         UnbindAllImportedFunctions() = 0;
 
@@ -804,29 +804,29 @@ public:
 	virtual int              GetSubTypeId() const = 0;
 
 	// Interfaces
-	virtual int              GetInterfaceCount() const = 0;
+	virtual asUINT           GetInterfaceCount() const = 0;
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
 
 	// Factories
-	virtual int                GetFactoryCount() const = 0;
-	virtual int                GetFactoryIdByIndex(int index) const = 0;
+	virtual asUINT             GetFactoryCount() const = 0;
+	virtual int                GetFactoryIdByIndex(asUINT index) const = 0;
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
 
 	// Methods
-	virtual int                GetMethodCount() const = 0;
-	virtual int                GetMethodIdByIndex(int index, bool getVirtual = true) const = 0;
+	virtual asUINT             GetMethodCount() const = 0;
+	virtual int                GetMethodIdByIndex(asUINT index, bool getVirtual = true) const = 0;
 	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
 	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(int index, bool getVirtual = true) const = 0;
+	virtual asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual = true) const = 0;
 
 	// Properties
-	virtual int         GetPropertyCount() const = 0;
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0) const = 0;
+	virtual asUINT      GetPropertyCount() const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0) const = 0;
 	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
 
 	// Behaviours
-	virtual int GetBehaviourCount() const = 0;
-	virtual int GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	virtual asUINT GetBehaviourCount() const = 0;
+	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 
 protected:
 	virtual ~asIObjectType() {}

@@ -391,8 +391,7 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 	int len;
 	asETokenClass t = engine->ParseToken(expr.c_str(), 0, &len);
 
-	// TODO: If the expression starts with :: we should look for global variables
-	// TODO: If the expression starts with this. we should look for class members
+	// TODO: If the expression starts with :: we should only look for global variables
 	if( t == asTC_IDENTIFIER )
 	{
 		string name(expr.c_str(), len);
@@ -405,25 +404,63 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 		if( !func ) return;
 
 		// We start from the end, in case the same name is reused in different scopes
-		bool found = false;
 		for( asUINT n = func->GetVarCount(); n-- > 0; )
 		{
 			if( ctx->IsVarInScope(n) && name == ctx->GetVarName(n) )
 			{
 				ptr = ctx->GetAddressOfVar(n);
 				typeId = ctx->GetVarTypeId(n);
-				found = true;
 				break;
 			}
 		}
 
-		if( !found )
+		// Look for class members, if we're in a class method
+		if( !ptr && func->GetObjectType() )
 		{
-			// TODO: Look for class members, if we're in a class method
-			// TODO: Look for global variables
+			if( name == "this" )
+			{
+				ptr = ctx->GetThisPointer();
+				typeId = ctx->GetThisTypeId();
+			}
+			else
+			{
+				asIObjectType *type = engine->GetObjectTypeById(ctx->GetThisTypeId());
+				for( asUINT n = 0; n < type->GetPropertyCount(); n++ )
+				{
+					const char *propName = 0;
+					int offset = 0;
+					bool isReference = 0;
+					type->GetProperty(n, &propName, &typeId, 0, &offset, &isReference);
+					if( name == propName )
+					{
+						ptr = (void*)(((asBYTE*)ctx->GetThisPointer())+offset);
+						if( isReference ) ptr = *(void**)ptr;
+						break;
+					}
+				}
+			}
 		}
 
-		if( found )
+		// Look for global variables
+		if( !ptr )
+		{
+			asIScriptModule *mod = ctx->GetEngine()->GetModule(func->GetModuleName(), asGM_ONLY_IF_EXISTS);
+			if( mod )
+			{
+				for( asUINT n = 0; n < mod->GetGlobalVarCount(); n++ )
+				{
+					const char *varName = 0;
+					mod->GetGlobalVar(n, &varName, &typeId);
+					if( name == varName )
+					{
+						ptr = mod->GetAddressOfGlobalVar(n);
+						break;
+					}
+				}
+			}
+		}
+
+		if( ptr )
 		{
 			// TODO: If there is a . after the identifier, check for members
 
@@ -485,7 +522,7 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 	if( !mod ) return;
 
 	stringstream s;
-	for( int n = 0; n < mod->GetGlobalVarCount(); n++ )
+	for( asUINT n = 0; n < mod->GetGlobalVarCount(); n++ )
 	{
 		int typeId;
 		mod->GetGlobalVar(n, 0, &typeId);

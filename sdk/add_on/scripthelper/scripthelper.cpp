@@ -20,7 +20,7 @@ int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 	if( ot )
 	{
 		// Check if the object type has a compatible opCmp method
-		for( int n = 0; n < ot->GetMethodCount(); n++ )
+		for( asUINT n = 0; n < ot->GetMethodCount(); n++ )
 		{
 			asIScriptFunction *func = ot->GetMethodDescriptorByIndex(n);
 			if( strcmp(func->GetName(), "opCmp") == 0 &&
@@ -74,7 +74,7 @@ int CompareEquality(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 	if( ot )
 	{
 		// Check if the object type has a compatible opEquals method
-		for( int n = 0; n < ot->GetMethodCount(); n++ )
+		for( asUINT n = 0; n < ot->GetMethodCount(); n++ )
 		{
 			asIScriptFunction *func = ot->GetMethodDescriptorByIndex(n);
 			if( strcmp(func->GetName(), "opEquals") == 0 &&
@@ -242,7 +242,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		string typeDecl = engine->GetTypeDeclaration(type->GetTypeId());
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
-			for( int m = 0; m < type->GetMethodCount(); m++ )
+			for( asUINT m = 0; m < type->GetMethodCount(); m++ )
 			{
 				asIScriptFunction *func = type->GetMethodDescriptorByIndex(m);
 				fprintf(f, "intfmthd %s \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
@@ -250,7 +250,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		}
 		else
 		{
-			int m;
+			asUINT m;
 			for( m = 0; m < type->GetFactoryCount(); m++ )
 			{
 				asIScriptFunction *func = engine->GetFunctionDescriptorById(type->GetFactoryIdByIndex(m));
