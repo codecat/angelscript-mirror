@@ -332,7 +332,9 @@ void asCModule::InternalReset()
 	// Free bind information
 	for( n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		engine->importedFunctions[bindInformations[n]->importedFunctionSignature->id & 0xFFFF] = 0 ;
+		asUINT id = bindInformations[n]->importedFunctionSignature->id & 0xFFFF;
+		engine->importedFunctions[id] = 0;
+		engine->freeImportedFunctionIdxs.PushLast(id);
 
 		asDELETE(bindInformations[n]->importedFunctionSignature, asCScriptFunction);
 		asDELETE(bindInformations[n], sBindInfo);
@@ -702,6 +704,10 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId) const
 // internal
 int asCModule::GetNextImportedFunctionId()
 {
+	// TODO: multithread: This will break if one thread if freeing a module, while another is being compiled
+	if( engine->freeImportedFunctionIdxs.GetLength() )
+		return FUNC_IMPORTED | (asUINT)engine->freeImportedFunctionIdxs[engine->freeImportedFunctionIdxs.GetLength()-1];
+
 	return FUNC_IMPORTED | (asUINT)engine->importedFunctions.GetLength();
 }
 
@@ -781,7 +787,10 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	bindInformations.PushLast(info);
 
 	// Add the info to the array in the engine
-	engine->importedFunctions.PushLast(info);
+	if( engine->freeImportedFunctionIdxs.GetLength() )
+		engine->importedFunctions[engine->freeImportedFunctionIdxs.PopLast()] = info;
+	else
+		engine->importedFunctions.PushLast(info);
 
 	return 0;
 }

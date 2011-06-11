@@ -356,8 +356,17 @@ int asCRestore::Restore()
 	{
 		sBindInfo *info = asNEW(sBindInfo);
 		info->importedFunctionSignature = ReadFunction(false, false);
-		info->importedFunctionSignature->id = int(FUNC_IMPORTED + engine->importedFunctions.GetLength());
-		engine->importedFunctions.PushLast(info);
+		if( engine->freeImportedFunctionIdxs.GetLength() )
+		{
+			int id = engine->freeImportedFunctionIdxs.PopLast();
+			info->importedFunctionSignature->id = int(FUNC_IMPORTED + id);
+			engine->importedFunctions[id] = info;
+		}
+		else
+		{
+			info->importedFunctionSignature->id = int(FUNC_IMPORTED + engine->importedFunctions.GetLength());
+			engine->importedFunctions.PushLast(info);
+		}
 		ReadString(&info->importFromModule);
 		info->boundFunctionId = -1;
 		module->bindInformations[i] = info;

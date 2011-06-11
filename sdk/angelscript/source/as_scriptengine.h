@@ -322,6 +322,7 @@ public:
 
 	// An array with all module imported functions
 	asCArray<sBindInfo *>  importedFunctions;
+	asCArray<int>          freeImportedFunctionIdxs;
 
 	// These resources must be protected for multiple accesses
 	mutable asCAtomic      refCount;
