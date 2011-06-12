@@ -4846,7 +4846,9 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		if( from->type.dataType.IsFloatType() )
 		{
 			float fc = from->type.floatValue;
-			asUINT uic = asUINT(fc);
+			// Some compilers set the value to 0 when converting a negative float to unsigned int.
+			// To maintain a consistent behaviour across compilers we convert to int first.
+			asUINT uic = asUINT(int(fc));
 
 			if( float(uic) != fc )
 			{
@@ -4862,7 +4864,9 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		else if( from->type.dataType.IsDoubleType() )
 		{
 			double fc = from->type.doubleValue;
-			asUINT uic = asUINT(fc);
+			// Some compilers set the value to 0 when converting a negative double to unsigned int.
+			// To maintain a consistent behaviour across compilers we convert to int first.
+			asUINT uic = asUINT(int(fc));
 
 			if( double(uic) != fc )
 			{
@@ -5101,7 +5105,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			float fc = float((signed)from->type.qwordValue);
+			float fc = float((asINT64)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
 			{
@@ -5196,7 +5200,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			double fc = double((signed)from->type.qwordValue);
+			double fc = double((asINT64)from->type.qwordValue);
 
 			if( asQWORD(fc) != from->type.qwordValue )
 			{
