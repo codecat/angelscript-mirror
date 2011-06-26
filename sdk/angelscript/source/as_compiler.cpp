@@ -1404,7 +1404,12 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 				{
 					// Send the object as a reference to the object, 
 					// and not to the variable holding the object
-					bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					if( !IsVariableOnHeap(args[n]->type.stackOffset) )
+						// TODO: optimize: Actually the reference can be pushed on the stack directly
+						//                 as the value allocated on the stack is guaranteed to be safe
+						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					else
+						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
 				}
 				else
 					bc->InstrWORD(asBC_GETREF, (asWORD)offset);

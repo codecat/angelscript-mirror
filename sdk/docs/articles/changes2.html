@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.0 WIP - 2011/06/12</h2>
+<h2>Version 2.21.0 WIP - 2011/06/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash on MSVC when basic behaviour methods was implemented with multiple inheritance (Thanks Thomas Grip)
 <li>Fixed bug when application compiles modules with imported functions over and over again, eventually crashing (Thanks loboWu)
 <li>Fixed implicit conversion of negative float constant to uint making the value become 0 (Thanks Jeremy Harmon)
+<li>Fixed bug with passing value types on stack to a function taking a var arg (Thanks immortius)
 </ul>
 <li>Virtual machine
 <ul>

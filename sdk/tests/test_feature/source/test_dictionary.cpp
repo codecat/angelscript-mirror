@@ -203,6 +203,46 @@ bool Test()
 		engine->Release();
 	}
 
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	
+		const char *script =
+			"void main() \n"
+			"{ \n"
+			" dictionary test; \n"
+			" test.set('test', 'something'); \n"
+			" string output; \n"
+			" test.get('test', output); \n"
+			" assert(output == 'something'); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	return fail;
 }
 
