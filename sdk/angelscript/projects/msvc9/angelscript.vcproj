@@ -349,7 +349,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\as_callfunc_x64_msvc.asm"
+				RelativePath="..\..\source\as_callfunc_x64_msvc_asm.asm"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -372,7 +372,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
+						CommandLine="ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)"
 						Outputs="$(OutDir)\as_callfunc_x64_msvc_asm.obj"
 					/>
 				</FileConfiguration>
@@ -381,7 +381,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)&#x0D;&#x0A;"
+						CommandLine="ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)"
 						Outputs="$(OutDir)\as_callfunc_x64_msvc_asm.obj"
 					/>
 				</FileConfiguration>
