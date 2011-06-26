@@ -81,7 +81,7 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 			}
 
 			// Run a few steps of DestroyGarbage
-			int iter = gcNewObjects.GetLength();
+			int iter = (int)gcNewObjects.GetLength();
 			if( iter > 10 ) iter = 10;
 			while( iter-- > 0 )
 				DestroyNewGarbage();
@@ -112,7 +112,7 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 			if( doDetect )
 			{
 				// Move all objects to the old list, so we guarantee that all is detected
-				for( asUINT n = gcNewObjects.GetLength(); n-- > 0; )
+				for( asUINT n = (asUINT)gcNewObjects.GetLength(); n-- > 0; )
 					MoveObjectToOldList(n);
 				detectState  = clearCounters_init;
 			}

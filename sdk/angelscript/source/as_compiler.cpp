@@ -280,7 +280,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 				Error(TXT_PARAMETER_ALREADY_DECLARED, node);
 
 			// Add marker for variable declaration
-			byteCode.VarDecl(outFunc->variables.GetLength());
+			byteCode.VarDecl((int)outFunc->variables.GetLength());
 			outFunc->AddVariable(name, type, stackPos);
 
 			node = node->next;
@@ -1714,7 +1714,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		// Add marker that the variable has been declared
-		bc->VarDecl(outFunc->variables.GetLength());
+		bc->VarDecl((int)outFunc->variables.GetLength());
 		outFunc->AddVariable(name, type, offset);
 
 		// Keep the node for the variable decl
@@ -3790,7 +3790,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 #ifdef AS_64BIT_PTR
 				int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt64, false), true);
-				ctx->bc.InstrW_QW(asBC_SetV8, offset, 0);
+				ctx->bc.InstrW_QW(asBC_SetV8, (asWORD)offset, 0);
 				ctx->bc.InstrW_W(asBC_CMPi64, ctx->type.stackOffset, offset);
 				DeallocateVariable(offset);
 #else

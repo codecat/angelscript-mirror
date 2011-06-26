@@ -736,7 +736,7 @@ int asCScriptFunction::GetReturnTypeId() const
 // interface
 asUINT asCScriptFunction::GetParamCount() const
 {
-	return parameterTypes.GetLength();
+	return (asUINT)parameterTypes.GetLength();
 }
 
 // interface

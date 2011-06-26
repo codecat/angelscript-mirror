@@ -415,7 +415,7 @@ asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(asUINT index, bool 
 // interface
 asUINT asCObjectType::GetPropertyCount() const
 {
-	return properties.GetLength();
+	return (asUINT)properties.GetLength();
 }
 
 // interface
@@ -480,8 +480,8 @@ asUINT asCObjectType::GetBehaviourCount() const
 
 	// For reference types, the factories are also stored in the constructor
 	// list, so it is sufficient to enumerate only those
-	count += beh.constructors.GetLength();
-	count += beh.operators.GetLength() / 2;
+	count += (asUINT)beh.constructors.GetLength();
+	count += (asUINT)beh.operators.GetLength() / 2;
 
 	return count;
 }
@@ -559,7 +559,7 @@ int asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour
 		return beh.constructors[index - count];
 	}
 	else 
-		count += beh.constructors.GetLength();
+		count += (asUINT)beh.constructors.GetLength();
 
 	if( index - count < beh.operators.GetLength() / 2 )
 	{

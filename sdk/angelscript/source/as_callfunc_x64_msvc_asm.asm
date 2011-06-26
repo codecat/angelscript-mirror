@@ -1,6 +1,6 @@
 ;
 ;  AngelCode Scripting Library
-;  Copyright (c) 2003-2010 Andreas Jonsson
+;  Copyright (c) 2003-2011 Andreas Jonsson
 ;
 ;  This software is provided 'as-is', without any express or implied 
 ;  warranty. In no event will the authors be held liable for any 
@@ -40,6 +40,8 @@ CallX64 PROC FRAME
 	; We must save preserved registers that are used
 	; TODO: No need to save unused registers
 
+	push rbp
+.pushreg rbp
 	push rsi
 .pushreg rsi
 	push r11
@@ -56,6 +58,10 @@ CallX64 PROC FRAME
 .pushreg r15
 	push rbx
 .pushreg rbx
+	sub rsp, 050h
+.allocstack 050h
+	mov rbp, rsp
+.setframe rbp, 0
 .endprolog
 
 	; Move function param to non-scratch register
@@ -130,9 +136,10 @@ callfunc:
 	call r14
 	
 	; Restore the stack
-	add rsp, rdi
+	mov rsp, rbp
 		
 	; EPILOG: Restore stack & preserved registers
+	add rsp, 050h
 	pop rbx
 	pop r15
 	pop r14
@@ -141,6 +148,7 @@ callfunc:
 	pop rdi
 	pop r11
 	pop rsi
+	pop rbp
 
 	; return value in RAX
 	ret
