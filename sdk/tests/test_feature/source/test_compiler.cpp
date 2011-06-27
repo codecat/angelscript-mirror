@@ -1387,6 +1387,36 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test ambigious names
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"void name(uint8 a) { } \n"
+			"void main() \n"
+			"{ \n"
+			"  uint8 name; \n"
+			"  name(7); \n"
+			"  ::name(7); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
+                           "script (5, 3) : Error   : Expression doesn't form a function call. 'name' is a variable of a non-function type\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

@@ -7112,8 +7112,8 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
-	// TODO: funcdef: First check for a local variable of a function type
-	//                Must not allow function names, nor global variables to be returned in this instance
+	// First check for a local variable of a function type
+	// Must not allow function names, nor global variables to be returned in this instance
 	asSExprContext funcPtr(engine);
 	if( objectType == 0 )
 		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
@@ -7143,6 +7143,14 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 
 			// TODO: funcdef: It is still possible that there is a global variable of a function type
 		}
+	}
+	else if( !funcPtr.type.dataType.GetFuncDef() )
+	{
+		// The variable is not a function
+		asCString msg;
+		msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+		Error(msg.AddressOf(), node);
+		return;
 	}
 
 	if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() )
