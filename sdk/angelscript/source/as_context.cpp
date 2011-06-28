@@ -3680,10 +3680,11 @@ void asCContext::CleanStackFrame()
 			}
 		}
 
-		if( currentFunction->objectType )
+		// If the object is a script declared object, then we must release it
+		// as the compiler adds a reference at the entry of the function. Make sure
+		// the function has actually been entered
+		if( currentFunction->objectType && regs.programPointer != currentFunction->byteCode.AddressOf() )
 		{
-			// If the object is a script declared object, then we must release it
-			// as the compiler adds a reference at the entry of the function
 			asSTypeBehaviour *beh = &currentFunction->objectType->beh;
 			if( beh->release && *(size_t*)&regs.stackFramePointer[0] != 0 )
 			{

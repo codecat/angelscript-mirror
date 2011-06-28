@@ -82,6 +82,22 @@ bool TestException()
 		TEST_FAILED;
 	}
 
+	// A test to validate Unprepare without execution
+	{
+		asIObjectType *type = mod->GetObjectTypeByIndex(0);
+		int funcId = type->GetMethodIdByDecl("void Test(string c)");
+		ctx = engine->CreateContext();
+		ctx->Prepare(funcId);
+		asIScriptContext *obj = (asIScriptContext*)engine->CreateScriptObject(type->GetTypeId());
+		ctx->SetObject(obj); // Just sets the address
+		CScriptString *str = new CScriptString();
+		ctx->SetArgObject(0, str); // Makes a copy of the object
+		str->Release();
+		ctx->Unprepare(); // Must release the string argument, but not the object
+		ctx->Release();
+		obj->Release();
+	}
+
 	// A test to verify behaviour when exception occurs in script class constructor
 	const char *script2 = "class SomeClassA \n"
 	"{ \n"
