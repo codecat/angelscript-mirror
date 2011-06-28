@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.0 WIP - 2011/06/26</h2>
+<h2>Version 2.21.0 WIP - 2011/06/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with passing value types on stack to a function taking a var arg (Thanks immortius)
 <li>Fixed native calling convention for objects with copy constructor on 64bit Windows with MSVC
 <li>Fixed assembler code in as_Callfunc_x64_msvc_asm to allow stack unwinding in debugger (Thanks Zoner)
+<li>It's now possible to use property accessor of another object of the same type from within a member property accessor (Thanks _orm_)
 </ul>
 <li>Virtual machine
 <ul>

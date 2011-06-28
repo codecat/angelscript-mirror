@@ -760,6 +760,29 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 	
+	// Test accessing property of the same name on a member object
+	const char *script21 =
+		"class Test { \n"
+		" int a; \n"
+		" Test @member; \n"
+		" int get_a() const { return a; } \n"
+		" void set_a(int val) {a = val; if( member !is null ) member.a = val;} \n"
+		"} \n";
+	mod->AddScriptSection("script", script21);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "Test t, s, u; @t.member = s; @s.member = u; t.set_a(3); assert( u.a == 3 );", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
+
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	
 	// TODO: Test get accessor that returns a reference (only from application func to start with)

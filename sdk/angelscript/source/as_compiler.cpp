@@ -5853,12 +5853,12 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			{
 				// This is an index access, check if there is a property accessor that takes an index arg
 				asSExprContext dummyArg(engine);
-				r = FindPropertyAccessor(name, &access, &dummyArg, errNode);
+				r = FindPropertyAccessor(name, &access, &dummyArg, errNode, true);
 			}
 			if( r == 0 )
 			{
 				// Normal property access
-				r = FindPropertyAccessor(name, &access, errNode);
+				r = FindPropertyAccessor(name, &access, errNode, true);
 			}
 			if( r < 0 ) return -1;
 			if( access.property_get || access.property_set )
@@ -7595,12 +7595,12 @@ void asCCompiler::ConvertToReference(asSExprContext *ctx)
 	}
 }
 
-int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node)
+int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node, bool isThisAccess)
 {
-	return FindPropertyAccessor(name, ctx, 0, node);
+	return FindPropertyAccessor(name, ctx, 0, node, isThisAccess);
 }
 
-int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node)
+int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node, bool isThisAccess)
 {
 	if( engine->ep.propertyAccessorMode == 0 )
 	{
@@ -7745,7 +7745,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	// Check if we are within one of the accessors
 	int realGetId = getId;
 	int realSetId = setId;
-	if( outFunc->objectType )
+	if( outFunc->objectType && isThisAccess )
 	{
 		// The property accessors would be virtual functions, so we need to find the real implementation
 		asCScriptFunction *getFunc = getId ? engine->scriptFunctions[getId] : 0;
@@ -7760,11 +7760,12 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 			realSetId = outFunc->objectType->virtualFunctionTable[setFunc->vfTableIdx]->id;
 	}
 
-	if( (realGetId && realGetId == outFunc->id) ||
-		(realSetId && realSetId == outFunc->id) )
+	// Avoid recursive call, by not treating this as a property accessor call.
+	// This will also allow having the real property with the same name as the accessors.
+	if( (isThisAccess || outFunc->objectType == 0) &&
+		((realGetId && realGetId == outFunc->id) ||
+		 (realSetId && realSetId == outFunc->id)) )
 	{
-		// Avoid recursive call, by not treating this as a property accessor call.
-		// This will also allow having the real property with the same name as the accessors.
 		getId = 0;
 		setId = 0;
 	}
