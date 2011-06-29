@@ -122,8 +122,11 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
-                       "TestCompiler (3, 8) : Error   : Expected ';'\n" )
+                       "TestCompiler (3, 2) : Error   : Identifier 'Assert' is not a data type\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
+	}
 
 	engine->Release();
 
@@ -333,7 +336,7 @@ bool Test()
 	r = ExecuteString(engine, "class XXX { int a; }; XXX b;");
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Expected expression value\n"
-	                   "ExecuteString (1, 27) : Error   : Expected ';'\n" )
+	                   "ExecuteString (1, 23) : Error   : Identifier 'XXX' is not a data type\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
