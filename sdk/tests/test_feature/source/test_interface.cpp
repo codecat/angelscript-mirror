@@ -144,8 +144,8 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"
-					   "TestInterface (5, 23) : Warning : The interface 'intf' is already implemented\n"
+	if( bout.buffer != "TestInterface (5, 23) : Warning : The interface 'intf' is already implemented\n"
+					   "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"
 					   "TestInterface (9, 1) : Info    : Compiling void test(intf&inout)\n"
 					   "TestInterface (11, 9) : Error   : Data type can't be 'intf'\n"
 					   "TestInterface (13, 6) : Error   : There is no copy operator for this type available.\n"
@@ -182,6 +182,24 @@ bool Test()
 		r = ExecuteString(engine, "cast<PlayerLogic>(getScriptObject());", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		engine->Release();			
+	}
+
+	// It should be possible to inherit the implementation of an interface method
+	{
+		const char *script = 
+			"interface I { void method(); } \n"
+			"class B { void method() {} } \n"
+			"class D : B, I {} \n"
+			"D d; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
 
 		engine->Release();			
 	}

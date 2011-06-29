@@ -1626,20 +1626,6 @@ void asCBuilder::CompileClasses()
 				else
 				{
 					decl->objType->interfaces.PushLast(objType);
-
-					// Make sure all the methods of the interface are implemented
-					for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
-					{
-						if( !DoesMethodExist(decl->objType, objType->methods[i]) )
-						{
-							int r, c;
-							file->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
-							asCString str;
-							str.Format(TXT_MISSING_IMPLEMENTATION_OF_s,
-								engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
-							WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
-						}
-					}
 				}
 			}
 
@@ -1799,6 +1785,29 @@ void asCBuilder::CompileClasses()
 		}
 
 		toValidate.PushLast(decl);
+	}
+
+	// Verify that all interface methods are implemented in the classes
+	// We do this here so the base class' methods have already been inherited 
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *decl = classDeclarations[n];
+		for( asUINT m = 0; m < decl->objType->interfaces.GetLength(); m++ )
+		{
+			asCObjectType *objType = decl->objType->interfaces[m];
+			for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
+			{
+				if( !DoesMethodExist(decl->objType, objType->methods[i]) )
+				{
+					int r, c;
+					decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
+					asCString str;
+					str.Format(TXT_MISSING_IMPLEMENTATION_OF_s,
+						engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
+					WriteError(decl->script->name.AddressOf(), str.AddressOf(), r, c);
+				}
+			}
+		}
 	}
 
 	// Verify that the declared structures are valid, e.g. that the structure
