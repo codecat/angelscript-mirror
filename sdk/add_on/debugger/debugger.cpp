@@ -7,7 +7,7 @@ using namespace std;
 CDebugger::CDebugger()
 {
 	m_action = CONTINUE;
-	m_lastStackLevel = 0;
+	m_lastFunction = 0;
 }
 
 CDebugger::~CDebugger()
@@ -29,7 +29,7 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 		s << *(signed int*)value;
 	else if( typeId == asTYPEID_INT64 )
 #if defined(_MSC_VER) && _MSC_VER <= 1200
-		s << "{...}"; // MSVC6 doesn't like the operator for 64bit integer
+		s << "{...}"; // MSVC6 doesn't like the << operator for 64bit integer
 #else
 		s << *(asINT64*)value;
 #endif
@@ -41,7 +41,7 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 		s << *(unsigned int*)value;
 	else if( typeId == asTYPEID_UINT64 )
 #if defined(_MSC_VER) && _MSC_VER <= 1200
-		s << "{...}"; // MSVC6 doesn't like the operator for 64bit integer
+		s << "{...}"; // MSVC6 doesn't like the << operator for 64bit integer
 #else
 		s << *(asQWORD*)value;
 #endif
@@ -146,35 +146,6 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	//       can be hit when entering a function. If there are no break points in the current function
 	//       then there is no need to check every line.
 
-	// TODO: A break point can be placed on a line where there is no code. In this case  
-	//       the first line with code after it should be taken as the break point. It's 
-	//       necessary to know where the function is first declared.
-
-	if( m_lastStackLevel < ctx->GetCallstackSize() )
-	{
-		// We've moved into a new function, so we need to check for a breakpoint at entering the function
-		for( size_t n = 0; n < breakPoints.size(); n++ )
-		{
-			if( breakPoints[n].func )
-			{
-				if( breakPoints[n].name == ctx->GetFunction()->GetName() )
-				{
-					stringstream s;
-					s << "Entering function '" << breakPoints[n].name << "'. Transforming it into break point" << endl;
-					Output(s.str());
-
-					// Transform the function breakpoint into a file breakpoint
-					const char *file = 0;
-					int lineNbr = ctx->GetLineNumber(0, 0, &file);
-					breakPoints[n].name    = file;
-					breakPoints[n].lineNbr = lineNbr;
-					breakPoints[n].func    = false;
-				}
-			}
-		}
-	}
-	m_lastStackLevel = ctx->GetCallstackSize();
-
 	const char *tmp = 0;
 	int lineNbr = ctx->GetLineNumber(0, 0, &tmp);
 
@@ -184,9 +155,55 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	if( r != string::npos )
 		file = file.substr(r+1);
 
+	// Did we move into a new function?
+	asIScriptFunction *func = ctx->GetFunction();
+	if( m_lastFunction != func )
+	{
+		// Check if any breakpoints need adjusting
+		for( size_t n = 0; n < breakPoints.size(); n++ )
+		{
+			// We need to check for a breakpoint at entering the function
+			if( breakPoints[n].func )
+			{
+				if( breakPoints[n].name == func->GetName() )
+				{
+					stringstream s;
+					s << "Entering function '" << breakPoints[n].name << "'. Transforming it into break point" << endl;
+					Output(s.str());
+
+					// Transform the function breakpoint into a file breakpoint
+					breakPoints[n].name           = file;
+					breakPoints[n].lineNbr        = lineNbr;
+					breakPoints[n].func           = false;
+					breakPoints[n].needsAdjusting = false;
+				}
+			}
+			// Check if a given breakpoint fall on a line with code or else adjust it to the next line
+			else if( breakPoints[n].needsAdjusting &&
+					 breakPoints[n].name == file )
+			{
+				int line = func->FindNextLineWithCode(breakPoints[n].lineNbr);
+				if( line >= 0 )
+				{
+					stringstream s;
+					s << "Moving break point " << n << " in file '" << file << "' to next line with code at line " << line << endl;
+					Output(s.str());
+
+					// Move the breakpoint to the next line
+					breakPoints[n].needsAdjusting = false;
+					breakPoints[n].lineNbr = line;
+				}
+			}
+		}
+	}
+	m_lastFunction = func;
+
+	// Determine if there is a breakpoint at the current line
 	for( size_t n = 0; n < breakPoints.size(); n++ )
 	{
-		// TODO: do case-less comparison
+		// TODO: do case-less comparison for file name
+
+		// Should we break?
 		if( !breakPoints[n].func &&
 			breakPoints[n].lineNbr == lineNbr &&
 			breakPoints[n].name == file )
@@ -376,7 +393,7 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 
 	default:
 		Output("Unknown command\n");
-		// take more commandsc
+		// take more commands
 		return false;
 	}
 

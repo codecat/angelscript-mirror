@@ -861,6 +861,7 @@ public:
 	virtual asUINT           GetVarCount() const = 0;
 	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
 	virtual const char *     GetVarDecl(asUINT index) const = 0;
+	virtual int              FindNextLineWithCode(int line) const = 0;
 
 	// For JIT compilation
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;

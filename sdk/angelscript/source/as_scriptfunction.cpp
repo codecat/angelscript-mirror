@@ -369,6 +369,28 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 	return str;
 }
 
+// interface
+int asCScriptFunction::FindNextLineWithCode(int line) const
+{
+	if( lineNumbers.GetLength() == 0 ) return -1;
+
+	// Check if given line is outside function
+	// TODO: should start at declaration instead of first line of code
+	if( line < (lineNumbers[1]&0xFFFFF) ) return -1;
+	if( line > (lineNumbers[lineNumbers.GetLength()-1]&0xFFFFF) ) return -1;
+
+	// Find the line with code on or right after the input line
+	// TODO: optimize: Do binary search instead
+	if( line == (lineNumbers[1]&0xFFFFF) ) return line;
+	for( asUINT n = 3; n < lineNumbers.GetLength(); n += 2 )
+	{
+		if( line <= (lineNumbers[n]&0xFFFFF) )
+			return (lineNumbers[n]&0xFFFFF);
+	}
+
+	return -1;
+}
+
 // internal
 int asCScriptFunction::GetLineNumber(int programPosition)
 {

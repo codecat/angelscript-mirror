@@ -118,6 +118,7 @@ public:
 	asUINT               GetVarCount() const;
 	int                  GetVar(asUINT index, const char **name, int *typeId = 0) const;
 	const char *         GetVarDecl(asUINT index) const;
+	int                  FindNextLineWithCode(int line) const;
 
 	// For JIT compilation
 	asDWORD             *GetByteCode(asUINT *length = 0);

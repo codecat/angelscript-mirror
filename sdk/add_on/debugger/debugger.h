@@ -36,16 +36,17 @@ protected:
 		STEP_OVER, // stop at next instruction, skipping called functions
 		STEP_OUT   // run until returning from current function
 	};
-	DebugAction m_action;
-	asUINT      m_lastCommandAtStackLevel;
-	asUINT      m_lastStackLevel;
+	DebugAction        m_action;
+	asUINT             m_lastCommandAtStackLevel;
+	asIScriptFunction *m_lastFunction;
 
 	struct BreakPoint
 	{
-		BreakPoint(std::string f, int n, bool _func) : name(f), lineNbr(n), func(_func) {}
+		BreakPoint(std::string f, int n, bool _func) : name(f), lineNbr(n), func(_func), needsAdjusting(true) {}
 		std::string name;
 		int         lineNbr;
 		bool        func;
+		bool        needsAdjusting;
 	};
 	std::vector<BreakPoint> breakPoints;
 };
