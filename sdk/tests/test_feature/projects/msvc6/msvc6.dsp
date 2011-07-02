@@ -735,15 +735,15 @@ SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring_utils.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
+SOURCE=..\..\source\scriptstring.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.h
+SOURCE=..\..\source\scriptstring.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp
+SOURCE=..\..\source\scriptstring_utils.cpp
 # End Source File
 # Begin Source File
 

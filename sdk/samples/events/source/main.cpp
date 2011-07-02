@@ -14,7 +14,7 @@
 	#include <crtdbg.h>  // debugging routines
 #endif
 #include <angelscript.h>
-#include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
 
 using namespace std;
 
@@ -232,8 +232,7 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// Register the script string type
 	// Look at the implementation for this function for more information  
 	// on how to register a custom string type, and other object types.
-	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
 
 	// Register the functions that the scripts will be allowed to use
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )

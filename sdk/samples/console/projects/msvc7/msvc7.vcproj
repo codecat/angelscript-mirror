@@ -160,7 +160,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -187,7 +187,7 @@
 				RelativePath="..\..\..\..\angelscript\include\angelscript.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h">
 			</File>
 		</Filter>
 		<Filter

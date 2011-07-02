@@ -20,7 +20,7 @@
 #endif
 #include <list>
 #include <angelscript.h>
-#include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scriptany/scriptany.h"
 #include "../../../add_on/contextmgr/contextmgr.h"
 
@@ -150,8 +150,7 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// Register the script string type
 	// Look at the implementation for this function for more information  
 	// on how to register a custom string type, and other object types.
-	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
 
 	// Register the script any type
 	// This type will allow the script to pass a variable argument type to the function

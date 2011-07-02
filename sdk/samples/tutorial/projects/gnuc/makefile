@@ -8,7 +8,7 @@ OBJDIR = obj
 SRCNAMES = \
   main.cpp
 
-OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstring.o
+OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstdstring.o
 BIN = ../../bin/tutorial
 DELETER = rm -f
 
@@ -22,7 +22,7 @@ $(BIN): $(OBJ)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
+obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

@@ -163,7 +163,7 @@
 				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp">
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -193,7 +193,7 @@
 				RelativePath="..\..\..\..\add_on\scriptbuilder\scriptbuilder.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h">
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h">
 			</File>
 		</Filter>
 		<Filter

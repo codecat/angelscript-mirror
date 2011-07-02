@@ -2,7 +2,7 @@
 #include <assert.h>  // assert()
 #include <string.h>  // strstr()
 #include <angelscript.h>
-#include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/contextmgr/contextmgr.h"
 
 #if defined(_MSC_VER)
@@ -183,8 +183,7 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// Register the script string type
 	// Look at the implementation for this function for more information  
 	// on how to register a custom string type, and other object types.
-	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
 
 	// Register the functions that the scripts will be allowed to use
 	r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );

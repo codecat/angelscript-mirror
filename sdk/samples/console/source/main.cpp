@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <math.h>
 #include <angelscript.h>
-#include "../../../add_on/scriptstring/scriptstring.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
 
 using namespace std;
@@ -33,7 +33,7 @@ float          g_gravity;
 asUINT         p_health;
 asUINT         r_fov;
 bool           r_shadow;
-CScriptString *p_name = 0;
+string         p_name = "player";
 
 int main(int argc, char **argv)
 {
@@ -42,16 +42,6 @@ int main(int argc, char **argv)
 	if( engine == 0 )
 	{
 		cout << "Failed to create script engine." << endl;
-		return -1;
-	}
-
-	// Allocate a script string for the player name.
-	// We must do this because the script string type that we use is
-	// reference counted and cannot be declared as local or global variable.
-	p_name = new CScriptString("player");
-	if( p_name == 0 )
-	{
-		cout << "Failed to allocate script string." << endl;
 		return -1;
 	}
 
@@ -115,9 +105,6 @@ int main(int argc, char **argv)
 	// Release the engine
 	engine->Release();
 
-	// Release the script string
-	if( p_name ) p_name->Release();
-
 	return 0;
 }
 
@@ -161,15 +148,14 @@ void ConfigureEngine(asIScriptEngine *engine)
 	// Register the script string type
 	// Look at the implementation for this function for more information
 	// on how to register a custom string type, and other object types.
-	// The implementation is in "/add_on/scriptstring/scriptstring.cpp"
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
 
 	// Register the global variables
 	r = engine->RegisterGlobalProperty("float g_gravity", &g_gravity); assert( r >= 0 );
 	r = engine->RegisterGlobalProperty("uint p_health", &p_health);    assert( r >= 0 );
 	r = engine->RegisterGlobalProperty("uint r_fov", &r_fov);          assert( r >= 0 );
 	r = engine->RegisterGlobalProperty("bool r_shadow", &r_shadow);    assert( r >= 0 );
-	r = engine->RegisterGlobalProperty("string p_name", p_name);       assert( r >= 0 );
+	r = engine->RegisterGlobalProperty("string p_name", &p_name);      assert( r >= 0 );
 
 	// Register some useful functions
 	r = engine->RegisterGlobalFunction("float sin(float)", asFUNCTION(sinf), asCALL_CDECL); assert( r >= 0 );

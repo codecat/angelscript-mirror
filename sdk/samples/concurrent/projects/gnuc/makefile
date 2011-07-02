@@ -7,7 +7,7 @@ OBJDIR = obj
 
 SRCNAMES =   main.cpp
 
-OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstring.o obj/contextmgr.o
+OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) obj/scriptstdstring.o obj/contextmgr.o
 BIN = ../../bin/concurrent
 DELETER = rm -f
 
@@ -21,7 +21,7 @@ $(BIN): $(OBJ)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
+obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/contextmgr.o: ../../../../add_on/contextmgr/contextmgr.cpp

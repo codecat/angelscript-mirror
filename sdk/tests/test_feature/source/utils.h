@@ -13,7 +13,7 @@
 #include <angelscript.h>
 
 #include "../../../add_on/scriptarray/scriptarray.h"
-#include "../../../add_on/scriptstring/scriptstring.h"
+#include "scriptstring.h"
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
 

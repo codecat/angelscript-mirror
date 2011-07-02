@@ -181,7 +181,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp"
 				>
 			</File>
 		</Filter>
@@ -195,7 +195,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h"
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h"
 				>
 			</File>
 		</Filter>

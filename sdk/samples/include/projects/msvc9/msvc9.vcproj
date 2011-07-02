@@ -137,7 +137,7 @@
 				AdditionalIncludeDirectories="../../../../angelscript/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Debug/msvc6.pch"
 				AssemblerListingLocation=".\Debug/"
@@ -232,7 +232,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -270,7 +270,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h"
+				RelativePath="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h"
 				>
 			</File>
 		</Filter>

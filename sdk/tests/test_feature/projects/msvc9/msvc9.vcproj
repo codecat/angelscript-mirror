@@ -992,15 +992,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
+				RelativePath="..\..\source\scriptstring.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h"
+				RelativePath="..\..\source\scriptstring.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring_utils.cpp"
+				RelativePath="..\..\source\scriptstring_utils.cpp"
 				>
 			</File>
 			<File

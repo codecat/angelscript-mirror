@@ -1,6 +1,6 @@
 #include "utils.h"
 using std::string;
-#include "../../../add_on/scriptstring/scriptstring.h"
+#include "scriptstring.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
 #include <vector>
 

@@ -95,7 +95,7 @@ SOURCE=..\..\..\..\add_on\scripthelper\scripthelper.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.cpp
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -107,7 +107,7 @@ SOURCE=..\..\..\..\angelscript\include\angelscript.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptstring\scriptstring.h
+SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

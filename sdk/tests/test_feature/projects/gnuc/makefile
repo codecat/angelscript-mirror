@@ -145,16 +145,16 @@ SRCNAMES = \
   testvirtualinheritance.cpp \
   testvirtualmethod.cpp \
   utils.cpp \
+  scriptstring.cpp \
+  scriptstring_utils.cpp \
 
 
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptarray.o \
   obj/scripthelper.o \
-  obj/scriptstring.o \
   obj/scriptstdstring.o \
   obj/scriptstdstringutil.o \
   obj/scriptany.o \
-  obj/scriptstringutil.o \
   obj/scriptmath.o \
   obj/scriptdictionary.o \
   obj/scriptfile.o \
@@ -179,12 +179,6 @@ obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scripthelper.o: ../../../../add_on/scripthelper/scripthelper.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
-obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
-obj/scriptstringutil.o: ../../../../add_on/scriptstring/scriptstring_utils.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
