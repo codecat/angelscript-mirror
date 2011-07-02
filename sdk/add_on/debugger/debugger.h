@@ -11,22 +11,29 @@ public:
 	CDebugger();
 	virtual ~CDebugger();
 
-	virtual void LineCallback(asIScriptContext *ctx);
+	// User interaction
 	virtual void TakeCommands(asIScriptContext *ctx);
-	virtual bool InterpretCommand(const std::string &cmd, asIScriptContext *ctx);
+	virtual void Output(const std::string &str);
+
+	// Line callback invoked by context
+	virtual void LineCallback(asIScriptContext *ctx);
+
+	// Commands
 	virtual void PrintHelp();
 	virtual void AddFileBreakPoint(const std::string &file, int lineNbr);
 	virtual void AddFuncBreakPoint(const std::string &func);
-	virtual bool CheckBreakPoint(asIScriptContext *ctx);
 	virtual void ListBreakPoints();
 	virtual void ListLocalVariables(asIScriptContext *ctx);
 	virtual void ListGlobalVariables(asIScriptContext *ctx);
 	virtual void ListMemberProperties(asIScriptContext *ctx);
 	virtual void ListStatistics(asIScriptContext *ctx);
 	virtual void PrintCallstack(asIScriptContext *ctx);
-	virtual std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine);
-	virtual void Output(const std::string &str);
 	virtual void PrintValue(const std::string &expr, asIScriptContext *ctx);
+
+	// Helpers
+	virtual bool InterpretCommand(const std::string &cmd, asIScriptContext *ctx);
+	virtual bool CheckBreakPoint(asIScriptContext *ctx);
+	virtual std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine);
 
 protected:
 	enum DebugAction

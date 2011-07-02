@@ -11,20 +11,98 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
  - \subpage doc_addon_build
  - \subpage doc_addon_ctxmgr
- - \subpage doc_addon_autowrap
+ - \subpage doc_addon_debugger
  - \subpage doc_addon_helpers
+ - \subpage doc_addon_autowrap
  - \subpage doc_addon_clib
 
 \page doc_addon_script Script extensions
 
  - \subpage doc_addon_std_string
- - \subpage doc_addon_string
  - \subpage doc_addon_array
  - \subpage doc_addon_any
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
  - \subpage doc_addon_math3d
+
+
+
+\page doc_addon_debugger Debugger
+
+<b>Path:</b> /sdk/add_on/debugger/
+
+The <code>CDebugger</code> implements common debugging functionality for scripts, e.g.
+setting breakpoints, stepping through the code, examining values of variables, etc.
+
+To use the debugger the line callback should be set in the context. This will allow the 
+debugger to take over whenever a breakpoint is reached, so the script can be debugged.
+
+By default the debugger uses the standard in and standard out streams to interact with the
+user, but this can be easily overloaded by deriving from the <code>CDebugger</code> class and implementing
+the methods <code>TakeCommands</code> and <code>Output</code>. With this it is possible to implement a graphical 
+interface, or even remote debugging for an application.
+
+The application developer may also be interested in overriding the default <code>ToString</code> method
+to implement ways to visualize application registered types in an easier way.
+
+\see The sample \ref doc_samples_asrun for a complete example of how to use the debugger
+
+\section doc_addon_ctxmgr_1 Public C++ interface
+
+\code
+class CDebugger
+{
+public:
+  CDebugger();
+  virtual ~CDebugger();
+
+  // User interaction
+  virtual void TakeCommands(asIScriptContext *ctx);
+  virtual void Output(const std::string &str);
+
+  // Line callback invoked by context
+  virtual void LineCallback(asIScriptContext *ctx);
+
+  // Commands
+  virtual void PrintHelp();
+  virtual void AddFileBreakPoint(const std::string &file, int lineNbr);
+  virtual void AddFuncBreakPoint(const std::string &func);
+  virtual void ListBreakPoints();
+  virtual void ListLocalVariables(asIScriptContext *ctx);
+  virtual void ListGlobalVariables(asIScriptContext *ctx);
+  virtual void ListMemberProperties(asIScriptContext *ctx);
+  virtual void ListStatistics(asIScriptContext *ctx);
+  virtual void PrintCallstack(asIScriptContext *ctx);
+  virtual void PrintValue(const std::string &expr, asIScriptContext *ctx);
+
+  // Helpers
+  virtual bool InterpretCommand(const std::string &cmd, asIScriptContext *ctx);
+  virtual bool CheckBreakPoint(asIScriptContext *ctx);
+  virtual std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine);
+};
+\endcode
+
+\section doc_addon_debugger_1 Example usage
+
+\code
+CDebugger dbg;
+int ExecuteWithDebug(asIScriptContext *ctx)
+{
+  // Tell the context to invoke the debugger's line callback
+  ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), dbg, asCALL_THISCALL);
+
+  // Allow the user to initialize the debugging before moving on
+  dbg.TakeCommands(ctx);
+
+  // Execute the script normally. If a breakpoint is reached the 
+  // debugger will take over the control loop.
+  return ctx->Execute();
+}
+\endcode
+
+
+
 
 
 
@@ -343,7 +421,7 @@ myAny->Retrieve((void*)&str, typeId);
 
 
 
-\page doc_addon_std_string string object (STL)
+\page doc_addon_std_string string object
 
 <b>Path:</b> /sdk/add_on/scriptstdstring/
 
@@ -356,9 +434,9 @@ increase the number of copies taken when string values are being passed around
 in the script code. However, this is most likely only a problem for scripts 
 that perform a lot of string operations.
 
-Register the type with <code>RegisterStdString(asIScriptEngine*)</code>.
-
-\see \ref doc_addon_string
+Register the type with <code>RegisterStdString(asIScriptEngine*)</code>. Register the optional
+split method and global join function with <code>RegisterStdStringUtils(asIScriptEngine*)</code>. 
+The optional functions require that the \ref doc_addon_array has been registered first.
 
 \section doc_addon_std_string_1 Public C++ interface
 
@@ -389,7 +467,15 @@ Refer to the <code>std::string</code> implementation for your compiler.
     bool opEquals(const string &in right) const;
     int  opCmp(const string &in right) const;
     
-    // Automatic conversion from number types to string type
+    // Substring
+    string substr(uint start = 0, int count = -1) const;
+    array<string>@ split(const string &in delimiter) const;
+    
+    // Search
+    int findFirst(const string &in str, uint start = 0) const;
+    int findLast(const string &in str, int start = -1) const;
+    
+    // Automatic conversion from primitive types to string type
     string &opAssign(double val);
     string &opAddAssign(double val);
     string  opAdd(double val) const;
@@ -410,136 +496,12 @@ Refer to the <code>std::string</code> implementation for your compiler.
     string  opAdd(bool val) const;
     string  opAdd_r(bool val) const;
   }
+
+  // Takes an array of strings and joins them into one string separated by the specified delimiter
+  string join(const array<string> &in arr, const string &in delimiter);
 </pre>
 
 
-
-
-\page doc_addon_string string object (reference counted)
-
-<b>Path:</b> /sdk/add_on/scriptstring/
-
-This add-on registers a string type that is in most situations compatible with the 
-<code>std::string</code>, except that it uses reference counting. This means that if you have an
-application function that takes a <code>std::string</code> by reference, you can register it 
-with AngelScript to take a script string by reference. This works because the CScriptString
-wraps the <code>std::string</code> type, with the std::string type at the first byte of the CScriptString
-object.
-
-Register the type with <code>RegisterScriptString(asIScriptEngine*)</code>. Register the 
-utility functions with <code>RegisterScriptStringUtils(asIScriptEngine*)</code>.
-
-The utility functions require that the \ref doc_addon_array has been registered first.
-
-\see \ref doc_addon_std_string
-
-\section doc_addon_string_1 Public C++ interface
-
-\code
-class CScriptString
-{
-public:
-  // Constructors
-  CScriptString();
-  CScriptString(const CScriptString &other);
-  CScriptString(const char *s);
-  CScriptString(const std::string &s);
-
-  // Memory management
-  void AddRef() const;
-  void Release() const;
-
-  // Assignment
-  CScriptString &operator=(const CScriptString &other);
-  
-  // Concatenation
-  CScriptString &operator+=(const CScriptString &other);
-  friend CScriptString *operator+(const CScriptString &a, const CScriptString &b);
-  
-  // Memory buffer
-  std::string buffer;
-};
-\endcode
-
-\section doc_addon_string_2 Public script interface
-
-<pre>
-  class string
-  {
-    // Constructors
-    string();
-    string(const string &in other);
-    
-    // Returns the length of the string
-    uint length() const;
-    
-    // Assignment and concatenation
-    string &opAssign(const string &in other);
-    string &opAddAssign(const string &in other);
-    string \@opAdd(const string &in right) const;
-    
-    // Access individual characters
-    uint8       &opIndex(uint);
-    const uint8 &opIndex(uint) const;
-    
-    // Comparison operators
-    bool opEquals(const string &in right) const;
-    int  opCmp(const string &in right) const;
-    
-    // Automatic conversion from number types to string type
-    string &opAssign(double val);
-    string &opAddAssign(double val);
-    string \@opAdd(double val) const;
-    string \@opAdd_r(double val) const;
- 
-    string &opAssign(float val);
-    string &opAddAssign(float val);
-    string \@opAdd(float val) const;
-    string \@opAdd_r(float val) const;
- 
-    string &opAssign(int val);
-    string &opAddAssign(int val);
-    string \@opAdd(int val) const;
-    string \@opAdd_r(int val) const;
-    
-    string &opAssign(uint val);
-    string &opAddAssign(uint val);
-    string \@opAdd(uint val) const;
-    string \@opAdd_r(uint val) const;
-
-    string &opAssign(bool val);
-    string &opAddAssign(bool val);
-    string \@opAdd(bool val) const;
-    string \@opAdd_r(bool val) const;
-  }
-
-  // Get a substring of a string
-  string @ substring(const string &in str, int start, int length);
-
-  // Find the first occurrance of the substring
-  int findFirst(const string &in str, const string &in sub, int startAt = 0);
-
-  // Find the last occurrance of the substring
-  int findLast(const string &in str, const string &in sub, int startAt = -1);
-
-  // Find the first character from the set 
-  int findFirstOf(const string &in str, const string &in set, int startAt = 0);
-
-  // Find the first character not in the set
-  int findFirstNotOf(const string &in str, const string &in set, int startAt = 0);
-
-  // Find the last character from the set
-  int findLastOf(const string &in str, const string &in set, int startAt = -1);
-
-  // Find the last character not in the set
-  int findLastNotOf(const string &in str, const string &in set, int startAt = -1);
-
-  // Split the string into an array of substrings
-  string@[]@ split(const string &in str, const string &in delimiter);
-
-  // Join an array of strings into a larger string separated by a delimiter
-  string@ join(const string@[] &in str, const string &in delimiter);
-</pre>
 
 
 
@@ -818,7 +780,7 @@ this add-on as-is.
 
 
 
-\page doc_addon_build Script builder helper
+\page doc_addon_build Script builder
 
 <b>Path:</b> /sdk/add_on/scriptbuilder/
 
@@ -1061,10 +1023,9 @@ and give a prefix according to the following table:
 <tr><td>asIScriptModule   &nbsp;</td>    <td>asModule_</td></tr>
 <tr><td>asIScriptContext  &nbsp;</td>    <td>asContext_</td></tr>
 <tr><td>asIScriptGeneric  &nbsp;</td>    <td>asGeneric_</td></tr>
-<tr><td>asIScriptArray    &nbsp;</td>    <td>asArray_</td></tr>
 <tr><td>asIScriptObject   &nbsp;</td>    <td>asObject_</td></tr>
 <tr><td>asIObjectType     &nbsp;</td>    <td>asObjectType_</td></tr>
-<tr><td>asIScriptFunction &nbsp;</td>    <td>asScriptFunction_</td></tr>
+<tr><td>asIScriptFunction &nbsp;</td>    <td>asFunction_</td></tr>
 </table>
 
 All interface methods take the interface pointer as the first parameter when in the C function format, the rest

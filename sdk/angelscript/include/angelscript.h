@@ -590,7 +590,7 @@ public:
 	virtual const char      *GetName() const = 0;
 
 	// Compilation
-    virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	virtual int  Build() = 0;
 	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
 	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;

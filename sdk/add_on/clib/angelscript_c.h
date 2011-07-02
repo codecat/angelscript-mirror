@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -522,16 +522,6 @@ extern "C"
 	AS_API void *           asObject_GetPropertyPointer(asIScriptObject *s, asUINT prop);
 	AS_API int              asObject_CopyFrom(asIScriptObject *s, asIScriptObject *other);
 
-	AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a);
-	AS_API int              asArray_AddRef(asIScriptArray *a);
-	AS_API int              asArray_Release(asIScriptArray *a);
-	AS_API int              asArray_GetArrayTypeId(asIScriptArray *a);
-	AS_API int              asArray_GetElementTypeId(asIScriptArray *a);
-	AS_API asUINT           asArray_GetElementCount(asIScriptArray *a);
-	AS_API void *           asArray_GetElementPointer(asIScriptArray *a, asUINT index);
-	AS_API void             asArray_Resize(asIScriptArray *a, asUINT size);
-	AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other);
-
 	AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o);
 	AS_API int                      asObjectType_AddRef(asIObjectType *o);
 	AS_API int                      asObjectType_Release(asIObjectType *o);
@@ -558,17 +548,17 @@ extern "C"
 	AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop);
 	AS_API int                      asObjectType_GetPropertyOffset(const asIObjectType *o, asUINT prop);
 
-	AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f);
-	AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f);
-	AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f);
-	AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f);
-	AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f);
-	AS_API const char          *asScriptFunction_GetDeclaration(const asIScriptFunction *f, bool includeObjectName);
-	AS_API asBOOL               asScriptFunction_IsClassMethod(const asIScriptFunction *f);
-	AS_API asBOOL               asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f);
-	AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f);
-	AS_API int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index);
-	AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f);
+	AS_API asIScriptEngine     *asFunction_GetEngine(const asIScriptFunction *f);
+	AS_API const char          *asFunction_GetModuleName(const asIScriptFunction *f);
+	AS_API asIObjectType       *asFunction_GetObjectType(const asIScriptFunction *f);
+	AS_API const char          *asFunction_GetObjectName(const asIScriptFunction *f);
+	AS_API const char          *asFunction_GetName(const asIScriptFunction *f);
+	AS_API const char          *asFunction_GetDeclaration(const asIScriptFunction *f, bool includeObjectName);
+	AS_API asBOOL               asFunction_IsClassMethod(const asIScriptFunction *f);
+	AS_API asBOOL               asFunction_IsInterfaceMethod(const asIScriptFunction *f);
+	AS_API int                  asFunction_GetParamCount(const asIScriptFunction *f);
+	AS_API int                  asFunction_GetParamTypeId(const asIScriptFunction *f, int index);
+	AS_API int                  asFunction_GetReturnTypeId(const asIScriptFunction *f);
 #ifdef __cplusplus
 }
 #endif

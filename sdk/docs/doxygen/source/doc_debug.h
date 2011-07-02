@@ -8,6 +8,8 @@ that can set break points, inspect/manipulate variables in functions, visualize 
 Observe that the CDebugMgr class used in the examples below doesn't exist. It is only used as an abstraction to
 avoid having to write fictional debug routines.
 
+\see \ref doc_addon_debugger for a standard implementation
+
 \section doc_debug_1 Setting line breaks
 
 In order to break at a specified line in the code the debugger can set the line callback function in the script context. The
@@ -167,7 +169,7 @@ The debugger may also need to be able to inspect the global variables that the f
 global variables are stored in the module, there is the place to look for them. The \ref asIScriptModule 
 interface can be obtained by querying the module name from the function, and then getting the module 
 pointer from the engine. Once the module is determined the global variables are enumerated much the same
-way as in the example above, except that the appropriate methods on the asIScriptModule interface is used
+way as in the example above, except that the appropriate methods on the asIScriptModule interface are used
 instead.
 
 

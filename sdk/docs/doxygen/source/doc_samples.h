@@ -12,6 +12,7 @@ This page gives a brief description of the samples that you'll find in the /sdk/
  - \subpage doc_samples_events
  - \subpage doc_samples_incl
  - \subpage doc_samples_asbuild
+ - \subpage doc_samples_asrun
 
 
 
@@ -68,7 +69,7 @@ These functions can then be executed to perform automated tasks.
  - \ref doc_addon_helpers "ExecuteString"
  - \ref asIScriptModule::CompileFunction "CompileFunction", \ref asIScriptModule::CompileGlobalVar "CompileGlobalVar", \ref asIScriptModule::RemoveFunction "RemoveFunction", \ref asIScriptModule::RemoveGlobalVar "RemoveGlobalVar"
  - Enumerate global functions and variables
- - \ref doc_addon_string "Strings"
+ - \ref doc_addon_std_string "Strings"
  - Registered global functions and properties
  - Special function _grab() with overloads to receive and print resulting value from script statements
 
@@ -125,7 +126,7 @@ complicated circular includes.
 
 
 
-\page doc_samples_asbuild Generic bytecode compiler
+\page doc_samples_asbuild Generic compiler
 
 <b>Path:</b> /sdk/samples/asbuild/
 
@@ -144,6 +145,25 @@ the application interface has been fully registered.
  - \ref asIScriptEngine::ParseToken
  - \ref asIScriptModule::SaveByteCode
  - \ref asIBinaryStream
+
+
+\page doc_samples_asrun Commandline runner
+
+<b>Path:</b> /sdk/samples/asrun/
+
+This samples gives a very basic commandline executer for AngelScripts. It currently doesn't
+allow the user to do very much as it is just a sample, but serves as a good foundation for
+building a useful commandline tool.
+
+It also implements a fully functional commandline debugger, with support for setting 
+breakpoints, stepping through the code, examining variables, etc.
+
+ - \ref doc_debug
+ - \ref doc_addon_debugger
+ - \ref doc_addon_std_string
+ - \ref doc_addon_array
+ - \ref doc_addon_build
+ - Passing commandline arguments to script
 
 
 

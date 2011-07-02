@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -246,16 +246,6 @@ AS_API const char *     asObject_GetPropertyName(asIScriptObject *s, asUINT prop
 AS_API void *           asObject_GetAddressOfProperty(asIScriptObject *s, asUINT prop)  { return s->GetAddressOfProperty(prop); }
 AS_API int              asObject_CopyFrom(asIScriptObject *s, asIScriptObject *other) { return s->CopyFrom(other); }
 
-AS_API asIScriptEngine *asArray_GetEngine(asIScriptArray *a)                       { return a->GetEngine(); }                
-AS_API int              asArray_AddRef(asIScriptArray *a)                          { return a->AddRef(); }
-AS_API int              asArray_Release(asIScriptArray *a)                         { return a->Release(); }
-AS_API int              asArray_GetArrayTypeId(asIScriptArray *a)                  { return a->GetArrayTypeId(); }
-AS_API int              asArray_GetElementTypeId(asIScriptArray *a)                { return a->GetElementTypeId(); }
-AS_API asUINT           asArray_GetElementCount(asIScriptArray *a)                 { return a->GetElementCount(); }
-AS_API void *           asArray_GetElementPointer(asIScriptArray *a, asUINT index) { return a->GetElementPointer(index); }
-AS_API void             asArray_Resize(asIScriptArray *a, asUINT size)             { a->Resize(size); }
-AS_API int              asArray_CopyFrom(asIScriptArray *a, asIScriptArray *other) { return a->CopyFrom(other); }
-
 AS_API asIScriptEngine         *asObjectType_GetEngine(const asIObjectType *o)                                                      { return o->GetEngine(); }
 AS_API int                      asObjectType_AddRef(asIObjectType *o)                                                         { return o->AddRef(); }
 AS_API int                      asObjectType_Release(asIObjectType *o)                                                        { return o->Release(); }
@@ -282,17 +272,17 @@ AS_API int                      asObjectType_GetPropertyTypeId(const asIObjectTy
 AS_API const char              *asObjectType_GetPropertyName(const asIObjectType *o, asUINT prop)                                   { return o->GetPropertyName(prop); }
 AS_API int                      asObjectType_GetPropertyOffset(const asIObjectType *o, asUINT prop)                                 { return o->GetPropertyOffset(prop); }
                                                                                                                
-AS_API asIScriptEngine     *asScriptFunction_GetEngine(const asIScriptFunction *f)                                           { return f->GetEngine(); }
-AS_API const char          *asScriptFunction_GetModuleName(const asIScriptFunction *f)                                       { return f->GetModuleName(); }
-AS_API asIObjectType       *asScriptFunction_GetObjectType(const asIScriptFunction *f)                                       { return f->GetObjectType(); }
-AS_API const char          *asScriptFunction_GetObjectName(const asIScriptFunction *f)                                       { return f->GetObjectName(); }
-AS_API const char          *asScriptFunction_GetName(const asIScriptFunction *f)                                             { return f->GetName(); }
-AS_API const char          *asScriptFunction_GetDeclaration(const asIScriptFunction *f, bool includeObjectName)              { return f->GetDeclaration(includeObjectName); }
-AS_API bool                 asScriptFunction_IsClassMethod(const asIScriptFunction *f)                                       { return f->IsClassMethod(); }
-AS_API bool                 asScriptFunction_IsInterfaceMethod(const asIScriptFunction *f)                                   { return f->IsInterfaceMethod(); }
-AS_API int                  asScriptFunction_GetParamCount(const asIScriptFunction *f)                                       { return f->GetParamCount(); }
-AS_API int                  asScriptFunction_GetParamTypeId(const asIScriptFunction *f, int index)                           { return f->GetParamTypeId(index); }
-AS_API int                  asScriptFunction_GetReturnTypeId(const asIScriptFunction *f)                                     { return f->GetReturnTypeId(); }
+AS_API asIScriptEngine     *asFunction_GetEngine(const asIScriptFunction *f)                                           { return f->GetEngine(); }
+AS_API const char          *asFunction_GetModuleName(const asIScriptFunction *f)                                       { return f->GetModuleName(); }
+AS_API asIObjectType       *asFunction_GetObjectType(const asIScriptFunction *f)                                       { return f->GetObjectType(); }
+AS_API const char          *asFunction_GetObjectName(const asIScriptFunction *f)                                       { return f->GetObjectName(); }
+AS_API const char          *asFunction_GetName(const asIScriptFunction *f)                                             { return f->GetName(); }
+AS_API const char          *asFunction_GetDeclaration(const asIScriptFunction *f, bool includeObjectName)              { return f->GetDeclaration(includeObjectName); }
+AS_API bool                 asFunction_IsClassMethod(const asIScriptFunction *f)                                       { return f->IsClassMethod(); }
+AS_API bool                 asFunction_IsInterfaceMethod(const asIScriptFunction *f)                                   { return f->IsInterfaceMethod(); }
+AS_API int                  asFunction_GetParamCount(const asIScriptFunction *f)                                       { return f->GetParamCount(); }
+AS_API int                  asFunction_GetParamTypeId(const asIScriptFunction *f, int index)                           { return f->GetParamTypeId(index); }
+AS_API int                  asFunction_GetReturnTypeId(const asIScriptFunction *f)                                     { return f->GetReturnTypeId(); }
                                                                                                   
 }
 

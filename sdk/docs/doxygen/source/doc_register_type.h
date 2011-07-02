@@ -34,7 +34,7 @@ The basic reference type should be registered with the following behaviours:
 r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
 \endcode
 
-\see The \ref doc_addon_string "string" add-on for an example of a reference type.
+\see The \ref doc_addon_any "any" add-on for an example of a reference type.
 
 \see \ref doc_gc_object, \ref doc_adv_class_hierarchy, \ref doc_adv_scoped_type, and \ref doc_adv_single_ref_type for more advanced types.
 

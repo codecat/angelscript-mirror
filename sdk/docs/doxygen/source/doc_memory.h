@@ -49,7 +49,7 @@ script engine.
 Application registered objects may or may not be reference counted. Those
 that should be reference counted must implement the ADDREF and RELEASE
 behaviours so that AngelScript can notify the objects of the changes to the
-reference count. The application needs keep track of the reference counter
+reference count. The application needs to keep track of the reference counter
 itself and free the memory when there are no more references to the object.
 This is usually done by having an integer member variable in the object
 structure itself to hold the reference count. It can also be implemented with
@@ -63,6 +63,8 @@ overhead as the reference counter must be searched for with each change.
 
 
 \section doc_memory_3 Garbage collector algorithm
+
+\todo Review this to reflect improvements to algorithm
 
 The garbage collector, used to handle the scenarios where reference counting
 isn't enough, uses the following algorithm.

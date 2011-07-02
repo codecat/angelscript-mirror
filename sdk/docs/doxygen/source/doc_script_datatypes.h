@@ -70,9 +70,12 @@ infinite, and NaN (Not-a-Number). For <code>float</code> NaN is represented by t
 
 \page doc_datatypes_arrays Arrays
 
-It is possible to declare array variables by appending the [] brackets to the type.
+<b>Observe:</b> Arrays are only available in the scripts if the application registers the support for them. The syntax
+for using arrays may differ for the application you're working with so consult the application's manual
+for more details.
 
-When declaring a variable with a type modifier, the type modifier affects the type of all variables in the list.
+It is possible to declare array variables by appending the [] brackets to the type. When declaring a 
+variable with a type modifier, i.e. [], the type modifier affects the type of all variables in the list.
 Example:
 
 <pre>
@@ -81,7 +84,9 @@ Example:
 
 <code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers.
 
-When declaring arrays it is possible to define the initial size of the array by passing the length as a parameter to the constructor. The elements can also be individually initialized by specifying an initialization list. Example:
+When declaring arrays it is possible to define the initial size of the array by passing the length as
+a parameter to the constructor. The elements can also be individually initialized by specifying an 
+initialization list. Example:
 
 <pre>
   int[] a;           // A zero-length array of integers
@@ -99,13 +104,39 @@ Multidimensional arrays are supported as arrays of arrays, for example:
   int[][] c(10, int[](10)); // A 10 by 10 array of integers with uninitialized values
 </pre>
 
-Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the range of valid indices are from 0 to length - 1.
+Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the
+range of valid indices are from 0 to length - 1.
 
 <pre>
   a[0] = some_value;
 </pre>
 
-An array also have two methods. length() allow you to determine how many elements are in the array, and resize() lets you resize the array.
+The standard array implementation also has the following methods:
+
+<pre>
+  // Adding and removing elements
+  void insertAt(uint index, const T& in);
+  void removeAt(uint index);
+  void insertLast(const T& in);
+  void removeLast();
+
+  // Determine size of array
+  uint length() const;
+  void resize(uint);
+
+  // Sort the array
+  void sortAsc();
+  void sortAsc(uint index, uint count);
+  void sortDesc();
+  void sortDesc(uint index, uint count);
+  void reverse();
+
+  // Find elements
+  int  find(const T& in);
+  int  find(uint index, const T& in);
+</pre>
+
+
 
 
 
@@ -163,18 +194,30 @@ Object handle and array type modifiers can be combined to form handles to arrays
 
 \see \ref doc_script_handle
 
+
+
+
+
+
+
+
+
+
+
 \page doc_datatypes_strings Strings
 
-Strings are a special type of data that can be used only if the application
-registers support for them. They hold an array of
-bytes or 16bit words depending on the application settings. The only limit to how 
-large this array can be is the memory available on the computer.
+<b>Observe:</b> Strings are only available in the scripts if the application registers the support for them. The syntax
+for using strings may differ for the application you're working with so consult the application's manual
+for more details.
+
+Strings hold an array of bytes or 16bit words depending on the application settings. 
+Normally they are used to store text but can really store any kind of binary data.
 
 There are two types of string constants supported in the AngelScript
-language, the normal double quoted string, and the documentation strings,
+language, the normal quoted string, and the documentation strings,
 called heredoc strings.
 
-The normal strings are written between double quotation marks (<code>"</code>) or single quotation marks (<code>'</code>)<sup>1</sup>.
+The normal strings are written between double quotation marks (<code>"</code>) or single quotation marks (<code>'</code>).
 Inside the constant strings some escape sequences can be used to write exact
 byte values that might not be possible to write in your normal editor.
 
@@ -257,9 +300,60 @@ UTF-8 or UTF-16 encoded sequence depending on the application settings. Only val
 code points are accepted, i.e. code points between U+D800 and U+DFFF (reserved for surrogate pairs) 
 or above U+10FFFF are not accepted.
 
-<sup>1) The application can change the interpretation of single quoted strings by setting an engine 
-property. If this is done the first character in the single quoted string will be interpreted as 
-a single uint value instead of a string literal.</sup>
+The standard string implementation also comes with the following methods:
+
+<pre>
+  // Returns the length of the string
+  uint length() const;
+  
+  // Assignment and concatenation
+  string &opAssign(const string &in other);
+  string &opAddAssign(const string &in other);
+  string  opAdd(const string &in right) const;
+  
+  // Access individual characters
+  uint8       &opIndex(uint);
+  const uint8 &opIndex(uint) const;
+  
+  // Comparison operators
+  bool opEquals(const string &in right) const;
+  int  opCmp(const string &in right) const;
+  
+  // Substring
+  string substr(uint start = 0, int count = -1) const;
+  array<string>@ split(const string &in delimiter) const;
+  
+  // Search
+  int findFirst(const string &in str, uint start = 0) const;
+  int findLast(const string &in str, int start = -1) const;
+  
+  // Automatic conversion from primitive types to string type
+  string &opAssign(double val);
+  string &opAddAssign(double val);
+  string  opAdd(double val) const;
+  string  opAdd_r(double val) const;
+  
+  string &opAssign(int val);
+  string &opAddAssign(int val);
+  string  opAdd(int val) const;
+  string  opAdd_r(int val) const;
+  
+  string &opAssign(uint val);
+  string &opAddAssign(uint val);
+  string  opAdd(uint val) const;
+  string  opAdd_r(uint val) const;
+
+  string &opAssign(bool val);
+  string &opAddAssign(bool val);
+  string  opAdd(bool val) const;
+  string  opAdd_r(bool val) const;
+</pre>
+
+There is also a standard global function joining an array of strings into a single string with delimeter.
+
+<pre>
+  string join(const array<string> &in arr, const string &in delimiter);
+</pre>
 
 
 

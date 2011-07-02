@@ -9,8 +9,7 @@ would be forced to adapt to, instead AngelScript allows the application to \ref 
 
 This article presents the options for customizing the script language to the application's needs with regards 
 to strings. If you do not want, or do not need to have AngelScript use your own string type, then I suggest
-you use one of the standard string add-ons, either the \ref doc_addon_std_string "std::string registration", or the \ref 
-doc_addon_string "reference counted string type".
+you use the standard add-on for \ref doc_addon_std_string "std::string registration".
 
 \section doc_strings_1 Unicode vs ASCII
 
