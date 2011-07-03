@@ -53,8 +53,6 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
  - \subpage doc_understanding_as
  - \subpage doc_register_api
- - \subpage doc_strings
- - \subpage doc_arrays
  - \subpage doc_compile_script
  - \subpage doc_call_script_func
  - \subpage doc_use_script_class

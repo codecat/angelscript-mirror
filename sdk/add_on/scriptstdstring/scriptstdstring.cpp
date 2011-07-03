@@ -104,12 +104,12 @@ static void StringAddGeneric(asIScriptGeneric * gen) {
 
 static void StringLengthGeneric(asIScriptGeneric * gen) {
   string * self = static_cast<string *>(gen->GetObject());
-  *static_cast<size_t *>(gen->GetAddressOfReturnLocation()) = self->length();
+  *static_cast<asUINT *>(gen->GetAddressOfReturnLocation()) = (asUINT)self->length();
 }
 
 static void StringResizeGeneric(asIScriptGeneric * gen) {
   string * self = static_cast<string *>(gen->GetObject());
-  self->resize(*static_cast<size_t *>(gen->GetAddressOfArg(0)));
+  self->resize(*static_cast<asUINT *>(gen->GetAddressOfArg(0)));
 }
 
 static void StringCharAtGeneric(asIScriptGeneric * gen) {
@@ -318,16 +318,8 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register the object methods
-	if( sizeof(size_t) == 4 )
-	{
-		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint)",   asFUNCTION(StringResizeGeneric), asCALL_GENERIC); assert( r >= 0 );
-	}
-	else 
-	{
-		r = engine->RegisterObjectMethod("string", "uint64 length() const", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint64)",   asFUNCTION(StringResizeGeneric), asCALL_GENERIC); assert( r >= 0 );
-	}
+	r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void resize(uint)",   asFUNCTION(StringResizeGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register the index operator, both as a mutator and as an inspector
 	r = engine->RegisterObjectMethod("string", "uint8 &opIndex(uint)", asFUNCTION(StringCharAtGeneric), asCALL_GENERIC); assert( r >= 0 );
@@ -547,6 +539,23 @@ static int StringFindLast(const string &sub, int start, const string &str)
 	return (int)str.rfind(sub, (size_t)start);
 }
 
+// AngelScript signature:
+// uint string::length() const
+static asUINT StringLength(const string &str)
+{
+	// We don't register the method directly because the return type changes between 32bit and 64bit platforms
+	return (asUINT)str.length();
+}
+
+
+// AngelScript signature:
+// void string::resize(uint l) 
+static void StringResize(asUINT l, string &str)
+{
+	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
+	str.resize(l);
+}
+
 
 void RegisterStdString_Native(asIScriptEngine *engine)
 {
@@ -570,18 +579,8 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTIONPR(operator +, (const string &, const string &), string), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
 	// Register the object methods
-	if( sizeof(size_t) == 4 )
-	{
-		r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
-	}
-	else
-	{
-		// TODO: Should use wrappers so the same function signature is registered regardless of 
-		//       pointer size, otherwise it won't be possible to have platform independent bytecode
-		r = engine->RegisterObjectMethod("string", "uint64 length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
-	}
+	r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void resize(uint)", asFUNCTION(StringResize), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Register the index operator, both as a mutator and as an inspector
 	// Note that we don't register the operator[] directory, as it doesn't do bounds checking
@@ -622,9 +621,10 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	// parseFloat
 	// formatInt - maybe as string::string(int64 value, const string &in format)
 	// formatFloat
-	// replace
+	// replace - replaces a text found in the string
+	// replaceRange - replaces a range of bytes in the string
 	// trim
-	// multiply - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
+	// multiply/times - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
 }
 
 void RegisterStdString(asIScriptEngine * engine)

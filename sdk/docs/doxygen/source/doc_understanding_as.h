@@ -12,6 +12,8 @@ when passing objects between AngelScript and C++.
 \section doc_understading_as_1 Topics
 
  - \subpage doc_as_vs_cpp_types
+ - \subpage doc_strings
+ - \subpage doc_arrays
  - \subpage doc_obj_handle
  - \subpage doc_memory
 
