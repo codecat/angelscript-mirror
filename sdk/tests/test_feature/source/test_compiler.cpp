@@ -130,6 +130,44 @@ bool Test()
 
 	engine->Release();
 
+	{
+		const char *script = "class Mind {} \n"
+							 "class TA_VehicleInfo {} \n"
+							 "class TA_Mind : Mind \n"
+		                     "{ \n"
+							 "  TA_Mind(TA_VehicleInfo@ vi) \n"
+		                     "  { \n"
+							 "    VehicleInfo = vi; \n" // script writer did a value assign by mistake
+							 "  } \n"
+							 "  TA_VehicleInfo@ get_VehicleInfo() const { return m_VehicleInfo; } \n"
+							 "  void set_VehicleInfo(TA_VehicleInfo@ info) { @m_VehicleInfo = @info; } \n"
+							 "  private TA_VehicleInfo@ m_VehicleInfo; \n"
+	                         "}; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "TA_VehicleInfo vi; TA_Mind m(vi); \n", mod);
+		if( r != asEXECUTION_EXCEPTION )
+		{
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// test 2
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

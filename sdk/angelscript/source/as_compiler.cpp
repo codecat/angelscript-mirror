@@ -5259,6 +5259,11 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 		return ProcessPropertySetAccessor(ctx, rctx, opNode);
 	}
+	else if( lctx->property_get && lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle )
+	{
+		// Get the handle to the object that will be used for the value assignment
+		ProcessPropertyGetAccessor(lctx, opNode);
+	}
 
 	if( lctx->type.dataType.IsPrimitive() )
 	{
