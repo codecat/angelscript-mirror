@@ -3,7 +3,7 @@
 //
 
 #include "utils.h"
-#include "../../add_on/scriptstring/scriptstring.h"
+#include "scriptstring.h"
 
 namespace TestString2
 {
