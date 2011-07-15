@@ -29,6 +29,9 @@ public:
 	CNode *GetChild() {return child;}
 	void  SetChild(CNode *n) {if( child ) child->Release(); child = n; n->AddRef();}
 
+	Vector3 GetVector() const {return vector;}
+	void SetVector(const Vector3 &v) {vector = v;}
+
 	Vector3 vector;
 	CNode *child;
 
@@ -1204,7 +1207,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// Make sure it is possible to update properties of objects returned through getter
+	// Make sure it is possible to update properties of objects returned by reference through getter
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -1224,6 +1227,34 @@ bool Test()
 								  "a.child.vector = vector3(0,0,0); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Make sure it is not possible to update properties of objects returned by value through getter
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptMath3D(engine);
+		engine->RegisterObjectType("node", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("node", asBEHAVE_FACTORY, "node @f()", asFUNCTION(CNode::CNodeFactory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("node", asBEHAVE_ADDREF, "void f()", asMETHOD(CNode, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("node", asBEHAVE_RELEASE, "void f()", asMETHOD(CNode, Release), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "vector3 get_vector() const", asMETHOD(CNode, GetVector), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "void set_vector(const vector3 &in)", asMETHOD(CNode, SetVector), asCALL_THISCALL);
+
+		r = ExecuteString(engine, "node @a = node(); \n"
+								  "a.vector.x = 1; \n"              // Not OK
+								  "a.vector = vector3(1,0,0); \n"); // OK
+
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (2, 1) : Error   : Expression is not an l-value\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

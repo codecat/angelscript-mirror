@@ -151,6 +151,7 @@
 #define TXT_s_NOT_DECLARED                         "'%s' is not declared"
 #define TXT_NOT_EXACT                              "Implicit conversion of value is not exact"
 #define TXT_s_NOT_INITIALIZED                      "'%s' is not initialized."
+#define TXT_NOT_LVALUE                             "Expression is not an l-value"
 #define TXT_s_NOT_MEMBER_OF_s                      "'%s' is not a member of '%s'"
 #define TXT_NOT_VALID_REFERENCE                    "Not a valid reference"
 #define TXT_NOT_VALID_LVALUE                       "Not a valid lvalue"

@@ -66,6 +66,11 @@ bool Test()
 		r = ExecuteString(engine, "g = 0; Test() = 42; assert( g == 42 );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	// Test returning reference to a global variable

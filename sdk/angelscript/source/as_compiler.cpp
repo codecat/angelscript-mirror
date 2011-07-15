@@ -846,6 +846,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		ti.isVariable = false;
 		ti.isTemporary = false;
 		ti.stackOffset = (short)gvar->index;
+		ti.isLValue = true;
 
 		CompileInitList(&ti, node, &ctx.bc);
 
@@ -872,6 +873,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			lctx.type.Set(gvar->datatype);
 			lctx.type.dataType.MakeReference(true);
 			lctx.type.dataType.MakeReadOnly(false);
+			lctx.type.isLValue = true;
 
 			// If it is an enum value that is being compiled, then
 			// we skip this, as the bytecode won't be used anyway
@@ -897,6 +899,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			lexpr.type.dataType.MakeReference(true);
 			lexpr.type.dataType.MakeReadOnly(false);
 			lexpr.type.stackOffset = -1;
+			lexpr.type.isLValue = true;
 
 			if( gvar->datatype.IsObjectHandle() )
 				lexpr.type.isExplicitHandle = true;
@@ -1816,6 +1819,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			ti.isVariable = true;
 			ti.isTemporary = false;
 			ti.stackOffset = (short)v->stackOffset;
+			ti.isLValue = true;
 
 			CompileInitList(&ti, node, bc);
 
@@ -1851,6 +1855,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					asSExprContext lctx(engine);
 					lctx.type.SetVariable(type, offset, false);
 					lctx.type.dataType.MakeReadOnly(false);
+					lctx.type.isLValue = true;
 
 					DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
 					ProcessDeferredParams(&ctx);
@@ -1873,6 +1878,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					lexpr.bc.InstrSHORT(asBC_PSF, (short)v->stackOffset);
 					lexpr.type.stackOffset = (short)v->stackOffset;
 					lexpr.type.isVariable = true;
+					lexpr.type.isLValue = true;
 
 
 					// If left expression resolves into a registered type
@@ -2089,6 +2095,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			// If the element type is handles, then we're expected to do handle assignments
 			if( lctx.type.dataType.IsObjectHandle() )
 				lctx.type.isExplicitHandle = true;
+
+			lctx.type.isLValue = true;
 
 			asSExprContext ctx(engine);
 			DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
@@ -3590,6 +3598,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 
 bool asCCompiler::IsLValue(asCTypeInfo &type)
 {
+	if( !type.isLValue ) return false;
 	if( type.dataType.IsReadOnly() ) return false;
 	if( !type.dataType.IsObject() && !type.isVariable && !type.dataType.IsReference() ) return false;
 	if( type.isTemporary ) return false;
@@ -5267,6 +5276,12 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 	if( lctx->type.dataType.IsPrimitive() )
 	{
+		if( !lctx->type.isLValue )
+		{
+			Error(TXT_NOT_LVALUE, lexpr);
+			return -1;
+		}
+
 		if( op != ttAssignment )
 		{
 			// Compute the operator before the assignment
@@ -5310,6 +5325,12 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 	}
 	else if( lctx->type.isExplicitHandle )
 	{
+		if( !lctx->type.isLValue )
+		{
+			Error(TXT_NOT_LVALUE, lexpr);
+			return -1;
+		}
+
 		// Verify that the left hand value isn't a temporary variable
 		if( lctx->type.isTemporary )
 		{
@@ -5371,6 +5392,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			to = lctx->type.dataType;
 			to.MakeHandle(false);
 			ImplicitConversion(lctx, to, lexpr, asIC_IMPLICIT_CONV);
+			lctx->type.isLValue = true; // Handle may not have been an lvalue, but the dereferenced object is
 		}
 
 		// Check for overloaded assignment operator
@@ -5812,6 +5834,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			}
 			else
 				ctx->type.SetVariable(v->type, v->stackOffset, false);
+
+			ctx->type.isLValue = true;
 		}
 		else
 		{
@@ -5825,6 +5849,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			// Implicitly dereference handle parameters sent by reference
 			if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
 				ctx->bc.Instr(asBC_RDSPTR);
+
+			ctx->type.isLValue = true;
 		}
 	}
 
@@ -5840,6 +5866,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			ctx->bc.InstrSHORT(asBC_PSF, 0);
 			ctx->type.SetVariable(dt, 0, false);
 			ctx->type.dataType.MakeReference(true);
+			ctx->type.isLValue = true;
 
 			found = true;
 		}
@@ -5918,6 +5945,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				ctx->type.dataType = prop->type;
 				ctx->type.dataType.MakeReference(true);
 				ctx->type.isVariable = false;
+				ctx->type.isLValue = true;
 
 				if( ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle() )
 				{
@@ -5989,6 +6017,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					{
 						ctx->type.Set(prop->type);
 						ctx->type.dataType.MakeReference(true);
+						ctx->type.isLValue = true;
 
 						if( ctx->type.dataType.IsPrimitive() )
 						{
@@ -7377,6 +7406,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		if( !ctx->type.isConstant )
 		{
 			ConvertToTempVariable(ctx);
+			asASSERT(!ctx->type.isLValue);
 
 			if( op == ttMinus )
 			{
@@ -7443,6 +7473,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			ProcessPropertyGetAccessor(ctx, node);
 
 			ConvertToTempVariable(ctx);
+			asASSERT(!ctx->type.isLValue);
 
 			ctx->bc.InstrSHORT(asBC_NOT, ctx->type.stackOffset);
 		}
@@ -7487,6 +7518,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			}
 
 			ConvertToTempVariable(ctx);
+			asASSERT(!ctx->type.isLValue);
+
 			if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 				ctx->bc.InstrSHORT(asBC_BNOT, ctx->type.stackOffset);
 			else
@@ -7517,6 +7550,11 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		if( ctx->property_get || ctx->property_set )
 		{
 			Error(TXT_INVALID_REF_PROP_ACCESS, node);
+			return -1;
+		}
+		if( !ctx->type.isLValue )
+		{
+			Error(TXT_NOT_LVALUE, node);
 			return -1;
 		}
 
@@ -8097,6 +8135,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			Error(TXT_INVALID_REF_PROP_ACCESS, node);
 			return -1;
 		}
+		if( !ctx->type.isLValue )
+		{
+			Error(TXT_NOT_LVALUE, node);
+			return -1;
+		}
 
 		if( ctx->type.isVariable && !ctx->type.dataType.IsReference() )
 			ConvertToReference(ctx);
@@ -8108,6 +8151,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 		// Copy the value to a temp before changing it
 		ConvertToTempVariable(ctx);
+		asASSERT(!ctx->type.isLValue);
 
 		// Increment the value pointed to by the reference still in the register
 		asEBCInstr iInc = asBC_INCi, iDec = asBC_DECi;
@@ -8184,6 +8228,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				dt.MakeHandle(false);
 
 				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
+
+				// The handle may not have been an lvalue, but the dereferenced object is
+				ctx->type.isLValue = true;
 			}
 
 			// Find the property offset and type
@@ -10373,6 +10420,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 		// The instruction has already moved the returned object to the variable
 		ctx->type.Set(asCDataType::CreatePrimitive(ttVoid, false));
+		ctx->type.isLValue = false;
 
 		// Clean up arguments
 		if( args )
@@ -10414,6 +10462,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		}
 
 		ctx->type.dataType.MakeReference(true);
+		ctx->type.isLValue = false; // It is a reference, but not an lvalue
 
 		// Move the pointer from the object register to the temporary variable
 		ctx->bc.InstrSHORT(asBC_STOREOBJ, (short)returnOffset);
@@ -10452,6 +10501,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 				ctx->type.dataType.MakeReference(false);
 			}
 		}
+
+		// A returned reference can be used as lvalue
+		ctx->type.isLValue = true;
 	}
 	else
 	{
@@ -10480,6 +10532,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		}
 		else
 			ctx->type.Set(descr->returnType);
+
+		ctx->type.isLValue = false;
 
 		// Clean up arguments
 		if( args )
