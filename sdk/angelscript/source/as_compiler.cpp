@@ -542,7 +542,8 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar)
 {
-	if( !type.IsObject() || type.IsObjectHandle() )
+	if( !type.IsObject() || 
+		(type.IsObjectHandle() && !(type.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 		return 0;
 
 	if( type.GetObjectType()->flags & asOBJ_REF )
@@ -643,7 +644,8 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 		// Call destructor for the data type
 		if( type.IsObject() )
 		{
-			if( isObjectOnHeap || type.IsObjectHandle() )
+			// ASHANDLE is really a value type and shouldn't be deallocated. Just the destructor should be called
+			if( isObjectOnHeap || (type.IsObjectHandle() && !(type.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 			{
 				// Free the memory
 				bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
@@ -5347,44 +5349,52 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		asCDataType dt = lctx->type.dataType;
-		dt.MakeReference(false);
-
-		PrepareArgument(&dt, rctx, rexpr, true, 1);
-		if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
+		if( lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
 		{
-			asCString str;
-			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), rexpr);
+			// The object is a value type but that should be treated as a handle
+			// TODO: handle: Make sure the right hand value is a handle
+
+			if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx) )
+			{
+				// An overloaded assignment operator was found (or a compilation error occured)
+				return 0;
+			}
+
+			// The object must implement the opAssign method
+			Error(TXT_NO_APPROPRIATE_OPASSIGN, opNode);
 			return -1;
 		}
+		else
+		{
+			asCDataType dt = lctx->type.dataType;
+			dt.MakeReference(false);
 
-		MergeExprBytecode(ctx, rctx);
-		MergeExprBytecode(ctx, lctx);
+			PrepareArgument(&dt, rctx, rexpr, true, 1);
+			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
+			{
+				asCString str;
+				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
+				Error(str.AddressOf(), rexpr);
+				return -1;
+			}
 
-		ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+			MergeExprBytecode(ctx, rctx);
+			MergeExprBytecode(ctx, lctx);
 
-		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
+			ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
 
-		ReleaseTemporaryVariable(rctx->type, &ctx->bc);
+			PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
 
-		ctx->type = rctx->type;
+			ReleaseTemporaryVariable(rctx->type, &ctx->bc);
+
+			ctx->type = rctx->type;
+		}
 	}
 	else // if( lctx->type.dataType.IsObject() )
 	{
 		// The lvalue reference may be marked as a temporary, if for example
 		// it was originated as a handle returned from a function. In such 
 		// cases it must be possible to assign values to it anyway.
-
-		// TODO: Is there any situation where must not allow the assignment to a temporary reference?
-/*
-		// Verify that the left hand value isn't a temporary variable
-		if( lctx->type.isTemporary )
-		{
-			Error(TXT_REF_IS_TEMP, lexpr);
-			return -1;
-		}
-*/
 		if( lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle )
 		{
 			// Convert the handle to a object reference
@@ -7283,7 +7293,9 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	if( op == ttHandle )
 	{
 		// Verify that the type allow its handle to be taken
-		if( ctx->type.isExplicitHandle || !ctx->type.dataType.IsObject() || !ctx->type.dataType.GetObjectType()->beh.addref || !ctx->type.dataType.GetObjectType()->beh.release )
+		if( ctx->type.isExplicitHandle || 
+			!ctx->type.dataType.IsObject() ||
+			!((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 		{
 			Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
 			return -1;
@@ -8812,7 +8824,9 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char *methodName, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, bool specificReturn, const asCDataType &returnType)
 {
 	// Find the matching method 
-	if( lctx->type.dataType.IsObject() && !lctx->type.isExplicitHandle )
+	if( lctx->type.dataType.IsObject() && 
+		(!lctx->type.isExplicitHandle || 
+		 lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 	{
 		// Is the left value a const?
 		bool isConst = false;
@@ -8901,7 +8915,12 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 {
 	if( objectType )
 	{
-		Dereference(ctx, true);
+		// ASHANDLE is actually a value type, even though it looks 
+		// like a handle, so we shouldn't dereference it
+		if( !(objectType->flags & asOBJ_ASHANDLE) )
+		{
+			Dereference(ctx, true);
+		}
 
 		// This following warning was removed as there may be valid reasons
 		// for calling non-const methods on temporary objects, and we shouldn't
@@ -10276,6 +10295,41 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	{
 		Warning(TXT_HANDLE_COMPARISON, node);
 	}
+
+	// If one of the operands is a value type used as handle, we should look for the opEquals method
+	if( (lctx->type.dataType.GetObjectType() && lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE ||
+		 rctx->type.dataType.GetObjectType() && rctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) &&
+		(node->tokenType == ttEqual || node->tokenType == ttIs ||
+		 node->tokenType == ttNotEqual || node->tokenType == ttNotIs) )
+	{
+		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
+		// Find the matching opEquals method 
+		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+		if( r == 0 )
+		{
+			// Try again by switching the order of the operands
+			r = CompileOverloadedDualOperator2(node, "opEquals", rctx, lctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+		}
+
+		if( r == 1 )
+		{
+			if( node->tokenType == ttNotEqual || node->tokenType == ttNotIs )
+				ctx->bc.InstrSHORT(asBC_NOT, ctx->type.stackOffset);
+
+			// Success, don't continue
+			return;
+		}
+		else if( r == 0 )
+		{
+			// Couldn't find opEquals method
+			Error(TXT_NO_APPROPRIATE_OPEQUALS, node);
+		}
+
+		// Compiler error, don't continue
+		ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+		return;
+	}
+
 
 	// Implicitly convert null to the other type
 	asCDataType to;

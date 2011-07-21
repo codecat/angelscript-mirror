@@ -1206,7 +1206,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	{
 		// Cannot use reference flags
 		// TODO: template: Should be possible to register a value type as template type
-		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED) )
+		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED | asOBJ_TEMPLATE) )
+			return ConfigError(asINVALID_ARG);
+
+		// flags are exclusive
+		if( (flags & asOBJ_POD) && (flags & asOBJ_ASHANDLE) )
 			return ConfigError(asINVALID_ARG);
 
 		// If the app type is given, we must validate the flags
@@ -3250,7 +3254,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt) const
 
 	// If the object type supports object handles then register those types as well
 	// Note: Don't check for addref, as asOBJ_SCOPED don't have this
-	if( dt.IsObject() && dt.GetObjectType()->beh.release )
+	if( dt.IsObject() && (dt.GetObjectType()->beh.release || dt.GetObjectType()->flags & asOBJ_ASHANDLE) )
 	{
 		newDt = asNEW(asCDataType)(dt);
 		newDt->MakeReference(false);

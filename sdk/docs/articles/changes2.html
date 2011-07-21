@@ -15,13 +15,17 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.1 WIP - 2011/07/14</h2>
+<h2>Version 2.21.1 WIP - 2011/07/21</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed crash when doing a value assignment to a handle obtained from a property accessor (Thanks _orm_)
 <li>Compiler will now give error when assigning to property of an object that is returned by value from a function
+</ul>
+<li>Library interface
+<ul>
+<li>Added the asOBJ_ASHANDLE type flag. This will be used together with asOBJ_VALUE to allow application to register a container type that can store any handle type
 </ul>
 </ul>
 

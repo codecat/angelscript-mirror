@@ -5,6 +5,8 @@ namespace TestRegisterType
 
 void DummyFunc(asIScriptGeneric *) {}
 
+bool TestHandleType();
+
 bool TestRefScoped();
 
 bool TestHelper();
@@ -12,6 +14,7 @@ bool TestHelper();
 bool Test()
 {
 	bool fail = TestHelper();
+	fail = TestHandleType() || fail;
 	int r = 0;
 	CBufferedOutStream bout;
  	asIScriptEngine *engine;
@@ -735,6 +738,126 @@ bool TestHelper()
 	return fail;
 }
 
+
+//============================================
+
+class CHandleType
+{
+public:
+	CHandleType() { m_ref = 0; m_typeId = 0; }
+	CHandleType(const CHandleType &o) {}
+	~CHandleType() {}
+	CHandleType &operator=(const CHandleType &o) {return *this;}
+
+	CHandleType &opAssign(void *ref, int typeId)
+	{
+		// TODO: Need to call AddRef/Release
+		if( typeId & asTYPEID_OBJHANDLE )
+		{
+			// Store the actual reference
+			ref = *(void**)ref;
+			typeId &= ~asTYPEID_OBJHANDLE;
+		}
+
+		m_ref    = ref;
+		m_typeId = typeId;
+
+		return *this;
+	}
+
+	bool opEquals(void *ref, int typeId) const
+	{
+		if( typeId & asTYPEID_OBJHANDLE )
+		{
+			// Compare the actual reference
+			ref = *(void**)ref;
+			typeId &= ~asTYPEID_OBJHANDLE;
+		}
+
+		if( ref == m_ref ) return true;
+
+		return false;
+	}
+
+	static void Construct(CHandleType *self) { new(self) CHandleType(); }
+	static void Construct(CHandleType *self, const CHandleType &o) { new(self) CHandleType(o); }
+	static void Destruct(CHandleType *self) { self->~CHandleType(); }
+
+	void *m_ref;
+	int m_typeId;
+};
+
+bool TestHandleType()
+{
+	bool fail = false;
+	asIScriptEngine *engine;
+	int r;
+	CBufferedOutStream bout;
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectType("ref", sizeof(CHandleType), asOBJ_VALUE | asOBJ_ASHANDLE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(CHandleType::Construct, (CHandleType *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(CHandleType::Destruct, (CHandleType *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", asMETHOD(CHandleType, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHOD(CHandleType, opEquals), asCALL_THISCALL); assert( r >= 0 );
+
+	// It must be possible to use the is and !is operators on the handle type
+	// It must be possible to use handle assignment on the handle type
+	// It must be possible to do a cast on the handle type to get the real handle
+	const char *script = "class A {} \n"
+		                 "class B {} \n"
+						 "ref@ func(ref@ r) { return r; } \n"
+						 "void main() \n"
+						 "{ \n"
+						 "  ref@ ra, rb; \n"
+						 "  A a; B b; \n"
+						 "  @ra = @a; \n"
+						 "  assert( ra is a ); \n" 
+						 "  @rb = @b; \n"
+						 "  if( ra !is null && ra is rb ) {} \n"
+				//		 "  A@ ha = cast<A>(ra); \n"
+				//		 "  assert( ha !is null ); \n"
+				//		 "  B@ hb = cast<B>(ra); \n"
+				//		 "  assert( hb is null ); \n"
+						 "  @ra = null; \n"
+						 "  @ra = @rb; \n"
+						 "  assert( ra is b ); \n"
+				//		 "  assert( func(rb) is b ); \n"
+						 "} \n";
+	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", script);
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
+	asIScriptContext *ctx = engine->CreateContext();
+	r = ExecuteString(engine, "main()", mod, ctx);
+	if( r != asEXECUTION_FINISHED )
+	{
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		TEST_FAILED;
+	}
+	ctx->Release();
+
+	engine->Release();
+
+	// TODO: This type must always be passed as if it is a handle to arguments, i.e. ref @func(ref @);
+	// TODO: It must also be declared as handle in variables, globals, and members. 
+	// TODO: It must not be allowed to do a value assignment on the type
+
+	return fail;
+}
 
 } // namespace
 
