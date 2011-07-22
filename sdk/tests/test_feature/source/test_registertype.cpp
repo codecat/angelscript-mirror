@@ -744,14 +744,34 @@ bool TestHelper()
 class CHandleType
 {
 public:
-	CHandleType() { m_ref = 0; m_typeId = 0; }
-	CHandleType(const CHandleType &o) {}
-	~CHandleType() {}
-	CHandleType &operator=(const CHandleType &o) {return *this;}
+	CHandleType() 
+	{ 
+		m_ref = 0;
+		m_typeId = 0;
+	}
+	CHandleType(const CHandleType &o) 
+	{ 
+		m_ref = 0;
+		m_typeId = 0;
+		opAssign(o.m_ref, o.m_typeId);
+	}
+	~CHandleType() 
+	{ 
+	}
+	CHandleType &operator=(const CHandleType &o) 
+	{ 
+		opAssign(o.m_ref, o.m_typeId);
+		return *this;
+	}
 
 	CHandleType &opAssign(void *ref, int typeId)
 	{
 		// TODO: Need to call AddRef/Release
+
+		// When receiving a null handle we just clear our memory
+		if( typeId == 0 )
+			ref = 0;
+		// Dereference handles
 		if( typeId & asTYPEID_OBJHANDLE )
 		{
 			// Store the actual reference
@@ -765,14 +785,34 @@ public:
 		return *this;
 	}
 
+	bool opEquals(const CHandleType &o) const
+	{
+		if( m_ref == o.m_ref &&
+			m_typeId == o.m_typeId )
+			return true;
+
+		// TODO: If typeId is not the same, we should attempt to do a dynamic cast,
+		//       which may change the pointer for application registered classes
+
+		return false;
+	}
+
 	bool opEquals(void *ref, int typeId) const
 	{
+		// Null handles are received as reference to a null handle
+		if( typeId == 0 )
+			ref = 0;
+
+		// Dereference handles
 		if( typeId & asTYPEID_OBJHANDLE )
 		{
 			// Compare the actual reference
 			ref = *(void**)ref;
 			typeId &= ~asTYPEID_OBJHANDLE;
 		}
+
+		// TODO: If typeId is not the same, we should attempt to do a dynamic cast, 
+		//       which may change the pointer for application registered classes
 
 		if( ref == m_ref ) return true;
 
@@ -804,31 +844,47 @@ bool TestHandleType()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(CHandleType::Destruct, (CHandleType *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", asMETHOD(CHandleType, operator=), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHOD(CHandleType, opEquals), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 
 	// It must be possible to use the is and !is operators on the handle type
 	// It must be possible to use handle assignment on the handle type
 	// It must be possible to do a cast on the handle type to get the real handle
 	const char *script = "class A {} \n"
 		                 "class B {} \n"
-						 "ref@ func(ref@ r) { return r; } \n"
 						 "void main() \n"
 						 "{ \n"
 						 "  ref@ ra, rb; \n"
 						 "  A a; B b; \n"
+						 // Assignment of reference
 						 "  @ra = @a; \n"
 						 "  assert( ra is a ); \n" 
 						 "  @rb = @b; \n"
-						 "  if( ra !is null && ra is rb ) {} \n"
-				//		 "  A@ ha = cast<A>(ra); \n"
-				//		 "  assert( ha !is null ); \n"
-				//		 "  B@ hb = cast<B>(ra); \n"
-				//		 "  assert( hb is null ); \n"
+						 // Casting to reference
+					//	 "  A@ ha = cast<A>(ra); \n"
+					//	 "  assert( ha !is null ); \n"
+					//	 "  B@ hb = cast<B>(ra); \n"
+					//	 "  assert( hb is null ); \n"
+						 // Assigning null, and comparing with null
 						 "  @ra = null; \n"
+						 "  assert( ra is null ); \n"
+						 "  func2(ra); \n"
+						 // Handle assignment with explicit handle
 						 "  @ra = @rb; \n"
 						 "  assert( ra is b ); \n"
-				//		 "  assert( func(rb) is b ); \n"
-						 "} \n";
+						 "  assert( rb is b ); \n"
+						 "  assert( ra is rb ); \n"
+						 // Handle assignment with implicit handle
+						 "  @rb = rb; \n"
+						 "  assert( rb is b ); \n"
+						 "  assert( ra is rb ); \n"
+						 // Function call and return value
+						 "  @rb = func(rb); \n"
+						 "  assert( rb is b ); \n"
+						 "  assert( func(rb) is b ); \n"
+						 "} \n"
+						 "ref@ func(ref@ r) { return r; } \n"
+						 "void func2(ref@r) { assert( r is null ); } \n";
 	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
 	r = mod->Build();

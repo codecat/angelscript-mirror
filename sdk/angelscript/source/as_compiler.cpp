@@ -442,7 +442,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 		return 0;
 
 	// CallCopyConstructor should not be called for object handles.
-	asASSERT(!type.IsObjectHandle());
+	asASSERT(!type.IsObjectHandle() || (type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_ASHANDLE)) );
 
 	asCArray<asSExprContext*> args;
 	args.PushLast(arg);
@@ -1417,7 +1417,15 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
 				}
 				else
-					bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+				{
+					if( args[n]->type.dataType.GetObjectType() && 
+						(args[n]->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) &&
+						args[n]->type.isVariable &&
+						IsVariableOnHeap(args[n]->type.stackOffset) )
+						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					else
+						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+				}
 			}
 		}
 		else if( descr->parameterTypes[n].IsObject() )
@@ -2948,7 +2956,8 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	lvalue.isVariable = true;
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
 
-	if( !dt.IsObjectHandle() && dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
+	if( (!dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_ASHANDLE))) && 
+		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
 		PrepareForAssignment(&lvalue.dataType, ctx, node);
 
@@ -4529,7 +4538,13 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		}
 		else if( !to.IsReference() && ctx->type.dataType.IsReference() )
 		{
-			Dereference(ctx, generateCode);
+			// ASHANDLE is really a value type, even though it looks 
+			// like a handle, so we shouldn't dereference it
+			if( !(ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) ||
+				(ctx->type.isVariable && IsVariableOnHeap(ctx->type.stackOffset)) )
+				Dereference(ctx, generateCode);
+			else
+				ctx->type.dataType.MakeReference(false);
 		}
 	}
 	else
@@ -4589,8 +4604,15 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 			if( ctx->type.dataType.IsReference() )
 			{
+				if( ctx->type.isExplicitHandle && ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+				{
+					// ASHANDLE objects are really value types, so explicit handle can be removed
+					ctx->type.isExplicitHandle = false;
+					ctx->type.dataType.MakeHandle(false);
+				}
+
 				// A reference to a handle can be converted to a reference to an object
-				// by first reading the address, then verifying that it is not null, then putting the address back on the stack
+				// by first reading the address, then verifying that it is not null
 				if( !to.IsObjectHandle() && ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
 				{
 					ctx->type.dataType.MakeHandle(false);
@@ -8916,8 +8938,9 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 	if( objectType )
 	{
 		// ASHANDLE is actually a value type, even though it looks 
-		// like a handle, so we shouldn't dereference it
-		if( !(objectType->flags & asOBJ_ASHANDLE) )
+		// like a handle, so we shouldn't dereference it unless it is on the heap
+		if( !(objectType->flags & asOBJ_ASHANDLE) || 
+			(ctx->type.isVariable && IsVariableOnHeap(ctx->type.stackOffset)) )
 		{
 			Dereference(ctx, true);
 		}
@@ -9130,6 +9153,8 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 		offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
 		if( ctx->type.IsNullConstant() )
 		{
+			if( ctx->bc.GetLastInstr() == asBC_PshC4 || ctx->bc.GetLastInstr() == asBC_PshC8 )
+				ctx->bc.Pop(AS_PTR_SIZE); // Pop the null constant pushed onto the stack
 #ifdef AS_64BIT_PTR
 			ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, 0);
 #else
