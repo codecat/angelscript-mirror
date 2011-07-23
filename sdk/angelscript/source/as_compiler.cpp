@@ -5068,12 +5068,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			double ic = from->type.doubleValue;
 			float fc = float(ic);
 
-			if( double(fc) != ic )
-			{
-				asCString str;
-				str.Format(TXT_POSSIBLE_LOSS_OF_PRECISION);
-				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str.AddressOf(), node);
-			}
+			// Don't bother warning about this
+//			if( double(fc) != ic )
+//			{
+//				asCString str;
+//				str.Format(TXT_POSSIBLE_LOSS_OF_PRECISION);
+//				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str.AddressOf(), node);
+//			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;

@@ -158,6 +158,32 @@ bool Test()
 	}
 
 	{
+		// When passing a double constant to a float arg the compiler shouldn't warn if the value doesn't loose precision
+		const char *script = "void func(float) {} \n"
+			                 "void main() { \n"
+							 "  func(0.3); \n"
+	                         "}\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+
+	{
 		const char *script = "class Mind {} \n"
 							 "class TA_VehicleInfo {} \n"
 							 "class TA_Mind : Mind \n"
