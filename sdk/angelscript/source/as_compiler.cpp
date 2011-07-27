@@ -3612,7 +3612,6 @@ bool asCCompiler::IsLValue(asCTypeInfo &type)
 	if( !type.isLValue ) return false;
 	if( type.dataType.IsReadOnly() ) return false;
 	if( !type.dataType.IsObject() && !type.isVariable && !type.dataType.IsReference() ) return false;
-	if( type.isTemporary ) return false;
 	return true;
 }
 
@@ -3782,6 +3781,9 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 			}
 		}
 
+		// It shouldn't be possible to have more than one
+		asASSERT( ops.GetLength() <= 1 );
+
 		// Should only have one behaviour for each output type
 		if( ops.GetLength() == 1 )
 		{
@@ -3858,10 +3860,67 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				ctx->type.Set(func->returnType);
 			}
 		}
-		else if( ops.GetLength() > 1 )
+		else if( ops.GetLength() == 0 )
 		{
-			// It shouldn't be possible to have more than one, should it?
-			asASSERT( false );
+			// Check for the generic ref cast behaviour
+			for( n = 0; n < beh->operators.GetLength(); n+= 2 )
+			{
+				if( (isExplicit && asBEHAVE_REF_CAST == beh->operators[n]) ||
+					asBEHAVE_IMPLICIT_REF_CAST == beh->operators[n] )
+				{
+					int funcId = beh->operators[n+1];
+
+					// Does the operator take the ?&out parameter?
+					asCScriptFunction *func = engine->scriptFunctions[funcId];
+					if( func->parameterTypes.GetLength() != 1 ||
+						func->parameterTypes[0].GetTokenType() != ttQuestion ||
+						func->inOutFlags[0] != asTM_OUTREF )
+						continue;
+
+					ops.PushLast(funcId);
+				}
+			}
+
+			// It shouldn't be possible to have more than one
+			asASSERT( ops.GetLength() <= 1 );
+
+			if( ops.GetLength() == 1 )
+			{
+				if( generateCode )
+				{
+					asASSERT(to.IsObjectHandle());
+
+					// Allocate a temporary variable of the requested handle type
+					asCArray<int> vars;
+					ctx->bc.GetVarsUsed(vars);
+					int stackOffset = AllocateVariableNotIn(to, true, &vars);
+
+					// Pass the reference of that variable to the function as output parameter
+					asCDataType toRef(to);
+					toRef.MakeReference(true);
+					asCArray<asSExprContext *> args;
+					asSExprContext arg(engine);
+					arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+					// Don't mark the variable as temporary, so it won't be freed too early
+					arg.type.SetVariable(toRef, stackOffset, false);
+					arg.type.isLValue = true;
+					arg.type.isExplicitHandle = true;
+					args.PushLast(&arg);
+
+					// Call the behaviour method
+					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node); 
+					
+					// Use the reference to the variable as the result of the expression
+					// Now we can mark the variable as temporary
+					ctx->type.SetVariable(toRef, stackOffset, true);
+					ctx->bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+				}
+				else
+				{
+					// All casts are legal
+					ctx->type.Set(to);
+				}
+			}
 		}
 	}
 
@@ -5356,13 +5415,6 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		// Verify that the left hand value isn't a temporary variable
-		if( lctx->type.isTemporary )
-		{
-			Error(TXT_REF_IS_TEMP, lexpr);
-			return -1;
-		}
-
 		// Object handles don't have any compound assignment operators
 		if( op != ttAssignment )
 		{
@@ -6793,7 +6845,13 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	if( expr.type.dataType.IsReference() )
 	{
 		if( expr.type.dataType.IsObject() )
-			Dereference(&expr, true);
+		{
+			// ASHANDLE is actually a value type, even though it looks like a handle
+			// For this reason we shouldn't dereference it, unless it is on the heap
+			if( !(expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) ||
+				(expr.type.isVariable && IsVariableOnHeap(expr.type.stackOffset)) )
+				Dereference(&expr, true);
+		}
 		else
 			ConvertToVariable(&expr);
 	}

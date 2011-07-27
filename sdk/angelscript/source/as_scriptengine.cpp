@@ -1789,13 +1789,15 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	else if( behaviour == asBEHAVE_REF_CAST ||
 	         behaviour == asBEHAVE_IMPLICIT_REF_CAST )
 	{
-		// Verify parameter count
-		if( func.parameterTypes.GetLength() != 0 )
-			return ConfigError(asINVALID_DECLARATION);
+		// There are two allowed signatures
+		//  1. obj @f()
+		//  2. void f(?&out)
 
-		// Verify return type
-		if( !func.returnType.IsObjectHandle() )
+		if( !(func.parameterTypes.GetLength() == 0 && func.returnType.IsObjectHandle()) &&
+			!(func.parameterTypes.GetLength() == 1 && func.parameterTypes[0].GetTokenType() == ttQuestion && func.inOutFlags[0] == asTM_OUTREF && func.returnType.GetTokenType() == ttVoid) )
+		{
 			return ConfigError(asINVALID_DECLARATION);
+		}
 
 		// TODO: verify that the same cast is not registered already (cosnt or non-const is treated the same for the return type)
 

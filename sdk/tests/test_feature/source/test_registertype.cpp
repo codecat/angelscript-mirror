@@ -757,6 +757,7 @@ public:
 	}
 	~CHandleType() 
 	{ 
+		ReleaseHandle();
 	}
 	CHandleType &operator=(const CHandleType &o) 
 	{ 
@@ -766,7 +767,7 @@ public:
 
 	CHandleType &opAssign(void *ref, int typeId)
 	{
-		// TODO: Need to call AddRef/Release
+		ReleaseHandle();
 
 		// When receiving a null handle we just clear our memory
 		if( typeId == 0 )
@@ -781,6 +782,8 @@ public:
 
 		m_ref    = ref;
 		m_typeId = typeId;
+
+		AddRefHandle();
 
 		return *this;
 	}
@@ -819,6 +822,52 @@ public:
 		return false;
 	}
 
+	// AngelScript: used as '@obj = cast<obj>(ref);'
+	void opCast(void **outRef, int typeId)
+	{
+		// It is expected that the outRef is always a handle
+		assert( typeId & asTYPEID_OBJHANDLE );
+
+		// Compare the type id of the actual object
+		typeId &= ~asTYPEID_OBJHANDLE;
+
+		if( typeId != m_typeId )
+		{
+			// TODO: Should attempt a dynamic cast of the stored handle to the requested handle
+
+			*outRef = 0;
+			return;
+		}
+
+		// Must increase the ref count
+		AddRefHandle();
+
+		*outRef = m_ref;
+	}
+
+	void ReleaseHandle()
+	{
+		if( m_ref )
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			asIScriptEngine *engine = ctx->GetEngine();
+			engine->ReleaseScriptObject(m_ref, m_typeId);
+
+			m_ref = 0;
+			m_typeId = 0;
+		}
+	}
+
+	void AddRefHandle()
+	{
+		if( m_ref )
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			asIScriptEngine *engine = ctx->GetEngine();
+			engine->AddRefScriptObject(m_ref, m_typeId);
+		}
+	}
+
 	static void Construct(CHandleType *self) { new(self) CHandleType(); }
 	static void Construct(CHandleType *self, const CHandleType &o) { new(self) CHandleType(o); }
 	static void Destruct(CHandleType *self) { self->~CHandleType(); }
@@ -846,6 +895,7 @@ bool TestHandleType()
 	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
 
 	// It must be possible to use the is and !is operators on the handle type
 	// It must be possible to use handle assignment on the handle type
@@ -861,10 +911,10 @@ bool TestHandleType()
 						 "  assert( ra is a ); \n" 
 						 "  @rb = @b; \n"
 						 // Casting to reference
-					//	 "  A@ ha = cast<A>(ra); \n"
-					//	 "  assert( ha !is null ); \n"
-					//	 "  B@ hb = cast<B>(ra); \n"
-					//	 "  assert( hb is null ); \n"
+						 "  A@ ha = cast<A>(ra); \n"
+						 "  assert( ha !is null ); \n"
+						 "  B@ hb = cast<B>(ra); \n"
+						 "  assert( hb is null ); \n"
 						 // Assigning null, and comparing with null
 						 "  @ra = null; \n"
 						 "  assert( ra is null ); \n"
