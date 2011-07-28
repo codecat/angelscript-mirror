@@ -15,18 +15,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.1 WIP - 2011/07/26</h2>
+<h2>Version 2.21.1 WIP - 2011/07/27</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed crash when doing a value assignment to a handle obtained from a property accessor (Thanks _orm_)
 <li>Compiler will now give error when assigning to property of an object that is returned by value from a function
+<li>Fixed bug in the std::string add-on in the boolean operators that concatenates a bool type to the string (Thanks Altren)
 </ul>
 <li>Library
 <ul>
 <li>Added the asOBJ_ASHANDLE type flag. This will be used together with asOBJ_VALUE to allow application to register a container type that can store any handle type
-<li>Implemented support for asBEHAVE_REF_CAST with the signature 'void f(?&out)' which allow a cast to any handle type, evaluated at runtime
+<li>Implemented support for asBEHAVE_REF_CAST with the signature 'void f(?&amp;out)' which allow a cast to any handle type, evaluated at runtime
+<li>asIScriptContext::Unprepare no longer free's the stack memory, so there is no performance penalty for that
 </ul>
 <li>Script language
 <ul>
