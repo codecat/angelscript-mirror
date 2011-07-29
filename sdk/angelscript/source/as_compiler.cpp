@@ -5467,6 +5467,16 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 	}
 	else // if( lctx->type.dataType.IsObject() )
 	{
+		// An ASHANDLE type must not allow a value assignment, as
+		// the opAssign operator is used for the handle assignment
+		if( lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
+		{
+			asCString str;
+			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format().AddressOf());
+			Error(str.AddressOf(), lexpr);
+			return -1;
+		}
+
 		// The lvalue reference may be marked as a temporary, if for example
 		// it was originated as a handle returned from a function. In such 
 		// cases it must be possible to assign values to it anyway.

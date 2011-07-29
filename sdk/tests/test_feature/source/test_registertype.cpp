@@ -956,11 +956,51 @@ bool TestHandleType()
 	}
 	ctx->Release();
 
+	
+	{
+		// This type must always be passed as if it is a handle to arguments, i.e. ref @func(ref @);
+		script = "ref func() { return null; } \n" // ERROR
+			     "void func2(ref a) {} \n"        // ERROR
+  			 	 // It must also be declared as handle in variables, globals, and members. 
+				 "ref globl; \n"                  // ERROR
+				 "void main() \n"
+				 "{ \n"
+				 "  ref a; \n"                    // ERROR
+				 "} \n"
+				 "class T { ref a; } \n"          // ERROR
+				 // It must not be allowed to do a value assignment on the type
+				 "class S {} \n"
+				 "void test() \n"
+				 "{ \n"
+                 "  ref @r; \n"
+				 "  S s; \n"
+				 "  r = s; \n"                    // ERROR
+				 "} \n";
+
+		bout.buffer.c_str();
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (3, 1) : Error   : Data type can't be 'ref'\n"
+		                   "script (8, 11) : Error   : Data type can't be 'ref'\n"
+		                   "script (1, 1) : Info    : Compiling ref func()\n"
+		                   "script (1, 1) : Error   : Data type can't be 'ref'\n"
+		                   "script (1, 21) : Error   : Can't implicitly convert from '<null handle>' to 'ref'.\n"
+		                   "script (2, 1) : Info    : Compiling void func2(ref)\n"
+		                   "script (2, 12) : Error   : Parameter type can't be 'ref'\n"
+		                   "script (4, 1) : Info    : Compiling void main()\n"
+		                   "script (6, 7) : Error   : Data type can't be 'ref'\n"
+		                   "script (10, 1) : Info    : Compiling void test()\n"
+		                   "script (14, 3) : Error   : Illegal operation on 'ref@&'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	engine->Release();
 
-	// TODO: This type must always be passed as if it is a handle to arguments, i.e. ref @func(ref @);
-	// TODO: It must also be declared as handle in variables, globals, and members. 
-	// TODO: It must not be allowed to do a value assignment on the type
 
 	return fail;
 }

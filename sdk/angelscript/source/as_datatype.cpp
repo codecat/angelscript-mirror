@@ -294,6 +294,10 @@ bool asCDataType::CanBeInstanciated() const
 		   objectType->beh.factories.GetLength() == 0))) ) // the ref type cannot be instanciated
 		return false;
 
+	// An ASHANDLE type can only be declared as a handle, even though it is a value type
+	if( IsObject() && (objectType->flags & asOBJ_ASHANDLE) && !IsObjectHandle() )
+		return false;
+
 	return true;
 }
 
