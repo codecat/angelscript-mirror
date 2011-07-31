@@ -7022,7 +7022,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			{
 				// We must still evaluate the expression
 				MergeExprBytecode(ctx, expr);
-				if( !expr->type.isConstant )
+				if( !expr->type.isConstant || expr->type.IsNullConstant() )
 					ctx->bc.Pop(expr->type.dataType.GetSizeOnStackDWords());
 
 				// Give a warning, except if the argument is null which indicate the argument is really to be ignored

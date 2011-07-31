@@ -134,8 +134,11 @@ bool Test()
 		// When passing 'null' to an output parameter the compiler shouldn't warn
 		const char *script = "class C {} void func(C @&out) {} \n"
 			                 "void main() { \n"
-							 "  func(null); \n"
-							 "  func(C()); \n"
+							 "  bool f = true; \n"
+							 "  if( f ) \n"
+							 "    func(null); \n"
+							 "  else \n"
+							 "    func(C()); \n"
 	                         "}\n";
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -148,7 +151,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 		if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void main()\n"
-		                   "TestCompiler (4, 8) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
+		                   "TestCompiler (7, 10) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

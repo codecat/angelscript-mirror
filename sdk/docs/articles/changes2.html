@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.1 WIP - 2011/07/27</h2>
+<h2>Version 2.21.1 WIP - 2011/07/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when doing a value assignment to a handle obtained from a property accessor (Thanks _orm_)
 <li>Compiler will now give error when assigning to property of an object that is returned by value from a function
 <li>Fixed bug in the std::string add-on in the boolean operators that concatenates a bool type to the string (Thanks Altren)
+<li>Fixed bug when pass null to output parameter and the compiler didn't properly clean up the stack
 </ul>
 <li>Library
 <ul>
