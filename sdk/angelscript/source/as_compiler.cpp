@@ -955,7 +955,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			}
 		}
 	}
-	else if( gvar->datatype.IsObject() && !gvar->datatype.IsObjectHandle() )
+	else if( gvar->datatype.IsObject() && (!gvar->datatype.IsObjectHandle() || gvar->datatype.GetObjectType()->flags & asOBJ_ASHANDLE) )
 	{
 		// Call the default constructor in case no explicit initialization is given
 		CallDefaultConstructor(gvar->datatype, gvar->index, true, &ctx.bc, gvar->idNode, true);
@@ -9007,13 +9007,11 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 {
 	if( objectType )
 	{
-		// ASHANDLE is actually a value type, even though it looks 
-		// like a handle, so we shouldn't dereference it unless it is on the heap
+		// The ASHANDLE type is really a value type, so if it is a  
+		// local variable on the stack it must not be dereferenced
 		if( !(objectType->flags & asOBJ_ASHANDLE) || 
-			(ctx->type.isVariable && IsVariableOnHeap(ctx->type.stackOffset)) )
-		{
+			!(ctx->type.isVariable && !IsVariableOnHeap(ctx->type.stackOffset)) )
 			Dereference(ctx, true);
-		}
 
 		// This following warning was removed as there may be valid reasons
 		// for calling non-const methods on temporary objects, and we shouldn't
@@ -10537,7 +10535,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 	if( descr->objectType && descr->returnType.IsReference() && 
 		!ctx->type.isVariable && (ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
-		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) )
+		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) &&
+		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_ASHANDLE) )
 	{
 		// The class method we're calling is returning a reference, which may be to a member of the object.
 		// In order to guarantee the lifetime of the reference, we must hold a local reference to the object.

@@ -352,6 +352,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\scripthandle\scripthandle.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scripthandle\scripthandle.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test2modules.cpp"
 				>
 			</File>
@@ -361,6 +369,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_addon_scriptarray.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\test_addon_scripthandle.cpp"
 				>
 			</File>
 			<File

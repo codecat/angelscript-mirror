@@ -10,6 +10,7 @@ SRCNAMES = \
   main.cpp \
   test_2func.cpp \
   test_addon_scriptarray.cpp \
+  test_addon_scripthandle.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -144,6 +145,7 @@ SRCNAMES = \
 
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptarray.o \
+  obj/scripthandle.o \
   obj/scripthelper.o \
   obj/scriptstring.o \
   obj/scriptstdstring.o \
@@ -175,6 +177,9 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
+obj/scripthandle.o: ../../../../add_on/scripthandle/scripthandle.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	
 obj/scripthelper.o: ../../../../add_on/scripthelper/scripthelper.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 

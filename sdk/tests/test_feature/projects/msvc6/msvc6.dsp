@@ -103,6 +103,10 @@ SOURCE=..\..\source\test_addon_scriptarray.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_scripthandle.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_any.cpp
 # End Source File
 # Begin Source File
@@ -696,6 +700,14 @@ SOURCE=..\..\..\..\add_on\scriptfile\scriptfile.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptfile\scriptfile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scripthandle\scripthandle.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scripthandle\scripthandle.h
 # End Source File
 # Begin Source File
 

@@ -3350,6 +3350,7 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 	return dt->GetSizeInMemoryBytes();
 }
 
+// TODO: interface: Should be able to take a pointer to asIObjectType directly
 void *asCScriptEngine::CreateScriptObject(int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
@@ -3421,6 +3422,7 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	}
 }
 
+// TODO: interface: Should be able to take a pointer to asIObjectType directly
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer
@@ -3443,6 +3445,7 @@ void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 	}
 }
 
+// TODO: interface: Should be able to take a pointer to asIObjectType directly
 void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer

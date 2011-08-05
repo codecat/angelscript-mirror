@@ -744,15 +744,17 @@ bool TestHelper()
 class CHandleType
 {
 public:
-	CHandleType() 
+	CHandleType(asIScriptEngine *engine) 
 	{ 
 		m_ref = 0;
 		m_typeId = 0;
+		m_engine = engine;
 	}
 	CHandleType(const CHandleType &o) 
 	{ 
 		m_ref = 0;
 		m_typeId = 0;
+		m_engine = o.m_engine;
 		opAssign(o.m_ref, o.m_typeId);
 	}
 	~CHandleType() 
@@ -849,9 +851,7 @@ public:
 	{
 		if( m_ref )
 		{
-			asIScriptContext *ctx = asGetActiveContext();
-			asIScriptEngine *engine = ctx->GetEngine();
-			engine->ReleaseScriptObject(m_ref, m_typeId);
+			m_engine->ReleaseScriptObject(m_ref, m_typeId);
 
 			m_ref = 0;
 			m_typeId = 0;
@@ -862,18 +862,17 @@ public:
 	{
 		if( m_ref )
 		{
-			asIScriptContext *ctx = asGetActiveContext();
-			asIScriptEngine *engine = ctx->GetEngine();
-			engine->AddRefScriptObject(m_ref, m_typeId);
+			m_engine->AddRefScriptObject(m_ref, m_typeId);
 		}
 	}
 
-	static void Construct(CHandleType *self) { new(self) CHandleType(); }
+	static void Construct(CHandleType *self) { asIScriptEngine *engine = asGetActiveContext()->GetEngine(); new(self) CHandleType(engine); }
 	static void Construct(CHandleType *self, const CHandleType &o) { new(self) CHandleType(o); }
 	static void Destruct(CHandleType *self) { self->~CHandleType(); }
 
 	void *m_ref;
 	int m_typeId;
+	asIScriptEngine *m_engine;
 };
 
 bool TestHandleType()
@@ -932,11 +931,21 @@ bool TestHandleType()
 						 "  @rb = func(rb); \n"
 						 "  assert( rb is b ); \n"
 						 "  assert( func(rb) is b ); \n"
+						 // Global variable
+						 "  @g = @b; \n"
+						 "  assert( g is b ); \n"
+						 // Assignment to reference
+						 "  @func3() = @a; \n"
+						 "  assert( g is a ); \n"
+						 "  assert( func3() is a ); \n"
 						 "} \n"
 						 "ref@ func(ref@ r) { return r; } \n"
-						 "void func2(ref@r) { assert( r is null ); } \n";
+						 "void func2(ref@r) { assert( r is null ); } \n"
+						 "ref@ g; \n"
+						 "ref@& func3() { return g; } \n";
 	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
+	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 	r = mod->Build();
 	if( r < 0 )
 		TEST_FAILED;
@@ -945,6 +954,9 @@ bool TestHandleType()
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
+
+	CHandleType *ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g"));
+	assert( ptr && ptr->m_engine == engine );
 
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "main()", mod, ctx);
