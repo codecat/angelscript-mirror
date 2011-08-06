@@ -57,6 +57,7 @@ bool Test()
 							 "  assert( func(rb) is b ); \n"
 							 // Arrays of handles 
 							 "  array<handle@> arr(2); \n"
+							 "  assert( arr[0] is null ); \n"
 							 "  @arr[0] = a; \n"
 							 "  @arr[1] = a; \n"
 							 "  assert( arr[0] is arr[1] ); \n"

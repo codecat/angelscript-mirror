@@ -3102,12 +3102,14 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// be done before the expression is evaluated.
 			DestroyVariables(bc);
 
+			
 			// For primitives the reference is already in the register,
 			// but for non-primitives the reference is on the stack so we 
 			// need to load it into the register
 			if( !expr.type.dataType.IsPrimitive() )
 			{
-				if( !expr.type.dataType.IsObjectHandle() && expr.type.dataType.IsReference() )
+				if( (!expr.type.dataType.IsObjectHandle() || (expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) && 
+					expr.type.dataType.IsReference() )
 					expr.bc.Instr(asBC_RDSPTR);
 
 				expr.bc.Instr(asBC_PopRPtr);
@@ -10642,7 +10644,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		else
 		{
 			ctx->bc.Instr(asBC_PshRPtr);
-			if( descr->returnType.IsObject() && !descr->returnType.IsObjectHandle() )
+			if( descr->returnType.IsObject() && 
+				(!descr->returnType.IsObjectHandle() || (descr->returnType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 			{
 				// We are getting the pointer to the object
 				// not a pointer to a object variable
