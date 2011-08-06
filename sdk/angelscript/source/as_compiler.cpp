@@ -308,7 +308,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	{
 		asCString str;
 		str.Format(TXT_RETURN_CANT_BE_s, returnType.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str.AddressOf(), func);
 	}
 
 	variables->DeclareVariable("return", returnType, stackPos, true);
@@ -890,7 +890,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			//             just the copy constructor. Only if no appropriate constructor is 
 			//             available should the assignment operator be used.
 
-			if( !gvar->datatype.IsObjectHandle() )
+			if( (!gvar->datatype.IsObjectHandle() || gvar->datatype.GetObjectType()->flags & asOBJ_ASHANDLE) )
 			{
 				// Call the default constructor to have a valid object for the assignment
 				CallDefaultConstructor(gvar->datatype, gvar->index, true, &ctx.bc, gvar->idNode, true);
@@ -914,7 +914,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			// the default action is a direct copy if it is the same type
 			// and a simple assignment.
 			bool assigned = false;
-			if( lexpr.type.dataType.IsObject() && !lexpr.type.isExplicitHandle )
+			if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 			{
 				assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
 				if( assigned )
@@ -1897,7 +1897,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					// the default action is a direct copy if it is the same type
 					// and a simple assignment.
 					bool assigned = false;
-					if( lexpr.type.dataType.IsObject() && !lexpr.type.isExplicitHandle )
+					if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 					{
 						assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
 						if( assigned )

@@ -3219,9 +3219,15 @@ void asCScriptEngine::GCEnumCallback(void *reference)
 
 
 // TODO: multithread: The mapTypeIdToDataType must be protected with critical sections in all functions that access it
-int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt) const
+int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
-	if( dt.IsNullHandle() ) return 0;
+	if( dtIn.IsNullHandle() ) return 0;
+
+	// ASHANDLE is mimicking a handle, but it really is a value 
+	// type so only the non-handle form should be registered.
+	asCDataType dt(dtIn);
+	if( dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_ASHANDLE )
+		dt.MakeHandle(false);
 
 	// Find the existing type id
 	asSMapNode<int,asCDataType*> *cursor = 0;
@@ -3256,7 +3262,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dt) const
 
 	// If the object type supports object handles then register those types as well
 	// Note: Don't check for addref, as asOBJ_SCOPED don't have this
-	if( dt.IsObject() && (dt.GetObjectType()->beh.release || dt.GetObjectType()->flags & asOBJ_ASHANDLE) )
+	if( dt.IsObject() && dt.GetObjectType()->beh.release )
 	{
 		newDt = asNEW(asCDataType)(dt);
 		newDt->MakeReference(false);

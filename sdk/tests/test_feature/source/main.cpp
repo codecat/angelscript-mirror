@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
-//	if( Test_Addon_ScriptHandle::Test() ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
+	if( Test_Addon_ScriptHandle::Test() ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
 	if( TestScriptRetRef::Test()        ) goto failed; else printf("-- TestScriptRetRef passed\n");
 	if( TestGarbageCollect::Test()      ) goto failed; else printf("-- TestGarbageCollect passed\n");

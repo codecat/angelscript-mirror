@@ -938,10 +938,14 @@ bool TestHandleType()
 						 "  @func3() = @a; \n"
 						 "  assert( g is a ); \n"
 						 "  assert( func3() is a ); \n"
+						 // Copying the reference
+						 "  ref@ rc = rb; \n"
+						 "  assert( rc is rb ); \n"
 						 "} \n"
 						 "ref@ func(ref@ r) { return r; } \n"
 						 "void func2(ref@r) { assert( r is null ); } \n"
 						 "ref@ g; \n"
+						 "ref@ g2 = g; \n"
 						 "ref@& func3() { return g; } \n";
 	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script);
@@ -956,7 +960,12 @@ bool TestHandleType()
 	}
 
 	CHandleType *ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g"));
-	assert( ptr && ptr->m_engine == engine );
+	if( !ptr || ptr->m_engine != engine )
+		TEST_FAILED;
+	ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g2"));
+	if( !ptr || ptr->m_engine != engine )
+		TEST_FAILED;
+
 
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "main()", mod, ctx);
@@ -989,7 +998,7 @@ bool TestHandleType()
 				 "  r = s; \n"                    // ERROR
 				 "} \n";
 
-		bout.buffer.c_str();
+		bout.buffer = "";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
