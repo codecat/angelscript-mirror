@@ -10,6 +10,7 @@ ifdef SHARED
 	DEVLIB = libangelscript.so
 else
 	LIB = libangelscript.a
+	DEVLIB = libangelscript.a
 endif
 INC = angelscript.h
 
