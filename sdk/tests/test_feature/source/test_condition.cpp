@@ -5,6 +5,7 @@
 //
 
 #include "utils.h"
+#include "../../../add_on/scriptarray/scriptarray.h"
 
 static const char * const TESTNAME = "TestCondition";
 
@@ -160,6 +161,56 @@ bool TestCondition()
 
 	engine->Release();
 	a->Release();
+
+	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		const char *script = "class T \n"
+		                     "{ \n"
+			                 "  T@ Get() \n"
+		                     "  { \n"
+							 "    T@ r; \n"
+							 "    return (false ? null : r); \n"
+	                         "  } \n"
+	                         "} \n";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		script = "class T \n"
+		    "{ \n"
+			"  array<T@> Ts;\n"
+			"  T@ Get(uint n)\n"
+		    "  {\n"
+			"    return (n>=Ts.length()) ? null : Ts[n];  \n"
+			"  } \n"
+			"} \n";
+
+		bout.buffer = "";
+		mod->AddScriptSection("script", script);
+/*		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+*/
+		engine->Release();
+	}
 
 	// Success
 	return fail;

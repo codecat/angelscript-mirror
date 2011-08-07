@@ -4277,7 +4277,7 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	{
 		if( ctx->type.dataType.IsPrimitive() )
 			ImplicitConvPrimitiveToObject(ctx, to, node, convType, generateCode, reservedVars, allowObjectConstruct);
-		else
+		else if( ctx->type.IsNullConstant() || ctx->type.dataType.GetObjectType() )
 			ImplicitConvObjectToObject(ctx, to, node, convType, generateCode, reservedVars, allowObjectConstruct);
 	}
 }
@@ -4419,6 +4419,8 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 		return;
 	}
+
+	asASSERT(ctx->type.dataType.GetObjectType());
 
 	// First attempt to convert the base type without instanciating another instance
 	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
@@ -5630,13 +5632,19 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 			bool isExplicitHandle = le.type.isExplicitHandle || re.type.isExplicitHandle;
 
-			// Allow a 0 in the first case to be implicitly converted to the second type
+			// Allow a 0 or null in the first case to be implicitly converted to the second type
 			if( le.type.isConstant && le.type.intValue == 0 && le.type.dataType.IsUnsignedType() )
 			{
 				asCDataType to = re.type.dataType;
 				to.MakeReference(false);
 				to.MakeReadOnly(true);
 				ImplicitConversionConstant(&le, to, cexpr->next, asIC_IMPLICIT_CONV);
+			}
+			else if( le.type.IsNullConstant() )
+			{
+				asCDataType to = re.type.dataType;
+				to.MakeHandle(true);
+				ImplicitConversion(&le, to, cexpr->next, asIC_IMPLICIT_CONV);
 			}
 
 			//---------------------------------
