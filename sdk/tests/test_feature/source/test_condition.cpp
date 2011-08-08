@@ -188,6 +188,7 @@ bool TestCondition()
 			TEST_FAILED;
 		}
 
+		// Having classes with the same name as the template subtype was causing problems
 		script = "class T \n"
 		    "{ \n"
 			"  array<T@> Ts;\n"
@@ -199,7 +200,7 @@ bool TestCondition()
 
 		bout.buffer = "";
 		mod->AddScriptSection("script", script);
-/*		r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -208,7 +209,7 @@ bool TestCondition()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-*/
+
 		engine->Release();
 	}
 
