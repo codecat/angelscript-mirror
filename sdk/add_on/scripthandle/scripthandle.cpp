@@ -188,16 +188,16 @@ void RegisterScriptHandle_Native(asIScriptEngine *engine)
 {
 	int r;
 
-	r = engine->RegisterObjectType("handle", sizeof(CScriptHandle), asOBJ_VALUE | asOBJ_ASHANDLE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("handle", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(Construct, (CScriptHandle *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("handle", asBEHAVE_CONSTRUCT, "void f(const handle &in)", asFUNCTIONPR(Construct, (CScriptHandle *, const CScriptHandle &), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("handle", asBEHAVE_CONSTRUCT, "void f(const ?&in)", asFUNCTIONPR(Construct, (CScriptHandle *, void *, int), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("handle", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(Destruct, (CScriptHandle *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("handle", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CScriptHandle, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("handle", "handle &opAssign(const handle &in)", asMETHOD(CScriptHandle, operator=), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("handle", "handle &opAssign(const ?&in)", asMETHOD(CScriptHandle, opAssign), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("handle", "bool opEquals(const handle &in) const", asMETHODPR(CScriptHandle, opEquals, (const CScriptHandle &) const, bool), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("handle", "bool opEquals(const ?&in) const", asMETHODPR(CScriptHandle, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectType("ref", sizeof(CScriptHandle), asOBJ_VALUE | asOBJ_ASHANDLE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(Construct, (CScriptHandle *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", asFUNCTIONPR(Construct, (CScriptHandle *, const CScriptHandle &), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ?&in)", asFUNCTIONPR(Construct, (CScriptHandle *, void *, int), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(Destruct, (CScriptHandle *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CScriptHandle, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", asMETHOD(CScriptHandle, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CScriptHandle, opAssign), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CScriptHandle, opEquals, (const CScriptHandle &) const, bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CScriptHandle, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptHandle(asIScriptEngine *engine)

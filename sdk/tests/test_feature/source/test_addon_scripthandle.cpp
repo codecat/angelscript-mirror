@@ -27,7 +27,7 @@ bool Test()
 							 "class B {} \n"
 							 "void main() \n"
 							 "{ \n"
-							 "  handle@ ra, rb; \n"
+							 "  ref@ ra, rb; \n"
 							 "  A a; B b; \n"
 							 // Assignment of reference
 							 "  @ra = @a; \n"
@@ -56,15 +56,15 @@ bool Test()
 							 "  assert( rb is b ); \n"
 							 "  assert( func(rb) is b ); \n"
 							 // Arrays of handles 
-							 "  array<handle@> arr(2); \n"
+							 "  array<ref@> arr(2); \n"
 							 "  assert( arr[0] is null ); \n"
 							 "  @arr[0] = a; \n"
 							 "  @arr[1] = a; \n"
 							 "  assert( arr[0] is arr[1] ); \n"
 							 "  assert( arr[0] is a ); \n"
 							 "} \n"
-							 "handle@ func(handle@ r) { return r; } \n"
-							 "void func2(handle@r) { assert( r is null ); } \n";
+							 "ref@ func(ref@ r) { return r; } \n"
+							 "void func2(ref@r) { assert( r is null ); } \n";
 
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
