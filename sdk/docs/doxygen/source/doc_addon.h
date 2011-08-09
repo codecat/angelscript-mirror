@@ -21,6 +21,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_std_string
  - \subpage doc_addon_array
  - \subpage doc_addon_any
+ - \subpage doc_addon_handle
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
@@ -418,6 +419,79 @@ CScriptString *str = new CScriptString("hello world");
 myAny->Store((void*)&str, typeId);
 myAny->Retrieve((void*)&str, typeId);
 \endcode
+
+
+
+
+
+
+
+
+
+
+\page doc_addon_handle ref object
+
+<b>Path:</b> /sdk/add_on/scripthandle/
+
+The <code>ref</code> type is a generic container that can hold any handle. 
+It is a value type, but behaves very much like an object handle.
+
+The type is registered with <code>RegisterScriptHandle(asIScriptEngine*)</code>.
+
+\section doc_addon_handle_1 Public C++ interface
+
+\code
+class CScriptHandle 
+{
+public:
+  // Constructors
+  CScriptHandle();
+  CScriptHandle(const CScriptHandle &other);
+  CScriptHandle(void *ref, int typeId);
+  ~CScriptHandle();
+
+  // Copy the stored reference from another handle object
+  CScriptHandle &operator=(const CScriptHandle &other);
+  CScriptHandle &opAssign(void *ref, int typeId);
+
+  // Compare equalness
+  bool opEquals(const CScriptHandle &o) const;
+  bool opEquals(void *ref, int typeId) const;
+
+  // Dynamic cast to desired handle type
+  void opCast(void **outRef, int typeId);
+};
+\endcode
+
+\section doc_addon_handle_3 Example usage
+
+In the scripts it can be used as follows:
+
+<pre>
+  ref\@ unknown;
+
+  // Store a handle in the ref variable
+  object obj;
+  \@unknown = \@obj;
+
+  // Compare equalness
+  if( unknown != null ) 
+  {
+    // Dynamically cast the handle to wanted type
+    object \@obj2 = cast<object>(unknown);
+    if( obj2 != null )
+    {
+      ...
+    }
+  }
+</pre>
+
+
+
+
+
+
+
 
 
 

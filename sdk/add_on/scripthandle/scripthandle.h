@@ -17,9 +17,12 @@ public:
 	// Copy the stored value from another any object
 	CScriptHandle &operator=(const CScriptHandle &other);
 	CScriptHandle &opAssign(void *ref, int typeId);
+
+	// Compare equalness
 	bool opEquals(const CScriptHandle &o) const;
 	bool opEquals(void *ref, int typeId) const;
 
+	// Dynamic cast to desired handle type
 	void opCast(void **outRef, int typeId);
 
 protected:

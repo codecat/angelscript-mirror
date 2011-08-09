@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.21.0
-#define ANGELSCRIPT_VERSION        22100
-#define ANGELSCRIPT_VERSION_STRING "2.21.0"
+//! \details Version 2.21.1
+#define ANGELSCRIPT_VERSION        22101
+#define ANGELSCRIPT_VERSION_STRING "2.21.1"
 
 // Data types
 
@@ -152,6 +152,8 @@ enum asEObjTypeFlags
 	asOBJ_SCOPED                     = 0x20,
 	//! A template type.
 	asOBJ_TEMPLATE                   = 0x40,
+	//! The value type should be treated as a handle.
+	asOBJ_ASHANDLE                   = 0x80,
 	//! The C++ type is a class type. Only valid for value types.
 	asOBJ_APP_CLASS                  = 0x100,
 	//! The C++ class has an explicit constructor. Only valid for value types.
@@ -196,7 +198,7 @@ enum asEObjTypeFlags
 	asOBJ_APP_PRIMITIVE              = 0x2000,
 	//! The C++ type is a float or double. Only valid for value types.
 	asOBJ_APP_FLOAT                  = 0x4000,
-	asOBJ_MASK_VALID_FLAGS           = 0x7F7F,
+	asOBJ_MASK_VALID_FLAGS           = 0x7FFF,
 	//! The object is a script class or an interface.
 	asOBJ_SCRIPT_OBJECT              = 0x10000
 };
