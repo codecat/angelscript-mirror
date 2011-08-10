@@ -46,6 +46,7 @@ to pass function pointers to the application, e.g. to implement callback routine
 \page doc_advanced_api Advanced application interface
 
  - \subpage doc_gc_object
+ - \subpage doc_adv_generic_handle
  - \subpage doc_adv_scoped_type
  - \subpage doc_adv_single_ref_type
  - \subpage doc_adv_class_hierarchy

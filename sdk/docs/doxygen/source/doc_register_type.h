@@ -144,6 +144,7 @@ r = engine->RegisterObjectType("val", sizeof(val), asOBJ_VALUE); assert( r >= 0 
 \endcode
 
 \see The \ref doc_addon_std_string or \ref doc_addon_math3d "vector3" add-on for examples of value types
+\see \ref doc_adv_generic_handle for a more specific example of a value type
 
 
 \section doc_reg_val_1 Constructor and destructor

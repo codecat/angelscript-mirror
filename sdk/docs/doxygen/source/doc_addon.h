@@ -438,6 +438,8 @@ It is a value type, but behaves very much like an object handle.
 
 The type is registered with <code>RegisterScriptHandle(asIScriptEngine*)</code>.
 
+\see \ref doc_adv_generic_handle
+
 \section doc_addon_handle_1 Public C++ interface
 
 \code

@@ -377,7 +377,7 @@ Here's an example that shows the syntax for using function pointes:
   // Define a function signature for the function pointer
   funcdef bool CALLBACK(int, int);
 
-  // An example function that to use this
+  // An example function that shows how to use this
   void main()
   {
     // Declare a function pointer, and set it 

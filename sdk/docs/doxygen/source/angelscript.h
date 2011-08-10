@@ -751,6 +751,11 @@ extern "C"
 // Interface declarations
 
 //! \brief The engine interface
+//!
+//! It is allowed to have multiple instances of script engines, but there is rarely a need for it.
+//! Even if the application needs to expose different interfaces to different types of scripts
+//! this can usually be accomplished through the use of dynamic configuration groups and access
+//! profiles.
 class asIScriptEngine
 {
 public:
@@ -1531,6 +1536,24 @@ protected:
 };
 
 //! \brief The interface to the script modules
+//!
+//! A script module can be thought of a library of script functions, objects, and global variables. These
+//! are built from a single or multiple script files, also known as script sections.
+//! 
+//! An application can load multiple modules independently, and can even discard modules that are no longer
+//! used without affecting the other modules. This makes modules convenient for use with on-demand script logic, 
+//! i.e. the script is loaded and compiled only as it needed, rather than everything up front.
+//!
+//! If two modules are built using the same source script files, they will each hold unique copies of the 
+//! global variables, functions, and objects declared in the script. There may be valid reasons to do
+//! this, but if your only reason is to give a set of individual scripted properties to application objects, 
+//! then you should consider designing your scripts to use script classes. The use of script classes will
+//! allow each application object to maintain its own instance of the script class, while still sharing the 
+//! same implementation in a single module.
+//!
+//! While different modules are independent, they can communicate with each other with a little help from the
+//! application. It is for example possible to import functions between modules, or a handle to an interface
+//! might be passed from one module to another to allow. 
 class asIScriptModule
 {
 public:
@@ -1938,6 +1961,21 @@ protected:
 };
 
 //! \brief The interface to the virtual machine
+//!
+//! The script context provides the interface for a single script execution. The object stores the call
+//! stack where the local variables used by the execution are kept, however it doesn't keep copies of 
+//! global variables as these are stored in the \ref asIScriptModule, and only referenced by the context.
+//!
+//! The value stored in a global variable is shared between all contexts, as they all refer to the same 
+//! memory. This means that the global variables outlive the execution of a script, and will keep their
+//! values between executions.
+//!
+//! It is seldom necessary to maintain more than one script context at a time, with the only exceptions
+//! being when a script calls an application function that in turn calls another script before returning, 
+//! and if multiple scripts are running in parallel. 
+//!
+//! Try to avoid associating a unique context with each object that may need to call scripts. Instead 
+//! keep a shared pool of contexts that can be requested by the objects on a need-to basis.
 class asIScriptContext
 {
 public:
