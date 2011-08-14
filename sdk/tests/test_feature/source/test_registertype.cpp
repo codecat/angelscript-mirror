@@ -7,6 +7,8 @@ void DummyFunc(asIScriptGeneric *) {}
 
 bool TestHandleType();
 
+bool TestIrrTypes();
+
 bool TestRefScoped();
 
 bool TestHelper();
@@ -15,6 +17,7 @@ bool Test()
 {
 	bool fail = TestHelper();
 	fail = TestHandleType() || fail;
+	fail = TestIrrTypes() || fail;
 	int r = 0;
 	CBufferedOutStream bout;
  	asIScriptEngine *engine;
@@ -312,7 +315,7 @@ bool Test()
 		bout.buffer = "";
 		r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE | asOBJ_POD);
 		if( r < 0 ) TEST_FAILED;
-		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_CDECL); 
+		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_CDECL);
 		if( r < 0 ) TEST_FAILED;
 		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_CDECL);
 		if( r < 0 ) TEST_FAILED;
@@ -491,7 +494,7 @@ bool TestRefScoped()
 
 	r = engine->RegisterGlobalFunction("const scoped @GetWorldPositionByName()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void SetObjectPosition(scoped &in)", asFUNCTION(Scoped_InRef), asCALL_CDECL); assert( r >= 0 );
-	
+
 	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( bout.buffer != "" )
@@ -744,25 +747,25 @@ bool TestHelper()
 class CHandleType
 {
 public:
-	CHandleType(asIScriptEngine *engine) 
-	{ 
+	CHandleType(asIScriptEngine *engine)
+	{
 		m_ref = 0;
 		m_typeId = 0;
 		m_engine = engine;
 	}
-	CHandleType(const CHandleType &o) 
-	{ 
+	CHandleType(const CHandleType &o)
+	{
 		m_ref = 0;
 		m_typeId = 0;
 		m_engine = o.m_engine;
 		opAssign(o.m_ref, o.m_typeId);
 	}
-	~CHandleType() 
-	{ 
+	~CHandleType()
+	{
 		ReleaseHandle();
 	}
-	CHandleType &operator=(const CHandleType &o) 
-	{ 
+	CHandleType &operator=(const CHandleType &o)
+	{
 		opAssign(o.m_ref, o.m_typeId);
 		return *this;
 	}
@@ -816,7 +819,7 @@ public:
 			typeId &= ~asTYPEID_OBJHANDLE;
 		}
 
-		// TODO: If typeId is not the same, we should attempt to do a dynamic cast, 
+		// TODO: If typeId is not the same, we should attempt to do a dynamic cast,
 		//       which may change the pointer for application registered classes
 
 		if( ref == m_ref ) return true;
@@ -907,7 +910,7 @@ bool TestHandleType()
 						 "  A a; B b; \n"
 						 // Assignment of reference
 						 "  @ra = @a; \n"
-						 "  assert( ra is a ); \n" 
+						 "  assert( ra is a ); \n"
 						 "  @rb = @b; \n"
 						 // Casting to reference
 						 "  A@ ha = cast<A>(ra); \n"
@@ -977,12 +980,12 @@ bool TestHandleType()
 	}
 	ctx->Release();
 
-	
+
 	{
 		// This type must always be passed as if it is a handle to arguments, i.e. ref @func(ref @);
 		script = "ref func() { return null; } \n" // ERROR
 			     "void func2(ref a) {} \n"        // ERROR
-  			 	 // It must also be declared as handle in variables, globals, and members. 
+  			 	 // It must also be declared as handle in variables, globals, and members.
 				 "ref globl; \n"                  // ERROR
 				 "void main() \n"
 				 "{ \n"
@@ -1022,6 +1025,94 @@ bool TestHandleType()
 
 	engine->Release();
 
+
+	return fail;
+}
+
+///////////////////////////////////
+
+// This is the relevant part of the type from the Irrlicht engine.
+// It is reproduced here to test the registration of the
+// type with AngelScript.
+
+template <class T>
+class dimension2d
+{
+	public:
+		dimension2d() : Width(0), Height(0) {}
+		dimension2d(const T& width, const T& height) :
+			Width(width), Height(height) {}
+
+		template <class U>
+		explicit dimension2d(const dimension2d<U>& other) :
+			Width((T)other.Width), Height((T)other.Height) { }
+
+		template <class U>
+		dimension2d<T>& operator=(const dimension2d<U>& other)
+		{
+			Width = (T) other.Width;
+			Height = (T) other.Height;
+			return *this;
+		}
+
+
+		dimension2d<T> operator+(const dimension2d<T>& other) const
+		{
+			return dimension2d<T>(Width+other.Width, Height+other.Height);
+		}
+
+		T Width;
+		T Height;
+};
+
+typedef dimension2d<float> dimension2df;
+
+void Construct_dim2f(dimension2df *mem)
+{
+	new(mem) dimension2df();
+}
+
+void Construct_dim2f(const dimension2df &other, dimension2df *mem)
+{
+	new(mem) dimension2df(other);
+}
+
+void Construct_dim2f(float x, float y, dimension2df *mem)
+{
+	new(mem) dimension2df(x, y);
+}
+
+bool TestIrrTypes()
+{
+	bool fail = false;
+	int r;
+	COutStream out;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	// The dimension2df type must be registered with asOBJ_APP_CLASS_C, 
+	// despite it having an assignment and copy constructor. 
+	r = engine->RegisterObjectType("dim2f", sizeof(dimension2df), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f()", asFUNCTIONPR(Construct_dim2f, (dimension2df*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(const dim2f &in)", asFUNCTIONPR(Construct_dim2f, (const dimension2df &, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(float x, float y)", asFUNCTIONPR(Construct_dim2f, (float x, float y, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dim2f", "dim2f &opAssign(const dim2f &in)",     asMETHODPR(dimension2df, operator =, (const dimension2df&), dimension2df&),      asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dim2f", "dim2f opAdd(const dim2f &in) const",   asMETHODPR(dimension2df, operator+,  (const dimension2df&) const, dimension2df), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("dim2f", "float x", offsetof(dimension2df, Width)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("dim2f", "float y", offsetof(dimension2df, Height)); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+	r = ExecuteString(engine, "dim2f video_res(800,600);\n"
+		                      "dim2f total_res;\n"
+							  "total_res = video_res + video_res;\n"
+							  "assert( total_res.x == 1600 && total_res.y == 1200 );\n");
+	if( r != asEXECUTION_FINISHED )
+	{
+		TEST_FAILED;
+	}
+
+	engine->Release();
 
 	return fail;
 }
