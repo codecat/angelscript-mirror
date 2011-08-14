@@ -49,10 +49,10 @@ BEGIN_AS_NAMESPACE
 
 // TODO: I must correct the interpretation of a references to objects in the compiler.
 //       A reference should mean that a pointer to the object is on the stack.
-//       No expression should end up as non-references to objects, as the actual object is 
+//       No expression should end up as non-references to objects, as the actual object is
 //       never put on the stack.
 //       Local variables are declared as non-references, but the expression should be a reference to the variable.
-//       Function parameters of called functions can also be non-references, but in that case it means the 
+//       Function parameters of called functions can also be non-references, but in that case it means the
 //       object will be passed by value (currently on the heap, which will be moved to the application stack).
 
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
@@ -406,7 +406,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	}
 
 	// If there are compile errors, there is no reason to build the final code
-	if( hasCompileErrors || builder->numErrors != buildErrors ) 
+	if( hasCompileErrors || builder->numErrors != buildErrors )
 		return -1;
 
 	// At this point there should be no variables allocated
@@ -450,7 +450,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	// The reference parameter must be pushed on the stack
 	asASSERT( arg->type.dataType.GetObjectType() == type.GetObjectType() );
 
-	// Since we're calling the copy constructor, we have to trust the function to not do 
+	// Since we're calling the copy constructor, we have to trust the function to not do
 	// anything stupid otherwise we will just enter a loop, as we try to make temporary
 	// copies of the argument in order to guarantee safety.
 
@@ -495,7 +495,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	{
 		asSTypeBehaviour *beh = type.GetBehaviour();
 		int func = beh ? beh->copyconstruct : 0;
-		if( func > 0 ) 
+		if( func > 0 )
 		{
 			// Push the address where the object will be stored on the stack, before the argument
 			// TODO: When the context is serializable this probably has to be changed, since this
@@ -509,7 +509,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 			tmp.AddCode(bc);
 			bc->AddCode(&tmp);
 
-			// When the object is allocated on the stack the object pointer 
+			// When the object is allocated on the stack the object pointer
 			// must be pushed on the stack after the arguments
 			if( !isObjectOnHeap )
 			{
@@ -525,7 +525,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 			// TODO: value on stack: This probably needs to be done in PerformFunctionCall
 			// Mark the object as initialized
 			if( !isObjectOnHeap )
-				bc->ObjInfo(offset, asOBJ_INIT); 
+				bc->ObjInfo(offset, asOBJ_INIT);
 
 
 			return 0;
@@ -542,7 +542,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar)
 {
-	if( !type.IsObject() || 
+	if( !type.IsObject() ||
 		(type.IsObjectHandle() && !(type.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 		return 0;
 
@@ -596,7 +596,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			{
 				asASSERT( !isGlobalVar );
 
-				// There is nothing to do if there is no function, 
+				// There is nothing to do if there is no function,
 				// as the memory is already allocated on the stack
 				if( func )
 				{
@@ -608,7 +608,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
 					// Mark the object as initialized
-					bc->ObjInfo(offset, asOBJ_INIT); 
+					bc->ObjInfo(offset, asOBJ_INIT);
 				}
 			}
 			else
@@ -650,7 +650,7 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 				// Free the memory
 				bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
 			}
-			else 
+			else
 			{
 				asASSERT( type.GetObjectType()->GetFlags() & asOBJ_VALUE );
 
@@ -818,9 +818,9 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 						{
 							// Push the address of the location where the variable will be stored on the stack.
 							// This reference is safe, because the addresses of the global variables cannot change.
-							// TODO: When serialization of the context is implemented this will probably have to change, 
+							// TODO: When serialization of the context is implemented this will probably have to change,
 							//       because this pointer may be on the stack while the context is suspended, and may
-							//       be difficult to serialize as the context doesn't know that the value represents a 
+							//       be difficult to serialize as the context doesn't know that the value represents a
 							//       pointer.
 							ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
 
@@ -887,7 +887,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		else
 		{
 			// TODO: copy: Here we should look for the best matching constructor, instead of
-			//             just the copy constructor. Only if no appropriate constructor is 
+			//             just the copy constructor. Only if no appropriate constructor is
 			//             available should the assignment operator be used.
 
 			if( (!gvar->datatype.IsObjectHandle() || gvar->datatype.GetObjectType()->flags & asOBJ_ASHANDLE) )
@@ -968,7 +968,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	size_t pos = 0;
 	if( gvar->idNode )
 		pos = gvar->idNode->tokenPos;
-	else if( gvar->nextNode ) 
+	else if( gvar->nextNode )
 		pos = gvar->nextNode->tokenPos;
 	LineInstr(&byteCode, pos);
 
@@ -1319,7 +1319,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// Objects passed by value must be placed in temporary variables
 					// so that they are guaranteed to not be referenced anywhere else.
 					// The object must also be allocated on the heap, as the memory will
-					// be deleted by in as_callfunc_xxx. 
+					// be deleted by in as_callfunc_xxx.
 					// TODO: value on stack: How can we avoid this unnecessary allocation?
 					PrepareTemporaryObject(node, ctx, reservedVars, true);
 
@@ -1391,7 +1391,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
 				{
-					if( (args[n]->type.isVariable || args[n]->type.isTemporary) && 
+					if( (args[n]->type.isVariable || args[n]->type.isTemporary) &&
 						!IsVariableOnHeap(args[n]->type.stackOffset) )
 						// TODO: optimize: Actually the reference can be pushed on the stack directly
 						//                 as the value allocated on the stack is guaranteed to be safe
@@ -1407,7 +1407,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 				if( descr->parameterTypes[n].GetTokenType() == ttQuestion &&
 					args[n]->type.dataType.IsObject() && !args[n]->type.dataType.IsObjectHandle() )
 				{
-					// Send the object as a reference to the object, 
+					// Send the object as a reference to the object,
 					// and not to the variable holding the object
 					if( !IsVariableOnHeap(args[n]->type.stackOffset) )
 						// TODO: optimize: Actually the reference can be pushed on the stack directly
@@ -1418,7 +1418,7 @@ void asCCompiler::MoveArgsToStack(int funcID, asCByteCode *bc, asCArray<asSExprC
 				}
 				else
 				{
-					if( args[n]->type.dataType.GetObjectType() && 
+					if( args[n]->type.dataType.GetObjectType() &&
 						(args[n]->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) &&
 						args[n]->type.isVariable &&
 						IsVariableOnHeap(args[n]->type.stackOffset) )
@@ -1509,7 +1509,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		int r = parser.ParseExpression(&code);
 		if( r < 0 ) { anyErrors = true; continue; }
 
-		asCScriptNode *arg = parser.GetScriptNode();		
+		asCScriptNode *arg = parser.GetScriptNode();
 
 		// Temporarily set the script code to the default arg expression
 		asCScriptCode *origScript = script;
@@ -1524,13 +1524,13 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 
 		script = origScript;
 
-		if( r < 0 ) 
-		{ 
+		if( r < 0 )
+		{
 			asCString msg;
 			msg.Format(TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s, n, func->GetDeclaration());
 			Error(msg.AddressOf(), node);
-			anyErrors = true; 
-			continue; 
+			anyErrors = true;
+			continue;
 		}
 
 		args[n] = asNEW(asSExprContext)(engine);
@@ -1676,7 +1676,7 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		{
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 			Error(str.AddressOf(), node);
-	
+
 			PrintMatchingFuncs(funcs, node);
 		}
 	}
@@ -1721,7 +1721,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
 			Error(str.AddressOf(), node);
 
-			// Don't continue after this error, as it will just 
+			// Don't continue after this error, as it will just
 			// lead to more errors that are likely false
 			return;
 		}
@@ -1784,8 +1784,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 							}
 							else
 							{
-								// When the object is allocated on the heap, the address where the 
-								// reference will be stored must be pushed on the stack before the 
+								// When the object is allocated on the heap, the address where the
+								// reference will be stored must be pushed on the stack before the
 								// arguments. This reference on the stack is safe, even if the script
 								// is suspended during the evaluation of the arguments.
 								if( v->onHeap )
@@ -1840,7 +1840,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			asSExprContext ctx(engine);
 
 			// TODO: copy: Here we should look for the best matching constructor, instead of
-			//             just the copy constructor. Only if no appropriate constructor is 
+			//             just the copy constructor. Only if no appropriate constructor is
 			//             available should the assignment operator be used.
 
 			// Call the default constructor here
@@ -2021,8 +2021,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	bc->AddCode(&ctx.bc);
 
 	// TODO: initlist: Should we have a special indexing operator for this? How can we support
-	//                 initialization lists with different types for different elements? Maybe 
-	//                 by using the variable arguments the initialization can be done with one 
+	//                 initialization lists with different types for different elements? Maybe
+	//                 by using the variable arguments the initialization can be done with one
 	//                 call, passing all the elements as arguments. The registered function can
 	//                 then traverse them however it wants.
 
@@ -2194,7 +2194,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		to.SetTokenType(ttUInt);
 
 	// Make sure the value is in a variable
-	if( expr.type.dataType.IsReference() ) 
+	if( expr.type.dataType.IsReference() )
 		ConvertToVariable(&expr);
 
 	ImplicitConversion(&expr, to, snode->firstChild, asIC_IMPLICIT_CONV, true);
@@ -2606,8 +2606,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 {
-	// TODO: optimize: We should be able to remove the static JMP to the beginning of the loop by rearranging the 
-	//                 byte code a bit. 
+	// TODO: optimize: We should be able to remove the static JMP to the beginning of the loop by rearranging the
+	//                 byte code a bit.
 	//
 	//                 init
 	//                 jump to before
@@ -2924,10 +2924,10 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	// If the object already is stored in temporary variable then nothing needs to be done
 	// Note, a type can be temporary without being a variable, in which case it is holding off
 	// on releasing a previously used object.
-	if( ctx->type.isTemporary && ctx->type.isVariable && 
+	if( ctx->type.isTemporary && ctx->type.isVariable &&
 		!(forceOnHeap && !IsVariableOnHeap(ctx->type.stackOffset)) )
 	{
-		// If the temporary object is currently not a reference 
+		// If the temporary object is currently not a reference
 		// the expression needs to be reevaluated to a reference
 		if( !ctx->type.dataType.IsReference() )
 		{
@@ -2956,7 +2956,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	lvalue.isVariable = true;
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
 
-	if( (!dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_ASHANDLE))) && 
+	if( (!dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_ASHANDLE))) &&
 		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
 		PrepareForAssignment(&lvalue.dataType, ctx, node);
@@ -2979,7 +2979,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 		ctx->bc.Pop(AS_PTR_SIZE);
 	}
 
-	// If the expression was holding off on releasing a 
+	// If the expression was holding off on releasing a
 	// previously used object, we need to release it now
 	if( ctx->type.isTemporary )
 		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -3018,12 +3018,12 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 		if( v->type.IsReference() )
 		{
-			// The expression that gives the reference must not use any of the 
+			// The expression that gives the reference must not use any of the
 			// variables that must be destroyed upon exit, because then it means
 			// reference will stay alive while the clean-up is done, which could
 			// potentially mean that the reference is invalidated by the clean-up.
-			//       
-			// When the function is returning a reference, the clean-up of the 
+			//
+			// When the function is returning a reference, the clean-up of the
 			// variables must be done before the evaluation of the expression.
 			//
 			// A reference to a global variable, or a class member for class methods
@@ -3041,7 +3041,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// No references to local variables, temporary variables, or parameters
 			// are allowed to be returned, since they go out of scope when the function
 			// returns. Even reference parameters are disallowed, since it is not possible
-			// to know the scope of them. The exception is the 'this' pointer, which 
+			// to know the scope of them. The exception is the 'this' pointer, which
 			// is treated by the compiler as a local variable, but isn't really so.
 			if( (expr.type.isVariable && !(expr.type.stackOffset == 0 && outFunc->objectType)) || expr.type.isTemporary )
 			{
@@ -3064,7 +3064,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				return;
 			}
 
-			// The expression must not have any deferred expressions, because the evaluation 
+			// The expression must not have any deferred expressions, because the evaluation
 			// of these cannot be done without keeping the reference which is not safe
 			if( expr.deferredParams.GetLength() )
 			{
@@ -3074,7 +3074,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				return;
 			}
 
-			// Make sure the expression isn't using any local variables that  
+			// Make sure the expression isn't using any local variables that
 			// will need to be cleaned up before the function completes
 			asCArray<int> usedVars;
 			expr.bc.GetVarsUsed(usedVars);
@@ -3093,22 +3093,22 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				}
 			}
 
-			// All objects in the function must be cleaned up before the expression 
+			// All objects in the function must be cleaned up before the expression
 			// is evaluated, otherwise there is a possibility that the cleanup will
 			// invalidate the reference.
 
-			// Destroy the local variables before loading 
-			// the reference into the register. This will 
+			// Destroy the local variables before loading
+			// the reference into the register. This will
 			// be done before the expression is evaluated.
 			DestroyVariables(bc);
 
-			
+
 			// For primitives the reference is already in the register,
-			// but for non-primitives the reference is on the stack so we 
+			// but for non-primitives the reference is on the stack so we
 			// need to load it into the register
 			if( !expr.type.dataType.IsPrimitive() )
 			{
-				if( (!expr.type.dataType.IsObjectHandle() || (expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) && 
+				if( (!expr.type.dataType.IsObjectHandle() || (expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) &&
 					expr.type.dataType.IsReference() )
 					expr.bc.Instr(asBC_RDSPTR);
 
@@ -3297,7 +3297,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	bool isOnHeap = true;
 	// TODO: Remove this once the bugs with value types on stack is fixed
 	// forceOnHeap = true;
-	if( t.IsPrimitive() || 
+	if( t.IsPrimitive() ||
 		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) )
 	{
 		// Primitives and value types (unless overridden) are allocated on the stack
@@ -3309,7 +3309,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	{
 		int slot = freeVariables[n];
 
-		if( variableAllocations[slot].IsEqualExceptConst(t) && 
+		if( variableAllocations[slot].IsEqualExceptConst(t) &&
 			variableIsTemporary[slot] == isTemporary &&
 			variableIsOnHeap[slot] == isOnHeap )
 		{
@@ -3405,7 +3405,7 @@ int asCCompiler::GetVariableSlot(int offset)
 bool asCCompiler::IsVariableOnHeap(int offset)
 {
 	int varSlot = GetVariableSlot(offset);
-	if( varSlot < 0 ) 
+	if( varSlot < 0 )
 	{
 		// This happens for function arguments that are considered as on the heap
 		return true;
@@ -3791,13 +3791,13 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 		{
 			if( generateCode )
 			{
-				// TODO: optimize: Instead of producing bytecode for checking if the handle is 
-				//                 null, we can create a special CALLSYS instruction that checks 
+				// TODO: optimize: Instead of producing bytecode for checking if the handle is
+				//                 null, we can create a special CALLSYS instruction that checks
 				//                 if the object pointer is null and if so sets the object register
 				//                 to null directly without executing the function.
 				//
 				//                 Alternatively I could force the ref cast behaviours be global
-				//                 functions with 1 parameter, even though they should still be 
+				//                 functions with 1 parameter, even though they should still be
 				//                 registered with RegisterObjectBehaviour()
 
 				// Add code to avoid calling the cast behaviour if the handle is already null,
@@ -3841,7 +3841,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 				ctx->bc.InstrINT(asBC_JMP, endLabel);
 				ctx->bc.Label((short)afterLabel);
-				
+
 				// Make a NULL pointer
 #ifdef AS_64BIT_PTR
 				ctx->bc.InstrW_QW(asBC_SetV8, ctx->type.stackOffset, 0);
@@ -3852,7 +3852,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 				// Since we're receiving a handle, we can release the original variable
 				ReleaseTemporaryVariable(objType, &ctx->bc);
-				
+
 				// Push the reference to the handle on the stack
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 			}
@@ -3910,8 +3910,8 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 					args.PushLast(&arg);
 
 					// Call the behaviour method
-					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node); 
-					
+					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
+
 					// Use the reference to the variable as the result of the expression
 					// Now we can mark the variable as temporary
 					ctx->type.SetVariable(toRef, stackOffset, true);
@@ -4561,12 +4561,12 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		}
 		else
 		{
-			// A handle to non-const can be converted to a  
+			// A handle to non-const can be converted to a
 			// handle to const, but not the other way
 			if( to.IsHandleToConst() )
 				ctx->type.dataType.MakeHandleToConst(true);
 
-			// A const handle can be converted to a non-const 
+			// A const handle can be converted to a non-const
 			// handle and vice versa as the handle is just a value
 			ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 		}
@@ -4577,14 +4577,14 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			{
 				// If the input type is a handle, then a simple ref copy is enough
 				bool isExplicitHandle = ctx->type.isExplicitHandle;
-				ctx->type.isExplicitHandle = ctx->type.dataType.IsObjectHandle();				
+				ctx->type.isExplicitHandle = ctx->type.dataType.IsObjectHandle();
 
 				// If the input type is read-only we'll need to temporarily
 				// remove this constness, otherwise the assignment will fail
 				bool typeIsReadOnly = ctx->type.dataType.IsReadOnly();
 				ctx->type.dataType.MakeReadOnly(false);
 
-				// If the object already is a temporary variable, then the copy 
+				// If the object already is a temporary variable, then the copy
 				// doesn't have to be made as it is already a unique object
 				PrepareTemporaryObject(node, ctx, reservedVars);
 
@@ -4601,7 +4601,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		}
 		else if( !to.IsReference() && ctx->type.dataType.IsReference() )
 		{
-			// ASHANDLE is really a value type, even though it looks 
+			// ASHANDLE is really a value type, even though it looks
 			// like a handle, so we shouldn't dereference it
 			if( !(ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) ||
 				(ctx->type.isVariable && IsVariableOnHeap(ctx->type.stackOffset)) )
@@ -4694,7 +4694,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 					if( generateCode )
 					{
-						// If the object already is a temporary variable, then the copy 
+						// If the object already is a temporary variable, then the copy
 						// doesn't have to be made as it is already a unique object
 						PrepareTemporaryObject(node, ctx, reservedVars);
 					}
@@ -4703,13 +4703,13 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			else
 			{
 				// A value type allocated on the stack is differentiated
-				// by it not being a reference. But it can be handled as 
+				// by it not being a reference. But it can be handled as
 				// reference by pushing the pointer on the stack
 				if( (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) &&
 					(ctx->type.isVariable || ctx->type.isTemporary) &&
 					!IsVariableOnHeap(ctx->type.stackOffset) )
 				{
-					// Actually the pointer is already pushed on the stack in 
+					// Actually the pointer is already pushed on the stack in
 					// CompileVariableAccess, so we don't need to do anything else
 				}
 				else if( generateCode )
@@ -4722,7 +4722,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					bool typeIsReadOnly = ctx->type.dataType.IsReadOnly();
 					ctx->type.dataType.MakeReadOnly(false);
 
-					// If the object already is a temporary variable, then the copy 
+					// If the object already is a temporary variable, then the copy
 					// doesn't have to be made as it is already a unique object
 					PrepareTemporaryObject(node, ctx, reservedVars);
 
@@ -4742,7 +4742,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				else
 				{
 					// This may look strange as the conversion was to make the expression a reference
-					// but a value type allocated on the stack is a reference even without the type 
+					// but a value type allocated on the stack is a reference even without the type
 					// being marked as such.
 					ctx->type.dataType.MakeReference(IsVariableOnHeap(ctx->type.stackOffset));
 				}
@@ -4757,7 +4757,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 void asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext * /*ctx*/, const asCDataType & /*to*/, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool /*generateCode*/, asCArray<int> * /*reservedVars*/, bool /*allowObjectConstruct*/)
 {
-	// TODO: This function should call the constructor/factory that has been marked as available 
+	// TODO: This function should call the constructor/factory that has been marked as available
 	//       for implicit conversions. The code will likely be similar to CallCopyConstructor()
 }
 
@@ -5333,8 +5333,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 	{
 		if( op != ttAssignment )
 		{
-			// TODO: getset: We may actually be able to support this, if we can 
-			//               guarantee that the object reference will stay valid 
+			// TODO: getset: We may actually be able to support this, if we can
+			//               guarantee that the object reference will stay valid
 			//               between the calls to the get and set accessors.
 
 			// Compound assignments are not allowed for properties
@@ -5344,8 +5344,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 		// It is not allowed to do a handle assignment on a property accessor that
 		//  doesn't take a handle in the set accessor.
-		if( lctx->property_set && 
-			lctx->type.isExplicitHandle && 
+		if( lctx->property_set &&
+			lctx->type.isExplicitHandle &&
 			!engine->scriptFunctions[lctx->property_set]->parameterTypes[0].IsObjectHandle() )
 		{
 			Error(TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP, opNode);
@@ -5482,7 +5482,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		}
 
 		// The lvalue reference may be marked as a temporary, if for example
-		// it was originated as a handle returned from a function. In such 
+		// it was originated as a handle returned from a function. In such
 		// cases it must be possible to assign values to it anyway.
 		if( lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle )
 		{
@@ -5513,15 +5513,15 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		// If the left hand expression is simple, i.e. without any 
+		// If the left hand expression is simple, i.e. without any
 		// function calls or allocations of memory, then we can avoid
 		// doing a copy of the right hand expression (done by PrepareArgument).
 		// Instead the reference to the value can be placed directly on the
-		// stack. 
-		// 
+		// stack.
+		//
 		// This optimization should only be done for value types, where
-		// the application developer is responsible for making the 
-		// implementation safe against unwanted destruction of the input 
+		// the application developer is responsible for making the
+		// implementation safe against unwanted destruction of the input
 		// reference before the time.
 		bool simpleExpr = (lctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) && lctx->bc.IsSimpleExpression();
 
@@ -5849,7 +5849,7 @@ int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, as
 	// Shouldn't send any byte code
 	asASSERT(ctx->bc.GetLastInstr() == -1);
 
-	// Set the context to a dummy type to avoid further 
+	// Set the context to a dummy type to avoid further
 	// errors in case the expression fails to compile
 	ctx->type.SetDummy();
 
@@ -6031,7 +6031,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					ctx->type.dataType.MakeReference(true);
 					Dereference(ctx, true);
 				}
-				
+
 				// TODO: This is the same as what is in CompileExpressionPostOp
 				// Put the offset on the stack
 				ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(dt));
@@ -6091,7 +6091,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 			found = true;
 		}
-		
+
 		// See if there is any matching global property
 		if( !found )
 		{
@@ -6134,7 +6134,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 							// Push the address of the variable on the stack
 							ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[prop->id]->GetAddressOfValue());
 
-							// If the object is a value type, then we must validate the existance,  
+							// If the object is a value type, then we must validate the existance,
 							// as it could potentially be accessed before it is initialized.
 							if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
 								!ctx->type.dataType.IsObjectHandle() )
@@ -6165,7 +6165,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		if( funcs.GetLength() > 1 )
 		{
 			// TODO: funcdef: If multiple functions are found, then the compiler should defer the decision
-			//                to which one it should use until the value is actually used. 
+			//                to which one it should use until the value is actually used.
 			//
 			//                - assigning the function pointer to a variable
 			//                - performing an explicit cast
@@ -6506,8 +6506,8 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snAssignment )
 	{
 		asSExprContext e(engine);
-		int r = CompileAssignment(vnode, &e); 
-		if( r < 0 ) 
+		int r = CompileAssignment(vnode, &e);
+		if( r < 0 )
 		{
 			ctx->type.SetDummy();
 			return r;
@@ -6586,7 +6586,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 				return charLiteral;
 			}
 
-			// TODO: Consider deprecating use of hexadecimal escape sequences, 
+			// TODO: Consider deprecating use of hexadecimal escape sequences,
 			//       as they do not guarantee proper unicode sequences
 			if( cstr[n] == 'x' || cstr[n] == 'X' )
 			{
@@ -6692,7 +6692,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 			{
 				unsigned int len;
 				val = asStringDecodeUTF8(&cstr[n], &len);
-				if( val == 0xFFFFFFFF || len < 0 )
+				if( val == 0xFFFFFFFF )
 				{
 					// Incorrect UTF8 encoding. Use only the first byte
 					// TODO: Need code position for warning
@@ -6711,7 +6711,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 		int len;
 		if( engine->ep.scanner == 1 && engine->ep.stringEncoding == 0 )
 		{
-			// Convert to UTF8 encoded 
+			// Convert to UTF8 encoded
 			len = asStringEncodeUTF8(val, encodedValue);
 		}
 		else if( engine->ep.stringEncoding == 1 )
@@ -6787,7 +6787,7 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *no
 	if( end < 0 ) end = 0;
 
 	asCString tmp;
-	if( end > start ) 
+	if( end > start )
 		tmp.Assign(&str[start], end-start);
 
 	ProcessStringConstant(tmp, node, false);
@@ -7338,7 +7338,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 				r = CompileDefaultArgs(node, args, func);
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
-			//                is it enough to make sure it is in a local variable? 
+			//                is it enough to make sure it is in a local variable?
 
 			// For function pointer we must guarantee that the function is safe, i.e.
 			// by first storing the function pointer in a local variable (if it isn't already in one)
@@ -7395,7 +7395,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	if( op == ttHandle )
 	{
 		// Verify that the type allow its handle to be taken
-		if( ctx->type.isExplicitHandle || 
+		if( ctx->type.isExplicitHandle ||
 			!ctx->type.dataType.IsObject() ||
 			!((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 		{
@@ -7807,7 +7807,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	}
 	else
 	{
-		// Look for appropriate global functions. 
+		// Look for appropriate global functions.
 		asCArray<int> funcs;
 		asUINT n;
 		builder->GetFunctionDescriptions(getName.AddressOf(), funcs);
@@ -7907,7 +7907,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		// The property accessors would be virtual functions, so we need to find the real implementation
 		asCScriptFunction *getFunc = getId ? engine->scriptFunctions[getId] : 0;
 		if( getFunc &&
-			getFunc->funcType == asFUNC_VIRTUAL && 
+			getFunc->funcType == asFUNC_VIRTUAL &&
 			outFunc->objectType->DerivesFrom(getFunc->objectType) )
 			realGetId = outFunc->objectType->virtualFunctionTable[getFunc->vfTableIdx]->id;
 		asCScriptFunction *setFunc = setId ? engine->scriptFunctions[setId] : 0;
@@ -7938,7 +7938,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 	if( getId || setId )
 	{
-		// Property accessors were found, but we don't know which is to be used yet, so 
+		// Property accessors were found, but we don't know which is to be used yet, so
 		// we just prepare the bytecode for the method call, and then store the function ids
 		// so that the right one can be used when we get there.
 		ctx->property_get = getId;
@@ -7959,14 +7959,14 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		}
 
 		// The setter's parameter type is used as the property type,
-		// unless only the getter is available	
+		// unless only the getter is available
 		asCDataType dt;
 		if( setId )
 			dt = engine->scriptFunctions[setId]->parameterTypes[(arg?1:0)];
 		else
 			dt = engine->scriptFunctions[getId]->returnType;
 
-		// Just change the type, the context must still maintain information 
+		// Just change the type, the context must still maintain information
 		// about previous variable offset and the indicator of temporary variable.
 		int offset = ctx->type.stackOffset;
 		bool isTemp = ctx->type.isTemporary;
@@ -8331,7 +8331,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				r = FindPropertyAccessor(name, ctx, node);
 			if( r != 0 )
 				return r;
-			
+
 			if( !ctx->type.dataType.IsPrimitive() )
 				Dereference(ctx, true);
 
@@ -8414,7 +8414,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				Error(str.AddressOf(), node);
 				return -1;
 			}
-	
+
 			// Process the get property accessor
 			ProcessPropertyGetAccessor(ctx, node);
 
@@ -8431,7 +8431,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Compile function call
 			CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
 
-			// If the method returned a reference, then we can't release the original  
+			// If the method returned a reference, then we can't release the original
 			// object yet, because the reference may be to a member of it
 			if( objType.isTemporary &&
 				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
@@ -8502,11 +8502,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		// Check for the existence of the opIndex method
 		asSExprContext lctx(engine);
 		MergeExprBytecodeAndType(&lctx, ctx);
-		int r = 0; 
+		int r = 0;
 		if( propertyName == "" )
 			r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
 		if( r == 0 )
-		{	
+		{
 			// Check for accessors methods for the opIndex
 			r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, &expr, node);
 			if( r == 0 )
@@ -8514,7 +8514,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				asCString str;
 				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
 				Error(str.AddressOf(), node);
-				return -1;	
+				return -1;
 			}
 			else if( r < 0 )
 				return -1;
@@ -8613,9 +8613,9 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 		if( argType->dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
 		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, 0, allowObjectConstruct);
 
-		// If the function parameter is an inout-reference then it must not be possible to call the 
+		// If the function parameter is an inout-reference then it must not be possible to call the
 		// function with an incorrect argument type, even though the type can normally be converted.
-		if( desc->parameterTypes[paramNum].IsReference() && 
+		if( desc->parameterTypes[paramNum].IsReference() &&
 			desc->inOutFlags[paramNum] == asTM_INOUTREF &&
 			desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
 		{
@@ -8658,7 +8658,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 				if( !isMatchExceptConst )
 				{
 					// Is it a size promotion, e.g. int8 -> int?
-					if( argType->dataType.IsSamePrimitiveBaseType(ti.type.dataType) || 
+					if( argType->dataType.IsSamePrimitiveBaseType(ti.type.dataType) ||
 						(argType->dataType.IsEnumType() && ti.type.dataType.IsIntegerType()) )
 					{
 						if( !isMatchWithBaseType ) matches.SetLength(0);
@@ -8736,8 +8736,8 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	int token = node->tokenType;
 	if( token == ttUnrecognizedToken )
 	{
-		// This happens when the compiler is inferring an assignment 
-		// operation from another action, for example in preparing a value 
+		// This happens when the compiler is inferring an assignment
+		// operation from another action, for example in preparing a value
 		// as a function argument
 		token = ttAssignment;
 	}
@@ -8753,7 +8753,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 		token == ttNotEqual )
 	{
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
-		// Find the matching opEquals method 
+		// Find the matching opEquals method
 		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		if( r == 0 )
 		{
@@ -8925,9 +8925,9 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 //         one on matching operator
 int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char *methodName, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, bool specificReturn, const asCDataType &returnType)
 {
-	// Find the matching method 
-	if( lctx->type.dataType.IsObject() && 
-		(!lctx->type.isExplicitHandle || 
+	// Find the matching method
+	if( lctx->type.dataType.IsObject() &&
+		(!lctx->type.isExplicitHandle ||
 		 lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 	{
 		// Is the left value a const?
@@ -8976,7 +8976,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			ctx->type = lctx->type;
 			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
 
-			// If the method returned a reference, then we can't release the original  
+			// If the method returned a reference, then we can't release the original
 			// object yet, because the reference may be to a member of it
 			if( objType.isTemporary &&
 				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
@@ -9017,22 +9017,22 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 {
 	if( objectType )
 	{
-		// The ASHANDLE type is really a value type, so if it is a  
+		// The ASHANDLE type is really a value type, so if it is a
 		// local variable on the stack it must not be dereferenced
-		if( !(objectType->flags & asOBJ_ASHANDLE) || 
+		if( !(objectType->flags & asOBJ_ASHANDLE) ||
 			!(ctx->type.isVariable && !IsVariableOnHeap(ctx->type.stackOffset)) )
 			Dereference(ctx, true);
 
 		// This following warning was removed as there may be valid reasons
 		// for calling non-const methods on temporary objects, and we shouldn't
 		// warn when there is no way of removing the warning.
-/*		
-		// Warn if the method is non-const and the object is temporary 
+/*
+		// Warn if the method is non-const and the object is temporary
 		// since the changes will be lost when the object is destroyed.
 		// If the object is accessed through a handle, then it is assumed
 		// the object is not temporary, even though the handle is.
-		if( ctx->type.isTemporary && 
-			!ctx->type.dataType.IsObjectHandle() && 
+		if( ctx->type.isTemporary &&
+			!ctx->type.dataType.IsObjectHandle() &&
 			!engine->scriptFunctions[funcId]->isReadOnly )
 		{
 			Warning("A non-const method is called on temporary object. Changes to the object may be lost.", node);
@@ -9225,7 +9225,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 	if( reservedVars ) excludeVars.Concatenate(*reservedVars);
 	int offset;
 	if( !ctx->type.isVariable &&
-		(ctx->type.dataType.IsObjectHandle() || 
+		(ctx->type.dataType.IsObjectHandle() ||
 		 (ctx->type.dataType.IsObject() && ctx->type.dataType.SupportHandles())) )
 	{
 		offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
@@ -9427,7 +9427,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else if( op == ttPercent || op == ttModAssign )
 				{
 					if( lctx->type.dataType.IsIntegerType() )
-						instruction = asBC_MODi; 
+						instruction = asBC_MODi;
 					else
 						instruction = asBC_MODu;
 				}
@@ -9518,9 +9518,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
-							v = lctx->type.intValue / rctx->type.intValue; 
+							v = lctx->type.intValue / rctx->type.intValue;
 						else
-							v = lctx->type.dwordValue / rctx->type.dwordValue; 
+							v = lctx->type.dwordValue / rctx->type.dwordValue;
 				}
 				else if( op == ttPercent )
 				{
@@ -10406,7 +10406,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		 node->tokenType == ttNotEqual || node->tokenType == ttNotIs) )
 	{
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
-		// Find the matching opEquals method 
+		// Find the matching opEquals method
 		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		if( r == 0 )
 		{
@@ -10499,8 +10499,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		int b = lctx->type.stackOffset;
 		int c = rctx->type.stackOffset;
 
-		// TODO: When saving the bytecode we must be able to determine that this is 
-		//       a comparison with a pointer, so that the instruction can be adapted 
+		// TODO: When saving the bytecode we must be able to determine that this is
+		//       a comparison with a pointer, so that the instruction can be adapted
 		//       to the pointer size on the platform that will execute it.
 #ifdef AS_64BIT_PTR
 		ctx->bc.InstrW_W(asBC_CMPi64, b, c);
@@ -10543,7 +10543,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 	int argSize = descr->GetSpaceNeededForArguments();
 
-	if( descr->objectType && descr->returnType.IsReference() && 
+	if( descr->objectType && descr->returnType.IsReference() &&
 		!ctx->type.isVariable && (ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_ASHANDLE) )
@@ -10569,7 +10569,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 	if( isConstructor )
 	{
-		// Sometimes the value types are allocated on the heap,  
+		// Sometimes the value types are allocated on the heap,
 		// which is when this way of constructing them is used.
 
 		asASSERT(useVariable == false);
@@ -10652,7 +10652,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		else
 		{
 			ctx->bc.Instr(asBC_PshRPtr);
-			if( descr->returnType.IsObject() && 
+			if( descr->returnType.IsObject() &&
 				(!descr->returnType.IsObjectHandle() || (descr->returnType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 			{
 				// We are getting the pointer to the object
@@ -10670,7 +10670,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 		if( descr->returnType.GetSizeInMemoryBytes() )
 		{
-			// Allocate a temporary variable to hold the value, but make sure 
+			// Allocate a temporary variable to hold the value, but make sure
 			// the temporary variable isn't used in any of the deferred arguments
 			asCArray<int> vars;
 			for( asUINT n = 0; args && n < args->GetLength(); n++ )

@@ -920,6 +920,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\debugger\debugger.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\debugger\debugger.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\scriptany\scriptany.cpp"
 				>
 			</File>
