@@ -208,22 +208,22 @@ enum asERetCodes
 // Context states
 enum asEContextState
 {
-    asEXECUTION_FINISHED      = 0,
-    asEXECUTION_SUSPENDED     = 1,
-    asEXECUTION_ABORTED       = 2,
-    asEXECUTION_EXCEPTION     = 3,
-    asEXECUTION_PREPARED      = 4,
-    asEXECUTION_UNINITIALIZED = 5,
-    asEXECUTION_ACTIVE        = 6,
-    asEXECUTION_ERROR         = 7
+	asEXECUTION_FINISHED      = 0,
+	asEXECUTION_SUSPENDED     = 1,
+	asEXECUTION_ABORTED       = 2,
+	asEXECUTION_EXCEPTION     = 3,
+	asEXECUTION_PREPARED      = 4,
+	asEXECUTION_UNINITIALIZED = 5,
+	asEXECUTION_ACTIVE        = 6,
+	asEXECUTION_ERROR         = 7
 };
 
 // Message types
 enum asEMsgType
 {
-    asMSGTYPE_ERROR       = 0,
-    asMSGTYPE_WARNING     = 1,
-    asMSGTYPE_INFORMATION = 2
+	asMSGTYPE_ERROR       = 0,
+	asMSGTYPE_WARNING     = 1,
+	asMSGTYPE_INFORMATION = 2
 };
 
 // Garbage collector flags
@@ -839,8 +839,8 @@ public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 
 	// Memory management
-	virtual int AddRef() const = 0;
-	virtual int Release() const = 0;
+	virtual int              AddRef() const = 0;
+	virtual int              Release() const = 0;
 
 	virtual int              GetId() const = 0;
 	virtual asEFuncType      GetFuncType() const = 0;
@@ -868,8 +868,8 @@ public:
 	virtual asDWORD         *GetByteCode(asUINT *length = 0) = 0;
 
 	// User data
-	virtual void *SetUserData(void *userData) = 0;
-	virtual void *GetUserData() const = 0;
+	virtual void            *SetUserData(void *userData) = 0;
+	virtual void            *GetUserData() const = 0;
 
 protected:
 	virtual ~asIScriptFunction() {};

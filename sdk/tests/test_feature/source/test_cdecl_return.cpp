@@ -82,8 +82,8 @@ bool Test()
 		TEST_FAILED;
 	}
 
-	ExecuteString(engine, "Assert(!retfalse() == cfunction_b())");
-	ExecuteString(engine, "Assert(retfalse() == false)");
+	ExecuteString(engine, "assert(!retfalse() == cfunction_b())");
+	ExecuteString(engine, "assert(retfalse() == false)");
 	ExecuteString(engine, "returned = retfalse()");
 	if( returned )
 	{
@@ -91,8 +91,8 @@ bool Test()
 		TEST_FAILED;
 	}
 
-	ExecuteString(engine, "Assert(!retfalse2() == cfunction_b())");
-	ExecuteString(engine, "Assert(retfalse2() == false)");
+	ExecuteString(engine, "assert(!retfalse2() == cfunction_b())");
+	ExecuteString(engine, "assert(retfalse2() == false)");
 	ExecuteString(engine, "returned = retfalse2()");
 	if( returned )
 	{

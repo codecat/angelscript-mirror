@@ -10400,8 +10400,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	}
 
 	// If one of the operands is a value type used as handle, we should look for the opEquals method
-	if( (lctx->type.dataType.GetObjectType() && lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE ||
-		 rctx->type.dataType.GetObjectType() && rctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) &&
+	if( ((lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) ||
+		 (rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE))) &&
 		(node->tokenType == ttEqual || node->tokenType == ttIs ||
 		 node->tokenType == ttNotEqual || node->tokenType == ttNotIs) )
 	{
