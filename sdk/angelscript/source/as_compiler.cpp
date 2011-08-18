@@ -5337,19 +5337,29 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			//               guarantee that the object reference will stay valid
 			//               between the calls to the get and set accessors.
 
+			// Process the property to free the memory
+			ProcessPropertySetAccessor(lctx, rctx, opNode);
+
 			// Compound assignments are not allowed for properties
 			Error(TXT_COMPOUND_ASGN_WITH_PROP, opNode);
 			return -1;
 		}
 
-		// It is not allowed to do a handle assignment on a property accessor that
-		//  doesn't take a handle in the set accessor.
-		if( lctx->property_set &&
-			lctx->type.isExplicitHandle &&
-			!engine->scriptFunctions[lctx->property_set]->parameterTypes[0].IsObjectHandle() )
+		// It is not allowed to do a handle assignment on a property 
+		// accessor that doesn't take a handle in the set accessor.
+		if( lctx->property_set && lctx->type.isExplicitHandle )
 		{
-			Error(TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP, opNode);
-			return -1;
+			// set_opIndex has 2 arguments, where as normal setters have only 1
+			asCArray<asCDataType>& parameterTypes =
+				engine->scriptFunctions[lctx->property_set]->parameterTypes;
+			if( !parameterTypes[parameterTypes.GetLength() - 1].IsObjectHandle() )
+			{
+				// Process the property to free the memory
+				ProcessPropertySetAccessor(lctx, rctx, opNode);
+
+				Error(TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP, opNode);
+				return -1;
+			}
 		}
 
 		MergeExprBytecodeAndType(ctx, lctx);

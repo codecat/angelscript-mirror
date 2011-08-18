@@ -72,28 +72,36 @@ bool Test()
 		engine->RegisterGlobalFunction("bool retfalse2()", asFUNCTION(retfalse_fake), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int64 reti64()", asFUNCTION(reti64), asCALL_CDECL);
 		
-		ExecuteString(engine, "assert(reti64() == 0x102030405)");
+		int r = ExecuteString(engine, "assert(reti64() == 0x102030405)");
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	}
 
-	ExecuteString(engine, "returned = cfunction_b()");
+	int r = ExecuteString(engine, "returned = cfunction_b()");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if (!returned) 
 	{
 		printf("\nTestReturn: cfunction didn't return properly\n\n");
 		TEST_FAILED;
 	}
 
-	ExecuteString(engine, "assert(!retfalse() == cfunction_b())");
-	ExecuteString(engine, "assert(retfalse() == false)");
-	ExecuteString(engine, "returned = retfalse()");
+	r = ExecuteString(engine, "assert(!retfalse() == cfunction_b())");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "assert(retfalse() == false)");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "returned = retfalse()");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( returned )
 	{
 		printf("\nTestReturn: retfalse didn't return properly\n\n");
 		TEST_FAILED;
 	}
 
-	ExecuteString(engine, "assert(!retfalse2() == cfunction_b())");
-	ExecuteString(engine, "assert(retfalse2() == false)");
-	ExecuteString(engine, "returned = retfalse2()");
+	r = ExecuteString(engine, "assert(!retfalse2() == cfunction_b())");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "assert(retfalse2() == false)");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "returned = retfalse2()");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( returned )
 	{
 		printf("\nTestReturn: retfalse2 didn't return properly\n\n");
@@ -134,7 +142,8 @@ bool TestReturnF()
 	else
 		engine->RegisterGlobalFunction("float cfunction_f()", asFUNCTION(cfunction_f), asCALL_CDECL);
 
-	ExecuteString(engine, "returnValue_f = cfunction_f()");
+	int r = ExecuteString(engine, "returnValue_f = cfunction_f()");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	if( returnValue_f != 18.87f ) 
 	{
@@ -173,7 +182,8 @@ bool TestReturnD()
 	else
 		engine->RegisterGlobalFunction("double cfunction_d()", asFUNCTION(cfunction_d), asCALL_CDECL);
 
-	ExecuteString(engine, "returnValue_d = cfunction_d()");
+	int r = ExecuteString(engine, "returnValue_d = cfunction_d()");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	if( returnValue_d != 88.32 ) 
 	{

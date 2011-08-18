@@ -1040,7 +1040,7 @@ bool Test()
 	// Test property accessors for opIndex
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
 		RegisterScriptString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -1053,6 +1053,13 @@ bool Test()
 			"  void set_opIndex(int i, int v) { arr[i] = v; } \n"
 			"  array<int> arr; \n"
 			"} \n"
+			"class CTest2 \n"
+			"{ \n"
+			"  CTest2() { arr.resize(1); } \n"
+			"  CTest @get_opIndex(int i) const { return arr[i]; } \n"
+			"  void set_opIndex(int i, CTest @v) { @arr[i] = v; } \n"
+			"  array<CTest@> arr; \n"
+			"} \n"
 			"void main() \n"
 			"{ \n"
 			"  CTest s; \n"
@@ -1060,8 +1067,12 @@ bool Test()
 			"  assert( s[0] == 42 ); \n"
 			"  s[1] = 24; \n"
 			"  assert( s[1] == 24 ); \n"
+			"  CTest2 t; \n"
+			"  @t[0] = s; \n"
+			"  assert( t[0] is s ); \n"
 			"} \n";
 
+		bout.buffer = "";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
@@ -1071,6 +1082,42 @@ bool Test()
 		r = ExecuteString(engine, "main", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		// Test error
+		script = 
+			"class CTest \n"
+			"{ \n"
+			"  CTest() { } \n"
+			"  int get_opIndex(int i) const { return arr[i]; } \n"
+			"  void set_opIndex(int i, int v) { arr[i] = v; } \n"
+			"  array<int> arr; \n"
+			"} \n"
+			"class CTest2 \n"
+			"{ \n"
+			"  CTest2() { } \n"
+			"  CTest get_opIndex(int i) const { return arr[i]; } \n"
+			"  void set_opIndex(int i, CTest v) { @arr[i] = v; } \n"
+			"  array<CTest@> arr; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  CTest s; \n"
+			"  s[0] += 42; \n" // compound assignment is not allowed
+			"  CTest2 t; \n"
+			"  @t[0] = s; \n" // handle assign is not allowed for non-handle property
+			"} \n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r > 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (15, 1) : Info    : Compiling void main()\n"
+		                   "script (18, 8) : Error   : Compound assignments with property accessors are not allowed\n"
+		                   "script (20, 9) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 
 		engine->Release();
 	}
