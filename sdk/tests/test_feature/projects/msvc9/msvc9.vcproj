@@ -368,6 +368,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_addon_serializer.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_any.cpp"
 				>
 			</File>

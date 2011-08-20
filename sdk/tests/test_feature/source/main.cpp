@@ -149,6 +149,7 @@ namespace TestDefaultArg        { bool Test(); }
 
 namespace Test_Addon_ScriptArray  { bool Test(); }
 namespace Test_Addon_ScriptHandle { bool Test(); }
+namespace Test_Addon_Serializer   { bool Test(); }
 
 #include "utils.h"
 
@@ -189,6 +190,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( Test_Addon_Serializer::Test()   ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
 	if( Test_Addon_ScriptHandle::Test() ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
 	if( TestScriptRetRef::Test()        ) goto failed; else printf("-- TestScriptRetRef passed\n");

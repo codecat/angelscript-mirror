@@ -60,6 +60,8 @@
 		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h" />
 		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptstring\scriptstring.h" />
+		<Unit filename="..\..\..\..\add_on\serializer\serializer.cpp" />
+		<Unit filename="..\..\..\..\add_on\serializer\serializer.h" />
 		<Unit filename="..\..\..\..\angelscript\include\angelscript.h" />
 		<Unit filename="..\..\source\bstr.cpp" />
 		<Unit filename="..\..\source\bstr.h" />
@@ -73,6 +75,7 @@
 		<Unit filename="..\..\source\test_2func.cpp" />
 		<Unit filename="..\..\source\test_addon_scriptarray.cpp" />
 		<Unit filename="..\..\source\test_addon_scripthandle.cpp" />
+		<Unit filename="..\..\source\test_addon_serializer.cpp" />
 		<Unit filename="..\..\source\test_any.cpp" />
 		<Unit filename="..\..\source\test_argref.cpp" />
 		<Unit filename="..\..\source\test_array.cpp" />

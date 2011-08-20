@@ -16,6 +16,7 @@ SRCNAMES = \
   test_2func.cpp \
   test_addon_scriptarray.cpp \
   test_addon_scripthandle.cpp \
+  test_addon_serializer.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -162,6 +163,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptfile.o \
   obj/scriptbuilder.o \
   obj/scriptmath3d.o  \
+  obj/serializer.o \
 
 
 BIN = ../../bin/testgnuc
@@ -210,6 +212,8 @@ obj/scriptmath3d.o: ../../../../add_on/scriptmath3d/scriptmath3d.cpp
 obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
+obj/serializer.o: ../../../../add_on/serializer/serializer.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:
 	$(DELETER) $(OBJ) $(BIN)

@@ -11,6 +11,7 @@ SRCNAMES = \
   test_2func.cpp \
   test_addon_scriptarray.cpp \
   test_addon_scripthandle.cpp \
+  test_addon_serializer.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -141,22 +142,23 @@ SRCNAMES = \
   testvirtualinheritance.cpp \
   testvirtualmethod.cpp \
   utils.cpp \
+  scriptstring.cpp \
+  scriptstring_utils.cpp \
 
 
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptarray.o \
   obj/scripthandle.o \
   obj/scripthelper.o \
-  obj/scriptstring.o \
   obj/scriptstdstring.o \
   obj/scriptstdstringutil.o \
   obj/scriptany.o \
-  obj/scriptstringutil.o \
   obj/scriptmath.o \
   obj/scriptdictionary.o \
   obj/scriptfile.o \
   obj/scriptbuilder.o \
   obj/scriptmath3d.o  \
+  obj/serializer.o \
 
 
 BIN = ../../bin/mingw.exe
@@ -183,12 +185,6 @@ obj/scripthandle.o: ../../../../add_on/scripthandle/scripthandle.cpp
 obj/scripthelper.o: ../../../../add_on/scripthelper/scripthelper.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/scriptstring.o: ../../../../add_on/scriptstring/scriptstring.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
-obj/scriptstringutil.o: ../../../../add_on/scriptstring/scriptstring_utils.cpp
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
 obj/scriptstdstring.o: ../../../../add_on/scriptstdstring/scriptstdstring.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
@@ -213,6 +209,8 @@ obj/scriptmath3d.o: ../../../../add_on/scriptmath3d/scriptmath3d.cpp
 obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
+obj/serializer.o: ../../../../add_on/serializer/serializer.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:
 	$(DELETER) $(OBJ_D) $(BIN_D)
