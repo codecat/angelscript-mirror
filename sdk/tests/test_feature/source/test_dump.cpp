@@ -363,13 +363,8 @@ void DumpModule(asIScriptModule *mod)
 		" bool opEquals(const string&in) const\n"
 		" int opCmp(const string&in) const\n"
 		" string opAdd(const string&in) const\n"
-#if defined(__LP64__) || defined(_WIN64)
-		" uint64 length() const\n"
-		" void resize(uint64)\n"
-#else
 		" uint length() const\n"
 		" void resize(uint)\n"
-#endif
 		" uint8& opIndex(uint)\n"
 		" const uint8& opIndex(uint) const\n"
 		" string& opAssign(double)\n"

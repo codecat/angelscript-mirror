@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.1 WIP - 2011/08/18</h2>
+<h2>Version 2.21.1 WIP - 2011/08/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added the asOBJ_ASHANDLE type flag. This will be used together with asOBJ_VALUE to allow application to register a container type that can store any handle type
 <li>Implemented support for asBEHAVE_REF_CAST with the signature 'void f(?&amp;out)' which allow a cast to any handle type, evaluated at runtime
 <li>asIScriptContext::Unprepare no longer free's the stack memory, so there is no performance penalty for that
+<li>Added support for native calling conventions on Win64 with MinGW64 (Thanks _Vicious_)
 </ul>
 <li>Script language
 <ul>

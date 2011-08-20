@@ -1024,6 +1024,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\add_on\serializer\serializer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\serializer\serializer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\stdstring.h"
 				>
 			</File>
