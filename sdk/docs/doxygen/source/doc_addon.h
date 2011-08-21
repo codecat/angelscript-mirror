@@ -12,6 +12,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_build
  - \subpage doc_addon_ctxmgr
  - \subpage doc_addon_debugger
+ - \subpage doc_addon_serializer
  - \subpage doc_addon_helpers
  - \subpage doc_addon_autowrap
  - \subpage doc_addon_clib
@@ -26,6 +27,122 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_file
  - \subpage doc_addon_math
  - \subpage doc_addon_math3d
+
+
+ 
+ 
+\page doc_addon_serializer Serializer
+
+<b>Path:</b> /sdk/add_on/serializer/
+
+The <code>CSerializer</code> implements support for serializing the values of global variables in a 
+module, for example in order to reload a slightly modified version of the script without reinitializing
+everything. It will resolve primitives and script classes automatically, including references and handles.
+For application registered types, the application needs to implement callback objects to show how
+these should be serialized.
+
+The implementation currently has some limitations:
+
+ - It can only serialize to memory, i.e. it is not possible to save the values to a file.
+ - If the variables changed type when restoring, the serializer cannot restore the value.
+ - The serializer will attempt to backup all objects, but in some cases an application may
+   not want to backup the actual object, but only a reference to it, e.g. an internal application
+   object referenced by the script. Currently there is no way of telling the serializer to do 
+   differently in this case.
+ - If the module holds references to objects from another module it will probably fail in 
+   restoring the values.
+ 
+
+\section doc_addon_serializer_1 Public C++ interface
+
+\code
+class CSerializer
+{
+public:
+  CSerializer();
+  ~CSerializer();
+
+  // Add implementation for serializing user types
+  void AddUserType(CUserType *ref, const std::string &name);
+
+  // Store all global variables in the module
+  int Store(asIScriptModule *mod);
+
+  // Restore all global variables after reloading script
+  int Restore(asIScriptModule *mod);
+};
+\endcode
+
+\section doc_addon_serializer_2 Example usage
+
+\code
+struct CStringType;
+struct CArrayType;
+
+void RecompileModule(asIScriptEngine *engine, asIScriptModule *mod)
+{
+  string modName = mod->GetName();
+
+  // Tell the serializer how the user types should be serialized
+  // by adding the implementations of the CUserType interface
+  CSerializer backup;
+  backup.AddUserType(new CStringType(), "string");
+  backup.AddUserType(new CArrayType(), "array");
+
+  // Backup the values of the global variables
+  modStore.Store(mod);
+  
+  // Application can now recompile the module
+  CompileModule(modName);
+
+  // Restore the values of the global variables in the new module
+  mod = engine->GetModule(modName.c_str(), asGM_ONLY_IF_EXISTS);
+  backup.Restore(mod);
+}
+
+// This serializes the std::string type
+struct CStringType : public CUserType
+{
+  void Store(CSerializedValue *val, void *ptr)
+  {
+    val->SetUserData(new std::string(*(std::string*)ptr));
+  }
+  void Restore(CSerializedValue *val, void *ptr)
+  {
+    std::string *buffer = (std::string*)val->GetUserData();
+    *(std::string*)ptr = *buffer;
+  }
+  void CleanupUserData(CSerializedValue *val)
+  {
+    std::string *buffer = (std::string*)val->GetUserData();
+    delete buffer;
+  }
+};
+
+// This serializes the CScriptArray type
+struct CArrayType : public CUserType
+{
+  void Store(CSerializedValue *val, void *ptr)
+  {
+    CScriptArray *arr = (CScriptArray*)ptr;
+
+    for( unsigned int i = 0; i < arr->GetSize(); i++ )
+      val->m_children.push_back(new CSerializedValue(val ,"", arr->At(i), arr->GetElementTypeId()));
+  }
+  void Restore(CSerializedValue *val, void *ptr)
+  {
+    CScriptArray *arr = (CScriptArray*)ptr;
+    arr->Resize(val->m_children.size());
+
+    for( size_t i = 0; i < val->m_children.size(); ++i )
+      val->m_children[i]->Restore(arr->At(i));
+  }
+};
+\endcode
+
+
+
+
 
 
 

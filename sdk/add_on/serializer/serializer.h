@@ -150,14 +150,13 @@ public:
 	CSerializer();
 	~CSerializer();
 	
-	// Add user class, for store user references types
-	// Script reload cant do automatically store and restore user type.
+	// Add implementation for serializing user types
 	void AddUserType(CUserType *ref, const std::string &name);
 
-	// Store all global variables, and handles
+	// Store all global variables in the module
 	int Store(asIScriptModule *mod);
 
-	// Retrieve all global variables after reload script.
+	// Restore all global variables after reloading script
 	int Restore(asIScriptModule *mod);
 
 protected:

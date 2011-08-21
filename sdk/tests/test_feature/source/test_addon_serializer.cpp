@@ -110,7 +110,6 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-
 		r = modStore.Restore(mod);
 		if( r < 0 )
 			TEST_FAILED;
