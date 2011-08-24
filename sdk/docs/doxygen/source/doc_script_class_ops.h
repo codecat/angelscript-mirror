@@ -54,7 +54,8 @@ opEquals method must be implemented to return a <tt>bool</tt> in order to be con
 
 The comparison operators are rewritten as <tt>a.opCmp(b) <i>op</i> 0</tt> and <tt>0 <i>op</i> b.opCmp(a)</tt> 
 and then the best match is used. The opCmp method must be implemented to return a <tt>int</tt> in order to be 
-considered by the compiler.
+considered by the compiler. If the method argument is to be considered larger than the object then the method 
+should return a negative value. If they are supposed to be equal the return value should be 0.
 
 If an equality check is made and the opEquals method is not available the compiler looks for the opCmp method 
 instead. So if the opCmp method is available it is really not necesary to implement the opEquals method, except
