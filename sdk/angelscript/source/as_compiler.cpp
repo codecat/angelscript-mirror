@@ -1212,6 +1212,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		}
 		else if( refType == asTM_INOUTREF )
 		{
+			ProcessPropertyGetAccessor(ctx, node);
+
 			// Literal constants cannot be passed to inout ref arguments
 			if( !ctx->type.isVariable && ctx->type.isConstant )
 			{

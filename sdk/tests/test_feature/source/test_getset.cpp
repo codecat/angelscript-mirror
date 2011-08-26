@@ -39,6 +39,12 @@ private:
 	int refCount;
 };
 
+void Log(const string& s)
+{
+	assert( s == "hello" );
+//	printf("Log: %s\n", s.c_str());
+}
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -464,6 +470,7 @@ bool Test()
 	// used instead of the overloaded assignment operator to set the value. 
 	// Properties of object properties, must allow having different 
 	// types for get and set. IsEqualExceptConstAndRef should be used.
+	engine->RegisterGlobalFunction("void Log(const string&inout)", asFUNCTION(Log), asCALL_CDECL);
 	const char *script12 = 
 		"class Test                                   \n"
 		"{                                            \n"
@@ -476,6 +483,8 @@ bool Test()
 		"  Test t;                  \n"
 		"  t.s = 'hello';           \n"
 		"  assert(t.s == 'hello');  \n"
+		"  Log(t.s);                \n" // &inout parameter wasn't working
+		"  Log(t.get_s());          \n"
 		"}                          \n";
 	mod->AddScriptSection("script", script12);
 	bout.buffer = "";
