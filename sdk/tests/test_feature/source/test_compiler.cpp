@@ -1515,6 +1515,9 @@ bool Test()
 	}
 
 	// Test function overloading
+	// This was failing because the code didn't filter out the method with only one parameter before starting
+	// the match making. As it's first parameter was a better match it then made the code ignore the correct
+	// method.
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";
