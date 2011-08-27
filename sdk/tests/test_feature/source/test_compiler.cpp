@@ -1514,6 +1514,36 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test function overloading
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class T { \n"
+			"  uint mthd(int a, bool b) {return 0;} \n"
+			"  bool mthd(uint a) {return false;} \n"
+			"} \n"
+			"void main() { \n"
+			"  T t; \n"
+			"  t.mthd(1, true); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
