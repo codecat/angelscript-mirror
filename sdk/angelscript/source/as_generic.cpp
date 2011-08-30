@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -120,6 +120,7 @@ asBYTE asCGeneric::GetArgByte(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -143,6 +144,7 @@ asWORD asCGeneric::GetArgWord(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -166,6 +168,7 @@ asDWORD asCGeneric::GetArgDWord(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -189,6 +192,7 @@ asQWORD asCGeneric::GetArgQWord(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -212,6 +216,7 @@ float asCGeneric::GetArgFloat(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -235,6 +240,7 @@ double asCGeneric::GetArgDouble(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -255,6 +261,7 @@ void *asCGeneric::GetArgAddress(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -275,6 +282,7 @@ void *asCGeneric::GetArgObject(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -290,6 +298,7 @@ void *asCGeneric::GetAddressOfArg(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -315,6 +324,7 @@ int asCGeneric::GetArgTypeId(asUINT arg) const
 		return engine->GetTypeIdFromDataType(*dt);
 	else
 	{
+		// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 		int offset = 0;
 		for( asUINT n = 0; n < arg; n++ )
 			offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -446,6 +456,8 @@ int asCGeneric::SetReturnAddress(void *val)
 // interface
 int asCGeneric::SetReturnObject(void *obj)
 {
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
+
 	asCDataType *dt = &sysFunction->returnType;
 	if( !dt->IsObject() )
 		return asINVALID_TYPE;
@@ -477,6 +489,8 @@ int asCGeneric::SetReturnObject(void *obj)
 void *asCGeneric::GetReturnPointer()
 {
 	asCDataType &dt = sysFunction->returnType;
+
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 
 	if( dt.IsObject() && !dt.IsReference() )
 		return &objectRegister;

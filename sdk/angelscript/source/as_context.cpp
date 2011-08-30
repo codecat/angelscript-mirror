@@ -306,17 +306,20 @@ int asCContext::Prepare(int funcID)
 			stackBlocks.PushLast(stack);
 		}
 
-		// Reserve space for the arguments and return value
-		returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
-
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
-		// TODO: ret-by-val: Functions that return by value have an extra pointer for the address of the return location
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
-	}
 
-	// TODO: ret-by-val: The context should reserve space for the return value on the stack before the arguments.
-	//                   The address of the return value should be set automatically to this location so it will
-	//                   be transparent to the application.
+#ifdef AS_NEW
+		// Reserve space for the arguments and return value
+		if( currentFunction->DoesReturnOnStack() )
+		{
+			returnValueSize = currentFunction->returnType.GetSizeInMemoryDWords();
+			argumentsSize += AS_PTR_SIZE;
+		}
+		else
+#endif
+			returnValueSize = 0;
+	}
 
 	// Reset state
 	// Most of the time the previous state will be asEXECUTION_FINISHED, in which case the values are already initialized
@@ -334,11 +337,23 @@ int asCContext::Prepare(int funcID)
 	status = asEXECUTION_PREPARED;
 
 	// Reserve space for the arguments and return value
-	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize;
+	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize - returnValueSize;
 	regs.stackPointer      = regs.stackFramePointer;
 
 	// Set arguments to 0
 	memset(regs.stackPointer, 0, 4*argumentsSize);
+
+#ifdef AS_NEW
+	if( returnValueSize )
+	{
+		// Set the address of the location where the return value should be put
+		asDWORD *ptr = regs.stackFramePointer;
+		if( currentFunction->objectType )
+			ptr += AS_PTR_SIZE;
+
+		*(void**)ptr = (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
+	}
+#endif
 
 	if( currentFunction->funcType == asFUNC_SCRIPT )
 	{
@@ -468,7 +483,13 @@ void *asCContext::GetReturnAddress()
 	if( dt->IsReference() )
 		return *(void**)&regs.valueRegister;
 	else if( dt->IsObject() )
+	{
+#ifdef AS_NEW
+		if( initialFunction->DoesReturnOnStack() )
+			return (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
+#endif		
 		return regs.objectRegister;
+	}
 
 	return 0;
 }
@@ -484,7 +505,13 @@ void *asCContext::GetReturnObject()
 	if( dt->IsReference() )
 		return *(void**)(size_t)regs.valueRegister;
 	else
+	{
+#ifdef AS_NEW
+		if( initialFunction->DoesReturnOnStack() )
+			return (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
+#endif
 		return regs.objectRegister;
+	}
 }
 
 void *asCContext::GetAddressOfReturnValue()
@@ -498,7 +525,13 @@ void *asCContext::GetAddressOfReturnValue()
 	{
 		// Need to dereference objects 
 		if( !dt->IsObjectHandle() )
+		{
+#ifdef AS_NEW
+			if( initialFunction->DoesReturnOnStack() )
+				return (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
+#endif
 			return *(void**)&regs.objectRegister;
+		}
 		return &regs.objectRegister;
 	}
 
@@ -548,10 +581,14 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -587,10 +624,14 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -626,10 +667,14 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -665,10 +710,14 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -704,10 +753,14 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -743,10 +796,14 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -776,10 +833,14 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -825,10 +886,14 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	}
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -851,10 +916,14 @@ void *asCContext::GetAddressOfArg(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
+#ifdef AS_NEW
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( returnValueSize )
+		offset += AS_PTR_SIZE;
+#endif
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -3463,6 +3532,8 @@ void asCContext::SetInternalException(const char *descr)
 
 void asCContext::CleanReturnObject()
 {
+	// TODO: ret-by-val: If function returns on stack we need to call the destructor on the returned object
+
 	if( regs.objectRegister == 0 ) return;
 
 	asASSERT( regs.objectType != 0 );
