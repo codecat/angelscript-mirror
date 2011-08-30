@@ -144,7 +144,9 @@ public:
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;
 	bool      IsSignatureExceptNameEqual(const asCScriptFunction *func) const;
 
-    void      JITCompile();
+	bool      DoesReturnOnStack() const;
+
+	void      JITCompile();
 
 	void      AddReferences();
 	void      ReleaseReferences();

@@ -194,6 +194,7 @@ public:
 
 	void ReleaseAllFunctions();
 
+	// TODO: interface: Implements and DerivesFrom could be made public methods in the asIObjectType interface
 	bool Implements(const asCObjectType *objType) const;
 	bool DerivesFrom(const asCObjectType *objType) const;
 	bool IsInterface() const;

@@ -295,6 +295,17 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 }
 
 // internal
+bool asCScriptFunction::DoesReturnOnStack() const
+{
+	if( returnType.GetObjectType() &&
+		(returnType.GetObjectType()->flags & asOBJ_VALUE) &&
+		!returnType.IsReference() )
+		return true;
+		
+	return false;
+}
+
+// internal
 asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 {
 	asCString str;

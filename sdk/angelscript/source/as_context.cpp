@@ -310,8 +310,13 @@ int asCContext::Prepare(int funcID)
 		returnValueSize = currentFunction->GetSpaceNeededForReturnValue();
 
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
+		// TODO: ret-by-val: Functions that return by value have an extra pointer for the address of the return location
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
 	}
+
+	// TODO: ret-by-val: The context should reserve space for the return value on the stack before the arguments.
+	//                   The address of the return value should be set automatically to this location so it will
+	//                   be transparent to the application.
 
 	// Reset state
 	// Most of the time the previous state will be asEXECUTION_FINISHED, in which case the values are already initialized
@@ -543,6 +548,7 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -581,6 +587,7 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -619,6 +626,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -657,6 +665,7 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -695,6 +704,7 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -733,6 +743,7 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -765,10 +776,10 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-
 	for( asUINT n = 0; n < arg; n++ )
 		offset += initialFunction->parameterTypes[n].GetSizeOnStackDWords();
 
@@ -814,6 +825,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	}
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -839,6 +851,7 @@ void *asCContext::GetAddressOfArg(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
@@ -1187,10 +1200,12 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 				stackBlocks.PushLast(stack);
 			}
 
+			// TODO: ret-by-val: Functions that return by value has an extra pointer on the stack
 			regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments() - (func->objectType ? AS_PTR_SIZE : 0);
 		} 
 
 		// Copy the function arguments to the new stack space
+		// TODO: ret-by-val: Functions that return by value have an extra pointer on the stack
 		int numDwords = func->GetSpaceNeededForArguments() + (func->objectType ? AS_PTR_SIZE : 0);
 		memcpy(regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
 	}

@@ -489,6 +489,8 @@ void *asCGeneric::GetAddressOfReturnLocation()
 {
 	asCDataType &dt = sysFunction->returnType;
 
+	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
+
 	if( dt.IsObject() && !dt.IsReference() )
 	{
 		if( dt.GetObjectType()->flags & asOBJ_VALUE )

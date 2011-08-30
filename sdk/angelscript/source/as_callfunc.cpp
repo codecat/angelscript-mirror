@@ -378,13 +378,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	void    *obj               = 0;
 	int      popSize           = sysFunc->paramSize;
 
-	context->regs.objectType = descr->returnType.GetObjectType();
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
-	{
-		// Allocate the memory for the object
-		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
-	}
-
 	if( callConv >= ICC_THISCALL )
 	{
 		if( objectPointer )
@@ -420,6 +413,24 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			args += AS_PTR_SIZE;
 		}
 	}
+
+	context->regs.objectType = descr->returnType.GetObjectType();
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
+	{
+#ifdef AS_NEW
+		// Get the address of the location for the return value from the stack
+		retPointer = (void*)*(size_t*)(args);
+		popSize += AS_PTR_SIZE;
+		args += AS_PTR_SIZE;
+
+		// When returning the value on the location allocated by the called we shouldn't set the object type in the register
+		context->regs.objectType = 0;
+#else
+		// Allocate the memory for the object
+		retPointer = engine->CallAlloc(descr->returnType.GetObjectType());
+#endif
+	}
+
 
 	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
 
@@ -512,6 +523,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			// Store the object in the register
 			context->regs.objectRegister = retPointer;
 		}
+
+#ifdef AS_NEW
+		// If the value is returned on the stack we shouldn't update the object register
+		if( descr->DoesReturnOnStack() )
+			context->regs.objectRegister = 0;
+#endif
 	}
 	else
 	{

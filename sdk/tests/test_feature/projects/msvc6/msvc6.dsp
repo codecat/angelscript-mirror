@@ -107,6 +107,10 @@ SOURCE=..\..\source\test_addon_scripthandle.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_serializer.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_any.cpp
 # End Source File
 # Begin Source File
@@ -756,6 +760,14 @@ SOURCE=..\..\source\scriptstring.h
 # Begin Source File
 
 SOURCE=..\..\source\scriptstring_utils.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\serializer\serializer.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\serializer\serializer.h
 # End Source File
 # Begin Source File
 
