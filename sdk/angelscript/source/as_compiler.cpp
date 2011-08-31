@@ -4542,8 +4542,18 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			{
 				asCTypeInfo objType = ctx->type;
 				Dereference(ctx, true);
-				// TODO: ret-by-val: Need to allocate space for the return value
-				PerformFunctionCall(funcs[0], ctx);
+
+				bool useVariable = false;
+				int  stackOffset = 0;
+#ifdef AS_NEW
+				if( f->DoesReturnOnStack() )
+				{
+					useVariable = true;
+					stackOffset = AllocateVariable(f->returnType, true);
+					ctx->bc.InstrSHORT(asBC_PSF, short(stackOffset));
+				}
+#endif
+				PerformFunctionCall(funcs[0], ctx, false, 0, 0, useVariable, stackOffset);
 				ReleaseTemporaryVariable(objType, &ctx->bc);
 			}
 			else

@@ -3401,6 +3401,20 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 	return newObj;
 }
 
+// internal
+void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type)
+{
+	// This function is only meant to be used for value types
+	asASSERT( type->flags & asOBJ_VALUE );
+
+	// TODO: Should use the copy constructor when available
+	int funcIndex = type->beh.construct;
+	if( funcIndex )
+		CallObjectMethod(mem, funcIndex);
+
+	CopyScriptObject(mem, obj, type->GetTypeId());
+}
+
 void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 {
 	// TODO: optimize: Use the copy constructor when available

@@ -3980,6 +3980,15 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 		}
 	}
 
+#ifdef AS_NEW
+	if( sysFunction->DoesReturnOnStack() )
+	{
+		// Skip the address where the return value will be stored
+		args += AS_PTR_SIZE;
+		popSize += AS_PTR_SIZE;
+	}
+#endif
+
 	asCGeneric gen(engine, sysFunction, currentObject, args);
 
 	isCallingSystemFunction = true;

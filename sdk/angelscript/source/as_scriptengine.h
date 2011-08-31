@@ -228,6 +228,8 @@ public:
 	void  CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 	bool  CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
 
+	void ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type);
+
 	void ClearUnusedTypes();
 	void RemoveTemplateInstanceType(asCObjectType *t);
 	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);

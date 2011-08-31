@@ -120,7 +120,6 @@ asBYTE asCGeneric::GetArgByte(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -144,7 +143,6 @@ asWORD asCGeneric::GetArgWord(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -168,7 +166,6 @@ asDWORD asCGeneric::GetArgDWord(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -192,7 +189,6 @@ asQWORD asCGeneric::GetArgQWord(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -216,7 +212,6 @@ float asCGeneric::GetArgFloat(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -240,7 +235,6 @@ double asCGeneric::GetArgDouble(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -261,7 +255,6 @@ void *asCGeneric::GetArgAddress(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -282,7 +275,6 @@ void *asCGeneric::GetArgObject(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -298,7 +290,6 @@ void *asCGeneric::GetAddressOfArg(asUINT arg)
 		return 0;
 
 	// Determine the position of the argument
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 	int offset = 0;
 	for( asUINT n = 0; n < arg; n++ )
 		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -324,7 +315,6 @@ int asCGeneric::GetArgTypeId(asUINT arg) const
 		return engine->GetTypeIdFromDataType(*dt);
 	else
 	{
-		// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
 		int offset = 0;
 		for( asUINT n = 0; n < arg; n++ )
 			offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
@@ -456,8 +446,6 @@ int asCGeneric::SetReturnAddress(void *val)
 // interface
 int asCGeneric::SetReturnObject(void *obj)
 {
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
-
 	asCDataType *dt = &sysFunction->returnType;
 	if( !dt->IsObject() )
 		return asINVALID_TYPE;
@@ -477,7 +465,16 @@ int asCGeneric::SetReturnObject(void *obj)
 	}
 	else
 	{
+#ifdef AS_NEW
+		// If function returns object by value the memory is already allocated.
+		// Here we should just initialize that memory by calling the copy constructor
+		// or the default constructor followed by the assignment operator
+		void *mem = (void*)*(size_t*)&stackPointer[-AS_PTR_SIZE];
+		engine->ConstructScriptObjectCopy(mem, obj, dt->GetObjectType());
+		return 0;
+#else
 		obj = engine->CreateScriptObjectCopy(obj, engine->GetTypeIdFromDataType(*dt));
+#endif
 	}
 
 	objectRegister = obj;
@@ -490,10 +487,14 @@ void *asCGeneric::GetReturnPointer()
 {
 	asCDataType &dt = sysFunction->returnType;
 
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
-
 	if( dt.IsObject() && !dt.IsReference() )
+	{
+		// This function doesn't support returning on the stack but the use of 
+		// the function doesn't require it so we don't need to implement it here.
+		asASSERT( !sysFunction->DoesReturnOnStack() );
+
 		return &objectRegister;
+	}
 
 	return &returnVal;
 }
@@ -503,10 +504,16 @@ void *asCGeneric::GetAddressOfReturnLocation()
 {
 	asCDataType &dt = sysFunction->returnType;
 
-	// TODO: ret-by-val: If function returns object by value an extra pointer is pushed on the stack
-
 	if( dt.IsObject() && !dt.IsReference() )
 	{
+#ifdef AS_NEW
+		if( sysFunction->DoesReturnOnStack() )
+		{
+			// The memory is already preallocated on the stack,
+			// and the pointer to the location is found before the first arg
+			return (void*)*(size_t*)&stackPointer[-AS_PTR_SIZE];
+		}
+#else
 		if( dt.GetObjectType()->flags & asOBJ_VALUE )
 		{
 			// Allocate the necessary memory for this object, 
@@ -517,6 +524,7 @@ void *asCGeneric::GetAddressOfReturnLocation()
 
 			return objectRegister;
 		}
+#endif
 
 		// Reference types store the handle in the objectReference
 		return &objectRegister;
