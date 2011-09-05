@@ -553,7 +553,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	return -1;
 }
 
-int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar)
+int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar, bool deferDest)
 {
 	if( !type.IsObject() ||
 		(type.IsObjectHandle() && !(type.GetObjectType()->flags & asOBJ_ASHANDLE)) )
@@ -615,6 +615,8 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				{
 					// Call the constructor as a normal function
 					bc->InstrSHORT(asBC_PSF, (short)offset);
+					if( deferDest )
+						bc->Instr(asBC_RDSPTR);
 					asSExprContext ctx(engine);
 					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 					bc->AddCode(&ctx.bc);
@@ -3187,14 +3189,39 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			else if( v->type.IsObject() )
 			{
 #ifdef AS_NEW
+				// TODO: A null handle returned to a ashandle type is not properly handled
+
 				// Value types are returned on the stack, in a location
 				// that has been reserved by the calling function. 
 				if( outFunc->DoesReturnOnStack() )
 				{
-					PrepareForAssignment(&v->type, &expr, rnode->firstChild);					
+					int offset = outFunc->objectType ? -AS_PTR_SIZE : 0;
+					if( v->type.GetObjectType()->beh.copyconstruct )
+					{
+						PrepareForAssignment(&v->type, &expr, rnode->firstChild);					
+						CallCopyConstructor(v->type, offset, false, &expr.bc, &expr, rnode->firstChild, false, true);
+					}
+					else
+					{
+						// If the copy constructor doesn't exist, then a manual assignment needs to be done instead. 
+						CallDefaultConstructor(v->type, offset, false, &expr.bc, rnode->firstChild, false, true);
+						PrepareForAssignment(&v->type, &expr, rnode->firstChild);
+						expr.bc.InstrSHORT(asBC_PSF, (short)offset);
+						expr.bc.Instr(asBC_RDSPTR);
 
-					// TODO: ret-by-val: If the copy constructor doesn't exist, then a manual assignment needs to be done instead. Similar to what is done in CreateTemporaryVariable
-					CallCopyConstructor(v->type, outFunc->objectType ? -AS_PTR_SIZE : 0, false, &expr.bc, &expr, rnode->firstChild, false, true);
+						asSExprContext lexpr(engine);
+						lexpr.type.Set(v->type);
+						lexpr.type.isLValue = true;
+						PerformAssignment(&lexpr.type, &expr.type, &expr.bc, rnode->firstChild);
+						expr.bc.Pop(AS_PTR_SIZE);
+
+						// Release any temporary variable
+						ReleaseTemporaryVariable(expr.type, &expr.bc);
+					}
+
+					// Clean up the local variables and process deferred parameters
+					DestroyVariables(&expr.bc);
+					ProcessDeferredParams(&expr);
 				}
 				else
 #endif
