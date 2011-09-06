@@ -10716,7 +10716,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		// If the function returns an object by value the address of the location
 		// where the value should be stored is passed as an argument too
 		if( descr->DoesReturnOnStack() )
+		{
 			argSize += AS_PTR_SIZE;
+		}
 #endif
 
 		if( descr->funcType == asFUNC_IMPORTED )
@@ -10746,7 +10748,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			ctx->type.SetVariable(descr->returnType, returnOffset, true);
 
 			// The variable was initialized by the function, so we need to mark it as initialized here
-			ctx->bc.ObjInfo(returnOffset, asOBJ_INIT);
+			ctx->bc.ObjInfo(varOffset, asOBJ_INIT);
 		}
 		else
 #endif

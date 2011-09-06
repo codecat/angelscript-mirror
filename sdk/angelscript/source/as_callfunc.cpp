@@ -522,13 +522,25 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 			// Store the object in the register
 			context->regs.objectRegister = retPointer;
-		}
 
 #ifdef AS_NEW
-		// If the value is returned on the stack we shouldn't update the object register
-		if( descr->DoesReturnOnStack() )
-			context->regs.objectRegister = 0;
+			// If the value is returned on the stack we shouldn't update the object register
+			if( descr->DoesReturnOnStack() )
+			{
+				context->regs.objectRegister = 0;
+
+				if( context->status == asEXECUTION_EXCEPTION )
+				{
+					// If the function raised a script exception it really shouldn't have 
+					// initialized the object. However, as it is a soft exception there is 
+					// no way for the application to not return a value, so instead we simply
+					// destroy it here, to pretend it was never created.
+					if( descr->returnType.GetObjectType()->beh.destruct )
+						engine->CallObjectMethod(retPointer, descr->returnType.GetObjectType()->beh.destruct);
+				}
+			}
 #endif
+		}
 	}
 	else
 	{

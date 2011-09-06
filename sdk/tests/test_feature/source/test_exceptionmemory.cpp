@@ -58,8 +58,18 @@ static const char *script3 =
 class CObject
 {
 public:
-	CObject() {val = ('C' | ('O'<<8) | ('b'<<16) | ('j'<<24)); mem = new int[1]; *mem = ('M' | ('e'<<8) | ('m'<<16) | (' '<<24)); /*printf("C: %x\n", this);*/ }
-	~CObject() {delete[] mem; /*printf("D: %x\n", this);*/}
+	CObject() 
+	{
+		val = ('C' | ('O'<<8) | ('b'<<16) | ('j'<<24)); 
+		mem = new int[1]; 
+		*mem = ('M' | ('e'<<8) | ('m'<<16) | (' '<<24)); 
+		//printf("C: %x\n", this);
+	}
+	~CObject() 
+	{
+		delete[] mem; 
+		//printf("D: %x\n", this);
+	}
 	int val;
 	int *mem;
 };
@@ -195,6 +205,7 @@ bool Test()
 
 	bool fail = false;
 	int r;
+	int suspendId, exceptionId;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -210,8 +221,8 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef_gen), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release_gen), asCALL_GENERIC); assert(r >= 0);
 		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_GENERIC);
-		engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj_gen), asCALL_GENERIC);
-		engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj_gen), asCALL_GENERIC);
+		suspendId   = engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj_gen), asCALL_GENERIC);
+		exceptionId = engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj_gen), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("RefObj@ ExceptionHandle()", asFUNCTION(ExceptionHandle_gen), asCALL_GENERIC);
 	}
 	else
@@ -224,8 +235,8 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefObject, AddRef), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("RefObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefObject, Release), asCALL_THISCALL); assert(r >= 0);
 		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_CDECL);
-		engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj), asCALL_CDECL);
-		engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj), asCALL_CDECL);
+		suspendId   = engine->RegisterGlobalFunction("Object SuspendObj()", asFUNCTION(SuspendObj), asCALL_CDECL);
+		exceptionId = engine->RegisterGlobalFunction("Object ExceptionObj()", asFUNCTION(ExceptionObj), asCALL_CDECL);
 		engine->RegisterGlobalFunction("RefObj@ ExceptionHandle()", asFUNCTION(ExceptionHandle), asCALL_CDECL);
 	}
 
@@ -354,6 +365,18 @@ bool Test()
 							  "RaiseException(); \n");
 	if( r != asEXECUTION_EXCEPTION )
 		TEST_FAILED;
+
+	// Calling a function that returns an object directly must release the object upon releasing the context
+	ctx = engine->CreateContext();
+	ctx->Prepare(suspendId);
+	ctx->Execute();
+	ctx->Release();
+
+	// Calling a function that returns an object but raised an exception shouldn't try to destroy the object
+	ctx = engine->CreateContext();
+	ctx->Prepare(exceptionId);
+	ctx->Execute();
+	ctx->Release();
 
  	engine->Release();
 

@@ -284,9 +284,22 @@ int asCContext::Prepare(int funcID)
 		initialFunction->AddRef();
 		currentFunction = initialFunction;
 
-		// Determine the minimum stack size needed
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
-		int stackSize = currentFunction->GetSpaceNeededForArguments() + currentFunction->stackNeeded + RESERVE_STACK;
+		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
+
+#ifdef AS_NEW
+		// Reserve space for the arguments and return value
+		if( currentFunction->DoesReturnOnStack() )
+		{
+			returnValueSize = currentFunction->returnType.GetSizeInMemoryDWords();
+			argumentsSize += AS_PTR_SIZE;
+		}
+		else
+#endif
+			returnValueSize = 0;
+
+		// Determine the minimum stack size needed
+		int stackSize = argumentsSize + returnValueSize + currentFunction->stackNeeded + RESERVE_STACK;
 
 		stackSize = stackSize > engine->initialContextStackSize ? stackSize : engine->initialContextStackSize;
 
@@ -305,20 +318,6 @@ int asCContext::Prepare(int funcID)
 			asDWORD *stack = asNEWARRAY(asDWORD,stackBlockSize);
 			stackBlocks.PushLast(stack);
 		}
-
-		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
-		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
-
-#ifdef AS_NEW
-		// Reserve space for the arguments and return value
-		if( currentFunction->DoesReturnOnStack() )
-		{
-			returnValueSize = currentFunction->returnType.GetSizeInMemoryDWords();
-			argumentsSize += AS_PTR_SIZE;
-		}
-		else
-#endif
-			returnValueSize = 0;
 	}
 
 	// Reset state
@@ -3532,7 +3531,16 @@ void asCContext::SetInternalException(const char *descr)
 
 void asCContext::CleanReturnObject()
 {
-	// TODO: ret-by-val: If function returns on stack we need to call the destructor on the returned object
+#ifdef AS_NEW
+	if( initialFunction && initialFunction->DoesReturnOnStack() && status == asEXECUTION_FINISHED )
+	{
+		// If function returns on stack we need to call the destructor on the returned object
+		if( initialFunction->returnType.GetObjectType()->beh.destruct )
+			engine->CallObjectMethod((void*)(stackBlocks[0] + stackBlockSize - returnValueSize), initialFunction->returnType.GetObjectType()->beh.destruct);
+
+		return;
+	}
+#endif
 
 	if( regs.objectRegister == 0 ) return;
 
@@ -3651,13 +3659,25 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 		pos = asUINT((asDWORD*)s[2] - func->byteCode.AddressOf());
 	}
 
+	if( status == asEXECUTION_EXCEPTION )
+	{
+		// Don't consider the last instruction as executed, as it failed with an exception
+		// It's not actually necessary to decrease the exact size of the instruction. Just 
+		// before the current position is enough to disconsider it.
+		pos--;
+	}
+
 
 	// Determine which object variables that are really live ones
 	liveObjects.SetLength(func->objVariablePos.GetLength());
 	memset(liveObjects.AddressOf(), 0, sizeof(int)*liveObjects.GetLength());
 	for( int n = 0; n < (int)func->objVariableInfo.GetLength(); n++ )
 	{
-		if( func->objVariableInfo[n].programPos >= pos )
+		// Find the first variable info with a larger position than the current
+		// As the variable info are always placed on the instruction right after the 
+		// one that initialized or freed the object, the current position needs to be 
+		// considered as valid.
+		if( func->objVariableInfo[n].programPos > pos )
 		{
 			// We've determined how far the execution ran, now determine which variables are alive
 			for( --n; n >= 0; n-- )
