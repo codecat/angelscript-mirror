@@ -234,7 +234,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			Error(str.AddressOf(), func->firstChild);
 		}
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 		// If the return type is a value type returned by value the address of the
 		// location where the value will be stored is pushed on the stack before 
 		// the arguments
@@ -1399,7 +1399,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 	if( addOneToOffset )
 		offset += AS_PTR_SIZE;
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// The address of where the return value should be stored is push on top of the arguments
 	if( descr->DoesReturnOnStack() )
 		offset += AS_PTR_SIZE;
@@ -3167,7 +3167,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					asCString str;
 					str.Format(TXT_NO_CONVERSION_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
 					Error(str.AddressOf(), rnode);
-					r = -1;
+					return;
 				}
 				else
 				{
@@ -3188,13 +3188,26 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			}
 			else if( v->type.IsObject() )
 			{
-#ifdef AS_NEW
-				// TODO: A null handle returned to a ashandle type is not properly handled
-
+#ifndef AS_OLD
 				// Value types are returned on the stack, in a location
 				// that has been reserved by the calling function. 
 				if( outFunc->DoesReturnOnStack() )
 				{
+					// TODO: optimize: If the return type has a constructor that takes the type of the expression,
+					//                 it should be called directly instead of first converting the expression and 
+					//                 then copy the value.
+					if( !v->type.IsEqualExceptRefAndConst(expr.type.dataType) ) 
+					{
+						ImplicitConversion(&expr, v->type, rnode->firstChild, asIC_IMPLICIT_CONV);
+						if( !v->type.IsEqualExceptRefAndConst(expr.type.dataType) )
+						{
+							asCString str;
+							str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
+							Error(str.AddressOf(), rnode->firstChild);
+							return;
+						}
+					}
+
 					int offset = outFunc->objectType ? -AS_PTR_SIZE : 0;
 					if( v->type.GetObjectType()->beh.copyconstruct )
 					{
@@ -3226,11 +3239,14 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				else
 #endif
 				{
-					// Value types are still returned on the heap, so we must
-					// copy the value to an object allocated on the heap here
+#ifndef AS_OLD
+					asASSERT( v->type.GetObjectType()->flags & asOBJ_REF );
+#endif
+					// Prepare the expression to be loaded into the object 
+					// register. This will place the reference in local variable
 					PrepareArgument(&v->type, &expr, rnode->firstChild, false, 0, 0, true);
 
-					// Pop the reference to the temporary variable again
+					// Pop the reference to the temporary variable
 					expr.bc.Pop(AS_PTR_SIZE);
 
 					// Clean up the local variables and process deferred parameters
@@ -4572,7 +4588,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 				bool useVariable = false;
 				int  stackOffset = 0;
-#ifdef AS_NEW
+#ifndef AS_OLD
 				if( f->DoesReturnOnStack() )
 				{
 					useVariable = true;
@@ -6510,7 +6526,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 					bool useVariable = false;
 					int stackOffset  = 0;
-#ifdef AS_NEW
+#ifndef AS_OLD
 					if( descr->DoesReturnOnStack() )
 					{
 						useVariable = true;
@@ -9178,7 +9194,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 		}
 	}
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If the function will return a value type on the stack, then we must allocate space 
 	// for that here and push the address on the stack as a hidden argument to the function
 	asCScriptFunction *func = builder->GetFunctionDescription(funcId);
@@ -10712,7 +10728,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		if( descr->objectType )
 			argSize += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 		// If the function returns an object by value the address of the location
 		// where the value should be stored is passed as an argument too
 		if( descr->DoesReturnOnStack() )
@@ -10738,7 +10754,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		int returnOffset = 0;
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 		if( descr->DoesReturnOnStack() )
 		{
 			asASSERT( useVariable );

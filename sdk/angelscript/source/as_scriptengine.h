@@ -100,6 +100,7 @@ public:
 	// TODO: interface: Should return asUINT
 	virtual int GetGlobalFunctionCount() const;
 	virtual int GetGlobalFunctionIdByIndex(asUINT index) const;
+	// TODO: interface: Needs GetGlobalFunctionIdByDecl(), just like for module
 
 	// Global properties
 	virtual int RegisterGlobalProperty(const char *declaration, void *pointer);

@@ -417,7 +417,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	context->regs.objectType = descr->returnType.GetObjectType();
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
 	{
-#ifdef AS_NEW
+#ifndef AS_OLD
 		// Get the address of the location for the return value from the stack
 		retPointer = (void*)*(size_t*)(args);
 		popSize += AS_PTR_SIZE;
@@ -523,7 +523,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			// Store the object in the register
 			context->regs.objectRegister = retPointer;
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 			// If the value is returned on the stack we shouldn't update the object register
 			if( descr->DoesReturnOnStack() )
 			{

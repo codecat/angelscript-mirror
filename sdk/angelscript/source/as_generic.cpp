@@ -465,7 +465,7 @@ int asCGeneric::SetReturnObject(void *obj)
 	}
 	else
 	{
-#ifdef AS_NEW
+#ifndef AS_OLD
 		// If function returns object by value the memory is already allocated.
 		// Here we should just initialize that memory by calling the copy constructor
 		// or the default constructor followed by the assignment operator
@@ -506,7 +506,7 @@ void *asCGeneric::GetAddressOfReturnLocation()
 
 	if( dt.IsObject() && !dt.IsReference() )
 	{
-#ifdef AS_NEW
+#ifndef AS_OLD
 		if( sysFunction->DoesReturnOnStack() )
 		{
 			// The memory is already preallocated on the stack,

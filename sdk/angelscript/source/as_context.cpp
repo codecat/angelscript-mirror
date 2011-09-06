@@ -287,7 +287,7 @@ int asCContext::Prepare(int funcID)
 		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 		// Reserve space for the arguments and return value
 		if( currentFunction->DoesReturnOnStack() )
 		{
@@ -342,7 +342,7 @@ int asCContext::Prepare(int funcID)
 	// Set arguments to 0
 	memset(regs.stackPointer, 0, 4*argumentsSize);
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 	if( returnValueSize )
 	{
 		// Set the address of the location where the return value should be put
@@ -483,7 +483,7 @@ void *asCContext::GetReturnAddress()
 		return *(void**)&regs.valueRegister;
 	else if( dt->IsObject() )
 	{
-#ifdef AS_NEW
+#ifndef AS_OLD
 		if( initialFunction->DoesReturnOnStack() )
 			return (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
 #endif		
@@ -505,7 +505,7 @@ void *asCContext::GetReturnObject()
 		return *(void**)(size_t)regs.valueRegister;
 	else
 	{
-#ifdef AS_NEW
+#ifndef AS_OLD
 		if( initialFunction->DoesReturnOnStack() )
 			return (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
 #endif
@@ -525,7 +525,7 @@ void *asCContext::GetAddressOfReturnValue()
 		// Need to dereference objects 
 		if( !dt->IsObjectHandle() )
 		{
-#ifdef AS_NEW
+#ifndef AS_OLD
 			if( initialFunction->DoesReturnOnStack() )
 				return (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
 #endif
@@ -583,7 +583,7 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -626,7 +626,7 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -669,7 +669,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -712,7 +712,7 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -755,7 +755,7 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -798,7 +798,7 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -835,7 +835,7 @@ int asCContext::SetArgAddress(asUINT arg, void *value)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -888,7 +888,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -918,7 +918,7 @@ void *asCContext::GetAddressOfArg(asUINT arg)
 	int offset = 0;
 	if( initialFunction->objectType )
 		offset += AS_PTR_SIZE;
-#ifdef AS_NEW
+#ifndef AS_OLD
 	// If function returns object by value an extra pointer is pushed on the stack
 	if( returnValueSize )
 		offset += AS_PTR_SIZE;
@@ -1268,13 +1268,11 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 				stackBlocks.PushLast(stack);
 			}
 
-			// TODO: ret-by-val: Functions that return by value has an extra pointer on the stack
-			regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments() - (func->objectType ? AS_PTR_SIZE : 0);
+			regs.stackPointer = stackBlocks[stackIndex] + (stackBlockSize<<stackIndex) - func->GetSpaceNeededForArguments() - (func->objectType ? AS_PTR_SIZE : 0) - (func->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
 		} 
 
 		// Copy the function arguments to the new stack space
-		// TODO: ret-by-val: Functions that return by value have an extra pointer on the stack
-		int numDwords = func->GetSpaceNeededForArguments() + (func->objectType ? AS_PTR_SIZE : 0);
+		int numDwords = func->GetSpaceNeededForArguments() + (func->objectType ? AS_PTR_SIZE : 0) + (func->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
 		memcpy(regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
 	}
 
@@ -3531,7 +3529,7 @@ void asCContext::SetInternalException(const char *descr)
 
 void asCContext::CleanReturnObject()
 {
-#ifdef AS_NEW
+#ifndef AS_OLD
 	if( initialFunction && initialFunction->DoesReturnOnStack() && status == asEXECUTION_FINISHED )
 	{
 		// If function returns on stack we need to call the destructor on the returned object
@@ -4000,7 +3998,7 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 		}
 	}
 
-#ifdef AS_NEW
+#ifndef AS_OLD
 	if( sysFunction->DoesReturnOnStack() )
 	{
 		// Skip the address where the return value will be stored
