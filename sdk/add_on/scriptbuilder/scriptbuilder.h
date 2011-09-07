@@ -84,6 +84,9 @@ public:
 
 	// Get metadata declared for global variables
 	const char *GetMetadataStringForVar(int varIdx);
+
+	// Get metadata declared for class variables
+	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 #endif
 
 protected:
@@ -108,21 +111,34 @@ protected:
 #if AS_PROCESS_METADATA == 1
 	int  ExtractMetadataString(int pos, std::string &outMetadata);
 	int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
+	bool CompareVarDecl(const char* apA, const char* apB);
 
 	// Temporary structure for storing metadata and declaration
 	struct SMetadataDecl
 	{
-		SMetadataDecl(std::string m, std::string d, int t) : metadata(m), declaration(d), type(t) {}
+		SMetadataDecl(std::string m, std::string d, int t, std::string c) : metadata(m), declaration(d), type(t), parentClass(c) {}
 		std::string metadata;
 		std::string declaration;
 		int         type;
+		std::string parentClass;
 	};
+
+	struct SClassMetadata
+	{
+		SClassMetadata(const std::string& aName) : className(aName) {}
+		std::string className;
+		std::map<int, std::string> funcMetadataMap;
+		std::map<int, std::string> varMetadataMap;
+	};
+
+	std::string currentClass;
 
 	std::vector<SMetadataDecl> foundDeclarations;
 
 	std::map<int, std::string> typeMetadataMap;
 	std::map<int, std::string> funcMetadataMap;
 	std::map<int, std::string> varMetadataMap;
+	std::map<int, SClassMetadata> classMetadataMap;
 #endif
 
 	std::set<std::string>      includedScripts;

@@ -1025,6 +1025,9 @@ public:
 
   // Get metadata declared for global variables
   const char *GetMetadataStringForVar(int varIdx);
+  
+  // Get metadata declared for a class property
+  const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 };
 \endcode
 
@@ -1100,12 +1103,13 @@ them as it sees fit.
 Example script with metadata:
 
 <pre>
-  [factory func = CreateOgre,
-   editable: myPosition,
-   editable: myStrength [10, 100]]
+  [factory func = CreateOgre]
   class COgre
   {
+    [editable] 
     vector3 myPosition;
+    
+    [editable [10, 100]]
     int     myStrength;
   }
   

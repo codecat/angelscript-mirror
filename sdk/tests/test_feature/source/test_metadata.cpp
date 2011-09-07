@@ -32,6 +32,12 @@ const char *script =
 "   dont compile this nested block \n"
 " #endif \n"
 "#endif \n"
+// class properties can also have meta data
+"class MyClass2 { \n"
+" [ edit ] \n"
+" int a; \n"
+" [ noedit ] int b; \n"
+"} \n"
 // interface declarations can have meta data
 "[ myintf ] interface MyIntf {} \n"
 // arrays must still work
@@ -88,6 +94,14 @@ bool Test()
 	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
 	metadata = builder.GetMetadataStringForType(typeId);
 	if( metadata != " myclass " )
+		TEST_FAILED;
+
+	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass2");
+	metadata = builder.GetMetadataStringForTypeProperty(typeId, 0);
+	if( metadata != " edit " )
+		TEST_FAILED;
+	metadata = builder.GetMetadataStringForTypeProperty(typeId, 1);
+	if( metadata != " noedit " )
 		TEST_FAILED;
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
