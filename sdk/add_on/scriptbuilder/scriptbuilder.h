@@ -34,13 +34,6 @@
 
 BEGIN_AS_NAMESPACE
 
-// TODO: Need a callback routine for resolving include directives
-//       When the builder encounters an include directive, it should call the callback with the current section name and the include directive.
-//       The application should respond by calling AddScriptFromFile or AddScriptFromMemory (or give an error if the include is invalid).
-//       The AddScriptFromFile/Memory should put the scripts on the queue to be built
-
-// TODO: Should process metadata for class/interface members as well
-
 class CScriptBuilder;
 
 // This callback will be called for each #include directive encountered by the
