@@ -13,6 +13,7 @@ This page gives a brief description of the samples that you'll find in the /sdk/
  - \subpage doc_samples_incl
  - \subpage doc_samples_asbuild
  - \subpage doc_samples_asrun
+ - \subpage doc_samples_game
 
 
 
@@ -147,6 +148,9 @@ the application interface has been fully registered.
  - \ref asIBinaryStream
 
 
+
+
+
 \page doc_samples_asrun Commandline runner
 
 <b>Path:</b> /sdk/samples/asrun/
@@ -165,6 +169,22 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref doc_addon_build
  - Passing commandline arguments to script
 
+
+
+
+ \page doc_samples_game Game
+ 
+ <b>Path:</b> /sdk/samples/game/
+ 
+ This sample shows one way of integrating the scripting library in a game engine. It is a 
+ simple game where the player is trying to avoid getting eaten by zombies. Each game object type
+ has it's own script that controls its behaviour, these are loaded independently into separately
+ modules. 
+ 
+ - \ref asIScriptModule
+ - \ref doc_global_interface
+ - \ref doc_script_class
+ - \ref doc_addon_build
 
 
 */
