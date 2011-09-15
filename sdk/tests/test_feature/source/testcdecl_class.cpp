@@ -66,6 +66,24 @@ static void class3ByVal(Class3 c)
 	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 && c.c == 0x89ABCDEF );
 }
 
+
+// This C style structure seems to be handled differently on Linux 64bit
+// http://www.gamedev.net/topic/610537-re-vector3-pod-types-in-c-this-time/
+typedef float vec_t;
+typedef vec_t vec3_t[3];
+typedef struct asvec3_s
+{
+	vec3_t v;
+} asvec3_t;
+
+static asvec3_t vec3_123()
+{
+	asvec3_t v = {1,2,3};
+	return v;
+}
+
+static asvec3_t v3;
+
 bool TestCDecl_Class()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -89,6 +107,10 @@ bool TestCDecl_Class()
 	engine->RegisterGlobalFunction("class1 _class1()", asFUNCTION(class1), asCALL_CDECL);
 	engine->RegisterGlobalFunction("class2 _class2()", asFUNCTION(class2), asCALL_CDECL);
 	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(class3), asCALL_CDECL);
+
+	engine->RegisterObjectType("vec3", sizeof(asvec3_t), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+	engine->RegisterGlobalProperty("vec3 v3", &v3);
+	engine->RegisterGlobalFunction("vec3 vec3_123()", asFUNCTION(vec3_123), asCALL_CDECL);
 
 	COutStream out;
 
@@ -157,6 +179,19 @@ bool TestCDecl_Class()
 	if( c3.c != 0x89ABCDEF )
 	{
 		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)c3.c);
+		TEST_FAILED;
+	}
+
+	// Test the vec3 C structure
+	v3.v[0] = 0;
+	v3.v[1] = 0;
+	v3.v[2] = 0;
+	r = ExecuteString(engine, "v3 = vec3_123();");
+	if( r < 0 )
+		TEST_FAILED;
+	if( v3.v[0] != 1 || v3.v[1] != 2 || v3.v[2] != 3 )
+	{
+		printf("%s: Got (%f, %f, %f)\n", TESTNAME, v3.v[0], v3.v[1], v3.v[2]);
 		TEST_FAILED;
 	}
 
