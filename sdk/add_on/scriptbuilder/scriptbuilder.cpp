@@ -470,7 +470,7 @@ int CScriptBuilder::Build()
 				int idx = -1;
 
 				// Search through all properties to get proper declaration
-				for( size_t i = 0; i < objectType->GetPropertyCount(); ++i )
+				for( asUINT i = 0; i < (asUINT)objectType->GetPropertyCount(); ++i )
 				{
 					// Need special compare func that skips spaces and tabs
 					if( CompareVarDecl(decl->declaration.c_str(), objectType->GetPropertyDeclaration(i)) )

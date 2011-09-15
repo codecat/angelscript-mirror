@@ -96,6 +96,14 @@ bool TestCDecl_Class()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
+	if( sizeof(Class3) != 12 || sizeof(asvec3_t) != 12 )
+	{
+		printf("sizeof(Class1) == %d\n", sizeof(Class1));
+		printf("sizeof(Class2) == %d\n", sizeof(Class2));
+		printf("sizeof(Class3) == %d\n", sizeof(Class3));
+		printf("sizeof(asvec3_t) == %d\n", sizeof(asvec3_t));
+	}
+
 	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
