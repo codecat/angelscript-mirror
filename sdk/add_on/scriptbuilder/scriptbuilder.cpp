@@ -255,44 +255,42 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 #if AS_PROCESS_METADATA == 1
 		// Check if class
-		if( currentClass == "" )
+		if( currentClass == "" && modifiedScript.substr(pos,len) == "class" )
 		{
-			// Get name of class
-			if( modifiedScript.substr(pos,len) == "class" )
+			// Get the identifier after "class"
+			do 
 			{
-				// Get the identifier after "class"
-				do 
+				pos += len;
+				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
+
+			currentClass = modifiedScript.substr(pos,len);
+			
+			// Search until first { is encountered
+			while( pos < (int)modifiedScript.length() )
+			{
+				engine->ParseToken(&modifiedScript[pos], 0, &len);
+			
+				// If start of class section encountered stop
+				if( modifiedScript[pos] == '{' ) 
 				{
 					pos += len;
-					t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-				} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
-
-				currentClass = modifiedScript.substr(pos,len);
-				
-				// Search until first { is encountered
-				while( pos < (int)modifiedScript.length() )
-				{
-					engine->ParseToken(&modifiedScript[pos], 0, &len);
-				
-					// If start of class section encountered stop
-					if( modifiedScript[pos] == '{' ) 
-					{
-						pos += len;
-						break;
-					}
-
-					// Check next symbol
-					pos += len;
+					break;
 				}
+
+				// Check next symbol
+				pos += len;
 			}
+
+			continue;
 		}
+
 		// Check if end of class
-		if( currentClass != "" )
+		if( currentClass != "" && modifiedScript[pos] == '}' )
 		{
-			if( modifiedScript[pos] == '}' )
-			{
-				currentClass = "";
-			}
+			currentClass = "";
+			pos += len;
+			continue;
 		}
 
 		// Is this the start of metadata?
@@ -353,10 +351,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 		// Don't search for metadata/includes within statement blocks or between tokens in statements
 		else 
 		{
-			if( currentClass == "" ) 
-				pos = SkipStatement(pos);
-			else
-				pos += len;
+			pos = SkipStatement(pos);
 		}
 	}
 
@@ -500,7 +495,7 @@ int CScriptBuilder::SkipStatement(int pos)
 	int len;
 
 	// Skip until ; or { whichever comes first
-	while( pos < (int)modifiedScript.length() && modifiedScript[pos] != ';' && modifiedScript[pos] != '{' && modifiedScript[pos] != '}' )
+	while( pos < (int)modifiedScript.length() && modifiedScript[pos] != ';' && modifiedScript[pos] != '{' )
 	{
 		engine->ParseToken(&modifiedScript[pos], 0, &len);
 		pos += len;

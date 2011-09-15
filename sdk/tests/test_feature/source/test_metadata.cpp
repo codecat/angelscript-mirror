@@ -33,9 +33,13 @@ const char *script =
 " #endif \n"
 "#endif \n"
 // class properties can also have meta data
+"[ myclass2 ] \n"
 "class MyClass2 { \n"
 " [ edit ] \n"
 " int a; \n"
+" int func() { \n"
+"   return 0; \n"
+" } \n"
 " [ noedit ] int b; \n"
 "} \n"
 // interface declarations can have meta data
