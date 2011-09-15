@@ -11,22 +11,22 @@ static const char * const TESTNAME = "TestCDecl_Class";
 class Class1
 {
 public:
-	unsigned long a;
+	asDWORD a;
 };
 
 class Class2
 {
 public:
-	unsigned long a;
-	unsigned long b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class Class3
 {
 public:
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 static Class1 class1()

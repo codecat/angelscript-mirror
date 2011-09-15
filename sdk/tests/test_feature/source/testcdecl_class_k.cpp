@@ -11,28 +11,28 @@ static const char * const TESTNAME = "TestCDecl_ClassK";
 class ClassK1
 {
 public:
-	ClassK1(unsigned long _a) {a = _a;}
+	ClassK1(asDWORD _a) {a = _a;}
 	ClassK1(const ClassK1 &o) {a = o.a;}
-	unsigned long a;
+	asDWORD a;
 };
 
 class ClassK2
 {
 public:
-	ClassK2(unsigned long _a, unsigned long _b) {a = _a; b = _b;}
+	ClassK2(asDWORD _a, asDWORD _b) {a = _a; b = _b;}
 	ClassK2(const ClassK2 &o) {a = o.a; b = o.b;}
-	unsigned long a;
-	unsigned long b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class ClassK3
 {
 public:
-	ClassK3(unsigned long _a, unsigned long _b, unsigned long _c) {a = _a; b = _b; c = _c;}
+	ClassK3(asDWORD _a, asDWORD _b, asDWORD _c) {a = _a; b = _b; c = _c;}
 	ClassK3(const ClassK3 &o) {a = o.a; b = o.b; c = o.c;}
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 static ClassK1 classK1()

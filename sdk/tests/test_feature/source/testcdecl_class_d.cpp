@@ -12,24 +12,24 @@ class ClassD1
 {
 public:
 	~ClassD1() {a = 0;}
-	unsigned long a;
+	asDWORD a;
 };
 
 class ClassD2
 {
 public:
 	~ClassD2() {a = 0; b = 0;}
-	unsigned long a;
-	unsigned long b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class ClassD3
 {
 public:
 	~ClassD3() {a = 0; b = 0; c = 0;}
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 static ClassD1 classD1()

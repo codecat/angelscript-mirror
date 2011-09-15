@@ -12,24 +12,24 @@ class ClassA1
 {
 public:
 	ClassA1 &operator=(ClassA1 &other) {a = other.a; return *this;}
-	unsigned long a;
+	asDWORD a;
 };
 
 class ClassA2
 {
 public:
 	ClassA2 &operator=(ClassA2 &other) {a = other.a; b = other.b; return *this;}
-	unsigned long a;
-	unsigned long b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class ClassA3
 {
 public:
 	ClassA3 &operator=(ClassA3 &other) {a = other.a; b = other.b; c = other.c; return *this;}
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 static ClassA1 classA1()

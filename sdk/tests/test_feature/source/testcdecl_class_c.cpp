@@ -19,24 +19,24 @@ class ClassC1
 {
 public:
 	ClassC1() {a = 0xDEADC0DE;}
-	unsigned long a;
+	asDWORD a;
 };
 
 class ClassC2
 {
 public:
 	ClassC2() {a = 0xDEADC0DE; b = 0x01234567;}
-	unsigned long a;
-	unsigned long b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class ClassC3
 {
 public:
 	ClassC3() {a = 0xDEADC0DE; b = 0x01234567; c = 0x89ABCDEF;}
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 static ClassC1 classC1()
