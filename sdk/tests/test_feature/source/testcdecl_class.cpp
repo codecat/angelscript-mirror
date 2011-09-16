@@ -92,6 +92,14 @@ bool TestCDecl_Class()
 		return false;
 	}
 
+	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
+	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
+	if ( strstr( asGetLibraryOptions(), "AS_X64_GCC" ) )
+	{
+		printf("%s: Skipped due to not being supported\n", TESTNAME);
+		return false;
+	}
+
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -104,6 +112,8 @@ bool TestCDecl_Class()
 		printf("sizeof(asvec3_t) == %d\n", sizeof(asvec3_t));
 	}
 
+	// TODO: On 64bit Linux these types would be returned in RAX:RDX, and could be supported but 
+	//       requires that AngelScript knows the types of each member
 	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
@@ -116,6 +126,7 @@ bool TestCDecl_Class()
 	engine->RegisterGlobalFunction("class2 _class2()", asFUNCTION(class2), asCALL_CDECL);
 	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(class3), asCALL_CDECL);
 
+	// TODO: On 64bit Linux this type would be returned in XMM0:XMM1 which is not yet supported
 	engine->RegisterObjectType("vec3", sizeof(asvec3_t), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterGlobalProperty("vec3 v3", &v3);
 	engine->RegisterGlobalFunction("vec3 vec3_123()", asFUNCTION(vec3_123), asCALL_CDECL);
@@ -204,26 +215,21 @@ bool TestCDecl_Class()
 	}
 
 	// Test passing the object types by value to a system function
-	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
-	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
-	if ( !strstr( asGetLibraryOptions(), "AS_X64_GCC" ) )
-	{
-		r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
-		r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+	r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
-		r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
-		r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+	r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
-		Class3 c = class3(); class3ByVal(c);
-		r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
-		r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
-	}
+	Class3 c = class3(); class3ByVal(c);
+	r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	engine->Release();
 

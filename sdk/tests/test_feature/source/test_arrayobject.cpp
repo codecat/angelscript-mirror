@@ -334,13 +334,23 @@ public:
 
 bool Test2()
 {
+	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
+	{
+		// This test doesn't work on Linux 64bit and similar systems, because 
+		// the return by value is not supported for simple types
+		// TODO: Add this test again by making the types complex
+		return false;
+	}
+
 	int nRet;
 	bool fail = false;
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptArray(engine, true);
 
-	nRet = engine->RegisterObjectType("Value", sizeof(Value),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("Value", sizeof(Value),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C);	assert( nRet >= 0 );
 
 	nRet = engine->RegisterObjectType("A", sizeof(A),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
 	nRet = engine->RegisterObjectMethod("A", "Value &opIndex(int)", asMETHODPR(A, operator[], (int ), Value &), asCALL_THISCALL); 	assert( nRet >= 0 );
