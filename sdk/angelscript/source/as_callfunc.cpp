@@ -211,6 +211,23 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				}
 #endif
 			}
+
+#ifdef SPLIT_OBJS_BY_MEMBER_TYPES
+			// It's not safe to return objects by value because different registers
+			// will be used depending on the memory layout of the object
+			// Ref: http://www.x86-64.org/documentation/abi.pdf
+			// Ref: http://www.agner.org/optimize/calling_conventions.pdf
+			if( !internal->hostReturnInMemory )	
+			{
+				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
+
+				asCString str;
+				str.Format(TXT_DONT_SUPPORT_RET_TYPE_s_BY_VAL, func->parameterTypes[n].GetObjectType()->name.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+				engine->ConfigError(asINVALID_CONFIGURATION);
+			}
+#endif
+
 		}
 		else if( objType & asOBJ_APP_PRIMITIVE )
 		{
@@ -291,6 +308,8 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 #ifdef SPLIT_OBJS_BY_MEMBER_TYPES
 			// It's not safe to pass objects by value because different registers
 			// will be used depending on the memory layout of the object
+			// Ref: http://www.x86-64.org/documentation/abi.pdf
+			// Ref: http://www.agner.org/optimize/calling_conventions.pdf
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 			if( !(func->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) )	
 #endif

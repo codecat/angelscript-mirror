@@ -212,7 +212,8 @@
 #define TXT_NON_POD_REQUIRE_CONSTR_DESTR_BEHAVIOUR "A non-pod value type must have the default constructor and destructor behaviours"
 #define TXT_CANNOT_PASS_TYPE_s_BY_VAL              "Can't pass type '%s' by value unless the application type is informed in the registration"
 #define TXT_CANNOT_RET_TYPE_s_BY_VAL               "Can't return type '%s' by value unless the application type is informed in the registration"
-#define TXT_DONT_SUPPORT_TYPE_s_BY_VAL             "Don't support passing type '%s' by value to application"
+#define TXT_DONT_SUPPORT_TYPE_s_BY_VAL             "Don't support passing type '%s' by value to application. Use generic calling convention instead"
+#define TXT_DONT_SUPPORT_RET_TYPE_s_BY_VAL         "Don't support returning type '%s' by value from application. Use generic calling convention instead"
 
 // Internal names
 

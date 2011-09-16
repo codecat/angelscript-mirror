@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.21.2 WIP - 2011/09/09</h2>
+<h2>Version 2.21.2 WIP - 2011/09/16</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed a bug when passing value from property accessor to function inout reference parameter (Thanks scypior)
 <li>Fixed a bug with function overloading and default args (Thanks cvet)
 <li>Minor change to fix compiler error with CLang (Thanks Jeremy Harmon)
+<li>The library was not detecting return of simple value type on Linux 64bit. It should give error as this is not supported due to the use of different registers based on type of class members. (Thanks toukkapoukka)
 </ul>
 <li>Library
 <ul>
