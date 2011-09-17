@@ -181,6 +181,10 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				{
 					internal->hostReturnInMemory = false;
 					internal->hostReturnSize     = func->returnType.GetSizeInMemoryDWords();
+#ifdef SPLIT_OBJS_BY_MEMBER_TYPES
+					if( func->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_ALLFLOATS )
+						internal->hostReturnFloat = true;
+#endif
 				}
 
 #ifdef THISCALL_RETURN_SIMPLE_IN_MEMORY
@@ -219,7 +223,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 			// Ref: http://www.agner.org/optimize/calling_conventions.pdf
 			// If the application informs that the class should be treated as all integers, then we allow it
 			if( !internal->hostReturnInMemory &&
-				!(func->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_ALLINTS) )	
+				!(func->returnType.GetObjectType()->flags & (asOBJ_APP_CLASS_ALLINTS | asOBJ_APP_CLASS_ALLFLOATS)) )	
 			{
 				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
 

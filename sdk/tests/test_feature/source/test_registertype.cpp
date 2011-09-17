@@ -1084,15 +1084,6 @@ void Construct_dim2f(float x, float y, dimension2df *mem)
 
 bool TestIrrTypes()
 {
-	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
-	{
-		// This test doesn't work on Linux 64bit and similar systems, because 
-		// the return by value is not supported for simple types
-		// TODO: Add this test again by implementing support for telling AngelScript the type is only floats
-		printf("Skipping test with returning struct with floats due to not being supported on X64_GCC\n");
-		return false;
-	}
-
 	bool fail = false;
 	int r;
 	COutStream out;
@@ -1101,8 +1092,9 @@ bool TestIrrTypes()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 	// The dimension2df type must be registered with asOBJ_APP_CLASS_C, 
-	// despite it having an assignment and copy constructor. 
-	r = engine->RegisterObjectType("dim2f", sizeof(dimension2df), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert( r >= 0 );
+	// despite it having an assignment and copy constructor. It must also 
+	// be registered with asOBJ_APP_CLASS_FLOATS to work on Linux 64bit
+	r = engine->RegisterObjectType("dim2f", sizeof(dimension2df), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f()", asFUNCTIONPR(Construct_dim2f, (dimension2df*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(const dim2f &in)", asFUNCTIONPR(Construct_dim2f, (const dimension2df &, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(float x, float y)", asFUNCTIONPR(Construct_dim2f, (float x, float y, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );

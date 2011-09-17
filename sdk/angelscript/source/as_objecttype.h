@@ -54,7 +54,7 @@ BEGIN_AS_NAMESPACE
 // TODO: The type id should have flags for diferenciating between value types and reference types. It should also have a flag for differenciating interface types.
 
 // Additional flag to the class object type
-const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x40000;
+const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x00400000;
 const asDWORD asOBJ_TYPEDEF          = 0x40000000;
 const asDWORD asOBJ_ENUM             = 0x10000000;
 const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;

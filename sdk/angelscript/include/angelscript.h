@@ -138,8 +138,9 @@ enum asEObjTypeFlags
 	asOBJ_APP_PRIMITIVE              = 0x2000,
 	asOBJ_APP_FLOAT                  = 0x4000,
 	asOBJ_APP_CLASS_ALLINTS          = 0x8000,
-	asOBJ_MASK_VALID_FLAGS           = 0xFFFF,
-	asOBJ_SCRIPT_OBJECT              = 0x10000
+	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
+	asOBJ_MASK_VALID_FLAGS           = 0x1FFFF,
+	asOBJ_SCRIPT_OBJECT              = 0x80000
 };
 
 // Behaviours

@@ -1230,7 +1230,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 						 asOBJ_APP_CLASS_ASSIGNMENT       |
 						 asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
 						 asOBJ_APP_FLOAT                  |
-						 asOBJ_APP_CLASS_ALLINTS) )
+						 asOBJ_APP_CLASS_ALLINTS          |
+						 asOBJ_APP_CLASS_ALLFLOATS) )
 				return ConfigError(asINVALID_ARG);
 		}
 		else if( flags & asOBJ_APP_FLOAT )
@@ -1242,14 +1243,16 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 						 asOBJ_APP_CLASS_ASSIGNMENT       |
 						 asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
 						 asOBJ_APP_PRIMITIVE              |
-						 asOBJ_APP_CLASS_ALLINTS) )
+						 asOBJ_APP_CLASS_ALLINTS          |
+						 asOBJ_APP_CLASS_ALLFLOATS) )
 				return ConfigError(asINVALID_ARG);
 		}
 		else if( flags & (asOBJ_APP_CLASS_CONSTRUCTOR      |
 		                  asOBJ_APP_CLASS_DESTRUCTOR       |
 		                  asOBJ_APP_CLASS_ASSIGNMENT       |
 						  asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
-						  asOBJ_APP_CLASS_ALLINTS) )
+						  asOBJ_APP_CLASS_ALLINTS          |
+						  asOBJ_APP_CLASS_ALLFLOATS) )
 		{
 			// Must not set the class properties, without the class flag
 			return ConfigError(asINVALID_ARG);
