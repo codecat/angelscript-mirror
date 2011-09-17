@@ -15,6 +15,7 @@ class CVec3
 {
 public:
 	CVec3() {}
+	CVec3(const CVec3 &o) : x(o.x), y(o.y), z(o.z) {}
 	CVec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 
 	float x,y,z;
@@ -71,7 +72,7 @@ bool Test()
 	// TEST 1
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterObjectType("CVec3", sizeof(CVec3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C); assert( r >= 0 );
+	r = engine->RegisterObjectType("CVec3", sizeof(CVec3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("CVec3", "float x", offsetof(CVec3,x)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("CVec3", "float y", offsetof(CVec3,y)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("CVec3", "float z", offsetof(CVec3,z)); assert( r >= 0 );
