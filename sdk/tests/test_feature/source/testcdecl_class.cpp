@@ -117,11 +117,6 @@ bool TestCDecl_Class()
 	engine->RegisterGlobalFunction("class2 _class2()", asFUNCTION(class2), asCALL_CDECL);
 	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(class3), asCALL_CDECL);
 
-	// TODO: On 64bit Linux this type would be returned in XMM0:XMM1 which is not yet supported
-	engine->RegisterObjectType("vec3", sizeof(asvec3_t), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-	engine->RegisterGlobalProperty("vec3 v3", &v3);
-	engine->RegisterGlobalFunction("vec3 vec3_123()", asFUNCTION(vec3_123), asCALL_CDECL);
-
 	COutStream out;
 
 	c1.a = 0;
@@ -201,6 +196,11 @@ bool TestCDecl_Class()
 	else
 	{
 		// Test the vec3 C structure
+		// TODO: On 64bit Linux this type would be returned in XMM0:XMM1 which is not yet supported
+		engine->RegisterObjectType("vec3", sizeof(asvec3_t), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+		engine->RegisterGlobalProperty("vec3 v3", &v3);
+		engine->RegisterGlobalFunction("vec3 vec3_123()", asFUNCTION(vec3_123), asCALL_CDECL);
+
 		v3.v[0] = 0;
 		v3.v[1] = 0;
 		v3.v[2] = 0;
