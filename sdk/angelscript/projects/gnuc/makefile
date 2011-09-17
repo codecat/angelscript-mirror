@@ -41,7 +41,7 @@ else
 	CXX ?= gcc
 	# On i686 architecture you may need to add -march=i686 if you get 
 	# an undefined symbol for __sync_sub_and_fetch_4 in as_atomic.cpp.
-	CXXFLAGS += -g -Wall -fPIC -fno-strict-aliasing
+	CXXFLAGS += -O3 -g -Wall -fPIC -fno-strict-aliasing
 endif
 
 AR ?= ar
