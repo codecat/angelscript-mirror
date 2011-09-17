@@ -151,6 +151,26 @@ static asQWORD GetReturnedDouble()
 	return ret;
 }
 
+static asQWORD GetReturnedHighBytes()
+{
+	double  retval = 0.0f;
+	asQWORD ret    = 0;
+
+	__asm__ __volatile__ (
+		"lea     %0, %%rax\n"
+		"movlpd  %%xmm1, (%%rax)"
+		: /* no optput */
+		: "m" (retval)
+		: "%rax", "%xmm1"
+	);
+
+	// We need to avoid implicit conversions from double to unsigned long long - we need
+	// a bit-wise-correct-and-complete copy of the value 
+	memcpy( &ret, &retval, sizeof( ret ) );
+
+	return ret;
+}
+
 // Note to self: If there is any trouble with a function when it is optimized, gcc supports
 // turning off optimization for individual functions by adding the following to the declaration:
 // __attribute__ ((optimize(0)))
@@ -469,7 +489,11 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		if( sysFunc->hostReturnSize == 1 )
 			*(asDWORD*)&retQW = GetReturnedFloat();
 		else
+		{
 			retQW = GetReturnedDouble();
+			if( sysFunc->hostReturnSize > 2 )
+				retQW2 = GetReturnedHighBytes();
+		}
 	}
 
 	return retQW;

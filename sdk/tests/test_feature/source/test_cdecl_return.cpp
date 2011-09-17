@@ -228,21 +228,13 @@ bool TestReturnStruct()
 		// Skipping this test for max portability
 		return false;
 	}
-	// TODO: On gnuc 64bit, the application needs to provide more information 
-	//       to be able to return this this type correctly
-	if( strstr(asGetLibraryOptions(), "AS_X64_GCC" ) )
-	{
-		// Skipping this test
-		printf("Skipping test with returning struct with floats due to not being supported on X64_GCC\n");
-		return false;
-	}
 
 	bool fail = false;
 	int r;
 
     asIScriptEngine *engine=asCreateScriptEngine(ANGELSCRIPT_VERSION);
-    r = engine->RegisterObjectType("point", sizeof(asPoint), asOBJ_VALUE|asOBJ_POD|asOBJ_APP_CLASS); assert( r >= 0 );
-    r = engine->RegisterObjectType("rect", sizeof(asRect), asOBJ_VALUE|asOBJ_POD|asOBJ_APP_CLASS); assert( r >= 0 );
+    r = engine->RegisterObjectType("point", sizeof(asPoint), asOBJ_VALUE|asOBJ_POD|asOBJ_APP_CLASS|asOBJ_APP_CLASS_ALLFLOATS); assert( r >= 0 );
+    r = engine->RegisterObjectType("rect", sizeof(asRect), asOBJ_VALUE|asOBJ_POD|asOBJ_APP_CLASS|asOBJ_APP_CLASS_ALLFLOATS); assert( r >= 0 );
     r = engine->RegisterGlobalFunction("point Point()",asFUNCTION(TestPoint),asCALL_CDECL); assert( r >= 0 );
     r = engine->RegisterGlobalFunction("rect Rect()",asFUNCTION(TestRect),asCALL_CDECL); assert( r >= 0 );
     asPoint p={0,0};

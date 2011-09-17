@@ -187,31 +187,22 @@ bool TestCDecl_Class()
 		TEST_FAILED;
 	}
 
-	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
-	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
-	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
-	{
-		printf("%s: Skipped vec3 test due to not being supported on X64_GCC\n", TESTNAME);
-	}
-	else
-	{
-		// Test the vec3 C structure
-		// TODO: On 64bit Linux this type would be returned in XMM0:XMM1 which is not yet supported
-		engine->RegisterObjectType("vec3", sizeof(asvec3_t), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-		engine->RegisterGlobalProperty("vec3 v3", &v3);
-		engine->RegisterGlobalFunction("vec3 vec3_123()", asFUNCTION(vec3_123), asCALL_CDECL);
+	// Test the vec3 C structure
+	// On 64bit Linux this type would be returned in XMM0:XMM1, which is why we need to inform asOBJ_APP_CLASS_ALLFLOATS
+	engine->RegisterObjectType("vec3", sizeof(asvec3_t), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLFLOATS);
+	engine->RegisterGlobalProperty("vec3 v3", &v3);
+	engine->RegisterGlobalFunction("vec3 vec3_123()", asFUNCTION(vec3_123), asCALL_CDECL);
 
-		v3.v[0] = 0;
-		v3.v[1] = 0;
-		v3.v[2] = 0;
-		r = ExecuteString(engine, "v3 = vec3_123();");
-		if( r < 0 )
-			TEST_FAILED;
-		if( v3.v[0] != 1 || v3.v[1] != 2 || v3.v[2] != 3 )
-		{
-			printf("%s: Got (%f, %f, %f)\n", TESTNAME, v3.v[0], v3.v[1], v3.v[2]);
-			TEST_FAILED;
-		}
+	v3.v[0] = 0;
+	v3.v[1] = 0;
+	v3.v[2] = 0;
+	r = ExecuteString(engine, "v3 = vec3_123();");
+	if( r < 0 )
+		TEST_FAILED;
+	if( v3.v[0] != 1 || v3.v[1] != 2 || v3.v[2] != 3 )
+	{
+		printf("%s: Got (%f, %f, %f)\n", TESTNAME, v3.v[0], v3.v[1], v3.v[2]);
+		TEST_FAILED;
 	}
 
 	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
