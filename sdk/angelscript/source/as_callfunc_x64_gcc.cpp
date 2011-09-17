@@ -121,7 +121,7 @@ static asDWORD GetReturnedFloat()
 		"movss    %%xmm0, (%%rax)"
 		: /* no output */
 		: "m" (retval)
-		: "%rax"
+		: "%rax", "%xmm0"
 	);
 
 	// We need to avoid implicit conversions from float to unsigned - we need
@@ -141,7 +141,7 @@ static asQWORD GetReturnedDouble()
 		"movlpd  %%xmm0, (%%rax)"
 		: /* no optput */
 		: "m" (retval)
-		: "%rax"
+		: "%rax", "%xmm0"
 	);
 
 	// We need to avoid implicit conversions from double to unsigned long long - we need

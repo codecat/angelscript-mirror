@@ -333,7 +333,7 @@ bool Test()
                            " (0, 0) : Info    : void f(test1)\n"
 		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
 						   " (0, 0) : Info    : void f(test1)\n"
-						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application\n"
+						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application. Use generic calling convention instead\n"
 						   " (0, 0) : Error   : Invalid configuration\n" )
 		{
 			printf("%s", bout.buffer.c_str());
@@ -1084,6 +1084,14 @@ void Construct_dim2f(float x, float y, dimension2df *mem)
 
 bool TestIrrTypes()
 {
+	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
+	{
+		// This test doesn't work on Linux 64bit and similar systems, because 
+		// the return by value is not supported for simple types
+		// TODO: Add this test again by implementing support for telling AngelScript the type is only floats
+		return false;
+	}
+
 	bool fail = false;
 	int r;
 	COutStream out;
