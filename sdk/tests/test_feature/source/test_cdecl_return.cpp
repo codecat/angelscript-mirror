@@ -228,7 +228,8 @@ bool TestReturnStruct()
 		// Skipping this test for max portability
 		return false;
 	}
-	// TODO: Why is this skipped for x64 on Linux?
+	// TODO: On gnuc 64bit, the application needs to provide more information 
+	//       to be able to return this this type correctly
 	if( strstr(asGetLibraryOptions(), "AS_X64_GCC" ) )
 	{
 		// Skipping this test

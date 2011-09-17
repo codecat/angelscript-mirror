@@ -1224,26 +1224,32 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		else if( flags & asOBJ_APP_PRIMITIVE )
 		{
 			// Must not set the class flags nor the float flag
-			if( flags & (asOBJ_APP_CLASS             |
-				         asOBJ_APP_CLASS_CONSTRUCTOR |
-						 asOBJ_APP_CLASS_DESTRUCTOR  |
-						 asOBJ_APP_CLASS_ASSIGNMENT  |
-						 asOBJ_APP_FLOAT) )
+			if( flags & (asOBJ_APP_CLASS                  |
+				         asOBJ_APP_CLASS_CONSTRUCTOR      |
+						 asOBJ_APP_CLASS_DESTRUCTOR       |
+						 asOBJ_APP_CLASS_ASSIGNMENT       |
+						 asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
+						 asOBJ_APP_FLOAT                  |
+						 asOBJ_APP_CLASS_ALLINTS) )
 				return ConfigError(asINVALID_ARG);
 		}
 		else if( flags & asOBJ_APP_FLOAT )
 		{
 			// Must not set the class flags nor the primitive flag
-			if( flags & (asOBJ_APP_CLASS             |
-				         asOBJ_APP_CLASS_CONSTRUCTOR |
-						 asOBJ_APP_CLASS_DESTRUCTOR  |
-						 asOBJ_APP_CLASS_ASSIGNMENT  |
-						 asOBJ_APP_PRIMITIVE) )
+			if( flags & (asOBJ_APP_CLASS                  |
+				         asOBJ_APP_CLASS_CONSTRUCTOR      |
+						 asOBJ_APP_CLASS_DESTRUCTOR       |
+						 asOBJ_APP_CLASS_ASSIGNMENT       |
+						 asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
+						 asOBJ_APP_PRIMITIVE              |
+						 asOBJ_APP_CLASS_ALLINTS) )
 				return ConfigError(asINVALID_ARG);
 		}
-		else if( flags & (asOBJ_APP_CLASS_CONSTRUCTOR |
-		                  asOBJ_APP_CLASS_DESTRUCTOR  |
-		                  asOBJ_APP_CLASS_ASSIGNMENT) )
+		else if( flags & (asOBJ_APP_CLASS_CONSTRUCTOR      |
+		                  asOBJ_APP_CLASS_DESTRUCTOR       |
+		                  asOBJ_APP_CLASS_ASSIGNMENT       |
+						  asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
+						  asOBJ_APP_CLASS_ALLINTS) )
 		{
 			// Must not set the class properties, without the class flag
 			return ConfigError(asINVALID_ARG);

@@ -214,10 +214,12 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 
 #ifdef SPLIT_OBJS_BY_MEMBER_TYPES
 			// It's not safe to return objects by value because different registers
-			// will be used depending on the memory layout of the object
+			// will be used depending on the memory layout of the object.
 			// Ref: http://www.x86-64.org/documentation/abi.pdf
 			// Ref: http://www.agner.org/optimize/calling_conventions.pdf
-			if( !internal->hostReturnInMemory )	
+			// If the application informs that the class should be treated as all integers, then we allow it
+			if( !internal->hostReturnInMemory &&
+				!(func->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_ALLINTS) )	
 			{
 				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
 
@@ -227,7 +229,6 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				engine->ConfigError(asINVALID_CONFIGURATION);
 			}
 #endif
-
 		}
 		else if( objType & asOBJ_APP_PRIMITIVE )
 		{
