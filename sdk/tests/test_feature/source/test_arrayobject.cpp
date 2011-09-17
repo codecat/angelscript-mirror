@@ -309,23 +309,31 @@ public:
 	Value() {
 		a = 4;
 	}
+	// Add copy constructor to work on gcc 64bit
+	Value(const Value &v) : a(v.a) {}
 	int a;
 };
 static Value v_static;
 class A {
 public:
+	A() {}
+	A(const A &) {}
 	Value &operator[] (int n) {
 		return v_static;
 	}
 };
 class AArray {
 public:
+	AArray() {}
+	AArray(const AArray &) {}
 	A operator[] (int n) {
 		return A();
 	}
 };
 class AArrayArray {
 public:
+	AArrayArray() {}
+	AArrayArray(const AArrayArray &) {}
 	AArray operator[] (int n) {
 		return AArray();
 	}
@@ -334,14 +342,6 @@ public:
 
 bool Test2()
 {
-	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
-	{
-		// This test doesn't work on Linux 64bit and similar systems, because 
-		// the return by value is not supported for simple types
-		// TODO: Add this test again by making the types complex
-		return false;
-	}
-
 	int nRet;
 	bool fail = false;
 	COutStream out;
@@ -350,13 +350,13 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterScriptArray(engine, true);
 
-	nRet = engine->RegisterObjectType("Value", sizeof(Value),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("Value", sizeof(Value),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);	assert( nRet >= 0 );
 
-	nRet = engine->RegisterObjectType("A", sizeof(A),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("A", sizeof(A),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);	assert( nRet >= 0 );
 	nRet = engine->RegisterObjectMethod("A", "Value &opIndex(int)", asMETHODPR(A, operator[], (int ), Value &), asCALL_THISCALL); 	assert( nRet >= 0 );
-	nRet = engine->RegisterObjectType("A[]", sizeof(AArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("A[]", sizeof(AArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);	assert( nRet >= 0 );
 	nRet = engine->RegisterObjectMethod("A[]", "A opIndex( int )", asMETHODPR(AArray, operator[], (int ), A), asCALL_THISCALL); 	assert( nRet >= 0 );
-	nRet = engine->RegisterObjectType("A[][]", sizeof(AArrayArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);	assert( nRet >= 0 );
+	nRet = engine->RegisterObjectType("A[][]", sizeof(AArrayArray),    asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);	assert( nRet >= 0 );
 	nRet = engine->RegisterObjectMethod("A[][]", "A[] opIndex(int)", asMETHODPR(AArrayArray, operator[], (int ), AArray), asCALL_THISCALL); 	assert( nRet >= 0 );
 
 	nRet = ExecuteString(engine, "A[][] f;");	assert( nRet >= 0 );
