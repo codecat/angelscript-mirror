@@ -11,22 +11,22 @@ static const char * const TESTNAME = "TestReturnWithCDeclObjFirst";
 class Class1
 {
 public:
-	unsigned int a;
+	asDWORD a;
 };
 
 class Class2
 {
 public:
-	unsigned int a;
-	unsigned int b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class Class3
 {
 public:
-	unsigned int a;
-	unsigned int b;
-	unsigned int c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 class ClassNotComplex {};

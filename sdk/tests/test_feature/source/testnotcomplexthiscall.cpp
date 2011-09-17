@@ -12,22 +12,22 @@ static const char * const TESTNAME = "TestNotComplexThisCall";
 class Class1
 {
 public:
-	unsigned long a;
+	asDWORD a;
 };
 
 class Class2
 {
 public:
-	unsigned long a;
-	unsigned long b;
+	asDWORD a;
+	asDWORD b;
 };
 
 class Class3
 {
 public:
-	unsigned long a;
-	unsigned long b;
-	unsigned long c;
+	asDWORD a;
+	asDWORD b;
+	asDWORD c;
 };
 
 class ClassNotComplex
@@ -71,21 +71,13 @@ bool TestNotComplexThisCall()
 		return false;
 	}
 
-	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
-	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
-	if ( strstr( asGetLibraryOptions(), "AS_X64_GCC" ) )
-	{
-		printf("%s: Skipped due to not being supported\n", TESTNAME);
-		return false;
-	}
-
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("factory", 0, asOBJ_REF | asOBJ_NOHANDLE);
 
 	engine->RegisterGlobalProperty("class1 c1", &c1);

@@ -1089,6 +1089,7 @@ bool TestIrrTypes()
 		// This test doesn't work on Linux 64bit and similar systems, because 
 		// the return by value is not supported for simple types
 		// TODO: Add this test again by implementing support for telling AngelScript the type is only floats
+		printf("Skipping test with returning struct with floats due to not being supported on X64_GCC\n");
 		return false;
 	}
 

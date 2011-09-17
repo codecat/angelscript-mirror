@@ -92,14 +92,6 @@ bool TestCDecl_Class()
 		return false;
 	}
 
-	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
-	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
-	if ( strstr( asGetLibraryOptions(), "AS_X64_GCC" ) )
-	{
-		printf("%s: Skipped due to not being supported\n", TESTNAME);
-		return false;
-	}
-
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -112,11 +104,10 @@ bool TestCDecl_Class()
 		printf("sizeof(asvec3_t) == %d\n", sizeof(asvec3_t));
 	}
 
-	// TODO: On 64bit Linux these types would be returned in RAX:RDX, and could be supported but 
-	//       requires that AngelScript knows the types of each member
-	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+	// On 64bit Linux these types would be returned in RAX:RDX, and must be informed with asOBJ_APP_CLASS_ALLINTS
+	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
@@ -201,35 +192,51 @@ bool TestCDecl_Class()
 		TEST_FAILED;
 	}
 
-	// Test the vec3 C structure
-	v3.v[0] = 0;
-	v3.v[1] = 0;
-	v3.v[2] = 0;
-	r = ExecuteString(engine, "v3 = vec3_123();");
-	if( r < 0 )
-		TEST_FAILED;
-	if( v3.v[0] != 1 || v3.v[1] != 2 || v3.v[2] != 3 )
+	// This isn't supported on 64bit AMD ABI (Linux, Mac, etc) because the class will be passed in 
+	// multiple registers. To support this AngelScript would need to know the exact layout of the class members.
+	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
 	{
-		printf("%s: Got (%f, %f, %f)\n", TESTNAME, v3.v[0], v3.v[1], v3.v[2]);
-		TEST_FAILED;
+		printf("%s: Skipped vec3 test due to not being supported on X64_GCC\n", TESTNAME);
+	}
+	else
+	{
+		// Test the vec3 C structure
+		v3.v[0] = 0;
+		v3.v[1] = 0;
+		v3.v[2] = 0;
+		r = ExecuteString(engine, "v3 = vec3_123();");
+		if( r < 0 )
+			TEST_FAILED;
+		if( v3.v[0] != 1 || v3.v[1] != 2 || v3.v[2] != 3 )
+		{
+			printf("%s: Got (%f, %f, %f)\n", TESTNAME, v3.v[0], v3.v[1], v3.v[2]);
+			TEST_FAILED;
+		}
 	}
 
-	// Test passing the object types by value to a system function
-	r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
-	r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
+	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
+	{
+		printf("%s: Skipped passing type by value test due to not being supported on X64_GCC\n", TESTNAME);
+	}
+	else
+	{
+		// Test passing the object types by value to a system function
+		r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
+		r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
-	r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
-	r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
+		r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
+		r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
-	Class3 c = class3(); class3ByVal(c);
-	r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
-	r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
+		Class3 c = class3(); class3ByVal(c);
+		r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
+		r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+	}
 
 	engine->Release();
 

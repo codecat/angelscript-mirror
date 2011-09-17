@@ -233,6 +233,7 @@ bool TestReturnStruct()
 	if( strstr(asGetLibraryOptions(), "AS_X64_GCC" ) )
 	{
 		// Skipping this test
+		printf("Skipping test with returning struct with floats due to not being supported on X64_GCC\n");
 		return false;
 	}
 
