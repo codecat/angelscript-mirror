@@ -9,6 +9,7 @@ class csVector3
 {
 public:
 	inline csVector3() {}
+	inline csVector3(const csVector3 &o) : x(o.x), y(o.y), z(o.z) {}
 	inline csVector3( float fX, float fY, float fZ ) : x( fX ), y( fY ), z( fZ ) {}
 
 	/// Multiply this vector by a scalar.
