@@ -129,7 +129,7 @@ maintained, then the type can be registered with the flag \ref asOBJ_POD. In thi
 constructor, assignment behaviour, or destructor as it will be able to automatically handle these cases the same way it handles
 built-in primitives.
 
-If you plan on passing the or returning the type by value to registered functions that uses native calling convention, you also
+If you plan on passing or returning the type by value to registered functions that uses native calling convention, you also
 need to inform \ref doc_reg_val_2 "how the type is implemented in the application", but if you only plan on using generic
 calling conventions, or don't pass these types by value then you don't need to worry about that.
 
@@ -212,7 +212,23 @@ Make sure you inform these flags correctly, because if you do not you may get va
 Common problems are stack corruptions, and invalid memory accesses. In some cases you may face more silent errors that
 may be difficult to detect, e.g. the function is not returning the expected values.
 
+On some platforms the native calling convention may require further knowledge about the class members in order to work 
+properly; most notable are the Linux 64bit and Mac OSX 64bit systems with the GNUC compiler. On these systems small classes 
+that do not have a destructor or a copy constructor will have different behaviours depending on the type of their members.
 
+AngelScript lets the application inform the two most common variants, i.e. the class should be treated as if all members are integers, 
+or it should be treated as if all members are floats. 
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td>\ref asOBJ_APP_CLASS_ALLINTS   &nbsp; </td><td>The C++ class members can be treated as if all integers</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALLFLOATS &nbsp; </td><td>The C++ class members can be treated as if all floats or doubles</td></tr>
+</table>
+
+It is difficult to explain when one or the other should be used as it requires indepth knowledge of the ABI for the 
+respective system, so if you find that you really need to use these flags, make sure you perform adequate testing 
+to guarantee that your functions are called correctly by the script engine. If neither of these flags work, and you're 
+not able to change the class to work without them, then the only other option is to use the generic calling convention,
+preferably with the \ref doc_addon_autowrap "auto wrappers".
 
 
 

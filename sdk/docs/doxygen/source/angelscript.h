@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.21.1
-#define ANGELSCRIPT_VERSION        22101
-#define ANGELSCRIPT_VERSION_STRING "2.21.1"
+//! \details Version 2.21.2
+#define ANGELSCRIPT_VERSION        22102
+#define ANGELSCRIPT_VERSION_STRING "2.21.2"
 
 // Data types
 
@@ -198,9 +198,13 @@ enum asEObjTypeFlags
 	asOBJ_APP_PRIMITIVE              = 0x2000,
 	//! The C++ type is a float or double. Only valid for value types.
 	asOBJ_APP_FLOAT                  = 0x4000,
-	asOBJ_MASK_VALID_FLAGS           = 0x7FFF,
+	//! The C++ class can be treated as if all its members are integers.
+	asOBJ_APP_CLASS_ALLINTS          = 0x8000,
+	//! The C++ class can be treated as if all its members are floats or doubles.
+	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
+	asOBJ_MASK_VALID_FLAGS           = 0x1FFFF,
 	//! The object is a script class or an interface.
-	asOBJ_SCRIPT_OBJECT              = 0x10000
+	asOBJ_SCRIPT_OBJECT              = 0x80000
 };
 
 // Behaviours
@@ -3098,7 +3102,9 @@ struct asSMethodPtr
 		// as it would mean that the size of the method pointer cannot be determined.
 
 		int ERROR_UnsupportedMethodPtr[N-100];
-		return 0;
+
+		asSFuncPtr p;
+		return p;
 	}
 };
 
