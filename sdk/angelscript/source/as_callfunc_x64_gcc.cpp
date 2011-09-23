@@ -111,7 +111,7 @@ typedef asQWORD ( *funcptr_t )( void );
 	)
 
 
-static asDWORD GetReturnedFloat()
+static asDWORD __attribute__ ((optimize(0))) GetReturnedFloat()
 {
 	float   retval = 0.0f;
 	asDWORD ret    = 0;
@@ -131,7 +131,7 @@ static asDWORD GetReturnedFloat()
 	return ( asDWORD )ret;
 }
 
-static asQWORD GetReturnedDouble()
+static asQWORD __attribute__ ((optimize(0))) GetReturnedDouble()
 {
 	double  retval = 0.0f;
 	asQWORD ret    = 0;
@@ -151,7 +151,7 @@ static asQWORD GetReturnedDouble()
 	return ret;
 }
 
-static asQWORD GetReturnedHighBytes()
+static asQWORD __attribute__ ((optimize(0))) GetReturnedHighBytes()
 {
 	double  retval = 0.0f;
 	asQWORD ret    = 0;
@@ -175,7 +175,7 @@ static asQWORD GetReturnedHighBytes()
 // turning off optimization for individual functions by adding the following to the declaration:
 // __attribute__ ((optimize(0)))
 
-static asQWORD __attribute__ ((noinline)) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
+static asQWORD __attribute__ ((noinline)) __attribute__ ((optimize(0))) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
 {
 	asQWORD retval      = 0;
 	asQWORD ( *call )() = (asQWORD (*)())func;
@@ -224,7 +224,7 @@ inline bool IsVariableArgument( asCDataType type )
 	return ( type.GetTokenType() == ttQuestion ) ? true : false;
 }
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2)
+asQWORD __attribute__ ((optimize(0))) CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2)
 {
 	asSSystemFunctionInterface *sysFunc            = descr->sysFuncIntf;
 	int                         callConv           = sysFunc->callConv;
