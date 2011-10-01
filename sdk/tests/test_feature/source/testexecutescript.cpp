@@ -74,7 +74,8 @@ static bool ExecuteScript()
 	// PrepareContext on it again. If the same stack size is used as the last time
 	// there will not be any new allocation thus saving some time.
 
-	int r = ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("main"));
+	int id = engine->GetModule(0)->GetFunctionIdByName("main");
+	int r = ctx->Prepare(engine->GetModule(0)->GetFunctionDescriptorById(id));
 	if( r < 0 )
 	{
 		printf("%s: Failed to prepare context\n", TESTNAME);

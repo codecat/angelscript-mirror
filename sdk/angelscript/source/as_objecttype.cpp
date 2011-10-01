@@ -127,7 +127,9 @@ asCObjectType::asCObjectType()
 	derivedFrom = 0;
 
 	acceptValueSubType = true;
-	acceptRefSubType = true;
+	acceptRefSubType   = true;
+
+	userData = 0;
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
@@ -150,6 +152,18 @@ int asCObjectType::Release() const
 {
 	gcFlag = false;
 	return refCount.atomicDec();
+}
+
+void *asCObjectType::SetUserData(void *data)
+{
+	void *oldData = userData;
+	userData = data;
+	return oldData;
+}
+
+void *asCObjectType::GetUserData() const
+{
+	return userData;
 }
 
 int asCObjectType::GetRefCount()
@@ -201,6 +215,10 @@ asCObjectType::~asCObjectType()
 	}
 
 	enumValues.SetLength(0);
+
+	// Clean the user data
+	if( userData && engine->cleanObjectTypeFunc )
+		engine->cleanObjectTypeFunc(this);
 }
 
 bool asCObjectType::Implements(const asCObjectType *objType) const

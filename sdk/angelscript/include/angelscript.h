@@ -55,8 +55,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22102
-#define ANGELSCRIPT_VERSION_STRING "2.21.2"
+#define ANGELSCRIPT_VERSION        22200
+#define ANGELSCRIPT_VERSION_STRING "2.22.0 WIP"
 
 // Data types
 
@@ -346,6 +346,7 @@ typedef void (*asFREEFUNC_t)(void *);
 typedef void (*asCLEANENGINEFUNC_t)(asIScriptEngine *);
 typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
+typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 
 #define asFUNCTION(f) asFunctionPtr(f)
 #if (defined(_MSC_VER) && _MSC_VER <= 1200) || (defined(__BORLANDC__) && __BORLANDC__ < 0x590)
@@ -492,14 +493,14 @@ public:
 	virtual asIJITCompiler *GetJITCompiler() const = 0;
 
 	// Global functions
-	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual int GetGlobalFunctionCount() const = 0;
-	virtual int GetGlobalFunctionIdByIndex(asUINT index) const = 0;
+	virtual int    RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual asUINT GetGlobalFunctionCount() const = 0;
+	virtual int    GetGlobalFunctionIdByIndex(asUINT index) const = 0;
 
 	// Global properties
-	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
-	virtual int GetGlobalPropertyCount() const = 0;
-	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
+	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
+	virtual asUINT GetGlobalPropertyCount() const = 0;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
 
 	// Object types
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
@@ -508,7 +509,7 @@ public:
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	virtual int            RegisterInterface(const char *name) = 0;
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
-	virtual int            GetObjectTypeCount() const = 0;
+	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 
 	// String factory
@@ -522,19 +523,19 @@ public:
 	// Enums
 	virtual int         RegisterEnum(const char *type) = 0;
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
-	virtual int         GetEnumCount() const = 0;
+	virtual asUINT      GetEnumCount() const = 0;
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) const = 0;
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
 	// Funcdefs
 	virtual int                RegisterFuncdef(const char *decl) = 0;
-	virtual int                GetFuncdefCount() const = 0;
+	virtual asUINT             GetFuncdefCount() const = 0;
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) const = 0;
 
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
-	virtual int         GetTypedefCount() const = 0;
+	virtual asUINT      GetTypedefCount() const = 0;
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const = 0;
 
 	// Configuration groups
@@ -580,6 +581,7 @@ public:
 	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback) = 0;
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback) = 0;
 
 protected:
 	virtual ~asIScriptEngine() {}
@@ -661,6 +663,7 @@ public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 
 	// Execution
+	virtual int             Prepare(asIScriptFunction *func) = 0;
 	virtual int             Prepare(int funcId) = 0;
 	virtual int             Unprepare() = 0;
 	virtual int             SetObject(void *obj) = 0;
@@ -776,7 +779,7 @@ public:
 	virtual asIObjectType *GetObjectType() const = 0;
 
 	// Class properties
-	virtual int         GetPropertyCount() const = 0;
+	virtual asUINT      GetPropertyCount() const = 0;
 	virtual int         GetPropertyTypeId(asUINT prop) const = 0;
 	virtual const char *GetPropertyName(asUINT prop) const = 0;
 	virtual void       *GetAddressOfProperty(asUINT prop) = 0;
@@ -830,6 +833,10 @@ public:
 	// Behaviours
 	virtual asUINT GetBehaviourCount() const = 0;
 	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+
+	// User data
+	virtual void *SetUserData(void *data) = 0;
+	virtual void *GetUserData() const = 0;
 
 protected:
 	virtual ~asIObjectType() {}

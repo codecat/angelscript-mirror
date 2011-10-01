@@ -404,10 +404,11 @@ asCScriptEngine::asCScriptEngine()
 	lastModule = 0;
 
 	// User data
-	userData          = 0;
-	cleanEngineFunc   = 0;
-	cleanContextFunc  = 0;
-	cleanFunctionFunc = 0;
+	userData            = 0;
+	cleanEngineFunc     = 0;
+	cleanContextFunc    = 0;
+	cleanFunctionFunc   = 0;
+	cleanObjectTypeFunc = 0;
 
 
 	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
@@ -1961,9 +1962,9 @@ void asCScriptEngine::FreeUnusedGlobalProperties()
 }
 
 // interface
-int asCScriptEngine::GetGlobalPropertyCount() const
+asUINT asCScriptEngine::GetGlobalPropertyCount() const
 {
-	return (int)registeredGlobalProps.GetLength();
+	return registeredGlobalProps.GetLength();
 }
 
 // interface
@@ -2190,9 +2191,9 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 }
 
 // interface
-int asCScriptEngine::GetGlobalFunctionCount() const
+asUINT asCScriptEngine::GetGlobalFunctionCount() const
 {
-	return (int)registeredGlobalFuncs.GetLength();
+	return registeredGlobalFuncs.GetLength();
 }
 
 // interface
@@ -3800,9 +3801,9 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 }
 
 // interface
-int asCScriptEngine::GetFuncdefCount() const
+asUINT asCScriptEngine::GetFuncdefCount() const
 {
-	return (int)registeredFuncDefs.GetLength();
+	return registeredFuncDefs.GetLength();
 }
 
 // interface
@@ -3899,9 +3900,9 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 }
 
 // interface
-int asCScriptEngine::GetTypedefCount() const
+asUINT asCScriptEngine::GetTypedefCount() const
 {
-	return (int)registeredTypeDefs.GetLength();
+	return registeredTypeDefs.GetLength();
 }
 
 // interface
@@ -4018,9 +4019,9 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 }
 
 // interface
-int asCScriptEngine::GetEnumCount() const
+asUINT asCScriptEngine::GetEnumCount() const
 {
-	return (int)registeredEnums.GetLength();
+	return registeredEnums.GetLength();
 }
 
 // interface
@@ -4074,9 +4075,9 @@ const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, i
 }
 
 // interface
-int asCScriptEngine::GetObjectTypeCount() const
+asUINT asCScriptEngine::GetObjectTypeCount() const
 {
-	return (int)registeredObjTypes.GetLength();
+	return registeredObjTypes.GetLength();
 }
 
 // interface
@@ -4174,6 +4175,29 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 	return int(scriptSectionNames.GetLength()-1);
 }
 
+// interface 
+void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback)
+{
+	cleanEngineFunc = callback;
+}
+
+// interface
+void asCScriptEngine::SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback)
+{
+	cleanContextFunc = callback;
+}
+
+// interface
+void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback)
+{
+	cleanFunctionFunc = callback;
+}
+
+// interface
+void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback)
+{
+	cleanObjectTypeFunc = callback;
+}
 
 END_AS_NAMESPACE
 

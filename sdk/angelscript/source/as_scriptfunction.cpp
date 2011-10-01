@@ -215,24 +215,6 @@ int asCScriptFunction::Release() const
 	return r;
 }
 
-// interface 
-void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback)
-{
-	cleanEngineFunc = callback;
-}
-
-// interface
-void asCScriptEngine::SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback)
-{
-	cleanContextFunc = callback;
-}
-
-// interface
-void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback)
-{
-	cleanFunctionFunc = callback;
-}
-
 // interface
 const char *asCScriptFunction::GetModuleName() const
 {

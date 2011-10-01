@@ -233,6 +233,7 @@ asIScriptEngine *asCContext::GetEngine() const
 	return engine;
 }
 
+// interface
 void *asCContext::SetUserData(void *data)
 {
 	void *oldData = userData;
@@ -240,13 +241,31 @@ void *asCContext::SetUserData(void *data)
 	return oldData;
 }
 
+// interface
 void *asCContext::GetUserData() const
 {
 	return userData;
 }
 
-int asCContext::Prepare(int funcID)
+// interface
+int asCContext::Prepare(int funcId)
 {
+	if( funcId == -1 )
+	{
+		if( initialFunction == 0 )
+			return asNO_FUNCTION;
+
+		funcId = initialFunction->GetId();
+	}
+	return Prepare(engine->GetScriptFunction(funcId));
+}
+
+// interface
+int asCContext::Prepare(asIScriptFunction *func)
+{
+	if( func == 0 ) 
+		return asNO_FUNCTION;
+
 	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
@@ -257,16 +276,9 @@ int asCContext::Prepare(int funcID)
 	// Release the returned object (if any)
 	CleanReturnObject();
 
-	if( funcID == -1 )
+	if( initialFunction && initialFunction == func )
 	{
-		// Use the previously prepared function
-		if( initialFunction == 0 )
-			return asNO_FUNCTION;
-
-		currentFunction = initialFunction;
-	}
-	else if( initialFunction && initialFunction->id == funcID )
-	{
+		// If the same function is executed again, we can skip a lot of the setup 
 		currentFunction = initialFunction;
 	}
 	else
@@ -277,10 +289,8 @@ int asCContext::Prepare(int funcID)
 		if( initialFunction )
 			initialFunction->Release();
 
-		initialFunction = engine->GetScriptFunction(funcID);
-		if( initialFunction == 0 )
-			return asNO_FUNCTION;
-
+		// We trust the application not to pass anything else but a asCScriptFunction
+		initialFunction = reinterpret_cast<asCScriptFunction *>(func);
 		initialFunction->AddRef();
 		currentFunction = initialFunction;
 

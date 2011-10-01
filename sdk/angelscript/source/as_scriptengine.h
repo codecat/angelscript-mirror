@@ -96,17 +96,15 @@ public:
     virtual asIJITCompiler *GetJITCompiler() const;
 
 	// Global functions
-	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	// TODO: interface: Should return asUINT
-	virtual int GetGlobalFunctionCount() const;
-	virtual int GetGlobalFunctionIdByIndex(asUINT index) const;
+	virtual int    RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual asUINT GetGlobalFunctionCount() const;
+	virtual int    GetGlobalFunctionIdByIndex(asUINT index) const;
 	// TODO: interface: Needs GetGlobalFunctionIdByDecl(), just like for module
 
 	// Global properties
-	virtual int RegisterGlobalProperty(const char *declaration, void *pointer);
-	// TODO: interface: Should return asUINT
-	virtual int GetGlobalPropertyCount() const;
-	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const;
+	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer);
+	virtual asUINT GetGlobalPropertyCount() const;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const;
 	
 	// Type registration
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
@@ -115,8 +113,7 @@ public:
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
 	virtual int            RegisterInterface(const char *name);
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
-	// TODO: interface: Should return asUINT
-	virtual int            GetObjectTypeCount() const;
+	virtual asUINT         GetObjectTypeCount() const;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
 	
 	// String factory
@@ -130,22 +127,19 @@ public:
 	// Enums
 	virtual int         RegisterEnum(const char *type);
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value);
-	// TODO: interface: Should return asUINT
-	virtual int         GetEnumCount() const;
+	virtual asUINT      GetEnumCount() const;
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) const;
 	virtual int         GetEnumValueCount(int enumTypeId) const;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
 
 	// Funcdefs
 	virtual int                RegisterFuncdef(const char *decl);
-	// TODO: interface: Should return asUINT
-	virtual int                GetFuncdefCount() const;
+	virtual asUINT             GetFuncdefCount() const;
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) const;
 
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl);
-	// TODO: interface: Should return asUINT
-	virtual int         GetTypedefCount() const;
+	virtual asUINT      GetTypedefCount() const;
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const;
 
 	// Configuration groups
@@ -159,6 +153,7 @@ public:
 	virtual int              DiscardModule(const char *module);
 
 	// Script functions
+	// TODO: interface: Should be named GetFunctionById
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
 
 	// Type identification
@@ -191,6 +186,7 @@ public:
 	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback);
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback);
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback);
 
 //===========================================================
 // internal methods
@@ -372,10 +368,11 @@ public:
 	asCArray<asCString*>        stringConstants;
 
 	// User data
-	void                  *userData;
-	asCLEANENGINEFUNC_t    cleanEngineFunc;
-	asCLEANCONTEXTFUNC_t   cleanContextFunc;
-	asCLEANFUNCTIONFUNC_t  cleanFunctionFunc;
+	void                   *userData;
+	asCLEANENGINEFUNC_t     cleanEngineFunc;
+	asCLEANCONTEXTFUNC_t    cleanContextFunc;
+	asCLEANFUNCTIONFUNC_t   cleanFunctionFunc;
+	asCLEANOBJECTTYPEFUNC_t cleanObjectTypeFunc;
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical);

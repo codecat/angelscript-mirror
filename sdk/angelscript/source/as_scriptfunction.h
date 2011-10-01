@@ -86,6 +86,11 @@ struct asSSystemFunctionInterface;
 //       also functions/methods that are being called. This could be used to build a 
 //       code database with call graphs, etc.
 
+// TODO: optimize: The GC should only be notified of the script function when the last module
+//                 removes it from the scope. Must make sure it is only added to the GC once
+//                 in case the function is added to another module after the GC already knows 
+//                 about the function.
+
 void RegisterScriptFunction(asCScriptEngine *engine);
 
 class asCScriptFunction : public asIScriptFunction

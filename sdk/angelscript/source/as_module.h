@@ -111,8 +111,10 @@ public:
 	virtual int                GetFunctionIdByIndex(asUINT index) const;
 	virtual int                GetFunctionIdByName(const char *name) const;
 	virtual int                GetFunctionIdByDecl(const char *decl) const;
+	// TODO: interface: Should be named GetFunctionByIndex
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
+	// TODO: interface: Need GetFunctionByName and GetFunctionByDecl too
 	virtual int                RemoveFunction(int funcId);
 
 	// Script global variables

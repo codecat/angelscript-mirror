@@ -74,10 +74,6 @@ const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;
 // automatically make garbage collected as well, because we cannot know what type
 // of references that object can contain, and must assume the worst.
 
-// TODO: interface: asIObjectType should have methods for setting/getting user data
-//                  this can for example be used to store cached function ids for quicker
-//                  executions of class methods
-
 struct asSTypeBehaviour
 {
 	asSTypeBehaviour() 
@@ -178,6 +174,10 @@ public:
 	asUINT GetBehaviourCount() const;
 	int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
 
+	// User data
+	void *SetUserData(void *data);
+	void *GetUserData() const;
+
 //===========================================
 // Internal
 //===========================================
@@ -220,6 +220,7 @@ public:
 	bool           acceptRefSubType;
 
 	asCScriptEngine *engine;
+	void            *userData;
 
 protected:
 	mutable asCAtomic refCount;
