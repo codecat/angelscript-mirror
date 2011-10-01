@@ -344,6 +344,7 @@ typedef void (*asGENFUNC_t)(asIScriptGeneric *);
 typedef void *(*asALLOCFUNC_t)(size_t);
 typedef void (*asFREEFUNC_t)(void *);
 typedef void (*asCLEANENGINEFUNC_t)(asIScriptEngine *);
+typedef void (*asCLEANMODULEFUNC_t)(asIScriptModule *);
 typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
@@ -579,6 +580,7 @@ public:
 	virtual void *SetUserData(void *data) = 0;
 	virtual void *GetUserData() const = 0;
 	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback) = 0;
+	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback) = 0;
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback) = 0;
@@ -647,6 +649,10 @@ public:
 	// Bytecode saving and loading
 	virtual int SaveByteCode(asIBinaryStream *out) const = 0;
 	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+
+	// User data
+	virtual void *SetUserData(void *data) = 0;
+	virtual void *GetUserData() const = 0;
 
 protected:
 	virtual ~asIScriptModule() {}

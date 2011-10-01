@@ -184,6 +184,7 @@ public:
 	virtual void *SetUserData(void *data);
 	virtual void *GetUserData() const;
 	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback);
+	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback);
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback);
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback);
@@ -370,6 +371,7 @@ public:
 	// User data
 	void                   *userData;
 	asCLEANENGINEFUNC_t     cleanEngineFunc;
+	asCLEANMODULEFUNC_t     cleanModuleFunc;
 	asCLEANCONTEXTFUNC_t    cleanContextFunc;
 	asCLEANFUNCTIONFUNC_t   cleanFunctionFunc;
 	asCLEANOBJECTTYPEFUNC_t cleanObjectTypeFunc;

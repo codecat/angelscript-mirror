@@ -406,6 +406,7 @@ asCScriptEngine::asCScriptEngine()
 	// User data
 	userData            = 0;
 	cleanEngineFunc     = 0;
+	cleanModuleFunc     = 0;
 	cleanContextFunc    = 0;
 	cleanFunctionFunc   = 0;
 	cleanObjectTypeFunc = 0;
@@ -4179,6 +4180,12 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback)
 {
 	cleanEngineFunc = callback;
+}
+
+// interface 
+void asCScriptEngine::SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback)
+{
+	cleanModuleFunc = callback;
 }
 
 // interface

@@ -50,6 +50,7 @@ asCModule::asCModule(const char *name, asCScriptEngine *engine)
 	this->name     = name;
 	this->engine   = engine;
 
+	userData = 0;
 	builder = 0;
 	isGlobalVarInitialized = false;
 }
@@ -65,6 +66,10 @@ asCModule::~asCModule()
 		builder = 0;
 	}
 
+	// Clean the user data
+	if( userData && engine->cleanModuleFunc )
+		engine->cleanModuleFunc(this);
+
 	// Remove the module from the engine
 	if( engine )
 	{
@@ -73,6 +78,20 @@ asCModule::~asCModule()
 
 		engine->scriptModules.RemoveValue(this);
 	}
+}
+
+// interface
+void *asCModule::SetUserData(void *data)
+{
+	void *oldData = userData;
+	userData = data;
+	return oldData;
+}
+
+// interface
+void *asCModule::GetUserData() const
+{
+	return userData;
 }
 
 // interface

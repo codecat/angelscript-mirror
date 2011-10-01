@@ -87,9 +87,6 @@ struct sObjectTypePair
 //       then it should simply replace the bytecode within the functions without
 //       changing the values of existing global properties, etc.
 
-// TODO: interface: Should have user data in the modules as well. This may be 
-//                  used to store extra information, such as meta-data and source code files
-
 class asCModule : public asIScriptModule
 {
 //-------------------------------------------
@@ -156,6 +153,10 @@ public:
 	virtual int SaveByteCode(asIBinaryStream *out) const;
 	virtual int LoadByteCode(asIBinaryStream *in);
 
+	// User data
+	virtual void *SetUserData(void *data);
+	virtual void *GetUserData() const;
+
 //-----------------------------------------------
 // Internal
 //-----------------------------------------------
@@ -198,6 +199,7 @@ public:
 
 	asCScriptEngine *engine;
 	asCBuilder      *builder;
+	void            *userData;
 
 	// This array holds all functions, class members, factories, etc that were compiled with the module
 	asCArray<asCScriptFunction *>  scriptFunctions;
