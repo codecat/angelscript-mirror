@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <angelscript.h>
 
 class CGameObjLink;
@@ -29,7 +28,7 @@ protected:
 	struct SController
 	{
 		std::string module;
-		int typeId;
+		asIObjectType *type;
 		int factoryFuncId;
 		int onThinkMethodId;
 		int onMessageMethodId;
@@ -48,7 +47,6 @@ protected:
 	// to search for the function ids everytime we need to call a function.
 	// The search is quite time consuming and should only be done once.
 	std::vector<SController *> controllers; 
-	std::map<int, SController *> typeIdMap;
 };
 
 extern CScriptMgr *scriptMgr;

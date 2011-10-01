@@ -146,7 +146,7 @@ CScriptMgr::SController *CScriptMgr::GetControllerScript(const string &script)
 	controllers.push_back(ctrl);
 
 	ctrl->module          = script;
-	ctrl->typeId          = 0;
+	ctrl->type            = 0;
 	ctrl->factoryFuncId   = 0;
 	ctrl->onThinkMethodId = 0;
 
@@ -170,12 +170,12 @@ CScriptMgr::SController *CScriptMgr::GetControllerScript(const string &script)
 
 		if( found == true )
 		{
-			ctrl->typeId = type->GetTypeId();
+			ctrl->type = type;
 			break;
 		}
 	}
 
-	if( ctrl->typeId == 0 )
+	if( ctrl->type == 0 )
 	{
 		cout << "Couldn't find the controller class for the type '" << script << "'" << endl;
 		controllers.pop_back();
@@ -199,8 +199,8 @@ CScriptMgr::SController *CScriptMgr::GetControllerScript(const string &script)
 	ctrl->onThinkMethodId     = type->GetMethodIdByDecl("void OnThink()");
 	ctrl->onMessageMethodId   = type->GetMethodIdByDecl("void OnMessage(const string &in msg, const CGameObj @sender)");
 
-	// Add the cache to the lookup map
-	typeIdMap.insert(map<int, SController *>::value_type(ctrl->typeId, ctrl));
+	// Add the cache as user data to the type for quick access
+	type->SetUserData(ctrl);
 
 	return ctrl;
 }
@@ -240,10 +240,8 @@ asIScriptObject *CScriptMgr::CreateController(const string &script, CGameObjLink
 
 void CScriptMgr::CallOnThink(asIScriptObject *object)
 {
-	// Find the cached onThink method. Since the object exists
-	// we know the typeId is kept in the map.
-	int typeId = object->GetObjectType()->GetTypeId();
-	SController *ctrl = typeIdMap.find(typeId)->second;
+	// Find the cached onThink method id 
+	SController *ctrl = reinterpret_cast<SController*>(object->GetObjectType()->GetUserData());
 
 	// Call the method using the shared context
 	if( ctrl->onThinkMethodId > 0 )
@@ -257,10 +255,8 @@ void CScriptMgr::CallOnThink(asIScriptObject *object)
 
 void CScriptMgr::CallOnMessage(asIScriptObject *object, const string &msg, CGameObjLink *link)
 {
-	// Find the cached onMessage method. Since the object exists
-	// we know the typeId is kept in the map.
-	int typeId = object->GetObjectType()->GetTypeId();
-	SController *ctrl = typeIdMap.find(typeId)->second;
+	// Find the cached onMessage method id
+	SController *ctrl = reinterpret_cast<SController*>(object->GetObjectType()->GetUserData());
 
 	// Call the method using the shared context
 	if( ctrl->onMessageMethodId > 0 )
