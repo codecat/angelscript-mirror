@@ -9070,6 +9070,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 				(!isConst || func->isReadOnly) )
 			{
 				// Make sure the method is accessible by the module
+				// TODO: access: Use new access mask
 				asCConfigGroup *group = engine->FindConfigGroupForFunction(func->id);
 				if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
 					funcs.PushLast(func->id);

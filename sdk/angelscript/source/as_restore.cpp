@@ -1350,7 +1350,7 @@ void asCRestore::ReadDataType(asCDataType *dt)
 		ReadFunctionSignature(&func);
 		for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 		{
-			// TODO: Only return the definitions for the config groups that the module has access to
+			// TODO: access: Only return the definitions that the module has access to
 			if( engine->registeredFuncDefs[n]->name == func.name )
 			{
 				funcDef = engine->registeredFuncDefs[n];

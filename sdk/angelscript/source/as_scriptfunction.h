@@ -91,6 +91,8 @@ struct asSSystemFunctionInterface;
 //                 in case the function is added to another module after the GC already knows 
 //                 about the function.
 
+// TODO: access: The script function should have methods to get and set the access mask
+
 void RegisterScriptFunction(asCScriptEngine *engine);
 
 class asCScriptFunction : public asIScriptFunction

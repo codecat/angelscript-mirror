@@ -71,6 +71,11 @@ struct sBindInfo;
 
 // TODO: Should allow enumerating modules, in case they have not been named.
 
+// TODO: access: Engine should have a method SetDefaultAccessMask. It should return the old mask.
+//               New functions, methods, global variables, etc should get the default access mask.
+
+
+
 
 class asCScriptEngine : public asIScriptEngine
 {
@@ -104,7 +109,9 @@ public:
 	// Global properties
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer);
 	virtual asUINT GetGlobalPropertyCount() const;
+	// TODO: access: Return the current access mask
 	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const;
+	// TODO: access: Allow changing the access mask
 	
 	// Type registration
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
@@ -146,6 +153,7 @@ public:
 	virtual int BeginConfigGroup(const char *groupName);
 	virtual int EndConfigGroup();
 	virtual int RemoveConfigGroup(const char *groupName);
+	// TODO: interface: deprecate
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess);
 
 	// Script modules

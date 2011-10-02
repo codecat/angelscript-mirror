@@ -64,6 +64,7 @@ public:
 	bool HasLiveObjects();
 	void RemoveConfiguration(asCScriptEngine *engine, bool notUsed = false);
 
+	// TODO: interface: deprecate
 	int SetModuleAccess(const char *module, bool hasAccess);
 	bool HasModuleAccess(const char *module);
 
@@ -80,6 +81,7 @@ public:
 	asCArray<asCConfigGroup*>    referencedConfigGroups;
 	asCArray<asCScriptFunction*> funcDefs;
 
+	// TODO: interface: deprecate
 	// Module access
 	bool defaultAccess;
 	asCMap<asCString, bool> moduleAccess;

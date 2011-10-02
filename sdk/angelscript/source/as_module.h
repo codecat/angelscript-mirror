@@ -87,6 +87,8 @@ struct sObjectTypePair
 //       then it should simply replace the bytecode within the functions without
 //       changing the values of existing global properties, etc.
 
+// TODO: access: Add method for setting the module's access mask
+
 class asCModule : public asIScriptModule
 {
 //-------------------------------------------

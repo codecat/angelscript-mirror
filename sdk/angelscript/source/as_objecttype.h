@@ -166,6 +166,7 @@ public:
 	asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual) const;
 
 	// Properties
+	// TODO: access: Allow getting and setting property access mask
 	asUINT      GetPropertyCount() const;
 	int         GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset, bool *isReference) const;
 	const char *GetPropertyDeclaration(asUINT index) const;

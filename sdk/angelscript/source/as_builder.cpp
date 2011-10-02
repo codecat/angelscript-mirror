@@ -668,7 +668,6 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 {
 	asASSERT(obj.GetObjectType() != 0);
 
-	// TODO: Only search in config groups to which the module has access
 	// TODO: optimize: Improve linear search
 	asCArray<asCObjectProperty *> &props = obj.GetObjectType()->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
@@ -694,6 +693,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 			if( module )
 			{
 				// Find the config group for the global property
+				// TODO: access: Use the new access mask
 				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->id);
 				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
 					return (*props)[n];
@@ -2643,6 +2643,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 			engine->scriptFunctions[n]->name == name )
 		{
 			// Find the config group for the global function
+			// TODO: access: Use the new access mask
 			asCConfigGroup *group = engine->FindConfigGroupForFunction(engine->scriptFunctions[n]->id);
 			if( !group || group->HasModuleAccess(module->name.AddressOf()) )
 				funcs.PushLast(engine->scriptFunctions[n]->id);
@@ -2783,6 +2784,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				isImplicitHandle = true;
 
 			// Find the config group for the object type
+			// TODO: access: Use the new access mask
 			asCConfigGroup *group = engine->FindConfigGroupForObjectType(ot);
 			if( !module || !group || group->HasModuleAccess(module->name.AddressOf()) )
 			{
@@ -2990,7 +2992,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 
 asCObjectType *asCBuilder::GetObjectType(const char *type)
 {
-	// TODO: Only search in config groups to which the module has access
+	// TODO: access: Only search in config groups to which the module has access
 	asCObjectType *ot = engine->GetObjectType(type);
 	if( !ot && module )
 		ot = module->GetObjectType(type);
@@ -3002,7 +3004,7 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
 {
 	for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 	{
-		// TODO: Only return the definitions for the config groups that the module has access to
+		// TODO: access: Only return the definitions for the config groups that the module has access to
 		if( engine->registeredFuncDefs[n]->name == type )
 		{
 			return engine->registeredFuncDefs[n];

@@ -3668,6 +3668,7 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(asCScriptFunction *fu
 	return 0;
 }
 
+// TODO: interface: deprecate
 int asCScriptEngine::SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess)
 {
 	asCConfigGroup *group = 0;
