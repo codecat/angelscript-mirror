@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.0 WIP - 2011/10/03</h2>
+<h2>Version 2.22.0 WIP - 2011/10/04</h2>
 
 <ul>
 <li>Library interface
@@ -31,6 +31,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetFactoryByIndex and Decl to asIObjectType
 <li>Added GetMethodByName and Decl to asIObjectType
 <li>Deprecated asIObjectType::GetMethodDescriptorByIndex and replaced it with GetMethodByIndex
+<li>Added asIScriptEngine::SetDefaultAccessMask and asIScriptModule::SetAccessMask, which deprecates SetConfigGroupModuleAccess
+</ul>
+<li>Library
+<ul>
+<li>The module's access to types, functions, properties, and even class members can now be set individually for each object through an access mask and is no longer tied to the configuration group
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

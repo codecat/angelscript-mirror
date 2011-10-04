@@ -53,6 +53,8 @@ asCModule::asCModule(const char *name, asCScriptEngine *engine)
 	userData = 0;
 	builder = 0;
 	isGlobalVarInitialized = false;
+
+	accessMask = 1;
 }
 
 // internal
@@ -1467,6 +1469,14 @@ int asCModule::AddFuncDef(const char *name)
 	engine->SetScriptFunction(func);
 
 	return (int)funcDefs.GetLength()-1;
+}
+
+// interface
+asDWORD asCModule::SetAccessMask(asDWORD mask)
+{
+	asDWORD old = accessMask;
+	accessMask = mask;
+	return old;
 }
 
 END_AS_NAMESPACE

@@ -143,6 +143,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	gcFlag                 = false;
 	userData               = 0;
 	id                     = 0;
+	accessMask             = 0xFFFFFFFF;
 
 	// TODO: optimize: The engine could notify the GC just before it wants to
 	//                 discard the function. That way the GC won't waste time

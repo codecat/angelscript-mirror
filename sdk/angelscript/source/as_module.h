@@ -87,8 +87,6 @@ struct sObjectTypePair
 //       then it should simply replace the bytecode within the functions without
 //       changing the values of existing global properties, etc.
 
-// TODO: access: Add method for setting the module's access mask
-
 class asCModule : public asIScriptModule
 {
 //-------------------------------------------
@@ -100,10 +98,11 @@ public:
 	virtual const char      *GetName() const;
 
 	// Compilation
-	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
-	virtual int  Build();
-	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD reserved, asIScriptFunction **outFunc);
-	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
+	virtual int     AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
+	virtual int     Build();
+	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD reserved, asIScriptFunction **outFunc);
+	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
+	virtual asDWORD SetAccessMask(asDWORD accessMask);
 
 	// Script functions
 	virtual asUINT             GetFunctionCount() const;
@@ -206,6 +205,7 @@ public:
 	asCScriptEngine *engine;
 	asCBuilder      *builder;
 	void            *userData;
+	asDWORD          accessMask;
 
 	// This array holds all functions, class members, factories, etc that were compiled with the module
 	asCArray<asCScriptFunction *>  scriptFunctions;

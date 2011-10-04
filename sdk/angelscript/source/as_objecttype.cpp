@@ -129,6 +129,8 @@ asCObjectType::asCObjectType()
 	acceptValueSubType = true;
 	acceptRefSubType   = true;
 
+	accessMask = 0xFFFFFFFF;
+
 	userData = 0;
 }
 
@@ -140,6 +142,10 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 
 	acceptValueSubType = true;
 	acceptRefSubType = true;
+
+	accessMask = 0xFFFFFFFF;
+
+	userData = 0;
 }
 
 int asCObjectType::AddRef() const

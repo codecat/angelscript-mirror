@@ -672,7 +672,10 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 	asCArray<asCObjectProperty *> &props = obj.GetObjectType()->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
 		if( props[n]->name == prop )
-			return props[n];
+			if( module->accessMask & props[n]->accessMask )
+				return props[n];
+			else
+				return 0;
 
 	return 0;
 }
@@ -692,11 +695,17 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 		{
 			if( module )
 			{
-				// Find the config group for the global property
-				// TODO: access: Use the new access mask
-				asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->id);
-				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
+				// Determine if the module has access to the property
+				if( module->accessMask & (*props)[n]->accessMask )
+				{
+#ifdef AS_DEPRECATED
+					// deprecated since 2011-10-04
+					// Find the config group for the global property
+					asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->id);
+					if( !group || group->HasModuleAccess(module->name.AddressOf()) )
+#endif
 					return (*props)[n];
+				}
 			}
 			else
 			{
@@ -2642,11 +2651,17 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 			engine->scriptFunctions[n]->objectType == 0 &&
 			engine->scriptFunctions[n]->name == name )
 		{
-			// Find the config group for the global function
-			// TODO: access: Use the new access mask
-			asCConfigGroup *group = engine->FindConfigGroupForFunction(engine->scriptFunctions[n]->id);
-			if( !group || group->HasModuleAccess(module->name.AddressOf()) )
+			// Verify if the module has access to the function
+			if( module->accessMask & engine->scriptFunctions[n]->accessMask )
+			{
+#ifdef AS_DEPRECATED
+				// deprecated since 2011-10-04
+				// Find the config group for the global function
+				asCConfigGroup *group = engine->FindConfigGroupForFunction(engine->scriptFunctions[n]->id);
+				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
+#endif
 				funcs.PushLast(engine->scriptFunctions[n]->id);
+			}
 		}
 	}
 }
@@ -2783,10 +2798,15 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			if( ot->flags & asOBJ_IMPLICIT_HANDLE )
 				isImplicitHandle = true;
 
+			// Make sure the module has access to the object type
+#ifdef AS_DEPRECATED
+			// deprecated since 2011-10-04
 			// Find the config group for the object type
-			// TODO: access: Use the new access mask
 			asCConfigGroup *group = engine->FindConfigGroupForObjectType(ot);
-			if( !module || !group || group->HasModuleAccess(module->name.AddressOf()) )
+			if( !module || ((module->accessMask & ot->accessMask) && (!group || group->HasModuleAccess(module->name.AddressOf()))) )
+#else
+			if( !module || (module->accessMask & ot->accessMask) )
+#endif
 			{
 				if(asOBJ_TYPEDEF == (ot->flags & asOBJ_TYPEDEF))
 				{
@@ -2992,7 +3012,6 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 
 asCObjectType *asCBuilder::GetObjectType(const char *type)
 {
-	// TODO: access: Only search in config groups to which the module has access
 	asCObjectType *ot = engine->GetObjectType(type);
 	if( !ot && module )
 		ot = module->GetObjectType(type);

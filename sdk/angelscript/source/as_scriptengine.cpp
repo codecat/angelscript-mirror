@@ -415,8 +415,9 @@ asCScriptEngine::asCScriptEngine()
 	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
 
 
-	typeIdSeqNbr = 0;
-	currentGroup = &defaultGroup;
+	typeIdSeqNbr      = 0;
+	currentGroup      = &defaultGroup;
+	defaultAccessMask = 1;
 
 	msgCallback = 0;
     jitCompiler = 0;
@@ -1061,6 +1062,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	prop->type       = type;
 	prop->byteOffset = byteOffset;
 	prop->isPrivate  = false;
+	prop->accessMask = defaultAccessMask;
 
 	dt.GetObjectType()->properties.PushLast(prop);
 
@@ -1296,9 +1298,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		}
 
 		asCObjectType *type = asNEW(asCObjectType)(this);
-		type->name      = typeName;
-		type->size      = byteSize;
-		type->flags     = flags;
+		type->name       = typeName;
+		type->size       = byteSize;
+		type->flags      = flags;
+		type->accessMask = defaultAccessMask;
 
 		// Store it in the object types
 		objectTypes.PushLast(type);
@@ -1379,9 +1382,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
-			type->name      = typeName;
-			type->size      = byteSize;
-			type->flags     = flags;
+			type->name       = typeName;
+			type->size       = byteSize;
+			type->flags      = flags;
+			type->accessMask = defaultAccessMask;
 
 			objectTypes.PushLast(type);
 			registeredObjTypes.PushLast(type);
@@ -1416,11 +1420,12 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
-			type->name      = dt.GetObjectType()->name;
+			type->name       = dt.GetObjectType()->name;
 			type->templateSubType = dt.GetSubType();
 			if( type->templateSubType.GetObjectType() ) type->templateSubType.GetObjectType()->AddRef();
-			type->size      = byteSize;
-			type->flags     = flags;
+			type->size       = byteSize;
+			type->flags      = flags;
+			type->accessMask = defaultAccessMask;
 
 			templateTypes.PushLast(type);
 
@@ -1869,6 +1874,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	f->objectType  = func.objectType;
 	f->id          = id;
 	f->isReadOnly  = func.isReadOnly;
+	f->accessMask  = defaultAccessMask;
 	for( n = 0; n < func.parameterTypes.GetLength(); n++ )
 	{
 		f->parameterTypes.PushLast(func.parameterTypes[n]);
@@ -1914,6 +1920,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	asCGlobalProperty *prop = AllocateGlobalProperty();
 	prop->name        = name;
 	prop->type        = type;
+	prop->accessMask  = defaultAccessMask;
 
 	prop->SetRegisteredAddress(pointer);
 	
@@ -2067,6 +2074,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 
 	func->id = GetNextScriptFunctionId();
 	func->objectType->methods.PushLast(func->id);
+	func->accessMask = defaultAccessMask;
 	SetScriptFunction(func);
 
 	// TODO: This code is repeated in many places
@@ -2170,6 +2178,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	SetScriptFunction(func);
 
 	currentGroup->scriptFunctions.PushLast(func);
+	func->accessMask = defaultAccessMask;
 	registeredGlobalFuncs.PushLast(func);
 
 	// If parameter type from other groups are used, add references
@@ -3719,7 +3728,8 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(asCScriptFunction *fu
 	return 0;
 }
 
-// TODO: interface: deprecate
+#ifdef AS_DEPRECATED
+// deprecated since 2011-10-04
 int asCScriptEngine::SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess)
 {
 	asCConfigGroup *group = 0;
@@ -3738,6 +3748,15 @@ int asCScriptEngine::SetConfigGroupModuleAccess(const char *groupName, const cha
 		return asWRONG_CONFIG_GROUP;
 
 	return group->SetModuleAccess(module, hasAccess);
+}
+#endif
+
+// interface
+asDWORD asCScriptEngine::SetDefaultAccessMask(asDWORD defaultMask)
+{
+	asDWORD old = defaultAccessMask;
+	defaultAccessMask = defaultMask;
+	return old;
 }
 
 int asCScriptEngine::GetNextScriptFunctionId()

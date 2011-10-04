@@ -71,11 +71,6 @@ struct sBindInfo;
 
 // TODO: Should allow enumerating modules, in case they have not been named.
 
-// TODO: access: Engine should have a method SetDefaultAccessMask. It should return the old mask.
-//               New functions, methods, global variables, etc should get the default access mask.
-
-
-
 
 class asCScriptEngine : public asIScriptEngine
 {
@@ -151,11 +146,14 @@ public:
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const;
 
 	// Configuration groups
-	virtual int BeginConfigGroup(const char *groupName);
-	virtual int EndConfigGroup();
-	virtual int RemoveConfigGroup(const char *groupName);
-	// TODO: interface: deprecate
+	virtual int     BeginConfigGroup(const char *groupName);
+	virtual int     EndConfigGroup();
+	virtual int     RemoveConfigGroup(const char *groupName);
+	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask);
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-04
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess);
+#endif
 
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag);
@@ -369,6 +367,7 @@ public:
 	asCConfigGroup             defaultGroup;
 	asCArray<asCConfigGroup*>  configGroups;
 	asCConfigGroup            *currentGroup;
+	asDWORD                    defaultAccessMask;
 
 	// Message callback
 	bool                        msgCallback;

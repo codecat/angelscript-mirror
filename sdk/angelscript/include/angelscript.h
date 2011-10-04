@@ -545,7 +545,11 @@ public:
 	virtual int BeginConfigGroup(const char *groupName) = 0;
 	virtual int EndConfigGroup() = 0;
 	virtual int RemoveConfigGroup(const char *groupName) = 0;
+	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-04
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
+#endif
 
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag = asGM_ONLY_IF_EXISTS) = 0;
@@ -603,10 +607,11 @@ public:
 	virtual const char      *GetName() const = 0;
 
 	// Compilation
-	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
-	virtual int  Build() = 0;
-	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
-	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
+	virtual int     AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	virtual int     Build() = 0;
+	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
+	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
+	virtual asDWORD SetAccessMask(asDWORD accessMask) = 0;
 
 	// Functions
 	virtual asUINT             GetFunctionCount() const = 0;

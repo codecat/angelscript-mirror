@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2010 Andreas Jonsson
+   Copyright (c) 2003-2011 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -44,7 +44,10 @@
 #include "as_string.h"
 #include "as_array.h"
 #include "as_objecttype.h"
+#ifdef AS_DEPRECATED
+// deprecated since 2011-10-04
 #include "as_map.h"
+#endif
 
 BEGIN_AS_NAMESPACE
 
@@ -64,9 +67,11 @@ public:
 	bool HasLiveObjects();
 	void RemoveConfiguration(asCScriptEngine *engine, bool notUsed = false);
 
-	// TODO: interface: deprecate
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-04
 	int SetModuleAccess(const char *module, bool hasAccess);
 	bool HasModuleAccess(const char *module);
+#endif
 
 #ifdef AS_DEBUG
 	void ValidateNoUsage(asCScriptEngine *engine, asCObjectType *type);
@@ -81,10 +86,12 @@ public:
 	asCArray<asCConfigGroup*>    referencedConfigGroups;
 	asCArray<asCScriptFunction*> funcDefs;
 
-	// TODO: interface: deprecate
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-04
 	// Module access
 	bool defaultAccess;
 	asCMap<asCString, bool> moduleAccess;
+#endif
 };
 
 END_AS_NAMESPACE

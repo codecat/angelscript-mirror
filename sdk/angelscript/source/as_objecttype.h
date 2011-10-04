@@ -220,6 +220,7 @@ public:
 	asCArray<asCScriptFunction*> virtualFunctionTable;
 
 	asDWORD flags;
+	asDWORD accessMask;
 
 	asSTypeBehaviour beh;
 
