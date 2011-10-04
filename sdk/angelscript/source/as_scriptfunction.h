@@ -114,6 +114,7 @@ public:
 	const char          *GetConfigGroup() const;
 	bool                 IsReadOnly() const;
 	bool                 IsPrivate() const;
+	// TODO: access: Get/Set access mask for function
 
 	asUINT               GetParamCount() const;
 	int                  GetParamTypeId(asUINT index, asDWORD *flags = 0) const;

@@ -148,6 +148,7 @@ public:
 	asUINT           GetSize() const;
 	int              GetTypeId() const;
 	int              GetSubTypeId() const;
+	// TODO: access: Get/Set access mask for type
 
 	// Interfaces
 	asUINT           GetInterfaceCount() const;

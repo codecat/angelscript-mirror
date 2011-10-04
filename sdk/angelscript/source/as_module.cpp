@@ -421,7 +421,7 @@ asIScriptFunction *asCModule::GetFunctionByName(const char *name) const
 	if( id < 0 )
 		return 0;
 
-	return globalFunctions[id];
+	return engine->GetFunctionById(id);
 }
 
 // interface
