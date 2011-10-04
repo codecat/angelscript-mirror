@@ -316,11 +316,13 @@ asIScriptEngine *asCObjectType::GetEngine() const
 	return engine;
 }
 
+// interface
 asUINT asCObjectType::GetFactoryCount() const
 {
 	return (asUINT)beh.factories.GetLength();
 }
 
+// interface
 int asCObjectType::GetFactoryIdByIndex(asUINT index) const
 {
 	if( index >= beh.factories.GetLength() )
@@ -329,6 +331,16 @@ int asCObjectType::GetFactoryIdByIndex(asUINT index) const
 	return beh.factories[index];
 }
 
+// interface
+asIScriptFunction *asCObjectType::GetFactoryByIndex(asUINT index) const
+{
+	if( index >= beh.factories.GetLength() )
+		return 0;
+
+	return engine->GetFunctionById(beh.factories[index]);
+}
+
+// interface
 int asCObjectType::GetFactoryIdByDecl(const char *decl) const
 {
 	if( beh.factories.GetLength() == 0 )
@@ -336,6 +348,16 @@ int asCObjectType::GetFactoryIdByDecl(const char *decl) const
 
 	// Let the engine parse the string and find the appropriate factory function
 	return engine->GetFactoryIdByDecl(this, decl);
+}
+
+// interface
+asIScriptFunction *asCObjectType::GetFactoryByDecl(const char *decl) const
+{
+	if( beh.factories.GetLength() == 0 )
+		return 0;
+
+	// Let the engine parse the string and find the appropriate factory function
+	return engine->GetFunctionById(engine->GetFactoryIdByDecl(this, decl));
 }
 
 // interface
@@ -358,6 +380,12 @@ int asCObjectType::GetMethodIdByIndex(asUINT index, bool getVirtual) const
 	}
 
 	return methods[index];
+}
+
+// interface
+asIScriptFunction *asCObjectType::GetMethodByIndex(asUINT index, bool getVirtual) const
+{
+	return engine->GetFunctionById(GetMethodIdByIndex(index, getVirtual));
 }
 
 // interface
@@ -388,6 +416,12 @@ int asCObjectType::GetMethodIdByName(const char *name, bool getVirtual) const
 }
 
 // interface
+asIScriptFunction *asCObjectType::GetMethodByName(const char *name, bool getVirtual) const
+{
+	return engine->GetFunctionById(GetMethodIdByName(name, getVirtual));
+}
+
+// interface
 int asCObjectType::GetMethodIdByDecl(const char *decl, bool getVirtual) const
 {
 	// Get the module from one of the methods
@@ -415,6 +449,14 @@ int asCObjectType::GetMethodIdByDecl(const char *decl, bool getVirtual) const
 }
 
 // interface
+asIScriptFunction *asCObjectType::GetMethodByDecl(const char *decl, bool getVirtual) const
+{
+	return engine->GetFunctionById(GetMethodIdByDecl(decl, getVirtual));
+}
+
+#ifdef AS_DEPRECATED
+// deprecated since 2011-10-03
+// interface
 asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(asUINT index, bool getVirtual) const
 {
 	if( index >= methods.GetLength() ) 
@@ -429,6 +471,7 @@ asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(asUINT index, bool 
 
 	return engine->scriptFunctions[methods[index]];
 }
+#endif
 
 // interface
 asUINT asCObjectType::GetPropertyCount() const

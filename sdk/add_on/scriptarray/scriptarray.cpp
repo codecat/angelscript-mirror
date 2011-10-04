@@ -78,7 +78,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 				int funcId = subtype->GetBehaviourByIndex(n, &beh);
 				if( beh != asBEHAVE_CONSTRUCT ) continue;
 
-				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
+				asIScriptFunction *func = ot->GetEngine()->GetFunctionById(funcId);
 				if( func->GetParamCount() == 0 )
 				{
 					// Found the default constructor
@@ -95,7 +95,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 			for( asUINT n = 0; n < subtype->GetFactoryCount(); n++ )
 			{
 				int funcId = subtype->GetFactoryIdByIndex(n);
-				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
+				asIScriptFunction *func = ot->GetEngine()->GetFunctionById(funcId);
 				if( func->GetParamCount() == 0 )
 				{
 					// Found the default factory
@@ -932,7 +932,7 @@ void CScriptArray::Precache()
 		{
 			for( asUINT i = 0; i < subType->GetMethodCount(); i++ )
 			{
-				asIScriptFunction *func = subType->GetMethodDescriptorByIndex(i);
+				asIScriptFunction *func = subType->GetMethodByIndex(i);
 
 				if( func->GetParamCount() == 1 /* && func->IsReadOnly() */ )
 				{

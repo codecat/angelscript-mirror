@@ -110,10 +110,14 @@ public:
 	virtual int                GetFunctionIdByIndex(asUINT index) const;
 	virtual int                GetFunctionIdByName(const char *name) const;
 	virtual int                GetFunctionIdByDecl(const char *decl) const;
-	// TODO: interface: Should be named GetFunctionByIndex
+	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const;
+	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const;
+	virtual asIScriptFunction *GetFunctionByName(const char *name) const;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
-	// TODO: interface: Need GetFunctionByName and GetFunctionByDecl too
+#endif
 	virtual int                RemoveFunction(int funcId);
 
 	// Script global variables

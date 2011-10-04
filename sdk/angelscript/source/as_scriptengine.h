@@ -101,10 +101,11 @@ public:
     virtual asIJITCompiler *GetJITCompiler() const;
 
 	// Global functions
-	virtual int    RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
-	virtual asUINT GetGlobalFunctionCount() const;
-	virtual int    GetGlobalFunctionIdByIndex(asUINT index) const;
-	// TODO: interface: Needs GetGlobalFunctionIdByDecl(), just like for module
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual asUINT             GetGlobalFunctionCount() const;
+	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const;
+	virtual asIScriptFunction *GetGlobalFunctionByIndex(asUINT index) const;
+	virtual asIScriptFunction *GetGlobalFunctionByDecl(const char *declaration) const;
 
 	// Global properties
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer);
@@ -161,8 +162,11 @@ public:
 	virtual int              DiscardModule(const char *module);
 
 	// Script functions
-	// TODO: interface: Should be named GetFunctionById
+	virtual asIScriptFunction *GetFunctionById(int funcId) const;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
+#endif
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const;

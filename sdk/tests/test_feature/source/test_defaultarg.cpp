@@ -57,7 +57,7 @@ bool Test()
 		r = engine->RegisterGlobalFunction("void defarg(bool, int a = 34 + /* comments will be removed */ 45, int b = 23)", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
 			TEST_FAILED;
-		asIScriptFunction *func = engine->GetFunctionDescriptorById(r);
+		asIScriptFunction *func = engine->GetFunctionById(r);
 		string decl = func->GetDeclaration();
 		if( decl != "void defarg(bool, int arg1 = 34 + 45, int arg2 = 23)" )
 		{

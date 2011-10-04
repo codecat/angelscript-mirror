@@ -199,6 +199,15 @@ int asCModule::GetFunctionIdByIndex(asUINT index) const
 	return globalFunctions[index]->id;
 }
 
+// interface
+asIScriptFunction *asCModule::GetFunctionByIndex(asUINT index) const
+{
+	if( index >= globalFunctions.GetLength() )
+		return 0;
+
+	return globalFunctions[index];
+}
+
 // internal
 int asCModule::CallInit(asIScriptContext *myCtx)
 {
@@ -248,7 +257,7 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 					if( r == asEXECUTION_EXCEPTION )
 					{
 						int funcId = ctx->GetExceptionFunction();
-						const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+						const asIScriptFunction *function = engine->GetFunctionById(funcId);
 
 						msg.Format(TXT_EXCEPTION_s_IN_s, ctx->GetExceptionString(), function->GetDeclaration());
 
@@ -404,6 +413,16 @@ int asCModule::GetFunctionIdByName(const char *name) const
 }
 
 // interface
+asIScriptFunction *asCModule::GetFunctionByName(const char *name) const
+{
+	int id = GetFunctionIdByName(name);
+	if( id < 0 )
+		return 0;
+
+	return globalFunctions[id];
+}
+
+// interface
 asUINT asCModule::GetImportedFunctionCount() const
 {
 	return (asUINT)bindInformations.GetLength();
@@ -503,6 +522,14 @@ int asCModule::GetFunctionIdByDecl(const char *decl) const
 }
 
 // interface
+asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
+{
+	int id = GetFunctionIdByDecl(decl);
+	if( id < 0 ) return 0;
+	return globalFunctions[id];
+}
+
+// interface
 asUINT asCModule::GetGlobalVarCount() const
 {
 	return (asUINT)scriptGlobals.GetLength();
@@ -539,6 +566,8 @@ int asCModule::RemoveGlobalVar(asUINT index)
 	return 0;
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2011-10-03
 // interface
 asIScriptFunction *asCModule::GetFunctionDescriptorByIndex(asUINT index) const
 {
@@ -553,6 +582,7 @@ asIScriptFunction *asCModule::GetFunctionDescriptorById(int funcId) const
 {
 	return engine->GetFunctionDescriptorById(funcId);
 }
+#endif
 
 // interface
 int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
@@ -1174,8 +1204,8 @@ bool asCModule::AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<
 	{
 		match = false;
 
-		asCScriptFunction *funcA = (asCScriptFunction*)engine->GetFunctionDescriptorById(a->methods[n]);
-		asCScriptFunction *funcB = (asCScriptFunction*)engine->GetFunctionDescriptorById(b->methods[n]);
+		asCScriptFunction *funcA = (asCScriptFunction*)engine->GetFunctionById(a->methods[n]);
+		asCScriptFunction *funcB = (asCScriptFunction*)engine->GetFunctionById(b->methods[n]);
 
 		// funcB can be null if the module that created the interface has been  
 		// discarded but the type has not yet been released by the engine.

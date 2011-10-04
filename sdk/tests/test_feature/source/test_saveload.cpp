@@ -363,7 +363,7 @@ bool Test()
 	if( mod->GetFunctionCount() != 5 )
 		TEST_FAILED;
 
-	if( string(mod->GetFunctionDescriptorByIndex(0)->GetScriptSectionName()) != ":1" )
+	if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
 		TEST_FAILED;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);

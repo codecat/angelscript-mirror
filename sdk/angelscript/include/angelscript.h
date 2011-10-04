@@ -494,9 +494,11 @@ public:
 	virtual asIJITCompiler *GetJITCompiler() const = 0;
 
 	// Global functions
-	virtual int    RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
-	virtual asUINT GetGlobalFunctionCount() const = 0;
-	virtual int    GetGlobalFunctionIdByIndex(asUINT index) const = 0;
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual asUINT             GetGlobalFunctionCount() const = 0;
+	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const = 0;
+	virtual asIScriptFunction *GetGlobalFunctionByIndex(asUINT index) const = 0;
+	virtual asIScriptFunction *GetGlobalFunctionByDecl(const char *declaration) const = 0;
 
 	// Global properties
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
@@ -550,7 +552,11 @@ public:
 	virtual int              DiscardModule(const char *module) = 0;
 
 	// Script functions
+	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
+#endif
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
@@ -607,8 +613,14 @@ public:
 	virtual int                GetFunctionIdByIndex(asUINT index) const = 0;
 	virtual int                GetFunctionIdByName(const char *name) const = 0;
 	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
+	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const = 0;
+	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const = 0;
+	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const = 0;
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
+#endif
 	virtual int                RemoveFunction(int funcId) = 0;
 
 	// Global variables
@@ -737,7 +749,11 @@ public:
 	// Miscellaneous
 	virtual asIScriptEngine   *GetEngine() const = 0;
 	virtual int                GetFunctionId() const = 0;
+	virtual asIScriptFunction *GetFunction() const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
+#endif
 	virtual void              *GetFunctionUserData() const = 0;
 
 	// Object
@@ -823,13 +839,21 @@ public:
 	virtual asUINT             GetFactoryCount() const = 0;
 	virtual int                GetFactoryIdByIndex(asUINT index) const = 0;
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
+	virtual asIScriptFunction *GetFactoryByIndex(asUINT index) const = 0;
+	virtual asIScriptFunction *GetFactoryByDecl(const char *decl) const = 0;
 
 	// Methods
 	virtual asUINT             GetMethodCount() const = 0;
 	virtual int                GetMethodIdByIndex(asUINT index, bool getVirtual = true) const = 0;
 	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
 	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
+	virtual asIScriptFunction *GetMethodByIndex(asUINT index, bool getVirtual = true) const = 0;
+	virtual asIScriptFunction *GetMethodByName(const char *name, bool getVirtual = true) const = 0;
+	virtual asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual = true) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual = true) const = 0;
+#endif
 
 	// Properties
 	virtual asUINT      GetPropertyCount() const = 0;

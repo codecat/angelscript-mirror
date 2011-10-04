@@ -2206,8 +2206,59 @@ int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index) const
 	return registeredGlobalFuncs[index]->id;
 }
 
+// interface
+asIScriptFunction *asCScriptEngine::GetGlobalFunctionByIndex(asUINT index) const
+{
+	if( index >= registeredGlobalFuncs.GetLength() )
+		return 0;
 
+	return registeredGlobalFuncs[index];
+}
 
+// interface
+asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) const
+{
+	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
+
+	asCScriptFunction func(const_cast<asCScriptEngine*>(this), 0, asFUNC_DUMMY);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
+	if( r < 0 )
+		return 0;
+
+	// TODO: optimize: Improve linear search
+	// Search registered functions for matching interface
+	int id = -1;
+	for( size_t n = 0; n < registeredGlobalFuncs.GetLength(); ++n )
+	{
+		if( registeredGlobalFuncs[n]->objectType == 0 && 
+			func.name == registeredGlobalFuncs[n]->name && 
+			func.returnType == registeredGlobalFuncs[n]->returnType &&
+			func.parameterTypes.GetLength() == registeredGlobalFuncs[n]->parameterTypes.GetLength() )
+		{
+			bool match = true;
+			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
+			{
+				if( func.parameterTypes[p] != registeredGlobalFuncs[n]->parameterTypes[p] )
+				{
+					match = false;
+					break;
+				}
+			}
+
+			if( match )
+			{
+				if( id == -1 )
+					id = registeredGlobalFuncs[n]->id;
+				else
+					return 0; // Multiple matches
+			}
+		}
+	}
+
+	if( id < 0 ) return 0; // No matches
+
+	return registeredGlobalFuncs[id];
+}
 
 
 asCObjectType *asCScriptEngine::GetObjectType(const char *type)
@@ -4106,12 +4157,19 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId) const
 	return dt->GetObjectType();
 }
 
-
-asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId) const
+// interface
+asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 {
 	return GetScriptFunction(funcId);
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2011-10-03
+asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId) const
+{
+	return GetScriptFunction(funcId);
+}
+#endif
 
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const

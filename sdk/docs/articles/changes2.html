@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.0 WIP - 2011/10/01</h2>
+<h2>Version 2.22.0 WIP - 2011/10/03</h2>
 
 <ul>
 <li>Library interface
@@ -23,6 +23,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added user data to the asIObjectType and asIScriptModule interfaces, and corresponding cleanup callbacks to the asIScriptEngine interface
 <li>Changed some return types from int to asUINT where the methods couldn't return a negative value
 <li>Added a Prepare method to the context that takes the asIScriptFunction pointer instead of the function id
+<li>Added GetGlobalFunctionByIndex and Decl to asIScriptEngine
+<li>Deprecated GetFunctionDescriptorById in asIScriptEngine and asIScriptModule and replaced it with asIScriptEngine::GetFunctionById
+<li>Added GetFunctionByName and Decl to asIScriptModule
+<li>Deprecated asIScriptModule::GetFunctionDescriptorByIndex and replaced it with GetFunctionByIndex
+<li>Deprecated asIScriptGeneric::GetFunctionDescriptor and replaced it with GetFunction
+<li>Added GetFactoryByIndex and Decl to asIObjectType
+<li>Added GetMethodByName and Decl to asIObjectType
+<li>Deprecated asIObjectType::GetMethodDescriptorByIndex and replaced it with GetMethodByIndex
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

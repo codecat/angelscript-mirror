@@ -74,7 +74,7 @@ bool Test()
 	if( r == asEXECUTION_EXCEPTION )
 	{
 		int funcID = ctx->GetExceptionFunction();
-		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		const asIScriptFunction *func = engine->GetFunctionById(funcID);
 		if( strcmp(func->GetModuleName(), "DynamicModule") != 0 )
 			failed = true;
 

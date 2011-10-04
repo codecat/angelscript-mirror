@@ -74,8 +74,17 @@ int asCGeneric::GetFunctionId() const
 	return sysFunction->id;
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2011-10-03
 // interface
 asIScriptFunction *asCGeneric::GetFunctionDescriptor() const
+{
+	return sysFunction;
+}
+#endif
+
+// interface
+asIScriptFunction *asCGeneric::GetFunction() const
 {
 	return sysFunction;
 }

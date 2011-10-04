@@ -446,7 +446,7 @@ bool TestRefScoped()
 		TEST_FAILED;
 
 	// Must be possible to determine type id for scoped types with handle
-	asIScriptFunction *func = engine->GetFunctionDescriptorById(ot->GetFactoryIdByIndex(0));
+	asIScriptFunction *func = engine->GetFunctionById(ot->GetFactoryIdByIndex(0));
 	int typeId = func->GetReturnTypeId();
 	if( typeId != engine->GetTypeIdByDecl("scoped@") )
 		TEST_FAILED;
@@ -666,7 +666,7 @@ int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1), 
 	{
 		// TODO: Can write messages to the message callback in the engine instead of testing through asserts
 
-		asIScriptFunction *descr = e->GetFunctionDescriptorById(r);
+		asIScriptFunction *descr = e->GetFunctionById(r);
 
 		// Verify the parameter count
 		assert( descr->GetParamCount() == 1 );
@@ -686,7 +686,7 @@ int RegisterGlobalFunction(asIScriptEngine *e, const char *decl, void (*f)(A1, A
 
 	if( r >= 0 )
 	{
-		asIScriptFunction *descr = e->GetFunctionDescriptorById(r);
+		asIScriptFunction *descr = e->GetFunctionById(r);
 
 		// Verify the parameter count
 		assert( descr->GetParamCount() == 2 );

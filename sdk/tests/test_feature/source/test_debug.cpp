@@ -161,7 +161,7 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
 	int funcID = ctx->GetExceptionFunction();
-	const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcID);
+	const asIScriptFunction *function = engine->GetFunctionById(funcID);
 	print("--- exception ---\n");
 	print("desc: %s\n", ctx->GetExceptionString());
 	print("func: %s\n", function->GetDeclaration());

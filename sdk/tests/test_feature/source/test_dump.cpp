@@ -122,7 +122,7 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 	// Show factory functions
 	for( asUINT f = 0; f < objType->GetFactoryCount(); f++ )
 	{
-		s << " " << engine->GetFunctionDescriptorById(objType->GetFactoryIdByIndex(f))->GetDeclaration() << endl;
+		s << " " << engine->GetFunctionById(objType->GetFactoryIdByIndex(f))->GetDeclaration() << endl;
 	}
 
 	if( !( objType->GetFlags() & asOBJ_SCRIPT_OBJECT ) )
@@ -132,14 +132,14 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 		{
 			asEBehaviours beh;
 			int bid = objType->GetBehaviourByIndex(b, &beh);
-			s << " beh(" << beh << ") " << engine->GetFunctionDescriptorById(bid)->GetDeclaration(false) << endl;
+			s << " beh(" << beh << ") " << engine->GetFunctionById(bid)->GetDeclaration(false) << endl;
 		}
 	}
 
 	// Show methods
 	for( asUINT m = 0; m < objType->GetMethodCount(); m++ )
 	{
-		s << " " << objType->GetMethodDescriptorByIndex(m)->GetDeclaration(false) << endl;
+		s << " " << objType->GetMethodByIndex(m)->GetDeclaration(false) << endl;
 	}
 
 	// Show properties
@@ -159,7 +159,7 @@ void DumpModule(asIScriptModule *mod)
 	c = mod->GetFunctionCount();
 	for( n = 0; n < c; n++ )
 	{
-		asIScriptFunction *func = mod->GetFunctionDescriptorByIndex(n);
+		asIScriptFunction *func = mod->GetFunctionByIndex(n);
 		s << "func: " << func->GetDeclaration() << endl;
 	}
 
@@ -244,8 +244,8 @@ void DumpModule(asIScriptModule *mod)
 	for( n = 0; n < c; n++ )
 	{
 		int funcId = engine->GetGlobalFunctionIdByIndex(n);
-		const char *group = engine->GetFunctionDescriptorById(funcId)->GetConfigGroup();
-		s << "reg func: " << engine->GetFunctionDescriptorById(funcId)->GetDeclaration() << 
+		const char *group = engine->GetFunctionById(funcId)->GetConfigGroup();
+		s << "reg func: " << engine->GetFunctionById(funcId)->GetDeclaration() << 
 			" group: " << (group ? group : "<null>") << endl;
 	}
 

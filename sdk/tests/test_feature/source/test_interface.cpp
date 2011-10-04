@@ -343,7 +343,7 @@ bool Test2()
 	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A@");
 	typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
 	asIObjectType *objType = engine->GetObjectTypeById(typeBB);
-	asIScriptFunction *func = objType->GetMethodDescriptorByIndex(0);
+	asIScriptFunction *func = objType->GetMethodByIndex(0);
 	if( func->GetReturnTypeId() != typeBA )
 		TEST_FAILED;
 

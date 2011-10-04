@@ -42,7 +42,7 @@ bool TestException()
 		int line = ctx->GetExceptionLineNumber();
 		const char *desc = ctx->GetExceptionString();
 
-		const asIScriptFunction *function = engine->GetFunctionDescriptorById(func);
+		const asIScriptFunction *function = engine->GetFunctionById(func);
 		if( strcmp(function->GetName(), "ExecuteString") != 0 )
 		{
 			printf("%s: Exception function name is wrong\n", TESTNAME);

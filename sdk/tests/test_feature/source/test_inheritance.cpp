@@ -152,13 +152,13 @@ bool Test()
 			printf("First module's functions\n");
 			for( n = 0; n < (asUINT)mod->GetFunctionCount(); n++ )
 			{
-				asIScriptFunction *f = mod->GetFunctionDescriptorByIndex(n);
+				asIScriptFunction *f = mod->GetFunctionByIndex(n);
 				printf("%s\n", f->GetDeclaration());
 			}
 			printf("\nSecond module's functions\n");
 			for( n = 0; n < (asUINT)mod2->GetFunctionCount(); n++ )
 			{
-				asIScriptFunction *f = mod2->GetFunctionDescriptorByIndex(n);
+				asIScriptFunction *f = mod2->GetFunctionByIndex(n);
 				printf("%s\n", f->GetDeclaration());
 			}
 		}

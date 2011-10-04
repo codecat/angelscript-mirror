@@ -74,8 +74,7 @@ static bool ExecuteScript()
 	// PrepareContext on it again. If the same stack size is used as the last time
 	// there will not be any new allocation thus saving some time.
 
-	int id = engine->GetModule(0)->GetFunctionIdByName("main");
-	int r = ctx->Prepare(engine->GetModule(0)->GetFunctionDescriptorById(id));
+	int r = ctx->Prepare(engine->GetModule(0)->GetFunctionByName("main"));
 	if( r < 0 )
 	{
 		printf("%s: Failed to prepare context\n", TESTNAME);
@@ -125,8 +124,8 @@ static bool ExecuteScript()
 		printf("%s: An exception occured during execution\n", TESTNAME);
 
 		// Print exception description
-		int funcID = ctx->GetExceptionFunction();
-		const asIScriptFunction *func = engine->GetFunctionDescriptorById(funcID);
+		int funcId = ctx->GetExceptionFunction();
+		const asIScriptFunction *func = engine->GetFunctionById(funcId);
 		printf("func : %s\n", func->GetName());
 		printf("line : %d\n", ctx->GetExceptionLineNumber());
 		printf("desc : %s\n", ctx->GetExceptionString());
