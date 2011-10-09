@@ -15,9 +15,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.0 WIP - 2011/10/04</h2>
+<h2>Version 2.22.0 WIP - 2011/10/08</h2>
 
 <ul>
+<li>Bug fixes
+<ul>
+<li>Fixed bug where compiler would incorrectly reuse a temporary variable when preparing arguments for a function call (Thanks Philip Bennefall)
+</ul>
 <li>Library interface
 <ul>
 <li>Added user data to the asIObjectType and asIScriptModule interfaces, and corresponding cleanup callbacks to the asIScriptEngine interface

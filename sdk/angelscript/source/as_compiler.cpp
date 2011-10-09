@@ -1107,11 +1107,11 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				IsVariableInitialized(&ctx->type, node);
 
-				if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
+				if( ctx->type.dataType.IsReference() ) ConvertToVariableNotIn(ctx, reservedVars);
 				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, reservedVars);
 
 				if( !(param.IsReadOnly() && ctx->type.isVariable) )
-					ConvertToTempVariable(ctx);
+					ConvertToTempVariableNotIn(ctx, reservedVars);
 
 				PushVariableOnStack(ctx, true);
 				ctx->type.dataType.MakeReadOnly(param.IsReadOnly());
@@ -1294,7 +1294,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		{
 			IsVariableInitialized(&ctx->type, node);
 
-			if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
+			if( ctx->type.dataType.IsReference() ) ConvertToVariableNotIn(ctx, reservedVars);
 
 			// Implicitly convert primitives to the parameter type
 			ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, reservedVars);
@@ -1305,7 +1305,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			}
 			else if( ctx->type.isConstant )
 			{
-				ConvertToVariable(ctx);
+				ConvertToVariableNotIn(ctx, reservedVars);
 				PushVariableOnStack(ctx, dt.IsReference());
 			}
 		}

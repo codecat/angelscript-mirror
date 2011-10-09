@@ -671,11 +671,15 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 	// TODO: optimize: Improve linear search
 	asCArray<asCObjectProperty *> &props = obj.GetObjectType()->properties;
 	for( asUINT n = 0; n < props.GetLength(); n++ )
+	{
 		if( props[n]->name == prop )
+		{
 			if( module->accessMask & props[n]->accessMask )
 				return props[n];
 			else
 				return 0;
+		}
+	}
 
 	return 0;
 }

@@ -1456,6 +1456,51 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test - Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"bool freq_ms(string &in freqs, double &in length) \n"
+			"{ \n"
+			"  assert( freqs == '524' ); \n"
+			"  assert( length == 1000 ); \n"
+			"  return false; \n"
+			"} \n"
+			"class tone_player \n"
+			"{ \n"
+			"  double freq; \n"
+			"  double ms; \n"
+			"  tone_player() \n"
+			"  { \n"
+			"    freq=524; \n"
+			"    ms=1000; \n"
+			"  } \n"
+			"  void play_tone() \n"
+			"  { \n"
+			"    freq_ms(''+freq,ms); \n"
+			"  } \n"
+			"} \n"
+			);
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		r = ExecuteString(engine, "tone_player tp; tp.play_tone();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test invalid script
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
