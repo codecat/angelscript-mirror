@@ -533,6 +533,11 @@ asCScriptEngine::~asCScriptEngine()
 	GarbageCollect(asGC_FULL_CYCLE);
 	ClearUnusedTypes();
 
+	// If the application hasn't registered GC behaviours for all types 
+	// that can form circular references with script types, then there
+	// may still be objects in the GC.
+	gc.ReportUndestroyedObjects();
+
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	while( mapTypeIdToDataType.MoveFirst(&cursor) )
 	{
@@ -2890,6 +2895,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 void asCScriptEngine::CallObjectMethod(void *obj, int func)
 {
 	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
 	CallObjectMethod(obj, s->sysFuncIntf, s);
 }
 
@@ -2959,6 +2965,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 {
 	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
 	asSSystemFunctionInterface *i = s->sysFuncIntf;
 
 #ifdef __GNUC__
@@ -3026,6 +3033,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 {
 	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
 	asSSystemFunctionInterface *i = s->sysFuncIntf;
 
 #ifdef __GNUC__
@@ -3093,12 +3101,14 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 void *asCScriptEngine::CallGlobalFunctionRetPtr(int func)
 {
 	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
 	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s);
 }
 
 void *asCScriptEngine::CallGlobalFunctionRetPtr(int func, void *param1)
 {
 	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
 	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s, param1);
 }
 
@@ -3147,6 +3157,7 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func)
 {
 	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
 	CallObjectMethod(obj, param, s->sysFuncIntf, s);
 }
 

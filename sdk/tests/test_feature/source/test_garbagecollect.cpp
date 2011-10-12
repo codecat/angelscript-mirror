@@ -14,6 +14,27 @@ void PrintString_Generic(asIScriptGeneric *gen)
 	called++;
 }
 
+
+
+
+class CFoo 
+{ 
+public:     
+	CFoo() : m_Ref(1) { m_pObject = 0; }
+	~CFoo() { if( m_pObject ) m_pObject->Release(); }
+	void SetScriptObject(asIScriptObject* _pObject) { m_pObject = _pObject; }
+	void AddRef() { m_Ref++; }
+	void Release() { if( --m_Ref == 0 ) { delete this; } }
+	static CFoo* CreateObject() { return new CFoo; }
+private:
+	asIScriptObject* m_pObject;
+	asUINT m_Ref;
+};
+
+
+
+
+
 bool Test()
 {
 	bool fail = false;
@@ -181,7 +202,44 @@ bool Test()
 		if( called != 2 )
 			TEST_FAILED;
 	}
+/*
+	{
+		// This test forces a memory leak due to not registering the GC behaviours for the CFoo class
+		COutStream out;
+		int r;
 
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterInterface("IMyInterface"); 
+		engine->RegisterObjectType("CFoo", sizeof(CFoo), asOBJ_REF); 
+		engine->RegisterObjectBehaviour("CFoo", asBEHAVE_ADDREF, "void f()", asMETHOD(CFoo, AddRef), asCALL_THISCALL); 
+		engine->RegisterObjectBehaviour("CFoo", asBEHAVE_RELEASE, "void f()", asMETHOD(CFoo, Release), asCALL_THISCALL); 
+		engine->RegisterObjectBehaviour("CFoo", asBEHAVE_FACTORY, "CFoo@ f()", asFUNCTION(&CFoo::CreateObject), asCALL_CDECL);       
+		engine->RegisterObjectMethod("CFoo", "void SetObject(IMyInterface@)", asMETHOD(CFoo, SetScriptObject), asCALL_THISCALL); 
+
+		const char *script = 
+			"CBar test; \n"
+			"class CBase : IMyInterface \n"
+			"{ \n"
+			"  IMyInterface@ m_dummy; \n" // Comment only this and everything is ok
+			"} \n"
+			"class CBar : CBase \n"
+			"{ \n"
+			"  CBar() \n"
+			"  { \n"
+			"    m_foo.SetObject(this); \n" // Comment only this and everything is ok
+			"  } \n"
+			"  CFoo m_foo; \n"
+			"}; ";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+
+		engine->Release();
+	}
+*/
 	return fail;
 }
 

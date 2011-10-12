@@ -214,6 +214,7 @@
 #define TXT_CANNOT_RET_TYPE_s_BY_VAL               "Can't return type '%s' by value unless the application type is informed in the registration"
 #define TXT_DONT_SUPPORT_TYPE_s_BY_VAL             "Don't support passing type '%s' by value to application. Use generic calling convention instead"
 #define TXT_DONT_SUPPORT_RET_TYPE_s_BY_VAL         "Don't support returning type '%s' by value from application. Use generic calling convention instead"
+#define TXT_GC_CANNOT_FREE_OBJ_OF_TYPE_s           "GC cannot free an object of type '%s'. Make sure all types that can form circular references have the GC behaviours"
 
 // Internal names
 

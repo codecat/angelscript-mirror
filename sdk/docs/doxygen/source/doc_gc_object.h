@@ -51,13 +51,13 @@ int CGCRef::GetRefCount()
     return (refCount & 0x7FFFFFFF);
 }
 
-void CGCRef::EnumReferences()
+void CGCRef::EnumReferences(asIScriptEngine *engine)
 {
     // Call the engine::GCEnumCallback for all references to other objects held
     engine->GCEnumCallback(myref);
 }
 
-void CGCRef::ReleaseAllReferences()
+void CGCRef::ReleaseAllReferences(asIScriptEngine *engine)
 {
     // When we receive this call, we are as good as dead, but
     // the garbage collector will still hold a references to us, so we

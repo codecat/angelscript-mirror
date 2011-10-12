@@ -726,37 +726,9 @@ void asCObjectType::ReleaseAllFunctions()
 		engine->scriptFunctions[beh.destruct]->Release();
 	beh.destruct  = 0;
 
-	if( beh.addref )
-		engine->scriptFunctions[beh.addref]->Release();
-	beh.addref = 0;
-
-	if( beh.release )
-		engine->scriptFunctions[beh.release]->Release();
-	beh.release = 0;
-
 	if( beh.copy )
 		engine->scriptFunctions[beh.copy]->Release();
 	beh.copy = 0;
-
-	if( beh.gcEnumReferences )
-		engine->scriptFunctions[beh.gcEnumReferences]->Release();
-	beh.gcEnumReferences = 0;
-
-	if( beh.gcGetFlag )
-		engine->scriptFunctions[beh.gcGetFlag]->Release();
-	beh.gcGetFlag = 0;
-
-	if( beh.gcGetRefCount )
-		engine->scriptFunctions[beh.gcGetRefCount]->Release();
-	beh.gcGetRefCount = 0;
-
-	if( beh.gcReleaseAllReferences )
-		engine->scriptFunctions[beh.gcReleaseAllReferences]->Release();
-	beh.gcReleaseAllReferences = 0;
-
-	if( beh.gcSetFlag )
-		engine->scriptFunctions[beh.gcSetFlag]->Release();
-	beh.gcSetFlag = 0;
 
 	for( asUINT e = 1; e < beh.operators.GetLength(); e += 2 )
 	{
@@ -778,6 +750,35 @@ void asCObjectType::ReleaseAllFunctions()
 			virtualFunctionTable[d]->Release();
 	}
 	virtualFunctionTable.SetLength(0);
+
+	// GC behaviours
+	if( beh.addref )
+		engine->scriptFunctions[beh.addref]->Release();
+	beh.addref = 0;
+
+	if( beh.release )
+		engine->scriptFunctions[beh.release]->Release();
+	beh.release = 0;
+
+	if( beh.gcEnumReferences )
+		engine->scriptFunctions[beh.gcEnumReferences]->Release();
+	beh.gcEnumReferences = 0;
+
+	if( beh.gcGetFlag )
+		engine->scriptFunctions[beh.gcGetFlag]->Release();
+	beh.gcGetFlag = 0;
+
+	if( beh.gcGetRefCount )
+		engine->scriptFunctions[beh.gcGetRefCount]->Release();
+	beh.gcGetRefCount = 0;
+
+	if( beh.gcReleaseAllReferences )
+		engine->scriptFunctions[beh.gcReleaseAllReferences]->Release();
+	beh.gcReleaseAllReferences = 0;
+
+	if( beh.gcSetFlag )
+		engine->scriptFunctions[beh.gcSetFlag]->Release();
+	beh.gcSetFlag = 0;
 }
 
 // internal
