@@ -916,6 +916,8 @@ asCScriptNode *asCParser::ParseInterface()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snInterface);
 
+	// TODO: shared: Allow keyword 'shared' before 'interface'
+
 	sToken t;
 	GetToken(&t);
 	if( t.type != ttInterface )
@@ -963,6 +965,8 @@ asCScriptNode *asCParser::ParseInterface()
 asCScriptNode *asCParser::ParseClass()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snClass);
+
+	// TODO: shared: Allow the keyword 'shared' before 'class'
 
 	sToken t;
 	GetToken(&t);

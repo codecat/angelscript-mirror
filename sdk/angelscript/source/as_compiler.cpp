@@ -1714,6 +1714,8 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
+	// TODO: shared: A shared object may not declare variables of non-shared types
+
 	// Get the data type
 	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script);
 
@@ -6213,6 +6215,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			{
 				found = true;
 
+				// TODO: shared: A shared type must not access global vars (unless they too are shared, e.g. application registered type)
+
 				// Verify that the global property has been compiled already
 				if( isCompiled )
 				{
@@ -6289,6 +6293,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			found = true;
 
+			// TODO: shared: A shared object may not access global functions unless they too are shared (e.g. registered functions)
+
 			// Push the function pointer on the stack
 			ctx->bc.InstrPTR(asBC_FuncPtr, engine->scriptFunctions[funcs[0]]);
 			ctx->type.Set(asCDataType::CreateFuncDef(engine->scriptFunctions[funcs[0]]));
@@ -6328,6 +6334,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 		if( found )
 		{
+			// TODO: shared: A shared object may not use non shared enums
+
 			// an enum value was resolved
 			ctx->type.SetConstantDW(dt, value);
 		}
@@ -10673,6 +10681,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isConstructor, asCArray<asSExprContext*> *args, asCObjectType *objType, bool useVariable, int varOffset, int funcPtrVar)
 {
+	// TODO: shared: A shared object may not call non-shared functions
+
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
 	// Check if the function is private

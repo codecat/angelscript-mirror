@@ -1118,6 +1118,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	// Don't have to check against members of object
 	// types as they are allowed to use the names
 
+	// TODO: shared: All registered types should automatically get asOBJ_SHARED flag
 	// Register the object type for the interface
 	asCObjectType *st = asNEW(asCObjectType)(this);
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
@@ -1310,6 +1311,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return asALREADY_REGISTERED;
 		}
 
+		// TODO: shared: All registered types should automatically get asOBJ_SHARED flag
 		asCObjectType *type = asNEW(asCObjectType)(this);
 		type->name       = typeName;
 		type->size       = byteSize;
@@ -1393,6 +1395,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			// Don't have to check against members of object
 			// types as they are allowed to use the names
 
+			// TODO: shared: All registered types should automatically get asOBJ_SHARED flag
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
 			type->name       = typeName;
@@ -1431,6 +1434,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 //			if( dt.GetObjectType()->GetRefCount() > 1 )
 //				return ConfigError(asNOT_SUPPORTED);
 
+			// TODO: shared: All registered types should automatically get asOBJ_SHARED flag
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
 			type->name       = dt.GetObjectType()->name;

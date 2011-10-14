@@ -1195,6 +1195,8 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 
 int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 {
+	// TODO: shared: Allow setting the shared flag
+
 	asCScriptNode *n = node->firstChild;
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
@@ -1248,6 +1250,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 
 int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 {
+	// TODO: shared: Allow setting the shared flag
+
 	asCScriptNode *n = node->firstChild;
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
@@ -1560,6 +1564,8 @@ void asCBuilder::CompileClasses()
 {
 	asUINT n;
 	asCArray<sClassDeclaration*> toValidate((int)classDeclarations.GetLength());
+
+	// TODO: shared: A shared type may not inherit from non-shared types. A non-shared type may inherit from shared type though
 
 	// Determine class inheritances and interfaces
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
@@ -2411,6 +2417,8 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		func->objType   = objType;
 		func->funcId    = funcId;
 	}
+
+	// TODO: shared: If class or interface is shared, then only shared types may be used in the method signature
 
 	// Destructors may not have any parameters
 	if( isDestructor && parameterTypes.GetLength() > 0 )
