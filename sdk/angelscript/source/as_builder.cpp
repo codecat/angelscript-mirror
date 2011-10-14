@@ -1127,6 +1127,14 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 {
+	// Has the application disabled global vars?
+	if( engine->ep.disallowGlobalVars )
+	{
+		int r, c;
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+		WriteError(file->name.AddressOf(), TXT_GLOBAL_VARS_NOT_ALLOWED, r, c);
+	}
+
 	// What data type is it?
 	asCDataType type = CreateDataTypeFromNode(node->firstChild, file);
 

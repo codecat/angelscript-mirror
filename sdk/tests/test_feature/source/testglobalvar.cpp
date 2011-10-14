@@ -360,6 +360,29 @@ bool TestGlobalVar()
 		engine->Release();
 	}
 
+	// Global vars can be disabled
+	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		
+		engine->SetEngineProperty(asEP_DISALLOW_GLOBAL_VARS, true);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("", "int var;");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (1, 1) : Error   : Global variables have been disabled by the application\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	g_str->Release();
 	g_str = 0;
 

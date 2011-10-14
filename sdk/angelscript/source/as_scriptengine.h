@@ -409,6 +409,7 @@ public:
 		int  propertyAccessorMode;
 		bool expandDefaultArrayToTemplate;
 		bool autoGarbageCollect;
+		bool disallowGlobalVars;
 	} ep;
 };
 

@@ -291,6 +291,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.autoGarbageCollect = value ? true : false;
 		break;
 
+	case asEP_DISALLOW_GLOBAL_VARS:
+		ep.disallowGlobalVars = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -349,6 +353,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_AUTO_GARBAGE_COLLECT:
 		return ep.autoGarbageCollect;
+
+	case asEP_DISALLOW_GLOBAL_VARS:
+		return ep.disallowGlobalVars;
 	}
 
 	return 0;
@@ -392,6 +399,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.propertyAccessorMode         = 2;         // 0 = disable, 1 = app registered only, 2 = app and script created
 		ep.expandDefaultArrayToTemplate = false;
 		ep.autoGarbageCollect           = true;
+		ep.disallowGlobalVars           = false;
 	}
 
 	gc.engine = this;

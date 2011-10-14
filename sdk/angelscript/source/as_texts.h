@@ -92,6 +92,7 @@
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
 #define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
+#define TXT_GLOBAL_VARS_NOT_ALLOWED              "Global variables have been disabled by the application"
 
 #define TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP     "It is not allowed to perform a handle assignment on a non-handle property"
 #define TXT_HANDLE_COMPARISON                    "The operand is implicitly converted to handle in order to compare them"
@@ -215,6 +216,11 @@
 #define TXT_DONT_SUPPORT_TYPE_s_BY_VAL             "Don't support passing type '%s' by value to application. Use generic calling convention instead"
 #define TXT_DONT_SUPPORT_RET_TYPE_s_BY_VAL         "Don't support returning type '%s' by value from application. Use generic calling convention instead"
 #define TXT_GC_CANNOT_FREE_OBJ_OF_TYPE_s           "GC cannot free an object of type '%s'. Make sure all types that can form circular references have the GC behaviours"
+#define TXT_OBJECT_TYPE_s_DOESNT_EXIST             "Object type '%s' doesn't exist"
+#define TXT_TEMPLATE_TYPE_s_DOESNT_EXIST           "Template type '%s' doesn't exist"
+#define TXT_TEMPLATE_SUBTYPE_s_DOESNT_EXIST        "Template subtype '%s' doesn't exist"
+#define TXT_FAILED_READ_SUBTYPE_OF_TEMPLATE_s      "Failed to read subtype of template type '%s'"
+#define TXT_INSTANCING_INVLD_TMPL_TYPE_s_s         "Attempting to instanciate invalid template type '%s<%s>'"
 
 // Internal names
 

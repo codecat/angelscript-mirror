@@ -90,7 +90,8 @@ enum asEEngineProp
 	asEP_STRING_ENCODING              = 13,
 	asEP_PROPERTY_ACCESSOR_MODE       = 14,
 	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15,
-	asEP_AUTO_GARBAGE_COLLECT         = 16
+	asEP_AUTO_GARBAGE_COLLECT         = 16,
+	asEP_DISALLOW_GLOBAL_VARS         = 17
 };
 
 // Calling conventions
