@@ -1014,8 +1014,6 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 // internal
 void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 {
-	// TODO: shared: Once it is found that the interface is shared, the shared flag should be set automatically
-
 	// For each of the interfaces declared in the script find identical interface in the engine.
 	// If an identical interface was found then substitute the current id for the identical interface's id, 
 	// then remove this interface declaration. If an interface was modified by the declaration, then 

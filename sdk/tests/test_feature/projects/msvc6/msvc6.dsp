@@ -435,6 +435,10 @@ SOURCE=..\..\source\test_scriptstruct.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_shared.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_shark.cpp
 # End Source File
 # Begin Source File

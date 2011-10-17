@@ -59,7 +59,6 @@ const asDWORD asOBJ_TYPEDEF          = 0x40000000;
 const asDWORD asOBJ_ENUM             = 0x10000000;
 const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;
 
-// TODO: shared: asOBJ_SHARED should be added as a public flag
 
 
 // asOBJ_GC is used to indicate that the type can potentially 

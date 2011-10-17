@@ -1714,8 +1714,6 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
-	// TODO: shared: A shared object may not declare variables of non-shared types
-
 	// Get the data type
 	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script);
 
@@ -1733,6 +1731,18 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 			// Use int instead to avoid further problems
 			type = asCDataType::CreatePrimitive(ttInt, false);
+		}
+
+		// A shared object may not declare variables of non-shared types
+		if( outFunc->objectType && (outFunc->objectType->flags & asOBJ_SHARED) )
+		{
+			asCObjectType *ot = type.GetObjectType();
+			if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
+			{
+				asCString msg;
+				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
+				Error(msg.AddressOf(), decl);
+			}
 		}
 
 		// Get the name of the identifier
@@ -3802,6 +3812,8 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, asCScriptNode *node, bool generateCode)
 {
 	bool conversionDone = false;
+
+	// TODO: shared: Do not allow casting to non shared type
 
 	asCArray<int> ops;
 	asUINT n;
@@ -6209,13 +6221,12 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			bool isCompiled = true;
 			bool isPureConstant = false;
+			bool isAppProp = false;
 			asQWORD constantValue;
-			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue);
+			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
 			{
 				found = true;
-
-				// TODO: shared: A shared type must not access global vars (unless they too are shared, e.g. application registered type)
 
 				// Verify that the global property has been compiled already
 				if( isCompiled )
@@ -6234,6 +6245,20 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 						ctx->type.SetConstantQW(prop->type, constantValue);
 					else
 					{
+						// A shared type must not access global vars, unless they  
+						// too are shared, e.g. application registered vars
+						if( outFunc->objectType && (outFunc->objectType->flags & asOBJ_SHARED) )
+						{
+							if( !isAppProp )
+							{
+								asCString str;
+								str.Format(TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s, prop->name.AddressOf());
+								Error(str.AddressOf(), errNode);
+
+								// Allow the compilation to continue to catch other problems
+							}
+						}
+
 						ctx->type.Set(prop->type);
 						ctx->type.dataType.MakeReference(true);
 						ctx->type.isLValue = true;
@@ -7201,6 +7226,8 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 
 void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 {
+	// TODO: shared: Do not allow constructing non-shared types
+
 	// The first node is a datatype node
 	asCString name;
 	asCTypeInfo tempObj;
@@ -10681,9 +10708,19 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isConstructor, asCArray<asSExprContext*> *args, asCObjectType *objType, bool useVariable, int varOffset, int funcPtrVar)
 {
-	// TODO: shared: A shared object may not call non-shared functions
-
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
+
+	// A shared object may not call non-shared functions
+	if( outFunc->objectType && (outFunc->objectType->flags & asOBJ_SHARED) )
+	{
+		if( descr->funcType == asFUNC_SCRIPT &&
+			(descr->objectType == 0 || !(descr->objectType->flags & asOBJ_SHARED)) )
+		{
+			asCString msg;
+			msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, descr->GetDeclarationStr().AddressOf());
+			Error(msg.AddressOf(), ctx->exprNode);
+		}
+	}
 
 	// Check if the function is private
 	if( descr->isPrivate && descr->GetObjectType() != outFunc->GetObjectType() )

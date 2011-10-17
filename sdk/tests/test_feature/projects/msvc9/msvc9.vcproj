@@ -692,6 +692,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_shared.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_shark.cpp"
 				>
 			</File>

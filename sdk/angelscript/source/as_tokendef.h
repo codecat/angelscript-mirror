@@ -285,10 +285,10 @@ const unsigned int numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
 const char * const whiteSpace = " \t\r\n";
 
 // Some keywords that are not considered tokens by the parser
-// TODO: shared: Add the 'shared' pseudo keyword
-const char * const THIS_TOKEN = "this";
-const char * const FROM_TOKEN = "from";
-const char * const SUPER_TOKEN = "super";
+const char * const THIS_TOKEN   = "this";
+const char * const FROM_TOKEN   = "from";
+const char * const SUPER_TOKEN  = "super";
+const char * const SHARED_TOKEN = "shared";
 
 END_AS_NAMESPACE
 

@@ -158,6 +158,7 @@
 		<Unit filename="..\..\source\test_scriptretref.cpp" />
 		<Unit filename="..\..\source\test_scriptstring.cpp" />
 		<Unit filename="..\..\source\test_scriptstruct.cpp" />
+		<Unit filename="..\..\source\test_shared.cpp" />
 		<Unit filename="..\..\source\test_shark.cpp" />
 		<Unit filename="..\..\source\test_singleton.cpp" />
 		<Unit filename="..\..\source\test_stack2.cpp" />
