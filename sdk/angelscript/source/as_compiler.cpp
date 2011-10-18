@@ -8619,7 +8619,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			if( ctx->property_get )
 				func = engine->scriptFunctions[ctx->property_get];
 			else
-				func = engine->scriptFunctions[ctx->property_get];
+				func = engine->scriptFunctions[ctx->property_set];
 			propertyName = func->GetName();
 			propertyName = propertyName.SubString(4);
 
