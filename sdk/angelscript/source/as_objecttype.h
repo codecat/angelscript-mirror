@@ -207,6 +207,7 @@ public:
 	bool Implements(const asCObjectType *objType) const;
 	bool DerivesFrom(const asCObjectType *objType) const;
 	bool IsInterface() const;
+	bool IsShared() const;
 
 	asCObjectProperty *AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate);
 

@@ -4058,7 +4058,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	asCDataType dataType;
 	dataType.CreatePrimitive(ttInt, false);
 
-	st->flags = asOBJ_ENUM;
+	st->flags = asOBJ_ENUM | asOBJ_SHARED;
 	st->size = 4;
 	st->name = name;
 

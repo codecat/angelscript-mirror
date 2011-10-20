@@ -255,6 +255,15 @@ bool asCObjectType::DerivesFrom(const asCObjectType *objType) const
 	return false;
 }
 
+bool asCObjectType::IsShared() const
+{
+	// Objects that can be declared by scripts need to have the explicit flag asOBJ_SHARED
+	if( flags & (asOBJ_SCRIPT_OBJECT|asOBJ_ENUM) ) return flags & asOBJ_SHARED ? true : false;
+
+	// Otherwise we assume the object to be shared
+	return true;
+}
+
 // interface
 const char *asCObjectType::GetName() const
 {

@@ -1233,8 +1233,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 		{
 			asCObjectType *st = engine->classTypes[n];
 			if( st &&
-				(st->flags & asOBJ_SHARED) &&
-				(st->flags & asOBJ_SCRIPT_OBJECT) &&
+				st->IsShared() &&
 				st->name == name &&
 				!st->IsInterface() )
 			{
@@ -1323,8 +1322,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 		{
 			asCObjectType *st = engine->classTypes[n];
 			if( st &&
-				(st->flags & asOBJ_SHARED) &&
-				(st->flags & asOBJ_SCRIPT_OBJECT) &&
+				st->IsShared() &&
 				st->name == name &&
 				st->IsInterface() )
 			{
@@ -1650,7 +1648,7 @@ void asCBuilder::CompileClasses()
 		bool multipleInheritance = false;
 		asCScriptNode *node = decl->node->firstChild->next;
 
-		if( decl->objType->flags & asOBJ_SHARED )
+		if( decl->objType->IsShared() )
 		{
 			// Skip the keyword 'shared'
 			node = node->next;
@@ -1715,7 +1713,7 @@ void asCBuilder::CompileClasses()
 					if( !error )
 					{
 						// A shared type may only inherit from other shared types
-						if( (decl->objType->flags & asOBJ_SHARED) && !(objType->flags & asOBJ_SHARED) )
+						if( (decl->objType->IsShared()) && !(objType->IsShared()) )
 						{
 							int r, c;
 							file->ConvertPosToRowCol(node->tokenPos, &r, &c);
@@ -1761,7 +1759,7 @@ void asCBuilder::CompileClasses()
 				else
 				{
 					// A shared type may only implement from shared interfaces
-					if( (decl->objType->flags & asOBJ_SHARED) && !(objType->flags & asOBJ_SHARED) )
+					if( (decl->objType->IsShared()) && !(objType->IsShared()) )
 					{
 						int r, c;
 						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
@@ -1930,6 +1928,15 @@ void asCBuilder::CompileClasses()
 				asCScriptCode *file = decl->script;
 				asCDataType dt = CreateDataTypeFromNode(isPrivate ? node->firstChild->next : node->firstChild, file);
 				asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
+
+				if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
+				{
+					int r, c;
+					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+					asCString msg;
+					msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
+					WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+				}
 
 				if( dt.IsReadOnly() )
 				{
@@ -2564,10 +2571,10 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	}
 
 	// If class or interface is shared, then only shared types may be used in the method signature
-	if( objType && (objType->flags & asOBJ_SHARED) )
+	if( objType && objType->IsShared() )
 	{
 		asCObjectType *ot = returnType.GetObjectType();
-		if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
+		if( ot && !ot->IsShared() )
 		{
 			int r, c;
 			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
@@ -2579,7 +2586,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
 		{
 			asCObjectType *ot = parameterTypes[p].GetObjectType();
-			if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
+			if( ot && !ot->IsShared() )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);

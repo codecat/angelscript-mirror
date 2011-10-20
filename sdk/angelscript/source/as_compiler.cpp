@@ -1734,10 +1734,10 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		// A shared object may not declare variables of non-shared types
-		if( outFunc->objectType && (outFunc->objectType->flags & asOBJ_SHARED) )
+		if( outFunc->objectType && outFunc->objectType->IsShared() )
 		{
 			asCObjectType *ot = type.GetObjectType();
-			if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
+			if( ot && !ot->IsShared() )
 			{
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
@@ -6247,7 +6247,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					{
 						// A shared type must not access global vars, unless they  
 						// too are shared, e.g. application registered vars
-						if( outFunc->objectType && (outFunc->objectType->flags & asOBJ_SHARED) )
+						if( outFunc->objectType && outFunc->objectType->IsShared() )
 						{
 							if( !isAppProp )
 							{
@@ -6359,7 +6359,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 		if( found )
 		{
-			// TODO: shared: A shared object may not use non shared enums
+			// Even if the enum type is not shared, and we're compiling a shared object,
+			// the use of the values are still allowed, since they are treated as constants.
 
 			// an enum value was resolved
 			ctx->type.SetConstantDW(dt, value);
@@ -10711,10 +10712,10 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
 	// A shared object may not call non-shared functions
-	if( outFunc->objectType && (outFunc->objectType->flags & asOBJ_SHARED) )
+	if( outFunc->objectType && outFunc->objectType->IsShared() )
 	{
 		if( descr->funcType == asFUNC_SCRIPT &&
-			(descr->objectType == 0 || !(descr->objectType->flags & asOBJ_SHARED)) )
+			(descr->objectType == 0 || !descr->objectType->IsShared()) )
 		{
 			asCString msg;
 			msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, descr->GetDeclarationStr().AddressOf());

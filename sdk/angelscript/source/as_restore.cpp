@@ -255,14 +255,13 @@ int asCRestore::Restore()
 
 		// If the type is shared, then we should use the original if it exists
 		bool sharedExists = false;
-		if( ot->flags & asOBJ_SHARED )
+		if( ot->IsShared() )
 		{
 			for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
 			{
 				asCObjectType *t = engine->classTypes[n];
 				if( t &&
-					(t->flags & asOBJ_SHARED) &&
-					(t->flags & asOBJ_SCRIPT_OBJECT) &&
+					t->IsShared() &&
 					t->name == ot->name &&
 					t->IsInterface() == ot->IsInterface() )
 				{
