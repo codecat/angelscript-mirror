@@ -259,9 +259,9 @@ public:
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 
-	asCString GetFunctionDeclaration(int funcID);
+	asCString GetFunctionDeclaration(int funcId);
 
-	asCScriptFunction *GetScriptFunction(int funcID) const;
+	asCScriptFunction *GetScriptFunction(int funcId) const;
 
 	asCModule *GetModule(const char *name, bool create);
 	asCModule *GetModuleFromFuncId(int funcId);

@@ -1011,10 +1011,10 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 
 
 // Internal
-asCString asCScriptEngine::GetFunctionDeclaration(int funcID)
+asCString asCScriptEngine::GetFunctionDeclaration(int funcId)
 {
 	asCString str;
-	asCScriptFunction *func = GetScriptFunction(funcID);
+	asCScriptFunction *func = GetScriptFunction(funcId);
 	if( func )
 		str = func->GetDeclarationStr();
 

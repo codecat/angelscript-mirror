@@ -257,7 +257,7 @@ int asCContext::Prepare(int funcId)
 
 		funcId = initialFunction->GetId();
 	}
-	return Prepare(engine->GetScriptFunction(funcId));
+	return Prepare(engine->GetFunctionById(funcId));
 }
 
 // interface
@@ -2090,15 +2090,15 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			int funcID = engine->importedFunctions[i&0xFFFF]->boundFunctionId;
-			if( funcID == -1 )
+			int funcId = engine->importedFunctions[i&0xFFFF]->boundFunctionId;
+			if( funcId == -1 )
 			{
 				SetInternalException(TXT_UNBOUND_FUNCTION);
 				return;
 			}
 			else
 			{
-				asCScriptFunction *func = engine->GetScriptFunction(funcID);
+				asCScriptFunction *func = engine->GetScriptFunction(funcId);
 
 				CallScriptFunction(func);
 			}

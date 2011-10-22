@@ -527,8 +527,7 @@ int asCModule::GetFunctionIdByDecl(const char *decl) const
 asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 {
 	int id = GetFunctionIdByDecl(decl);
-	if( id < 0 ) return 0;
-	return globalFunctions[id];
+	return engine->GetFunctionById(id);
 }
 
 // interface
