@@ -3813,8 +3813,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 {
 	bool conversionDone = false;
 
-	// TODO: shared: Do not allow casting to non shared type
-
 	asCArray<int> ops;
 	asUINT n;
 
@@ -6318,7 +6316,15 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			found = true;
 
-			// TODO: shared: A shared object may not access global functions unless they too are shared (e.g. registered functions)
+			// A shared object may not access global functions unless they too are shared (e.g. registered functions)
+			if( engine->scriptFunctions[funcs[0]]->funcType == asFUNC_SCRIPT &&
+				outFunc->objectType && outFunc->objectType->IsShared() )
+			{
+				asCString msg;
+				msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, engine->scriptFunctions[funcs[0]]->GetDeclaration());
+				Error(msg.AddressOf(), errNode);
+				return -1;
+			}
 
 			// Push the function pointer on the stack
 			ctx->bc.InstrPTR(asBC_FuncPtr, engine->scriptFunctions[funcs[0]]);
@@ -7008,6 +7014,16 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		}
 	}
 
+	// Do not allow casting to non shared type if we're compiling a shared method
+	if( outFunc->objectType && outFunc->objectType->IsShared() && 
+		to.GetObjectType() && !to.GetObjectType()->IsShared() )
+	{
+		asCString msg;
+		msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, to.GetObjectType()->name.AddressOf());
+		Error(msg.AddressOf(), node);
+		anyErrors = true;
+	}
+
 	if( anyErrors )
 	{
 		// Assume that the error can be fixed and allow the compilation to continue
@@ -7227,8 +7243,6 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 
 void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 {
-	// TODO: shared: Do not allow constructing non-shared types
-
 	// The first node is a datatype node
 	asCString name;
 	asCTypeInfo tempObj;
@@ -7243,6 +7257,15 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		// This is a cast to a primitive type
 		CompileConversion(node, ctx);
 		return;
+	}
+
+	// Do not allow constructing non-shared types in shared functions
+	if( outFunc->objectType && outFunc->objectType->IsShared() &&
+		dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
+	{
+		asCString msg;
+		msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
+		Error(msg.AddressOf(), node);
 	}
 
 	// Compile the arguments
