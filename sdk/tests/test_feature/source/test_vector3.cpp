@@ -141,17 +141,17 @@ bool TestVector3()
 	// Test error message when constructor is not found
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = ExecuteString(engine, "vector3 v = vector3(4,3);");
+	r = ExecuteString(engine, "vector3 v = vector3(4,3,2,1);");
 	if( r >= 0 )
 	{
 		TEST_FAILED;
 	}
-	// TODO: the function signature for the constructors/factories should carry the name of the object
-	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const uint, const uint)'\n"
+	// TODO: the function signature for the constructors/factories should carry the name of the object instead of _beh_0_
+	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const uint, const uint, const uint, const uint)'\n"
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
-					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float, float)\n"
+					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float arg1 = 0, float arg2 = 0)\n"
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
@@ -345,6 +345,10 @@ bool TestVector3()
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "vector3 pos(5, 0, 0); pos *= 5; assert( pos.length() == 25 )");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "vector3 a(1); assert( a.x == 1 && a.y == 0 && a.z == 0 ); assert( a == vector3(1) );");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

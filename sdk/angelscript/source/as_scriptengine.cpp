@@ -1884,18 +1884,20 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 
 	asCScriptFunction *f = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	asASSERT(func.name != "" && func.name != "f");
-	f->name        = func.name;
-	f->sysFuncIntf = newInterface;
-	f->returnType  = func.returnType;
-	f->objectType  = func.objectType;
-	f->id          = id;
-	f->isReadOnly  = func.isReadOnly;
-	f->accessMask  = defaultAccessMask;
-	for( n = 0; n < func.parameterTypes.GetLength(); n++ )
-	{
-		f->parameterTypes.PushLast(func.parameterTypes[n]);
-		f->inOutFlags.PushLast(func.inOutFlags[n]);
-	}
+	f->name           = func.name;
+	f->sysFuncIntf    = newInterface;
+	f->returnType     = func.returnType;
+	f->objectType     = func.objectType;
+	f->id             = id;
+	f->isReadOnly     = func.isReadOnly;
+	f->accessMask     = defaultAccessMask;
+	f->parameterTypes = func.parameterTypes;
+	f->inOutFlags     = func.inOutFlags;
+	for( asUINT n = 0; n < func.defaultArgs.GetLength(); n++ )
+		if( func.defaultArgs[n] )
+			f->defaultArgs.PushLast(asNEW(asCString)(*func.defaultArgs[n]));
+		else
+			f->defaultArgs.PushLast(0);
 
 	SetScriptFunction(f);
 
