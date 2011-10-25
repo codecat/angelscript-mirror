@@ -151,52 +151,46 @@ static asQWORD GetReturnedDouble()
 	return ret;
 }
 
-static asQWORD GetReturnedHighBytes()
+static void GetReturnedXmm0Xmm1(asQWORD &a, asQWORD &b)
 {
-	double  retval = 0.0f;
-	asQWORD ret    = 0;
-
 	__asm__ __volatile__ (
 		"lea     %0, %%rax\n"
-		"movlpd  %%xmm1, (%%rax)"
+		"movq  %%xmm0, (%%rax)\n"
+		"lea     %1, %%rdx\n"
+		"movq  %%xmm1, (%%rdx)\n" 
 		: /* no optput */
-		: "m" (retval)
-		: "%rax", "%xmm1"
+		: "m" (a), "m" (b)
+		: "%rax", "%rdx", "%xmm0", "%xmm1"
 	);
-
-	// We need to avoid implicit conversions from double to unsigned long long - we need
-	// a bit-wise-correct-and-complete copy of the value 
-	memcpy( &ret, &retval, sizeof( ret ) );
-
-	return ret;
 }
 
-// Note to self: If there is any trouble with a function when it is optimized, gcc supports
-// turning off optimization for individual functions by adding the following to the declaration:
-// __attribute__ ((optimize(0)))
-
-static asQWORD __attribute__ ((noinline)) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func )
+// TODO: optimize: The way this function has been written it is not possible
+//                 to allow the gnuc optimizer to work on it. The first thing
+//                 the gnuc optimizer will do is to remove the prologue and 
+//                 epilogue. Since the code doesn't clean up the stack after
+//                 itself, this will cause a seg fault due to the callstack 
+//                 becoming corrupt. The code is also not taking care to keep
+//                 the callstack aligned to 16 bytes or whatever the ABI says.
+static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func ) 
 {
-	asQWORD retval      = 0;
+	asQWORD retval;
 	asQWORD ( *call )() = (asQWORD (*)())func;
 	int     i           = 0;
 
-	/* push the stack parameters */
+	// push the stack parameters
 	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && ( i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 ); i++ ) {
 		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
 	}
 
-	/* push integer parameters */
-	for ( i = 0; i < MAX_CALL_INT_REGISTERS; i++ ) {
+	// push integer and floating point parameters
+	// TODO: optimize: This loop and subsequent POPs should be written 
+	//                 in assembler so the registers are loaded directly
+	//                 from the array
+	for ( i = 0; i < MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; i++ ) {
 		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
 	}
 
-	/* push floating point parameters */
-	for ( i = MAX_CALL_INT_REGISTERS; i < MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; i++ ) {
-		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
-	}
-
-	/* now pop the registers in reverse order and make the call */
+	// now pop the registers in reverse order and make the call 
 	POP_LONG_XMM( "%xmm7" );
 	POP_LONG_XMM( "%xmm6" );
 	POP_LONG_XMM( "%xmm5" );
@@ -215,11 +209,12 @@ static asQWORD __attribute__ ((noinline)) X64_CallFunction( const asDWORD* pArgs
 
 	// call the function with the arguments
 	retval = call();
+
 	return retval;
 }
 
 // returns true if the given parameter is a 'variable argument'
-inline bool IsVariableArgument( asCDataType type )
+static inline bool IsVariableArgument( asCDataType type )
 {
 	return ( type.GetTokenType() == ttQuestion ) ? true : false;
 }
@@ -488,11 +483,14 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 		if( sysFunc->hostReturnSize == 1 )
 			*(asDWORD*)&retQW = GetReturnedFloat();
+		else if( sysFunc->hostReturnSize == 2 )
+			retQW = GetReturnedDouble();
 		else
 		{
-			retQW = GetReturnedDouble();
-			if( sysFunc->hostReturnSize > 2 )
-				retQW2 = GetReturnedHighBytes();
+			asQWORD x0, x1;
+			GetReturnedXmm0Xmm1(x0, x1);
+			retQW = x0;
+			retQW2 = x1;
 		}
 	}
 
