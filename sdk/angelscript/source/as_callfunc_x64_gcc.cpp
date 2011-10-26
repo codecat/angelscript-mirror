@@ -164,19 +164,37 @@ static void GetReturnedXmm0Xmm1(asQWORD &a, asQWORD &b)
 	);
 }
 
-// TODO: optimize: The way this function has been written it is not possible
-//                 to allow the gnuc optimizer to work on it. The first thing
-//                 the gnuc optimizer will do is to remove the prologue and 
-//                 epilogue. Since the code doesn't clean up the stack after
-//                 itself, this will cause a seg fault due to the callstack 
-//                 becoming corrupt. The code is also not taking care to keep
-//                 the callstack aligned to 16 bytes or whatever the ABI says.
-static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func ) 
+static asQWORD __attribute__((noinline)) X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, void *func ) 
 {
 	asQWORD retval;
 	asQWORD ( *call )() = (asQWORD (*)())func;
 	int     i           = 0;
+	int     cnt = 0;
 
+	// count stack parameters
+	// TODO: optimize: This should be done outside as the parameters are prepared
+	for( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && (i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3); i++ )
+	{
+		cnt++;
+	}
+
+	cnt *= 8;
+
+	// Backup the stack pointer and then align it to 16 bytes.
+	// The R15 register is guaranteed to maintain its value over function
+	// calls, so it is safe for us to keep the original stack pointer here.
+	__asm__ __volatile__ (
+		"  movq %%rsp, %%r15 \n"
+		"  movq %%rsp, %%rax \n"
+                "  sub %0, %%rax \n"
+		"  and $15, %%rax \n"
+		"  sub %%rax, %%rsp \n"
+		: : "m" (cnt) 
+		// Tell the compiler that we're using the RAX and R15.
+		// This will make sure these registers are backed up by the compiler.
+		: "%rax", "%r15");
+
+	// TODO: optimize: Since we know the number of arguments before hand, this loop can be greatly simplified
 	// push the stack parameters
 	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && ( i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 ); i++ ) {
 		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
@@ -209,6 +227,11 @@ static asQWORD X64_CallFunction( const asDWORD* pArgs, const asBYTE *pArgsType, 
 
 	// call the function with the arguments
 	retval = call();
+
+	// Restore the stack pointer
+	__asm__ __volatile__ (
+		"  mov %%r15, %%rsp \n" : : : "%r15"
+		);
 
 	return retval;
 }
@@ -273,6 +296,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	}
 	asASSERT( argIndex == argumentCount );
 
+	// TODO: optimize: The code for setting up the arguments is terribly unoptimized. There are 
+	//                 many loops over the array, and memory is being moved and copied multiple times.
 	for ( a = 0; a < argumentCount && totalArgumentCount <= X64_MAX_ARGS; a++ ) {
 		switch ( argsType[a] ) {
 			case x64ENDARG:
