@@ -186,7 +186,7 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asDWORD* pArgs,
 	__asm__ __volatile__ (
 		"  movq %%rsp, %%r15 \n"
 		"  movq %%rsp, %%rax \n"
-                "  sub %0, %%rax \n"
+		"  sub %0, %%rax \n"
 		"  and $15, %%rax \n"
 		"  sub %%rax, %%rsp \n"
 		: : "m" (cnt) 
@@ -196,7 +196,8 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asDWORD* pArgs,
 
 	// TODO: optimize: Since we know the number of arguments before hand, this loop can be greatly simplified
 	// push the stack parameters
-	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && ( i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 ); i++ ) {
+	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; pArgsType[i] != x64ENDARG && ( i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 ); i++ )
+	{
 		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
 	}
 
@@ -204,7 +205,8 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asDWORD* pArgs,
 	// TODO: optimize: This loop and subsequent POPs should be written 
 	//                 in assembler so the registers are loaded directly
 	//                 from the array
-	for ( i = 0; i < MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; i++ ) {
+	for ( i = 0; i < MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; i++ )
+	{
 		PUSH_LONG( pArgs[i * CALLSTACK_MULTIPLIER] );
 	}
 
@@ -229,9 +231,7 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asDWORD* pArgs,
 	retval = call();
 
 	// Restore the stack pointer
-	__asm__ __volatile__ (
-		"  mov %%r15, %%rsp \n" : : : "%r15"
-		);
+	__asm__ __volatile__ ("  mov %%r15, %%rsp \n" : : : "%r15");
 
 	return retval;
 }
