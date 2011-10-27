@@ -46,13 +46,12 @@
 
 BEGIN_AS_NAMESPACE
 
-enum argTypes { x64ENDARG = 0, x64INTARG = 1, x64FLOATARG = 2, x64DOUBLEARG = 3, x64VARIABLE = 4 };
+enum argTypes { x64INTARG = 0, x64FLOATARG = 1 };
 typedef asQWORD ( *funcptr_t )( void );
 
 #define X64_MAX_ARGS             32
 #define MAX_CALL_INT_REGISTERS    6
 #define MAX_CALL_SSE_REGISTERS    8
-#define CALLSTACK_MULTIPLIER      2
 #define X64_CALLSTACK_SIZE        ( X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3 )
 
 // Note to self: Always remember to inform the used registers on the clobber line, 
@@ -200,20 +199,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	funcptr_t                  *vftable            = NULL;
 	int                         totalArgumentCount = 0;
 	int                         n                  = 0;
-	int                         base_n             = 0;
-	int                         a                  = 0;
-	int                         param_pre          = 0;
 	int                         param_post         = 0;
 	int                         argIndex           = 0;
-	int                         argumentCount      = 0;
-
-	asQWORD  tempBuff[X64_CALLSTACK_SIZE] = { 0 };
-	asBYTE   tempType[X64_CALLSTACK_SIZE] = { 0 };
-
-	asQWORD  paramBuffer[X64_CALLSTACK_SIZE] = { 0 };
-	asBYTE	 argsType[X64_CALLSTACK_SIZE] = { 0 };
-
-	asBYTE   argsSet[X64_CALLSTACK_SIZE]  = { 0 };
 
 	if( sysFunc->hostReturnInMemory ) 
 	{
@@ -221,81 +208,26 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		callConv++;
 	}
 
-	argumentCount = ( int )descr->parameterTypes.GetLength();
-	asASSERT( argumentCount <= X64_MAX_ARGS );
-
-	// TODO: optimize: argsType should be computed in PrepareSystemFunction
-	for( a = 0; a < argumentCount; ++a, ++argIndex ) 
-	{
-		// get the base type
-		argsType[argIndex] = x64INTARG;
-		if ( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() ) 
-		{
-			argsType[argIndex] = x64FLOATARG;
-		}
-		else if ( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() ) 
-		{
-			argsType[argIndex] = x64DOUBLEARG;
-		}
-		else if ( IsVariableArgument( descr->parameterTypes[a] ) ) 
-		{
-			argsType[argIndex] = x64VARIABLE;
-		}
-	}
-	asASSERT( argIndex == argumentCount );
-
-	// TODO: optimize: The code for setting up the arguments is terribly unoptimized. There are 
-	//                 many loops over the array, and memory is being moved and copied multiple times.
-	for ( a = 0; a < argumentCount && totalArgumentCount <= X64_MAX_ARGS; a++ ) 
-	{
-		switch ( argsType[a] ) 
-		{
-			case x64ENDARG:
-			case x64INTARG:
-			case x64FLOATARG:
-			case x64DOUBLEARG: 
-			{
-				if ( totalArgumentCount < X64_MAX_ARGS )
-					tempType[totalArgumentCount++] = argsType[a];
-				break;
-			}
-			case x64VARIABLE: 
-			{
-				if ( totalArgumentCount < X64_MAX_ARGS )
-					tempType[totalArgumentCount++] = x64VARIABLE;
-				if ( totalArgumentCount < X64_MAX_ARGS )
-					tempType[totalArgumentCount++] = x64INTARG;
-				break;
-			}
-		}
-	}
-
-	asASSERT( totalArgumentCount <= X64_MAX_ARGS );
-	if ( totalArgumentCount > argumentCount ) {
-		memcpy( argsType, tempType, totalArgumentCount );
-	}
-	memset( tempType, 0, sizeof( tempType ) );
-
+	// Determine the real function pointer in case of virtual method
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) 
 	{
 		vftable = *( ( funcptr_t ** )obj );
 		func    = ( void * )vftable[( asQWORD )func >> 3];
 	}
 
+	// Determine the type of the arguments, and prepare the input array for the X64_CallFunction 
+	asQWORD  paramBuffer[X64_CALLSTACK_SIZE] = { 0 };
+	asBYTE	 argsType[X64_CALLSTACK_SIZE] = { 0 };
+
 	switch ( callConv ) 
 	{
 		case ICC_CDECL_RETURNINMEM:
 		case ICC_STDCALL_RETURNINMEM: 
 		{
-			if ( totalArgumentCount ) 
-			{
-				memmove( argsType + 1, argsType, totalArgumentCount );
-			}
-			memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
+			paramBuffer[0] = (size_t)retPointer;
 			argsType[0] = x64INTARG;
-			base_n = 1;
 
-			param_pre = 1;
+			argIndex = 1;
 
 			break;
 		}
@@ -303,14 +235,10 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_VIRTUAL_THISCALL:
 		case ICC_CDECL_OBJFIRST: 
 		{
-			if ( totalArgumentCount ) 
-			{
-				memmove( argsType + 1, argsType, totalArgumentCount );
-			}
-			memcpy( paramBuffer, &obj, sizeof( obj ) );
+			paramBuffer[0] = (size_t)obj;
 			argsType[0] = x64INTARG;
 
-			param_pre = 1;
+			argIndex = 1;
 
 			break;
 		}
@@ -318,102 +246,83 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		case ICC_CDECL_OBJFIRST_RETURNINMEM: 
 		{
-			if ( totalArgumentCount ) 
-			{
-				memmove( argsType + 2, argsType, totalArgumentCount );
-			}
-			memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
-			memcpy( paramBuffer + 1, &obj, sizeof( &obj ) );
+			paramBuffer[0] = (size_t)retPointer;
+			paramBuffer[1] = (size_t)obj;
 			argsType[0] = x64INTARG;
 			argsType[1] = x64INTARG;
 
-			param_pre = 2;
+			argIndex = 2;
 
 			break;
 		}
 		case ICC_CDECL_OBJLAST: 
-		{
-			memcpy( paramBuffer + totalArgumentCount, &obj, sizeof( obj ) );
-			argsType[totalArgumentCount] = x64INTARG;
-
 			param_post = 1;
-
 			break;
-		}
 		case ICC_CDECL_OBJLAST_RETURNINMEM: 
 		{
-			if ( totalArgumentCount ) 
-			{
-				memmove( argsType + 1, argsType, totalArgumentCount );
-			}
-			memcpy( paramBuffer, &retPointer, sizeof( retPointer ) );
+			paramBuffer[0] = (size_t)retPointer;
 			argsType[0] = x64INTARG;
-			memcpy( paramBuffer + ( totalArgumentCount + 1 ), &obj, sizeof( obj ) );
-			argsType[totalArgumentCount + 1] = x64INTARG;
 
-			param_pre = 1;
+			argIndex = 1;
 			param_post = 1;
 
 			break;
 		}
-		default: 
-		{
-			base_n = 0;
-			break;
-		}
 	}
 
-	int adjust = 0;
-	for( n = 0; n < ( int )( param_pre + totalArgumentCount + param_post ); n++ ) 
+	int argumentCount = ( int )descr->parameterTypes.GetLength();
+	for( int a = 0; a < argumentCount; ++a ) 
 	{
-		int copy_count = 0;
-		if ( n >= param_pre && n < ( int )( param_pre + totalArgumentCount ) ) 
+		if ( descr->parameterTypes[a].IsFloatType() && !descr->parameterTypes[a].IsReference() ) 
 		{
-			copy_count = descr->parameterTypes[n - param_pre - adjust].GetSizeOnStackDWords();
-
-			if ( argsType[n] == x64VARIABLE ) 
-			{
-				adjust += 1;
-				argsType[n] = x64INTARG;
-				n += 1;
-			}
+			argsType[argIndex] = x64FLOATARG;
+			memcpy(paramBuffer + argIndex, stack_pointer, sizeof(float));
+			argIndex++;
+			stack_pointer++;
 		}
-		if ( copy_count > CALLSTACK_MULTIPLIER ) 
+		else if ( descr->parameterTypes[a].IsDoubleType() && !descr->parameterTypes[a].IsReference() ) 
 		{
-			if ( copy_count > CALLSTACK_MULTIPLIER + 1 ) 
-			{
-				context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
-				return 0;
-			}
-
-			memcpy( paramBuffer + ( n - 1 ), stack_pointer, AS_PTR_SIZE * sizeof( asDWORD ) );
-			stack_pointer += AS_PTR_SIZE;
-			memcpy( paramBuffer + n, stack_pointer, sizeof( asDWORD ) );
-			stack_pointer += 1;
-		} 
-		else 
+			argsType[argIndex] = x64FLOATARG;
+			memcpy(paramBuffer + argIndex, stack_pointer, sizeof(double));
+			argIndex++;
+			stack_pointer += 2;
+		}
+		else if ( IsVariableArgument( descr->parameterTypes[a] ) ) 
 		{
-			if ( copy_count ) 
+			// The variable args are really two, one pointer and one type id
+			argsType[argIndex] = x64INTARG;
+			argsType[argIndex+1] = x64INTARG;
+			memcpy(paramBuffer + argIndex, stack_pointer, sizeof(void*));
+			memcpy(paramBuffer + argIndex + 1, stack_pointer + 2, sizeof(asDWORD));
+			argIndex += 2;
+			stack_pointer += 3;
+		}
+		else
+		{
+			argsType[argIndex] = x64INTARG;
+			if( descr->parameterTypes[a].GetSizeOnStackDWords() == 1 )
 			{
-				memcpy( paramBuffer + n, stack_pointer, copy_count * sizeof( asDWORD ) );
-				stack_pointer += copy_count;
+				memcpy(paramBuffer + argIndex, stack_pointer, sizeof(asDWORD));
+				stack_pointer++;
 			}
+			else
+			{
+				memcpy(paramBuffer + argIndex, stack_pointer, sizeof(asQWORD));
+				stack_pointer += 2;
+			}
+			argIndex++;
 		}
 	}
 
-	// If we are returning an object not by reference, we need to make the
-	// pointer to the space allocated to the object the first parameter.
-	if( descr->returnType.IsObject() && ( descr->returnType.GetObjectType()->flags & asOBJ_APP_CLASS_CA ) == asOBJ_APP_CLASS_CA &&
-		!descr->returnType.IsReference() && !sysFunc->hostReturnInMemory )
+	// For the CDECL_OBJ_LAST calling convention we need to add the object pointer as the last argument
+	if( param_post )
 	{
-		if ( totalArgumentCount )
-		{
-			memmove( paramBuffer + 1, paramBuffer, ( CALLSTACK_MULTIPLIER * ( X64_CALLSTACK_SIZE - 1 ) ) );
-			memmove( argsType + 1, argsType, X64_CALLSTACK_SIZE - 1 );
-		}
-		paramBuffer[0] = (size_t)&retPointer;
-		argsType[0] = x64INTARG;
+		paramBuffer[argIndex] = (size_t)obj;
+		argsType[argIndex] = x64INTARG;
+		argIndex++;
 	}
+
+	totalArgumentCount = argIndex;
 
 	/*
 	 * Q: WTF is going on here !?
@@ -421,7 +330,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	 * A: The idea is to pre-arange the parameters so that X64_CallFunction() can do
 	 * it's little magic which must work regardless of how the compiler decides to
 	 * allocate registers. Basically:
-	 * - the first MAX_CALL_INT_REGISTERS entries in tempBuff and tempType will
+	 * - the first MAX_CALL_INT_REGISTERS entries in tempBuff will
 	 *   contain the values/types of the x64INTARG parameters - that is the ones who
 	 *   go into the registers. If the function has less then MAX_CALL_INT_REGISTERS
 	 *   integer parameters then the last entries will be set to 0
@@ -434,56 +343,43 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	 *   in reverse order so that X64_CallFunction() can simply push them to the stack
 	 *   without the need to perform further tests
 	 */
-	int     used_int_regs = 0;
-	int     used_sse_regs = 0;
-	int     idx           = 0;
-	base_n = 0;
-	for ( n = 0; ( n < X64_CALLSTACK_SIZE ) && ( used_int_regs < MAX_CALL_INT_REGISTERS ); n++ ) 
+	asQWORD tempBuff[X64_CALLSTACK_SIZE] = { 0 };
+	asBYTE  argsSet[X64_CALLSTACK_SIZE]  = { 0 };
+	int     used_int_regs   = 0;
+	int     used_sse_regs   = 0;
+	int     used_stack_args = 0;
+	int     idx             = 0;
+	for ( n = 0; ( n < totalArgumentCount ) && ( used_int_regs < MAX_CALL_INT_REGISTERS ); n++ ) 
 	{
 		if ( argsType[n] == x64INTARG ) 
 		{
-			idx = base_n;
 			argsSet[n] = 1;
-			tempType[idx] = argsType[n];
-			tempBuff[idx] = paramBuffer[n];
-			base_n++;
+			tempBuff[idx++] = paramBuffer[n];
 			used_int_regs++;
 		}
 	}
-	base_n = 0;
-	for ( n = 0; ( n < X64_CALLSTACK_SIZE ) && ( used_sse_regs < MAX_CALL_SSE_REGISTERS ); n++ ) 
+	idx = MAX_CALL_INT_REGISTERS;
+	for ( n = 0; ( n < totalArgumentCount ) && ( used_sse_regs < MAX_CALL_SSE_REGISTERS ); n++ ) 
 	{
-		if ( argsType[n] == x64FLOATARG || argsType[n] == x64DOUBLEARG ) 
+		if ( argsType[n] == x64FLOATARG ) 
 		{
-			idx = MAX_CALL_INT_REGISTERS + base_n;
 			argsSet[n] = 1;
-			tempType[idx] = argsType[n];
-			tempBuff[idx] = paramBuffer[n];
-			base_n++;
+			tempBuff[idx++] = paramBuffer[n];
 			used_sse_regs++;
 		}
 	}
-	base_n = 0;
-	for ( n = X64_CALLSTACK_SIZE - 1; n >= 0; n-- ) 
+	idx = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS;
+	for ( n = totalArgumentCount - 1; n >= 0; n-- ) 
 	{
-		if ( argsType[n] != x64ENDARG && !argsSet[n] ) 
+		if ( !argsSet[n] ) 
 		{
-			idx = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS + base_n;
-			argsSet[n] = 1;
-			tempType[idx] = argsType[n];
-			tempBuff[idx] = paramBuffer[n];
-			base_n++;
+			tempBuff[idx++] = paramBuffer[n];
+			used_stack_args++;
 		}
 	}
 
-	// count stack parameters
-	// TODO: optimize: This should be done as the parameters are prepared
-	int cnt = 0;
-	for( int i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; tempType[i] != x64ENDARG && (i < X64_MAX_ARGS + MAX_CALL_SSE_REGISTERS + 3); i++ )
-		cnt++;
-
 	context->isCallingSystemFunction = true;
-	retQW = X64_CallFunction( tempBuff, cnt, ( asDWORD * )func );
+	retQW = X64_CallFunction( tempBuff, used_stack_args, (asDWORD*)func );
 	ASM_GET_REG( "%rdx", retQW2 );
 	context->isCallingSystemFunction = false;
 
