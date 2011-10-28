@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with indexed property accessor where only set accessor was available (Thanks virious)
 <li>Fixed bug where default args for registered functions were not recognized (Thanks Takashi Yamamoto)
 <li>Fixed problems when compiling the library with optimizations on 64bit GNUC (Thanks Jameson)
+<li>Fixed assert failure in VM when using JIT compiled functions (Thanks Andrew Ackermann)
 </ul>
 <li>Library interface
 <ul>
@@ -40,6 +41,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetMethodByName and Decl to asIObjectType
 <li>Deprecated asIObjectType::GetMethodDescriptorByIndex and replaced it with GetMethodByIndex
 <li>Added asIScriptEngine::SetDefaultAccessMask and asIScriptModule::SetAccessMask, which deprecates SetConfigGroupModuleAccess
+<li>The asJITFunction now takes a asPWORD as the second argument incase the compiler wants to store a pointer as the argument (Thanks Andrew Ackermann)
 </ul>
 <li>Library
 <ul>
@@ -48,6 +50,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_DISALLOW_GLOBAL_VARS
 <li>Classes can now be shared between modules if they are compiled with the 'shared' keyword
 <li>Added object type flag asOBJ_SHARED that identifies script classes that are shared between modules
+</ul>
+<li>Virtual Machine
+<ul>
+<li>Added the context pointer to the asSVMRegisters so the JIT function can immediately access this without calling asGetActiveContext (Thanks Andrew Ackermann)
+<li>The JitEntry instruction will now invoke the JIT function without decreasing 1 from the argument set by the JIT compiler
+<li>The JitEntry instruction can also immediately return from the execution in case the context has been suspended, aborted, or an exception has been set
 </ul>
 <li>Script language
 <ul>

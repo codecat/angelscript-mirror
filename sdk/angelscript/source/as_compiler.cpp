@@ -349,7 +349,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// Concatenate the bytecode
 
 	// Insert a JitEntry at the start of the function for JIT compilers
-	byteCode.InstrWORD(asBC_JitEntry, 0);
+	byteCode.InstrPTR(asBC_JitEntry, 0);
 
 	// Count total variable size
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
@@ -2730,7 +2730,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	// Add a suspend bytecode inside the loop to guarantee
 	// that the application can suspend the execution
 	bc->Instr(asBC_SUSPEND);
-	bc->InstrWORD(asBC_JitEntry, 0);
+	bc->InstrPTR(asBC_JitEntry, 0);
 
 
 	bc->AddCode(&expr.bc);
@@ -2801,7 +2801,7 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	// Add a suspend bytecode inside the loop to guarantee
 	// that the application can suspend the execution
 	bc->Instr(asBC_SUSPEND);
-	bc->InstrWORD(asBC_JitEntry, 0);
+	bc->InstrPTR(asBC_JitEntry, 0);
 
 	// Compile statement
 	bool hasReturn;
@@ -2855,7 +2855,7 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	// Add a suspend bytecode inside the loop to guarantee
 	// that the application can suspend the execution
 	bc->Instr(asBC_SUSPEND);
-	bc->InstrWORD(asBC_JitEntry, 0);
+	bc->InstrPTR(asBC_JitEntry, 0);
 
 	// Add a line instruction
 	LineInstr(bc, wnode->lastChild->tokenPos);

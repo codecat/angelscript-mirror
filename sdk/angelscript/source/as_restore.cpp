@@ -1885,6 +1885,11 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 			// Translate object type pointers into indices
 			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
 		}
+		else if( c == asBC_JitEntry ) // PTR_ARG
+		{
+			// We don't store the JIT argument
+			*(asPWORD*)(tmp+1) = 0;
+		}
 		else if( c == asBC_TYPEID || // DW_ARG
 			     c == asBC_Cast )   // DW_ARG
 		{

@@ -1893,7 +1893,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	f->accessMask     = defaultAccessMask;
 	f->parameterTypes = func.parameterTypes;
 	f->inOutFlags     = func.inOutFlags;
-	for( asUINT n = 0; n < func.defaultArgs.GetLength(); n++ )
+	for( n = 0; n < func.defaultArgs.GetLength(); n++ )
 		if( func.defaultArgs[n] )
 			f->defaultArgs.PushLast(asNEW(asCString)(*func.defaultArgs[n]));
 		else

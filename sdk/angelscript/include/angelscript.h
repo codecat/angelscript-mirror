@@ -1149,9 +1149,10 @@ struct asSVMRegisters
 	void             *objectRegister;     // temp register for objects and handles
 	asIObjectType    *objectType;         // type of object held in object register
 	bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+	asIScriptContext *ctx;                // the active context
 };
 
-typedef void (*asJITFunction)(asSVMRegisters *registers, asDWORD entryId);
+typedef void (*asJITFunction)(asSVMRegisters *registers, asPWORD jitArg);
 
 class asIJITCompiler
 {
@@ -1619,7 +1620,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CMPu64,	rW_rW_ARG,		0),
 	asBCINFO(ChkNullS,	W_ARG,			0),
 	asBCINFO(ClrHi,		NO_ARG,			0),
-	asBCINFO(JitEntry,	W_ARG,			0),
+	asBCINFO(JitEntry,	PTR_ARG,		0),
 	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
 	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
 	asBCINFO(LoadThisR, W_DW_ARG,       0),

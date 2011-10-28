@@ -172,6 +172,8 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	doSuspend = false;
 
 	userData = 0;
+
+	regs.ctx = this;
 }
 
 asCContext::~asCContext()
@@ -3220,21 +3222,25 @@ void asCContext::ExecuteNext()
 		{
 			if( currentFunction->jitFunction )
 			{
-				unsigned int jitOffset = asBC_WORDARG0(l_bc);
+				asPWORD jitArg = asBC_PTRARG(l_bc);
 
-				if( jitOffset )
+				if( jitArg )
 				{
 					// Resume JIT operation
 					regs.programPointer = l_bc;
 					regs.stackPointer = l_sp;
 					regs.stackFramePointer = l_fp;
 
-					// TODO: JIT: We should return from this function if the jitFunction tells us to
-					(currentFunction->jitFunction)(&regs, jitOffset-1);
+					(currentFunction->jitFunction)(&regs, jitArg);
 				
 					l_bc = regs.programPointer;
 					l_sp = regs.stackPointer;
 					l_fp = regs.stackFramePointer;
+
+					// If status isn't active anymore then we must stop
+					if( status != asEXECUTION_ACTIVE )
+						return;
+				
 					break;
 				}
 			}
@@ -3496,7 +3502,8 @@ void asCContext::ExecuteNext()
 #ifdef AS_DEBUG
 		asDWORD instr = *(asBYTE*)old;
 		if( instr != asBC_JMP && instr != asBC_JMPP && (instr < asBC_JZ || instr > asBC_JNP) &&
-			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC && instr != asBC_CallPtr )
+			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC && instr != asBC_CallPtr && 
+			instr != asBC_JitEntry )
 		{
 			asASSERT( (l_bc - old) == asBCTypeSize[asBCInfo[instr].type] );
 		}
