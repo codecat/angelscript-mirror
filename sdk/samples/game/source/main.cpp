@@ -55,11 +55,18 @@ int main(int argc, char **argv)
 
 	// Start a new game
 	r = gameMgr->StartGame();
-	if( r >= 0 )
+	if( r < 0 )
 	{
-		// Let the game manager handle the game loop
-		gameMgr->Run();
+		cout << "Failed to initialize the game. Please verify the script errors." << endl;
+		cout << endl;
+		cout << "Press enter to exit." << endl;
+		char buf[10];
+		cin.getline(buf, 10);
+		return -1;
 	}
+
+	// Let the game manager handle the game loop
+	gameMgr->Run();
 	
 	// Uninitialize the game manager
 	if( gameMgr )

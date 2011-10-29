@@ -40,7 +40,12 @@ int CGameMgr::StartGame()
 
 	// Create the player
 	CGameObj *obj = SpawnObject("player", 'p', 10*rand()/RAND_MAX, 10*rand()/RAND_MAX);
-	obj->name = "player";
+	if( obj )
+		obj->name = "player";
+
+	// Check if there were any compilation errors during the script loading
+	if( scriptMgr->hasCompileErrors )
+		return -1;
 
 	return 0;
 }

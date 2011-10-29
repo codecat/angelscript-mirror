@@ -332,7 +332,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 						t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 					}
 
-					if( t == asTC_VALUE && len > 2 && modifiedScript[pos] == '"' )
+					if( t == asTC_VALUE && len > 2 && (modifiedScript[pos] == '"' || modifiedScript[pos] == '\'') )
 					{
 						// Get the include file
 						string includefile;

@@ -17,7 +17,9 @@ public:
 
 	asIScriptObject *CreateController(const std::string &type, CGameObjLink *link);
 	void CallOnThink(asIScriptObject *object);
-	void CallOnMessage(asIScriptObject *object, const std::string &msg, CGameObjLink *link);
+	void CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObjLink *link);
+
+	bool hasCompileErrors;
 
 protected:
 	void MessageCallback(const asSMessageInfo &msg);

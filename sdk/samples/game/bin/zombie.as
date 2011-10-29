@@ -1,3 +1,5 @@
+// Include the shared code
+#include 'shared.as'
 
 // This script implements the logic for the zombie
 class CZombie : IController
@@ -70,7 +72,7 @@ class CZombie : IController
 				if( player.x == self.x + dx && player.y == self.y + dy )
 				{
 					// Hit the player
-					self.Send('Attack', player);
+					self.Send(CMessage('Attack'), player);
 				}
 				else
 				{

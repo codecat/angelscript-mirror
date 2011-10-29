@@ -1,3 +1,5 @@
+// Include the shared code
+#include 'shared.as'
 
 // This script implements the logic for the player character
 class CPlayer : IController
@@ -30,9 +32,10 @@ class CPlayer : IController
 		}
 	}
 	
-	void OnMessage(const string &in msg, const CGameObj @sender)
+	void OnMessage(IMessage @m, const CGameObj @sender)
 	{
-		if( msg == 'Attack' )
+		CMessage @msg = cast<CMessage>(m);
+		if( msg !is null && msg.txt == 'Attack' )
 		{
 			// The zombie got us
 			self.Kill();

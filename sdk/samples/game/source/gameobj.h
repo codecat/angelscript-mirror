@@ -16,7 +16,7 @@ public:
 	void OnThink();
 
 	bool Move(int dx, int dy);
-	void Send(const std::string &msg, CGameObjLink *other);
+	void Send(asIScriptObject *msg, CGameObjLink *other);
 
 	std::string name;
 	CGameObjLink *link;
@@ -54,7 +54,7 @@ public:
 	int GetY() { if( obj ) return obj->y; return 0; }
 	bool Move(int dx, int dy) { if( obj ) return obj->Move(dx,dy); return false; }
 	void Kill() { if( obj ) obj->isDead = true; }
-	void Send(const std::string &msg, CGameObjLink *other) { if( obj ) obj->Send(msg, other); }
+	void Send(asIScriptObject *msg, CGameObjLink *other) { if( obj ) obj->Send(msg, other); }
 
 protected:
 	friend class CGameObj;
