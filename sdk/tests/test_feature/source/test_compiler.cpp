@@ -131,6 +131,27 @@ bool Test()
 	engine->Release();
 
 	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, "void f(){\n  int a;\n  a(0)=0;}");
+		
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void f()\n"
+		                   "TestCompiler (3, 3) : Error   : Expression doesn't form a function call. 'a' is a variable of a non-function type\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	{
 		// When passing 'null' to an output parameter the compiler shouldn't warn
 		const char *script = "class C {} void func(C @&out) {} \n"
 			                 "void main() { \n"

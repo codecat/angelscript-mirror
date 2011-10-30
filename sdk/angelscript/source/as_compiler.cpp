@@ -6593,8 +6593,6 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( vnode->nodeType == snFunctionCall )
 	{
-		bool found = false;
-
 		// Determine the scope resolution
 		asCString scope = GetScopeFromNode(vnode);
 
@@ -6653,13 +6651,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				// TODO: optimize: This adds a CHKREF. Is that really necessary?
 				Dereference(ctx, true);
 
-				CompileFunctionCall(vnode, ctx, outFunc->objectType, false, scope);
-				found = true;
+				return CompileFunctionCall(vnode, ctx, outFunc->objectType, false, scope);
 			}
 		}
 
-		if( !found )
-			CompileFunctionCall(vnode, ctx, 0, false, scope);
+		return CompileFunctionCall(vnode, ctx, 0, false, scope);
 	}
 	else if( vnode->nodeType == snConstructCall )
 	{
@@ -7429,7 +7425,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 }
 
 
-void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst, const asCString &scope)
+int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, asCObjectType *objectType, bool objIsConst, const asCString &scope)
 {
 	asCString name;
 	asCTypeInfo tempObj;
@@ -7477,7 +7473,7 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		asCString msg;
 		msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
 		Error(msg.AddressOf(), node);
-		return;
+		return -1;
 	}
 
 	if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() )
@@ -7565,6 +7561,8 @@ void asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, 
 		{
 			asDELETE(args[n],asSExprContext);
 		}
+
+	return 0;
 }
 
 int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx)
@@ -8610,7 +8608,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			asCTypeInfo objType = ctx->type;
 
 			// Compile function call
-			CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
+			int r = CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
+			if( r < 0 ) return r;
 
 			// If the method returned a reference, then we can't release the original
 			// object yet, because the reference may be to a member of it
