@@ -60,9 +60,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.21.2
-#define ANGELSCRIPT_VERSION        22102
-#define ANGELSCRIPT_VERSION_STRING "2.21.2"
+//! \details Version 2.22.0
+#define ANGELSCRIPT_VERSION        22200
+#define ANGELSCRIPT_VERSION_STRING "2.22.0"
 
 // Data types
 
@@ -113,7 +113,9 @@ enum asEEngineProp
 	//! Format default array in template form in messages and declarations. Default: false
 	asEP_EXPAND_DEF_ARRAY_TO_TMPL     = 15,
 	//! Enable or disable automatic garbage collection. Default: true
-	asEP_AUTO_GARBAGE_COLLECT         = 16
+	asEP_AUTO_GARBAGE_COLLECT         = 16,
+	//! Disallow the use of global variables in the script. Default: false
+	asEP_DISALLOW_GLOBAL_VARS         = 17
 };
 
 // Calling conventions
@@ -204,7 +206,9 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
 	asOBJ_MASK_VALID_FLAGS           = 0x1FFFF,
 	//! The object is a script class or an interface.
-	asOBJ_SCRIPT_OBJECT              = 0x80000
+	asOBJ_SCRIPT_OBJECT              = 0x80000,
+	//! Type object type is shared between modules.
+	asOBJ_SHARED                     = 0x100000
 };
 
 // Behaviours
@@ -546,10 +550,14 @@ typedef void *(*asALLOCFUNC_t)(size_t);
 typedef void (*asFREEFUNC_t)(void *);
 //! The function signature for the engine cleanup callback function
 typedef void (*asCLEANENGINEFUNC_t)(asIScriptEngine *);
+//! The function signature for the module cleanup callback function
+typedef void (*asCLEANMODULEFUNC_t)(asIScriptModule *);
 //! The function signature for the context cleanup callback function
 typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 //! The function signature for the function cleanup callback function
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
+//! The function signature for the object type cleanup callback function
+typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 
 //! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the function specified by the name
@@ -882,15 +890,23 @@ public:
 	//! This method registers system functions that the scripts may use to communicate with the host application.
 	//! 
 	//! \see \ref doc_register_func
-	virtual int RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
 	//! \brief Returns the number of registered functions.
 	//! \return The number of registered functions.
-	virtual int GetGlobalFunctionCount() const = 0;
+	virtual asUINT             GetGlobalFunctionCount() const = 0;
 	//! \brief Returns the function id of the registered function.
 	//! \param[in] index The index of the registered global function.
 	//! \return The id of the function, or a negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int GetGlobalFunctionIdByIndex(asUINT index) const = 0;
+	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const = 0;
+	//! \brief Returns the registered function.
+	//! \param[in] index The index of the registered global function.
+	//! \return The function object, or null on error.
+	virtual asIScriptFunction *GetGlobalFunctionByIndex(asUINT index) const = 0;
+	//! \brief Returns the registered function.
+	//! \param[in] declaration The signature of the function.
+	//! \return The function object, or null on error.
+	virtual asIScriptFunction *GetGlobalFunctionByDecl(const char *declaration) const = 0;
 	//! \}
 
 	// Global properties
@@ -914,10 +930,10 @@ public:
 	//! the actual value. The application must also make sure that this address
 	//! remains valid throughout the life time of this registration, i.e. until
 	//! the engine is released or the dynamic configuration group is removed.
-	virtual int RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
+	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	//! \brief Returns the number of registered global properties.
 	//! \return The number of registered global properties.
-	virtual int GetGlobalPropertyCount() const = 0;
+	virtual asUINT GetGlobalPropertyCount() const = 0;
 	//! \brief Returns the detail on the registered global property.
 	//! \param[in] index The index of the global variable.
 	//! \param[out] name Receives the name of the property.
@@ -927,7 +943,7 @@ public:
 	//! \param[out] pointer Receives the pointer of the property.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
 	//! \}
 
 	// Object types
@@ -1047,7 +1063,7 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	//! \brief Returns the number of registered object types.
 	//! \return The number of object types registered by the application.
-	virtual int            GetObjectTypeCount() const = 0;
+	virtual asUINT         GetObjectTypeCount() const = 0;
 	//! \brief Returns the object type interface by index.
 	//! \param[in] index The index of the type.
 	//! \return The registered object type interface for the type, or null if not found.
@@ -1140,7 +1156,7 @@ public:
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
 	//! \brief Returns the number of registered enum types.
 	//! \return The number of registered enum types.
-	virtual int         GetEnumCount() const = 0;
+	virtual asUINT      GetEnumCount() const = 0;
 	//! \brief Returns the registered enum type.
 	//! \param[in] index The index of the enum type.
 	//! \param[out] enumTypeId Receives the type if of the enum type.
@@ -1177,7 +1193,7 @@ public:
 	virtual int                RegisterFuncdef(const char *decl) = 0;
 	//! \brief Returns the number of registered function definitions.
 	//! \return The number of registered funcdefs.
-	virtual int                GetFuncdefCount() const = 0;
+	virtual asUINT             GetFuncdefCount() const = 0;
 	//! \brief Returns a registered function definition.
 	//! \param[in] index The index of the funcdef.
 	//! \param[out] configGroup The config group in which the funcdef was registered.
@@ -1208,7 +1224,7 @@ public:
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
 	//! \brief Returns the number of registered typedefs.
 	//! \return The number of registered typedefs.
-	virtual int         GetTypedefCount() const = 0;
+	virtual asUINT      GetTypedefCount() const = 0;
 	//! \brief Returns a registered typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
@@ -1250,6 +1266,12 @@ public:
 	//! that have function calls to functions in the group and global variables of types registered 
 	//! in the group.
 	virtual int RemoveConfigGroup(const char *groupName) = 0;
+	//! \brief Sets the access mask that should be used for subsequent registered entities.
+	//! \param[in] defaultMask The default access bit mask.
+	//! \return The previous default mask.
+	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-04
 	//! \brief Tell AngelScript which modules have access to which configuration groups.
 	//!
 	//! \param[in] groupName The name of the configuration group
@@ -1265,6 +1287,7 @@ public:
 	//! The default module access is granted. The default for a group can be changed by specifying 
 	//! the modulename asALL_MODULES. 
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
+#endif
 	//! \}
 
 	// Script modules
@@ -1300,12 +1323,21 @@ public:
 	//! \name Script functions
 	//! \{
 
+	//! \brief Returns the function by its id.
+	//! \param[in] funcId The id of the function or method.
+	//! \return A pointer to the function description interface, or null if not found.
+	//!
+	//! This does not increment the reference count of the returned function interface.
+	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	//! \brief Returns the function descriptor for the script function
 	//! \param[in] funcId The id of the function or method.
 	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increment the reference count of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
+#endif
 	//! \}
 
 	// Type identification
@@ -1400,6 +1432,14 @@ public:
 	//! 
 	//! This only works for objects.
 	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
+	//! \brief Release the script object pointer.
+	//! \param[in] obj A pointer to the object.
+	//! \param[in] type The type of the object.
+	//!
+	//! This calls the release method of the object to release the reference.
+	//! 
+	//! This only works for objects.
+	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Increase the reference counter for the script object.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] typeId The type id of the object.
@@ -1408,6 +1448,14 @@ public:
 	//! 
 	//! This only works for objects.
 	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
+	//! \brief Increase the reference counter for the script object.
+	//! \param[in] obj A pointer to the object.
+	//! \param[in] type The type of the object.
+	//!
+	//! This calls the add ref method of the object to increase the reference count.
+	//! 
+	//! This only works for objects.
+	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Returns true if the object referenced by a handle compatible with the specified type.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] objTypeId The type id of the object.
@@ -1515,6 +1563,15 @@ public:
 	//! The function is called from within the engine destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
 	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback) = 0;
+	//! \brief Set the function that should be called when the module is destroyed
+	//! \param[in] callback A pointer to the function
+	//!
+	//! The function given with this call will be invoked when the module
+	//! is destroyed if any \ref asIScriptModule::SetUserData "user data" has been registered with the module.
+	//!
+	//! The function is called from within the module destructor, so the callback
+	//! should not be used for anything but cleaning up the user data itself.
+	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback) = 0;
 	//! \brief Set the function that should be called when a context is destroyed
 	//! \param[in] callback A pointer to the function
 	//!
@@ -1533,6 +1590,15 @@ public:
 	//! The function is called from within the function destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
+	//! \brief Set the function that should be called when an object type is destroyed
+	//! \param[in] callback A pointer to the function
+	//!
+	//! The function given with this call will be invoked when an object type
+	//! is destroyed if any \ref asIObjectType::SetUserData "user data" has been registered with the type.
+	//!
+	//! The function is called from within the object type destructor, so the callback
+	//! should not be used for anything but cleaning up the user data itself.
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback) = 0;
 	//! \}
 
 protected:
@@ -1597,7 +1663,7 @@ public:
 	//! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
 	//! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
 	//! with \ref asIScriptEngine::SetEngineProperty.
-	virtual int  AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	virtual int     AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	//! \brief Build the previously added script sections.
 	//!
 	//! \return A negative value on error
@@ -1617,7 +1683,7 @@ public:
 	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set. If you get the error
 	//! asINIT_GLOBAL_VARS_FAILED, then it is probable that one of the global variables during the initialization 
 	//! is trying to access another global variable before it has been initialized. 
-	virtual int  Build() = 0;
+	virtual int     Build() = 0;
 	//! \brief Compile a single function.
 	//!
 	//! \param[in] sectionName The name of the script section
@@ -1636,7 +1702,7 @@ public:
 	//! output parameter, which will allow the application to execute it, and then discard it when it is no longer needed.
 	//!
 	//! If the output function parameter is set, remember to release the function object when you're done with it.
-	virtual int  CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
+	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
 	//! \brief Compile a single global variable and add it to the scope of the module
 	//!
 	//! \param[in] sectionName The name of the script section
@@ -1653,7 +1719,18 @@ public:
 	//!
 	//! The script code may contain an initialization expression, which will be executed by the
 	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set.
-	virtual int  CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
+	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
+	//! \brief Sets the access mask that should be used during the compilation.
+	//! \param[in] accessMask The access bit mask
+	//! \return The previous access mask.
+	//!
+	//! The module's access mask with be bitwise and-ed with the registered entity's access mask
+	//! in order to determine if the module is allowed to access the entity. If the result is zero
+	//! then the script in the module will not be able to use the entity.
+	//!
+	//! This can be used to provide different interfaces to scripts that serve different purposes
+	//! in the application. 
+	virtual asDWORD SetAccessMask(asDWORD accessMask) = 0;
 	//! \}
 
 	// Functions
@@ -1696,6 +1773,20 @@ public:
 	//!
 	//! The method will find the script function with the exact same declaration.
 	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
+	//! \brief Returns the function by index
+	//! \param[in] index The index of the function
+	//! \return The function or null in case of error.
+	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const = 0;
+	//! \brief Returns the function by its declaration
+	//! \param[in] decl The function declaration.
+	//! \return The function or null in case of error.
+	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const = 0;
+	//! \brief Returns the function by its name
+	//! \param[in] name The function name
+	//! \return The function or null if not found or there are multiple matches.
+	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	//! \brief Returns the function descriptor for the script function
 	//! \param[in] index The index of the function.
 	//! \return A pointer to the function description interface, or null if not found.
@@ -1708,6 +1799,7 @@ public:
 	//!
 	//! This does not increase the reference counter of the returned function descriptor.
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
+#endif
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] funcId The id of the function to remove.
 	//! \return A negative value on error.
@@ -1960,6 +2052,22 @@ public:
 	virtual int LoadByteCode(asIBinaryStream *in) = 0;
 	//! \}
 
+	// User data
+	//! \name User data
+	//! \{
+	//! \brief Register the memory address of some user data.
+	//! \param[in] data A pointer to the user data.
+	//! \return The previous pointer stored in the module
+	//!
+	//! This method allows the application to associate a value, e.g. a pointer, with the module instance.
+	//!
+	//! Optionally, a callback function can be \ref SetModuleUserDataCleanupCallback "registered" to clean up the user data when the module is destroyed.
+	virtual void *SetUserData(void *data) = 0;
+	//! \brief Returns the address of the previously registered user data.
+	//! \return The pointer to the user data.
+	virtual void *GetUserData() const = 0;
+	//! \}
+
 protected:
 	virtual ~asIScriptModule() {}
 };
@@ -2016,6 +2124,17 @@ public:
 	//! \name Execution
 	//! \{
 
+	//! \brief Prepares the context for execution of the function
+	//! \param[in] func The id of the function/method that will be executed.
+	//! \return A negative value on error.
+	//! \retval asCONTEXT_ACTIVE The context is still active or suspended.
+	//!
+	//! This method prepares the context for executeion of a script function. It allocates
+	//! the stack space required and reserves space for return value and parameters. The
+	//! default value for parameters and return value is 0.
+	//!
+	//! \see \ref doc_call_script_func
+	virtual int             Prepare(asIScriptFunction *func) = 0;
 	//! \brief Prepares the context for execution of the function identified by funcId.
 	//! \param[in] funcId The id of the function/method that will be executed.
 	//! \return A negative value on error.
@@ -2412,9 +2531,15 @@ public:
 	//! \brief Returns the function id of the called function.
 	//! \return The function id of the function being called.
 	virtual int                GetFunctionId() const = 0;
+	//! \brief Returns the function that is being called.
+	//! \return The function that is being called.
+	virtual asIScriptFunction *GetFunction() const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	//! \brief Returns the function descriptor of the called function.
 	//! \return The function descriptor of the called function.
 	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
+#endif
 	//! \brief Returns the user data for the called function.
 	//! \return The user data for the called function.
 	virtual void              *GetFunctionUserData() const = 0;
@@ -2611,7 +2736,7 @@ public:
 
 	//! \brief Returns the number of properties that the object contains.
 	//! \return The number of member properties of the script object.
-	virtual int         GetPropertyCount() const = 0;
+	virtual asUINT      GetPropertyCount() const = 0;
 	//! \brief Returns the type id of the property referenced by prop.
 	//! \param[in] prop The property index.
 	//! \return The type id of the member property, or a negative value on error.
@@ -2700,6 +2825,10 @@ public:
 	//!
 	//! This does not increase the reference count of the returned object type.
 	virtual asIObjectType   *GetBaseType() const = 0;
+	//! \brief Returns true if the type inherits directly or indirectly from the informed type.
+	//! \param[in] objType The potential parent type.
+	//! \return True if the type inherits directly or indirectly from the informed type.
+	virtual bool             DerivesFrom(const asIObjectType *objType) const = 0;
 	//! \brief Returns the object type flags.
 	//! \return A bit mask with the flags from \ref asEObjTypeFlags.
 	//!
@@ -2721,6 +2850,9 @@ public:
 	//! \return The type id of the template sub type, or a negative value on error.
 	//! \retval asERROR The type is not a template type.
 	virtual int              GetSubTypeId() const = 0;
+	//! \brief Returns the template subtype, in case it is an object type.
+	//! \return The object type of the template sub type, or null if the template subtype is not an object type.
+	virtual asIObjectType   *GetSubType() const = 0;
 	//! \}
 
 	// Interfaces
@@ -2734,6 +2866,10 @@ public:
 	//! \param[in] index The interface index.
 	//! \return A pointer to the interface type.
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
+	//! \brief Returns true if the type implements the informed interface type.
+	//! \param[in] objType The interface type.
+	//! \return True if the type implements the informed interface type.
+	virtual bool             Implements(const asIObjectType *objType) const = 0;
 	//! \}
 
 	// Factories
@@ -2762,6 +2898,14 @@ public:
 	//! id = type->GetFactoryIdByDecl("object@ object(int arg1, int arg2)");
 	//! \endcode
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
+	//! \brief Returns the factory function by the index
+	//! \param[in] index The index of the factory function.
+	//! \return The factory function or null if the index is invalid.
+	virtual asIScriptFunction *GetFactoryByIndex(asUINT index) const = 0;
+	//! \brief Returns the factory function by the declaration
+	//! \param[in] decl The declaration of the function
+	//! \return The matching factory function or null if there are no matches
+	virtual asIScriptFunction *GetFactoryByDecl(const char *decl) const = 0;
 	//! \}
 
 	// Methods
@@ -2792,8 +2936,8 @@ public:
 	//! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
 	//! \retval asNO_FUNCTION Didn't find any matching method.
 	//!
-	//! This method should be used to retrieve the ID of the script method for the object 
-	//! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//! This method should be used to retrieve the id of the script method for the object 
+	//! that you wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
 	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
 	//! \brief Returns the method id by declaration.
 	//! \param[in] decl The method signature.
@@ -2804,11 +2948,44 @@ public:
 	//! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
 	//! \retval asERROR The module for the type was not built successfully.
 	//!
-	//! This method should be used to retrieve the ID of the script method for the object 
-	//! that you wish to execute. The ID is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//! This method should be used to retrieve the id of the script method for the object 
+	//! that you wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
 	//!
 	//! The method will find the script method with the exact same declaration.
 	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
+	//! \brief Returns the method by index.
+	//! \param[in] index The index of the method.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
+	//! \return The method or null on error.
+	//!
+	//! This method should be used to retrieve the script method for the object 
+	//! that you wish to execute. The method is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//!
+	//! By default this returns the virtual method for script classes. This will allow you to 
+	//! call the virtual method on classes, and rely on the polymorphism to call the correct 
+	//! implementation. If you wish to inspect the real method, then you should set the second
+	//! parameter to false to retrieve the real method.
+	virtual asIScriptFunction *GetMethodByIndex(asUINT index, bool getVirtual = true) const = 0;
+	//! \brief Returns the method by name.
+	//! \param[in] name The name of the method.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
+	//! \return Tthe method or null in case of error
+	//!
+	//! This method should be used to retrieve the script method for the object 
+	//! that you wish to execute. The method is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	virtual asIScriptFunction *GetMethodByName(const char *name, bool getVirtual = true) const = 0;
+	//! \brief Returns the method by declaration.
+	//! \param[in] decl The method signature.
+	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
+	//! \return The method or null on error.
+	//!
+	//! This method should be used to retrieve the script method for the object 
+	//! that you wish to execute. The method is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//!
+	//! The method will find the script method with the exact same declaration.
+	virtual asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual = true) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2011-10-03
 	//! \brief Returns the function descriptor for the script method
 	//! \param[in] index The index of the method.
 	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
@@ -2816,6 +2993,7 @@ public:
 	//! 
 	//! This does not increment the reference count of the returned function descriptor.
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual = true) const = 0;
+#endif
 	//! \}
 
 	// Properties
@@ -2854,6 +3032,25 @@ public:
 	//! \return The function id of the behaviour.
 	//! \retval asINVALID_ARG The \a index is too large.
 	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	//! \}
+
+	// User data
+	//! \name User data
+	//! \{
+
+	//! \brief Register the memory address of some user data.
+	//! \param[in] data A pointer to the user data.
+	//! \return The previous pointer stored in the object type.
+	//!
+	//! This method allows the application to associate a value, e.g. a pointer, with the object type instance.
+	//!
+	//! Optionally, a callback function can be \ref asIScriptEngine::SetObjectTypeUserDataCleanupCallback "registered" 
+	//! to clean up the user data when the object type is destroyed. As the callback is registered with the engine, it is
+	//! only necessary to do it once, even if more than one context is used.
+	virtual void *SetUserData(void *data) = 0;
+	//! \brief Returns the address of the previously registered user data.
+	//! \return The pointer to the user data.
+	virtual void *GetUserData() const = 0;
 	//! \}
 
 protected:
@@ -3264,11 +3461,13 @@ struct asSVMRegisters
 	asIObjectType    *objectType;         // type of object held in object register
 	//! \brief Set to true if the SUSPEND instruction should be processed. Do not update this value.
 	bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
+	//! \brief The context to which the registers belong.
+	asIScriptContext *ctx;                // the active context
 };
 
 //! \brief The function signature of a JIT compiled function
 //! \param [in] registers  A pointer to the virtual machine's registers.
-//! \param [in] entryId    The value defined by the JIT compiler for the current entry point in the JIT function.
+//! \param [in] jitArg     The value defined by the JIT compiler for the current entry point in the JIT function.
 //!
 //! A JIT function receives a pointer to the virtual machine's registers when called and 
 //! an argument telling it where in the script function to continue the execution. The JIT
@@ -3276,7 +3475,7 @@ struct asSVMRegisters
 //! before returning control to the VM.
 //!
 //! \see \ref doc_adv_jit
-typedef void (*asJITFunction)(asSVMRegisters *registers, asDWORD entryId);
+typedef void (*asJITFunction)(asSVMRegisters *registers, asPWORD jitArg);
 
 //! \brief The interface that AS use to interact with the JIT compiler
 //!
@@ -3986,7 +4185,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CMPu64,	rW_rW_ARG,		0),
 	asBCINFO(ChkNullS,	W_ARG,			0),
 	asBCINFO(ClrHi,		NO_ARG,			0),
-	asBCINFO(JitEntry,	W_ARG,			0),
+	asBCINFO(JitEntry,	PTR_ARG,		0),
 	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
 	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
 	asBCINFO(LoadThisR, W_DW_ARG,       0),
