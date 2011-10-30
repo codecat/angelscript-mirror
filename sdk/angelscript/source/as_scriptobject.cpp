@@ -37,7 +37,7 @@
 BEGIN_AS_NAMESPACE
 
 // This helper function will call the default factory, that is a script function
-asIScriptObject *ScriptObjectFactory(asCObjectType *objType, asCScriptEngine *engine)
+asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngine *engine)
 {
 	asIScriptContext *ctx;
 

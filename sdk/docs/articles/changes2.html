@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.0 WIP - 2011/10/29</h2>
+<h2>Version 2.22.0 WIP - 2011/10/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -42,6 +42,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Deprecated asIObjectType::GetMethodDescriptorByIndex and replaced it with GetMethodByIndex
 <li>Added asIScriptEngine::SetDefaultAccessMask and asIScriptModule::SetAccessMask, which deprecates SetConfigGroupModuleAccess
 <li>The asJITFunction now takes a asPWORD as the second argument incase the compiler wants to store a pointer as the argument (Thanks Andrew Ackermann)
+<li>Added Implements, DerivesFrom, and GetSubType to the asIObjectType interface
+<li>Added overloads for AddRefScriptObject and ReleaseScriptObject that take a pointer to asIObjectType which makes them more efficient than the previous version
 </ul>
 <li>Library
 <ul>

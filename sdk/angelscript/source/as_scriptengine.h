@@ -61,10 +61,6 @@ class asCContext;
 // TODO: import: Remove this when import is removed
 struct sBindInfo;
 
-// TODO: Deprecate CreateScriptObject. Objects should be created by calling the factory function instead.
-// TODO: Deprecate GetSizeOfPrimitiveType. This function is not necessary now that all primitive types have fixed typeIds
-
-
 // TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
 
 // TODO: Should have a CreateModule/GetModule instead of just GetModule with parameters.
@@ -178,7 +174,9 @@ public:
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId);
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId);
 	virtual void              ReleaseScriptObject(void *obj, int typeId);
+	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type);
 	virtual void              AddRefScriptObject(void *obj, int typeId);
+	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type);
 	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
 
 	// String interpretation

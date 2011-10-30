@@ -227,7 +227,8 @@ asCObjectType::~asCObjectType()
 		engine->cleanObjectTypeFunc(this);
 }
 
-bool asCObjectType::Implements(const asCObjectType *objType) const
+// interface
+bool asCObjectType::Implements(const asIObjectType *objType) const
 {
 	if( this == objType )
 		return true;
@@ -238,7 +239,8 @@ bool asCObjectType::Implements(const asCObjectType *objType) const
 	return false;
 }
 
-bool asCObjectType::DerivesFrom(const asCObjectType *objType) const
+// interface
+bool asCObjectType::DerivesFrom(const asIObjectType *objType) const
 {
 	if( this == objType )
 		return true;
@@ -305,6 +307,18 @@ int asCObjectType::GetSubTypeId() const
 
 	// Only template types have sub types
 	return asERROR;
+}
+
+// interface
+asIObjectType *asCObjectType::GetSubType() const
+{
+	// TODO: template: This method should allow indexing multiple template subtypes
+	if( flags & asOBJ_TEMPLATE )
+	{
+		return templateSubType.GetObjectType();
+	}
+
+	return 0;
 }
 
 asUINT asCObjectType::GetInterfaceCount() const

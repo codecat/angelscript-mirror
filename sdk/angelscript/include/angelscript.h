@@ -576,7 +576,9 @@ public:
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
 	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
 	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
 
 	// String interpretation
@@ -833,14 +835,17 @@ public:
 	// Type info
 	virtual const char      *GetName() const = 0;
 	virtual asIObjectType   *GetBaseType() const = 0;
+	virtual bool             DerivesFrom(const asIObjectType *objType) const = 0;
 	virtual asDWORD          GetFlags() const = 0;
 	virtual asUINT           GetSize() const = 0;
 	virtual int              GetTypeId() const = 0;
 	virtual int              GetSubTypeId() const = 0;
+	virtual asIObjectType   *GetSubType() const = 0;
 
 	// Interfaces
 	virtual asUINT           GetInterfaceCount() const = 0;
 	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
+	virtual bool             Implements(const asIObjectType *objType) const = 0;
 
 	// Factories
 	virtual asUINT             GetFactoryCount() const = 0;

@@ -3428,8 +3428,7 @@ int asCScriptEngine::GetTypeIdByDecl(const char *decl) const
 	return GetTypeIdFromDataType(dt);
 }
 
-
-
+// interface
 const char *asCScriptEngine::GetTypeDeclaration(int typeId) const
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -3442,6 +3441,7 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId) const
 	return tempString->AddressOf();
 }
 
+// TODO: interface: Deprecate. This function is not necessary now that all primitive types have fixed typeIds
 int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 {
 	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
@@ -3451,7 +3451,7 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 	return dt->GetSizeInMemoryBytes();
 }
 
-// TODO: interface: Should be able to take a pointer to asIObjectType directly
+// TODO: interface: Should deprecate this. The application should be calling the factory directly
 void *asCScriptEngine::CreateScriptObject(int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
@@ -3486,6 +3486,7 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	return ptr;
 }
 
+// TODO: interface: Should deprecate this. The application should be calling the factory directly
 void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 {
 	void *newObj = CreateScriptObject(typeId);
@@ -3510,6 +3511,7 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 	CopyScriptObject(mem, obj, type->GetTypeId());
 }
 
+// TODO: interface: Should deprecate this. The application should be calling the opAssign method directly
 void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 {
 	// TODO: optimize: Use the copy constructor when available
@@ -3537,7 +3539,7 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	}
 }
 
-// TODO: interface: Should be able to take a pointer to asIObjectType directly
+// interface
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer
@@ -3560,7 +3562,21 @@ void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 	}
 }
 
-// TODO: interface: Should be able to take a pointer to asIObjectType directly
+// interface
+void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
+{
+	// Make sure it is not a null pointer
+	if( obj == 0 ) return;
+
+	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
+	if( objType->beh.addref )
+	{
+		// Call the addref behaviour
+		CallObjectMethod(obj, objType->beh.addref);
+	}
+}
+
+// interface
 void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer
@@ -3581,6 +3597,31 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 		// Call the release behaviour
 		CallObjectMethod(obj, objType->beh.release);
 	}
+	// TODO: interface: shouldn't work on non reference types
+	else
+	{
+		// Call the destructor
+		if( objType->beh.destruct )
+			CallObjectMethod(obj, objType->beh.destruct);
+
+		// Then free the memory
+		CallFree(obj);
+	}
+}
+
+// interface
+void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
+{
+	// Make sure it is not a null pointer
+	if( obj == 0 ) return;
+	
+	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
+	if( objType->beh.release )
+	{
+		// Call the release behaviour
+		CallObjectMethod(obj, objType->beh.release);
+	}
+	// TODO: interface: shouldn't work on non reference types
 	else
 	{
 		// Call the destructor

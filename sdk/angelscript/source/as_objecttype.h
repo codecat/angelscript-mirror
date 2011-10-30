@@ -143,15 +143,18 @@ public:
 	// Type info
 	const char      *GetName() const;
 	asIObjectType   *GetBaseType() const;
+	bool             DerivesFrom(const asIObjectType *objType) const;
 	asDWORD          GetFlags() const;
 	asUINT           GetSize() const;
 	int              GetTypeId() const;
 	int              GetSubTypeId() const;
+	asIObjectType   *GetSubType() const;
 	// TODO: access: Get/Set access mask for type
 
 	// Interfaces
 	asUINT           GetInterfaceCount() const;
 	asIObjectType   *GetInterface(asUINT index) const;
+	bool             Implements(const asIObjectType *objType) const;
 
 	// Factories
 	asUINT             GetFactoryCount() const;
@@ -203,9 +206,6 @@ public:
 
 	void ReleaseAllFunctions();
 
-	// TODO: interface: Implements and DerivesFrom could be made public methods in the asIObjectType interface
-	bool Implements(const asCObjectType *objType) const;
-	bool DerivesFrom(const asCObjectType *objType) const;
 	bool IsInterface() const;
 	bool IsShared() const;
 

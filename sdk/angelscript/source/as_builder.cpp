@@ -3211,7 +3211,7 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
 {
 	for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 	{
-		// TODO: access: Only return the definitions for the config groups that the module has access to
+		// TODO: access: Only return the definitions that the module has access to
 		if( engine->registeredFuncDefs[n]->name == type )
 		{
 			return engine->registeredFuncDefs[n];
