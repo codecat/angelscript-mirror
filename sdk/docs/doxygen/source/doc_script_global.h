@@ -1,6 +1,6 @@
 /**
 
-\page doc_global Globals
+\page doc_global Global script entities
 
 All global declarations share the same namespace so their names may not
 conflict. This includes extended data types and built-in functions registered
@@ -93,33 +93,9 @@ will get unpredictable behaviour or a null-pointer exception.
 
 \section doc_global_class Classes
 
-In AngelScript the script writer may declare script classes. The syntax is
+In AngelScript the script writer may declare script classes to groups
+properties and methods for object oriented programming. The syntax is
 similar to that of C++ or Java.
-
-With classes the script writer can declare new data types that hold groups
-of variables and methods to manipulate them. The classes also supports inheritance
-and polymorphism through \ref doc_global_interface "interfaces".
-
-<pre>
-  // The class declaration
-  class MyClass
-  {
-    // The default constructor
-    MyClass()
-    {
-      a = 0;
-    }
-
-    // A class method
-    void DoSomething()
-    {
-      a *= 2;
-    }
-
-    // A class property
-    int a;
-  }
-</pre>
 
 \see \ref doc_script_class
 

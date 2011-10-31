@@ -50,13 +50,14 @@ or<br>
 out<br>
 private<br>
 return<br>
+shared*<br>
 super*<br>
 switch<br>
 this*<br>
 true<br>
-typedef<br>
 </code></td>
 <td width=100 valign=top><code>
+typedef<br>
 uint<br>
 uint8<br>
 uint16<br>
