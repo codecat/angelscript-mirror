@@ -44,12 +44,12 @@ that doesn't throw an exception, and if an exception is to be thrown the JIT fun
 The following shows a possible structure of a JIT compiled function:
 
 <pre>
-  void jitCompiledFunc(asSVMRegisters *regs, asDWORD entry)
+  void jitCompiledFunc(asSVMRegisters *regs, asPWORD jitArg)
   {
-    Read desired VM registers into CPU registers
-    Jump to the current position of the function based on the 'entry' argument
+    Read desired VM registers into CPU registers.
+    Jump to the current position of the function based on the 'jitArg' argument.
   1:
-    Execute code in block 1
+    Execute code in block 1.
     Jump to exit if an illegal operation is done, e.g. divide by zero. 
     Jump to exit if block ends with an instruction that should not be executed by JIT function. 
   2:
@@ -57,7 +57,9 @@ The following shows a possible structure of a JIT compiled function:
   3:
     ...
   exit:
-    Update the VM registers before returning control to VM
+    Update the VM registers before returning control to VM.
+    If necessary the function can invoke the methods of the context informed 
+    in the regs, e.g. to suspend the execution, or to set a script exception.
   }
 </pre>
 
@@ -94,7 +96,7 @@ int CJITCompiler::CompileFunction(asIScriptFunction *func, asJITFunction *output
       // the argument that should be sent to the jit function.
       // Remember that 0 means that the VM should not pass
       // control to the JIT function.
-      asBC_SWORDARG0(byteCode) = DetermineJitEntryArg();
+      asBC_PTRARG(byteCode) = DetermineJitEntryArg();
       break;
     }
     

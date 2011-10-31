@@ -1272,20 +1272,7 @@ public:
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-04
-	//! \brief Tell AngelScript which modules have access to which configuration groups.
-	//!
-	//! \param[in] groupName The name of the configuration group
-	//! \param[in] module The module name
-	//! \param[in] hasAccess Whether the module has access or not to the group members
-	//! \return A negative value on error
-	//! \retval asWRONG_CONFIG_GROUP No group with the \a groupName was found.
-	//!
-	//! With this method the application can give modules access to individual configuration groups. 
-	//! This is useful when exposing more than one script interface for various parts of the application, 
-	//! e.g. one interface for GUI handling, another for in-game events, etc. 
-	//!
-	//! The default module access is granted. The default for a group can be changed by specifying 
-	//! the modulename asALL_MODULES. 
+	//! \deprecated \since 2011-10-03. Use \ref asIScriptModule::SetAccessMask instead
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 #endif
 	//! \}
@@ -1331,11 +1318,7 @@ public:
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-03
-	//! \brief Returns the function descriptor for the script function
-	//! \param[in] funcId The id of the function or method.
-	//! \return A pointer to the function description interface, or null if not found.
-	//!
-	//! This does not increment the reference count of the returned function descriptor.
+	//! \deprecated \since 2011-10-03. Use \ref asIScriptEngine::GetFunctionById instead
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
 #endif
 	//! \}
@@ -1787,17 +1770,9 @@ public:
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-03
-	//! \brief Returns the function descriptor for the script function
-	//! \param[in] index The index of the function.
-	//! \return A pointer to the function description interface, or null if not found.
-	//!
-	//! This does not increase the reference counter of the returned function descriptor.
+	//! \deprecated \since 2011-10-03. Use \ref asIScriptModule::GetFunctionByIndex instead
 	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const = 0;
-	//! \brief Returns the function descriptor for the script function
-	//! \param[in] funcId The id of the function or method.
-	//! \return A pointer to the function description interface, or null if not found.
-	//!
-	//! This does not increase the reference counter of the returned function descriptor.
+	//! \deprecated \since 2011-10-03. Use \ref asIScriptEngine::GetFunctionById
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
 #endif
 	//! \brief Remove a single function from the scope of the module
@@ -2055,13 +2030,14 @@ public:
 	// User data
 	//! \name User data
 	//! \{
+
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
 	//! \return The previous pointer stored in the module
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the module instance.
 	//!
-	//! Optionally, a callback function can be \ref SetModuleUserDataCleanupCallback "registered" to clean up the user data when the module is destroyed.
+	//! Optionally, a callback function can be \ref asIScriptEngine::SetModuleUserDataCleanupCallback "registered" to clean up the user data when the module is destroyed.
 	virtual void *SetUserData(void *data) = 0;
 	//! \brief Returns the address of the previously registered user data.
 	//! \return The pointer to the user data.
@@ -2536,8 +2512,7 @@ public:
 	virtual asIScriptFunction *GetFunction() const = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-03
-	//! \brief Returns the function descriptor of the called function.
-	//! \return The function descriptor of the called function.
+	//! \deprecated \since 2011-10-03. Use \ref asIScriptGeneric::GetFunction instead
 	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
 #endif
 	//! \brief Returns the user data for the called function.
@@ -2986,12 +2961,7 @@ public:
 	virtual asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual = true) const = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-03
-	//! \brief Returns the function descriptor for the script method
-	//! \param[in] index The index of the method.
-	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
-	//! \return A pointer to the method description interface, or null if not found.
-	//! 
-	//! This does not increment the reference count of the returned function descriptor.
+	//! \deprecated \since 2011-10-03. Use asIObjectType::GetMethodByIndex instead
 	virtual asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual = true) const = 0;
 #endif
 	//! \}
