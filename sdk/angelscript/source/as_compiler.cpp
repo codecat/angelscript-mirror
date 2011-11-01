@@ -4605,7 +4605,17 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				{
 					useVariable = true;
 					stackOffset = AllocateVariable(f->returnType, true);
+
+					// Push the pointer to the pre-allocated space for the return value
 					ctx->bc.InstrSHORT(asBC_PSF, short(stackOffset));
+
+					// The object pointer is already on the stack, but should be the top 
+					// one, so we need to swap the pointers in order to get the correct
+#if AS_PTR_SIZE == 1
+					ctx->bc.Instr(asBC_SWAP4);
+#else
+					ctx->bc.Instr(asBC_SWAP8);
+#endif
 				}
 #endif
 				PerformFunctionCall(funcs[0], ctx, false, 0, 0, useVariable, stackOffset);
@@ -7391,6 +7401,9 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 						ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
 
 					PerformFunctionCall(funcs[0], ctx, onHeap, &args, tempObj.dataType.GetObjectType());
+
+					// Add tag that the object has been initialized
+					ctx->bc.ObjInfo(tempObj.stackOffset, asOBJ_INIT);
 
 					// The constructor doesn't return anything,
 					// so we have to manually inform the type of
