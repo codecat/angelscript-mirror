@@ -1,21 +1,25 @@
 /**
 
 
-\page doc_script_class Script classes
+\page doc_script_class_desc Script class overview
 
-In AngelScript the script writer may declare script classes. The syntax is
-similar to that of C++. All the class methods must be declared with their implementation, 
-like in Java.
+With classes the script writer can declare new data types that hold groups
+of variables and methods to manipulate them. The class properties can be
+accessed directly or through \ref doc_script_class_prop "property accessors". 
+It is also possible to \ref doc_script_class_ops "overload operators" for the classes.
+
+The class methods are implemented the same way as \ref doc_global_function "global functions", 
+with the addition that the class method can access the class instance properties through either
+directly or through the 'this' keyword in the case a local variable has the same name.
 
 The default constructor and destructor are not needed, unless specific
 logic is wanted. AngelScript will take care of the proper initialization of
 members upon construction, and releasing members upon destruction, even if not 
 manually implemented.
 
-With classes the script writer can declare new data types that hold groups
-of variables and methods to manipulate them. The class' properties can be
-accessed directly or through \ref doc_script_class_prop "property accessors". 
-It is also possible to \ref doc_script_class_ops "overload operators" for the classes.
+A script class can \ref doc_script_class_inheritance "inherit" from other classes, and 
+can also implement \ref doc_global_interface "interfaces".
+
 
 <pre>
   // The class declaration
@@ -49,7 +53,10 @@ It is also possible to \ref doc_script_class_ops "overload operators" for the cl
   }
 </pre>
 
-\section doc_script_class_inheritance Inheritance and polymorphism
+
+
+
+\page doc_script_class_inheritance Inheritance and polymorphism
 
 AngelScript supports single inheritance, where a derived class inherits the 
 properties and methods of its base class. Multiple inheritance is not supported,
@@ -98,7 +105,7 @@ on the destructor being called at a specific moment. AngelScript will also
 call the destructor only once, even if the object is resurrected by adding a
 reference to it while executing the destructor.
 
-\section doc_script_class_private Private class members
+\page doc_script_class_private Private class members
 
 Class members can be declared as private if you wish do not intend for them to be accessed 
 from outside the public class methods. This can be useful in large programs where you to 

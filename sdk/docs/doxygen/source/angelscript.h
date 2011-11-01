@@ -1606,7 +1606,10 @@ protected:
 //!
 //! While different modules are independent, they can communicate with each other with a little help from the
 //! application. It is for example possible to import functions between modules, or a handle to an interface
-//! might be passed from one module to another to allow. 
+//! might be passed from one module to another to allow. To facilitate the information exchange between 
+//! modules, the script language permits the declaration of shared entities, e.g. classes and interfaces. 
+//! These shared entities will be seen and shared by all modules that declare them, thus making guaranteeing
+//! that the modules speak the same language, so to speak.
 class asIScriptModule
 {
 public:

@@ -93,7 +93,7 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_expressions
  - \subpage doc_datatypes
  - \subpage doc_script_handle
- - \subpage doc_script_class_main
+ - \subpage doc_script_class
  - \subpage doc_script_class_prop
  - \subpage doc_script_retref
  - \subpage doc_script_shared
@@ -101,10 +101,25 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_reserved_keywords
 
 
-\page doc_script_class_main Script classes
+\page doc_script_class Script classes
 
- - \subpage doc_script_class
+Script classes are declared \ref doc_global "globally" and provides an
+easy way of grouping properties and methods into logical units. The syntax
+for classes is similar to C++ and Java.
+
+<pre>
+  class Foo
+  {
+    void Method() {}
+    int property;
+  }
+</pre>
+
+ - \subpage doc_script_class_desc
+ - \subpage doc_script_class_inheritance
+ - \subpage doc_script_class_private
  - \subpage doc_script_class_ops
+ - \ref doc_script_class_prop
 
 
 

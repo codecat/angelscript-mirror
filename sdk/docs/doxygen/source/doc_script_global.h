@@ -93,9 +93,9 @@ will get unpredictable behaviour or a null-pointer exception.
 
 \section doc_global_class Classes
 
-In AngelScript the script writer may declare script classes to groups
-properties and methods for object oriented programming. The syntax is
-similar to that of C++ or Java.
+Script classes are declared \ref doc_global "globally" and provides an
+easy way of grouping properties and methods into logical units. The syntax
+for classes is similar to C++ and Java.
 
 \see \ref doc_script_class
 
