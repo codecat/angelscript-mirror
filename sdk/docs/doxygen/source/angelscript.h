@@ -1414,14 +1414,14 @@ public:
 	//! This calls the release method of the object to release the reference.
 	//! 
 	//! This only works for objects.
+	//!
+	//! This version is slightly slower than the \ref ReleaseScriptObject(void*, const asIObjectType *) variant.
 	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
 	//! \brief Release the script object pointer.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] type The type of the object.
 	//!
 	//! This calls the release method of the object to release the reference.
-	//! 
-	//! This only works for objects.
 	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Increase the reference counter for the script object.
 	//! \param[in] obj A pointer to the object.
@@ -1430,14 +1430,14 @@ public:
 	//! This calls the add ref method of the object to increase the reference count.
 	//! 
 	//! This only works for objects.
+	//!
+	//! This version is slightly slower than the \ref AddRefScriptObject(void*, const asIObjectType *) variant.
 	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
 	//! \brief Increase the reference counter for the script object.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] type The type of the object.
 	//!
 	//! This calls the add ref method of the object to increase the reference count.
-	//! 
-	//! This only works for objects.
 	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Returns true if the object referenced by a handle compatible with the specified type.
 	//! \param[in] obj A pointer to the object.
@@ -2123,6 +2123,8 @@ public:
 	//! This method prepares the context for execution of a script function. It allocates 
 	//! the stack space required and reserves space for return value and parameters. The 
 	//! default value for parameters and return value is 0.
+	//!
+	//! This method is slightly slower than the \ref Prepare(asIScriptFunction*) variant.
 	//!
 	//! \see \ref doc_call_script_func
 	virtual int             Prepare(int funcId) = 0;

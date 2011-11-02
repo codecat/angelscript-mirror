@@ -17,6 +17,31 @@ call the \ref asIScriptModule::LoadByteCode "LoadByteCode" method, passing it a 
 stream object. The script module will then pull all the bytecode and related data from that object with 
 the \ref asIBinaryStream::Read "Read" method to reconstruct the script module.
 
+Here's a very simple example of how to implement the \ref asIBinaryStream interface:
+
+\code
+class CBytecodeStream : public asIBinaryStream
+{
+public:
+  CBytecodeStream(FILE *fp) : f(fp) {}
+
+  void Write(const void *ptr, asUINT size) 
+  {
+    if( size == 0 ) return; 
+    fwrite(ptr, size, 1, f); 
+  }
+  void Read(void *ptr, asUINT size) 
+  { 
+    if( size == 0 ) return; 
+    fread(ptr, size, 1, f); 
+  }
+
+protected:
+  FILE *f;
+};
+\endcode
+
+
 \see \ref doc_samples_asbuild
 
 \section doc_adv_precompile_1 Things to remember

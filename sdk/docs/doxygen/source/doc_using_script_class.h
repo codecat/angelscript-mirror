@@ -39,11 +39,11 @@ is found by querying the \ref asIObjectType.
 asIScriptModule *module = engine->GetModule("MyModule");
 asIObjectType *type = engine->GetObjectTypeById(module->GetTypeIdByDecl("MyClass"));
 
-// Get the factory function id from the object type
-int factoryId = type->GetFactoryIdByDecl("MyClass @MyClass()");
+// Get the factory function from the object type
+asIScriptFunction *factory = type->GetFactoryByDecl("MyClass @MyClass()");
 
 // Prepare the context to call the factory function
-ctx->Prepare(factoryId);
+ctx->Prepare(factory);
 
 // Execute the call
 ctx->Execute();
@@ -70,11 +70,11 @@ that you obtain the function id from the \ref asIObjectType, and you must set th
 rest of the function arguments.
 
 \code
-// Obtain the id of the class method
-int funcId = type->GetMethodIdByDecl("void method()");
+// Obtain the function object that represents the class method
+asIScriptFunction *func = type->GetMethodByDecl("void method()");
 
 // Prepare the context for calling the method
-ctx->Prepare(funcId);
+ctx->Prepare(func);
 
 // Set the object pointer
 ctx->SetObject(obj);

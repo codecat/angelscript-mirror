@@ -93,17 +93,9 @@ As AngelScript doesn't load the files itself, it also doesn't have built-in supp
 for including other files from within the script. However, if you look in the add-on
 directory, you'll find a \ref doc_addon_build "CScriptBuilder" class that provides
 this support and more. It is a helper class for loading files, perform a pre-processing pass, 
-and then building the module. With it the code for building a module looks like this:
+and then building the module. You can a see an example of how to use the script builder
+in \ref doc_hello_world.
 
-\code
-CScriptBuilder builder;
-int r = builder.BuildScriptFromFile(engine, "module", "script.as");
-if( r < 0 )
-{
-  // The build failed. The message stream will have received  
-  // compiler errors that shows what needs to be fixed
-}
-\endcode
 
 \see \ref doc_adv_precompile
 

@@ -36,8 +36,8 @@ void CreateCoRoutine(string &func)
 
     // We need to find the function that will be created as the co-routine
     string decl = "void " + func + "()"; 
-    int funcId = engine->GetModule(mod.c_str())->GetFunctionIdByDecl(decl.c_str());
-    if( funcId < 0 )
+    asIScriptFunction *funcPtr = engine->GetModule(mod.c_str())->GetFunctionByDecl(decl.c_str());
+    if( funcPtr == 0 )
     {
       // No function could be found, raise an exception
       ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
@@ -46,7 +46,7 @@ void CreateCoRoutine(string &func)
 
     // Create a new context for the co-routine
     asIScriptContext *coctx = engine->CreateContext();
-    coctx->Prepare(funcId);
+    coctx->Prepare(funcPtr);
 
     // Add the new co-routine context to the array of co-routines
     coroutines.push_back(coctx);

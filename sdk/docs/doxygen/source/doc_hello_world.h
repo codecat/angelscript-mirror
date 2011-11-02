@@ -105,8 +105,8 @@ for executing it.
 \code
 // Find the function that is to be called. 
 asIScriptModule *mod = engine->GetModule("MyModule");
-int funcId = mod->GetFunctionIdByDecl("void main()");
-if( funcId < 0 )
+asIScriptFunction *func = mod->GetFunctionByDecl("void main()");
+if( func == 0 )
 {
   // The function couldn't be found. Instruct the script writer
   // to include the expected function in the script.
@@ -116,8 +116,8 @@ if( funcId < 0 )
 
 // Create our context, prepare it, and then execute
 asIScriptContext *ctx = engine->CreateContext();
-ctx->Prepare(funcId);
-r = ctx->Execute()
+ctx->Prepare(func);
+r = ctx->Execute();
 if( r != asEXECUTION_FINISHED )
 {
   // The execution didn't complete as expected. Determine what happened.

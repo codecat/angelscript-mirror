@@ -649,11 +649,13 @@ bool Test3()
 struct Castee{
 	Castee() {}
 	Castee(int v) : m_v(v) {}
+	Castee(const Castee &v) : m_v(v.m_v) {}
 	Castee& operator=(const Castee& rhs) { m_v = rhs.m_v; return *this; } 
 	int GetValue() const { return m_v; }
 	int m_v;
 
 	static void Construct(void *mem) { new(mem) Castee(); }
+	static void Construct2(void *mem, const Castee &v) { new(mem) Castee(v); }
 	static void Destruct(void *mem) {}
 };
 struct Caster{ 
@@ -676,8 +678,9 @@ static bool Test4()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	r = engine->RegisterObjectType("Castee", sizeof(Castee), asOBJ_VALUE | asOBJ_APP_CLASS_CA); assert( r >= 0 );
+	r = engine->RegisterObjectType("Castee", sizeof(Castee), asOBJ_VALUE | asOBJ_APP_CLASS_CAK); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Castee::Construct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_CONSTRUCT, "void f(const Castee &in)", asFUNCTION(Castee::Construct2), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Castee::Destruct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Castee", "Castee &opAssign(const Castee &in)", asMETHOD(Castee, operator=), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Castee", "int GetValue() const", asMETHOD(Castee, GetValue), asCALL_THISCALL); assert( r >= 0 );
