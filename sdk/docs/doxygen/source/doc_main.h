@@ -107,14 +107,6 @@ Script classes are declared \ref doc_global "globally" and provides an
 easy way of grouping properties and methods into logical units. The syntax
 for classes is similar to C++ and Java.
 
-<pre>
-  class Foo
-  {
-    void Method() {}
-    int property;
-  }
-</pre>
-
  - \subpage doc_script_class_desc
  - \subpage doc_script_class_inheritance
  - \subpage doc_script_class_private

@@ -4,55 +4,122 @@
 \page doc_script_class_desc Script class overview
 
 With classes the script writer can declare new data types that hold groups
-of variables and methods to manipulate them. The class properties can be
-accessed directly or through \ref doc_script_class_prop "property accessors". 
-It is also possible to \ref doc_script_class_ops "overload operators" for the classes.
+of properties and methods to manipulate them. 
+
+Script classes are reference types, which means that multiple references 
+or \ref doc_script_handle "handles" can be held for the same object instance.
+The classes uses automatic memory management so the object instances are only
+destroyed when the last reference ot the instance is cleared.
 
 The class methods are implemented the same way as \ref doc_global_function "global functions", 
 with the addition that the class method can access the class instance properties through either
 directly or through the 'this' keyword in the case a local variable has the same name.
 
-The default constructor and destructor are not needed, unless specific
-logic is wanted. AngelScript will take care of the proper initialization of
-members upon construction, and releasing members upon destruction, even if not 
-manually implemented.
-
-A script class can \ref doc_script_class_inheritance "inherit" from other classes, and 
-can also implement \ref doc_global_interface "interfaces".
-
-
 <pre>
   // The class declaration
   class MyClass
   {
-    // The default constructor
-    MyClass()
-    {
-      a = 0;
-    }
-
-    // Destructor
-    ~MyClass()
-    {
-    }
-
-    // Another constructor
-    MyClass(int a)
-    {
-      this.a = a;
-    }
-
     // A class method
     void DoSomething()
     {
+      // The class properties can be accessed directly
       a *= 2;
+
+      // The declaration of a local variable may hide class properties
+      int b = 42;
+
+      // In this case the class property have to be accessed explicitly
+      this.b = b;
     }
 
-    // A class property
+    // Class properties
     int a;
+    int b;
   }
 </pre>
 
+A class can implement specific methods to \ref doc_script_class_ops "overload operators".
+This can simplify how the object instances are used in expressions, so that it is not
+necessary to explicitly name each function, e.g. the opAdd method translates to the + operator.
+
+Another useful feature is the ability to implement \ref doc_script_class_prop "property accessors",
+which can be used either to provide virtual properties, i.e. that look like properties but really 
+aren't, or to implement specific routines that must be executed everytime a property is accessed.
+
+A script class can also \ref doc_script_class_inheritance "inherit" from other classes, and 
+implement \ref doc_global_interface "interfaces".
+
+
+
+
+\section doc_script_class_construct Class constructors
+
+Class constructors are specific methods that will be used to create new instances
+of the class. It is not required for a class to declare constructors, but doing
+so may make it easier to use the class as it will not be necessary to first instanciate
+the class and then manually set the properties.
+
+The constructors are declared without a return type, and must have the same name as
+the class itself. Multiple constructors with different parameter lists can be 
+implemented for different forms of initializations.
+
+<pre>
+  class MyClass
+  {
+    // Implement a default constructor
+    MyClass()
+    {
+    }
+
+    // Implement the copy constructor
+    MyClass(const MyClass &in other)
+    {
+      // Copy the value of the other instance
+    }
+
+    // Implement other constructors with different parameter lists
+    MyClass(int a, string b) {}
+    MyClass(float x, float y, float z) {}
+  }
+</pre>
+
+The copy constructor is a specific constructor that the compiler can use to build
+more performatic code when copies of an object must be made. Without the copy 
+constructor the compiler will be forced to first instanciate the copy using the 
+default constructor, and then copy the attributes with the 
+\ref doc_script_class_prop "opAssign" method.
+
+One constructor cannot call another constructor. If you wish to share 
+implementations in the constructors you should use a specific method for that.
+
+
+
+\section doc_script_class_destruct Class destructor
+
+It is normally not necessary to implement the class destructor as AngelScript
+will by default free up any resources the objects holds when it is destroyed. 
+However, there may be situations where a more explicit cleanup routine must be
+done as part of the destruction of the object.
+
+The destructor is declared similarly to the constructor, except that it must be
+prefixed with the ~ symbol (also known as the bitwise not operator).
+
+<pre>
+  class MyClass
+  {
+    // Implement the destructor if explicit cleanup is needed
+    ~MyClass()
+    {
+      // Perform explicit cleanup here
+    }
+  }
+</pre>
+
+Observe that AngelScript uses automatic memory management with garbage collection
+so it may not always be easy to predict when the destructor is executed.
+
+It is not possible to directly invoke the destructor. If you need to be able to 
+directly invoke the cleanup, then you should implement a public method for that.
 
 
 

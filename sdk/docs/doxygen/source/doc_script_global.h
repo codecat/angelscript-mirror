@@ -93,7 +93,7 @@ will get unpredictable behaviour or a null-pointer exception.
 
 \section doc_global_class Classes
 
-Script classes are declared \ref doc_global "globally" and provides an
+Script classes are declared globally and provides an
 easy way of grouping properties and methods into logical units. The syntax
 for classes is similar to C++ and Java.
 
