@@ -87,9 +87,9 @@ protected:
 	~B() {}
 };
 
-bool Test2();
-bool Test3();
-bool Test4();
+static bool Test2();
+static bool Test3();
+static bool Test4();
 
 bool Test()
 {
@@ -491,7 +491,7 @@ struct Complex {
 void implicit(asIScriptGeneric * gen) {
 }
 
-bool Test2()
+static bool Test2()
 {
 	bool fail = false;
 	COutStream out;
@@ -586,7 +586,7 @@ MovieClip *MovieClipFactory()
 	return new MovieClip();
 }
 
-bool Test3()
+static bool Test3()
 {
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 	// This doesn't work on MSVC6

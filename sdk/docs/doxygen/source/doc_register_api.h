@@ -39,13 +39,13 @@ to pass function pointers to the application, e.g. to implement callback routine
  - \subpage doc_register_func
  - \subpage doc_register_prop
  - \subpage doc_register_type
- - \subpage doc_generic
  - \subpage doc_advanced_api
 
 
 \page doc_advanced_api Advanced application interface
 
  - \subpage doc_gc_object
+ - \subpage doc_generic
  - \subpage doc_adv_generic_handle
  - \subpage doc_adv_scoped_type
  - \subpage doc_adv_single_ref_type

@@ -56,7 +56,6 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_compile_script
  - \subpage doc_call_script_func
  - \subpage doc_use_script_class
- - \subpage doc_gc
  - \subpage doc_advanced
 
 
@@ -68,6 +67,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
  - \subpage doc_debug
  - \subpage doc_adv_timeout
+ - \subpage doc_gc
  - \subpage doc_adv_multithread
  - \subpage doc_adv_concurrent
  - \subpage doc_adv_coroutine

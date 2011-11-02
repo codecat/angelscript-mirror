@@ -12,6 +12,8 @@ cannot be passed by value to application registered functions, a value type
 doesn't support handles and can be passed by value to application registered
 functions.
 
+\todo Expand this page to better describe the difference between reference types and value types
+
  - \subpage doc_reg_basicref
  - \subpage doc_register_val_type
  - \subpage doc_reg_opbeh
