@@ -643,7 +643,8 @@ static bool Test3()
 	return fail;
 }
 
-// Value didn't work when returning object by value
+//==========================================================================================================
+// Value cast didn't work when returning object by value
 // http://www.gamedev.net/topic/614070-implicit-value-cast-and-explicit-value-cast-no-longer-working-with-2212/
 
 struct Castee{
@@ -680,7 +681,7 @@ static bool Test4()
 
 	r = engine->RegisterObjectType("Castee", sizeof(Castee), asOBJ_VALUE | asOBJ_APP_CLASS_CAK); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Castee::Construct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_CONSTRUCT, "void f(const Castee &in)", asFUNCTION(Castee::Construct2), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+//	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_CONSTRUCT, "void f(const Castee &in)", asFUNCTION(Castee::Construct2), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Castee", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Castee::Destruct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Castee", "Castee &opAssign(const Castee &in)", asMETHOD(Castee, operator=), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Castee", "int GetValue() const", asMETHOD(Castee, GetValue), asCALL_THISCALL); assert( r >= 0 );
@@ -706,6 +707,29 @@ static bool Test4()
 		TEST_FAILED;
 
 	asIScriptContext *ctx = engine->CreateContext();
+	ctx->Prepare(mod->GetFunctionByDecl("int Run()"));
+	r = ctx->Execute();
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	r = ctx->GetReturnDWord();
+	if( r != 5 )
+		TEST_FAILED;
+
+	mod->AddScriptSection("test", "int Run() \n"
+								  "{ \n"
+								  "  Caster caster(5); \n"
+								  "  Castee castee = caster; \n"
+								  "  return GetValueFromCastee(castee); \n"
+								  "} \n"
+								  "int GetValueFromCastee(const Castee &in castee) \n"
+								  "{ \n"
+								  "  return castee.GetValue(); \n"
+								  "} \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+
 	ctx->Prepare(mod->GetFunctionByDecl("int Run()"));
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )

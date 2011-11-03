@@ -3781,7 +3781,9 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 			if( lvalue->dataType.GetSizeInMemoryDWords() == 0 ||
 				!(lvalue->dataType.GetObjectType()->flags & asOBJ_POD) )
 			{
-				Error(TXT_NO_DEFAULT_COPY_OP, node);
+				asCString msg;
+				msg.Format(TXT_NO_DEFAULT_COPY_OP_FOR_s, lvalue->dataType.GetObjectType()->name.AddressOf());
+				Error(msg.AddressOf(), node);
 			}
 
 			// Copy larger data types from a reference

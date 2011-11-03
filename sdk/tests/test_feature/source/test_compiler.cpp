@@ -634,7 +634,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 || bout.buffer != "test (1, 10) : Info    : Compiling derp wtf\n"
 		                             "test (1, 12) : Error   : Can't implicitly convert from 'const uint' to 'derp&'.\n"
-		                             "test (1, 12) : Error   : There is no copy operator for this type available.\n" )
+		                             "test (1, 12) : Error   : There is no copy operator for the type 'derp' available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -957,9 +957,9 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 						   "script (4, 14) : Error   : No default constructor for object of type 'Entity'.\n"
-						   "script (4, 14) : Error   : There is no copy operator for this type available.\n"
+						   "script (4, 14) : Error   : There is no copy operator for the type 'Entity' available.\n"
 						   "script (5, 14) : Error   : No default constructor for object of type 'Entity'.\n"
-						   "script (5, 14) : Error   : There is no copy operator for this type available.\n" )
+						   "script (5, 14) : Error   : There is no copy operator for the type 'Entity' available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
