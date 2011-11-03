@@ -901,9 +901,9 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		}
 		else
 		{
-			// TODO: copy: Here we should look for the best matching constructor, instead of
-			//             just the copy constructor. Only if no appropriate constructor is
-			//             available should the assignment operator be used.
+			// TODO: optimize: Here we should look for the best matching constructor, instead of
+			//                 just the copy constructor. Only if no appropriate constructor is
+			//                 available should the assignment operator be used.
 
 			if( (!gvar->datatype.IsObjectHandle() || gvar->datatype.GetObjectType()->flags & asOBJ_ASHANDLE) )
 			{
@@ -944,7 +944,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 			if( !assigned )
 			{
-				PrepareForAssignment(&lexpr.type.dataType, &expr, node);
+				PrepareForAssignment(&lexpr.type.dataType, &expr, node, false);
 
 				// If the expression is constant and the variable also is constant
 				// then mark the variable as pure constant. This will allow the compiler
@@ -1156,7 +1156,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					ctx->bc.AddCode(&tmpBC);
 
 					// Assign the evaluated expression to the temporary variable
-					PrepareForAssignment(&dt, ctx, node);
+					PrepareForAssignment(&dt, ctx, node, true);
 
 					dt.MakeReference(IsVariableOnHeap(offset));
 					asCTypeInfo type;
@@ -1914,7 +1914,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				}
 				else
 				{
-					// TODO: We can use a copy constructor here
+					// TODO: optimize: We can use a copy constructor here
 
 					sVariable *v = variables->GetVariable(name.AddressOf());
 
@@ -1957,7 +1957,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 					if( !assigned )
 					{
-						PrepareForAssignment(&lexpr.type.dataType, &expr, node);
+						PrepareForAssignment(&lexpr.type.dataType, &expr, node, false);
 
 						// If the expression is constant and the variable also is constant
 						// then mark the variable as pure constant. This will allow the compiler
@@ -3001,7 +3001,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	if( (!dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_ASHANDLE))) &&
 		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
-		PrepareForAssignment(&lvalue.dataType, ctx, node);
+		PrepareForAssignment(&lvalue.dataType, ctx, node, true);
 
 		// Use the copy constructor/factory when available
 		CallCopyConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, ctx, node);
@@ -3012,7 +3012,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 		CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, node);
 
 		// Assign the object to the temporary variable
-		PrepareForAssignment(&lvalue.dataType, ctx, node);
+		PrepareForAssignment(&lvalue.dataType, ctx, node, true);
 
 		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 		PerformAssignment(&lvalue, &ctx->type, &ctx->bc, node);
@@ -3223,14 +3223,14 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					int offset = outFunc->objectType ? -AS_PTR_SIZE : 0;
 					if( v->type.GetObjectType()->beh.copyconstruct )
 					{
-						PrepareForAssignment(&v->type, &expr, rnode->firstChild);					
+						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);					
 						CallCopyConstructor(v->type, offset, false, &expr.bc, &expr, rnode->firstChild, false, true);
 					}
 					else
 					{
 						// If the copy constructor doesn't exist, then a manual assignment needs to be done instead. 
 						CallDefaultConstructor(v->type, offset, false, &expr.bc, rnode->firstChild, false, true);
-						PrepareForAssignment(&v->type, &expr, rnode->firstChild);
+						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
 						expr.bc.InstrSHORT(asBC_PSF, (short)offset);
 						expr.bc.Instr(asBC_RDSPTR);
 
@@ -3635,7 +3635,7 @@ void asCCompiler::PrepareOperand(asSExprContext *ctx, asCScriptNode *node)
 	ProcessDeferredParams(ctx);
 }
 
-void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx, asCScriptNode *node, asSExprContext *lvalueExpr)
+void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx, asCScriptNode *node, bool toTemporary, asSExprContext *lvalueExpr)
 {
 	ProcessPropertyGetAccessor(rctx, node);
 
@@ -3678,20 +3678,20 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		to.MakeReference(false);
 
 		// TODO: ImplicitConversion should know to do this by itself
-		// First convert to a handle which will to a reference cast
+		// First convert to a handle which will do a reference cast
 		if( !lvalue->IsObjectHandle() &&
 			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
 			to.MakeHandle(true);
 
 		// Don't allow the implicit conversion to create an object
-		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, 0, false);
+		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, 0, !toTemporary);
 
 		if( !lvalue->IsObjectHandle() &&
 			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
 		{
 			// Then convert to a reference, which will validate the handle
 			to.MakeHandle(false);
-			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, 0, false);
+			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, 0, !toTemporary);
 		}
 
 		// Check data type
@@ -5523,7 +5523,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			rctx->type = o.type;
 
 			// Convert the rvalue to the right type and validate it
-			PrepareForAssignment(&lvalue.dataType, rctx, rexpr);
+			PrepareForAssignment(&lvalue.dataType, rctx, rexpr, false);
 
 			MergeExprBytecode(ctx, rctx);
 			lctx->type = lvalue;
@@ -5533,7 +5533,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		else
 		{
 			// Convert the rvalue to the right type and validate it
-			PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, lctx);
+			PrepareForAssignment(&lctx->type.dataType, rctx, rexpr, false, lctx);
 
 			MergeExprBytecode(ctx, rctx);
 			MergeExprBytecode(ctx, lctx);
@@ -5850,7 +5850,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				if( rtemp.dataType.IsObjectHandle() )
 					rtemp.isExplicitHandle = true;
 
-				PrepareForAssignment(&rtemp.dataType, &le, cexpr->next);
+				PrepareForAssignment(&rtemp.dataType, &le, cexpr->next, true);
 				MergeExprBytecode(ctx, &le);
 
 				if( !rtemp.dataType.IsPrimitive() )
@@ -5871,7 +5871,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ctx->bc.Label((short)elseLabel);
 
 				// Copy the result to the same temporary variable
-				PrepareForAssignment(&rtemp.dataType, &re, cexpr->next);
+				PrepareForAssignment(&rtemp.dataType, &re, cexpr->next, true);
 				MergeExprBytecode(ctx, &re);
 
 				if( !rtemp.dataType.IsPrimitive() )
