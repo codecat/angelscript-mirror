@@ -1250,7 +1250,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		engine->RegisterObjectType("LevelType", sizeof(CLevel), asOBJ_VALUE | asOBJ_POD);
-		engine->RegisterObjectProperty("LevelType", "float attr", offsetof(CLevel, attr));
+		engine->RegisterObjectProperty("LevelType", "float attr", asOFFSET(CLevel, attr));
 		engine->RegisterGlobalFunction("LevelType &get_Level()", asFUNCTION(get_Level), asCALL_CDECL);
 		
 		r = ExecuteString(engine, "Level.attr = 0.5f;");
@@ -1274,8 +1274,8 @@ bool Test()
 		engine->RegisterObjectBehaviour("node", asBEHAVE_RELEASE, "void f()", asMETHOD(CNode, Release), asCALL_THISCALL);
 		engine->RegisterObjectMethod("node", "node @+ get_child()", asMETHOD(CNode, GetChild), asCALL_THISCALL);
 		engine->RegisterObjectMethod("node", "void set_child(node @+)", asMETHOD(CNode, SetChild), asCALL_THISCALL);
-		engine->RegisterObjectProperty("node", "vector3 vector", offsetof(CNode, vector));
-		engine->RegisterObjectProperty("node", "float x", offsetof(CNode, vector));
+		engine->RegisterObjectProperty("node", "vector3 vector", asOFFSET(CNode, vector));
+		engine->RegisterObjectProperty("node", "float x", asOFFSET(CNode, vector));
 
 		r = ExecuteString(engine, "node @a = node(); \n"
 								  "@a.child = node(); \n"

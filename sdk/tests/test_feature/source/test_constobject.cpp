@@ -99,9 +99,9 @@ bool Test()
 
 	r = engine->RegisterObjectMethod("obj", "void SetVal(int)", asMETHOD(CObj, SetVal), asCALL_THISCALL); assert( r>=0 );
 	r = engine->RegisterObjectMethod("obj", "int GetVal() const", asMETHOD(CObj, GetVal), asCALL_THISCALL); assert( r>=0 );
-	r = engine->RegisterObjectProperty("obj", "int val", offsetof(CObj,val)); assert( r>=0 );
-	r = engine->RegisterObjectProperty("obj", "obj@ next", offsetof(CObj,next)); assert( r>=0 );
-	r = engine->RegisterObjectProperty("obj", "prop p", offsetof(CObj,val)); assert( r>=0 );
+	r = engine->RegisterObjectProperty("obj", "int val", asOFFSET(CObj,val)); assert( r>=0 );
+	r = engine->RegisterObjectProperty("obj", "obj@ next", asOFFSET(CObj,next)); assert( r>=0 );
+	r = engine->RegisterObjectProperty("obj", "prop p", asOFFSET(CObj,val)); assert( r>=0 );
 
 	r = engine->RegisterGlobalProperty("const obj c_obj", &c_obj); assert( r>=0 );
 	r = engine->RegisterGlobalProperty("obj g_obj", &c_obj); assert( r>= 0 );

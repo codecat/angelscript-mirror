@@ -141,7 +141,7 @@ bool Test()
 		r = engine->RegisterObjectType("AppVal", sizeof(AppVal), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("AppVal", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(Construct, (AppVal*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("AppVal", "bool opEquals(const AppVal &in) const", asMETHODPR(AppVal, operator ==, (const AppVal &) const, bool), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectProperty("AppVal", "int value", offsetof(AppVal, value)); assert( r >= 0 );
+		r = engine->RegisterObjectProperty("AppVal", "int value", asOFFSET(AppVal, value)); assert( r >= 0 );
 
 		r = engine->RegisterGlobalFunction("AppVal &GetAppValRef(AppVal &out)", asFUNCTIONPR(GetAppValRef, (AppVal &), AppVal &), asCALL_CDECL); assert( r >= 0 );
 		g_AppVal.value = 0;

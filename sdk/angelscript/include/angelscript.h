@@ -351,6 +351,10 @@ typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 
+// This macro does basically the same thing as offsetof defined in stddef, but
+// GNUC should complain about the usage as I'm not using 0 as the base pointer.
+#define asOFFSET(s,m) ((size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
+
 #define asFUNCTION(f) asFunctionPtr(f)
 #if (defined(_MSC_VER) && _MSC_VER <= 1200) || (defined(__BORLANDC__) && __BORLANDC__ < 0x590)
 // MSVC 6 has a bug that prevents it from properly compiling using the correct asFUNCTIONPR with operator >

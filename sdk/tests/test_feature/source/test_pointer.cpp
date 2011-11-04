@@ -68,9 +68,9 @@ bool Test()
 
 	int r;
 	r = engine->RegisterObjectType("ObjectInstance", sizeof(ObjectInstance), asOBJ_VALUE | asOBJ_APP_CLASS); assert(r>=0);
-	r = engine->RegisterObjectProperty("ObjectInstance", "int val", offsetof(ObjectInstance, val)); assert(r>=0);
-	r = engine->RegisterObjectProperty("ObjectInstance", "int val2", offsetof(ObjectInstance, val)); assert(r>=0);
-	r = engine->RegisterObjectProperty("ObjectInstance", "int val3", offsetof(ObjectInstance, val)); assert(r>=0);
+	r = engine->RegisterObjectProperty("ObjectInstance", "int val", asOFFSET(ObjectInstance, val)); assert(r>=0);
+	r = engine->RegisterObjectProperty("ObjectInstance", "int val2", asOFFSET(ObjectInstance, val)); assert(r>=0);
+	r = engine->RegisterObjectProperty("ObjectInstance", "int val3", asOFFSET(ObjectInstance, val)); assert(r>=0);
 	r = engine->RegisterObjectMethod("ObjectInstance", "void function()", asFUNCTION(ObjectFunction), asCALL_CDECL_OBJFIRST); assert(r>=0);
 	r = engine->RegisterObjectMethod("ObjectInstance", "void Method()", asMETHOD(ObjectInstance,Method), asCALL_THISCALL); assert(r>=0);
 

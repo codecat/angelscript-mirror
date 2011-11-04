@@ -151,7 +151,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
 
 	// Must be possible to register properties for templates, but not of the template subtype
-	r = engine->RegisterObjectProperty("MyTmpl<T>", "int length", offsetof(MyTmpl,length)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("MyTmpl<T>", "int length", asOFFSET(MyTmpl,length)); assert( r >= 0 );
 
 	// Add method to return the type of the template instance as a string
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "string GetNameOfType()", asMETHOD(MyTmpl, GetNameOfType), asCALL_THISCALL); assert( r >= 0 );

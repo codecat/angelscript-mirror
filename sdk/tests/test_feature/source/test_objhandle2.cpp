@@ -128,7 +128,7 @@ bool Test()
 	RegisterScriptString_Generic(engine);
 
 	r = engine->RegisterObjectType("refclass", sizeof(CRefClass), asOBJ_REF); assert(r >= 0);
-	r = engine->RegisterObjectProperty("refclass", "int id", offsetof(CRefClass, id));
+	r = engine->RegisterObjectProperty("refclass", "int id", asOFFSET(CRefClass, id));
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_ADDREF, "void f()", asMETHOD(CRefClass, AddRef), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("refclass", asBEHAVE_RELEASE, "void f()", asMETHOD(CRefClass, Release), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("refclass", "refclass &opAssign(const refclass &in)", asMETHOD(CRefClass, operator=), asCALL_THISCALL); assert(r >= 0);

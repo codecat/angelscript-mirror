@@ -397,9 +397,9 @@ void RegisterScriptMath3D_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("vector3", sizeof(Vector3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); assert( r >= 0 );
 
 	// Register the object properties
-	r = engine->RegisterObjectProperty("vector3", "float x", offsetof(Vector3, x)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("vector3", "float y", offsetof(Vector3, y)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("vector3", "float z", offsetof(Vector3, z)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vector3", "float x", asOFFSET(Vector3, x)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vector3", "float y", asOFFSET(Vector3, y)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vector3", "float z", asOFFSET(Vector3, z)); assert( r >= 0 );
 
 	// Register the constructors
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT,  "void f()",                     asFUNCTION(Vector3DefaultConstructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -444,9 +444,9 @@ void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("vector3", sizeof(Vector3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); assert( r >= 0 );
 
 	// Register the object properties
-	r = engine->RegisterObjectProperty("vector3", "float x", offsetof(Vector3, x)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("vector3", "float y", offsetof(Vector3, y)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("vector3", "float z", offsetof(Vector3, z)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vector3", "float x", asOFFSET(Vector3, x)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vector3", "float y", asOFFSET(Vector3, y)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vector3", "float z", asOFFSET(Vector3, z)); assert( r >= 0 );
 
 	// Register the constructors
 	r = engine->RegisterObjectBehaviour("vector3", asBEHAVE_CONSTRUCT, "void f()",                    asFUNCTION(Vector3DefaultConstructor_Generic), asCALL_GENERIC); assert( r >= 0 );

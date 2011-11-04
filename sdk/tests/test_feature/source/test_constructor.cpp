@@ -89,8 +89,8 @@ bool TestConstructor()
 		r = engine->RegisterObjectBehaviour("obj", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTIONPR(ConstrObj, (int, int, CTestConstructor *), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	}
 
-	r = engine->RegisterObjectProperty("obj", "int a", offsetof(CTestConstructor, a)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("obj", "int b", offsetof(CTestConstructor, b)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("obj", "int a", asOFFSET(CTestConstructor, a)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("obj", "int b", asOFFSET(CTestConstructor, b)); assert( r >= 0 );
 
 	int a, b;
 	r = engine->RegisterGlobalProperty("int a", &a); assert( r >= 0 );

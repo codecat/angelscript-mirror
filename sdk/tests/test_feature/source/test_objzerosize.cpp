@@ -54,7 +54,7 @@ bool Test()
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_RELEASE, "void f()", asMETHOD(CObject, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "int Get()", asMETHOD(CObject, Get), asCALL_THISCALL);
-	engine->RegisterObjectProperty("Object", "int val", offsetof(CObject, val));
+	engine->RegisterObjectProperty("Object", "int val", asOFFSET(CObject, val));
 
 	engine->RegisterGlobalProperty("Object obj", &obj);
 	engine->RegisterGlobalFunction("Object @CreateObject()", asFUNCTION(CreateObject), asCALL_CDECL);

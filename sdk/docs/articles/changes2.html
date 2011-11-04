@@ -47,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The asJITFunction now takes a asPWORD as the second argument incase the compiler wants to store a pointer as the argument (Thanks Andrew Ackermann)
 <li>Added Implements, DerivesFrom, and GetSubType to the asIObjectType interface
 <li>Added overloads for AddRefScriptObject and ReleaseScriptObject that take a pointer to asIObjectType which makes them more efficient than the previous version
+<li>Created the macro asOFFSET that does the same thing as offsetof, except that GNUC doesn't complain about using it
 </ul>
 <li>Library
 <ul>

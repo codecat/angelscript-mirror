@@ -1100,8 +1100,8 @@ bool TestIrrTypes()
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(float x, float y)", asFUNCTIONPR(Construct_dim2f, (float x, float y, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dim2f", "dim2f &opAssign(const dim2f &in)",     asMETHODPR(dimension2df, operator =, (const dimension2df&), dimension2df&),      asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("dim2f", "dim2f opAdd(const dim2f &in) const",   asMETHODPR(dimension2df, operator+,  (const dimension2df&) const, dimension2df), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("dim2f", "float x", offsetof(dimension2df, Width)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("dim2f", "float y", offsetof(dimension2df, Height)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("dim2f", "float x", asOFFSET(dimension2df, Width)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("dim2f", "float y", asOFFSET(dimension2df, Height)); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	r = ExecuteString(engine, "dim2f video_res(800,600);\n"

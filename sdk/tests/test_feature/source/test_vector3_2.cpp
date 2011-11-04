@@ -99,9 +99,9 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
     r = engine->RegisterObjectType ("Vector3", sizeof (csVector3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK); assert( r >= 0 );
-    r = engine->RegisterObjectProperty ("Vector3", "float x", offsetof(csVector3, x)); assert( r >= 0 );
-    r = engine->RegisterObjectProperty ("Vector3", "float y", offsetof(csVector3, y)); assert( r >= 0 );
-    r = engine->RegisterObjectProperty ("Vector3", "float z", offsetof(csVector3, z)); assert( r >= 0 );
+    r = engine->RegisterObjectProperty ("Vector3", "float x", asOFFSET(csVector3, x)); assert( r >= 0 );
+    r = engine->RegisterObjectProperty ("Vector3", "float y", asOFFSET(csVector3, y)); assert( r >= 0 );
+    r = engine->RegisterObjectProperty ("Vector3", "float z", asOFFSET(csVector3, z)); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructVector3, (csVector3*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
     r = engine->RegisterObjectBehaviour ("Vector3", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTIONPR(ConstructVector3, (float, float, float, csVector3*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 //    r = engine->RegisterObjectMethod ("Vector3", "float Length()", asMETHODPR(csVector3, Norm, (void) const, float), asCALL_THISCALL); assert( r >= 0 );

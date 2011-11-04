@@ -22,8 +22,8 @@ bool TestExecuteString()
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->RegisterObjectType("Obj", sizeof(Obj), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-	engine->RegisterObjectProperty("Obj", "bool a", offsetof(Obj,a));
-	engine->RegisterObjectProperty("Obj", "bool b", offsetof(Obj,b));
+	engine->RegisterObjectProperty("Obj", "bool a", asOFFSET(Obj,a));
+	engine->RegisterObjectProperty("Obj", "bool b", asOFFSET(Obj,b));
 
 	engine->RegisterGlobalProperty("Obj g_Obj", &g_Obj);
 

@@ -158,13 +158,13 @@ bool Test()
 	engine->RegisterObjectBehaviour("Object", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
 	funcId = engine->RegisterObjectMethod("Object", "void Set(int)", asMETHOD(CObject, Set), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Object", "int Get()", asMETHOD(CObject, Get), asCALL_THISCALL);
-	engine->RegisterObjectProperty("Object", "int val", offsetof(CObject, val));
+	engine->RegisterObjectProperty("Object", "int val", asOFFSET(CObject, val));
 	r = engine->RegisterObjectMethod("Object", "int &GetRef()", asMETHOD(CObject, GetRef), asCALL_THISCALL); assert( r >= 0 );
 
 	engine->RegisterObjectType("Object2", sizeof(CObject2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
 	engine->RegisterObjectBehaviour("Object2", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct2), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Object2", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct2), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectProperty("Object2", "Object obj", offsetof(CObject2, obj));
+	engine->RegisterObjectProperty("Object2", "Object obj", asOFFSET(CObject2, obj));
 
 	engine->RegisterGlobalFunction("Object TestReturnObject()", asFUNCTION(TestReturnObject), asCALL_CDECL);
 	engine->RegisterGlobalFunction("Object &TestReturnObjectRef()", asFUNCTION(TestReturnObjectRef), asCALL_CDECL);

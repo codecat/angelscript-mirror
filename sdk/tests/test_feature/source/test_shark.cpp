@@ -93,8 +93,8 @@ bool Test()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	r = engine->RegisterObjectType("Point", sizeof(Point), asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("Point", "int x", offsetof(Point, x)); assert( r >= 0 );
-	r = engine->RegisterObjectProperty("Point", "int y", offsetof(Point, y)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("Point", "int x", asOFFSET(Point, x)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("Point", "int y", asOFFSET(Point, y)); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Point", "void Add(Point&in)", asFUNCTION(Point_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Point", asBEHAVE_FACTORY, "Point@ f()", asFUNCTION(Point_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Point", "Point &opAssign(Point &in)", asFUNCTION(Point_Assign), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
