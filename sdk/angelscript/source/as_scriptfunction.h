@@ -157,6 +157,8 @@ public:
 	void      AddReferences();
 	void      ReleaseReferences();
 
+	bool      IsShared() const;
+
 	asCGlobalProperty *GetPropertyByGlobalVarPtr(void *gvarPtr);
 
 	// GC methods
@@ -192,6 +194,7 @@ public:
 
 	asEFuncType                  funcType;
 	asDWORD                      accessMask;
+	bool                         isShared;
 
 	// Used by asFUNC_SCRIPT
 	asCArray<asDWORD>               byteCode;

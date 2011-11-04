@@ -150,6 +150,35 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test import with global property accessors
+	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("t", 
+			"interface ITest {}; \n"
+			"import ITest@ get_globalAccessor() from 'any_module'; \n"
+			"class Crash : ITest { \n"
+			"  ITest@ ptr; \n"
+			"  Crash() { \n"
+			"    @ptr = globalAccessor; \n"
+			"  }\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

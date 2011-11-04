@@ -2218,6 +2218,10 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
 	engine->scriptFunctions[funcId]->AddRef();
+
+	// If the object is shared, then the factory must also be marked as shared
+	if( objType->flags & asOBJ_SHARED )
+		engine->scriptFunctions[funcId]->isShared = true;
 }
 
 int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
@@ -2677,7 +2681,11 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
 			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
 
-			// Add a dummy function to the module so that it doesn't mix up the fund Ids
+			// If the object is shared, then the factory must also be marked as shared
+			if( objType->flags & asOBJ_SHARED )
+				engine->scriptFunctions[factoryId]->isShared = true;
+
+			// Add a dummy function to the builder so that it doesn't mix up the fund Ids
 			functions.PushLast(0);
 
 			// Compile the factory immediately

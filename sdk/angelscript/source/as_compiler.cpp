@@ -562,6 +562,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 	if( type.GetObjectType()->flags & asOBJ_REF )
 	{
 		asSExprContext ctx(engine);
+		ctx.exprNode = node;
 
 		int func = 0;
 		asSTypeBehaviour *beh = type.GetBehaviour();
@@ -3223,7 +3224,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					int offset = outFunc->objectType ? -AS_PTR_SIZE : 0;
 					if( v->type.GetObjectType()->beh.copyconstruct )
 					{
-						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);					
+						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
 						CallCopyConstructor(v->type, offset, false, &expr.bc, &expr, rnode->firstChild, false, true);
 					}
 					else
@@ -5475,7 +5476,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		{
 			// set_opIndex has 2 arguments, where as normal setters have only 1
 			asCArray<asCDataType>& parameterTypes =
-				engine->scriptFunctions[lctx->property_set]->parameterTypes;
+				builder->GetFunctionDescription(lctx->property_set)->parameterTypes;
 			if( !parameterTypes[parameterTypes.GetLength() - 1].IsObjectHandle() )
 			{
 				// Process the property to free the memory
@@ -6329,18 +6330,18 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			found = true;
 
 			// A shared object may not access global functions unless they too are shared (e.g. registered functions)
-			if( engine->scriptFunctions[funcs[0]]->funcType == asFUNC_SCRIPT &&
+			if( !builder->GetFunctionDescription(funcs[0])->IsShared() &&
 				outFunc->objectType && outFunc->objectType->IsShared() )
 			{
 				asCString msg;
-				msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, engine->scriptFunctions[funcs[0]]->GetDeclaration());
+				msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, builder->GetFunctionDescription(funcs[0])->GetDeclaration());
 				Error(msg.AddressOf(), errNode);
 				return -1;
 			}
 
 			// Push the function pointer on the stack
-			ctx->bc.InstrPTR(asBC_FuncPtr, engine->scriptFunctions[funcs[0]]);
-			ctx->type.Set(asCDataType::CreateFuncDef(engine->scriptFunctions[funcs[0]]));
+			ctx->bc.InstrPTR(asBC_FuncPtr, builder->GetFunctionDescription(funcs[0]));
+			ctx->type.Set(asCDataType::CreateFuncDef(builder->GetFunctionDescription(funcs[0])));
 		}
 	}
 
@@ -8007,7 +8008,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		builder->GetFunctionDescriptions(getName.AddressOf(), funcs);
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
-			asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
+			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
 			// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
 			if( (int)f->parameterTypes.GetLength() == (arg?1:0) )
 			{
@@ -8027,7 +8028,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		builder->GetFunctionDescriptions(setName.AddressOf(), funcs);
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
-			asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
+			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
 			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
 			if( (int)f->parameterTypes.GetLength() == (arg?2:1) )
 			{
@@ -8070,8 +8071,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	// Check for type compatibility between get and set accessor
 	if( getId && setId )
 	{
-		asCScriptFunction *getFunc = engine->scriptFunctions[getId];
-		asCScriptFunction *setFunc = engine->scriptFunctions[setId];
+		asCScriptFunction *getFunc = builder->GetFunctionDescription(getId);
+		asCScriptFunction *setFunc = builder->GetFunctionDescription(setId);
 
 		// It is permitted for a getter to return a handle and the setter to take a reference
 		int idx = (arg?1:0);
@@ -8099,12 +8100,12 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	if( outFunc->objectType && isThisAccess )
 	{
 		// The property accessors would be virtual functions, so we need to find the real implementation
-		asCScriptFunction *getFunc = getId ? engine->scriptFunctions[getId] : 0;
+		asCScriptFunction *getFunc = getId ? builder->GetFunctionDescription(getId) : 0;
 		if( getFunc &&
 			getFunc->funcType == asFUNC_VIRTUAL &&
 			outFunc->objectType->DerivesFrom(getFunc->objectType) )
 			realGetId = outFunc->objectType->virtualFunctionTable[getFunc->vfTableIdx]->id;
-		asCScriptFunction *setFunc = setId ? engine->scriptFunctions[setId] : 0;
+		asCScriptFunction *setFunc = setId ? builder->GetFunctionDescription(setId) : 0;
 		if( setFunc &&
 			setFunc->funcType == asFUNC_VIRTUAL &&
 			outFunc->objectType->DerivesFrom(setFunc->objectType) )
@@ -8124,9 +8125,9 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	// Check if the application has disabled script written property accessors
 	if( engine->ep.propertyAccessorMode == 1 )
 	{
-		if( getId && engine->scriptFunctions[getId]->funcType != asFUNC_SYSTEM )
+		if( getId && builder->GetFunctionDescription(getId)->funcType != asFUNC_SYSTEM )
 		  getId = 0;
-		if( setId && engine->scriptFunctions[setId]->funcType != asFUNC_SYSTEM )
+		if( setId && builder->GetFunctionDescription(setId)->funcType != asFUNC_SYSTEM )
 		  setId = 0;
 	}
 
@@ -8156,9 +8157,9 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		// unless only the getter is available
 		asCDataType dt;
 		if( setId )
-			dt = engine->scriptFunctions[setId]->parameterTypes[(arg?1:0)];
+			dt = builder->GetFunctionDescription(setId)->parameterTypes[(arg?1:0)];
 		else
-			dt = engine->scriptFunctions[getId]->returnType;
+			dt = builder->GetFunctionDescription(getId)->returnType;
 
 		// Just change the type, the context must still maintain information
 		// about previous variable offset and the indicator of temporary variable.
@@ -8194,7 +8195,7 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	}
 
 	asCTypeInfo objType = ctx->type;
-	asCScriptFunction *func = engine->scriptFunctions[ctx->property_set];
+	asCScriptFunction *func = builder->GetFunctionDescription(ctx->property_set);
 
 	// Make sure the arg match the property
 	asCArray<int> funcs;
@@ -8281,7 +8282,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	}
 
 	asCTypeInfo objType = ctx->type;
-	asCScriptFunction *func = engine->scriptFunctions[ctx->property_get];
+	asCScriptFunction *func = builder->GetFunctionDescription(ctx->property_get);
 
 	// Make sure the arg match the property
 	asCArray<int> funcs;
@@ -8649,15 +8650,15 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	{
 		// If the property access takes an index arg, then we should use that instead of processing it now
 		asCString propertyName;
-		if( (ctx->property_get && engine->scriptFunctions[ctx->property_get]->GetParamCount() == 1) ||
-			(ctx->property_set && engine->scriptFunctions[ctx->property_set]->GetParamCount() == 2) )
+		if( (ctx->property_get && builder->GetFunctionDescription(ctx->property_get)->GetParamCount() == 1) ||
+			(ctx->property_set && builder->GetFunctionDescription(ctx->property_set)->GetParamCount() == 2) )
 		{
 			// Determine the name of the property accessor
 			asCScriptFunction *func = 0;
 			if( ctx->property_get )
-				func = engine->scriptFunctions[ctx->property_get];
+				func = builder->GetFunctionDescription(ctx->property_get);
 			else
-				func = engine->scriptFunctions[ctx->property_set];
+				func = builder->GetFunctionDescription(ctx->property_set);
 			propertyName = func->GetName();
 			propertyName = propertyName.SubString(4);
 
@@ -10749,15 +10750,11 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
 	// A shared object may not call non-shared functions
-	if( outFunc->objectType && outFunc->objectType->IsShared() )
+	if( outFunc->objectType && outFunc->objectType->IsShared() && !descr->IsShared() )
 	{
-		if( descr->funcType == asFUNC_SCRIPT &&
-			(descr->objectType == 0 || !descr->objectType->IsShared()) )
-		{
-			asCString msg;
-			msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, descr->GetDeclarationStr().AddressOf());
-			Error(msg.AddressOf(), ctx->exprNode);
-		}
+		asCString msg;
+		msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, descr->GetDeclarationStr().AddressOf());
+		Error(msg.AddressOf(), ctx->exprNode);
 	}
 
 	// Check if the function is private

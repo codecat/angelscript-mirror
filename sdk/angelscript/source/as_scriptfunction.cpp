@@ -144,6 +144,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	userData               = 0;
 	id                     = 0;
 	accessMask             = 0xFFFFFFFF;
+	isShared               = false;
 
 	// TODO: optimize: The engine could notify the GC just before it wants to
 	//                 discard the function. That way the GC won't waste time
@@ -1046,6 +1047,19 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		// variable itself release the function to break the circle
 		}
 	}
+}
+
+// internal
+bool asCScriptFunction::IsShared() const
+{
+	// All system functions are shared
+	if( funcType == asFUNC_SYSTEM ) return true;
+
+	// All class methods for shared classes are also shared
+	if( objectType && (objectType->flags & asOBJ_SHARED) ) return true;
+
+	// Functions that have been specifically marked as shared are shared
+	return isShared;
 }
 
 END_AS_NAMESPACE

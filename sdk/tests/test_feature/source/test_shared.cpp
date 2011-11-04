@@ -40,6 +40,16 @@ bool Test()
 			"    assert !is null; \n" // Allow taking address of registered functions
 			"    gfunc !is null; \n" // Do not allow taking address of non-shared script functions
 			"    nonShared(); \n" // Do not allow constructing objects of non-shared type
+			"    impfunc(); \n" // Do not allow calling imported function
+			"  } \n"
+			"  T @dup() const \n" // It must be possible for the shared class to use its own type
+			"  { \n"
+			"    T d; \n" // Calling the global factory as a shared function
+			"    return d; \n" 
+			"  } \n"
+			"  T(int a) \n"
+			"  { \n"
+			"     var = a; \n" // Constructor of shared class must not access non-shared code
 			"  } \n"
 			"  void f(badIntf @) {} \n" // Don't allow use of non-shared types in parameters/return type
 			"  ESHARED _es; \n" // allow
@@ -50,14 +60,15 @@ bool Test()
 			"enum ENOTSHARED { ENS1 = 1 } \n"
 			"const int g_cnst = 42; \n"
 			"class nonShared {} \n"
+			"import void impfunc() from 'mod'; \n"
 			);
 		bout.buffer = "";
 		r = mod->Build();
 		if( r >= 0 ) 
 			TEST_FAILED;
-		if( bout.buffer != "a (20, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
+		if( bout.buffer != "a (30, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (3, 25) : Error   : Shared class cannot implement non-shared interface 'badIntf'\n"
-						   "a (22, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
+						   "a (32, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
 						   "a (5, 3) : Info    : Compiling void T::test()\n"
 						   "a (7, 5) : Error   : Shared code cannot access non-shared global variable 'var'\n"
 						   "a (8, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
@@ -66,7 +77,10 @@ bool Test()
 						   "a (15, 5) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (17, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
 						   "a (18, 5) : Error   : Shared code cannot use non-shared type 'nonShared'\n"
-						   "a (18, 5) : Error   : Shared code cannot call non-shared function 'nonShared@ nonShared()'\n" )
+						   "a (18, 5) : Error   : Shared code cannot call non-shared function 'nonShared@ nonShared()'\n"
+						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"
+						   "a (26, 3) : Info    : Compiling T::T(int)\n"
+		                   "a (28, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

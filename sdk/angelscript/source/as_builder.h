@@ -131,7 +131,7 @@ protected:
 	asCObjectProperty *GetObjectProperty(asCDataType &obj, const char *prop);
 	asCGlobalProperty *GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp);
 
-	asCScriptFunction *GetFunctionDescription(int funcID);
+	asCScriptFunction *GetFunctionDescription(int funcId);
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
 	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope = "");
 
