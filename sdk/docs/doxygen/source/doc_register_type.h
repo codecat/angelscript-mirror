@@ -328,10 +328,8 @@ struct MyStruct
   int a;
 };
 
-r = engine->RegisterObjectProperty("mytype", "int a", offsetof(MyStruct,a)); assert( r >= 0 );
+r = engine->RegisterObjectProperty("mytype", "int a", asOFFSET(MyStruct,a)); assert( r >= 0 );
 \endcode
-
-offsetof() is a macro declared in stddef.h header file.
 
 It is also possible to expose properties through \ref doc_script_class_prop "property accessors", 
 which are a pair of class methods with prefixes get_ and set_ for getting and setting the property value. 

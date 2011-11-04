@@ -90,7 +90,7 @@ void RegisterBaseMembers(asIScriptEngine *engine, const char *type)
 
   r = engine->RegisterObjectMethod(type, "void aMethod()", asMETHOD(T, aMethod), asCALL_THISCALL); assert( r >= 0 );
   
-  r = engine->RegisterObjectProperty(type, "int aProperty", offsetof(T, aProperty)); assert( r >= 0 );
+  r = engine->RegisterObjectProperty(type, "int aProperty", asOFFSET(T, aProperty)); assert( r >= 0 );
 }
 
 template <class T>
@@ -105,7 +105,7 @@ void RegisterDerivedMembers(asIScriptEngine *engine, const char *type)
   // Now register the new members
   r = engine->RegisterObjectMethod(type, "void aNewMethod()", asMETHOD(T, aNewMethod), asCALL_THISCALL); assert( r >= 0 );
 
-  r = engine->RegisterObjectProperty(type, "int aProperty", offsetof(T, aProperty)); assert( r >= 0 );
+  r = engine->RegisterObjectProperty(type, "int aProperty", asOFFSET(T, aProperty)); assert( r >= 0 );
 }
 
 void RegisterTypes(asIScriptEngine *engine)

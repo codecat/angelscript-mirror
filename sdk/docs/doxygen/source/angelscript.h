@@ -559,6 +559,12 @@ typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 //! The function signature for the object type cleanup callback function
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 
+// This macro does basically the same thing as offsetof defined in stddef, but
+// GNUC should complain about the usage as I'm not using 0 as the base pointer.
+//! \ingroup funcs
+//! \brief Returns the offset of an attribute in a struct
+#define asOFFSET(s,m) ((size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
+
 //! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the function specified by the name
 #define asFUNCTION(f) asFunctionPtr(f)
