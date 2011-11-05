@@ -20,6 +20,8 @@ void MyGenericFunction(asIScriptGeneric *gen)
 }
 \endcode
 
+\todo Improve the example to better describe how it works
+
 Functions using the generic calling convention can be registered anywhere the script engine is expecting 
 global functions or class methods (except where explicitly written otherwise). 
 

@@ -73,11 +73,14 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_coroutine
  - \subpage doc_adv_precompile
  - \subpage doc_finetuning
+ - \subpage doc_adv_dynamic_config
  - \subpage doc_adv_jit
 
-\todo Add page about dynamic config groups
+
 \todo Add page about imports and function binding
-\todo Add page about execute string and dynamic compilations
+\todo Add page about execute string and dynamic compilations. Should show how to include new functions/variables and also remove them
+\todo Add page on inheritance from application types
+\todo Add page on reflection, i.e. how to enumerate types, functions, etc
 
 
 

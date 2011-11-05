@@ -49,6 +49,8 @@ aren't, or to implement specific routines that must be executed everytime a prop
 A script class can also \ref doc_script_class_inheritance "inherit" from other classes, and 
 implement \ref doc_global_interface "interfaces".
 
+\todo Explain const methods
+
 
 
 
@@ -116,7 +118,9 @@ prefixed with the ~ symbol (also known as the bitwise not operator).
 </pre>
 
 Observe that AngelScript uses automatic memory management with garbage collection
-so it may not always be easy to predict when the destructor is executed.
+so it may not always be easy to predict when the destructor is executed. AngelScript will also
+call the destructor only once, even if the object is resurrected by adding a
+reference to it while executing the destructor.
 
 It is not possible to directly invoke the destructor. If you need to be able to 
 directly invoke the cleanup, then you should implement a public method for that.
@@ -166,11 +170,10 @@ need to manually do this.
   }
 </pre>
 
-Note, that since AngelScript uses \ref doc_memory "automatic memory management", it can be
-difficult to know exactly when the destructor is called, so you shouldn't rely
-on the destructor being called at a specific moment. AngelScript will also
-call the destructor only once, even if the object is resurrected by adding a
-reference to it while executing the destructor.
+\todo Show how the polymorphism is used with cast behaviours
+
+
+
 
 \page doc_script_class_private Private class members
 

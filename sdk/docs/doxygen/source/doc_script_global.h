@@ -54,6 +54,7 @@ Parameters can have default arguments. When a function with default arguments is
   }
 </pre>
 
+\todo Promote to individual article, that should explain function overloading, default args, and parameter references
 
 
 

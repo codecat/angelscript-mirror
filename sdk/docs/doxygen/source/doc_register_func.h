@@ -9,6 +9,8 @@ learned here are used in several locations, such as \ref asIScriptEngine::Regist
 "RegisterGlobalFunction", \ref asIScriptEngine::RegisterObjectMethod "RegisterObjectMethod", \ref
 asIScriptEngine::RegisterObjectBehaviour "RegisterObjectBehaviour", etc.
 
+\todo Break this article in two, one for global functions and the other for class methods. The article on class methods should be placed under 'Registering an object type'
+
 \section doc_register_func_1 How to get the address of the application function or method
 
 The macros \ref asFUNCTION, \ref asFUNCTIONPR, \ref asMETHOD, and \ref asMETHODPR 
@@ -87,6 +89,28 @@ registered the same way, with asCALL_THISCALL. Classes with \ref doc_register_fu
 
 
 
+\section doc_register_func_3 A little on type differences
+
+AngelScript supports most of the same types that C++ has, but there are differences that you'll need to know when registering
+functions, methods, and behaviours. Make sure you read and understand the article \ref doc_as_vs_cpp_types.
+
+When registering functions that take references, you must make sure to inform the correct keyword that informs the intention of 
+the data in the reference. For example, a parameter reference that is meant to be used as input should have the keyword 'in' 
+defined after the &amp; character, and an output reference should have the keyword 'out'. \ref doc_reg_basicref "Reference types" 
+can be passed as both input and output references, in which case the keyword 'inout' can be used, or simply no keyword at all.
+\ref doc_register_val_type "Value types" on the other hand cannot use 'inout' references, as AngelScript cannot guarantee that 
+the reference will be valid during the whole execution of the function.
+
+When registering functions that take pointers, you need to determine what the pointer represents. If the pointer
+is to a value type though, then it can only be registered as a reference. If the pointer is to a reference type, then it can 
+be registered as an \ref doc_obj_handle "object handle", or as a plain reference. If you choose to use the object handle then
+you need to pay attention to the reference counter in the type so you don't get problems with memory leaks or crashes due to
+objects being destroyed too early.
+
+
+
+
+
 \section doc_register_func_4 Virtual inheritance is not supported
 
 Registering class methods for classes with virtual inheritance is not supported due to the high complexity involved with them. 
@@ -118,37 +142,6 @@ you don't have to manually write all the proxy functions.
 
 
 
-\section doc_register_func_3 A little on type differences
 
-AngelScript supports most of the same types that C++ has, but there are differences that you'll need to know when registering
-functions, methods, and behaviours.
-
-All primitive types in C++ have a corresponding type in AngelScript, though sometimes with a slightly different name, i.e.
-<code>char</code> in C++ is <code>int8</code> in AngelScript. You can see a list of all types and their match in respective 
-language \ref doc_as_vs_cpp_types "here".
-
-Pointers do not exist in AngelScript in the same way as in C++, so you need to decide on how they should be passed. For this you
-have two options, either as reference, or as an \ref doc_obj_handle "object handle". Most common uses of pointers in parameters
-can be represented with either references or object handles in AngelScript, for the few uses where it cannot be done a wrapper 
-function must be written to simplify the function interface to a form that AngelScript can understand.
-
-Parameter references in AngelScript have an additional restriction over the C++ references, and that is that you must specify
-the intended direction of the value that the reference points to, i.e. whether it is an input value, output value, or if the value
-is both input and output. This is done by adding the keywords <code>in</code>, <code>out</code>, or <code>inout</code> after the 
-& character. If no keyword is given AngelScript assumes <code>inout</code>. Value types can only use <code>in</code> and <code>out</code>,
-as AngelScript cannot guarantee the safety of the references otherwise. 
-
-Object handles are reference counted pointers to objects, so when using these you need to pay attention to the reference counter,
-e.g. whenever you receive an object handle from AngelScript, you must make sure to decrease the reference when you're done with it. 
-Similarly whenever you pass an object handle to AngelScript you must make sure that reference is accounted for, so that AngelScript
-doesn't destroy the object too early. If your application functions are not already prepared to work like this, you can most of the 
-time tell AngelScript to handle the reference counting for you by using the auto-handles, <code>\@+</code>.
-
-Strings are a bit complicated as C++ doesn't have one standard way of dealing with them. Because of that AngelScript also doesn't
-impose a specific string type on the applications. Instead the application needs to register the string type it wants to use, and
-then the string parameters needs to be registered accordingly. AngelScript comes with a standard add-on for registering the most
-commonly used C++ string type, the std::string.
-
-\see \ref doc_obj_handle, \ref doc_as_vs_cpp_types, \ref doc_addon_std_string
 
 */

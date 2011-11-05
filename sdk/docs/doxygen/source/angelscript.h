@@ -1252,14 +1252,18 @@ public:
 	//!
 	//! Starts a new dynamic configuration group. This group can be setup so that it is only 
 	//! visible to specific modules, and it can also be removed when it is no longer used.
+	//!
+	//! \see \ref doc_adv_dynamic_config
 	virtual int BeginConfigGroup(const char *groupName) = 0;
 	//! \brief Ends the configuration group.
 	//!
 	//! \return A negative value on error
-	//! \retval asNOT_SUPPORTED Can't end a group that hasn't been begun.
+	//! \retval asERROR Can't end a group that hasn't been begun.
 	//!
 	//! Ends the current configuration group. Once finished a config group cannot be changed, 
 	//! but it can be removed when it is no longer used.
+	//!
+	//! \see \ref doc_adv_dynamic_config
 	virtual int EndConfigGroup() = 0;
 	//! \brief Removes a previously registered configuration group.
 	//!
@@ -1271,6 +1275,8 @@ public:
 	//! use, the function will return with an error code. Examples of uses are compiled modules 
 	//! that have function calls to functions in the group and global variables of types registered 
 	//! in the group.
+	//!
+	//! \see \ref doc_adv_dynamic_config
 	virtual int RemoveConfigGroup(const char *groupName) = 0;
 	//! \brief Sets the access mask that should be used for subsequent registered entities.
 	//! \param[in] defaultMask The default access bit mask.

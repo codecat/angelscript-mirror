@@ -3689,7 +3689,7 @@ int asCScriptEngine::EndConfigGroup()
 {
 	// Raise error if trying to end the default config
 	if( currentGroup == &defaultGroup )
-		return asNOT_SUPPORTED;
+		return asERROR;
 
 	currentGroup = &defaultGroup;
 

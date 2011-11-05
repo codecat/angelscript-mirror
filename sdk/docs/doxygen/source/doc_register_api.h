@@ -2,6 +2,8 @@
 
 \page doc_register_api Registering the application interface
 
+\todo Separate articles from menu groups. It's too easy to miss articles that are also menu groups.
+
 AngelScript requires the application developer to register the interface
 that the scripts should use to interact with anything outside the script itself.
 
