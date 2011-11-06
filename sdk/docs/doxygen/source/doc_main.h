@@ -33,7 +33,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
 
 
- 
+
 \page doc_start Getting started
 
  - \subpage doc_overview
@@ -41,7 +41,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_compile_lib
  - \subpage doc_hello_world
  - \subpage doc_good_practice
- 
+
 
 
 
@@ -52,13 +52,35 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 \page doc_using Using AngelScript
 
  - \subpage doc_understanding_as
- - \subpage doc_register_api
+ - \subpage doc_register_api_topic
  - \subpage doc_compile_script
  - \subpage doc_call_script_func
  - \subpage doc_use_script_class
  - \subpage doc_advanced
 
 
+
+
+
+\page doc_register_api_topic Registering the application interface
+
+ - \subpage doc_register_api
+ - \subpage doc_register_func
+ - \subpage doc_register_prop
+ - \subpage doc_register_type
+ - \subpage doc_advanced_api
+
+
+\page doc_advanced_api Advanced application interface
+
+ - \subpage doc_gc_object
+ - \subpage doc_generic
+ - \subpage doc_adv_generic_handle
+ - \subpage doc_adv_scoped_type
+ - \subpage doc_adv_single_ref_type
+ - \subpage doc_adv_class_hierarchy
+ - \subpage doc_adv_var_type
+ - \subpage doc_adv_template
 
 
 
@@ -75,7 +97,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_finetuning
  - \subpage doc_adv_access_mask
  - \subpage doc_adv_dynamic_config
- - \subpage doc_adv_jit
+ - \subpage doc_adv_jit_topic
 
 
 \todo Add page about imports and function binding
@@ -86,8 +108,13 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
 
 
- 
- 
+\page doc_adv_jit_topic JIT compilation
+
+ - \subpage doc_adv_jit
+ - \subpage doc_adv_jit_1
+
+
+
 \page doc_script The script language
 
 This is the reference documentation for the AngelScript scripting language.

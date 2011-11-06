@@ -1,8 +1,6 @@
 /**
 
-\page doc_adv_jit JIT compilation
-
-\todo No articles should have subpages.
+\page doc_adv_jit How to build a JIT compiler
 
 AngelScript doesn't provide a built-in JIT compiler, instead it permits an external JIT compiler to be implemented 
 through a public interface.
@@ -130,7 +128,7 @@ The layout of the arguments is determined from the \ref asBCInfo array.
  - \ref asBC_SWORDARG1
  - \ref asBC_SWORDARG2
 
-What each \ref asEBCInstr "byte code" instruction does is described in \subpage doc_adv_jit_1, but the exact 
+What each \ref asEBCInstr "byte code" instruction does is described in \ref doc_adv_jit_1, but the exact 
 implementation of each byte code instruction is best determined from the implementation
 in the VM, i.e. the asCScriptContext::ExecuteNext method.
 

@@ -1,8 +1,6 @@
 /**
 
-\page doc_register_api Registering the application interface
-
-\todo Separate articles from menu groups. It's too easy to miss articles that are also menu groups.
+\page doc_register_api What can be registered
 
 AngelScript requires the application developer to register the interface
 that the scripts should use to interact with anything outside the script itself.
@@ -33,28 +31,10 @@ without the interfaces.
 \ref asIScriptEngine::RegisterFuncdef "Function definitions" can be registered when you wish to allow the script
 to pass function pointers to the application, e.g. to implement callback routines.
 
-\ref asIScriptEngine::RegisterEnum "enumeration types" and 
+\ref asIScriptEngine::RegisterEnum "Enumeration types" and 
 \ref asIScriptEngine::RegisterTypedef "typedefs" can also be registered to improve readability of the scripts.
 
-\section doc_register_api_1 Topics
 
- - \subpage doc_register_func
- - \subpage doc_register_prop
- - \subpage doc_register_type
- - \subpage doc_advanced_api
-
-
-\page doc_advanced_api Advanced application interface
-
- - \subpage doc_gc_object
- - \subpage doc_generic
- - \subpage doc_adv_generic_handle
- - \subpage doc_adv_scoped_type
- - \subpage doc_adv_single_ref_type
- - \subpage doc_adv_class_hierarchy
- - \subpage doc_adv_var_type
- - \subpage doc_adv_template
- 
 
 
 */
