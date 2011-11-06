@@ -559,8 +559,8 @@ typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 //! The function signature for the object type cleanup callback function
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 
-// This macro does basically the same thing as offsetof defined in stddef, but
-// GNUC should complain about the usage as I'm not using 0 as the base pointer.
+// This macro does basically the same thing as offsetof defined in stddef.h, but
+// GNUC should not complain about the usage as I'm not using 0 as the base pointer.
 //! \ingroup funcs
 //! \brief Returns the offset of an attribute in a struct
 #define asOFFSET(s,m) ((size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
@@ -990,12 +990,11 @@ public:
 	//!
 	//! Use this method to register a member property of a class. The property must
 	//! be local to the object, i.e. not a global variable or a static member. The
-	//! easiest way to get the offset of the property is to use the offsetof macro
-	//! from stddef.h.
+	//! easiest way to get the offset of the property is to use the asOFFSET macro.
 	//!
 	//! \code
 	//! struct MyType {float prop;};
-	//! r = engine->RegisterObjectProperty("MyType", "float prop", offsetof(MyType, prop)));
+	//! r = engine->RegisterObjectProperty("MyType", "float prop", asOFFSET(MyType, prop)));
 	//! \endcode
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
 	//! \brief Registers a method for the object type.
@@ -1281,6 +1280,8 @@ public:
 	//! \brief Sets the access mask that should be used for subsequent registered entities.
 	//! \param[in] defaultMask The default access bit mask.
 	//! \return The previous default mask.
+	//!
+	//! \see \ref doc_adv_access_mask
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-04
@@ -1728,6 +1729,8 @@ public:
 	//!
 	//! This can be used to provide different interfaces to scripts that serve different purposes
 	//! in the application. 
+	//!
+	//! \see \ref doc_adv_access_mask
 	virtual asDWORD SetAccessMask(asDWORD accessMask) = 0;
 	//! \}
 

@@ -1011,6 +1011,9 @@ public:
   // Build the added script sections
   int BuildModule();
 
+  // Returns the current module
+  asIScriptModule *GetModule();
+
   // Register the callback for resolving include directive
   void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
 
@@ -1025,7 +1028,7 @@ public:
 
   // Get metadata declared for global variables
   const char *GetMetadataStringForVar(int varIdx);
-  
+
   // Get metadata declared for a class property
   const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 };

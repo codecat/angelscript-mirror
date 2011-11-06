@@ -45,6 +45,11 @@ int CScriptBuilder::StartNewModule(asIScriptEngine *engine, const char *moduleNa
 	return 0;
 }
 
+asIScriptModule *CScriptBuilder::GetModule()
+{
+	return module;
+}
+
 int CScriptBuilder::AddSectionFromFile(const char *filename)
 {
 	// TODO: The file name stored in the set should be the fully resolved name because

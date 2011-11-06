@@ -2,6 +2,8 @@
 
 \page doc_adv_jit JIT compilation
 
+\todo No articles should have subpages.
+
 AngelScript doesn't provide a built-in JIT compiler, instead it permits an external JIT compiler to be implemented 
 through a public interface.
 

@@ -351,8 +351,8 @@ typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 
-// This macro does basically the same thing as offsetof defined in stddef, but
-// GNUC should complain about the usage as I'm not using 0 as the base pointer.
+// This macro does basically the same thing as offsetof defined in stddef.h, but
+// GNUC should not complain about the usage as I'm not using 0 as the base pointer.
 #define asOFFSET(s,m) ((size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
 
 #define asFUNCTION(f) asFunctionPtr(f)
