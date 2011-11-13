@@ -2021,7 +2021,7 @@ public:
 	Variant(const Variant &other) {}
 	~Variant() {}
 	Variant &operator=(const Variant &other) {return *this;}
-	const std::string &GetString() const {static std::string dummy; return dummy;}
+	const std::string &GetString() const {static std::string dummy("test"); return dummy;}
 };
 
 static void ConstructVariant(Variant *self)
@@ -2078,10 +2078,13 @@ bool TestRetRef()
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", asMETHOD(Node, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", asMETHODPR(Node, GetAttribute, (), Variant), asCALL_THISCALL);
 
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
 	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", "void f() { \n"
 								  "  Node@ node = Node(); // Create a dummy scene node \n"
 								  "  string str = node.GetAttribute().GetString(); // Get its first attribute as a string \n"
+								  "  assert( str == 'test' ); \n"
 								  "} \n");
 	r = mod->Build();
 	if( r < 0 )
@@ -2093,11 +2096,10 @@ bool TestRetRef()
 		TEST_FAILED;
 	}
 
-/*	// TODO: Add this test
 	r = ExecuteString(engine, "f();", mod);
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
-*/
+
 	engine->Release();
 
 	return fail;

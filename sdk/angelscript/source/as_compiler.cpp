@@ -8241,16 +8241,9 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	if( func->objectType )
 	{
 		// TODO: This is from CompileExpressionPostOp, can we unify the code?
-		if( objType.isTemporary &&
-			ctx->type.dataType.IsReference() &&
-			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-		{
-			// Remember the original object's variable, so that it can be released
-			// later on when the reference to its member goes out of scope
-			ctx->type.isTemporary = true;
-			ctx->type.stackOffset = objType.stackOffset;
-		}
-		else
+		if( !objType.isTemporary ||
+			!ctx->type.dataType.IsReference() ||
+			ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
 		{
 			// As the method didn't return a reference to a member
 			// we can safely release the original object now
@@ -8328,16 +8321,9 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	if( func->objectType )
 	{
 		// TODO: This is from CompileExpressionPostOp, can we unify the code?
-		if( objType.isTemporary &&
-			ctx->type.dataType.IsReference() &&
-			!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-		{
-			// Remember the original object's variable, so that it can be released
-			// later on when the reference to its member goes out of scope
-			ctx->type.isTemporary = true;
-			ctx->type.stackOffset = objType.stackOffset;
-		}
-		else
+		if( !objType.isTemporary ||
+			!ctx->type.dataType.IsReference() ||
+			ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
 		{
 			// As the method didn't return a reference to a member
 			// we can safely release the original object now
@@ -8631,16 +8617,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 			// If the method returned a reference, then we can't release the original
 			// object yet, because the reference may be to a member of it
-			if( objType.isTemporary &&
-				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
-				!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-			{
-				// Remember the original object's variable, so that it can be released
-				// later on when the reference to its member goes out of scope
-				ctx->type.isTemporary = true;
-				ctx->type.stackOffset = objType.stackOffset;
-			}
-			else
+			if( !objType.isTemporary ||
+				!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
+				ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
 			{
 				// As the method didn't return a reference to a member
 				// we can safely release the original object now
@@ -9182,16 +9161,9 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 
 			// If the method returned a reference, then we can't release the original
 			// object yet, because the reference may be to a member of it
-			if( objType.isTemporary &&
-				(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) &&
-				!ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
-			{
-				// Remember the object's variable, so that it can be released
-				// later on when the reference to its member goes out of scope
-				ctx->type.isTemporary = true;
-				ctx->type.stackOffset = objType.stackOffset;
-			}
-			else
+			if( !objType.isTemporary ||
+				!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
+				ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
 			{
 				// As the index operator didn't return a reference to a
 				// member we can release the original object now
@@ -10791,8 +10763,6 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		ctx->deferredParams.PushLast(deferred);
 	}
 
-	ctx->type.Set(descr->returnType);
-
 	if( isConstructor )
 	{
 		// Sometimes the value types are allocated on the heap,
@@ -10840,7 +10810,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			ctx->bc.CallPtr(asBC_CallPtr, funcPtrVar, argSize);
 	}
 
-	if( ctx->type.dataType.IsObject() && !descr->returnType.IsReference() )
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
 	{
 		int returnOffset = 0;
 
@@ -10895,17 +10865,31 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 		// We cannot clean up the arguments yet, because the
 		// reference might be pointing to one of them.
-
-		// Clean up arguments
 		if( args )
 			AfterFunctionCall(funcId, *args, ctx, true);
 
 		// Do not process the output parameters yet, because it
 		// might invalidate the returned reference
 
-		if( descr->returnType.IsPrimitive() )
-			ctx->type.Set(descr->returnType);
-		else
+		// If the context holds a variable that needs cleanup
+		// store it as a deferred parameter so it will be cleaned up 
+		// afterwards. Here we must clear such things as isTemporary 
+		// and stackOffset as we have no idea were the reference is coming from
+		if( ctx->type.isTemporary )
+		{
+			asSDeferredParam defer;
+			defer.argNode = 0;
+			defer.argType = ctx->type;
+			defer.argInOutFlags = asTM_INOUTREF;
+			defer.origExpr = 0;
+			ctx->deferredParams.PushLast(defer);
+		}
+
+		ctx->type.isVariable = false;
+		ctx->type.isTemporary = false;
+
+		ctx->type.Set(descr->returnType);
+		if( !descr->returnType.IsPrimitive() )
 		{
 			ctx->bc.Instr(asBC_PshRPtr);
 			if( descr->returnType.IsObject() &&
