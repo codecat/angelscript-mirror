@@ -79,6 +79,7 @@ bool Test6();
 bool Test7();
 bool Test8();
 bool Test9();
+bool TestRetRef();
 
 // For test Philip Bennefall
 class CSound
@@ -107,6 +108,7 @@ bool Test()
 	fail = Test7() || fail;
 	fail = Test8() || fail;
 	fail = Test9() || fail;
+	fail = TestRetRef() || fail;
 
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
@@ -2003,6 +2005,99 @@ bool Test9()
 		TEST_FAILED;
 	}
 
+	engine->Release();
+
+	return fail;
+}
+
+//////////////////////////////
+// AgentC reported a crash
+// http://www.gamedev.net/topic/614727-crash-with-temporary-value-types-and-unsafe-references/
+
+class Variant 
+{
+public:
+	Variant() {}
+	Variant(const Variant &other) {}
+	~Variant() {}
+	Variant &operator=(const Variant &other) {return *this;}
+	const std::string &GetString() const {static std::string dummy; return dummy;}
+};
+
+static void ConstructVariant(Variant *self)
+{
+	new(self) Variant();
+}
+
+static void ConstructVariantCopy(Variant &other, Variant *self)
+{
+	new(self) Variant(other);
+}
+
+static void DestructVariant(Variant *self)
+{
+	self->~Variant();
+}
+
+class Node
+{
+public:
+	Node() {refCount = 1;}
+	void AddRef() {refCount++;}
+	void Release() {if( --refCount == 0 ) delete this;}
+	Variant GetAttribute() {return Variant();}
+	int refCount;
+};
+
+static Node *NodeFactory()
+{
+	return new Node();
+}
+
+bool TestRetRef()
+{
+	bool fail = false;
+	CBufferedOutStream bout;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+	RegisterStdString(engine);
+
+	engine->RegisterObjectType("Variant", sizeof(Variant), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructVariant), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", asFUNCTION(ConstructVariantCopy), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructVariant), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Variant", "const string& GetString() const", asMETHOD(Variant, GetString), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", asMETHODPR(Variant, operator =, (const Variant&), Variant&), asCALL_THISCALL);
+
+	engine->RegisterObjectType("Node", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("Node", asBEHAVE_FACTORY, "Node @f()", asFUNCTION(NodeFactory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("Node", asBEHAVE_ADDREF, "void f()", asMETHOD(Node, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", asMETHOD(Node, Release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", asMETHODPR(Node, GetAttribute, (), Variant), asCALL_THISCALL);
+
+	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", "void f() { \n"
+								  "  Node@ node = Node(); // Create a dummy scene node \n"
+								  "  string str = node.GetAttribute().GetString(); // Get its first attribute as a string \n"
+								  "} \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
+/*	// TODO: Add this test
+	r = ExecuteString(engine, "f();", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+*/
 	engine->Release();
 
 	return fail;
