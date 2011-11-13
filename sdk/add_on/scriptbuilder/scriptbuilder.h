@@ -83,6 +83,9 @@ public:
 
 	// Get metadata declared for class variables
 	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
+
+	// Get metadata declared for class functions
+	const char *GetMetadataStringForTypeMethod(int typeId, int methodIdx);
 #endif
 
 protected:

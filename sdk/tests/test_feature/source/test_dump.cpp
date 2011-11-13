@@ -354,6 +354,8 @@ void DumpModule(asIScriptModule *mod)
 		" void reverse()\n"
 		" int find(const T&in) const\n"
 		" int find(uint, const T&in) const\n"
+		" uint get_length() const\n"
+		" void set_length(uint)\n"
 		"reg type: val string group: <null>\n"
 		" beh(1) void _beh_1_()\n"
 		" beh(0) void _beh_0_()\n"

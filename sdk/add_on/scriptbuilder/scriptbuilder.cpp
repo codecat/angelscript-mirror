@@ -750,6 +750,17 @@ const char *CScriptBuilder::GetMetadataStringForTypeProperty(int typeId, int var
 
 	return propIt->second.c_str();
 }
+
+const char *CScriptBuilder::GetMetadataStringForTypeMethod(int typeId, int methodIdx)
+{
+	map<int, SClassMetadata>::iterator typeIt = classMetadataMap.find(typeId);
+	if(typeIt == classMetadataMap.end()) return "";
+
+	map<int, string>::iterator methodIt = typeIt->second.funcMetadataMap.find(methodIdx);
+	if(methodIt == typeIt->second.funcMetadataMap.end()) return "";
+	
+	return methodIt->second.c_str();
+}
 #endif
 
 static const char *GetCurrentDir(char *buf, size_t size)

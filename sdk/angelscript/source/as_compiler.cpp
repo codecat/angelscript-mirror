@@ -7969,7 +7969,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 	if( ctx->type.dataType.IsObject() )
 	{
-		// Check if the object has any methods with the property name prefixed by get_ or set_
+		// Check if the object has any methods with the corresponding accessor name(s)
 		asCObjectType *ot = ctx->type.dataType.GetObjectType();
 		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
 		{
