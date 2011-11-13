@@ -55,8 +55,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22200
-#define ANGELSCRIPT_VERSION_STRING "2.22.0"
+#define ANGELSCRIPT_VERSION        22201
+#define ANGELSCRIPT_VERSION_STRING "2.22.1 WIP"
 
 // Data types
 
@@ -142,7 +142,8 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
 	asOBJ_MASK_VALID_FLAGS           = 0x1FFFF,
 	asOBJ_SCRIPT_OBJECT              = 0x80000,
-	asOBJ_SHARED                     = 0x100000
+	asOBJ_SHARED                     = 0x100000,
+	asOBJ_NOINHERIT                  = 0x200000
 };
 
 // Behaviours

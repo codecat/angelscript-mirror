@@ -172,6 +172,7 @@ protected:
 	asCScriptNode *ParseCast();
 	asCScriptNode *ParseEnumeration();				//	Parse enumeration enum { X, Y }
 	asCScriptNode *ParseTypedef();					//	Parse named type declaration
+	void ParseMethodOverrideBehaviors(asCScriptNode *funcNode);
 
 	bool IsVarDecl();
 	bool IsFuncDecl(bool isMethod);

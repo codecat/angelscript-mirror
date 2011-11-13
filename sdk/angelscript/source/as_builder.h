@@ -76,7 +76,7 @@ struct sGlobalVariableDescription
 
 struct sClassDeclaration
 {
-	sClassDeclaration() {script = 0; node = 0; validState = 0; objType = 0; isExistingShared = false;}
+	sClassDeclaration() {script = 0; node = 0; validState = 0; objType = 0; isExistingShared = false; isFinal = false;}
 
 	asCScriptCode *script;
 	asCScriptNode *node;
@@ -84,6 +84,7 @@ struct sClassDeclaration
 	int validState;
 	asCObjectType *objType;
 	bool isExistingShared;
+	bool isFinal;
 };
 
 struct sFuncDef
@@ -146,10 +147,10 @@ protected:
 	void CompleteFuncDef(sFuncDef *funcDef);
 	void CompileClasses();
 
-	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate);
+	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal);
 	int  ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
 
-	bool DoesMethodExist(asCObjectType *objType, int methodId);
+	bool DoesMethodExist(asCObjectType *objType, int methodId, asUINT *methodIndex = 0);
 
 	void AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
 	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, bool isPrivate, asCScriptCode *file = 0, asCScriptNode *node = 0);

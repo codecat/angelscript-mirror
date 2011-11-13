@@ -351,7 +351,10 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseEnumeration());	//	Handle enumerations
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		//	Handle primitive typedefs
-			else if( t1.type == ttClass || (t1.type == ttIdentifier && t2.type == ttClass) )
+			else if( t1.type == ttClass || 
+					 (t1.type == ttIdentifier && t2.type == ttClass) || 
+					 (t1.type == ttFinal && (t2.type == ttIdentifier || t2.type == ttClass)) ||
+					 (t1.type == ttIdentifier && t2.type == ttFinal) )
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttInterface || (t1.type == ttIdentifier && t2.type == ttInterface) )
 				node->AddChildLast(ParseInterface());
@@ -763,12 +766,23 @@ bool asCParser::IsFuncDecl(bool isMethod)
 			return false;
 		else
 		{
-			// A class method can have a 'const' token after the parameter list
 			if( isMethod )
 			{
+				// A class method can have a 'const' token after the parameter list
 				GetToken(&t1);
 				if( t1.type != ttConst )
 					RewindTo(&t1);
+				
+				// A class method may also have any number of additional inheritance behavior specifiers
+				for( ; ; )
+				{
+					GetToken(&t2);
+					if( t2.type != ttFinal && t2.type != ttOverride )
+					{
+						RewindTo(&t2);
+						break;
+					}
+				}
 			}
 
 			GetToken(&t1);
@@ -864,11 +878,15 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 
 	if( isMethod )
 	{
-		// Is the method a const?
 		GetToken(&t1);
 		RewindTo(&t1);
+
+		// Is the method a const?
 		if( t1.type == ttConst )
 			node->AddChildLast(ParseToken(ttConst));
+
+		ParseMethodOverrideBehaviors(node);
+		if( isSyntaxError ) return node;
 	}
 
 	// We should just find the end of the statement block here. The statements 
@@ -998,6 +1016,13 @@ asCScriptNode *asCParser::ParseClass()
 
 		RewindTo(&t);
 		node->AddChildLast(ParseIdentifier());
+		GetToken(&t);
+	}
+
+	if( t.type == ttFinal )
+	{
+		RewindTo(&t);
+		node->AddChildLast(ParseToken(ttFinal));
 		GetToken(&t);
 	}
 
@@ -3087,6 +3112,24 @@ asCScriptNode *asCParser::ParseTypedef()
 	}
 
 	return node;
+}
+
+void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
+{
+	sToken t1;
+
+	for( ; ; )
+	{
+		static int decoratorTokens[] = {ttFinal, ttOverride};
+		GetToken(&t1);
+		RewindTo(&t1);
+
+		if( t1.type == ttStartStatementBlock )
+			break;
+
+		funcNode->AddChildLast(ParseOneOf(decoratorTokens, sizeof(decoratorTokens)/sizeof(decoratorTokens[0])));
+		if( isSyntaxError ) break;
+	}
 }
 
 END_AS_NAMESPACE

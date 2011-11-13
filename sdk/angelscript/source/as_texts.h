@@ -89,6 +89,8 @@
 #define TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s "Failed while compiling default arg for parameter %d in function '%s'"
 #define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
+#define TXT_METHOD_CANNOT_OVERRIDE_s      "Method '%s' declared as final and cannot be overridden"
+#define TXT_METHOD_s_DOES_NOT_OVERRIDE    "Method '%s' marked as override but does not replace any base class or interface method"
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
 #define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
