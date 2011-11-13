@@ -173,6 +173,44 @@ bool Test()
 
 	engine->Release();
 
+	// Test final and override
+	{
+		CBufferedOutStream bout;
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test", 
+			"final class CFin1 {} \n" // Don't allow inheritance
+			"shared final class CFin2 {} \n" // -"-
+			"class CBase \n"
+			"{ \n"
+			"  void finalFunc() final {} \n" // don't allow override this func
+			"  void overrideFunc() {} \n" 
+			"} \n"
+			"class CD1 : CFin1 {} \n" // Shouldn't work
+			"class CD2 : CBase \n"
+			"{ \n"
+			"  void finalFunc() {} \n" // shouldn't work
+			"  void overrideFunc(int) override {} \n" // must override
+			"} \n");
+
+		int r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (8, 13) : Error   : Can't inherit from class 'CFin1' marked as final\n"
+						   "test (9, 7) : Error   : Method 'void CBase::finalFunc()' declared as final and cannot be overridden\n"
+						   "test (9, 7) : Error   : Method 'void CD2::overrideFunc(int)' marked as override but does not replace any base class or interface method\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success
@@ -391,10 +429,10 @@ bool Test2()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "script (1, 11) : Error   : Can't inherit from 'string'\n" )
+	if( bout.buffer != "script (1, 11) : Error   : Can't inherit from class 'string' marked as final\n" )
 	{
-		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
 	}
 
 	// Test that it is not possible to inherit from multiple script classes

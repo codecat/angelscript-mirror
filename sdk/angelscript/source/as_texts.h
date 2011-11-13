@@ -51,7 +51,7 @@
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS     "Can't call a constructor in loops"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH    "Can't call a constructor in switch"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE        "Can't call a constructor multiple times"
-#define TXT_CANNOT_INHERIT_FROM_s                "Can't inherit from '%s'"
+#define TXT_CANNOT_INHERIT_FROM_s_FINAL          "Can't inherit from class '%s' marked as final"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES "Can't inherit from multiple classes"
 #define TXT_CANNOT_INHERIT_FROM_SELF             "Can't inherit from itself, or another class that inherits from this class"
 #define TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s "Can't instanciate template '%s' with subtype '%s'"

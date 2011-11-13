@@ -1666,7 +1666,7 @@ void asCBuilder::CompileClasses()
 
 		// Find the base class that this class inherits from
 		bool multipleInheritance = false;
-		asCScriptNode *node = decl->node->firstChild->next;
+		asCScriptNode *node = decl->node->firstChild;
 
 		if( decl->objType->IsShared() )
 		{
@@ -1680,6 +1680,10 @@ void asCBuilder::CompileClasses()
 			asASSERT(node->tokenType == ttFinal);
 			node = node->next;
 		}
+
+		// Skip the name of the class
+		asASSERT(node->tokenType == ttIdentifier);
+		node = node->next;
 
 		while( node && node->nodeType == snIdentifier )
 		{
@@ -1705,7 +1709,7 @@ void asCBuilder::CompileClasses()
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
-				str.Format(TXT_CANNOT_INHERIT_FROM_s, objType->name.AddressOf());
+				str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
 				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
 			}
 			else if( objType->size != 0 )
@@ -1951,6 +1955,10 @@ void asCBuilder::CompileClasses()
 
 		// Enumerate each of the declared properties
 		asCScriptNode *node = decl->node->firstChild->next;
+		if( decl->objType->IsShared() )
+			node = node->next;
+		if( decl->objType->flags & asOBJ_NOINHERIT )
+			node = node->next;
 
 		// Skip list of classes and interfaces
 		while( node && node->nodeType == snIdentifier )
@@ -1997,6 +2005,13 @@ void asCBuilder::CompileClasses()
 
 		toValidate.PushLast(decl);
 	}
+
+	// TODO: Warn if a method overrides a base method without marking it as 'override'. 
+	//       It must be possible to turn off this warning through engine property.
+
+	// TODO: A base class should be able to mark a method as 'abstract'. This will
+	//       allow a base class to provide a partial implementation, but still force
+	//       derived classes to implement specific methods.
 
 	// Verify that all interface methods are implemented in the classes
 	// We do this here so the base class' methods have already been inherited 
@@ -2175,19 +2190,22 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 {
 	asCScriptFunction *vf =  asNEW(asCScriptFunction)(engine, module, asFUNC_VIRTUAL);
 
-	vf->funcType = asFUNC_VIRTUAL;
-	vf->name = func->name;
-	vf->returnType = func->returnType;
-	vf->parameterTypes = func->parameterTypes;
-	vf->inOutFlags = func->inOutFlags;
-	vf->id = engine->GetNextScriptFunctionId();
+	vf->funcType         = asFUNC_VIRTUAL;
+	vf->name             = func->name;
+	vf->returnType       = func->returnType;
+	vf->parameterTypes   = func->parameterTypes;
+	vf->inOutFlags       = func->inOutFlags;
+	vf->id               = engine->GetNextScriptFunctionId();
 	vf->scriptSectionIdx = func->scriptSectionIdx;
-	vf->isReadOnly = func->isReadOnly;
-	vf->objectType = func->objectType;
-	vf->signatureId = func->signatureId;
-	vf->isPrivate = func->isPrivate;
-	vf->vfTableIdx = idx;
-	vf->defaultArgs = func->defaultArgs;
+	vf->isReadOnly       = func->isReadOnly;
+	vf->objectType       = func->objectType;
+	vf->signatureId      = func->signatureId;
+	vf->isPrivate        = func->isPrivate;
+	vf->isFinal          = func->isFinal;
+	vf->isOverride       = func->isOverride;
+	vf->vfTableIdx       = idx;
+	vf->defaultArgs      = func->defaultArgs;
+
 	// Copy the default arg strings to avoid multiple deletes on the same object
 	for( asUINT n = 0; n < vf->defaultArgs.GetLength(); n++ )
 		if( vf->defaultArgs[n] )
