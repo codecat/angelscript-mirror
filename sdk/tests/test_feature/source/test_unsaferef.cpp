@@ -146,6 +146,41 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem found by TheAtom
+	// Passing an inout reference to a handle to a function wasn't working properly
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"class T { int a; } \n"
+			"void f(T@& p) { \n"
+			"  T t; \n"
+			"  t.a = 42; \n"
+			"  @p = t; \n" // or p=t; in which case t is copied
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "T @t; f(t); assert( t.a == 42 );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();		
+	}
+
 	// Success
 	return fail;
 }
