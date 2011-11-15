@@ -132,6 +132,46 @@ bool Test()
 
 	engine->Release();
 
+	// Problem reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// Special string class
+		r = engine->RegisterObjectType("string", sizeof(std::string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+		r = engine->RegisterStringFactory("string", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(0),  asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(0),    asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string get_opIndex(uint) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+	
+		// This script should not compile, because true cannot be passed to int& in
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"void string_contains_bulk(string the_string, string the_bulk)\n"
+			"{\n"
+			"  string_contains(the_bulk[0], true);\n"
+			"}\n"
+			"void string_contains(string& in, int& in) {} \n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void string_contains_bulk(string, string)\n"
+						   "TestCompiler (3, 3) : Error   : No matching signatures to 'string_contains(string, const bool)'\n"
+						   "TestCompiler (3, 3) : Info    : Candidates are:\n"
+						   "TestCompiler (3, 3) : Info    : void string_contains(string&in, int&in)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+	
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";

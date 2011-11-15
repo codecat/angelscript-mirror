@@ -78,7 +78,8 @@ struct asSExprContext
 	}
 	~asSExprContext() 
 	{
-		asASSERT(property_arg == 0);
+		if( property_arg )
+			asDELETE(property_arg, asSExprContext);
 	}
 
 	asCByteCode bc;
