@@ -168,9 +168,7 @@ enum eTokenType
 	ttTypedef,             // typedef
 	ttEnum,                // enum
 	ttCast,                // cast
-	ttPrivate,             // private
-	ttFinal,               // final
-	ttOverride             // override
+	ttPrivate              // private
 };
 
 struct sTokenWord
@@ -280,8 +278,6 @@ sTokenWord const tokenWords[] =
 	{"typedef"   , ttTypedef},
 	{"enum"      , ttEnum},
 	{"private"   , ttPrivate},
-	{"final"     , ttFinal},
-	{"override"  , ttOverride}
 };
 
 const unsigned int numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
@@ -289,10 +285,16 @@ const unsigned int numTokenWords = sizeof(tokenWords)/sizeof(sTokenWord);
 const char * const whiteSpace = " \t\r\n";
 
 // Some keywords that are not considered tokens by the parser
-const char * const THIS_TOKEN   = "this";
-const char * const FROM_TOKEN   = "from";
-const char * const SUPER_TOKEN  = "super";
-const char * const SHARED_TOKEN = "shared";
+// These only have meaning in specific situations. Outside these
+// situations they are treated as normal identifiers.
+const char * const THIS_TOKEN     = "this";
+const char * const FROM_TOKEN     = "from";
+const char * const SUPER_TOKEN    = "super";
+const char * const SHARED_TOKEN   = "shared";
+const char * const FINAL_TOKEN    = "final";
+const char * const OVERRIDE_TOKEN = "override";
+const char * const GET_TOKEN      = "get";
+const char * const SET_TOKEN      = "set";
 
 END_AS_NAMESPACE
 

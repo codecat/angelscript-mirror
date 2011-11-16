@@ -1208,27 +1208,27 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	bool isFinal = false;
 	bool isShared = false;
 
-	if( n->tokenType == ttFinal )
+	if( n->tokenType == ttIdentifier && file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) )
 	{
 		isFinal = true;
 		n = n->next;
 	}
 
-	asCString name(&file->code[n->tokenPos], n->tokenLength);
-	if( name == SHARED_TOKEN )
+	if( n->tokenType == ttIdentifier && file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN) )
 	{
 		isShared = true;
 		n = n->next;
 
 		// Check for final again
-		if( n->tokenType == ttFinal )
+		if( n->tokenType == ttIdentifier && file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) )
 		{
 			isFinal = true;
 			n = n->next;
 		}
 
-		name.Assign(&file->code[n->tokenPos], n->tokenLength);
 	}
+
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
 	int r, c;
 	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
@@ -1677,7 +1677,7 @@ void asCBuilder::CompileClasses()
 		if( decl->objType->flags & asOBJ_NOINHERIT )
 		{
 			// skip the keyword 'final'
-			asASSERT(node->tokenType == ttFinal);
+			asASSERT(node->tokenType == ttIdentifier);
 			node = node->next;
 		}
 
@@ -2532,9 +2532,9 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 
 		while( decorator )
 		{
-			if( decorator->tokenType == ttFinal )
+			if( decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, FINAL_TOKEN) )
 				isFinal = true;
-			else if( decorator->tokenType == ttOverride )
+			else if( decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, OVERRIDE_TOKEN) )
 				isOverride = true;
 
 			decorator = decorator->next;

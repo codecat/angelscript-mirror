@@ -188,11 +188,14 @@ protected:
 	bool IsAssignOperator(int tokenType);
 	bool IsFunctionCall();
 
+	bool IdentifierIs(const sToken &t, const char *str);
+
 	bool CheckTemplateType(sToken &t);
 
 	asCString ExpectedToken(const char *token);
 	asCString ExpectedTokens(const char *token1, const char *token2);
 	asCString ExpectedOneOf(int *tokens, int count);
+	asCString ExpectedOneOf(const char **tokens, int count);
 
 	bool errorWhileParsing;
 	bool isSyntaxError;

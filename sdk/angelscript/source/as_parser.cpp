@@ -374,6 +374,14 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	return node;
 }
 
+bool asCParser::IdentifierIs(const sToken &t, const char *str)
+{
+	if( t.type != ttIdentifier ) 
+		return false;
+
+	return script->TokenEquals(t.pos, t.length, str);
+}
+
 asCScriptNode *asCParser::ParseScript()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snScript);
@@ -396,9 +404,8 @@ asCScriptNode *asCParser::ParseScript()
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		//	Handle primitive typedefs
 			else if( t1.type == ttClass || 
-					 (t1.type == ttIdentifier && t2.type == ttClass) || 
-					 (t1.type == ttFinal && (t2.type == ttIdentifier || t2.type == ttClass)) ||
-					 (t1.type == ttIdentifier && t2.type == ttFinal) )
+					 ((IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN)) && t2.type == ttClass) || 
+					 (IdentifierIs(t1, SHARED_TOKEN) && IdentifierIs(t2, FINAL_TOKEN)) )
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttInterface || (t1.type == ttIdentifier && t2.type == ttInterface) )
 				node->AddChildLast(ParseInterface());
@@ -892,7 +899,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 				for( ; ; )
 				{
 					GetToken(&t2);
-					if( t2.type != ttFinal && t2.type != ttOverride )
+					if( !IdentifierIs(t2, FINAL_TOKEN) && !IdentifierIs(t2, OVERRIDE_TOKEN) )
 					{
 						RewindTo(&t2);
 						break;
@@ -1049,7 +1056,7 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterface)
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualProperty);
-/*
+
 	sToken t1,t2;
 	GetToken(&t1);
 	GetToken(&t2);
@@ -1083,7 +1090,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 		GetToken(&t1);
 		asCScriptNode *accessorNode = 0;
 
-		if( t1.type == ttGetterDecl )
+		if( IdentifierIs(t1, GET_TOKEN) )
 		{
 			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualPropertyGetter);
 			node->AddChildLast(accessorNode);
@@ -1117,7 +1124,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 				}
 			}
 		}
-		else if( t1.type == ttSetterDecl )
+		else if( IdentifierIs(t1, SET_TOKEN) )
 		{
 			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualPropertySetter);
 			node->AddChildLast(accessorNode);
@@ -1157,12 +1164,12 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 		}
 		else
 		{
-			static int tokenTypes[] = { ttGetterDecl, ttSetterDecl, ttEndStatementBlock };
-			Error(ExpectedOneOf(tokenTypes, sizeof(tokenTypes)/sizeof(tokenTypes[0])).AddressOf(), &t1);
+			const char *tokens[] = { GET_TOKEN, SET_TOKEN, asGetTokenDefinition(ttEndStatementBlock) };
+			Error(ExpectedOneOf(tokens, 3).AddressOf(), &t1);
 			return node;
 		}
 	}
-*/
+
 	return node;
 }
 
@@ -1247,25 +1254,17 @@ asCScriptNode *asCParser::ParseClass()
 	GetToken(&t);
 
 	// Allow the keyword 'shared' before 'class'
-	if( t.type == ttIdentifier )
+	if( IdentifierIs(t, SHARED_TOKEN) )
 	{
-		asCString str;
-		str.Assign(&script->code[t.pos], t.length);
-		if( str != SHARED_TOKEN )
-		{
-			Error(ExpectedToken(SHARED_TOKEN).AddressOf(), &t);
-			return node;
-		}
-
 		RewindTo(&t);
 		node->AddChildLast(ParseIdentifier());
 		GetToken(&t);
 	}
 
-	if( t.type == ttFinal )
+	if( IdentifierIs(t, FINAL_TOKEN) )
 	{
 		RewindTo(&t);
-		node->AddChildLast(ParseToken(ttFinal));
+		node->AddChildLast(ParseIdentifier());
 		GetToken(&t);
 	}
 
@@ -3316,6 +3315,21 @@ asCString asCParser::ExpectedOneOf(int *tokens, int count)
 	return str;
 }
 
+asCString asCParser::ExpectedOneOf(const char **tokens, int count)
+{
+	asCString str;
+
+	str = TXT_EXPECTED_ONE_OF;
+	for( int n = 0; n < count; n++ )
+	{
+		str += tokens[n];
+		if( n < count-1 )
+			str += ", ";
+	}
+
+	return str;
+}
+
 // TODO: typedef: Typedefs should accept complex types as well
 asCScriptNode *asCParser::ParseTypedef()
 {
@@ -3367,15 +3381,14 @@ void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
 
 	for( ; ; )
 	{
-		static int decoratorTokens[] = {ttFinal, ttOverride};
 		GetToken(&t1);
 		RewindTo(&t1);
 
 		if( t1.type == ttStartStatementBlock )
 			break;
 
-		funcNode->AddChildLast(ParseOneOf(decoratorTokens, sizeof(decoratorTokens)/sizeof(decoratorTokens[0])));
-		if( isSyntaxError ) break;
+		if( IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, OVERRIDE_TOKEN) )
+			funcNode->AddChildLast(ParseIdentifier());
 	}
 }
 
