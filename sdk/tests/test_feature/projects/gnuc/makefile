@@ -16,6 +16,7 @@ SRCNAMES = \
   test_2func.cpp \
   test_addon_scriptarray.cpp \
   test_addon_scripthandle.cpp \
+  test_addon_scriptmath.cpp \
   test_addon_serializer.cpp \
   test_any.cpp \
   test_argref.cpp \
@@ -160,6 +161,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptstdstringutil.o \
   obj/scriptany.o \
   obj/scriptmath.o \
+  obj/scriptmathcomplex.o \
   obj/scriptdictionary.o \
   obj/scriptfile.o \
   obj/scriptbuilder.o \
@@ -199,6 +201,9 @@ obj/scriptdictionary.o: ../../../../add_on/scriptdictionary/scriptdictionary.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmath.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmathcomplex.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp

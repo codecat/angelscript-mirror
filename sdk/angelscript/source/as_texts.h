@@ -89,8 +89,6 @@
 #define TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s "Failed while compiling default arg for parameter %d in function '%s'"
 #define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
-#define TXT_METHOD_CANNOT_OVERRIDE_s      "Method '%s' declared as final and cannot be overridden"
-#define TXT_METHOD_s_DOES_NOT_OVERRIDE    "Method '%s' marked as override but does not replace any base class or interface method"
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
 #define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
@@ -120,7 +118,9 @@
 #define TXT_INVALID_UNICODE_VALUE               "Invalid unicode code point"
 #define TXT_INVALID_UNICODE_SEQUENCE_IN_SRC     "Invalid unicode sequence in source"
 
+#define TXT_METHOD_CANNOT_OVERRIDE_s      "Method '%s' declared as final and cannot be overridden"
 #define TXT_METHOD_CANT_HAVE_NAME_OF_CLASS          "The method cannot be named with the class name"
+#define TXT_METHOD_s_DOES_NOT_OVERRIDE    "Method '%s' marked as override but does not replace any base class or interface method"
 #define TXT_MISSING_IMPLEMENTATION_OF_s             "Missing implementation of '%s'"
 #define TXT_MORE_THAN_ONE_MATCHING_OP               "Found more than one matching operator"
 #define TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s       "Multiple matching signatures to '%s'"
@@ -200,6 +200,7 @@
 #define TXT_UNEXPECTED_TOKEN_s            "Unexpected token '%s'"
 #define TXT_UNINITIALIZED_GLOBAL_VAR_s    "Use of uninitialized global variable '%s'."
 #define TXT_UNREACHABLE_CODE              "Unreachable code"
+#define TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE "Virtual property contains unrecognized aspect"
 #define TXT_UNUSED_SCRIPT_NODE            "Unused script node"
 
 #define TXT_VALUE_TOO_LARGE_FOR_TYPE      "Value is too large for data type"

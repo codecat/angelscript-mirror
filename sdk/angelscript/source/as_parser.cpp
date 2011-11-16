@@ -244,6 +244,50 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 	return 0;
 }
 
+int asCParser::ParseVirtualPropertyDeclaration(asCScriptCode *script, bool asMethod)
+{
+	Reset();
+
+	this->script = script;
+
+	scriptNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualProperty);
+
+	sToken t;
+	
+
+	scriptNode->AddChildLast(ParseType(true));
+	if( isSyntaxError ) return -1;
+
+	scriptNode->AddChildLast(ParseTypeMod(false));
+	if( isSyntaxError ) return -1;
+
+	scriptNode->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return -1;
+
+	if( asMethod )
+	{
+		GetToken(&t);
+		RewindTo(&t);
+
+		if( t.type == ttConst )
+		{
+			scriptNode->AddChildLast(ParseToken(ttConst));
+			if( isSyntaxError ) return -1;
+		}
+	}
+
+	GetToken(&t);
+
+	// The declaration should end after the identifier
+	if( t.type != ttEnd )
+	{
+		Error(ExpectedToken(asGetTokenDefinition(ttEnd)).AddressOf(), &t);
+		return -1;
+	}
+
+	return 0;
+}
+
 asCScriptNode *asCParser::ParseImport()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snImport);
@@ -362,7 +406,9 @@ asCScriptNode *asCParser::ParseScript()
 				node->AddChildLast(ParseFuncDef());
 			else if( t1.type == ttConst || IsDataType(t1) )
 			{
-				if( IsVarDecl() )
+				if( IsVirtualPropertyDecl() )
+					node->AddChildLast(ParseVirtualPropertyDecl(false, false));
+				else if( IsVarDecl() )
 					node->AddChildLast(ParseGlobalVar());
 				else
 					node->AddChildLast(ParseFunction());
@@ -674,6 +720,75 @@ bool asCParser::IsVarDecl()
 	return false;
 }
 
+bool asCParser::IsVirtualPropertyDecl()
+{
+	// Set start point so that we can rewind
+	sToken t;
+	GetToken(&t);
+	RewindTo(&t);
+
+	// A class property decl can be preceded by 'private' 
+	sToken t1;
+	GetToken(&t1);
+	if( t1.type != ttPrivate )
+		RewindTo(&t1);
+
+	// A variable decl can start with a const
+	GetToken(&t1);
+	if( t1.type == ttConst )
+		GetToken(&t1);
+
+	// We don't validate if the identifier is an actual declared type at this moment
+	// as it may wrongly identify the statement as a non-declaration if the user typed
+	// the name incorrectly. The real type is validated in ParseDeclaration where a
+	// proper error message can be given.
+	if( !IsRealType(t1.type) && t1.type != ttIdentifier )
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	if( !CheckTemplateType(t1) )
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Object handles can be interleaved with the array brackets
+	sToken t2;
+	GetToken(&t2);
+	while( t2.type == ttHandle || t2.type == ttOpenBracket )
+	{
+		if( t2.type == ttOpenBracket )
+		{
+			GetToken(&t2);
+			if( t2.type != ttCloseBracket )
+			{
+				RewindTo(&t);
+				return false;
+			}
+		}
+
+		GetToken(&t2);
+	}
+
+	if( t2.type != ttIdentifier )
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	GetToken(&t2);
+	if( t2.type == ttStartStatementBlock )
+	{
+		RewindTo(&t);
+		return true;
+	}
+
+	RewindTo(&t);
+	return false;
+}
+
 bool asCParser::IsFuncDecl(bool isMethod)
 {
 	// Set start point so that we can rewind
@@ -931,6 +1046,126 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 	return node;
 }
 
+asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterface)
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualProperty);
+/*
+	sToken t1,t2;
+	GetToken(&t1);
+	GetToken(&t2);
+	RewindTo(&t1);
+
+	// A class method can start with private
+	if( isMethod && t1.type == ttPrivate )
+	{
+		node->AddChildLast(ParseToken(ttPrivate));
+		if( isSyntaxError ) return node;
+	}
+
+	node->AddChildLast(ParseType(true));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseTypeMod(false));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return node;
+
+	GetToken(&t1);
+	if( t1.type != ttStartStatementBlock )
+	{
+		Error(ExpectedToken("{").AddressOf(), &t1);
+		return node;
+	}
+
+	for(;;)
+	{
+		GetToken(&t1);
+		asCScriptNode *accessorNode = 0;
+
+		if( t1.type == ttGetterDecl )
+		{
+			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualPropertyGetter);
+			node->AddChildLast(accessorNode);
+			
+			if( isMethod )
+			{
+				GetToken(&t1);
+				RewindTo(&t1);
+				if( t1.type == ttConst )
+					accessorNode->AddChildLast(ParseToken(ttConst));
+
+				if( !isInterface )
+				{
+					ParseMethodOverrideBehaviors(accessorNode);
+					if( isSyntaxError ) return node;
+				}
+			}
+
+			if( !isInterface )
+			{
+				accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
+				if( isSyntaxError ) return node;
+			}
+			else
+			{
+				GetToken(&t1);
+				if( t1.type != ttEndStatement )
+				{
+					Error(ExpectedToken(";").AddressOf(), &t1);
+					return node;
+				}
+			}
+		}
+		else if( t1.type == ttSetterDecl )
+		{
+			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualPropertySetter);
+			node->AddChildLast(accessorNode);
+
+			if( isMethod )
+			{
+				GetToken(&t1);
+				RewindTo(&t1);
+				if( t1.type == ttConst )
+					accessorNode->AddChildLast(ParseToken(ttConst));
+
+				if( !isInterface )
+				{
+					ParseMethodOverrideBehaviors(accessorNode);
+					if( isSyntaxError ) return node;
+				}
+			}
+
+			if( !isInterface )
+			{
+				accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
+				if( isSyntaxError ) return node;
+			}
+			else
+			{
+				GetToken(&t1);
+				if( t1.type != ttEndStatement )
+				{
+					Error(ExpectedToken(";").AddressOf(), &t1);
+					return node;
+				}
+			}
+		}
+		else if( t1.type == ttEndStatementBlock )
+		{
+			break;
+		}
+		else
+		{
+			static int tokenTypes[] = { ttGetterDecl, ttSetterDecl, ttEndStatementBlock };
+			Error(ExpectedOneOf(tokenTypes, sizeof(tokenTypes)/sizeof(tokenTypes[0])).AddressOf(), &t1);
+			return node;
+		}
+	}
+*/
+	return node;
+}
+
 asCScriptNode *asCParser::ParseInterface()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snInterface);
@@ -976,8 +1211,16 @@ asCScriptNode *asCParser::ParseInterface()
 	RewindTo(&t);
 	while( t.type != ttEndStatementBlock && t.type != ttEnd )
 	{
-		// Parse the method signature
-		node->AddChildLast(ParseInterfaceMethod());
+		if( IsVirtualPropertyDecl() )
+		{
+			node->AddChildLast(ParseVirtualPropertyDecl(true, true));
+		}
+		else
+		{
+			// Parse the method signature
+			node->AddChildLast(ParseInterfaceMethod());
+		}
+
 		if( isSyntaxError ) return node;
 		
 		GetToken(&t);
@@ -1077,6 +1320,10 @@ asCScriptNode *asCParser::ParseClass()
 		{
 			// Parse the method
 			node->AddChildLast(ParseFunction(true));
+		}
+		else if( IsVirtualPropertyDecl() )
+		{
+			node->AddChildLast(ParseVirtualPropertyDecl(true, false));
 		}
 		else if( IsVarDecl() )
 		{

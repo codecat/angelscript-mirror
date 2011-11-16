@@ -368,6 +368,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_addon_scriptmath.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_addon_serializer.cpp"
 				>
 			</File>
@@ -1005,6 +1009,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptmath\scriptmathcomplex.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\add_on\scriptmath\scriptmathcomplex.h"
 				>
 			</File>
 			<File

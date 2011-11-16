@@ -151,6 +151,7 @@ namespace TestShared            { bool Test(); }
 namespace Test_Addon_ScriptArray  { bool Test(); }
 namespace Test_Addon_ScriptHandle { bool Test(); }
 namespace Test_Addon_Serializer   { bool Test(); }
+namespace Test_Addon_ScriptMath   { bool Test(); }
 
 #include "utils.h"
 
@@ -191,6 +192,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( Test_Addon_ScriptMath::Test()   ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");
 	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( Test_Addon_Serializer::Test()   ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
 	if( Test_Addon_ScriptHandle::Test() ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");

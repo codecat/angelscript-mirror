@@ -107,6 +107,10 @@ SOURCE=..\..\source\test_addon_scripthandle.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_scriptmath.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_addon_serializer.cpp
 # End Source File
 # Begin Source File
@@ -740,6 +744,14 @@ SOURCE=..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\add_on\scriptmath3d\scriptmath3d.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptmath\scriptmathcomplex.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\scriptmath\scriptmathcomplex.h
 # End Source File
 # Begin Source File
 

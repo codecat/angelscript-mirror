@@ -85,7 +85,10 @@ enum eScriptNode
 	snTypedef,
 	snCast,
 	snVariableAccess,
-	snFuncDef
+	snFuncDef,
+	snVirtualProperty,
+	snVirtualPropertyGetter,
+	snVirtualPropertySetter
 };
 
 struct sToken
