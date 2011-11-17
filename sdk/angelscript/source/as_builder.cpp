@@ -3023,6 +3023,15 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 
 int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
 {
+	if( engine->ep.propertyAccessorMode != 2 )
+	{
+		int r, c;
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+		WriteError(file->name.AddressOf(), TXT_PROPERTY_ACCESSOR_DISABLED, r, c);
+		node->Destroy(engine);
+		return 0;
+	}
+
 	bool isPrivate = false;
 	asCString emulatedName;
 	asCDataType emulatedType;
@@ -3084,6 +3093,8 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 			if( funcNode == 0 && (objType == 0 || !objType->IsInterface()) )
 			{
 				// TODO: getset: If no implementation is supplied the builder should provide an automatically generated implementation
+				//               The compiler needs to be able to handle the different types, primitive, value type, and handle
+				//               The code is also different for global property accessors
 				int r, c;
 				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 

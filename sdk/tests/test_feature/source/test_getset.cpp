@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 #include "../../../add_on/scriptmath3d/scriptmath3d.h"
 
 using namespace std;
@@ -1320,6 +1321,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptMathComplex(engine);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
@@ -1332,6 +1334,10 @@ bool Test()
 			"    get const final { return _prop3; } \n"
 			"    set { _prop3 = value; } \n"
 			"  } \n"
+//			"  int propInt { get { return propInt; } } int propInt; \n"
+//			"  double propDouble { get { return propDouble; } } double propDouble; \n"
+//			"  complex propComplex { get { return propComplex; } } complex propComplex; \n"
+//			"  T@ propT { get { return propT; } } T @propT; \n"
 			"  private int _prop3; \n"
 			"} \n"
 			"void func() \n"

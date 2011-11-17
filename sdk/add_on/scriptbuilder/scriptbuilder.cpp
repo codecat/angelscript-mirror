@@ -274,7 +274,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			// Search until first { is encountered
 			while( pos < (int)modifiedScript.length() )
 			{
-				engine->ParseToken(&modifiedScript[pos], 0, &len);
+				engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			
 				// If start of class section encountered stop
 				if( modifiedScript[pos] == '{' ) 
@@ -502,7 +502,7 @@ int CScriptBuilder::SkipStatement(int pos)
 	// Skip until ; or { whichever comes first
 	while( pos < (int)modifiedScript.length() && modifiedScript[pos] != ';' && modifiedScript[pos] != '{' )
 	{
-		engine->ParseToken(&modifiedScript[pos], 0, &len);
+		engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 		pos += len;
 	}
 
@@ -515,7 +515,7 @@ int CScriptBuilder::SkipStatement(int pos)
 		int level = 1;
 		while( level > 0 && pos < (int)modifiedScript.size() )
 		{
-			asETokenClass t = engine->ParseToken(&modifiedScript[pos], 0, &len);
+			asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			if( t == asTC_KEYWORD )
 			{
 				if( modifiedScript[pos] == '{' )
