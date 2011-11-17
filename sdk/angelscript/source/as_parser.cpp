@@ -1090,10 +1090,13 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 		GetToken(&t1);
 		asCScriptNode *accessorNode = 0;
 
-		if( IdentifierIs(t1, GET_TOKEN) )
+		if( IdentifierIs(t1, GET_TOKEN) || IdentifierIs(t1, SET_TOKEN) )
 		{
-			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualPropertyGetter);
+			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualProperty);
 			node->AddChildLast(accessorNode);
+
+			RewindTo(&t1);
+			accessorNode->AddChildLast(ParseIdentifier());
 			
 			if( isMethod )
 			{
@@ -1111,42 +1114,18 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 
 			if( !isInterface )
 			{
-				accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
-				if( isSyntaxError ) return node;
-			}
-			else
-			{
 				GetToken(&t1);
-				if( t1.type != ttEndStatement )
+				if( t1.type == ttStartStatementBlock )
 				{
-					Error(ExpectedToken(";").AddressOf(), &t1);
-					return node;
-				}
-			}
-		}
-		else if( IdentifierIs(t1, SET_TOKEN) )
-		{
-			accessorNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualPropertySetter);
-			node->AddChildLast(accessorNode);
-
-			if( isMethod )
-			{
-				GetToken(&t1);
-				RewindTo(&t1);
-				if( t1.type == ttConst )
-					accessorNode->AddChildLast(ParseToken(ttConst));
-
-				if( !isInterface )
-				{
-					ParseMethodOverrideBehaviors(accessorNode);
+					RewindTo(&t1);
+					accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
 					if( isSyntaxError ) return node;
 				}
-			}
-
-			if( !isInterface )
-			{
-				accessorNode->AddChildLast(SuperficiallyParseStatementBlock());
-				if( isSyntaxError ) return node;
+				else if( t1.type != ttEndStatement )
+				{
+					Error(ExpectedTokens(";", "{").AddressOf(), &t1);
+					return node;
+				}
 			}
 			else
 			{
@@ -3384,11 +3363,10 @@ void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
 		GetToken(&t1);
 		RewindTo(&t1);
 
-		if( t1.type == ttStartStatementBlock )
-			break;
-
 		if( IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, OVERRIDE_TOKEN) )
 			funcNode->AddChildLast(ParseIdentifier());
+		else
+			break;
 	}
 }
 

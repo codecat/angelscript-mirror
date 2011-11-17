@@ -194,7 +194,7 @@ int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactory
 }
 
 // Entry
-int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asCScriptNode *func, asCScriptFunction *outFunc)
+int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
 {
 	Reset(builder, script, outFunc);
 	int buildErrors = builder->numErrors;
@@ -211,97 +211,149 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// part of.
 	AddVariableScope();
 
-	// Skip the private keyword if it is there
-	asCScriptNode *node = func->firstChild;
-	if( node->nodeType == snUndefined && node->tokenType == ttPrivate )
-		node = node->next;
-
-	//----------------------------------------------
-	// Examine return type
+	asCScriptNode *node;
 	bool isDestructor = false;
 	asCDataType returnType;
-	if( node->nodeType == snDataType )
+
+	if( !signature )
 	{
-		returnType = builder->CreateDataTypeFromNode(node, script);
-		returnType = builder->ModifyDataTypeFromNode(returnType, node->next, script, 0, 0);
+		// Skip the private keyword if it is there
+		node = func->firstChild;
+		if( node->nodeType == snUndefined && node->tokenType == ttPrivate )
+			node = node->next;
 
-		// Make sure the return type is instanciable or is void
-		if( !returnType.CanBeInstanciated() &&
-			returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+		//----------------------------------------------
+		// Examine return type
+
+		if( node->nodeType == snDataType )
 		{
-			asCString str;
-			str.Format(TXT_DATA_TYPE_CANT_BE_s, returnType.Format().AddressOf());
-			Error(str.AddressOf(), func->firstChild);
-		}
+			returnType = builder->CreateDataTypeFromNode(node, script);
+			returnType = builder->ModifyDataTypeFromNode(returnType, node->next, script, 0, 0);
 
-#ifndef AS_OLD
-		// If the return type is a value type returned by value the address of the
-		// location where the value will be stored is pushed on the stack before 
-		// the arguments
-		if( outFunc->DoesReturnOnStack() )
-			stackPos -= AS_PTR_SIZE;
-#endif
+			// Make sure the return type is instanciable or is void
+			if( !returnType.CanBeInstanciated() &&
+				returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+			{
+				asCString str;
+				str.Format(TXT_DATA_TYPE_CANT_BE_s, returnType.Format().AddressOf());
+				Error(str.AddressOf(), func->firstChild);
+			}
+		}
+		else
+		{
+			returnType = asCDataType::CreatePrimitive(ttVoid, false);
+			if( node->tokenType == ttBitNot )
+				isDestructor = true;
+			else
+				m_isConstructor = true;
+		}
 	}
 	else
 	{
-		returnType = asCDataType::CreatePrimitive(ttVoid, false);
-		if( node->tokenType == ttBitNot )
-			isDestructor = true;
-		else
-			m_isConstructor = true;
+		node = func;
+		returnType = signature->returnType;
 	}
 
-	//----------------------------------------------
-	// Declare parameters
-	// Find first parameter
-	while( node && node->nodeType != snParameterList )
-		node = node->next;
+#ifndef AS_OLD
+	// If the return type is a value type returned by value the address of the
+	// location where the value will be stored is pushed on the stack before 
+	// the arguments
+	if( !(isDestructor || m_isConstructor) && outFunc->DoesReturnOnStack() )
+		stackPos -= AS_PTR_SIZE;
+#endif
 
-	// Register parameters from last to first, otherwise they will be destroyed in the wrong order
 	asCVariableScope vs(0);
 
-	if( node ) node = node->firstChild;
-	while( node )
+	if( !signature )
 	{
-		// Get the parameter type
-		asCDataType type = builder->CreateDataTypeFromNode(node, script);
-
-		asETypeModifiers inoutFlag = asTM_NONE;
-		type = builder->ModifyDataTypeFromNode(type, node->next, script, &inoutFlag, 0);
-
-		// Is the data type allowed?
-		if( (type.IsReference() && inoutFlag != asTM_INOUTREF && !type.CanBeInstanciated()) ||
-			(!type.IsReference() && !type.CanBeInstanciated()) )
-		{
-			asCString str;
-			str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
-			Error(str.AddressOf(), node);
-		}
-
-		// If the parameter has a name then declare it as variable
-		node = node->next->next;
-		if( node && node->nodeType == snIdentifier )
-		{
-			asCString name(&script->code[node->tokenPos], node->tokenLength);
-
-			if( vs.DeclareVariable(name.AddressOf(), type, stackPos, true) < 0 )
-				Error(TXT_PARAMETER_ALREADY_DECLARED, node);
-
-			// Add marker for variable declaration
-			byteCode.VarDecl((int)outFunc->variables.GetLength());
-			outFunc->AddVariable(name, type, stackPos);
-
+		//----------------------------------------------
+		// Declare parameters
+		// Find first parameter
+		while( node && node->nodeType != snParameterList )
 			node = node->next;
 
-			// Skip the default arg
-			if( node && node->nodeType == snExpression )
-				node = node->next;
-		}
-		else
-			vs.DeclareVariable("", type, stackPos, true);
+		// Register parameters from last to first, otherwise they will be destroyed in the wrong order
 
-		// Move to next parameter
-		stackPos -= type.GetSizeOnStackDWords();
+		if( node ) node = node->firstChild;
+		while( node )
+		{
+			// Get the parameter type
+			asCDataType type = builder->CreateDataTypeFromNode(node, script);
+
+			asETypeModifiers inoutFlag = asTM_NONE;
+			type = builder->ModifyDataTypeFromNode(type, node->next, script, &inoutFlag, 0);
+
+			// Is the data type allowed?
+			if( (type.IsReference() && inoutFlag != asTM_INOUTREF && !type.CanBeInstanciated()) ||
+				(!type.IsReference() && !type.CanBeInstanciated()) )
+			{
+				asCString str;
+				str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
+				Error(str.AddressOf(), node);
+			}
+
+			// If the parameter has a name then declare it as variable
+			node = node->next->next;
+			if( node && node->nodeType == snIdentifier )
+			{
+				asCString name(&script->code[node->tokenPos], node->tokenLength);
+
+				if( vs.DeclareVariable(name.AddressOf(), type, stackPos, true) < 0 )
+					Error(TXT_PARAMETER_ALREADY_DECLARED, node);
+
+				// Add marker for variable declaration
+				byteCode.VarDecl((int)outFunc->variables.GetLength());
+				outFunc->AddVariable(name, type, stackPos);
+
+				node = node->next;
+
+				// Skip the default arg
+				if( node && node->nodeType == snExpression )
+					node = node->next;
+			}
+			else
+				vs.DeclareVariable("", type, stackPos, true);
+
+			// Move to next parameter
+			stackPos -= type.GetSizeOnStackDWords();
+		}
+	}
+	else
+	{
+		
+		asCArray<asCDataType> &args = signature->argTypes;
+		asCArray<asETypeModifiers> &inoutFlags = signature->argModifiers;
+		asCArray<asCString> &argNames = signature->argNames;
+		asASSERT(args.GetLength() == argNames.GetLength());
+
+		for( int k = 0; k < (int)args.GetLength(); k++ )
+		{
+			asCDataType type = args[k];
+			asETypeModifiers inoutFlag = inoutFlags[k];
+
+			if( (type.IsReference() && inoutFlag != asTM_INOUTREF && !type.CanBeInstanciated()) ||
+				(!type.IsReference() && !type.CanBeInstanciated()) )
+			{
+				asCString str;
+				str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
+				Error(str.AddressOf(), node);
+			}
+
+			if( 0 != argNames[k].Compare("") )
+			{
+				if( vs.DeclareVariable(argNames[k].AddressOf(), type, stackPos, true) < 0 )
+					Error(TXT_PARAMETER_ALREADY_DECLARED, node);
+
+				// Add marker for variable declaration
+				byteCode.VarDecl((int)outFunc->variables.GetLength());
+				outFunc->AddVariable(argNames[k], type, stackPos);
+			}
+			else
+				vs.DeclareVariable("", type, stackPos, true);
+
+			// Move to next parameter
+			stackPos -= type.GetSizeOnStackDWords();
+		}
 	}
 
 	int n;
@@ -326,23 +378,30 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	// We need to parse the statement block now
 
+	asCScriptNode *blockBegin;
+
+	if( !signature )
+		blockBegin = func->lastChild;
+	else
+		blockBegin = func;
+
 	// TODO: memory: We can parse the statement block one statement at a time, thus save even more memory
 	asCParser parser(builder);
-	int r = parser.ParseStatementBlock(script, func->lastChild);
+	int r = parser.ParseStatementBlock(script, blockBegin);
 	if( r < 0 ) return -1;
 	asCScriptNode *block = parser.GetScriptNode();
 
 	bool hasReturn;
 	asCByteCode bc(engine);
-	LineInstr(&bc, func->lastChild->tokenPos);
+	LineInstr(&bc, blockBegin->tokenPos);
 	CompileStatementBlock(block, false, &hasReturn, &bc);
-	LineInstr(&bc, func->lastChild->tokenPos + func->lastChild->tokenLength);
+	LineInstr(&bc, blockBegin->tokenPos + blockBegin->tokenLength);
 
 	// Make sure there is a return in all paths (if not return type is void)
 	if( returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 	{
 		if( hasReturn == false )
-			Error(TXT_NOT_ALL_PATHS_RETURN, func->lastChild);
+			Error(TXT_NOT_ALL_PATHS_RETURN, blockBegin);
 	}
 
 	//------------------------------------------------

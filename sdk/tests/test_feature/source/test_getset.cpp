@@ -1315,6 +1315,42 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test the alternative syntax for declaring property getters and setters
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class T \n"
+			"{ \n"
+			// TODO: getset: Builder should provide automatic implementations
+//			"  int prop1 { get; set; } \n"
+//			"  int prop2 { get const final; set final; } \n"
+			"  int prop3 { \n"
+			"    get const final { return _prop3; } \n"
+			"    set { _prop3 = value; } \n"
+			"  } \n"
+			"  private int _prop3; \n"
+			"} \n"
+			"void func() \n"
+			"{ \n"
+			"  T t; \n"
+			"  int a = t.prop3; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success

@@ -50,12 +50,24 @@
 
 BEGIN_AS_NAMESPACE
 
+struct sExplicitSignature
+{
+	sExplicitSignature(int argCount = 0) : argTypes(argCount), argModifiers(argCount), argNames(argCount), defaultArgs(argCount) {}
+
+	asCDataType returnType;
+	asCArray<asCDataType> argTypes;
+	asCArray<asETypeModifiers> argModifiers;
+	asCArray<asCString> argNames;
+	asCArray<asCString *> defaultArgs;
+};
+
 struct sFunctionDescription
 {
 	asCScriptCode *script;
 	asCScriptNode *node;
 	asCString name;
 	asCObjectType *objType;
+	sExplicitSignature *explicitSignature;
 	int funcId;
 };
 
@@ -137,6 +149,8 @@ protected:
 	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope = "");
 
 	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false);
+	int RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false);
+	int RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false);
 	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
 	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
 	int RegisterClass(asCScriptNode *node, asCScriptCode *file);

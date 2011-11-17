@@ -173,6 +173,7 @@
 #define TXT_POSSIBLE_LOSS_OF_PRECISION    "Conversion from double to float, possible loss of precision"
 #define TXT_PRIVATE_METHOD_CALL_s         "Illegal call to private method '%s'"
 #define TXT_PRIVATE_PROP_ACCESS_s         "Illegal access to private property '%s'"
+#define TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED "Property accessor must be implemented"
 #define TXT_PROPERTY_CANT_BE_CONST        "Class properties cannot be declared as const"
 #define TXT_PROPERTY_HAS_NO_GET_ACCESSOR  "The property has no get accessor"
 #define TXT_PROPERTY_HAS_NO_SET_ACCESSOR  "The property has no set accessor"
