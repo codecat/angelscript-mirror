@@ -147,7 +147,9 @@ bool Test()
 		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(0),    asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string get_opIndex(uint) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void set_opIndex(uint, const string &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	
+
 		// This script should not compile, because true cannot be passed to int& in
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
@@ -161,9 +163,33 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void string_contains_bulk(string, string)\n"
-						   "TestCompiler (3, 3) : Error   : No matching signatures to 'string_contains(string, const bool)'\n"
+						   "TestCompiler (3, 3) : Error   : No matching signatures to 'string_contains(const string&, const bool)'\n"
 						   "TestCompiler (3, 3) : Info    : Candidates are:\n"
 						   "TestCompiler (3, 3) : Info    : void string_contains(string&in, int&in)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// 
+		r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("void alert(string &in, string &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		mod->AddScriptSection(TESTNAME, 
+			"void main() \n"
+			"{ \n"
+			"	string test='food'; \n"
+			"	test[0]='g'; \n"
+			"	for(uint i=0;i<test.length();i++) \n"
+			"	  alert('Character ' + (i+1) + '', test[i]); \n"
+			"} \n");
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
