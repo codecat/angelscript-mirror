@@ -203,7 +203,7 @@ obj/scriptdictionary.o: ../../../../add_on/scriptdictionary/scriptdictionary.cpp
 obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmath.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/scriptmath.o: ../../../../add_on/scriptmath/scriptmathcomplex.cpp
+obj/scriptmathcomplex.o: ../../../../add_on/scriptmath/scriptmathcomplex.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
