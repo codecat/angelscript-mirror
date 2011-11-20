@@ -409,6 +409,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 	return 0;
 }
 
+#if AS_PROCESS_METADATA == 1
 bool CScriptBuilder::CompareVarDecl(const char *a, const char *b)
 {
 	while( *a != 0 && *b != 0 )
@@ -422,6 +423,7 @@ bool CScriptBuilder::CompareVarDecl(const char *a, const char *b)
 
 	return true;
 }
+#endif
 
 int CScriptBuilder::Build()
 {
