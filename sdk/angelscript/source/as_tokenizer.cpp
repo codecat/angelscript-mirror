@@ -407,7 +407,8 @@ bool asCTokenizer::IsKeyWord(const char *source, size_t sourceLength, size_t &to
 			// identifier require an extra verification to guarantee that 
 			// we don't split an identifier token, e.g. the "!is" token 
 			// and the tokens "!" and "isTrue" in the "!isTrue" expression.
-			if( ((source[maxLength-1] >= 'a' && source[maxLength-1] <= 'z') ||
+			if( maxLength < int(sourceLength) &&
+				((source[maxLength-1] >= 'a' && source[maxLength-1] <= 'z') ||
 				 (source[maxLength-1] >= 'A' && source[maxLength-1] <= 'Z')) &&
 				((source[maxLength] >= 'a' && source[maxLength] <= 'z') ||
 				 (source[maxLength] >= 'A' && source[maxLength] <= 'Z') ||
