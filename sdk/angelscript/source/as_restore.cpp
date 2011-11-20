@@ -482,12 +482,14 @@ int asCRestore::Restore()
 
 int asCRestore::FindStringConstantIndex(int id)
 {
-	for( asUINT i = 0; i < usedStringConstants.GetLength(); i++ )
-		if( usedStringConstants[i] == id )
-			return i;
+	asSMapNode<int,int> *cursor = 0;
+	if (stringIdToIndexMap.MoveTo(&cursor, id))
+		return cursor->value;
 
 	usedStringConstants.PushLast(id);
-	return int(usedStringConstants.GetLength() - 1);
+	int index = int(usedStringConstants.GetLength() - 1);
+	stringIdToIndexMap.Insert(id, index);
+	return index;
 }
 
 void asCRestore::WriteUsedStringConstants()
@@ -1437,16 +1439,14 @@ void asCRestore::WriteString(asCString* str)
 	}
 
 	// First check if the string hasn't been saved already
-	for( asUINT n = 0; n < savedStrings.GetLength(); n++ )
+	asSMapNode<asCStringPointer, int> *cursor = 0;
+	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str)))
 	{
-		if( *str == savedStrings[n] )
-		{
-			// Save a reference to the existing string
-			char b = 'r';
-			WRITE_NUM(b);
-			WriteEncodedUInt(n);
-			return;
-		}
+		// Save a reference to the existing string
+		char b = 'r';
+		WRITE_NUM(b);
+		WriteEncodedUInt(cursor->value);
+		return;
 	}
 
 	// Save a new string
@@ -1458,6 +1458,7 @@ void asCRestore::WriteString(asCString* str)
 	stream->Write(str->AddressOf(), (asUINT)len);
 
 	savedStrings.PushLast(*str);
+	stringToIdMap.Insert(asCStringPointer(str), savedStrings.GetLength() - 1);
 }
 
 void asCRestore::ReadString(asCString* str) 

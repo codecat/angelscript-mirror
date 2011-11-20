@@ -376,7 +376,8 @@ public:
     asIJITCompiler              *jitCompiler;
 
 	// String constants
-	asCArray<asCString*>        stringConstants;
+	asCArray<asCString*>          stringConstants;
+	asCMap<asCStringPointer, int> stringToIdMap;
 
 	// User data
 	void                   *userData;

@@ -627,6 +627,7 @@ asCScriptEngine::~asCScriptEngine()
 		asDELETE(stringConstants[n],asCString);
 	}
 	stringConstants.SetLength(0);
+	stringToIdMap.EraseAll();
 
 	// Free the script section names
 	for( n = 0; n < scriptSectionNames.GetLength(); n++ )
@@ -4275,24 +4276,21 @@ int asCScriptEngine::AddConstantString(const char *str, size_t len)
 {
 	// The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
 
-	// TODO: optimize: Improve linear search
 	// Has the string been registered before?
-	for( size_t n = 0; n < stringConstants.GetLength(); n++ )
-	{
-		if( stringConstants[n]->Compare(str, len) == 0 )
-		{
-			return (int)n;
-		}
-	}
+	asSMapNode<asCStringPointer, int> *cursor = 0;
+	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str, len)))
+		return cursor->value;
 
 	// No match was found, add the string
 	asCString *cstr = asNEW(asCString)(str, len);
 	stringConstants.PushLast(cstr);
+	int index = (int)stringConstants.GetLength() - 1;
+	stringToIdMap.Insert(asCStringPointer(cstr), index);
 
 	// The VM currently doesn't handle string ids larger than 65535
 	asASSERT(stringConstants.GetLength() <= 65536);
 
-	return (int)stringConstants.GetLength() - 1;
+	return index;
 }
 
 // internal
