@@ -207,7 +207,6 @@ protected:
 	asCScriptCode   *script;
 	asCScriptNode   *scriptNode;
 
-	asCTokenizer tokenizer;
 	size_t       sourcePos;
 };
 

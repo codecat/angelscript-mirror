@@ -52,6 +52,7 @@
 #include "as_configgroup.h"
 #include "as_memory.h"
 #include "as_gc.h"
+#include "as_tokenizer.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -344,6 +345,9 @@ public:
 	asCArray<asCModule *>  scriptModules;
 	asCModule             *lastModule;
 	bool                   isBuilding;
+
+	// Tokenizer is instanciated once to share resources
+	asCTokenizer tok;
 
 	// Stores script declared object types
 	asCArray<asCObjectType *> classTypes;

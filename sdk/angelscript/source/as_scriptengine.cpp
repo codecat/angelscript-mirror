@@ -367,7 +367,7 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 
 
-asCScriptEngine::asCScriptEngine()
+asCScriptEngine::asCScriptEngine() 
 {
 	// Instanciate the thread manager
 	ENTERCRITICALSECTION(engineCritical);
@@ -403,6 +403,7 @@ asCScriptEngine::asCScriptEngine()
 	}
 
 	gc.engine = this;
+	tok.engine = this;
 
 	refCount.set(1);
 	stringFactory = 0;
@@ -755,9 +756,8 @@ asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLengt
 		stringLength = strlen(string);
 
 	size_t len;
-	asCTokenizer t(this);
 	asETokenClass tc;
-	t.GetToken(string, stringLength, &len, &tc);
+	tok.GetToken(string, stringLength, &len, &tc);
 
 	if( tokenLength )
 		*tokenLength = (int)len;
@@ -1109,9 +1109,8 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( r >= 0 ) return ConfigError(asERROR);
 
 	// Make sure the name is not a reserved keyword
-	asCTokenizer t(this);
 	size_t tokenLen;
-	int token = t.GetToken(name, strlen(name), &tokenLen);
+	int token = tok.GetToken(name, strlen(name), &tokenLen);
 	if( token != ttIdentifier || strlen(name) != tokenLen )
 		return ConfigError(asINVALID_NAME);
 
@@ -1384,9 +1383,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		if( r < 0 )
 		{
 			// Make sure the name is not a reserved keyword
-			asCTokenizer t(this);
 			size_t tokenLen;
-			int token = t.GetToken(name, typeName.GetLength(), &tokenLen);
+			int token = tok.GetToken(name, typeName.GetLength(), &tokenLen);
 			if( token != ttIdentifier || typeName.GetLength() != tokenLen )
 				return ConfigError(asINVALID_NAME);
 
@@ -3977,13 +3975,12 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	}
 
 	// Grab the data type
-	asCTokenizer t(this);
 	size_t tokenLen;
 	eTokenType token;
 	asCDataType dataType;
 
 	//	Create the data type
-	token = t.GetToken(decl, strlen(decl), &tokenLen);
+	token = tok.GetToken(decl, strlen(decl), &tokenLen);
 	switch(token)
 	{
 	case ttBool:
@@ -4010,7 +4007,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	dataType = asCDataType::CreatePrimitive(token, false);
 
 	// Make sure the name is not a reserved keyword
-	token = t.GetToken(type, strlen(type), &tokenLen);
+	token = tok.GetToken(type, strlen(type), &tokenLen);
 	if( token != ttIdentifier || strlen(type) != tokenLen )
 		return ConfigError(asINVALID_NAME);
 
@@ -4087,9 +4084,8 @@ int asCScriptEngine::RegisterEnum(const char *name)
 		return ConfigError(asERROR);
 
 	// Make sure the name is not a reserved keyword
-	asCTokenizer t(this);
 	size_t tokenLen;
-	int token = t.GetToken(name, strlen(name), &tokenLen);
+	int token = tok.GetToken(name, strlen(name), &tokenLen);
 	if( token != ttIdentifier || strlen(name) != tokenLen )
 		return ConfigError(asINVALID_NAME);
 
