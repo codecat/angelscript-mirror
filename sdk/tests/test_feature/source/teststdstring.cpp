@@ -346,7 +346,8 @@ bool TestStdString()
 			"      arr[2] == ''  && \n"
 			"      arr[3] == 'D' ); \n"
 			"  assert( join(arr, ';') == 'A;B;;D' ); \n"
-			"  assert( formatInt(123456789012345, 'l', 20).length() == 20 ); \n");
+			"  assert( formatInt(123456789012345, 'l', 20).length() == 20 ); \n"
+			"  assert( formatFloat(123.456, '', 20, 10).length() == 20 ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

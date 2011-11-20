@@ -143,6 +143,41 @@ static string formatInt(asINT64 value, const string &options, asUINT width)
 	return buf;
 }
 
+// AngelScript signature:
+// string formatFloat(double val, const string &in options, uint width, uint precision)
+static string formatFloat(double value, const string &options, asUINT width, asUINT precision)
+{
+	bool leftJustify = options.find("l") != -1;
+	bool padWithZero = options.find("0") != -1;
+	bool alwaysSign  = options.find("+") != -1;
+	bool spaceOnSign = options.find(" ") != -1;
+	bool expSmall    = options.find("e") != -1;
+	bool expLarge    = options.find("E") != -1;
+
+	string fmt = "%";
+	if( leftJustify ) fmt += "-";
+	if( alwaysSign ) fmt += "+";
+	if( spaceOnSign ) fmt += " ";
+	if( padWithZero ) fmt += "0";
+
+	fmt += "*.*";
+
+	if( expSmall ) fmt += "e";
+	else if( expLarge ) fmt += "E";
+	else fmt += "f";
+
+	string buf;
+	buf.resize(width+precision+50);
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, precision, value);
+#else
+	sprintf(&buf[0], fmt.c_str(), width, precision, value);
+#endif
+	buf.resize(strlen(&buf[0]));
+	
+	return buf;
+}
+
 
 // This is where the utility functions are registered.
 // The string type must have been registered first.
@@ -152,11 +187,10 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options, uint width)", asFUNCTION(formatInt), asCALL_CDECL); assert(r >= 0);
-
+	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options, uint width = 0)", asFUNCTION(formatInt), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0)", asFUNCTION(formatFloat), asCALL_CDECL); assert(r >= 0);
 	// TODO: implement parseInt
 	// TODO: implement parseFloat
-	// TODO: implement formatFloat
 }
 
 END_AS_NAMESPACE
