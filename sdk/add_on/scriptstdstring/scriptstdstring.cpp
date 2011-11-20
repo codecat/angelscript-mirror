@@ -581,10 +581,6 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	// findLastOf
 	// findFirstNotOf
 	// findLastNotOf
-	// parseInt
-	// parseFloat
-	// formatInt - maybe as string::string(int64 value, const string &in format)
-	// formatFloat
 	// replace - replaces a text found in the string
 	// replaceRange - replaces a range of bytes in the string
 	// trim
