@@ -1004,11 +1004,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp"
+				RelativePath="..\..\source\scriptmath3d.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h"
+				RelativePath="..\..\source\scriptmath3d.h"
 				>
 			</File>
 			<File

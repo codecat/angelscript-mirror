@@ -1,6 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptany/scriptany.h"
-#include "../../../add_on/scriptmath3d/scriptmath3d.h"
+#include "scriptmath3d.h"
 
 namespace TestAny
 {
