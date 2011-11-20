@@ -196,6 +196,11 @@ int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactory
 // Entry
 int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
 {
+	// TODO: The compiler should take the return type and parameter types from the 
+	//       outFunc, instead of interpreting the script nodes again. The builder
+	//       must pass the list of parameter names. Making this change we can
+	//       eliminate large parts of this function and the sExplicitSignature structure
+
 	Reset(builder, script, outFunc);
 	int buildErrors = builder->numErrors;
 
@@ -787,14 +792,16 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 		bc->AddCode(&statement);
 
 		if( !hasCompileErrors )
+		{
 			asASSERT( tempVariables.GetLength() == 0 );
+			asASSERT( reservedVariables.GetLength() == 0 );
+		}
 
 		node = node->next;
 	}
 
 	if( ownVariableScope )
 	{
-
 		// Deallocate variables in this block, in reverse order
 		for( int n = (int)variables->variables.GetLength() - 1; n >= 0; n-- )
 		{
@@ -1121,7 +1128,7 @@ void asCCompiler::FinalizeFunction()
 	outFunc->lineNumbers = byteCode.lineNumbers;
 }
 
-void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, asCArray<int> *reservedVars, bool /* forceOnHeap */)
+void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType)
 {
 	asCDataType param = *paramType;
 	if( paramType->GetTokenType() == ttQuestion )
@@ -1167,11 +1174,11 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				IsVariableInitialized(&ctx->type, node);
 
-				if( ctx->type.dataType.IsReference() ) ConvertToVariableNotIn(ctx, reservedVars);
-				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, reservedVars);
+				if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
+				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true);
 
 				if( !(param.IsReadOnly() && ctx->type.isVariable) )
-					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ConvertToTempVariable(ctx);
 
 				PushVariableOnStack(ctx, true);
 				ctx->type.dataType.MakeReadOnly(param.IsReadOnly());
@@ -1180,7 +1187,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				IsVariableInitialized(&ctx->type, node);
 
-				ImplicitConversion(ctx, param, node, asIC_IMPLICIT_CONV, true, reservedVars);
+				ImplicitConversion(ctx, param, node, asIC_IMPLICIT_CONV, true);
 
 				if( !ctx->type.dataType.IsEqualExceptRef(param) )
 				{
@@ -1199,10 +1206,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
 				{
 					// Make sure the variable is not used in the expression
-					asCArray<int> vars;
-					ctx->bc.GetVarsUsed(vars);
-					if( reservedVars ) vars.Concatenate(*reservedVars);
-					offset = AllocateVariableNotIn(dt, true, &vars);
+					offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
 
@@ -1249,10 +1253,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		else if( refType == 2 ) // &out
 		{
 			// Make sure the variable is not used in the expression
-			asCArray<int> vars;
-			ctx->bc.GetVarsUsed(vars);
-			if( reservedVars ) vars.Concatenate(*reservedVars);
-			offset = AllocateVariableNotIn(dt, true, &vars);
+			offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 			if( dt.IsPrimitive() )
 			{
@@ -1312,10 +1313,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				dt.MakeHandle(true);
 				dt.MakeReference(false);
 
-				asCArray<int> vars;
-				ctx->bc.GetVarsUsed(vars);
-				if( reservedVars ) vars.Concatenate(*reservedVars);
-				offset = AllocateVariableNotIn(dt, true, &vars);
+				offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 				// Copy the handle
 				if( !ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReference() )
@@ -1356,10 +1354,10 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		{
 			IsVariableInitialized(&ctx->type, node);
 
-			if( ctx->type.dataType.IsReference() ) ConvertToVariableNotIn(ctx, reservedVars);
+			if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
 
 			// Implicitly convert primitives to the parameter type
-			ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, reservedVars);
+			ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
 
 			if( ctx->type.isVariable )
 			{
@@ -1367,7 +1365,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			}
 			else if( ctx->type.isConstant )
 			{
-				ConvertToVariableNotIn(ctx, reservedVars);
+				ConvertToVariable(ctx);
 				PushVariableOnStack(ctx, dt.IsReference());
 			}
 		}
@@ -1376,7 +1374,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			IsVariableInitialized(&ctx->type, node);
 
 			// Implicitly convert primitives to the parameter type
-			ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, reservedVars);
+			ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
 
 			// Was the conversion successful?
 			if( !ctx->type.dataType.IsEqualExceptRef(dt) )
@@ -1400,7 +1398,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// The object must also be allocated on the heap, as the memory will
 					// be deleted by in as_callfunc_xxx.
 					// TODO: value on stack: How can we avoid this unnecessary allocation?
-					PrepareTemporaryObject(node, ctx, reservedVars, true);
+					PrepareTemporaryObject(node, ctx, true);
 
 					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
@@ -1438,16 +1436,16 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSE
 
 	// Add code for arguments
 	asSExprContext e(engine);
-	int n;
-	for( n = (int)args.GetLength()-1; n >= 0; n-- )
+	for( int n = (int)args.GetLength()-1; n >= 0; n-- )
 	{
 		// Make sure PrepareArgument doesn't use any variable that is already
 		// being used by any of the following argument expressions
-		asCArray<int> reservedVars;
+		int l = reservedVariables.GetLength();
 		for( int m = n-1; m >= 0; m-- )
-			args[m]->bc.GetVarsUsed(reservedVars);
+			args[m]->bc.GetVarsUsed(reservedVariables);
 
-		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n], &reservedVars);
+		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n]);
+		reservedVariables.SetLength(l);
 	}
 
 	bc->AddCode(&e.bc);
@@ -1633,7 +1631,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 
 				asCDataType dt = args[n]->type.dataType;
 				dt.MakeReference(false);
-				int newOffset = AllocateVariableNotIn(dt, true, &varsUsed, IsVariableOnHeap(offset));
+				int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(offset));
 
 				asASSERT( IsVariableOnHeap(offset) == IsVariableOnHeap(newOffset) );
 
@@ -3023,7 +3021,7 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 	}
 }
 
-void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars, bool forceOnHeap)
+void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, bool forceOnHeap)
 {
 	// If the object already is stored in temporary variable then nothing needs to be done
 	// Note, a type can be temporary without being a variable, in which case it is holding off
@@ -3048,7 +3046,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	dt.MakeReference(false);
 	dt.MakeReadOnly(false);
 
-	int offset = AllocateVariableNotIn(dt, true, reservedVars, forceOnHeap);
+	int offset = AllocateVariable(dt, true, forceOnHeap);
 
 	// Objects stored on the stack are not considered references
 	dt.MakeReference(IsVariableOnHeap(offset));
@@ -3318,7 +3316,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 #endif
 					// Prepare the expression to be loaded into the object 
 					// register. This will place the reference in local variable
-					PrepareArgument(&v->type, &expr, rnode->firstChild, false, 0, 0, true);
+					PrepareArgument(&v->type, &expr, rnode->firstChild, false, 0);
 
 					// Pop the reference to the temporary variable
 					expr.bc.Pop(AS_PTR_SIZE);
@@ -3435,12 +3433,16 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 	}
 }
 
-int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap)
+int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, bool forceOnHeap, asSExprContext *ctx)
 {
-	return AllocateVariableNotIn(type, isTemporary, 0, forceOnHeap);
+	int l = reservedVariables.GetLength();
+	ctx->bc.GetVarsUsed(reservedVariables);
+	int var = AllocateVariable(type, isTemporary, forceOnHeap);
+	reservedVariables.SetLength(l);
+	return var;
 }
 
-int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars, bool forceOnHeap)
+int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap)
 {
 	asCDataType t(type);
 
@@ -3475,19 +3477,10 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 			// We can't return by slot, must count variable sizes
 			int offset = GetVariableOffset(slot);
 
-			// Verify that it is not in the list of used variables
+			// Verify that it is not in the list of reserved variables
 			bool isUsed = false;
-			if( vars )
-			{
-				for( asUINT m = 0; m < vars->GetLength(); m++ )
-				{
-					if( offset == (*vars)[m] )
-					{
-						isUsed = true;
-						break;
-					}
-				}
-			}
+			if( reservedVariables.GetLength() )
+				isUsed = reservedVariables.Exists(offset);
 
 			if( !isUsed )
 			{
@@ -3716,9 +3709,10 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		}
 
 		// Implicitly convert the value to the right type
-		asCArray<int> usedVars;
-		if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(usedVars);
-		ImplicitConversion(rctx, *lvalue, node, asIC_IMPLICIT_CONV, true, &usedVars);
+		int l = reservedVariables.GetLength();
+		if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(reservedVariables);
+		ImplicitConversion(rctx, *lvalue, node, asIC_IMPLICIT_CONV);
+		reservedVariables.SetLength(l);
 
 		// Check data type
 		if( !lvalue->IsEqualExceptRefAndConst(rctx->type.dataType) )
@@ -3746,14 +3740,14 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 			to.MakeHandle(true);
 
 		// Don't allow the implicit conversion to create an object
-		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, 0, !toTemporary);
+		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, !toTemporary);
 
 		if( !lvalue->IsObjectHandle() &&
 			(lvalue->GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
 		{
 			// Then convert to a reference, which will validate the handle
 			to.MakeHandle(false);
-			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, 0, !toTemporary);
+			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, !toTemporary);
 		}
 
 		// Check data type
@@ -4058,9 +4052,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 					asASSERT(to.IsObjectHandle());
 
 					// Allocate a temporary variable of the requested handle type
-					asCArray<int> vars;
-					ctx->bc.GetVarsUsed(vars);
-					int stackOffset = AllocateVariableNotIn(to, true, &vars);
+					int stackOffset = AllocateVariableNotIn(to, true, false, ctx);
 
 					// Pass the reference of that variable to the function as output parameter
 					asCDataType toRef(to);
@@ -4095,7 +4087,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 }
 
 
-void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars)
+void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
 	asCDataType to = toOrig;
 	to.MakeReference(false);
@@ -4118,7 +4110,7 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 		int s = ctx->type.dataType.GetSizeInMemoryBytes();
 		if( s < 4 )
 		{
-			ConvertToTempVariableNotIn(ctx, reservedVars);
+			ConvertToTempVariable(ctx);
 			if( ctx->type.dataType.IsIntegerType() )
 			{
 				if( s == 1 )
@@ -4151,25 +4143,25 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 				}
 				else
 				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ConvertToTempVariable(ctx);
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					int offset = AllocateVariable(to, true);
 					ctx->bc.InstrW_W(asBC_i64TOi, offset, ctx->type.stackOffset);
 					ctx->type.SetVariable(to, offset, true);
 				}
 			}
 			else if( ctx->type.dataType.IsFloatType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_fTOi, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_dTOi, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
@@ -4178,7 +4170,7 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 			int s = to.GetSizeInMemoryBytes();
 			if( s < 4 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				if( s == 1 )
 					ctx->bc.InstrSHORT(asBC_iTOb, ctx->type.stackOffset);
 				else if( s == 2 )
@@ -4198,9 +4190,9 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 				}
 				else
 				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ConvertToTempVariable(ctx);
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					int offset = AllocateVariable(to, true);
 					if( ctx->type.dataType.IsUnsignedType() )
 						ctx->bc.InstrW_W(asBC_uTOi64, offset, ctx->type.stackOffset);
 					else
@@ -4210,15 +4202,15 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 			}
 			else if( ctx->type.dataType.IsFloatType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_fTOi64, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_dTOi64, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
@@ -4237,25 +4229,25 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 				}
 				else
 				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ConvertToTempVariable(ctx);
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					int offset = AllocateVariable(to, true);
 					ctx->bc.InstrW_W(asBC_i64TOi, offset, ctx->type.stackOffset);
 					ctx->type.SetVariable(to, offset, true);
 				}
 			}
 			else if( ctx->type.dataType.IsFloatType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_fTOu, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_dTOu, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
@@ -4264,7 +4256,7 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 			int s = to.GetSizeInMemoryBytes();
 			if( s < 4 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				if( s == 1 )
 					ctx->bc.InstrSHORT(asBC_iTOb, ctx->type.stackOffset);
 				else if( s == 2 )
@@ -4284,9 +4276,9 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 				}
 				else
 				{
-					ConvertToTempVariableNotIn(ctx, reservedVars);
+					ConvertToTempVariable(ctx);
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					int offset = AllocateVariableNotIn(to, true, reservedVars);
+					int offset = AllocateVariable(to, true);
 					if( ctx->type.dataType.IsUnsignedType() )
 						ctx->bc.InstrW_W(asBC_uTOi64, offset, ctx->type.stackOffset);
 					else
@@ -4296,15 +4288,15 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 			}
 			else if( ctx->type.dataType.IsFloatType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_fTOu64, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_dTOu64, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
@@ -4314,39 +4306,39 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 		{
 			if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_iTOf, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 			else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_i64TOf, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
 			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_uTOf, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_u64TOf, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_dTOf, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
@@ -4355,39 +4347,39 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 		{
 			if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_iTOd, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
 			else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_i64TOd, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_uTOd, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
 			else if( ctx->type.dataType.IsUnsignedType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_u64TOd, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 			else if( ctx->type.dataType.IsFloatType() )
 			{
-				ConvertToTempVariableNotIn(ctx, reservedVars);
+				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-				int offset = AllocateVariableNotIn(to, true, reservedVars);
+				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_fTOd, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
 			}
@@ -4411,7 +4403,7 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 	ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 }
 
-void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
+void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
 {
 	asASSERT( ctx->type.dataType.GetTokenType() != ttUnrecognizedToken ||
 		      ctx->type.dataType.IsNullHandle() );
@@ -4434,20 +4426,20 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 	else if( to.IsPrimitive() )
 	{
 		if( !ctx->type.dataType.IsPrimitive() )
-			ImplicitConvObjectToPrimitive(ctx, to, node, convType, generateCode, reservedVars);
+			ImplicitConvObjectToPrimitive(ctx, to, node, convType, generateCode);
 		else
-			ImplicitConvPrimitiveToPrimitive(ctx, to, node, convType, generateCode, reservedVars);
+			ImplicitConvPrimitiveToPrimitive(ctx, to, node, convType, generateCode);
 	}
 	else // The target is a complex type
 	{
 		if( ctx->type.dataType.IsPrimitive() )
-			ImplicitConvPrimitiveToObject(ctx, to, node, convType, generateCode, reservedVars, allowObjectConstruct);
+			ImplicitConvPrimitiveToObject(ctx, to, node, convType, generateCode, allowObjectConstruct);
 		else if( ctx->type.IsNullConstant() || ctx->type.dataType.GetObjectType() )
-			ImplicitConvObjectToObject(ctx, to, node, convType, generateCode, reservedVars, allowObjectConstruct);
+			ImplicitConvObjectToObject(ctx, to, node, convType, generateCode, allowObjectConstruct);
 	}
 }
 
-void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars)
+void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
 	if( ctx->type.isExplicitHandle )
 	{
@@ -4559,7 +4551,7 @@ void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDa
 			ctx->type.Set(descr->returnType);
 
 		// Allow one more implicit conversion to another primitive type
-		ImplicitConversion(ctx, to, node, convType, generateCode, reservedVars, false);
+		ImplicitConversion(ctx, to, node, convType, generateCode, false);
 	}
 	else
 	{
@@ -4574,7 +4566,7 @@ void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDa
 
 
 
-void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, asCArray<int> *reservedVars, bool allowObjectConstruct)
+void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
 {
 	// Convert null to any object type handle, but not to a non-handle type
 	if( ctx->type.IsNullConstant() )
@@ -4772,7 +4764,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 				// If the object already is a temporary variable, then the copy
 				// doesn't have to be made as it is already a unique object
-				PrepareTemporaryObject(node, ctx, reservedVars);
+				PrepareTemporaryObject(node, ctx);
 
 				ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
 				ctx->type.isExplicitHandle = isExplicitHandle;
@@ -4823,7 +4815,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					if( generateCode )
 					{
 						// Make a temporary object with the copy
-						PrepareTemporaryObject(node, ctx, reservedVars);
+						PrepareTemporaryObject(node, ctx);
 					}
 
 					// In case the object was already in a temporary variable, then the function
@@ -4882,7 +4874,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					{
 						// If the object already is a temporary variable, then the copy
 						// doesn't have to be made as it is already a unique object
-						PrepareTemporaryObject(node, ctx, reservedVars);
+						PrepareTemporaryObject(node, ctx);
 					}
 				}
 			}
@@ -4910,7 +4902,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 
 					// If the object already is a temporary variable, then the copy
 					// doesn't have to be made as it is already a unique object
-					PrepareTemporaryObject(node, ctx, reservedVars);
+					PrepareTemporaryObject(node, ctx);
 
 					ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
 				}
@@ -4941,7 +4933,7 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 	}
 }
 
-void asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext * /*ctx*/, const asCDataType & /*to*/, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool /*generateCode*/, asCArray<int> * /*reservedVars*/, bool /*allowObjectConstruct*/)
+void asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext * /*ctx*/, const asCDataType & /*to*/, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool /*generateCode*/, bool /*allowObjectConstruct*/)
 {
 	// TODO: This function should call the constructor/factory that has been marked as available
 	//       for implicit conversions. The code will likely be similar to CallCopyConstructor()
@@ -5886,9 +5878,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				temp.dataType.MakeReference(false);
 				temp.dataType.MakeReadOnly(false);
 				// Make sure the variable isn't used in the initial expression
-				asCArray<int> vars;
-				e.bc.GetVarsUsed(vars);
-				int offset = AllocateVariableNotIn(temp.dataType, true, &vars);
+				int offset = AllocateVariableNotIn(temp.dataType, true, false, &e);
 				temp.SetVariable(temp.dataType, offset, true);
 
 				// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
@@ -8847,7 +8837,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 		asSExprContext ti(engine);
 		ti.type = *argType;
 		if( argType->dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
-		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, 0, allowObjectConstruct);
+		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
 
 		// If the function parameter is an inout-reference then it must not be possible to call the
 		// function with an incorrect argument type, even though the type can normally be converted.
@@ -8948,7 +8938,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 	return (int)matches.GetLength();
 }
 
-void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, asCArray<int> *reservedVars)
+void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType)
 {
 	// Reference parameters whose value won't be used don't evaluate the expression
 	if( paramType->IsReference() && !(refType & asTM_INREF) )
@@ -8959,7 +8949,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		arg->origExpr = orig;
 	}
 
-	PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType, reservedVars);
+	PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType);
 	// arg still holds the original expression for output parameters
 	ctx->bc.AddCode(&arg->bc);
 }
@@ -9290,13 +9280,14 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 			// Release the current temporary variable
 			ReleaseTemporaryVariable(args[n]->type, 0);
 
-			asCArray<int> usedVars;
-			objBC.GetVarsUsed(usedVars);
-			ctx->bc.GetVarsUsed(usedVars);
-
 			asCDataType dt = args[n]->type.dataType;
 			dt.MakeReference(false);
-			int newOffset = AllocateVariableNotIn(dt, true, &usedVars, IsVariableOnHeap(args[n]->type.stackOffset));
+
+			int l = reservedVariables.GetLength();
+			objBC.GetVarsUsed(reservedVariables);
+			ctx->bc.GetVarsUsed(reservedVariables);
+			int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(args[n]->type.stackOffset));
+			reservedVariables.SetLength(l);
 
 			asASSERT( IsVariableOnHeap(args[n]->type.stackOffset) == IsVariableOnHeap(newOffset) );
 
@@ -9366,9 +9357,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		// Make sure lctx doesn't end up with a variable used in rctx
 		if( lctx->type.isTemporary && rctx->bc.IsVarUsed(lctx->type.stackOffset) )
 		{
-			asCArray<int> vars;
-			rctx->bc.GetVarsUsed(vars);
-			int offset = AllocateVariableNotIn(lctx->type.dataType, true, &vars);
+			int offset = AllocateVariableNotIn(lctx->type.dataType, true, false, rctx);
 			rctx->bc.ExchangeVar(lctx->type.stackOffset, offset);
 			ReleaseTemporaryVariable(offset, 0);
 		}
@@ -9424,23 +9413,24 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 
 void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asSExprContext *exclude)
 {
-	asCArray<int> excludeVars;
-	if( exclude ) exclude->bc.GetVarsUsed(excludeVars);
-	ConvertToTempVariableNotIn(ctx, &excludeVars);
+	int l = reservedVariables.GetLength();
+	if( exclude ) exclude->bc.GetVarsUsed(reservedVariables);
+	ConvertToTempVariable(ctx);
+	reservedVariables.SetLength(l);
 }
 
-void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars)
+void asCCompiler::ConvertToTempVariable(asSExprContext *ctx)
 {
 	// This is only used for primitive types and null handles
 	asASSERT( ctx->type.dataType.IsPrimitive() || ctx->type.dataType.IsNullHandle() );
 
-	ConvertToVariableNotIn(ctx, reservedVars);
+	ConvertToVariable(ctx);
 	if( !ctx->type.isTemporary )
 	{
 		if( ctx->type.dataType.IsPrimitive() )
 		{
 			// Copy the variable to a temporary variable
-			int offset = AllocateVariableNotIn(ctx->type.dataType, true, reservedVars);
+			int offset = AllocateVariable(ctx->type.dataType, true);
 			if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 				ctx->bc.InstrW_W(asBC_CpyVtoV4, offset, ctx->type.stackOffset);
 			else
@@ -9455,29 +9445,17 @@ void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> 
 	}
 }
 
-void asCCompiler::ConvertToTempVariable(asSExprContext *ctx)
-{
-	ConvertToTempVariableNotIn(ctx, (asCArray<int>*)0);
-}
-
 void asCCompiler::ConvertToVariable(asSExprContext *ctx)
-{
-	ConvertToVariableNotIn(ctx, (asCArray<int>*)0);
-}
-
-void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars)
 {
 	// We should never get here while the context is still an unprocessed property accessor
 	asASSERT(ctx->property_get == 0 && ctx->property_set == 0);
 
-	asCArray<int> excludeVars;
-	if( reservedVars ) excludeVars.Concatenate(*reservedVars);
 	int offset;
 	if( !ctx->type.isVariable &&
 		(ctx->type.dataType.IsObjectHandle() ||
 		 (ctx->type.dataType.IsObject() && ctx->type.dataType.SupportHandles())) )
 	{
-		offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
+		offset = AllocateVariable(ctx->type.dataType, true);
 		if( ctx->type.IsNullConstant() )
 		{
 			if( ctx->bc.GetLastInstr() == asBC_PshC4 || ctx->bc.GetLastInstr() == asBC_PshC8 )
@@ -9505,7 +9483,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 	{
 		if( ctx->type.isConstant )
 		{
-			offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
+			offset = AllocateVariable(ctx->type.dataType, true);
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
 				ctx->bc.InstrSHORT_B(asBC_SetV1, (short)offset, ctx->type.byteValue);
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
@@ -9524,7 +9502,7 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 			asASSERT(ctx->type.dataType.IsReference());
 
 			ctx->type.dataType.MakeReference(false);
-			offset = AllocateVariableNotIn(ctx->type.dataType, true, &excludeVars);
+			offset = AllocateVariable(ctx->type.dataType, true);
 
 			// Read the value from the address in the register directly into the variable
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
@@ -9544,9 +9522,10 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *res
 
 void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *exclude)
 {
-	asCArray<int> excludeVars;
-	if( exclude ) exclude->bc.GetVarsUsed(excludeVars);
-	ConvertToVariableNotIn(ctx, &excludeVars);
+	int l = reservedVariables.GetLength();
+	if( exclude ) exclude->bc.GetVarsUsed(reservedVariables);
+	ConvertToVariable(ctx);
+	reservedVariables.SetLength(l);
 }
 
 
@@ -9582,17 +9561,18 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		to.SetTokenType(ttFloat);
 
 	// Do the actual conversion
-	asCArray<int> reservedVars;
-	rctx->bc.GetVarsUsed(reservedVars);
-	lctx->bc.GetVarsUsed(reservedVars);
+	int l = reservedVariables.GetLength();
+	rctx->bc.GetVarsUsed(reservedVariables);
+	lctx->bc.GetVarsUsed(reservedVariables);
 
 	if( lctx->type.dataType.IsReference() )
-		ConvertToVariableNotIn(lctx, &reservedVars);
+		ConvertToVariable(lctx);
 	if( rctx->type.dataType.IsReference() )
-		ConvertToVariableNotIn(rctx, &reservedVars);
+		ConvertToVariable(rctx);
 
-	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
-	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
+	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
+	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+	reservedVariables.SetLength(l);
 
 	// Verify that the conversion was successful
 	if( !lctx->type.dataType.IsIntegerType() &&
@@ -9903,9 +9883,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 			to.SetTokenType(ttUInt);
 
 		// Do the actual conversion
-		asCArray<int> reservedVars;
-		rctx->bc.GetVarsUsed(reservedVars);
-		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
+		int l = reservedVariables.GetLength();
+		rctx->bc.GetVarsUsed(reservedVariables);
+		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
+		reservedVariables.SetLength(l);
 
 		// Verify that the conversion was successful
 		if( !lctx->type.dataType.IsUnsignedType() )
@@ -9916,9 +9897,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Convert right hand operand to same type as left hand operand
-		asCArray<int> vars;
-		lctx->bc.GetVarsUsed(vars);
-		ImplicitConversion(rctx, lctx->type.dataType, node, asIC_IMPLICIT_CONV, true, &vars);
+		l = reservedVariables.GetLength();
+		lctx->bc.GetVarsUsed(reservedVariables);
+		ImplicitConversion(rctx, lctx->type.dataType, node, asIC_IMPLICIT_CONV, true);
+		reservedVariables.SetLength(l);
 		if( !rctx->type.dataType.IsEqualExceptRef(lctx->type.dataType) )
 		{
 			asCString str;
@@ -10040,9 +10022,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Do the actual conversion
-		asCArray<int> reservedVars;
-		rctx->bc.GetVarsUsed(reservedVars);
-		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
+		int l = reservedVariables.GetLength();
+		rctx->bc.GetVarsUsed(reservedVariables);
+		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
+		reservedVariables.SetLength(l);
 
 		// Verify that the conversion was successful
 		if( lctx->type.dataType != to )
@@ -10053,9 +10036,10 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Right operand must be 32bit uint
-		asCArray<int> vars;
-		lctx->bc.GetVarsUsed(vars);
-		ImplicitConversion(rctx, asCDataType::CreatePrimitive(ttUInt, true), node, asIC_IMPLICIT_CONV, true, &vars);
+		l = reservedVariables.GetLength();
+		lctx->bc.GetVarsUsed(reservedVariables);
+		ImplicitConversion(rctx, asCDataType::CreatePrimitive(ttUInt, true), node, asIC_IMPLICIT_CONV, true);
+		reservedVariables.SetLength(l);
 		if( !rctx->type.dataType.IsUnsignedType() )
 		{
 			asCString str;
@@ -10216,16 +10200,17 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 		Warning(TXT_SIGNED_UNSIGNED_MISMATCH, node);
 
 	// Do the actual conversion
-	asCArray<int> reservedVars;
-	rctx->bc.GetVarsUsed(reservedVars);
+	int l = reservedVariables.GetLength();
+	rctx->bc.GetVarsUsed(reservedVariables);
 
 	if( lctx->type.dataType.IsReference() )
-		ConvertToVariableNotIn(lctx, &reservedVars);
+		ConvertToVariable(lctx);
 	if( rctx->type.dataType.IsReference() )
-		ConvertToVariableNotIn(rctx, &reservedVars);
+		ConvertToVariable(rctx);
 
-	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
+	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV);
 	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV);
+	reservedVariables.SetLength(l);
 
 	// Verify that the conversion was successful
 	bool ok = true;
@@ -10469,11 +10454,12 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	to.SetTokenType(ttBool);
 
 	// Do the actual conversion
-	asCArray<int> reservedVars;
-	rctx->bc.GetVarsUsed(reservedVars);
-	lctx->bc.GetVarsUsed(reservedVars);
-	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
-	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true, &reservedVars);
+	int l = reservedVariables.GetLength();
+	rctx->bc.GetVarsUsed(reservedVariables);
+	lctx->bc.GetVarsUsed(reservedVariables);
+	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV);
+	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV);
+	reservedVariables.SetLength(l);
 
 	// Verify that the conversion was successful
 	if( !lctx->type.dataType.IsBooleanType() )
@@ -10971,14 +10957,15 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		{
 			// Allocate a temporary variable to hold the value, but make sure
 			// the temporary variable isn't used in any of the deferred arguments
-			asCArray<int> vars;
+			int l = reservedVariables.GetLength();
 			for( asUINT n = 0; args && n < args->GetLength(); n++ )
 			{
 				asSExprContext *expr = (*args)[n]->origExpr;
 				if( expr )
-					expr->bc.GetVarsUsed(vars);
+					expr->bc.GetVarsUsed(reservedVariables);
 			}
-			int offset = AllocateVariableNotIn(descr->returnType, true, &vars);
+			int offset = AllocateVariable(descr->returnType, true);
+			reservedVariables.SetLength(l);
 
 			ctx->type.SetVariable(descr->returnType, offset, true);
 

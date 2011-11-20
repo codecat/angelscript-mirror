@@ -42,12 +42,6 @@ static void AddAssignStringGeneric(asIScriptGeneric *gen) {
   gen->SetReturnAddress(self);
 }
 
-static void StringEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
-}
-
 static void StringEqualsGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   string * b = static_cast<string *>(gen->GetArgAddress(0));
@@ -63,36 +57,6 @@ static void StringCmpGeneric(asIScriptGeneric * gen) {
   else if( *a > *b ) cmp = 1;
 
   *(int*)gen->GetAddressOfReturnLocation() = cmp;
-}
-
-static void StringNotEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a != *b);
-}
-
-static void StringLEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a <= *b);
-}
-
-static void StringGEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a >= *b);
-}
-
-static void StringLessThanGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a < *b);
-}
-
-static void StringGreaterThanGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a > *b);
 }
 
 static void StringAddGeneric(asIScriptGeneric * gen) {

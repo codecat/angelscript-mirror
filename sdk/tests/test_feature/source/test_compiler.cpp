@@ -1,4 +1,7 @@
 #include "utils.h"
+#include <sstream>
+
+using namespace std;
 
 namespace TestCompiler
 {
@@ -95,6 +98,78 @@ public:
 	static CSound *CSound_fact() {return new CSound();}
 };
 
+static void StringFactoryGeneric(asIScriptGeneric *gen) {
+  asUINT length = gen->GetArgDWord(0);
+  const char *s = (const char*)gen->GetArgAddress(1);
+  string str(s, length);
+  gen->SetReturnObject(&str);
+}
+
+static void ConstructStringGeneric(asIScriptGeneric * gen) {
+  new (gen->GetObject()) string();
+}
+
+static void CopyConstructStringGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetArgObject(0));
+  new (gen->GetObject()) string(*a);
+}
+
+static void DestructStringGeneric(asIScriptGeneric * gen) {
+  string * ptr = static_cast<string *>(gen->GetObject());
+  ptr->~string();
+}
+
+static void AssignStringGeneric(asIScriptGeneric *gen) {
+  string * a = static_cast<string *>(gen->GetArgObject(0));
+  string * self = static_cast<string *>(gen->GetObject());
+  *self = *a;
+  gen->SetReturnAddress(self);
+}
+
+static void StringAddGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetObject());
+  string * b = static_cast<string *>(gen->GetArgAddress(0));
+  string ret_val = *a + *b;
+  gen->SetReturnObject(&ret_val);
+}
+
+static void StringLengthGeneric(asIScriptGeneric * gen) {
+  string * self = static_cast<string *>(gen->GetObject());
+  *static_cast<asUINT *>(gen->GetAddressOfReturnLocation()) = (asUINT)self->length();
+}
+
+static void AddString2IntGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetObject());
+  int * b = static_cast<int *>(gen->GetAddressOfArg(0));
+  std::stringstream sstr;
+  sstr << *a << *b;
+  std::string ret_val = sstr.str();
+  gen->SetReturnObject(&ret_val);
+}
+
+static string alert_buf;
+static void AlertGeneric(asIScriptGeneric * gen) {
+	string *a = static_cast<string*>(gen->GetArgAddress(0));
+	string *b = static_cast<string*>(gen->GetArgAddress(1));
+	alert_buf += *a;
+	alert_buf += *b;
+	alert_buf += "\n";
+}
+
+static void String_get_opIndexGeneric(asIScriptGeneric *gen) {
+  string * a = static_cast<string *>(gen->GetObject());
+  asUINT i = gen->GetArgDWord(0);
+  string ret_val = a->substr(i, 1);
+  gen->SetReturnObject(&ret_val);
+}
+
+static void String_set_opIndexGeneric(asIScriptGeneric *gen) {
+  string * a = static_cast<string *>(gen->GetObject());
+  asUINT i = gen->GetArgDWord(0);
+  string *str = static_cast<string*>(gen->GetArgAddress(1));
+  (*a)[i] = (*str)[0];
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -140,16 +215,18 @@ bool Test()
 
 		// Special string class
 		r = engine->RegisterObjectType("string", sizeof(std::string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
-		r = engine->RegisterStringFactory("string", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(0),  asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(0),    asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "string get_opIndex(uint) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void set_opIndex(uint, const string &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterStringFactory("string", asFUNCTION(StringFactoryGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string get_opIndex(uint) const", asFUNCTION(String_get_opIndexGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void set_opIndex(uint, const string &in)", asFUNCTION(String_set_opIndexGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("void alert(string &in, string &in)", asFUNCTION(AlertGeneric), asCALL_GENERIC); assert( r >= 0 );
 	
-
 		// This script should not compile, because true cannot be passed to int& in
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
@@ -171,18 +248,14 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// 
-		r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterGlobalFunction("void alert(string &in, string &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-
+		// This script should correctly return the strings
 		mod->AddScriptSection(TESTNAME, 
 			"void main() \n"
 			"{ \n"
 			"	string test='food'; \n"
 			"	test[0]='g'; \n"
 			"	for(uint i=0;i<test.length();i++) \n"
-			"	  alert('Character ' + (i+1) + '', test[i]); \n"
+			"	  alert('Character ' + (i+1), test[i]); \n"
 			"} \n");
 
 		bout.buffer = "";
@@ -192,6 +265,19 @@ bool Test()
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( alert_buf != "Character 1g\n"
+			             "Character 2o\n"
+						 "Character 3o\n"
+						 "Character 4d\n" )
+		{
+			printf("%s", alert_buf.c_str());
 			TEST_FAILED;
 		}
 

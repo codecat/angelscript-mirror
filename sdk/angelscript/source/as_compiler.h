@@ -171,7 +171,7 @@ protected:
 	int  FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node, bool isThisAccess = false);
 	int  FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node, bool isThisAccess = false);
 	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
-	void PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, asCArray<int> *reservedVars, bool forceOnHeap = false);
+	void PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, bool forceOnHeap = false);
 	void PrepareOperand(asSExprContext *ctx, asCScriptNode *node);
 	void PrepareForAssignment(asCDataType *lvalue, asSExprContext *rvalue, asCScriptNode *node, bool toTemporary, asSExprContext *lvalueExpr = 0);
 	void PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asCByteCode *bc, asCScriptNode *node);
@@ -185,8 +185,8 @@ protected:
 	void PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSExprContext *> &args);
 	void AfterFunctionCall(int funcId, asCArray<asSExprContext*> &args, asSExprContext *ctx, bool deferAll);
 	void ProcessDeferredParams(asSExprContext *ctx);
-	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, int refType = 0, asCArray<int> *reservedVars = 0, bool forceOnHeap = false);
-	void PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction = false, int refType = 0, asCArray<int> *reservedVars = 0);
+	void PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction = false, int refType = 0);
+	void PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction = false, int refType = 0);
 	bool IsLValue(asCTypeInfo &type);
 	int  DoAssignment(asSExprContext *out, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode);
 	void MergeExprBytecode(asSExprContext *before, asSExprContext *after);
@@ -194,20 +194,18 @@ protected:
 	void FilterConst(asCArray<int> &funcs);
 	void ConvertToVariable(asSExprContext *ctx);
 	void ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *exclude);
-	void ConvertToVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToTempVariable(asSExprContext *ctx);
 	void ConvertToTempVariableNotIn(asSExprContext *ctx, asSExprContext *exclude);
-	void ConvertToTempVariableNotIn(asSExprContext *ctx, asCArray<int> *reservedVars);
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
 	asCString GetScopeFromNode(asCScriptNode *node);
 	void DestroyVariables(asCByteCode *bc);
 
-	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
-	void ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0);
-	void ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0);
-	void ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
-	void ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, asCArray<int> *reservedVars = 0, bool allowObjectConstruct = true);
+	void ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, bool allowObjectConstruct = true);
+	void ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true);
+	void ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true);
+	void ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, bool allowObjectConstruct = true);
+	void ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true, bool allowObjectConstruct = true);
 	void ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType);
 
 	void LineInstr(asCByteCode *bc, size_t pos);
@@ -220,7 +218,6 @@ protected:
 	void Warning(const char *msg, asCScriptNode *node);
 	void Information(const char *msg, asCScriptNode *node);
 	void PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node);
-
 
 	void AddVariableScope(bool isBreakScope = false, bool isContinueScope = false);
 	void RemoveVariableScope();
@@ -246,7 +243,7 @@ protected:
 	asCArray<int> continueLabels;
 
 	int AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap = false);
-	int AllocateVariableNotIn(const asCDataType &type, bool isTemporary, asCArray<int> *vars, bool forceOnHeap = false);
+	int AllocateVariableNotIn(const asCDataType &type, bool isTemporary, bool forceOnHeap, asSExprContext *ctx);
 	int GetVariableOffset(int varIndex);
 	int GetVariableSlot(int varOffset);
 	void DeallocateVariable(int pos);
@@ -259,6 +256,7 @@ protected:
 	asCArray<bool>        variableIsOnHeap;
 	asCArray<int>         freeVariables;
 	asCArray<int>         tempVariables;
+	asCArray<int>         reservedVariables;
 
 	bool isCompilingDefaultArg;
 	bool isProcessingDeferredParams;
