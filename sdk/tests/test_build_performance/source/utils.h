@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include "../../add_on/scriptstdstring/scriptstdstring.h"
+#include "../../add_on/scriptarray/scriptarray.h"
+
 
 double GetSystemTimer();
 

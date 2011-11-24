@@ -516,6 +516,51 @@ bool Test()
 		engine->Release();
 	}
 
+	// Default constructor and opAssign shouldn't be provided if a non-default constructor is implemented
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		// TODO: This should already be turned off by default
+		engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, false);
+
+		const char *script = 
+			"class CBar \n"
+			"{ \n"
+			" CBar(int a) {}\n"
+			"}; \n"
+			"void func() \n"
+			"{ \n"
+			"  CBar a; \n" // not ok
+			"  CBar b(1); \n" // ok
+			"  CBar c = CBar(1); \n" // not ok
+			"  b = b; \n" // not ok
+			"  CBar d(CBar()); \n" // not ok
+			"}; \n";
+
+		asIScriptModule *mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
+						   "script (7, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (9, 8) : Error   : No default constructor for object of type 'CBar'.\n"
+						   "script (9, 8) : Error   : There is no copy operator for the type 'CBar' available.\n"
+						   "script (10, 5) : Error   : There is no copy operator for the type 'CBar' available.\n"
+						   "script (11, 10) : Error   : No matching signatures to 'CBar()'\n"
+						   "script (11, 10) : Info    : Candidates are:\n"
+						   "script (11, 10) : Info    : CBar@ CBar(int)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+ 
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
@@ -536,6 +581,7 @@ bool Test2()
 		"class MyClass {                  \n"
 		"  int a;                         \n"
 		"  MyClass(int a) { this.a = a; } \n"
+		"  MyClass &opAssign(const MyClass &in o) { a = o.a; return this; } \n"
 		"  int foo() { return a; }        \n"
 		"}                                \n"
 		"                                 \n"

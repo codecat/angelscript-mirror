@@ -14,11 +14,12 @@ namespace TestBasic
 static const char *scriptBegin =
 "void main()                                                 \n"
 "{                                                           \n"
-"   int[] array(2);                                          \n"
-"   int[][] PWToGuild(26);                                   \n";
+"   int[] arr(2);                                            \n"
+"   int[][] PWToGuild(26);                                   \n"
+"   string test;                                             \n";
 
 static const char *scriptMiddle = 
-"   array[0] = 121; array[1] = 196; PWToGuild[0] = array;    \n";
+"   arr[0] = 121; arr[1] = 196; PWToGuild[0] = arr; test = '%d';  \n";
 
 static const char *scriptEnd =
 "}                                                           \n";
@@ -42,9 +43,16 @@ void Test()
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+	RegisterScriptArray(engine, true);
+	RegisterStdString(engine);
+
 	string script = scriptBegin;
-	for( int n = 0; n < 4000; n++ )
-		script += scriptMiddle;
+	for( int n = 0; n < 40000; n++ )
+	{
+		char buf[500];
+		sprintf(buf, scriptMiddle, n);
+		script += buf;
+	}
 	script += scriptEnd;
 
 	double time = GetSystemTimer();

@@ -378,6 +378,9 @@ bool asCTokenizer::IsKeyWord(const char *source, size_t sourceLength, size_t &to
 	//                 As most keywords are shorter, then we should start from the shortest
 	//                 to the longest. Only for some of the keywords is it necessary to look
 	//                 for a longer part, e.g. ! and !is.
+	//
+	//                 We can use a map that separates the tokens based on the first character.
+	//                 The highest number of possible tokens would then be 11 for the letter 'i'.
 
 	// Choose the best map
 	const asCMap<asCStringPointer,eTokenType> *map;

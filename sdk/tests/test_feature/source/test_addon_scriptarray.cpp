@@ -554,6 +554,7 @@ bool Test()
 			"{  \n"
 			"  int val;  \n"
 			"  Value(int v) {val = v;} \n"
+			"  Value() {} \n"
 			"  int opCmp(const Value &in o) {return val - o.val;} \n"
 			"} \n";
 

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.1 WIP - 2011/11/20</h2>
+<h2>Version 2.22.1 WIP - 2011/11/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,11 +30,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added asOBJ_NOINHERIT that can be used to identify the script classes declared as final (Thanks InvalidPointer)
 <li>Improved compiler performance when scripts have a lot of literal string contants (Thanks vroad)
 <li>Optimized the algorithm for tokenizing the script, which will provide a significant performance improvement when compiling large scripts (Thanks m4ttbush)
+<li>Added asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT to allow application to force the automatic implementation of default constructor and opAssign
 </ul>
 <li>Script language
 <ul>
 <li>Added 'final' and 'override' keywords for improved control on how inheritance is implemented (Thanks InvalidPointer)
 <li>Implemented an alternative shorter version for declaring get and set property accessors (Thanks InvalidPointer)
+<li>Default constructor and opAssign is no longer implemented automatically if the script class has a non-default constructor
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

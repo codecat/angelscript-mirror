@@ -489,7 +489,31 @@ void asCBuilder::ParseScripts()
 			// Make sure the default factory & constructor exists for classes
 			if( decl->objType->beh.construct == engine->scriptTypeBehaviours.beh.construct )
 			{
-				AddDefaultConstructor(decl->objType, decl->script);
+				if( decl->objType->beh.constructors.GetLength() == 1 || engine->ep.alwaysImplDefaultConstruct )
+				{
+					AddDefaultConstructor(decl->objType, decl->script);
+				}
+				else
+				{
+					// As the class has another constructor we shouldn't provide the default constructor
+					if( decl->objType->beh.construct )
+					{
+						engine->scriptFunctions[decl->objType->beh.construct]->Release();
+						decl->objType->beh.construct = 0;
+						decl->objType->beh.constructors.RemoveIndex(0);
+					}
+					if( decl->objType->beh.factory )
+					{
+						engine->scriptFunctions[decl->objType->beh.factory]->Release();
+						decl->objType->beh.factory = 0;
+						decl->objType->beh.factories.RemoveIndex(0);
+					}
+					if( decl->objType->beh.copy )
+					{
+						engine->scriptFunctions[decl->objType->beh.copy]->Release();
+						decl->objType->beh.copy = 0;
+					}
+				}
 			}
 		}
 
@@ -3286,8 +3310,13 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 {
+	// TODO: optimize: Improve linear searches in GetFunctionDescriptions
+	//                 A large part of the compilation time seems to be spent in this function
+	//                 I need to have a map with all global functions so that it will be
+	//                 quicker to find them by name. The key should be the function name, and 
+	//                 the value a list with all the functions using that name
+
 	asUINT n;
-	// TODO: optimize: Improve linear search
 	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
 	{
 		if( module->scriptFunctions[n]->name == name &&
@@ -3295,14 +3324,12 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 			funcs.PushLast(module->scriptFunctions[n]->id);
 	}
 
-	// TODO: optimize: Improve linear search
 	for( n = 0; n < module->bindInformations.GetLength(); n++ )
 	{
 		if( module->bindInformations[n]->importedFunctionSignature->name == name )
 			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 
-	// TODO: optimize: Improve linear search
 	// TODO: optimize: Use the registeredGlobalFunctions array instead
 	for( n = 0; n < engine->scriptFunctions.GetLength(); n++ )
 	{

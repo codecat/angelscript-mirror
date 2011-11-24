@@ -1043,24 +1043,24 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			{
 				// For existing types we don't want to make any updates
 				asCScriptFunction *func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
-				if( func )
+				if( sharedExists )
 				{
-					if( sharedExists )
+					// Find the real function in the object, and update the savedFunctions array
+					asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.construct);
+					if( (realFunc == 0 && func == 0) || realFunc->IsSignatureEqual(func) )
 					{
-						// Find the real function in the object, and update the savedFunctions array
-						asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.construct);
-						if( realFunc->IsSignatureEqual(func) )
-						{
-							// If the function is not the last, then the substitution has already occurred before
-							if( savedFunctions[savedFunctions.GetLength()-1] == func )
-								savedFunctions[savedFunctions.GetLength()-1] = realFunc;
-						}
-						else
-						{
-							// TODO: Write message
-							error = true;
-						}
-						// Destroy the function without releasing any references
+						// If the function is not the last, then the substitution has already occurred before
+						if( func && savedFunctions[savedFunctions.GetLength()-1] == func )
+							savedFunctions[savedFunctions.GetLength()-1] = realFunc;
+					}
+					else
+					{
+						// TODO: Write message
+						error = true;
+					}
+					// Destroy the function without releasing any references
+					if( func )
+					{
 						func->id = 0;
 						func->byteCode.SetLength(0);
 						func->Release();
@@ -1068,34 +1068,42 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						realFunc->AddRef();
 						dontTranslate.Insert(realFunc, true);
 					}
-					else 
+				}
+				else 
+				{
+					engine->scriptFunctions[ot->beh.construct]->Release();
+					if( func )
 					{
-						engine->scriptFunctions[ot->beh.construct]->Release();
 						ot->beh.construct = func->id;
 						ot->beh.constructors[0] = func->id;
 						func->AddRef();
 					}
+					else
+					{
+						ot->beh.construct = 0;
+						ot->beh.constructors.PopLast();
+					}
 				}
 
 				func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
-				if( func )
+				if( sharedExists )
 				{
-					if( sharedExists )
+					// Find the real function in the object, and update the savedFunctions array
+					asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.destruct);
+					if( (realFunc == 0 && func == 0) || realFunc->IsSignatureEqual(func) )
 					{
-						// Find the real function in the object, and update the savedFunctions array
-						asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.destruct);
-						if( realFunc->IsSignatureEqual(func) )
-						{
-							// If the function is not the last, then the substitution has already occurred before
-							if( savedFunctions[savedFunctions.GetLength()-1] == func )
-								savedFunctions[savedFunctions.GetLength()-1] = realFunc;
-						}
-						else
-						{
-							// TODO: Write message
-							error = true;
-						}
-						// Destroy the function without releasing any references
+						// If the function is not the last, then the substitution has already occurred before
+						if( func && savedFunctions[savedFunctions.GetLength()-1] == func )
+							savedFunctions[savedFunctions.GetLength()-1] = realFunc;
+					}
+					else
+					{
+						// TODO: Write message
+						error = true;
+					}
+					// Destroy the function without releasing any references
+					if( func )
+					{
 						func->id = 0;
 						func->byteCode.SetLength(0);
 						func->Release();
@@ -1103,32 +1111,37 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						realFunc->AddRef();
 						dontTranslate.Insert(realFunc, true);
 					}
-					else
+				}
+				else
+				{
+					if( func )
 					{
 						ot->beh.destruct = func->id;
 						func->AddRef();
 					}
+					else
+						ot->beh.destruct = 0;
 				}
 
 				func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
-				if( func )
+				if( sharedExists )
 				{
-					if( sharedExists )
+					// Find the real function in the object, and update the savedFunctions array
+					asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.factory);
+					if( (realFunc == 0 && func == 0) || realFunc->IsSignatureEqual(func) )
 					{
-						// Find the real function in the object, and update the savedFunctions array
-						asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.factory);
-						if( realFunc->IsSignatureEqual(func) )
-						{
-							// If the function is not the last, then the substitution has already occurred before
-							if( savedFunctions[savedFunctions.GetLength()-1] == func )
-								savedFunctions[savedFunctions.GetLength()-1] = realFunc;
-						}
-						else
-						{
-							// TODO: Write message
-							error = true;
-						}
-						// Destroy the function without releasing any references
+						// If the function is not the last, then the substitution has already occurred before
+						if( func && savedFunctions[savedFunctions.GetLength()-1] == func )
+							savedFunctions[savedFunctions.GetLength()-1] = realFunc;
+					}
+					else
+					{
+						// TODO: Write message
+						error = true;
+					}
+					// Destroy the function without releasing any references
+					if( func )
+					{
 						func->id = 0;
 						func->byteCode.SetLength(0);
 						func->Release();
@@ -1136,12 +1149,20 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						realFunc->AddRef();
 						dontTranslate.Insert(realFunc, true);
 					}
-					else
+				}
+				else
+				{
+					engine->scriptFunctions[ot->beh.factory]->Release();
+					if( func )
 					{
-						engine->scriptFunctions[ot->beh.factory]->Release();
 						ot->beh.factory = func->id;
 						ot->beh.factories[0] = func->id;
 						func->AddRef();
+					}
+					else
+					{
+						ot->beh.factory = 0;
+						ot->beh.factories.PopLast();
 					}
 				}
 
@@ -1186,6 +1207,11 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							func->AddRef();
 						}
 					}
+					else
+					{
+						// TODO: Write message
+						error = true;
+					}
 
 					func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
 					if( func )
@@ -1224,6 +1250,11 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							ot->beh.factories.PushLast(func->id);
 							func->AddRef();
 						}
+					}
+					else
+					{
+						// TODO: Write message
+						error = true;
 					}
 				}
 			}
@@ -1271,6 +1302,11 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						func->AddRef();
 					}
 				}
+				else
+				{
+					// TODO: Write message
+					error = true;
+				}
 			}
 
 			// virtualFunctionTable[]
@@ -1314,6 +1350,11 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						ot->virtualFunctionTable.PushLast(func);
 						func->AddRef();
 					}
+				}
+				else
+				{
+					// TODO: Write message
+					error = true;
 				}
 			}
 		}

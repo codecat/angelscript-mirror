@@ -414,6 +414,7 @@ public:
 		bool expandDefaultArrayToTemplate;
 		bool autoGarbageCollect;
 		bool disallowGlobalVars;
+		bool alwaysImplDefaultConstruct;
 	} ep;
 };
 

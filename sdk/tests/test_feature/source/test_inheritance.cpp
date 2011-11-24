@@ -66,6 +66,7 @@ bool Test()
 		"    Base::f3();                                     \n"
 		"    assert(a == 3);                                 \n"
 		"  }                                                 \n"
+		"  Derived() {} \n"
 		"  Derived(int) { derivedConstructorCalled = true; } \n"
 		"  ~Derived() { derivedDestructorCalled = true; }    \n"
 		"}                                                \n"

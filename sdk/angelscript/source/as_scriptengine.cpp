@@ -295,6 +295,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.disallowGlobalVars = value ? true : false;
 		break;
 
+	case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
+		ep.alwaysImplDefaultConstruct = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -356,6 +360,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_DISALLOW_GLOBAL_VARS:
 		return ep.disallowGlobalVars;
+
+	case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
+		return ep.alwaysImplDefaultConstruct;
 	}
 
 	return 0;
@@ -400,6 +407,8 @@ asCScriptEngine::asCScriptEngine()
 		ep.expandDefaultArrayToTemplate = false;
 		ep.autoGarbageCollect           = true;
 		ep.disallowGlobalVars           = false;
+		// TODO: the default should be false
+		ep.alwaysImplDefaultConstruct   = true;
 	}
 
 	gc.engine = this;
@@ -950,7 +959,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 
 	// Is this a script class?
 	if( ot->flags & asOBJ_SCRIPT_OBJECT && ot->size > 0 )
-		mod = scriptFunctions[ot->beh.factory]->module;
+		mod = scriptFunctions[ot->beh.factories[0]]->module;
 
 	asCBuilder bld(this, mod);
 

@@ -47,6 +47,7 @@ bool Test()
 			"    T d; \n" // Calling the global factory as a shared function
 			"    return d; \n" 
 			"  } \n"
+			"  T() {} \n"
 			"  T(int a) \n"
 			"  { \n"
 			"     var = a; \n" // Constructor of shared class must not access non-shared code
@@ -66,9 +67,9 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 ) 
 			TEST_FAILED;
-		if( bout.buffer != "a (30, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
+		if( bout.buffer != "a (31, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (3, 25) : Error   : Shared class cannot implement non-shared interface 'badIntf'\n"
-						   "a (32, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
+						   "a (33, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
 						   "a (5, 3) : Info    : Compiling void T::test()\n"
 						   "a (7, 5) : Error   : Shared code cannot access non-shared global variable 'var'\n"
 						   "a (8, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
@@ -79,8 +80,8 @@ bool Test()
 						   "a (18, 5) : Error   : Shared code cannot use non-shared type 'nonShared'\n"
 						   "a (18, 5) : Error   : Shared code cannot call non-shared function 'nonShared@ nonShared()'\n"
 						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"
-						   "a (26, 3) : Info    : Compiling T::T(int)\n"
-		                   "a (28, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n" )
+						   "a (27, 3) : Info    : Compiling T::T(int)\n"
+		                   "a (29, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
