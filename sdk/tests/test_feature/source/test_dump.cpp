@@ -297,7 +297,6 @@ void DumpModule(asIScriptModule *mod)
 		" void a(int)\n"
 		" float f\n"
 		"type: class B : A, I\n"
-		" B@ B()\n"
 		" B@ B(int)\n"
 		" void i(float)\n"
 		" void a(int)\n"

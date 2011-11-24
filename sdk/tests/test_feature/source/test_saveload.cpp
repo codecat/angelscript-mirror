@@ -350,7 +350,7 @@ bool Test()
 	}
 
 	asUINT zeroes = stream.CountZeroes();
-	if( (sizeof(void*) == 4 && zeroes != 484) /* ||
+	if( (sizeof(void*) == 4 && zeroes != 482) /* ||
 		(sizeof(void*) == 8 && zeroes != 609) */ )
 	{
 		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);

@@ -903,12 +903,10 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			// behaviours
 			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
-				WriteFunction(engine->scriptFunctions[ot->beh.construct]);
 				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
-				WriteFunction(engine->scriptFunctions[ot->beh.factory]);
-				size = (int)ot->beh.constructors.GetLength() - 1;
+				size = (int)ot->beh.constructors.GetLength();
 				WriteEncodedUInt(size);
-				for( n = 1; n < ot->beh.constructors.GetLength(); n++ )
+				for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 				{
 					WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
 					WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
@@ -960,6 +958,10 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 
 		// Use the default script class behaviours
 		ot->beh = engine->scriptTypeBehaviours.beh;
+		ot->beh.construct = 0;
+		ot->beh.factory = 0;
+		ot->beh.constructors.PopLast(); // These will be read from the file
+		ot->beh.factories.PopLast(); // These will be read from the file
 		engine->scriptFunctions[ot->beh.addref]->AddRef();
 		engine->scriptFunctions[ot->beh.release]->AddRef();
 		engine->scriptFunctions[ot->beh.gcEnumReferences]->AddRef();
@@ -968,8 +970,6 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 		engine->scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRef();
 		engine->scriptFunctions[ot->beh.gcSetFlag]->AddRef();
 		engine->scriptFunctions[ot->beh.copy]->AddRef();
-		engine->scriptFunctions[ot->beh.factory]->AddRef();
-		engine->scriptFunctions[ot->beh.construct]->AddRef();
 		for( asUINT i = 1; i < ot->beh.operators.GetLength(); i += 2 )
 			engine->scriptFunctions[ot->beh.operators[i]]->AddRef();
 	}
@@ -1041,51 +1041,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			// behaviours
 			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
-				// For existing types we don't want to make any updates
 				asCScriptFunction *func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
-				if( sharedExists )
-				{
-					// Find the real function in the object, and update the savedFunctions array
-					asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.construct);
-					if( (realFunc == 0 && func == 0) || realFunc->IsSignatureEqual(func) )
-					{
-						// If the function is not the last, then the substitution has already occurred before
-						if( func && savedFunctions[savedFunctions.GetLength()-1] == func )
-							savedFunctions[savedFunctions.GetLength()-1] = realFunc;
-					}
-					else
-					{
-						// TODO: Write message
-						error = true;
-					}
-					// Destroy the function without releasing any references
-					if( func )
-					{
-						func->id = 0;
-						func->byteCode.SetLength(0);
-						func->Release();
-						module->scriptFunctions.PushLast(realFunc);
-						realFunc->AddRef();
-						dontTranslate.Insert(realFunc, true);
-					}
-				}
-				else 
-				{
-					engine->scriptFunctions[ot->beh.construct]->Release();
-					if( func )
-					{
-						ot->beh.construct = func->id;
-						ot->beh.constructors[0] = func->id;
-						func->AddRef();
-					}
-					else
-					{
-						ot->beh.construct = 0;
-						ot->beh.constructors.PopLast();
-					}
-				}
-
-				func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
 				if( sharedExists )
 				{
 					// Find the real function in the object, and update the savedFunctions array
@@ -1121,49 +1077,6 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					else
 						ot->beh.destruct = 0;
-				}
-
-				func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
-				if( sharedExists )
-				{
-					// Find the real function in the object, and update the savedFunctions array
-					asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.factory);
-					if( (realFunc == 0 && func == 0) || realFunc->IsSignatureEqual(func) )
-					{
-						// If the function is not the last, then the substitution has already occurred before
-						if( func && savedFunctions[savedFunctions.GetLength()-1] == func )
-							savedFunctions[savedFunctions.GetLength()-1] = realFunc;
-					}
-					else
-					{
-						// TODO: Write message
-						error = true;
-					}
-					// Destroy the function without releasing any references
-					if( func )
-					{
-						func->id = 0;
-						func->byteCode.SetLength(0);
-						func->Release();
-						module->scriptFunctions.PushLast(realFunc);
-						realFunc->AddRef();
-						dontTranslate.Insert(realFunc, true);
-					}
-				}
-				else
-				{
-					engine->scriptFunctions[ot->beh.factory]->Release();
-					if( func )
-					{
-						ot->beh.factory = func->id;
-						ot->beh.factories[0] = func->id;
-						func->AddRef();
-					}
-					else
-					{
-						ot->beh.factory = 0;
-						ot->beh.factories.PopLast();
-					}
 				}
 
 				size = ReadEncodedUInt();
@@ -1205,6 +1118,9 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						{
 							ot->beh.constructors.PushLast(func->id);
 							func->AddRef();
+
+							if( func->parameterTypes.GetLength() == 0 )
+								ot->beh.construct = func->id;
 						}
 					}
 					else
@@ -1249,6 +1165,9 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						{
 							ot->beh.factories.PushLast(func->id);
 							func->AddRef();
+
+							if( func->parameterTypes.GetLength() == 0 )
+								ot->beh.factory = func->id;
 						}
 					}
 					else

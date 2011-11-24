@@ -739,11 +739,11 @@ SOURCE=..\..\..\..\add_on\scriptmath\scriptmath.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp
+SOURCE=..\..\source\scriptmath3d.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptmath3d\scriptmath3d.h
+SOURCE=..\..\source\scriptmath3d.h
 # End Source File
 # Begin Source File
 

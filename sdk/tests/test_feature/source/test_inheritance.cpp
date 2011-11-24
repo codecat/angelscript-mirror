@@ -324,10 +324,10 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 
 	asUINT gcSize;
 	engine->GetGCStatistics(&gcSize);
-	assert( gcSize == 128 || gcSize == 65 ); // The object types and script functions are also garbage collected
+	assert( gcSize == 124 || gcSize == 63 ); // The object types and script functions are also garbage collected
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcSize);
-	assert( gcSize == 126 || gcSize == 63 );
+	assert( gcSize == 122 || gcSize == 61 );
 
 	// Test that the derived class inherits the interfaces that the base class implements
 	r = ExecuteString(engine, "Intf @a; Derived b; @a = @b;", mod);

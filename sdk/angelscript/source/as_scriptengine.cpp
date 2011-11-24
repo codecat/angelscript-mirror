@@ -407,8 +407,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.expandDefaultArrayToTemplate = false;
 		ep.autoGarbageCollect           = true;
 		ep.disallowGlobalVars           = false;
-		// TODO: the default should be false
-		ep.alwaysImplDefaultConstruct   = true;
+		ep.alwaysImplDefaultConstruct   = false;
 	}
 
 	gc.engine = this;
