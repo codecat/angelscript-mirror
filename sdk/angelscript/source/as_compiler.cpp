@@ -1128,7 +1128,7 @@ void asCCompiler::FinalizeFunction()
 	outFunc->lineNumbers = byteCode.lineNumbers;
 }
 
-void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType)
+void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, bool isMakingCopy)
 {
 	asCDataType param = *paramType;
 	if( paramType->GetTokenType() == ttQuestion )
@@ -1187,15 +1187,18 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				IsVariableInitialized(&ctx->type, node);
 
-				ImplicitConversion(ctx, param, node, asIC_IMPLICIT_CONV, true);
-
-				if( !ctx->type.dataType.IsEqualExceptRef(param) )
+				if( !isMakingCopy )
 				{
-					asCString str;
-					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), param.Format().AddressOf());
-					Error(str.AddressOf(), node);
+					ImplicitConversion(ctx, param, node, asIC_IMPLICIT_CONV, true);
 
-					ctx->type.Set(param);
+					if( !ctx->type.dataType.IsEqualExceptRef(param) )
+					{
+						asCString str;
+						str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), param.Format().AddressOf());
+						Error(str.AddressOf(), node);
+
+						ctx->type.Set(param);
+					}
 				}
 
 				// If the argument already is a temporary
@@ -1203,7 +1206,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				// If the parameter is read-only and the object already is a local
 				// variable then it is not necessary to make a copy either
-				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
+				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) && !isMakingCopy )
 				{
 					// Make sure the variable is not used in the expression
 					offset = AllocateVariableNotIn(dt, true, false, ctx);
@@ -1247,6 +1250,14 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					if( paramType->IsReadOnly() )
 						ctx->type.dataType.MakeReadOnly(true);
+				}
+				else if( isMakingCopy )
+				{
+					// We must guarantee that the address to the value is on the stack
+					if( ctx->type.dataType.IsObject() && 
+						!ctx->type.dataType.IsObjectHandle() && 
+						ctx->type.dataType.IsReference() )
+						Dereference(ctx, true);
 				}
 			}
 		}
@@ -1421,11 +1432,16 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		// &inout parameter may leave the reference on the stack already
 		if( refType != 3 )
 		{
-			ctx->bc.Pop(AS_PTR_SIZE);
-			ctx->bc.InstrSHORT(asBC_VAR, ctx->type.stackOffset);
-		}
+			asASSERT( ctx->type.isVariable || ctx->type.isTemporary || isMakingCopy );
 
-		ProcessDeferredParams(ctx);
+			if( ctx->type.isVariable || ctx->type.isTemporary )
+			{
+				ctx->bc.Pop(AS_PTR_SIZE);
+				ctx->bc.InstrSHORT(asBC_VAR, ctx->type.stackOffset);
+
+				ProcessDeferredParams(ctx);
+			}
+		}
 	}
 }
 
@@ -1433,6 +1449,15 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSE
 {
 	// When a match has been found, compile the final byte code using correct parameter types
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
+
+	// If the function being called is the opAssign or copy constructor for the same type
+	// as the argument, then we should avoid making temporary copy of the argument
+	bool makingCopy = false;
+	if( descr->parameterTypes.GetLength() == 1 &&
+		descr->parameterTypes[0].IsEqualExceptRefAndConst(args[0]->type.dataType) &&
+		((descr->name == "opAssign" && descr->objectType && descr->objectType == args[0]->type.dataType.GetObjectType()) ||
+		 (args[0]->type.dataType.GetObjectType() && descr->name == args[0]->type.dataType.GetObjectType()->name)) )
+		makingCopy = true;
 
 	// Add code for arguments
 	asSExprContext e(engine);
@@ -1444,7 +1469,7 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSE
 		for( int m = n-1; m >= 0; m-- )
 			args[m]->bc.GetVarsUsed(reservedVariables);
 
-		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n]);
+		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n], makingCopy);
 		reservedVariables.SetLength(l);
 	}
 
@@ -1465,6 +1490,15 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 		offset += AS_PTR_SIZE;
 #endif
 
+	// If the function being called is the opAssign or copy constructor for the same type
+	// as the argument, then we should avoid making temporary copy of the argument
+	bool makingCopy = false;
+	if( descr->parameterTypes.GetLength() == 1 &&
+		descr->parameterTypes[0].IsEqualExceptRefAndConst(args[0]->type.dataType) &&
+		((descr->name == "opAssign" && descr->objectType && descr->objectType == args[0]->type.dataType.GetObjectType()) ||
+		 (args[0]->type.dataType.GetObjectType() && descr->name == args[0]->type.dataType.GetObjectType()->name)) )
+		makingCopy = true;
+
 	// Move the objects that are sent by value to the stack just before the call
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
@@ -1474,13 +1508,17 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
 				{
-					if( (args[n]->type.isVariable || args[n]->type.isTemporary) &&
-						!IsVariableOnHeap(args[n]->type.stackOffset) )
-						// TODO: optimize: Actually the reference can be pushed on the stack directly
-						//                 as the value allocated on the stack is guaranteed to be safe
-						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
-					else
-						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					asASSERT( args[n]->type.isVariable || args[n]->type.isTemporary || makingCopy );
+
+					if( (args[n]->type.isVariable || args[n]->type.isTemporary) )
+					{
+						if( !IsVariableOnHeap(args[n]->type.stackOffset) )
+							// TODO: optimize: Actually the reference can be pushed on the stack directly
+							//                 as the value allocated on the stack is guaranteed to be safe
+							bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+						else 
+							bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					}
 				}
 				if( args[n]->type.dataType.IsObjectHandle() )
 					bc->InstrWORD(asBC_ChkNullS, (asWORD)offset);
@@ -8954,7 +8992,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 	return (int)matches.GetLength();
 }
 
-void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType)
+void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)
 {
 	// Reference parameters whose value won't be used don't evaluate the expression
 	if( paramType->IsReference() && !(refType & asTM_INREF) )
@@ -8965,7 +9003,8 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 		arg->origExpr = orig;
 	}
 
-	PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType);
+	PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType, isMakingCopy);
+
 	// arg still holds the original expression for output parameters
 	ctx->bc.AddCode(&arg->bc);
 }

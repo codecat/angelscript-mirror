@@ -2169,11 +2169,12 @@ bool Test9()
 class Variant 
 {
 public:
-	Variant() {}
-	Variant(const Variant &other) {}
-	~Variant() {}
+	Variant() {val = "test";}
+	Variant(const Variant &other) {val = other.val;}
+	~Variant() {val = "deleted";}
 	Variant &operator=(const Variant &other) {return *this;}
-	const std::string &GetString() const {static std::string dummy("test"); return dummy;}
+	const std::string &GetString() const {return val;}
+	std::string val;
 };
 
 static void ConstructVariant(Variant *self)
@@ -2238,9 +2239,6 @@ bool TestRetRef()
 								  "  string str = node.GetAttribute().GetString(); // Get its first attribute as a string \n"
 								  "  assert( str == 'test' ); \n"
 								  "} \n");
-	// TODO: optimize: In this example, the returned string is first copied to a temporary variable, 
-	//                 then the temporary variable is used to initialize the official variable. The compiler
-	//                 should be modified to initialize the official variable directly with the returned string.
 	r = mod->Build();
 	if( r < 0 )
 		TEST_FAILED;

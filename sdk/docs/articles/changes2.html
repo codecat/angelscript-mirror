@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.1 WIP - 2011/11/23</h2>
+<h2>Version 2.22.1 WIP - 2011/11/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved compiler performance when scripts have a lot of literal string contants (Thanks vroad)
 <li>Optimized the algorithm for tokenizing the script, which will provide a significant performance improvement when compiling large scripts (Thanks m4ttbush)
 <li>Added asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT to allow application to force the automatic implementation of default constructor and opAssign
+<li>The compiler now avoids creating unecessary temporary copies of objects when calling opAssign or copy constructor for the same type
 </ul>
 <li>Script language
 <ul>
