@@ -3069,16 +3069,26 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	else
 	{
 		// Allocate and construct the temporary object
-		CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, node);
+		int r = CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, node);
+		if( r < 0 )
+		{
+			Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
+		}
+		else
+		{
+			// Assign the object to the temporary variable
+			PrepareForAssignment(&lvalue.dataType, ctx, node, true);
 
-		// Assign the object to the temporary variable
-		PrepareForAssignment(&lvalue.dataType, ctx, node, true);
+			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+			r = PerformAssignment(&lvalue, &ctx->type, &ctx->bc, node);
+			if( r < 0 )
+			{
+				Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
+			}
 
-		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-		PerformAssignment(&lvalue, &ctx->type, &ctx->bc, node);
-
-		// Pop the original reference
-		ctx->bc.Pop(AS_PTR_SIZE);
+			// Pop the original reference
+			ctx->bc.Pop(AS_PTR_SIZE);
+		}
 	}
 
 	// If the expression was holding off on releasing a
@@ -3774,10 +3784,13 @@ bool asCCompiler::IsLValue(asCTypeInfo &type)
 	return true;
 }
 
-void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asCByteCode *bc, asCScriptNode *node)
+int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asCByteCode *bc, asCScriptNode *node)
 {
 	if( lvalue->dataType.IsReadOnly() )
+	{
 		Error(TXT_REF_IS_READ_ONLY, node);
+		return -1;
+	}
 
 	if( lvalue->dataType.IsPrimitive() )
 	{
@@ -3809,7 +3822,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		else
 		{
 			Error(TXT_NOT_VALID_LVALUE, node);
-			return;
+			return -1;
 		}
 	}
 	else if( !lvalue->isExplicitHandle )
@@ -3840,6 +3853,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 				asCString msg;
 				msg.Format(TXT_NO_DEFAULT_COPY_OP_FOR_s, lvalue->dataType.GetObjectType()->name.AddressOf());
 				Error(msg.AddressOf(), node);
+				return -1;
 			}
 
 			// Copy larger data types from a reference
@@ -3852,7 +3866,7 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 		if( !lvalue->dataType.IsReference() )
 		{
 			Error(TXT_NOT_VALID_REFERENCE, node);
-			return;
+			return -1;
 		}
 
 		// TODO: optimize: Convert to register based
@@ -3865,6 +3879,8 @@ void asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, as
 			if( v ) v->isInitialized = true;
 		}
 	}
+
+	return 0;
 }
 
 bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, asCScriptNode *node, bool generateCode)

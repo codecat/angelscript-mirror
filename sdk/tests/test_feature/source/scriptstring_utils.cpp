@@ -18,7 +18,8 @@ static void StringSubString_Generic(asIScriptGeneric *gen)
     int start = *(int*)gen->GetAddressOfArg(1);
     int count = *(int*)gen->GetAddressOfArg(2);
 
-	// TODO: It's necessary to check for out-of-bounds
+	// We really should be checking for out-of-bounds situations, but I won't spend more time on this code
+
     // Create the substring
     CScriptString *sub = new CScriptString();
     sub->buffer = str->buffer.substr(start,count);
@@ -181,8 +182,6 @@ static void StringSplit_Generic(asIScriptGeneric *gen)
     asIScriptContext *ctx = asGetActiveContext();
     asIScriptEngine *engine = ctx->GetEngine();
 
-    // TODO: This should only be done once
-	// TODO: This assumes that CScriptArray was already registered
 	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
 
     // Create the array object
@@ -255,27 +254,6 @@ static void StringJoin_Generic(asIScriptGeneric *gen)
     // Return the string
     *(CScriptString**)gen->GetAddressOfReturnLocation() = str;
 }
-
-
-
-// TODO: Implement the following functions
-//
-//       int64    parseInt(const string &in str, int &out bytesParsed);
-//       double   parseDouble(const string &in str, int &out bytesParsed);
-//       string @ formatString(int64, const string &in format);  // should use sprintf to format the string
-//       string @ formatDouble(double, const string &in format); 
-//
-//       int16    byteStringToInt16(const string &in str, int start);
-//       int32    byteStringToInt32(const string &in str, int start);
-//       int64    byteStringtoInt64(const string &in str, int start);
-//       float    byteStringToFloat(const string &in str, int start);
-//       double   byteStringToDouble(const string &in str, int start);
-//       string @ int16ToByteString(int16);
-//       string @ int32ToByteString(int32);
-//       string @ int64ToByteString(int64);
-//       string @ floatToByteString(float);
-//       string @ doubleToByteString(double);
-
 
 
 

@@ -255,7 +255,7 @@ bool Test()
 					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n"
 					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n"
 					   "script (1, 34) : Error   : No default constructor for object of type 'ref'.\n"
-					   "script (1, 34) : Error   : There is no copy operator for the type 'ref' available.\n" )
+					   "script (1, 34) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
