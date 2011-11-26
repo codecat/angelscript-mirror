@@ -2163,8 +2163,9 @@ bool Test9()
 }
 
 //////////////////////////////
-// AgentC reported a crash
+// AgentC reported problems
 // http://www.gamedev.net/topic/614727-crash-with-temporary-value-types-and-unsafe-references/
+// http://www.gamedev.net/topic/615762-assert-failures-of-unfreed-temp-variables/page__gopid__4887763#entry4887763
 
 class Variant 
 {
@@ -2173,6 +2174,7 @@ public:
 	Variant(const Variant &other) {val = other.val;}
 	~Variant() {val = "deleted";}
 	Variant &operator=(const Variant &other) {return *this;}
+	Variant &operator=(int v) {return *this;}
 	const std::string &GetString() const {return val;}
 	std::string val;
 };
@@ -2192,6 +2194,23 @@ static void DestructVariant(Variant *self)
 	self->~Variant();
 }
 
+class VariantMap
+{
+public:
+	Variant var;
+	Variant &opIndex(const string &) { return var; }
+};
+
+static void ConstructVariantMap(VariantMap *self)
+{
+	new(self) VariantMap();
+}
+
+static void DestructVariantMap(VariantMap *self)
+{
+	self->~VariantMap();
+}
+
 class Node
 {
 public:
@@ -2200,11 +2219,18 @@ public:
 	void Release() {if( --refCount == 0 ) delete this;}
 	Variant GetAttribute() {return Variant();}
 	int refCount;
+	VariantMap vars;
 };
 
 static Node *NodeFactory()
 {
 	return new Node();
+}
+
+static Node *g_node = 0;
+Node *GetGlobalNode()
+{
+	return g_node;
 }
 
 bool TestRetRef()
@@ -2224,18 +2250,27 @@ bool TestRetRef()
 	engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructVariant), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("Variant", "const string& GetString() const", asMETHOD(Variant, GetString), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", asMETHODPR(Variant, operator =, (const Variant&), Variant&), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Variant", "Variant& opAssign(int)", asMETHODPR(Variant, operator =, (int), Variant&), asCALL_THISCALL);
+
+	engine->RegisterObjectType("VariantMap", sizeof(VariantMap), asOBJ_VALUE | asOBJ_APP_CLASS_CD);
+	engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructVariantMap), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructVariantMap), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("VariantMap", "Variant &opIndex(const string &in)", asMETHODPR(VariantMap, opIndex, (const string &), Variant&), asCALL_THISCALL);
 
 	engine->RegisterObjectType("Node", 0, asOBJ_REF);
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_FACTORY, "Node @f()", asFUNCTION(NodeFactory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_ADDREF, "void f()", asMETHOD(Node, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", asMETHOD(Node, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", asMETHODPR(Node, GetAttribute, (), Variant), asCALL_THISCALL);
+	engine->RegisterObjectProperty("Node", "VariantMap vars", asOFFSET(Node, vars));
+	
+	engine->RegisterGlobalFunction("Node@+ get_node()", asFUNCTION(GetGlobalNode), asCALL_CDECL);
+	g_node = NodeFactory();
 
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", "void f() { \n"
-								  "  Node@ node = Node(); // Create a dummy scene node \n"
 								  "  string str = node.GetAttribute().GetString(); // Get its first attribute as a string \n"
 								  "  assert( str == 'test' ); \n"
 								  "} \n");
@@ -2253,7 +2288,29 @@ bool TestRetRef()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
+	// Test for assert failures
+	mod->AddScriptSection("test", "class GameObject { \n"
+		                          "  int health; \n"
+								  "  GameObject() { \n"
+								  "    health = 10; \n"
+                                  "  } \n"
+								  "  void Update(float deltaTime) { \n"
+								  "    node.vars['Health'] = health; \n" // This will cause unfreed temp variable of type Node@
+                                  "  } \n"
+                                  "} \n");
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
 	engine->Release();
+	g_node->Release();
 
 	return fail;
 }

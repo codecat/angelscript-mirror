@@ -10861,6 +10861,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		deferred.argType.SetVariable(ctx->type.dataType, tempRef, true);
 
 		ctx->deferredParams.PushLast(deferred);
+
+		// Forget the current type
+		ctx->type.SetDummy();
 	}
 
 	if( isConstructor )
@@ -10973,8 +10976,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 		// If the context holds a variable that needs cleanup
 		// store it as a deferred parameter so it will be cleaned up 
-		// afterwards. Here we must clear such things as isTemporary 
-		// and stackOffset as we have no idea were the reference is coming from
+		// afterwards. 
 		if( ctx->type.isTemporary )
 		{
 			asSDeferredParam defer;
@@ -10984,9 +10986,6 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			defer.origExpr = 0;
 			ctx->deferredParams.PushLast(defer);
 		}
-
-		ctx->type.isVariable = false;
-		ctx->type.isTemporary = false;
 
 		ctx->type.Set(descr->returnType);
 		if( !descr->returnType.IsPrimitive() )
