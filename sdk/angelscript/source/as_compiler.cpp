@@ -7321,8 +7321,8 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				if( !expr->type.isConstant || expr->type.IsNullConstant() )
 					ctx->bc.Pop(expr->type.dataType.GetSizeOnStackDWords());
 
-				// Give a warning, except if the argument is null which indicate the argument is really to be ignored
-				if( !expr->type.IsNullConstant() )
+				// Give a warning, except if the argument is null or 0 which indicate the argument is really to be ignored
+				if( !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
 					Warning(TXT_ARG_NOT_LVALUE, outParam.argNode);
 
 				ReleaseTemporaryVariable(outParam.argType, &ctx->bc);

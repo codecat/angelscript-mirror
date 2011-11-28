@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.1 WIP - 2011/11/25</h2>
+<h2>Version 2.22.1 WIP - 2011/11/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added 'final' and 'override' keywords for improved control on how inheritance is implemented (Thanks InvalidPointer)
 <li>Implemented an alternative shorter version for declaring get and set property accessors (Thanks InvalidPointer)
 <li>Default constructor and opAssign is no longer implemented automatically if the script class has a non-default constructor
+<li>The compiler no longer warns if 0 is passed to an output parameter, as it then assumes the result is meant to be ignored
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
@@ -48,7 +49,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compilation error in CScriptBuilder when turning off metadata (Thanks Philip Bennefall)
 <li>Removed scriptmath3d.cpp as a standard add-on
 <li>Fixed some compiler warnings in CScriptFile add-on
-<li>Implemented formatInt() and formatFloat() as string utilities
+<li>Implemented formatInt(), formatFloat(), parseInt(), and parseFloat() as string utilities
+<li>Added property accessors for length on the string registration
 </ul>
 </ul>
 
