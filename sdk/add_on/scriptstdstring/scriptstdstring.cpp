@@ -2,6 +2,7 @@
 #include <sstream>
 #include "scriptstdstring.h"
 #include <string.h> // strstr
+#include <stdio.h>
 
 using namespace std;
 
