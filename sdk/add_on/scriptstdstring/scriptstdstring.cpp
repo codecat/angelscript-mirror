@@ -1,8 +1,10 @@
-#include <assert.h>
-#include <sstream>
 #include "scriptstdstring.h"
-#include <string.h> // strstr
-#include <stdio.h>
+#include <assert.h> // assert()
+#include <sstream>  // std::stringstream
+#include <string.h> // strstr()
+#include <stdio.h>	// sprintf()
+#include <stdlib.h> // strtod()
+#include <locale.h> // setlocale()
 
 using namespace std;
 
