@@ -273,7 +273,7 @@ public:
 	void SetScriptFunction(asCScriptFunction *func);
 	void FreeScriptFunctionId(int id);
 
-	int ConfigError(int err);
+	int ConfigError(int err, const char *funcName, const char *arg1, const char *arg2);
 
 	int                GetTypeIdFromDataType(const asCDataType &dt) const;
 	const asCDataType *GetDataTypeFromTypeId(int typeId) const;

@@ -59,16 +59,24 @@ bool Test()
 	if( !engine->GetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES) )
 	{
 		if( bout.buffer != "System function (1, 11) : Error   : Identifier 'mytype' is not a data type\n"
+			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(mytype)'\n"
 						   "System function (1, 15) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(int &)'\n"
 						   "System function (1, 8) : Error   : Identifier 'othertype' is not a data type\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'mytype' and 'void f(othertype)'\n"
 						   "System function (1, 1) : Error   : Identifier 'type' is not a data type\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'mytype' and 'type opAdd(int) const'\n"
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with 'type a'\n"
 						   "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'mytype' and 'void method(int &)'\n"
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type\n"
-						   " (1, 1) : Error   : Identifier 'type' is not a data type\n" )
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'mytype' and 'type a'\n"
+						   " (1, 1) : Error   : Identifier 'type' is not a data type\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterStringFactory' with 'type'\n" )
 		{
-			TEST_FAILED;
 			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
 		}
 	}
 	else

@@ -31,7 +31,8 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
 		TEST_FAILED;
-	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n" )
+	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
+		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -48,7 +49,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'gc' is missing behaviours\n"
 		               " (0, 0) : Info    : A garbage collected type must have the addref, release, and all gc behaviours\n"
-		               " (0, 0) : Error   : Invalid configuration\n" )
+		               " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -70,8 +71,11 @@ bool Test()
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'void f()'\n"
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : The behaviour is not compatible with the type\n" )
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'void f()'\n"
+					   " (0, 0) : Error   : The behaviour is not compatible with the type\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'int f()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -90,7 +94,8 @@ bool Test()
 	r = engine->RegisterGlobalFunction("ref f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "" )
+	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(ref)'\n"
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref f()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -125,7 +130,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'ref' is missing behaviours\n"
 		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
-		               " (0, 0) : Error   : Invalid configuration\n" )
+		               " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -145,8 +150,11 @@ bool Test()
 		TEST_FAILED;
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref @f()", asFUNCTION(0), asCALL_GENERIC);
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
+		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   "System function (1, 5) : Error   : Object handle is not supported for this type\n")
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+					   "System function (1, 5) : Error   : Object handle is not supported for this type\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'ref @f()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -203,7 +211,7 @@ bool Test()
 					   " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Type 'val2' is missing behaviours\n"
 					   " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
-					   " (0, 0) : Error   : Invalid configuration\n" )
+					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -228,7 +236,7 @@ bool Test()
 					   " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 					   " (0, 0) : Error   : Type 'ref2' is missing behaviours\n"
 					   " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
-					   " (0, 0) : Error   : Invalid configuration\n" )
+					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -297,7 +305,8 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 5) : Error   : Object handle is not supported for this type\n"
 	                   "ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
-	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n" )
+	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -326,7 +335,7 @@ bool Test()
 			               " (0, 0) : Error   : Can't return type 'test1' by value unless the application type is informed in the registration\n"
                            " (0, 0) : Info    : void f(test1)\n"
 		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
-						   " (0, 0) : Error   : Invalid configuration\n" &&
+						   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" &&
 			// The errors are slightly different on 64bit Linux
 			bout.buffer != " (0, 0) : Info    : test1 f()\n"
 			               " (0, 0) : Error   : Can't return type 'test1' by value unless the application type is informed in the registration\n"
@@ -334,7 +343,7 @@ bool Test()
 		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
 						   " (0, 0) : Info    : void f(test1)\n"
 						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application. Use generic calling convention instead\n"
-						   " (0, 0) : Error   : Invalid configuration\n" )
+						   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -526,7 +535,8 @@ bool TestRefScoped()
 	bout.buffer = "";
 	r = engine->RegisterGlobalFunction("void f(scoped@)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n" )
+	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n"
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped@)'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -536,7 +546,8 @@ bool TestRefScoped()
 	bout.buffer = "";
 	r = engine->RegisterGlobalFunction("void f(scoped&)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
+	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped&)'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

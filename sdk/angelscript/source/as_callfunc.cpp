@@ -156,7 +156,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 			asCString str;
 			str.Format(TXT_CANNOT_RET_TYPE_s_BY_VAL, func->returnType.GetObjectType()->name.AddressOf());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-			engine->ConfigError(asINVALID_CONFIGURATION);
+			engine->ConfigError(asINVALID_CONFIGURATION, 0, 0, 0);
 		}
 		else if( objType & asOBJ_APP_CLASS )
 		{
@@ -306,7 +306,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				asCString str;
 				str.Format(TXT_CANNOT_PASS_TYPE_s_BY_VAL, func->parameterTypes[n].GetObjectType()->name.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				engine->ConfigError(asINVALID_CONFIGURATION);
+				engine->ConfigError(asINVALID_CONFIGURATION, 0, 0, 0);
 			}
 
 
@@ -324,7 +324,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				asCString str;
 				str.Format(TXT_DONT_SUPPORT_TYPE_s_BY_VAL, func->parameterTypes[n].GetObjectType()->name.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				engine->ConfigError(asINVALID_CONFIGURATION);
+				engine->ConfigError(asINVALID_CONFIGURATION, 0, 0, 0);
 			}
 #endif
 			break;

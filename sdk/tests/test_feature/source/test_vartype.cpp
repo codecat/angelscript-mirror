@@ -119,13 +119,22 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
-                       "script (1, 14) : Error   : Expected expression value\n" ) TEST_FAILED;
+                       "script (1, 14) : Error   : Expected expression value\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 
 	// It must not be possible to register global properties of the var type ?
 	r = engine->RegisterGlobalProperty("? prop", 0);
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n" ) TEST_FAILED;
+	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with '? prop'\n" ) 
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 	engine->Release();
 
@@ -135,7 +144,12 @@ bool Test()
 	r = engine->RegisterObjectType("test", 0, asOBJ_REF); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("test", "? prop", 0);
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n" ) TEST_FAILED;
+	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
+		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'test' and '? prop'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 	engine->Release();
 
@@ -148,7 +162,11 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 10) : Error   : Expected method or property\n"
-		               "script (1, 19) : Error   : Unexpected token '}'\n" ) TEST_FAILED;
+		               "script (1, 19) : Error   : Unexpected token '}'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 	
 	// It must not be possible to declare script functions that take the var type ? as parameter 
@@ -156,7 +174,11 @@ bool Test()
 	mod->AddScriptSection("script", script4);
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "script (1, 11) : Error   : Expected data type\n" ) TEST_FAILED;
+	if( bout.buffer != "script (1, 11) : Error   : Expected data type\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 
 	// It must not be possible to declare script functions that return the var type ?
@@ -207,7 +229,12 @@ bool Test()
 	// It must not be possible to register functions that return the var type ?
 	r = engine->RegisterGlobalFunction("? testFunc()", asFUNCTION(testFuncI), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "System function (1, 1) : Error   : Expected data type\n" ) TEST_FAILED;
+	if( bout.buffer != "System function (1, 1) : Error   : Expected data type\n"
+		               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with '? testFunc()'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 	engine->Release();
 

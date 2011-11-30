@@ -253,10 +253,11 @@ bool TestGlobalVar()
 		int r = engine->RegisterGlobalProperty("const int value = 3345;", 0);
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n" )
+		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n"
+			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with 'const int value = 3345;'\n" )
 		{
-			TEST_FAILED;
 			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
 		}
 		engine->Release();
 	}

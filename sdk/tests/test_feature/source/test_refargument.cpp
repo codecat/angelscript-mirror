@@ -210,8 +210,12 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
+		if( bout.buffer != "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" 
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(float &)'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
+		}
 
 		engine->Release();
 	}
