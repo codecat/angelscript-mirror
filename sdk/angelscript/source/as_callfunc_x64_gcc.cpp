@@ -149,7 +149,7 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asQWORD *args, 
 		: "%rax", "%r15", "%rsp");
 
 	// Push the stack parameters
-	for ( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; cnt-- > 0; i++ )
+	for( i = MAX_CALL_INT_REGISTERS + MAX_CALL_SSE_REGISTERS; cnt-- > 0; i++ )
 		PUSH_LONG( args[i] );
 
 	// Populate integer and floating point parameters
@@ -170,9 +170,12 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asQWORD *args, 
 		"  movsd 48(%%rax), %%xmm6 \n"
 		"  movsd 56(%%rax), %%xmm7 \n"
 		: 
-		: "a" (args) 
+		: "a" (args) // Pass args in rax
 		: "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7", 
-		  "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%9");
+		  "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9", 
+		  // rsp and r15 is added too so the compiler doesn't try to use
+		  // them to store anything over this piece of assembly
+		  "%rsp", "%r15"); 
 		
 	// call the function with the arguments
 	retval = call();

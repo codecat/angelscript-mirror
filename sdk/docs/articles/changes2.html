@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.1 WIP - 2011/11/30</h2>
+<h2>Version 2.22.1 WIP - 2011/12/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with returning reference from temporary value type on stack (Thanks AgentC)
 <li>Fixed assert failure on compilation error involving get_opIndex (Thanks Philip Bennefall)
 <li>Fixed bug where a temporary variable was improperly reused under certain situations (Thanks Philip Bennefall)
+<li>Fixed bug in native calling conventions for 64bit gnuc that was causing crashes on Mac OS X (Thanks dutt)
 </ul>
 <li>Library
 <ul>
