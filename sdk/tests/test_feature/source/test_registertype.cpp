@@ -342,7 +342,7 @@ bool Test()
                            " (0, 0) : Info    : void f(test1)\n"
 		                   " (0, 0) : Error   : Can't pass type 'test1' by value unless the application type is informed in the registration\n"
 						   " (0, 0) : Info    : void f(test1)\n"
-						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application. Use generic calling convention instead\n"
+						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application in native calling convention on this platform\n"
 						   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
