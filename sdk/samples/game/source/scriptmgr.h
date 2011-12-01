@@ -5,7 +5,7 @@
 #include <vector>
 #include <angelscript.h>
 
-class CGameObjLink;
+class CGameObj;
 
 class CScriptMgr
 {
@@ -15,9 +15,9 @@ public:
 
 	int Init();
 
-	asIScriptObject *CreateController(const std::string &type, CGameObjLink *link);
+	asIScriptObject *CreateController(const std::string &type, CGameObj *obj);
 	void CallOnThink(asIScriptObject *object);
-	void CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObjLink *link);
+	void CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObj *caller);
 
 	bool hasCompileErrors;
 

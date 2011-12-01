@@ -46,23 +46,21 @@ int CScriptMgr::Init()
 
 
 	// Register the game object. The scripts cannot create these directly, so there is no factory function.
-	// In order to allow the game manager to delete the game object at anytime, without having to worry 
-	// about the script holding on to references to it, we will register the CGameObjLink type instead.
 	r = engine->RegisterObjectType("CGameObj", 0, asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("CGameObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CGameObjLink, AddRef), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("CGameObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CGameObjLink, Release), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("CGameObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CGameObj, AddRef), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("CGameObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CGameObj, Release), asCALL_THISCALL); assert( r >= 0 );
 
 	// The object's position is read-only to the script. The position is updated with the Move method
-	r = engine->RegisterObjectMethod("CGameObj", "int get_x() const", asMETHOD(CGameObjLink, GetX), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("CGameObj", "int get_y() const", asMETHOD(CGameObjLink, GetY), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("CGameObj", "bool Move(int dx, int dy)", asMETHOD(CGameObjLink, Move), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("CGameObj", "int get_x() const", asMETHOD(CGameObj, GetX), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("CGameObj", "int get_y() const", asMETHOD(CGameObj, GetY), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("CGameObj", "bool Move(int dx, int dy)", asMETHOD(CGameObj, Move), asCALL_THISCALL); assert( r >= 0 );
 
 	// The script can kill the owning object
-	r = engine->RegisterObjectMethod("CGameObj", "void Kill()", asMETHOD(CGameObjLink, Kill), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("CGameObj", "void Kill()", asMETHOD(CGameObj, Kill), asCALL_THISCALL); assert( r >= 0 );
 	
 	// The script can send a message to the other object through this method
 	// Observe the autohandle @+ to tell AngelScript to automatically release the handle after the call
-	r = engine->RegisterObjectMethod("CGameObj", "void Send(IMessage @+ msg, const CGameObj @+ to)", asMETHOD(CGameObjLink, Send), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("CGameObj", "void Send(IMessage @+ msg, const CGameObj @+ to)", asMETHOD(CGameObj, Send), asCALL_THISCALL); assert( r >= 0 );
 
 
 
@@ -90,7 +88,8 @@ int CScriptMgr::Init()
 	// Register a method that will allow the script to find an object by its name.
 	// This returns the object as const handle, as the script should only be 
 	// allow to directly modify its owner object.
-	r = engine->RegisterObjectMethod("CGameMgr", "const CGameObj @FindObjByName(const string &in name)", asMETHOD(CGameMgr, FindGameObjLinkByName), asCALL_THISCALL); assert( r >= 0 );
+	// Observe the @+ that tells AngelScript to automatically increase the refcount
+	r = engine->RegisterObjectMethod("CGameMgr", "const CGameObj @+ FindObjByName(const string &in name)", asMETHOD(CGameMgr, FindGameObjByName), asCALL_THISCALL); assert( r >= 0 );
 
 
 	return 0;
@@ -214,7 +213,7 @@ CScriptMgr::SController *CScriptMgr::GetControllerScript(const string &script)
 	return ctrl;
 }
 
-asIScriptObject *CScriptMgr::CreateController(const string &script, CGameObjLink *link)
+asIScriptObject *CScriptMgr::CreateController(const string &script, CGameObj *gameObj)
 {
 	int r;
 	asIScriptObject *obj = 0;
@@ -225,9 +224,9 @@ asIScriptObject *CScriptMgr::CreateController(const string &script, CGameObjLink
 	// Create the object using the factory function
 	asIScriptContext *ctx = PrepareContextFromPool(ctrl->factoryFuncId);
 
-	// Pass the object link to the script function. With this call the 
-	// context will automatically increase the reference count for the link.
-	ctx->SetArgObject(0, link);
+	// Pass the object pointer to the script function. With this call the 
+	// context will automatically increase the reference count for the object.
+	ctx->SetArgObject(0, gameObj);
 
 	// Make the call and take care of any errors that may happen
 	r = ExecuteCall(ctx);
@@ -262,7 +261,7 @@ void CScriptMgr::CallOnThink(asIScriptObject *object)
 	}
 }
 
-void CScriptMgr::CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObjLink *link)
+void CScriptMgr::CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObj *caller)
 {
 	// Find the cached onMessage method id
 	SController *ctrl = reinterpret_cast<SController*>(object->GetObjectType()->GetUserData());
@@ -273,7 +272,7 @@ void CScriptMgr::CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CG
 		asIScriptContext *ctx = PrepareContextFromPool(ctrl->onMessageMethodId);
 		ctx->SetObject(object);
 		ctx->SetArgObject(0, msg);
-		ctx->SetArgObject(1, link);
+		ctx->SetArgObject(1, caller);
 		ExecuteCall(ctx);
 		ReturnContextToPool(ctx);
 	}
