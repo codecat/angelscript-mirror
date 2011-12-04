@@ -303,7 +303,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 		else if( descr->parameterTypes[a].IsPrimitive() ||
 		         descr->parameterTypes[a].IsReference() || 
-                         descr->parameterTypes[a].IsObjectHandle() )
+		         descr->parameterTypes[a].IsObjectHandle() )
 		{
 			argsType[argIndex] = x64INTARG;
 			if( descr->parameterTypes[a].GetSizeOnStackDWords() == 1 )
@@ -341,30 +341,29 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				}
 				else
 				{
-				        argsType[argIndex] = x64INTARG;
-                                        memcpy(paramBuffer + argIndex, *(asDWORD**)stack_pointer, descr->parameterTypes[a].GetSizeInMemoryBytes());
-
-                                        argIndex++;
+					argsType[argIndex] = x64INTARG;
+					memcpy(paramBuffer + argIndex, *(asDWORD**)stack_pointer, descr->parameterTypes[a].GetSizeInMemoryBytes());
+					argIndex++;
 				}
 				// Delete the original memory
 				engine->CallFree(*(void**)stack_pointer);
 			}
 			else if( descr->parameterTypes[a].GetObjectType()->flags & asOBJ_APP_CLASS_ALLFLOATS )
 			{
-                                // Copy the value of the object
-                                if( descr->parameterTypes[a].GetSizeInMemoryDWords() > 2 )
-                                {
-                                        argsType[argIndex] = x64FLOATARG;
-                                        argsType[argIndex+1] = x64FLOATARG;
-                                        memcpy(paramBuffer + argIndex, *(asDWORD**)stack_pointer, descr->parameterTypes[a].GetSizeInMemoryBytes());
-                                        argIndex += 2;
-                                }
-                                else
-                                {
-                                        argsType[argIndex] = x64FLOATARG;
-                                        memcpy(paramBuffer + argIndex, *(asDWORD**)stack_pointer, descr->parameterTypes[a].GetSizeInMemoryBytes());
-                                        argIndex++;
-                                }
+				// Copy the value of the object
+				if( descr->parameterTypes[a].GetSizeInMemoryDWords() > 2 )
+				{
+					argsType[argIndex] = x64FLOATARG;
+					argsType[argIndex+1] = x64FLOATARG;
+					memcpy(paramBuffer + argIndex, *(asDWORD**)stack_pointer, descr->parameterTypes[a].GetSizeInMemoryBytes());
+					argIndex += 2;
+				}
+				else
+				{
+					argsType[argIndex] = x64FLOATARG;
+					memcpy(paramBuffer + argIndex, *(asDWORD**)stack_pointer, descr->parameterTypes[a].GetSizeInMemoryBytes());
+					argIndex++;
+				}
 				// Delete the original memory
 				engine->CallFree(*(void**)stack_pointer);
 			}
