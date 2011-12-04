@@ -2325,7 +2325,10 @@ void asCRestore::WriteUsedTypeIds()
 	asUINT count = (asUINT)usedTypeIds.GetLength();
 	WriteEncodedUInt(count);
 	for( asUINT n = 0; n < count; n++ )
-		WriteDataType(engine->GetDataTypeFromTypeId(usedTypeIds[n]));
+	{
+		asCDataType dt = engine->GetDataTypeFromTypeId(usedTypeIds[n]);
+		WriteDataType(&dt);
+	}
 }
 
 void asCRestore::ReadUsedTypeIds()
@@ -2619,14 +2622,14 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 
 			// COPY is used to copy POD types that don't have the opAssign method
 			// Update the number of dwords to copy as it may be different on the target platform
-			const asCDataType *dt = engine->GetDataTypeFromTypeId(*tid);
-			if( dt == 0 )
+			asCDataType dt = engine->GetDataTypeFromTypeId(*tid);
+			if( !dt.IsValid() )
 			{
 				// TODO: Write error to message
 				error = true;
 			}
 			else
-				asBC_SWORDARG0(&bc[n]) = (short)dt->GetSizeInMemoryDWords();
+				asBC_SWORDARG0(&bc[n]) = (short)dt.GetSizeInMemoryDWords();
 		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||

@@ -290,6 +290,12 @@ bool Test()
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
+
+	int t1 = engine->GetTypeIdByDecl("ref");
+	int t2 = engine->GetTypeIdByDecl("ref@") & ~asTYPEID_OBJHANDLE; 
+	if( t1 != t2 )
+		TEST_FAILED;
+
 	engine->Release();
 
 	// It must not be possible to register functions that take handles of types with asOBJ_HANDLE

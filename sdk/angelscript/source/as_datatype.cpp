@@ -70,6 +70,15 @@ asCDataType::~asCDataType()
 {
 }
 
+bool asCDataType::IsValid() const
+{
+	if( tokenType == ttUnrecognizedToken &&
+		!isObjectHandle )
+		return false;
+
+	return true;
+}
+
 asCDataType asCDataType::CreateObject(asCObjectType *ot, bool isConst)
 {
 	asCDataType dt;

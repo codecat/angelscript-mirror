@@ -276,7 +276,7 @@ public:
 	int ConfigError(int err, const char *funcName, const char *arg1, const char *arg2);
 
 	int                GetTypeIdFromDataType(const asCDataType &dt) const;
-	const asCDataType *GetDataTypeFromTypeId(int typeId) const;
+	asCDataType        GetDataTypeFromTypeId(int typeId) const;
 	asCObjectType     *GetObjectTypeFromTypeId(int typeId) const;
 	void               RemoveFromTypeIdMap(asCObjectType *type);
 

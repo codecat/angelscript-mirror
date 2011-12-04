@@ -3343,10 +3343,9 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
 	if( dtIn.IsNullHandle() ) return 0;
 
-	// ASHANDLE is mimicking a handle, but it really is a value 
-	// type so only the non-handle form should be registered.
+	// Register the base form
 	asCDataType dt(dtIn);
-	if( dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_ASHANDLE )
+	if( dt.GetObjectType() )
 		dt.MakeHandle(false);
 
 	// Find the existing type id
@@ -3355,7 +3354,20 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 	while( cursor )
 	{
 		if( mapTypeIdToDataType.GetValue(cursor)->IsEqualExceptRefAndConst(dt) )
-			return mapTypeIdToDataType.GetKey(cursor);
+		{
+			int typeId = mapTypeIdToDataType.GetKey(cursor);
+			if( dtIn.GetObjectType() && !(dtIn.GetObjectType()->flags & asOBJ_ASHANDLE) )
+			{
+				// The the ASHANDLE types behave like handles, but are really 
+				// value types so the typeId is never returned as a handle
+				if( dtIn.IsObjectHandle() )
+					typeId |= asTYPEID_OBJHANDLE;
+				if( dtIn.IsHandleToConst() )
+					typeId |= asTYPEID_HANDLETOCONST;
+			}
+
+			return typeId;
+		}
 
 		mapTypeIdToDataType.MoveNext(&cursor, cursor);
 	}
@@ -3380,47 +3392,32 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 
 	mapTypeIdToDataType.Insert(typeId, newDt);
 
-	// If the object type supports object handles then register those types as well
-	// Note: Don't check for addref, as asOBJ_SCOPED don't have this
-	if( dt.IsObject() && dt.GetObjectType()->beh.release )
-	{
-		newDt = asNEW(asCDataType)(dt);
-		newDt->MakeReference(false);
-		newDt->MakeReadOnly(false);
-		newDt->MakeHandle(true);
-		newDt->MakeHandleToConst(false);
-
-		mapTypeIdToDataType.Insert(typeId | asTYPEID_OBJHANDLE, newDt);
-
-		newDt = asNEW(asCDataType)(dt);
-		newDt->MakeReference(false);
-		newDt->MakeReadOnly(false);
-		newDt->MakeHandle(true);
-		newDt->MakeHandleToConst(true);
-
-		mapTypeIdToDataType.Insert(typeId | asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST, newDt);
-	}
-
-	// Call the method recursively to get the correct type id
-	return GetTypeIdFromDataType(dt);
+	// Call recursively to get the correct typeId
+	return GetTypeIdFromDataType(dtIn);
 }
 
-const asCDataType *asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
+asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 {
-	asSMapNode<int,asCDataType*> *cursor = 0;
-	if( mapTypeIdToDataType.MoveTo(&cursor, typeId) )
-		return mapTypeIdToDataType.GetValue(cursor);
+	int baseId = typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR);
 
-	return 0;
+	asSMapNode<int,asCDataType*> *cursor = 0;
+	if( mapTypeIdToDataType.MoveTo(&cursor, baseId) )
+	{
+		asCDataType dt(*mapTypeIdToDataType.GetValue(cursor));
+		if( typeId & asTYPEID_OBJHANDLE )
+			dt.MakeHandle(true);
+		if( typeId & asTYPEID_HANDLETOCONST )
+			dt.MakeHandleToConst(true);
+		return dt;
+	}
+
+	return asCDataType();
 }
 
 asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId) const
 {
-	asSMapNode<int,asCDataType*> *cursor = 0;
-	if( mapTypeIdToDataType.MoveTo(&cursor, typeId) )
-		return mapTypeIdToDataType.GetValue(cursor)->GetObjectType();
-
-	return 0;
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
+	return dt.GetObjectType();
 }
 
 void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
@@ -3456,12 +3453,11 @@ int asCScriptEngine::GetTypeIdByDecl(const char *decl) const
 // interface
 const char *asCScriptEngine::GetTypeDeclaration(int typeId) const
 {
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return 0;
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
-	*tempString = dt->Format();
+	*tempString = dt.Format();
 
 	return tempString->AddressOf();
 }
@@ -3469,11 +3465,10 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId) const
 // TODO: interface: Deprecate. This function is not necessary now that all primitive types have fixed typeIds
 int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 {
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
-	if( dt == 0 ) return 0;
-	if( !dt->IsPrimitive() ) return 0;
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
+	if( !dt.IsPrimitive() ) return 0;
 
-	return dt->GetSizeInMemoryBytes();
+	return dt.GetSizeInMemoryBytes();
 }
 
 // TODO: interface: Should deprecate this. The application should be calling the factory directly
@@ -3483,13 +3478,13 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return 0;
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return 0;
 
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	// Is the type id valid?
-	if( !dt ) return 0;
+	if( !dt.IsValid() ) return 0;
 
 	// Allocate the memory
-	asCObjectType *objType = dt->GetObjectType();
+	asCObjectType *objType = dt.GetObjectType();
 	void *ptr = 0;
 
 	// Construct the object
@@ -3546,12 +3541,12 @@ void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
 
 	// Copy the contents from the original object, using the assignment operator
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	// Is the type id valid?
-	if( !dt ) return;
+	if( !dt.IsValid() ) return;
 
-	asCObjectType *objType = dt->GetObjectType();
+	asCObjectType *objType = dt.GetObjectType();
 	// TODO: beh.copy will be removed, so we need to find the default opAssign method instead
 	// TODO: Must not copy if the opAssign is not available and the object is not a POD object
 	if( objType->beh.copy )
@@ -3573,12 +3568,12 @@ void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 	// Make sure the type id is for an object type or a handle
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
 
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	// Is the type id valid?
-	if( !dt ) return;
+	if( !dt.IsValid() ) return;
 
-	asCObjectType *objType = dt->GetObjectType();
+	asCObjectType *objType = dt.GetObjectType();
 
 	if( objType->beh.addref )
 	{
@@ -3610,12 +3605,12 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 	// Make sure the type id is for an object type or a handle
 	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
 
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	// Is the type id valid?
-	if( !dt ) return;
+	if( !dt.IsValid() ) return;
 
-	asCObjectType *objType = dt->GetObjectType();
+	asCObjectType *objType = dt.GetObjectType();
 
 	if( objType->beh.release )
 	{
@@ -3665,23 +3660,23 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 		return true;
 
 	// Get the actual data types from the type ids
-	const asCDataType *objDt = GetDataTypeFromTypeId(objTypeId);
-	const asCDataType *hdlDt = GetDataTypeFromTypeId(handleTypeId);
+	asCDataType objDt = GetDataTypeFromTypeId(objTypeId);
+	asCDataType hdlDt = GetDataTypeFromTypeId(handleTypeId);
 
 	// A handle to const cannot be passed to a handle that is not referencing a const object
-	if( objDt->IsHandleToConst() && !hdlDt->IsHandleToConst() )
+	if( objDt.IsHandleToConst() && !hdlDt.IsHandleToConst() )
 		return false;
 
-	if( objDt->GetObjectType() == hdlDt->GetObjectType() )
+	if( objDt.GetObjectType() == hdlDt.GetObjectType() )
 	{
 		// The object type is equal
 		return true;
 	}
-	else if( objDt->IsScriptObject() && obj )
+	else if( objDt.IsScriptObject() && obj )
 	{
 		// There's still a chance the object implements the requested interface
 		asCObjectType *objType = ((asCScriptObject*)obj)->objType;
-		if( objType->Implements(hdlDt->GetObjectType()) )
+		if( objType->Implements(hdlDt.GetObjectType()) )
 			return true;
 	}
 
@@ -4209,8 +4204,8 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 // interface
 int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
 {
-	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
-	asCObjectType *t = dt->GetObjectType();
+	asCDataType dt = GetDataTypeFromTypeId(enumTypeId);
+	asCObjectType *t = dt.GetObjectType();
 	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
 		return asINVALID_TYPE;
 
@@ -4221,8 +4216,8 @@ int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
 const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const
 {
 	// TODO: This same function is implemented in as_module.cpp as well. Perhaps it should be moved to asCObjectType?
-	const asCDataType *dt = GetDataTypeFromTypeId(enumTypeId);
-	asCObjectType *t = dt->GetObjectType();
+	asCDataType dt = GetDataTypeFromTypeId(enumTypeId);
+	asCObjectType *t = dt.GetObjectType();
 	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
 		return 0;
 
@@ -4253,16 +4248,16 @@ asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 // interface
 asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId) const
 {
-	const asCDataType *dt = GetDataTypeFromTypeId(typeId);
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	// Is the type id valid?
-	if( !dt ) return 0;
+	if( !dt.IsValid() ) return 0;
 
 	// Enum types are not objects, so we shouldn't return an object type for them
-	if( dt->GetObjectType() && dt->GetObjectType()->GetFlags() & asOBJ_ENUM )
+	if( dt.GetObjectType() && dt.GetObjectType()->GetFlags() & asOBJ_ENUM )
 		return 0;
 
-	return dt->GetObjectType();
+	return dt.GetObjectType();
 }
 
 // interface
