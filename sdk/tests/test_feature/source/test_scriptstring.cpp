@@ -248,7 +248,11 @@ bool Test()
 
 	printOutput = "";
 	ExecuteString(engine, "print(1.2 + \"a\")");
-	if( printOutput != "1.2a") TEST_FAILED;
+	if( printOutput != "1.2a")
+	{
+		printf("Get '%s'\n", printOutput.c_str());
+		TEST_FAILED;
+	}
 
 	// Passing a handle to a function
 	printOutput = "";

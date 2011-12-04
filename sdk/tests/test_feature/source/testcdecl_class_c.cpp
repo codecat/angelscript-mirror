@@ -170,28 +170,21 @@ bool TestCDecl_ClassC()
 		TEST_FAILED;
 	}
 
-	if( strstr(asGetLibraryOptions(), "AS_X64_GCC") )
-	{
-		printf("%s: Skipped passing type by value test due to not being supported on X64_GCC\n", TESTNAME);
-	}
-	else
-	{
-		// Test passing the object types by value to a system function
-		r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
-		r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+	// Test passing the object types by value to a system function
+	r = engine->RegisterGlobalFunction("void class1ByVal(class1)", asFUNCTION(class1ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class1 c = _class1(); class1ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
-		r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
-		r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+	r = engine->RegisterGlobalFunction("void class2ByVal(class2)", asFUNCTION(class2ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class2 c = _class2(); class2ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
-		r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
-		r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
-	}
+	r = engine->RegisterGlobalFunction("void class3ByVal(class3)", asFUNCTION(class3ByVal), asCALL_CDECL); assert( r >= 0 );
+	r = ExecuteString(engine, "class3 c = _class3(); class3ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	engine->Release();
 

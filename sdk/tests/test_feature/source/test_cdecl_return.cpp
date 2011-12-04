@@ -250,7 +250,10 @@ bool TestReturnStruct()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 	if( rc.tl.x != 3 || rc.tl.y != 4 || rc.br.x != 5 || rc.br.y != 6 )
+	{
 		TEST_FAILED;
+		printf("Got {%f, %f, %f, %f}\n", rc.tl.x, rc.tl.y, rc.br.x, rc.br.y);
+	}
     
     // at that point, 'p' should contain 1,2 while 'rc' should contain 3,4,5,6
     
