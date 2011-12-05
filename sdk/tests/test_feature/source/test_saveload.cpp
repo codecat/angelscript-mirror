@@ -1075,10 +1075,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
-						   " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
-						   " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
-						   " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n" )
+		if( bout.buffer != " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

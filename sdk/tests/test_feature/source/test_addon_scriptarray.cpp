@@ -704,6 +704,35 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test array, with objects that don't have default constructor/factory
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class CTest \n"
+			"{ \n"
+			"  CTest(int v) {} \n" // With an explicit non-default constructor the compiler won't create the default constructor
+			"} \n"
+			"array<CTest> arr; \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r > 0 ) 
+			TEST_FAILED;
+		if( bout.buffer != "script (5, 7) : Error   : Can't instanciate template 'array' with subtype 'CTest'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}	
+
 	// Success
 	return fail;
 }
