@@ -23,7 +23,8 @@ bool Test()
 		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		const char *script = "class A {} \n"
+		const char *script = 
+							 "class A {} \n"
 							 "class B {} \n"
 							 "void main() \n"
 							 "{ \n"
@@ -62,6 +63,10 @@ bool Test()
 							 "  @arr[1] = a; \n"
 							 "  assert( arr[0] is arr[1] ); \n"
 							 "  assert( arr[0] is a ); \n"
+							 // Implicit conv from type to ref
+							 "  func2(null); \n"
+							 "  func(a); \n"
+							 "  assert( func(a) is a ); \n"
 							 "} \n"
 							 "ref@ func(ref@ r) { return r; } \n"
 							 "void func2(ref@r) { assert( r is null ); } \n";

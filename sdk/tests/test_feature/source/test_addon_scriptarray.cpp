@@ -733,6 +733,33 @@ bool Test()
 		engine->Release();
 	}	
 
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		const char *script = 
+			"class T { }; \n"
+			"array<T> arr; \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		r = ExecuteString(engine, "array<T> arr(1); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

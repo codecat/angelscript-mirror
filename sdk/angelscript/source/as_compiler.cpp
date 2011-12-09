@@ -1684,9 +1684,11 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 	return anyErrors ? -1 : 0;
 }
 
-void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
+asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
 	asCArray<int> origFuncs = funcs; // Keep the original list for error message
+
+	asUINT cost = 0;
 
 	asUINT n;
 	if( funcs.GetLength() > 0 )
@@ -1729,7 +1731,7 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 		for( n = 0; n < args.GetLength(); ++n )
 		{
 			asCArray<int> tempFuncs;
-			MatchArgument(funcs, tempFuncs, &args[n]->type, n, allowObjectConstruct);
+			cost += MatchArgument(funcs, tempFuncs, &args[n]->type, n, allowObjectConstruct);
 
 			// Intersect the found functions with the list of matching functions
 			for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
@@ -1808,6 +1810,8 @@ void asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*>
 			PrintMatchingFuncs(funcs, node);
 		}
 	}
+
+	return cost;
 }
 
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
@@ -4141,25 +4145,46 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 }
 
 
-void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode)
+asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
 	asCDataType to = toOrig;
 	to.MakeReference(false);
 	asASSERT( !ctx->type.dataType.IsReference() );
 
+	// Maybe no conversion is needed
+	if( to.IsEqualExceptConst(ctx->type.dataType) )
+	{
+		// A primitive is const or not
+		ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+		return asCC_NO_CONV;
+	}
+
+	// Determine the cost of this conversion
+	asUINT cost = asCC_NO_CONV;
+	if( (to.IsIntegerType() || to.IsUnsignedType()) && (ctx->type.dataType.IsFloatType() || ctx->type.dataType.IsDoubleType()) )
+		cost = asCC_INT_FLOAT_CONV;
+	else if( (to.IsFloatType() || to.IsDoubleType()) && (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsEnumType()) )
+		cost = asCC_INT_FLOAT_CONV;
+	else if( to.IsUnsignedType() && ctx->type.dataType.IsIntegerType() )
+		cost = asCC_SIGNED_CONV;
+	else if( to.IsIntegerType() && (ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsEnumType()) )
+		cost = asCC_SIGNED_CONV;
+	else if( to.GetSizeInMemoryBytes() || ctx->type.dataType.GetSizeInMemoryBytes() )
+		cost = asCC_PRIMITIVE_SIZE_CONV;
+
 	// Start by implicitly converting constant values
 	if( ctx->type.isConstant )
+	{
 		ImplicitConversionConstant(ctx, to, node, convType);
-
-	// A primitive is const or not
-	ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
-
-	if( to == ctx->type.dataType )
-		return;
+		ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+		return cost;
+	}
 
 	// Allow implicit conversion between numbers
 	if( generateCode )
 	{
+		// When generating the code the decision has already been made, so we don't bother determining the cost
+
 		// Convert smaller types to 32bit first
 		int s = ctx->type.dataType.GetSizeInMemoryBytes();
 		if( s < 4 )
@@ -4455,16 +4480,17 @@ void asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const as
 
 	// Primitive types on the stack, can be const or non-const
 	ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+	return cost;
 }
 
-void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
+asUINT asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
 {
 	asASSERT( ctx->type.dataType.GetTokenType() != ttUnrecognizedToken ||
 		      ctx->type.dataType.IsNullHandle() );
 
 	// No conversion from void to any other type
 	if( ctx->type.dataType.GetTokenType() == ttVoid )
-		return;
+		return asCC_NO_CONV;
 
 	// Do we want a var type?
 	if( to.GetTokenType() == ttQuestion )
@@ -4474,26 +4500,28 @@ void asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to,
 
 		ctx->type.dataType = to;
 
-		return;
+		return asCC_VARIABLE_CONV;
 	}
 	// Do we want a primitive?
 	else if( to.IsPrimitive() )
 	{
 		if( !ctx->type.dataType.IsPrimitive() )
-			ImplicitConvObjectToPrimitive(ctx, to, node, convType, generateCode);
+			return ImplicitConvObjectToPrimitive(ctx, to, node, convType, generateCode);
 		else
-			ImplicitConvPrimitiveToPrimitive(ctx, to, node, convType, generateCode);
+			return ImplicitConvPrimitiveToPrimitive(ctx, to, node, convType, generateCode);
 	}
 	else // The target is a complex type
 	{
 		if( ctx->type.dataType.IsPrimitive() )
-			ImplicitConvPrimitiveToObject(ctx, to, node, convType, generateCode, allowObjectConstruct);
+			return ImplicitConvPrimitiveToObject(ctx, to, node, convType, generateCode, allowObjectConstruct);
 		else if( ctx->type.IsNullConstant() || ctx->type.dataType.GetObjectType() )
-			ImplicitConvObjectToObject(ctx, to, node, convType, generateCode, allowObjectConstruct);
+			return ImplicitConvObjectToObject(ctx, to, node, convType, generateCode, allowObjectConstruct);
 	}
+
+	return asCC_NO_CONV;
 }
 
-void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode)
+asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
 	if( ctx->type.isExplicitHandle )
 	{
@@ -4504,7 +4532,7 @@ void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDa
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
 			Error(str.AddressOf(), node);
 		}
-		return;
+		return asCC_NO_CONV;
 	}
 
 	// TODO: Must use the const cast behaviour if the object is read-only
@@ -4605,7 +4633,7 @@ void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDa
 			ctx->type.Set(descr->returnType);
 
 		// Allow one more implicit conversion to another primitive type
-		ImplicitConversion(ctx, to, node, convType, generateCode, false);
+		return asCC_OBJ_TO_PRIMITIVE_CONV + ImplicitConversion(ctx, to, node, convType, generateCode, false);
 	}
 	else
 	{
@@ -4616,19 +4644,21 @@ void asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asCDa
 			Error(str.AddressOf(), node);
 		}
 	}
+
+	return asCC_NO_CONV;
 }
 
 
-
-void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
+asUINT asCCompiler::ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
 	// Convert null to any object type handle, but not to a non-handle type
 	if( ctx->type.IsNullConstant() )
 	{
-		if( to.IsObjectHandle() )
+		// asOBJ_ASHANDLE is not really a handle, so a null handle must not be converted directly to an asOBJ_ASHANDLE
+		if( to.IsObjectHandle() && !(to.GetObjectType() && (to.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 			ctx->type.dataType = to;
 
-		return;
+		return asCC_REF_CONV;
 	}
 
 	asASSERT(ctx->type.dataType.GetObjectType());
@@ -4640,16 +4670,16 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		if( ctx->type.dataType.GetObjectType()->Implements(to.GetObjectType()) )
 		{
 			ctx->type.dataType.SetObjectType(to.GetObjectType());
+			return asCC_REF_CONV;
 		}
-
 		// If the to type is a class and the from type derives from it, then we can convert it immediately
-		if( ctx->type.dataType.GetObjectType()->DerivesFrom(to.GetObjectType()) )
+		else if( ctx->type.dataType.GetObjectType()->DerivesFrom(to.GetObjectType()) )
 		{
 			ctx->type.dataType.SetObjectType(to.GetObjectType());
+			return asCC_REF_CONV;
 		}
-
 		// If the types are not equal yet, then we may still be able to find a reference cast
-		if( ctx->type.dataType.GetObjectType() != to.GetObjectType() )
+		else if( ctx->type.dataType.GetObjectType() != to.GetObjectType() )
 		{
 			// A ref cast must not remove the constness
 			bool isConst = false;
@@ -4661,12 +4691,36 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			CompileRefCast(ctx, to, convType == asIC_EXPLICIT_REF_CAST, node, generateCode);
 
 			ctx->type.dataType.MakeHandleToConst(isConst);
+
+			// Was the conversion done?
+			if( ctx->type.dataType.GetObjectType() == to.GetObjectType() )
+				return asCC_REF_CONV;
 		}
 	}
 
+	// Convert matching function types
+	if( to.GetFuncDef() && ctx->type.dataType.GetFuncDef() &&
+		to.GetFuncDef() != ctx->type.dataType.GetFuncDef() )
+	{
+		asCScriptFunction *toFunc = to.GetFuncDef();
+		asCScriptFunction *fromFunc = ctx->type.dataType.GetFuncDef();
+		if( toFunc->IsSignatureExceptNameEqual(fromFunc) )
+		{
+			ctx->type.dataType.SetFuncDef(toFunc);
+			return asCC_REF_CONV;
+		}
+	}
+
+	return asCC_NO_CONV;
+}
+
+asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataType &to, asCScriptNode * /*node*/, EImplicitConv convType, bool generateCode)
+{
+	asUINT cost = asCC_NO_CONV;
+
 	// If the base type is still different, and we are allowed to instance
 	// another object then we can try an implicit value cast
-	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() && allowObjectConstruct )
+	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
 	{
 		// TODO: Implement support for implicit constructor/factory
 
@@ -4733,28 +4787,116 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 			}
 			else
 				ctx->type.Set(f->returnType);
+
+			cost = asCC_TO_OBJECT_CONV;
 		}
 	}
 
-	// If we still haven't converted the base type to the correct type, then there is no need to continue
-	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
-		return;
+	return cost;
+}
 
-	// Convert matching function types
-	if( to.GetFuncDef() && ctx->type.dataType.GetFuncDef() &&
-		to.GetFuncDef() != ctx->type.dataType.GetFuncDef() )
+asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
+{
+	// First try a ref cast
+	asUINT cost = ImplicitConvObjectRef(ctx, to, node, convType, generateCode);
+
+	// If the desired type is an asOBJ_ASHANDLE then we'll assume it is allowed to implicitly 
+	// construct the object through any of the available constructors
+	if( to.GetObjectType() && (to.GetObjectType()->flags & asOBJ_ASHANDLE) && to.GetObjectType() != ctx->type.dataType.GetObjectType() && allowObjectConstruct )
 	{
-		asCScriptFunction *toFunc = to.GetFuncDef();
-		asCScriptFunction *fromFunc = ctx->type.dataType.GetFuncDef();
-		if( toFunc->IsSignatureExceptNameEqual(fromFunc) )
+		asCArray<int> funcs;
+		funcs = to.GetObjectType()->beh.constructors;
+
+		asCArray<asSExprContext *> args;
+		args.PushLast(ctx);
+
+		cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, node, 0, 0, false, true, false);
+
+		// Did we find a matching constructor?
+		if( funcs.GetLength() == 1 )
 		{
-			ctx->type.dataType.SetFuncDef(toFunc);
+			if( generateCode )
+			{
+				// TODO: This should really reuse the code from CompileConstructCall
+
+				// Allocate the new object
+				asCTypeInfo tempObj;
+				tempObj.dataType = to;
+				tempObj.stackOffset = (short)AllocateVariable(to, true);
+				tempObj.dataType.MakeReference(true);
+				tempObj.isTemporary = true;
+				tempObj.isVariable = true;
+
+				bool onHeap = IsVariableOnHeap(tempObj.stackOffset);
+
+				// Push the address of the object on the stack
+				asSExprContext e(engine);
+				if( onHeap )
+					e.bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
+
+				PrepareFunctionCall(funcs[0], &e.bc, args);
+				MoveArgsToStack(funcs[0], &e.bc, args, false);
+
+				// If the object is allocated on the stack, then call the constructor as a normal function
+				if( onHeap )
+				{
+					int offset = 0;
+					asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
+					offset = descr->parameterTypes[0].GetSizeOnStackDWords();
+
+					e.bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+				}		
+				else
+					e.bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
+
+				PerformFunctionCall(funcs[0], &e, onHeap, &args, tempObj.dataType.GetObjectType());
+
+				// Add tag that the object has been initialized
+				e.bc.ObjInfo(tempObj.stackOffset, asOBJ_INIT);
+
+				// The constructor doesn't return anything,
+				// so we have to manually inform the type of
+				// the return value
+				e.type = tempObj;
+				if( !onHeap )
+					e.type.dataType.MakeReference(false);
+
+				// Push the address of the object on the stack again
+				e.bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
+
+				MergeExprBytecodeAndType(ctx, &e);
+
+				// An asOBJ_ASHANDLE type should always be treated as a handle
+				ctx->type.dataType.MakeHandle(true);
+			}
+			else
+			{
+				ctx->type.Set(asCDataType::CreateObject(to.GetObjectType(), false));
+
+				// An asOBJ_ASHANDLE type should always be treated as a handle
+				ctx->type.dataType.MakeHandle(true);
+			}
 		}
 	}
+
+	// If the base type is still different, and we are allowed to instance
+	// another object then we can try an implicit value cast
+	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() && allowObjectConstruct )
+	{
+		// Attempt implicit value cast
+		cost = ImplicitConvObjectValue(ctx, to, node, convType, generateCode);
+	}
+
+	// If we still haven't converted the base type to the correct type, then there is
+	//  no need to continue as it is not possible to do the conversion
+	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
+		return asCC_NO_CONV;
 
 
 	if( to.IsObjectHandle() )
 	{
+		// There is no extra cost in converting to a handle
+
 		// reference to handle -> handle
 		// reference           -> handle
 		// object              -> handle
@@ -4807,6 +4949,8 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 		{
 			if( generateCode )
 			{
+				asASSERT( ctx->type.dataType.IsObjectHandle() );
+
 				// If the input type is a handle, then a simple ref copy is enough
 				bool isExplicitHandle = ctx->type.isExplicitHandle;
 				ctx->type.isExplicitHandle = ctx->type.dataType.IsObjectHandle();
@@ -4875,6 +5019,9 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					// In case the object was already in a temporary variable, then the function
 					// didn't really do anything so we need to remove the constness here
 					ctx->type.dataType.MakeReadOnly(false);
+
+					// Add the cost for the copy
+					cost += asCC_TO_OBJECT_CONV;
 				}
 			}
 
@@ -4930,6 +5077,9 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 						// doesn't have to be made as it is already a unique object
 						PrepareTemporaryObject(node, ctx);
 					}
+
+					// Add the cost for the copy
+					cost += asCC_TO_OBJECT_CONV;
 				}
 			}
 			else
@@ -4959,10 +5109,14 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 					PrepareTemporaryObject(node, ctx);
 
 					ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
+
+					// Add the cost for the copy
+					cost += asCC_TO_OBJECT_CONV;
 				}
 
 				// A handle can be converted to a reference, by checking for a null pointer
-				if( ctx->type.dataType.IsObjectHandle() )
+				// An asOBJ_ASHANDLE is not really a handle, it is a value type
+				if( ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 				{
 					if( generateCode )
 						ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
@@ -4973,24 +5127,30 @@ void asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDataT
 				}
 				else
 				{
+					if( ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
+						ctx->type.dataType.MakeHandle(false);
+
 					// This may look strange as the conversion was to make the expression a reference
 					// but a value type allocated on the stack is a reference even without the type
 					// being marked as such.
 					ctx->type.dataType.MakeReference(IsVariableOnHeap(ctx->type.stackOffset));
 				}
 
-				// TODO: If the variable is an object allocated on the stack, this is not true
+				// TODO: If the variable is an object allocated on the stack the following is not true as the copy may not have been made
 				// Since it is a new temporary variable it doesn't have to be const
 				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 			}
 		}
 	}
+
+	return cost;
 }
 
-void asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext * /*ctx*/, const asCDataType & /*to*/, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool /*generateCode*/, bool /*allowObjectConstruct*/)
+asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext * /*ctx*/, const asCDataType & /*to*/, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool /*generateCode*/, bool /*allowObjectConstruct*/)
 {
 	// TODO: This function should call the constructor/factory that has been marked as available
 	//       for implicit conversions. The code will likely be similar to CallCopyConstructor()
+	return asCC_NO_CONV;
 }
 
 void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCDataType &to, asCScriptNode *node, EImplicitConv convType)
@@ -8867,19 +9027,12 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 	return 0;
 }
 
-int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct)
+asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct)
 {
-	bool isExactMatch        = false;
-	bool isMatchExceptConst  = false;
-	bool isMatchWithBaseType = false;
-	bool isMatchExceptSign   = false;
-	bool isMatchNotVarType   = false;
-
-	asUINT n;
-
+	asUINT bestCost = asUINT(-1);
 	matches.SetLength(0);
 
-	for( n = 0; n < funcs.GetLength(); n++ )
+	for( asUINT n = 0; n < funcs.GetLength(); n++ )
 	{
 		asCScriptFunction *desc = builder->GetFunctionDescription(funcs[n]);
 
@@ -8891,7 +9044,7 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 		asSExprContext ti(engine);
 		ti.type = *argType;
 		if( argType->dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
-		ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
+		asUINT cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
 
 		// If the function parameter is an inout-reference then it must not be possible to call the
 		// function with an incorrect argument type, even though the type can normally be converted.
@@ -8911,85 +9064,18 @@ int asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, con
 		// How well does the argument match the function parameter?
 		if( desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType) )
 		{
-			// Is it an exact match?
-			if( argType->dataType.IsEqualExceptRef(ti.type.dataType) )
+			if( cost < bestCost )
 			{
-				if( !isExactMatch ) matches.SetLength(0);
+				matches.SetLength(0);
+				bestCost = cost;
+			}
 
-				isExactMatch = true;
-
+			if( cost == bestCost )
 				matches.PushLast(funcs[n]);
-				continue;
-			}
-
-			if( !isExactMatch )
-			{
-				// Is it a match except const?
-				if( argType->dataType.IsEqualExceptRefAndConst(ti.type.dataType) )
-				{
-					if( !isMatchExceptConst ) matches.SetLength(0);
-
-					isMatchExceptConst = true;
-
-					matches.PushLast(funcs[n]);
-					continue;
-				}
-
-				if( !isMatchExceptConst )
-				{
-					// Is it a size promotion, e.g. int8 -> int?
-					if( argType->dataType.IsSamePrimitiveBaseType(ti.type.dataType) ||
-						(argType->dataType.IsEnumType() && ti.type.dataType.IsIntegerType()) )
-					{
-						if( !isMatchWithBaseType ) matches.SetLength(0);
-
-						isMatchWithBaseType = true;
-
-						matches.PushLast(funcs[n]);
-						continue;
-					}
-
-					if( !isMatchWithBaseType )
-					{
-						// Conversion between signed and unsigned integer is better than between integer and float
-
-						// Is it a match except for sign?
-						if( (argType->dataType.IsIntegerType() && ti.type.dataType.IsUnsignedType()) ||
-							(argType->dataType.IsUnsignedType() && ti.type.dataType.IsIntegerType()) ||
-							(argType->dataType.IsEnumType() && ti.type.dataType.IsUnsignedType()) )
-						{
-							if( !isMatchExceptSign ) matches.SetLength(0);
-
-							isMatchExceptSign = true;
-
-							matches.PushLast(funcs[n]);
-							continue;
-						}
-
-						if( !isMatchExceptSign )
-						{
-							// If there was any match without a var type it has higher priority
-							if( desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
-							{
-								if( !isMatchNotVarType ) matches.SetLength(0);
-
-								isMatchNotVarType = true;
-
-								matches.PushLast(funcs[n]);
-								continue;
-							}
-
-							// Implicit conversion to ?& has the smallest priority
-							if( !isMatchNotVarType )
-								matches.PushLast(funcs[n]);
-						}
-					}
-				}
-			}
 		}
 	}
 
-	return (int)matches.GetLength();
+	return bestCost;
 }
 
 void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)

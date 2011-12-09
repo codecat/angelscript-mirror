@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.1 WIP - 2011/12/04</h2>
+<h2>Version 2.22.1 WIP - 2011/12/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -43,6 +43,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented an alternative shorter version for declaring get and set property accessors (Thanks InvalidPointer)
 <li>Default constructor and opAssign is no longer implemented automatically if the script class has a non-default constructor
 <li>The compiler no longer warns if 0 is passed to an output parameter, as it then assumes the result is meant to be ignored
+<li>The compiler performs implicit conversions to objects registered as ASHANDLE by calling the available constructor
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
