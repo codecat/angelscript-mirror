@@ -5027,9 +5027,14 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 
 			if( ctx->type.dataType.IsReference() )
 			{
-				Dereference(ctx, generateCode);
-
-				// TODO: Can't this leave unhandled deferred output params?
+				// This may look strange, but a value type allocated on the stack is already 
+				// correct, so nothing should be done other than remove the mark as reference.
+				// For types allocated on the heap, it is necessary to dereference the pointer
+				// that is currently on the stack
+				if( IsVariableOnHeap(ctx->type.stackOffset) )
+					Dereference(ctx, generateCode);
+				else
+					ctx->type.dataType.MakeReference(false);
 			}
 
 			// A non-const object can be converted to a const object directly

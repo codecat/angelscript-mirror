@@ -7,6 +7,10 @@ namespace Test_Addon_ScriptHandle
 
 static const char *TESTNAME = "Test_Addon_ScriptHandle";
 
+static void ReceiveRefByValue(CScriptHandle hndl)
+{
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -22,6 +26,8 @@ bool Test()
 		RegisterScriptHandle(engine);
 		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		// TODO: It should be allowed to register as ref@ too 
+		engine->RegisterGlobalFunction("void ReceiveRefByVal(ref)", asFUNCTION(ReceiveRefByValue), asCALL_CDECL);
 
 		const char *script = 
 							 "class A {} \n"
@@ -91,6 +97,10 @@ bool Test()
 			TEST_FAILED;
 		}
 		if( ctx ) ctx->Release();
+
+		r = ExecuteString(engine, "ref @r; ReceiveRefByVal(r);", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}
