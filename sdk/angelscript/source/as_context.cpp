@@ -883,7 +883,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	// If the object should be sent by value we must make a copy of it
 	if( !dt->IsReference() )
 	{
-		if( dt->IsObjectHandle() && !(dt->GetObjectType()->flags & asOBJ_ASHANDLE) )
+		if( dt->IsObjectHandle() )
 		{
 			// Increase the reference counter
 			asSTypeBehaviour *beh = &dt->GetObjectType()->beh;

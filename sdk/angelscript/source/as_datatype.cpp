@@ -219,8 +219,9 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 	else if( b && !isObjectHandle )
 	{
 		// Only reference types are allowed to be handles, 
-		// but not nohandle reference types, and not scoped references (except when returned from registered function)
-		// funcdefs are special reference types, and support handles
+		// but not nohandle reference types, and not scoped references 
+		// (except when returned from registered function)
+		// funcdefs are special reference types and support handles
 		// value types with asOBJ_ASHANDLE are treated as a handle
 		if( !funcDef && 
 			(!objectType || 

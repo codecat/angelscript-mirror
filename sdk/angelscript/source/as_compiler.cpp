@@ -514,7 +514,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 		return 0;
 
 	// CallCopyConstructor should not be called for object handles.
-	asASSERT(!type.IsObjectHandle() || (type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_ASHANDLE)) );
+	asASSERT( !type.IsObjectHandle() );
 
 	asCArray<asSExprContext*> args;
 	args.PushLast(arg);
@@ -619,8 +619,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar, bool deferDest)
 {
-	if( !type.IsObject() ||
-		(type.IsObjectHandle() && !(type.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+	if( !type.IsObject() || type.IsObjectHandle() )
 		return 0;
 
 	if( type.GetObjectType()->flags & asOBJ_REF )
@@ -724,8 +723,7 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 		// Call destructor for the data type
 		if( type.IsObject() )
 		{
-			// ASHANDLE is really a value type and shouldn't be deallocated. Just the destructor should be called
-			if( isObjectOnHeap || (type.IsObjectHandle() && !(type.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+			if( isObjectOnHeap || type.IsObjectHandle() )
 			{
 				// Free the memory
 				bc->InstrW_PTR(asBC_FREE, (short)offset, type.GetObjectType());
@@ -972,7 +970,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			//                 just the copy constructor. Only if no appropriate constructor is
 			//                 available should the assignment operator be used.
 
-			if( (!gvar->datatype.IsObjectHandle() || gvar->datatype.GetObjectType()->flags & asOBJ_ASHANDLE) )
+			if( !gvar->datatype.IsObjectHandle() )
 			{
 				// Call the default constructor to have a valid object for the assignment
 				CallDefaultConstructor(gvar->datatype, gvar->index, true, &ctx.bc, gvar->idNode, true);
@@ -996,6 +994,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			// the default action is a direct copy if it is the same type
 			// and a simple assignment.
 			bool assigned = false;
+			// Even though an ASHANDLE can be an explicit handle the assignment needs to be treated by the overloaded operator
 			if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 			{
 				assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
@@ -1037,7 +1036,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 			}
 		}
 	}
-	else if( gvar->datatype.IsObject() && (!gvar->datatype.IsObjectHandle() || gvar->datatype.GetObjectType()->flags & asOBJ_ASHANDLE) )
+	else if( gvar->datatype.IsObject() && !gvar->datatype.IsObjectHandle() )
 	{
 		// Call the default constructor in case no explicit initialization is given
 		CallDefaultConstructor(gvar->datatype, gvar->index, true, &ctx.bc, gvar->idNode, true);
@@ -1539,6 +1538,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 				}
 				else
 				{
+					// TODO: ASHANDLE: Is this right?
 					if( args[n]->type.dataType.GetObjectType() &&
 						(args[n]->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) &&
 						args[n]->type.isVariable &&
@@ -2041,6 +2041,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 					// the default action is a direct copy if it is the same type
 					// and a simple assignment.
 					bool assigned = false;
+					// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
 					if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 					{
 						assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
@@ -3100,7 +3101,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	lvalue.isVariable = true;
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
 
-	if( (!dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_ASHANDLE))) &&
+	if( !dt.IsObjectHandle() &&
 		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
 		PrepareForAssignment(&lvalue.dataType, ctx, node, true);
@@ -3262,7 +3263,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// need to load it into the register
 			if( !expr.type.dataType.IsPrimitive() )
 			{
-				if( (!expr.type.dataType.IsObjectHandle() || (expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) &&
+				if( !expr.type.dataType.IsObjectHandle() &&
 					expr.type.dataType.IsReference() )
 					expr.bc.Instr(asBC_RDSPTR);
 
@@ -4654,11 +4655,12 @@ asUINT asCCompiler::ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType
 	// Convert null to any object type handle, but not to a non-handle type
 	if( ctx->type.IsNullConstant() )
 	{
-		// asOBJ_ASHANDLE is not really a handle, so a null handle must not be converted directly to an asOBJ_ASHANDLE
-		if( to.IsObjectHandle() && !(to.GetObjectType() && (to.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+		if( to.IsObjectHandle() )
+		{
 			ctx->type.dataType = to;
-
-		return asCC_REF_CONV;
+			return asCC_REF_CONV;
+		}
+		return asCC_NO_CONV;
 	}
 
 	asASSERT(ctx->type.dataType.GetObjectType());
@@ -4865,16 +4867,10 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				e.bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
 
 				MergeExprBytecodeAndType(ctx, &e);
-
-				// An asOBJ_ASHANDLE type should always be treated as a handle
-				ctx->type.dataType.MakeHandle(true);
 			}
 			else
 			{
 				ctx->type.Set(asCDataType::CreateObject(to.GetObjectType(), false));
-
-				// An asOBJ_ASHANDLE type should always be treated as a handle
-				ctx->type.dataType.MakeHandle(true);
 			}
 		}
 	}
@@ -4977,6 +4973,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 		}
 		else if( !to.IsReference() && ctx->type.dataType.IsReference() )
 		{
+			// TODO: ref: Is this really necessary?
 			// ASHANDLE is really a value type, even though it looks
 			// like a handle, so we shouldn't dereference it
 			if( !(ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) ||
@@ -5120,8 +5117,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				}
 
 				// A handle can be converted to a reference, by checking for a null pointer
-				// An asOBJ_ASHANDLE is not really a handle, it is a value type
-				if( ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+				if( ctx->type.dataType.IsObjectHandle() )
 				{
 					if( generateCode )
 						ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
@@ -5132,9 +5128,6 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				}
 				else
 				{
-					if( ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
-						ctx->type.dataType.MakeHandle(false);
-
 					// This may look strange as the conversion was to make the expression a reference
 					// but a value type allocated on the stack is a reference even without the type
 					// being marked as such.
@@ -7317,6 +7310,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	{
 		if( expr.type.dataType.IsObject() )
 		{
+			// TODO: ref: Is this right or necessary?
 			// ASHANDLE is actually a value type, even though it looks like a handle
 			// For this reason we shouldn't dereference it, unless it is on the heap
 			if( !(expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) ||
@@ -9392,6 +9386,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 {
 	if( objectType )
 	{
+		// TODO: ref: Is this right?
 		// The ASHANDLE type is really a value type, so if it is a
 		// local variable on the stack it must not be dereferenced
 		if( !(objectType->flags & asOBJ_ASHANDLE) ||
@@ -11087,7 +11082,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		{
 			ctx->bc.Instr(asBC_PshRPtr);
 			if( descr->returnType.IsObject() &&
-				(!descr->returnType.IsObjectHandle() || (descr->returnType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+				!descr->returnType.IsObjectHandle() )
 			{
 				// We are getting the pointer to the object
 				// not a pointer to a object variable
