@@ -7862,21 +7862,25 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		// Verify that the type allow its handle to be taken
 		if( ctx->type.isExplicitHandle ||
 			!ctx->type.dataType.IsObject() ||
-			!((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+			!((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || 
+			  (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 		{
 			Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
 			return -1;
 		}
 
 		// Objects that are not local variables are not references
-		if( !ctx->type.dataType.IsReference() && !(ctx->type.dataType.IsObject() && !ctx->type.isVariable) )
+		// Objects allocated on the stack are also not marked as references
+		if( !ctx->type.dataType.IsReference() && 
+			!(ctx->type.dataType.IsObject() && !ctx->type.isVariable) &&
+			!(ctx->type.isVariable && !IsVariableOnHeap(ctx->type.stackOffset)) )
 		{
 			Error(TXT_NOT_VALID_REFERENCE, node);
 			return -1;
 		}
 
 		// If this is really an object then the handle created is a const handle
-		bool makeConst = !ctx->type.dataType.IsObjectHandle();
+		bool makeConst = !ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE);
 
 		// Mark the type as an object handle
 		ctx->type.dataType.MakeHandle(true);

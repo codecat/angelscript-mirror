@@ -3,6 +3,7 @@
 
 #include <string>
 #include <angelscript.h>
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 class CGameObj
 {
@@ -19,7 +20,7 @@ public:
 	void OnThink();
 
 	bool Move(int dx, int dy);
-	void Send(asIScriptObject *msg, CGameObj *other);
+	void Send(CScriptHandle msg, CGameObj *other);
 	void Kill();
 
 	// The script shouldn't be allowed to update the position directly 

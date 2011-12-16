@@ -78,7 +78,7 @@ bool CGameObj::Move(int dx, int dy)
 	return true;
 }
 
-void CGameObj::Send(asIScriptObject *msg, CGameObj *other)
+void CGameObj::Send(CScriptHandle msg, CGameObj *other)
 {
 	if( other && other->controller )
 		scriptMgr->CallOnMessage(other->controller, msg, this);

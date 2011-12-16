@@ -38,11 +38,8 @@ int CScriptMgr::Init()
 	// Register the string type
 	RegisterStdString(engine);
 
-
-	// Register the message interface. This interface has no methods.
-	// It is only used to allow the scripts to implement their own message
-	// structures, yet pass them to the game engine via a reference to the interface.
-	r = engine->RegisterInterface("IMessage"); assert( r >= 0 );
+	// Register the generic handle type, called 'ref' in the script
+	RegisterScriptHandle(engine);
 
 
 	// Register the game object. The scripts cannot create these directly, so there is no factory function.
@@ -60,7 +57,9 @@ int CScriptMgr::Init()
 	
 	// The script can send a message to the other object through this method
 	// Observe the autohandle @+ to tell AngelScript to automatically release the handle after the call
-	r = engine->RegisterObjectMethod("CGameObj", "void Send(IMessage @+ msg, const CGameObj @+ to)", asMETHOD(CGameObj, Send), asCALL_THISCALL); assert( r >= 0 );
+	// The generic handle type is used to allow the script to pass any object to
+	// the other script without the application having to know anything about it
+	r = engine->RegisterObjectMethod("CGameObj", "void Send(ref msg, const CGameObj @+ to)", asMETHOD(CGameObj, Send), asCALL_THISCALL); assert( r >= 0 );
 
 
 
@@ -205,7 +204,7 @@ CScriptMgr::SController *CScriptMgr::GetControllerScript(const string &script)
 	
 	// Find the optional event handlers
 	ctrl->onThinkMethodId     = type->GetMethodIdByDecl("void OnThink()");
-	ctrl->onMessageMethodId   = type->GetMethodIdByDecl("void OnMessage(IMessage @msg, const CGameObj @sender)");
+	ctrl->onMessageMethodId   = type->GetMethodIdByDecl("void OnMessage(ref @msg, const CGameObj @sender)");
 
 	// Add the cache as user data to the type for quick access
 	type->SetUserData(ctrl);
@@ -261,7 +260,7 @@ void CScriptMgr::CallOnThink(asIScriptObject *object)
 	}
 }
 
-void CScriptMgr::CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObj *caller)
+void CScriptMgr::CallOnMessage(asIScriptObject *object, CScriptHandle &msg, CGameObj *caller)
 {
 	// Find the cached onMessage method id
 	SController *ctrl = reinterpret_cast<SController*>(object->GetObjectType()->GetUserData());
@@ -271,7 +270,7 @@ void CScriptMgr::CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CG
 	{
 		asIScriptContext *ctx = PrepareContextFromPool(ctrl->onMessageMethodId);
 		ctx->SetObject(object);
-		ctx->SetArgObject(0, msg);
+		ctx->SetArgObject(0, &msg);
 		ctx->SetArgObject(1, caller);
 		ExecuteCall(ctx);
 		ReturnContextToPool(ctx);

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <angelscript.h>
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 class CGameObj;
 
@@ -17,7 +18,7 @@ public:
 
 	asIScriptObject *CreateController(const std::string &type, CGameObj *obj);
 	void CallOnThink(asIScriptObject *object);
-	void CallOnMessage(asIScriptObject *object, asIScriptObject *msg, CGameObj *caller);
+	void CallOnMessage(asIScriptObject *object, CScriptHandle &msg, CGameObj *caller);
 
 	bool hasCompileErrors;
 
