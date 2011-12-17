@@ -1538,14 +1538,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 				}
 				else
 				{
-					// TODO: ASHANDLE: Is this right?
-					if( args[n]->type.dataType.GetObjectType() &&
-						(args[n]->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) &&
-						args[n]->type.isVariable &&
-						IsVariableOnHeap(args[n]->type.stackOffset) )
-						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
-					else
-						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					bc->InstrWORD(asBC_GETREF, (asWORD)offset);
 				}
 			}
 		}
@@ -4973,14 +4966,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 		}
 		else if( !to.IsReference() && ctx->type.dataType.IsReference() )
 		{
-			// TODO: ref: Is this really necessary?
-			// ASHANDLE is really a value type, even though it looks
-			// like a handle, so we shouldn't dereference it
-			if( !(ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) ||
-				(ctx->type.isVariable && IsVariableOnHeap(ctx->type.stackOffset)) )
-				Dereference(ctx, generateCode);
-			else
-				ctx->type.dataType.MakeReference(false);
+			Dereference(ctx, generateCode);
 		}
 	}
 	else
@@ -7309,14 +7295,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	if( expr.type.dataType.IsReference() )
 	{
 		if( expr.type.dataType.IsObject() )
-		{
-			// TODO: ref: Is this right or necessary?
-			// ASHANDLE is actually a value type, even though it looks like a handle
-			// For this reason we shouldn't dereference it, unless it is on the heap
-			if( !(expr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) ||
-				(expr.type.isVariable && IsVariableOnHeap(expr.type.stackOffset)) )
-				Dereference(&expr, true);
-		}
+			Dereference(&expr, true);
 		else
 			ConvertToVariable(&expr);
 	}
@@ -9386,12 +9365,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 {
 	if( objectType )
 	{
-		// TODO: ref: Is this right?
-		// The ASHANDLE type is really a value type, so if it is a
-		// local variable on the stack it must not be dereferenced
-		if( !(objectType->flags & asOBJ_ASHANDLE) ||
-			!(ctx->type.isVariable && !IsVariableOnHeap(ctx->type.stackOffset)) )
-			Dereference(ctx, true);
+		Dereference(ctx, true);
 
 		// This following warning was removed as there may be valid reasons
 		// for calling non-const methods on temporary objects, and we shouldn't
