@@ -4817,7 +4817,8 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				// Allocate the new object
 				asCTypeInfo tempObj;
 				tempObj.dataType = to;
-				tempObj.stackOffset = (short)AllocateVariable(to, true);
+				tempObj.dataType.MakeReference(false);
+				tempObj.stackOffset = (short)AllocateVariable(tempObj.dataType, true);
 				tempObj.dataType.MakeReference(true);
 				tempObj.isTemporary = true;
 				tempObj.isVariable = true;

@@ -107,10 +107,9 @@ bool Test()
 			TEST_FAILED;
 
 		// This will cause an implicit cast to 'ref'. The object must be release properly afterwards
-		// TODO: This is causing a memory leak, as the 'ref' type is never destroyed
-		//r = ExecuteString(engine, "ReceiveRefByRef(A());", mod);
-		//if( r != asEXECUTION_FINISHED )
-		//	TEST_FAILED;
+		r = ExecuteString(engine, "ReceiveRefByRef(A());", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}
