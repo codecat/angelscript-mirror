@@ -110,7 +110,6 @@ protected:
 #if AS_PROCESS_METADATA == 1
 	int  ExtractMetadataString(int pos, std::string &outMetadata);
 	int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
-	bool CompareVarDecl(const char* apA, const char* apB);
 
 	// Temporary structure for storing metadata and declaration
 	struct SMetadataDecl

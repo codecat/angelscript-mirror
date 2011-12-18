@@ -364,6 +364,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_addon_scriptbuilder.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_addon_scripthandle.cpp"
 				>
 			</File>
@@ -577,10 +581,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_interface.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\test_metadata.cpp"
 				>
 			</File>
 			<File

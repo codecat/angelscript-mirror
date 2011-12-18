@@ -103,6 +103,10 @@ SOURCE=..\..\source\test_addon_scriptarray.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_scriptbuilder.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_addon_scripthandle.cpp
 # End Source File
 # Begin Source File
@@ -320,10 +324,6 @@ SOURCE=..\..\source\test_int8.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_interface.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\source\test_metadata.cpp
 # End Source File
 # Begin Source File
 

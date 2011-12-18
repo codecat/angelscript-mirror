@@ -4,8 +4,9 @@
 #pragma warning (disable:4786)
 #endif
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
+#include "../../../adD_on/scriptmath/scriptmathcomplex.h"
 
-namespace TestMetaData
+namespace Test_Addon_ScriptBuilder
 {
 
 const char *script =
@@ -41,6 +42,8 @@ const char *script =
 "   return 0; \n"
 " } \n"
 " [ noedit ] int b; \n"
+" [ edit,c ] \n"
+" complex c; \n"
 "} \n"
 // interface declarations can have meta data
 "[ myintf ] interface MyIntf {} \n"
@@ -69,6 +72,7 @@ bool Test()
 	RegisterScriptArray(engine, true);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	RegisterScriptMathComplex(engine);
 
 	// Test the parse token method
 	asETokenClass t = engine->ParseToken("!is");
@@ -106,6 +110,9 @@ bool Test()
 		TEST_FAILED;
 	metadata = builder.GetMetadataStringForTypeProperty(typeId, 1);
 	if( metadata != " noedit " )
+		TEST_FAILED;
+	metadata = builder.GetMetadataStringForTypeProperty(typeId, 2);
+	if( metadata != " edit,c " )
 		TEST_FAILED;
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");

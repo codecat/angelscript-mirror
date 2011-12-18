@@ -409,22 +409,6 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 	return 0;
 }
 
-#if AS_PROCESS_METADATA == 1
-bool CScriptBuilder::CompareVarDecl(const char *a, const char *b)
-{
-	while( *a != 0 && *b != 0 )
-	{
-		if( *a != *b ) return false;
-
-		//Go to next char skipping spaces or tabs
-		do { ++a; } while( *a == ' ' || *a == '\t' );
-		do { ++b; } while( *b == ' ' || *b == '\t' );
-	}
-
-	return true;
-}
-#endif
-
 int CScriptBuilder::Build()
 {
 	int r = module->Build();
@@ -456,7 +440,7 @@ int CScriptBuilder::Build()
 			if( decl->parentClass == "" )
 			{
 				// Find the global variable index
-				int varIdx = module->GetGlobalVarIndexByDecl(decl->declaration.c_str());
+				int varIdx = module->GetGlobalVarIndexByName(decl->declaration.c_str());
 				if( varIdx >= 0 )
 					varMetadataMap.insert(map<int, string>::value_type(varIdx, decl->metadata));
 			}
@@ -479,8 +463,9 @@ int CScriptBuilder::Build()
 				// Search through all properties to get proper declaration
 				for( asUINT i = 0; i < (asUINT)objectType->GetPropertyCount(); ++i )
 				{
-					// Need special compare func that skips spaces and tabs
-					if( CompareVarDecl(decl->declaration.c_str(), objectType->GetPropertyDeclaration(i)) )
+					const char *name;
+					objectType->GetProperty(i, &name);
+					if( decl->declaration == name )
 					{
 						idx = i;
 						break;
@@ -670,12 +655,13 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 		{
 			// For function declarations, store everything up to the start of the statement block
 
-			// For variable declaration store everything up until the first parenthesis, assignment, or end statement.
+			// For variable declaration store just the name as there can only be one
 
 			// We'll only know if the declaration is a variable or function declaration when we see the statement block, or absense of a statement block.
 			int varLength = 0;
 			declaration.append(&modifiedScript[pos], len);
 			pos += len;
+			string name;
 			for(; pos < (int)modifiedScript.size();)
 			{
 				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
@@ -693,6 +679,10 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 						// We've found the end of a variable declaration.
 						if( varLength != 0 )
 							declaration.resize(varLength);
+
+						// Substitute the declaration with just the name
+						declaration = name;
+
 						type = 3;
 
 						return pos;
@@ -704,6 +694,10 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 						// should only store the type and name of the variable, not the initialization parameters.
 						varLength = (int)declaration.size();
 					}
+				}
+				else if( t == asTC_IDENTIFIER )
+				{
+					name.assign(&modifiedScript[pos], len);
 				}
 
 				declaration.append(&modifiedScript[pos], len);

@@ -75,6 +75,7 @@
 		<Unit filename="..\..\source\test2modules.cpp" />
 		<Unit filename="..\..\source\test_2func.cpp" />
 		<Unit filename="..\..\source\test_addon_scriptarray.cpp" />
+		<Unit filename="..\..\source\test_addon_scriptbuilder.cpp" />
 		<Unit filename="..\..\source\test_addon_scripthandle.cpp" />
 		<Unit filename="..\..\source\test_addon_serializer.cpp" />
 		<Unit filename="..\..\source\test_any.cpp" />
@@ -129,7 +130,6 @@
 		<Unit filename="..\..\source\test_inheritance.cpp" />
 		<Unit filename="..\..\source\test_int8.cpp" />
 		<Unit filename="..\..\source\test_interface.cpp" />
-		<Unit filename="..\..\source\test_metadata.cpp" />
 		<Unit filename="..\..\source\test_module.cpp" />
 		<Unit filename="..\..\source\test_multiassign.cpp" />
 		<Unit filename="..\..\source\test_nested.cpp" />

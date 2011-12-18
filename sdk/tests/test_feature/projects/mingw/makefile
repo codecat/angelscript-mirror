@@ -10,6 +10,7 @@ SRCNAMES = \
   main.cpp \
   test_2func.cpp \
   test_addon_scriptarray.cpp \
+  test_addon_scriptbuilder.cpp \
   test_addon_scripthandle.cpp \
   test_addon_scriptmath.cpp \
   test_addon_serializer.cpp \
@@ -61,7 +62,6 @@ SRCNAMES = \
   test_import2.cpp \
   test_inheritance.cpp \
   test_interface.cpp \
-  test_metadata.cpp \
   test_module.cpp \
   test_multiassign.cpp \
   test_nested.cpp \

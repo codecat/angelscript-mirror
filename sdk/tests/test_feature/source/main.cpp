@@ -135,7 +135,6 @@ namespace TestEnum              { bool Test(); }
 namespace TestFile              { bool Test(); }
 namespace TestRefCast           { bool Test(); }
 namespace TestImplicitHandle    { bool Test(); }
-namespace TestMetaData          { bool Test(); }
 namespace TestInheritance       { bool Test(); }
 namespace TestDump              { bool Test(); }
 namespace TestTemplate          { bool Test(); }
@@ -152,6 +151,7 @@ namespace Test_Addon_ScriptArray  { bool Test(); }
 namespace Test_Addon_ScriptHandle { bool Test(); }
 namespace Test_Addon_Serializer   { bool Test(); }
 namespace Test_Addon_ScriptMath   { bool Test(); }
+namespace Test_Addon_ScriptBuilder { bool Test(); }
 
 #include "utils.h"
 
@@ -192,6 +192,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( Test_Addon_ScriptBuilder::Test() ) goto failed; else printf("-- Test_Addon_ScriptBuilder passed\n");
 	if( Test_Addon_ScriptMath::Test()   ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");
 	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( Test_Addon_Serializer::Test()   ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
@@ -230,7 +231,6 @@ int main(int argc, char **argv)
 	if( TestArray::Test()               ) goto failed; else printf("-- TestArray passed\n");
 	if( TestAny::Test()                 ) goto failed; else printf("-- TestAny passed\n");
 	if( TestObjHandle2::Test()          ) goto failed; else printf("-- TestObjHandle2 passed\n");
-	if( TestMetaData::Test()            ) goto failed; else printf("-- TestMetaData passed\n");
 	if( TestDictionary::Test()          ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestVector3()                   ) goto failed; else printf("-- TestVector3 passed\n");
 	if( TestConstObject::Test()         ) goto failed; else printf("-- TestConstObject passed\n");
