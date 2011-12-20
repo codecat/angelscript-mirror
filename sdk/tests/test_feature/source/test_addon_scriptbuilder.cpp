@@ -4,7 +4,7 @@
 #pragma warning (disable:4786)
 #endif
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
-#include "../../../adD_on/scriptmath/scriptmathcomplex.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 
 namespace Test_Addon_ScriptBuilder
 {
