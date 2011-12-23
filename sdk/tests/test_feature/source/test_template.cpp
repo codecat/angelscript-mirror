@@ -16,6 +16,15 @@ public:
 		type->AddRef();
 	}
 
+	MyTmpl(asIObjectType *t, int len) 
+	{
+		refCount = 1;
+		type = t;
+		length = len;
+
+		type->AddRef();
+	}
+
 	~MyTmpl()
 	{
 		if( type ) 
@@ -68,6 +77,11 @@ public:
 MyTmpl *MyTmpl_factory(asIObjectType *type)
 {
 	return new MyTmpl(type);
+}
+
+MyTmpl *MyTmpl_factory(asIObjectType *type, int len)
+{
+	return new MyTmpl(type, len);
 }
 
 // A template specialization
@@ -146,7 +160,7 @@ bool Test()
 	if( r < 0 )
 		TEST_FAILED;
 
-	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int&in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int&in)", asFUNCTIONPR(MyTmpl_factory, (asIObjectType*), MyTmpl*), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
 
@@ -246,7 +260,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTIONPR(MyTmpl_factory, (asIObjectType*), MyTmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
 
@@ -276,7 +290,7 @@ bool Test()
 		RegisterScriptString(engine);
 
 		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTION(MyTmpl_factory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTIONPR(MyTmpl_factory, (asIObjectType*), MyTmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
 
@@ -333,6 +347,47 @@ bool Test()
 		{
 			TEST_FAILED;
 		}
+		engine->Release();
+	}
+
+	// Must properly handle templates without default constructor
+	// http://www.gamedev.net/topic/617408-crash-when-aggregating-a-template-class-that-has-no-default-factory/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF|asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in, int)", asFUNCTIONPR(MyTmpl_factory, (asIObjectType*, int), MyTmpl*), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		// Class T should give error because there is no default constructor for t
+		// Class S should work because it is calling the appropriate non-default constructor for s
+		mod->AddScriptSection("mod", "class T { MyTmpl<int> t; } T t;\n"
+			                         "class S { MyTmpl<int> s; S() { s = MyTmpl<int>(1); } } S s;");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "mod (1, 7) : Info    : Compiling T::T()\n"
+		                   "mod (1, 7) : Error   : No default constructor for object of type 'MyTmpl'.\n"
+						   "mod (2, 26) : Info    : Compiling S::S()\n"
+		                   "mod (2, 34) : Error   : There is no copy operator for the type 'MyTmpl' available.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		r = ExecuteString(engine, "MyTmpl<int> t;");
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 13) : Error   : No default constructor for object of type 'MyTmpl'.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 

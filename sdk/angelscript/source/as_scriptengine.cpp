@@ -1661,6 +1661,8 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			(func.parameterTypes.GetLength() == 0 ||
 			 !func.parameterTypes[0].IsReference()) )
 		{
+			// TODO: Give proper error message that explain that the first parameter is expected to be a reference
+			//       The library should try to avoid having to read the manual as much as possible.
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
@@ -2708,13 +2710,11 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		// The function's refCount was already initialized to 1
 		ot->beh.factories.PushLast(func->id);
 	}
-	if( ot->beh.factories.GetLength() )
+	// If the template has a default factory, then set keep the id
+	if( ot->beh.factories.GetLength() && scriptFunctions[ot->beh.factories[0]]->parameterTypes.GetLength() == 0 )
 		ot->beh.factory = ot->beh.factories[0];
 	else
-	{
-		asASSERT(false);
-		ot->beh.factory = templateType->beh.factory;
-	}
+		ot->beh.factory = 0;
 
 	// Generate stub for the list factory as well
 	if( templateType->beh.listFactory )
