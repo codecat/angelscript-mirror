@@ -173,7 +173,7 @@ void PrintExceptionInfo(asIScriptContext *ctx)
 
   // Determine the function where the exception occurred
   int funcId = ctx->GetExceptionFunction();
-  const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+  const asIScriptFunction *function = engine->GetFunctionById(funcId);
   printf("func: %s\n", function->GetDeclaration());
   printf("modl: %s\n", function->GetModuleName());
   printf("sect: %s\n", function->GetScriptSectionName());
