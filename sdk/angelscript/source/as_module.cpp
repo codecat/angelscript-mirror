@@ -1120,6 +1120,7 @@ void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 					asCScriptFunction *func = engine->GetScriptFunction(intf->methods[m]);
 					if( func )
 					{
+						// TODO: bug: Look for template instances that uses the interface as subtype
 						if( func->returnType.GetObjectType() == equals[i].a )
 							func->returnType.SetObjectType(equals[i].b);
 
@@ -1155,6 +1156,7 @@ void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 		}
 
 		// Deallocate the object type
+		// TODO: bug: If there was a template instance, it needs to be removed first
 		asDELETE(equals[i].a, asCObjectType);
 	}
 }

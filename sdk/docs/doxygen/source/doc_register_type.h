@@ -211,7 +211,7 @@ r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asOBJ_A
 \endcode
 
 Make sure you inform these flags correctly, because if you do not you may get various errors when executing the scripts. 
-Common problems are stack corruptions, and invalid memory accesses. In some cases you may face more silent errors that
+Common problems are stack corruptions and invalid memory accesses. In some cases you may face more silent errors that
 may be difficult to detect, e.g. the function is not returning the expected values.
 
 On some platforms the native calling convention may require further knowledge about the class members in order to work 

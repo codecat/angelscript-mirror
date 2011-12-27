@@ -179,6 +179,63 @@ bool Test()
 		engine->Release();
 	}
 
+	// TODO: Test import with array
+	// http://www.gamedev.net/topic/616554-bindallimportedfunctions-fail/page__gopid__4892532#entry4892532
+/*	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("t", 
+			"interface test1\n"
+			"{\n"
+			"  void foo(test2@[] a);\n"
+			"}\n"
+			"interface test2\n"
+			"{\n"
+			"}\n"
+			"test1@ func()\n"
+			"{\n"
+			"  return null;\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("t",
+			"interface test1\n"
+			"{\n"
+			"  void foo(test2@[] a);\n"
+			"}\n"
+			"interface test2\n"
+			"{\n"
+			"}\n"
+			"import test1@ func() from 'module1';\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = mod->BindAllImportedFunctions();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+*/
 	// Success
 	return fail;
 }
