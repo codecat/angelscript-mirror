@@ -182,6 +182,8 @@ need to manually do this.
 
 \todo Show how the polymorphism is used with cast behaviours
 
+\section doc_script_class_inheritance_2 Extra control with final and override
+
 A class can be marked as 'final' to prevent the inheritance of it. This is an optional feature and
 mostly used in larger projects where there are many classes and it may be difficult to manually 
 control the correct use of all classes. It is also possible to mark individual class methods of a 
@@ -208,7 +210,7 @@ method cannot be overridden.
 </pre>
 
 When deriving a class it is possible to tell the compiler that a method is meant to override a method in the 
-inherited base class. When this is done and there is no matching method in the base class, the compiler will
+inherited base class. When this is done and there is no matching method in the base class the compiler will
 emit an error, as it knows that something wasn't implemented quite the way it was meant. This is especially
 useful to catch errors in large projects where a base class might be modified, but the derived classes was 
 forgotten.
