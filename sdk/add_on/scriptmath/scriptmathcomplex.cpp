@@ -178,7 +178,7 @@ static void RegisterScriptMathComplex_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("complex", "complex opDiv(const complex &in) const", asMETHODPR(Complex, operator/, (const Complex &) const, Complex), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register the object methods
-	r = engine->RegisterObjectMethod("complex", "float length() const", asMETHOD(Complex,length), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("complex", "float abs() const", asMETHOD(Complex,length), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register the swizzle operators
 	r = engine->RegisterObjectMethod("complex", "complex get_ri() const", asMETHOD(Complex, get_ri), asCALL_THISCALL); assert( r >= 0 );

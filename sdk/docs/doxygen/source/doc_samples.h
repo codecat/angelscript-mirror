@@ -186,6 +186,7 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref doc_global_interface
  - \ref doc_script_class
  - \ref doc_addon_build
+ - \ref doc_addon_handle
  - \ref doc_script_shared
 
 

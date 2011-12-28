@@ -358,9 +358,9 @@ public:
   void SortAsc(asUINT index, asUINT count);
   void SortDesc();
   void SortDesc(asUINT index, asUINT count);
-  void reverse();
-  int  find(void *value);
-  int  find(asUINT index, void *value);
+  void Reverse();
+  int  Find(void *value);
+  int  Find(asUINT index, void *value);
 };
 \endcode
 
@@ -377,6 +377,8 @@ public:
     const T &opIndex(uint) const;
 
     array<T> opAssign(const array<T> & in);
+    
+    uint length { get const; set; }
     
     void insertAt(uint index, const T& in);
     void removeAt(uint index);
@@ -402,7 +404,7 @@ public:
     array<int> arr = {1,2,3};
     
     int sum = 0;
-    for( uint n = 0; n < arr.length(); n++ )
+    for( uint n = 0; n < arr.length; n++ )
       sum += arr[n];
       
     return sum;
@@ -644,8 +646,12 @@ Refer to the <code>std::string</code> implementation for your compiler.
     string();
     string(const string &in);
     
-    // Returns the length of the string
+    // Property accessor for getting and setting the length
+    uint length { get const; set; }
+    
+    // Methods for getting and setting the length
     uint length() const;
+    void resize(uint);
     
     // Assignment and concatenation
     string &opAssign(const string &in other);
@@ -692,6 +698,24 @@ Refer to the <code>std::string</code> implementation for your compiler.
 
   // Takes an array of strings and joins them into one string separated by the specified delimiter
   string join(const array<string> &in arr, const string &in delimiter);
+  
+  // Formatting numbers into strings
+  // The options should be informed as characters in a string
+  //  l = left justify
+  //  0 = pad with zeroes
+  //  + = always include the sign, even if positive
+  //    = add a space in case of positive number
+  //  h = hexadecimal integer small letters
+  //  H = hexadecimal integer capital letters
+  //  e = exponent character with small e
+  //  E = exponent character with capital E
+  string formatInt(int64 val, const string &in options, uint width = 0);
+  string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0);
+  
+  // Parsing numbers from strings
+  int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0);
+  double parseFloat(const string &in, uint &out byteCount = 0);
+
 </pre>
 
 
@@ -924,49 +948,85 @@ engine. Use <code>RegisterScriptMath(asIScriptEngine*)</code> to perform the reg
 By defining the preprocessor word AS_USE_FLOAT=0, the functions will be registered to take 
 and return doubles instead of floats.
 
+The function <code>RegisterScriptMathComplex(asIScriptEngine*)</code> registers a type that 
+represents a complex number, i.e. a number with real and imaginary parts.
+
 \section doc_addon_math_1 Public script interface
 
 <pre>
+  // Trigonometric functions
   float cos(float rad);
   float sin(float rad);
   float tan(float rad);
+  
+  // Inverse trigonometric functions
   float acos(float val);
   float asin(float val);
   float atan(float val);
   float atan2(float y, float x);
+  
+  // Hyperbolic functions
   float cosh(float rad);
   float sinh(float rad);
   float tanh(float rad);
+  
+  // Logarithmic functions
   float log(float val);
   float log10(float val);
+  
+  // Power of
   float pow(float val, float exp);
+  
+  // Square root
   float sqrt(float val);
-  float ceil(float val);
+
+  // Absolute value
   float abs(float val);
+
+  // Ceil and floor functions
+  float ceil(float val);
   float floor(float val);
+  
+  // Returns the fraction
   float fraction(float val);
+  
+  // This type represents a complex number with real and imaginary parts
+  class complex
+  {
+    // Constructors
+    complex();
+    complex(const complex &in);
+    complex(float r, float i = 0);
+
+    // Equality operator
+    bool opEquals(const complex &in) const;
+
+    // Compound assignment operators
+    complex &opAddAssign(const complex &in);
+    complex &opSubAssign(const complex &in);
+    complex &opMulAssign(const complex &in);
+    complex &opDivAssign(const complex &in);
+    
+    // Math operators
+    complex opAdd(const complex &in) const;
+    complex opSub(const complex &in) const;
+    complex opMul(const complex &in) const;
+    complex opDiv(const complex &in) const;
+    
+    // Returns the absolute value (magnitude)
+    float abs() const;
+
+    // Swizzle operators
+    complex get_ri() const;
+    void set_ri(const complex &in);
+    complex get_ir() const;
+    void set_ir(const complex &in);
+    
+    // The real and imaginary parts
+    float r;
+    float i;
+  }
 </pre>
- 
-
-
- 
- 
-\page doc_addon_math3d 3D math functions
-
-<b>Path:</b> /sdk/add_on/scriptmath3d/
-
-This add-on registers some value types and functions that permit the scripts to perform 
-3D mathematical operations. Use <code>RegisterScriptMath3D(asIScriptEngine*)</code> to
-perform the registration.
-
-Currently the only thing registered is the <code>vector3</code> type, representing a 3D vector, 
-with basic math operators, such as add, subtract, scalar multiply, equality comparison, etc. It 
-also includes swizzle operators xyz, yzx, zxy, zyx, yxz, and xzy implemented with property accessors.
-
-This add-on serves mostly as a sample on how to register a value type. Application
-developers will most likely want to register their own math library rather than use 
-this add-on as-is. 
-
 
 
 
@@ -1028,6 +1088,9 @@ public:
 
   // Get metadata declared for global variables
   const char *GetMetadataStringForVar(int varIdx);
+
+  // Get metadata declared for a class method
+  const char *GetMetadataStringForTypeMethod(int typeId, int mthdIdx);
 
   // Get metadata declared for a class property
   const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);

@@ -111,19 +111,19 @@ bool Test()
 	}
 
 	// Test some operator overloads
-	r = ExecuteString(engine, "complex v(1,0); assert( (v*complex(2,0)).length() == 2 );");
+	r = ExecuteString(engine, "complex v(1,0); assert( (v*complex(2,0)).abs() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = ExecuteString(engine, "complex v(1,0); assert( (complex(2,0)*v).length() == 2 );");
+	r = ExecuteString(engine, "complex v(1,0); assert( (complex(2,0)*v).abs() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = ExecuteString(engine, "complex v(1,0); assert( (v+v).length() == 2 );");
+	r = ExecuteString(engine, "complex v(1,0); assert( (v+v).abs() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
@@ -135,7 +135,7 @@ bool Test()
 		TEST_FAILED;
 	}
 
-	r = ExecuteString(engine, "complex v(1,0); assert( (v *= complex(2)).length() == 2 );");
+	r = ExecuteString(engine, "complex v(1,0); assert( (v *= complex(2)).abs() == 2 );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
