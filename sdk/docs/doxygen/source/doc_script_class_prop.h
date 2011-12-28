@@ -7,37 +7,70 @@ accessing them. An example would be to always send a notification when a propert
 the value of the property from other properties. By implementing property accessor methods for the properties
 this can be implemented by the class itself, making it easier for the one who accesses the properties.
 
-In AngelScript property accessors are implemented as ordinary class methods with the prefixes <tt>get_</tt> 
-and <tt>set_</tt> when the property belongs to an object. Property accessors can also be implemented for global
-properties, which follows the same rules, except the functions are global.
+In AngelScript property accessors are declared with the following syntax:
 
 <pre>
-  // The class declaration with property accessors
   class MyObj
   {
-    int get_prop() const
-    {
-      // The actual value of the property could be stored
-      // somewhere else, or even computed at access time
-      return realProp;
+    // A virtual property with accessors
+    int prop 
+    { 
+      get const 
+      { 
+        // The actual value of the property could be stored
+        // somewhere else, or even computed at access time.
+        return realProp; 
+      } 
+      set 
+      { 
+        // The new value is stored in a hidden parameter appropriately called 'value'.
+        realProp = value; 
+      }
     }
-
-    void set_prop(int val)
-    {
-      // Here we can do extra logic, e.g. make sure 
-      // the value is within the proper range
-      if( val > 1000 ) val = 1000;
-      if( val < 0 ) val = 0;
-
-      realProp = val;
-    }
-
-    // The caller should use the property accessors
-    // 'prop' to access this property
-    int realProp;
+  
+    // The actual value can be stored in a member or elsewhere.
+    // It is actually possible to use the same name for the real property, if so is desired.
+    private int realProp;
   }
+</pre>
 
-  // An example for how to access the property through the accessors
+Behind the scene the compiler transforms this into two methods with the name of the property and the prefixes 
+<tt>get_</tt> and <tt>set_</tt>. The following generates the equivalent code, and is perfectly valid too:
+
+<pre>
+  class MyObj
+  {
+    int get_prop() const { return realProp; }
+    void set_prop(int value) { realProp = value; }
+    private int realProp;
+  }
+</pre>
+
+If you implement the property accessors by explicitly writing the two methods you must make sure the return type 
+of the get accessor and the parameter type of the set accessor match, otherwise the compiler will not know which 
+is the correct type to use.
+
+For interfaces the first alternative is usually the preferred way of declaring the property accessors, as it 
+gets quite short and easy to read.
+
+<pre>
+  interface IProp
+  {
+    int prop { get const; set; }
+  }
+</pre>
+
+You can also leave out either the get or set accessor. If you leave out the set accessor, then the 
+property will be read-only. If you leave out the get accessor, then the property will be write-only.
+
+Property accessors can also be implemented for global properties, which follows the same rules, except the 
+functions are global.
+
+When the property accessors have been declared it is possible to access them like ordinary properties,
+and the compiler will automatically expand the expressions to the appropriate function calls, either 
+<tt>set_</tt> or <tt>get_</tt> depending on how the property is used in the expression.
+
+<pre>
   void Func()
   {
     MyObj obj;
@@ -51,13 +84,6 @@ properties, which follows the same rules, except the functions are global.
     assert( obj.prop == 1000 );
   }
 </pre>
-
-When implementing the property accessors you must make sure the return type of the get accessor and the 
-parameter type of the set accessor match, otherwise the compiler will not know which is the correct type
-to use.
-
-You can also leave out either the get or set accessor. If you leave out the set accessor, then the 
-property will be read-only. If you leave out the get accessor, then the property will be write-only.
 
 Observe that as property accessors are actually a pair of methods rather than direct access to the value, 
 some restrictions apply as to how they can be used in expressions. Expressions that need to read and write

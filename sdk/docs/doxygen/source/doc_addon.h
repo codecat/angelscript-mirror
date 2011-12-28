@@ -26,7 +26,6 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
- - \subpage doc_addon_math3d
 
 
  
@@ -974,7 +973,7 @@ represents a complex number, i.e. a number with real and imaginary parts.
   float log(float val);
   float log10(float val);
   
-  // Power of
+  // Power to
   float pow(float val, float exp);
   
   // Square root
