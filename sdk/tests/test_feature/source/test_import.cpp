@@ -179,9 +179,9 @@ bool Test()
 		engine->Release();
 	}
 
-	// TODO: Test import with array
+	// Test import with array
 	// http://www.gamedev.net/topic/616554-bindallimportedfunctions-fail/page__gopid__4892532#entry4892532
-/*	{
+	{
 		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -219,7 +219,7 @@ bool Test()
 			"interface test2\n"
 			"{\n"
 			"}\n"
-			"import test1@ func() from 'module1';\n");
+			"import test1@ func() from '1';\n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -235,7 +235,7 @@ bool Test()
 
 		engine->Release();
 	}
-*/
+
 	// Success
 	return fail;
 }

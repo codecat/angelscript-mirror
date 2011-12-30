@@ -17,6 +17,8 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->RegisterGlobalProperty("int reg", &reg);
 
+		RegisterScriptArray(engine, true);
+
 		engine->RegisterEnum("ESHARED");
 		engine->RegisterEnumValue("ESHARED", "ES1", 1);
 
@@ -55,6 +57,10 @@ bool Test()
 			"  void f(badIntf @) {} \n" // Don't allow use of non-shared types in parameters/return type
 			"  ESHARED _es; \n" // allow
 			"  ENOTSHARED _ens; \n" // Don't allow
+			"  void f() \n"
+			"  { \n"
+			"    array<int> a; \n"
+			"  } \n"
 			"} \n"
 			"int var; \n"
 			"void gfunc() {} \n"
