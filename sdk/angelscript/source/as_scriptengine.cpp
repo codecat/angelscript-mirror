@@ -2003,7 +2003,7 @@ void asCScriptEngine::FreeUnusedGlobalProperties()
 // interface
 asUINT asCScriptEngine::GetGlobalPropertyCount() const
 {
-	return registeredGlobalProps.GetLength();
+	return asUINT(registeredGlobalProps.GetLength());
 }
 
 // interface
@@ -2234,7 +2234,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 // interface
 asUINT asCScriptEngine::GetGlobalFunctionCount() const
 {
-	return registeredGlobalFuncs.GetLength();
+	return asUINT(registeredGlobalFuncs.GetLength());
 }
 
 // interface
@@ -3962,7 +3962,7 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 // interface
 asUINT asCScriptEngine::GetFuncdefCount() const
 {
-	return registeredFuncDefs.GetLength();
+	return asUINT(registeredFuncDefs.GetLength());
 }
 
 // interface
@@ -4061,7 +4061,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 // interface
 asUINT asCScriptEngine::GetTypedefCount() const
 {
-	return registeredTypeDefs.GetLength();
+	return asUINT(registeredTypeDefs.GetLength());
 }
 
 // interface
@@ -4179,7 +4179,7 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 // interface
 asUINT asCScriptEngine::GetEnumCount() const
 {
-	return registeredEnums.GetLength();
+	return asUINT(registeredEnums.GetLength());
 }
 
 // interface
@@ -4235,7 +4235,7 @@ const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, i
 // interface
 asUINT asCScriptEngine::GetObjectTypeCount() const
 {
-	return registeredObjTypes.GetLength();
+	return asUINT(registeredObjTypes.GetLength());
 }
 
 // interface

@@ -1481,7 +1481,7 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSE
 	{
 		// Make sure PrepareArgument doesn't use any variable that is already
 		// being used by any of the following argument expressions
-		int l = reservedVariables.GetLength();
+		int l = int(reservedVariables.GetLength());
 		for( int m = n-1; m >= 0; m-- )
 			args[m]->bc.GetVarsUsed(reservedVariables);
 
@@ -3498,7 +3498,7 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 
 int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary, bool forceOnHeap, asSExprContext *ctx)
 {
-	int l = reservedVariables.GetLength();
+	int l = int(reservedVariables.GetLength());
 	ctx->bc.GetVarsUsed(reservedVariables);
 	int var = AllocateVariable(type, isTemporary, forceOnHeap);
 	reservedVariables.SetLength(l);
@@ -3772,7 +3772,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		}
 
 		// Implicitly convert the value to the right type
-		int l = reservedVariables.GetLength();
+		int l = int(reservedVariables.GetLength());
 		if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(reservedVariables);
 		ImplicitConversion(rctx, *lvalue, node, asIC_IMPLICIT_CONV);
 		reservedVariables.SetLength(l);
@@ -9420,7 +9420,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 			asCDataType dt = args[n]->type.dataType;
 			dt.MakeReference(false);
 
-			int l = reservedVariables.GetLength();
+			int l = int(reservedVariables.GetLength());
 			objBC.GetVarsUsed(reservedVariables);
 			ctx->bc.GetVarsUsed(reservedVariables);
 			int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(args[n]->type.stackOffset));
@@ -9550,7 +9550,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 
 void asCCompiler::ConvertToTempVariableNotIn(asSExprContext *ctx, asSExprContext *exclude)
 {
-	int l = reservedVariables.GetLength();
+	int l = int(reservedVariables.GetLength());
 	if( exclude ) exclude->bc.GetVarsUsed(reservedVariables);
 	ConvertToTempVariable(ctx);
 	reservedVariables.SetLength(l);
@@ -9659,7 +9659,7 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 
 void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *exclude)
 {
-	int l = reservedVariables.GetLength();
+	int l = int(reservedVariables.GetLength());
 	if( exclude ) exclude->bc.GetVarsUsed(reservedVariables);
 	ConvertToVariable(ctx);
 	reservedVariables.SetLength(l);
@@ -9698,7 +9698,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		to.SetTokenType(ttFloat);
 
 	// Do the actual conversion
-	int l = reservedVariables.GetLength();
+	int l = int(reservedVariables.GetLength());
 	rctx->bc.GetVarsUsed(reservedVariables);
 	lctx->bc.GetVarsUsed(reservedVariables);
 
@@ -10020,7 +10020,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 			to.SetTokenType(ttUInt);
 
 		// Do the actual conversion
-		int l = reservedVariables.GetLength();
+		int l = int(reservedVariables.GetLength());
 		rctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
@@ -10034,7 +10034,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Convert right hand operand to same type as left hand operand
-		l = reservedVariables.GetLength();
+		l = int(reservedVariables.GetLength());
 		lctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConversion(rctx, lctx->type.dataType, node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
@@ -10159,7 +10159,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Do the actual conversion
-		int l = reservedVariables.GetLength();
+		int l = int(reservedVariables.GetLength());
 		rctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
@@ -10173,7 +10173,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		}
 
 		// Right operand must be 32bit uint
-		l = reservedVariables.GetLength();
+		l = int(reservedVariables.GetLength());
 		lctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConversion(rctx, asCDataType::CreatePrimitive(ttUInt, true), node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
@@ -10337,7 +10337,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 		Warning(TXT_SIGNED_UNSIGNED_MISMATCH, node);
 
 	// Do the actual conversion
-	int l = reservedVariables.GetLength();
+	int l = int(reservedVariables.GetLength());
 	rctx->bc.GetVarsUsed(reservedVariables);
 
 	if( lctx->type.dataType.IsReference() )
@@ -10591,7 +10591,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	to.SetTokenType(ttBool);
 
 	// Do the actual conversion
-	int l = reservedVariables.GetLength();
+	int l = int(reservedVariables.GetLength());
 	rctx->bc.GetVarsUsed(reservedVariables);
 	lctx->bc.GetVarsUsed(reservedVariables);
 	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV);
@@ -11093,7 +11093,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		{
 			// Allocate a temporary variable to hold the value, but make sure
 			// the temporary variable isn't used in any of the deferred arguments
-			int l = reservedVariables.GetLength();
+			int l = int(reservedVariables.GetLength());
 			for( asUINT n = 0; args && n < args->GetLength(); n++ )
 			{
 				asSExprContext *expr = (*args)[n]->origExpr;

@@ -126,7 +126,6 @@
 				BufferSecurityCheck="false"
 				RuntimeTypeInfo="false"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
