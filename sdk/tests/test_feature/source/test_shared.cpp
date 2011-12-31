@@ -159,6 +159,38 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test shared classes as members of other classes
+	// http://www.gamedev.net/topic/617717-shared-template-factory-stub/
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		const char *code = 
+			"shared class S { int a; } \n"
+			"class A { S s; } \n";
+
+		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("code", code);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("code", code);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

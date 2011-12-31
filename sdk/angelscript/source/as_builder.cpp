@@ -1925,6 +1925,10 @@ void asCBuilder::CompileClasses()
 		if( decl->isExistingShared )
 		{
 			// TODO: shared: Should really validate against original
+
+			// Set the declaration as validated already, so that other
+			// types that contain this will accept this type
+			decl->validState = 1;
 			continue;
 		}
 
