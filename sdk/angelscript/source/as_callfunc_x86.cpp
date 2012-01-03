@@ -327,7 +327,7 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop         \n"
 		"endcopy:               \n"
-		"call  %2               \n"
+		"call  *%2              \n"
 		"addl  %0, %%esp        \n" // pop arguments
 		
 		// Pop the alignment bytes
@@ -418,7 +418,7 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop8        \n"
 		"endcopy8:              \n"
-		"call  %3               \n"
+		"call  *%3              \n"
 		"addl  %0, %%esp        \n" // pop arguments
 		"addl  $4, %%esp        \n" // pop obj
 
@@ -510,7 +510,7 @@ endcopy:
 		"jne   copyloop6        \n"
 		"endcopy6:              \n"
 		"pushl %2               \n" // push obj
-		"call  %3               \n"
+		"call  *%3              \n"
 		"addl  %0, %%esp        \n" // pop arguments
 		"addl  $4, %%esp        \n" // pop obj
 
@@ -612,7 +612,7 @@ endcopy:
 		"endcopy5:              \n"
 		"pushl %2               \n" // push object first
 		"pushl %3               \n" // retPtr
-		"call  %4               \n" // func
+		"call  *%4              \n" // func
 		"addl  %0, %%esp        \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $8, %%esp        \n" // Pop the return pointer and object pointer
@@ -710,7 +710,7 @@ endcopy:
 		"jne   copyloop7        \n"
 		"endcopy7:              \n"
 		"pushl %2               \n" // retPtr
-		"call  %3               \n" // func
+		"call  *%3              \n" // func
 		"addl  %0, %%esp        \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $4, %%esp        \n" // Pop the return pointer
@@ -811,7 +811,7 @@ endcopy:
 		"jne   copyloop4        \n"
 		"endcopy4:              \n"
 		"pushl %3               \n" // retPtr
-		"call  %4               \n" // func
+		"call  *%4              \n" // func
 		"addl  %0, %%esp        \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $8, %%esp        \n" // Pop the return pointer and object pointer
@@ -899,7 +899,7 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop2        \n"
 		"endcopy2:              \n"
-		"call  %2               \n" // callee pops the arguments
+		"call  *%2              \n" // callee pops the arguments
 
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
@@ -1001,7 +1001,7 @@ endcopy:
 		"endcopy1:              \n"
 		"movl  %2, %%ecx        \n" // move obj into ECX
 		"pushl %%ecx            \n" // push obj on the stack
-		"call  %3               \n"
+		"call  *%3              \n"
 		"addl  %0, %%esp        \n" // pop arguments
 		"addl  $4, %%esp        \n" // pop obj
 
@@ -1114,7 +1114,7 @@ endcopy:
 		"movl  %2, %%ecx       \n" // move obj into ECX
 		"pushl %%ecx           \n" // push obj on the stack
 		"pushl %3              \n" // push retPtr on the stack
-		"call  %4              \n"
+		"call  *%4             \n"
 #ifndef THISCALL_CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $4, %%esp       \n" // pop return pointer
 #endif
