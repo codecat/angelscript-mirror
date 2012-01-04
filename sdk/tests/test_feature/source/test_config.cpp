@@ -36,7 +36,7 @@ bool Test()
 	r = engine->RegisterObjectMethod("mytype", "type opAdd(int) const", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
 
-	r = engine->RegisterGlobalProperty("type a", 0);
+	r = engine->RegisterGlobalProperty("type a", (void*)1);
 	if( r >= 0 ) TEST_FAILED;
 
 	r = engine->RegisterObjectMethod("mytype", "void method(int &)", asFUNCTION(0), asCALL_GENERIC);

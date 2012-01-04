@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.2 WIP - 2011/12/31</h2>
+<h2>Version 2.22.2 WIP - 2012/01/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,15 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Arrays of interfaces weren't properly handled when resolving equal interfaces in different modules (Thanks cvet)
 <li>Shared code couldn't call template factories (Thanks TheAtom)
 <li>Classes that contained shared classes as members would fail in the second module that declared the shared class (Thanks TheAtom)
+<li>RegisterGlobalProperty was accepting null pointers (Thanks Quillraven)
+</ul>
+<li>Virtual machine
+<ul>
+<li>Created the instruction SwapPtr and removed the SWAP4, SWAP8, SWAP48, and SWAP84 instructions that were no longer used
+<li>Created the instruction RDSPtr and removed the RDS4 and RDS8 instructions that won't be used anymore
+<li>Created the instructions PshVPtr, PshNull that will be used for pointers instead of PshV4/8 and PshC4/8
+<li>Created the instruction ClrVPtr that will be used for pointers instead of SetV4/8
+<li>Created the instruction CmpPtr that will be used for pointers instead of CMPi or CMPi64
 </ul>
 </ul>
 

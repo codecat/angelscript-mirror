@@ -199,8 +199,6 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 
-			// All properties must have different offsets in order to make them 
-			// distinct, so we simply register them with an incremental offset
 			asIObjectType *type = engine->GetObjectTypeById(engine->GetTypeIdByDecl(name.c_str()));
 			if( type == 0 )
 			{
@@ -208,6 +206,8 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 				return -1;
 			}
 
+			// All properties must have different offsets in order to make them 
+			// distinct, so we simply register them with an incremental offset
 			r = engine->RegisterObjectProperty(name.c_str(), decl.c_str(), type->GetPropertyCount());
 			if( r < 0 )
 			{
@@ -260,7 +260,10 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
 
-			r = engine->RegisterGlobalProperty(decl.c_str(), 0);
+			// All properties must have different offsets in order to make them 
+			// distinct, so we simply register them with an incremental offset.
+			// The pointer must also be non-null so we add 1 to have a value.
+			r = engine->RegisterGlobalProperty(decl.c_str(), engine->GetGlobalPropertyCount()+1);
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register global property");

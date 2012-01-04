@@ -141,7 +141,7 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterGlobalProperty("int global", 0); assert( r >= 0 );
+	r = engine->RegisterGlobalProperty("int global", (void*)1); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -174,7 +174,7 @@ bool Test()
 
 	// Try registering the property again
 	r = engine->BeginConfigGroup("group1"); assert( r >= 0 );
-	r = engine->RegisterGlobalProperty("int global", 0); assert( r >= 0 );
+	r = engine->RegisterGlobalProperty("int global", (void*)1); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
 	engine->Release();
@@ -572,16 +572,16 @@ bool Test()
 
 
 	//-----------------------------
-	// Test that it isn't possible to register the sample property in two different groups
+	// Test that it isn't possible to register the same property in two different groups
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	engine->BeginConfigGroup("a");
 
-	r = engine->RegisterGlobalProperty("int a", 0); assert( r >= 0 );
+	r = engine->RegisterGlobalProperty("int a", (void*)1); assert( r >= 0 );
 
 	engine->EndConfigGroup();
 
-	r = engine->RegisterGlobalProperty("int a", 0); assert( r < 0 );
+	r = engine->RegisterGlobalProperty("int a", (void*)1); assert( r < 0 );
 
 	engine->Release();
 

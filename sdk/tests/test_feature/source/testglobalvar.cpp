@@ -250,7 +250,7 @@ bool TestGlobalVar()
 		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		int r = engine->RegisterGlobalProperty("const int value = 3345;", 0);
+		int r = engine->RegisterGlobalProperty("const int value = 3345;", (void*)1);
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n"

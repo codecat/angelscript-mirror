@@ -1899,7 +1899,7 @@ bool Test4()
 	engine->RegisterObjectType("ScriptObject", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	engine->RegisterObjectMethod("ScriptObject", "Struct @f()", asFUNCTION(0), asCALL_GENERIC);
 
-	engine->RegisterGlobalProperty("ScriptObject current", 0);
+	engine->RegisterGlobalProperty("ScriptObject current", (void*)1);
 
 	engine->RegisterGlobalFunction("void print(Chars&)", asFUNCTION(0), asCALL_GENERIC);
 

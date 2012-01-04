@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1935,6 +1935,10 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 // interface
 int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *pointer)
 {
+	// Don't accept a null pointer
+	if( pointer == 0 )
+		return ConfigError(asINVALID_ARG, "RegisterGlobalProperty", declaration, 0);
+
 	asCDataType type;
 	asCString name;
 

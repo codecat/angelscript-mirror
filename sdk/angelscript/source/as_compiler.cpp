@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -122,7 +122,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	{
 		// Call the base class' default constructor
 		byteCode.InstrSHORT(asBC_PSF, 0);
-		byteCode.Instr(asBC_RDSPTR);
+		byteCode.Instr(asBC_RDSPtr);
 		byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 	}
 
@@ -164,6 +164,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	byteCode.InstrSHORT(asBC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
+	// TODO: how will this work with platform independent bytecode, as the size of the args may vary?
 	int argDwords = (int)outFunc->GetSpaceNeededForArguments();
 	for( int a = argDwords-1; a >= 0; a-- )
 		byteCode.InstrSHORT(asBC_PshV4, short(-a));
@@ -276,13 +277,11 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		returnType = signature->returnType;
 	}
 
-#ifndef AS_OLD
 	// If the return type is a value type returned by value the address of the
 	// location where the value will be stored is pushed on the stack before 
 	// the arguments
 	if( !(isDestructor || m_isConstructor) && outFunc->DoesReturnOnStack() )
 		stackPos -= AS_PTR_SIZE;
-#endif
 
 	asCVariableScope vs(0);
 
@@ -442,14 +441,14 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		if( m_isConstructor && !m_isConstructorCalled && outFunc->objectType->derivedFrom )
 		{
 			byteCode.InstrSHORT(asBC_PSF, 0);
-			byteCode.Instr(asBC_RDSPTR);
+			byteCode.Instr(asBC_RDSPtr);
 			byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 		}
 
 		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
 		// TODO: optimize: This is probably not necessary for constructors as no outside reference to the object is created yet
 		byteCode.InstrSHORT(asBC_PSF, 0);
-		byteCode.Instr(asBC_RDSPTR);
+		byteCode.Instr(asBC_RDSPtr);
 		byteCode.Call(asBC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
 	}
 
@@ -568,7 +567,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 				PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType());
 
 				// Store the returned handle in the global variable
-				ctx.bc.Instr(asBC_RDSPTR);
+				ctx.bc.Instr(asBC_RDSPtr);
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
 				ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 				ctx.bc.Pop(AS_PTR_SIZE);
@@ -607,7 +606,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 				if( derefDest )
 				{
 					// The variable is a reference to the real location, so we need to dereference it
-					bc->Instr(asBC_RDSPTR);
+					bc->Instr(asBC_RDSPtr);
 				}
 			}
 
@@ -664,7 +663,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 
 				// Store the returned handle in the global variable
-				ctx.bc.Instr(asBC_RDSPTR);
+				ctx.bc.Instr(asBC_RDSPtr);
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
 				ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 				ctx.bc.Pop(AS_PTR_SIZE);
@@ -697,7 +696,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 					// Call the constructor as a normal function
 					bc->InstrSHORT(asBC_PSF, (short)offset);
 					if( deferDest )
-						bc->Instr(asBC_RDSPTR);
+						bc->Instr(asBC_RDSPtr);
 					asSExprContext ctx(engine);
 					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 					bc->AddCode(&ctx.bc);
@@ -905,7 +904,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 							MakeFunctionCall(&ctx, funcs[0], 0, args, node);
 
 							// Store the returned handle in the global variable
-							ctx.bc.Instr(asBC_RDSPTR);
+							ctx.bc.Instr(asBC_RDSPtr);
 							ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
 							ctx.bc.InstrPTR(asBC_REFCPY, gvar->datatype.GetObjectType());
 							ctx.bc.Pop(AS_PTR_SIZE);
@@ -1072,6 +1071,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// We need to push zeroes on the stack to guarantee
 	// that temporary object handles are clear
+	// TODO: How will this work with platform independent bytecode as the pointer size can vary?
 	int n;
 	for( n = 0; n < varSize; n++ )
 		byteCode.InstrINT(asBC_PshC4, 0);
@@ -1262,7 +1262,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 					if( dt.IsObject() && !dt.IsObjectHandle() )
-						ctx->bc.Instr(asBC_RDSPTR);
+						ctx->bc.Instr(asBC_RDSPtr);
 
 					if( paramType->IsReadOnly() )
 						ctx->type.dataType.MakeReadOnly(true);
@@ -1307,7 +1307,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 				if( dt.IsObject() && !dt.IsObjectHandle() )
-					ctx->bc.Instr(asBC_RDSPTR);
+					ctx->bc.Instr(asBC_RDSPtr);
 			}
 
 			// After the function returns the temporary variable will
@@ -1344,7 +1344,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 				// Copy the handle
 				if( !ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReference() )
-					ctx->bc.Instr(asBC_RDSPTR);
+					ctx->bc.Instr(asBC_RDSPtr);
 				ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
 				ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
 				ctx->bc.Pop(AS_PTR_SIZE);
@@ -1500,11 +1500,9 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 	if( addOneToOffset )
 		offset += AS_PTR_SIZE;
 
-#ifndef AS_OLD
 	// The address of where the return value should be stored is push on top of the arguments
 	if( descr->DoesReturnOnStack() )
 		offset += AS_PTR_SIZE;
-#endif
 
 	// If the function being called is the opAssign or copy constructor for the same type
 	// as the argument, then we should avoid making temporary copy of the argument
@@ -2166,7 +2164,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		PerformFunctionCall(funcId, &ctx, false, &args);
 
 		// Store the returned handle in the global variable
-		ctx.bc.Instr(asBC_RDSPTR);
+		ctx.bc.Instr(asBC_RDSPtr);
 		ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
 		ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
 		ctx.bc.Pop(AS_PTR_SIZE);
@@ -2246,7 +2244,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				lctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
 			else
 				lctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
-			lctx.bc.Instr(asBC_RDSPTR);
+			lctx.bc.Instr(asBC_RDSPtr);
 			lctx.bc.Call(asBC_CALLSYS, funcId, 1+AS_PTR_SIZE);
 
 			if( !var->dataType.GetSubType().IsPrimitive() )
@@ -3275,7 +3273,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			{
 				if( !expr.type.dataType.IsObjectHandle() &&
 					expr.type.dataType.IsReference() )
-					expr.bc.Instr(asBC_RDSPTR);
+					expr.bc.Instr(asBC_RDSPtr);
 
 				expr.bc.Instr(asBC_PopRPtr);
 			}
@@ -3323,7 +3321,6 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			}
 			else if( v->type.IsObject() )
 			{
-#ifndef AS_OLD
 				// Value types are returned on the stack, in a location
 				// that has been reserved by the calling function. 
 				if( outFunc->DoesReturnOnStack() )
@@ -3355,7 +3352,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 						CallDefaultConstructor(v->type, offset, false, &expr.bc, rnode->firstChild, false, true);
 						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
 						expr.bc.InstrSHORT(asBC_PSF, (short)offset);
-						expr.bc.Instr(asBC_RDSPTR);
+						expr.bc.Instr(asBC_RDSPtr);
 
 						asSExprContext lexpr(engine);
 						lexpr.type.Set(v->type);
@@ -3372,11 +3369,9 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					ProcessDeferredParams(&expr);
 				}
 				else
-#endif
 				{
-#ifndef AS_OLD
 					asASSERT( v->type.GetObjectType()->flags & asOBJ_REF );
-#endif
+
 					// Prepare the expression to be loaded into the object 
 					// register. This will place the reference in local variable
 					PrepareArgument(&v->type, &expr, rnode->firstChild, false, 0);
@@ -3698,7 +3693,7 @@ void asCCompiler::Dereference(asSExprContext *ctx, bool generateCode)
 			if( generateCode )
 			{
 				ctx->bc.Instr(asBC_CHKREF);
-				ctx->bc.Instr(asBC_RDSPTR);
+				ctx->bc.Instr(asBC_RDSPtr);
 			}
 		}
 		else
@@ -4040,23 +4035,19 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 					ConvertToVariable(ctx);
 				}
 
-#ifdef AS_64BIT_PTR
-				int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt64, false), true);
-				ctx->bc.InstrW_QW(asBC_SetV8, (asWORD)offset, 0);
-				ctx->bc.InstrW_W(asBC_CMPi64, ctx->type.stackOffset, offset);
+				// TODO: optimize: should have immediate comparison for null pointer
+				int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
+				// TODO: optimize: ClrVPtr is not necessary, because the VM will initialize the variable to null anyway
+				ctx->bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
+				ctx->bc.InstrW_W(asBC_CmpPtr, ctx->type.stackOffset, offset);
 				DeallocateVariable(offset);
-#else
-				int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
-				ctx->bc.InstrW_DW(asBC_SetV4, (asWORD)offset, 0);
-				ctx->bc.InstrW_W(asBC_CMPi, ctx->type.stackOffset, offset);
-				DeallocateVariable(offset);
-#endif
+
 				int afterLabel = nextLabel++;
 				ctx->bc.InstrDWORD(asBC_JZ, afterLabel);
 
 				// Call the cast operator
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
-				ctx->bc.Instr(asBC_RDSPTR);
+				ctx->bc.Instr(asBC_RDSPtr);
 				ctx->type.dataType.MakeReference(false);
 
 				asCTypeInfo objType = ctx->type;
@@ -4071,11 +4062,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				ctx->bc.Label((short)afterLabel);
 
 				// Make a NULL pointer
-#ifdef AS_64BIT_PTR
-				ctx->bc.InstrW_QW(asBC_SetV8, ctx->type.stackOffset, 0);
-#else
-				ctx->bc.InstrW_DW(asBC_SetV4, ctx->type.stackOffset, 0);
-#endif
+				ctx->bc.InstrSHORT(asBC_ClrVPtr, ctx->type.stackOffset);
 				ctx->bc.Label((short)endLabel);
 
 				// Since we're receiving a handle, we can release the original variable
@@ -4776,7 +4763,7 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 
 				bool useVariable = false;
 				int  stackOffset = 0;
-#ifndef AS_OLD
+
 				if( f->DoesReturnOnStack() )
 				{
 					useVariable = true;
@@ -4787,13 +4774,9 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 
 					// The object pointer is already on the stack, but should be the top 
 					// one, so we need to swap the pointers in order to get the correct
-#if AS_PTR_SIZE == 1
-					ctx->bc.Instr(asBC_SWAP4);
-#else
-					ctx->bc.Instr(asBC_SWAP8);
-#endif
+					ctx->bc.Instr(asBC_SwapPtr);
 				}
-#endif
+
 				PerformFunctionCall(funcs[0], ctx, false, 0, 0, useVariable, stackOffset);
 				ReleaseTemporaryVariable(objType, &ctx->bc);
 			}
@@ -5947,7 +5930,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			}
 		}
 		else if( rctx->type.dataType.IsReference() && (!(rctx->type.isVariable || rctx->type.isTemporary) || IsVariableOnHeap(rctx->type.stackOffset)) )
-			rctx->bc.Instr(asBC_RDSPTR);
+			rctx->bc.Instr(asBC_RDSPtr);
 
 		MergeExprBytecode(ctx, rctx);
 		MergeExprBytecode(ctx, lctx);
@@ -6355,7 +6338,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 			// Implicitly dereference handle parameters sent by reference
 			if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
-				ctx->bc.Instr(asBC_RDSPTR);
+				ctx->bc.Instr(asBC_RDSPtr);
 
 			ctx->type.isLValue = true;
 		}
@@ -6439,7 +6422,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(dt));
 
 				if( prop->type.IsReference() )
-					ctx->bc.Instr(asBC_RDSPTR);
+					ctx->bc.Instr(asBC_RDSPtr);
 
 				// Reference to primitive must be stored in the temp register
 				if( prop->type.IsPrimitive() )
@@ -6544,12 +6527,12 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 						if( ctx->type.dataType.IsPrimitive() )
 						{
 							// Load the address of the variable into the register
-							ctx->bc.InstrPTR(asBC_LDG, engine->globalProperties[prop->id]->GetAddressOfValue());
+							ctx->bc.InstrPTR(asBC_LDG, prop->GetAddressOfValue());
 						}
 						else
 						{
 							// Push the address of the variable on the stack
-							ctx->bc.InstrPTR(asBC_PGA, engine->globalProperties[prop->id]->GetAddressOfValue());
+							ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
 
 							// If the object is a value type, then we must validate the existance,
 							// as it could potentially be accessed before it is initialized.
@@ -6846,14 +6829,13 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 					bool useVariable = false;
 					int stackOffset  = 0;
-#ifndef AS_OLD
+
 					if( descr->DoesReturnOnStack() )
 					{
 						useVariable = true;
 						stackOffset = AllocateVariable(descr->returnType, true);
 						ctx->bc.InstrSHORT(asBC_PSF, short(stackOffset));
 					}
-#endif
 
 					PerformFunctionCall(descr->id, ctx, false, 0, 0, useVariable, stackOffset);
 				}
@@ -6861,11 +6843,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else if( vnode->tokenType == ttNull )
 		{
-#ifndef AS_64BIT_PTR
-			ctx->bc.InstrDWORD(asBC_PshC4, 0);
-#else
-			ctx->bc.InstrQWORD(asBC_PshC8, 0);
-#endif
+			ctx->bc.Instr(asBC_PshNull);
 			ctx->type.SetNullConstant();
 		}
 		else
@@ -8813,7 +8791,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(ctx->type.dataType.GetObjectType(), false)));
 
 					if( prop->type.IsReference() )
-						ctx->bc.Instr(asBC_RDSPTR);
+						ctx->bc.Instr(asBC_RDSPtr);
 
 					// Reference to primitive must be stored in the temp register
 					if( prop->type.IsPrimitive() )
@@ -9435,7 +9413,6 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 		}
 	}
 
-#ifndef AS_OLD
 	// If the function will return a value type on the stack, then we must allocate space 
 	// for that here and push the address on the stack as a hidden argument to the function
 	asCScriptFunction *func = builder->GetFunctionDescription(funcId);
@@ -9447,7 +9424,6 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 		stackOffset = AllocateVariable(func->returnType, true);
 		ctx->bc.InstrSHORT(asBC_PSF, short(stackOffset));
 	}
-#endif
 
 	ctx->bc.AddCode(&objBC);
 
@@ -9595,13 +9571,9 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 		offset = AllocateVariable(ctx->type.dataType, true);
 		if( ctx->type.IsNullConstant() )
 		{
-			if( ctx->bc.GetLastInstr() == asBC_PshC4 || ctx->bc.GetLastInstr() == asBC_PshC8 )
+			if( ctx->bc.GetLastInstr() == asBC_PshNull )
 				ctx->bc.Pop(AS_PTR_SIZE); // Pop the null constant pushed onto the stack
-#ifdef AS_64BIT_PTR
-			ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, 0);
-#else
-			ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, 0);
-#endif
+			ctx->bc.InstrSHORT(asBC_ClrVPtr, (short)offset);
 		}
 		else
 		{
@@ -10572,15 +10544,17 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 void asCCompiler::PushVariableOnStack(asSExprContext *ctx, bool asReference)
 {
 	// Put the result on the stack
-	ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 	if( asReference )
+	{
+		ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 		ctx->type.dataType.MakeReference(true);
+	}
 	else
 	{
 		if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-			ctx->bc.Instr(asBC_RDS4);
+			ctx->bc.InstrSHORT(asBC_PshV4, ctx->type.stackOffset);
 		else
-			ctx->bc.Instr(asBC_RDS8);
+			ctx->bc.InstrSHORT(asBC_PshV8, ctx->type.stackOffset);
 	}
 }
 
@@ -10871,14 +10845,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		int b = lctx->type.stackOffset;
 		int c = rctx->type.stackOffset;
 
-		// TODO: When saving the bytecode we must be able to determine that this is
-		//       a comparison with a pointer, so that the instruction can be adapted
-		//       to the pointer size on the platform that will execute it.
-#ifdef AS_64BIT_PTR
-		ctx->bc.InstrW_W(asBC_CMPi64, b, c);
-#else
-		ctx->bc.InstrW_W(asBC_CMPi, b, c);
-#endif
+		ctx->bc.InstrW_W(asBC_CmpPtr, b, c);
 
 		if( op == ttEqual || op == ttIs )
 			ctx->bc.Instr(asBC_TZ);
@@ -10973,14 +10940,13 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		if( descr->objectType )
 			argSize += AS_PTR_SIZE;
-#ifndef AS_OLD
+
 		// If the function returns an object by value the address of the location
 		// where the value should be stored is passed as an argument too
 		if( descr->DoesReturnOnStack() )
 		{
 			argSize += AS_PTR_SIZE;
 		}
-#endif
 
 		if( descr->funcType == asFUNC_IMPORTED )
 			ctx->bc.Call(asBC_CALLBND , descr->id, argSize);
@@ -10999,7 +10965,6 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		int returnOffset = 0;
 
-#ifndef AS_OLD
 		if( descr->DoesReturnOnStack() )
 		{
 			asASSERT( useVariable );
@@ -11012,7 +10977,6 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			ctx->bc.ObjInfo(varOffset, asOBJ_INIT);
 		}
 		else
-#endif
 		{
 			if( useVariable )
 			{

@@ -127,7 +127,7 @@ bool Test()
 	bout.buffer = "";
 
 	// It must not be possible to register global properties of the var type ?
-	r = engine->RegisterGlobalProperty("? prop", 0);
+	r = engine->RegisterGlobalProperty("? prop", (void*)1);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
 	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with '? prop'\n" ) 

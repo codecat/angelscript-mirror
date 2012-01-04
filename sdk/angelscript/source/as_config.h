@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -958,11 +958,9 @@
 #ifdef AS_64BIT_PTR
 	#define AS_PTR_SIZE  2
 	#define asPTRWORD    asQWORD
-	#define asBC_RDSPTR  asBC_RDS8
 #else
 	#define AS_PTR_SIZE  1
 	#define asPTRWORD    asDWORD
-	#define asBC_RDSPTR  asBC_RDS4
 #endif
 #define ARG_PTR(b)   ((asPTRWORD*)&b)
 #define BCARG_PTR(b) ((asPTRWORD*)&(b)[1])
