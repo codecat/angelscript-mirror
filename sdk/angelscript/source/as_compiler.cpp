@@ -54,6 +54,10 @@ BEGIN_AS_NAMESPACE
 //       Local variables are declared as non-references, but the expression should be a reference to the variable.
 //       Function parameters of called functions can also be non-references, but in that case it means the
 //       object will be passed by value (currently on the heap, which will be moved to the application stack).
+// 
+//       The compiler shouldn't use the asCDataType::IsReference. The datatype should always be stored as non-references.
+//       Instead the compiler should keep track of references in TypeInfo, where it should also state how the reference
+//       is currently stored, i.e. in variable, in register, on stack, etc. 
 
 asCCompiler::asCCompiler(asCScriptEngine *engine) : byteCode(engine)
 {
@@ -164,7 +168,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	byteCode.InstrSHORT(asBC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
-	// TODO: how will this work with platform independent bytecode, as the size of the args may vary?
+	// TODO: bytecode: how will this work with platform independent bytecode, as the size of the args may vary?
 	int argDwords = (int)outFunc->GetSpaceNeededForArguments();
 	for( int a = argDwords-1; a >= 0; a-- )
 		byteCode.InstrSHORT(asBC_PshV4, short(-a));
@@ -1071,7 +1075,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// We need to push zeroes on the stack to guarantee
 	// that temporary object handles are clear
-	// TODO: How will this work with platform independent bytecode as the pointer size can vary?
+	// TODO: bytecode: How will this work with platform independent bytecode as the pointer size can vary?
 	int n;
 	for( n = 0; n < varSize; n++ )
 		byteCode.InstrINT(asBC_PshC4, 0);
@@ -2101,8 +2105,6 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			node = node->next;
 
 			bc->AddCode(&ctx.bc);
-
-			// TODO: Can't this leave deferred output params without being compiled?
 		}
 		else
 		{
@@ -3514,8 +3516,6 @@ int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, boo
 	asASSERT( t.IsObjectHandle() || t.GetTokenType() != ttUnrecognizedToken );
 
 	bool isOnHeap = true;
-	// TODO: Remove this once the bugs with value types on stack is fixed
-	// forceOnHeap = true;
 	if( t.IsPrimitive() ||
 		(t.GetObjectType() && (t.GetObjectType()->GetFlags() & asOBJ_VALUE) && !forceOnHeap) )
 	{
@@ -3880,8 +3880,6 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 		Dereference(&ctx, true);
 		*lvalue = ctx.type;
 		bc->AddCode(&ctx.bc);
-
-		// TODO: Can't this leave deferred output params unhandled?
 
 		// TODO: Should find the opAssign method that implements the default copy behaviour.
 		//       The beh->copy member will be removed.
@@ -5939,7 +5937,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		{
 			if( (rctx->type.isVariable || rctx->type.isTemporary) && !IsVariableOnHeap(rctx->type.stackOffset) )
 				// TODO: optimize: Actually the reference can be pushed on the stack directly
-				//                 as the value allocated on the stack is guaranteed to be safe
+				//                 as the value allocated on the stack is guaranteed to be safe.
+				//                 The bytecode optimizer should be able to determine this and optimize away the VAR + GETREF
 				ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
 			else
 				ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
@@ -6315,11 +6314,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			if( v->type.IsReference() )
 			{
 				// Copy the reference into the register
-#if AS_PTR_SIZE == 1
-				ctx->bc.InstrSHORT(asBC_CpyVtoR4, (short)v->stackOffset);
-#else
-				ctx->bc.InstrSHORT(asBC_CpyVtoR8, (short)v->stackOffset);
-#endif
+				ctx->bc.InstrSHORT(asBC_PshVPtr, (short)v->stackOffset);
+				ctx->bc.Instr(asBC_PopRPtr);
 				ctx->type.Set(v->type);
 			}
 			else
@@ -6906,7 +6902,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 				ctx->type.SetVariable(dt, 0, false);
 				ctx->type.dataType.MakeReference(true);
 
-				// TODO: optimize: This adds a CHKREF. Is that really necessary?
+				// TODO: optimize: This adds a CHKREF. Is that really necessary? It isn't as the 
+				//                 VM will check for null pointer anyway before calling the method.
+				//                 The bytecode optimizer should know this and remove the unnecessary CHKREF
 				Dereference(ctx, true);
 
 				return CompileFunctionCall(vnode, ctx, outFunc->objectType, false, scope);
@@ -7002,8 +7000,10 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 				return charLiteral;
 			}
 
-			// TODO: Consider deprecating use of hexadecimal escape sequences,
-			//       as they do not guarantee proper unicode sequences
+			// Hexadecimal escape sequences will allow the construction of 
+			// invalid unicode sequences, but the string should also work as
+			// a bytearray so we must support this. The code for working with
+			// unicode text must be prepared to handle invalid unicode sequences
 			if( cstr[n] == 'x' || cstr[n] == 'X' )
 			{
 				++n;

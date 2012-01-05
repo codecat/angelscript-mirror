@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -2925,8 +2925,8 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 		}
 
 		// The stack needed by the function will be adjusted by the highest variable shift
-		// TODO: When bytecode is adjusted for 32/64bit it is necessary to adjust 
-		//       also for pointers pushed on the stack as function arguments
+		// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
+		//                 also for pointers pushed on the stack as function arguments
 		func->stackNeeded += adjustByPos[adjustByPos.GetLength()-1];
 	}
 }

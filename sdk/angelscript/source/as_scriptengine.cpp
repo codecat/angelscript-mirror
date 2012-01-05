@@ -1844,7 +1844,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
-		// TODO: verify that the same cast is not registered already (cosnt or non-const is treated the same for the return type)
+		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
 
 		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);

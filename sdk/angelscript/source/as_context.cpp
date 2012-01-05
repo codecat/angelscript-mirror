@@ -1416,15 +1416,9 @@ void asCContext::ExecuteNext()
 	// Swap the top 2 pointers on the stack
 	case asBC_SwapPtr:
 		{
-#if AS_PTR_SIZE == 1
-			asDWORD d = (asDWORD)*l_sp;
-			*l_sp = *(l_sp+1);
-			*(asDWORD*)(l_sp+1) = d;
-#else
-			asQWORD q = *(asQWORD*)l_sp;
-			*(asQWORD*)l_sp = *(asQWORD*)(l_sp+2);
-			*(asQWORD*)(l_sp+2) = q;
-#endif
+			asPTRWORD p = (asPTRWORD)*l_sp;
+			*(asPTRWORD*)l_sp = *(asPTRWORD*)(l_sp+AS_PTR_SIZE);
+			*(asDWORD*)(l_sp+AS_PTR_SIZE) = p;
 			l_bc++;
 		}
 		break;

@@ -648,6 +648,7 @@ int asCByteCode::Optimize()
 			DeleteInstruction(curr);
 			instr = GoBack(ChangeFirstDeleteNext(instr, asBC_LoadThisR));
 		}
+		// TODO: Optimize: PshVPtr x, PopRPtr -> LoadRObjR x, 0
 		// PshVPtr x, ADDSi, PopRPtr -> LoadRObjR
 		else if( IsCombination(curr, asBC_PshVPtr, asBC_ADDSi) &&
 		         IsCombination(instr, asBC_ADDSi, asBC_PopRPtr) &&
@@ -1531,7 +1532,7 @@ cByteInstruction *asCByteCode::DeleteInstruction(cByteInstruction *instr)
 
 void asCByteCode::Output(asDWORD *array)
 {
-	// TODO: Receive a script function pointer
+	// TODO: Receive a script function pointer instead of the bytecode array
 
 	asDWORD *ap = array;
 
