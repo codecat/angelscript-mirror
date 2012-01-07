@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.2 WIP - 2012/01/04</h2>
+<h2>Version 2.22.2 WIP - 2012/01/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Shared code couldn't call template factories (Thanks TheAtom)
 <li>Classes that contained shared classes as members would fail in the second module that declared the shared class (Thanks TheAtom)
 <li>RegisterGlobalProperty was accepting null pointers (Thanks Quillraven)
+<li>In some situations the value assign of a class member to an object would recieve the wrong reference (Thanks Philip Bennefall)
 </ul>
 <li>Virtual machine
 <ul>

@@ -301,6 +301,10 @@ endcopy:
 	UNUSED_VAR(paramSize);
 	UNUSED_VAR(func);
 
+	// TODO: bug: GNUC 4.6 is using esp to get the arguments, despite the fact that I'm saying esp is modified
+	//            Instead of passing the parameters in memory, I should pass the pointer to the first argument 
+	//            in edx the other arguments can then be deferred from that.
+
 	asm __volatile__(
 		_S(CLEAR_FPU_STACK)  "\n"
 

@@ -8799,10 +8799,24 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 						ctx->bc.Instr(asBC_PopRPtr);
 					}
 
-					// Set the new type (keeping info about temp variable)
+					// Keep information about temporary variables as deferred expression
+					if( ctx->type.isTemporary )
+					{
+						// Add the release of this reference, as a deferred expression
+						asSDeferredParam deferred;
+						deferred.origExpr = 0;
+						deferred.argInOutFlags = asTM_INREF;
+						deferred.argNode = 0;
+						deferred.argType.SetVariable(ctx->type.dataType, ctx->type.stackOffset, true);
+
+						ctx->deferredParams.PushLast(deferred);
+					}
+
+					// Set the new type and make sure it is not treated as a variable anymore
 					ctx->type.dataType = prop->type;
 					ctx->type.dataType.MakeReference(true);
 					ctx->type.isVariable = false;
+					ctx->type.isTemporary = false;
 
 					if( ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle() )
 					{

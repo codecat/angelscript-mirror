@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <sstream>
+#include "../../../add_on/scriptdictionary/scriptdictionary.h"
 
 using namespace std;
 
@@ -1670,6 +1671,37 @@ bool Test()
 			TEST_FAILED;
 		
 		r = ExecuteString(engine, "tone_player tp; tp.play_tone();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test - Philip Bennefall
+	{
+		const char *script = 
+			"class Technique {\n"
+			"  string hitsound;\n"
+			"}\n"
+			"Technique@ getTechnique() {return @Technique();}\n"
+			"void main() {\n"
+			"  string t = getTechnique().hitsound;\n"
+			"}\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		RegisterStdString(engine);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		r = ExecuteString(engine, "main();", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
