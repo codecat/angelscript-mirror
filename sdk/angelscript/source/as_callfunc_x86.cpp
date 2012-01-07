@@ -301,9 +301,11 @@ endcopy:
 	UNUSED_VAR(paramSize);
 	UNUSED_VAR(func);
 
-	// TODO: bug: GNUC 4.6 is using esp to get the arguments, despite the fact that I'm saying esp is modified
-	//            Instead of passing the parameters in memory, I should pass the pointer to the first argument 
-	//            in edx the other arguments can then be deferred from that.
+	// GNUC 4.6.1 seems to have a bug when compiling with -O2. This wasn't a problem in earlier versions.
+	// Even though the clobber list is specifically listing the esp register, it still doesn't understand
+	// that it cannot rely on esp for getting the function arguments. So in order to work around this
+	// I'm passing the address of the first arg in edx to the inline assembly, and then copy it to ebx
+	// where it is guaranteed to be maintained over the function call.
 
 	asm __volatile__(
 		_S(CLEAR_FPU_STACK)  "\n"
@@ -400,11 +402,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  8(%%ebx), %%eax  \n" // paramSize
 		"addl  $8, %%eax        \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -413,9 +416,9 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"pushl %2               \n" // obj
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"pushl 0(%%ebx)         \n" // obj
+		"movl  8(%%ebx), %%ecx  \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy8         \n"
@@ -425,15 +428,16 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop8        \n"
 		"endcopy8:              \n"
-		"call  *%3              \n"
-		"addl  %0, %%esp        \n" // pop arguments
+		"call  *12(%%ebx)       \n"
+		"addl  8(%%ebx), %%esp  \n" // pop arguments
 		"addl  $4, %%esp        \n" // pop obj
 
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                                 // output
-		: "m"(paramSize), "m"(args), "m"(obj), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                          // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&obj)                // input - pass pointer of obj in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
@@ -492,11 +496,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  8(%%ebx), %%eax  \n" // paramSize
 		"addl  $8, %%eax        \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -505,8 +510,8 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"movl  8(%%ebx), %%ecx  \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy6         \n"
@@ -516,16 +521,17 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop6        \n"
 		"endcopy6:              \n"
-		"pushl %2               \n" // push obj
-		"call  *%3              \n"
-		"addl  %0, %%esp        \n" // pop arguments
+		"pushl 0(%%ebx)         \n" // push obj
+		"call  *12(%%ebx)       \n"
+		"addl  8(%%ebx), %%esp  \n" // pop arguments
 		"addl  $4, %%esp        \n" // pop obj
 
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                                 // output
-		: "m"(paramSize), "m"(args), "m"(obj), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                          // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&obj)                // input - pass pointer of obj in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
@@ -593,11 +599,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  8(%%ebx), %%eax  \n" // paramSize
 		"addl  $12, %%eax       \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -606,8 +613,8 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"movl  8(%%ebx), %%ecx  \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy5         \n"
@@ -617,10 +624,10 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop5        \n"
 		"endcopy5:              \n"
-		"pushl %2               \n" // push object first
-		"pushl %3               \n" // retPtr
-		"call  *%4              \n" // func
-		"addl  %0, %%esp        \n" // pop arguments
+		"pushl 0(%%ebx)         \n" // push object first
+		"pushl 16(%%ebx)        \n" // retPtr
+		"call  *12(%%ebx)       \n" // func
+		"addl  8(%%ebx), %%esp  \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $8, %%esp        \n" // Pop the return pointer and object pointer
 #else
@@ -628,11 +635,11 @@ endcopy:
 #endif
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                                              // output
-		: "m"(paramSize), "m"(args), "m"(obj), "m"(retPtr), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                                       // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&obj)                // input - pass pointer of obj in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
-
 #endif
 }
 
@@ -692,11 +699,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // paramSize
 		"addl  $8, %%eax        \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -705,8 +713,8 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"movl  4(%%ebx), %%ecx  \n" // paramSize
+		"movl  0(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy7         \n"
@@ -716,17 +724,18 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop7        \n"
 		"endcopy7:              \n"
-		"pushl %2               \n" // retPtr
-		"call  *%3              \n" // func
-		"addl  %0, %%esp        \n" // pop arguments
+		"pushl 12(%%ebx)        \n" // retPtr
+		"call  *8(%%ebx)        \n" // func
+		"addl  4(%%ebx), %%esp  \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $4, %%esp        \n" // Pop the return pointer
 #endif
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                                    // output
-		: "m"(paramSize), "m"(args), "m"(retPtr), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                             // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&args)               // input - pass pointer of args in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
@@ -792,11 +801,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  8(%%ebx), %%eax  \n" // paramSize
 		"addl  $12, %%eax       \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -805,9 +815,9 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"pushl %2               \n" // obj
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"pushl 0(%%ebx)         \n" // obj
+		"movl  8(%%ebx), %%ecx  \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy4         \n"
@@ -817,9 +827,9 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop4        \n"
 		"endcopy4:              \n"
-		"pushl %3               \n" // retPtr
-		"call  *%4              \n" // func
-		"addl  %0, %%esp        \n" // pop arguments
+		"pushl 16(%%ebx)        \n" // retPtr
+		"call  *12(%%ebx)       \n" // func
+		"addl  8(%ebx), %%esp   \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $8, %%esp        \n" // Pop the return pointer and object pointer
 #else
@@ -827,9 +837,10 @@ endcopy:
 #endif
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                                              // output
-		: "m"(paramSize), "m"(args), "m"(obj), "m"(retPtr), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                                       // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&obj)                // input - pass pointer of obj in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
@@ -882,11 +893,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // paramSize
 		"addl  $4, %%eax        \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -895,8 +907,8 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"movl  4(%%ebx), %%ecx  \n" // paramSize
+		"movl  0(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy2         \n"
@@ -906,13 +918,14 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop2        \n"
 		"endcopy2:              \n"
-		"call  *%2              \n" // callee pops the arguments
+		"call  *8(%%ebx)        \n" // callee pops the arguments
 
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                       // output
-		: "m"(paramSize), "m"(args), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&args)               // input - pass pointer of args in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
@@ -982,11 +995,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax        \n" // paramSize
+		"movl  8(%%ebx), %%eax  \n" // paramSize
 		"addl  $8, %%eax        \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -995,8 +1009,8 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"movl  %0, %%ecx        \n" // paramSize
-		"movl  %1, %%eax        \n" // args
+		"movl  8(%%ebx), %%ecx  \n" // paramSize
+		"movl  4(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push all arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy1         \n"
@@ -1006,17 +1020,18 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop1        \n"
 		"endcopy1:              \n"
-		"movl  %2, %%ecx        \n" // move obj into ECX
+		"movl  0(%%ebx), %%ecx  \n" // move obj into ECX
 		"pushl %%ecx            \n" // push obj on the stack
-		"call  *%3              \n"
-		"addl  %0, %%esp        \n" // pop arguments
+		"call  *12(%%ebx)       \n"
+		"addl  8(%%ebx), %%esp  \n" // pop arguments
 		"addl  $4, %%esp        \n" // pop obj
 
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
-		:                                                 // output
-		: "m"(paramSize), "m"(args), "m"(obj), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                          // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&obj)                // input - pass pointer of obj in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
@@ -1094,11 +1109,12 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  %0, %%eax       \n" // paramSize
+		"movl  8(%%ebx), %%eax \n" // paramSize
 		"addl  $12, %%eax      \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx    \n"
 		"subl  %%eax, %%ecx    \n"
@@ -1107,8 +1123,8 @@ endcopy:
 		"subl  %%ecx, %%esp    \n"
 		"pushl %%eax           \n" // Store the original stack pointer
 
-		"movl  %0, %%ecx       \n" // paramSize
-		"movl  %1, %%eax       \n" // args
+		"movl  8(%%ebx), %%ecx \n" // paramSize
+		"movl  4(%%ebx), %%eax \n" // args
 		"addl  %%ecx, %%eax    \n" // push all arguments to the stack
 		"cmp   $0, %%ecx       \n"
 		"je    endcopy3        \n"
@@ -1118,21 +1134,22 @@ endcopy:
 		"subl  $4, %%ecx       \n"
 		"jne   copyloop3       \n"
 		"endcopy3:             \n"
-		"movl  %2, %%ecx       \n" // move obj into ECX
+		"movl  0(%%ebx), %%ecx \n" // move obj into ECX
 		"pushl %%ecx           \n" // push obj on the stack
-		"pushl %3              \n" // push retPtr on the stack
-		"call  *%4             \n"
+		"pushl 16(%%ebx)       \n" // push retPtr on the stack
+		"call  *12(%%ebx)      \n"
 #ifndef THISCALL_CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $4, %%esp       \n" // pop return pointer
 #endif
-		"addl  %0, %%esp       \n" // pop arguments
+		"addl  8(%%ebx), %%esp \n" // pop arguments
 		"addl  $4, %%esp       \n" // pop the object pointer
 		                           // the return pointer was popped by the callee
 		// Pop the alignment bytes
 		"popl  %%esp           \n"
-		:                                                              // output
-		: "m"(paramSize), "m"(args), "m"(obj), "m"(retPtr), "m"(func)  // input
-		: "%eax", "%ecx", "%esp"                                       // clobber 
+		"popl  %%ebx            \n" 
+		:                          // output
+		: "d"(&obj)                // input - pass pointer of obj in edx
+		: "%eax", "%ecx", "%esp"   // clobber 
 		);
 
 #endif
