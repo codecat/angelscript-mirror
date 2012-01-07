@@ -829,7 +829,7 @@ endcopy:
 		"endcopy4:              \n"
 		"pushl 16(%%ebx)        \n" // retPtr
 		"call  *12(%%ebx)       \n" // func
-		"addl  8(%ebx), %%esp   \n" // pop arguments
+		"addl  8(%%ebx), %%esp  \n" // pop arguments
 #ifndef CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $8, %%esp        \n" // Pop the return pointer and object pointer
 #else
