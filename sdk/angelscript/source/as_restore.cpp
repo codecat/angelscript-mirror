@@ -872,8 +872,7 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine, 
 	// Read script section name
 	asCString name;
 	ReadString(&name);
-	if( name.GetLength() > 0 )
-		func->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
+	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
 
 	if( addToModule )
 	{

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -120,6 +120,7 @@ public:
 	virtual int                RemoveFunction(int funcId);
 
 	// Script global variables
+	// TODO: interface: Should be called InitGlobalVars, and should have a bool to reset in case already initialized
 	virtual int         ResetGlobalVars(asIScriptContext *ctx);
 	virtual asUINT      GetGlobalVarCount() const;
 	virtual int         GetGlobalVarIndexByName(const char *name) const;

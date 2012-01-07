@@ -387,6 +387,72 @@ bool TestGlobalVar()
 	g_str->Release();
 	g_str = 0;
 
+	// Test - Philip Bennefall
+	// Global vars initialized in the wrong order
+	{
+		const char *script = 
+			"test stuff; \n"
+			"string whatever; \n"
+			"class test \n"
+			"{ \n"
+			" int whatever; \n"
+			" test() \n"
+			" { \n"
+			"  whatever=create_whatever(); \n"
+			" } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"} \n"
+			"int create_whatever() \n"
+			"{ \n"
+			" whatever='HelloStrangeErrors'; \n"
+			" return whatever.length(); \n"
+			"} \n";
+
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+		
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod->ResetGlobalVars();
+
+		if( bout.buffer != " (1, 6) : Error   : Failed to initialize global variable 'stuff'\n"
+                           " (16, 0) : Info    : Exception 'Null pointer access' in 'int create_whatever()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		bout.buffer = "";
+
+		CBytecodeStream stream(__FILE__"1");
+		mod->SaveByteCode(&stream);
+
+		asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod2->ResetGlobalVars();
+
+		if( bout.buffer != " (1, 6) : Error   : Failed to initialize global variable 'stuff'\n"
+                           " (16, 0) : Info    : Exception 'Null pointer access' in 'int create_whatever()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	return fail;
 }
 
