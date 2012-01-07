@@ -311,7 +311,7 @@ endcopy:
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
 		// to calculate how much we will put on the stack during this call.
-		"movl  4(%%edx), %%eax  \n" // paramSize
+		"movl  %0, %%eax        \n" // paramSize
 		"addl  $4, %%eax        \n" // counting esp that we will push on the stack
 		"movl  %%esp, %%ecx     \n"
 		"subl  %%eax, %%ecx     \n"
@@ -320,8 +320,8 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
-		"movl  4(%%edx), %%ecx  \n" // paramSize
-		"movl  0(%%edx), %%eax  \n" // args
+		"movl  %0, %%ecx        \n" // paramSize
+		"movl  %1, %%eax        \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
 		"cmp   $0, %%ecx        \n"
 		"je    endcopy          \n"
@@ -331,14 +331,14 @@ endcopy:
 		"subl  $4, %%ecx        \n"
 		"jne   copyloop         \n"
 		"endcopy:               \n"
-		"call  *8(%%edx)        \n"
+		"call  *%2              \n"
 		"addl  %0, %%esp        \n" // pop arguments
 		
 		// Pop the alignment bytes
 		"popl  %%esp            \n" 
-		:                          // output
-		: "d"(&args)               // input - pass pointer of args in edx
-		: "%eax", "%ecx", "%esp"   // clobber
+		:                                       // output
+		: "m"(paramSize), "m"(args), "m"(func)  // input
+		: "%eax", "%ecx", "%esp"                // clobber 
 		);
 
 #endif
