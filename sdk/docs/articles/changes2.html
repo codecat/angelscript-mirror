@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Classes that contained shared classes as members would fail in the second module that declared the shared class (Thanks TheAtom)
 <li>RegisterGlobalProperty was accepting null pointers (Thanks Quillraven)
 <li>In some situations the value assign of a class member to an object would recieve the wrong reference (Thanks Philip Bennefall)
+<li>Fixed segfault when compiling with -O2 on x86 32bit gnuc 4.6.1 (Thanks gdmarkou)
 </ul>
 <li>Virtual machine
 <ul>
