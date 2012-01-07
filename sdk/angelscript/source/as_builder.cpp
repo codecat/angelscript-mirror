@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -183,6 +183,11 @@ int asCBuilder::Build()
 	CompileClasses();
 	CompileGlobalVariables();
 	CompileFunctions();
+
+	// TODO: Attempt to reorder the initialization of global variables so that 
+	//       they do not access other uninitialized global variables out-of-order
+	//       The builder needs to check for each of the global variable, what functions
+	//       that are accessed, and what global variables are access by these functions.
 
 	if( numErrors > 0 )
 		return asERROR;

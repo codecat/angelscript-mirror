@@ -402,6 +402,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -496,6 +497,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -599,6 +601,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -699,6 +702,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -801,6 +805,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -893,6 +898,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -995,6 +1001,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
@@ -1109,6 +1116,7 @@ endcopy:
 
 	asm __volatile__ (
 		_S(CLEAR_FPU_STACK)  "\n"
+		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
