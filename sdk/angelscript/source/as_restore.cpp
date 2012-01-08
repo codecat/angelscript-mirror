@@ -46,13 +46,18 @@ BEGIN_AS_NAMESPACE
 #define WRITE_NUM(N) WriteData(&(N), sizeof(N))
 #define READ_NUM(N) ReadData(&(N), sizeof(N))
 
-asCRestore::asCRestore(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
+asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
 	error = false;
 }
 
-void asCRestore::WriteData(const void *data, asUINT size)
+asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
+ : module(_module), stream(_stream), engine(_engine)
+{
+}
+
+void asCWriter::WriteData(const void *data, asUINT size)
 {
 	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
 #if defined(AS_BIG_ENDIAN)
@@ -64,7 +69,7 @@ void asCRestore::WriteData(const void *data, asUINT size)
 #endif
 }
 
-void asCRestore::ReadData(void *data, asUINT size)
+void asCReader::ReadData(void *data, asUINT size)
 {
 	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
 #if defined(AS_BIG_ENDIAN)
@@ -76,7 +81,7 @@ void asCRestore::ReadData(void *data, asUINT size)
 #endif
 }
 
-int asCRestore::Save() 
+int asCWriter::Write() 
 {
 	unsigned long i, count;
 
@@ -221,7 +226,7 @@ int asCRestore::Save()
 	return asSUCCESS;
 }
 
-int asCRestore::Restore() 
+int asCReader::Read() 
 {
 	engine->deferValidationOfTemplateTypes = true;
 
@@ -511,7 +516,7 @@ int asCRestore::Restore()
 	return error ? asERROR : asSUCCESS;
 }
 
-int asCRestore::FindStringConstantIndex(int id)
+int asCWriter::FindStringConstantIndex(int id)
 {
 	asSMapNode<int,int> *cursor = 0;
 	if (stringIdToIndexMap.MoveTo(&cursor, id))
@@ -523,7 +528,7 @@ int asCRestore::FindStringConstantIndex(int id)
 	return index;
 }
 
-void asCRestore::WriteUsedStringConstants()
+void asCWriter::WriteUsedStringConstants()
 {
 	asUINT count = (asUINT)usedStringConstants.GetLength();
 	WriteEncodedUInt(count);
@@ -531,7 +536,7 @@ void asCRestore::WriteUsedStringConstants()
 		WriteString(engine->stringConstants[usedStringConstants[i]]);
 }
 
-void asCRestore::ReadUsedStringConstants()
+void asCReader::ReadUsedStringConstants()
 {
 	asCString str;
 
@@ -545,7 +550,7 @@ void asCRestore::ReadUsedStringConstants()
 	}
 }
 
-void asCRestore::WriteUsedFunctions()
+void asCWriter::WriteUsedFunctions()
 {
 	asUINT count = (asUINT)usedFunctions.GetLength();
 	WriteEncodedUInt(count);
@@ -564,7 +569,7 @@ void asCRestore::WriteUsedFunctions()
 	}
 }
 
-void asCRestore::ReadUsedFunctions()
+void asCReader::ReadUsedFunctions()
 {
 	asUINT count;
 	count = ReadEncodedUInt();
@@ -618,7 +623,7 @@ void asCRestore::ReadUsedFunctions()
 	}
 }
 
-void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
+void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 {
 	asUINT i, count;
 
@@ -658,7 +663,7 @@ void asCRestore::WriteFunctionSignature(asCScriptFunction *func)
 	}
 }
 
-void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
+void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 {
 	int i, count;
 	asCDataType dt;
@@ -708,7 +713,7 @@ void asCRestore::ReadFunctionSignature(asCScriptFunction *func)
 	}
 }
 
-void asCRestore::WriteFunction(asCScriptFunction* func) 
+void asCWriter::WriteFunction(asCScriptFunction* func) 
 {
 	char c;
 
@@ -789,7 +794,7 @@ void asCRestore::WriteFunction(asCScriptFunction* func)
 	}
 }
 
-asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine, bool addToGC) 
+asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, bool addToGC) 
 {
 	char c;
 	READ_NUM(c);
@@ -887,7 +892,7 @@ asCScriptFunction *asCRestore::ReadFunction(bool addToModule, bool addToEngine, 
 	return func;
 }
 
-void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
+void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 {
 	if( phase == 1 )
 	{
@@ -972,7 +977,7 @@ void asCRestore::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 }
 
-void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
+void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 {
 	if( phase == 1 )
 	{
@@ -1317,7 +1322,7 @@ void asCRestore::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 }
 
-void asCRestore::WriteEncodedUInt(asUINT i)
+void asCWriter::WriteEncodedUInt(asUINT i)
 {
 	if( i < 128 )
 	{
@@ -1366,7 +1371,7 @@ void asCRestore::WriteEncodedUInt(asUINT i)
 	}
 }
 
-asUINT asCRestore::ReadEncodedUInt()
+asUINT asCReader::ReadEncodedUInt()
 {
 	asUINT i = 0;
 	asBYTE b;
@@ -1414,7 +1419,7 @@ asUINT asCRestore::ReadEncodedUInt()
 	return i;
 }
 
-void asCRestore::WriteString(asCString* str) 
+void asCWriter::WriteString(asCString* str) 
 {
 	// TODO: All strings should be stored in a separate section, and when
 	//       they are used an offset into that section should be stored.
@@ -1451,7 +1456,7 @@ void asCRestore::WriteString(asCString* str)
 	stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);
 }
 
-void asCRestore::ReadString(asCString* str) 
+void asCReader::ReadString(asCString* str) 
 {
 	char b;
 	READ_NUM(b);
@@ -1474,7 +1479,7 @@ void asCRestore::ReadString(asCString* str)
 	}
 }
 
-void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop) 
+void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop) 
 {
 	// TODO: We might be able to avoid storing the name and type of the global 
 	//       properties twice if we merge this with the WriteUsedGlobalProperties. 
@@ -1496,7 +1501,7 @@ void asCRestore::WriteGlobalProperty(asCGlobalProperty* prop)
 	}
 }
 
-void asCRestore::ReadGlobalProperty() 
+void asCReader::ReadGlobalProperty() 
 {
 	asCString name;
 	asCDataType type;
@@ -1518,14 +1523,14 @@ void asCRestore::ReadGlobalProperty()
 	}
 }
 
-void asCRestore::WriteObjectProperty(asCObjectProperty* prop) 
+void asCWriter::WriteObjectProperty(asCObjectProperty* prop) 
 {
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
 	WRITE_NUM(prop->isPrivate);
 }
 
-void asCRestore::ReadObjectProperty(asCObjectType *ot) 
+void asCReader::ReadObjectProperty(asCObjectType *ot) 
 {
 	asCString name;
 	ReadString(&name);
@@ -1540,7 +1545,7 @@ void asCRestore::ReadObjectProperty(asCObjectType *ot)
 		ot->AddPropertyToClass(name, dt, isPrivate);
 }
 
-void asCRestore::WriteDataType(const asCDataType *dt) 
+void asCWriter::WriteDataType(const asCDataType *dt) 
 {
 	// First check if the datatype has already been saved
 	for( asUINT n = 0; n < savedDataTypes.GetLength(); n++ )
@@ -1579,7 +1584,7 @@ void asCRestore::WriteDataType(const asCDataType *dt)
 	}
 }
 
-void asCRestore::ReadDataType(asCDataType *dt) 
+void asCReader::ReadDataType(asCDataType *dt) 
 {
 	eTokenType tokenType;
 
@@ -1655,7 +1660,7 @@ void asCRestore::ReadDataType(asCDataType *dt)
 	savedDataTypes.PushLast(*dt);
 }
 
-void asCRestore::WriteObjectType(asCObjectType* ot) 
+void asCWriter::WriteObjectType(asCObjectType* ot) 
 {
 	char ch;
 
@@ -1709,7 +1714,7 @@ void asCRestore::WriteObjectType(asCObjectType* ot)
 	}
 }
 
-asCObjectType* asCRestore::ReadObjectType() 
+asCObjectType* asCReader::ReadObjectType() 
 {
 	asCObjectType *ot = 0;
 	char ch;
@@ -1849,7 +1854,7 @@ asCObjectType* asCRestore::ReadObjectType()
 	return ot;
 }
 
-void asCRestore::WriteByteCode(asDWORD *bc, int length)
+void asCWriter::WriteByteCode(asDWORD *bc, int length)
 {
 	while( length )
 	{
@@ -2139,7 +2144,7 @@ void asCRestore::WriteByteCode(asDWORD *bc, int length)
 	}
 }
 
-void asCRestore::ReadByteCode(asDWORD *bc, int length)
+void asCReader::ReadByteCode(asDWORD *bc, int length)
 {
 	while( length )
 	{
@@ -2350,7 +2355,7 @@ void asCRestore::ReadByteCode(asDWORD *bc, int length)
 	}
 }
 
-void asCRestore::WriteUsedTypeIds()
+void asCWriter::WriteUsedTypeIds()
 {
 	asUINT count = (asUINT)usedTypeIds.GetLength();
 	WriteEncodedUInt(count);
@@ -2361,7 +2366,7 @@ void asCRestore::WriteUsedTypeIds()
 	}
 }
 
-void asCRestore::ReadUsedTypeIds()
+void asCReader::ReadUsedTypeIds()
 {
 	asUINT count = ReadEncodedUInt();
 	usedTypeIds.SetLength(count);
@@ -2373,7 +2378,7 @@ void asCRestore::ReadUsedTypeIds()
 	}
 }
 
-int asCRestore::FindGlobalPropPtrIndex(void *ptr)
+int asCWriter::FindGlobalPropPtrIndex(void *ptr)
 {
 	int i = usedGlobalProperties.IndexOf(ptr);
 	if( i >= 0 ) return i;
@@ -2382,7 +2387,7 @@ int asCRestore::FindGlobalPropPtrIndex(void *ptr)
 	return (int)usedGlobalProperties.GetLength()-1;
 }
 
-void asCRestore::WriteUsedGlobalProps()
+void asCWriter::WriteUsedGlobalProps()
 {
 	int c = (int)usedGlobalProperties.GetLength();
 	WriteEncodedUInt(c);
@@ -2428,7 +2433,7 @@ void asCRestore::WriteUsedGlobalProps()
 	}
 }
 
-void asCRestore::ReadUsedGlobalProps()
+void asCReader::ReadUsedGlobalProps()
 {
 	int c = ReadEncodedUInt();
 
@@ -2482,7 +2487,7 @@ void asCRestore::ReadUsedGlobalProps()
 	}
 }
 
-void asCRestore::WriteUsedObjectProps()
+void asCWriter::WriteUsedObjectProps()
 {
 	int c = (int)usedObjectProperties.GetLength();
 	WriteEncodedUInt(c);
@@ -2504,7 +2509,7 @@ void asCRestore::WriteUsedObjectProps()
 	}	
 }
 
-void asCRestore::ReadUsedObjectProps()
+void asCReader::ReadUsedObjectProps()
 {
 	asUINT c = ReadEncodedUInt();
 
@@ -2548,7 +2553,7 @@ void asCRestore::ReadUsedObjectProps()
 // Miscellaneous
 //---------------------------------------------------------------------------------------------------
 
-int asCRestore::FindObjectPropIndex(short offset, int typeId)
+int asCWriter::FindObjectPropIndex(short offset, int typeId)
 {
 	asCObjectType *objType = engine->GetObjectTypeFromTypeId(typeId);
 	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
@@ -2563,7 +2568,7 @@ int asCRestore::FindObjectPropIndex(short offset, int typeId)
 	return (int)usedObjectProperties.GetLength() - 1;
 }
 
-short asCRestore::FindObjectPropOffset(asWORD index)
+short asCReader::FindObjectPropOffset(asWORD index)
 {
 	if( index >= usedObjectProperties.GetLength() )
 	{
@@ -2576,7 +2581,7 @@ short asCRestore::FindObjectPropOffset(asWORD index)
 	return (short)usedObjectProperties[index].offset;
 }
 
-int asCRestore::FindFunctionIndex(asCScriptFunction *func)
+int asCWriter::FindFunctionIndex(asCScriptFunction *func)
 {
 	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
 	{
@@ -2588,7 +2593,7 @@ int asCRestore::FindFunctionIndex(asCScriptFunction *func)
 	return (int)usedFunctions.GetLength() - 1;
 }
 
-asCScriptFunction *asCRestore::FindFunction(int idx)
+asCScriptFunction *asCReader::FindFunction(int idx)
 {
 	if( idx >= 0 && idx < (int)usedFunctions.GetLength() )
 		return usedFunctions[idx];
@@ -2600,7 +2605,7 @@ asCScriptFunction *asCRestore::FindFunction(int idx)
 	}
 }
 
-void asCRestore::TranslateFunction(asCScriptFunction *func)
+void asCReader::TranslateFunction(asCScriptFunction *func)
 {
 	// Skip this if the function is part of an pre-existing shared object
 	if( dontTranslate.MoveTo(0, func) ) return;
@@ -2930,7 +2935,7 @@ void asCRestore::TranslateFunction(asCScriptFunction *func)
 	}
 }
 
-int asCRestore::FindTypeIdIdx(int typeId)
+int asCWriter::FindTypeIdIdx(int typeId)
 {
 	asUINT n;
 	for( n = 0; n < usedTypeIds.GetLength(); n++ )
@@ -2943,7 +2948,7 @@ int asCRestore::FindTypeIdIdx(int typeId)
 	return (int)usedTypeIds.GetLength() - 1;
 }
 
-int asCRestore::FindTypeId(int idx)
+int asCReader::FindTypeId(int idx)
 {
 	if( idx >= 0 && idx < (int)usedTypeIds.GetLength() )
 		return usedTypeIds[idx];
@@ -2955,7 +2960,7 @@ int asCRestore::FindTypeId(int idx)
 	}
 }
 
-int asCRestore::FindObjectTypeIdx(asCObjectType *obj)
+int asCWriter::FindObjectTypeIdx(asCObjectType *obj)
 {
 	asUINT n;
 	for( n = 0; n < usedTypes.GetLength(); n++ )
@@ -2968,7 +2973,7 @@ int asCRestore::FindObjectTypeIdx(asCObjectType *obj)
 	return (int)usedTypes.GetLength() - 1;
 }
 
-asCObjectType *asCRestore::FindObjectType(int idx)
+asCObjectType *asCReader::FindObjectType(int idx)
 {
 	if( idx < 0 || idx >= (int)usedTypes.GetLength() )
 	{

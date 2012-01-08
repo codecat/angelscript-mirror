@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1371,8 +1371,8 @@ int asCModule::SaveByteCode(asIBinaryStream *out) const
 {
 	if( out == 0 ) return asINVALID_ARG;
 
-	asCRestore rest(const_cast<asCModule*>(this), out, engine);
-	return rest.Save();
+	asCWriter write(const_cast<asCModule*>(this), out, engine);
+	return write.Write();
 }
 
 // interface
@@ -1386,8 +1386,8 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 	if( r < 0 )
 		return r;
 
-	asCRestore rest(this, in, engine);
-	r = rest.Restore();
+	asCReader read(this, in, engine);
+	r = read.Read();
 
     JITCompile();
 
