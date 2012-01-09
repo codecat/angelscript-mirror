@@ -179,6 +179,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\scriptstring.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_assign.cpp"
 				>
 			</File>
@@ -249,6 +253,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\scriptstring.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\utils.h"
 				>
 			</File>
@@ -258,26 +266,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-		</Filter>
-		<Filter
-			Name="add_on"
-			>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\add_on\scriptstring\scriptstring.h"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>
