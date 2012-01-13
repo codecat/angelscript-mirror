@@ -3475,7 +3475,7 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 }
 
 
-asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope, asCObjectType *templateType)
+asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope, asCObjectType *currentType)
 {
 	asASSERT(node->nodeType == snDataType);
 
@@ -3501,11 +3501,13 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		// If this is for a template type, then we must first determine if the 
 		// identifier matches any of the template subtypes
 		// TODO: template: it should be possible to have more than one subtypes
-		if( templateType && (templateType->flags & asOBJ_TEMPLATE) && str == templateType->templateSubType.GetObjectType()->name )
-			ot = templateType->templateSubType.GetObjectType();
+		if( currentType && (currentType->flags & asOBJ_TEMPLATE) && str == currentType->templateSubType.GetObjectType()->name )
+			ot = currentType->templateSubType.GetObjectType();
 
 		if( ot == 0 )
 			ot = GetObjectType(str.AddressOf());
+		if( ot == 0 && !module && currentType )
+			ot = GetObjectTypeFromTypesKnownByObject(str.AddressOf(), currentType);
 	
 		if( ot )
 		{
@@ -3731,6 +3733,34 @@ asCObjectType *asCBuilder::GetObjectType(const char *type)
 		ot = module->GetObjectType(type);
 
 	return ot;
+}
+
+asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType)
+{
+	if( currentType->name == type )
+		return currentType;
+
+	asUINT n;
+
+	for( n = 0; n < currentType->properties.GetLength(); n++ )
+		if( currentType->properties[n]->type.GetObjectType() && 
+			currentType->properties[n]->type.GetObjectType()->name == type )
+			return currentType->properties[n]->type.GetObjectType();
+
+	for( n = 0; n < currentType->methods.GetLength(); n++ )
+	{
+		asCScriptFunction *func = engine->scriptFunctions[currentType->methods[n]];
+		if( func->returnType.GetObjectType() &&
+			func->returnType.GetObjectType()->name == type )
+			return func->returnType.GetObjectType();
+
+		for( asUINT f = 0; f < func->parameterTypes.GetLength(); f++ )
+			if( func->parameterTypes[f].GetObjectType() &&
+				func->parameterTypes[f].GetObjectType()->name == type )
+				return func->parameterTypes[f].GetObjectType();
+	}
+
+	return 0;
 }
 
 asCScriptFunction *asCBuilder::GetFuncDef(const char *type)

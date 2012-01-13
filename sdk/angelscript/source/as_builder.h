@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -173,6 +173,7 @@ protected:
 
 	asCObjectType     *GetObjectType(const char *type);
 	asCScriptFunction *GetFuncDef(const char *type);
+	asCObjectType     *GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 
 	int GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
 	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);
@@ -205,7 +206,7 @@ protected:
 	asCScriptEngine *engine;
 	asCModule *module;
 
-	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope = false, asCObjectType *templateType = 0);
+	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
 	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);
 };
 

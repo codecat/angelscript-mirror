@@ -6172,7 +6172,13 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 {
 	asASSERT(expr->nodeType == snExpression);
 
-	// Count the nodes
+	// Convert to polish post fix, i.e: a+b => ab+
+
+	// The algorithm that I've implemented here is similar to 
+	// Djikstra's Shunting Yard algorithm, though I didn't know it at the time.
+	// ref: http://en.wikipedia.org/wiki/Shunting-yard_algorithm
+
+	// Count the nodes in order to preallocate the buffers
 	int count = 0;
 	asCScriptNode *node = expr->firstChild;
 	while( node )
@@ -6181,7 +6187,6 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 		node = node->next;
 	}
 
-	// Convert to polish post fix, i.e: a+b => ab+
 	asCArray<asCScriptNode *> stack(count);
 	asCArray<asCScriptNode *> stack2(count);
 	asCArray<asCScriptNode *> postfix(count);
@@ -10962,6 +10967,13 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			argSize += AS_PTR_SIZE;
 		}
 
+		// TODO: optimize: If it is known that a class method cannot be overridden the call
+		//                 should be made with asBC_CALL as it is faster. Examples where this
+		//                 is known is for example finalled methods where the class doesn't derive 
+		//                 from any other, or even non-finalled methods but where it is known
+		//                 at compile time the true type of the object. The first should be
+		//                 quite easy to determine, but the latter will be quite complex and possibly
+		//                 not worth it.
 		if( descr->funcType == asFUNC_IMPORTED )
 			ctx->bc.Call(asBC_CALLBND , descr->id, argSize);
 		// TODO: Maybe we need two different byte codes

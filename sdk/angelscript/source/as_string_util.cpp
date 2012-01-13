@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -90,6 +90,10 @@ double asStringScanDouble(const char *string, size_t *numScanned)
 	setlocale(LC_NUMERIC, "C");
 #endif
 
+	// TODO: It seems strtod() is not available on iOS 5. It's probably 
+	//       time to substitute this for my own implementation. This 
+	//       would also make the code locale independent.
+	//       http://www.gamedev.net/topic/618198-angelscript-and-xcode-421/
 	double res = strtod(string, &end);
 
 #if !defined(_WIN32_WCE) && !defined(ANDROID)

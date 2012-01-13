@@ -1799,6 +1799,43 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test value copy during decl
+	// http://www.gamedev.net/topic/618412-memory-leak-when-doing-an-assign-operation-with-a-handle/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class T { \n"
+			"  T() {} \n"
+		//	"  T(int v) {} \n"
+			"  T &opAssign(const T&in o) {return this;} \n"
+			"} \n"
+			"T @Get() { return T(); } \n"
+			"void main() { \n"
+			"  T @t1 = Get(); \n"
+			"  T t2 = t1; \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

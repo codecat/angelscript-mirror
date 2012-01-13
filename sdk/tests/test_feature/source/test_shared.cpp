@@ -191,6 +191,81 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test reloading scripts with shared code
+	// http://www.gamedev.net/topic/618417-problem-with-shared-keyword/
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		const char *code = 
+			"shared class B {} \n"
+			"shared class iMyInterface { \n"
+			"  void MyFunc(const B &in) {} \n"
+			"} \n"
+			"class cMyClass : iMyInterface { \n"
+			"  void MyFunc(const B &in) { \n"
+			"  } \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("code", code);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		int id = mod->GetTypeIdByDecl("cMyClass");
+		asIObjectType *type = engine->GetObjectTypeById(id);
+		asIScriptFunction *func = type->GetMethodByDecl("void MyFunc(const B &in)");
+		if( func == 0 )
+			TEST_FAILED;
+
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(id);
+		asIScriptContext *ctx = engine->CreateContext();
+
+		ctx->Prepare(func);
+		ctx->SetObject(obj);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		ctx->Release();
+		obj->Release();
+
+		// This will orphan the shared types, but won't destroy them yet
+		// as they are still kept alive by the garbage collector
+		engine->DiscardModule("1");
+
+		// Build the module again. This will re-use the orphaned 
+		// shared classes, the code should still work normally
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("code", code);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		id = mod->GetTypeIdByDecl("cMyClass");
+		type = engine->GetObjectTypeById(id);
+		func = type->GetMethodByDecl("void MyFunc(const B &in)");
+		if( func == 0 )
+			TEST_FAILED;
+
+		obj = (asIScriptObject*)engine->CreateScriptObject(id);
+		ctx = engine->CreateContext();
+
+		ctx->Prepare(func);
+		ctx->SetObject(obj);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		ctx->Release();
+		obj->Release();
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

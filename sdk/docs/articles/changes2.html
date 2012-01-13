@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.22.2 WIP - 2012/01/08</h2>
+<h2>Version 2.22.2 WIP - 2012/01/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>RegisterGlobalProperty was accepting null pointers (Thanks Quillraven)
 <li>In some situations the value assign of a class member to an object would recieve the wrong reference (Thanks Philip Bennefall)
 <li>Fixed segfault when compiling with -O2 on x86 32bit gnuc 4.6.1 (Thanks gdmarkou)
+<li>Fixed problem with shared classes when the were orphaned (Thanks Thomas Grip)
 </ul>
 <li>Virtual machine
 <ul>
