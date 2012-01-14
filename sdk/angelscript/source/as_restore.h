@@ -34,10 +34,7 @@
 //
 // Functions for saving and restoring module bytecode
 // asCRestore was originally written by Dennis Bollyn, dennis@gyrbo.be
-
-
-// TODO: This should be split in two, so that an application that doesn't compile any 
-//       code but only loads precompiled code can link with only the bytecode loader
+// It was later split in two classes asCReader and asCWriter by me
 
 #ifndef AS_RESTORE_H
 #define AS_RESTORE_H
@@ -116,6 +113,8 @@ protected:
 	asCMap<asCScriptFunction*,bool> dontTranslate;
 };
 
+#ifndef AS_NO_COMPILER
+
 class asCWriter
 {
 public:
@@ -176,6 +175,8 @@ protected:
 	};
 	asCArray<SObjProp>           usedObjectProperties;
 };
+
+#endif
 
 END_AS_NAMESPACE
 

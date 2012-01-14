@@ -91,6 +91,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_ATOMIC
 		"AS_NO_ATOMIC "
 #endif
+#ifdef AS_NO_COMPILER
+		"AS_NO_COMPILER "
+#endif
 
 	// Target system
 #ifdef AS_WIN

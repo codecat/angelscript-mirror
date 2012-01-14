@@ -1660,6 +1660,7 @@ public:
 	//! \return A negative value on error.
 	//! \retval asMODULE_IS_IN_USE The module is currently in use.
 	//! \retval asINVALID_ARG The \a code argument is null.
+	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
 	//! This adds a script section to the module. All sections added will be treated as if one 
 	//! large script. Errors reported will give the name of the corresponding section.
@@ -1675,6 +1676,7 @@ public:
 	//! \retval asERROR The script failed to build.
 	//! \retval asBUILD_IN_PROGRESS Another thread is currently building. 
 	//! \retval asINIT_GLOBAL_VARS_FAILED It was not possible to initialize at least one of the global variables.
+	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
 	//! Builds the script based on the added sections, and registered types and functions. After the
 	//! build is complete the script sections are removed to free memory. If the script module needs 
@@ -1700,6 +1702,7 @@ public:
 	//! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
 	//! \retval asBUILD_IN_PROGRESS Another build is in progress.
 	//! \retval asERROR The compilation failed.
+	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//! 
 	//! Use this to compile a single function. The function can be optionally added to the scope of the module, in which case
 	//! it will be available for subsequent compilations. If not added to the module, the function can still be returned in the
@@ -1717,6 +1720,7 @@ public:
 	//! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
 	//! \retval asBUILD_IN_PROGRESS Another build is in progress.
 	//! \retval asERROR The compilation failed.
+	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
 	//! Use this to add a single global variable to the scope of a module. The variable can then
 	//! be referred to by the application and subsequent compilations.
@@ -2025,13 +2029,14 @@ public:
 	//! \param[in] out The output stream.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The stream object wasn't specified.
+	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
 	//! This method is used to save pre-compiled byte code to disk or memory, for a later restoral.
 	//! The application must implement an object that inherits from \ref asIBinaryStream to provide
 	//! the necessary stream operations.
 	//!
 	//! The pre-compiled byte code is currently not platform independent, so you need to make
-	//! sure the byte code is compiled on a platform that is compatible with the one that will load it.	
+	//! sure the byte code is compiled on a platform that is compatible with the one that will load it.
 	virtual int SaveByteCode(asIBinaryStream *out) const = 0;
 	//! \brief Load pre-compiled bytecode from a binary stream.
 	//!

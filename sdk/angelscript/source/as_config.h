@@ -86,7 +86,10 @@
 // is used as this is supported natively by the compiler without the use for this
 // preprocessor flag.
 
-
+// AS_NO_COMPILER
+// Compiles the library without support for compiling scripts. This is intended
+// for those applications that will load pre-compiled bytecode and wants to decrease
+// the size of the executable.
 
 
 //

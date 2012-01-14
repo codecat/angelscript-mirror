@@ -117,10 +117,18 @@ const char *asCModule::GetName() const
 // interface
 int asCModule::AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset)
 {
+#ifdef AS_NO_COMPILER
+	UNUSED_VAR(name);
+	UNUSED_VAR(code);
+	UNUSED_VAR(codeLength);
+	UNUSED_VAR(lineOffset);
+	return asNOT_SUPPORTED;
+#else
 	if( !builder )
 		builder = asNEW(asCBuilder)(engine, this);
 
 	return builder->AddCode(name, code, (int)codeLength, lineOffset, (int)engine->GetScriptSectionNameIndex(name ? name : ""), engine->ep.copyScriptSections);
+#endif
 }
 
 // internal
@@ -135,6 +143,9 @@ void asCModule::JITCompile()
 // interface
 int asCModule::Build()
 {
+#ifdef AS_NO_COMPILER
+	return asNOT_SUPPORTED;
+#else
 	// Only one thread may build at one time
 	// TODO: It should be possible to have multiple threads perform compilations
 	int r = engine->RequestBuild();
@@ -181,6 +192,7 @@ int asCModule::Build()
 		r = ResetGlobalVars(0);
 
 	return r;
+#endif
 }
 
 // interface
@@ -816,9 +828,6 @@ int asCModule::AddScriptFunction(asCScriptFunction *func)
 	return 0;
 }
 
-
-
-
 // internal
 int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName)
 {
@@ -1369,10 +1378,15 @@ bool asCModule::AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArr
 // interface
 int asCModule::SaveByteCode(asIBinaryStream *out) const
 {
+#ifdef AS_NO_COMPILER
+	UNUSED_VAR(out);
+	return asNOT_SUPPORTED;
+#else
 	if( out == 0 ) return asINVALID_ARG;
 
 	asCWriter write(const_cast<asCModule*>(this), out, engine);
 	return write.Write();
+#endif
 }
 
 // interface
@@ -1399,6 +1413,12 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 // interface
 int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int lineOffset)
 {
+#ifdef AS_NO_COMPILER
+	UNUSED_VAR(sectionName);
+	UNUSED_VAR(code);
+	UNUSED_VAR(lineOffset);
+	return asNOT_SUPPORTED;
+#else
 	// Validate arguments
 	if( code == 0 )
 		return asINVALID_ARG;
@@ -1449,11 +1469,20 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 	}
 
 	return r;
+#endif
 }
 
 // interface
 int asCModule::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc)
 {
+#ifdef AS_NO_COMPILER
+	UNUSED_VAR(sectionName);
+	UNUSED_VAR(code);
+	UNUSED_VAR(lineOffset);
+	UNUSED_VAR(compileFlags);
+	UNUSED_VAR(outFunc);
+	return asNOT_SUPPORTED;
+#else
 	asASSERT(outFunc == 0 || *outFunc == 0);
 
 	// Validate arguments
@@ -1496,6 +1525,7 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 		func->Release();
 
 	return r;
+#endif
 }
 
 // interface

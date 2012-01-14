@@ -43,30 +43,12 @@
 
 BEGIN_AS_NAMESPACE
 
-#define WRITE_NUM(N) WriteData(&(N), sizeof(N))
 #define READ_NUM(N) ReadData(&(N), sizeof(N))
 
 asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
 	error = false;
-}
-
-asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
- : module(_module), stream(_stream), engine(_engine)
-{
-}
-
-void asCWriter::WriteData(const void *data, asUINT size)
-{
-	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
-#if defined(AS_BIG_ENDIAN)
-	for( asUINT n = 0; n < size; n++ )
-		stream->Write(((asBYTE*)data)+n, 1);
-#else
-	for( int n = size-1; n >= 0; n-- )
-		stream->Write(((asBYTE*)data)+n, 1);
-#endif
 }
 
 void asCReader::ReadData(void *data, asUINT size)
@@ -79,151 +61,6 @@ void asCReader::ReadData(void *data, asUINT size)
 	for( int n = size-1; n >= 0; n-- )
 		stream->Read(((asBYTE*)data)+n, 1);
 #endif
-}
-
-int asCWriter::Write() 
-{
-	unsigned long i, count;
-
-	// TODO: The first thing the code needs to do is build a list of the 
-	//       types that are used, so that the function signatures, etc can
-	//       be encoded in a small way.
-	// 
-	//       If only a few types are used, then maybe one byte is enough.
-	//       By using a scheme similar to UTF8 I can support a high number
-	//       of types without sacrifizing space.
-
-	// Store everything in the same order that the builder parses scripts
-	
-	// Store enums
-	count = (asUINT)module->enumTypes.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; i++ )
-	{
-		WriteObjectTypeDeclaration(module->enumTypes[i], 1);
-		WriteObjectTypeDeclaration(module->enumTypes[i], 2);
-	}
-
-	// Store type declarations first
-	count = (asUINT)module->classTypes.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; i++ )
-	{
-		// Store only the name of the class/interface types
-		WriteObjectTypeDeclaration(module->classTypes[i], 1);
-	}
-
-	// Store func defs
-	count = (asUINT)module->funcDefs.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; i++ )
-	{
-		WriteFunction(module->funcDefs[i]);
-	}
-
-	// Now store all interface methods
-	count = (asUINT)module->classTypes.GetLength();
-	for( i = 0; i < count; i++ )
-	{
-		if( module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], 2);
-	}
-
-	// Then store the class methods and behaviours
-	for( i = 0; i < count; ++i )
-	{
-		if( !module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], 2);
-	}
-
-	// Then store the class properties
-	for( i = 0; i < count; ++i )
-	{
-		if( !module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], 3);
-	}
-
-	// Store typedefs
-	count = (asUINT)module->typeDefs.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; i++ )
-	{
-		WriteObjectTypeDeclaration(module->typeDefs[i], 1);
-		WriteObjectTypeDeclaration(module->typeDefs[i], 2);
-	}
-
-	// scriptGlobals[]
-	count = (asUINT)module->scriptGlobals.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; ++i ) 
-		WriteGlobalProperty(module->scriptGlobals[i]);
-
-	// scriptFunctions[]
-	count = 0;
-	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-		if( module->scriptFunctions[i]->objectType == 0 )
-			count++;
-	WriteEncodedUInt(count);
-	for( i = 0; i < module->scriptFunctions.GetLength(); ++i )
-		if( module->scriptFunctions[i]->objectType == 0 )
-			WriteFunction(module->scriptFunctions[i]);
-
-	// globalFunctions[]
-	count = (int)module->globalFunctions.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; i++ )
-	{
-		WriteFunction(module->globalFunctions[i]);
-	}
-
-	// bindInformations[]
-	count = (asUINT)module->bindInformations.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; ++i )
-	{
-		WriteFunction(module->bindInformations[i]->importedFunctionSignature);
-		WriteString(&module->bindInformations[i]->importFromModule);
-	}
-
-	// usedTypes[]
-	asUINT numValueTypes = 0;
-	count = (asUINT)usedTypes.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; ++i )
-	{
-		if( usedTypes[i]->flags & asOBJ_VALUE )
-			numValueTypes++;
-
-		WriteObjectType(usedTypes[i]);
-	}
-
-	// Write the size of value types so the code can be adjusted if they are not the same when reloading the code
-	WriteEncodedUInt(numValueTypes);
-	for( i = 0; i < count; i++ )
-	{
-		if( usedTypes[i]->flags & asOBJ_VALUE )
-		{
-			WriteEncodedUInt(i);
-			WriteEncodedUInt(usedTypes[i]->GetSize());
-		}
-	}
-
-	// usedTypeIds[]
-	WriteUsedTypeIds();
-
-	// usedFunctions[]
-	WriteUsedFunctions();
-
-	// usedGlobalProperties[]
-	WriteUsedGlobalProps();
-
-	// usedStringConstants[]
-	WriteUsedStringConstants();
-
-	// usedObjectProperties[]
-	WriteUsedObjectProps();
-
-	return asSUCCESS;
 }
 
 int asCReader::Read() 
@@ -516,26 +353,6 @@ int asCReader::Read()
 	return error ? asERROR : asSUCCESS;
 }
 
-int asCWriter::FindStringConstantIndex(int id)
-{
-	asSMapNode<int,int> *cursor = 0;
-	if (stringIdToIndexMap.MoveTo(&cursor, id))
-		return cursor->value;
-
-	usedStringConstants.PushLast(id);
-	int index = int(usedStringConstants.GetLength() - 1);
-	stringIdToIndexMap.Insert(id, index);
-	return index;
-}
-
-void asCWriter::WriteUsedStringConstants()
-{
-	asUINT count = (asUINT)usedStringConstants.GetLength();
-	WriteEncodedUInt(count);
-	for( asUINT i = 0; i < count; ++i )
-		WriteString(engine->stringConstants[usedStringConstants[i]]);
-}
-
 void asCReader::ReadUsedStringConstants()
 {
 	asCString str;
@@ -547,25 +364,6 @@ void asCReader::ReadUsedStringConstants()
 	{
 		ReadString(&str);
 		usedStringConstants[i] = engine->AddConstantString(str.AddressOf(), str.GetLength());
-	}
-}
-
-void asCWriter::WriteUsedFunctions()
-{
-	asUINT count = (asUINT)usedFunctions.GetLength();
-	WriteEncodedUInt(count);
-
-	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
-	{
-		char c;
-
-		// Write enough data to be able to uniquely identify the function upon load
-
-		// Is the function from the module or the application?
-		c = usedFunctions[n]->module ? 'm' : 'a';
-		WRITE_NUM(c);
-
-		WriteFunctionSignature(usedFunctions[n]);
 	}
 }
 
@@ -623,46 +421,6 @@ void asCReader::ReadUsedFunctions()
 	}
 }
 
-void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
-{
-	asUINT i, count;
-
-	WriteString(&func->name);
-	WriteDataType(&func->returnType);
-
-	count = (asUINT)func->parameterTypes.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; ++i ) 
-		WriteDataType(&func->parameterTypes[i]);
-	
-	count = (asUINT)func->inOutFlags.GetLength();
-	WriteEncodedUInt(count);
-	for( i = 0; i < count; ++i )
-		WriteEncodedUInt(func->inOutFlags[i]);
-
-	WRITE_NUM(func->funcType);
-
-	// Write the default args, from last to first
-	count = 0;
-	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
-		if( func->defaultArgs[i] )
-			count++;
-	WriteEncodedUInt(count);
-	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
-		if( func->defaultArgs[i] )
-			WriteString(func->defaultArgs[i]);
-
-	WriteObjectType(func->objectType);
-
-	if( func->objectType )
-	{
-		asBYTE b = 0;
-		b += func->isReadOnly ? 1 : 0;
-		b += func->isPrivate  ? 2 : 0;
-		WRITE_NUM(b);
-	}
-}
-
 void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 {
 	int i, count;
@@ -710,87 +468,6 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 		READ_NUM(b);
 		func->isReadOnly = (b & 1) ? true : false;
 		func->isPrivate  = (b & 2) ? true : false;
-	}
-}
-
-void asCWriter::WriteFunction(asCScriptFunction* func) 
-{
-	char c;
-
-	// If there is no function, then store a null char
-	if( func == 0 )
-	{
-		c = '\0';
-		WRITE_NUM(c);
-		return;
-	}
-
-	// First check if the function has been saved already
-	for( asUINT f = 0; f < savedFunctions.GetLength(); f++ )
-	{
-		if( savedFunctions[f] == func )
-		{
-			c = 'r';
-			WRITE_NUM(c);
-			WriteEncodedUInt(f);
-			return;
-		}
-	}
-
-	// Keep a reference to the function in the list
-	savedFunctions.PushLast(func);
-
-	c = 'f';
-	WRITE_NUM(c);
-
-	asUINT i, count;
-
-	WriteFunctionSignature(func);
-
-	if( func->funcType == asFUNC_SCRIPT )
-	{
-		count = (asUINT)func->byteCode.GetLength();
-		WriteEncodedUInt(count);
-		WriteByteCode(func->byteCode.AddressOf(), count);
-
-		count = (asUINT)func->objVariablePos.GetLength();
-		WriteEncodedUInt(count);
-		for( i = 0; i < count; ++i )
-		{
-			WriteObjectType(func->objVariableTypes[i]);
-			WriteEncodedUInt(func->objVariablePos[i]);
-			WRITE_NUM(func->objVariableIsOnHeap[i]);
-		}
-
-		WriteEncodedUInt(func->stackNeeded);
-
-		WriteEncodedUInt((asUINT)func->objVariableInfo.GetLength());
-		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
-		{
-			WriteEncodedUInt(func->objVariableInfo[i].programPos);
-			WriteEncodedUInt(func->objVariableInfo[i].variableOffset); // TODO: should be int
-			WriteEncodedUInt(func->objVariableInfo[i].option);
-		}
-
-		asUINT length = (asUINT)func->lineNumbers.GetLength();
-		WriteEncodedUInt(length);
-		for( i = 0; i < length; ++i )
-			WriteEncodedUInt(func->lineNumbers[i]);
-
-		// TODO: Write variables
-	}
-	else if( func->funcType == asFUNC_VIRTUAL )
-	{
-		WriteEncodedUInt(func->vfTableIdx);
-	}
-
-	// Store script section name
-	if( func->scriptSectionIdx >= 0 )
-		WriteString(engine->scriptSectionNames[func->scriptSectionIdx]);
-	else
-	{
-		char c = 0;
-		WRITE_NUM(c);
 	}
 }
 
@@ -890,91 +567,6 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		func->ComputeSignatureId();
 
 	return func;
-}
-
-void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
-{
-	if( phase == 1 )
-	{
-		// name
-		WriteString(&ot->name);
-		// flags
-		WRITE_NUM(ot->flags);
-		// size
-		WriteEncodedUInt(ot->size);
-	}
-	else if( phase == 2 )
-	{
-		if( ot->flags & asOBJ_ENUM )
-		{
-			// enumValues[]
-			int size = (int)ot->enumValues.GetLength();
-			WriteEncodedUInt(size);
-
-			for( int n = 0; n < size; n++ )
-			{
-				WriteString(&ot->enumValues[n]->name);
-				WRITE_NUM(ot->enumValues[n]->value);
-			}
-		}
-		else if( ot->flags & asOBJ_TYPEDEF )
-		{
-			eTokenType t = ot->templateSubType.GetTokenType();
-			WRITE_NUM(t);
-		}
-		else
-		{
-			WriteObjectType(ot->derivedFrom);
-
-			// interfaces[]
-			int size = (asUINT)ot->interfaces.GetLength();
-			WriteEncodedUInt(size);
-			asUINT n;
-			for( n = 0; n < ot->interfaces.GetLength(); n++ )
-			{
-				WriteObjectType(ot->interfaces[n]);
-			}
-
-			// behaviours
-			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
-			{
-				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
-				size = (int)ot->beh.constructors.GetLength();
-				WriteEncodedUInt(size);
-				for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
-				{
-					WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
-					WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
-				}
-			}
-
-			// methods[]
-			size = (int)ot->methods.GetLength();
-			WriteEncodedUInt(size);
-			for( n = 0; n < ot->methods.GetLength(); n++ )
-			{
-				WriteFunction(engine->scriptFunctions[ot->methods[n]]);
-			}
-
-			// virtualFunctionTable[]
-			size = (int)ot->virtualFunctionTable.GetLength();
-			WriteEncodedUInt(size);
-			for( n = 0; n < (asUINT)size; n++ )
-			{
-				WriteFunction(ot->virtualFunctionTable[n]);
-			}
-		}
-	}
-	else if( phase == 3 )
-	{
-		// properties[]
-		asUINT size = (asUINT)ot->properties.GetLength();
-		WriteEncodedUInt(size);
-		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
-		{
-			WriteObjectProperty(ot->properties[n]);
-		}
-	}
 }
 
 void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
@@ -1322,55 +914,6 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 }
 
-void asCWriter::WriteEncodedUInt(asUINT i)
-{
-	if( i < 128 )
-	{
-		asBYTE b = (asBYTE)i;
-		WRITE_NUM(b);
-	}
-	else if( i < 16384 )
-	{
-		asBYTE b = asBYTE(0x80 + (i >> 8));
-		WRITE_NUM(b);
-		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
-	}
-	else if( i < 2097152 )
-	{
-		asBYTE b = asBYTE(0xC0 + (i >> 16));
-		WRITE_NUM(b);
-		b = asBYTE((i >> 8) & 0xFF);
-		WRITE_NUM(b);
-		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
-	}
-	else if( i < 268435456 )
-	{
-		asBYTE b = asBYTE(0xE0 + (i >> 24));
-		WRITE_NUM(b);
-		b = asBYTE((i >> 16) & 0xFF);
-		WRITE_NUM(b);
-		b = asBYTE((i >> 8) & 0xFF);
-		WRITE_NUM(b);
-		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
-	}
-	else
-	{
-		asBYTE b = asBYTE(0xF0);
-		WRITE_NUM(b);
-		b = asBYTE((i >> 24) & 0xFF);
-		WRITE_NUM(b);
-		b = asBYTE((i >> 16) & 0xFF);
-		WRITE_NUM(b);
-		b = asBYTE((i >> 8) & 0xFF);
-		WRITE_NUM(b);
-		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
-	}
-}
-
 asUINT asCReader::ReadEncodedUInt()
 {
 	asUINT i = 0;
@@ -1419,43 +962,6 @@ asUINT asCReader::ReadEncodedUInt()
 	return i;
 }
 
-void asCWriter::WriteString(asCString* str) 
-{
-	// TODO: All strings should be stored in a separate section, and when
-	//       they are used an offset into that section should be stored.
-	//       This will make it unnecessary to store the extra byte to 
-	//       identify new versus old strings.
-
-	if( str->GetLength() == 0 )
-	{
-		char z = '\0';
-		WRITE_NUM(z);
-		return;
-	}
-
-	// First check if the string hasn't been saved already
-	asSMapNode<asCStringPointer, int> *cursor = 0;
-	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str)))
-	{
-		// Save a reference to the existing string
-		char b = 'r';
-		WRITE_NUM(b);
-		WriteEncodedUInt(cursor->value);
-		return;
-	}
-
-	// Save a new string
-	char b = 'n';
-	WRITE_NUM(b);
-
-	asUINT len = (asUINT)str->GetLength();
-	WriteEncodedUInt(len);
-	stream->Write(str->AddressOf(), (asUINT)len);
-
-	savedStrings.PushLast(*str);
-	stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);
-}
-
 void asCReader::ReadString(asCString* str) 
 {
 	char b;
@@ -1476,28 +982,6 @@ void asCReader::ReadString(asCString* str)
 	{
 		asUINT n = ReadEncodedUInt();
 		*str = savedStrings[n];
-	}
-}
-
-void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop) 
-{
-	// TODO: We might be able to avoid storing the name and type of the global 
-	//       properties twice if we merge this with the WriteUsedGlobalProperties. 
-	WriteString(&prop->name);
-	WriteDataType(&prop->type);
-
-	// Store the initialization function
-	if( prop->GetInitFunc() )
-	{
-		bool f = true;
-		WRITE_NUM(f);
-
-		WriteFunction(prop->GetInitFunc());
-	}
-	else
-	{
-		bool f = false;
-		WRITE_NUM(f);
 	}
 }
 
@@ -1523,13 +1007,6 @@ void asCReader::ReadGlobalProperty()
 	}
 }
 
-void asCWriter::WriteObjectProperty(asCObjectProperty* prop) 
-{
-	WriteString(&prop->name);
-	WriteDataType(&prop->type);
-	WRITE_NUM(prop->isPrivate);
-}
-
 void asCReader::ReadObjectProperty(asCObjectType *ot) 
 {
 	asCString name;
@@ -1543,45 +1020,6 @@ void asCReader::ReadObjectProperty(asCObjectType *ot)
 	//               validate that the loaded methods match the original 
 	if( !existingShared.MoveTo(0, ot) )
 		ot->AddPropertyToClass(name, dt, isPrivate);
-}
-
-void asCWriter::WriteDataType(const asCDataType *dt) 
-{
-	// First check if the datatype has already been saved
-	for( asUINT n = 0; n < savedDataTypes.GetLength(); n++ )
-	{
-		if( *dt == savedDataTypes[n] )
-		{
-			asUINT c = 0;
-			WriteEncodedUInt(c);
-			WriteEncodedUInt(n);
-			return;
-		}
-	}
-
-	// Save the new datatype
-	savedDataTypes.PushLast(*dt);
-
-	bool b;
-	int t = dt->GetTokenType();
-	WriteEncodedUInt(t);
-	if( t == ttIdentifier )
-	{
-		WriteObjectType(dt->GetObjectType());
-		b = dt->IsObjectHandle();
-		WRITE_NUM(b);
-		b = dt->IsHandleToConst();
-		WRITE_NUM(b);
-	}
-	b = dt->IsReference();
-	WRITE_NUM(b);
-	b = dt->IsReadOnly();
-	WRITE_NUM(b);
-
-	if( t == ttIdentifier && dt->GetObjectType()->name == "_builtin_function_" )
-	{
-		WriteFunctionSignature(dt->GetFuncDef());
-	}
 }
 
 void asCReader::ReadDataType(asCDataType *dt) 
@@ -1658,60 +1096,6 @@ void asCReader::ReadDataType(asCDataType *dt)
 	dt->MakeReference(isReference);
 
 	savedDataTypes.PushLast(*dt);
-}
-
-void asCWriter::WriteObjectType(asCObjectType* ot) 
-{
-	char ch;
-
-	// Only write the object type name
-	if( ot )
-	{
-		// Check for template instances/specializations
-		if( ot->templateSubType.GetTokenType() != ttUnrecognizedToken )
-		{
-			ch = 'a';
-			WRITE_NUM(ch);
-			WriteString(&ot->name);
-
-			if( ot->templateSubType.IsObject() || ot->templateSubType.IsEnumType() )
-			{
-				ch = 's';
-				WRITE_NUM(ch);
-				WriteObjectType(ot->templateSubType.GetObjectType());
-
-				if( ot->templateSubType.IsObjectHandle() )
-					ch = 'h';
-				else
-					ch = 'o';
-				WRITE_NUM(ch);
-			}
-			else
-			{
-				ch = 't';
-				WRITE_NUM(ch);
-				eTokenType t = ot->templateSubType.GetTokenType();
-				WRITE_NUM(t);
-			}
-		}
-		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
-		{
-			ch = 's';
-			WRITE_NUM(ch);
-			WriteString(&ot->name);
-		}
-		else
-		{
-			ch = 'o';
-			WRITE_NUM(ch);
-			WriteString(&ot->name);
-		}
-	}
-	else
-	{
-		ch = '\0';
-		WRITE_NUM(ch);
-	}
 }
 
 asCObjectType* asCReader::ReadObjectType() 
@@ -1852,296 +1236,6 @@ asCObjectType* asCReader::ReadObjectType()
 	}
 
 	return ot;
-}
-
-void asCWriter::WriteByteCode(asDWORD *bc, int length)
-{
-	while( length )
-	{
-		asDWORD tmp[4]; // The biggest instructions take up 4 DWORDs
-		asDWORD c = *(asBYTE*)bc;
-
-		// Copy the instruction to a temp buffer so we can work on it before saving
-		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
-
-		if( c == asBC_ALLOC ) // PTR_DW_ARG
-		{
-			// Translate the object type 
-			asCObjectType *ot = *(asCObjectType**)(tmp+1);
-			*(int*)(tmp+1) = FindObjectTypeIdx(ot);
-
-			// Translate the constructor func id, if it is a script class
-			if( ot->flags & asOBJ_SCRIPT_OBJECT )
-				*(int*)&tmp[1+AS_PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[1+AS_PTR_SIZE]]);
-		}
-		else if( c == asBC_FREE   || // wW_PTR_ARG
-			     c == asBC_REFCPY || // PTR_ARG
-				 c == asBC_OBJTYPE ) // PTR_ARG
-		{
-			// Translate object type pointers into indices
-			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
-		}
-		else if( c == asBC_JitEntry ) // PTR_ARG
-		{
-			// We don't store the JIT argument
-			*(asPWORD*)(tmp+1) = 0;
-		}
-		else if( c == asBC_TYPEID || // DW_ARG
-			     c == asBC_Cast )   // DW_ARG
-		{
-			// Translate type ids into indices
-			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
-		}
-		else if( c == asBC_ADDSi ||      // W_DW_ARG
-			     c == asBC_LoadThisR )   // W_DW_ARG	 
-		{
-			// Translate property offsets into indices
-			*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
-
-			// Translate type ids into indices
-			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
-		}
-		else if( c == asBC_LoadRObjR ||    // rW_W_DW_ARG
-			     c == asBC_LoadVObjR )     // rW_W_DW_ARG
-		{
-			// Translate property offsets into indices
-			*(((short*)tmp)+2) = (short)FindObjectPropIndex(*(((short*)tmp)+2), *(int*)(tmp+2));
-
-			// Translate type ids into indices
-			*(int*)(tmp+2) = FindTypeIdIdx(*(int*)(tmp+2));
-		}
-		else if( c == asBC_COPY )        // W_DW_ARG
-		{
-			// Translate type ids into indices
-			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
-		}
-		else if( c == asBC_CALL ||     // DW_ARG
-				 c == asBC_CALLINTF || // DW_ARG
-				 c == asBC_CALLSYS )   // DW_ARG
-		{
-			// Translate the function id
-			*(int*)(tmp+1) = FindFunctionIndex(engine->scriptFunctions[*(int*)(tmp+1)]);
-		}
-		else if( c == asBC_FuncPtr ) // PTR_ARG
-		{
-			// Translate the function pointer
-			*(asPTRWORD*)(tmp+1) = FindFunctionIndex(*(asCScriptFunction**)(tmp+1));
-		}
-		else if( c == asBC_STR ) // W_ARG
-		{
-			// Translate the string constant id
-			asWORD *arg = ((asWORD*)tmp)+1;
-			*arg = (asWORD)FindStringConstantIndex(*arg);
-		}
-		else if( c == asBC_CALLBND ) // DW_ARG
-		{
-			// Translate the function id
-			int funcId = tmp[1];
-			for( asUINT n = 0; n < module->bindInformations.GetLength(); n++ )
-				if( module->bindInformations[n]->importedFunctionSignature->id == funcId )
-				{
-					funcId = n;
-					break;
-				}
-
-			tmp[1] = funcId;
-		}
-		else if( c == asBC_PGA ||      // PTR_ARG
-			     c == asBC_LDG ||      // PTR_ARG
-				 c == asBC_PshG4 ||    // PTR_ARG
-				 c == asBC_LdGRdR4 ||  // wW_PTR_ARG
-				 c == asBC_CpyGtoV4 || // wW_PTR_ARG
-				 c == asBC_CpyVtoG4 || // rW_PTR_ARG
-				 c == asBC_SetG4 )     // PTR_DW_ARG
-		{
-			// Translate global variable pointers into indices
-			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
-		}
-
-		// Now store the instruction in the smallest possible way
-		switch( asBCInfo[c].type )
-		{
-		case asBCTYPE_NO_ARG:
-			{
-				// Just write 1 byte
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-			}
-			break;
-		case asBCTYPE_W_ARG:
-		case asBCTYPE_wW_ARG:
-		case asBCTYPE_rW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-				
-				// Write the argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
-			}
-			break;
-		case asBCTYPE_rW_DW_ARG:
-		case asBCTYPE_wW_DW_ARG:
-		case asBCTYPE_W_DW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the word argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
-
-				// Write the dword argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[1]);
-			}
-			break;
-		case asBCTYPE_DW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[1]);
-			}
-			break;
-		case asBCTYPE_DW_DW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the dword argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[1]);
-
-				// Write the dword argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[2]);
-			}
-			break;
-		case asBCTYPE_wW_rW_rW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
-
-				// Write the second argument
-				w = *(((asWORD*)tmp)+2);
-				WRITE_NUM(w);
-
-				// Write the third argument
-				w = *(((asWORD*)tmp)+3);
-				WRITE_NUM(w);
-			}
-			break;
-		case asBCTYPE_wW_rW_ARG:
-		case asBCTYPE_rW_rW_ARG:
-		case asBCTYPE_wW_W_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
-
-				// Write the second argument
-				w = *(((asWORD*)tmp)+2);
-				WRITE_NUM(w);
-			}
-			break;
-		case asBCTYPE_wW_rW_DW_ARG:
-		case asBCTYPE_rW_W_DW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
-
-				// Write the second argument
-				w = *(((asWORD*)tmp)+2);
-				WRITE_NUM(w);
-
-				// Write the third argument
-				// TODO: This could be encoded as an int to decrease the size
-				asDWORD dw = tmp[2];
-				WRITE_NUM(dw);
-			}
-			break;
-		case asBCTYPE_QW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the argument
-				// TODO: This could be encoded as an int to decrease the size
-				asQWORD qw = *(asQWORD*)&tmp[1];
-				WRITE_NUM(qw);
-			}
-			break;
-		case asBCTYPE_QW_DW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the argument
-				// TODO: This could be encoded as an int to decrease the size
-				asQWORD qw = *(asQWORD*)&tmp[1];
-				WRITE_NUM(qw);
-
-				// Write the second argument
-				// TODO: This could be encoded as an int to decrease the size
-				asDWORD dw = tmp[3];
-				WRITE_NUM(dw);
-			}
-			break;
-		case asBCTYPE_rW_QW_ARG:
-		case asBCTYPE_wW_QW_ARG:
-			{
-				// Write the instruction code
-				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
-
-				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
-
-				// Write the argument
-				// TODO: This could be encoded as an int to decrease the size
-				asQWORD qw = *(asQWORD*)&tmp[1];
-				WRITE_NUM(qw);
-			}
-			break;
-		default:
-			{
-				// This should never happen
-				asASSERT(false);
-
-				// Store the bc as is
-				for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
-					WRITE_NUM(tmp[n]);
-			}
-		}
-
-		// Move to the next instruction
-		bc += asBCTypeSize[asBCInfo[c].type];
-		length -= asBCTypeSize[asBCInfo[c].type];
-	}
 }
 
 void asCReader::ReadByteCode(asDWORD *bc, int length)
@@ -2355,17 +1449,6 @@ void asCReader::ReadByteCode(asDWORD *bc, int length)
 	}
 }
 
-void asCWriter::WriteUsedTypeIds()
-{
-	asUINT count = (asUINT)usedTypeIds.GetLength();
-	WriteEncodedUInt(count);
-	for( asUINT n = 0; n < count; n++ )
-	{
-		asCDataType dt = engine->GetDataTypeFromTypeId(usedTypeIds[n]);
-		WriteDataType(&dt);
-	}
-}
-
 void asCReader::ReadUsedTypeIds()
 {
 	asUINT count = ReadEncodedUInt();
@@ -2375,61 +1458,6 @@ void asCReader::ReadUsedTypeIds()
 		asCDataType dt;
 		ReadDataType(&dt);
 		usedTypeIds[n] = engine->GetTypeIdFromDataType(dt);
-	}
-}
-
-int asCWriter::FindGlobalPropPtrIndex(void *ptr)
-{
-	int i = usedGlobalProperties.IndexOf(ptr);
-	if( i >= 0 ) return i;
-
-	usedGlobalProperties.PushLast(ptr);
-	return (int)usedGlobalProperties.GetLength()-1;
-}
-
-void asCWriter::WriteUsedGlobalProps()
-{
-	int c = (int)usedGlobalProperties.GetLength();
-	WriteEncodedUInt(c);
-
-	for( int n = 0; n < c; n++ )
-	{
-		size_t *p = (size_t*)usedGlobalProperties[n];
-		
-		// First search for the global in the module
-		char moduleProp = 0;
-		asCGlobalProperty *prop = 0;
-		for( int i = 0; i < (signed)module->scriptGlobals.GetLength(); i++ )
-		{
-			if( p == module->scriptGlobals[i]->GetAddressOfValue() )
-			{
-				prop = module->scriptGlobals[i];
-				moduleProp = 1;
-				break;
-			}
-		}
-
-		// If it is not in the module, it must be an application registered property
-		if( !prop )
-		{
-			for( int i = 0; i < (signed)engine->registeredGlobalProps.GetLength(); i++ )
-			{
-				if( engine->registeredGlobalProps[i]->GetAddressOfValue() == p )
-				{
-					prop = engine->registeredGlobalProps[i];
-					break;
-				}
-			}
-		}
-
-		asASSERT(prop);
-
-		// Store the name and type of the property so we can find it again on loading
-		WriteString(&prop->name);
-		WriteDataType(&prop->type);
-
-		// Also store whether the property is a module property or a registered property
-		WRITE_NUM(moduleProp);
 	}
 }
 
@@ -2487,28 +1515,6 @@ void asCReader::ReadUsedGlobalProps()
 	}
 }
 
-void asCWriter::WriteUsedObjectProps()
-{
-	int c = (int)usedObjectProperties.GetLength();
-	WriteEncodedUInt(c);
-
-	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
-	{
-		asCObjectType *objType = usedObjectProperties[n].objType;
-		WriteObjectType(objType);
-
-		// Find the property name
-		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
-		{
-			if( objType->properties[p]->byteOffset == usedObjectProperties[n].offset )
-			{
-				WriteString(&objType->properties[p]->name);
-				break;
-			}
-		}
-	}	
-}
-
 void asCReader::ReadUsedObjectProps()
 {
 	asUINT c = ReadEncodedUInt();
@@ -2549,25 +1555,6 @@ void asCReader::ReadUsedObjectProps()
 	}
 }
 
-//---------------------------------------------------------------------------------------------------
-// Miscellaneous
-//---------------------------------------------------------------------------------------------------
-
-int asCWriter::FindObjectPropIndex(short offset, int typeId)
-{
-	asCObjectType *objType = engine->GetObjectTypeFromTypeId(typeId);
-	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
-	{
-		if( usedObjectProperties[n].objType == objType &&
-			usedObjectProperties[n].offset  == offset )
-			return n;
-	}
-
-	SObjProp prop = {objType, offset};
-	usedObjectProperties.PushLast(prop);
-	return (int)usedObjectProperties.GetLength() - 1;
-}
-
 short asCReader::FindObjectPropOffset(asWORD index)
 {
 	if( index >= usedObjectProperties.GetLength() )
@@ -2579,18 +1566,6 @@ short asCReader::FindObjectPropOffset(asWORD index)
 	}
 
 	return (short)usedObjectProperties[index].offset;
-}
-
-int asCWriter::FindFunctionIndex(asCScriptFunction *func)
-{
-	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
-	{
-		if( usedFunctions[n] == func )
-			return n;
-	}
-
-	usedFunctions.PushLast(func);
-	return (int)usedFunctions.GetLength() - 1;
 }
 
 asCScriptFunction *asCReader::FindFunction(int idx)
@@ -2935,6 +1910,1054 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	}
 }
 
+int asCReader::FindTypeId(int idx)
+{
+	if( idx >= 0 && idx < (int)usedTypeIds.GetLength() )
+		return usedTypeIds[idx];
+	else
+	{
+		// TODO: Write to message callback
+		error = true;
+		return 0;
+	}
+}
+
+asCObjectType *asCReader::FindObjectType(int idx)
+{
+	if( idx < 0 || idx >= (int)usedTypes.GetLength() )
+	{
+		// TODO: Write to message callback
+		error = true;
+		return 0;
+	}
+
+	return usedTypes[idx];
+}
+
+#ifndef AS_NO_COMPILER
+
+#define WRITE_NUM(N) WriteData(&(N), sizeof(N))
+
+asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
+ : module(_module), stream(_stream), engine(_engine)
+{
+}
+
+void asCWriter::WriteData(const void *data, asUINT size)
+{
+	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
+#if defined(AS_BIG_ENDIAN)
+	for( asUINT n = 0; n < size; n++ )
+		stream->Write(((asBYTE*)data)+n, 1);
+#else
+	for( int n = size-1; n >= 0; n-- )
+		stream->Write(((asBYTE*)data)+n, 1);
+#endif
+}
+
+int asCWriter::Write() 
+{
+	unsigned long i, count;
+
+	// TODO: The first thing the code needs to do is build a list of the 
+	//       types that are used, so that the function signatures, etc can
+	//       be encoded in a small way.
+	// 
+	//       If only a few types are used, then maybe one byte is enough.
+	//       By using a scheme similar to UTF8 I can support a high number
+	//       of types without sacrifizing space.
+
+	// Store everything in the same order that the builder parses scripts
+	
+	// Store enums
+	count = (asUINT)module->enumTypes.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteObjectTypeDeclaration(module->enumTypes[i], 1);
+		WriteObjectTypeDeclaration(module->enumTypes[i], 2);
+	}
+
+	// Store type declarations first
+	count = (asUINT)module->classTypes.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; i++ )
+	{
+		// Store only the name of the class/interface types
+		WriteObjectTypeDeclaration(module->classTypes[i], 1);
+	}
+
+	// Store func defs
+	count = (asUINT)module->funcDefs.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteFunction(module->funcDefs[i]);
+	}
+
+	// Now store all interface methods
+	count = (asUINT)module->classTypes.GetLength();
+	for( i = 0; i < count; i++ )
+	{
+		if( module->classTypes[i]->IsInterface() )
+			WriteObjectTypeDeclaration(module->classTypes[i], 2);
+	}
+
+	// Then store the class methods and behaviours
+	for( i = 0; i < count; ++i )
+	{
+		if( !module->classTypes[i]->IsInterface() )
+			WriteObjectTypeDeclaration(module->classTypes[i], 2);
+	}
+
+	// Then store the class properties
+	for( i = 0; i < count; ++i )
+	{
+		if( !module->classTypes[i]->IsInterface() )
+			WriteObjectTypeDeclaration(module->classTypes[i], 3);
+	}
+
+	// Store typedefs
+	count = (asUINT)module->typeDefs.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteObjectTypeDeclaration(module->typeDefs[i], 1);
+		WriteObjectTypeDeclaration(module->typeDefs[i], 2);
+	}
+
+	// scriptGlobals[]
+	count = (asUINT)module->scriptGlobals.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; ++i ) 
+		WriteGlobalProperty(module->scriptGlobals[i]);
+
+	// scriptFunctions[]
+	count = 0;
+	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
+		if( module->scriptFunctions[i]->objectType == 0 )
+			count++;
+	WriteEncodedUInt(count);
+	for( i = 0; i < module->scriptFunctions.GetLength(); ++i )
+		if( module->scriptFunctions[i]->objectType == 0 )
+			WriteFunction(module->scriptFunctions[i]);
+
+	// globalFunctions[]
+	count = (int)module->globalFunctions.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; i++ )
+	{
+		WriteFunction(module->globalFunctions[i]);
+	}
+
+	// bindInformations[]
+	count = (asUINT)module->bindInformations.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; ++i )
+	{
+		WriteFunction(module->bindInformations[i]->importedFunctionSignature);
+		WriteString(&module->bindInformations[i]->importFromModule);
+	}
+
+	// usedTypes[]
+	asUINT numValueTypes = 0;
+	count = (asUINT)usedTypes.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; ++i )
+	{
+		if( usedTypes[i]->flags & asOBJ_VALUE )
+			numValueTypes++;
+
+		WriteObjectType(usedTypes[i]);
+	}
+
+	// Write the size of value types so the code can be adjusted if they are not the same when reloading the code
+	WriteEncodedUInt(numValueTypes);
+	for( i = 0; i < count; i++ )
+	{
+		if( usedTypes[i]->flags & asOBJ_VALUE )
+		{
+			WriteEncodedUInt(i);
+			WriteEncodedUInt(usedTypes[i]->GetSize());
+		}
+	}
+
+	// usedTypeIds[]
+	WriteUsedTypeIds();
+
+	// usedFunctions[]
+	WriteUsedFunctions();
+
+	// usedGlobalProperties[]
+	WriteUsedGlobalProps();
+
+	// usedStringConstants[]
+	WriteUsedStringConstants();
+
+	// usedObjectProperties[]
+	WriteUsedObjectProps();
+
+	return asSUCCESS;
+}
+
+int asCWriter::FindStringConstantIndex(int id)
+{
+	asSMapNode<int,int> *cursor = 0;
+	if (stringIdToIndexMap.MoveTo(&cursor, id))
+		return cursor->value;
+
+	usedStringConstants.PushLast(id);
+	int index = int(usedStringConstants.GetLength() - 1);
+	stringIdToIndexMap.Insert(id, index);
+	return index;
+}
+
+void asCWriter::WriteUsedStringConstants()
+{
+	asUINT count = (asUINT)usedStringConstants.GetLength();
+	WriteEncodedUInt(count);
+	for( asUINT i = 0; i < count; ++i )
+		WriteString(engine->stringConstants[usedStringConstants[i]]);
+}
+
+void asCWriter::WriteUsedFunctions()
+{
+	asUINT count = (asUINT)usedFunctions.GetLength();
+	WriteEncodedUInt(count);
+
+	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
+	{
+		char c;
+
+		// Write enough data to be able to uniquely identify the function upon load
+
+		// Is the function from the module or the application?
+		c = usedFunctions[n]->module ? 'm' : 'a';
+		WRITE_NUM(c);
+
+		WriteFunctionSignature(usedFunctions[n]);
+	}
+}
+
+void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
+{
+	asUINT i, count;
+
+	WriteString(&func->name);
+	WriteDataType(&func->returnType);
+
+	count = (asUINT)func->parameterTypes.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; ++i ) 
+		WriteDataType(&func->parameterTypes[i]);
+	
+	count = (asUINT)func->inOutFlags.GetLength();
+	WriteEncodedUInt(count);
+	for( i = 0; i < count; ++i )
+		WriteEncodedUInt(func->inOutFlags[i]);
+
+	WRITE_NUM(func->funcType);
+
+	// Write the default args, from last to first
+	count = 0;
+	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
+		if( func->defaultArgs[i] )
+			count++;
+	WriteEncodedUInt(count);
+	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
+		if( func->defaultArgs[i] )
+			WriteString(func->defaultArgs[i]);
+
+	WriteObjectType(func->objectType);
+
+	if( func->objectType )
+	{
+		asBYTE b = 0;
+		b += func->isReadOnly ? 1 : 0;
+		b += func->isPrivate  ? 2 : 0;
+		WRITE_NUM(b);
+	}
+}
+
+void asCWriter::WriteFunction(asCScriptFunction* func) 
+{
+	char c;
+
+	// If there is no function, then store a null char
+	if( func == 0 )
+	{
+		c = '\0';
+		WRITE_NUM(c);
+		return;
+	}
+
+	// First check if the function has been saved already
+	for( asUINT f = 0; f < savedFunctions.GetLength(); f++ )
+	{
+		if( savedFunctions[f] == func )
+		{
+			c = 'r';
+			WRITE_NUM(c);
+			WriteEncodedUInt(f);
+			return;
+		}
+	}
+
+	// Keep a reference to the function in the list
+	savedFunctions.PushLast(func);
+
+	c = 'f';
+	WRITE_NUM(c);
+
+	asUINT i, count;
+
+	WriteFunctionSignature(func);
+
+	if( func->funcType == asFUNC_SCRIPT )
+	{
+		count = (asUINT)func->byteCode.GetLength();
+		WriteEncodedUInt(count);
+		WriteByteCode(func->byteCode.AddressOf(), count);
+
+		count = (asUINT)func->objVariablePos.GetLength();
+		WriteEncodedUInt(count);
+		for( i = 0; i < count; ++i )
+		{
+			WriteObjectType(func->objVariableTypes[i]);
+			WriteEncodedUInt(func->objVariablePos[i]);
+			WRITE_NUM(func->objVariableIsOnHeap[i]);
+		}
+
+		WriteEncodedUInt(func->stackNeeded);
+
+		WriteEncodedUInt((asUINT)func->objVariableInfo.GetLength());
+		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
+		{
+			WriteEncodedUInt(func->objVariableInfo[i].programPos);
+			WriteEncodedUInt(func->objVariableInfo[i].variableOffset); // TODO: should be int
+			WriteEncodedUInt(func->objVariableInfo[i].option);
+		}
+
+		asUINT length = (asUINT)func->lineNumbers.GetLength();
+		WriteEncodedUInt(length);
+		for( i = 0; i < length; ++i )
+			WriteEncodedUInt(func->lineNumbers[i]);
+
+		// TODO: Write variables
+	}
+	else if( func->funcType == asFUNC_VIRTUAL )
+	{
+		WriteEncodedUInt(func->vfTableIdx);
+	}
+
+	// Store script section name
+	if( func->scriptSectionIdx >= 0 )
+		WriteString(engine->scriptSectionNames[func->scriptSectionIdx]);
+	else
+	{
+		char c = 0;
+		WRITE_NUM(c);
+	}
+}
+
+void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
+{
+	if( phase == 1 )
+	{
+		// name
+		WriteString(&ot->name);
+		// flags
+		WRITE_NUM(ot->flags);
+		// size
+		WriteEncodedUInt(ot->size);
+	}
+	else if( phase == 2 )
+	{
+		if( ot->flags & asOBJ_ENUM )
+		{
+			// enumValues[]
+			int size = (int)ot->enumValues.GetLength();
+			WriteEncodedUInt(size);
+
+			for( int n = 0; n < size; n++ )
+			{
+				WriteString(&ot->enumValues[n]->name);
+				WRITE_NUM(ot->enumValues[n]->value);
+			}
+		}
+		else if( ot->flags & asOBJ_TYPEDEF )
+		{
+			eTokenType t = ot->templateSubType.GetTokenType();
+			WRITE_NUM(t);
+		}
+		else
+		{
+			WriteObjectType(ot->derivedFrom);
+
+			// interfaces[]
+			int size = (asUINT)ot->interfaces.GetLength();
+			WriteEncodedUInt(size);
+			asUINT n;
+			for( n = 0; n < ot->interfaces.GetLength(); n++ )
+			{
+				WriteObjectType(ot->interfaces[n]);
+			}
+
+			// behaviours
+			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
+			{
+				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
+				size = (int)ot->beh.constructors.GetLength();
+				WriteEncodedUInt(size);
+				for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+				{
+					WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
+					WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
+				}
+			}
+
+			// methods[]
+			size = (int)ot->methods.GetLength();
+			WriteEncodedUInt(size);
+			for( n = 0; n < ot->methods.GetLength(); n++ )
+			{
+				WriteFunction(engine->scriptFunctions[ot->methods[n]]);
+			}
+
+			// virtualFunctionTable[]
+			size = (int)ot->virtualFunctionTable.GetLength();
+			WriteEncodedUInt(size);
+			for( n = 0; n < (asUINT)size; n++ )
+			{
+				WriteFunction(ot->virtualFunctionTable[n]);
+			}
+		}
+	}
+	else if( phase == 3 )
+	{
+		// properties[]
+		asUINT size = (asUINT)ot->properties.GetLength();
+		WriteEncodedUInt(size);
+		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
+		{
+			WriteObjectProperty(ot->properties[n]);
+		}
+	}
+}
+
+void asCWriter::WriteEncodedUInt(asUINT i)
+{
+	if( i < 128 )
+	{
+		asBYTE b = (asBYTE)i;
+		WRITE_NUM(b);
+	}
+	else if( i < 16384 )
+	{
+		asBYTE b = asBYTE(0x80 + (i >> 8));
+		WRITE_NUM(b);
+		b = asBYTE(i & 0xFF);
+		WRITE_NUM(b);
+	}
+	else if( i < 2097152 )
+	{
+		asBYTE b = asBYTE(0xC0 + (i >> 16));
+		WRITE_NUM(b);
+		b = asBYTE((i >> 8) & 0xFF);
+		WRITE_NUM(b);
+		b = asBYTE(i & 0xFF);
+		WRITE_NUM(b);
+	}
+	else if( i < 268435456 )
+	{
+		asBYTE b = asBYTE(0xE0 + (i >> 24));
+		WRITE_NUM(b);
+		b = asBYTE((i >> 16) & 0xFF);
+		WRITE_NUM(b);
+		b = asBYTE((i >> 8) & 0xFF);
+		WRITE_NUM(b);
+		b = asBYTE(i & 0xFF);
+		WRITE_NUM(b);
+	}
+	else
+	{
+		asBYTE b = asBYTE(0xF0);
+		WRITE_NUM(b);
+		b = asBYTE((i >> 24) & 0xFF);
+		WRITE_NUM(b);
+		b = asBYTE((i >> 16) & 0xFF);
+		WRITE_NUM(b);
+		b = asBYTE((i >> 8) & 0xFF);
+		WRITE_NUM(b);
+		b = asBYTE(i & 0xFF);
+		WRITE_NUM(b);
+	}
+}
+
+void asCWriter::WriteString(asCString* str) 
+{
+	// TODO: All strings should be stored in a separate section, and when
+	//       they are used an offset into that section should be stored.
+	//       This will make it unnecessary to store the extra byte to 
+	//       identify new versus old strings.
+
+	if( str->GetLength() == 0 )
+	{
+		char z = '\0';
+		WRITE_NUM(z);
+		return;
+	}
+
+	// First check if the string hasn't been saved already
+	asSMapNode<asCStringPointer, int> *cursor = 0;
+	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str)))
+	{
+		// Save a reference to the existing string
+		char b = 'r';
+		WRITE_NUM(b);
+		WriteEncodedUInt(cursor->value);
+		return;
+	}
+
+	// Save a new string
+	char b = 'n';
+	WRITE_NUM(b);
+
+	asUINT len = (asUINT)str->GetLength();
+	WriteEncodedUInt(len);
+	stream->Write(str->AddressOf(), (asUINT)len);
+
+	savedStrings.PushLast(*str);
+	stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);
+}
+
+void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop) 
+{
+	// TODO: We might be able to avoid storing the name and type of the global 
+	//       properties twice if we merge this with the WriteUsedGlobalProperties. 
+	WriteString(&prop->name);
+	WriteDataType(&prop->type);
+
+	// Store the initialization function
+	if( prop->GetInitFunc() )
+	{
+		bool f = true;
+		WRITE_NUM(f);
+
+		WriteFunction(prop->GetInitFunc());
+	}
+	else
+	{
+		bool f = false;
+		WRITE_NUM(f);
+	}
+}
+
+void asCWriter::WriteObjectProperty(asCObjectProperty* prop) 
+{
+	WriteString(&prop->name);
+	WriteDataType(&prop->type);
+	WRITE_NUM(prop->isPrivate);
+}
+
+void asCWriter::WriteDataType(const asCDataType *dt) 
+{
+	// First check if the datatype has already been saved
+	for( asUINT n = 0; n < savedDataTypes.GetLength(); n++ )
+	{
+		if( *dt == savedDataTypes[n] )
+		{
+			asUINT c = 0;
+			WriteEncodedUInt(c);
+			WriteEncodedUInt(n);
+			return;
+		}
+	}
+
+	// Save the new datatype
+	savedDataTypes.PushLast(*dt);
+
+	bool b;
+	int t = dt->GetTokenType();
+	WriteEncodedUInt(t);
+	if( t == ttIdentifier )
+	{
+		WriteObjectType(dt->GetObjectType());
+		b = dt->IsObjectHandle();
+		WRITE_NUM(b);
+		b = dt->IsHandleToConst();
+		WRITE_NUM(b);
+	}
+	b = dt->IsReference();
+	WRITE_NUM(b);
+	b = dt->IsReadOnly();
+	WRITE_NUM(b);
+
+	if( t == ttIdentifier && dt->GetObjectType()->name == "_builtin_function_" )
+	{
+		WriteFunctionSignature(dt->GetFuncDef());
+	}
+}
+
+void asCWriter::WriteObjectType(asCObjectType* ot) 
+{
+	char ch;
+
+	// Only write the object type name
+	if( ot )
+	{
+		// Check for template instances/specializations
+		if( ot->templateSubType.GetTokenType() != ttUnrecognizedToken )
+		{
+			ch = 'a';
+			WRITE_NUM(ch);
+			WriteString(&ot->name);
+
+			if( ot->templateSubType.IsObject() || ot->templateSubType.IsEnumType() )
+			{
+				ch = 's';
+				WRITE_NUM(ch);
+				WriteObjectType(ot->templateSubType.GetObjectType());
+
+				if( ot->templateSubType.IsObjectHandle() )
+					ch = 'h';
+				else
+					ch = 'o';
+				WRITE_NUM(ch);
+			}
+			else
+			{
+				ch = 't';
+				WRITE_NUM(ch);
+				eTokenType t = ot->templateSubType.GetTokenType();
+				WRITE_NUM(t);
+			}
+		}
+		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
+		{
+			ch = 's';
+			WRITE_NUM(ch);
+			WriteString(&ot->name);
+		}
+		else
+		{
+			ch = 'o';
+			WRITE_NUM(ch);
+			WriteString(&ot->name);
+		}
+	}
+	else
+	{
+		ch = '\0';
+		WRITE_NUM(ch);
+	}
+}
+
+void asCWriter::WriteByteCode(asDWORD *bc, int length)
+{
+	while( length )
+	{
+		asDWORD tmp[4]; // The biggest instructions take up 4 DWORDs
+		asDWORD c = *(asBYTE*)bc;
+
+		// Copy the instruction to a temp buffer so we can work on it before saving
+		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
+
+		if( c == asBC_ALLOC ) // PTR_DW_ARG
+		{
+			// Translate the object type 
+			asCObjectType *ot = *(asCObjectType**)(tmp+1);
+			*(int*)(tmp+1) = FindObjectTypeIdx(ot);
+
+			// Translate the constructor func id, if it is a script class
+			if( ot->flags & asOBJ_SCRIPT_OBJECT )
+				*(int*)&tmp[1+AS_PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[1+AS_PTR_SIZE]]);
+		}
+		else if( c == asBC_FREE   || // wW_PTR_ARG
+			     c == asBC_REFCPY || // PTR_ARG
+				 c == asBC_OBJTYPE ) // PTR_ARG
+		{
+			// Translate object type pointers into indices
+			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
+		}
+		else if( c == asBC_JitEntry ) // PTR_ARG
+		{
+			// We don't store the JIT argument
+			*(asPWORD*)(tmp+1) = 0;
+		}
+		else if( c == asBC_TYPEID || // DW_ARG
+			     c == asBC_Cast )   // DW_ARG
+		{
+			// Translate type ids into indices
+			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
+		}
+		else if( c == asBC_ADDSi ||      // W_DW_ARG
+			     c == asBC_LoadThisR )   // W_DW_ARG	 
+		{
+			// Translate property offsets into indices
+			*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
+
+			// Translate type ids into indices
+			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
+		}
+		else if( c == asBC_LoadRObjR ||    // rW_W_DW_ARG
+			     c == asBC_LoadVObjR )     // rW_W_DW_ARG
+		{
+			// Translate property offsets into indices
+			*(((short*)tmp)+2) = (short)FindObjectPropIndex(*(((short*)tmp)+2), *(int*)(tmp+2));
+
+			// Translate type ids into indices
+			*(int*)(tmp+2) = FindTypeIdIdx(*(int*)(tmp+2));
+		}
+		else if( c == asBC_COPY )        // W_DW_ARG
+		{
+			// Translate type ids into indices
+			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
+		}
+		else if( c == asBC_CALL ||     // DW_ARG
+				 c == asBC_CALLINTF || // DW_ARG
+				 c == asBC_CALLSYS )   // DW_ARG
+		{
+			// Translate the function id
+			*(int*)(tmp+1) = FindFunctionIndex(engine->scriptFunctions[*(int*)(tmp+1)]);
+		}
+		else if( c == asBC_FuncPtr ) // PTR_ARG
+		{
+			// Translate the function pointer
+			*(asPTRWORD*)(tmp+1) = FindFunctionIndex(*(asCScriptFunction**)(tmp+1));
+		}
+		else if( c == asBC_STR ) // W_ARG
+		{
+			// Translate the string constant id
+			asWORD *arg = ((asWORD*)tmp)+1;
+			*arg = (asWORD)FindStringConstantIndex(*arg);
+		}
+		else if( c == asBC_CALLBND ) // DW_ARG
+		{
+			// Translate the function id
+			int funcId = tmp[1];
+			for( asUINT n = 0; n < module->bindInformations.GetLength(); n++ )
+				if( module->bindInformations[n]->importedFunctionSignature->id == funcId )
+				{
+					funcId = n;
+					break;
+				}
+
+			tmp[1] = funcId;
+		}
+		else if( c == asBC_PGA ||      // PTR_ARG
+			     c == asBC_LDG ||      // PTR_ARG
+				 c == asBC_PshG4 ||    // PTR_ARG
+				 c == asBC_LdGRdR4 ||  // wW_PTR_ARG
+				 c == asBC_CpyGtoV4 || // wW_PTR_ARG
+				 c == asBC_CpyVtoG4 || // rW_PTR_ARG
+				 c == asBC_SetG4 )     // PTR_DW_ARG
+		{
+			// Translate global variable pointers into indices
+			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
+		}
+
+		// Now store the instruction in the smallest possible way
+		switch( asBCInfo[c].type )
+		{
+		case asBCTYPE_NO_ARG:
+			{
+				// Just write 1 byte
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+			}
+			break;
+		case asBCTYPE_W_ARG:
+		case asBCTYPE_wW_ARG:
+		case asBCTYPE_rW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+				
+				// Write the argument
+				asWORD w = *(((asWORD*)tmp)+1);
+				WRITE_NUM(w);
+			}
+			break;
+		case asBCTYPE_rW_DW_ARG:
+		case asBCTYPE_wW_DW_ARG:
+		case asBCTYPE_W_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the word argument
+				asWORD w = *(((asWORD*)tmp)+1);
+				WRITE_NUM(w);
+
+				// Write the dword argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[1]);
+			}
+			break;
+		case asBCTYPE_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[1]);
+			}
+			break;
+		case asBCTYPE_DW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the dword argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[1]);
+
+				// Write the dword argument
+				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
+				WriteEncodedUInt(tmp[2]);
+			}
+			break;
+		case asBCTYPE_wW_rW_rW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = *(((asWORD*)tmp)+1);
+				WRITE_NUM(w);
+
+				// Write the second argument
+				w = *(((asWORD*)tmp)+2);
+				WRITE_NUM(w);
+
+				// Write the third argument
+				w = *(((asWORD*)tmp)+3);
+				WRITE_NUM(w);
+			}
+			break;
+		case asBCTYPE_wW_rW_ARG:
+		case asBCTYPE_rW_rW_ARG:
+		case asBCTYPE_wW_W_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = *(((asWORD*)tmp)+1);
+				WRITE_NUM(w);
+
+				// Write the second argument
+				w = *(((asWORD*)tmp)+2);
+				WRITE_NUM(w);
+			}
+			break;
+		case asBCTYPE_wW_rW_DW_ARG:
+		case asBCTYPE_rW_W_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = *(((asWORD*)tmp)+1);
+				WRITE_NUM(w);
+
+				// Write the second argument
+				w = *(((asWORD*)tmp)+2);
+				WRITE_NUM(w);
+
+				// Write the third argument
+				// TODO: This could be encoded as an int to decrease the size
+				asDWORD dw = tmp[2];
+				WRITE_NUM(dw);
+			}
+			break;
+		case asBCTYPE_QW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the argument
+				// TODO: This could be encoded as an int to decrease the size
+				asQWORD qw = *(asQWORD*)&tmp[1];
+				WRITE_NUM(qw);
+			}
+			break;
+		case asBCTYPE_QW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the argument
+				// TODO: This could be encoded as an int to decrease the size
+				asQWORD qw = *(asQWORD*)&tmp[1];
+				WRITE_NUM(qw);
+
+				// Write the second argument
+				// TODO: This could be encoded as an int to decrease the size
+				asDWORD dw = tmp[3];
+				WRITE_NUM(dw);
+			}
+			break;
+		case asBCTYPE_rW_QW_ARG:
+		case asBCTYPE_wW_QW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WRITE_NUM(b);
+
+				// Write the first argument
+				asWORD w = *(((asWORD*)tmp)+1);
+				WRITE_NUM(w);
+
+				// Write the argument
+				// TODO: This could be encoded as an int to decrease the size
+				asQWORD qw = *(asQWORD*)&tmp[1];
+				WRITE_NUM(qw);
+			}
+			break;
+		default:
+			{
+				// This should never happen
+				asASSERT(false);
+
+				// Store the bc as is
+				for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
+					WRITE_NUM(tmp[n]);
+			}
+		}
+
+		// Move to the next instruction
+		bc += asBCTypeSize[asBCInfo[c].type];
+		length -= asBCTypeSize[asBCInfo[c].type];
+	}
+}
+
+void asCWriter::WriteUsedTypeIds()
+{
+	asUINT count = (asUINT)usedTypeIds.GetLength();
+	WriteEncodedUInt(count);
+	for( asUINT n = 0; n < count; n++ )
+	{
+		asCDataType dt = engine->GetDataTypeFromTypeId(usedTypeIds[n]);
+		WriteDataType(&dt);
+	}
+}
+
+int asCWriter::FindGlobalPropPtrIndex(void *ptr)
+{
+	int i = usedGlobalProperties.IndexOf(ptr);
+	if( i >= 0 ) return i;
+
+	usedGlobalProperties.PushLast(ptr);
+	return (int)usedGlobalProperties.GetLength()-1;
+}
+
+void asCWriter::WriteUsedGlobalProps()
+{
+	int c = (int)usedGlobalProperties.GetLength();
+	WriteEncodedUInt(c);
+
+	for( int n = 0; n < c; n++ )
+	{
+		size_t *p = (size_t*)usedGlobalProperties[n];
+		
+		// First search for the global in the module
+		char moduleProp = 0;
+		asCGlobalProperty *prop = 0;
+		for( int i = 0; i < (signed)module->scriptGlobals.GetLength(); i++ )
+		{
+			if( p == module->scriptGlobals[i]->GetAddressOfValue() )
+			{
+				prop = module->scriptGlobals[i];
+				moduleProp = 1;
+				break;
+			}
+		}
+
+		// If it is not in the module, it must be an application registered property
+		if( !prop )
+		{
+			for( int i = 0; i < (signed)engine->registeredGlobalProps.GetLength(); i++ )
+			{
+				if( engine->registeredGlobalProps[i]->GetAddressOfValue() == p )
+				{
+					prop = engine->registeredGlobalProps[i];
+					break;
+				}
+			}
+		}
+
+		asASSERT(prop);
+
+		// Store the name and type of the property so we can find it again on loading
+		WriteString(&prop->name);
+		WriteDataType(&prop->type);
+
+		// Also store whether the property is a module property or a registered property
+		WRITE_NUM(moduleProp);
+	}
+}
+
+void asCWriter::WriteUsedObjectProps()
+{
+	int c = (int)usedObjectProperties.GetLength();
+	WriteEncodedUInt(c);
+
+	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
+	{
+		asCObjectType *objType = usedObjectProperties[n].objType;
+		WriteObjectType(objType);
+
+		// Find the property name
+		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
+		{
+			if( objType->properties[p]->byteOffset == usedObjectProperties[n].offset )
+			{
+				WriteString(&objType->properties[p]->name);
+				break;
+			}
+		}
+	}	
+}
+
+int asCWriter::FindObjectPropIndex(short offset, int typeId)
+{
+	asCObjectType *objType = engine->GetObjectTypeFromTypeId(typeId);
+	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
+	{
+		if( usedObjectProperties[n].objType == objType &&
+			usedObjectProperties[n].offset  == offset )
+			return n;
+	}
+
+	SObjProp prop = {objType, offset};
+	usedObjectProperties.PushLast(prop);
+	return (int)usedObjectProperties.GetLength() - 1;
+}
+
+int asCWriter::FindFunctionIndex(asCScriptFunction *func)
+{
+	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
+	{
+		if( usedFunctions[n] == func )
+			return n;
+	}
+
+	usedFunctions.PushLast(func);
+	return (int)usedFunctions.GetLength() - 1;
+}
+
 int asCWriter::FindTypeIdIdx(int typeId)
 {
 	asUINT n;
@@ -2946,18 +2969,6 @@ int asCWriter::FindTypeIdIdx(int typeId)
 
 	usedTypeIds.PushLast(typeId);
 	return (int)usedTypeIds.GetLength() - 1;
-}
-
-int asCReader::FindTypeId(int idx)
-{
-	if( idx >= 0 && idx < (int)usedTypeIds.GetLength() )
-		return usedTypeIds[idx];
-	else
-	{
-		// TODO: Write to message callback
-		error = true;
-		return 0;
-	}
 }
 
 int asCWriter::FindObjectTypeIdx(asCObjectType *obj)
@@ -2973,17 +2984,7 @@ int asCWriter::FindObjectTypeIdx(asCObjectType *obj)
 	return (int)usedTypes.GetLength() - 1;
 }
 
-asCObjectType *asCReader::FindObjectType(int idx)
-{
-	if( idx < 0 || idx >= (int)usedTypes.GetLength() )
-	{
-		// TODO: Write to message callback
-		error = true;
-		return 0;
-	}
-
-	return usedTypes[idx];
-}
+#endif // AS_NO_COMPILER
 
 END_AS_NAMESPACE
 

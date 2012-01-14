@@ -58,6 +58,8 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_use_script_class
  - \subpage doc_advanced
 
+\todo Add page about funcdefs and callbacks
+
 
 
 
