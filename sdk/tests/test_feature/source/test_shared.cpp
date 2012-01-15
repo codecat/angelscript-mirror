@@ -125,6 +125,10 @@ bool Test()
 		if( f1 < 0 )
 			TEST_FAILED;
 
+		int fact1 = engine->GetObjectTypeById(t1)->GetFactoryIdByIndex(0);
+		if( fact1 < 0 )
+			TEST_FAILED;
+
 		asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
 		mod2->AddScriptSection("b", validCode);
 		r = mod2->Build();
@@ -141,8 +145,12 @@ bool Test()
 		if( t1 != t2 )
 			TEST_FAILED;
 
-		int f2 = mod->GetFunctionIdByDecl("void func()");
+		int f2 = mod2->GetFunctionIdByDecl("void func()");
 		if( f1 != f2 )
+			TEST_FAILED;
+
+		int fact2 = engine->GetObjectTypeById(t2)->GetFactoryIdByIndex(0);
+		if( fact1 != fact2 )
 			TEST_FAILED;
 
 		CBytecodeStream stream(__FILE__"1");
@@ -163,8 +171,16 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		int f3 = mod3->GetFunctionIdByDecl("void func()");
+		if( f1 != f3 )
+			TEST_FAILED;
+
+		int fact3 = engine->GetObjectTypeById(t3)->GetFactoryIdByIndex(0);
+		if( fact1 != fact3 )
+			TEST_FAILED;
+
 		bout.buffer = "";
-		r = ExecuteString(engine, "T t; t.func();", mod3);
+		r = ExecuteString(engine, "T t; t.func(); func();", mod3);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 		if( bout.buffer != "" )

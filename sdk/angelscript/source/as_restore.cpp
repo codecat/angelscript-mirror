@@ -213,7 +213,38 @@ int asCReader::Read()
 	count = ReadEncodedUInt();
 	for( i = 0; i < count; ++i ) 
 	{
+		asUINT len = module->scriptFunctions.GetLength();
 		func = ReadFunction();
+		
+		// Is the function shared and was it created now?
+		if( func->isShared && len != module->scriptFunctions.GetLength() )
+		{
+			// If the function already existed in another module, then
+			// we need to replace it with previously existing one
+			for( asUINT n = 0; n < engine->scriptFunctions.GetLength(); n++ )
+			{
+				asCScriptFunction *realFunc = engine->scriptFunctions[n];
+				if( realFunc &&
+					realFunc != func &&
+					realFunc->IsShared() &&
+					realFunc->IsSignatureEqual(func) )
+				{
+					// Replace the recently created function with the pre-existing function
+					module->scriptFunctions[module->scriptFunctions.GetLength()-1] = realFunc;
+					realFunc->AddRef();
+					savedFunctions[savedFunctions.GetLength()-1] = realFunc;
+					engine->FreeScriptFunctionId(func->id);
+
+					// Insert the function in the dontTranslate array
+					dontTranslate.Insert(realFunc, true);
+
+					// Release the function, but make sure nothing else is released
+					func->id = 0;
+					func->byteCode.SetLength(0);
+					func->Release();
+				}
+			}
+		}
 	}
 
 	// globalFunctions[]
@@ -545,6 +576,8 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		func->lineNumbers.SetLength(length);
 		for( i = 0; i < length; ++i )
 			func->lineNumbers[i] = ReadEncodedUInt();
+
+		READ_NUM(func->isShared);
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{
@@ -2242,6 +2275,8 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		WriteEncodedUInt(length);
 		for( i = 0; i < length; ++i )
 			WriteEncodedUInt(func->lineNumbers[i]);
+
+		WRITE_NUM(func->isShared);
 
 		// TODO: Write variables
 	}

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -509,11 +509,24 @@ bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 // internal
 bool asCScriptFunction::IsSignatureExceptNameEqual(const asCScriptFunction *func) const
 {
-	if( returnType        != func->returnType        ) return false;
-	if( isReadOnly        != func->isReadOnly        ) return false;
-	if( inOutFlags        != func->inOutFlags        ) return false;
-	if( parameterTypes    != func->parameterTypes    ) return false;
-	if( (objectType != 0) != (func->objectType != 0) ) return false;
+	return IsSignatureExceptNameEqual(func->returnType, func->parameterTypes, func->inOutFlags, func->objectType, func->isReadOnly);
+}
+
+// internal
+bool asCScriptFunction::IsSignatureExceptNameEqual(const asCDataType &retType, const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &paramInOut, const asCObjectType *objType, bool readOnly) const
+{
+	if( this->returnType        != retType        ) return false;
+
+	return IsSignatureExceptNameAndReturnTypeEqual(paramTypes, paramInOut, objType, readOnly);
+}
+
+// internal
+bool asCScriptFunction::IsSignatureExceptNameAndReturnTypeEqual(const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &paramInOut, const asCObjectType *objType, bool readOnly) const
+{
+	if( this->isReadOnly        != readOnly       ) return false;
+	if( this->inOutFlags        != paramInOut     ) return false;
+	if( this->parameterTypes    != paramTypes     ) return false;
+	if( (this->objectType != 0) != (objType != 0) ) return false;
 
 	return true;
 }

@@ -2768,10 +2768,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 				if( f &&
 					f->isShared &&
 					f->name == name &&
-					f->returnType == returnType &&
-					f->parameterTypes == parameterTypes &&
-					f->objectType == 0 &&
-					f->inOutFlags == inOutFlags )
+					f->IsSignatureExceptNameEqual(returnType, parameterTypes, inOutFlags, 0, false) )
 				{
 					funcId           = func->funcId           = f->id;
 					isExistingShared = func->isExistingShared = true;
@@ -2817,7 +2814,6 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		}
 	}
 
-	// TODO: Much of this can probably be reduced by using the IsSignatureEqual method
 	// Check that the same function hasn't been registered already
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs);
@@ -2826,33 +2822,13 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		for( asUINT n = 0; n < funcs.GetLength(); ++n )
 		{
 			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
-
-			if( parameterTypes.GetLength() == func->parameterTypes.GetLength() )
+			if( func->IsSignatureExceptNameAndReturnTypeEqual(parameterTypes, inOutFlags, objType, isConstMethod) )
 			{
-				bool match = true;
-				if( func->objectType != objType )
-				{
-					match = false;
-					break;
-				}
+				int r, c;
+				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-				for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
-				{
-					if( parameterTypes[p] != func->parameterTypes[p] )
-					{
-						match = false;
-						break;
-					}
-				}
-
-				if( match )
-				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-					WriteError(file->name.AddressOf(), TXT_FUNCTION_ALREADY_EXIST, r, c);
-					break;
-				}
+				WriteError(file->name.AddressOf(), TXT_FUNCTION_ALREADY_EXIST, r, c);
+				break;
 			}
 		}
 	}
