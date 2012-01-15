@@ -302,9 +302,9 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	node = node->firstChild;
 
 	// Create the function
-	bool isConstructor, isDestructor, isPrivate, isFinal, isOverride;
+	bool isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared;
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
-	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride);
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 
@@ -460,6 +460,7 @@ void asCBuilder::ParseScripts()
 
 		// Now the interfaces have been completely established, now we need to determine if
 		// the same interface has already been registered before, and if so reuse the interface id.
+		// TODO: deprecate this. interfaces should be explicitly marked as shared
 		module->ResolveInterfaceIds();
 
 		// Register script methods found in the structures
@@ -1190,8 +1191,9 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	bool                       isPrivate;
 	bool                       isOverride;
 	bool                       isFinal;
+	bool                       isShared;
 
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
 	if( func )
@@ -2547,7 +2549,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 	return r;
 }
 
-void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal)
+void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared)
 {
 	node = node->firstChild;
 
@@ -2556,6 +2558,14 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	if( node->tokenType == ttPrivate )
 	{
 		isPrivate = true;
+		node = node->next;
+	}
+
+	// Is the function shared?
+	isShared = false;
+	if( node->tokenType == ttIdentifier && file->TokenEquals(node->tokenPos, node->tokenLength, SHARED_TOKEN) )
+	{
+		isShared = true;
 		node = node->next;
 	}
 
@@ -2700,8 +2710,9 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	bool                       isConstructor;
 	bool                       isDestructor;
 	bool                       isPrivate;
+	bool                       isShared;
 
-	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal);
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 
 	// Check for name conflicts
 	if( !isConstructor && !isDestructor )
@@ -2734,6 +2745,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			name = "~" + name;
 	}
 
+	bool isExistingShared = false;
 	if( !isInterface )
 	{
 		sFunctionDescription *func = asNEW(sFunctionDescription);
@@ -2745,6 +2757,28 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		func->objType           = objType;
 		func->funcId            = funcId;
 		func->explicitSignature = 0;
+		func->isExistingShared  = false;
+
+		if( isShared )
+		{
+			// Look for a pre-existing shared function with the same signature
+			for( asUINT n = 0; n < engine->scriptFunctions.GetLength(); n++ )
+			{
+				asCScriptFunction *f = engine->scriptFunctions[n];
+				if( f &&
+					f->isShared &&
+					f->name == name &&
+					f->returnType == returnType &&
+					f->parameterTypes == parameterTypes &&
+					f->objectType == 0 &&
+					f->inOutFlags == inOutFlags )
+				{
+					funcId           = func->funcId           = f->id;
+					isExistingShared = func->isExistingShared = true;
+					break;
+				}
+			}
+		}
 	}
 
 	// Destructors may not have any parameters
@@ -2756,8 +2790,8 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		WriteError(file->name.AddressOf(), TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, r, c);
 	}
 
-	// If class or interface is shared, then only shared types may be used in the method signature
-	if( objType && objType->IsShared() )
+	// If a function, class, or interface is shared then only shared types may be used in the signature
+	if( (objType && objType->IsShared()) || isShared )
 	{
 		asCObjectType *ot = returnType.GetObjectType();
 		if( ot && !ot->IsShared() )
@@ -2824,7 +2858,15 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	}
 
 	// Register the function
-	module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride);
+	if( isExistingShared )
+	{
+		asCScriptFunction *f = engine->scriptFunctions[funcId];
+		module->AddScriptFunction(f);
+		module->globalFunctions.PushLast(f);
+		f->AddRef();
+	}
+	else
+		module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared);
 
 	// Make sure the default args are declared correctly
 	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);

@@ -774,7 +774,7 @@ int asCModule::GetNextImportedFunctionId()
 }
 
 // internal
-int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, asCString **defaultArgs, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isFinal, bool isOverride)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, asCString **defaultArgs, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isFinal, bool isOverride, bool isShared)
 {
 	asASSERT(id >= 0);
 
@@ -795,6 +795,10 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	func->isPrivate  = isPrivate;
 	func->isFinal    = isFinal;
 	func->isOverride = isOverride;
+	// All methods of shared objects are also shared
+	if( objType && objType->IsShared() )
+		isShared = true;
+	func->isShared   = isShared;
 
 	// Verify that we are not assigning either the final or override specifier(s) if we are registering a non-member function
 	asASSERT( !(!objType && isFinal) );

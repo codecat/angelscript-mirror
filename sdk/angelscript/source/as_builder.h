@@ -69,6 +69,7 @@ struct sFunctionDescription
 	asCObjectType *objType;
 	sExplicitSignature *explicitSignature;
 	int funcId;
+	bool isExistingShared;
 };
 
 struct sGlobalVariableDescription
@@ -161,7 +162,7 @@ protected:
 	void CompleteFuncDef(sFuncDef *funcDef);
 	void CompileClasses();
 
-	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal);
+	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared);
 	int  ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
 
 	bool DoesMethodExist(asCObjectType *objType, int methodId, asUINT *methodIndex = 0);

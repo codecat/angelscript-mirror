@@ -1848,7 +1848,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		// A shared object may not declare variables of non-shared types
-		if( outFunc->objectType && outFunc->objectType->IsShared() )
+		if( outFunc->IsShared() )
 		{
 			asCObjectType *ot = type.GetObjectType();
 			if( ot && !ot->IsShared() )
@@ -6509,7 +6509,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					{
 						// A shared type must not access global vars, unless they  
 						// too are shared, e.g. application registered vars
-						if( outFunc->objectType && outFunc->objectType->IsShared() )
+						if( outFunc->IsShared() )
 						{
 							if( !isAppProp )
 							{
@@ -6582,7 +6582,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 			// A shared object may not access global functions unless they too are shared (e.g. registered functions)
 			if( !builder->GetFunctionDescription(funcs[0])->IsShared() &&
-				outFunc->objectType && outFunc->objectType->IsShared() )
+				outFunc->IsShared() )
 			{
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, builder->GetFunctionDescription(funcs[0])->GetDeclaration());
@@ -7274,7 +7274,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	}
 
 	// Do not allow casting to non shared type if we're compiling a shared method
-	if( outFunc->objectType && outFunc->objectType->IsShared() && 
+	if( outFunc->IsShared() && 
 		to.GetObjectType() && !to.GetObjectType()->IsShared() )
 	{
 		asCString msg;
@@ -7513,7 +7513,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	}
 
 	// Do not allow constructing non-shared types in shared functions
-	if( outFunc->objectType && outFunc->objectType->IsShared() &&
+	if( outFunc->IsShared() &&
 		dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 	{
 		asCString msg;
@@ -10892,7 +10892,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 
 	// A shared object may not call non-shared functions
-	if( outFunc->objectType && outFunc->objectType->IsShared() && !descr->IsShared() )
+	if( outFunc->IsShared() && !descr->IsShared() )
 	{
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, descr->GetDeclarationStr().AddressOf());

@@ -43,6 +43,7 @@ bool Test()
 			"    gfunc !is null; \n" // Do not allow taking address of non-shared script functions
 			"    nonShared(); \n" // Do not allow constructing objects of non-shared type
 			"    impfunc(); \n" // Do not allow calling imported function
+			"    sfunc(); \n" // Allow calling a shared global function
 			"  } \n"
 			"  T @dup() const \n" // It must be possible for the shared class to use its own type
 			"  { \n"
@@ -64,6 +65,11 @@ bool Test()
 			"} \n"
 			"int var; \n"
 			"void gfunc() {} \n"
+			"shared void sfunc() \n"
+		    "{ \n"
+			"  gfunc(); \n" // don't allow
+			"  T t; \n" // allow
+	        "} \n"
 			"enum ENOTSHARED { ENS1 = 1 } \n"
 			"const int g_cnst = 42; \n"
 			"class nonShared {} \n"
@@ -73,9 +79,9 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 ) 
 			TEST_FAILED;
-		if( bout.buffer != "a (31, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
+		if( bout.buffer != "a (32, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (3, 25) : Error   : Shared class cannot implement non-shared interface 'badIntf'\n"
-						   "a (33, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
+						   "a (34, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
 						   "a (5, 3) : Info    : Compiling void T::test()\n"
 						   "a (7, 5) : Error   : Shared code cannot access non-shared global variable 'var'\n"
 						   "a (8, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
@@ -86,8 +92,10 @@ bool Test()
 						   "a (18, 5) : Error   : Shared code cannot use non-shared type 'nonShared'\n"
 						   "a (18, 5) : Error   : Shared code cannot call non-shared function 'nonShared@ nonShared()'\n"
 						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"
-						   "a (27, 3) : Info    : Compiling T::T(int)\n"
-		                   "a (29, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n" )
+						   "a (28, 3) : Info    : Compiling T::T(int)\n"
+		                   "a (30, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n"
+						   "a (42, 1) : Info    : Compiling void sfunc()\n"
+		                   "a (44, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -100,7 +108,8 @@ bool Test()
 			"{ \n"
 			"  void func() {} \n"
 			"  int i; \n"
-			"} \n";
+			"} \n"
+			"shared void func() {} \n";
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("a", validCode);
 		bout.buffer = "";
@@ -110,6 +119,10 @@ bool Test()
 
 		int t1 = mod->GetTypeIdByDecl("T");
 		if( t1 < 0 )
+			TEST_FAILED;
+
+		int f1 = mod->GetFunctionIdByDecl("void func()");
+		if( f1 < 0 )
 			TEST_FAILED;
 
 		asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
@@ -126,6 +139,10 @@ bool Test()
 
 		int t2 = mod2->GetTypeIdByDecl("T");
 		if( t1 != t2 )
+			TEST_FAILED;
+
+		int f2 = mod->GetFunctionIdByDecl("void func()");
+		if( f1 != f2 )
 			TEST_FAILED;
 
 		CBytecodeStream stream(__FILE__"1");

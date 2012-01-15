@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -972,6 +972,13 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	if( isMethod && t1.type == ttPrivate )
 	{
 		node->AddChildLast(ParseToken(ttPrivate));
+		if( isSyntaxError ) return node;
+	}
+
+	// A global function can be marked as shared
+	if( !isMethod && IdentifierIs(t1, SHARED_TOKEN) )
+	{
+		node->AddChildLast(ParseIdentifier());
 		if( isSyntaxError ) return node;
 	}
 
