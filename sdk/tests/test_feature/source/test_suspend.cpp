@@ -57,7 +57,7 @@ void STDCALL LineCallback(asIScriptContext *ctx, void * /*param*/)
 }
 
 bool Test()
-{
+{ 
 	bool fail = false;
 
 	//---
@@ -105,36 +105,71 @@ bool Test()
 	//---
 	// If the library was built with the flag BUILD_WITH_LINE_CUES the script
 	// will return after each increment of the loopCount variable.
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->RegisterGlobalProperty("int loopCount", &loopCount);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":2", script2);
-	mod->Build();
-
-	ctx = engine->CreateContext();
-	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void TestSuspend2()"));
-	loopCount = 0;
-	while( ctx->GetState() != asEXECUTION_FINISHED )
-		ctx->Execute();
-	if( loopCount != 3 )
 	{
-		printf("%s: failed\n", TESTNAME);
-		TEST_FAILED;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterGlobalProperty("int loopCount", &loopCount);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":2", script2);
+		mod->Build();
+
+		ctx = engine->CreateContext();
+		ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
+		ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void TestSuspend2()"));
+		loopCount = 0;
+		while( ctx->GetState() != asEXECUTION_FINISHED )
+			ctx->Execute();
+		if( loopCount != 3 )
+		{
+			printf("%s: failed\n", TESTNAME);
+			TEST_FAILED;
+		}
+
+		ctx->Prepare(asPREPARE_PREVIOUS);
+		loopCount = 0;
+		while( ctx->GetState() != asEXECUTION_FINISHED )
+			ctx->Execute();
+		if( loopCount != 3 )
+		{
+			printf("%s: failed\n", TESTNAME);
+			TEST_FAILED;
+		}
+
+		ctx->Release();
+		engine->Release();
 	}
 
-	ctx->Prepare(asPREPARE_PREVIOUS);
-	loopCount = 0;
-	while( ctx->GetState() != asEXECUTION_FINISHED )
-		ctx->Execute();
-	if( loopCount != 3 )
+	// Test cleaning up while context is suspended
+	// http://www.gamedev.net/topic/618821-crash-while-closing-application-with-the-suspended-context/
 	{
-		printf("%s: failed\n", TESTNAME);
-		TEST_FAILED;
-	}
+ 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_GENERIC);
 
-	ctx->Release();
-	engine->Release();
+		COutStream out;
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1", 
+			"class Test { \n"
+			"  void method() { \n"
+			"    string str = 'test'; \n"
+			"    Suspend(); \n"
+			"  } \n"
+			"} \n");
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod->Build();
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Test t; t.method();", mod, ctx);
+		if( r != asEXECUTION_SUSPENDED )
+			TEST_FAILED;
+
+		// Try freeing up as much memory as possible
+		engine->GarbageCollect();
+		engine->Release();
+
+		// Free the suspended context last
+		ctx->Release();
+	}
 
 	// Success
 	return fail;

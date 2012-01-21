@@ -6,6 +6,8 @@
 
 #include "scriptarray.h"
 
+using namespace std;
+
 BEGIN_AS_NAMESPACE
 
 static void RegisterScriptArray_Native(asIScriptEngine *engine);
@@ -196,7 +198,8 @@ CScriptArray &CScriptArray::operator=(const CScriptArray &other)
 
 		// Copy all elements from the other array
 		CreateBuffer(&buffer, other.buffer->numElements);
-		CopyBuffer(buffer, other.buffer);
+		if( buffer )
+			CopyBuffer(buffer, other.buffer);
 	}
 
 	return *this;
@@ -277,28 +280,31 @@ CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
 // Internal
 void CScriptArray::SetValue(asUINT index, void *value)
 {
+	void *ptr = At(index);
+	if( ptr == 0 ) return;
+
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
-		objType->GetEngine()->CopyScriptObject(At(index), value, subTypeId);
+		objType->GetEngine()->CopyScriptObject(ptr, value, subTypeId);
 	else if( subTypeId & asTYPEID_OBJHANDLE )
 	{
-		*(void**)At(index) = *(void**)value;
+		*(void**)ptr = *(void**)value;
 		objType->GetEngine()->AddRefScriptObject(*(void**)value, objType->GetSubType());
 	}
 	else if( subTypeId == asTYPEID_BOOL ||
 			 subTypeId == asTYPEID_INT8 ||
 			 subTypeId == asTYPEID_UINT8 )
-		*(char*)At(index) = *(char*)value;
+		*(char*)ptr = *(char*)value;
 	else if( subTypeId == asTYPEID_INT16 ||
 			 subTypeId == asTYPEID_UINT16 )
-		*(short*)At(index) = *(short*)value;
+		*(short*)ptr = *(short*)value;
 	else if( subTypeId == asTYPEID_INT32 ||
 			 subTypeId == asTYPEID_UINT32 ||
 			 subTypeId == asTYPEID_FLOAT )
-		*(int*)At(index) = *(int*)value;
+		*(int*)ptr = *(int*)value;
 	else if( subTypeId == asTYPEID_INT64 ||
 			 subTypeId == asTYPEID_UINT64 ||
 			 subTypeId == asTYPEID_DOUBLE )
-		*(double*)At(index) = *(double*)value;
+		*(double*)ptr = *(double*)value;
 }
 
 CScriptArray::~CScriptArray()
@@ -351,8 +357,17 @@ void CScriptArray::Resize(int delta, asUINT at)
 
 	// Allocate memory for the buffer
 	SArrayBuffer *newBuffer;
-	newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
-	newBuffer->numElements = buffer->numElements + delta;
+	newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
+	if( newBuffer )
+		newBuffer->numElements = buffer->numElements + delta;
+	else
+	{
+		// Out of memory
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )	
+			ctx->SetException("Out of memory");
+		return;
+	}
 
 	memcpy(newBuffer->data, buffer->data, at*elementSize);
 	if( delta > 0 && at < buffer->numElements )
@@ -463,7 +478,7 @@ void CScriptArray::RemoveLast()
 // Return a pointer to the array element. Returns 0 if the index is out of bounds
 void *CScriptArray::At(asUINT index)
 {
-	if( index >= buffer->numElements )
+	if( buffer == 0 || index >= buffer->numElements )
 	{
 		// If this is called from a script we raise a script exception
 		asIScriptContext *ctx = asGetActiveContext();
@@ -471,30 +486,33 @@ void *CScriptArray::At(asUINT index)
 			ctx->SetException("Index out of bounds");
 		return 0;
 	}
+
+	if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
+		return (void*)((size_t*)buffer->data)[index];
 	else
-	{
-		if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
-			return (void*)((size_t*)buffer->data)[index];
-		else
-			return buffer->data + elementSize*index;
-	}
+		return buffer->data + elementSize*index;
 }
 
 // internal
 void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 {
 	if( subTypeId & asTYPEID_MASK_OBJECT )
+		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
+	else
+		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
+
+	if( *buf )
 	{
-		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
 		(*buf)->numElements = numElements;
+		Construct(*buf, 0, numElements);
 	}
 	else
 	{
-		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-		(*buf)->numElements = numElements;
+		// Oops, out of memory
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+			ctx->SetException("Out of memory");
 	}
-
-	Construct(*buf, 0, numElements);
 }
 
 // internal
