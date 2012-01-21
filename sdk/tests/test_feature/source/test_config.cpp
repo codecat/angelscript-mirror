@@ -14,6 +14,13 @@ bool Test()
 	engine->ClearMessageCallback(); // Make sure this works
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
+	RegisterScriptArray(engine, true);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	asIScriptFunction *func = engine->GetGlobalFunctionByDecl("void assert(bool)");
+	if( func == 0 ) TEST_FAILED;
+	if( std::string(func->GetDeclaration()) != "void assert(bool)" ) TEST_FAILED;
+
+
 	r = engine->RegisterGlobalFunction("void func(mytype)", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
 

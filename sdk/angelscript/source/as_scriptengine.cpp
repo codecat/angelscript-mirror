@@ -2304,7 +2304,7 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 
 	if( id < 0 ) return 0; // No matches
 
-	return registeredGlobalFuncs[id];
+	return scriptFunctions[id];
 }
 
 
