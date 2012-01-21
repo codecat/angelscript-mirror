@@ -161,6 +161,7 @@ asCBuilder::~asCBuilder()
 	}
 }
 
+#ifndef AS_NO_COMPILER
 int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy)
 {
 	asCScriptCode *script = asNEW(asCScriptCode);
@@ -243,6 +244,7 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 
 	return 0;
 }
+#endif
 
 int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func)
 {
@@ -267,6 +269,7 @@ int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, 
 	return 0;
 }
 
+#ifndef AS_NO_COMPILER
 int asCBuilder::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc)
 {
 	asASSERT(outFunc != 0);
@@ -629,6 +632,7 @@ void asCBuilder::CompileFunctions()
 		}
 	}
 }
+#endif
 
 int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 {
@@ -1144,7 +1148,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	return 0;
 }
 
-
+#ifndef AS_NO_COMPILER
 int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 {
 	// Find the name
@@ -1454,7 +1458,6 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 
 	return 0;
 }
-
 
 void asCBuilder::CompileGlobalVariables()
 {
@@ -2672,6 +2675,7 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 			defaultArgs.PushLast(0);
 	}
 }
+#endif
 
 asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCode *file)
 {
@@ -2696,7 +2700,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 	return cleanStr;
 }
 
-
+#ifndef AS_NO_COMPILER
 int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
 {
 	asCString                  name;
@@ -3341,7 +3345,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 	return 0;
 }
-
+#endif
 
 asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 {

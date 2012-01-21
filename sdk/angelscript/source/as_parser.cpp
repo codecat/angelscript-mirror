@@ -88,6 +88,7 @@ asCScriptNode *asCParser::GetScriptNode()
 	return scriptNode;
 }
 
+#ifndef AS_NO_COMPILER
 int asCParser::ParseScript(asCScriptCode *script)
 {
 	Reset();
@@ -101,6 +102,7 @@ int asCParser::ParseScript(asCScriptCode *script)
 
 	return 0;
 }
+#endif
 
 int asCParser::ParseFunctionDefinition(asCScriptCode *script)
 {
@@ -466,6 +468,7 @@ asCScriptNode *asCParser::ParseScript()
 	UNREACHABLE_RETURN;
 }
 
+#ifndef AS_NO_COMPILER
 int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 {
 	Reset();
@@ -483,6 +486,7 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 
 	return 0;
 }
+#endif
 
 asCScriptNode *asCParser::ParseEnumeration()
 {
@@ -1399,6 +1403,7 @@ asCScriptNode *asCParser::ParseGlobalVar()
 	UNREACHABLE_RETURN;
 }
 
+#ifndef AS_NO_COMPILER
 int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
 {
 	Reset();
@@ -1437,6 +1442,7 @@ int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
 
 	return 0;
 }
+#endif
 
 asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 {

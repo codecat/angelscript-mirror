@@ -116,26 +116,26 @@ public:
 	asCBuilder(asCScriptEngine *engine, asCModule *module);
 	~asCBuilder();
 
+	// These methods are used by the application interface
 	int VerifyProperty(asCDataType *dt, const char *decl, asCString &outName, asCDataType &outType);
-
 	int ParseDataType(const char *datatype, asCDataType *result);
 	int ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName);
-
 	int ParseFunctionDeclaration(asCObjectType *type, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
 	int ParseVariableDeclaration(const char *decl, asCObjectProperty *var);
+	int CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code);
+	int CheckNameConflictMember(asCObjectType *type, const char *name, asCScriptNode *node, asCScriptCode *code, bool isProperty);
 
+#ifndef AS_NO_COMPILER
 	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);
 	int Build();
 
 	int CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc);
 	int CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
+#endif
 
 	void WriteInfo(const char *scriptname, const char *msg, int r, int c, bool preMessage);
 	void WriteError(const char *scriptname, const char *msg, int r, int c);
 	void WriteWarning(const char *scriptname, const char *msg, int r, int c);
-
-	int CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code);
-	int CheckNameConflictMember(asCObjectType *type, const char *name, asCScriptNode *node, asCScriptCode *code, bool isProperty);
 
 protected:
 	friend class asCCompiler;
@@ -149,6 +149,10 @@ protected:
 	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
 	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope = "");
 
+	int  ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
+	asCString GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
+
+#ifndef AS_NO_COMPILER
 	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false);
 	int RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false);
 	int RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false);
@@ -161,16 +165,15 @@ protected:
 	int RegisterFuncDef(asCScriptNode *node, asCScriptCode *file);
 	void CompleteFuncDef(sFuncDef *funcDef);
 	void CompileClasses();
-
 	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared);
-	int  ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
-
 	bool DoesMethodExist(asCObjectType *objType, int methodId, asUINT *methodIndex = 0);
-
 	void AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
 	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, bool isPrivate, asCScriptCode *file = 0, asCScriptNode *node = 0);
-	
 	int CreateVirtualFunction(asCScriptFunction *func, int idx);
+	void ParseScripts();
+	void CompileFunctions();
+	void CompileGlobalVariables();
+#endif
 
 	asCObjectType     *GetObjectType(const char *type);
 	asCScriptFunction *GetFuncDef(const char *type);
@@ -178,12 +181,6 @@ protected:
 
 	int GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
 	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);
-
-	asCString GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
-
-	void ParseScripts();
-	void CompileFunctions();
-	void CompileGlobalVariables();
 
 	struct preMessage_t
 	{

@@ -100,6 +100,7 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	byteCode.ClearAll();
 }
 
+#ifndef AS_NO_COMPILER
 int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, asCScriptFunction *outFunc)
 {
 	Reset(builder, script, outFunc);
@@ -195,6 +196,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 */
 	return 0;
 }
+#endif
 
 // Entry
 int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactoryId, asCObjectType *objType, asCScriptFunction *outFunc)
@@ -215,6 +217,7 @@ int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactory
 	return 0;
 }
 
+#ifndef AS_NO_COMPILER
 // Entry
 int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
 {
@@ -527,6 +530,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	return 0;
 }
+#endif
 
 int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar, bool derefDest)
 {
@@ -841,6 +845,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	}
 }
 
+#ifndef AS_NO_COMPILER
 // Entry
 int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc)
 {
@@ -1112,6 +1117,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	return 0;
 }
+#endif
 
 void asCCompiler::FinalizeFunction()
 {
