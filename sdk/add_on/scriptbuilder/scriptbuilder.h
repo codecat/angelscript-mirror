@@ -85,7 +85,7 @@ public:
 	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 
 	// Get metadata declared for class functions
-	const char *GetMetadataStringForTypeMethod(int typeId, int methodIdx);
+	const char *GetMetadataStringForTypeMethod(int typeId, int methodId);
 #endif
 
 protected:
@@ -120,7 +120,15 @@ protected:
 		int         type;
 		std::string parentClass;
 	};
+	std::vector<SMetadataDecl> foundDeclarations;
+	std::string currentClass;
 
+	// Storage of metadata for global declarations
+	std::map<int, std::string> typeMetadataMap;
+	std::map<int, std::string> funcMetadataMap;
+	std::map<int, std::string> varMetadataMap;
+
+	// Storage of metadata for class member declarations
 	struct SClassMetadata
 	{
 		SClassMetadata(const std::string& aName) : className(aName) {}
@@ -128,15 +136,8 @@ protected:
 		std::map<int, std::string> funcMetadataMap;
 		std::map<int, std::string> varMetadataMap;
 	};
-
-	std::string currentClass;
-
-	std::vector<SMetadataDecl> foundDeclarations;
-
-	std::map<int, std::string> typeMetadataMap;
-	std::map<int, std::string> funcMetadataMap;
-	std::map<int, std::string> varMetadataMap;
 	std::map<int, SClassMetadata> classMetadataMap;
+
 #endif
 
 	std::set<std::string>      includedScripts;

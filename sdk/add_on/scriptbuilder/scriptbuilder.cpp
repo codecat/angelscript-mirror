@@ -430,10 +430,62 @@ int CScriptBuilder::Build()
 		}
 		else if( decl->type == 2 )
 		{
-			// Find the function id
-			int funcId = module->GetFunctionIdByDecl(decl->declaration.c_str());
-			if( funcId >= 0 )
-				funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+			if( decl->parentClass == "" )
+			{
+				// Find the function id
+				int funcId = module->GetFunctionIdByDecl(decl->declaration.c_str());
+				if( funcId >= 0 )
+					funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+			}
+			else
+			{
+				// Find the method id
+				int typeId = module->GetTypeIdByDecl(decl->parentClass.c_str());
+				map<int, SClassMetadata>::iterator it = classMetadataMap.find(typeId);
+				if( it == classMetadataMap.end() )
+				{
+					classMetadataMap.insert(map<int, SClassMetadata>::value_type(typeId, SClassMetadata(decl->parentClass)));
+					it = classMetadataMap.find(typeId);
+				}
+
+				asIObjectType *type = engine->GetObjectTypeById(typeId);
+				int funcId = type->GetMethodIdByDecl(decl->declaration.c_str());
+				if( funcId >= 0 )
+					it->second.funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+			}
+		}
+		else if( decl->type == 4 )
+		{
+			if( decl->parentClass == "" )
+			{
+				// Find the global virtual property accessors
+				int funcId = module->GetFunctionIdByName(("get_" + decl->declaration).c_str());
+				if( funcId >= 0 )
+					funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+				funcId = module->GetFunctionIdByName(("set_" + decl->declaration).c_str());
+				if( funcId >= 0 )
+					funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+			}
+			else
+			{
+				// Find the method virtual property accessors
+				int typeId = module->GetTypeIdByDecl(decl->parentClass.c_str());
+				map<int, SClassMetadata>::iterator it = classMetadataMap.find(typeId);
+				if( it == classMetadataMap.end() )
+				{
+					classMetadataMap.insert(map<int, SClassMetadata>::value_type(typeId, SClassMetadata(decl->parentClass)));
+					it = classMetadataMap.find(typeId);
+				}
+
+				asIObjectType *type = engine->GetObjectTypeById(typeId);
+				int funcId = type->GetMethodIdByName(("get_" + decl->declaration).c_str());
+				if( funcId >= 0 )
+					it->second.funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+				funcId = type->GetMethodIdByName(("set_" + decl->declaration).c_str());
+				if( funcId >= 0 )
+					it->second.funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+
+			}
 		}
 		else if( decl->type == 3 )
 		{
@@ -658,7 +710,7 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 			// For variable declaration store just the name as there can only be one
 
 			// We'll only know if the declaration is a variable or function declaration when we see the statement block, or absense of a statement block.
-			int varLength = 0;
+			bool hasParenthesis = false;
 			declaration.append(&modifiedScript[pos], len);
 			pos += len;
 			string name;
@@ -670,29 +722,32 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 					token.assign(&modifiedScript[pos], len);
 					if( token == "{" )
 					{
-						// We've found the end of a function signature
-						type = 2;
+						if( hasParenthesis )
+						{
+							// We've found the end of a function signature
+							type = 2;
+						}
+						else
+						{
+							// We've found a virtual property. Just keep the name
+							declaration = name;
+							type = 4;
+						}
 						return pos;
 					}
 					if( token == "=" || token == ";" )
 					{
-						// We've found the end of a variable declaration.
-						if( varLength != 0 )
-							declaration.resize(varLength);
-
 						// Substitute the declaration with just the name
 						declaration = name;
-
 						type = 3;
-
 						return pos;
 					}
-					else if( token == "(" && varLength == 0 )
+					else if( token == "(" )
 					{
 						// This is the first parenthesis we encounter. If the parenthesis isn't followed 
 						// by a statement block, then this is a variable declaration, in which case we 
 						// should only store the type and name of the variable, not the initialization parameters.
-						varLength = (int)declaration.size();
+						hasParenthesis = true;
 					}
 				}
 				else if( t == asTC_IDENTIFIER )

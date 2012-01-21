@@ -44,6 +44,8 @@ const char *script =
 " [ noedit ] int b; \n"
 " [ edit,c ] \n"
 " complex c; \n"
+" [ prop ] \n" // It's possible to inform meta data for virtual properties too
+" complex prop { get {return c;} set {c = value;} } \n"
 "} \n"
 // interface declarations can have meta data
 "[ myintf ] interface MyIntf {} \n"
@@ -114,6 +116,15 @@ bool Test()
 	metadata = builder.GetMetadataStringForTypeProperty(typeId, 2);
 	if( metadata != " edit,c " )
 		TEST_FAILED;
+
+	asIObjectType *type = engine->GetObjectTypeById(typeId);
+	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodIdByName("get_prop"));
+	if( metadata != " prop " )
+		TEST_FAILED;
+	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodIdByName("set_prop"));
+	if( metadata != " prop " )
+		TEST_FAILED;
+
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	metadata = builder.GetMetadataStringForType(typeId);
