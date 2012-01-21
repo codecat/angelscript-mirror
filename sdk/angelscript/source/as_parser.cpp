@@ -95,7 +95,7 @@ int asCParser::ParseScript(asCScriptCode *script)
 
 	this->script = script;
 
-	scriptNode = ParseScript();
+	scriptNode = ParseScript(false);
 
 	if( errorWhileParsing )
 		return -1;
@@ -384,7 +384,8 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 	return script->TokenEquals(t.pos, t.length, str);
 }
 
-asCScriptNode *asCParser::ParseScript()
+#ifndef AS_NO_COMPILER
+asCScriptNode *asCParser::ParseScript(bool inBlock)
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snScript);
 
@@ -428,6 +429,13 @@ asCScriptNode *asCParser::ParseScript()
 				GetToken(&t1);
 			}
 			else if( t1.type == ttEnd )
+			{
+				if( inBlock )
+					Error(ExpectedToken(asCTokenizer::GetDefinition(ttEndStatementBlock)).AddressOf(), &t1);
+
+				return node;
+			}
+			else if( inBlock && t1.type == ttEndStatementBlock )
 				return node;
 			else
 			{
@@ -468,7 +476,41 @@ asCScriptNode *asCParser::ParseScript()
 	UNREACHABLE_RETURN;
 }
 
-#ifndef AS_NO_COMPILER
+asCScriptNode *asCParser::ParseNamespace()
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snNamespace);
+
+	sToken t1;
+
+	GetToken(&t1);
+	if( t1.type == ttNamespace )
+		node->UpdateSourcePos(t1.pos, t1.length);
+	else
+		Error(ExpectedToken(asCTokenizer::GetDefinition(ttNamespace)).AddressOf(), &t1);
+
+	node->AddChildLast(ParseIdentifier());
+	if( isSyntaxError ) return node;
+
+	GetToken(&t1);
+	if( t1.type == ttStartStatementBlock )
+		node->UpdateSourcePos(t1.pos, t1.length);
+	else
+		Error(ExpectedToken(asCTokenizer::GetDefinition(ttStartStatementBlock)).AddressOf(), &t1);
+
+	node->AddChildLast(ParseScript(true));
+
+	if( !isSyntaxError )
+	{
+		GetToken(&t1);
+		if( t1.type == ttEndStatementBlock )
+			node->UpdateSourcePos(t1.pos, t1.length);
+		else
+			Error(ExpectedToken(asCTokenizer::GetDefinition(ttEndStatementBlock)).AddressOf(), &t1);
+	}
+
+	return node;
+}
+
 int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 {
 	Reset();

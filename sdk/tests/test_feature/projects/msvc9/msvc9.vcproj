@@ -592,6 +592,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_namespace.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_nested.cpp"
 				>
 			</File>

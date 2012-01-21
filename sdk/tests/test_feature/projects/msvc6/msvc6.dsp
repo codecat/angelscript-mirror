@@ -335,6 +335,10 @@ SOURCE=..\..\source\test_multiassign.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_namespace.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_nested.cpp
 # End Source File
 # Begin Source File

@@ -146,6 +146,7 @@ namespace TestGarbageCollect    { bool Test(); }
 namespace TestScriptRetRef      { bool Test(); }
 namespace TestDefaultArg        { bool Test(); }
 namespace TestShared            { bool Test(); }
+namespace TestNamespace         { bool Test(); }
 
 namespace Test_Addon_ScriptArray  { bool Test(); }
 namespace Test_Addon_ScriptHandle { bool Test(); }
@@ -194,9 +195,10 @@ int main(int argc, char **argv)
 
 	if( Test_Addon_ScriptBuilder::Test() ) goto failed; else printf("-- Test_Addon_ScriptBuilder passed\n");
 	if( Test_Addon_ScriptMath::Test()   ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");
-	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( Test_Addon_Serializer::Test()   ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
 	if( Test_Addon_ScriptHandle::Test() ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
+	if( TestNamespace::Test()           ) goto failed; else printf("-- TestNamespace passed\n");
+	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
 	if( TestScriptRetRef::Test()        ) goto failed; else printf("-- TestScriptRetRef passed\n");
 	if( TestGarbageCollect::Test()      ) goto failed; else printf("-- TestGarbageCollect passed\n");

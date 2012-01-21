@@ -125,8 +125,10 @@ protected:
 
 	asCScriptNode *ParseImport();
 	asCScriptNode *ParseFunctionDefinition();
-
-	asCScriptNode *ParseScript();
+#ifndef AS_NO_COMPILER
+	asCScriptNode *ParseScript(bool inBlock);
+	asCScriptNode *ParseNamespace();
+#endif
 	asCScriptNode *ParseType(bool allowConst, bool allowVariableType = false);
 	asCScriptNode *ParseTypeMod(bool isParam);
 	asCScriptNode *ParseFunction(bool isMethod = false);
