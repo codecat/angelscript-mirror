@@ -378,6 +378,20 @@ bool Test()
 		engine->Release();
 	}
 
+	// It must be possible calling system functions through pointers too
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->RegisterFuncdef("bool fun(bool)");
+		engine->RegisterGlobalFunction("bool assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "fun @f = assert; f(true);");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

@@ -171,6 +171,12 @@ static void String_set_opIndexGeneric(asIScriptGeneric *gen) {
   (*a)[i] = (*str)[0];
 }
 
+string g_printbuf;
+void Print(const string &s)
+{
+	g_printbuf += s;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -1704,6 +1710,65 @@ bool Test()
 		r = ExecuteString(engine, "main();", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test - reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+
+		const char *script = 
+			"double round(double d, int i) {return double(int64(d*1000+0.5))/1000;}\n"
+	//		"string input_box(string &in, string &in) {return '';}\n"
+	//		"int string_to_number(string) {return 0;}\n"
+			"void main()\n"
+			"{\n"
+			//"  show_game_window('Golden Ratio');\n"
+			"  \n"
+			"  double numberA=0, numberB=1;\n"
+			"  double sum_of_ratios=0;\n"
+			"  int sequence_length=1475; \n" // 1475 is the largest we can go without breaking the limits of what a double can hold
+			"  \n"
+			"  for(int i=0; i<sequence_length; i++)\n"
+			"  { \n"
+			"    double temp=numberB;\n"
+			"    numberB=numberA+numberB;\n"
+			"    numberA=temp;\n"
+			"    \n"
+	//		"    print('A:'+numberA+', B:'+numberB+'\\n'); \n"
+			"    sum_of_ratios+=round(numberB/numberA, 3); \n"
+	//		"    print(sum_of_ratios+'\\n'); \n"
+			"  } // end for. \n"
+			"  \n"
+			"  double average_of_ratios=sum_of_ratios/sequence_length; \n"
+			"  average_of_ratios=round(average_of_ratios, 3); \n"
+//			"  assert(average_of_ratios == 1.618); \n"
+			"  print('The average of first '+sequence_length+' ratios of Fibonacci number is: '+average_of_ratios+'.\\n'); \n"
+			//"  alert('Average', 'The average of first '+sequence_length+' ratios of Fibonacci number is: '+average_of_ratios+'.'); \n"
+			//"  exit(); \n"
+			"}\n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;		
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( g_printbuf != "The average of first 1475 ratios of Fibonacci number is: 1.618.\n" )
+		{
+			printf("%s", g_printbuf.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

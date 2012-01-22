@@ -428,6 +428,8 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 				// Ignore a semicolon by itself
 				GetToken(&t1);
 			}
+			else if( t1.type == ttNamespace )
+				node->AddChildLast(ParseNamespace());
 			else if( t1.type == ttEnd )
 			{
 				if( inBlock )

@@ -171,6 +171,8 @@ protected:
 	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, bool isPrivate, asCScriptCode *file = 0, asCScriptNode *node = 0);
 	int CreateVirtualFunction(asCScriptFunction *func, int idx);
 	void ParseScripts();
+	void RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script);
+	void RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script);
 	void CompileFunctions();
 	void CompileGlobalVariables();
 #endif

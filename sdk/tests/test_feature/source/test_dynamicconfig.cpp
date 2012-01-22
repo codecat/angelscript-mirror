@@ -133,7 +133,7 @@ bool Test()
 			"void main() \n"
 			"{ \n"
 			"  type t; \n"
-			"  @t.callback = cb; \n"
+			"  @t.callback = cb; \n" // It should be possible to call system functions through pointers too
 			"  t.callback(t, 1); \n"
 			"} \n");
 

@@ -194,9 +194,10 @@ int main(int argc, char **argv)
 	InstallMemoryManager();
 
 	if( Test_Addon_ScriptBuilder::Test() ) goto failed; else printf("-- Test_Addon_ScriptBuilder passed\n");
-	if( Test_Addon_ScriptMath::Test()   ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");
-	if( Test_Addon_Serializer::Test()   ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
-	if( Test_Addon_ScriptHandle::Test() ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
+	if( Test_Addon_ScriptMath::Test()    ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");
+	if( Test_Addon_Serializer::Test()    ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
+	if( Test_Addon_ScriptHandle::Test()  ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
+	if( Test_Addon_ScriptArray::Test()   ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
 	if( TestNamespace::Test()           ) goto failed; else printf("-- TestNamespace passed\n");
 	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
@@ -205,7 +206,6 @@ int main(int argc, char **argv)
 	if( TestFunctionPtr::Test()         ) goto failed; else printf("-- TestFunctionPtr passed\n");
 	if( TestModule::Test()              ) goto failed; else printf("-- TestModule passed\n");
 	if( TestGetSet::Test()              ) goto failed; else printf("-- TestGetSet passed\n");
-	if( Test_Addon_ScriptArray::Test()  ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
 	if( TestOperator::Test()            ) goto failed; else printf("-- TestOperator passed\n");
 	if( TestTemplate::Test()            ) goto failed; else printf("-- TestTemplate passed\n");
 	if( TestDump::Test()                ) goto failed; else printf("-- TestDump passed\n");

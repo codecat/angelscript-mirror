@@ -392,42 +392,7 @@ void asCBuilder::ParseScripts()
 		for( n = 0; n < scripts.GetLength(); n++ )
 		{
 			asCScriptNode *node = parsers[n]->GetScriptNode();
-
-			// Find structure definitions first
-			node = node->firstChild;
-			while( node )
-			{
-				asCScriptNode *next = node->next;
-				if( node->nodeType == snClass )
-				{
-					node->DisconnectParent();
-					RegisterClass(node, scripts[n]);
-				}
-				else if( node->nodeType == snInterface )
-				{
-					node->DisconnectParent();
-					RegisterInterface(node, scripts[n]);
-				}
-				//	Handle enumeration
-				else if( node->nodeType == snEnum )
-				{
-					node->DisconnectParent();
-					RegisterEnum(node, scripts[n]);
-				}
-				//	Handle typedef
-				else if( node->nodeType == snTypedef )
-				{
-					node->DisconnectParent();
-					RegisterTypedef(node, scripts[n]);
-				}
-				else if( node->nodeType == snFuncDef )
-				{
-					node->DisconnectParent();
-					RegisterFuncDef(node, scripts[n]);
-				}
-
-				node = next;
-			}
+			RegisterTypesFromScript(node, scripts[n]);
 		}
 
 		// Register the complete function definitions
@@ -531,47 +496,100 @@ void asCBuilder::ParseScripts()
 		{
 			// Find other global nodes
 			asCScriptNode *node = parsers[n]->GetScriptNode();
-			node = node->firstChild;
-			while( node )
-			{
-				asCScriptNode *next = node->next;
-				node->DisconnectParent();
-
-				if( node->nodeType == snFunction )
-				{
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, scripts[n], 0, false, true);
-				}
-				else if( node->nodeType == snGlobalVar )
-				{
-					RegisterGlobalVar(node, scripts[n]);
-				}
-				else if( node->nodeType == snVirtualProperty )
-				{
-					RegisterVirtualProperty(node, scripts[n], 0, false, true);
-				}
-				else if( node->nodeType == snImport )
-				{
-					RegisterImportedFunction(module->GetNextImportedFunctionId(), node, scripts[n]);
-				}
-				else
-				{
-					// Unused script node
-					int r, c;
-					scripts[n]->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-					WriteWarning(scripts[n]->name.AddressOf(), TXT_UNUSED_SCRIPT_NODE, r, c);
-
-					node->Destroy(engine);
-				}
-
-				node = next;
-			}
+			RegisterNonTypesFromScript(node, scripts[n]);
 		}
 	}
 
 	for( n = 0; n < parsers.GetLength(); n++ )
 	{
 		asDELETE(parsers[n],asCParser);
+	}
+}
+
+void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script)
+{
+	asASSERT(node->nodeType == snScript);
+
+	// Find structure definitions first
+	node = node->firstChild;
+	while( node )
+	{
+		asCScriptNode *next = node->next;
+		if( node->nodeType == snNamespace )
+		{
+			// Recursively register the entities defined in the namespace
+			// TODO: namespace: Keep entities separated by namespace
+			RegisterTypesFromScript(node->lastChild, script);
+		}
+		else
+		{
+			if( node->nodeType == snClass )
+			{
+				node->DisconnectParent();
+				RegisterClass(node, script);
+			}
+			else if( node->nodeType == snInterface )
+			{
+				node->DisconnectParent();
+				RegisterInterface(node, script);
+			}
+			else if( node->nodeType == snEnum )
+			{
+				node->DisconnectParent();
+				RegisterEnum(node, script);
+			}
+			else if( node->nodeType == snTypedef )
+			{
+				node->DisconnectParent();
+				RegisterTypedef(node, script);
+			}
+			else if( node->nodeType == snFuncDef )
+			{
+				node->DisconnectParent();
+				RegisterFuncDef(node, script);
+			}
+		}
+
+		node = next;
+	}
+}
+
+void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script)
+{
+	node = node->firstChild;
+	while( node )
+	{
+		asCScriptNode *next = node->next;
+		if( node->nodeType == snNamespace )
+		{
+			// Recursively register the entities in the namespace
+			// TODO: namespace: Keep entities separated by namespace
+			RegisterNonTypesFromScript(node->lastChild, script);
+		}
+		else
+		{
+			node->DisconnectParent();
+			if( node->nodeType == snFunction )
+				RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, script, 0, false, true);
+			else if( node->nodeType == snGlobalVar )
+				RegisterGlobalVar(node, script);
+			else if( node->nodeType == snVirtualProperty )
+				RegisterVirtualProperty(node, script, 0, false, true);
+			else if( node->nodeType == snImport )
+				RegisterImportedFunction(module->GetNextImportedFunctionId(), node, script);
+			else
+			{
+				// Unused script node
+				int r, c;
+				script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+				WriteWarning(script->name.AddressOf(), TXT_UNUSED_SCRIPT_NODE, r, c);
+
+				node->Destroy(engine);
+			}
+		}
+
+		node = next;
 	}
 }
 
