@@ -3230,7 +3230,6 @@ void asCContext::ExecuteNext()
 		{
 			// Get the function pointer from the local variable
 			asCScriptFunction *func = *(asCScriptFunction**)(l_fp - asBC_SWORDARG0(l_bc));
-			l_bc++;
 
 			// Need to move the values back to the context
 			regs.programPointer = l_bc;
@@ -3244,7 +3243,23 @@ void asCContext::ExecuteNext()
 				return;
 			}
 			else
-				CallScriptFunction(func);
+			{
+				if( func->funcType == asFUNC_SCRIPT )
+				{
+					regs.programPointer++;
+					CallScriptFunction(func);
+				}
+				else
+				{
+					asASSERT( func->funcType == asFUNC_SYSTEM );
+
+					regs.stackPointer += CallSystemFunction(func->id, this, 0);
+
+					// Update program position after the call so the line number  
+					// is correct in case the system function queries it
+					regs.programPointer++;
+				}
+			}
 
 			// Extract the values from the context again
 			l_bc = regs.programPointer;

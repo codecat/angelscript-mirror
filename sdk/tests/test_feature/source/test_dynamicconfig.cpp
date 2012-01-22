@@ -93,10 +93,60 @@ static void Release(asIScriptGeneric *gen)
 
 bool Test2();
 
+class Type
+{
+public:
+	Type() { refCount = 1; callback = 0; }
+	~Type() { if(callback) callback->Release(); }
+	void AddRef() { refCount++ ; }
+	void Release() { if( --refCount == 0 ) delete this; }
+	int refCount;
+	asIScriptFunction *callback;
+
+	static Type *Factory() { return new Type(); }
+	static void Callback(Type *, int) {}
+};
+
 bool Test()
 {
 	bool fail = Test2();
 	int r;
+
+	// Test dynamic config groups with function definitions used for callbacks
+	// http://www.gamedev.net/topic/618909-assertion-failure-in-as-configgroupcpp/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->BeginConfigGroup("gr");
+		engine->RegisterObjectType("type", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_FACTORY, "type @f()", asFUNCTION(Type::Factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_ADDREF, "void f()", asMETHOD(Type,AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_RELEASE, "void f()", asMETHOD(Type,Release), asCALL_THISCALL);
+		engine->RegisterFuncdef("void fun(type @, int)");
+		engine->RegisterGlobalFunction("void cb(type @+, int)", asFUNCTION(Type::Callback), asCALL_CDECL);
+		engine->RegisterObjectProperty("type", "fun @callback", asOFFSET(Type,callback));
+		engine->EndConfigGroup();
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", 
+			"void func(type @, int) {} \n"
+			"void main() \n"
+			"{ \n"
+			"  type t; \n"
+			"  @t.callback = cb; \n"
+			"  t.callback(t, 1); \n"
+			"} \n");
+
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	//------------
 	// Test global function
