@@ -1126,7 +1126,8 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( token != ttIdentifier || strlen(name) != tokenLen )
 		return ConfigError(asINVALID_NAME, "RegisterInterface", name, 0);
 
-	r = bld.CheckNameConflict(name, 0, 0);
+	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
+	r = bld.CheckNameConflict(name, 0, 0, "");
 	if( r < 0 )
 		return ConfigError(asNAME_TAKEN, "RegisterInterface", name, 0);
 
@@ -1403,7 +1404,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			if( token != ttIdentifier || typeName.GetLength() != tokenLen )
 				return ConfigError(asINVALID_NAME, "RegisterObjectType", name, 0);
 
-			int r = bld.CheckNameConflict(name, 0, 0);
+			// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
+			int r = bld.CheckNameConflict(name, 0, 0, "");
 			if( r < 0 )
 				return ConfigError(asNAME_TAKEN, "RegisterObjectType", name, 0);
 
@@ -2205,7 +2207,8 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	}
 
 	// Check name conflicts
-	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0);
+	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
+	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0, "");
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);
@@ -3934,7 +3937,8 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	}
 
 	// Check name conflicts
-	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0);
+	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
+	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0, "");
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);
@@ -4043,8 +4047,9 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	if( token != ttIdentifier || strlen(type) != tokenLen )
 		return ConfigError(asINVALID_NAME, "RegisterTypedef", type, decl);
 
+	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
 	asCBuilder bld(this, 0);
-	int r = bld.CheckNameConflict(type, 0, 0);
+	int r = bld.CheckNameConflict(type, 0, 0, "");
 	if( r < 0 )
 		return ConfigError(asNAME_TAKEN, "RegisterTypedef", type, decl);
 
@@ -4121,7 +4126,8 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	if( token != ttIdentifier || strlen(name) != tokenLen )
 		return ConfigError(asINVALID_NAME, "RegisterEnum", name, 0);
 
-	r = bld.CheckNameConflict(name, 0, 0);
+	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
+	r = bld.CheckNameConflict(name, 0, 0, "");
 	if( r < 0 )
 		return ConfigError(asNAME_TAKEN, "RegisterEnum", name, 0);
 

@@ -122,7 +122,7 @@ public:
 	int ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName);
 	int ParseFunctionDeclaration(asCObjectType *type, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
 	int ParseVariableDeclaration(const char *decl, asCObjectProperty *var);
-	int CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code);
+	int CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code, const asCString &ns);
 	int CheckNameConflictMember(asCObjectType *type, const char *name, asCScriptNode *node, asCScriptCode *code, bool isProperty);
 
 #ifndef AS_NO_COMPILER
@@ -153,16 +153,16 @@ protected:
 	asCString GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
 
 #ifndef AS_NO_COMPILER
-	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false);
-	int RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false);
-	int RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false);
-	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file);
-	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file);
-	int RegisterClass(asCScriptNode *node, asCScriptCode *file);
-	int RegisterInterface(asCScriptNode *node, asCScriptCode *file);
-	int RegisterEnum(asCScriptNode *node, asCScriptCode *file);
-	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file);
-	int RegisterFuncDef(asCScriptNode *node, asCScriptCode *file);
+	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, const asCString &ns = "");
+	int RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false, const asCString &ns = "");
+	int RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, const asCString &ns = "");
+	int RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file, const asCString &ns);
+	int RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, const asCString &ns);
+	int RegisterClass(asCScriptNode *node, asCScriptCode *file, const asCString &ns);
+	int RegisterInterface(asCScriptNode *node, asCScriptCode *file, const asCString &ns);
+	int RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asCString &ns);
+	int RegisterTypedef(asCScriptNode *node, asCScriptCode *file, const asCString &ns);
+	int RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, const asCString &ns);
 	void CompleteFuncDef(sFuncDef *funcDef);
 	void CompileClasses();
 	void GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared);
@@ -171,8 +171,8 @@ protected:
 	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, bool isPrivate, asCScriptCode *file = 0, asCScriptNode *node = 0);
 	int CreateVirtualFunction(asCScriptFunction *func, int idx);
 	void ParseScripts();
-	void RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script);
-	void RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script);
+	void RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script, const asCString &ns);
+	void RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script, const asCString &ns);
 	void CompileFunctions();
 	void CompileGlobalVariables();
 #endif

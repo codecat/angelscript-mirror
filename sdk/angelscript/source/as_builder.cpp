@@ -227,7 +227,9 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 
 	node = node->firstChild;
 	node->DisconnectParent();
-	RegisterGlobalVar(node, script);
+	// TODO: namespace: How should we allow informing the namespace? Perhaps the module 
+	//                  needs a SetDefaultNamepace() method that can be called before
+	RegisterGlobalVar(node, script, "");
 
 	CompileGlobalVariables();
 
@@ -304,6 +306,9 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	// Find the function node
 	node = node->firstChild;
 
+	// TODO: namespace: How should we allow informing the namespace? Perhaps the module 
+	//                  needs a SetDefaultNamepace() method that can be called before
+
 	// Create the function
 	bool isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared;
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
@@ -322,7 +327,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	// Tell the engine that the function exists already so the compiler can access it
 	if( compileFlags & asCOMP_ADD_TO_MODULE )
 	{
-		int r = CheckNameConflict(func->name.AddressOf(), node, scripts[0]);
+		int r = CheckNameConflict(func->name.AddressOf(), node, scripts[0], "");
 		if( r < 0 )
 		{
 			func->Release();
@@ -392,7 +397,7 @@ void asCBuilder::ParseScripts()
 		for( n = 0; n < scripts.GetLength(); n++ )
 		{
 			asCScriptNode *node = parsers[n]->GetScriptNode();
-			RegisterTypesFromScript(node, scripts[n]);
+			RegisterTypesFromScript(node, scripts[n], "");
 		}
 
 		// Register the complete function definitions
@@ -496,7 +501,7 @@ void asCBuilder::ParseScripts()
 		{
 			// Find other global nodes
 			asCScriptNode *node = parsers[n]->GetScriptNode();
-			RegisterNonTypesFromScript(node, scripts[n]);
+			RegisterNonTypesFromScript(node, scripts[n], "");
 		}
 	}
 
@@ -506,7 +511,7 @@ void asCBuilder::ParseScripts()
 	}
 }
 
-void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script)
+void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *script, const asCString &ns)
 {
 	asASSERT(node->nodeType == snScript);
 
@@ -518,35 +523,36 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 		if( node->nodeType == snNamespace )
 		{
 			// Recursively register the entities defined in the namespace
-			// TODO: namespace: Keep entities separated by namespace
-			RegisterTypesFromScript(node->lastChild, script);
+			asCString nsChild;
+			nsChild.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);			
+			RegisterTypesFromScript(node->lastChild, script, ns+"::"+nsChild);
 		}
 		else
 		{
 			if( node->nodeType == snClass )
 			{
 				node->DisconnectParent();
-				RegisterClass(node, script);
+				RegisterClass(node, script, ns);
 			}
 			else if( node->nodeType == snInterface )
 			{
 				node->DisconnectParent();
-				RegisterInterface(node, script);
+				RegisterInterface(node, script, ns);
 			}
 			else if( node->nodeType == snEnum )
 			{
 				node->DisconnectParent();
-				RegisterEnum(node, script);
+				RegisterEnum(node, script, ns);
 			}
 			else if( node->nodeType == snTypedef )
 			{
 				node->DisconnectParent();
-				RegisterTypedef(node, script);
+				RegisterTypedef(node, script, ns);
 			}
 			else if( node->nodeType == snFuncDef )
 			{
 				node->DisconnectParent();
-				RegisterFuncDef(node, script);
+				RegisterFuncDef(node, script, ns);
 			}
 		}
 
@@ -554,7 +560,7 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 	}
 }
 
-void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script)
+void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *script, const asCString &ns)
 {
 	node = node->firstChild;
 	while( node )
@@ -563,20 +569,21 @@ void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *
 		if( node->nodeType == snNamespace )
 		{
 			// Recursively register the entities in the namespace
-			// TODO: namespace: Keep entities separated by namespace
-			RegisterNonTypesFromScript(node->lastChild, script);
+			asCString nsChild;
+			nsChild.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);			
+			RegisterNonTypesFromScript(node->lastChild, script, ns+"::"+nsChild);
 		}
 		else
 		{
 			node->DisconnectParent();
 			if( node->nodeType == snFunction )
-				RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, script, 0, false, true);
+				RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, script, 0, false, true, ns);
 			else if( node->nodeType == snGlobalVar )
-				RegisterGlobalVar(node, script);
+				RegisterGlobalVar(node, script, ns);
 			else if( node->nodeType == snVirtualProperty )
-				RegisterVirtualProperty(node, script, 0, false, true);
+				RegisterVirtualProperty(node, script, 0, false, true, ns);
 			else if( node->nodeType == snImport )
-				RegisterImportedFunction(module->GetNextImportedFunctionId(), node, script);
+				RegisterImportedFunction(module->GetNextImportedFunctionId(), node, script, ns);
 			else
 			{
 				// Unused script node
@@ -753,7 +760,8 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	}
 	else
 	{
-		if( CheckNameConflict(name.AddressOf(), nameNode, &source) < 0 )
+		// TODO: namespace: Use proper namespace
+		if( CheckNameConflict(name.AddressOf(), nameNode, &source, "") < 0 )
 			return asNAME_TAKEN;
 	}
 
@@ -1060,17 +1068,16 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 	return 0;
 }
 
-int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code)
+int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code, const asCString &ns)
 {
-	// TODO: Must verify object types in all config groups, whether the module has access or not
-	// Check against object types
+	// Check against registered object types
+	// TODO: namespace: Check in correct namespace
 	if( engine->GetObjectType(name) != 0 )
 	{
 		if( code )
 		{
 			int r, c;
 			code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_EXTENDED_TYPE, name);
 			WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
@@ -1079,6 +1086,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		return -1;
 	}
 
+	// TODO: namespace: Check in correct namespace
 	// TODO: Must verify global properties in all config groups, whether the module has access or not
 	// Check against global properties
 	asCGlobalProperty *prop = GetGlobalProperty(name, 0, 0, 0, 0);
@@ -1088,10 +1096,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			int r, c;
 			code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY, name);
-
 			WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
 		}
 
@@ -1104,16 +1110,15 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	asUINT n;
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
+		// TODO: namespace: verify namespace
 		if( classDeclarations[n]->name == name )
 		{
 			if( code )
 			{
 				int r, c;
 				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_STRUCT, name);
-
 				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
 			}
 
@@ -1124,17 +1129,15 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	// Check against named types
 	for( n = 0; n < namedTypeDeclarations.GetLength(); n++ )
 	{
+		// TODO: namespace: verify namespace
 		if( namedTypeDeclarations[n]->name == name )
 		{
 			if( code )
 			{
 				int r, c;
 				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 				asCString str;
-
 				str.Format(TXT_NAME_CONFLICT_s_IS_NAMED_TYPE, name);
-
 				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
 			}
 
@@ -1145,17 +1148,15 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	// Must check for name conflicts with funcdefs
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 	{
+		// TODO: namespace: verify namespace
 		if( funcDefs[n]->name == name )
 		{
 			if( code )
 			{
 				int r, c;
 				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 				asCString str;
-
 				str.Format(TXT_NAME_CONFLICT_s_IS_FUNCDEF, name);
-
 				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
 			}
 
@@ -1167,7 +1168,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	// Find the name
 	asASSERT( node->firstChild->nodeType == snDataType );
@@ -1177,7 +1178,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 	name.Assign(&file->code[n->tokenPos], n->tokenLength);
 
 	// Check for name conflict with other types
-	int r = CheckNameConflict(name.AddressOf(), node, file);
+	int r = CheckNameConflict(name.AddressOf(), node, file, ns);
 	if( asSUCCESS != r )
 	{
 		node->Destroy(engine);
@@ -1190,6 +1191,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file)
 	// The return type and parameter types aren't determined in this function. A second pass is 
 	// necessary after all type declarations have been identified.
 
+	// TODO: namespace: store the namespace
 	sFuncDef *fd = asNEW(sFuncDef);
 	fd->name   = name;
 	fd->node   = node;
@@ -1231,7 +1233,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	}
 }
 
-int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	// Has the application disabled global vars?
 	if( engine->ep.disallowGlobalVars )
@@ -1262,7 +1264,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 	{
 		// Verify that the name isn't taken
 		asCString name(&file->code[n->tokenPos], n->tokenLength);
-		CheckNameConflict(name.AddressOf(), n, file);
+		CheckNameConflict(name.AddressOf(), n, file, ns);
 
 		// Register the global variable
 		sGlobalVariableDescription *gvar = asNEW(sGlobalVariableDescription);
@@ -1288,6 +1290,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 			n->next->DisconnectParent();
 		}
 
+		// TODO: namespace: Store namespace
 		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype);
 		gvar->index    = gvar->property->id;
 
@@ -1299,7 +1302,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
-int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	asCScriptNode *n = node->firstChild;
 	bool isFinal = false;
@@ -1329,7 +1332,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	int r, c;
 	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
 
-	CheckNameConflict(name.AddressOf(), n, file);
+	CheckNameConflict(name.AddressOf(), n, file, ns);
 
 	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	classDeclarations.PushLast(decl);
@@ -1373,6 +1376,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	if( node->tokenType == ttHandle )
 		st->flags |= asOBJ_IMPLICIT_HANDLE;
 
+	// TODO: namespace: Store namespace
 	st->size      = sizeof(asCScriptObject);
 	st->name      = name;
 	module->classTypes.PushLast(st);
@@ -1404,7 +1408,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file)
 	return 0;
 }
 
-int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	asCScriptNode *n = node->firstChild;
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
@@ -1421,7 +1425,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	int r, c;
 	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
 
-	CheckNameConflict(name.AddressOf(), n, file);
+	CheckNameConflict(name.AddressOf(), n, file, ns);
 
 	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	interfaceDeclarations.PushLast(decl);
@@ -1453,6 +1457,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file)
 	}
 
 	// Register the object type for the interface
+	// TODO: namespace: store namespace
 	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 
@@ -2408,7 +2413,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 		engine->scriptFunctions[funcId]->isShared = true;
 }
 
-int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	// Grab the name of the enumeration
 	asCScriptNode *tmp = node->firstChild;
@@ -2419,12 +2424,13 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 	name.Assign(&file->code[tmp->firstChild->tokenPos], tmp->firstChild->tokenLength);
 
 	// Check the name and add the enum
-	int r = CheckNameConflict(name.AddressOf(), tmp->firstChild, file);
+	int r = CheckNameConflict(name.AddressOf(), tmp->firstChild, file, ns);
 	if( asSUCCESS == r )
 	{
 		asCObjectType *st;
 		asCDataType dataType;
 
+		// TODO: namespace: store namespace
 		st = asNEW(asCObjectType)(engine);
 		dataType.CreatePrimitive(ttInt, false);
 
@@ -2525,7 +2531,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file)
 	return r;
 }
 
-int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	// Get the native data type
 	asCScriptNode *tmp = node->firstChild;
@@ -2541,10 +2547,11 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file)
 	name.Assign(&file->code[tmp->tokenPos], tmp->tokenLength);
 
 	// If the name is not already in use add it
- 	int r = CheckNameConflict(name.AddressOf(), tmp, file);
+ 	int r = CheckNameConflict(name.AddressOf(), tmp, file, ns);
 	if( asSUCCESS == r )
 	{
 		// Create the new type
+		// TODO: namespace: Store namespace
 		asCObjectType *st = asNEW(asCObjectType)(engine);
 
 		st->flags           = asOBJ_TYPEDEF;
@@ -2719,7 +2726,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
+int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, const asCString &ns)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -2751,7 +2758,9 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			}
 		}
 		else
-			CheckNameConflict(name.AddressOf(), node, file);
+		{
+			CheckNameConflict(name.AddressOf(), node, file, ns);
+		}
 	}
 	else
 	{
@@ -2784,6 +2793,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		if( isShared )
 		{
 			// Look for a pre-existing shared function with the same signature
+			// TODO: namespace: Must be in same namespace
 			for( asUINT n = 0; n < engine->scriptFunctions.GetLength(); n++ )
 			{
 				asCScriptFunction *f = engine->scriptFunctions[n];
@@ -2837,6 +2847,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	}
 
 	// Check that the same function hasn't been registered already
+	// TODO: namespace: Only for the same namespace
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs);
 	if( funcs.GetLength() )
@@ -2864,7 +2875,10 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		f->AddRef();
 	}
 	else
+	{
+		// TODO: namespace: Store namespace
 		module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared);
+	}
 
 	// Make sure the default args are declared correctly
 	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);
@@ -2930,7 +2944,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	return 0;
 }
 
-int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *objType, bool isInterface, bool isGlobalFunction, bool isPrivate, bool isConst, bool isFinal, bool isOverride, bool treatAsProperty)
+int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *objType, bool isInterface, bool isGlobalFunction, bool isPrivate, bool isConst, bool isFinal, bool isOverride, bool treatAsProperty, const asCString &ns)
 {
 	bool isConstructor = false;
 	bool isDestructor = false;
@@ -2952,7 +2966,7 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 		if( objType )
 			CheckNameConflictMember(objType, name.AddressOf(), node, file, treatAsProperty);
 		else
-			CheckNameConflict(name.AddressOf(), node, file);
+			CheckNameConflict(name.AddressOf(), node, file, ns);
 	}
 
 	if( isInterface )
@@ -3010,6 +3024,7 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 	}
 
 	// TODO: Much of this can probably be reduced by using the IsSignatureEqual method
+	// TODO: namespace: Check namespace
 	// Check that the same function hasn't been registered already
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs);
@@ -3112,7 +3127,7 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 	return 0;
 }
 
-int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction)
+int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, const asCString &ns)
 {
 	if( engine->ep.propertyAccessorMode != 2 )
 	{
@@ -3251,9 +3266,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		}
 
 		if( success )
-		{
-			RegisterScriptFunctionWithSignature(engine->GetNextScriptFunctionId(), funcNode, file, name, signature, objType, isInterface, isGlobalFunction, isPrivate, isConst, isFinal, isOverride, true);
-		}
+			RegisterScriptFunctionWithSignature(engine->GetNextScriptFunctionId(), funcNode, file, name, signature, objType, isInterface, isGlobalFunction, isPrivate, isConst, isFinal, isOverride, true, ns);
 
 		node = next;
 	};
@@ -3263,7 +3276,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 	return 0;
 }
 
-int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCScriptCode *file)
+int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCScriptCode *file, const asCString &ns)
 {
 	// Find name
 	asCScriptNode *f = node->firstChild;
@@ -3271,7 +3284,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 	// Check for name conflicts
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
-	CheckNameConflict(name.AddressOf(), n, file);
+	CheckNameConflict(name.AddressOf(), n, file, ns);
 
 	// Initialize a script function object for registration
 	asCDataType returnType;
@@ -3319,6 +3332,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	}
 
 	// Check that the same function hasn't been registered already
+	// TODO: namespace: check in namespace
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs);
 	if( funcs.GetLength() )
@@ -3359,6 +3373,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	node->Destroy(engine);
 
 	// Register the function
+	// TODO: namespace: Store namespace
 	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleName);
 
 	return 0;
