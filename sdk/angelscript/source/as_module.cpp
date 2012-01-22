@@ -774,13 +774,14 @@ int asCModule::GetNextImportedFunctionId()
 }
 
 // internal
-int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, asCString **defaultArgs, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isFinal, bool isOverride, bool isShared)
+int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, asCString **defaultArgs, int paramCount, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isFinal, bool isOverride, bool isShared, const asCString &ns)
 {
 	asASSERT(id >= 0);
 
 	// Store the function information
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT);
 	func->name             = name;
+	func->nameSpace        = ns;
 	func->id               = id;
 	func->returnType       = returnType;
 	func->scriptSectionIdx = sectionIdx;
@@ -1013,10 +1014,11 @@ asCObjectType *asCModule::GetObjectType(const char *type)
 }
 
 // internal
-asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asCDataType &dt)
+asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asCDataType &dt, const asCString &ns)
 {
 	asCGlobalProperty *prop = engine->AllocateGlobalProperty();
 	prop->name = name;
+	prop->nameSpace = ns;
 
 	// Allocate the memory for this property based on its type
 	prop->type = dt;
@@ -1121,7 +1123,7 @@ void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 		// Remove the old object type from the engine's class types
 		engine->classTypes.RemoveValue(equals[i].a);
 
-		// Only interfaces in the module is using the type so far
+		// Only interfaces in the module are using the type so far
 		for( c = 0; c < classTypes.GetLength(); c++ )
 		{
 			if( classTypes[c]->IsInterface() )
@@ -1262,6 +1264,10 @@ bool asCModule::AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<
 
 	// Are the names equal?
 	if( a->name != b->name )
+		return false;
+
+	// Are the namespaces equal?
+	if( a->nameSpace != b->nameSpace )
 		return false;
 
 	// Are the number of methods equal?

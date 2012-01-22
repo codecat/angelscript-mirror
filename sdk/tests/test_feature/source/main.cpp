@@ -148,10 +148,10 @@ namespace TestDefaultArg        { bool Test(); }
 namespace TestShared            { bool Test(); }
 namespace TestNamespace         { bool Test(); }
 
-namespace Test_Addon_ScriptArray  { bool Test(); }
-namespace Test_Addon_ScriptHandle { bool Test(); }
-namespace Test_Addon_Serializer   { bool Test(); }
-namespace Test_Addon_ScriptMath   { bool Test(); }
+namespace Test_Addon_ScriptArray   { bool Test(); }
+namespace Test_Addon_ScriptHandle  { bool Test(); }
+namespace Test_Addon_Serializer    { bool Test(); }
+namespace Test_Addon_ScriptMath    { bool Test(); }
 namespace Test_Addon_ScriptBuilder { bool Test(); }
 
 #include "utils.h"

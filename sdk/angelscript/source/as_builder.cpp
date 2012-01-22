@@ -791,7 +791,7 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 	return 0;
 }
 
-asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp)
+asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, const asCString &ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp)
 {
 	asUINT n;
 
@@ -803,6 +803,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 	// Check application registered properties
 	asCArray<asCGlobalProperty *> *props = &(engine->registeredGlobalProps);
 	for( n = 0; n < props->GetLength(); ++n )
+		// TODO: namespace: Compare namespace too
 		if( (*props)[n] && (*props)[n]->name == prop )
 		{
 			if( module )
@@ -831,17 +832,20 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 
 	// TODO: optimize: Improve linear search
 	// Check properties being compiled now
-	asCArray<sGlobalVariableDescription *> *gvars = &globVariables;
-	for( n = 0; n < gvars->GetLength(); ++n )
+	asCArray<sGlobalVariableDescription *> &gvars = globVariables;
+	for( n = 0; n < gvars.GetLength(); ++n )
 	{
-		if( (*gvars)[n] && (*gvars)[n]->name == prop )
+		if( gvars[n] == 0 ) continue;
+		asCGlobalProperty *p = gvars[n]->property;
+		if( p && 
+			p->name == prop &&
+			p->nameSpace == ns )
 		{
-			if( isCompiled ) *isCompiled = (*gvars)[n]->isCompiled;
+			if( isCompiled )     *isCompiled     = gvars[n]->isCompiled;
+			if( isPureConstant ) *isPureConstant = gvars[n]->isPureConstant;
+			if( constantValue  ) *constantValue  = gvars[n]->constantValue;
 
-			if( isPureConstant ) *isPureConstant = (*gvars)[n]->isPureConstant;
-			if( constantValue  ) *constantValue  = (*gvars)[n]->constantValue;
-
-			return (*gvars)[n]->property;
+			return p;
 		}
 	}
 
@@ -851,7 +855,8 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, bool *isCompi
 	{
 		props = &module->scriptGlobals;
 		for( n = 0; n < props->GetLength(); ++n )
-			if( (*props)[n]->name == prop )
+			if( (*props)[n]->name == prop &&
+				(*props)[n]->nameSpace == ns )
 				return (*props)[n];
 	}
 
@@ -1086,10 +1091,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		return -1;
 	}
 
-	// TODO: namespace: Check in correct namespace
 	// TODO: Must verify global properties in all config groups, whether the module has access or not
 	// Check against global properties
-	asCGlobalProperty *prop = GetGlobalProperty(name, 0, 0, 0, 0);
+	asCGlobalProperty *prop = GetGlobalProperty(name, ns, 0, 0, 0, 0);
 	if( prop )
 	{
 		if( code )
@@ -1110,8 +1114,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	asUINT n;
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
-		// TODO: namespace: verify namespace
-		if( classDeclarations[n]->name == name )
+		if( classDeclarations[n]->name == name &&
+			classDeclarations[n]->objType->nameSpace == ns )
 		{
 			if( code )
 			{
@@ -1290,8 +1294,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, cons
 			n->next->DisconnectParent();
 		}
 
-		// TODO: namespace: Store namespace
-		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype);
+		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype, ns);
 		gvar->index    = gvar->property->id;
 
 		n = n->next;
@@ -1351,6 +1354,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, const as
 			if( st &&
 				st->IsShared() &&
 				st->name == name &&
+				st->nameSpace == ns &&
 				!st->IsInterface() )
 			{
 				// We'll use the existing type
@@ -1376,9 +1380,9 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, const as
 	if( node->tokenType == ttHandle )
 		st->flags |= asOBJ_IMPLICIT_HANDLE;
 
-	// TODO: namespace: Store namespace
 	st->size      = sizeof(asCScriptObject);
 	st->name      = name;
+	st->nameSpace = ns;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
 	st->AddRef();
@@ -1444,6 +1448,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, cons
 			if( st &&
 				st->IsShared() &&
 				st->name == name &&
+				st->nameSpace == ns &&
 				st->IsInterface() )
 			{
 				// We'll use the existing type
@@ -1457,7 +1462,6 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, cons
 	}
 
 	// Register the object type for the interface
-	// TODO: namespace: store namespace
 	asCObjectType *st = asNEW(asCObjectType)(engine);
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
 
@@ -1466,6 +1470,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, cons
 
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
+	st->nameSpace = ns;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
 	st->AddRef();
@@ -2793,13 +2798,13 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		if( isShared )
 		{
 			// Look for a pre-existing shared function with the same signature
-			// TODO: namespace: Must be in same namespace
 			for( asUINT n = 0; n < engine->scriptFunctions.GetLength(); n++ )
 			{
 				asCScriptFunction *f = engine->scriptFunctions[n];
 				if( f &&
 					f->isShared &&
 					f->name == name &&
+					f->nameSpace == ns &&
 					f->IsSignatureExceptNameEqual(returnType, parameterTypes, inOutFlags, 0, false) )
 				{
 					funcId           = func->funcId           = f->id;
@@ -2846,10 +2851,9 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		}
 	}
 
-	// Check that the same function hasn't been registered already
-	// TODO: namespace: Only for the same namespace
+	// Check that the same function hasn't been registered already in the namespace
 	asCArray<int> funcs;
-	GetFunctionDescriptions(name.AddressOf(), funcs);
+	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 	if( funcs.GetLength() )
 	{
 		for( asUINT n = 0; n < funcs.GetLength(); ++n )
@@ -2876,8 +2880,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	}
 	else
 	{
-		// TODO: namespace: Store namespace
-		module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared);
+		module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared, ns);
 	}
 
 	// Make sure the default args are declared correctly
@@ -3024,10 +3027,9 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 	}
 
 	// TODO: Much of this can probably be reduced by using the IsSignatureEqual method
-	// TODO: namespace: Check namespace
 	// Check that the same function hasn't been registered already
 	asCArray<int> funcs;
-	GetFunctionDescriptions(name.AddressOf(), funcs);
+	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 	if( funcs.GetLength() )
 	{
 		for( asUINT n = 0; n < funcs.GetLength(); ++n )
@@ -3332,9 +3334,8 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	}
 
 	// Check that the same function hasn't been registered already
-	// TODO: namespace: check in namespace
 	asCArray<int> funcs;
-	GetFunctionDescriptions(name.AddressOf(), funcs);
+	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 	if( funcs.GetLength() )
 	{
 		for( asUINT n = 0; n < funcs.GetLength(); ++n )
@@ -3390,7 +3391,7 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 		return engine->importedFunctions[id & 0xFFFF]->importedFunctionSignature;
 }
 
-void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
+void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs, const asCString &ns)
 {
 	// TODO: optimize: Improve linear searches in GetFunctionDescriptions
 	//                 A large part of the compilation time seems to be spent in this function
@@ -3401,9 +3402,11 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 	asUINT n;
 	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
 	{
-		if( module->scriptFunctions[n]->name == name &&
-			module->scriptFunctions[n]->objectType == 0 )
-			funcs.PushLast(module->scriptFunctions[n]->id);
+		asCScriptFunction *f = module->scriptFunctions[n];
+		if( f->name == name &&
+			f->nameSpace == ns && 
+			f->objectType == 0 )
+			funcs.PushLast(f->id);
 	}
 
 	for( n = 0; n < module->bindInformations.GetLength(); n++ )
@@ -3412,24 +3415,25 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs)
 			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 
-	// TODO: optimize: Use the registeredGlobalFunctions array instead
-	for( n = 0; n < engine->scriptFunctions.GetLength(); n++ )
+	for( n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
 	{
-		if( engine->scriptFunctions[n] &&
-			engine->scriptFunctions[n]->funcType == asFUNC_SYSTEM &&
-			engine->scriptFunctions[n]->objectType == 0 &&
-			engine->scriptFunctions[n]->name == name )
+		asCScriptFunction *f = engine->registeredGlobalFuncs[n];
+		if( f &&
+			f->funcType == asFUNC_SYSTEM &&
+			f->objectType == 0 &&
+			f->nameSpace == ns &&
+			f->name == name )
 		{
 			// Verify if the module has access to the function
-			if( module->accessMask & engine->scriptFunctions[n]->accessMask )
+			if( module->accessMask & f->accessMask )
 			{
 #ifdef AS_DEPRECATED
 				// deprecated since 2011-10-04
 				// Find the config group for the global function
-				asCConfigGroup *group = engine->FindConfigGroupForFunction(engine->scriptFunctions[n]->id);
+				asCConfigGroup *group = engine->FindConfigGroupForFunction(f->id);
 				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
 #endif
-				funcs.PushLast(engine->scriptFunctions[n]->id);
+				funcs.PushLast(f->id);
 			}
 		}
 	}

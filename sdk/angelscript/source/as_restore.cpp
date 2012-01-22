@@ -1026,7 +1026,8 @@ void asCReader::ReadGlobalProperty()
 	ReadString(&name);
 	ReadDataType(&type);
 
-	asCGlobalProperty *prop = module->AllocateGlobalProperty(name.AddressOf(), type);
+	// TODO: namespace: use correct namespace
+	asCGlobalProperty *prop = module->AllocateGlobalProperty(name.AddressOf(), type, "");
 
 	// Read the initialization function
 	bool f;

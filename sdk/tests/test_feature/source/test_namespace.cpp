@@ -14,13 +14,24 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		// Nested namespaces are allowed
 		const char *script =
 			"void func() {} \n"
+			"int var = 0; \n"
+			"class cl {} \n"
+			"interface i {} \n"
+		//	"enum e { e1 } \n"
+		//	"funcdef void fd(); \n"
+			// Namespaces allow same entities to be declared again
 			"namespace a { \n"
-			"  void func1() {} \n"
+			"  void func() {} \n"
+			"  int var = 1; \n"
+			"  class cl {} \n"
+			"  interface i {} \n"
+		//	"  enum e { e1 } \n"
+		//	"  funcdef void fd(); \n"
+			// Nested namespaces are allowed
 			"  namespace b { \n"
-			"    void func2() {} \n"
+			"    int var = 2; \n"
 			"  } \n"
 			"} \n";
 

@@ -203,6 +203,10 @@ public:
 	asDWORD                      accessMask;
 	bool                         isShared;
 
+	// TODO: optimize: The namespace should be stored as an integer id. This  
+	//                 will use less space and provide quicker comparisons.
+	asCString                    nameSpace;
+
 	// Used by asFUNC_SCRIPT
 	asCArray<asDWORD>               byteCode;
 	asCArray<asCObjectType*>        objVariableTypes;

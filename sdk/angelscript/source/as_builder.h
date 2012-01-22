@@ -143,10 +143,10 @@ protected:
 	friend class asCParser;
 
 	asCObjectProperty *GetObjectProperty(asCDataType &obj, const char *prop);
-	asCGlobalProperty *GetGlobalProperty(const char *prop, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp);
+	asCGlobalProperty *GetGlobalProperty(const char *prop, const asCString &ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp);
 
 	asCScriptFunction *GetFunctionDescription(int funcId);
-	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs);
+	void GetFunctionDescriptions(const char *name, asCArray<int> &funcs, const asCString &ns);
 	void GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope = "");
 
 	int  ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);

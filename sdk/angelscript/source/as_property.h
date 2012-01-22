@@ -76,6 +76,7 @@ public:
 	asCString          name;
 	asCDataType        type;
 	asUINT             id;
+	asCString          nameSpace;
 
 	void SetInitFunc(asCScriptFunction *initFunc);
 	asCScriptFunction *GetInitFunc();

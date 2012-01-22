@@ -6491,7 +6491,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			bool isPureConstant = false;
 			bool isAppProp = false;
 			asQWORD constantValue;
-			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), &isCompiled, &isPureConstant, &constantValue, &isAppProp);
+			// TODO: namespace: Use proper namespace
+			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), "", &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
 			{
 				found = true;
@@ -6567,7 +6568,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	if( !noFunction && !found && (scope == "" || scope == "::") && !objType )
 	{
 		asCArray<int> funcs;
-		builder->GetFunctionDescriptions(name.AddressOf(), funcs);
+		// TODO: namespace: Use the proper namespace
+		builder->GetFunctionDescriptions(name.AddressOf(), funcs, "");
 
 		if( funcs.GetLength() > 1 )
 		{
@@ -7728,7 +7730,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		}
 		else
 		{
-			builder->GetFunctionDescriptions(name.AddressOf(), funcs);
+			// TODO: namespace: use the proper namespace
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs, "");
 
 			// TODO: funcdef: It is still possible that there is a global variable of a function type
 		}
@@ -8259,7 +8262,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		// Look for appropriate global functions.
 		asCArray<int> funcs;
 		asUINT n;
-		builder->GetFunctionDescriptions(getName.AddressOf(), funcs);
+		// TODO: namespace: use the proper namespace
+		builder->GetFunctionDescriptions(getName.AddressOf(), funcs, "");
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
@@ -8279,7 +8283,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		}
 
 		funcs.SetLength(0);
-		builder->GetFunctionDescriptions(setName.AddressOf(), funcs);
+		// TODO: namespace: use the proper namespace
+		builder->GetFunctionDescriptions(setName.AddressOf(), funcs, "");
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
