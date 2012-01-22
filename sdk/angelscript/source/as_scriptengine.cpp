@@ -1079,7 +1079,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	asCDataType type;
 	asCString name;
 
-	if( (r = bld.VerifyProperty(&dt, declaration, name, type)) < 0 )
+	if( (r = bld.VerifyProperty(&dt, declaration, name, type, "")) < 0 )
 		return ConfigError(r, "RegisterObjectProperty", obj, declaration);
 
 	// Store the property info
@@ -1949,7 +1949,8 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 
 	int r;
 	asCBuilder bld(this, 0);
-	if( (r = bld.VerifyProperty(0, declaration, name, type)) < 0 )
+	// TODO: namespace: Use proper namespace
+	if( (r = bld.VerifyProperty(0, declaration, name, type, "")) < 0 )
 		return ConfigError(r, "RegisterGlobalProperty", declaration, 0);
 
 	// Don't allow registering references as global properties

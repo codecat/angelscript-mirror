@@ -1561,10 +1561,11 @@ int asCModule::RemoveFunction(int funcId)
 }
 
 // internal
-int asCModule::AddFuncDef(const char *name)
+int asCModule::AddFuncDef(const char *name, const asCString &ns)
 {
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, 0, asFUNC_FUNCDEF);
-	func->name = name;
+	func->name      = name;
+	func->nameSpace = ns;
 
 	funcDefs.PushLast(func);
 

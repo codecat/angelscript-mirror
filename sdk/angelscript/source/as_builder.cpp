@@ -713,7 +713,7 @@ int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCString *
 	return asSUCCESS;
 }
 
-int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &name, asCDataType &type)
+int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &name, asCDataType &type, const asCString &ns)
 {
 	numErrors = 0;
 	numWarnings = 0;
@@ -760,8 +760,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	}
 	else
 	{
-		// TODO: namespace: Use proper namespace
-		if( CheckNameConflict(name.AddressOf(), nameNode, &source, "") < 0 )
+		if( CheckNameConflict(name.AddressOf(), nameNode, &source, ns) < 0 )
 			return asNAME_TAKEN;
 	}
 
@@ -801,32 +800,33 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, const asCStri
 
 	// TODO: optimize: Improve linear search
 	// Check application registered properties
-	asCArray<asCGlobalProperty *> *props = &(engine->registeredGlobalProps);
-	for( n = 0; n < props->GetLength(); ++n )
-		// TODO: namespace: Compare namespace too
-		if( (*props)[n] && (*props)[n]->name == prop )
+	asCArray<asCGlobalProperty *> &props = engine->registeredGlobalProps;
+	for( n = 0; n < props.GetLength(); ++n )
+		if( props[n] && 
+			props[n]->name == prop &&
+			props[n]->nameSpace == ns )
 		{
 			if( module )
 			{
 				// Determine if the module has access to the property
-				if( module->accessMask & (*props)[n]->accessMask )
+				if( module->accessMask & props[n]->accessMask )
 				{
 #ifdef AS_DEPRECATED
 					// deprecated since 2011-10-04
 					// Find the config group for the global property
-					asCConfigGroup *group = engine->FindConfigGroupForGlobalVar((*props)[n]->id);
+					asCConfigGroup *group = engine->FindConfigGroupForGlobalVar(props[n]->id);
 					if( !group || group->HasModuleAccess(module->name.AddressOf()) )
 						continue;
 #endif
 					if( isAppProp ) *isAppProp = true;
-					return (*props)[n];
+					return props[n];
 				}
 			}
 			else
 			{
 				// We're not compiling a module right now, so it must be a registered global property
 				if( isAppProp ) *isAppProp = true;
-				return (*props)[n];
+				return props[n];
 			}
 		}
 
@@ -853,11 +853,11 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, const asCStri
 	// Check previously compiled global variables
 	if( module )
 	{
-		props = &module->scriptGlobals;
-		for( n = 0; n < props->GetLength(); ++n )
-			if( (*props)[n]->name == prop &&
-				(*props)[n]->nameSpace == ns )
-				return (*props)[n];
+		asCArray<asCGlobalProperty *> &props = module->scriptGlobals;
+		for( n = 0; n < props.GetLength(); ++n )
+			if( props[n]->name == prop &&
+				props[n]->nameSpace == ns )
+				return props[n];
 	}
 
 	return 0;
@@ -1133,8 +1133,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	// Check against named types
 	for( n = 0; n < namedTypeDeclarations.GetLength(); n++ )
 	{
-		// TODO: namespace: verify namespace
-		if( namedTypeDeclarations[n]->name == name )
+		if( namedTypeDeclarations[n]->name == name &&
+			namedTypeDeclarations[n]->objType->nameSpace == ns )
 		{
 			if( code )
 			{
@@ -1152,8 +1152,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	// Must check for name conflicts with funcdefs
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 	{
-		// TODO: namespace: verify namespace
-		if( funcDefs[n]->name == name )
+		if( funcDefs[n]->name == name &&
+			module->funcDefs[funcDefs[n]->idx]->nameSpace == ns )
 		{
 			if( code )
 			{
@@ -1195,12 +1195,11 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, const 
 	// The return type and parameter types aren't determined in this function. A second pass is 
 	// necessary after all type declarations have been identified.
 
-	// TODO: namespace: store the namespace
 	sFuncDef *fd = asNEW(sFuncDef);
 	fd->name   = name;
 	fd->node   = node;
 	fd->script = file;
-	fd->idx    = module->AddFuncDef(name.AddressOf());
+	fd->idx    = module->AddFuncDef(name.AddressOf(), ns);
 
 	funcDefs.PushLast(fd);
 
@@ -2435,13 +2434,13 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 		asCObjectType *st;
 		asCDataType dataType;
 
-		// TODO: namespace: store namespace
 		st = asNEW(asCObjectType)(engine);
 		dataType.CreatePrimitive(ttInt, false);
 
 		st->flags     = asOBJ_ENUM;
 		st->size      = 4;
 		st->name      = name;
+		st->nameSpace = ns;
 
 		module->enumTypes.PushLast(st);
 		st->AddRef();
@@ -2459,9 +2458,9 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 
 		asCDataType type = CreateDataTypeFromNode(tmp, file);
 		asASSERT(!type.IsReference());
-
+		
+		// Register the enum values
 		tmp = tmp->next;
-
 		while( tmp )
 		{
 			asASSERT(snIdentifier == tmp->nodeType);
@@ -2476,7 +2475,8 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 				if( gvar->datatype != type )
 					break;
 
-				if( gvar->name == name )
+				if( gvar->name == name &&
+					gvar->property->nameSpace == ns )
 				{
 					r = asNAME_TAKEN;
 					break;
@@ -2497,7 +2497,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 				continue;
 			}
 
-			//	check for assignment
+			// Check for assignment
 			asCScriptNode *asnNode = tmp->next;
 			if( asnNode && snAssignment == asnNode->nodeType )
 				asnNode->DisconnectParent();
@@ -2522,10 +2522,11 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 
 			// Allocate dummy property so we can compile the value. 
 			// This will be removed later on so we don't add it to the engine.
-			gvar->property        = asNEW(asCGlobalProperty);
-			gvar->property->name  = name;
-			gvar->property->type  = gvar->datatype;
-			gvar->property->id    = 0;
+			gvar->property            = asNEW(asCGlobalProperty);
+			gvar->property->name      = name;
+			gvar->property->nameSpace = ns;
+			gvar->property->type      = gvar->datatype;
+			gvar->property->id        = 0;
 
 			tmp = tmp->next;
 		}
@@ -2556,12 +2557,12 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, const 
 	if( asSUCCESS == r )
 	{
 		// Create the new type
-		// TODO: namespace: Store namespace
 		asCObjectType *st = asNEW(asCObjectType)(engine);
 
 		st->flags           = asOBJ_TYPEDEF;
 		st->size            = dataType.GetSizeInMemoryBytes();
 		st->name            = name;
+		st->nameSpace       = ns;
 		st->templateSubType = dataType;
 
 		st->AddRef();

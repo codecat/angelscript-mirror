@@ -117,7 +117,7 @@ public:
 	~asCBuilder();
 
 	// These methods are used by the application interface
-	int VerifyProperty(asCDataType *dt, const char *decl, asCString &outName, asCDataType &outType);
+	int VerifyProperty(asCDataType *dt, const char *decl, asCString &outName, asCDataType &outType, const asCString &ns);
 	int ParseDataType(const char *datatype, asCDataType *result);
 	int ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName);
 	int ParseFunctionDeclaration(asCObjectType *type, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
