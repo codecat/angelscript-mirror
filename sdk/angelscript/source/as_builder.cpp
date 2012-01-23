@@ -524,8 +524,11 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 		{
 			// Recursively register the entities defined in the namespace
 			asCString nsChild;
-			nsChild.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);			
-			RegisterTypesFromScript(node->lastChild, script, ns+"::"+nsChild);
+			nsChild.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);	
+			if( ns != "" )
+				RegisterTypesFromScript(node->lastChild, script, ns+"::"+nsChild);
+			else
+				RegisterTypesFromScript(node->lastChild, script, nsChild);
 		}
 		else
 		{
@@ -570,8 +573,11 @@ void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *
 		{
 			// Recursively register the entities in the namespace
 			asCString nsChild;
-			nsChild.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);			
-			RegisterNonTypesFromScript(node->lastChild, script, ns+"::"+nsChild);
+			nsChild.Assign(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);		
+			if( ns != "" )
+				RegisterNonTypesFromScript(node->lastChild, script, ns+"::"+nsChild);
+			else
+				RegisterNonTypesFromScript(node->lastChild, script, nsChild);
 		}
 		else
 		{

@@ -6459,9 +6459,10 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it a global property?
-	if( !found && (scope == "" || scope == "::") && !objType )
+	if( !found && !objType )
 	{
 		// See if there are any matching global property accessors
+		// TODO: namespace: Support namespaces for global property accessors too
 		asSExprContext access(engine);
 		int r = 0;
 		if( errNode->next && errNode->next->tokenType == ttOpenBracket )
@@ -6491,8 +6492,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			bool isPureConstant = false;
 			bool isAppProp = false;
 			asQWORD constantValue;
-			// TODO: namespace: Use proper namespace
-			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), "", &isCompiled, &isPureConstant, &constantValue, &isAppProp);
+			asCString ns = scope == "::" ? "" : scope;
+			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
 			{
 				found = true;
@@ -6565,11 +6566,11 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it the name of a global function?
-	if( !noFunction && !found && (scope == "" || scope == "::") && !objType )
+	if( !noFunction && !found && !objType )
 	{
 		asCArray<int> funcs;
-		// TODO: namespace: Use the proper namespace
-		builder->GetFunctionDescriptions(name.AddressOf(), funcs, "");
+		asCString ns = scope == "::" ? "" : scope;
+		builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
 		if( funcs.GetLength() > 1 )
 		{
@@ -6607,6 +6608,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	// Is it an enum value?
 	if( !found && !objType )
 	{
+		// TODO: namespace: The enum type may be declared in a namespace too
 		asCObjectType *scopeType = 0;
 		if( scope != "" )
 		{
@@ -6958,23 +6960,18 @@ asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
 	asCScriptNode *sn = node->firstChild;
 	if( sn->tokenType == ttScope )
 	{
-		// Global scope
 		scope = "::";
 		sn = sn->next;
 	}
-	else if( sn->next && sn->next->tokenType == ttScope )
-	{
-		scope.Assign(&script->code[sn->tokenPos], sn->tokenLength);
-		sn = sn->next->next;
-	}
 
-	if( scope != "" )
+	while( sn && sn->next && sn->next->tokenType == ttScope )
 	{
-		// We don't support multiple levels of scope yet
-		if( sn->next && sn->next->tokenType == ttScope )
-		{
-			Error(TXT_INVALID_SCOPE, sn->next);
-		}
+		asCString tmp;
+		tmp.Assign(&script->code[sn->tokenPos], sn->tokenLength);
+		if( scope != "" && scope != "::" )
+			scope += "::";
+		scope += tmp;
+		sn = sn->next->next;
 	}
 
 	return scope;

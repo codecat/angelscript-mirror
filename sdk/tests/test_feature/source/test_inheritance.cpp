@@ -634,8 +634,7 @@ bool Test2()
 					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"
 					   "script (1, 65) : Info    : Candidates are:\n"
 					   "script (1, 65) : Info    : void A::method()\n"
-					   "script (1, 83) : Error   : Invalid scope resolution\n"
-					   "script (1, 79) : Error   : No matching signatures to 'B::a()'\n" )
+					   "script (1, 79) : Error   : No matching signatures to 'B::A::a()'\n" )
 	{
 		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());
