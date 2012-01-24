@@ -1463,6 +1463,24 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test the parsing of doubles
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		double d;
+		engine->RegisterGlobalProperty("double d", &d);
+
+		ExecuteString(engine, "d = 0.1234567890123456789");
+
+		if( !CompareDouble(d, 0.1234567890123456789) )
+			TEST_FAILED;
+
+		ExecuteString(engine, "d = 1.0e-307");
+
+		if( !CompareDouble(d/1.0e-307, 1.0) )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Make sure the deferred parameters are processed in the switch condition
 	{

@@ -31,11 +31,8 @@
 
 #include "as_config.h"
 
-#include <stdarg.h>     // va_list, va_start(), etc
-#include <stdlib.h>     // strtod(), strtol()
-#include <stdio.h>      // _vsnprintf()
 #include <string.h>     // some compilers declare memcpy() here
-#include <locale.h>     // setlocale()
+#include <math.h>       // pow()
 
 #if !defined(AS_NO_MEMORY_H)
 #include <memory.h>
@@ -79,32 +76,88 @@ int asCompareStrings(const char *str1, size_t len1, const char *str2, size_t len
 
 double asStringScanDouble(const char *string, size_t *numScanned)
 {
-	char *end;
+	// I decided to do my own implementation of strtod() because this function
+	// doesn't seem to be present on all systems. iOS 5 for example doesn't appear 
+	// to include the function in the standard lib. 
+	
+	// Another reason is that the standard implementation of strtod() is dependent
+	// on the locale on some systems, i.e. it may use comma instead of dot for 
+	// the decimal indicator. This can be avoided by forcing the locale to "C" with
+	// setlocale(), but this is another thing that is highly platform dependent.
 
-    // WinCE doesn't have setlocale. Some quick testing on my current platform
-    // still manages to parse the numbers such as "3.14" even if the decimal for the
-    // locale is ",".
-#if !defined(_WIN32_WCE) && !defined(ANDROID)
-	// Set the locale to C so that we are guaranteed to parse the float value correctly
-	char *orig = setlocale(LC_NUMERIC, 0);
-	setlocale(LC_NUMERIC, "C");
-#endif
+	double value = 0;
+	double fraction = 0.1;
+	int exponent = 0;
+	bool negativeExponent = false;
+	int c = 0;
 
-	// TODO: It seems strtod() is not available on iOS 5. It's probably 
-	//       time to substitute this for my own implementation. This 
-	//       would also make the code locale independent.
-	//       http://www.gamedev.net/topic/618198-angelscript-and-xcode-421/
-	double res = strtod(string, &end);
+	// The tokenizer separates the sign from the number in   
+	// two tokens so we'll never have a sign to parse here
 
-#if !defined(_WIN32_WCE) && !defined(ANDROID)
-	// Restore the locale
-	setlocale(LC_NUMERIC, orig);
-#endif
+	// Parse the integer value
+	for( ;; )
+	{
+		if( string[c] >= '0' && string[c] <= '9' )
+			value = value*10 + double(string[c] - '0');
+		else 
+			break;
+
+		c++;
+	}
+
+	if( string[c] == '.' )
+	{
+		c++;
+
+		// Parse the fraction
+		for( ;; )
+		{
+			if( string[c] >= '0' && string[c] <= '9' )
+				value += fraction * double(string[c] - '0');
+			else
+				break;
+
+			c++;
+			fraction *= 0.1;
+		}
+	}
+
+	if( string[c] == 'e' || string[c] == 'E' )
+	{
+		c++;
+
+		// Parse the sign of the exponent
+		if( string[c] == '-' )
+		{
+			negativeExponent = true;
+			c++;
+		}
+		else if( string[c] == '+' )
+			c++;
+
+		// Parse the exponent value
+		for( ;; )
+		{
+			if( string[c] >= '0' && string[c] <= '9' )
+				exponent = exponent*10 + int(string[c] - '0');
+			else
+				break;
+
+			c++;
+		}
+	}
+
+	if( exponent )
+	{
+		if( negativeExponent )
+			exponent = -exponent;
+		value *= pow(10.0, exponent);
+	}
 
 	if( numScanned )
-		*numScanned = end - string;
+		*numScanned = c;
 
-	return res;
+	return value;
 }
 
 asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned)

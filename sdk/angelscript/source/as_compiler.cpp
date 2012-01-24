@@ -6493,6 +6493,15 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			bool isAppProp = false;
 			asQWORD constantValue;
 			asCString ns = scope == "::" ? "" : scope;
+
+			if( ns == "" )
+			{
+				if( outFunc->nameSpace != "" )
+					ns = outFunc->nameSpace;
+				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
+					ns = outFunc->objectType->nameSpace;
+			}
+
 			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
 			{
@@ -6570,6 +6579,15 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	{
 		asCArray<int> funcs;
 		asCString ns = scope == "::" ? "" : scope;
+
+		if( ns == "" )
+		{
+			if( outFunc->nameSpace != "" )
+				ns = outFunc->nameSpace;
+			else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
+				ns = outFunc->objectType->nameSpace;
+		}
+
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
 		if( funcs.GetLength() > 1 )
@@ -7733,6 +7751,15 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		{
 			// The scope is used to define the namespace
 			asCString ns = scope == "::" ? "" : scope;
+
+			if( ns == "" )
+			{
+				if( outFunc->nameSpace != "" )
+					ns = outFunc->nameSpace;
+				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
+					ns = outFunc->objectType->nameSpace;
+			}
+
 			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
 			// TODO: funcdef: It is still possible that there is a global variable of a function type

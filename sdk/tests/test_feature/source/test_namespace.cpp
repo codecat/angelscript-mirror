@@ -17,18 +17,20 @@ bool Test()
 
 		const char *script =
 			"int func() { return var; } \n"
+			"int func2() { return var; } \n"
 			"int var = 0; \n"
-			"class cl {} \n"
+			"class cl { cl() {v = 0;} int v; } \n"
 			"interface i {} \n"
-			"enum e { e1 } \n"
+			"enum e { e1 = 0 } \n"
 			"funcdef void fd(); \n"
 			// Namespaces allow same entities to be declared again
 			"namespace a { \n"
-			"  int func() { return var; } \n" // Should find the global var in the same scope
+			"  int func() { return var; } \n" // Should find the global var in the same namespace
+			"  int func2() { return func(); } \n" // Should find the global function in the same namespace
 			"  int var = 1; \n"
-			"  class cl {} \n"
+			"  class cl { cl() {v = 1;} int v; } \n"
 			"  interface i {} \n"
-			"  enum e { e1 } \n"
+			"  enum e { e1 = 1 } \n"
 			"  funcdef void fd(); \n"
 			// Nested namespaces are allowed
 			"  namespace b { \n"
@@ -43,7 +45,19 @@ bool Test()
 			"  assert(a::var == 1); \n"
 			"  assert(a::b::var == 2); \n"
 			"  assert(func() == 0); \n"
-			"  assert(a::func() == 0); \n"
+			"  assert(a::func() == 1); \n"
+			"  assert(func2() == 0); \n"
+			"  assert(a::func2() == 1); \n"
+			"  assert(e1 == 0); \n"
+		//	"  assert(::e1 == 0); \n"
+			"  assert(e::e1 == 0); \n"
+		//	"  asserT(::e::e1 == 0); \n"
+		//	"  assert(a::e1 == 1); \n"
+		//	"  assert(a::e::e1 == 1); \n"
+		    "  cl c; \n"
+		//	"  a::cl ca; \n"
+			"  assert( c.v == 0 ); \n"
+		//	"  assert( ca.v == 1 ); \n"
 			"} \n";
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
