@@ -6865,6 +6865,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// Determine the scope resolution
 		asCString scope = GetScopeFromNode(vnode);
 
+		// TODO: cleanup: This condition should be handled inside the CompileFunctionCall itself to avoid duplicating the code
 		if( outFunc && outFunc->objectType && scope != "::" )
 		{
 			// TODO: funcdef: There may be a local variable of a function type with the same name
@@ -7712,14 +7713,17 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// If we're compiling a constructor and the name of the function is super then
 			// the constructor of the base class is being called.
 			// super cannot be prefixed with a scope operator
-			if( m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
+			if( scope == "" && m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
 			{
 				// If the class is not derived from anyone else, calling super should give an error
 				if( objectType->derivedFrom )
 					funcs = objectType->derivedFrom->beh.constructors;
 			}
 			else
+			{
+				// The scope is can be used to specify the base class
 				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
+			}
 
 			// It is still possible that there is a class member of a function type
 			if( funcs.GetLength() == 0 )
@@ -7727,8 +7731,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		}
 		else
 		{
-			// TODO: namespace: use the proper namespace
-			builder->GetFunctionDescriptions(name.AddressOf(), funcs, "");
+			// The scope is used to define the namespace
+			asCString ns = scope == "::" ? "" : scope;
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
 			// TODO: funcdef: It is still possible that there is a global variable of a function type
 		}

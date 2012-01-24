@@ -16,7 +16,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script =
-			"void func() {} \n"
+			"int func() { return var; } \n"
 			"int var = 0; \n"
 			"class cl {} \n"
 			"interface i {} \n"
@@ -24,7 +24,7 @@ bool Test()
 			"funcdef void fd(); \n"
 			// Namespaces allow same entities to be declared again
 			"namespace a { \n"
-			"  void func() {} \n"
+			"  int func() { return var; } \n" // Should find the global var in the same scope
 			"  int var = 1; \n"
 			"  class cl {} \n"
 			"  interface i {} \n"
@@ -42,6 +42,8 @@ bool Test()
 			"  assert(::var == 0); \n"
 			"  assert(a::var == 1); \n"
 			"  assert(a::b::var == 2); \n"
+			"  assert(func() == 0); \n"
+			"  assert(a::func() == 0); \n"
 			"} \n";
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
