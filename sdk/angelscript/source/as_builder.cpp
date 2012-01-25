@@ -665,6 +665,7 @@ void asCBuilder::CompileFunctions()
 }
 #endif
 
+// Called from module and engine
 int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 {
 	numErrors = 0;
@@ -682,7 +683,8 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 	// Get data type and property name
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
-	*result = CreateDataTypeFromNode(dataType, &source, true);
+	// TODO: namespace: Use correct implicit namespace
+	*result = CreateDataTypeFromNode(dataType, &source, "", true);
 
 	if( numErrors > 0 )
 		return asINVALID_TYPE;
@@ -746,7 +748,8 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 
 	asCScriptNode *nameNode = dataType->next;
 
-	type = CreateDataTypeFromNode(dataType, &source);
+	// TODO: namespace: Use correct implicit namespace
+	type = CreateDataTypeFromNode(dataType, &source, "");
 	name.Assign(&decl[nameNode->tokenPos], nameNode->tokenLength);
 
 	// Validate that the type really can be a registered property
@@ -895,7 +898,8 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	bool autoHandle;
 
 	// Scoped reference types are allowed to use handle when returned from application functions
-	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, true, objType);
+	// TODO: namespace: Use correct implicit namespace
+	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, "", true, objType);
 	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, &source, 0, &autoHandle);
 	if( autoHandle && (!func->returnType.IsObjectHandle() || func->returnType.IsReference()) )
 			return asINVALID_DECLARATION;
@@ -933,7 +937,8 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	while( n )
 	{
 		asETypeModifiers inOutFlags;
-		asCDataType type = CreateDataTypeFromNode(n, &source, false, objType);
+		// TODO: namespace: Use correct implicit namespace
+		asCDataType type = CreateDataTypeFromNode(n, &source, "", false, objType);
 		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 
 		// Reference types cannot be passed by value to system functions
@@ -1021,7 +1026,8 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *va
 	var->name.Assign(&source.code[n->tokenPos], n->tokenLength);
 
 	// Initialize a script variable object for registration
-	var->type = CreateDataTypeFromNode(node->firstChild, &source);
+	// TODO: namespace: Use correct implicit namespace
+	var->type = CreateDataTypeFromNode(node->firstChild, &source, "");
 
 	if( numErrors > 0 || numWarnings > 0 )
 		return asINVALID_DECLARATION;
@@ -1253,7 +1259,8 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, cons
 	}
 
 	// What data type is it?
-	asCDataType type = CreateDataTypeFromNode(node->firstChild, file);
+	// TODO: namespace: Use correct implicit namespace
+	asCDataType type = CreateDataTypeFromNode(node->firstChild, file, "");
 
 	if( !type.CanBeInstanciated() )
 	{
@@ -2088,7 +2095,8 @@ void asCBuilder::CompileClasses()
 					isPrivate = true;
 
 				asCScriptCode *file = decl->script;
-				asCDataType dt = CreateDataTypeFromNode(isPrivate ? node->firstChild->next : node->firstChild, file);
+				// TODO: namespace: Use correct implicit namespace
+				asCDataType dt = CreateDataTypeFromNode(isPrivate ? node->firstChild->next : node->firstChild, file, "");
 				asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 				if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
@@ -2463,7 +2471,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 		decl->objType          = st;
 		namedTypeDeclarations.PushLast(decl);
 
-		asCDataType type = CreateDataTypeFromNode(tmp, file);
+		asCDataType type = CreateDataTypeFromNode(tmp, file, ns);
 		asASSERT(!type.IsReference());
 		
 		// Register the enum values
@@ -2635,7 +2643,8 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	// Initialize a script function object for registration
 	if( !isConstructor && !isDestructor )
 	{
-		returnType = CreateDataTypeFromNode(node, file);
+		// TODO: namespace: Use correct implicit namespace
+		returnType = CreateDataTypeFromNode(node, file, "");
 		returnType = ModifyDataTypeFromNode(returnType, node->next, file, 0, 0);
 	}
 	else
@@ -2688,7 +2697,8 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	while( n )
 	{
 		asETypeModifiers inOutFlag;
-		asCDataType type = CreateDataTypeFromNode(n, file);
+		// TODO: namespace: Use correct implicit namespace
+		asCDataType type = CreateDataTypeFromNode(n, file, "");
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
 		// Store the parameter type
@@ -3161,7 +3171,8 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 	asCScriptNode *mainNode = node;
 	node = node->firstChild;
 
-	emulatedType = CreateDataTypeFromNode(node, file);
+	// TODO: namespace: Use correct implicit namespace
+	emulatedType = CreateDataTypeFromNode(node, file, "");
 	emulatedType = ModifyDataTypeFromNode(emulatedType, node->next, file, 0, 0);
 	node = node->next->next;
 
@@ -3298,7 +3309,8 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 	// Initialize a script function object for registration
 	asCDataType returnType;
-	returnType = CreateDataTypeFromNode(f->firstChild, file);
+	// TODO: namespace: Use correct implicit namespace
+	returnType = CreateDataTypeFromNode(f->firstChild, file, "");
 	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, file, 0, 0);
 
 	// Count the parameters
@@ -3318,7 +3330,8 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	while( n )
 	{
 		asETypeModifiers inOutFlag;
-		asCDataType type = CreateDataTypeFromNode(n, file);
+		// TODO: namespace: Use correct implicit namespace
+		asCDataType type = CreateDataTypeFromNode(n, file, "");
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
 		// Store the parameter type
@@ -3567,7 +3580,7 @@ asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *scrip
 	return scope;
 }
 
-asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope, asCObjectType *currentType)
+asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, const asCString &implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType)
 {
 	asASSERT(node->nodeType == snDataType);
 
@@ -3585,6 +3598,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 	// Determine namespace
 	asCString scope = GetScopeFromNode(n, file, &n);
+	if( scope == "" ) scope = implicitNamespace;
 
 	if( n->tokenType == ttIdentifier )
 	{
@@ -3637,7 +3651,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 						// orderwise it is a template instance.
 						// Only do this for application registered interface, as the 
 						// scripts cannot implement templates.
-						asCDataType subType = CreateDataTypeFromNode(n, file, false, module ? 0 : ot);
+						// TODO: namespace: Use correct implicit namespace
+						asCDataType subType = CreateDataTypeFromNode(n, file, "", false, module ? 0 : ot);
 						if( subType.GetObjectType() != ot->templateSubType.GetObjectType() )
 						{
 							// This is a template instance
@@ -3902,7 +3917,7 @@ int asCBuilder::GetEnumValueFromObjectType(asCObjectType *objType, const char *n
 	return 0;
 }
 
-int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue)
+int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue, const asCString &ns)
 {
 	bool found = false;
 
@@ -3911,6 +3926,8 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( t = 0; t < engine->objectTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = engine->objectTypes[t];
+		if( ns != ot->nameSpace ) continue;
+
 		if( GetEnumValueFromObjectType( ot, name, outDt, outValue ) )
 		{
 			if( !found )
@@ -3928,6 +3945,8 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	for( t = 0; t < module->enumTypes.GetLength(); t++ )
 	{
 		asCObjectType *ot = module->enumTypes[t];
+		if( ns != ot->nameSpace ) continue;
+
 		if( GetEnumValueFromObjectType( ot, name, outDt, outValue ) )
 		{
 			if( !found )

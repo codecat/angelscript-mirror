@@ -184,7 +184,7 @@ protected:
 	asCObjectType     *GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 
 	int GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
-	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue);
+	int GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue, const asCString &ns);
 
 	struct preMessage_t
 	{
@@ -208,7 +208,7 @@ protected:
 	asCScriptEngine *engine;
 	asCModule *module;
 
-	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
+	asCDataType CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, const asCString &implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
 	asCDataType ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);
 };
 

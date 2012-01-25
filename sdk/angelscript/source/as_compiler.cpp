@@ -257,7 +257,8 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 		if( node->nodeType == snDataType )
 		{
-			returnType = builder->CreateDataTypeFromNode(node, script);
+			// TODO: namespace: Use correct implicit namespace from function
+			returnType = builder->CreateDataTypeFromNode(node, script, "");
 			returnType = builder->ModifyDataTypeFromNode(returnType, node->next, script, 0, 0);
 
 			// Make sure the return type is instanciable or is void
@@ -306,7 +307,8 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		while( node )
 		{
 			// Get the parameter type
-			asCDataType type = builder->CreateDataTypeFromNode(node, script);
+			// TODO: namespace: Use correct implicit namespace from function
+			asCDataType type = builder->CreateDataTypeFromNode(node, script, "");
 
 			asETypeModifiers inoutFlag = asTM_NONE;
 			type = builder->ModifyDataTypeFromNode(type, node->next, script, &inoutFlag, 0);
@@ -1835,7 +1837,8 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
 	// Get the data type
-	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script);
+	// TODO: namespace: Use correct implicit namespace from function
+	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, "");
 
 	// Declare all variables in this declaration
 	asCScriptNode *node = decl->firstChild->next;
@@ -6626,12 +6629,22 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	// Is it an enum value?
 	if( !found && !objType )
 	{
-		// TODO: namespace: The enum type may be declared in a namespace too
+		// The enum type may be declared in a namespace too
 		asCObjectType *scopeType = 0;
-		if( scope != "" )
+		if( scope != "" && scope != "::" )
 		{
+			// Use the last scope name as the enum type
+			asCString enumType = scope;
+			asCString ns;
+			int p = scope.FindLast("::");
+			if( p != -1 )
+			{
+				enumType = scope.SubString(p+2);
+				ns = scope.SubString(0, p);
+			}
+
 			// resolve the type before the scope
-			scopeType = builder->GetObjectType(scope.AddressOf(), "");
+			scopeType = builder->GetObjectType(enumType.AddressOf(), ns);
 		}
 
 		asDWORD value = 0;
@@ -6641,10 +6654,22 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			// scoped enum value found
 			found = true;
 		}
-		else if( scope == "" && !engine->ep.requireEnumScope )
+		else if( !engine->ep.requireEnumScope )
 		{
-			// look for the enum value with no namespace
-			int e = builder->GetEnumValue(name.AddressOf(), dt, value);
+			// Look for the enum value without explicitly informing the enum type
+			asCString ns = scope == "::" ? "" : scope;
+
+			if( ns == "" )
+			{
+				// Use implicit scope from the current function that is being compiled
+				// TODO: cleanup: This is repeated in a lot of places. Should use function for it
+				if( outFunc->nameSpace != "" )
+					ns = outFunc->nameSpace;
+				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
+					ns = outFunc->objectType->nameSpace;
+			}
+
+			int e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
 			if( e )
 			{
 				found = true;
@@ -7243,7 +7268,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		}
 
 		// Determine the requested type
-		to = builder->CreateDataTypeFromNode(node->firstChild, script);
+		// TODO: namespace: Use correct implicit namespace from function
+		to = builder->CreateDataTypeFromNode(node->firstChild, script, "");
 		to.MakeReadOnly(true); // Default to const
 		asASSERT(to.IsPrimitive());
 	}
@@ -7257,7 +7283,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			anyErrors = true;
 
 		// Determine the requested type
-		to = builder->CreateDataTypeFromNode(node->firstChild, script);
+		// TODO: namespace: Use correct implicit namespace from function
+		to = builder->CreateDataTypeFromNode(node->firstChild, script, "");
 		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
 
 		// If the type support object handles, then use it
@@ -7504,7 +7531,8 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 	// It is possible that the name is really a constructor
 	asCDataType dt;
-	dt = builder->CreateDataTypeFromNode(node->firstChild, script);
+	// TODO: namespace: Use correct implicit namespace from function
+	dt = builder->CreateDataTypeFromNode(node->firstChild, script, "");
 	if( dt.IsPrimitive() )
 	{
 		// This is a cast to a primitive type

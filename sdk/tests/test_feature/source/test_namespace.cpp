@@ -38,6 +38,8 @@ bool Test()
 			"  } \n"
 			"} \n"
 			// It's possible to specify exactly which one is wanted
+			"cl gc; \n"
+			"a::cl gca; \n"
 			"void main() \n"
 			"{ \n"
 			"  assert(var == 0); \n"
@@ -49,15 +51,17 @@ bool Test()
 			"  assert(func2() == 0); \n"
 			"  assert(a::func2() == 1); \n"
 			"  assert(e1 == 0); \n"
-		//	"  assert(::e1 == 0); \n"
+			"  assert(::e1 == 0); \n"
 			"  assert(e::e1 == 0); \n"
-		//	"  assert(::e::e1 == 0); \n"
-		//	"  assert(a::e1 == 1); \n"
-		//	"  assert(a::e::e1 == 1); \n"
+			"  assert(::e::e1 == 0); \n"
+			"  assert(a::e1 == 1); \n"
+			"  assert(a::e::e1 == 1); \n"
 			"  cl c; \n"
 			"  a::cl ca; \n"
-			"  assert( c.v == 0 ); \n"
-			"  assert( ca.v == 1 ); \n"
+			"  assert(c.v == 0); \n"
+			"  assert(ca.v == 1); \n"
+			"  assert(gc.v == 0); \n"
+			"  assert(gca.v == 1); \n"
 			"} \n";
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
