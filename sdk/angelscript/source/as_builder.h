@@ -152,6 +152,8 @@ protected:
 	int  ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
 	asCString GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
 
+	asCString GetScopeFromNode(asCScriptNode *n, asCScriptCode *script, asCScriptNode **next = 0);
+
 #ifndef AS_NO_COMPILER
 	int RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, const asCString &ns = "");
 	int RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false, const asCString &ns = "");
@@ -177,7 +179,7 @@ protected:
 	void CompileGlobalVariables();
 #endif
 
-	asCObjectType     *GetObjectType(const char *type);
+	asCObjectType     *GetObjectType(const char *type, const asCString &ns);
 	asCScriptFunction *GetFuncDef(const char *type);
 	asCObjectType     *GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 

@@ -197,7 +197,7 @@ public:
 
 	asCScriptFunction *GetImportedFunction(int funcId) const;
 
-	asCObjectType *GetObjectType(const char *type);
+	asCObjectType *GetObjectType(const char *type, const asCString &ns);
 
 	asCGlobalProperty *AllocateGlobalProperty(const char *name, const asCDataType &dt, const asCString &ns);
 

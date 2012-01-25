@@ -993,21 +993,24 @@ int asCModule::UnbindAllImportedFunctions()
 }
 
 // internal
-asCObjectType *asCModule::GetObjectType(const char *type)
+asCObjectType *asCModule::GetObjectType(const char *type, const asCString &ns)
 {
 	size_t n;
 
 	// TODO: optimize: Improve linear search
 	for( n = 0; n < classTypes.GetLength(); n++ )
-		if( classTypes[n]->name == type )
+		if( classTypes[n]->name == type &&
+			classTypes[n]->nameSpace == ns )
 			return classTypes[n];
 
 	for( n = 0; n < enumTypes.GetLength(); n++ )
-		if( enumTypes[n]->name == type )
+		if( enumTypes[n]->name == type && 
+			enumTypes[n]->nameSpace == ns )
 			return enumTypes[n];
 
 	for( n = 0; n < typeDefs.GetLength(); n++ )
-		if( typeDefs[n]->name == type )
+		if( typeDefs[n]->name == type && 
+			typeDefs[n]->nameSpace == ns )
 			return typeDefs[n];
 
 	return 0;

@@ -1801,7 +1801,8 @@ void asCBuilder::CompileClasses()
 			asCString name(&file->code[node->tokenPos], node->tokenLength);
 
 			// Find the object type for the interface
-			asCObjectType *objType = GetObjectType(name.AddressOf());
+			// TODO: namespace: Use correct namespace
+			asCObjectType *objType = GetObjectType(name.AddressOf(), "");
 
 			if( objType == 0 )
 			{
@@ -3540,6 +3541,31 @@ void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r
 	engine->WriteMessage(scriptname, r, c, asMSGTYPE_WARNING, message);
 }
 
+asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *script, asCScriptNode **next)
+{
+	asCString scope;
+	asCScriptNode *sn = node;
+	if( sn->tokenType == ttScope )
+	{
+		scope = "::";
+		sn = sn->next;
+	}
+
+	while( sn && sn->next && sn->next->tokenType == ttScope )
+	{
+		asCString tmp;
+		tmp.Assign(&script->code[sn->tokenPos], sn->tokenLength);
+		if( scope != "" && scope != "::" )
+			scope += "::";
+		scope += tmp;
+		sn = sn->next->next;
+	}
+
+	if( next )
+		*next = sn;
+
+	return scope;
+}
 
 asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, bool acceptHandleForScope, asCObjectType *currentType)
 {
@@ -3557,6 +3583,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		n = n->next;
 	}
 
+	// Determine namespace
+	asCString scope = GetScopeFromNode(n, file, &n);
+
 	if( n->tokenType == ttIdentifier )
 	{
 		asCString str;
@@ -3571,7 +3600,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			ot = currentType->templateSubType.GetObjectType();
 
 		if( ot == 0 )
-			ot = GetObjectType(str.AddressOf());
+			ot = GetObjectType(str.AddressOf(), scope);
 		if( ot == 0 && !module && currentType )
 			ot = GetObjectTypeFromTypesKnownByObject(str.AddressOf(), currentType);
 	
@@ -3792,11 +3821,12 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 	return dt;
 }
 
-asCObjectType *asCBuilder::GetObjectType(const char *type)
+asCObjectType *asCBuilder::GetObjectType(const char *type, const asCString &ns)
 {
+	// TODO: namespace: Registered types should also allow namespaces
 	asCObjectType *ot = engine->GetObjectType(type);
 	if( !ot && module )
-		ot = module->GetObjectType(type);
+		ot = module->GetObjectType(type, ns);
 
 	return ot;
 }

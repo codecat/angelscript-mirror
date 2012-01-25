@@ -214,7 +214,6 @@ protected:
 	void ConvertToTempVariableNotIn(asSExprContext *ctx, asSExprContext *exclude);
 	void ConvertToReference(asSExprContext *ctx);
 	void PushVariableOnStack(asSExprContext *ctx, bool asReference);
-	asCString GetScopeFromNode(asCScriptNode *node);
 	void DestroyVariables(asCByteCode *bc);
 
 	// Returns the cost of the conversion (the sum of the EConvCost performed)

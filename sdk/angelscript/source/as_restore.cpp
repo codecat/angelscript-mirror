@@ -1238,7 +1238,8 @@ asCObjectType* asCReader::ReadObjectType()
 		if( typeName.GetLength() && typeName != "_builtin_object_" && typeName != "_builtin_function_" )
 		{
 			// Find the object type
-			ot = module->GetObjectType(typeName.AddressOf());
+			// TODO: namespace: Use correct namespace
+			ot = module->GetObjectType(typeName.AddressOf(), "");
 			if( !ot )
 				ot = engine->GetObjectType(typeName.AddressOf());
 			

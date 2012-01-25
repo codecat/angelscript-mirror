@@ -6631,7 +6631,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		if( scope != "" )
 		{
 			// resolve the type before the scope
-			scopeType = builder->GetObjectType( scope.AddressOf() );
+			scopeType = builder->GetObjectType(scope.AddressOf(), "");
 		}
 
 		asDWORD value = 0;
@@ -6711,10 +6711,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	if( vnode->nodeType == snVariableAccess )
 	{
 		// Determine the scope resolution of the variable
-		asCString scope = GetScopeFromNode(vnode);
+		asCString scope = builder->GetScopeFromNode(vnode->firstChild, script, &vnode);
 
 		// Determine the name of the variable
-		vnode = vnode->lastChild;
 		asASSERT(vnode->nodeType == snIdentifier );
 		asCString name(&script->code[vnode->tokenPos], vnode->tokenLength);
 
@@ -6881,7 +6880,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snFunctionCall )
 	{
 		// Determine the scope resolution
-		asCString scope = GetScopeFromNode(vnode);
+		asCString scope = builder->GetScopeFromNode(vnode->firstChild, script);
 
 		// TODO: cleanup: This condition should be handled inside the CompileFunctionCall itself to avoid duplicating the code
 		if( outFunc && outFunc->objectType && scope != "::" )
@@ -6971,29 +6970,6 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		asASSERT(false);
 
 	return 0;
-}
-
-asCString asCCompiler::GetScopeFromNode(asCScriptNode *node)
-{
-	asCString scope;
-	asCScriptNode *sn = node->firstChild;
-	if( sn->tokenType == ttScope )
-	{
-		scope = "::";
-		sn = sn->next;
-	}
-
-	while( sn && sn->next && sn->next->tokenType == ttScope )
-	{
-		asCString tmp;
-		tmp.Assign(&script->code[sn->tokenPos], sn->tokenLength);
-		if( scope != "" && scope != "::" )
-			scope += "::";
-		scope += tmp;
-		sn = sn->next->next;
-	}
-
-	return scope;
 }
 
 asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, bool processEscapeSequences)

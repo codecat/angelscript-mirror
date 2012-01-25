@@ -704,6 +704,20 @@ bool asCParser::IsVarDecl()
 	if( t1.type == ttConst )
 		GetToken(&t1);
 
+	// The type may be initiated with the scope operator
+	if( t1.type == ttScope )
+		GetToken(&t1);
+
+	// The type may be preceeded with a multilevel scope
+	sToken t2;
+	GetToken(&t2);
+	while( t1.type == ttIdentifier && t2.type == ttScope )
+	{
+		GetToken(&t1);
+		GetToken(&t2);
+	}
+	RewindTo(&t2);
+
 	// We don't validate if the identifier is an actual declared type at this moment
 	// as it may wrongly identify the statement as a non-declaration if the user typed
 	// the name incorrectly. The real type is validated in ParseDeclaration where a
@@ -721,7 +735,6 @@ bool asCParser::IsVarDecl()
 	}
 
 	// Object handles can be interleaved with the array brackets
-	sToken t2;
 	GetToken(&t2);
 	while( t2.type == ttHandle || t2.type == ttOpenBracket )
 	{
@@ -1623,6 +1636,28 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 		}
 	}
 
+
+	// Parse scope prefix
+	sToken t1, t2;
+	GetToken(&t1);
+	if( t1.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+	}
+	GetToken(&t2);
+	while( t1.type == ttIdentifier && t2.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseIdentifier());
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+		GetToken(&t2);
+	}
+	RewindTo(&t1);
+
+	// Parse the actual type
 	node->AddChildLast(ParseDataType(allowVariableType));
 
 	// If the datatype is a template type, then parse the subtype within the < >
@@ -3219,7 +3254,8 @@ bool asCParser::IsDataType(const sToken &token)
 			// Check if this is a registered type
 			asCString str;
 			str.Assign(&script->code[token.pos], token.length);
-			if( !builder->GetObjectType(str.AddressOf()) && !builder->GetFuncDef(str.AddressOf()) )
+			// TODO: namespace: Should parser really keep track of namespace?
+			if( !builder->GetObjectType(str.AddressOf(), "") && !builder->GetFuncDef(str.AddressOf()) )
 				return false;
 		}
 		return true;
