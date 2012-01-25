@@ -173,7 +173,7 @@ int  GetNumAllocs();
 
 inline bool CompareDouble(double a,double b)
 {
-	if( fabs( a - b ) > 0.000000000000001 )
+	if( fabs( a - b ) > 0.00000000000001 )
 		return false;
 	return true;
 }

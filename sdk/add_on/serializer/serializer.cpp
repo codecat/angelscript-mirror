@@ -123,6 +123,7 @@ void CSerializedValue::Init()
 	m_isInit     = false;
 	m_serializer = 0;
 	m_userData   = 0;
+	m_ptr        = 0;
 }
 
 void CSerializedValue::Uninit()

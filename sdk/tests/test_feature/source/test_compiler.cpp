@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <sstream>
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include <iostream>
 
 using namespace std;
 
@@ -1472,12 +1473,18 @@ bool Test()
 		ExecuteString(engine, "d = 0.1234567890123456789");
 
 		if( !CompareDouble(d, 0.1234567890123456789) )
+		{
+			cout << "Got: d = " << d << endl;
 			TEST_FAILED;
+		}
 
-		ExecuteString(engine, "d = 1.0e-307");
+		ExecuteString(engine, "d = 1.0e-300");
 
-		if( !CompareDouble(d/1.0e-307, 1.0) )
+		if( !CompareDouble(d/1.0e-300, 1.0) )
+		{
+			cout << "Got: d = " << d << endl;
 			TEST_FAILED;
+		}
 
 		engine->Release();
 	}
