@@ -173,7 +173,10 @@ int  GetNumAllocs();
 
 inline bool CompareDouble(double a,double b)
 {
-	if( fabs( a - b ) > 0.00000000000001 )
+	// I'm using a quite low accuracy on the double comparison 
+	// due to the known inaccuracies added by the Valgrind CPU 
+	// simulator
+	if( fabs( a - b ) > 0.000000001 )
 		return false;
 	return true;
 }

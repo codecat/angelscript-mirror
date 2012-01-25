@@ -1478,11 +1478,11 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		ExecuteString(engine, "d = 1.0e-300");
+		ExecuteString(engine, "d = 1.0e300");
 
-		if( !CompareDouble(d/1.0e-300, 1.0) )
+		if( !CompareDouble(d/1.0e300, 1.0) )
 		{
-			cout << "Got: d = " << d << ", d/1e-300 = " << (d/1.0e-300) << endl;
+			cout << "Got: d = " << d << ", d/1e300 = " << (d/1.0e300) << " d/1e300 - 1 = " << (d/1.0e300-1.0) << endl;
 			TEST_FAILED;
 		}
 
