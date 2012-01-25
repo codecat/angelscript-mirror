@@ -74,8 +74,22 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Test saving and loading 
+		CBytecodeStream s("");
+		mod->SaveByteCode(&s);
+
+		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod2->LoadByteCode(&s);
+
+		r = ExecuteString(engine, "main()", mod2);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		engine->Release();
 	}
+
+	// TODO: It should be possible to inform the namespace when querying by declaration
+	// TODO: It should be possible to choose whether to include namespace or not when getting declarations
 
 	// Success
 	return fail;

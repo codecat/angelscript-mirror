@@ -425,7 +425,8 @@ void asCReader::ReadUsedFunctions()
 				asCScriptFunction *f = module->scriptFunctions[i];
 				if( !func.IsSignatureEqual(f) ||
 					func.objectType != f->objectType ||
-					func.funcType != f->funcType )
+					func.funcType != f->funcType || 
+					func.nameSpace != f->nameSpace )
 					continue;
 
 				usedFunctions[n] = f;
@@ -439,7 +440,8 @@ void asCReader::ReadUsedFunctions()
 				asCScriptFunction *f = engine->scriptFunctions[i];
 				if( f == 0 ||
 					!func.IsSignatureEqual(f) ||
-					func.objectType != f->objectType )
+					func.objectType != f->objectType ||
+					func.nameSpace != f->nameSpace )
 					continue;
 
 				usedFunctions[n] = f;
@@ -459,6 +461,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	int num;
 
 	ReadString(&func->name);
+	ReadString(&func->nameSpace);
 	ReadDataType(&func->returnType);
 
 	count = ReadEncodedUInt();
@@ -606,12 +609,12 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 {
 	if( phase == 1 )
 	{
-		// name
+		// Read the initial attributes
 		ReadString(&ot->name);
-		// flags
 		READ_NUM(ot->flags);
-		// size
 		ot->size = ReadEncodedUInt();
+		ReadString(&ot->nameSpace);
+
 		// Reset the size of script classes, since it will be recalculated as properties are added
 		if( (ot->flags & asOBJ_SCRIPT_OBJECT) && ot->size != 0 )
 			ot->size = sizeof(asCScriptObject);
@@ -1021,13 +1024,14 @@ void asCReader::ReadString(asCString* str)
 void asCReader::ReadGlobalProperty() 
 {
 	asCString name;
+	asCString nameSpace;
 	asCDataType type;
 
 	ReadString(&name);
+	ReadString(&nameSpace);
 	ReadDataType(&type);
 
-	// TODO: namespace: use correct namespace
-	asCGlobalProperty *prop = module->AllocateGlobalProperty(name.AddressOf(), type, "");
+	asCGlobalProperty *prop = module->AllocateGlobalProperty(name.AddressOf(), type, nameSpace);
 
 	// Read the initialization function
 	bool f;
@@ -1093,7 +1097,8 @@ void asCReader::ReadDataType(asCDataType *dt)
 		for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 		{
 			// TODO: access: Only return the definitions that the module has access to
-			if( engine->registeredFuncDefs[n]->name == func.name )
+			if( engine->registeredFuncDefs[n]->name == func.name &&
+				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace )
 			{
 				funcDef = engine->registeredFuncDefs[n];
 				break;
@@ -1104,7 +1109,8 @@ void asCReader::ReadDataType(asCDataType *dt)
 		{
 			for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
 			{
-				if( module->funcDefs[n]->name == func.name )
+				if( module->funcDefs[n]->name == func.name &&
+					module->funcDefs[n]->nameSpace == func.nameSpace )
 				{
 					funcDef = module->funcDefs[n];
 					break;
@@ -1232,14 +1238,14 @@ asCObjectType* asCReader::ReadObjectType()
 	else if( ch == 'o' )
 	{
 		// Read the object type name
-		asCString typeName;
+		asCString typeName, nameSpace;
 		ReadString(&typeName);
+		ReadString(&nameSpace);
 
 		if( typeName.GetLength() && typeName != "_builtin_object_" && typeName != "_builtin_function_" )
 		{
 			// Find the object type
-			// TODO: namespace: Use correct namespace
-			ot = module->GetObjectType(typeName.AddressOf(), "");
+			ot = module->GetObjectType(typeName.AddressOf(), nameSpace);
 			if( !ot )
 				ot = engine->GetObjectType(typeName.AddressOf());
 			
@@ -1504,11 +1510,12 @@ void asCReader::ReadUsedGlobalProps()
 
 	for( int n = 0; n < c; n++ )
 	{
-		asCString name;
+		asCString name, nameSpace;
 		asCDataType type;
 		char moduleProp;
 
 		ReadString(&name);
+		ReadString(&nameSpace);
 		ReadDataType(&type);
 		READ_NUM(moduleProp);
 
@@ -1519,6 +1526,7 @@ void asCReader::ReadUsedGlobalProps()
 			for( asUINT p = 0; p < module->scriptGlobals.GetLength(); p++ )
 			{
 				if( module->scriptGlobals[p]->name == name &&
+					module->scriptGlobals[p]->nameSpace == nameSpace &&
 					module->scriptGlobals[p]->type == type )
 				{
 					prop = module->scriptGlobals[p]->GetAddressOfValue();
@@ -1532,6 +1540,7 @@ void asCReader::ReadUsedGlobalProps()
 			{
 				if( engine->registeredGlobalProps[p] &&
 					engine->registeredGlobalProps[p]->name == name &&
+					engine->registeredGlobalProps[p]->nameSpace == nameSpace &&
 					engine->registeredGlobalProps[p]->type == type )
 				{
 					prop = engine->registeredGlobalProps[p]->GetAddressOfValue();
@@ -1994,14 +2003,6 @@ int asCWriter::Write()
 {
 	unsigned long i, count;
 
-	// TODO: The first thing the code needs to do is build a list of the 
-	//       types that are used, so that the function signatures, etc can
-	//       be encoded in a small way.
-	// 
-	//       If only a few types are used, then maybe one byte is enough.
-	//       By using a scheme similar to UTF8 I can support a high number
-	//       of types without sacrifizing space.
-
 	// Store everything in the same order that the builder parses scripts
 	
 	// Store enums
@@ -2179,6 +2180,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	asUINT i, count;
 
 	WriteString(&func->name);
+	WriteString(&func->nameSpace);
 	WriteDataType(&func->returnType);
 
 	count = (asUINT)func->parameterTypes.GetLength();
@@ -2307,6 +2309,8 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		WRITE_NUM(ot->flags);
 		// size
 		WriteEncodedUInt(ot->size);
+		// namespace
+		WriteString(&ot->nameSpace);
 	}
 	else if( phase == 2 )
 	{
@@ -2473,6 +2477,7 @@ void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop)
 	// TODO: We might be able to avoid storing the name and type of the global 
 	//       properties twice if we merge this with the WriteUsedGlobalProperties. 
 	WriteString(&prop->name);
+	WriteString(&prop->nameSpace);
 	WriteDataType(&prop->type);
 
 	// Store the initialization function
@@ -2581,6 +2586,7 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 			ch = 'o';
 			WRITE_NUM(ch);
 			WriteString(&ot->name);
+			WriteString(&ot->nameSpace);
 		}
 	}
 	else
@@ -2939,6 +2945,7 @@ void asCWriter::WriteUsedGlobalProps()
 
 		// Store the name and type of the property so we can find it again on loading
 		WriteString(&prop->name);
+		WriteString(&prop->nameSpace);
 		WriteDataType(&prop->type);
 
 		// Also store whether the property is a module property or a registered property
