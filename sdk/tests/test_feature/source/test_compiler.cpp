@@ -1482,7 +1482,7 @@ bool Test()
 
 		if( !CompareDouble(d/1.0e-300, 1.0) )
 		{
-			cout << "Got: d = " << d << endl;
+			cout << "Got: d = " << d << ", d/1e-300 = " << (d/1.0e-300) << endl;
 			TEST_FAILED;
 		}
 
