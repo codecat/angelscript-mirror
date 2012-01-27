@@ -3520,8 +3520,8 @@ enum asEBCInstr
 	asBC_PshV4			= 3,
 	//! \brief Push the address of the stack frame onto the stack
 	asBC_PSF			= 4,
-	//! \brief Swap the top two DWORDs on the stack
-	asBC_SWAP4			= 5,
+	//! \brief Swap the top two pointers on the stack
+	asBC_SwapPtr		= 5,
 	//! \brief Perform a boolean not on the value in a variable
 	asBC_NOT			= 6,
 	//! \brief Push the 32bit value from a global variable onto the stack
@@ -3606,10 +3606,10 @@ enum asEBCInstr
 	asBC_COPY			= 46,
 	//! \brief Push a 64bit value on the stack
 	asBC_PshC8			= 47,
-	//! \brief Pop an address from the stack, then read a 64bit value from that address and push it on the stack
-	asBC_RDS8			= 48,
-	//! \brief Swap the top two QWORDs on the stack
-	asBC_SWAP8			= 49,
+	//! \brief Push a pointer from the variable on the stack
+	asBC_PshVPtr		= 48,
+	//! \brief Pop top address, read a pointer from it, and push the pointer onto the stack
+	asBC_RDSPtr			= 49,
 	//! \brief Compare two double variables and store the result in the value register
 	asBC_CMPd			= 50,
 	//! \brief Compare two unsigned 32bit integer variables and store the result in the value register
@@ -3656,10 +3656,10 @@ enum asEBCInstr
 	asBC_GETOBJREF		= 71,
 	//! \brief Replace a variable index on the stack with the address of the variable.
 	asBC_GETREF			= 72,
-	//! \brief Swap the top DWORD with the QWORD below it
-	asBC_SWAP48			= 73,
-	//! \brief Swap the top QWORD with the DWORD below it
-	asBC_SWAP84			= 74,
+	//! \brief Push a null pointer on the stack.
+	asBC_PshNull		= 73,
+	//! \brief Clear pointer in a variable.
+	asBC_ClrVPtr		= 74,
 	//! \brief Push the pointer argument onto the stack. The pointer is a pointer to an object type structure
 	asBC_OBJTYPE		= 75,
 	//! \brief Push the type id onto the stack. Equivalent to \ref asBC_PshC4 "PshC4".
@@ -3708,8 +3708,8 @@ enum asEBCInstr
 	asBC_LDV			= 97,
 	//! \brief Push the address of a global variable on the stack
 	asBC_PGA			= 98,
-	//! \brief Pop an address from the stack. Read a DWORD from the address, and push it on the stack.
-	asBC_RDS4			= 99,
+	//! \brief Compare two pointers.
+	asBC_CmpPtr			= 99,
 	//! \brief Push the index of the variable on the stack, with the size of a pointer.
 	asBC_VAR			= 100,
 	//! \brief Convert the 32bit integer value to a float in the variable
@@ -4015,7 +4015,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(PshC4,		DW_ARG,			1),
 	asBCINFO(PshV4,		rW_ARG,			1),
 	asBCINFO(PSF,		rW_ARG,			AS_PTR_SIZE),
-	asBCINFO(SWAP4,		NO_ARG,			0),
+	asBCINFO(SwapPtr,	NO_ARG,			0),
 	asBCINFO(NOT,		rW_ARG,			0),
 	asBCINFO(PshG4,		PTR_ARG,		1),
 	asBCINFO(LdGRdR4,	wW_PTR_ARG,		0),
@@ -4058,8 +4058,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(BSRA,		wW_rW_rW_ARG,	0),
 	asBCINFO(COPY,		W_DW_ARG,		-AS_PTR_SIZE),
 	asBCINFO(PshC8,		QW_ARG,			2),
-	asBCINFO(RDS8,		NO_ARG,			2-AS_PTR_SIZE),
-	asBCINFO(SWAP8,		NO_ARG,			0),
+	asBCINFO(PshVPtr,	rW_ARG,			AS_PTR_SIZE),
+	asBCINFO(RDSPtr,	NO_ARG,			0),
 	asBCINFO(CMPd,		rW_rW_ARG,		0),
 	asBCINFO(CMPu,		rW_rW_ARG,		0),
 	asBCINFO(CMPf,		rW_rW_ARG,		0),
@@ -4083,8 +4083,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CHKREF,	NO_ARG,			0),
 	asBCINFO(GETOBJREF,	W_ARG,			0),
 	asBCINFO(GETREF,	W_ARG,			0),
-	asBCINFO(SWAP48,	NO_ARG,			0),
-	asBCINFO(SWAP84,	NO_ARG,			0),
+	asBCINFO(PshNull,   NO_ARG,			AS_PTR_SIZE),
+	asBCINFO(ClrVPtr,   rW_ARG,			0),
 	asBCINFO(OBJTYPE,	PTR_ARG,		AS_PTR_SIZE),
 	asBCINFO(TYPEID,	DW_ARG,			1),
 	asBCINFO(SetV4,		wW_DW_ARG,		0),
@@ -4109,7 +4109,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(LDG,		PTR_ARG,		0),
 	asBCINFO(LDV,		rW_ARG,			0),
 	asBCINFO(PGA,		PTR_ARG,		AS_PTR_SIZE),
-	asBCINFO(RDS4,		NO_ARG,			1-AS_PTR_SIZE),
+	asBCINFO(CmpPtr,	rW_rW_ARG,		0),
 	asBCINFO(VAR,		rW_ARG,			AS_PTR_SIZE),
 	asBCINFO(iTOf,		rW_ARG,			0),
 	asBCINFO(fTOi,		rW_ARG,			0),

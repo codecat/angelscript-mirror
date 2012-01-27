@@ -17,6 +17,7 @@ it.
     <li>\ref doc_global_enums
     <li>\ref doc_global_typedef
     <li>\ref doc_global_funcdef
+    <li>\ref doc_global_namespace
     </ul>
 
 
@@ -214,5 +215,32 @@ able to store dynamic pointers that can be invoked at a later time as a normal f
 </pre>
 
 \see \ref doc_datatypes_funcptr for more information on how to use this
+
+
+
+
+\section doc_global_namespace Namespaces
+
+Namespaces can be used to organize large projects in logical units that may be easier 
+to remember. When using namespaces it is also not necessary to worry about using names
+for entities that may exist in a different part of the project under a different namespace.
+
+<pre>
+namespace A
+{
+  // Entities in a namespace see each other normally.
+  void function() { variable++; }
+  int variable;
+}
+
+namespace B
+{
+  // Entities in different namespaces don't immediately see each other and 
+  // can reuse the same name without causing name conflicts. By using the 
+  // scoping operator the entity from the desired namespace can be explicitly
+  // informed.
+  void function() { A::function(); }
+}
+</pre>
 
 */

@@ -303,6 +303,7 @@ Compare the value of two variables and store the result in the value register.
  - \ref asBC_CMPd
  - \ref asBC_CMPi64
  - \ref asBC_CMPu64
+ - \ref asBC_CmpPtr
 
 Compare the value of a variable with a constant and store the result in the value register.
 
@@ -441,6 +442,7 @@ Push a constant value on the stack.
  
  - \ref asBC_PshC4
  - \ref asBC_PshC8
+ - \ref asBC_PshNull
 
 Push the stack frame pointer on the stack.
  
@@ -448,15 +450,11 @@ Push the stack frame pointer on the stack.
 
 Swap the top values on the stack.
 
- - \ref asBC_SWAP4
- - \ref asBC_SWAP8
- - \ref asBC_SWAP48
- - \ref asBC_SWAP84
+ - \ref asBC_SwapPtr
 
 Pop an address from the stack, read a value from the address and push it on the stack.
 
- - \ref asBC_RDS4
- - \ref asBC_RDS8
+ - \ref asBC_RDSPtr
 
 Add an offset to the top address on the stack.
 
@@ -466,6 +464,7 @@ Push the value of a variable on the stack.
 
  - \ref asBC_PshV4
  - \ref asBC_PshV8
+ - \ref asBC_PshVPtr
 
 Initialize the value of a variable with a constant.
  
@@ -473,6 +472,7 @@ Initialize the value of a variable with a constant.
  - \ref asBC_SetV2
  - \ref asBC_SetV4
  - \ref asBC_SetV8
+ - \ref asBC_ClrPtr
 
 Copy the value of one variable to another.
  
