@@ -6907,68 +6907,6 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// Determine the scope resolution
 		asCString scope = builder->GetScopeFromNode(vnode->firstChild, script);
 
-		// TODO: cleanup: This condition should be handled inside the CompileFunctionCall itself to avoid duplicating the code
-		if( outFunc && outFunc->objectType && scope != "::" )
-		{
-			// TODO: funcdef: There may be a local variable of a function type with the same name
-
-			// Check if a class method is being called
-			asCScriptNode *nm = vnode->lastChild->prev;
-			asCString name;
-			name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
-
-			asCArray<int> funcs;
-
-			// If we're compiling a constructor and the name of the function called
-			// is 'super' then the base class' constructor is being called.
-			// super cannot be called from another scope, i.e. must not be prefixed
-			if( m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
-			{
-				// Actually it is the base class' constructor that is being called,
-				// but as we won't use the actual function ids here we can take the
-				// object's own constructors and avoid the need to check if the
-				// object actually derives from any other class
-				funcs = outFunc->objectType->beh.constructors;
-
-				// Must not allow calling constructors multiple times
-				if( continueLabels.GetLength() > 0 )
-				{
-					// If a continue label is set we are in a loop
-					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS, vnode);
-				}
-				else if( breakLabels.GetLength() > 0 )
-				{
-					// TODO: inheritance: Should eventually allow constructors in switch statements
-					// If a break label is set we are either in a loop or a switch statements
-					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH, vnode);
-				}
-				else if( m_isConstructorCalled )
-				{
-					Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, vnode);
-				}
-				m_isConstructorCalled = true;
-			}
-			else
-				builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
-
-			if( funcs.GetLength() )
-			{
-				asCDataType dt = asCDataType::CreateObject(outFunc->objectType, false);
-
-				// The object pointer is located at stack position 0
-				ctx->bc.InstrSHORT(asBC_PSF, 0);
-				ctx->type.SetVariable(dt, 0, false);
-				ctx->type.dataType.MakeReference(true);
-
-				// TODO: optimize: This adds a CHKREF. Is that really necessary? It isn't as the 
-				//                 VM will check for null pointer anyway before calling the method.
-				//                 The bytecode optimizer should know this and remove the unnecessary CHKREF
-				Dereference(ctx, true);
-
-				return CompileFunctionCall(vnode, ctx, outFunc->objectType, false, scope);
-			}
-		}
-
 		return CompileFunctionCall(vnode, ctx, 0, false, scope);
 	}
 	else if( vnode->nodeType == snConstructCall )
@@ -7723,6 +7661,52 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
+	// If we're compiling a class method, then the call may be to a class method
+	// even though it looks like an ordinary call to a global function. If it is 
+	// to a class method it is necessary to implicitly add the this pointer.
+	if( objectType == 0 && outFunc && outFunc->objectType && scope != "::" )
+	{
+		// The special keyword 'super' may be used in constructors to invoke the base 
+		// class' constructor. This can only be used without any scoping operator
+		if( m_isConstructor && name == SUPER_TOKEN && scope == "" )
+		{
+			// We are calling the base class' constructor, so set the objectType
+			objectType = outFunc->objectType;
+		}
+		else
+		{
+			// Are there any class methods that may match?
+			// TODO: namespace: Should really make sure the scope also match. Because the scope
+			//                  may match a base class, or it may match a global namespace. If it is
+			//                  matching a global scope then we're not calling a class method even
+			//                  if there is a method with the same name.
+			asCArray<int> funcs;
+			builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
+
+			if( funcs.GetLength() )
+			{
+				// We're calling a class method, so set the objectType
+				objectType = outFunc->objectType;
+			}
+		}
+	
+		// If a class method is being called then implicitly add the this pointer for the call
+		if( objectType )
+		{
+			asCDataType dt = asCDataType::CreateObject(objectType, false);
+
+			// The object pointer is located at stack position 0
+			ctx->bc.InstrSHORT(asBC_PSF, 0);
+			ctx->type.SetVariable(dt, 0, false);
+			ctx->type.dataType.MakeReference(true);
+
+			// TODO: optimize: This adds a CHKREF. Is that really necessary? It isn't as the 
+			//                 VM will check for null pointer anyway before calling the method.
+			//                 The bytecode optimizer should know this and remove the unnecessary CHKREF
+			Dereference(ctx, true);
+		}			
+	}
+
 	// First check for a local variable of a function type
 	// Must not allow function names, nor global variables to be returned in this instance
 	asSExprContext funcPtr(engine);
@@ -7735,11 +7719,29 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// If we're compiling a constructor and the name of the function is super then
 			// the constructor of the base class is being called.
 			// super cannot be prefixed with a scope operator
-			if( scope == "" && m_isConstructor && name == SUPER_TOKEN && nm->prev == 0 )
+			if( scope == "" && m_isConstructor && name == SUPER_TOKEN )
 			{
 				// If the class is not derived from anyone else, calling super should give an error
 				if( objectType->derivedFrom )
 					funcs = objectType->derivedFrom->beh.constructors;
+
+				// Must not allow calling base class' constructor multiple times
+				if( continueLabels.GetLength() > 0 )
+				{
+					// If a continue label is set we are in a loop
+					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS, node);
+				}
+				else if( breakLabels.GetLength() > 0 )
+				{
+					// TODO: inheritance: Should eventually allow constructors in switch statements
+					// If a break label is set we are either in a loop or a switch statements
+					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH, node);
+				}
+				else if( m_isConstructorCalled )
+				{
+					Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, node);
+				}
+				m_isConstructorCalled = true;
 			}
 			else
 			{
