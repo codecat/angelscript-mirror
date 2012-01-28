@@ -149,7 +149,8 @@ public:
 	int              GetTypeId() const;
 	int              GetSubTypeId() const;
 	asIObjectType   *GetSubType() const;
-	// TODO: access: Get/Set access mask for type
+	// TODO: interface: access: Get/Set access mask for type
+	// TODO: interface: namespace: Get namespace
 
 	// Interfaces
 	asUINT           GetInterfaceCount() const;
@@ -172,6 +173,7 @@ public:
 	asIScriptFunction *GetMethodByName(const char *name, bool getVirtual) const;
 	asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual) const;
 #ifdef AS_DEPRECATED
+	// TODO: interface: Remove this deprecated function
 	// deprecated since 2011-10-03
 	asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual) const;
 #endif
