@@ -133,6 +133,7 @@ int asCParser::ParseFunctionDefinition(asCScriptCode *script)
 	return 0;
 }
 
+#ifndef AS_NO_COMPILER
 int asCParser::ParseExpression(asCScriptCode *script)
 {
 	Reset();
@@ -145,6 +146,7 @@ int asCParser::ParseExpression(asCScriptCode *script)
 
 	return 0;
 }
+#endif
 
 int asCParser::ParseDataType(asCScriptCode *script)
 {
@@ -246,50 +248,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 	return 0;
 }
 
-int asCParser::ParseVirtualPropertyDeclaration(asCScriptCode *script, bool asMethod)
-{
-	Reset();
-
-	this->script = script;
-
-	scriptNode = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVirtualProperty);
-
-	sToken t;
-	
-
-	scriptNode->AddChildLast(ParseType(true));
-	if( isSyntaxError ) return -1;
-
-	scriptNode->AddChildLast(ParseTypeMod(false));
-	if( isSyntaxError ) return -1;
-
-	scriptNode->AddChildLast(ParseIdentifier());
-	if( isSyntaxError ) return -1;
-
-	if( asMethod )
-	{
-		GetToken(&t);
-		RewindTo(&t);
-
-		if( t.type == ttConst )
-		{
-			scriptNode->AddChildLast(ParseToken(ttConst));
-			if( isSyntaxError ) return -1;
-		}
-	}
-
-	GetToken(&t);
-
-	// The declaration should end after the identifier
-	if( t.type != ttEnd )
-	{
-		Error(ExpectedToken(asCTokenizer::GetDefinition(ttEnd)).AddressOf(), &t);
-		return -1;
-	}
-
-	return 0;
-}
-
+#ifndef AS_NO_COMPILER
 asCScriptNode *asCParser::ParseImport()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snImport);
@@ -349,6 +308,7 @@ asCScriptNode *asCParser::ParseImport()
 
 	return node;
 }
+#endif
 
 asCScriptNode *asCParser::ParseFunctionDefinition()
 {
@@ -531,7 +491,6 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 
 	return 0;
 }
-#endif
 
 asCScriptNode *asCParser::ParseEnumeration()
 {
@@ -634,6 +593,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 	//	Parse the declarations
 	return node;
 }
+#endif
 
 bool asCParser::CheckTemplateType(sToken &t)
 {
@@ -686,6 +646,7 @@ bool asCParser::CheckTemplateType(sToken &t)
 	return true;
 }
 
+#ifndef AS_NO_COMPILER
 bool asCParser::IsVarDecl()
 {
 	// Set start point so that we can rewind
@@ -1461,7 +1422,6 @@ asCScriptNode *asCParser::ParseGlobalVar()
 	UNREACHABLE_RETURN;
 }
 
-#ifndef AS_NO_COMPILER
 int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
 {
 	Reset();
@@ -1500,7 +1460,6 @@ int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
 
 	return 0;
 }
-#endif
 
 asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 {
@@ -1579,6 +1538,7 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 
 	return node;
 }
+#endif
 
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 {
@@ -2198,6 +2158,7 @@ asCScriptNode *asCParser::ParseArgList()
 	return 0;
 }
 
+#ifndef AS_NO_COMPILER
 asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snStatementBlock);
@@ -2411,6 +2372,7 @@ asCScriptNode *asCParser::ParseInitList()
 	}
 	UNREACHABLE_RETURN;
 }
+#endif
 
 bool asCParser::IsFunctionCall()
 {
@@ -2448,6 +2410,7 @@ bool asCParser::IsFunctionCall()
 	return false;
 }
 
+#ifndef AS_NO_COMPILER
 asCScriptNode *asCParser::ParseDeclaration()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snDeclaration);
@@ -2796,10 +2759,6 @@ asCScriptNode *asCParser::ParseFor()
 	return node;
 }
 
-
-
-
-	
 asCScriptNode *asCParser::ParseWhile()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snWhile);
@@ -2971,7 +2930,7 @@ asCScriptNode *asCParser::ParseContinue()
 
 	return node;
 }
-
+#endif
 asCScriptNode *asCParser::ParseAssignment()
 {
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snAssignment);
@@ -3403,6 +3362,7 @@ asCString asCParser::ExpectedOneOf(const char **tokens, int count)
 	return str;
 }
 
+#ifndef AS_NO_COMPILER
 // TODO: typedef: Typedefs should accept complex types as well
 asCScriptNode *asCParser::ParseTypedef()
 {
@@ -3463,6 +3423,7 @@ void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
 			break;
 	}
 }
+#endif
 
 END_AS_NAMESPACE
 
