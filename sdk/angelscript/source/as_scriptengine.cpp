@@ -50,6 +50,7 @@
 #include "as_generic.h"
 #include "as_scriptobject.h"
 #include "as_compiler.h"
+#include "as_bytecode.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -2861,9 +2862,26 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 	SetScriptFunction(func);
 
-	asCBuilder builder(this, 0);
-	asCCompiler compiler(this);
-	compiler.CompileTemplateFactoryStub(&builder, factoryId, ot, func);
+	// Generate the bytecode for the factory stub
+	// TODO: no compiler: This shouldn't use the asCByteCode class. This will allow us to easily 
+	//                    remove that class to when compiled without the compiler
+	asCByteCode byteCode(this);
+	asCScriptFunction *descr = scriptFunctions[factoryId];
+
+	byteCode.InstrPTR(asBC_OBJTYPE, ot);
+	byteCode.Call(asBC_CALLSYS, factoryId, descr->GetSpaceNeededForArguments());
+	byteCode.Ret(func->GetSpaceNeededForArguments());
+
+	byteCode.Finalize();
+	byteCode.ExtractObjectVariableInfo(func);
+	func->byteCode.SetLength(byteCode.GetSize());
+	byteCode.Output(func->byteCode.AddressOf());
+	func->AddReferences();
+	func->stackNeeded = byteCode.largestStackUsed;
+	func->lineNumbers = byteCode.lineNumbers;
+
+	// Tell the virtual machine not to clean up the object on exception
+	func->dontCleanUpOnException = true;
 
 	return func;
 }

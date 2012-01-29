@@ -38,6 +38,9 @@
 #include <math.h> // fmodf()
 
 #include "as_config.h"
+
+#ifndef AS_NO_COMPILER
+
 #include "as_compiler.h"
 #include "as_tokendef.h"
 #include "as_tokenizer.h"
@@ -100,7 +103,6 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	byteCode.ClearAll();
 }
 
-#ifndef AS_NO_COMPILER
 int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, asCScriptFunction *outFunc)
 {
 	Reset(builder, script, outFunc);
@@ -196,28 +198,42 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 */
 	return 0;
 }
-#endif
 
-// Entry
-int asCCompiler::CompileTemplateFactoryStub(asCBuilder *builder, int trueFactoryId, asCObjectType *objType, asCScriptFunction *outFunc)
+void asCCompiler::FinalizeFunction()
 {
-	Reset(builder, 0, outFunc);
+	asUINT n;
 
-	asCScriptFunction *descr = builder->GetFunctionDescription(trueFactoryId);
+	// Tell the bytecode which variables are temporary
+	for( n = 0; n < variableIsTemporary.GetLength(); n++ )
+	{
+		if( variableIsTemporary[n] )
+			byteCode.DefineTemporaryVariable(GetVariableOffset(n));
+	}
 
-	byteCode.InstrPTR(asBC_OBJTYPE, objType);
-	byteCode.Call(asBC_CALLSYS, trueFactoryId, descr->GetSpaceNeededForArguments());
-	byteCode.Ret(outFunc->GetSpaceNeededForArguments());
+	// Finalize the bytecode
+	byteCode.Finalize();
 
-	FinalizeFunction();
+	byteCode.ExtractObjectVariableInfo(outFunc);
 
-	// Tell the virtual machine not to clean up the object on exception
-	outFunc->dontCleanUpOnException = true;
+	// Compile the list of object variables for the exception handler
+	for( n = 0; n < variableAllocations.GetLength(); n++ )
+	{
+		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
+		{
+			outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+			outFunc->objVariablePos.PushLast(GetVariableOffset(n));
+			outFunc->objVariableIsOnHeap.PushLast(variableIsOnHeap[n]);
+		}
+	}
 
-	return 0;
+	// Copy byte code to the function
+	outFunc->byteCode.SetLength(byteCode.GetSize());
+	byteCode.Output(outFunc->byteCode.AddressOf());
+	outFunc->AddReferences();
+	outFunc->stackNeeded = byteCode.largestStackUsed;
+	outFunc->lineNumbers = byteCode.lineNumbers;
 }
 
-#ifndef AS_NO_COMPILER
 // Entry
 int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
 {
@@ -532,7 +548,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	return 0;
 }
-#endif
 
 int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar, bool derefDest)
 {
@@ -847,7 +862,6 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	}
 }
 
-#ifndef AS_NO_COMPILER
 // Entry
 int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc)
 {
@@ -1118,42 +1132,6 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 #endif
 
 	return 0;
-}
-#endif
-
-void asCCompiler::FinalizeFunction()
-{
-	asUINT n;
-
-	// Tell the bytecode which variables are temporary
-	for( n = 0; n < variableIsTemporary.GetLength(); n++ )
-	{
-		if( variableIsTemporary[n] )
-			byteCode.DefineTemporaryVariable(GetVariableOffset(n));
-	}
-
-	// Finalize the bytecode
-	byteCode.Finalize();
-
-	byteCode.ExtractObjectVariableInfo(outFunc);
-
-	// Compile the list of object variables for the exception handler
-	for( n = 0; n < variableAllocations.GetLength(); n++ )
-	{
-		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
-		{
-			outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
-			outFunc->objVariablePos.PushLast(GetVariableOffset(n));
-			outFunc->objVariableIsOnHeap.PushLast(variableIsOnHeap[n]);
-		}
-	}
-
-	// Copy byte code to the function
-	outFunc->byteCode.SetLength(byteCode.GetSize());
-	byteCode.Output(outFunc->byteCode.AddressOf());
-	outFunc->AddReferences();
-	outFunc->stackNeeded = byteCode.largestStackUsed;
-	outFunc->lineNumbers = byteCode.lineNumbers;
 }
 
 void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, bool isMakingCopy)
@@ -3602,6 +3580,7 @@ int asCCompiler::GetVariableOffset(int varIndex)
 	return varOffset;
 }
 
+
 int asCCompiler::GetVariableSlot(int offset)
 {
 	int varOffset = 1;
@@ -3712,7 +3691,6 @@ void asCCompiler::Dereference(asSExprContext *ctx, bool generateCode)
 		}
 	}
 }
-
 
 bool asCCompiler::IsVariableInitialized(asCTypeInfo *type, asCScriptNode *node)
 {
@@ -4148,7 +4126,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 
 	return conversionDone;
 }
-
 
 asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const asCDataType &toOrig, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
@@ -11234,6 +11211,8 @@ void asCCompiler::FilterConst(asCArray<int> &funcs)
 }
 
 END_AS_NAMESPACE
+
+#endif // AS_NO_COMPILER
 
 
 

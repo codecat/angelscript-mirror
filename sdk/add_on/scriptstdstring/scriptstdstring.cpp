@@ -650,7 +650,7 @@ static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
 	}
 
 	if( byteCount )
-		*byteCount = end - val.c_str();
+		*byteCount = asUINT(size_t(end - val.c_str()));
 
 	if( sign )
 		res = -res;
@@ -681,7 +681,7 @@ double parseFloat(const string &val, asUINT *byteCount)
 #endif
 
 	if( byteCount )
-		*byteCount = end - val.c_str();
+		*byteCount = asUINT(size_t(end - val.c_str()));
 
 	return res;
 }

@@ -312,7 +312,7 @@ int asCString::FindLast(const char *str) const
 	// and then only on quite short strings anyway.
 	const char *last = 0;
 	const char *curr = AddressOf()-1;
-	while( (curr = strstr(curr+1, str)) )
+	while( (curr = strstr(curr+1, str)) != 0 )
 		last = curr;
 
 	if( last )

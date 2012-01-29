@@ -226,21 +226,21 @@ to remember. When using namespaces it is also not necessary to worry about using
 for entities that may exist in a different part of the project under a different namespace.
 
 <pre>
-namespace A
-{
-  // Entities in a namespace see each other normally.
-  void function() { variable++; }
-  int variable;
-}
+  namespace A
+  {
+    // Entities in a namespace see each other normally.
+    void function() { variable++; }
+    int variable;
+  }
 
-namespace B
-{
-  // Entities in different namespaces don't immediately see each other and 
-  // can reuse the same name without causing name conflicts. By using the 
-  // scoping operator the entity from the desired namespace can be explicitly
-  // informed.
-  void function() { A::function(); }
-}
+  namespace B
+  {
+    // Entities in different namespaces don't immediately see each other and 
+    // can reuse the same name without causing name conflicts. By using the 
+    // scoping operator the entity from the desired namespace can be explicitly
+    // informed.
+    void function() { A::function(); }
+  }
 </pre>
 
 */
