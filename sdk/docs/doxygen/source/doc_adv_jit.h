@@ -472,7 +472,7 @@ Initialize the value of a variable with a constant.
  - \ref asBC_SetV2
  - \ref asBC_SetV4
  - \ref asBC_SetV8
- - \ref asBC_ClrPtr
+ - \ref asBC_ClrVPtr
 
 Copy the value of one variable to another.
  
