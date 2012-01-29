@@ -143,6 +143,8 @@ public:
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);
 	~asCScriptFunction();
 
+	void      DestroyInternal();
+
 	void      AddVariable(asCString &name, asCDataType &type, int stackOffset);
 
 	int       GetSpaceNeededForArguments();

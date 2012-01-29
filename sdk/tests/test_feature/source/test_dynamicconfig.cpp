@@ -102,50 +102,64 @@ public:
 	void Release() { if( --refCount == 0 ) delete this; }
 	int refCount;
 	asIScriptFunction *callback;
-
-	static Type *Factory() { return new Type(); }
-	static void Callback(Type *, int) {}
 };
 
 bool Test()
 {
 	bool fail = Test2();
 	int r;
+	COutStream out;
+	CBufferedOutStream bout;
 
 	// Test dynamic config groups with function definitions used for callbacks
 	// http://www.gamedev.net/topic/618909-assertion-failure-in-as-configgroupcpp/
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		engine->BeginConfigGroup("gr");
 		engine->RegisterObjectType("type", 0, asOBJ_REF);
-		engine->RegisterObjectBehaviour("type", asBEHAVE_FACTORY, "type @f()", asFUNCTION(Type::Factory), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("type", asBEHAVE_ADDREF, "void f()", asMETHOD(Type,AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("type", asBEHAVE_RELEASE, "void f()", asMETHOD(Type,Release), asCALL_THISCALL);
-		engine->RegisterFuncdef("void fun(type @, int)");
-		engine->RegisterGlobalFunction("void cb(type @+, int)", asFUNCTION(Type::Callback), asCALL_CDECL);
+		engine->RegisterFuncdef("void fun(type @)");
 		engine->RegisterObjectProperty("type", "fun @callback", asOFFSET(Type,callback));
 		engine->EndConfigGroup();
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("s", 
-			"void func(type @, int) {} \n"
-			"void main() \n"
+			"void func(type @) {} \n"
+			"void main(type @t) \n"
 			"{ \n"
-			"  type t; \n"
-			"  @t.callback = cb; \n" // It should be possible to call system functions through pointers too
-			"  t.callback(t, 1); \n"
+			"  @t.callback = func; \n"
 			"} \n");
 
 		int r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "main()", mod);
+		Type *t = new Type();
+
+		// Call the function that sets the callback on the object
+		asIScriptFunction *m = mod->GetFunctionByName("main");
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(m);
+		ctx->SetArgObject(0, t);
+		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+		ctx->Release();
 
+		// Release the engine, while the object holding the callback is still alive
 		engine->Release();
+
+		t->Release();
+
+		// The engine will warn about the callback not being released before the engine
+		if( bout.buffer != " (0, 0) : Error   : GC cannot free an object of type '_builtin_function_', it is kept alive by the application\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	//------------
@@ -156,7 +170,6 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void MyFunc()", asFUNCTION(MyFunc), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
-	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
@@ -173,7 +186,7 @@ bool Test()
 
 	r = engine->RemoveConfigGroup("group1"); assert( r >= 0 );
 
-	CBufferedOutStream bout;
+	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);

@@ -550,6 +550,11 @@ asCScriptEngine::~asCScriptEngine()
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
+	// Destroy internals of script functions that may still be kept alive outside of engine
+	for( n = 0; n < scriptFunctions.GetLength(); n++ )
+		if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SCRIPT )
+			scriptFunctions[n]->DestroyInternal();
+
 	// There may be instances where one more gc cycle must be run
 	GarbageCollect(asGC_FULL_CYCLE);
 	ClearUnusedTypes();
@@ -557,7 +562,15 @@ asCScriptEngine::~asCScriptEngine()
 	// If the application hasn't registered GC behaviours for all types 
 	// that can form circular references with script types, then there
 	// may still be objects in the GC.
-	gc.ReportUndestroyedObjects();
+	if( gc.ReportAndReleaseUndestroyedObjects() > 0 )
+	{
+		// Some items cannot be destroyed because the application is still holding on to them
+
+		// Make sure the script functions won't attempt to access the engine if they are destroyed later on
+		for( n = 0; n < scriptFunctions.GetLength(); n++ )
+			if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SCRIPT )
+				scriptFunctions[n]->engine = 0;
+	}
 
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	while( mapTypeIdToDataType.MoveFirst(&cursor) )

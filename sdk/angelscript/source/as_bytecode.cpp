@@ -1720,11 +1720,12 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	FILE *file = fopen(str.AddressOf(), "w");
 #endif
 
-#ifdef AS_XENON // XBox 360
-	// When running in DVD Emu, no write is allowed
+#if !defined(AS_XENON) // XBox 360: When running in DVD Emu, no write is allowed
+	asASSERT( file );
+#endif
+
 	if( file == 0 )
 		return;
-#endif
 
 	asUINT n;
 

@@ -798,6 +798,11 @@ public:
 	//! \return The number of references to this object.
 	//!
 	//! Call this method when you will no longer use the references that you own.
+	//! 
+	//! The application is responsible for releasing references to all other script
+	//! objects before releasing its last reference to the engine. If this is not done, 
+	//! it is possible that memory leaks occur as the engine cannot free objects 
+	//! kept alive by the application.
 	virtual int Release() const = 0;
 	//! \}
 
