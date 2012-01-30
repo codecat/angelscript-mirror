@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -73,47 +73,6 @@ typedef asQWORD ( *funcptr_t )( void );
 		: "m" ( dest )                           \
 		: name                                   \
 	)
-
-
-static asDWORD GetReturnedFloat()
-{
-	float   retval = 0.0f;
-	asDWORD ret    = 0;
-
-	__asm__ __volatile__ (
-		"lea      %0, %%rax\n"
-		"movss    %%xmm0, (%%rax)"
-		: /* no output */
-		: "m" (retval)
-		: "%rax", "%xmm0"
-	);
-
-	// We need to avoid implicit conversions from float to unsigned - we need
-	// a bit-wise-correct-and-complete copy of the value 
-	memcpy( &ret, &retval, sizeof( ret ) );
-
-	return ( asDWORD )ret;
-}
-
-static asQWORD GetReturnedDouble()
-{
-	double  retval = 0.0f;
-	asQWORD ret    = 0;
-
-	__asm__ __volatile__ (
-		"lea     %0, %%rax\n"
-		"movlpd  %%xmm0, (%%rax)"
-		: /* no optput */
-		: "m" (retval)
-		: "%rax", "%xmm0"
-	);
-
-	// We need to avoid implicit conversions from double to unsigned long long - we need
-	// a bit-wise-correct-and-complete copy of the value 
-	memcpy( &ret, &retval, sizeof( ret ) );
-
-	return ret;
-}
 
 static void __attribute__((noinline)) GetReturnedXmm0Xmm1(asQWORD &a, asQWORD &b)
 {
@@ -442,14 +401,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 	// If the return is a float value we need to get the value from the FP register
 	if( sysFunc->hostReturnFloat )
-	{
-		if( sysFunc->hostReturnSize == 1 )
-			*(asDWORD*)&retQW = GetReturnedFloat();
-		else if( sysFunc->hostReturnSize == 2 )
-			retQW = GetReturnedDouble();
-		else
-			GetReturnedXmm0Xmm1(retQW, retQW2);
-	}
+		GetReturnedXmm0Xmm1(retQW, retQW2);
 
 	return retQW;
 }
