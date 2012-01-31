@@ -215,164 +215,195 @@ bool Test2()
 	bool fail = false;
 	int r;
 	COutStream out;
+	asIScriptEngine *engine;
+	asIScriptModule *mod;
 
 	// An interface that is declared equally in two different modules should receive the same type id
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	// As of release 2.23.0, the interface must be explicitly marked as shared
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	const char *script = "interface Simple { void function(int); }";
-	asIScriptModule *mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		const char *script = "shared interface Simple { void function(int); }";
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	int typeA = engine->GetModule("a")->GetTypeIdByDecl("Simple");
-	int typeB = engine->GetModule("b")->GetTypeIdByDecl("Simple");
+		int typeA = engine->GetModule("a")->GetTypeIdByDecl("Simple");
+		int typeB = engine->GetModule("b")->GetTypeIdByDecl("Simple");
 
-	if( typeA != typeB )
-		TEST_FAILED;
+		if( typeA != typeB )
+			TEST_FAILED;
 
-	// Test recompiling a module
-	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		// Test recompiling a module
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	typeA = engine->GetModule("a")->GetTypeIdByDecl("Simple");
-	if( typeA != typeB )
-		TEST_FAILED;
+		typeA = engine->GetModule("a")->GetTypeIdByDecl("Simple");
+		if( typeA != typeB )
+			TEST_FAILED;
 
-	// Test interface that references itself
-	const char *script1 = "interface A { A@ f(); }";
-	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script1, strlen(script1));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		// Test interface that references itself
+		const char *script1 = "shared interface A { A@ f(); }";
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script1, strlen(script1));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script1, strlen(script1));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script1, strlen(script1));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	int typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
-	int typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
+		int typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+		int typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
 
-	if( typeAA != typeBA )
-		TEST_FAILED;
+		if( typeAA != typeBA )
+			TEST_FAILED;
 
+		engine->Release();
+	}
 
 	// Test with more complex interfaces
-	const char *script2 = "interface A { B@ f(); } interface B { A@ f(); C@ f(); } interface C { A@ f(); }";
-	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script2, strlen(script2));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script2, strlen(script2));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		const char *script2 = "shared interface A { B@ f(); } shared interface B { A@ f(); C@ f(); } shared interface C { A@ f(); }";
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script2, strlen(script2));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
-	int typeAB = engine->GetModule("a")->GetTypeIdByDecl("B");
-	int typeAC = engine->GetModule("a")->GetTypeIdByDecl("C");
-	
-	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
-	int typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
-	int typeBC = engine->GetModule("b")->GetTypeIdByDecl("C");
+		mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script2, strlen(script2));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	if( typeAA != typeBA ||
-		typeAB != typeBB ||
-		typeAC != typeBC )
-		TEST_FAILED;
+		int typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+		int typeAB = engine->GetModule("a")->GetTypeIdByDecl("B");
+		int typeAC = engine->GetModule("a")->GetTypeIdByDecl("C");
+		
+		int typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
+		int typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
+		int typeBC = engine->GetModule("b")->GetTypeIdByDecl("C");
+
+		if( typeAA != typeBA ||
+			typeAB != typeBB ||
+			typeAC != typeBC )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Test interfaces that are not equal
-	const char *script3 = "interface A { B@ f(); } interface B { int f(); }";
-	const char *script4 = "interface A { B@ f(); } interface B { float f(); }";
+	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script3, strlen(script3));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		const char *script3 = "shared interface A { B@ f(); } shared interface B { int f(); }";
+		const char *script4 = "shared interface A { B@ f(); } shared interface B { float f(); }";
 
-	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script4, strlen(script4));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script3, strlen(script3));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
-	typeAB = engine->GetModule("a")->GetTypeIdByDecl("B");
-	
-	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
-	typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
+		// Shared interfaces won't allow compiling two interfaces with the same name but different methods
+		mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script4, strlen(script4));
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
 
-	if( typeAA == typeBA ||
-		typeAB == typeBB )
-		TEST_FAILED;
+		if( bout.buffer != "script (1, 53) : Error   : Shared type doesn't match the original declaration in other module\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Interfaces that uses the interfaces that are substituted must be updated
-	const char *script5 = "interface A { float f(); }";
-	const char *script6 = "interface B { A@ f(); }";
-	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script5", script5, strlen(script5));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script5", script5, strlen(script5));
-	mod->AddScriptSection("script6", script6, strlen(script6));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		const char *script5 = "shared interface A { float f(); }";
+		const char *script6 = "shared interface B { A@ f(); }";
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script5", script5, strlen(script5));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A@");
-	typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
-	asIObjectType *objType = engine->GetObjectTypeById(typeBB);
-	asIScriptFunction *func = objType->GetMethodByIndex(0);
-	if( func->GetReturnTypeId() != typeBA )
-		TEST_FAILED;
+		mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script5", script5, strlen(script5));
+		mod->AddScriptSection("script6", script6, strlen(script6));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		int typeBA = engine->GetModule("b")->GetTypeIdByDecl("A@");
+		int typeBB = engine->GetModule("b")->GetTypeIdByDecl("B");
+		asIObjectType *objType = engine->GetObjectTypeById(typeBB);
+		asIScriptFunction *func = objType->GetMethodByIndex(0);
+		if( func->GetReturnTypeId() != typeBA )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// This must work for pre-compiled byte code as well, i.e. when loading the byte code 
 	// the interface ids must be resolved in the same way it is for compiled scripts
-	mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script1, strlen(script1));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	CBytecodeStream stream(__FILE__"1");
-	asIScriptModule *module = engine->GetModule("a");
-	module->SaveByteCode(&stream);
-	module = engine->GetModule("b", asGM_CREATE_IF_NOT_EXISTS);
-	r = module->LoadByteCode(&stream);
-	if( r < 0 )
-		TEST_FAILED;
+		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
+		const char *script1 = "shared interface A { A@ f(); }";
+		mod->AddScriptSection("script", script1, strlen(script1));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
-	typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
+		CBytecodeStream stream(__FILE__"1");
+		asIScriptModule *module = engine->GetModule("a");
+		module->SaveByteCode(&stream);
+		module = engine->GetModule("b", asGM_CREATE_IF_NOT_EXISTS);
+		r = module->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
 
-	if( typeAA != typeBA )
-		TEST_FAILED;
+		int typeAA = engine->GetModule("a")->GetTypeIdByDecl("A");
+		int typeBA = engine->GetModule("b")->GetTypeIdByDecl("A");
 
-	// TODO: The interfaces should be equal if they use enums declared in the 
-	// scripts as well (we don't bother checking the enum values)
+		if( typeAA != typeBA )
+			TEST_FAILED;
 
-	engine->Release();
+		// TODO: The interfaces should be equal if they use enums declared in the 
+		// scripts as well (we don't bother checking the enum values)
+
+		engine->Release();
+	}
 
 	return fail;
 }

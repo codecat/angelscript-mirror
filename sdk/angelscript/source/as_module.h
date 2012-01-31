@@ -193,9 +193,12 @@ public:
 
 	int  GetNextImportedFunctionId();
 
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.23.0 - 2012-01-30
 	void ResolveInterfaceIds(asCArray<void*> *substitutions = 0);
 	bool AreInterfacesEqual(asCObjectType *a, asCObjectType *b, asCArray<sObjectTypePair> &equals);
 	bool AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArray<sObjectTypePair> &equals);
+#endif
 
 	asCScriptFunction *GetImportedFunction(int funcId) const;
 

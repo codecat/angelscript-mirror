@@ -147,6 +147,8 @@ int asCReader::Read()
 			ReadObjectTypeDeclaration(module->classTypes[i], 2);
 	}
 
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.23.0 - 2012-01-30
 	asCArray<void*> substitutions;
 	module->ResolveInterfaceIds(&substitutions);
 
@@ -168,6 +170,7 @@ int asCReader::Read()
 				savedFunctions[f] = reinterpret_cast<asCScriptFunction*>(substitutions[i+1]);
 		}
 	}
+#endif
 
 	// Read class methods and behaviours
 	for( i = 0; i < module->classTypes.GetLength(); ++i )

@@ -1033,6 +1033,9 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 	return prop;
 }
 
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.23.0 - 2012-01-30
+
 // internal
 void asCModule::ResolveInterfaceIds(asCArray<void*> *substitutions)
 {
@@ -1387,6 +1390,8 @@ bool asCModule::AreTypesEqual(const asCDataType &a, const asCDataType &b, asCArr
 
 	return true;
 }
+
+#endif // AS_DEPRECATED
 
 // interface
 int asCModule::SaveByteCode(asIBinaryStream *out) const

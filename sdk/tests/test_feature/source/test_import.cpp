@@ -124,13 +124,13 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		mod = engine->GetModule("m0", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script1", "interface I3{};void F(I3@){}");
+		mod->AddScriptSection("script1", "shared interface I3{};void F(I3@){}");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
 		mod = engine->GetModule("m1", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script2", "interface I1{void f(I2@);};interface I2{};interface I3{};import void F(I3@) from 'm0';");
+		mod->AddScriptSection("script2", "interface I1{void f(I2@);};interface I2{};shared interface I3{};import void F(I3@) from 'm0';");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -139,7 +139,7 @@ bool Test()
 			TEST_FAILED;
 
 		mod = engine->GetModule("m2", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script2", "interface I1{void f(I2@);};interface I2{};interface I3{};import void F(I3@) from 'm0';");
+		mod->AddScriptSection("script2", "interface I1{void f(I2@);};interface I2{};shared interface I3{};import void F(I3@) from 'm0';");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -190,11 +190,11 @@ bool Test()
 		bout.buffer = "";
 		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("t", 
-			"interface test1\n"
+			"shared interface test1\n"
 			"{\n"
 			"  void foo(test2@[] a);\n"
 			"}\n"
-			"interface test2\n"
+			"shared interface test2\n"
 			"{\n"
 			"}\n"
 			"test1@ func()\n"
@@ -212,11 +212,11 @@ bool Test()
 
 		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("t",
-			"interface test1\n"
+			"shared interface test1\n"
 			"{\n"
 			"  void foo(test2@[] a);\n"
 			"}\n"
-			"interface test2\n"
+			"shared interface test2\n"
 			"{\n"
 			"}\n"
 			"import test1@ func() from '1';\n");

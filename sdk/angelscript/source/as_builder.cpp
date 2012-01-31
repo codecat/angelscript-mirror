@@ -414,8 +414,6 @@ void asCBuilder::ParseScripts()
 		for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
 		{
 			sClassDeclaration *decl = interfaceDeclarations[n];
-			if( decl->isExistingShared ) continue; // TODO: shared: Should really verify that the methods match the original
-
 			asCScriptNode *node = decl->node->firstChild->next;
 			while( node )
 			{
@@ -423,22 +421,26 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, true);
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, true, false, "", decl->isExistingShared);
 				}
 				else if( node->nodeType == snVirtualProperty )
 				{
 					node->DisconnectParent();
-					RegisterVirtualProperty(node, decl->script, decl->objType, true, false);
+					RegisterVirtualProperty(node, decl->script, decl->objType, true, false, "", decl->isExistingShared);
 				}
 
 				node = next;
 			}
 		}
 
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.23.0 - 2012-01-30
+
 		// Now the interfaces have been completely established, now we need to determine if
 		// the same interface has already been registered before, and if so reuse the interface id.
 		// TODO: deprecate this. interfaces should be explicitly marked as shared
 		module->ResolveInterfaceIds();
+#endif
 
 		// Register script methods found in the structures
 		for( n = 0; n < classDeclarations.GetLength(); n++ )
@@ -2749,7 +2751,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, const asCString &ns)
+int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, const asCString &ns, bool isExistingShared)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -2765,6 +2767,42 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	bool                       isShared;
 
 	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+
+	if( isExistingShared ) 
+	{
+		asASSERT( objType );
+
+		// Should validate that the function really exists in the class/interface
+		bool found = false;
+		if( isConstructor || isDestructor )
+		{
+			// TODO: shared: Should check the existance of these too
+			found = true;
+		}
+		else
+		{
+			for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+			{
+				asCScriptFunction *func = engine->scriptFunctions[objType->methods[n]];
+				if( func->name == name &&
+					func->IsSignatureExceptNameEqual(returnType, parameterTypes, inOutFlags, objType, isConstMethod) )
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if( !found )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+			WriteError(file->name.AddressOf(), TXT_SHARED_DOESNT_MATCH_ORIGINAL, r, c);
+		}
+
+		node->Destroy(engine);
+		return 0;
+	}
 
 	// Check for name conflicts
 	if( !isConstructor && !isDestructor )
@@ -2799,7 +2837,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			name = "~" + name;
 	}
 
-	bool isExistingShared = false;
+	isExistingShared = false;
 	if( !isInterface )
 	{
 		sFunctionDescription *func = asNEW(sFunctionDescription);
@@ -3147,8 +3185,15 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 	return 0;
 }
 
-int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, const asCString &ns)
+int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, const asCString &ns, bool isExistingShared)
 {
+	if( isExistingShared ) 
+	{
+		// TODO: shared: Should validate that the function really exists in the class/interface
+		node->Destroy(engine);
+		return 0;
+	}
+
 	if( engine->ep.propertyAccessorMode != 2 )
 	{
 		int r, c;
