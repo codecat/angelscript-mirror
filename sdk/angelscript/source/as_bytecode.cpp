@@ -38,6 +38,9 @@
 #include <stdio.h> // fopen(), fprintf(), fclose()
 
 #include "as_config.h"
+
+#ifndef AS_NO_COMPILER
+
 #include "as_bytecode.h"
 #include "as_debug.h" // mkdir()
 #include "as_array.h"
@@ -2502,3 +2505,6 @@ void cByteInstruction::Remove()
 }
 
 END_AS_NAMESPACE
+
+#endif // AS_NO_COMPILER
+

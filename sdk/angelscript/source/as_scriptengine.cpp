@@ -2863,22 +2863,21 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	SetScriptFunction(func);
 
 	// Generate the bytecode for the factory stub
-	// TODO: no compiler: This shouldn't use the asCByteCode class. This will allow us to easily 
-	//                    remove that class to when compiled without the compiler
-	asCByteCode byteCode(this);
-	asCScriptFunction *descr = scriptFunctions[factoryId];
+	func->byteCode.SetLength(asBCTypeSize[asBCInfo[asBC_OBJTYPE].type] + 
+	                         asBCTypeSize[asBCInfo[asBC_CALLSYS].type] +
+	                         asBCTypeSize[asBCInfo[asBC_RET].type]);
+	asDWORD *bc = func->byteCode.AddressOf();
+	*(asBYTE*)bc = asBC_OBJTYPE;
+	*(asPWORD*)(bc+1) = (asPWORD)ot;
+	bc += asBCTypeSize[asBCInfo[asBC_OBJTYPE].type];
+	*(asBYTE*)bc = asBC_CALLSYS;
+	*(asDWORD*)(bc+1) = factoryId;
+	bc += asBCTypeSize[asBCInfo[asBC_CALLSYS].type];
+	*(asBYTE*)bc = asBC_RET;
+	*(((asWORD*)bc)+1) = (asWORD)func->GetSpaceNeededForArguments();
 
-	byteCode.InstrPTR(asBC_OBJTYPE, ot);
-	byteCode.Call(asBC_CALLSYS, factoryId, descr->GetSpaceNeededForArguments());
-	byteCode.Ret(func->GetSpaceNeededForArguments());
-
-	byteCode.Finalize();
-	byteCode.ExtractObjectVariableInfo(func);
-	func->byteCode.SetLength(byteCode.GetSize());
-	byteCode.Output(func->byteCode.AddressOf());
 	func->AddReferences();
-	func->stackNeeded = byteCode.largestStackUsed;
-	func->lineNumbers = byteCode.lineNumbers;
+	func->stackNeeded = AS_PTR_SIZE;
 
 	// Tell the virtual machine not to clean up the object on exception
 	func->dontCleanUpOnException = true;

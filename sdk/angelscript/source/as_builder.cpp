@@ -56,6 +56,7 @@ asCBuilder::asCBuilder(asCScriptEngine *engine, asCModule *module)
 
 asCBuilder::~asCBuilder()
 {
+#ifndef AS_NO_COMPILER
 	asUINT n;
 
 	// Free all functions
@@ -159,6 +160,15 @@ asCBuilder::~asCBuilder()
 			funcDefs[n] = 0;
 		}
 	}
+
+#endif // AS_NO_COMPILER
+}
+
+void asCBuilder::Reset()
+{
+	numErrors = 0;
+	numWarnings = 0;
+	preMessage.isSet = false;
 }
 
 #ifndef AS_NO_COMPILER
@@ -175,9 +185,7 @@ int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int 
 
 int asCBuilder::Build()
 {
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	ParseScripts();
 
@@ -198,9 +206,7 @@ int asCBuilder::Build()
 
 int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int lineOffset)
 {
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	// Add the string to the script code
 	asCScriptCode *script = asNEW(asCScriptCode);
@@ -276,9 +282,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 {
 	asASSERT(outFunc != 0);
 
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	// Add the string to the script code
 	asCScriptCode *script = asNEW(asCScriptCode);
@@ -668,9 +672,7 @@ void asCBuilder::CompileFunctions()
 // Called from module and engine
 int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 {
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	asCScriptCode source;
 	source.SetCode("", datatype, true);
@@ -694,9 +696,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 
 int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName)
 {
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	asCScriptCode source;
 	source.SetCode("", decl, true);
@@ -723,9 +723,7 @@ int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCString *
 
 int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &name, asCDataType &type, const asCString &ns)
 {
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	if( dt )
 	{
@@ -839,6 +837,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, const asCStri
 			}
 		}
 
+#ifndef AS_NO_COMPILER
 	// TODO: optimize: Improve linear search
 	// Check properties being compiled now
 	asCArray<sGlobalVariableDescription *> &gvars = globVariables;
@@ -857,6 +856,9 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, const asCStri
 			return p;
 		}
 	}
+#else
+	UNUSED_VAR(constantValue);
+#endif
 
 	// TODO: optimize: Improve linear search
 	// Check previously compiled global variables
@@ -876,9 +878,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 {
 	// TODO: Can't we use GetParsedFunctionDetails to do most of what is done in this function?
 
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	asCScriptCode source;
 	source.SetCode(TXT_SYSTEM_FUNCTION, decl, true);
@@ -1006,9 +1006,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *var)
 {
-	numErrors = 0;
-	numWarnings = 0;
-	preMessage.isSet = false;
+	Reset();
 
 	asCScriptCode source;
 	source.SetCode(TXT_VARIABLE_DECL, decl, true);
@@ -1122,6 +1120,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 
 	// TODO: Property names must be checked against function names
 
+#ifndef AS_NO_COMPILER
 	// Check against class types
 	asUINT n;
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
@@ -1179,6 +1178,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			return -1;
 		}
 	}
+#endif
 
 	return 0;
 }
@@ -3899,6 +3899,8 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
 	return 0;
 }
 
+#ifndef AS_NO_COMPILER
+
 int asCBuilder::GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue)
 {
 	if( !objType || !(objType->flags & asOBJ_ENUM) )
@@ -3967,5 +3969,7 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 	// Didn't find any value
 	return 0;
 }
+
+#endif // AS_NO_COMPILER
 
 END_AS_NAMESPACE
