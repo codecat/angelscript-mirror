@@ -264,6 +264,10 @@ void DebugCall()
 
 	// Set the handle to point to a new string
 	*str = new CScriptString("test");
+
+	// It is possible to determine the function that is being called too
+	asIScriptFunction *func = ctx->GetSystemFunction();
+	assert( std::string(func->GetDeclaration()) == "void debugCall()" );
 }
 
 bool Test2()

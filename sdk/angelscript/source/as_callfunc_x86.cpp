@@ -163,7 +163,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		callConv++;
 
 	asDWORD *vftable;
-	context->isCallingSystemFunction = true;
 	switch( callConv )
 	{
 	case ICC_CDECL:
@@ -231,7 +230,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 	}
-	context->isCallingSystemFunction = false;
 
 	// If the return is a float value we need to get the value from the FP register
 	if( sysFunc->hostReturnFloat )

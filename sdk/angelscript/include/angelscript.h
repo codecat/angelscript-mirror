@@ -749,6 +749,7 @@ public:
 	virtual bool               IsVarInScope(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	virtual int                GetThisTypeId(asUINT stackLevel = 0) = 0;
 	virtual void              *GetThisPointer(asUINT stackLevel = 0) = 0;
+	virtual asIScriptFunction *GetSystemFunction() = 0;
 
 	// User data
 	virtual void *SetUserData(void *data) = 0;

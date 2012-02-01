@@ -394,10 +394,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 	}
 
-	context->isCallingSystemFunction = true;
 	retQW = X64_CallFunction( tempBuff, used_stack_args, (asDWORD*)func );
 	ASM_GET_REG( "%rdx", retQW2 );
-	context->isCallingSystemFunction = false;
 
 	// If the return is a float value we need to get the value from the FP register
 	if( sysFunc->hostReturnFloat )

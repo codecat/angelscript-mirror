@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -114,8 +114,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		args = &paramBuffer[1];
 	}
 
-	context->isCallingSystemFunction = true;
-
 	switch( callConv )
 	{
 	case ICC_CDECL_RETURNINMEM:     // fall through
@@ -161,7 +159,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 	}
-	context->isCallingSystemFunction = false;
 
 	return retQW;
 }

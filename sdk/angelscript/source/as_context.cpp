@@ -162,6 +162,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	isStackMemoryNotAllocated = false;
 
 	currentFunction = 0;
+	callingSystemFunction = 0;
 	regs.objectRegister = 0;
 	initialFunction = 0;
 
@@ -263,6 +264,12 @@ int asCContext::Prepare(int funcId)
 }
 
 // interface
+asIScriptFunction *asCContext::GetSystemFunction()
+{
+	return callingSystemFunction;
+}
+
+// interface
 int asCContext::Prepare(asIScriptFunction *func)
 {
 	if( func == 0 ) 
@@ -336,7 +343,6 @@ int asCContext::Prepare(asIScriptFunction *func)
 	{
 		exceptionLine           = -1;
 		exceptionFunction       = 0;
-		isCallingSystemFunction = false;
 		doAbort                 = false;
 		doSuspend               = false;
 		regs.doProcessSuspend   = lineCallback;
@@ -941,10 +947,10 @@ void *asCContext::GetAddressOfArg(asUINT arg)
 
 int asCContext::Abort()
 {
-	// TODO: multithread: Make thread safe
-
 	if( engine == 0 ) return asERROR;
 
+	// TODO: multithread: Make thread safe. There is a chance that the status
+	//                    changes to something else after being set to ABORTED here.
 	if( status == asEXECUTION_SUSPENDED )
 		status = asEXECUTION_ABORTED;
 
@@ -3507,7 +3513,7 @@ void asCContext::ExecuteNext()
 int asCContext::SetException(const char *descr)
 {
 	// Only allow this if we're executing a CALL byte code
-	if( !isCallingSystemFunction ) return asERROR;
+	if( callingSystemFunction == 0 ) return asERROR;
 
 	SetInternalException(descr);
 
@@ -4013,9 +4019,9 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 
 	asCGeneric gen(engine, sysFunction, currentObject, args);
 
-	isCallingSystemFunction = true;
+	callingSystemFunction = sysFunction;
 	func(&gen);
-	isCallingSystemFunction = false;
+	callingSystemFunction = 0;
 
 	regs.valueRegister = gen.returnVal;
 	regs.objectRegister = gen.objectRegister;

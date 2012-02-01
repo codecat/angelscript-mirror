@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.0 WIP - 2012/01/30</h2>
+<h2>Version 2.23.0 WIP - 2012/01/31</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,6 +26,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>By defining AS_NO_COMPILER the library can now be compiled without the script compiler for reducing the executable size (Thanks Philip Bennefall)
 <li>The compiler will no longer share interface type ids unless the interfaces are explicitly marked as shared. Previous behaviour is still temporarily available with AS_DEPRECATED
+</ul>
+<li>Library interface
+<ul>
+<li>Added asIScriptContext::GetSystemFunction() that returns the registered function that is currently being called (Thanks rviney)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

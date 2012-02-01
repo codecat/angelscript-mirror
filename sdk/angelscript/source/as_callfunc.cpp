@@ -456,7 +456,9 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 
 
+	context->callingSystemFunction = descr;
 	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
+	context->callingSystemFunction = 0;
 
 #if defined(COMPLEX_OBJS_PASSED_BY_REF) || defined(AS_LARGE_OBJS_PASSED_BY_REF)
 	if( sysFunc->takesObjByVal )
