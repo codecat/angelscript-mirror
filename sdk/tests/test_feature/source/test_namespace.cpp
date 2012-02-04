@@ -73,6 +73,25 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+	
+		// Retrieving entities should work properly with namespace
+		mod->SetDefaultNamespace("a");
+		asIScriptFunction *f1 = mod->GetFunctionByDecl("int func()");
+		asIScriptFunction *f2 = mod->GetFunctionByDecl("int a::func()");
+		asIScriptFunction *f3 = mod->GetFunctionByName("func");
+		if( f1 == 0 || f1 != f2 || f1 != f3 )
+			TEST_FAILED;
+
+		int v1 = mod->GetGlobalVarIndexByName("var");
+		int v2 = mod->GetGlobalVarIndexByDecl("int var");
+		int v3 = mod->GetGlobalVarIndexByDecl("int a::var");
+		if( v1 < 0 || v1 != v2 || v1 != v3 )
+			TEST_FAILED;
+
+		int t1 = mod->GetTypeIdByDecl("cl");
+		int t2 = mod->GetTypeIdByDecl("a::cl");
+		if( t1 < 0 || t1 != t2 )
+			TEST_FAILED;
 
 		// Test saving and loading 
 		CBytecodeStream s("");

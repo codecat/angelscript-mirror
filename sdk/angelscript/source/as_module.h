@@ -103,8 +103,7 @@ public:
 	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD reserved, asIScriptFunction **outFunc);
 	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
 	virtual asDWORD SetAccessMask(asDWORD accessMask);
-
-	// TODO: interface: Need SetDefaultNamespace()
+	virtual int     SetDefaultNamespace(const char *nameSpace);
 
 	// Script functions
 	virtual asUINT             GetFunctionCount() const;
@@ -212,6 +211,7 @@ public:
 	asCBuilder      *builder;
 	void            *userData;
 	asDWORD          accessMask;
+	asCString        defaultNamespace;
 
 	// This array holds all functions, class members, factories, etc that were compiled with the module
 	asCArray<asCScriptFunction *>  scriptFunctions;

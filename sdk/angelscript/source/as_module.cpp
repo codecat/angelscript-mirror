@@ -115,6 +115,39 @@ const char *asCModule::GetName() const
 }
 
 // interface
+int asCModule::SetDefaultNamespace(const char *nameSpace)
+{
+	// TODO: cleanup: This function is similar to asCScriptEngine::SetDefaultNamespace. Can we reuse the code?
+	if( nameSpace == 0 )
+		return asINVALID_ARG;
+
+	defaultNamespace = nameSpace;
+	if( defaultNamespace != "" )
+	{
+		// Make sure the namespace is composed of alternating identifier and ::
+		size_t pos = 0;
+		bool expectIdentifier = true;
+		size_t len;
+		eTokenType t = ttIdentifier;
+
+		for( ; pos < defaultNamespace.GetLength(); pos += len)
+		{
+			t = engine->tok.GetToken(defaultNamespace.AddressOf() + pos, defaultNamespace.GetLength() - pos, &len);
+			if( (expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope) )
+				return asINVALID_DECLARATION;
+
+			expectIdentifier = !expectIdentifier;
+		}
+
+		// If the namespace ends with :: then strip it off
+		if( t == ttScope )
+			defaultNamespace.SetLength(defaultNamespace.GetLength()-2);
+	}
+
+	return 0;
+}
+
+// interface
 int asCModule::AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset)
 {
 #ifdef AS_NO_COMPILER
@@ -411,7 +444,8 @@ int asCModule::GetFunctionIdByName(const char *name) const
 	int id = -1;
 	for( size_t n = 0; n < globalFunctions.GetLength(); n++ )
 	{
-		if( globalFunctions[n]->name == name )
+		if( globalFunctions[n]->name == name &&
+			globalFunctions[n]->nameSpace == defaultNamespace )
 		{
 			if( id == -1 )
 				id = globalFunctions[n]->id;
@@ -499,6 +533,9 @@ int asCModule::GetFunctionIdByDecl(const char *decl) const
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
+	// Use the defaultNamespace implicitly unless an explicit namespace has been provided
+	asCString ns = func.nameSpace == "" ? defaultNamespace : func.nameSpace;
+
 	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	int id = -1;
@@ -507,7 +544,8 @@ int asCModule::GetFunctionIdByDecl(const char *decl) const
 		if( globalFunctions[n]->objectType == 0 && 
 			func.name == globalFunctions[n]->name && 
 			func.returnType == globalFunctions[n]->returnType &&
-			func.parameterTypes.GetLength() == globalFunctions[n]->parameterTypes.GetLength() )
+			func.parameterTypes.GetLength() == globalFunctions[n]->parameterTypes.GetLength() &&
+			ns == globalFunctions[n]->nameSpace )
 		{
 			bool match = true;
 			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
@@ -550,12 +588,12 @@ asUINT asCModule::GetGlobalVarCount() const
 // interface
 int asCModule::GetGlobalVarIndexByName(const char *name) const
 {
-	// TODO: namespace: Should only look in the default namespace
 	// Find the global var id
 	int id = -1;
 	for( size_t n = 0; n < scriptGlobals.GetLength(); n++ )
 	{
-		if( scriptGlobals[n]->name == name )
+		if( scriptGlobals[n]->name == name &&
+			scriptGlobals[n]->nameSpace == defaultNamespace )
 		{
 			id = (int)n;
 			break;
@@ -584,10 +622,9 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 {
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
 
-	// TODO: namespace: Should allow an implicit namespace too
 	asCString name, nameSpace;
 	asCDataType dt;
-	bld.ParseVariableDeclaration(decl, "", name, nameSpace, dt);
+	bld.ParseVariableDeclaration(decl, defaultNamespace, name, nameSpace, dt);
 
 	// TODO: optimize: Improve linear search
 	// Search global variables for a match
@@ -676,7 +713,7 @@ int asCModule::GetTypeIdByDecl(const char *decl) const
 {
 	asCDataType dt;
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
-	int r = bld.ParseDataType(decl, &dt, "");
+	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
 	if( r < 0 )
 		return asINVALID_TYPE;
 
@@ -1444,6 +1481,7 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 	// Compile the global variable and add it to the module scope
 	asCBuilder builder(engine, this);
 	asCString str = code;
+	// TODO: namespace: Add the global var to the default namespace
 	r = builder.CompileGlobalVar(sectionName, str.AddressOf(), lineOffset);
 
 	engine->BuildCompleted();
@@ -1512,6 +1550,7 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 	asCBuilder builder(engine, this);
 	asCString str = code;
 	asCScriptFunction *func = 0;
+	// TODO: namespace: Add the function to the default namespace
 	r = builder.CompileFunction(sectionName, str.AddressOf(), lineOffset, compileFlags, &func);
 
 	engine->BuildCompleted();

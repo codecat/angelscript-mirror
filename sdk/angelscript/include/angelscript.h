@@ -618,6 +618,7 @@ public:
 	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
 	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
 	virtual asDWORD SetAccessMask(asDWORD accessMask) = 0;
+	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
 
 	// Functions
 	virtual asUINT             GetFunctionCount() const = 0;
