@@ -91,6 +91,57 @@ bool Test()
 	// TODO: It should be possible to inform the namespace when querying by declaration
 	// TODO: It should be possible to choose whether to include namespace or not when getting declarations
 
+	// Test registering interface with namespace
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		
+		r = engine->SetDefaultNamespace("test"); assert( r >= 0 );
+
+		r = engine->RegisterObjectType("t", 0, asOBJ_REF); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("t", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("t", "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectProperty("t", "int a", 0); assert( r >= 0 );
+		int t1 = engine->GetTypeIdByDecl("t");
+		int t2 = engine->GetTypeIdByDecl("test::t");
+		if( t1 < 0 || t1 != t2 )
+			TEST_FAILED;
+		
+		r = engine->RegisterInterface("i"); assert( r >= 0 );
+		r = engine->RegisterInterfaceMethod("i", "void f()"); assert( r >= 0 );
+		t1 = engine->GetTypeIdByDecl("test::i");
+		if( t1 < 0 )
+			TEST_FAILED;
+
+		r = engine->RegisterEnum("e"); assert( r >= 0 );
+		r = engine->RegisterEnumValue("e", "e1", 0); assert( r >= 0 );
+		t1 = engine->GetTypeIdByDecl("test::e");
+		if( t1 < 0 )
+			TEST_FAILED;
+
+		r = engine->RegisterFuncdef("void f()"); assert( r >= 0 );
+		t1 = engine->GetTypeIdByDecl("test::f");
+		if( t1 < 0 )
+			TEST_FAILED;
+
+		r = engine->RegisterGlobalFunction("void gf()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		asIScriptFunction *f1 = engine->GetGlobalFunctionByDecl("void test::gf()");
+		asIScriptFunction *f2 = engine->GetGlobalFunctionByDecl("void gf()");
+		if( f1 == 0 || f1 != f2 )
+			TEST_FAILED;
+
+		r = engine->RegisterGlobalProperty("int gp", (void*)1); assert( r >= 0 );
+		// TODO: how to test this?
+
+		r = engine->RegisterTypedef("td", "int"); assert( r >= 0 );
+		t1 = engine->GetTypeIdByDecl("test::td");
+		if( t1 < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
 	// Success
 	return fail;
 }

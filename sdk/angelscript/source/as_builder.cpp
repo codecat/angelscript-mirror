@@ -891,8 +891,11 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 	asCScriptNode *node = parser.GetScriptNode();
 
-	// Find name
+	// Determine scope
 	asCScriptNode *n = node->firstChild->next->next;
+	func->nameSpace = GetScopeFromNode(n, &source, &n);
+
+	// Find name
 	func->name.Assign(&source.code[n->tokenPos], n->tokenLength);
 
 	// Initialize a script function object for registration

@@ -709,7 +709,7 @@ int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
 		for( ; pos < defaultNamespace.GetLength(); pos += len)
 		{
 			t = tok.GetToken(defaultNamespace.AddressOf() + pos, defaultNamespace.GetLength() - pos, &len);
-			if( (expectIdentifier && t != ttIdentifier) || t != ttScope )
+			if( (expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope) )
 				return ConfigError(asINVALID_DECLARATION, "SetDefaultNamespace", nameSpace, 0);
 
 			expectIdentifier = !expectIdentifier;
@@ -2005,8 +2005,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 
 	int r;
 	asCBuilder bld(this, 0);
-	// TODO: namespace: Use proper namespace
-	if( (r = bld.VerifyProperty(0, declaration, name, type, "")) < 0 )
+	if( (r = bld.VerifyProperty(0, declaration, name, type, defaultNamespace)) < 0 )
 		return ConfigError(r, "RegisterGlobalProperty", declaration, 0);
 
 	// Don't allow registering references as global properties
@@ -2016,6 +2015,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	// Store the property info
 	asCGlobalProperty *prop = AllocateGlobalProperty();
 	prop->name        = name;
+	prop->nameSpace   = defaultNamespace;
 	prop->type        = type;
 	prop->accessMask  = defaultAccessMask;
 
@@ -2263,9 +2263,11 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 		return ConfigError(asINVALID_DECLARATION, "RegisterGlobalFunction", declaration, 0);
 	}
 
+	// TODO: namespace: What if the declaration defined an explicit namespace?
+	func->nameSpace = defaultNamespace;
+
 	// Check name conflicts
-	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
-	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0, "");
+	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0, defaultNamespace);
 	if( r < 0 )
 	{
 		asDELETE(func,asCScriptFunction);

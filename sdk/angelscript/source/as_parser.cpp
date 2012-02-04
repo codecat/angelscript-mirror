@@ -320,6 +320,27 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	node->AddChildLast(ParseTypeMod(false));
 	if( isSyntaxError ) return node;
 
+	// TODO: cleanup: Implement a common function for parsing the preceding namespace
+	// The name may be preceded by an explicit namespace
+	sToken t1, t2;
+	GetToken(&t1);
+	GetToken(&t2);
+	if( t1.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+	}
+	while( t1.type == ttIdentifier && t2.type == ttScope )
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseIdentifier());
+		node->AddChildLast(ParseToken(ttScope));
+		GetToken(&t1);
+		GetToken(&t2);
+	}
+	RewindTo(&t1);
+
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
 
@@ -327,7 +348,6 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	if( isSyntaxError ) return node;
 
 	// Parse an optional const after the function definition (used for object methods)
-	sToken t1;
 	GetToken(&t1);
 	RewindTo(&t1);
 	if( t1.type == ttConst )
