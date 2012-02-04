@@ -692,6 +692,38 @@ int asCScriptEngine::Release() const
 }
 
 // interface
+int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
+{
+	if( nameSpace == 0 )
+		return ConfigError(asINVALID_ARG, "SetDefaultNamespace", nameSpace, 0);
+
+	defaultNamespace = nameSpace;
+	if( defaultNamespace != "" )
+	{
+		// Make sure the namespace is composed of alternating identifier and ::
+		size_t pos = 0;
+		bool expectIdentifier = true;
+		size_t len;
+		eTokenType t = ttIdentifier;
+
+		for( ; pos < defaultNamespace.GetLength(); pos += len)
+		{
+			t = tok.GetToken(defaultNamespace.AddressOf() + pos, defaultNamespace.GetLength() - pos, &len);
+			if( (expectIdentifier && t != ttIdentifier) || t != ttScope )
+				return ConfigError(asINVALID_DECLARATION, "SetDefaultNamespace", nameSpace, 0);
+
+			expectIdentifier = !expectIdentifier;
+		}
+
+		// If the namespace ends with :: then strip it off
+		if( t == ttScope )
+			defaultNamespace.SetLength(defaultNamespace.GetLength()-2);
+	}
+
+	return 0;
+}
+
+// interface
 void *asCScriptEngine::SetUserData(void *data)
 {
 	void *old = userData;
@@ -830,6 +862,7 @@ int asCScriptEngine::DiscardModule(const char *module)
 	return 0;
 }
 
+// internal
 void asCScriptEngine::ClearUnusedTypes()
 {
 	// Build a list of all types to check for
@@ -938,6 +971,7 @@ void asCScriptEngine::ClearUnusedTypes()
 	}
 }
 
+// internal
 void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot)
 {
 	// Remove the type from the list
@@ -1037,7 +1071,7 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 }
 
 
-// Internal
+// internal
 asCString asCScriptEngine::GetFunctionDeclaration(int funcId)
 {
 	asCString str;
@@ -1048,6 +1082,7 @@ asCString asCScriptEngine::GetFunctionDeclaration(int funcId)
 	return str;
 }
 
+// internal
 asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcId) const
 {
 	if( funcId < 0 || funcId >= (int)scriptFunctions.GetLength() )
@@ -1057,7 +1092,7 @@ asCScriptFunction *asCScriptEngine::GetScriptFunction(int funcId) const
 }
 
 
-
+// interface
 asIScriptContext *asCScriptEngine::CreateContext()
 {
 	asIScriptContext *ctx = 0;
@@ -1065,6 +1100,7 @@ asIScriptContext *asCScriptEngine::CreateContext()
 	return ctx;
 }
 
+// internal
 int asCScriptEngine::CreateContext(asIScriptContext **context, bool isInternal)
 {
 	*context = asNEW(asCContext)(this, !isInternal);
@@ -1082,7 +1118,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	int r;
 	asCDataType dt;
 	asCBuilder bld(this, 0);
-	r = bld.ParseDataType(obj, &dt);
+	r = bld.ParseDataType(obj, &dt, defaultNamespace);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectProperty", obj, declaration);
 
@@ -1114,6 +1150,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	return asSUCCESS;
 }
 
+// interface
 int asCScriptEngine::RegisterInterface(const char *name)
 {
 	if( name == 0 ) return ConfigError(asINVALID_NAME, "RegisterInterface", 0, 0);
@@ -1122,7 +1159,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	asUINT n;
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && objectTypes[n]->name == name )
+		if( objectTypes[n] && objectTypes[n]->name == name && objectTypes[n]->nameSpace == defaultNamespace )
 			return asALREADY_REGISTERED;
 	}
 
@@ -1130,7 +1167,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	asCDataType dt;
 	asCBuilder bld(this, 0);
 	bool oldMsgCallback = msgCallback; msgCallback = false;
-	int r = bld.ParseDataType(name, &dt);
+	int r = bld.ParseDataType(name, &dt, defaultNamespace);
 	msgCallback = oldMsgCallback;
 	if( r >= 0 ) return ConfigError(asERROR, "RegisterInterface", name, 0);
 
@@ -1153,6 +1190,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_SHARED;
 	st->size = 0; // Cannot be instanciated
 	st->name = name;
+	st->nameSpace = defaultNamespace;
 
 	// Use the default script class behaviours
 	st->beh.factory = 0;
@@ -1179,7 +1217,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	asCDataType dt;
 	asCBuilder bld(this, 0);
-	int r = bld.ParseDataType(intf, &dt);
+	int r = bld.ParseDataType(intf, &dt, defaultNamespace);
 	if( r < 0 )
 		return ConfigError(r, "RegisterInterfaceMethod", intf, declaration);
 
@@ -1336,13 +1374,14 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		asUINT n;
 		for( n = 0; n < objectTypes.GetLength(); n++ )
 		{
-			if( objectTypes[n] && objectTypes[n]->name == typeName )
+			if( objectTypes[n] && objectTypes[n]->name == typeName && objectTypes[n]->nameSpace == defaultNamespace )
 				// This is not an irrepairable error, as it may just be that the same type is registered twice
 				return asALREADY_REGISTERED;
 		}
 
 		asCObjectType *type = asNEW(asCObjectType)(this);
 		type->name       = typeName;
+		type->nameSpace  = defaultNamespace;
 		type->size       = byteSize;
 		type->flags      = flags;
 		type->accessMask = defaultAccessMask;
@@ -1405,7 +1444,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		// Use builder to parse the datatype
 		asCDataType dt;
 		bool oldMsgCallback = msgCallback; msgCallback = false;
-		r = bld.ParseDataType(name, &dt);
+		r = bld.ParseDataType(name, &dt, defaultNamespace);
 		msgCallback = oldMsgCallback;
 
 		// If the builder fails, then the type name
@@ -1429,6 +1468,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
 			type->name       = typeName;
+			type->nameSpace  = defaultNamespace;
 			type->size       = byteSize;
 			type->flags      = flags;
 			type->accessMask = defaultAccessMask;
@@ -1467,6 +1507,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			// Put the data type in the list
 			asCObjectType *type = asNEW(asCObjectType)(this);
 			type->name       = dt.GetObjectType()->name;
+			// The namespace will be the same as the original template type
+			type->nameSpace  = dt.GetObjectType()->nameSpace;
 			type->templateSubType = dt.GetSubType();
 			if( type->templateSubType.GetObjectType() ) type->templateSubType.GetObjectType()->AddRef();
 			type->size       = byteSize;
@@ -1497,7 +1539,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	// Determine the object type
 	asCBuilder bld(this, 0);
 	asCDataType type;
-	int r = bld.ParseDataType(datatype, &type);
+	int r = bld.ParseDataType(datatype, &type, defaultNamespace);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectBehaviour", datatype, decl);
 
@@ -2070,7 +2112,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	// Determine the object type
 	asCDataType dt;
 	asCBuilder bld(this, 0);
-	int r = bld.ParseDataType(obj, &dt);
+	int r = bld.ParseDataType(obj, &dt, defaultNamespace);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", obj, declaration);
 
@@ -2454,7 +2496,7 @@ int asCScriptEngine::RegisterDefaultArrayType(const char *type)
 {
 	asCBuilder bld(this, 0);
 	asCDataType dt;
-	int r = bld.ParseDataType(type, &dt);
+	int r = bld.ParseDataType(type, &dt, defaultNamespace);
 	if( r < 0 ) return r;
 
 	if( dt.GetObjectType() == 0 ||
@@ -2504,7 +2546,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	asCBuilder bld(this, 0);
 
 	asCDataType dt;
-	r = bld.ParseDataType(datatype, &dt);
+	r = bld.ParseDataType(datatype, &dt, defaultNamespace);
 	if( r < 0 )
 	{
 		// Set as dummy before deleting
@@ -3489,7 +3531,7 @@ int asCScriptEngine::GetTypeIdByDecl(const char *decl) const
 	asCDataType dt;
 	// This cast is ok, because we are not changing anything in the engine
 	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
-	int r = bld.ParseDataType(decl, &dt);
+	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
 	if( r < 0 )
 		return asINVALID_TYPE;
 
@@ -4036,7 +4078,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	asUINT n;
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && objectTypes[n]->name == type )
+		if( objectTypes[n] && objectTypes[n]->name == type && objectTypes[n]->nameSpace == defaultNamespace )
 			// Let the application recover from this error, for example if the same typedef is registered twice
 			return asALREADY_REGISTERED;
 	}
@@ -4078,7 +4120,6 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	if( token != ttIdentifier || strlen(type) != tokenLen )
 		return ConfigError(asINVALID_NAME, "RegisterTypedef", type, decl);
 
-	// TODO: namespace: Allow application to specify namespace. Probably with a SetDefaultNamespace
 	asCBuilder bld(this, 0);
 	int r = bld.CheckNameConflict(type, 0, 0, "");
 	if( r < 0 )
@@ -4139,14 +4180,14 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	// Verify if the name has been registered as a type already
 	asUINT n;
 	for( n = 0; n < objectTypes.GetLength(); n++ )
-		if( objectTypes[n] && objectTypes[n]->name == name )
+		if( objectTypes[n] && objectTypes[n]->name == name && objectTypes[n]->nameSpace == defaultNamespace )
 			return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
 	asCDataType dt;
 	asCBuilder bld(this, 0);
 	bool oldMsgCallback = msgCallback; msgCallback = false;
-	int r = bld.ParseDataType(name, &dt);
+	int r = bld.ParseDataType(name, &dt, defaultNamespace);
 	msgCallback = oldMsgCallback;
 	if( r >= 0 )
 		return ConfigError(asERROR, "RegisterEnum", name, 0);
@@ -4170,6 +4211,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	st->flags = asOBJ_ENUM | asOBJ_SHARED;
 	st->size = 4;
 	st->name = name;
+	st->nameSpace = defaultNamespace;
 
 	objectTypes.PushLast(st);
 	registeredEnums.PushLast(st);
@@ -4189,7 +4231,7 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 	asCDataType dt;
 	int r;
 	asCBuilder bld(this, 0);
-	r = bld.ParseDataType(typeName, &dt);
+	r = bld.ParseDataType(typeName, &dt, defaultNamespace);
 	if( r < 0 )
 		return ConfigError(r, "RegisterEnumValue", typeName, valueName);
 

@@ -234,7 +234,7 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 	node = node->firstChild;
 	node->DisconnectParent();
 	// TODO: namespace: How should we allow informing the namespace? Perhaps the module 
-	//                  needs a SetDefaultNamepace() method that can be called before
+	//                  needs a SetDefaultNamespace() method that can be called before
 	RegisterGlobalVar(node, script, "");
 
 	CompileGlobalVariables();
@@ -311,7 +311,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	node = node->firstChild;
 
 	// TODO: namespace: How should we allow informing the namespace? Perhaps the module 
-	//                  needs a SetDefaultNamepace() method that can be called before
+	//                  needs a SetDefaultNamespace() method that can be called before
 
 	// Create the function
 	bool isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared;
@@ -672,7 +672,7 @@ void asCBuilder::CompileFunctions()
 #endif
 
 // Called from module and engine
-int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
+int asCBuilder::ParseDataType(const char *datatype, asCDataType *result, const asCString &implicitNamespace)
 {
 	Reset();
 
@@ -687,8 +687,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result)
 	// Get data type and property name
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
-	// TODO: namespace: Use correct implicit namespace
-	*result = CreateDataTypeFromNode(dataType, &source, "", true);
+	*result = CreateDataTypeFromNode(dataType, &source, implicitNamespace, true);
 
 	if( numErrors > 0 )
 		return asINVALID_TYPE;

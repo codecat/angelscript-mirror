@@ -450,7 +450,7 @@ asCScriptNode *asCParser::ParseNamespace()
 	else
 		Error(ExpectedToken(asCTokenizer::GetDefinition(ttNamespace)).AddressOf(), &t1);
 
-	// TODO: namepace: Allow declaration of multiple nested namespace with namespace A::B::C { }
+	// TODO: namespace: Allow declaration of multiple nested namespace with namespace A::B::C { }
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
 

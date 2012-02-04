@@ -153,6 +153,7 @@ public:
 	virtual int     EndConfigGroup();
 	virtual int     RemoveConfigGroup(const char *groupName);
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask);
+	virtual int     SetDefaultNamespace(const char *nameSpace);
 #ifdef AS_DEPRECATED
 	// TODO: interface: Remove this deprecated function
 	// deprecated since 2011-10-04
@@ -166,6 +167,7 @@ public:
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;
 #ifdef AS_DEPRECATED
+	// TODO: interface: Remove this deprecated function
 	// deprecated since 2011-10-03
 	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
 #endif
@@ -380,6 +382,7 @@ public:
 	asCArray<asCConfigGroup*>  configGroups;
 	asCConfigGroup            *currentGroup;
 	asDWORD                    defaultAccessMask;
+	asCString                  defaultNamespace;
 
 	// Message callback
 	bool                        msgCallback;

@@ -550,10 +550,11 @@ public:
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const = 0;
 
 	// Configuration groups
-	virtual int BeginConfigGroup(const char *groupName) = 0;
-	virtual int EndConfigGroup() = 0;
-	virtual int RemoveConfigGroup(const char *groupName) = 0;
+	virtual int     BeginConfigGroup(const char *groupName) = 0;
+	virtual int     EndConfigGroup() = 0;
+	virtual int     RemoveConfigGroup(const char *groupName) = 0;
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
+	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
 #ifdef AS_DEPRECATED
 	// deprecated since 2011-10-04
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;

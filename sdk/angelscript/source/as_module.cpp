@@ -691,7 +691,7 @@ int asCModule::GetTypeIdByDecl(const char *decl) const
 {
 	asCDataType dt;
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
-	int r = bld.ParseDataType(decl, &dt);
+	int r = bld.ParseDataType(decl, &dt, "");
 	if( r < 0 )
 		return asINVALID_TYPE;
 
