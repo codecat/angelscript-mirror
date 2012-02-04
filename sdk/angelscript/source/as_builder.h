@@ -123,7 +123,7 @@ public:
 	int ParseDataType(const char *datatype, asCDataType *result, const asCString &implicitNamespace);
 	int ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName);
 	int ParseFunctionDeclaration(asCObjectType *type, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles = 0, bool *returnAutoHandle = 0);
-	int ParseVariableDeclaration(const char *decl, asCObjectProperty *var);
+	int ParseVariableDeclaration(const char *decl, const asCString &implicitNamespace, asCString &outName, asCString &outNamespace, asCDataType &outDt);
 	int CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code, const asCString &ns);
 	int CheckNameConflictMember(asCObjectType *type, const char *name, asCScriptNode *node, asCScriptCode *code, bool isProperty);
 

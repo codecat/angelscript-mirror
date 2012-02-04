@@ -80,6 +80,7 @@ protected:
 	asCScriptNode *ParseParameterList();
 	asCScriptNode *ParseType(bool allowConst, bool allowVariableType = false);
 	asCScriptNode *ParseTypeMod(bool isParam);
+	void           ParseOptionalScope(asCScriptNode *node);
 
 #ifndef AS_NO_COMPILER
 	// Statements

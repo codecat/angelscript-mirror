@@ -108,7 +108,9 @@ public:
 	// TODO: interface: access: Return the current access mask
 	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const;
 	// TODO: access: Allow changing the access mask
-	
+	virtual int    GetGlobalPropertyIndexByName(const char *name) const;
+	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const;
+
 	// Type registration
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset);

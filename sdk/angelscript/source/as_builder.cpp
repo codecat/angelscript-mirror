@@ -1001,7 +1001,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	return 0;
 }
 
-int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *var)
+int asCBuilder::ParseVariableDeclaration(const char *decl, const asCString &implicitNamespace, asCString &outName, asCString &outNamespace, asCDataType &outDt)
 {
 	Reset();
 
@@ -1016,13 +1016,21 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asCObjectProperty *va
 
 	asCScriptNode *node = parser.GetScriptNode();
 
-	// Find name
+	// Determine the scope from declaration
 	asCScriptNode *n = node->firstChild->next;
-	var->name.Assign(&source.code[n->tokenPos], n->tokenLength);
+	asCString scope = GetScopeFromNode(n, &source, &n);
+	if( scope == "" )
+		outNamespace = implicitNamespace;
+	else if( scope == "::" )
+		outNamespace = "";
+	else
+		outNamespace = scope;
+
+	// Find name
+	outName.Assign(&source.code[n->tokenPos], n->tokenLength);
 
 	// Initialize a script variable object for registration
-	// TODO: namespace: Use correct implicit namespace
-	var->type = CreateDataTypeFromNode(node->firstChild, &source, "");
+	outDt = CreateDataTypeFromNode(node->firstChild, &source, implicitNamespace);
 
 	if( numErrors > 0 || numWarnings > 0 )
 		return asINVALID_DECLARATION;

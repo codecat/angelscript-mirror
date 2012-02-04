@@ -131,7 +131,11 @@ bool Test()
 			TEST_FAILED;
 
 		r = engine->RegisterGlobalProperty("int gp", (void*)1); assert( r >= 0 );
-		// TODO: how to test this?
+		int g1 = engine->GetGlobalPropertyIndexByName("gp");
+		int g2 = engine->GetGlobalPropertyIndexByDecl("int gp");
+		int g3 = engine->GetGlobalPropertyIndexByDecl("int test::gp");
+		if( g1 < 0 || g1 != g2 || g1 != g3 )
+			TEST_FAILED;
 
 		r = engine->RegisterTypedef("td", "int"); assert( r >= 0 );
 		t1 = engine->GetTypeIdByDecl("test::td");

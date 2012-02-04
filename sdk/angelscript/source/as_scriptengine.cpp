@@ -2104,6 +2104,55 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 }
 
 // interface
+int asCScriptEngine::GetGlobalPropertyIndexByName(const char *name) const
+{
+	// Find the global var id
+	int id = -1;
+	for( size_t n = 0; n < registeredGlobalProps.GetLength(); n++ )
+	{
+		if( registeredGlobalProps[n]->name == name &&
+			registeredGlobalProps[n]->nameSpace == defaultNamespace )
+		{
+			id = (int)n;
+			break;
+		}
+	}
+
+	if( id == -1 ) return asNO_GLOBAL_VAR;
+
+	return id;
+}
+
+// interface
+int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
+{
+	// This const cast is OK. The builder won't modify the engine
+	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
+
+	asCString name, ns;
+	asCDataType dt;
+	bld.ParseVariableDeclaration(decl, defaultNamespace, name, ns, dt);
+
+	// TODO: optimize: Improve linear search
+	// Search for a match
+	int id = -1;
+	for( size_t n = 0; n < registeredGlobalProps.GetLength(); ++n )
+	{
+		if( name == registeredGlobalProps[n]->name && 
+			dt   == registeredGlobalProps[n]->type && 
+			ns   == registeredGlobalProps[n]->nameSpace )
+		{
+			id = (int)n;
+			break;
+		}
+	}
+
+	if( id == -1 ) return asNO_GLOBAL_VAR;
+
+	return id;
+}
+
+// interface
 int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	if( obj == 0 )

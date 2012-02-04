@@ -512,6 +512,8 @@ public:
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	virtual asUINT GetGlobalPropertyCount() const = 0;
 	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
+	virtual int    GetGlobalPropertyIndexByName(const char *name) const = 0;
+	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const = 0;
 
 	// Object types
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;

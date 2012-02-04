@@ -233,6 +233,8 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
 
+	ParseOptionalScope(scriptNode);
+
 	scriptNode->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return -1;
 
@@ -310,18 +312,8 @@ asCScriptNode *asCParser::ParseImport()
 }
 #endif
 
-asCScriptNode *asCParser::ParseFunctionDefinition()
+void asCParser::ParseOptionalScope(asCScriptNode *node)
 {
-	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunction);
-
-	node->AddChildLast(ParseType(true));
-	if( isSyntaxError ) return node;
-
-	node->AddChildLast(ParseTypeMod(false));
-	if( isSyntaxError ) return node;
-
-	// TODO: cleanup: Implement a common function for parsing the preceding namespace
-	// The name may be preceded by an explicit namespace
 	sToken t1, t2;
 	GetToken(&t1);
 	GetToken(&t2);
@@ -330,6 +322,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 		RewindTo(&t1);
 		node->AddChildLast(ParseToken(ttScope));
 		GetToken(&t1);
+		GetToken(&t2);
 	}
 	while( t1.type == ttIdentifier && t2.type == ttScope )
 	{
@@ -340,6 +333,19 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 		GetToken(&t2);
 	}
 	RewindTo(&t1);
+}
+
+asCScriptNode *asCParser::ParseFunctionDefinition()
+{
+	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunction);
+
+	node->AddChildLast(ParseType(true));
+	if( isSyntaxError ) return node;
+
+	node->AddChildLast(ParseTypeMod(false));
+	if( isSyntaxError ) return node;
+
+	ParseOptionalScope(node);
 
 	node->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return node;
@@ -348,6 +354,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	if( isSyntaxError ) return node;
 
 	// Parse an optional const after the function definition (used for object methods)
+	sToken t1;
 	GetToken(&t1);
 	RewindTo(&t1);
 	if( t1.type == ttConst )
@@ -1616,26 +1623,8 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 		}
 	}
 
-
 	// Parse scope prefix
-	sToken t1, t2;
-	GetToken(&t1);
-	if( t1.type == ttScope )
-	{
-		RewindTo(&t1);
-		node->AddChildLast(ParseToken(ttScope));
-		GetToken(&t1);
-	}
-	GetToken(&t2);
-	while( t1.type == ttIdentifier && t2.type == ttScope )
-	{
-		RewindTo(&t1);
-		node->AddChildLast(ParseIdentifier());
-		node->AddChildLast(ParseToken(ttScope));
-		GetToken(&t1);
-		GetToken(&t2);
-	}
-	RewindTo(&t1);
+	ParseOptionalScope(node);
 
 	// Parse the actual type
 	node->AddChildLast(ParseDataType(allowVariableType));
@@ -2055,25 +2044,7 @@ asCScriptNode *asCParser::ParseFunctionCall()
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snFunctionCall);
 
 	// Parse scope prefix
-	sToken t1, t2;
-	GetToken(&t1);
-	if( t1.type == ttScope )
-	{
-		RewindTo(&t1);
-		node->AddChildLast(ParseToken(ttScope));
-		GetToken(&t1);
-	}
-	GetToken(&t2);
-	while( t1.type == ttIdentifier && t2.type == ttScope )
-	{
-		RewindTo(&t1);
-		node->AddChildLast(ParseIdentifier());
-		node->AddChildLast(ParseToken(ttScope));
-		GetToken(&t1);
-		GetToken(&t2);
-	}
-
-	RewindTo(&t1);
+	ParseOptionalScope(node);
 
 	// Parse the function name followed by the argument list
 	node->AddChildLast(ParseIdentifier());
@@ -2089,25 +2060,7 @@ asCScriptNode *asCParser::ParseVariableAccess()
 	asCScriptNode *node = new(engine->memoryMgr.AllocScriptNode()) asCScriptNode(snVariableAccess);
 
 	// Parse scope prefix
-	sToken t1, t2;
-	GetToken(&t1);
-	if( t1.type == ttScope )
-	{
-		RewindTo(&t1);
-		node->AddChildLast(ParseToken(ttScope));
-		GetToken(&t1);
-	}
-	GetToken(&t2);
-	while( t1.type == ttIdentifier && t2.type == ttScope )
-	{
-		RewindTo(&t1);
-		node->AddChildLast(ParseIdentifier());
-		node->AddChildLast(ParseToken(ttScope));
-		GetToken(&t1);
-		GetToken(&t2);
-	}
-
-	RewindTo(&t1);
+	ParseOptionalScope(node);
 
 	// Parse the variable name
 	node->AddChildLast(ParseIdentifier());

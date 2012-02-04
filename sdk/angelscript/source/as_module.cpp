@@ -551,6 +551,7 @@ asUINT asCModule::GetGlobalVarCount() const
 // interface
 int asCModule::GetGlobalVarIndexByName(const char *name) const
 {
+	// TODO: namespace: Should only look in the default namespace
 	// Find the global var id
 	int id = -1;
 	for( size_t n = 0; n < scriptGlobals.GetLength(); n++ )
@@ -584,16 +585,19 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 {
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
 
-	asCObjectProperty gvar;
-	bld.ParseVariableDeclaration(decl, &gvar);
+	// TODO: namespace: Should allow an implicit namespace too
+	asCString name, nameSpace;
+	asCDataType dt;
+	bld.ParseVariableDeclaration(decl, "", name, nameSpace, dt);
 
 	// TODO: optimize: Improve linear search
-	// Search script functions for matching interface
+	// Search global variables for a match
 	int id = -1;
 	for( size_t n = 0; n < scriptGlobals.GetLength(); ++n )
 	{
-		if( gvar.name == scriptGlobals[n]->name && 
-			gvar.type == scriptGlobals[n]->type )
+		if( name      == scriptGlobals[n]->name && 
+			nameSpace == scriptGlobals[n]->nameSpace &&
+			dt        == scriptGlobals[n]->type )
 		{
 			id = (int)n;
 			break;
