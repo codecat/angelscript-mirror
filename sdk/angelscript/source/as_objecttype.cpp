@@ -480,25 +480,6 @@ asIScriptFunction *asCObjectType::GetMethodByDecl(const char *decl, bool getVirt
 	return engine->GetFunctionById(GetMethodIdByDecl(decl, getVirtual));
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2011-10-03
-// interface
-asIScriptFunction *asCObjectType::GetMethodDescriptorByIndex(asUINT index, bool getVirtual) const
-{
-	if( index >= methods.GetLength() ) 
-		return 0;
-
-	if( !getVirtual )
-	{
-		asCScriptFunction *func = engine->scriptFunctions[methods[index]];
-		if( func && func->funcType == asFUNC_VIRTUAL )
-			return virtualFunctionTable[func->vfTableIdx];
-	}
-
-	return engine->scriptFunctions[methods[index]];
-}
-#endif
-
 // interface
 asUINT asCObjectType::GetPropertyCount() const
 {

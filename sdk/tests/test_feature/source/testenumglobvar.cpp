@@ -82,8 +82,8 @@ bool TestEnumGlobVar()
 		TEST_FAILED;
 	}
 
-	unsigned long *d;
-	d = (unsigned long *)mod->GetAddressOfGlobalVar(3);
+	asUINT *d;
+	d = (asUINT *)mod->GetAddressOfGlobalVar(3);
 	if( d == 0 )
 	{
 		printf("%s: GetAddressOfGlobalVar() returned %d\n", TESTNAME, r);

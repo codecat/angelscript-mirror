@@ -555,10 +555,6 @@ public:
 	virtual int     RemoveConfigGroup(const char *groupName) = 0;
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
 	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-04
-	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
-#endif
 
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag = asGM_ONLY_IF_EXISTS) = 0;
@@ -566,10 +562,6 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
-#endif
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
@@ -632,11 +624,6 @@ public:
 	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const = 0;
 	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const = 0;
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const = 0;
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
-#endif
 	virtual int                RemoveFunction(int funcId) = 0;
 
 	// Global variables
@@ -767,10 +754,6 @@ public:
 	virtual asIScriptEngine   *GetEngine() const = 0;
 	virtual int                GetFunctionId() const = 0;
 	virtual asIScriptFunction *GetFunction() const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
-#endif
 	virtual void              *GetFunctionUserData() const = 0;
 
 	// Object
@@ -870,10 +853,6 @@ public:
 	virtual asIScriptFunction *GetMethodByIndex(asUINT index, bool getVirtual = true) const = 0;
 	virtual asIScriptFunction *GetMethodByName(const char *name, bool getVirtual = true) const = 0;
 	virtual asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual = true) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual = true) const = 0;
-#endif
 
 	// Properties
 	virtual asUINT      GetPropertyCount() const = 0;

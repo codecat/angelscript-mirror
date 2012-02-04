@@ -819,13 +819,6 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, const asCStri
 				// Determine if the module has access to the property
 				if( module->accessMask & props[n]->accessMask )
 				{
-#ifdef AS_DEPRECATED
-					// deprecated since 2011-10-04
-					// Find the config group for the global property
-					asCConfigGroup *group = engine->FindConfigGroupForGlobalVar(props[n]->id);
-					if( !group || group->HasModuleAccess(module->name.AddressOf()) )
-						continue;
-#endif
 					if( isAppProp ) *isAppProp = true;
 					return props[n];
 				}
@@ -3495,12 +3488,6 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 			// Verify if the module has access to the function
 			if( module->accessMask & f->accessMask )
 			{
-#ifdef AS_DEPRECATED
-				// deprecated since 2011-10-04
-				// Find the config group for the global function
-				asCConfigGroup *group = engine->FindConfigGroupForFunction(f->id);
-				if( !group || group->HasModuleAccess(module->name.AddressOf()) )
-#endif
 				funcs.PushLast(f->id);
 			}
 		}
@@ -3671,14 +3658,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				isImplicitHandle = true;
 
 			// Make sure the module has access to the object type
-#ifdef AS_DEPRECATED
-			// deprecated since 2011-10-04
-			// Find the config group for the object type
-			asCConfigGroup *group = engine->FindConfigGroupForObjectType(ot);
-			if( !module || ((module->accessMask & ot->accessMask) && (!group || group->HasModuleAccess(module->name.AddressOf()))) )
-#else
 			if( !module || (module->accessMask & ot->accessMask) )
-#endif
 			{
 				if(asOBJ_TYPEDEF == (ot->flags & asOBJ_TYPEDEF))
 				{

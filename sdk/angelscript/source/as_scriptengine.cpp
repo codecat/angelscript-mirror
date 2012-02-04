@@ -3901,29 +3901,6 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(asCScriptFunction *fu
 	return 0;
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2011-10-04
-int asCScriptEngine::SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess)
-{
-	asCConfigGroup *group = 0;
-
-	// Make sure the group name doesn't already exist
-	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
-	{
-		if( configGroups[n]->groupName == groupName )
-		{
-			group = configGroups[n];
-			break;
-		}
-	}
-
-	if( group == 0 )
-		return asWRONG_CONFIG_GROUP;
-
-	return group->SetModuleAccess(module, hasAccess);
-}
-#endif
-
 // interface
 asDWORD asCScriptEngine::SetDefaultAccessMask(asDWORD defaultMask)
 {
@@ -4356,14 +4333,6 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 {
 	return GetScriptFunction(funcId);
 }
-
-#ifdef AS_DEPRECATED
-// deprecated since 2011-10-03
-asIScriptFunction *asCScriptEngine::GetFunctionDescriptorById(int funcId) const
-{
-	return GetScriptFunction(funcId);
-}
-#endif
 
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const

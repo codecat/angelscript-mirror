@@ -172,11 +172,6 @@ public:
 	asIScriptFunction *GetMethodByIndex(asUINT index, bool getVirtual) const;
 	asIScriptFunction *GetMethodByName(const char *name, bool getVirtual) const;
 	asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual) const;
-#ifdef AS_DEPRECATED
-	// TODO: interface: Remove this deprecated function
-	// deprecated since 2011-10-03
-	asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual) const;
-#endif
 
 	// Properties
 	// TODO: access: Allow getting and setting property access mask

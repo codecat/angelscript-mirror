@@ -9343,11 +9343,6 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 				// Make sure the method is accessible by the module
 				if( builder->module->accessMask & func->accessMask )
 				{
-#ifdef AS_DEPRECATED
-					// deprecated since 2011-10-04
-					asCConfigGroup *group = engine->FindConfigGroupForFunction(func->id);
-					if( !group || group->HasModuleAccess(builder->module->name.AddressOf()) )
-#endif
 					funcs.PushLast(func->id);
 				}
 			}

@@ -112,11 +112,6 @@ public:
 	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const;
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const;
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
-#endif
 	virtual int                RemoveFunction(int funcId);
 
 	// Script global variables

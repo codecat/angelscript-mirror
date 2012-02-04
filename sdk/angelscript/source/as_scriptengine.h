@@ -154,11 +154,6 @@ public:
 	virtual int     RemoveConfigGroup(const char *groupName);
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask);
 	virtual int     SetDefaultNamespace(const char *nameSpace);
-#ifdef AS_DEPRECATED
-	// TODO: interface: Remove this deprecated function
-	// deprecated since 2011-10-04
-	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess);
-#endif
 
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag);
@@ -166,11 +161,6 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;
-#ifdef AS_DEPRECATED
-	// TODO: interface: Remove this deprecated function
-	// deprecated since 2011-10-03
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const;
-#endif
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const;

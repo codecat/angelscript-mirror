@@ -579,24 +579,6 @@ int asCModule::RemoveGlobalVar(asUINT index)
 	return 0;
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2011-10-03
-// interface
-asIScriptFunction *asCModule::GetFunctionDescriptorByIndex(asUINT index) const
-{
-	if( index >= globalFunctions.GetLength() )
-		return 0;
-
-	return globalFunctions[index];
-}
-
-// interface
-asIScriptFunction *asCModule::GetFunctionDescriptorById(int funcId) const
-{
-	return engine->GetFunctionDescriptorById(funcId);
-}
-#endif
-
 // interface
 int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 {
