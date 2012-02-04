@@ -218,22 +218,23 @@
 // compiler is the same for both, when this is so these flags are used to produce the
 // right code.
 
-// AS_WIN     - Microsoft Windows
-// AS_LINUX   - Linux
-// AS_MAC     - Apple Macintosh
-// AS_BSD     - BSD based OS (FreeBSD, DragonFly, OpenBSD, etc)
-// AS_XBOX    - Microsoft XBox
-// AS_XBOX360 - Microsoft XBox 360
-// AS_PSP     - Sony Playstation Portable
-// AS_PS2     - Sony Playstation 2
-// AS_PS3     - Sony Playstation 3
-// AS_DC      - Sega Dreamcast
-// AS_GC      - Nintendo GameCube
-// AS_WII     - Nintendo Wii
-// AS_IPHONE  - Apple IPhone
-// AS_ANDROID - Android
-// AS_HAIKU   - Haiku
-// AS_ILLUMOS - Illumos like (OpenSolaris, OpenIndiana, NCP, etc)
+// AS_WIN       - Microsoft Windows
+// AS_LINUX     - Linux
+// AS_MAC       - Apple Macintosh
+// AS_BSD       - BSD based OS (FreeBSD, DragonFly, OpenBSD, etc)
+// AS_XBOX      - Microsoft XBox
+// AS_XBOX360   - Microsoft XBox 360
+// AS_PSP       - Sony Playstation Portable
+// AS_PS2       - Sony Playstation 2
+// AS_PS3       - Sony Playstation 3
+// AS_DC        - Sega Dreamcast
+// AS_GC        - Nintendo GameCube
+// AS_WII       - Nintendo Wii
+// AS_IPHONE    - Apple IPhone
+// AS_ANDROID   - Android
+// AS_HAIKU     - Haiku
+// AS_ILLUMOS   - Illumos like (OpenSolaris, OpenIndiana, NCP, etc)
+// AS_MARMALADE - Marmalade cross platform SDK (a layer on top of the OS)
 
 
 
@@ -280,7 +281,6 @@
 // STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
 // CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
 // Specifies the minimum size in dwords a class/struct needs to be to be passed in memory
-
 
 // CALLEE_POPS_HIDDEN_RETURN_POINTER
 // This constant should be defined if the callee pops the hidden return pointer,
@@ -389,15 +389,33 @@
 	#define HAVE_VIRTUAL_BASE_OFFSET
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
-	#if _MSC_VER < 1500 // MSVC++ 9 (aka MSVC++ .NET 2008)
-		#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
+
+	// There doesn't seem to be a standard define to identify Marmalade, so we'll 
+	// look for one of these defines that have to be given by the project settings
+	// http://www.madewithmarmalade.com/
+	#if defined(AS_MARMALADE) || defined (MARMALADE)
+		#ifndef AS_MARMALADE
+			// From now on we'll use the below define
+			#define AS_MARMALADE
+		#endif
+
+		// Marmalade doesn't use the Windows libraries
+		#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
+		#define AS_POSIX_THREADS
+		#define AS_NO_ATOMIC
 	#else
-		#define asVSNPRINTF(a, b, c, d) vsnprintf_s(a, b, _TRUNCATE, c, d)
+		#if _MSC_VER < 1500  // MSVC++ 9 (aka MSVC++ .NET 2008)
+			#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
+		#else
+			#define asVSNPRINTF(a, b, c, d) vsnprintf_s(a, b, _TRUNCATE, c, d)
+		#endif
+
+		#define AS_WINDOWS_THREADS
 	#endif
+
 	#define THISCALL_CALLEE_POPS_ARGUMENTS
 	#define STDCALL __stdcall
 	#define AS_SIZEOF_BOOL 1
-	#define AS_WINDOWS_THREADS
 
 	#define ASM_INTEL  // Intel style for inline assembly on microsoft compilers
 
@@ -515,7 +533,6 @@
 		#define AS_PS3
 		#define AS_PPC_64
 	#endif
-
 
 	#define I64(x) x##ll
 

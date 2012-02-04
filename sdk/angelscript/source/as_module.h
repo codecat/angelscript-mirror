@@ -104,8 +104,11 @@ public:
 	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
 	virtual asDWORD SetAccessMask(asDWORD accessMask);
 
+	// TODO: interface: Need SetDefaultNamespace()
+
 	// Script functions
 	virtual asUINT             GetFunctionCount() const;
+	// TODO: interface: Deprecate the functions that return the function id
 	virtual int                GetFunctionIdByIndex(asUINT index) const;
 	virtual int                GetFunctionIdByName(const char *name) const;
 	virtual int                GetFunctionIdByDecl(const char *decl) const;
