@@ -3452,10 +3452,9 @@ void asCScriptEngine::CallFree(void *obj) const
 }
 
 // interface
-void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, int typeId)
+void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type)
 {
-	asCObjectType *objType = GetObjectTypeFromTypeId(typeId);
-	gc.AddScriptObjectToGC(obj, objType);
+	gc.AddScriptObjectToGC(obj, static_cast<asCObjectType*>(type));
 }
 
 // interface
@@ -4360,6 +4359,19 @@ asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 		return 0;
 
 	return registeredObjTypes[index];
+}
+
+// interface
+asIObjectType *asCScriptEngine::GetObjectTypeByName(const char *name) const
+{
+	for( asUINT n = 0; n < registeredObjTypes.GetLength(); n++ )
+	{
+		if( registeredObjTypes[n]->name == name &&
+			registeredObjTypes[n]->nameSpace == defaultNamespace )
+			return registeredObjTypes[n];
+	}
+
+	return 0;
 }
 
 // interface

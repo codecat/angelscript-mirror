@@ -118,7 +118,8 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
-	
+	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
+
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv);
 	virtual int GetStringFactoryReturnTypeId() const;
@@ -187,8 +188,7 @@ public:
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE);
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
-	// TODO: interface: Should have a version that takes the asIObjectType pointer
-	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId);
+	virtual void NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type);
 	virtual void GCEnumCallback(void *reference);
 
 	// User data
