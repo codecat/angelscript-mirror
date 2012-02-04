@@ -333,8 +333,14 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 			if( (type.IsReference() && inoutFlag != asTM_INOUTREF && !type.CanBeInstanciated()) ||
 				(!type.IsReference() && !type.CanBeInstanciated()) )
 			{
+				asCString parm = type.Format();
+				if( inoutFlag == asTM_INREF )
+					parm += "in";
+				else if( inoutFlag == asTM_OUTREF )
+					parm += "out";
+
 				asCString str;
-				str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
+				str.Format(TXT_PARAMETER_CANT_BE_s, parm.AddressOf());
 				Error(str.AddressOf(), node);
 			}
 

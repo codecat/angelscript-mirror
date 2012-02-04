@@ -258,7 +258,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
 		               "script (1, 1) : Error   : Data type can't be 'ref'\n"
-					   "script (1, 10) : Error   : Parameter type can't be 'ref'\n"
+					   "script (1, 10) : Error   : Parameter type can't be 'ref', because the type cannot be instanciated.\n"
 					   "script (1, 23) : Error   : Data type can't be 'ref'\n"
 					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n"
 					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n"
@@ -268,7 +268,7 @@ bool Test()
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
-	engine->Release();
+	engine->Release(); 
 
 	// Ref types without default constructor must not be allowed to be passed by in/out reference, but must be allowed to be passed by inout reference
 	bout.buffer = "";
@@ -284,8 +284,8 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func(ref&in, ref&out, ref&inout)\n"
-		               "script (1, 11) : Error   : Parameter type can't be 'ref&'\n"
-					   "script (1, 23) : Error   : Parameter type can't be 'ref&'\n" )
+		               "script (1, 11) : Error   : Parameter type can't be 'ref&in', because the type cannot be instanciated.\n"
+					   "script (1, 23) : Error   : Parameter type can't be 'ref&out', because the type cannot be instanciated.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

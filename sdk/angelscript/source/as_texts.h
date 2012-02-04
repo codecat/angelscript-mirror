@@ -170,7 +170,7 @@
 #define TXT_ONLY_ONE_VARIABLE_ALLOWED      "The code must contain one and only one global variable"
 
 #define TXT_PARAMETER_ALREADY_DECLARED            "Parameter already declared"
-#define TXT_PARAMETER_CANT_BE_s                   "Parameter type can't be '%s'"
+#define TXT_PARAMETER_CANT_BE_s                   "Parameter type can't be '%s', because the type cannot be instanciated."
 #define TXT_POSSIBLE_LOSS_OF_PRECISION            "Conversion from double to float, possible loss of precision"
 #define TXT_PRIVATE_METHOD_CALL_s                 "Illegal call to private method '%s'"
 #define TXT_PRIVATE_PROP_ACCESS_s                 "Illegal access to private property '%s'"
