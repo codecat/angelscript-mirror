@@ -124,8 +124,7 @@ static bool ExecuteScript()
 		printf("%s: An exception occured during execution\n", TESTNAME);
 
 		// Print exception description
-		int funcId = ctx->GetExceptionFunction();
-		const asIScriptFunction *func = engine->GetFunctionById(funcId);
+		const asIScriptFunction *func = ctx->GetExceptionFunction();
 		printf("func : %s\n", func->GetName());
 		printf("line : %d\n", ctx->GetExceptionLineNumber());
 		printf("desc : %s\n", ctx->GetExceptionString());

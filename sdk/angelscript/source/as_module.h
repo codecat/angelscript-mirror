@@ -112,6 +112,7 @@ public:
 	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const;
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const;
+	// TODO: interface: RemoveFunction should take asIScriptFunction*
 	virtual int                RemoveFunction(int funcId);
 
 	// Script global variables

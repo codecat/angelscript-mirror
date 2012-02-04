@@ -718,12 +718,12 @@ public:
 	virtual void   *GetAddressOfReturnValue() = 0;
 
 	// Exception handling
-	virtual int         SetException(const char *string) = 0;
-	virtual int         GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
-	virtual int         GetExceptionFunction() = 0;
-	virtual const char *GetExceptionString() = 0;
-	virtual int         SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
-	virtual void        ClearExceptionCallback() = 0;
+	virtual int                SetException(const char *string) = 0;
+	virtual int                GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
+	virtual asIScriptFunction *GetExceptionFunction() = 0;
+	virtual const char *       GetExceptionString() = 0;
+	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual void               ClearExceptionCallback() = 0;
 
 	// Debugging
 	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;

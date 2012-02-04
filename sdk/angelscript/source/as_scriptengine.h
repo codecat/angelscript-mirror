@@ -92,8 +92,6 @@ public:
     virtual int SetJITCompiler(asIJITCompiler *compiler);
     virtual asIJITCompiler *GetJITCompiler() const;
 
-	// TODO: interface: namespace: Allow setting the current namespace for registration
-
 	// Global functions
 	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
 	virtual asUINT             GetGlobalFunctionCount() const;
@@ -140,6 +138,7 @@ public:
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
 
 	// Funcdefs
+	// TODO: interface: namespace: Return namespace
 	virtual int                RegisterFuncdef(const char *decl);
 	virtual asUINT             GetFuncdefCount() const;
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) const;

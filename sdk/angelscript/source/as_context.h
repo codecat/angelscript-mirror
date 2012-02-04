@@ -93,11 +93,10 @@ public:
 	int  Abort();
 	int  Suspend();
 
-	int  SetException(const char *descr);
-	int  GetExceptionLineNumber(int *column, const char **sectionName);
-	// TODO: interface: GetExceptionFunction should return asIScriptFunction.
-	int  GetExceptionFunction();
-	const char *GetExceptionString();
+	int                SetException(const char *descr);
+	int                GetExceptionLineNumber(int *column, const char **sectionName);
+	asIScriptFunction *GetExceptionFunction();
+	const char *       GetExceptionString();
 
 	int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv);
 	void ClearLineCallback();

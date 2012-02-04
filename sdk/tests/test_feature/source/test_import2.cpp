@@ -73,8 +73,7 @@ bool Test()
 	int r = ExecuteString(engine, "Run()", engine->GetModule(0), ctx);
 	if( r == asEXECUTION_EXCEPTION )
 	{
-		int funcID = ctx->GetExceptionFunction();
-		const asIScriptFunction *func = engine->GetFunctionById(funcID);
+		const asIScriptFunction *func = ctx->GetExceptionFunction();
 		if( strcmp(func->GetModuleName(), "DynamicModule") != 0 )
 			failed = true;
 

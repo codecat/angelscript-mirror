@@ -270,8 +270,7 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 										 
 					if( r == asEXECUTION_EXCEPTION )
 					{
-						int funcId = ctx->GetExceptionFunction();
-						const asIScriptFunction *function = engine->GetFunctionById(funcId);
+						const asIScriptFunction *function = ctx->GetExceptionFunction();
 
 						msg.Format(TXT_EXCEPTION_s_IN_s, ctx->GetExceptionString(), function->GetDeclaration());
 

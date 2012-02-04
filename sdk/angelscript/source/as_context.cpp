@@ -3866,11 +3866,11 @@ int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 }
 
 // interface
-int asCContext::GetExceptionFunction()
+asIScriptFunction *asCContext::GetExceptionFunction()
 {
-	if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
+	if( GetState() != asEXECUTION_EXCEPTION ) return 0;
 
-	return exceptionFunction;
+	return engine->scriptFunctions[exceptionFunction];
 }
 
 // interface
