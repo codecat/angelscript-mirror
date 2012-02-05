@@ -110,7 +110,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	asCScriptEngine            *engine    = context->engine;
 	asSSystemFunctionInterface *sysFunc   = descr->sysFuncIntf;
 
-	asQWORD retQW;
+	asQWORD retQW = 0;
 
 	// Prepare the parameters
 	int paramSize = sysFunc->paramSize;

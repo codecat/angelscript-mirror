@@ -357,7 +357,11 @@ void CScriptArray::Resize(int delta, asUINT at)
 
 	// Allocate memory for the buffer
 	SArrayBuffer *newBuffer;
+	#if defined(AS_MARMALADE)
+	newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
+	#else
 	newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
+	#endif
 	if( newBuffer )
 		newBuffer->numElements = buffer->numElements + delta;
 	else
@@ -497,9 +501,21 @@ void *CScriptArray::At(asUINT index)
 void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 {
 	if( subTypeId & asTYPEID_MASK_OBJECT )
+	{
+	#if defined( AS_MARMALADE )
+		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
+	#else
 		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
+	#endif
+	}
 	else
+	{
+		#if defined( AS_MARMALADE )
+		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
+        #else
 		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
+        #endif
+	}
 
 	if( *buf )
 	{
@@ -706,7 +722,7 @@ int CScriptArray::Find(asUINT index, void *value)
 		if( ctx )
 		{
 			char tmp[512];
-#if defined(_MSC_VER) && _MSC_VER >= 1500
+#if defined(_MSC_VER) && _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 			sprintf_s(tmp, 512, "Type '%s' does not have opEquals / opCmp", subType->GetName());
 #else
 			sprintf(tmp, "Type '%s' does not have opEquals / opCmp", subType->GetName());
@@ -821,7 +837,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 		if( ctx )
 		{
 			char tmp[512];
-#if defined(_MSC_VER) && _MSC_VER >= 1500
+#if defined(_MSC_VER) && _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 			sprintf_s(tmp, 512, "Type '%s' does not have opCmp", subType->GetName());
 #else
 			sprintf(tmp, "Type '%s' does not have opCmp", subType->GetName());

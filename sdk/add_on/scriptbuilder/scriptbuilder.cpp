@@ -3,13 +3,16 @@
 using namespace std;
 
 #include <stdio.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE)
+#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined( AS_MARMALADE )
 #include <direct.h>
 #endif
 #ifdef _WIN32_WCE
 #include <windows.h> // For GetModuleFileName
 #endif
 
+#if defined(AS_MARMALADE)
+#include <unistd.h>
+#endif
 
 BEGIN_AS_NAMESPACE
 
@@ -124,7 +127,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 {
 	// Open the script file
 	string scriptFile = filename;
-#if _MSC_VER >= 1500
+#if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 	FILE *f = 0;
 	fopen_s(&f, scriptFile.c_str(), "rb");
 #else
@@ -848,8 +851,12 @@ static const char *GetCurrentDir(char *buf, size_t size)
 #endif
 
     return buf;
+#else 
+#if defined( AS_MARMALADE )
+	return getcwd(buf, (int)size);
 #else
 	return _getcwd(buf, (int)size);
+#endif
 #endif
 #elif defined(__APPLE__)
 	return getcwd(buf, size);

@@ -556,7 +556,7 @@ static string formatInt(asINT64 value, const string &options, asUINT width)
 
 	string buf;
 	buf.resize(width+20);
-#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+#if _MSC_VER >= 1400 && !defined(AS_MARMALADE)// MSVC 8.0 / 2005
 	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, value);
 #else
 	sprintf(&buf[0], fmt.c_str(), width, value);
@@ -591,7 +591,7 @@ static string formatFloat(double value, const string &options, asUINT width, asU
 
 	string buf;
 	buf.resize(width+precision+50);
-#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+#if _MSC_VER >= 1400 && !defined(AS_MARMALADE)// MSVC 8.0 / 2005
 	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, precision, value);
 #else
 	sprintf(&buf[0], fmt.c_str(), width, precision, value);
