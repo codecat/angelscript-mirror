@@ -82,6 +82,6 @@ public:
 
 END_AS_NAMESPACE
 
-#endif AS_NO_COMPILER
+#endif // AS_NO_COMPILER
 
 #endif

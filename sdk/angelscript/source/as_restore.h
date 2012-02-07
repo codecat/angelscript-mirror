@@ -180,4 +180,4 @@ protected:
 
 END_AS_NAMESPACE
 
-#endif //AS_RESTORE_H
+#endif // AS_RESTORE_H
