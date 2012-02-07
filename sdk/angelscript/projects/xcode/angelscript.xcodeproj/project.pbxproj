@@ -14,7 +14,7 @@
 		61FD9FE314DCA9BA00161C82 /* as_builder.h in Headers */ = {isa = PBXBuildFile; fileRef = 61FD9F9714DCA9BA00161C82 /* as_builder.h */; };
 		61FD9FE414DCA9BA00161C82 /* as_bytecode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61FD9F9814DCA9BA00161C82 /* as_bytecode.cpp */; };
 		61FD9FE514DCA9BA00161C82 /* as_bytecode.h in Headers */ = {isa = PBXBuildFile; fileRef = 61FD9F9914DCA9BA00161C82 /* as_bytecode.h */; };
-		61FD9FE814DCA9BA00161C82 /* as_callfunc_arm_xcode.s in Sources */ = {isa = PBXBuildFile; fileRef = 61FD9F9C14DCA9BA00161C82 /* as_callfunc_arm_xcode.s */; };
+		61FD9FE814DCA9BA00161C82 /* as_callfunc_arm_xcode.S in Sources */ = {isa = PBXBuildFile; fileRef = 61FD9F9C14DCA9BA00161C82 /* as_callfunc_arm_xcode.S */; };
 		61FD9FE914DCA9BA00161C82 /* as_callfunc_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61FD9F9D14DCA9BA00161C82 /* as_callfunc_arm.cpp */; };
 		61FD9FEA14DCA9BA00161C82 /* as_callfunc_mips.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61FD9F9E14DCA9BA00161C82 /* as_callfunc_mips.cpp */; };
 		61FD9FEB14DCA9BA00161C82 /* as_callfunc_ppc_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61FD9F9F14DCA9BA00161C82 /* as_callfunc_ppc_64.cpp */; };
@@ -91,7 +91,7 @@
 		61FD9F9714DCA9BA00161C82 /* as_builder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_builder.h; path = ../../source/as_builder.h; sourceTree = SOURCE_ROOT; };
 		61FD9F9814DCA9BA00161C82 /* as_bytecode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_bytecode.cpp; path = ../../source/as_bytecode.cpp; sourceTree = SOURCE_ROOT; };
 		61FD9F9914DCA9BA00161C82 /* as_bytecode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = as_bytecode.h; path = ../../source/as_bytecode.h; sourceTree = SOURCE_ROOT; };
-		61FD9F9C14DCA9BA00161C82 /* as_callfunc_arm_xcode.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = as_callfunc_arm_xcode.s; path = ../../source/as_callfunc_arm_xcode.s; sourceTree = SOURCE_ROOT; };
+		61FD9F9C14DCA9BA00161C82 /* as_callfunc_arm_xcode.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = as_callfunc_arm_xcode.S; path = ../../source/as_callfunc_arm_xcode.S; sourceTree = SOURCE_ROOT; };
 		61FD9F9D14DCA9BA00161C82 /* as_callfunc_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_arm.cpp; path = ../../source/as_callfunc_arm.cpp; sourceTree = SOURCE_ROOT; };
 		61FD9F9E14DCA9BA00161C82 /* as_callfunc_mips.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_mips.cpp; path = ../../source/as_callfunc_mips.cpp; sourceTree = SOURCE_ROOT; };
 		61FD9F9F14DCA9BA00161C82 /* as_callfunc_ppc_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = as_callfunc_ppc_64.cpp; path = ../../source/as_callfunc_ppc_64.cpp; sourceTree = SOURCE_ROOT; };
@@ -217,7 +217,7 @@
 				61FD9F9714DCA9BA00161C82 /* as_builder.h */,
 				61FD9F9814DCA9BA00161C82 /* as_bytecode.cpp */,
 				61FD9F9914DCA9BA00161C82 /* as_bytecode.h */,
-				61FD9F9C14DCA9BA00161C82 /* as_callfunc_arm_xcode.s */,
+				61FD9F9C14DCA9BA00161C82 /* as_callfunc_arm_xcode.S */,
 				61FD9F9D14DCA9BA00161C82 /* as_callfunc_arm.cpp */,
 				61FD9F9E14DCA9BA00161C82 /* as_callfunc_mips.cpp */,
 				61FD9F9F14DCA9BA00161C82 /* as_callfunc_ppc_64.cpp */,
@@ -386,7 +386,7 @@
 				61FD9FE014DCA9BA00161C82 /* as_atomic.cpp in Sources */,
 				61FD9FE214DCA9BA00161C82 /* as_builder.cpp in Sources */,
 				61FD9FE414DCA9BA00161C82 /* as_bytecode.cpp in Sources */,
-				61FD9FE814DCA9BA00161C82 /* as_callfunc_arm_xcode.s in Sources */,
+				61FD9FE814DCA9BA00161C82 /* as_callfunc_arm_xcode.S in Sources */,
 				61FD9FE914DCA9BA00161C82 /* as_callfunc_arm.cpp in Sources */,
 				61FD9FEA14DCA9BA00161C82 /* as_callfunc_mips.cpp in Sources */,
 				61FD9FEB14DCA9BA00161C82 /* as_callfunc_ppc_64.cpp in Sources */,
