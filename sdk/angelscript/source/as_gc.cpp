@@ -129,13 +129,13 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 			{
 				// Detect all garbage with cyclic references
 				if( doDetect )
-					while( (r = IdentifyGarbageWithCyclicRefs()) == 1 );
+					while( (r = IdentifyGarbageWithCyclicRefs()) == 1 ) {}
 
 				// Now destroy all known garbage
 				if( doDestroy )
 				{
-					while( (r = DestroyNewGarbage()) == 1 );
-					while( (r = DestroyOldGarbage()) == 1 );
+					while( (r = DestroyNewGarbage()) == 1 ) {}
+					while( (r = DestroyOldGarbage()) == 1 ) {}
 				}
 
 				// Run another iteration if any garbage was destroyed

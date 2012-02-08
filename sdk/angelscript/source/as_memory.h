@@ -95,7 +95,7 @@ public:
 #endif
 
 protected:
-	DECLARECRITICALSECTION(cs);
+	DECLARECRITICALSECTION(cs)
 	asCArray<void *> scriptNodePool;
 	asCArray<void *> byteInstructionPool;
 };

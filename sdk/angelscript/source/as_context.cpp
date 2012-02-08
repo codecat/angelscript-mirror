@@ -1424,7 +1424,7 @@ void asCContext::ExecuteNext()
 		{
 			asPTRWORD p = (asPTRWORD)*l_sp;
 			*(asPTRWORD*)l_sp = *(asPTRWORD*)(l_sp+AS_PTR_SIZE);
-			*(asDWORD*)(l_sp+AS_PTR_SIZE) = p;
+			*(asPTRWORD*)(l_sp+AS_PTR_SIZE) = p;
 			l_bc++;
 		}
 		break;
@@ -2522,10 +2522,13 @@ void asCContext::ExecuteNext()
 
 	case asBC_CmpPtr:
 		{
-			asPTRWORD i = *(asPTRWORD*)(l_fp - asBC_SWORDARG0(l_bc)) - *(asPTRWORD*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( i == 0 )     *(int*)&regs.valueRegister =  0;
-			else if( i < 0 ) *(int*)&regs.valueRegister = -1;
-			else             *(int*)&regs.valueRegister =  1;
+			// TODO: optimize: This instruction should really just be an equals, and return true or false.
+			//                 The instruction is only used for is and !is tests anyway.
+			asPTRWORD p1 = *(asPTRWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+			asPTRWORD p2 = *(asPTRWORD*)(l_fp - asBC_SWORDARG1(l_bc));
+			if( p1 == p2 )     *(int*)&regs.valueRegister =  0;
+			else if( p1 < p2 ) *(int*)&regs.valueRegister = -1;
+			else               *(int*)&regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;

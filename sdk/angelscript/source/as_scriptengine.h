@@ -395,7 +395,7 @@ public:
 	asCLEANOBJECTTYPEFUNC_t cleanObjectTypeFunc;
 
 	// Critical sections for threads
-	DECLARECRITICALSECTION(engineCritical);
+	DECLARECRITICALSECTION(engineCritical)
 
 	// Engine properties
 	struct

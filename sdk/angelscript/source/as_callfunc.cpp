@@ -472,16 +472,17 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			if( descr->parameterTypes[n].IsObject() &&
-				!descr->parameterTypes[n].IsObjectHandle() && 
-				!descr->parameterTypes[n].IsReference() && (
+			bool needFree = false;
 #ifdef COMPLEX_OBJS_PASSED_BY_REF				
-				(descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK) ||
-#endif				
-#ifdef AS_LARGE_OBJS_PASSED_BY_REF
-				(descr->parameterTypes[n].GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE) ||
+			if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
 #endif
-				0) )
+#ifdef AS_LARGE_OBJS_PASSED_BY_REF
+			if( descr->parameterTypes[n].GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
+#endif
+			if( needFree &&
+				descr->parameterTypes[n].IsObject() &&
+				!descr->parameterTypes[n].IsObjectHandle() && 
+				!descr->parameterTypes[n].IsReference() )
 			{
 				void *obj = (void*)*(size_t*)&args[spos];
 				spos += AS_PTR_SIZE;
