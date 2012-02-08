@@ -48,7 +48,7 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func = (size_t)ptr.ptr.f.func;
+	internal->func = ptr.ptr.f.func;
 
 	// Was a compatible calling convention specified?
 	if( internal->func )

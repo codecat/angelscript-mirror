@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2009 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -78,7 +78,7 @@ enum internalCallConv
 
 struct asSSystemFunctionInterface
 {
-	size_t               func;
+	asFUNCTION_t         func;
 	int                  baseOffset;
 	internalCallConv     callConv;
 	int                  scriptReturnSize;

@@ -87,11 +87,11 @@ static void __attribute__((noinline)) GetReturnedXmm0Xmm1(asQWORD &a, asQWORD &b
 	);
 }
 
-static asQWORD __attribute__((noinline)) X64_CallFunction( const asQWORD *args, int cnt, void *func ) 
+static asQWORD __attribute__((noinline)) X64_CallFunction( const asQWORD *args, int cnt, funcptr_t func ) 
 {
-	asQWORD retval;
-	asQWORD ( *call )() = (asQWORD (*)())func;
-	int     i           = 0;
+	asQWORD   retval;
+	funcptr_t call    = func;
+	int       i       = 0;
 
 	// Backup the stack pointer and then align it to 16 bytes.
 	// The R15 register is guaranteed to maintain its value over function
@@ -157,13 +157,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	asSSystemFunctionInterface *sysFunc            = descr->sysFuncIntf;
 	int                         callConv           = sysFunc->callConv;
 	asQWORD                     retQW              = 0;
-	void                       *func               = ( void * )sysFunc->func;
 	asDWORD                    *stack_pointer      = args;
 	funcptr_t                  *vftable            = NULL;
 	int                         totalArgumentCount = 0;
 	int                         n                  = 0;
 	int                         param_post         = 0;
 	int                         argIndex           = 0;
+	funcptr_t                   func               = (funcptr_t)sysFunc->func;
 
 	if( sysFunc->hostReturnInMemory ) 
 	{
@@ -174,8 +174,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// Determine the real function pointer in case of virtual method
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) 
 	{
-		vftable = *( ( funcptr_t ** )obj );
-		func    = ( void * )vftable[( asQWORD )func >> 3];
+		vftable = *((funcptr_t**)obj);
+		
+		// A little trickery as the C++ standard doesn't allow direct 
+		// conversion between function pointer and data pointer
+		union { funcptr_t func; uintptr_t idx; } u;
+		u.func = func;
+		func = vftable[u.idx >> 3];
 	}
 
 	// Determine the type of the arguments, and prepare the input array for the X64_CallFunction 
@@ -187,7 +192,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_CDECL_RETURNINMEM:
 		case ICC_STDCALL_RETURNINMEM: 
 		{
-			paramBuffer[0] = (size_t)retPointer;
+			paramBuffer[0] = (uintptr_t)retPointer;
 			argsType[0] = x64INTARG;
 
 			argIndex = 1;
@@ -198,7 +203,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_VIRTUAL_THISCALL:
 		case ICC_CDECL_OBJFIRST: 
 		{
-			paramBuffer[0] = (size_t)obj;
+			paramBuffer[0] = (uintptr_t)obj;
 			argsType[0] = x64INTARG;
 
 			argIndex = 1;
@@ -209,8 +214,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		case ICC_CDECL_OBJFIRST_RETURNINMEM: 
 		{
-			paramBuffer[0] = (size_t)retPointer;
-			paramBuffer[1] = (size_t)obj;
+			paramBuffer[0] = (uintptr_t)retPointer;
+			paramBuffer[1] = (uintptr_t)obj;
 			argsType[0] = x64INTARG;
 			argsType[1] = x64INTARG;
 
@@ -223,7 +228,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			break;
 		case ICC_CDECL_OBJLAST_RETURNINMEM: 
 		{
-			paramBuffer[0] = (size_t)retPointer;
+			paramBuffer[0] = (uintptr_t)retPointer;
 			argsType[0] = x64INTARG;
 
 			argIndex = 1;

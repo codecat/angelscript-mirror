@@ -216,7 +216,7 @@ int asCReader::Read()
 	count = ReadEncodedUInt();
 	for( i = 0; i < count; ++i ) 
 	{
-		asUINT len = module->scriptFunctions.GetLength();
+		size_t len = module->scriptFunctions.GetLength();
 		func = ReadFunction();
 		
 		// Is the function shared and was it created now?

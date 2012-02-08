@@ -316,7 +316,7 @@ int asCString::FindLast(const char *str) const
 		last = curr;
 
 	if( last )
-		return last-AddressOf();
+		return int(last - AddressOf());
 
 	return -1;
 }
