@@ -809,6 +809,10 @@
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 
 		#if (defined(_ARM_) || defined(__arm__))
+			// The stdcall calling convention is not used on the arm cpu
+			#undef STDCALL
+			#define STDCALL
+
 			#define AS_ARM
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define AS_ALIGN
