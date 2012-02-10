@@ -762,6 +762,7 @@
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
+		#define AS_NO_MEMORY_H
 
 	// PS3
 	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
