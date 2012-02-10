@@ -41,6 +41,8 @@
 #ifndef AS_MAX_PORTABILITY
 #ifdef AS_X64_GCC
 
+#include <stdint.h> // uintptr_t
+
 #include "as_scriptengine.h"
 #include "as_texts.h"
 
