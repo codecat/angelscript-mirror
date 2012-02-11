@@ -197,13 +197,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		{
 			// Get virtual function table from the object pointer
 			asFUNCTION_t *vftable = *(asFUNCTION_t**)obj;
-
-			// A little trickery as the C++ standard doesn't allow direct 
-			// conversion between function pointer and data pointer
-			union { asFUNCTION_t func; uintptr_t idx; } u;
-			u.func = func;
-
-			retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, vftable[u.idx>>2]);
+			retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, vftable[FuncPtrToUInt(func)>>2]);
 		}
 		break;
 
@@ -211,13 +205,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		{
 			// Get virtual function table from the object pointer
 			asFUNCTION_t *vftable = *(asFUNCTION_t**)obj;
-
-			// A little trickery as the C++ standard doesn't allow direct 
-			// conversion between function pointer and data pointer
-			union { asFUNCTION_t func; uintptr_t idx; } u;
-			u.func = func;
-
-			retQW = CallThisCallFunctionRetByRef(obj, args, paramSize<<2, vftable[u.idx>>2], retPointer);
+			retQW = CallThisCallFunctionRetByRef(obj, args, paramSize<<2, vftable[FuncPtrToUInt(func)>>2], retPointer);
 		}
 		break;
 

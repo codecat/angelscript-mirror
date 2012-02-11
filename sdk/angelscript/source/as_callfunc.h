@@ -56,6 +56,16 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 
 int CallSystemFunction(int id, asCContext *context, void *objectPointer);
 
+inline asPWORD FuncPtrToUInt(asFUNCTION_t func)
+{
+	// A little trickery as the C++ standard doesn't allow direct 
+	// conversion between function pointer and data pointer
+	union { asFUNCTION_t func; asPWORD idx; } u;
+	u.func = func;
+
+	return u.idx;
+}
+
 enum internalCallConv
 {
 	ICC_GENERIC_FUNC,

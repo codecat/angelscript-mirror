@@ -448,7 +448,8 @@ asCScriptEngine::asCScriptEngine()
 	scriptFunctions.PushLast(0);
 
 	// Make sure typeId for the built-in primitives are defined according to asETypeIdFlags
-	int id;
+	int id = 0;
+	UNUSED_VAR(id); // It is only used in debug mode
 	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttVoid,   false)); asASSERT( id == asTYPEID_VOID   );
 	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttBool,   false)); asASSERT( id == asTYPEID_BOOL   );
 	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt8,   false)); asASSERT( id == asTYPEID_INT8   );

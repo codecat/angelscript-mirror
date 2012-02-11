@@ -2128,7 +2128,6 @@ asCScriptNode *asCParser::ParseArgList()
 			}
 		}
 	}
-	return 0;
 }
 
 #ifndef AS_NO_COMPILER

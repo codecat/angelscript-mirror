@@ -99,7 +99,8 @@ static void ScriptFunction_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 void RegisterScriptFunction(asCScriptEngine *engine)
 {
 	// Register the gc behaviours for the script functions
-	int r;
+	int r = 0;
+	UNUSED_VAR(r); // It is only used in debug mode
 	engine->functionBehaviours.engine = engine;
 	engine->functionBehaviours.flags = asOBJ_REF | asOBJ_GC;
 	engine->functionBehaviours.name = "_builtin_function_";

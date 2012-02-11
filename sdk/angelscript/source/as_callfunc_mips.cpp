@@ -210,7 +210,7 @@ asm(
 // so this isn't really used...
 asQWORD GetReturnedDouble()
 {
-	asQWORD d;
+	asQWORD d = 0;
 
 	printf("Broken!!!");
 /*

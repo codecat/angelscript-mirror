@@ -1500,6 +1500,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 	if( descr->DoesReturnOnStack() )
 		offset += AS_PTR_SIZE;
 
+#ifdef AS_DEBUG
 	// If the function being called is the opAssign or copy constructor for the same type
 	// as the argument, then we should avoid making temporary copy of the argument
 	bool makingCopy = false;
@@ -1508,6 +1509,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 		((descr->name == "opAssign" && descr->objectType && descr->objectType == args[0]->type.dataType.GetObjectType()) ||
 		 (args[0]->type.dataType.GetObjectType() && descr->name == args[0]->type.dataType.GetObjectType()->name)) )
 		makingCopy = true;
+#endif
 
 	// Move the objects that are sent by value to the stack just before the call
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
@@ -1518,7 +1520,9 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
 				{
+#ifdef AS_DEBUG
 					asASSERT( args[n]->type.isVariable || args[n]->type.isTemporary || makingCopy );
+#endif
 
 					if( (args[n]->type.isVariable || args[n]->type.isTemporary) )
 					{
@@ -10321,28 +10325,28 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 		{
 			if( !lctx->type.isConstant )
 				signMismatch = true;
-			else if( lctx->type.qwordValue & (I64(1)<<63) )
+			else if( lctx->type.qwordValue & (U64(1)<<63) )
 				signMismatch = true;
 		}
 		if( lctx->type.dataType.GetTokenType() == ttUInt )
 		{
 			if( !lctx->type.isConstant )
 				signMismatch = true;
-			else if( lctx->type.dwordValue & (1<<31) )
+			else if( lctx->type.dwordValue & (1u<<31) )
 				signMismatch = true;
 		}
 		if( rctx->type.dataType.GetTokenType() == ttUInt64 )
 		{
 			if( !rctx->type.isConstant )
 				signMismatch = true;
-			else if( rctx->type.qwordValue & (I64(1)<<63) )
+			else if( rctx->type.qwordValue & (U64(1)<<63) )
 				signMismatch = true;
 		}
 		if( rctx->type.dataType.GetTokenType() == ttUInt )
 		{
 			if( !rctx->type.isConstant )
 				signMismatch = true;
-			else if( rctx->type.dwordValue & (1<<31) )
+			else if( rctx->type.dwordValue & (1u<<31) )
 				signMismatch = true;
 		}
 	}

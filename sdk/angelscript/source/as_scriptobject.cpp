@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2011 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -125,7 +125,8 @@ static void ScriptObject_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 void RegisterScriptObject(asCScriptEngine *engine)
 {
 	// Register the default script class behaviours
-	int r;
+	int r = 0;
+	UNUSED_VAR(r); // It is only used in debug mode
 	engine->scriptTypeBehaviours.engine = engine;
 	engine->scriptTypeBehaviours.flags = asOBJ_SCRIPT_OBJECT | asOBJ_REF | asOBJ_GC;
 	engine->scriptTypeBehaviours.name = "_builtin_object_";

@@ -369,6 +369,7 @@
 	#define ASM_INTEL
 
 	#define I64(x) x##ll
+	#define U64(x) x##ull
 
 	#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
 
@@ -444,8 +445,10 @@
 
 	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
 		#define I64(x) x##l
+		#define U64(x) x##ul
 	#else // MSVC++ 7.1 and higher
 		#define I64(x) x##ll
+		#define U64(x) x##ull
 	#endif
 
 	#ifdef _ARM_
@@ -493,14 +496,16 @@
 
 	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
 		#define I64(x) x##l
+		#define U64(x) x##ul
 	#else // MSVC++ 7.1 and higher
 		#define I64(x) x##ll
+		#define U64(x) x##ull
 	#endif
 
 	#define UNREACHABLE_RETURN
 #endif
 
-// SN Systems ProDG (also experimental, let me know if something isn't working)
+// SN Systems ProDG 
 #if defined(__SNC__) || defined(SNSYS)
 	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
@@ -532,9 +537,15 @@
 		// Support native calling conventions on PS3
 		#define AS_PS3
 		#define AS_PPC_64
+	// PSP
+	#elif defined(__psp__)
+		#define AS_NO_MEMORY
+		#define AS_MIPS
+		#define AS_PSP
 	#endif
 
 	#define I64(x) x##ll
+	#define U64(x) x##ull
 
 	#define UNREACHABLE_RETURN
 #endif
@@ -762,7 +773,6 @@
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
-		#define AS_NO_MEMORY_H
 
 	// PS3
 	#elif (defined(__PPC__) || defined(__ppc__)) && defined(__PPU__)
@@ -869,6 +879,7 @@
 	#endif
 
 	#define I64(x) x##ll
+	#define U64(x) x##ull
 
 	#define UNREACHABLE_RETURN
 #endif

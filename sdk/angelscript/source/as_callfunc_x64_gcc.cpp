@@ -41,8 +41,6 @@
 #ifndef AS_MAX_PORTABILITY
 #ifdef AS_X64_GCC
 
-#include <stdint.h> // uintptr_t
-
 #include "as_scriptengine.h"
 #include "as_texts.h"
 
@@ -177,12 +175,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) 
 	{
 		vftable = *((funcptr_t**)obj);
-		
-		// A little trickery as the C++ standard doesn't allow direct 
-		// conversion between function pointer and data pointer
-		union { funcptr_t func; uintptr_t idx; } u;
-		u.func = func;
-		func = vftable[u.idx >> 3];
+		func = vftable[FuncPtrToUInt(func) >> 3];
 	}
 
 	// Determine the type of the arguments, and prepare the input array for the X64_CallFunction 
@@ -194,7 +187,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_CDECL_RETURNINMEM:
 		case ICC_STDCALL_RETURNINMEM: 
 		{
-			paramBuffer[0] = (uintptr_t)retPointer;
+			paramBuffer[0] = (asPWORD)retPointer;
 			argsType[0] = x64INTARG;
 
 			argIndex = 1;
@@ -205,7 +198,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_VIRTUAL_THISCALL:
 		case ICC_CDECL_OBJFIRST: 
 		{
-			paramBuffer[0] = (uintptr_t)obj;
+			paramBuffer[0] = (asPWORD)obj;
 			argsType[0] = x64INTARG;
 
 			argIndex = 1;
@@ -216,8 +209,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		case ICC_CDECL_OBJFIRST_RETURNINMEM: 
 		{
-			paramBuffer[0] = (uintptr_t)retPointer;
-			paramBuffer[1] = (uintptr_t)obj;
+			paramBuffer[0] = (asPWORD)retPointer;
+			paramBuffer[1] = (asPWORD)obj;
 			argsType[0] = x64INTARG;
 			argsType[1] = x64INTARG;
 
@@ -230,7 +223,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			break;
 		case ICC_CDECL_OBJLAST_RETURNINMEM: 
 		{
-			paramBuffer[0] = (uintptr_t)retPointer;
+			paramBuffer[0] = (asPWORD)retPointer;
 			argsType[0] = x64INTARG;
 
 			argIndex = 1;

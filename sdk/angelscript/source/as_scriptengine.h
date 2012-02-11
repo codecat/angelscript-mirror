@@ -224,6 +224,8 @@ public:
 
 	void *CallAlloc(asCObjectType *objType) const;
 	void  CallFree(void *obj) const;
+
+	// TODO: cleanup: These should be in the as_callfunc.cpp file
 	void *CallGlobalFunctionRetPtr(int func);
 	void *CallGlobalFunctionRetPtr(int func, void *param1);
 	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *func, asCScriptFunction *desc);

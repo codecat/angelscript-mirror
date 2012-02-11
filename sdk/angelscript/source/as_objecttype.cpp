@@ -97,7 +97,8 @@ static void ObjectType_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 void RegisterObjectTypeGCBehaviours(asCScriptEngine *engine)
 {
 	// Register the gc behaviours for the object types
-	int r;
+	int r = 0;
+	UNUSED_VAR(r); // It is only used in debug mode
 	engine->objectTypeBehaviours.engine = engine;
 	engine->objectTypeBehaviours.flags = asOBJ_REF | asOBJ_GC;
 	engine->objectTypeBehaviours.name = "_builtin_objecttype_";

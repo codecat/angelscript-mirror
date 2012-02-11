@@ -3489,6 +3489,7 @@ void asCContext::ExecuteNext()
 #ifdef AS_DEBUG
 	default:
 		asASSERT(false);
+		SetInternalException(TXT_UNRECOGNIZED_BYTE_CODE);
 #endif
 /*
 	default:
@@ -3509,8 +3510,6 @@ void asCContext::ExecuteNext()
 		}
 #endif
 	}
-
-	SetInternalException(TXT_UNRECOGNIZED_BYTE_CODE);
 }
 
 int asCContext::SetException(const char *descr)
