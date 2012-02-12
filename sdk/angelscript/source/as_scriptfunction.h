@@ -109,8 +109,8 @@ public:
 	asIObjectType       *GetObjectType() const;
 	const char          *GetObjectName() const;
 	const char          *GetName() const;
-	// TODO: interface: Allow inclusion of namespace or not in declaration
-	const char          *GetDeclaration(bool includeObjectName = true) const;
+	const char          *GetNamespace() const;
+	const char          *GetDeclaration(bool includeObjectName = true, bool includeNamespace = true) const;
 	const char          *GetScriptSectionName() const;
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
@@ -119,7 +119,6 @@ public:
 	bool                 IsFinal() const;
 	bool                 IsOverride() const;
 	bool                 IsShared() const;
-	// TODO: interface: namespace: Get namespace
 
 	asUINT               GetParamCount() const;
 	int                  GetParamTypeId(asUINT index, asDWORD *flags = 0) const;
@@ -151,7 +150,7 @@ public:
 
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();
-	asCString GetDeclarationStr(bool includeObjectName = true) const;
+	asCString GetDeclarationStr(bool includeObjectName = true, bool includeNamespace = true) const;
 	int       GetLineNumber(int programPosition);
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;

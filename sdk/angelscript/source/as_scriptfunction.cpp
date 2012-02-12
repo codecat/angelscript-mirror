@@ -270,6 +270,12 @@ const char *asCScriptFunction::GetName() const
 }
 
 // interface
+const char *asCScriptFunction::GetNamespace() const
+{
+	return nameSpace.AddressOf();
+}
+
+// interface
 bool asCScriptFunction::IsReadOnly() const
 {
 	return isReadOnly;
@@ -310,7 +316,7 @@ bool asCScriptFunction::DoesReturnOnStack() const
 }
 
 // internal
-asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
+asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace) const
 {
 	asCString str;
 
@@ -326,10 +332,17 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName) const
 	}
 	if( objectType && includeObjectName )
 	{
+		if( objectType && objectType->nameSpace != "" )
+			str += objectType->nameSpace + "::";
+			
 		if( objectType->name != "" )
 			str += objectType->name + "::";
 		else
 			str += "_unnamed_type_::";
+	}
+	else if( includeNamespace && nameSpace != "" )
+	{
+		str += nameSpace + "::";
 	}
 	if( name == "" )
 		str += "_unnamed_function_(";
@@ -828,11 +841,11 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 }
 
 // interface
-const char *asCScriptFunction::GetDeclaration(bool includeObjectName) const
+const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace) const
 {
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
-	*tempString = GetDeclarationStr(includeObjectName);
+	*tempString = GetDeclarationStr(includeObjectName, includeNamespace);
 	return tempString->AddressOf();
 }
 

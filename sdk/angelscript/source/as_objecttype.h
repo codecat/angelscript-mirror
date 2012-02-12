@@ -143,6 +143,7 @@ public:
 
 	// Type info
 	const char      *GetName() const;
+	const char      *GetNamespace() const;
 	asIObjectType   *GetBaseType() const;
 	bool             DerivesFrom(const asIObjectType *objType) const;
 	asDWORD          GetFlags() const;
@@ -150,7 +151,6 @@ public:
 	int              GetTypeId() const;
 	int              GetSubTypeId() const;
 	asIObjectType   *GetSubType() const;
-	// TODO: interface: namespace: Get namespace
 
 	// Interfaces
 	asUINT           GetInterfaceCount() const;

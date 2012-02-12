@@ -829,6 +829,7 @@ public:
 
 	// Type info
 	virtual const char      *GetName() const = 0;
+	virtual	const char      *GetNamespace() const = 0;
 	virtual asIObjectType   *GetBaseType() const = 0;
 	virtual bool             DerivesFrom(const asIObjectType *objType) const = 0;
 	virtual asDWORD          GetFlags() const = 0;
@@ -893,7 +894,8 @@ public:
 	virtual asIObjectType   *GetObjectType() const = 0;
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
-	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
+	virtual const char      *GetNamespace() const = 0;
+	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = true) const = 0;
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
 	virtual bool             IsFinal() const = 0;

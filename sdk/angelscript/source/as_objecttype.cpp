@@ -274,6 +274,12 @@ const char *asCObjectType::GetName() const
 }
 
 // interface
+const char *asCObjectType::GetNamespace() const
+{
+	return nameSpace.AddressOf();
+}
+
+// interface
 asDWORD asCObjectType::GetFlags() const
 {
 	return flags;
