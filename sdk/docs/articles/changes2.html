@@ -43,6 +43,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added accessMask argument in GetGlobalPropertyByIndex(), GetEnumByIndex(), GetTypedefByIndex(), and GetProperty()
 <li>Removed configGroup argument in GetFuncDefByIndex() as this is already available in the asIScriptFunction interface
 <li>Added GetAccessMask() to asIObjectType and asIScriptFunction
+<li>Added asIScriptModule::RemoveFunction() that takes a pointer to asIScriptFunction
+<li>Added asIScriptModule::GetObjectTypeByName()
+<li>Added IsFinal(), IsOverride(), IsShared() to asIScriptFunction
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

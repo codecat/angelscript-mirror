@@ -114,8 +114,9 @@ public:
 	virtual asIScriptFunction *GetFunctionByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const;
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const;
-	// TODO: interface: RemoveFunction should take asIScriptFunction*
+	// TODO: interface: Deprecate RemoveFunction(int)
 	virtual int                RemoveFunction(int funcId);
+	virtual int                RemoveFunction(asIScriptFunction *func);
 
 	// Script global variables
 	// TODO: interface: Should be called InitGlobalVars, and should have a bool to reset in case already initialized
@@ -133,7 +134,7 @@ public:
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
-	// TODO: interface: Should have GetObjectTypeByName
+	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 
 	// Enums

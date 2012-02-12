@@ -3943,7 +3943,8 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(const asCScriptFuncti
 {
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
-		if( configGroups[n]->funcDefs.Exists(const_cast<asCScriptFunction *>(funcDef)) )
+		asCScriptFunction *f = const_cast<asCScriptFunction*>(funcDef);
+		if( configGroups[n]->funcDefs.Exists(f) )
 			return configGroups[n];
 	}
 

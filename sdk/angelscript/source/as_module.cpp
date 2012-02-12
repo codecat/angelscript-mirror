@@ -709,6 +709,20 @@ asIObjectType *asCModule::GetObjectTypeByIndex(asUINT index) const
 }
 
 // interface
+asIObjectType *asCModule::GetObjectTypeByName(const char *name) const
+{
+	for( asUINT n = 0; n < classTypes.GetLength(); n++ )
+	{
+		if( classTypes[n] &&
+			classTypes[n]->name == name &&
+			classTypes[n]->nameSpace == defaultNamespace )
+			return classTypes[n];
+	}
+
+	return 0;
+}
+
+// interface
 int asCModule::GetTypeIdByDecl(const char *decl) const
 {
 	asCDataType dt;
@@ -1573,20 +1587,25 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 // interface
 int asCModule::RemoveFunction(int funcId)
 {
+	if( funcId >= 0 && funcId < (int)engine->scriptFunctions.GetLength() )
+		return RemoveFunction(engine->scriptFunctions[funcId]);
+
+	return asNO_FUNCTION;
+}
+
+// interface
+int asCModule::RemoveFunction(asIScriptFunction *func)
+{
 	// Find the global function
-	for( asUINT n = 0; n < globalFunctions.GetLength(); n++ )
+	asCScriptFunction *f = static_cast<asCScriptFunction*>(func);
+	int idx = globalFunctions.IndexOf(f);
+	if( idx >= 0 )
 	{
-		if( globalFunctions[n] && globalFunctions[n]->id == funcId )
-		{
-			asCScriptFunction *func = globalFunctions[n];
-			globalFunctions.RemoveIndex(n);
-			func->Release();
-
-			scriptFunctions.RemoveValue(func);
-			func->Release();
-
-			return 0;
-		}
+		globalFunctions.RemoveIndex(idx);
+		f->Release();
+		scriptFunctions.RemoveValue(f);
+		f->Release();
+		return 0;
 	}
 
 	return asNO_FUNCTION;

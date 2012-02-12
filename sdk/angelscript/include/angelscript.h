@@ -627,6 +627,7 @@ public:
 	virtual asIScriptFunction *GetFunctionByDecl(const char *decl) const = 0;
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
 	virtual int                RemoveFunction(int funcId) = 0;
+	virtual int                RemoveFunction(asIScriptFunction *func) = 0;
 
 	// Global variables
 	virtual int         ResetGlobalVars(asIScriptContext *ctx = 0) = 0;
@@ -895,6 +896,9 @@ public:
 	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
+	virtual bool             IsFinal() const = 0;
+	virtual bool             IsOverride() const = 0;
+	virtual bool             IsShared() const = 0;
 
 	virtual asUINT           GetParamCount() const = 0;
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;

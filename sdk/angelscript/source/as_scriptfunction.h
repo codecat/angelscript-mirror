@@ -116,7 +116,9 @@ public:
 	asDWORD              GetAccessMask() const;
 	bool                 IsReadOnly() const;
 	bool                 IsPrivate() const;
-	// TODO: interface: Add IsFinal() and IsOverride() as public methods
+	bool                 IsFinal() const;
+	bool                 IsOverride() const;
+	bool                 IsShared() const;
 	// TODO: interface: namespace: Get namespace
 
 	asUINT               GetParamCount() const;
@@ -164,9 +166,6 @@ public:
 	void      AddReferences();
 	void      ReleaseReferences();
 
-	bool      IsShared() const;
-	bool      IsFinal() const;
-	bool      IsOverride() const;
 
 	asCGlobalProperty *GetPropertyByGlobalVarPtr(void *gvarPtr);
 
