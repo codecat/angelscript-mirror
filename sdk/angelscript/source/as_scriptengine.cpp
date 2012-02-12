@@ -2080,7 +2080,7 @@ asUINT asCScriptEngine::GetGlobalPropertyCount() const
 
 // interface
 // TODO: If the typeId ever encodes the const flag, then the isConst parameter should be removed
-int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId, bool *isConst, const char **configGroup, void **pointer) const
+int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId, bool *isConst, const char **configGroup, void **pointer, asDWORD *accessMask) const
 {
 	if( index >= registeredGlobalProps.GetLength() )
 		return asINVALID_ARG;
@@ -2105,6 +2105,9 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, i
 
 	if( pointer )
 		*pointer = registeredGlobalProps[index]->GetRegisteredAddress();
+
+	if( accessMask )
+		*accessMask = registeredGlobalProps[index]->accessMask;
 
 	return asSUCCESS;
 }
@@ -3936,11 +3939,11 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForObjectType(const asCObjectTyp
 	return 0;
 }
 
-asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(asCScriptFunction *funcDef) const
+asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(const asCScriptFunction *funcDef) const
 {
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
-		if( configGroups[n]->funcDefs.Exists(funcDef) )
+		if( configGroups[n]->funcDefs.Exists(const_cast<asCScriptFunction *>(funcDef)) )
 			return configGroups[n];
 	}
 
@@ -4076,19 +4079,10 @@ asUINT asCScriptEngine::GetFuncdefCount() const
 }
 
 // interface
-asIScriptFunction *asCScriptEngine::GetFuncdefByIndex(asUINT index, const char **configGroup) const
+asIScriptFunction *asCScriptEngine::GetFuncdefByIndex(asUINT index) const
 {
 	if( index >= registeredFuncDefs.GetLength() )
 		return 0;
-
-	if( configGroup )
-	{
-		asCConfigGroup *group = FindConfigGroupForFuncDef(registeredFuncDefs[index]);
-		if( group )
-			*configGroup = group->groupName.AddressOf();
-		else
-			*configGroup = 0;
-	}
 
 	return registeredFuncDefs[index];
 }
@@ -4175,7 +4169,7 @@ asUINT asCScriptEngine::GetTypedefCount() const
 }
 
 // interface
-const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup) const
+const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup, asDWORD *accessMask) const
 {
 	if( index >= registeredTypeDefs.GetLength() )
 		return 0;
@@ -4191,6 +4185,9 @@ const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const 
 		else
 			*configGroup = 0;
 	}
+
+	if( accessMask )
+		*accessMask = registeredTypeDefs[index]->accessMask;
 
 	return registeredTypeDefs[index]->name.AddressOf();
 }
@@ -4295,7 +4292,7 @@ asUINT asCScriptEngine::GetEnumCount() const
 }
 
 // interface
-const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup) const
+const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup, asDWORD *accessMask) const
 {
 	if( index >= registeredEnums.GetLength() )
 		return 0;
@@ -4308,6 +4305,9 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 		else
 			*configGroup = 0;
 	}
+
+	if( accessMask )
+		*accessMask = registeredEnums[index]->accessMask;
 
 	if( enumTypeId )
 		*enumTypeId = GetTypeIdByDecl(registeredEnums[index]->name.AddressOf());

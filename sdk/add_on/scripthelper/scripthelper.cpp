@@ -173,6 +173,8 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	if( f == 0 )
 		return -1;
 
+	asDWORD currAccessMask = 0;
+
 	// Make sure the default array type is expanded to the template form 
 	bool expandDefArrayToTempl = engine->GetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL) ? true : false;
 	engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
@@ -183,7 +185,13 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		int typeId;
-		const char *enumName = engine->GetEnumByIndex(n, &typeId);
+		asDWORD accessMask;
+		const char *enumName = engine->GetEnumByIndex(n, &typeId, 0, &accessMask);
+		if( accessMask != currAccessMask )
+		{
+			fprintf(f, "access %X\n", accessMask);
+			currAccessMask = accessMask;
+		}
 		fprintf(f, "enum %s\n", enumName);
 		for( int m = 0; m < engine->GetEnumValueCount(typeId); m++ )
 		{
@@ -201,6 +209,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		asIObjectType *type = engine->GetObjectTypeByIndex(n);
+		asDWORD accessMask = type->GetAccessMask();
+		if( accessMask != currAccessMask )
+		{
+			fprintf(f, "access %X\n", accessMask);
+			currAccessMask = accessMask;
+		}
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
 			// This should only be interfaces
@@ -221,7 +235,13 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		int typeId;
-		const char *typeDef = engine->GetTypedefByIndex(n, &typeId);
+		asDWORD accessMask;
+		const char *typeDef = engine->GetTypedefByIndex(n, &typeId, 0, &accessMask);
+		if( accessMask != currAccessMask )
+		{
+			fprintf(f, "access %X\n", accessMask);
+			currAccessMask = accessMask;
+		}
 		fprintf(f, "typedef %s \"%s\"\n", typeDef, engine->GetTypeDeclaration(typeId));
 	}
 
@@ -229,6 +249,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		asIScriptFunction *funcDef = engine->GetFuncdefByIndex(n);
+		asDWORD accessMask = funcDef->GetAccessMask();
+		if( accessMask != currAccessMask )
+		{
+			fprintf(f, "access %X\n", accessMask);
+			currAccessMask = accessMask;
+		}
 		fprintf(f, "funcdef \"%s\"\n", funcDef->GetDeclaration());
 	}
 
@@ -245,6 +271,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			for( asUINT m = 0; m < type->GetMethodCount(); m++ )
 			{
 				asIScriptFunction *func = type->GetMethodByIndex(m);
+				asDWORD accessMask = func->GetAccessMask();
+				if( accessMask != currAccessMask )
+				{
+					fprintf(f, "access %X\n", accessMask);
+					currAccessMask = accessMask;
+				}
 				fprintf(f, "intfmthd %s \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
 			}
 		}
@@ -254,6 +286,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			for( m = 0; m < type->GetFactoryCount(); m++ )
 			{
 				asIScriptFunction *func = engine->GetFunctionById(type->GetFactoryIdByIndex(m));
+				asDWORD accessMask = func->GetAccessMask();
+				if( accessMask != currAccessMask )
+				{
+					fprintf(f, "access %X\n", accessMask);
+					currAccessMask = accessMask;
+				}
 				fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), asBEHAVE_FACTORY, func->GetDeclaration(false));
 			}
 			for( m = 0; m < type->GetBehaviourCount(); m++ )
@@ -265,10 +303,23 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			for( m = 0; m < type->GetMethodCount(); m++ )
 			{
 				asIScriptFunction *func = type->GetMethodByIndex(m);
+				asDWORD accessMask = func->GetAccessMask();
+				if( accessMask != currAccessMask )
+				{
+					fprintf(f, "access %X\n", accessMask);
+					currAccessMask = accessMask;
+				}
 				fprintf(f, "objmthd \"%s\" \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
 			}
 			for( m = 0; m < type->GetPropertyCount(); m++ )
 			{
+				asDWORD accessMask;
+				type->GetProperty(m, 0, 0, 0, 0, 0, &accessMask);
+				if( accessMask != currAccessMask )
+				{
+					fprintf(f, "access %X\n", accessMask);
+					currAccessMask = accessMask;
+				}
 				fprintf(f, "objprop \"%s\" \"%s\"\n", typeDecl.c_str(), type->GetPropertyDeclaration(m));
 			}
 		}
@@ -281,6 +332,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		asIScriptFunction *func = engine->GetFunctionById(engine->GetGlobalFunctionIdByIndex(n));
+		asDWORD accessMask = func->GetAccessMask();
+		if( accessMask != currAccessMask )
+		{
+			fprintf(f, "access %X\n", accessMask);
+			currAccessMask = accessMask;
+		}
 		fprintf(f, "func \"%s\"\n", func->GetDeclaration());
 	}
 
@@ -293,7 +350,13 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		const char *name;
 		int typeId;
 		bool isConst;
-		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst); 
+		asDWORD accessMask;
+		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst, 0, 0, &accessMask);
+		if( accessMask != currAccessMask )
+		{
+			fprintf(f, "access %X\n", accessMask);
+			currAccessMask = accessMask;
+		}
 		fprintf(f, "prop \"%s%s %s\"\n", isConst ? "const " : "", engine->GetTypeDeclaration(typeId), name);
 	}
 

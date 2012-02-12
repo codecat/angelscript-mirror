@@ -509,7 +509,7 @@ public:
 	// Global properties
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	virtual asUINT GetGlobalPropertyCount() const = 0;
-	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0, asDWORD *accessMask = 0) const = 0;
 	virtual int    GetGlobalPropertyIndexByName(const char *name) const = 0;
 	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const = 0;
 
@@ -536,19 +536,19 @@ public:
 	virtual int         RegisterEnum(const char *type) = 0;
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
 	virtual asUINT      GetEnumCount() const = 0;
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) const = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
 	// Funcdefs
 	virtual int                RegisterFuncdef(const char *decl) = 0;
 	virtual asUINT             GetFuncdefCount() const = 0;
-	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) const = 0;
+	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const = 0;
 
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
 	virtual asUINT      GetTypedefCount() const = 0;
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 
 	// Configuration groups
 	virtual int     BeginConfigGroup(const char *groupName) = 0;
@@ -820,6 +820,7 @@ class asIObjectType
 public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
+	virtual asDWORD          GetAccessMask() const = 0;
 
 	// Memory management
 	virtual int AddRef() const = 0;
@@ -858,7 +859,7 @@ public:
 
 	// Properties
 	virtual asUINT      GetPropertyCount() const = 0;
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
 	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
 
 	// Behaviours
@@ -887,6 +888,7 @@ public:
 	virtual const char      *GetModuleName() const = 0;
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
+	virtual asDWORD          GetAccessMask() const = 0;
 	virtual asIObjectType   *GetObjectType() const = 0;
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;

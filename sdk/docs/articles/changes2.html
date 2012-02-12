@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.0 WIP - 2012/02/08</h2>
+<h2>Version 2.23.0 WIP - 2012/02/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved some compiler messages
 <li>Added configuration to allow the compilation for the Marmalade SDK (Thanks Kite and robt)
 <li>Removed several compiler warnings for different compilers and target platforms (Thanks Richard Viney)
+<li>Added asOBJ_NOCOUNT to support ref types that are not reference counted (Thanks virious)
 </ul>
 <li>Library interface
 <ul>
@@ -39,6 +40,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asIScriptContext::GetExceptionFunction() now returns a asIScriptFunction* instead of the function id
 <li>Changed NotifyGarbageCollectorOfNewObject() to take asIObjectType* instead of type id
 <li>Added asIScriptEngine::GetObjectTypeByName()
+<li>Added accessMask argument in GetGlobalPropertyByIndex(), GetEnumByIndex(), GetTypedefByIndex(), and GetProperty()
+<li>Removed configGroup argument in GetFuncDefByIndex() as this is already available in the asIScriptFunction interface
+<li>Added GetAccessMask() to asIObjectType and asIScriptFunction
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

@@ -113,10 +113,10 @@ public:
 	const char          *GetDeclaration(bool includeObjectName = true) const;
 	const char          *GetScriptSectionName() const;
 	const char          *GetConfigGroup() const;
+	asDWORD              GetAccessMask() const;
 	bool                 IsReadOnly() const;
 	bool                 IsPrivate() const;
 	// TODO: interface: Add IsFinal() and IsOverride() as public methods
-	// TODO: interface: access: Get/Set access mask for function
 	// TODO: interface: namespace: Get namespace
 
 	asUINT               GetParamCount() const;

@@ -135,6 +135,7 @@ public:
 //=====================================
 	asIScriptEngine *GetEngine() const;
 	const char      *GetConfigGroup() const;
+	asDWORD          GetAccessMask() const;
 
 	// Memory management
 	int AddRef() const;
@@ -149,7 +150,6 @@ public:
 	int              GetTypeId() const;
 	int              GetSubTypeId() const;
 	asIObjectType   *GetSubType() const;
-	// TODO: interface: access: Get/Set access mask for type
 	// TODO: interface: namespace: Get namespace
 
 	// Interfaces
@@ -174,9 +174,8 @@ public:
 	asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual) const;
 
 	// Properties
-	// TODO: access: Allow getting and setting property access mask
 	asUINT      GetPropertyCount() const;
-	int         GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset, bool *isReference) const;
+	int         GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset, bool *isReference, asDWORD *accessMask) const;
 	const char *GetPropertyDeclaration(asUINT index) const;
 
 	// Behaviours

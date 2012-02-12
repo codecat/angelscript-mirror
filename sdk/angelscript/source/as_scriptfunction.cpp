@@ -848,11 +848,22 @@ const char *asCScriptFunction::GetScriptSectionName() const
 // interface
 const char *asCScriptFunction::GetConfigGroup() const
 {
-	asCConfigGroup *group = engine->FindConfigGroupForFunction(id);
+	asCConfigGroup *group = 0;
+	if( funcType != asFUNC_FUNCDEF )
+		group = engine->FindConfigGroupForFunction(id);
+	else
+		group = engine->FindConfigGroupForFuncDef(this);
+
 	if( group == 0 )
 		return 0;
 
 	return group->groupName.AddressOf();
+}
+
+// interface
+asDWORD asCScriptFunction::GetAccessMask() const
+{
+	return accessMask;
 }
 
 // internal
