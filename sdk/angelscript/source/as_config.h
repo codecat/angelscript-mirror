@@ -539,7 +539,7 @@
 		#define AS_PPC_64
 	// PSP
 	#elif defined(__psp__)
-		#define AS_NO_MEMORY
+		#define AS_NO_MEMORY_H
 		#define AS_MIPS
 		#define AS_PSP
 	#endif
@@ -647,6 +647,10 @@
 			#define COMPLEX_MASK asOBJ_APP_CLASS_DESTRUCTOR
 			#undef COMPLEX_RETURN_MASK
 			#define COMPLEX_RETURN_MASK asOBJ_APP_CLASS_DESTRUCTOR
+			
+			// STDCALL is not available on ARM
+			#undef STDCALL
+			#define STDCALL
 		#else
 			// Unknown CPU type
 			#define AS_MAX_PORTABILITY

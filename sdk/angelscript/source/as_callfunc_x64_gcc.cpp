@@ -175,7 +175,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) 
 	{
 		vftable = *((funcptr_t**)obj);
-		func = vftable[FuncPtrToUInt(func) >> 3];
+		func = vftable[FuncPtrToUInt(asFUNCTION_t(func)) >> 3];
 	}
 
 	// Determine the type of the arguments, and prepare the input array for the X64_CallFunction 
