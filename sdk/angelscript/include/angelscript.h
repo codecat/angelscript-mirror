@@ -141,7 +141,8 @@ enum asEObjTypeFlags
 	asOBJ_APP_FLOAT                  = 0x4000,
 	asOBJ_APP_CLASS_ALLINTS          = 0x8000,
 	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
-	asOBJ_MASK_VALID_FLAGS           = 0x1FFFF,
+	asOBJ_NOCOUNT                    = 0x20000,
+	asOBJ_MASK_VALID_FLAGS           = 0x3FFFF,
 	asOBJ_SCRIPT_OBJECT              = 0x80000,
 	asOBJ_SHARED                     = 0x100000,
 	asOBJ_NOINHERIT                  = 0x200000

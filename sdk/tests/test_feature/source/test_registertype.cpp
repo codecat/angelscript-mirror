@@ -243,6 +243,29 @@ bool Test()
 	}
 	engine->Release();
 
+	// Ref type with asOBJ_NOCOUNT must not register ADDREF and RELEASE
+	bout.buffer = "";
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+	if( r >= 0 ) TEST_FAILED;
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+	if( r >= 0 ) TEST_FAILED;
+	r = ExecuteString(engine, "ref @r;");
+	if( r >= 0 )
+		TEST_FAILED;
+	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+					   " (0, 0) : Error   : The behaviour is not compatible with the type\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+	engine->Release();
+
 	// Ref types without default factory must not be allowed to be initialized, nor must it be allowed to be passed by value in parameters or returned by value
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -535,7 +558,6 @@ bool TestRefScoped()
 	{
 		TEST_FAILED;
 	}
-
 
 	// Don't permit functions to be registered with handle for parameters
 	bout.buffer = "";

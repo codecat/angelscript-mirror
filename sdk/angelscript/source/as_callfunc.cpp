@@ -516,7 +516,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			context->regs.objectRegister = (void*)(size_t)retQW;
 
 			if( sysFunc->returnAutoHandle && context->regs.objectRegister )
+			{
+				asASSERT( !(descr->returnType.GetObjectType()->flags & asOBJ_NOCOUNT) );
 				engine->CallObjectMethod(context->regs.objectRegister, descr->returnType.GetObjectType()->beh.addref);
+			}
 		}
 		else
 		{

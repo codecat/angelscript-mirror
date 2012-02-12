@@ -1278,22 +1278,24 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	if( flags & asOBJ_REF )
 	{
 		// Can optionally have the asOBJ_GC, asOBJ_NOHANDLE, asOBJ_SCOPED, or asOBJ_TEMPLATE flag set, but nothing else
-		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_TEMPLATE) )
+		if( flags & ~(asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_TEMPLATE | asOBJ_NOCOUNT) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 
 		// flags are exclusive
-		if( (flags & asOBJ_GC) && (flags & (asOBJ_NOHANDLE|asOBJ_SCOPED)) )
+		if( (flags & asOBJ_GC) && (flags & (asOBJ_NOHANDLE|asOBJ_SCOPED|asOBJ_NOCOUNT)) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
-		if( (flags & asOBJ_NOHANDLE) && (flags & (asOBJ_GC|asOBJ_SCOPED)) )
+		if( (flags & asOBJ_NOHANDLE) && (flags & (asOBJ_GC|asOBJ_SCOPED|asOBJ_NOCOUNT)) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
-		if( (flags & asOBJ_SCOPED) && (flags & (asOBJ_GC|asOBJ_NOHANDLE)) )
+		if( (flags & asOBJ_SCOPED) && (flags & (asOBJ_GC|asOBJ_NOHANDLE|asOBJ_NOCOUNT)) )
+			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
+		if( (flags & asOBJ_NOCOUNT) && (flags & (asOBJ_GC|asOBJ_NOHANDLE|asOBJ_SCOPED)) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 	}
 	else if( flags & asOBJ_VALUE )
 	{
 		// Cannot use reference flags
 		// TODO: template: Should be possible to register a value type as template type
-		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED | asOBJ_TEMPLATE) )
+		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_SCOPED | asOBJ_TEMPLATE | asOBJ_NOCOUNT) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 
 		// flags are exclusive
@@ -1762,7 +1764,8 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		// Must be a ref type and must not have asOBJ_NOHANDLE, nor asOBJ_SCOPED
 		if( !(func.objectType->flags & asOBJ_REF) ||
 			(func.objectType->flags & asOBJ_NOHANDLE) ||
-			(func.objectType->flags & asOBJ_SCOPED) )
+			(func.objectType->flags & asOBJ_SCOPED) ||
+			(func.objectType->flags & asOBJ_NOCOUNT) )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
@@ -1784,7 +1787,9 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	else if( behaviour == asBEHAVE_RELEASE )
 	{
 		// Must be a ref type and must not have asOBJ_NOHANDLE
-		if( !(func.objectType->flags & asOBJ_REF) || (func.objectType->flags & asOBJ_NOHANDLE) )
+		if( !(func.objectType->flags & asOBJ_REF) || 
+			(func.objectType->flags & asOBJ_NOHANDLE) || 
+			(func.objectType->flags & asOBJ_NOCOUNT) )
 		{
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
@@ -2487,7 +2492,8 @@ void asCScriptEngine::PrepareEngine()
 			}
 			// Verify that ref types have add ref and release behaviours
 			else if( (objectTypes[n]->flags & asOBJ_REF) &&
-				     !(objectTypes[n]->flags & asOBJ_NOHANDLE) )
+				     !(objectTypes[n]->flags & asOBJ_NOHANDLE) &&
+					 !(objectTypes[n]->flags & asOBJ_NOCOUNT) )
 			{
 				if( objectTypes[n]->beh.addref  == 0 ||
 					objectTypes[n]->beh.release == 0 )
@@ -3749,21 +3755,7 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 
 	asCObjectType *objType = dt.GetObjectType();
 
-	if( objType->beh.release )
-	{
-		// Call the release behaviour
-		CallObjectMethod(obj, objType->beh.release);
-	}
-	// TODO: interface: shouldn't work on non reference types
-	else
-	{
-		// Call the destructor
-		if( objType->beh.destruct )
-			CallObjectMethod(obj, objType->beh.destruct);
-
-		// Then free the memory
-		CallFree(obj);
-	}
+	ReleaseScriptObject(obj, objType);
 }
 
 // interface
@@ -3773,14 +3765,19 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
 	if( obj == 0 ) return;
 	
 	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
-	if( objType->beh.release )
+	if( objType->flags & asOBJ_REF )
 	{
-		// Call the release behaviour
-		CallObjectMethod(obj, objType->beh.release);
+		asASSERT( (objType->flags & asOBJ_NOCOUNT) || objType->beh.release );
+		if( objType->beh.release )
+		{
+			// Call the release behaviour
+			CallObjectMethod(obj, objType->beh.release);
+		}
 	}
-	// TODO: interface: shouldn't work on non reference types
 	else
 	{
+		// TODO: interface: shouldn't work on non reference types
+
 		// Call the destructor
 		if( objType->beh.destruct )
 			CallObjectMethod(obj, objType->beh.destruct);

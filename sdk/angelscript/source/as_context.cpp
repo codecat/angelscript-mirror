@@ -2244,16 +2244,16 @@ void asCContext::ExecuteNext()
 				regs.stackPointer = l_sp;
 				regs.stackFramePointer = l_fp;
 
-				if( beh->release )
+				if( objType->flags & asOBJ_REF )
 				{
-					engine->CallObjectMethod((void*)(size_t)*a, beh->release);
+					asASSERT( (objType->flags & asOBJ_NOCOUNT) || beh->release );
+					if( beh->release )
+						engine->CallObjectMethod((void*)(size_t)*a, beh->release);
 				}
 				else
 				{
 					if( beh->destruct )
-					{
 						engine->CallObjectMethod((void*)(size_t)*a, beh->destruct);
-					}
 
 					engine->CallFree((void*)(size_t)*a);
 				}
@@ -2315,12 +2315,15 @@ void asCContext::ExecuteNext()
 			regs.stackPointer = l_sp;
 			regs.stackFramePointer = l_fp;
 
-			// Release previous object held by destination pointer
-			if( *d != 0 )
-				engine->CallObjectMethod(*d, beh->release);
-			// Increase ref counter of wanted object
-			if( s != 0 )
-				engine->CallObjectMethod(s, beh->addref);
+			if( !(objType->flags & asOBJ_NOCOUNT) )
+			{
+				// Release previous object held by destination pointer
+				if( *d != 0 )
+					engine->CallObjectMethod(*d, beh->release);
+				// Increase ref counter of wanted object
+				if( s != 0 )
+					engine->CallObjectMethod(s, beh->addref);
+			}
 
 			// Set the new object in the destination
 			*d = s;
@@ -3562,12 +3565,14 @@ void asCContext::CleanReturnObject()
 	{
 		// Call the destructor on the object
 		asSTypeBehaviour *beh = &((asCObjectType*)regs.objectType)->beh;
-		if( beh->release )
+		if( regs.objectType->GetFlags() & asOBJ_REF )
 		{
-			engine->CallObjectMethod(regs.objectRegister, beh->release);
-			regs.objectRegister = 0;
+			asASSERT( beh->release || (regs.objectType->GetFlags() & asOBJ_NOCOUNT) );
 
-			// The release method is responsible for freeing the memory
+			if( beh->release )
+				engine->CallObjectMethod(regs.objectRegister, beh->release);
+
+			regs.objectRegister = 0;
 		}
 		else
 		{
@@ -3770,9 +3775,11 @@ void asCContext::CleanStackFrame()
 				{
 					// Call the object's destructor
 					asSTypeBehaviour *beh = &currentFunction->objVariableTypes[n]->beh;
-					if( beh->release )
+					if( currentFunction->objVariableTypes[n]->flags & asOBJ_REF )
 					{
-						engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[-pos], beh->release);
+						asASSERT( (currentFunction->objVariableTypes[n]->flags & asOBJ_NOCOUNT) || beh->release );
+						if( beh->release )
+							engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[-pos], beh->release);
 						*(size_t*)&regs.stackFramePointer[-pos] = 0;
 					}
 					else
@@ -3834,9 +3841,12 @@ void asCContext::CleanStackFrame()
 			{
 				// Call the object's destructor
 				asSTypeBehaviour *beh = currentFunction->parameterTypes[n].GetBehaviour();
-				if( beh->release )
+				if( currentFunction->parameterTypes[n].GetObjectType()->flags & asOBJ_REF )
 				{
-					engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[offset], beh->release);
+					asASSERT( (currentFunction->parameterTypes[n].GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
+
+					if( beh->release )
+						engine->CallObjectMethod((void*)*(size_t*)&regs.stackFramePointer[offset], beh->release);
 					*(size_t*)&regs.stackFramePointer[offset] = 0;
 				}
 				else
@@ -4040,8 +4050,12 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 			{
 				// Release the object
 				asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].GetObjectType()->beh;
-				if( beh->release )
-					engine->CallObjectMethod(obj, beh->release);
+				if( sysFunction->parameterTypes[n].GetObjectType()->flags & asOBJ_REF )
+				{
+					asASSERT( (sysFunction->parameterTypes[n].GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
+					if( beh->release )
+						engine->CallObjectMethod(obj, beh->release);
+				}
 				else
 				{
 					// Call the destructor then free the memory

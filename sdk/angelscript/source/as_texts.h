@@ -215,6 +215,7 @@
 
 // Engine message
 
+#define TXT_AUTOHANDLE_CANNOT_BE_USED_FOR_NOCOUNT  "Autohandles cannot be used with types that have been registered with NOCOUNT"
 #define TXT_INVALID_CONFIGURATION                  "Invalid configuration. Verify the registered application interface."
 #define TXT_VALUE_TYPE_MUST_HAVE_SIZE              "A value type must be registered with a non-zero size"
 #define TXT_TYPE_s_IS_MISSING_BEHAVIOURS           "Type '%s' is missing behaviours"

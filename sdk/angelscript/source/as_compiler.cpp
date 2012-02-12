@@ -1327,8 +1327,9 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				!ctx->type.isVariable &&
 				ctx->type.dataType.IsObject() &&
 				!ctx->type.dataType.IsObjectHandle() &&
-				ctx->type.dataType.GetBehaviour()->addref &&
-				ctx->type.dataType.GetBehaviour()->release )
+				((ctx->type.dataType.GetBehaviour()->addref &&
+				  ctx->type.dataType.GetBehaviour()->release) || 
+				 (ctx->type.dataType.GetObjectType()->flags & asOBJ_NOCOUNT)) )
 			{
 				// Store a handle to the object as local variable
 				asSExprContext tmp(engine);
@@ -7431,8 +7432,9 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			else if( !outParam.argType.isVariable )
 			{
 				if( outParam.argType.dataType.IsObject() &&
-					outParam.argType.dataType.GetBehaviour()->addref &&
-					outParam.argType.dataType.GetBehaviour()->release )
+					((outParam.argType.dataType.GetBehaviour()->addref &&
+					  outParam.argType.dataType.GetBehaviour()->release) ||
+					 (outParam.argType.dataType.GetObjectType()->flags & asOBJ_NOCOUNT)) )
 				{
 					// Release the object handle that was taken to guarantee the reference
 					ReleaseTemporaryVariable(outParam.argType, &ctx->bc);
@@ -7867,7 +7869,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		// Verify that the type allow its handle to be taken
 		if( ctx->type.isExplicitHandle ||
 			!ctx->type.dataType.IsObject() ||
-			!((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || 
+			!(((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || (ctx->type.dataType.GetObjectType()->flags & asOBJ_NOCOUNT)) || 
 			  (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 		{
 			Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);

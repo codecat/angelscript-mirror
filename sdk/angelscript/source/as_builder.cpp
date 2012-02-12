@@ -3852,7 +3852,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 			inOutFlags && *inOutFlags == asTM_INOUTREF )
 		{
 			// Verify that the base type support &inout parameter types
-			if( !dt.IsObject() || dt.IsObjectHandle() || !dt.GetObjectType()->beh.addref || !dt.GetObjectType()->beh.release )
+			if( !dt.IsObject() || dt.IsObjectHandle() || !((dt.GetObjectType()->flags & asOBJ_NOCOUNT) || (dt.GetObjectType()->beh.addref && dt.GetObjectType()->beh.release)) )
 			{
 				int r, c;
 				file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
@@ -3865,6 +3865,14 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 
 	if( n && n->tokenType == ttPlus )
 	{
+		// Autohandles are not supported for types with NOCOUNT
+		if( dt.GetObjectType()->flags & asOBJ_NOCOUNT )
+		{
+			int r, c;
+			file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
+			WriteError(file->name.AddressOf(), TXT_AUTOHANDLE_CANNOT_BE_USED_FOR_NOCOUNT, r, c);
+		}
+
 		if( autoHandle ) *autoHandle = true;
 	}
 
