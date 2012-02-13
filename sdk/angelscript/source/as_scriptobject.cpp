@@ -399,7 +399,9 @@ void asCScriptObject::ReleaseAllHandles(asIScriptEngine *engine)
 			void **ptr = (void**)(((char*)this) + prop->byteOffset);
 			if( *ptr )
 			{
-				((asCScriptEngine*)engine)->CallObjectMethod(*ptr, prop->type.GetBehaviour()->release);
+				asASSERT( (prop->type.GetObjectType()->flags & asOBJ_NOCOUNT) || prop->type.GetBehaviour()->release );
+				if( prop->type.GetBehaviour()->release )
+					((asCScriptEngine*)engine)->CallObjectMethod(*ptr, prop->type.GetBehaviour()->release);
 				*ptr = 0;
 			}
 		}
@@ -497,16 +499,18 @@ void *asCScriptObject::AllocateObject(asCObjectType *objType, asCScriptEngine *e
 
 void asCScriptObject::FreeObject(void *ptr, asCObjectType *objType, asCScriptEngine *engine)
 {
-	if( !objType->beh.release )
+	if( objType->flags & asOBJ_REF )
+	{
+		asASSERT( (objType->flags & asOBJ_NOCOUNT) || objType->beh.release );
+		if( objType->beh.release )
+			engine->CallObjectMethod(ptr, objType->beh.release);
+	}
+	else
 	{
 		if( objType->beh.destruct )
 			engine->CallObjectMethod(ptr, objType->beh.destruct);
 
 		engine->CallFree(ptr);
-	}
-	else
-	{
-		engine->CallObjectMethod(ptr, objType->beh.release);
 	}
 }
 
