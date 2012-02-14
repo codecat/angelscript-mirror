@@ -964,7 +964,9 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = (asFUNCTION_t)func;
+
+	// Casting to PWORD to support constant 0 without compiler warnings
+	p.ptr.f.func = (asFUNCTION_t)(asPWORD)func;
 
 	// Mark this as a global function
 	p.flag = 2;
