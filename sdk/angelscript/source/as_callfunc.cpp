@@ -419,7 +419,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			popSize += AS_PTR_SIZE;
 
 			// Check for null pointer
-			obj = (void*)*(size_t*)(args);
+			obj = (void*)*(asPWORD*)(args);
 			if( obj == 0 )
 			{
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -433,9 +433,9 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
 			// and the whole offset is thus shifted one bit left to keep the original
 			// offset resolution
-			obj = (void*)(size_t(obj) + (sysFunc->baseOffset>>1));
+			obj = (void*)(asPWORD(obj) + (sysFunc->baseOffset>>1));
 #else
-			obj = (void*)(size_t(obj) + sysFunc->baseOffset);
+			obj = (void*)(asPWORD(obj) + sysFunc->baseOffset);
 #endif
 
 			// Skip the object pointer
@@ -447,7 +447,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
 	{
 		// Get the address of the location for the return value from the stack
-		retPointer = (void*)*(size_t*)(args);
+		retPointer = (void*)*(asPWORD*)(args);
 		popSize += AS_PTR_SIZE;
 		args += AS_PTR_SIZE;
 
@@ -484,7 +484,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				!descr->parameterTypes[n].IsObjectHandle() && 
 				!descr->parameterTypes[n].IsReference() )
 			{
-				void *obj = (void*)*(size_t*)&args[spos];
+				void *obj = (void*)*(asPWORD*)&args[spos];
 				spos += AS_PTR_SIZE;
 
 #ifndef AS_CALLEE_DESTROY_OBJ_BY_VAL
@@ -513,7 +513,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			retQW >>= 32;
 #endif
 
-			context->regs.objectRegister = (void*)(size_t)retQW;
+			context->regs.objectRegister = (void*)(asPWORD)retQW;
 
 			if( sysFunc->returnAutoHandle && context->regs.objectRegister )
 			{
@@ -637,11 +637,11 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			if( sysFunc->paramAutoHandles[n] && *(size_t*)&args[spos] != 0 )
+			if( sysFunc->paramAutoHandles[n] && *(asPWORD*)&args[spos] != 0 )
 			{
 				// Call the release method on the type
-				engine->CallObjectMethod((void*)*(size_t*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
-				*(size_t*)&args[spos] = 0;
+				engine->CallObjectMethod((void*)*(asPWORD*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				*(asPWORD*)&args[spos] = 0;
 			}
 
 			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )

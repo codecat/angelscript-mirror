@@ -10327,28 +10327,28 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 		{
 			if( !lctx->type.isConstant )
 				signMismatch = true;
-			else if( lctx->type.qwordValue & (U64(1)<<63) )
+			else if( lctx->type.qwordValue & (asQWORD(1)<<63) )
 				signMismatch = true;
 		}
 		if( lctx->type.dataType.GetTokenType() == ttUInt )
 		{
 			if( !lctx->type.isConstant )
 				signMismatch = true;
-			else if( lctx->type.dwordValue & (1u<<31) )
+			else if( lctx->type.dwordValue & (asDWORD(1)<<31) )
 				signMismatch = true;
 		}
 		if( rctx->type.dataType.GetTokenType() == ttUInt64 )
 		{
 			if( !rctx->type.isConstant )
 				signMismatch = true;
-			else if( rctx->type.qwordValue & (U64(1)<<63) )
+			else if( rctx->type.qwordValue & (asQWORD(1)<<63) )
 				signMismatch = true;
 		}
 		if( rctx->type.dataType.GetTokenType() == ttUInt )
 		{
 			if( !rctx->type.isConstant )
 				signMismatch = true;
-			else if( rctx->type.dwordValue & (1u<<31) )
+			else if( rctx->type.dwordValue & (asDWORD(1)<<31) )
 				signMismatch = true;
 		}
 	}

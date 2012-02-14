@@ -598,7 +598,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_FREE:
 		case asBC_REFCPY:
 			{
-                asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+                asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				objType->AddRef();
 			}
 			break;
@@ -606,7 +606,7 @@ void asCScriptFunction::AddReferences()
 		// Object type and function
 		case asBC_ALLOC:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				objType->AddRef();
 
 				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
@@ -625,7 +625,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_SetG4:
 			// Need to increase the reference for each global variable
 			{
-				void *gvarPtr = (void*)(size_t)asBC_PTRARG(&byteCode[n]);
+				void *gvarPtr = (void*)asBC_PTRARG(&byteCode[n]);
 				if( !gvarPtr ) break;
 				asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
 				if( !prop ) break;
@@ -665,7 +665,7 @@ void asCScriptFunction::AddReferences()
 		// Function pointers
 		case asBC_FuncPtr:
 			{
-				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCScriptFunction *func = (asCScriptFunction*)asBC_PTRARG(&byteCode[n]);
 				func->AddRef();
 			}
 			break;
@@ -705,7 +705,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_FREE:
 		case asBC_REFCPY:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				if( objType ) 
 					objType->Release();
 			}
@@ -714,7 +714,7 @@ void asCScriptFunction::ReleaseReferences()
 		// Object type and function
 		case asBC_ALLOC:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				if( objType )
 					objType->Release();
 
@@ -744,7 +744,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_SetG4:
 			// Need to increase the reference for each global variable
 			{
-				void *gvarPtr = (void*)(size_t)asBC_PTRARG(&byteCode[n]);
+				void *gvarPtr = (void*)asBC_PTRARG(&byteCode[n]);
 				if( !gvarPtr ) break;
 				asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
 				if( !prop ) break;
@@ -796,7 +796,7 @@ void asCScriptFunction::ReleaseReferences()
 		// Function pointers
 		case asBC_FuncPtr:
 			{
-				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCScriptFunction *func = (asCScriptFunction*)asBC_PTRARG(&byteCode[n]);
 				if( func )
 					func->Release();
 			}
@@ -980,14 +980,14 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 		case asBC_FREE:
 		case asBC_REFCPY:
 			{
-                asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+                asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				engine->GCEnumCallback(objType);
 			}
 			break;
 
 		case asBC_ALLOC:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				engine->GCEnumCallback(objType);
 
 				int func = asBC_INTARG(&byteCode[n]+AS_PTR_SIZE);
@@ -1008,7 +1008,7 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 		// Function pointers
 		case asBC_FuncPtr:
 			{
-				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCScriptFunction *func = (asCScriptFunction*)asBC_PTRARG(&byteCode[n]);
 				if( func )
 					engine->GCEnumCallback(func);
 			}
@@ -1025,7 +1025,7 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 			// Need to enumerate the reference for each global variable
 			{
 				// TODO: optimize: Keep an array of accessed global properties
-				void *gvarPtr = (void*)(size_t)asBC_PTRARG(&byteCode[n]);
+				void *gvarPtr = (void*)asBC_PTRARG(&byteCode[n]);
 				asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
 
 				engine->GCEnumCallback(prop);
@@ -1069,7 +1069,7 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		case asBC_FREE:
 		case asBC_REFCPY:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				if( objType )
 				{
 					objType->Release();
@@ -1080,7 +1080,7 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 
 		case asBC_ALLOC:
 			{
-				asCObjectType *objType = (asCObjectType*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				if( objType )
 				{
 					objType->Release();
@@ -1111,11 +1111,11 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		// Function pointers
 		case asBC_FuncPtr:
 			{
-				asCScriptFunction *func = (asCScriptFunction*)(size_t)asBC_PTRARG(&byteCode[n]);
+				asCScriptFunction *func = (asCScriptFunction*)asBC_PTRARG(&byteCode[n]);
 				if( func )
 				{
 					func->Release();
-					*(size_t*)&byteCode[n+1] = 0;
+					*(asPWORD*)&byteCode[n+1] = 0;
 				}
 			}
 			break;

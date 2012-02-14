@@ -130,7 +130,7 @@ int asCModule::SetDefaultNamespace(const char *nameSpace)
 		size_t len;
 		eTokenType t = ttIdentifier;
 
-		for( ; pos < defaultNamespace.GetLength(); pos += len)
+		for( ; pos < defaultNamespace.GetLength(); pos += len )
 		{
 			t = engine->tok.GetToken(defaultNamespace.AddressOf() + pos, defaultNamespace.GetLength() - pos, &len);
 			if( (expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope) )

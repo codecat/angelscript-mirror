@@ -1641,7 +1641,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			c == asBC_REFCPY || c == asBC_OBJTYPE )
 		{
 			// Translate the index to the true object type
-			asPTRWORD *ot = (asPTRWORD*)&bc[n+1];
+			asPWORD *ot = (asPWORD*)&bc[n+1];
 			*(asCObjectType**)ot = FindObjectType(*(int*)ot);
 		}
 		else if( c == asBC_TYPEID ||
@@ -1707,13 +1707,13 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		else if( c == asBC_FuncPtr )
 		{
 			// Translate the index to the func pointer
-			asPTRWORD *fid = (asPTRWORD*)&bc[n+1];
-			*fid = (asPTRWORD)(size_t)FindFunction((int)*fid);
+			asPWORD *fid = (asPWORD*)&bc[n+1];
+			*fid = (asPWORD)FindFunction((int)*fid);
 		}
 		else if( c == asBC_ALLOC )
 		{
 			// Translate the index to the true object type
-			asPTRWORD *arg = (asPTRWORD*)&bc[n+1];
+			asPWORD *arg = (asPWORD*)&bc[n+1];
 			*(asCObjectType**)arg = FindObjectType(*(int*)arg);
 
 			// If the object type is a script class then the constructor id must be translated
@@ -1778,7 +1778,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				 c == asBC_SetG4 )
 		{
 			// Translate the global var index to pointer
-			asPTRWORD *index = (asPTRWORD*)&bc[n+1];
+			asPWORD *index = (asPWORD*)&bc[n+1];
 			if( *(asUINT*)index < usedGlobalProperties.GetLength() )
 				*(void**)index = usedGlobalProperties[*(asUINT*)index];
 			else
@@ -2670,7 +2670,7 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 		else if( c == asBC_FuncPtr ) // PTR_ARG
 		{
 			// Translate the function pointer
-			*(asPTRWORD*)(tmp+1) = FindFunctionIndex(*(asCScriptFunction**)(tmp+1));
+			*(asPWORD*)(tmp+1) = FindFunctionIndex(*(asCScriptFunction**)(tmp+1));
 		}
 		else if( c == asBC_STR ) // W_ARG
 		{
@@ -2916,7 +2916,7 @@ void asCWriter::WriteUsedGlobalProps()
 
 	for( int n = 0; n < c; n++ )
 	{
-		size_t *p = (size_t*)usedGlobalProperties[n];
+		asPWORD *p = (asPWORD*)usedGlobalProperties[n];
 		
 		// First search for the global in the module
 		char moduleProp = 0;

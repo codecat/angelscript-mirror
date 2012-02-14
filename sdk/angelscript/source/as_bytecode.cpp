@@ -1337,7 +1337,7 @@ void asCByteCode::Alloc(asEBCInstr instr, void *objID, int funcID, int pop)
 	last->stackInc = -pop; // BC_ALLOC
 
 	asASSERT(asBCInfo[instr].type == asBCTYPE_PTR_DW_ARG);
-	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)objID;
+	*ARG_PTR(last->arg) = (asPWORD)objID;
 	*((int*)(ARG_DW(last->arg)+AS_PTR_SIZE)) = funcID;
 
     // Add a JitEntry instruction after function calls so that JIT's can resume execution
@@ -2125,7 +2125,7 @@ int asCByteCode::InstrW_PTR(asEBCInstr bc, short a, void *param)
 
 	last->op       = bc;
 	last->wArg[0]  = a;
-	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)param;
+	*ARG_PTR(last->arg) = (asPWORD)param;
 	last->size     = asBCTypeSize[asBCInfo[bc].type];
 	last->stackInc = asBCInfo[bc].stackInc;
 
@@ -2333,7 +2333,7 @@ int asCByteCode::InstrPTR(asEBCInstr bc, void *param)
 
 	last->op = bc;
 	asASSERT(asBCInfo[bc].type == asBCTYPE_PTR_ARG);
-	*ARG_PTR(last->arg) = (asPTRWORD)(size_t)param;
+	*ARG_PTR(last->arg) = (asPWORD)param;
 	last->size     = asBCTypeSize[asBCInfo[bc].type];
 	last->stackInc = asBCInfo[bc].stackInc;
 

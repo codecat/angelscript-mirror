@@ -369,7 +369,6 @@
 	#define ASM_INTEL
 
 	#define I64(x) x##ll
-	#define U64(x) x##ull
 
 	#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
 
@@ -445,10 +444,8 @@
 
 	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
 		#define I64(x) x##l
-		#define U64(x) x##ul
 	#else // MSVC++ 7.1 and higher
 		#define I64(x) x##ll
-		#define U64(x) x##ull
 	#endif
 
 	#ifdef _ARM_
@@ -496,10 +493,8 @@
 
 	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
 		#define I64(x) x##l
-		#define U64(x) x##ul
 	#else // MSVC++ 7.1 and higher
 		#define I64(x) x##ll
-		#define U64(x) x##ull
 	#endif
 
 	#define UNREACHABLE_RETURN
@@ -545,7 +540,6 @@
 	#endif
 
 	#define I64(x) x##ll
-	#define U64(x) x##ull
 
 	#define UNREACHABLE_RETURN
 #endif
@@ -883,7 +877,6 @@
 	#endif
 
 	#define I64(x) x##ll
-	#define U64(x) x##ull
 
 	#define UNREACHABLE_RETURN
 #endif
@@ -997,13 +990,11 @@
 
 #ifdef AS_64BIT_PTR
 	#define AS_PTR_SIZE  2
-	#define asPTRWORD    asQWORD
 #else
 	#define AS_PTR_SIZE  1
-	#define asPTRWORD    asDWORD
 #endif
-#define ARG_PTR(b)   ((asPTRWORD*)&b)
-#define BCARG_PTR(b) ((asPTRWORD*)&(b)[1])
+#define ARG_PTR(b)   ((asPWORD*)&b)
+#define BCARG_PTR(b) ((asPWORD*)&(b)[1])
 
 // This macro is used to avoid warnings about unused variables.
 // Usually where the variables are only used in debug mode.

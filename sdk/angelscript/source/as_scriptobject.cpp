@@ -188,14 +188,14 @@ asCScriptObject::asCScriptObject(asCObjectType *ot)
 		asCObjectProperty *prop = objType->properties[n];
 		if( prop->type.IsObject() )
 		{
-			size_t *ptr = (size_t*)(((char*)this) + prop->byteOffset);
+			asPWORD *ptr = (asPWORD*)(((char*)this) + prop->byteOffset);
 
 			if( prop->type.IsObjectHandle() )
 				*ptr = 0;
 			else
 			{
 				// Allocate the object and call it's constructor
-				*ptr = (size_t)AllocateObject(prop->type.GetObjectType(), engine);
+				*ptr = (asPWORD)AllocateObject(prop->type.GetObjectType(), engine);
 			}
 		}
 	}

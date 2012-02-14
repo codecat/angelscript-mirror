@@ -333,7 +333,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// For the CDECL_OBJ_LAST calling convention we need to add the object pointer as the last argument
 	if( param_post )
 	{
-		paramBuffer[argIndex] = (size_t)obj;
+		paramBuffer[argIndex] = (asPWORD)obj;
 		argsType[argIndex] = x64INTARG;
 		argIndex++;
 	}

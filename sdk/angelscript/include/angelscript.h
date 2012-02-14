@@ -40,6 +40,9 @@
 #define ANGELSCRIPT_H
 
 #include <stddef.h>
+#ifndef _MSC_VER
+#include <stdint.h>
+#endif
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -325,7 +328,7 @@ enum asEFuncType
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
-typedef size_t         asPWORD;
+typedef uintptr_t      asPWORD;
 #ifdef __LP64__
     typedef unsigned int  asDWORD;
     typedef unsigned long asQWORD;
@@ -333,8 +336,8 @@ typedef size_t         asPWORD;
 #else
     typedef unsigned long asDWORD;
   #if defined(__GNUC__) || defined(__MWERKS__)
-    typedef unsigned long long asQWORD;
-    typedef long long asINT64;
+    typedef uint64_t asQWORD;
+    typedef int64_t asINT64;
   #else
     typedef unsigned __int64 asQWORD;
     typedef __int64 asINT64;
@@ -961,7 +964,7 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = (asFUNCTION_t)(size_t)func;
+	p.ptr.f.func = (asFUNCTION_t)func;
 
 	// Mark this as a global function
 	p.flag = 2;
@@ -1712,7 +1715,7 @@ const asSBCInfo asBCInfo[256] =
 #define asBC_INTARG(x)    (int(*(x+1)))
 #define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
 #define asBC_FLOATARG(x)  (*(float*)(x+1))
-#define asBC_PTRARG(x)    (*(asPTRWORD*)(x+1))
+#define asBC_PTRARG(x)    (*(asPWORD*)(x+1))
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
 #define asBC_WORDARG1(x)  (*(((asWORD*)x)+2))
 #define asBC_SWORDARG0(x) (*(((short*)x)+1))
