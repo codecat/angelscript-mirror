@@ -478,7 +478,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			if( dt.GetObjectType() && dt.GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
 #endif
 #ifdef AS_LARGE_OBJS_PASSED_BY_REF
-			if( dt.GetObjectType() && dt.GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
+			if( dt.GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
 #endif
 			if( needFree &&
 				dt.IsObject() &&
