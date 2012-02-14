@@ -350,8 +350,12 @@ void asCModule::CallExit()
 			{
 				asCObjectType *ot = scriptGlobals[n]->type.GetObjectType();
 
-				if( ot->beh.release )
-					engine->CallObjectMethod(*obj, ot->beh.release);
+				if( ot->flags & asOBJ_REF )
+				{
+					asASSERT( (ot->flags & asOBJ_NOCOUNT) || ot->beh.release );
+					if( ot->beh.release )
+						engine->CallObjectMethod(*obj, ot->beh.release);
+				}
 				else
 				{
 					if( ot->beh.destruct )

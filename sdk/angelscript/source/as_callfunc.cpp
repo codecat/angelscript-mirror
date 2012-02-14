@@ -473,23 +473,24 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			bool needFree = false;
+			asCDataType &dt = descr->parameterTypes[n];
 #ifdef COMPLEX_OBJS_PASSED_BY_REF				
-			if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
+			if( dt.GetObjectType() && dt.GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
 #endif
 #ifdef AS_LARGE_OBJS_PASSED_BY_REF
-			if( descr->parameterTypes[n].GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
+			if( dt.GetObjectType() && dt.GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
 #endif
 			if( needFree &&
-				descr->parameterTypes[n].IsObject() &&
-				!descr->parameterTypes[n].IsObjectHandle() && 
-				!descr->parameterTypes[n].IsReference() )
+				dt.IsObject() &&
+				!dt.IsObjectHandle() && 
+				!dt.IsReference() )
 			{
 				void *obj = (void*)*(asPWORD*)&args[spos];
 				spos += AS_PTR_SIZE;
 
 #ifndef AS_CALLEE_DESTROY_OBJ_BY_VAL
 				// If the called function doesn't destroy objects passed by value we must do so here
-				asSTypeBehaviour *beh = &descr->parameterTypes[n].GetObjectType()->beh;
+				asSTypeBehaviour *beh = &dt.GetObjectType()->beh;
 				if( beh->destruct )
 					engine->CallObjectMethod(obj, beh->destruct);
 #endif
@@ -497,7 +498,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				engine->CallFree(obj);
 			}
 			else
-				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+				spos += dt.GetSizeOnStackDWords();
 		}
 	}
 #endif
