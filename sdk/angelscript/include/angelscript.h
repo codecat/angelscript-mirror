@@ -328,7 +328,14 @@ enum asEFuncType
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
-typedef uintptr_t      asPWORD;
+#if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC6 
+	// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
+	// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
+	// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
+	typedef size_t	       asPWORD;
+#else
+	typedef uintptr_t      asPWORD;
+#endif
 #ifdef __LP64__
     typedef unsigned int  asDWORD;
     typedef unsigned long asQWORD;
