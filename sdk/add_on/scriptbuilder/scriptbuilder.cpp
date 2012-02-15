@@ -851,13 +851,17 @@ static const char *GetCurrentDir(char *buf, size_t size)
 #endif
 
     return buf;
-#else 
-#if defined( AS_MARMALADE )
+#elif defined( AS_MARMALADE )
+	// Marmalade uses its own portable C library
 	return getcwd(buf, (int)size);
+#elif _XBOX_VER >= 200
+	// XBox 360 doesn't support the getcwd function, just use the root folder
+	assert( size >= 7 );
+	sprintf(buf, "game:\\");
+	return buf;
 #else
 	return _getcwd(buf, (int)size);
-#endif
-#endif
+#endif // _MSC_VER
 #elif defined(__APPLE__)
 	return getcwd(buf, size);
 #else

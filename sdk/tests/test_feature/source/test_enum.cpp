@@ -527,7 +527,7 @@ static bool TestEnum()
 			"enum ENUM_1            \n"
 			"{                      \n"
 			"  E1_VAL1              \n"
-			"}                      \n"
+			"};                     \n"   // Semi colon after enum declaration is allowed, but optional
 			"ENUM_1 g_e1 = ENUM_1::E1_VAL1;         \n"
 			"ENUM_1 g_e2 = E2_VAL1;                 \n"); // <- that shouldn't (?)
 		r = mod->Build();

@@ -368,8 +368,6 @@
 	#define AS_X86
 	#define ASM_INTEL
 
-	#define I64(x) x##ll
-
 	#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
 
 	#define fmodf(a,b) fmod(a,b)
@@ -442,12 +440,6 @@
 		#endif
 	#endif
 
-	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
-		#define I64(x) x##l
-	#else // MSVC++ 7.1 and higher
-		#define I64(x) x##ll
-	#endif
-
 	#ifdef _ARM_
 		#define AS_ALIGN
 		#define AS_ARM
@@ -491,12 +483,6 @@
 		#define ASM_INTEL  // Intel style for inline assembly
 	#endif
 
-	#if _MSC_VER <= 1300 // MSVC++ 7.0 and lower
-		#define I64(x) x##l
-	#else // MSVC++ 7.1 and higher
-		#define I64(x) x##ll
-	#endif
-
 	#define UNREACHABLE_RETURN
 #endif
 
@@ -538,8 +524,6 @@
 		#define AS_MIPS
 		#define AS_PSP
 	#endif
-
-	#define I64(x) x##ll
 
 	#define UNREACHABLE_RETURN
 #endif
@@ -876,8 +860,6 @@
 		#endif
 	#endif
 
-	#define I64(x) x##ll
-
 	#define UNREACHABLE_RETURN
 #endif
 
@@ -907,7 +889,7 @@
 		#define AS_USE_DOUBLE_AS_FLOAT
 	#endif
 	// XBox 360
-	#if (_XBOX_VER >= 200 )
+	#if (_XBOX_VER >= 200)
 		#define AS_ALIGN
 	#endif
 	// PS3

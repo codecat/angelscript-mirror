@@ -206,10 +206,13 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 	// Verify endianess
 #ifdef AS_BIG_ENDIAN
 	asASSERT( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );
-	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0001020304050607) );
+	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == ((asQWORD(0x00010203)<<32)|asQWORD(0x04050607)) );
 #else
 	asASSERT( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
-	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == I64(0x0706050403020100) );
+	// C++ didn't have a standard way of declaring 64bit literal constants until C++11, so
+	// I'm forced to do it like this to avoid compilers warnings when compiling with the full
+	// C++ compliance.
+	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == ((asQWORD(0x07060504)<<32)|asQWORD(0x03020100)) );
 #endif
 
 	return asNEW(asCScriptEngine)();

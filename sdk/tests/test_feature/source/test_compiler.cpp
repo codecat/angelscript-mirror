@@ -27,7 +27,7 @@ const char *script2 =
 
 const char *script3 = "void CompilerAssert(uint8[]@ &in b) { b[0] == 1; }";
 
-const char *script4 = "class C : I {}";
+const char *script4 = "class C : I {};";
 
 const char *script5 =
 "void t() {} \n"
