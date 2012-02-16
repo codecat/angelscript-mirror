@@ -126,8 +126,7 @@ public:
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const;
 	// TODO: interface: Add flag to define whether or not namespace should be included in declaration
 	virtual const char *GetGlobalVarDeclaration(asUINT index) const;
-	// TODO: interface: Add namespace to the return values
-	virtual int         GetGlobalVar(asUINT index, const char **name, int *typeId, bool *isConst) const;
+	virtual int         GetGlobalVar(asUINT index, const char **name, const char **nameSpace, int *typeId, bool *isConst) const;
 	virtual void       *GetAddressOfGlobalVar(asUINT index);
 	virtual int         RemoveGlobalVar(asUINT index);
 
@@ -139,13 +138,13 @@ public:
 
 	// Enums
 	virtual asUINT      GetEnumCount() const;
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) const;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace) const;
 	virtual int         GetEnumValueCount(int enumTypeId) const;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
 
 	// Typedefs
 	virtual asUINT      GetTypedefCount() const;
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) const;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace) const;
 
 	// Dynamic binding between modules
 	virtual asUINT      GetImportedFunctionCount() const;

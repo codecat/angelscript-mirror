@@ -103,7 +103,7 @@ public:
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer);
 	virtual asUINT GetGlobalPropertyCount() const;
 	// TODO: interface: namespace: Return the namespace
-	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0, asDWORD *accessMask = 0) const;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, const char **nameSpace = 0, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0, asDWORD *accessMask = 0) const;
 	virtual int    GetGlobalPropertyIndexByName(const char *name) const;
 	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const;
 
@@ -130,22 +130,19 @@ public:
 	virtual int         RegisterEnum(const char *type);
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value);
 	virtual asUINT      GetEnumCount() const;
-	// TODO: interface: namespace: Return namespace
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0, asDWORD *accessMask = 0) const;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace, const char **configGroup = 0, asDWORD *accessMask = 0) const;
 	virtual int         GetEnumValueCount(int enumTypeId) const;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
 
 	// Funcdefs
-	// TODO: interface: namespace: Return namespace
 	virtual int                RegisterFuncdef(const char *decl);
 	virtual asUINT             GetFuncdefCount() const;
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const;
 
 	// Typedefs
-	// TODO: interface: namespace: Return namespace
 	virtual int         RegisterTypedef(const char *type, const char *decl);
 	virtual asUINT      GetTypedefCount() const;
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0, asDWORD *accessMask = 0) const;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace, const char **configGroup = 0, asDWORD *accessMask = 0) const;
 
 	// Configuration groups
 	virtual int     BeginConfigGroup(const char *groupName);

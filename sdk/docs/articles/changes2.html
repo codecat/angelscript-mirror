@@ -48,11 +48,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added IsFinal(), IsOverride(), IsShared(), and GetNamespace() to asIScriptFunction
 <li>Added includeNamespace argument to asIScriptFunction::GetDeclaration()
 <li>Added GetNamespace() to asIObjectType
+<li>Added namespace argument to GetGlobalPropertyByIndex(), GetEnumByIndex(), GetTypedefByIndex(), and GetGlobalVar()
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
 <li>Placed the CDebugger in the AngelScript namespace (Thanks Thomas Fischer)
 <li>Fixed compilation problem in CScriptBuilder on XBox360 with regards to missing getcwd (Thanks virious)
+<li>Updated CSerializer to support namespaces
+<li>Updated WriteConfigToFile() to write the accessMask too
 </ul>
 <li>Project
 <ul>

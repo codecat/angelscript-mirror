@@ -680,7 +680,7 @@ const char *asCModule::GetGlobalVarDeclaration(asUINT index) const
 }
 
 // interface
-int asCModule::GetGlobalVar(asUINT index, const char **name, int *typeId, bool *isConst) const
+int asCModule::GetGlobalVar(asUINT index, const char **name, const char **nameSpace, int *typeId, bool *isConst) const
 {
 	if( index >= scriptGlobals.GetLength() )
 		return asINVALID_ARG;
@@ -689,6 +689,8 @@ int asCModule::GetGlobalVar(asUINT index, const char **name, int *typeId, bool *
 
 	if( name )
 		*name = prop->name.AddressOf();
+	if( nameSpace )
+		*nameSpace = prop->nameSpace.AddressOf();
 	if( typeId )
 		*typeId = engine->GetTypeIdFromDataType(prop->type);
 	if( isConst )
@@ -745,13 +747,16 @@ asUINT asCModule::GetEnumCount() const
 }
 
 // interface
-const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId) const
+const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace) const
 {
 	if( index >= enumTypes.GetLength() )
 		return 0;
 
 	if( enumTypeId )
 		*enumTypeId = GetTypeIdByDecl(enumTypes[index]->name.AddressOf());
+
+	if( nameSpace )
+		*nameSpace = enumTypes[index]->name.AddressOf();
 
 	return enumTypes[index]->name.AddressOf();
 }
@@ -791,13 +796,16 @@ asUINT asCModule::GetTypedefCount() const
 }
 
 // interface
-const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId) const
+const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace) const
 {
 	if( index >= typeDefs.GetLength() )
 		return 0;
 
 	if( typeId )
 		*typeId = GetTypeIdByDecl(typeDefs[index]->name.AddressOf());
+
+	if( nameSpace )
+		*nameSpace = typeDefs[index]->nameSpace.AddressOf();
 
 	return typeDefs[index]->name.AddressOf();
 }

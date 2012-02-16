@@ -519,7 +519,7 @@ public:
 	// Global properties
 	virtual int    RegisterGlobalProperty(const char *declaration, void *pointer) = 0;
 	virtual asUINT GetGlobalPropertyCount() const = 0;
-	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0, asDWORD *accessMask = 0) const = 0;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, const char **nameSpace = 0, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0, asDWORD *accessMask = 0) const = 0;
 	virtual int    GetGlobalPropertyIndexByName(const char *name) const = 0;
 	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const = 0;
 
@@ -546,7 +546,7 @@ public:
 	virtual int         RegisterEnum(const char *type) = 0;
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
 	virtual asUINT      GetEnumCount() const = 0;
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
@@ -558,7 +558,7 @@ public:
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
 	virtual asUINT      GetTypedefCount() const = 0;
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 
 	// Configuration groups
 	virtual int     BeginConfigGroup(const char *groupName) = 0;
@@ -645,7 +645,7 @@ public:
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
 	virtual const char *GetGlobalVarDeclaration(asUINT index) const = 0;
-	virtual int         GetGlobalVar(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0) const = 0;
+	virtual int         GetGlobalVar(asUINT index, const char **name, const char **nameSpace = 0, int *typeId = 0, bool *isConst = 0) const = 0;
 	virtual void       *GetAddressOfGlobalVar(asUINT index) = 0;
 	virtual int         RemoveGlobalVar(asUINT index) = 0;
 
@@ -656,13 +656,13 @@ public:
 
 	// Enums
 	virtual asUINT      GetEnumCount() const = 0;
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) const = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0) const = 0;
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
 	// Typedefs
 	virtual asUINT      GetTypedefCount() const = 0;
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) const = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0) const = 0;
 
 	// Dynamic binding between modules
 	virtual asUINT      GetImportedFunctionCount() const = 0;

@@ -30,7 +30,7 @@ struct CArrayType : public CUserType
 		CScriptArray *arr = (CScriptArray*)ptr;
 
 		for( unsigned int i = 0; i < arr->GetSize(); i++ )
-			val->m_children.push_back(new CSerializedValue(val ,"", arr->At(i), arr->GetElementTypeId()));
+			val->m_children.push_back(new CSerializedValue(val ,"", "", arr->At(i), arr->GetElementTypeId()));
 	}
 	void Restore(CSerializedValue *val, void *ptr)
 	{

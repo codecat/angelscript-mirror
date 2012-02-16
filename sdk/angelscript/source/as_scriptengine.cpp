@@ -2083,13 +2083,15 @@ asUINT asCScriptEngine::GetGlobalPropertyCount() const
 
 // interface
 // TODO: If the typeId ever encodes the const flag, then the isConst parameter should be removed
-int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId, bool *isConst, const char **configGroup, void **pointer, asDWORD *accessMask) const
+int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, const char **nameSpace, int *typeId, bool *isConst, const char **configGroup, void **pointer, asDWORD *accessMask) const
 {
 	if( index >= registeredGlobalProps.GetLength() )
 		return asINVALID_ARG;
 
 	if( name )
 		*name = registeredGlobalProps[index]->name.AddressOf();
+	if( nameSpace )
+		*nameSpace = registeredGlobalProps[index]->nameSpace.AddressOf();
 
 	if( configGroup )
 	{
@@ -4173,7 +4175,7 @@ asUINT asCScriptEngine::GetTypedefCount() const
 }
 
 // interface
-const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup, asDWORD *accessMask) const
+const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace, const char **configGroup, asDWORD *accessMask) const
 {
 	if( index >= registeredTypeDefs.GetLength() )
 		return 0;
@@ -4192,6 +4194,9 @@ const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const 
 
 	if( accessMask )
 		*accessMask = registeredTypeDefs[index]->accessMask;
+
+	if( nameSpace )
+		*nameSpace = registeredTypeDefs[index]->nameSpace.AddressOf();
 
 	return registeredTypeDefs[index]->name.AddressOf();
 }
@@ -4296,7 +4301,7 @@ asUINT asCScriptEngine::GetEnumCount() const
 }
 
 // interface
-const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup, asDWORD *accessMask) const
+const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace, const char **configGroup, asDWORD *accessMask) const
 {
 	if( index >= registeredEnums.GetLength() )
 		return 0;
@@ -4315,6 +4320,9 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 
 	if( enumTypeId )
 		*enumTypeId = GetTypeIdByDecl(registeredEnums[index]->name.AddressOf());
+
+	if( nameSpace )
+		*nameSpace = registeredEnums[index]->nameSpace.AddressOf();
 
 	return registeredEnums[index]->name.AddressOf();
 }

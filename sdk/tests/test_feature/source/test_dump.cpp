@@ -218,11 +218,11 @@ void DumpModule(asIScriptModule *mod)
 	c = engine->GetGlobalPropertyCount();
 	for( n = 0; n < c; n++ )
 	{
-		const char *name;
+		const char *name, *nameSpace;
 		int typeId;
 		bool isConst;
 		const char *group;
-		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst, &group);
+		engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId, &isConst, &group);
 		s << "reg prop: ";
 		if( isConst ) 
 			s << "const ";

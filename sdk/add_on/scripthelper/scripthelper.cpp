@@ -174,6 +174,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		return -1;
 
 	asDWORD currAccessMask = 0;
+	string currNamespace = "";
 
 	// Make sure the default array type is expanded to the template form 
 	bool expandDefArrayToTempl = engine->GetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL) ? true : false;
@@ -186,7 +187,8 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	{
 		int typeId;
 		asDWORD accessMask;
-		const char *enumName = engine->GetEnumByIndex(n, &typeId, 0, &accessMask);
+		const char *nameSpace;
+		const char *enumName = engine->GetEnumByIndex(n, &typeId, &nameSpace, 0, &accessMask);
 		if( accessMask != currAccessMask )
 		{
 			fprintf(f, "access %X\n", accessMask);
@@ -236,7 +238,8 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	{
 		int typeId;
 		asDWORD accessMask;
-		const char *typeDef = engine->GetTypedefByIndex(n, &typeId, 0, &accessMask);
+		const char *nameSpace;
+		const char *typeDef = engine->GetTypedefByIndex(n, &typeId, &nameSpace, 0, &accessMask);
 		if( accessMask != currAccessMask )
 		{
 			fprintf(f, "access %X\n", accessMask);
@@ -351,7 +354,8 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		int typeId;
 		bool isConst;
 		asDWORD accessMask;
-		engine->GetGlobalPropertyByIndex(n, &name, &typeId, &isConst, 0, 0, &accessMask);
+		const char *nameSpace;
+		engine->GetGlobalPropertyByIndex(n, &name, &nameSpace, &typeId, &isConst, 0, 0, &accessMask);
 		if( accessMask != currAccessMask )
 		{
 			fprintf(f, "access %X\n", accessMask);
