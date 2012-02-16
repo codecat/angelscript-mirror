@@ -148,7 +148,7 @@ int asCParser::ParseExpression(asCScriptCode *script)
 }
 #endif
 
-int asCParser::ParseDataType(asCScriptCode *script)
+int asCParser::ParseDataType(asCScriptCode *script, bool isReturnType)
 {
 	Reset();
 
@@ -158,6 +158,12 @@ int asCParser::ParseDataType(asCScriptCode *script)
 		
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
+
+	if( isReturnType )
+	{
+		scriptNode->AddChildLast(ParseTypeMod(false));
+		if( isSyntaxError ) return -1;
+	}
 
 	// The declaration should end after the type
 	sToken t;

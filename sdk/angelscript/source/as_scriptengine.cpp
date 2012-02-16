@@ -2612,7 +2612,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	asCBuilder bld(this, 0);
 
 	asCDataType dt;
-	r = bld.ParseDataType(datatype, &dt, defaultNamespace);
+	r = bld.ParseDataType(datatype, &dt, defaultNamespace, true);
 	if( r < 0 )
 	{
 		// Set as dummy before deleting

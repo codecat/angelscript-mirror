@@ -55,7 +55,7 @@ public:
 
 	int ParseFunctionDefinition(asCScriptCode *script);
 	int ParsePropertyDeclaration(asCScriptCode *script);
-	int ParseDataType(asCScriptCode *script);
+	int ParseDataType(asCScriptCode *script, bool isReturnType);
 	int ParseTemplateDecl(asCScriptCode *script);
 
 #ifndef AS_NO_COMPILER

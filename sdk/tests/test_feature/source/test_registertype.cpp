@@ -39,6 +39,21 @@ bool Test()
 	}
 	engine->Release();
 
+	// It must be possible to register a string factory that returns a const ref
+	bout.buffer = "";
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	r = engine->RegisterObjectType("string", 0, asOBJ_REF); assert( r >= 0 );
+	r = engine->RegisterStringFactory("const string &", asFUNCTION(0), asCALL_GENERIC);
+	if( r < 0 )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+	engine->Release();
+
 	// A type registered with asOBJ_GC must register all gc behaviours
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

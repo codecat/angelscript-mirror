@@ -672,7 +672,7 @@ void asCBuilder::CompileFunctions()
 #endif
 
 // Called from module and engine
-int asCBuilder::ParseDataType(const char *datatype, asCDataType *result, const asCString &implicitNamespace)
+int asCBuilder::ParseDataType(const char *datatype, asCDataType *result, const asCString &implicitNamespace, bool isReturnType)
 {
 	Reset();
 
@@ -680,7 +680,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result, const a
 	source.SetCode("", datatype, true);
 
 	asCParser parser(this);
-	int r = parser.ParseDataType(&source);
+	int r = parser.ParseDataType(&source, isReturnType);
 	if( r < 0 )
 		return asINVALID_TYPE;
 
@@ -688,6 +688,8 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result, const a
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
 	*result = CreateDataTypeFromNode(dataType, &source, implicitNamespace, true);
+	if( isReturnType )
+		*result = ModifyDataTypeFromNode(*result, dataType->next, &source, 0, 0);
 
 	if( numErrors > 0 )
 		return asINVALID_TYPE;
