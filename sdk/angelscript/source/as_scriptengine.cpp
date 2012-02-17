@@ -3604,13 +3604,13 @@ int asCScriptEngine::GetTypeIdByDecl(const char *decl) const
 }
 
 // interface
-const char *asCScriptEngine::GetTypeDeclaration(int typeId) const
+const char *asCScriptEngine::GetTypeDeclaration(int typeId, bool includeNamespace) const
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
-	*tempString = dt.Format();
+	*tempString = dt.Format(includeNamespace);
 
 	return tempString->AddressOf();
 }

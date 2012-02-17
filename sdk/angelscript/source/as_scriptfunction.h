@@ -110,7 +110,7 @@ public:
 	const char          *GetObjectName() const;
 	const char          *GetName() const;
 	const char          *GetNamespace() const;
-	const char          *GetDeclaration(bool includeObjectName = true, bool includeNamespace = true) const;
+	const char          *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const;
 	const char          *GetScriptSectionName() const;
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
@@ -150,7 +150,7 @@ public:
 
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();
-	asCString GetDeclarationStr(bool includeObjectName = true, bool includeNamespace = true) const;
+	asCString GetDeclarationStr(bool includeObjectName = true, bool includeNamespace = false) const;
 	int       GetLineNumber(int programPosition);
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;

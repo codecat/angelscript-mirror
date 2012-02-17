@@ -194,6 +194,11 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			fprintf(f, "access %X\n", accessMask);
 			currAccessMask = accessMask;
 		}
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
+		}
 		fprintf(f, "enum %s\n", enumName);
 		for( int m = 0; m < engine->GetEnumValueCount(typeId); m++ )
 		{
@@ -216,6 +221,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		{
 			fprintf(f, "access %X\n", accessMask);
 			currAccessMask = accessMask;
+		}
+		const char *nameSpace = type->GetNamespace();
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
 		}
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
@@ -240,6 +251,11 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		asDWORD accessMask;
 		const char *nameSpace;
 		const char *typeDef = engine->GetTypedefByIndex(n, &typeId, &nameSpace, 0, &accessMask);
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
+		}
 		if( accessMask != currAccessMask )
 		{
 			fprintf(f, "access %X\n", accessMask);
@@ -253,6 +269,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	{
 		asIScriptFunction *funcDef = engine->GetFuncdefByIndex(n);
 		asDWORD accessMask = funcDef->GetAccessMask();
+		const char *nameSpace = funcDef->GetNamespace();
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
+		}
 		if( accessMask != currAccessMask )
 		{
 			fprintf(f, "access %X\n", accessMask);
@@ -268,6 +290,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		asIObjectType *type = engine->GetObjectTypeByIndex(n);
+		const char *nameSpace = type->GetNamespace();
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
+		}
 		string typeDecl = engine->GetTypeDeclaration(type->GetTypeId());
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
@@ -335,6 +363,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	for( n = 0; n < c; n++ )
 	{
 		asIScriptFunction *func = engine->GetFunctionById(engine->GetGlobalFunctionIdByIndex(n));
+		const char *nameSpace = func->GetNamespace();
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
+		}
 		asDWORD accessMask = func->GetAccessMask();
 		if( accessMask != currAccessMask )
 		{
@@ -360,6 +394,11 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		{
 			fprintf(f, "access %X\n", accessMask);
 			currAccessMask = accessMask;
+		}
+		if( nameSpace != currNamespace )
+		{
+			fprintf(f, "namespace %s\n", nameSpace);
+			currNamespace = nameSpace;
 		}
 		fprintf(f, "prop \"%s%s %s\"\n", isConst ? "const " : "", engine->GetTypeDeclaration(typeId), name);
 	}

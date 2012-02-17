@@ -664,7 +664,7 @@ void *asCModule::GetAddressOfGlobalVar(asUINT index)
 }
 
 // interface
-const char *asCModule::GetGlobalVarDeclaration(asUINT index) const
+const char *asCModule::GetGlobalVarDeclaration(asUINT index, bool includeNamespace) const
 {
 	if( index >= scriptGlobals.GetLength() )
 		return 0;
@@ -674,7 +674,10 @@ const char *asCModule::GetGlobalVarDeclaration(asUINT index) const
 	asASSERT(threadManager);
 	asCString *tempString = &threadManager->GetLocalData()->string;
 	*tempString = prop->type.Format();
-	*tempString += " " + prop->name;
+	*tempString += " ";
+	if( includeNamespace )
+		*tempString += prop->nameSpace + "::";
+	*tempString += prop->name;
 
 	return tempString->AddressOf();
 }

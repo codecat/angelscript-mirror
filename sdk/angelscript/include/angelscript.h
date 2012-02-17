@@ -577,7 +577,7 @@ public:
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
-	virtual const char    *GetTypeDeclaration(int typeId) const = 0;
+	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
 
 	// Script execution
@@ -644,7 +644,7 @@ public:
 	virtual asUINT      GetGlobalVarCount() const = 0;
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
-	virtual const char *GetGlobalVarDeclaration(asUINT index) const = 0;
+	virtual const char *GetGlobalVarDeclaration(asUINT index, bool includeNamespace = false) const = 0;
 	virtual int         GetGlobalVar(asUINT index, const char **name, const char **nameSpace = 0, int *typeId = 0, bool *isConst = 0) const = 0;
 	virtual void       *GetAddressOfGlobalVar(asUINT index) = 0;
 	virtual int         RemoveGlobalVar(asUINT index) = 0;
@@ -905,7 +905,7 @@ public:
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
 	virtual const char      *GetNamespace() const = 0;
-	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = true) const = 0;
+	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const = 0;
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
 	virtual bool             IsFinal() const = 0;

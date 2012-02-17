@@ -160,8 +160,7 @@ public:
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const;
 	virtual int            GetTypeIdByDecl(const char *decl) const;
-	// TODO: interface: namespace: Add flag to allow including namespace or not in declaration
-	virtual const char    *GetTypeDeclaration(int typeId) const;
+	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const;
 
 	// Script execution
