@@ -6136,7 +6136,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ctx->bc.Label((short)afterLabel);
 
 				// Make sure both expressions have the same type
-				if( le.type.dataType != re.type.dataType )
+				if( !le.type.dataType.IsEqualExceptConst(re.type.dataType) )
 					Error(TXT_BOTH_MUST_BE_SAME, expr);
 
 				// Set the temporary variable as output
