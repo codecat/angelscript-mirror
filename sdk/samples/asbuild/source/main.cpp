@@ -135,7 +135,26 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		string token;
 		// TODO: The position where the initial token is found should be stored for error messages
 		GetToken(engine, token, config, pos);
-		if( token == "objtype" )
+		if( token == "namespace" )
+		{
+			string ns;
+			GetToken(engine, ns, config, pos);
+
+			r = engine->SetDefaultNamespace(ns.c_str());
+			if( r < 0 )
+			{
+				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to set namespace");
+				return -1;
+			}
+		}
+		else if( token == "access" )
+		{
+			string maskStr;
+			GetToken(engine, maskStr, config, pos);
+			asDWORD mask = strtol(maskStr.c_str(), 0, 16);
+			engine->SetDefaultAccessMask(mask);
+		}
+		else if( token == "objtype" )
 		{
 			string name, flags;
 			GetToken(engine, name, config, pos);
@@ -263,7 +282,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			// All properties must have different offsets in order to make them 
 			// distinct, so we simply register them with an incremental offset.
 			// The pointer must also be non-null so we add 1 to have a value.
-			r = engine->RegisterGlobalProperty(decl.c_str(), engine->GetGlobalPropertyCount()+1);
+			r = engine->RegisterGlobalProperty(decl.c_str(), (void*)(engine->GetGlobalPropertyCount()+1));
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register global property");
