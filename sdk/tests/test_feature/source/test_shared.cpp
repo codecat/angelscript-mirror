@@ -57,6 +57,7 @@ bool Test()
 			"  } \n"
 			"  void f(badIntf @) {} \n" // Don't allow use of non-shared types in parameters/return type
 			"  ESHARED _es; \n" // allow
+			"  ESHARED2 _es2; \n" // allow
 			"  ENOTSHARED _ens; \n" // Don't allow
 			"  void f() \n"
 			"  { \n"
@@ -69,8 +70,10 @@ bool Test()
 		    "{ \n"
 			"  gfunc(); \n" // don't allow
 			"  T t; \n" // allow
+			"  ESHARED2 s; \n" // allow
 	        "} \n"
 			"enum ENOTSHARED { ENS1 = 1 } \n"
+			"shared enum ESHARED2 { ES21 = 0 } \n"
 			"const int g_cnst = 42; \n"
 			"class nonShared {} \n"
 			"import void impfunc() from 'mod'; \n"
@@ -81,7 +84,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "a (32, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (3, 25) : Error   : Shared class cannot implement non-shared interface 'badIntf'\n"
-						   "a (34, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
+						   "a (35, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
 						   "a (5, 3) : Info    : Compiling void T::test()\n"
 						   "a (7, 5) : Error   : Shared code cannot access non-shared global variable 'var'\n"
 						   "a (8, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
@@ -94,8 +97,8 @@ bool Test()
 						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"
 						   "a (28, 3) : Info    : Compiling T::T(int)\n"
 		                   "a (30, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n"
-						   "a (42, 1) : Info    : Compiling void sfunc()\n"
-		                   "a (44, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
+						   "a (43, 1) : Info    : Compiling void sfunc()\n"
+		                   "a (45, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -109,7 +112,8 @@ bool Test()
 			"  void func() {} \n"
 			"  int i; \n"
 			"} \n"
-			"shared void func() {} \n";
+			"shared void func() {} \n"
+			"shared enum eshare { e1, e2 } \n";
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("a", validCode);
 		bout.buffer = "";

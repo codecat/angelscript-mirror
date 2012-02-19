@@ -42,7 +42,6 @@ struct CArrayType : public CUserType
 	}
 };
 
-
 bool Test()
 {
 	bool fail = false;

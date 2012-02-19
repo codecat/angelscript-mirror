@@ -1561,7 +1561,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
-			else if( t1.type == ttEnum )
+			else if( t1.type == ttEnum || (IdentifierIs(t1, SHARED_TOKEN) && t2.type == ttEnum) )
 				node->AddChildLast(ParseEnumeration());	//	Handle enumerations
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		//	Handle primitive typedefs
@@ -1700,8 +1700,18 @@ asCScriptNode *asCParser::ParseEnumeration()
 
 	sToken	token;
 
-	// Check for enum
+	// Optional 'shared' token
 	GetToken(&token);
+	if( IdentifierIs(token, SHARED_TOKEN) )
+	{	
+		RewindTo(&token);
+		node->AddChildLast(ParseIdentifier());
+		if( isSyntaxError ) return node;
+
+		GetToken(&token);
+	}
+
+	// Check for enum
 	if( token.type != ttEnum )
 	{
 		Error(ExpectedToken(asCTokenizer::GetDefinition(ttEnum)).AddressOf(), &token);
