@@ -2311,6 +2311,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		// flags
 		WRITE_NUM(ot->flags);
 		// size
+		// TODO: bytecode: The size shouldn't be stored as it needs to be determined at load time
 		WriteEncodedUInt(ot->size);
 		// namespace
 		WriteString(&ot->nameSpace);
@@ -2609,6 +2610,15 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 		// Copy the instruction to a temp buffer so we can work on it before saving
 		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
 
+		// TODO: bytecode: Must update the jump offsets to be offsets of instructions, 
+		//                 instead of offets of dwords because instructions may change size from 
+		//                 platform to platform
+
+		// TODO: bytecode: Must update var offsets as they may change from platform
+		//                 to platform due to pointer size
+
+		// TODO: bytecode: Must update the GETOBJ, GETREF, etc offsets as they too depend on pointer size
+		
 		if( c == asBC_ALLOC ) // PTR_DW_ARG
 		{
 			// Translate the object type 
@@ -2632,7 +2642,7 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 			*(asPWORD*)(tmp+1) = 0;
 		}
 		else if( c == asBC_TYPEID || // DW_ARG
-			     c == asBC_Cast )   // DW_ARG
+			     c == asBC_Cast )    // DW_ARG
 		{
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
@@ -2975,7 +2985,7 @@ void asCWriter::WriteUsedObjectProps()
 				break;
 			}
 		}
-	}	
+	}
 }
 
 int asCWriter::FindObjectPropIndex(short offset, int typeId)
