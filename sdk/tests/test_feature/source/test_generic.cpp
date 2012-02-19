@@ -171,66 +171,50 @@ bool Test()
 // TODO: Need to fix implementation for MSVC2005.
 #if !defined(_MSC_VER) || (_MSC_VER > 1200 && _MSC_VER != 1400) 
 
+}
 #include "../../../add_on/autowrapper/aswrappedcall.h"
+namespace TestGeneric
+{
 
-void TestWrapNoArg() {}
-asDECLARE_FUNCTION_WRAPPER(TestNoArg_Generic, TestWrapNoArg);
+void TestNoArg() {}
 
-
-void TestWrapStringByVal(std::string val) {
+void TestStringByVal(std::string val) {
 	assert(val == "test");
 }
-asDECLARE_FUNCTION_WRAPPER(TestStringByVal_Generic, TestWrapStringByVal);
 
-
-void TestWrapStringByRef(std::string &ref) {
+void TestStringByRef(std::string &ref) {
 	assert(ref == "test");
 }
-asDECLARE_FUNCTION_WRAPPER(TestStringByRef_Generic, TestWrapStringByRef);
 
-
-void TestWrapIntByVal(int val) {
+void TestIntByVal(int val) {
 	assert(val == 42);
 }
-asDECLARE_FUNCTION_WRAPPER(TestIntByVal_Generic, TestWrapIntByVal);
 
-
-void TestWrapIntByRef(int &ref) {
+void TestIntByRef(int &ref) {
 	assert(ref == 42);
 }
-asDECLARE_FUNCTION_WRAPPER(TestIntByRef_Generic, TestWrapIntByRef);
 
-
-int TestWrapRetIntByVal() {
+int TestRetIntByVal() {
 	return 42;
 }
-asDECLARE_FUNCTION_WRAPPER(TestRetIntByVal_Generic, TestWrapRetIntByVal);
 
-
-int &TestWrapRetIntByRef() {
+int &TestRetIntByRef() {
 	static int val = 42;
 	return val;
 }
-asDECLARE_FUNCTION_WRAPPER(TestRetIntByRef_Generic, TestWrapRetIntByRef);
 
-
-std::string TestWrapRetStringByVal() {
+std::string TestRetStringByVal() {
 	return "test";
 }
-asDECLARE_FUNCTION_WRAPPER(TestRetStringByVal_Generic, TestWrapRetStringByVal);
 
-
-std::string &TestWrapRetStringByRef() {
+std::string &TestRetStringByRef() {
 	static std::string val = "test";
 	return val;
 }
-asDECLARE_FUNCTION_WRAPPER(TestRetStringByRef_Generic, TestWrapRetStringByRef);
 
-void TestWrapOverload(int) {}
-asDECLARE_FUNCTION_WRAPPERPR(TestWrapOverload_Generic, TestWrapOverload, (int), void);
+void TestOverload(int) {}
 
-void TestWrapOverload(float) {}
-asDECLARE_FUNCTION_WRAPPERPR(TestWrapOverload2_Generic, TestWrapOverload, (float), void);
+void TestOverload(float) {}
 
 class A
 {
@@ -255,20 +239,10 @@ public:
 	virtual void c(float) const {assert(id == 2);}
 };
 
-asDECLARE_METHOD_WRAPPER(A_a_generic, A, a);
-asDECLARE_METHOD_WRAPPER(B_b_generic, B, b);
-asDECLARE_METHOD_WRAPPERPR(C_c_generic, C, c, (int), void);
-asDECLARE_METHOD_WRAPPERPR(C_c2_generic, C, c, (float) const, void);
-
-void Construct_C(asIScriptGeneric *gen)
+void Construct_C(C *ptr)
 {
-	void *mem = gen->GetObject();
-	new(mem) C();
+	new(ptr) C();
 }
-// TODO: The wrapper doesn't work for the constructor behaviour, as the 
-//       generic interface passes the memory pointer as the object pointer, 
-//       but the wrapper tries to access it as a parameter
-//asDECLARE_FUNCTION_WRAPPER(Construct_C_Generic, Construct_C);
 
 bool Test2()
 {
@@ -281,63 +255,63 @@ bool Test2()
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 	RegisterStdString(engine);
 
-	r = engine->RegisterGlobalFunction("void TestNoArg()", asFUNCTION(TestNoArg_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void TestNoArg()", WRAP_FN(TestNoArg), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestNoArg()");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("void TestStringByVal(string val)", asFUNCTION(TestStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void TestStringByVal(string val)", WRAP_FN(TestStringByVal), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestStringByVal('test')");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("void TestStringByRef(const string &in ref)", asFUNCTION(TestStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void TestStringByRef(const string &in ref)", WRAP_FN(TestStringByRef), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestStringByRef('test')");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("void TestIntByVal(int val)", asFUNCTION(TestIntByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void TestIntByVal(int val)", WRAP_FN(TestIntByVal), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestIntByVal(42)");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("void TestIntByRef(int &in ref)", asFUNCTION(TestIntByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void TestIntByRef(int &in ref)", WRAP_FN(TestIntByRef), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "TestIntByRef(42)");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("int TestRetIntByVal()", asFUNCTION(TestRetIntByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("int TestRetIntByVal()", WRAP_FN(TestRetIntByVal), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetIntByVal() == 42)");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("int &TestRetIntByRef()", asFUNCTION(TestRetIntByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("int &TestRetIntByRef()", WRAP_FN(TestRetIntByRef), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetIntByRef() == 42)");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("string TestRetStringByVal()", asFUNCTION(TestRetStringByVal_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("string TestRetStringByVal()", WRAP_FN(TestRetStringByVal), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetStringByVal() == 'test')");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
 	}
 
-	r = engine->RegisterGlobalFunction("string &TestRetStringByRef()", asFUNCTION(TestRetStringByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("string &TestRetStringByRef()", WRAP_FN(TestRetStringByRef), asCALL_GENERIC); assert( r >= 0 );
 	r = ExecuteString(engine, "assert(TestRetStringByRef() == 'test')");
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -345,11 +319,11 @@ bool Test2()
 	}
 
 	r = engine->RegisterObjectType("C", sizeof(C), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct_C), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("C", "void a() const", asFUNCTION(A_a_generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("C", "void b()", asFUNCTION(B_b_generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("C", "void c(int)", asFUNCTION(C_c_generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("C", "void c(float) const", asFUNCTION(C_c2_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_FIRST(Construct_C), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void a() const", WRAP_MFN(A, a), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void b()", WRAP_MFN(B, b), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void c(int)", WRAP_MFN_PR(C, c, (int), void), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("C", "void c(float) const", WRAP_MFN_PR(C, c, (float) const, void), asCALL_GENERIC); assert( r >= 0 );
 
 	r = ExecuteString(engine, "C c; c.a(); c.b(); c.c(1); c.c(1.1f);");
 	if( r != asEXECUTION_FINISHED )

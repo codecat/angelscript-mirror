@@ -926,6 +926,10 @@
 			Name="add_on"
 			>
 			<File
+				RelativePath="..\..\..\..\add_on\autowrapper\aswrappedcall.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\add_on\contextmgr\contextmgr.cpp"
 				>
 			</File>
