@@ -2445,7 +2445,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, const asC
 	bool isShared = false;
 	asCObjectType *existingSharedType = 0;
 	asCScriptNode *tmp = node->firstChild;
-	if( tmp->nodeType == ttIdentifier && file->TokenEquals(tmp->tokenPos, tmp->tokenLength, SHARED_TOKEN) )
+	if( tmp->nodeType == snIdentifier && file->TokenEquals(tmp->tokenPos, tmp->tokenLength, SHARED_TOKEN) )
 	{
 		isShared = true;
 		tmp = tmp->next;
