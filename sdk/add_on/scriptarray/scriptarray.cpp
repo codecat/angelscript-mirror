@@ -150,8 +150,8 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptArray,Release), asCALL_THISCALL); assert( r >= 0 );
 
 	// The index operator returns the template subtype
-	r = engine->RegisterObjectMethod("array<T>", "T &opIndex(uint)", asMETHOD(CScriptArray, At), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("array<T>", "const T &opIndex(uint) const", asMETHOD(CScriptArray, At), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "T &opIndex(uint)", asMETHODPR(CScriptArray, At, (asUINT), void*), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "const T &opIndex(uint) const", asMETHODPR(CScriptArray, At, (asUINT) const, const void*), asCALL_THISCALL); assert( r >= 0 );
 	
 	// The assignment operator
 	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asMETHOD(CScriptArray, operator=), asCALL_THISCALL); assert( r >= 0 );
@@ -480,7 +480,7 @@ void CScriptArray::RemoveLast()
 }
 
 // Return a pointer to the array element. Returns 0 if the index is out of bounds
-void *CScriptArray::At(asUINT index)
+const void *CScriptArray::At(asUINT index) const
 {
 	if( buffer == 0 || index >= buffer->numElements )
 	{
@@ -496,6 +496,11 @@ void *CScriptArray::At(asUINT index)
 	else
 		return buffer->data + elementSize*index;
 }
+void *CScriptArray::At(asUINT index)
+{
+	return const_cast<void*>(const_cast<const CScriptArray *>(this)->At(index));
+}
+
 
 // internal
 void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
