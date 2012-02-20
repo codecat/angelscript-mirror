@@ -1792,6 +1792,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
+	// TODO: bytecode: The loaded bytecode will refer to variables by index. It is necessary to update it to 
+	//                 point to the actual offset according to the size of the variables on the stack.
 	// As the bytecode may have been generated on a different platform it is necessary
 	// to adjust the bytecode in case any of the value types allocated on the stack has
 	// a different size on this platform.
@@ -2310,9 +2312,21 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		WriteString(&ot->name);
 		// flags
 		WRITE_NUM(ot->flags);
+
 		// size
-		// TODO: bytecode: The size shouldn't be stored as it needs to be determined at load time
-		WriteEncodedUInt(ot->size);
+		if( (ot->flags & asOBJ_SCRIPT_OBJECT) & ot->size )
+		{
+			// The size for script objects may vary from platform to platform so 
+			// only store 1 to diferentiate from interfaces that have size 0.
+			WriteEncodedUInt(1); 
+		}
+		else
+		{
+			// Enums, typedefs, and interfaces have fixed sizes independently
+			// of platform so it is safe to serialize the size directly.
+			WriteEncodedUInt(ot->size);
+		}
+
 		// namespace
 		WriteString(&ot->nameSpace);
 	}
@@ -2614,8 +2628,9 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 		//                 instead of offets of dwords because instructions may change size from 
 		//                 platform to platform
 
-		// TODO: bytecode: Must update var offsets as they may change from platform
-		//                 to platform due to pointer size
+		// TODO: bytecode: Must update variable offsets as they may change from platform
+		//                 to platform due to pointer size. The reader already makes adjustments, but
+		//                 the saved bytecode should keep the variable index, instead of the stack offset
 
 		// TODO: bytecode: Must update the GETOBJ, GETREF, etc offsets as they too depend on pointer size
 		
@@ -2669,6 +2684,8 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 		{
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
+
+			// TODO: bytecode: Update the WORDARG0 to 0, as this will be recalculated on the target platform
 		}
 		else if( c == asBC_CALL ||     // DW_ARG
 				 c == asBC_CALLINTF || // DW_ARG
