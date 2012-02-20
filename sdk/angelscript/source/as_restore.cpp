@@ -1632,9 +1632,20 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	// Skip this if the function is part of an pre-existing shared object
 	if( dontTranslate.MoveTo(0, func) ) return;
 
+	// Pre-compute the size of each instruction in order to translate jump offsets
 	asUINT n;
 	asDWORD *bc = func->byteCode.AddressOf();
+	asCArray<asUINT> bcSizes(func->byteCode.GetLength());
 	for( n = 0; n < func->byteCode.GetLength(); )
+	{
+		int c = *(asBYTE*)&bc[n];
+		asUINT size = asBCTypeSize[asBCInfo[c].type];
+		bcSizes.PushLast(size);
+		n += size;
+	}
+
+	asUINT bcNum = 0;
+	for( n = 0; n < func->byteCode.GetLength(); bcNum++ )
 	{
 		int c = *(asBYTE*)&bc[n];
 		if( c == asBC_FREE ||
@@ -1787,6 +1798,31 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				error = true;
 				return;
 			}
+		}
+		else if( c == asBC_JMP ||
+			     c == asBC_JZ ||
+				 c == asBC_JNZ ||
+				 c == asBC_JS ||
+				 c == asBC_JNS ||
+				 c == asBC_JP ||
+				 c == asBC_JNP ) // The JMPP instruction doesn't need modification
+		{
+			// Get the offset 
+			int offset = int(bc[n+1]);
+
+			// Count the instruction sizes to the destination instruction
+			int size = 0;
+			if( offset >= 0 )
+				// If moving ahead, then start from next instruction
+				for( asUINT num = bcNum+1; offset-- > 0; num++ )
+					size += bcSizes[num];
+			else
+				// If moving backwards, then start at current instruction
+				for( asUINT num = bcNum; offset++ < 0; num-- )
+					size -= bcSizes[num];
+
+			// The size is dword offset 
+			bc[n+1] = size;
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
@@ -2614,8 +2650,19 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 	}
 }
 
-void asCWriter::WriteByteCode(asDWORD *bc, int length)
+void asCWriter::WriteByteCode(asDWORD *bc, asUINT length)
 {
+	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
+	asCArray<asUINT> byteCodeNbr;
+	byteCodeNbr.SetLength(length);
+	for( asUINT offset = 0, num = 0; offset < length; )
+	{
+		byteCodeNbr[offset] = num;
+		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
+		num++;
+	}
+
+	asDWORD *startBC = bc;
 	while( length )
 	{
 		asDWORD tmp[4]; // The biggest instructions take up 4 DWORDs
@@ -2623,10 +2670,6 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 
 		// Copy the instruction to a temp buffer so we can work on it before saving
 		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
-
-		// TODO: bytecode: Must update the jump offsets to be offsets of instructions, 
-		//                 instead of offets of dwords because instructions may change size from 
-		//                 platform to platform
 
 		// TODO: bytecode: Must update variable offsets as they may change from platform
 		//                 to platform due to pointer size. The reader already makes adjustments, but
@@ -2729,7 +2772,26 @@ void asCWriter::WriteByteCode(asDWORD *bc, int length)
 			// Translate global variable pointers into indices
 			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
 		}
+		else if( c == asBC_JMP ||	// DW_ARG
+			     c == asBC_JZ ||
+				 c == asBC_JNZ ||
+				 c == asBC_JS ||
+				 c == asBC_JNS ||
+				 c == asBC_JP ||
+				 c == asBC_JNP ) // The JMPP instruction doesn't need modification
+		{
+			// Get the DWORD offset from arg
+			int offset = *(int*)(tmp+1);
 
+			// Determine instruction number for next instruction and destination
+			int bcSeqNum = byteCodeNbr[(asUINT(bc) - asUINT(startBC))/4] + 1;
+			asDWORD *targetBC = bc + 2 + offset;
+			int targetBcSeqNum = byteCodeNbr[(asUINT(targetBC) - asUINT(startBC))/4];
+
+			// Set the offset in number of instructions
+			*(int*)(tmp+1) = targetBcSeqNum - bcSeqNum;
+		}
+				 
 		// Now store the instruction in the smallest possible way
 		switch( asBCInfo[c].type )
 		{

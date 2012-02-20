@@ -137,7 +137,7 @@ protected:
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, int phase);
-	void WriteByteCode(asDWORD *bc, int length);
+	void WriteByteCode(asDWORD *bc, asUINT length);
 	void WriteEncodedUInt(asUINT i);
 
 	// Helper functions for storing variable data
