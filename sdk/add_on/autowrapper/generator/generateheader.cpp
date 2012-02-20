@@ -91,9 +91,9 @@ int main()
 
 	printf("template <typename T>\n"
 	"struct Id {\n"
-	"	template <T fn_ptr> AS_NAMESPACE_QUALIFIER asSFuncPtr  f(void) { return asFUNCTION(&(Wrapper<T>::f<fn_ptr>)); }\n"
-	"	template <T fn_ptr> AS_NAMESPACE_QUALIFIER asSFuncPtr of(void) { return asFUNCTION(&(ObjFirst<T>::f<fn_ptr>)); }\n"
-	"	template <T fn_ptr> AS_NAMESPACE_QUALIFIER asSFuncPtr ol(void) { return asFUNCTION(&(ObjLast<T>::f<fn_ptr>)); }\n"
+	"	template <T fn_ptr> AS_NAMESPACE_QUALIFIER asSFuncPtr  f(void) { return asFUNCTION(&Wrapper<T>::template f<fn_ptr>); }\n"
+	"	template <T fn_ptr> AS_NAMESPACE_QUALIFIER asSFuncPtr of(void) { return asFUNCTION(&ObjFirst<T>::template f<fn_ptr>); }\n"
+	"	template <T fn_ptr> AS_NAMESPACE_QUALIFIER asSFuncPtr ol(void) { return asFUNCTION(&ObjLast<T>::template f<fn_ptr>); }\n"
 	"};\n"
 	"\n"
 	"template <typename T>\n"
