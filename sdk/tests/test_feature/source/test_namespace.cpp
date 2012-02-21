@@ -98,7 +98,9 @@ bool Test()
 		mod->SaveByteCode(&s);
 
 		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
-		mod2->LoadByteCode(&s);
+		r = mod2->LoadByteCode(&s);
+		if( r < 0 )
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod2);
 		if( r != asEXECUTION_FINISHED )
