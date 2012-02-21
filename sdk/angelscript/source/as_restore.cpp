@@ -2815,9 +2815,9 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			int offset = *(int*)(tmp+1);
 
 			// Determine instruction number for next instruction and destination
-			int bcSeqNum = bytecodeNbrByPos[(asUINT(bc) - asUINT(startBC))/4] + 1;
+			int bcSeqNum = bytecodeNbrByPos[bc - startBC] + 1;
 			asDWORD *targetBC = bc + 2 + offset;
-			int targetBcSeqNum = bytecodeNbrByPos[(asUINT(targetBC) - asUINT(startBC))/4];
+			int targetBcSeqNum = bytecodeNbrByPos[targetBC - startBC];
 
 			// Set the offset in number of instructions
 			*(int*)(tmp+1) = targetBcSeqNum - bcSeqNum;
