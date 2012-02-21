@@ -291,29 +291,6 @@ int asCReader::Read()
 		usedTypes.PushLast(ot);
 	}
 
-	// Read the size of the value types so we can determine if it is necessary to adjust the code
-	asUINT numValueTypes = ReadEncodedUInt();
-	for( i = 0; i < numValueTypes; ++i )
-	{
-		asUINT idx = ReadEncodedUInt();
-		asUINT size = ReadEncodedUInt();
-
-		if( idx >= usedTypes.GetLength() )
-		{
-			// TODO: Write error message to the callback
-			error = true;
-			continue;
-		}
-
-		if( usedTypes[idx] && size != usedTypes[idx]->GetSize() )
-		{
-			// Keep track of the object types that have changed size 
-			// so the bytecode can be adjusted.
-			SObjChangeSize s = { usedTypes[idx], size };
-			oldObjectSizes.PushLast(s);
-		}
-	}
-
 	// usedTypeIds[]
 	ReadUsedTypeIds();
 
@@ -1828,37 +1805,30 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// TODO: bytecode: The loaded bytecode will refer to variables by index. It is necessary to update it to 
-	//                 point to the actual offset according to the size of the variables on the stack.
-	// As the bytecode may have been generated on a different platform it is necessary
-	// to adjust the bytecode in case any of the value types allocated on the stack has
-	// a different size on this platform.
+	// The bytecode has been stored as if all object variables take up only 1 dword. It is necessary
+	// to adjust to the size according to the current platform.
 	asCArray<int> adjustments;
 	for( n = 0; n < func->objVariableTypes.GetLength(); n++ )
 	{
-		if( func->objVariableTypes[n] &&
-			(func->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
-			!func->objVariableIsOnHeap[n] )
+		if( func->objVariableTypes[n] )
 		{
-			// Check if type has a different size than originally
-			for( asUINT s = 0; s < oldObjectSizes.GetLength(); s++ )
+			// Determine the size the variable currently occupies on the stack
+			int size = AS_PTR_SIZE;
+			if( (func->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
+				!func->objVariableIsOnHeap[n] )
 			{
-				if( oldObjectSizes[s].objType == func->objVariableTypes[n] &&
-					oldObjectSizes[s].oldSize != func->objVariableTypes[n]->GetSize() )
-				{
-					// How much needs to be adjusted? 
-					int newSize = func->objVariableTypes[n]->GetSize();
-					newSize = newSize < 4 ? 1 : newSize/4;
-					int oldSize = oldObjectSizes[s].oldSize;
-					oldSize = oldSize < 4 ? 1 : oldSize/4;
+				size = func->objVariableTypes[n]->GetSize();
+				if( size < 4 ) 
+					size = 1; 
+				else 
+					size /= 4;
+			}
 
-					int adjust = newSize - oldSize;
-					if( adjust != 0 )
-					{
-						adjustments.PushLast(func->objVariablePos[n]);
-						adjustments.PushLast(adjust);
-					}
-				}
+			// Check if type has a different size than stored
+			if( size > 1 )
+			{
+				adjustments.PushLast(func->objVariablePos[n]);
+				adjustments.PushLast(size-1);
 			}
 		}
 	}
@@ -2137,27 +2107,10 @@ int asCWriter::Write()
 	}
 
 	// usedTypes[]
-	asUINT numValueTypes = 0;
 	count = (asUINT)usedTypes.GetLength();
 	WriteEncodedUInt(count);
 	for( i = 0; i < count; ++i )
-	{
-		if( usedTypes[i]->flags & asOBJ_VALUE )
-			numValueTypes++;
-
 		WriteObjectType(usedTypes[i]);
-	}
-
-	// Write the size of value types so the code can be adjusted if they are not the same when reloading the code
-	WriteEncodedUInt(numValueTypes);
-	for( i = 0; i < count; i++ )
-	{
-		if( usedTypes[i]->flags & asOBJ_VALUE )
-		{
-			WriteEncodedUInt(i);
-			WriteEncodedUInt(usedTypes[i]->GetSize());
-		}
-	}
 
 	// usedTypeIds[]
 	WriteUsedTypeIds();
@@ -2293,29 +2246,39 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 
 	if( func->funcType == asFUNC_SCRIPT )
 	{
+		// Calculate the adjustment by position lookup table
+		CalculateAdjustmentByPos(func);
+
 		count = (asUINT)func->byteCode.GetLength();
 		WriteEncodedUInt(count);
-		WriteByteCode(func->byteCode.AddressOf(), count);
+		WriteByteCode(func);
 
 		count = (asUINT)func->objVariablePos.GetLength();
 		WriteEncodedUInt(count);
 		for( i = 0; i < count; ++i )
 		{
 			WriteObjectType(func->objVariableTypes[i]);
-			WriteEncodedUInt(func->objVariablePos[i]);
+			WriteEncodedUInt(AdjustPosition(func->objVariablePos[i]));
 			WRITE_NUM(func->objVariableIsOnHeap[i]);
 		}
 
-		WriteEncodedUInt(func->stackNeeded);
+		// The stack needed by the function will be adjusted by the highest variable shift
+		// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
+		//                 also for pointers pushed on the stack as function arguments
+		int stackNeeded = func->stackNeeded;
+		if( adjustByPos.GetLength() > 0 )
+			stackNeeded += adjustByPos[adjustByPos.GetLength()-1];
+		WriteEncodedUInt(stackNeeded);
 
 		WriteEncodedUInt((asUINT)func->objVariableInfo.GetLength());
 		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
 		{
 			WriteEncodedUInt(func->objVariableInfo[i].programPos);
-			WriteEncodedUInt(func->objVariableInfo[i].variableOffset); // TODO: should be int
+			WriteEncodedUInt(AdjustPosition(func->objVariableInfo[i].variableOffset)); // TODO: should be int
 			WriteEncodedUInt(func->objVariableInfo[i].option);
 		}
 
+		// TODO: bytecode: Is it necessary to adjust the line numbers?
 		asUINT length = (asUINT)func->lineNumbers.GetLength();
 		WriteEncodedUInt(length);
 		for( i = 0; i < length; ++i )
@@ -2650,8 +2613,74 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 	}
 }
 
-void asCWriter::WriteByteCode(asDWORD *bc, asUINT length)
+void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 {
+	// TODO: bytecode: Adjust the offset of all negative variables (i.e. parameters)
+	//                 so that all references have a size of 1 dword
+
+	// Adjust the offset of all positive variables so that all object types and handles have a size of 1 dword
+	// This is similar to how the adjustment is done in the asCReader::TranslateFunction, only the reverse
+	asCArray<int> adjustments;
+	for( asUINT n = 0; n < func->objVariableTypes.GetLength(); n++ )
+	{
+		if( func->objVariableTypes[n] )
+		{
+			// Determine the size the variable currently occupies on the stack
+			int size = AS_PTR_SIZE;
+			if( (func->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
+				!func->objVariableIsOnHeap[n] )
+			{
+				size = func->objVariableTypes[n]->GetSize();
+				if( size < 4 ) 
+					size = 1; 
+				else 
+					size /= 4;
+			}
+
+			// If larger than 1 dword, adjust the offsets accordingly
+			if( size > 1 )
+			{
+				// How much needs to be adjusted?
+				adjustments.PushLast(func->objVariablePos[n]);
+				adjustments.PushLast(-(size-1));
+			}
+		}
+	}
+
+	// Build look-up table with the adjustments for each stack position
+	adjustByPos.SetLength(func->stackNeeded);
+	memset(adjustByPos.AddressOf(), 0, adjustByPos.GetLength()*sizeof(int));
+	for( asUINT n = 0; n < adjustments.GetLength(); n+=2 )
+	{
+		int pos    = adjustments[n];
+		int adjust = adjustments[n+1];
+
+		for( asUINT i = pos; i < adjustByPos.GetLength(); i++ )
+			adjustByPos[i] += adjust;
+	}
+}
+
+int asCWriter::AdjustPosition(int pos)
+{
+	if( pos >= (int)adjustByPos.GetLength() )
+	{
+		// This happens for example if the function only have temporary variables
+		// The adjustByPos can also be empty if the function doesn't have any variables at all, but receive a handle by parameter
+		if( adjustByPos.GetLength() > 0 )
+			pos += adjustByPos[adjustByPos.GetLength()-1];
+	}
+	else if( pos >= 0 )
+		pos += adjustByPos[pos];
+
+	return pos;
+}
+
+
+void asCWriter::WriteByteCode(asCScriptFunction *func)
+{
+	asDWORD *bc   = func->byteCode.AddressOf();
+	asUINT length = func->byteCode.GetLength();
+
 	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
 	asCArray<asUINT> byteCodeNbr;
 	byteCodeNbr.SetLength(length);
@@ -2671,11 +2700,10 @@ void asCWriter::WriteByteCode(asDWORD *bc, asUINT length)
 		// Copy the instruction to a temp buffer so we can work on it before saving
 		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
 
-		// TODO: bytecode: Must update variable offsets as they may change from platform
-		//                 to platform due to pointer size. The reader already makes adjustments, but
-		//                 the saved bytecode should keep the variable index, instead of the stack offset
-
 		// TODO: bytecode: Must update the GETOBJ, GETREF, etc offsets as they too depend on pointer size
+		//                 The easiest way of doing this is probably by finding the actual function that is 
+		//                 being called after these instructions, and then use that to determine the size of 
+		//                 the arguments pushed on the stack.
 		
 		if( c == asBC_ALLOC ) // PTR_DW_ARG
 		{
@@ -2790,6 +2818,55 @@ void asCWriter::WriteByteCode(asDWORD *bc, asUINT length)
 
 			// Set the offset in number of instructions
 			*(int*)(tmp+1) = targetBcSeqNum - bcSeqNum;
+		}
+
+		// Adjust the variable offsets
+		switch( asBCInfo[c].type )
+		{
+		case asBCTYPE_wW_ARG:
+		case asBCTYPE_rW_DW_ARG:
+		case asBCTYPE_wW_QW_ARG:
+		case asBCTYPE_rW_ARG:
+		case asBCTYPE_wW_DW_ARG:
+		case asBCTYPE_wW_W_ARG:
+		case asBCTYPE_rW_QW_ARG:
+		case asBCTYPE_rW_W_DW_ARG:
+			{
+				asBC_SWORDARG0(tmp) = (short)AdjustPosition(asBC_SWORDARG0(tmp));
+			}
+			break;
+
+		case asBCTYPE_wW_rW_ARG:
+		case asBCTYPE_wW_rW_DW_ARG:
+		case asBCTYPE_rW_rW_ARG:
+			{
+				asBC_SWORDARG0(tmp) = (short)AdjustPosition(asBC_SWORDARG0(tmp));
+				asBC_SWORDARG1(tmp) = (short)AdjustPosition(asBC_SWORDARG1(tmp));
+			}
+			break;
+
+		case asBCTYPE_wW_rW_rW_ARG:
+			{
+				asBC_SWORDARG0(tmp) = (short)AdjustPosition(asBC_SWORDARG0(tmp));
+				asBC_SWORDARG1(tmp) = (short)AdjustPosition(asBC_SWORDARG1(tmp));
+				asBC_SWORDARG2(tmp) = (short)AdjustPosition(asBC_SWORDARG2(tmp));
+			}
+			break;
+
+		default:
+			// The other types don't treat variables so won't be modified
+			break;
+		}
+
+		if( c == asBC_PUSH )
+		{
+			// TODO: Maybe the push instruction should be removed, and be kept in 
+			//       the asCScriptFunction as a property instead. CallScriptFunction 
+			//       can immediately reserve the space
+
+			// PUSH is only used to reserve stack space for variables
+			if( adjustByPos.GetLength() > 0 )
+				asBC_WORDARG0(tmp) += (asWORD)adjustByPos[adjustByPos.GetLength()-1];
 		}
 				 
 		// Now store the instruction in the smallest possible way

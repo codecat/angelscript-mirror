@@ -102,14 +102,7 @@ protected:
 	};
 	asCArray<SObjProp> usedObjectProperties;
 
-	struct SObjChangeSize
-	{
-		asCObjectType *objType;
-		asUINT         oldSize;
-	};
-	asCArray<SObjChangeSize> oldObjectSizes;
-
-	asCMap<void*,bool> existingShared;
+	asCMap<void*,bool>              existingShared;
 	asCMap<asCScriptFunction*,bool> dontTranslate;
 };
 
@@ -137,7 +130,7 @@ protected:
 	void WriteDataType(const asCDataType *dt);
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, int phase);
-	void WriteByteCode(asDWORD *bc, asUINT length);
+	void WriteByteCode(asCScriptFunction *func);
 	void WriteEncodedUInt(asUINT i);
 
 	// Helper functions for storing variable data
@@ -147,6 +140,9 @@ protected:
 	int FindGlobalPropPtrIndex(void *);
 	int FindStringConstantIndex(int id);
 	int FindObjectPropIndex(short offset, int typeId);
+
+	void CalculateAdjustmentByPos(asCScriptFunction *func);
+	int  AdjustPosition(int pos);
 
 	// Intermediate data used for storing that which isn't constant, function id's, pointers, etc
 	void WriteUsedTypeIds();
@@ -167,6 +163,7 @@ protected:
 	asCArray<asCDataType>         savedDataTypes;
 	asCArray<asCString>           savedStrings;
 	asCMap<asCStringPointer, int> stringToIdMap;
+	asCArray<int>                 adjustByPos;
 
 	struct SObjProp
 	{
