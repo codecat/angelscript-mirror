@@ -527,10 +527,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		if( addToGC )
 			engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
 		
-		count = ReadEncodedUInt();
-		func->byteCode.Allocate(count, 0);
-		ReadByteCode(func->byteCode.AddressOf(), count);
-		func->byteCode.SetLength(count);
+		ReadByteCode(func);
 
 		count = ReadEncodedUInt();
 		func->objVariablePos.Allocate(count, 0);
@@ -1259,12 +1256,22 @@ asCObjectType* asCReader::ReadObjectType()
 	return ot;
 }
 
-void asCReader::ReadByteCode(asDWORD *bc, int length)
+void asCReader::ReadByteCode(asCScriptFunction *func)
 {
-	while( length )
+	// Read number of instructions
+	asUINT numInstructions = ReadEncodedUInt();
+
+	// Reserve some space for the instructions
+	func->byteCode.Allocate(numInstructions, 0);
+
+	while( numInstructions )
 	{
 		asBYTE b;
 		READ_NUM(b);
+
+		// Allocate the space for the instruction
+		func->byteCode.SetLength(func->byteCode.GetLength() + asBCTypeSize[asBCInfo[b].type]);
+		asDWORD *bc = func->byteCode.AddressOf() + func->byteCode.GetLength() - asBCTypeSize[asBCInfo[b].type];
 
 		switch( asBCInfo[b].type )
 		{
@@ -1466,7 +1473,7 @@ void asCReader::ReadByteCode(asDWORD *bc, int length)
 			}
 		}
 
-		length -= asBCTypeSize[asBCInfo[b].type];
+		numInstructions--;
 	}
 }
 
@@ -2249,9 +2256,6 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		// Calculate the adjustment by position lookup table
 		CalculateAdjustmentByPos(func);
 
-		// TODO: bytecode: The length cannot be stored, because it is platform dependent
-		count = (asUINT)func->byteCode.GetLength();
-		WriteEncodedUInt(count);
 		WriteByteCode(func);
 
 		count = (asUINT)func->objVariablePos.GetLength();
@@ -2670,7 +2674,9 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
 		num++;
 	}
-
+	// The last instruction is always a BC_RET. This make it possible to query 
+	// the number of instructions by checking the last entry in bytecodeNbrByPos
+	asASSERT(*(asBYTE*)(bc+length-1) == asBC_RET);
 }
 
 int asCWriter::AdjustStackPosition(int pos)
@@ -2693,6 +2699,11 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 {
 	asDWORD *bc   = func->byteCode.AddressOf();
 	asUINT length = func->byteCode.GetLength();
+
+	// The length cannot be stored, because it is platform dependent, 
+	// instead we store the number of instructions
+	asUINT count = bytecodeNbrByPos[bytecodeNbrByPos.GetLength()-1] + 1;
+	WriteEncodedUInt(count);
 
 	asDWORD *startBC = bc;
 	while( length )

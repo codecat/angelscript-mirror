@@ -67,7 +67,7 @@ protected:
 	void               ReadDataType(asCDataType *dt);
 	asCObjectType *    ReadObjectType();
 	void               ReadObjectTypeDeclaration(asCObjectType *ot, int phase);
-	void               ReadByteCode(asDWORD *bc, int length);
+	void               ReadByteCode(asCScriptFunction *func);
 	asUINT             ReadEncodedUInt();
 
 	void ReadUsedTypeIds();
