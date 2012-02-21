@@ -2249,6 +2249,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		// Calculate the adjustment by position lookup table
 		CalculateAdjustmentByPos(func);
 
+		// TODO: bytecode: The length cannot be stored, because it is platform dependent
 		count = (asUINT)func->byteCode.GetLength();
 		WriteEncodedUInt(count);
 		WriteByteCode(func);
@@ -2258,27 +2259,27 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		for( i = 0; i < count; ++i )
 		{
 			WriteObjectType(func->objVariableTypes[i]);
-			WriteEncodedUInt(AdjustPosition(func->objVariablePos[i]));
+			WriteEncodedUInt(AdjustStackPosition(func->objVariablePos[i]));
 			WRITE_NUM(func->objVariableIsOnHeap[i]);
 		}
 
 		// The stack needed by the function will be adjusted by the highest variable shift
 		// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
-		//                 also for pointers pushed on the stack as function arguments
-		int stackNeeded = func->stackNeeded;
-		if( adjustByPos.GetLength() > 0 )
-			stackNeeded += adjustByPos[adjustByPos.GetLength()-1];
-		WriteEncodedUInt(stackNeeded);
+		//                 also for pointers pushed on the stack as function arguments.
+		//                 Perhaps it is easier to recalculate the stack needed at loadtime
+		WriteEncodedUInt(AdjustStackPosition(func->stackNeeded));
 
 		WriteEncodedUInt((asUINT)func->objVariableInfo.GetLength());
 		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
 		{
+			// TODO: bytecode: The program position must be adjusted to be in number of instructions
 			WriteEncodedUInt(func->objVariableInfo[i].programPos);
-			WriteEncodedUInt(AdjustPosition(func->objVariableInfo[i].variableOffset)); // TODO: should be int
+			WriteEncodedUInt(AdjustStackPosition(func->objVariableInfo[i].variableOffset)); // TODO: should be int
 			WriteEncodedUInt(func->objVariableInfo[i].option);
 		}
 
-		// TODO: bytecode: Is it necessary to adjust the line numbers?
+		// TODO: bytecode: The program position (every even number) needs to be adjusted
+		//                 to be in number of instructions instead of DWORD offset
 		asUINT length = (asUINT)func->lineNumbers.GetLength();
 		WriteEncodedUInt(length);
 		for( i = 0; i < length; ++i )
@@ -2648,29 +2649,41 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 
 	// Build look-up table with the adjustments for each stack position
-	adjustByPos.SetLength(func->stackNeeded);
-	memset(adjustByPos.AddressOf(), 0, adjustByPos.GetLength()*sizeof(int));
+	adjustStackByPos.SetLength(func->stackNeeded);
+	memset(adjustStackByPos.AddressOf(), 0, adjustStackByPos.GetLength()*sizeof(int));
 	for( asUINT n = 0; n < adjustments.GetLength(); n+=2 )
 	{
 		int pos    = adjustments[n];
 		int adjust = adjustments[n+1];
 
-		for( asUINT i = pos; i < adjustByPos.GetLength(); i++ )
-			adjustByPos[i] += adjust;
+		for( asUINT i = pos; i < adjustStackByPos.GetLength(); i++ )
+			adjustStackByPos[i] += adjust;
 	}
+
+	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
+	asUINT length = func->byteCode.GetLength();
+	asDWORD *bc = func->byteCode.AddressOf();
+	bytecodeNbrByPos.SetLength(length);
+	for( asUINT offset = 0, num = 0; offset < length; )
+	{
+		bytecodeNbrByPos[offset] = num;
+		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
+		num++;
+	}
+
 }
 
-int asCWriter::AdjustPosition(int pos)
+int asCWriter::AdjustStackPosition(int pos)
 {
-	if( pos >= (int)adjustByPos.GetLength() )
+	if( pos >= (int)adjustStackByPos.GetLength() )
 	{
 		// This happens for example if the function only have temporary variables
 		// The adjustByPos can also be empty if the function doesn't have any variables at all, but receive a handle by parameter
-		if( adjustByPos.GetLength() > 0 )
-			pos += adjustByPos[adjustByPos.GetLength()-1];
+		if( adjustStackByPos.GetLength() > 0 )
+			pos += adjustStackByPos[adjustStackByPos.GetLength()-1];
 	}
 	else if( pos >= 0 )
-		pos += adjustByPos[pos];
+		pos += adjustStackByPos[pos];
 
 	return pos;
 }
@@ -2680,16 +2693,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 {
 	asDWORD *bc   = func->byteCode.AddressOf();
 	asUINT length = func->byteCode.GetLength();
-
-	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
-	asCArray<asUINT> byteCodeNbr;
-	byteCodeNbr.SetLength(length);
-	for( asUINT offset = 0, num = 0; offset < length; )
-	{
-		byteCodeNbr[offset] = num;
-		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
-		num++;
-	}
 
 	asDWORD *startBC = bc;
 	while( length )
@@ -2812,9 +2815,9 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			int offset = *(int*)(tmp+1);
 
 			// Determine instruction number for next instruction and destination
-			int bcSeqNum = byteCodeNbr[(asUINT(bc) - asUINT(startBC))/4] + 1;
+			int bcSeqNum = bytecodeNbrByPos[(asUINT(bc) - asUINT(startBC))/4] + 1;
 			asDWORD *targetBC = bc + 2 + offset;
-			int targetBcSeqNum = byteCodeNbr[(asUINT(targetBC) - asUINT(startBC))/4];
+			int targetBcSeqNum = bytecodeNbrByPos[(asUINT(targetBC) - asUINT(startBC))/4];
 
 			// Set the offset in number of instructions
 			*(int*)(tmp+1) = targetBcSeqNum - bcSeqNum;
@@ -2832,7 +2835,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		case asBCTYPE_rW_QW_ARG:
 		case asBCTYPE_rW_W_DW_ARG:
 			{
-				asBC_SWORDARG0(tmp) = (short)AdjustPosition(asBC_SWORDARG0(tmp));
+				asBC_SWORDARG0(tmp) = (short)AdjustStackPosition(asBC_SWORDARG0(tmp));
 			}
 			break;
 
@@ -2840,16 +2843,16 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		case asBCTYPE_wW_rW_DW_ARG:
 		case asBCTYPE_rW_rW_ARG:
 			{
-				asBC_SWORDARG0(tmp) = (short)AdjustPosition(asBC_SWORDARG0(tmp));
-				asBC_SWORDARG1(tmp) = (short)AdjustPosition(asBC_SWORDARG1(tmp));
+				asBC_SWORDARG0(tmp) = (short)AdjustStackPosition(asBC_SWORDARG0(tmp));
+				asBC_SWORDARG1(tmp) = (short)AdjustStackPosition(asBC_SWORDARG1(tmp));
 			}
 			break;
 
 		case asBCTYPE_wW_rW_rW_ARG:
 			{
-				asBC_SWORDARG0(tmp) = (short)AdjustPosition(asBC_SWORDARG0(tmp));
-				asBC_SWORDARG1(tmp) = (short)AdjustPosition(asBC_SWORDARG1(tmp));
-				asBC_SWORDARG2(tmp) = (short)AdjustPosition(asBC_SWORDARG2(tmp));
+				asBC_SWORDARG0(tmp) = (short)AdjustStackPosition(asBC_SWORDARG0(tmp));
+				asBC_SWORDARG1(tmp) = (short)AdjustStackPosition(asBC_SWORDARG1(tmp));
+				asBC_SWORDARG2(tmp) = (short)AdjustStackPosition(asBC_SWORDARG2(tmp));
 			}
 			break;
 
@@ -2865,8 +2868,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			//       can immediately reserve the space
 
 			// PUSH is only used to reserve stack space for variables
-			if( adjustByPos.GetLength() > 0 )
-				asBC_WORDARG0(tmp) += (asWORD)adjustByPos[adjustByPos.GetLength()-1];
+			asBC_WORDARG0(tmp) = (asWORD)AdjustStackPosition(asBC_WORDARG0(tmp));
 		}
 				 
 		// Now store the instruction in the smallest possible way

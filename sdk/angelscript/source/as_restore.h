@@ -142,7 +142,8 @@ protected:
 	int FindObjectPropIndex(short offset, int typeId);
 
 	void CalculateAdjustmentByPos(asCScriptFunction *func);
-	int  AdjustPosition(int pos);
+	int  AdjustStackPosition(int pos);
+	int  AdjustProgramPosition(int pos);
 
 	// Intermediate data used for storing that which isn't constant, function id's, pointers, etc
 	void WriteUsedTypeIds();
@@ -163,7 +164,8 @@ protected:
 	asCArray<asCDataType>         savedDataTypes;
 	asCArray<asCString>           savedStrings;
 	asCMap<asCStringPointer, int> stringToIdMap;
-	asCArray<int>                 adjustByPos;
+	asCArray<int>                 adjustStackByPos;
+	asCArray<int>                 bytecodeNbrByPos;
 
 	struct SObjProp
 	{
