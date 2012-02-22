@@ -62,7 +62,7 @@ const int RESERVE_STACK = 2*AS_PTR_SIZE;
 const int CALLSTACK_FRAME_SIZE = 5;
 
 
-#ifdef AS_DEBUG
+#if defined(AS_DEBUG) && defined(AS_DEBUG_STATS)
 // Instruction statistics
 int instrCount[256];
 
@@ -79,33 +79,36 @@ public:
 
 	~asCDebugStats()
 	{
-/*
 		// This code writes out some statistics for the VM. 
 		// It's useful for determining what needs to be optimized.
 
 		_mkdir("AS_DEBUG");
-		FILE *f = fopen("AS_DEBUG/total.txt", "at");
+		#if _MSC_VER >= 1500 
+			FILE *f;
+			fopen_s(&f, "AS_DEBUG/total.txt", "at");
+		#else
+			FILE *f = fopen("AS_DEBUG/total.txt", "at");
+		#endif
 		if( f )
 		{
 			// Output instruction statistics
 			fprintf(f, "\nTotal count\n");
 			int n;
-			for( n = 0; n < BC_MAXBYTECODE; n++ )
+			for( n = 0; n < asBC_MAXBYTECODE; n++ )
 			{
-				if( bcName[n].name && instrCount[n] > 0 )
-					fprintf(f, "%-10.10s : %.0f\n", bcName[n].name, instrCount[n]);
+				if( asBCInfo[n].name && instrCount[n] > 0 )
+					fprintf(f, "%-10.10s : %.0f\n", asBCInfo[n].name, instrCount[n]);
 			}
 
 			fprintf(f, "\nNever executed\n");
-			for( n = 0; n < BC_MAXBYTECODE; n++ )
+			for( n = 0; n < asBC_MAXBYTECODE; n++ )
 			{
-				if( bcName[n].name && instrCount[n] == 0 )
-					fprintf(f, "%-10.10s\n", bcName[n].name);
+				if( asBCInfo[n].name && instrCount[n] == 0 )
+					fprintf(f, "%-10.10s\n", asBCInfo[n].name);
 			}
 
 			fclose(f);
 		}
-*/
 	}
 
 	double instrCount[256];
@@ -142,7 +145,7 @@ void asPopActiveContext(asIScriptContext *ctx)
 
 asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 {
-#ifdef AS_DEBUG
+#if defined(AS_DEBUG) && defined(AS_DEBUG_STATS)
 	memset(instrCount, 0, sizeof(instrCount));
 
 	memset(instrCount2, 0, sizeof(instrCount2));
@@ -1082,20 +1085,24 @@ int asCContext::Execute()
 	asPopActiveContext((asIScriptContext *)this);
 
 
-#ifdef AS_DEBUG
-/*
+#if defined(AS_DEBUG) && defined(AS_DEBUG_STATS)
 	// Output instruction statistics
 	// This is useful for determining what needs to be optimized.
 
 	_mkdir("AS_DEBUG");
-	FILE *f = fopen("AS_DEBUG/stats.txt", "at");
+	#if _MSC_VER >= 1500 
+		FILE *f;
+		fopen_s(&f, "AS_DEBUG/stats.txt", "at");
+	#else
+		FILE *f = fopen("AS_DEBUG/stats.txt", "at");
+	#endif
 	fprintf(f, "\n");
 	asQWORD total = 0;
 	int n;
 	for( n = 0; n < 256; n++ )
 	{
-		if( bcName[n].name && instrCount[n] )
-			fprintf(f, "%-10.10s : %d\n", bcName[n].name, instrCount[n]);
+		if( asBCInfo[n].name && instrCount[n] )
+			fprintf(f, "%-10.10s : %d\n", asBCInfo[n].name, instrCount[n]);
 
 		total += instrCount[n];
 	}
@@ -1105,17 +1112,16 @@ int asCContext::Execute()
 	fprintf(f, "\n");
 	for( n = 0; n < 256; n++ )
 	{
-		if( bcName[n].name )
+		if( asBCInfo[n].name )
 		{
 			for( int m = 0; m < 256; m++ )
 			{
 				if( instrCount2[n][m] )
-					fprintf(f, "%-10.10s, %-10.10s : %d\n", bcName[n].name, bcName[m].name, instrCount2[n][m]);
+					fprintf(f, "%-10.10s, %-10.10s : %d\n", asBCInfo[n].name, asBCInfo[m].name, instrCount2[n][m]);
 			}
 		}
 	}
 	fclose(f);
-*/
 #endif
 
 	if( status == asEXECUTION_FINISHED )
@@ -1364,13 +1370,14 @@ void asCContext::ExecuteNext()
 	{
 
 #ifdef AS_DEBUG
+#ifdef AS_DEBUG_STATS
 	++stats.instrCount[*(asBYTE*)l_bc];
 
 	++instrCount[*(asBYTE*)l_bc];
 
 	++instrCount2[lastBC][*(asBYTE*)l_bc];
 	lastBC = *(asBYTE*)l_bc;
-
+#endif
 	// Used to verify that the size of the instructions are correct
 	asDWORD *old = l_bc;
 #endif
