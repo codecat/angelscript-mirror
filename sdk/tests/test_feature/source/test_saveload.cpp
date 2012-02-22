@@ -397,6 +397,37 @@ bool Test()
 	GlobalCharArray = 0;
 	engine->Release();
 
+	//---------------------------------------
+	// A tiny file for comparison
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("script", "void f() {}");
+	mod->Build();
+	CBytecodeStream streamTiny(__FILE__"tiny");
+	mod->SaveByteCode(&streamTiny);
+	engine->Release();
+
+	asBYTE expected[] = {0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x6E,0x01,0x66,0x00,0x4E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0xE0,0xC0,0x00,0x01,0x00,0x6E,0x06,0x73,0x63,0x72,0x69,0x70,0x74,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+	bool match = true;
+	for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
+		if( streamTiny.buffer[n] != expected[n] )
+		{
+			match = false;
+			break;
+		}
+	if( !match )
+	{
+		printf("Tiny module gave a different result than expected:\n");
+		printf("got     : ");
+		for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
+			printf("%0.2X", streamTiny.buffer[n]);
+		printf("\n");
+		printf("expected: ");
+		for( asUINT m = 0; m < sizeof(expected); m++ )
+			printf("%0.2X", expected[m]);
+		printf("\n");
+	}
+
 	//-----------------------------------------
 	// A different case
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
