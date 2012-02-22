@@ -85,6 +85,7 @@ protected:
 	void TranslateFunction(asCScriptFunction *func);
 	void CalculateAdjustmentByPos(asCScriptFunction *func);
 	int  AdjustStackPosition(int pos);
+	int  AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos);
 
 	// Temporary storage for persisting variable data
 	asCArray<int>                usedTypeIds;
@@ -149,6 +150,7 @@ protected:
 	void CalculateAdjustmentByPos(asCScriptFunction *func);
 	int  AdjustStackPosition(int pos);
 	int  AdjustProgramPosition(int pos);
+	int  AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos);
 
 	// Intermediate data used for storing that which isn't constant, function id's, pointers, etc
 	void WriteUsedTypeIds();

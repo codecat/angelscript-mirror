@@ -1813,6 +1813,12 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			// The size is dword offset 
 			bc[n+1] = size;
 		}
+		else if( c == asBC_GETREF ||
+			     c == asBC_GETOBJ ||
+				 c == asBC_GETOBJREF )
+		{
+			asBC_WORDARG0(&bc[n]) = (asWORD)AdjustGetOffset(asBC_WORDARG0(&bc[n]), func, n);
+		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
@@ -2013,6 +2019,45 @@ int asCReader::AdjustStackPosition(int pos)
 		pos += (short)adjustNegativeStackByPos[-pos];
 
 	return pos;
+}
+
+int asCReader::AdjustGetOffset(int offset, asCScriptFunction * /*func*/, asDWORD /*programPos*/)
+{
+	// TODO: optimize: multiple instructions for the same function doesn't need to look for the function everytime
+	//                 the function can remember where it found the function and check if the programPos is still valid
+
+	// TODO: bytecode: Find out which function that will be called
+/*	asCScriptFunction *calledFunc = 0;
+	for( asUINT n = programPos; func->byteCode.GetLength(); )
+	{
+		asBYTE bc = *(asBYTE*)&func->byteCode[n];
+		if( bc == asBC_CALL ||
+			bc == asBC_CALLSYS ||
+			bc == asBC_CALLINTF )
+		{
+			// Find the function from the function id in bytecode
+		}
+		else if( bc == asBC_ALLOC )
+		{
+			// Find the function from the function id in the bytecode
+		}
+		else if( bc == asBC_CALLBND )
+		{
+			// Find the function from the module's bind array
+		}
+		else if( bc == asBC_CallPtr )
+		{
+			// Find the funcdef from the local variable
+		}
+
+		n += asBCTypeSize[asBCInfo[bc].type];
+	}
+*/
+	// Count the number of pointers pushed on the stack above the 
+	// current offset, and then adjust the offset accordingly
+	// TODO: bytecode: 
+
+	return offset;
 }
 
 int asCReader::FindTypeId(int idx)
@@ -2789,6 +2834,44 @@ int asCWriter::AdjustStackPosition(int pos)
 	return pos;
 }
 
+int asCWriter::AdjustGetOffset(int offset, asCScriptFunction * /*func*/, asDWORD /*programPos*/)
+{
+	// TODO: optimize: multiple instructions for the same function doesn't need to look for the function everytime
+	//                 the function can remember where it found the function and check if the programPos is still valid
+
+	// TODO: bytecode: Find out which function that will be called
+/*	asCScriptFunction *calledFunc = 0;
+	for( asUINT n = programPos; func->byteCode.GetLength(); )
+	{
+		asBYTE bc = *(asBYTE*)&func->byteCode[n];
+		if( bc == asBC_CALL ||
+			bc == asBC_CALLSYS ||
+			bc == asBC_CALLINTF )
+		{
+			// Find the function from the function id in bytecode
+		}
+		else if( bc == asBC_ALLOC )
+		{
+			// Find the function from the function id in the bytecode
+		}
+		else if( bc == asBC_CALLBND )
+		{
+			// Find the function from the module's bind array
+		}
+		else if( bc == asBC_CallPtr )
+		{
+			// Find the funcdef from the local variable
+		}
+
+		n += asBCTypeSize[asBCInfo[bc].type];
+	}
+*/
+	// Count the number of pointers pushed on the stack above the 
+	// current offset, and then adjust the offset accordingly
+	// TODO: bytecode: 
+
+	return offset;
+}
 
 void asCWriter::WriteByteCode(asCScriptFunction *func)
 {
@@ -2809,11 +2892,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		// Copy the instruction to a temp buffer so we can work on it before saving
 		memcpy(tmp, bc, asBCTypeSize[asBCInfo[c].type]*sizeof(asDWORD));
 
-		// TODO: bytecode: Must update the GETOBJ, GETREF, etc offsets as they too depend on pointer size
-		//                 The easiest way of doing this is probably by finding the actual function that is 
-		//                 being called after these instructions, and then use that to determine the size of 
-		//                 the arguments pushed on the stack.
-		
 		if( c == asBC_ALLOC ) // PTR_DW_ARG
 		{
 			// Translate the object type 
@@ -2928,6 +3006,13 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 
 			// Set the offset in number of instructions
 			*(int*)(tmp+1) = targetBcSeqNum - bcSeqNum;
+		}
+		else if( c == asBC_GETOBJ ||    // W_ARG
+			     c == asBC_GETOBJREF ||
+				 c == asBC_GETREF )
+		{
+			// Adjust the offset according to the function call that comes after
+			asBC_WORDARG0(tmp) = (asWORD)AdjustGetOffset(asBC_WORDARG0(tmp), func, bc - startBC);
 		}
 
 		// Adjust the variable offsets
