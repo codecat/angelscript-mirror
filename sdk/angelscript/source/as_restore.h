@@ -83,6 +83,8 @@ protected:
 
 	// After loading, each function needs to be translated to update pointers, function ids, etc
 	void TranslateFunction(asCScriptFunction *func);
+	void CalculateAdjustmentByPos(asCScriptFunction *func);
+	int  AdjustStackPosition(int pos);
 
 	// Temporary storage for persisting variable data
 	asCArray<int>                usedTypeIds;
@@ -94,6 +96,9 @@ protected:
 	asCArray<asCScriptFunction*>  savedFunctions;
 	asCArray<asCDataType>         savedDataTypes;
 	asCArray<asCString>           savedStrings;
+
+	asCArray<int>                 adjustByPos;
+	asCArray<int>                 adjustNegativeStackByPos;
 
 	struct SObjProp
 	{
@@ -165,6 +170,7 @@ protected:
 	asCArray<asCString>           savedStrings;
 	asCMap<asCStringPointer, int> stringToIdMap;
 	asCArray<int>                 adjustStackByPos;
+	asCArray<int>                 adjustNegativeStackByPos;
 	asCArray<int>                 bytecodeNbrByPos;
 
 	struct SObjProp

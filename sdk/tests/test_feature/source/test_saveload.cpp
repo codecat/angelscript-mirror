@@ -342,18 +342,14 @@ bool Test()
 	mod->SaveByteCode(&stream);
 
 	// TODO: These should eventually be equal, once the bytecode is fully platform independent
-	if( (sizeof(void*) == 4 && stream.buffer.size() != 1589) /* ||
-		(sizeof(void*) == 8 && stream.buffer.size() != 1616) */ ) 
+	if( stream.buffer.size() != 1589) 
 	{
-		// Originally this was 3213 (on 32bit)
-		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
+		printf("The saved byte code is not of the expected size 1589. It is %d bytes\n", stream.buffer.size());
 	}
-
 	asUINT zeroes = stream.CountZeroes();
-	if( (sizeof(void*) == 4 && zeroes != 566) /* ||
-		(sizeof(void*) == 8 && zeroes != 609) */ )
+	if( zeroes != 566 ) 
 	{
-		printf("The saved byte code contains a different amount of zeroes than expected. Counted %d\n", zeroes);
+		printf("The saved byte code contains a different amount of zeroes than the expected 566. Counted %d\n", zeroes);
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
 

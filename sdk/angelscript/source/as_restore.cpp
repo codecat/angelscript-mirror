@@ -1817,9 +1817,150 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// The bytecode has been stored as if all object variables take up only 1 dword. It is necessary
-	// to adjust to the size according to the current platform.
+	// Adjust all variable positions
+	CalculateAdjustmentByPos(func);
+	bc = func->byteCode.AddressOf();
+	for( n = 0; n < func->byteCode.GetLength(); )
+	{
+		int c = *(asBYTE*)&bc[n];
+		switch( asBCInfo[c].type )
+		{
+		case asBCTYPE_wW_ARG:
+		case asBCTYPE_rW_DW_ARG:
+		case asBCTYPE_wW_QW_ARG:
+		case asBCTYPE_rW_ARG:
+		case asBCTYPE_wW_DW_ARG:
+		case asBCTYPE_wW_W_ARG:
+		case asBCTYPE_rW_QW_ARG:
+		case asBCTYPE_rW_W_DW_ARG:
+			{
+				asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
+			}
+			break;
+
+		case asBCTYPE_wW_rW_ARG:
+		case asBCTYPE_wW_rW_DW_ARG:
+		case asBCTYPE_rW_rW_ARG:
+			{
+				asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
+				asBC_SWORDARG1(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG1(&bc[n]));
+			}
+			break;
+
+		case asBCTYPE_wW_rW_rW_ARG:
+			{
+				asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
+				asBC_SWORDARG1(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG1(&bc[n]));
+				asBC_SWORDARG2(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG2(&bc[n]));
+			}
+			break;
+
+		default:
+			// The other types don't treat variables so won't be modified
+			break;
+		}
+
+		if( c == asBC_PUSH )
+		{
+			// TODO: Maybe the push instruction should be removed, and be kept in 
+			//       the asCScriptFunction as a property instead. CallScriptFunction 
+			//       can immediately reserve the space
+
+			// PUSH is only used to reserve stack space for variables
+			asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
+		}
+
+		n += asBCTypeSize[asBCInfo[c].type];
+	}
+
+	// objVariablePos
+	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
+	{
+		func->objVariablePos[n] = AdjustStackPosition(func->objVariablePos[n]);
+	}
+
+	// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
+	for( n = 0; n < func->objVariableInfo.GetLength(); n++ )
+	{
+		// The program position must be adjusted as it is stored in number of instructions
+		func->objVariableInfo[n].programPos = instructionNbrToPos[func->objVariableInfo[n].programPos];
+
+		func->objVariableInfo[n].variableOffset = AdjustStackPosition(func->objVariableInfo[n].variableOffset);
+	}
+
+	// variables[x].stackOffset
+	// TODO: The variables should also be loaded and adjusted
+/*
+	for( n = 0; n < func->variables.GetLength(); n++ )
+	{
+		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
+	}
+*/
+
+	// The program position (every even number) needs to be adjusted
+	// for the line numbers to be in number of dwords instead of number of instructions 
+	for( n = 0; n < func->lineNumbers.GetLength(); n += 2 )
+	{
+		func->lineNumbers[n] = instructionNbrToPos[func->lineNumbers[n]];
+	}
+
+
+	// The stack needed by the function will be adjusted by the highest variable shift
+	// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
+	//                 also for pointers pushed on the stack as function arguments
+	func->stackNeeded = AdjustStackPosition(func->stackNeeded);
+}
+
+void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
+{
+	// Adjust the offset of all negative variables (parameters) as  
+	// all pointers have been stored as having a size of 1 dword
+	asUINT n;
 	asCArray<int> adjustments;
+	asUINT offset = 0;
+	if( func->objectType )
+	{
+		adjustments.PushLast(offset);
+		adjustments.PushLast(1-AS_PTR_SIZE);
+		offset += 1;
+	}
+	if( func->DoesReturnOnStack() )
+	{
+		adjustments.PushLast(offset);
+		adjustments.PushLast(1-AS_PTR_SIZE);
+		offset += 1;
+	}
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		if( func->parameterTypes[n].GetObjectType() ||
+			func->parameterTypes[n].IsReference() )
+		{
+			adjustments.PushLast(offset);
+			adjustments.PushLast(1-AS_PTR_SIZE);
+			offset += 1;
+		}
+		else
+		{
+			asASSERT( func->parameterTypes[n].IsPrimitive() );
+			offset += func->parameterTypes[n].GetSizeOnStackDWords();
+		}
+	}
+
+	// Build look-up table with the adjustments for each stack position
+	adjustNegativeStackByPos.SetLength(offset);
+	memset(adjustNegativeStackByPos.AddressOf(), 0, adjustNegativeStackByPos.GetLength()*sizeof(int));
+	for( n = 0; n < adjustments.GetLength(); n+=2 )
+	{
+		int pos    = adjustments[n];
+		int adjust = adjustments[n+1];
+
+		for( asUINT i = pos+1; i < adjustNegativeStackByPos.GetLength(); i++ )
+			adjustNegativeStackByPos[i] += adjust;
+	}
+
+	// The bytecode has been stored as if all object variables take up only 1 dword. 
+	// It is necessary to adjust to the size according to the current platform.
+	adjustments.SetLength(0);
 	for( n = 0; n < func->objVariableTypes.GetLength(); n++ )
 	{
 		if( func->objVariableTypes[n] )
@@ -1846,7 +1987,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	}
 
 	// Count position 0 too
-	asCArray<int> adjustByPos(func->stackNeeded+1);
 	adjustByPos.SetLength(func->stackNeeded+1);
 	memset(adjustByPos.AddressOf(), 0, adjustByPos.GetLength()*sizeof(int));
 
@@ -1859,134 +1999,20 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		for( asUINT i = pos; i < adjustByPos.GetLength(); i++ )
 			adjustByPos[i] += adjust;
 	}
+}
 
-	// Adjust all variable positions
-	bc = func->byteCode.AddressOf();
-	for( n = 0; n < func->byteCode.GetLength(); )
-	{
-		int c = *(asBYTE*)&bc[n];
-		switch( asBCInfo[c].type )
-		{
-		case asBCTYPE_wW_ARG:
-		case asBCTYPE_rW_DW_ARG:
-		case asBCTYPE_wW_QW_ARG:
-		case asBCTYPE_rW_ARG:
-		case asBCTYPE_wW_DW_ARG:
-		case asBCTYPE_wW_W_ARG:
-		case asBCTYPE_rW_QW_ARG:
-		case asBCTYPE_rW_W_DW_ARG:
-			{
-				short var = asBC_SWORDARG0(&bc[n]);
-				if( var >= (int)adjustByPos.GetLength() ) 
-					error = true;
-				else if( var >= 0 ) 
-					asBC_SWORDARG0(&bc[n]) += (short)adjustByPos[var];
-			}
-			break;
+int asCReader::AdjustStackPosition(int pos)
+{
+	if( pos >= (int)adjustByPos.GetLength() ) 
+		error = true;
+	else if( pos >= 0 ) 
+		pos += (short)adjustByPos[pos];
+	else if( -pos >= (int)adjustNegativeStackByPos.GetLength() )
+		error = true;
+	else
+		pos += (short)adjustNegativeStackByPos[-pos];
 
-		case asBCTYPE_wW_rW_ARG:
-		case asBCTYPE_wW_rW_DW_ARG:
-		case asBCTYPE_rW_rW_ARG:
-			{
-				short var = asBC_SWORDARG0(&bc[n]);
-				if( var >= (int)adjustByPos.GetLength() ) 
-					error = true;
-				else if( var >= 0 ) 
-					asBC_SWORDARG0(&bc[n]) += (short)adjustByPos[var];
-
-				var = asBC_SWORDARG1(&bc[n]);
-				if( var >= (int)adjustByPos.GetLength() ) 
-					error = true;
-				else if( var >= 0 ) 
-					asBC_SWORDARG1(&bc[n]) += (short)adjustByPos[var];
-			}
-			break;
-
-		case asBCTYPE_wW_rW_rW_ARG:
-			{
-				short var = asBC_SWORDARG0(&bc[n]);
-				if( var >= (int)adjustByPos.GetLength() ) 
-					error = true;
-				else if( var >= 0 ) 
-					asBC_SWORDARG0(&bc[n]) += (short)adjustByPos[var];
-
-				var = asBC_SWORDARG1(&bc[n]);
-				if( var >= (int)adjustByPos.GetLength() ) 
-					error = true;
-				else if( var >= 0 ) 
-					asBC_SWORDARG1(&bc[n]) += (short)adjustByPos[var];
-
-				var = asBC_SWORDARG2(&bc[n]);
-				if( var >= (int)adjustByPos.GetLength() ) 
-					error = true;
-				else if( var >= 0 ) 
-					asBC_SWORDARG2(&bc[n]) += (short)adjustByPos[var];
-			}
-			break;
-
-		default:
-			// The other types don't treat variables so won't be modified
-			break;
-		}
-
-		if( c == asBC_PUSH )
-		{
-			// TODO: Maybe the push instruction should be removed, and be kept in 
-			//       the asCScriptFunction as a property instead. CallScriptFunction 
-			//       can immediately reserve the space
-
-			// PUSH is only used to reserve stack space for variables
-			asBC_WORDARG0(&bc[n]) += (asWORD)adjustByPos[adjustByPos.GetLength()-1];
-		}
-
-		n += asBCTypeSize[asBCInfo[c].type];
-	}
-
-	// objVariablePos
-	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
-	{
-		if( func->objVariablePos[n] >= (int)adjustByPos.GetLength() )
-			error = true;
-		else if( func->objVariablePos[n] >= 0 )
-			func->objVariablePos[n] += adjustByPos[func->objVariablePos[n]];
-	}
-
-	// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
-	for( n = 0; n < func->objVariableInfo.GetLength(); n++ )
-	{
-		// The program position must be adjusted as it is stored in number of instructions
-		func->objVariableInfo[n].programPos = instructionNbrToPos[func->objVariableInfo[n].programPos];
-
-		if( func->objVariableInfo[n].variableOffset >= (int)adjustByPos.GetLength() )
-			error = true;
-		else if( func->objVariableInfo[n].variableOffset >= 0 )
-			func->objVariableInfo[n].variableOffset += adjustByPos[func->objVariableInfo[n].variableOffset];
-	}
-
-	// variables[x].stackOffset
-	// TODO: The variables should also be loaded and adjusted
-/*
-	for( n = 0; n < func->variables.GetLength(); n++ )
-	{
-		if( func->variables[n]->stackOffset >= (int)adjustByPos.GetLength() )
-			error = true;
-		else if( func->variables[n]->stackOffset >= 0 )
-			func->variables[n]->stackOffset += adjustByPos[func->variables[n]->stackOffset];
-	}
-*/
-
-	// The program position (every even number) needs to be adjusted
-	// for the line numbers to be in number of dwords instead of number of instructions 
-	for( n = 0; n < func->lineNumbers.GetLength(); n += 2 )
-	{
-		func->lineNumbers[n] = instructionNbrToPos[func->lineNumbers[n]];
-	}
-
-
-	// The stack needed by the function will be adjusted by the highest variable shift
-	// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
-	//                 also for pointers pushed on the stack as function arguments
-	func->stackNeeded += adjustByPos[adjustByPos.GetLength()-1];
+	return pos;
 }
 
 int asCReader::FindTypeId(int idx)
@@ -2642,13 +2668,54 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 
 void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 {
-	// TODO: bytecode: Adjust the offset of all negative variables (i.e. parameters)
-	//                 so that all references have a size of 1 dword
+	// Adjust the offset of all negative variables (parameters) so all pointers will have a size of 1 dword
+	asUINT n;
+	asCArray<int> adjustments;
+	asUINT offset = 0;
+	if( func->objectType )
+	{
+		adjustments.PushLast(offset);
+		adjustments.PushLast(1-AS_PTR_SIZE);
+		offset += AS_PTR_SIZE;
+	}
+	if( func->DoesReturnOnStack() )
+	{
+		adjustments.PushLast(offset);
+		adjustments.PushLast(1-AS_PTR_SIZE);
+		offset += AS_PTR_SIZE;
+	}
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		if( func->parameterTypes[n].GetObjectType() ||
+			func->parameterTypes[n].IsReference() )
+		{
+			adjustments.PushLast(offset);
+			adjustments.PushLast(1-AS_PTR_SIZE);
+			offset += AS_PTR_SIZE;
+		}
+		else
+		{
+			asASSERT( func->parameterTypes[n].IsPrimitive() );
+			offset += func->parameterTypes[n].GetSizeOnStackDWords();
+		}
+	}
+
+	// Build look-up table with the adjustments for each stack position
+	adjustNegativeStackByPos.SetLength(offset);
+	memset(adjustNegativeStackByPos.AddressOf(), 0, adjustNegativeStackByPos.GetLength()*sizeof(int));
+	for( n = 0; n < adjustments.GetLength(); n+=2 )
+	{
+		int pos    = adjustments[n];
+		int adjust = adjustments[n+1];
+
+		for( asUINT i = pos+1; i < adjustNegativeStackByPos.GetLength(); i++ )
+			adjustNegativeStackByPos[i] += adjust;
+	}
 
 	// Adjust the offset of all positive variables so that all object types and handles have a size of 1 dword
 	// This is similar to how the adjustment is done in the asCReader::TranslateFunction, only the reverse
-	asCArray<int> adjustments;
-	for( asUINT n = 0; n < func->objVariableTypes.GetLength(); n++ )
+	adjustments.SetLength(0);
+	for( n = 0; n < func->objVariableTypes.GetLength(); n++ )
 	{
 		if( func->objVariableTypes[n] )
 		{
@@ -2677,7 +2744,7 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	// Build look-up table with the adjustments for each stack position
 	adjustStackByPos.SetLength(func->stackNeeded);
 	memset(adjustStackByPos.AddressOf(), 0, adjustStackByPos.GetLength()*sizeof(int));
-	for( asUINT n = 0; n < adjustments.GetLength(); n+=2 )
+	for( n = 0; n < adjustments.GetLength(); n+=2 )
 	{
 		int pos    = adjustments[n];
 		int adjust = adjustments[n+1];
@@ -2690,7 +2757,8 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	asUINT length = func->byteCode.GetLength();
 	asDWORD *bc = func->byteCode.AddressOf();
 	bytecodeNbrByPos.SetLength(length);
-	for( asUINT offset = 0, num = 0; offset < length; )
+	asUINT num;
+	for( offset = 0, num = 0; offset < length; )
 	{
 		bytecodeNbrByPos[offset] = num;
 		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
@@ -2712,6 +2780,11 @@ int asCWriter::AdjustStackPosition(int pos)
 	}
 	else if( pos >= 0 )
 		pos += adjustStackByPos[pos];
+	else
+	{
+		asASSERT( -pos < (int)adjustNegativeStackByPos.GetLength() );
+		pos -= (short)adjustNegativeStackByPos[-pos];
+	}
 
 	return pos;
 }
