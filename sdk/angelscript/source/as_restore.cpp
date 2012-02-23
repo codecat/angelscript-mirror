@@ -460,7 +460,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 		func->inOutFlags.PushLast(static_cast<asETypeModifiers>(num));
 	}
 
-	READ_NUM(func->funcType);
+	func->funcType = (asEFuncType)ReadEncodedUInt();
 
 	// Read the default args, from last to first
 	count = ReadEncodedUInt();
@@ -629,8 +629,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
-			eTokenType t;
-			READ_NUM(t);
+			eTokenType t = (eTokenType)ReadEncodedUInt();
 			ot->templateSubType = asCDataType::CreatePrimitive(t, false);
 		}
 		else
@@ -1170,8 +1169,7 @@ asCObjectType* asCReader::ReadObjectType()
 		}
 		else
 		{
-			eTokenType tokenType;
-			READ_NUM(tokenType);
+			eTokenType tokenType = (eTokenType)ReadEncodedUInt();
 			asCDataType dt = asCDataType::CreatePrimitive(tokenType, false);
 
 			ot = engine->GetTemplateInstanceType(tmpl, dt);
@@ -2136,8 +2134,6 @@ asCObjectType *asCReader::FindObjectType(int idx)
 
 #ifndef AS_NO_COMPILER
 
-#define WRITE_NUM(N) WriteData(&(N), sizeof(N))
-
 asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
@@ -2308,7 +2304,7 @@ void asCWriter::WriteUsedFunctions()
 
 		// Is the function from the module or the application?
 		c = usedFunctions[n]->module ? 'm' : 'a';
-		WRITE_NUM(c);
+		WriteData(&c, 1);
 
 		WriteFunctionSignature(usedFunctions[n]);
 	}
@@ -2332,7 +2328,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	for( i = 0; i < count; ++i )
 		WriteEncodedUInt(func->inOutFlags[i]);
 
-	WRITE_NUM(func->funcType);
+	WriteEncodedUInt(func->funcType);
 
 	// Write the default args, from last to first
 	count = 0;
@@ -2351,7 +2347,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		asBYTE b = 0;
 		b += func->isReadOnly ? 1 : 0;
 		b += func->isPrivate  ? 2 : 0;
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 }
 
@@ -2363,7 +2359,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	if( func == 0 )
 	{
 		c = '\0';
-		WRITE_NUM(c);
+		WriteData(&c, 1);
 		return;
 	}
 
@@ -2373,7 +2369,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		if( savedFunctions[f] == func )
 		{
 			c = 'r';
-			WRITE_NUM(c);
+			WriteData(&c, 1);
 			WriteEncodedUInt(f);
 			return;
 		}
@@ -2383,7 +2379,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	savedFunctions.PushLast(func);
 
 	c = 'f';
-	WRITE_NUM(c);
+	WriteData(&c, 1);
 
 	asUINT i, count;
 
@@ -2402,7 +2398,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		{
 			WriteObjectType(func->objVariableTypes[i]);
 			WriteEncodedUInt(AdjustStackPosition(func->objVariablePos[i]));
-			WRITE_NUM(func->objVariableIsOnHeap[i]);
+			WriteData(&func->objVariableIsOnHeap[i], 1);
 		}
 
 		// The stack needed by the function will be adjusted by the highest variable shift
@@ -2432,7 +2428,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				WriteEncodedUInt(func->lineNumbers[i]);
 		}
 
-		WRITE_NUM(func->isShared);
+		WriteData(&func->isShared, 1);
 
 		// TODO: Write variables
 	}
@@ -2447,7 +2443,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	else
 	{
 		char c = 0;
-		WRITE_NUM(c);
+		WriteData(&c, 1);
 	}
 }
 
@@ -2458,7 +2454,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		// name
 		WriteString(&ot->name);
 		// flags
-		WRITE_NUM(ot->flags);
+		WriteData(&ot->flags, 4);
 
 		// size
 		if( (ot->flags & asOBJ_SCRIPT_OBJECT) & ot->size )
@@ -2488,13 +2484,13 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			for( int n = 0; n < size; n++ )
 			{
 				WriteString(&ot->enumValues[n]->name);
-				WRITE_NUM(ot->enumValues[n]->value);
+				WriteData(&ot->enumValues[n]->value, 4);
 			}
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
 			eTokenType t = ot->templateSubType.GetTokenType();
-			WRITE_NUM(t);
+			WriteEncodedUInt(t);
 		}
 		else
 		{
@@ -2556,47 +2552,47 @@ void asCWriter::WriteEncodedUInt(asUINT i)
 	if( i < 128 )
 	{
 		asBYTE b = (asBYTE)i;
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 	else if( i < 16384 )
 	{
 		asBYTE b = asBYTE(0x80 + (i >> 8));
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 	else if( i < 2097152 )
 	{
 		asBYTE b = asBYTE(0xC0 + (i >> 16));
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 	else if( i < 268435456 )
 	{
 		asBYTE b = asBYTE(0xE0 + (i >> 24));
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE((i >> 16) & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 	else
 	{
 		asBYTE b = asBYTE(0xF0);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE((i >> 24) & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE((i >> 16) & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 }
 
@@ -2610,7 +2606,7 @@ void asCWriter::WriteString(asCString* str)
 	if( str->GetLength() == 0 )
 	{
 		char z = '\0';
-		WRITE_NUM(z);
+		WriteData(&z, 1);
 		return;
 	}
 
@@ -2620,14 +2616,14 @@ void asCWriter::WriteString(asCString* str)
 	{
 		// Save a reference to the existing string
 		char b = 'r';
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		WriteEncodedUInt(cursor->value);
 		return;
 	}
 
 	// Save a new string
 	char b = 'n';
-	WRITE_NUM(b);
+	WriteData(&b, 1);
 
 	asUINT len = (asUINT)str->GetLength();
 	WriteEncodedUInt(len);
@@ -2649,14 +2645,14 @@ void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop)
 	if( prop->GetInitFunc() )
 	{
 		bool f = true;
-		WRITE_NUM(f);
+		WriteData(&f, 1);
 
 		WriteFunction(prop->GetInitFunc());
 	}
 	else
 	{
 		bool f = false;
-		WRITE_NUM(f);
+		WriteData(&f, 1);
 	}
 }
 
@@ -2664,7 +2660,7 @@ void asCWriter::WriteObjectProperty(asCObjectProperty* prop)
 {
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
-	WRITE_NUM(prop->isPrivate);
+	WriteData(&prop->isPrivate, 1);
 }
 
 void asCWriter::WriteDataType(const asCDataType *dt) 
@@ -2691,14 +2687,14 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	{
 		WriteObjectType(dt->GetObjectType());
 		b = dt->IsObjectHandle();
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 		b = dt->IsHandleToConst();
-		WRITE_NUM(b);
+		WriteData(&b, 1);
 	}
 	b = dt->IsReference();
-	WRITE_NUM(b);
+	WriteData(&b, 1);
 	b = dt->IsReadOnly();
-	WRITE_NUM(b);
+	WriteData(&b, 1);
 
 	if( t == ttIdentifier && dt->GetObjectType()->name == "_builtin_function_" )
 	{
@@ -2717,39 +2713,39 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 		if( ot->templateSubType.GetTokenType() != ttUnrecognizedToken )
 		{
 			ch = 'a';
-			WRITE_NUM(ch);
+			WriteData(&ch, 1);
 			WriteString(&ot->name);
 
 			if( ot->templateSubType.IsObject() || ot->templateSubType.IsEnumType() )
 			{
 				ch = 's';
-				WRITE_NUM(ch);
+				WriteData(&ch, 1);
 				WriteObjectType(ot->templateSubType.GetObjectType());
 
 				if( ot->templateSubType.IsObjectHandle() )
 					ch = 'h';
 				else
 					ch = 'o';
-				WRITE_NUM(ch);
+				WriteData(&ch, 1);
 			}
 			else
 			{
 				ch = 't';
-				WRITE_NUM(ch);
+				WriteData(&ch, 1);
 				eTokenType t = ot->templateSubType.GetTokenType();
-				WRITE_NUM(t);
+				WriteEncodedUInt(t);
 			}
 		}
 		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
 		{
 			ch = 's';
-			WRITE_NUM(ch);
+			WriteData(&ch, 1);
 			WriteString(&ot->name);
 		}
 		else
 		{
 			ch = 'o';
-			WRITE_NUM(ch);
+			WriteData(&ch, 1);
 			WriteString(&ot->name);
 			WriteString(&ot->nameSpace);
 		}
@@ -2757,7 +2753,7 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 	else
 	{
 		ch = '\0';
-		WRITE_NUM(ch);
+		WriteData(&ch, 1);
 	}
 }
 
@@ -3171,7 +3167,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Just write 1 byte
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 			}
 			break;
 		case asBCTYPE_W_ARG:
@@ -3180,11 +3176,11 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 				
 				// Write the argument
 				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 			}
 			break;
 		case asBCTYPE_rW_DW_ARG:
@@ -3193,11 +3189,11 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the word argument
 				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the dword argument
 				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
@@ -3208,7 +3204,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the argument
 				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
@@ -3219,7 +3215,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the dword argument
 				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
@@ -3234,19 +3230,19 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the first argument
 				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the second argument
 				w = *(((asWORD*)tmp)+2);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the third argument
 				w = *(((asWORD*)tmp)+3);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 			}
 			break;
 		case asBCTYPE_wW_rW_ARG:
@@ -3255,15 +3251,15 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the first argument
 				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the second argument
 				w = *(((asWORD*)tmp)+2);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 			}
 			break;
 		case asBCTYPE_wW_rW_DW_ARG:
@@ -3271,49 +3267,49 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the first argument
 				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the second argument
 				w = *(((asWORD*)tmp)+2);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the third argument
 				// TODO: This could be encoded as an int to decrease the size
 				asDWORD dw = tmp[2];
-				WRITE_NUM(dw);
+				WriteData(&dw, 4);
 			}
 			break;
 		case asBCTYPE_QW_ARG:
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WRITE_NUM(qw);
+				WriteData(&qw, 8);
 			}
 			break;
 		case asBCTYPE_QW_DW_ARG:
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WRITE_NUM(qw);
+				WriteData(&qw, 8);
 
 				// Write the second argument
 				// TODO: This could be encoded as an int to decrease the size
 				asDWORD dw = tmp[3];
-				WRITE_NUM(dw);
+				WriteData(&dw, 4);
 			}
 			break;
 		case asBCTYPE_rW_QW_ARG:
@@ -3321,16 +3317,16 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			{
 				// Write the instruction code
 				asBYTE b = (asBYTE)c;
-				WRITE_NUM(b);
+				WriteData(&b, 1);
 
 				// Write the first argument
 				asWORD w = *(((asWORD*)tmp)+1);
-				WRITE_NUM(w);
+				WriteData(&w, 2);
 
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WRITE_NUM(qw);
+				WriteData(&qw, 8);
 			}
 			break;
 		default:
@@ -3340,7 +3336,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 
 				// Store the bc as is
 				for( int n = 0; n < asBCTypeSize[asBCInfo[c].type]; n++ )
-					WRITE_NUM(tmp[n]);
+					WriteData(&tmp[n], 4);
 			}
 		}
 
@@ -3413,7 +3409,7 @@ void asCWriter::WriteUsedGlobalProps()
 		WriteDataType(&prop->type);
 
 		// Also store whether the property is a module property or a registered property
-		WRITE_NUM(moduleProp);
+		WriteData(&moduleProp, 1);
 	}
 }
 
