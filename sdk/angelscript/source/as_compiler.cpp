@@ -171,11 +171,32 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	byteCode.InstrSHORT(asBC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
-	// TODO: bytecode: how will this work with platform independent bytecode, as the size of the args may vary?
-	int argDwords = (int)outFunc->GetSpaceNeededForArguments();
-	for( int a = argDwords-1; a >= 0; a-- )
-		byteCode.InstrSHORT(asBC_PshV4, short(-a));
+	// TODO: optimize: Might be interesting to have a specific instruction for copying all arguments
+	int offset = (int)outFunc->GetSpaceNeededForArguments();
+	for( int a = int(outFunc->parameterTypes.GetLength()) - 1; a >= 0; a-- )
+	{
+		if( outFunc->parameterTypes[a].GetObjectType() ||
+			outFunc->parameterTypes[a].IsReference() )
+		{
+			offset -= AS_PTR_SIZE;
+			byteCode.InstrSHORT(asBC_PshVPtr, short(-offset));
+		}
+		else
+		{
+			if( outFunc->parameterTypes[a].GetSizeOnStackDWords() == 2 )
+			{
+				offset -= 2;
+				byteCode.InstrSHORT(asBC_PshV8, short(-offset));
+			}
+			else
+			{
+				offset -= 1;
+				byteCode.InstrSHORT(asBC_PshV4, short(-offset));
+			}
+		}
+	}
 
+	int argDwords = (int)outFunc->GetSpaceNeededForArguments();
 	byteCode.Alloc(asBC_ALLOC, dt.GetObjectType(), constructor, argDwords + AS_PTR_SIZE);
 
 	// Return a handle to the newly created object
