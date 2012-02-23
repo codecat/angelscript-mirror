@@ -1813,12 +1813,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			// The size is dword offset 
 			bc[n+1] = size;
 		}
-		else if( c == asBC_GETREF ||
-			     c == asBC_GETOBJ ||
-				 c == asBC_GETOBJREF )
-		{
-			asBC_WORDARG0(&bc[n]) = (asWORD)AdjustGetOffset(asBC_WORDARG0(&bc[n]), func, n);
-		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
@@ -1864,6 +1858,15 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		default:
 			// The other types don't treat variables so won't be modified
 			break;
+		}
+
+		// Adjust the get offsets. This must be done in the second iteration because
+		// it relies on the function ids already being correct in the bytecode ahead
+		if( c == asBC_GETREF ||
+		    c == asBC_GETOBJ ||
+		    c == asBC_GETOBJREF )
+		{
+			asBC_WORDARG0(&bc[n]) = (asWORD)AdjustGetOffset(asBC_WORDARG0(&bc[n]), func, n);
 		}
 
 		if( c == asBC_PUSH )
@@ -2021,13 +2024,16 @@ int asCReader::AdjustStackPosition(int pos)
 	return pos;
 }
 
-int asCReader::AdjustGetOffset(int offset, asCScriptFunction * /*func*/, asDWORD /*programPos*/)
+int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos)
 {
 	// TODO: optimize: multiple instructions for the same function doesn't need to look for the function everytime
 	//                 the function can remember where it found the function and check if the programPos is still valid
 
-	// TODO: bytecode: Find out which function that will be called
-/*	asCScriptFunction *calledFunc = 0;
+	// Get offset 0 doesn't need adjustment
+	if( offset == 0 ) return 0;
+
+	// Find out which function that will be called
+	asCScriptFunction *calledFunc = 0;
 	for( asUINT n = programPos; func->byteCode.GetLength(); )
 	{
 		asBYTE bc = *(asBYTE*)&func->byteCode[n];
@@ -2036,28 +2042,72 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction * /*func*/, asDWORD
 			bc == asBC_CALLINTF )
 		{
 			// Find the function from the function id in bytecode
+			int funcId = asBC_INTARG(&func->byteCode[n]);
+			calledFunc = engine->scriptFunctions[funcId];
+			break;
 		}
 		else if( bc == asBC_ALLOC )
 		{
 			// Find the function from the function id in the bytecode
+			int funcId = asBC_INTARG(&func->byteCode[n+AS_PTR_SIZE]);
+			calledFunc = engine->scriptFunctions[funcId];
+			break;
 		}
 		else if( bc == asBC_CALLBND )
 		{
-			// Find the function from the module's bind array
+			// Find the function from the engine's bind array
+			int funcId = asBC_INTARG(&func->byteCode[n]);
+			calledFunc = engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
 		}
 		else if( bc == asBC_CallPtr )
 		{
 			// Find the funcdef from the local variable
+			//int var = asBC_SWORDARG0(&func->byteCode[n]);
+			// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
+			return offset;
+		}
+		else if( bc == asBC_REFCPY )
+		{
+			// In this case we know there is only 1 pointer on the stack above
+			asASSERT( offset == 1 );
+			return offset - (1 - AS_PTR_SIZE);
 		}
 
 		n += asBCTypeSize[asBCInfo[bc].type];
 	}
-*/
+
 	// Count the number of pointers pushed on the stack above the 
 	// current offset, and then adjust the offset accordingly
-	// TODO: bytecode: 
+	asUINT numPtrs = 0;
+	int currOffset = 0;
+	if( offset > currOffset && calledFunc->GetObjectType() )
+	{
+		numPtrs++;
+		currOffset++;
+	}
+	if( offset > currOffset && calledFunc->DoesReturnOnStack() )
+	{
+		numPtrs++;
+		currOffset++;
+	}
+	for( asUINT p = 0; p < calledFunc->parameterTypes.GetLength(); p++ )
+	{
+		if( offset <= currOffset ) break;
 
-	return offset;
+		if( calledFunc->parameterTypes[p].GetObjectType() ||
+			calledFunc->parameterTypes[p].IsReference() )
+		{
+			numPtrs++;
+			currOffset++;
+		}
+		else
+		{
+			asASSERT( calledFunc->parameterTypes[p].IsPrimitive() );
+			currOffset += calledFunc->parameterTypes[p].GetSizeOnStackDWords();
+		}
+	}
+
+	return offset - numPtrs * (1 - AS_PTR_SIZE);
 }
 
 int asCReader::FindTypeId(int idx)
@@ -2834,13 +2884,16 @@ int asCWriter::AdjustStackPosition(int pos)
 	return pos;
 }
 
-int asCWriter::AdjustGetOffset(int offset, asCScriptFunction * /*func*/, asDWORD /*programPos*/)
+int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos)
 {
 	// TODO: optimize: multiple instructions for the same function doesn't need to look for the function everytime
 	//                 the function can remember where it found the function and check if the programPos is still valid
 
-	// TODO: bytecode: Find out which function that will be called
-/*	asCScriptFunction *calledFunc = 0;
+	// Get offset 0 doesn't need adjustment
+	if( offset == 0 ) return 0;
+
+	// Find out which function that will be called
+	asCScriptFunction *calledFunc = 0;
 	for( asUINT n = programPos; func->byteCode.GetLength(); )
 	{
 		asBYTE bc = *(asBYTE*)&func->byteCode[n];
@@ -2849,28 +2902,76 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction * /*func*/, asDWORD
 			bc == asBC_CALLINTF )
 		{
 			// Find the function from the function id in bytecode
+			int funcId = asBC_INTARG(&func->byteCode[n]);
+			calledFunc = engine->scriptFunctions[funcId];
+			break;
 		}
 		else if( bc == asBC_ALLOC )
 		{
 			// Find the function from the function id in the bytecode
+			int funcId = asBC_INTARG(&func->byteCode[n+AS_PTR_SIZE]);
+			calledFunc = engine->scriptFunctions[funcId];
+			break;
 		}
 		else if( bc == asBC_CALLBND )
 		{
-			// Find the function from the module's bind array
+			// Find the function from the engine's bind array
+			int funcId = asBC_INTARG(&func->byteCode[n]);
+			calledFunc = engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
 		}
 		else if( bc == asBC_CallPtr )
 		{
 			// Find the funcdef from the local variable
+			//int var = asBC_SWORDARG0(&func->byteCode[n]);
+			// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
+			asASSERT( false && "not yet implemented" );
+			return offset;
+		}
+		else if( bc == asBC_REFCPY )
+		{
+			// In this case we know there is only 1 pointer on the stack above
+			asASSERT( offset == AS_PTR_SIZE );
+			return offset + (1 - AS_PTR_SIZE);
 		}
 
 		n += asBCTypeSize[asBCInfo[bc].type];
 	}
-*/
+
 	// Count the number of pointers pushed on the stack above the 
 	// current offset, and then adjust the offset accordingly
-	// TODO: bytecode: 
+	asUINT numPtrs = 0;
+	int currOffset = 0;
+	if( offset > currOffset && calledFunc->GetObjectType() )
+	{
+		numPtrs++;
+		currOffset += AS_PTR_SIZE;
+	}
+	if( offset > currOffset && calledFunc->DoesReturnOnStack() )
+	{
+		numPtrs++;
+		currOffset += AS_PTR_SIZE;
+	}
+	for( asUINT p = 0; p < calledFunc->parameterTypes.GetLength(); p++ )
+	{
+		if( offset <= currOffset ) break;
 
-	return offset;
+		if( calledFunc->parameterTypes[p].GetObjectType() ||
+			calledFunc->parameterTypes[p].IsReference() )
+		{
+			numPtrs++;
+			currOffset += AS_PTR_SIZE;
+		}
+		else
+		{
+			asASSERT( calledFunc->parameterTypes[p].IsPrimitive() );
+			currOffset += calledFunc->parameterTypes[p].GetSizeOnStackDWords();
+		}
+	}
+
+	// The get offset must match one of the parameter offsets
+	asASSERT( offset == currOffset );
+	
+	return offset + numPtrs * (1 - AS_PTR_SIZE);
 }
 
 void asCWriter::WriteByteCode(asCScriptFunction *func)
