@@ -1121,17 +1121,13 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		pos = gvar->nextNode->tokenPos;
 	LineInstr(&byteCode, pos);
 
-	// We need to push zeroes on the stack to guarantee
-	// that temporary object handles are clear
-	// TODO: bytecode: How will this work with platform independent bytecode as the pointer size can vary?
-	int n;
-	for( n = 0; n < varSize; n++ )
-		byteCode.InstrINT(asBC_PshC4, 0);
+	// Reserve space for all local variables
+	byteCode.Push(varSize);
 
 	byteCode.AddCode(&ctx.bc);
 
 	// Deallocate variables in this block, in reverse order
-	for( n = (int)variables->variables.GetLength() - 1; n >= 0; --n )
+	for( int n = (int)variables->variables.GetLength() - 1; n >= 0; --n )
 	{
 		sVariable *v = variables->variables[n];
 
