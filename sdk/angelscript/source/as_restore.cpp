@@ -43,8 +43,6 @@
 
 BEGIN_AS_NAMESPACE
 
-#define READ_NUM(N) ReadData(&(N), sizeof(N))
-
 asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
@@ -392,7 +390,7 @@ void asCReader::ReadUsedFunctions()
 		// Read the data to be able to uniquely identify the function
 
 		// Is the function from the module or the application?
-		READ_NUM(c);
+		ReadData(&c, 1);
 
 		asCScriptFunction func(engine, c == 'm' ? module : 0, asFUNC_DUMMY);
 		ReadFunctionSignature(&func);
@@ -479,7 +477,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( func->objectType )
 	{
 		asBYTE b;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		func->isReadOnly = (b & 1) ? true : false;
 		func->isPrivate  = (b & 2) ? true : false;
 	}
@@ -488,7 +486,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, bool addToGC) 
 {
 	char c;
-	READ_NUM(c);
+	ReadData(&c, 1);
 
 	if( c == '\0' )
 	{
@@ -537,7 +535,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 			func->objVariableTypes.PushLast(ReadObjectType());
 			num = ReadEncodedUInt();
 			func->objVariablePos.PushLast(num);
-			bool b; READ_NUM(b);
+			bool b; ReadData(&b, 1);
 			func->objVariableIsOnHeap.PushLast(b);
 		}
 
@@ -557,7 +555,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		for( i = 0; i < length; ++i )
 			func->lineNumbers[i] = ReadEncodedUInt();
 
-		READ_NUM(func->isShared);
+		ReadData(&func->isShared, 1);
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{
@@ -588,7 +586,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 	{
 		// Read the initial attributes
 		ReadString(&ot->name);
-		READ_NUM(ot->flags);
+		ReadData(&ot->flags, 4);
 		ot->size = ReadEncodedUInt();
 		ReadString(&ot->nameSpace);
 
@@ -623,7 +621,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			{
 				asSEnumValue *e = asNEW(asSEnumValue);
 				ReadString(&e->name);
-				READ_NUM(e->value);
+				ReadData(&e->value, 4);
 				ot->enumValues.PushLast(e);
 			}
 		}
@@ -930,7 +928,7 @@ asUINT asCReader::ReadEncodedUInt()
 {
 	asUINT i = 0;
 	asBYTE b;
-	READ_NUM(b);
+	ReadData(&b, 1);
 	if( b < 128 )
 	{
 		i = b;
@@ -938,36 +936,36 @@ asUINT asCReader::ReadEncodedUInt()
 	else if( b < 192 )
 	{
 		i = asUINT(b & 0x3F) << 8;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += b;
 	}
 	else if( b < 224 )
 	{
 		i = asUINT(b & 0x1F) << 16;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += asUINT(b) << 8;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += b;
 	}
 	else if( b < 240 )
 	{
 		i = asUINT(b & 0x0F) << 24;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += asUINT(b) << 16;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += asUINT(b) << 8;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += b;
 	}
 	else
 	{
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += asUINT(b) << 24;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += asUINT(b) << 16;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += asUINT(b) << 8;
-		READ_NUM(b);
+		ReadData(&b, 1);
 		i += b;
 	}
 
@@ -977,7 +975,7 @@ asUINT asCReader::ReadEncodedUInt()
 void asCReader::ReadString(asCString* str) 
 {
 	char b;
-	READ_NUM(b);
+	ReadData(&b, 1);
 	if( b == '\0' )
 	{
 		str->SetLength(0);
@@ -1011,7 +1009,7 @@ void asCReader::ReadGlobalProperty()
 
 	// Read the initialization function
 	bool f;
-	READ_NUM(f);
+	ReadData(&f, 1);
 	if( f )
 	{
 		asCScriptFunction *func = ReadFunction(false, true);
@@ -1028,7 +1026,7 @@ void asCReader::ReadObjectProperty(asCObjectType *ot)
 	asCDataType dt;
 	ReadDataType(&dt);
 	bool isPrivate;
-	READ_NUM(isPrivate);
+	ReadData(&isPrivate, 1);
 
 	// TODO: shared: If the type is shared and pre-existing, we should just 
 	//               validate that the loaded methods match the original 
@@ -1059,11 +1057,11 @@ void asCReader::ReadDataType(asCDataType *dt)
 	if( tokenType == ttIdentifier )
 	{
 		objType = ReadObjectType();
-		READ_NUM(isObjectHandle);
-		READ_NUM(isHandleToConst);
+		ReadData(&isObjectHandle, 1);
+		ReadData(&isHandleToConst, 1);
 	}
-	READ_NUM(isReference);
-	READ_NUM(isReadOnly);
+	ReadData(&isReference, 1);
+	ReadData(&isReadOnly, 1);
 
 	asCScriptFunction *funcDef = 0;
 	if( tokenType == ttIdentifier && objType && objType->name == "_builtin_function_" )
@@ -1118,7 +1116,7 @@ asCObjectType* asCReader::ReadObjectType()
 {
 	asCObjectType *ot = 0;
 	char ch;
-	READ_NUM(ch);
+	ReadData(&ch, 1);
 	if( ch == 'a' )
 	{
 		// Read the name of the template type
@@ -1134,7 +1132,7 @@ asCObjectType* asCReader::ReadObjectType()
 			return 0;
 		}
 
-		READ_NUM(ch);
+		ReadData(&ch, 1);
 		if( ch == 's' )
 		{
 			ot = ReadObjectType();
@@ -1149,7 +1147,7 @@ asCObjectType* asCReader::ReadObjectType()
 
 			asCDataType dt = asCDataType::CreateObject(ot, false);
 
-			READ_NUM(ch);
+			ReadData(&ch, 1);
 			if( ch == 'h' )
 				dt.MakeHandle(true);
 
@@ -1266,7 +1264,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 	while( numInstructions )
 	{
 		asBYTE b;
-		READ_NUM(b);
+		ReadData(&b, 1);
 
 		// Allocate the space for the instruction
 		asUINT len = asBCTypeSize[asBCInfo[b].type];
@@ -1290,7 +1288,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the argument
 				asWORD w;
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 
 				bc++;
@@ -1304,7 +1302,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the word argument
 				asWORD w;
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
@@ -1343,16 +1341,16 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the first argument
 				asWORD w;
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(asWORD*)bc = w;
 
 				// Read the third argument
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 
 				bc++;
@@ -1366,12 +1364,12 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the first argument
 				asWORD w;
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(asWORD*)bc = w;
 
 				bc++;
@@ -1384,18 +1382,18 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the first argument
 				asWORD w;
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(asWORD*)bc = w;
 				bc++;
 	
 				// Read the third argument
 				asDWORD dw;
-				READ_NUM(dw);
+				ReadData(&dw, 4);
 				*bc++ = dw;
 			}
 			break;
@@ -1406,7 +1404,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the argument
 				asQWORD qw;
-				READ_NUM(qw);
+				ReadData(&qw, 8);
 				*(asQWORD*)bc = qw;
 				bc += 2;
 			}
@@ -1418,13 +1416,13 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the first argument
 				asQWORD qw;
-				READ_NUM(qw);
+				ReadData(&qw, 8);
 				*(asQWORD*)bc = qw;
 				bc += 2;
 
 				// Read the second argument
 				asDWORD dw;
-				READ_NUM(dw);
+				ReadData(&dw, 4);
 				*bc++ = dw;
 			}
 			break;
@@ -1435,13 +1433,13 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the first argument
 				asWORD w;
-				READ_NUM(w);
+				ReadData(&w, 2);
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the argument
 				asQWORD qw;
-				READ_NUM(qw);
+				ReadData(&qw, 8);
 				*(asQWORD*)bc = qw;
 				bc += 2;
 			}
@@ -1455,14 +1453,14 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				asDWORD c; asBYTE t;
 #if defined(AS_BIG_ENDIAN)
 				c = b << 24;
-				READ_NUM(t); c += t << 16;
-				READ_NUM(t); c += t << 8;
-				READ_NUM(t); c += t;
+				ReadData(&t, 1); c += t << 16;
+				ReadData(&t, 1); c += t << 8;
+				ReadData(&t, 1); c += t;
 #else
 				c = b;
-				READ_NUM(t); c += t << 8;
-				READ_NUM(t); c += t << 16;
-				READ_NUM(t); c += t << 24;
+				ReadData(&t, 1); c += t << 8;
+				ReadData(&t, 1); c += t << 16;
+				ReadData(&t, 1); c += t << 24;
 #endif
 
 				*bc++ = c;
@@ -1470,7 +1468,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 				// Read the bc as is
 				for( int n = 1; n < asBCTypeSize[asBCInfo[c].type]; n++ )
-					READ_NUM(*bc++);
+					ReadData(&*bc++, 4);
 			}
 		}
 
@@ -1505,7 +1503,7 @@ void asCReader::ReadUsedGlobalProps()
 		ReadString(&name);
 		ReadString(&nameSpace);
 		ReadDataType(&type);
-		READ_NUM(moduleProp);
+		ReadData(&moduleProp, 1);
 
 		// Find the real property
 		void *prop = 0;

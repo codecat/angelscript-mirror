@@ -341,8 +341,7 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	// TODO: These should eventually be equal, once the bytecode is fully platform independent
-	if( stream.buffer.size() != 1481) 
+	if( stream.buffer.size() != 1481 ) 
 	{
 		printf("The saved byte code is not of the expected size 1481. It is %d bytes\n", stream.buffer.size());
 	}
