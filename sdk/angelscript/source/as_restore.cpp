@@ -2455,7 +2455,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		WriteData(&ot->flags, 4);
 
 		// size
-		if( (ot->flags & asOBJ_SCRIPT_OBJECT) & ot->size )
+		if( (ot->flags & asOBJ_SCRIPT_OBJECT) && ot->size > 0 )
 		{
 			// The size for script objects may vary from platform to platform so 
 			// only store 1 to diferentiate from interfaces that have size 0.
@@ -3158,6 +3158,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			asBC_WORDARG0(tmp) = (asWORD)AdjustStackPosition(asBC_WORDARG0(tmp));
 		}
 				 
+		// TODO: bytecode: Must make sure that bytecode instructions that contain pointers are always stored the same way regardless of platform
 		// Now store the instruction in the smallest possible way
 		switch( asBCInfo[c].type )
 		{
