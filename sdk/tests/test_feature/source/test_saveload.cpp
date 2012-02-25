@@ -341,14 +341,14 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1481 ) 
+	if( stream.buffer.size() != 1478 ) 
 	{
-		printf("The saved byte code is not of the expected size 1481. It is %d bytes\n", stream.buffer.size());
+		printf("The saved byte code is not of the expected size 1478. It is %d bytes\n", stream.buffer.size());
 	}
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 458 ) 
+	if( zeroes != 455 ) 
 	{
-		printf("The saved byte code contains a different amount of zeroes than the expected 458. Counted %d\n", zeroes);
+		printf("The saved byte code contains a different amount of zeroes than the expected 455. Counted %d\n", zeroes);
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
 

@@ -926,20 +926,32 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 
 asUINT asCReader::ReadEncodedUInt()
 {
-	asUINT i = 0;
+	asQWORD qw = ReadEncodedUInt64();
+	if( qw > 0xFFFFFFFFu )
+	{
+		// TODO: Write message
+		error = true;
+	}
+
+	return asUINT(qw & 0xFFFFFFFFu);
+}
+
+asQWORD asCReader::ReadEncodedUInt64()
+{
+	asQWORD i = 0;
 	asBYTE b;
 	ReadData(&b, 1);
-	if( b < 128 )
+	if( b < 0x80 )
 	{
 		i = b;
 	}
-	else if( b < 192 )
+	else if( b < 0xC0 )
 	{
 		i = asUINT(b & 0x3F) << 8;
 		ReadData(&b, 1);
 		i += b;
 	}
-	else if( b < 224 )
+	else if( b < 0xE0 )
 	{
 		i = asUINT(b & 0x1F) << 16;
 		ReadData(&b, 1);
@@ -947,7 +959,7 @@ asUINT asCReader::ReadEncodedUInt()
 		ReadData(&b, 1);
 		i += b;
 	}
-	else if( b < 240 )
+	else if( b < 0xF0 )
 	{
 		i = asUINT(b & 0x0F) << 24;
 		ReadData(&b, 1);
@@ -957,8 +969,58 @@ asUINT asCReader::ReadEncodedUInt()
 		ReadData(&b, 1);
 		i += b;
 	}
+	else if( b < 0xF8 )
+	{
+		i = asQWORD(b & 0x07) << 32;
+		ReadData(&b, 1);
+		i += asUINT(b) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}
+	else if( b < 0xFC )
+	{
+		i = asQWORD(b & 0x03) << 40;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 32;
+		ReadData(&b, 1);
+		i += asUINT(b) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}
+	else if( b < 0xFE )
+	{
+		i = asQWORD(b & 0x01) << 48;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 40;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 32;
+		ReadData(&b, 1);
+		i += asUINT(b) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}
 	else
 	{
+		ReadData(&b, 1);
+		i = asQWORD(b) << 56;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 48;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 40;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 32;
 		ReadData(&b, 1);
 		i += asUINT(b) << 24;
 		ReadData(&b, 1);
@@ -1392,8 +1454,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc++;
 	
 				// Read the third argument
-				asDWORD dw;
-				ReadData(&dw, 4);
+				asDWORD dw = ReadEncodedUInt();
 				*bc++ = dw;
 			}
 			break;
@@ -1403,8 +1464,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc++;
 
 				// Read the argument
-				asQWORD qw;
-				ReadData(&qw, 8);
+				asQWORD qw = ReadEncodedUInt64();
 				*(asQWORD*)bc = qw;
 				bc += 2;
 			}
@@ -1415,14 +1475,12 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc++;
 
 				// Read the first argument
-				asQWORD qw;
-				ReadData(&qw, 8);
+				asQWORD qw = ReadEncodedUInt64();
 				*(asQWORD*)bc = qw;
 				bc += 2;
 
 				// Read the second argument
-				asDWORD dw;
-				ReadData(&dw, 4);
+				asDWORD dw = ReadEncodedUInt();
 				*bc++ = dw;
 			}
 			break;
@@ -1438,8 +1496,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc++;
 
 				// Read the argument
-				asQWORD qw;
-				ReadData(&qw, 8);
+				asQWORD qw = ReadEncodedUInt64();
 				*(asQWORD*)bc = qw;
 				bc += 2;
 			}
@@ -2545,52 +2602,80 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 }
 
-void asCWriter::WriteEncodedUInt(asUINT i)
+void asCWriter::WriteEncodedUInt(asQWORD i)
 {
-	if( i < 128 )
+	asBYTE b;
+	if( i < (1<<7) )
 	{
-		asBYTE b = (asBYTE)i;
-		WriteData(&b, 1);
+		b = (asBYTE)i; WriteData(&b, 1);
 	}
-	else if( i < 16384 )
+	else if( i < (1<<14) )
 	{
-		asBYTE b = asBYTE(0x80 + (i >> 8));
-		WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);
-		WriteData(&b, 1);
+		b = asBYTE(0x80 + (i >> 8)); WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);        WriteData(&b, 1);
 	}
-	else if( i < 2097152 )
+	else if( i < (1<<21) )
 	{
-		asBYTE b = asBYTE(0xC0 + (i >> 16));
-		WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);
-		WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);
-		WriteData(&b, 1);
+		b = asBYTE(0xC0 + (i >> 16)); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
-	else if( i < 268435456 )
+	else if( i < (1<<28) )
 	{
-		asBYTE b = asBYTE(0xE0 + (i >> 24));
-		WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF);
-		WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);
-		WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);
-		WriteData(&b, 1);
+		b = asBYTE(0xE0 + (i >> 24)); WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
-	else
+	else if( i < (asQWORD(1)<<35) )
 	{
-		asBYTE b = asBYTE(0xF0);
-		WriteData(&b, 1);
-		b = asBYTE((i >> 24) & 0xFF);
-		WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF);
-		WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);
-		WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);
-		WriteData(&b, 1);
+		b = asBYTE(0xF0 + (i >> 32)); WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+	}
+	else if( i < (asQWORD(1)<<42) )
+	{
+		b = asBYTE(0xF8 + (i >> 40)); WriteData(&b, 1);
+		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+	}
+	else if( i < (asQWORD(1)<<49) )
+	{
+		b = asBYTE(0xFC + (i >> 48)); WriteData(&b, 1);
+		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+	}
+	else if( i < (asQWORD(1)<<56) )
+	{
+		b = asBYTE(0xFE);             WriteData(&b, 1);
+		b = asBYTE((i >> 48) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+	}
+	else 
+	{
+		b = asBYTE(0xFF);             WriteData(&b, 1);
+		b = asBYTE((i >> 56) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 48) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
 }
 
@@ -3279,7 +3364,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Write the third argument
 				// TODO: This could be encoded as an int to decrease the size
 				asDWORD dw = tmp[2];
-				WriteData(&dw, 4);
+				WriteEncodedUInt(dw);
 			}
 			break;
 		case asBCTYPE_QW_ARG:
@@ -3291,7 +3376,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WriteData(&qw, 8);
+				WriteEncodedUInt(qw);
 			}
 			break;
 		case asBCTYPE_QW_DW_ARG:
@@ -3303,12 +3388,12 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WriteData(&qw, 8);
+				WriteEncodedUInt(qw);
 
 				// Write the second argument
 				// TODO: This could be encoded as an int to decrease the size
 				asDWORD dw = tmp[3];
-				WriteData(&dw, 4);
+				WriteEncodedUInt(dw);
 			}
 			break;
 		case asBCTYPE_rW_QW_ARG:
@@ -3325,7 +3410,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WriteData(&qw, 8);
+				WriteEncodedUInt(qw);
 			}
 			break;
 		default:
