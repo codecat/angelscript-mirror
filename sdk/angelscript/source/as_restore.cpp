@@ -924,10 +924,22 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 }
 
+asWORD asCReader::ReadEncodedUInt16()
+{
+	asDWORD dw = ReadEncodedUInt();
+	if( (dw>>16) != 0 && (dw>>16) != 0xFFFF )
+	{
+		// TODO: Write message
+		error = true;
+	}
+
+	return asWORD(dw & 0xFFFF);
+}
+
 asUINT asCReader::ReadEncodedUInt()
 {
 	asQWORD qw = ReadEncodedUInt64();
-	if( qw > 0xFFFFFFFFu )
+	if( (qw>>32) != 0 && (qw>>32) != 0xFFFFFFFF )
 	{
 		// TODO: Write message
 		error = true;
@@ -941,77 +953,10 @@ asQWORD asCReader::ReadEncodedUInt64()
 	asQWORD i = 0;
 	asBYTE b;
 	ReadData(&b, 1);
-	if( b < 0x80 )
-	{
-		i = b;
-	}
-	else if( b < 0xC0 )
-	{
-		i = asUINT(b & 0x3F) << 8;
-		ReadData(&b, 1);
-		i += b;
-	}
-	else if( b < 0xE0 )
-	{
-		i = asUINT(b & 0x1F) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
-	}
-	else if( b < 0xF0 )
-	{
-		i = asUINT(b & 0x0F) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
-	}
-	else if( b < 0xF8 )
-	{
-		i = asQWORD(b & 0x07) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
-	}
-	else if( b < 0xFC )
-	{
-		i = asQWORD(b & 0x03) << 40;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
-	}
-	else if( b < 0xFE )
-	{
-		i = asQWORD(b & 0x01) << 48;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 40;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
-	}
-	else
+	bool isNegative = ( b & 0x80 ) ? true : false;
+	b &= 0x7F;
+	
+	if( (b & 0x7F) == 0x7F )
 	{
 		ReadData(&b, 1);
 		i = asQWORD(b) << 56;
@@ -1030,6 +975,78 @@ asQWORD asCReader::ReadEncodedUInt64()
 		ReadData(&b, 1);
 		i += b;
 	}
+	else if( (b & 0x7E) == 0x7E )
+	{
+		i = asQWORD(b & 0x01) << 48;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 40;
+		ReadData(&b, 1);
+		i = asQWORD(b) << 32;
+		ReadData(&b, 1);
+		i += asUINT(b) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}	
+	else if( (b & 0x7C) == 0x7C )
+	{
+		i = asQWORD(b & 0x03) << 40;
+		ReadData(&b, 1);
+		i += asQWORD(b) << 32;
+		ReadData(&b, 1);
+		i += asUINT(b) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}	
+	else if( (b & 0x78) == 0x78 )
+	{
+		i = asQWORD(b & 0x07) << 32;
+		ReadData(&b, 1);
+		i += asUINT(b) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}	
+	else if( (b & 0x70) == 0x70 )
+	{
+		i = asUINT(b & 0x0F) << 24;
+		ReadData(&b, 1);
+		i += asUINT(b) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}
+	else if( (b & 0x60) == 0x60 )
+	{
+		i = asUINT(b & 0x1F) << 16;
+		ReadData(&b, 1);
+		i += asUINT(b) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}
+	else if( (b & 0x40) == 0x40 )
+	{
+		i = asUINT(b & 0x3F) << 8;
+		ReadData(&b, 1);
+		i += b;
+	}
+	else
+	{
+		i = b;
+	}
+	if( isNegative )
+		i = (asQWORD)(-asINT64(i));
 
 	return i;
 }
@@ -1349,8 +1366,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				*(asBYTE*)(bc) = b;
 
 				// Read the argument
-				asWORD w;
-				ReadData(&w, 2);
+				asWORD w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 
 				bc++;
@@ -1363,13 +1379,11 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				*(asBYTE*)(bc) = b;
 
 				// Read the word argument
-				asWORD w;
-				ReadData(&w, 2);
+				asWORD w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the dword argument
-				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
 				*bc++ = ReadEncodedUInt();
 			}
 			break;
@@ -1379,7 +1393,6 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc++;
 
 				// Read the argument
-				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
 				*bc++ = ReadEncodedUInt();
 			}
 			break;
@@ -1389,11 +1402,9 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc++;
 
 				// Read the first argument
-				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
 				*bc++ = ReadEncodedUInt();
 
 				// Read the second argument
-				// TODO: Should be ReadEncodedInt() since we do not know if it is a signed value or not
 				*bc++ = ReadEncodedUInt();
 			}
 			break;
@@ -1402,17 +1413,16 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
-				asWORD w;
-				ReadData(&w, 2);
+				asWORD w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
-				ReadData(&w, 2);
+				w = ReadEncodedUInt16();
 				*(asWORD*)bc = w;
 
 				// Read the third argument
-				ReadData(&w, 2);
+				w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 
 				bc++;
@@ -1425,13 +1435,12 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
-				asWORD w;
-				ReadData(&w, 2);
+				asWORD w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
-				ReadData(&w, 2);
+				w = ReadEncodedUInt16();
 				*(asWORD*)bc = w;
 
 				bc++;
@@ -1443,13 +1452,12 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
-				asWORD w;
-				ReadData(&w, 2);
+				asWORD w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
 				// Read the second argument
-				ReadData(&w, 2);
+				w = ReadEncodedUInt16();
 				*(asWORD*)bc = w;
 				bc++;
 	
@@ -1490,8 +1498,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				*(asBYTE*)(bc) = b;
 
 				// Read the first argument
-				asWORD w;
-				ReadData(&w, 2);
+				asWORD w = ReadEncodedUInt16();
 				*(((asWORD*)bc)+1) = w;
 				bc++;
 
@@ -1969,7 +1976,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 	// The stack needed by the function will be adjusted by the highest variable shift
 	// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
-	//                 also for pointers pushed on the stack as function arguments
+	//                 also for pointers pushed on the stack as function arguments.
+	//                 Calculate this similarly to how asCByteCode::PostProcess calculates it
 	func->stackNeeded = AdjustStackPosition(func->stackNeeded);
 }
 
@@ -2214,7 +2222,7 @@ int asCWriter::Write()
 	
 	// Store enums
 	count = (asUINT)module->enumTypes.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; i++ )
 	{
 		WriteObjectTypeDeclaration(module->enumTypes[i], 1);
@@ -2223,7 +2231,7 @@ int asCWriter::Write()
 
 	// Store type declarations first
 	count = (asUINT)module->classTypes.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; i++ )
 	{
 		// Store only the name of the class/interface types
@@ -2232,7 +2240,7 @@ int asCWriter::Write()
 
 	// Store func defs
 	count = (asUINT)module->funcDefs.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; i++ )
 	{
 		WriteFunction(module->funcDefs[i]);
@@ -2262,7 +2270,7 @@ int asCWriter::Write()
 
 	// Store typedefs
 	count = (asUINT)module->typeDefs.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; i++ )
 	{
 		WriteObjectTypeDeclaration(module->typeDefs[i], 1);
@@ -2271,7 +2279,7 @@ int asCWriter::Write()
 
 	// scriptGlobals[]
 	count = (asUINT)module->scriptGlobals.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; ++i ) 
 		WriteGlobalProperty(module->scriptGlobals[i]);
 
@@ -2280,14 +2288,14 @@ int asCWriter::Write()
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		if( module->scriptFunctions[i]->objectType == 0 )
 			count++;
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < module->scriptFunctions.GetLength(); ++i )
 		if( module->scriptFunctions[i]->objectType == 0 )
 			WriteFunction(module->scriptFunctions[i]);
 
 	// globalFunctions[]
 	count = (int)module->globalFunctions.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; i++ )
 	{
 		WriteFunction(module->globalFunctions[i]);
@@ -2295,7 +2303,7 @@ int asCWriter::Write()
 
 	// bindInformations[]
 	count = (asUINT)module->bindInformations.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; ++i )
 	{
 		WriteFunction(module->bindInformations[i]->importedFunctionSignature);
@@ -2304,7 +2312,7 @@ int asCWriter::Write()
 
 	// usedTypes[]
 	count = (asUINT)usedTypes.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; ++i )
 		WriteObjectType(usedTypes[i]);
 
@@ -2341,7 +2349,7 @@ int asCWriter::FindStringConstantIndex(int id)
 void asCWriter::WriteUsedStringConstants()
 {
 	asUINT count = (asUINT)usedStringConstants.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( asUINT i = 0; i < count; ++i )
 		WriteString(engine->stringConstants[usedStringConstants[i]]);
 }
@@ -2349,7 +2357,7 @@ void asCWriter::WriteUsedStringConstants()
 void asCWriter::WriteUsedFunctions()
 {
 	asUINT count = (asUINT)usedFunctions.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 
 	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
 	{
@@ -2374,23 +2382,23 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	WriteDataType(&func->returnType);
 
 	count = (asUINT)func->parameterTypes.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; ++i ) 
 		WriteDataType(&func->parameterTypes[i]);
 	
 	count = (asUINT)func->inOutFlags.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = 0; i < count; ++i )
-		WriteEncodedUInt(func->inOutFlags[i]);
+		WriteEncodedInt64(func->inOutFlags[i]);
 
-	WriteEncodedUInt(func->funcType);
+	WriteEncodedInt64(func->funcType);
 
 	// Write the default args, from last to first
 	count = 0;
 	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
 		if( func->defaultArgs[i] )
 			count++;
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
 		if( func->defaultArgs[i] )
 			WriteString(func->defaultArgs[i]);
@@ -2425,7 +2433,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		{
 			c = 'r';
 			WriteData(&c, 1);
-			WriteEncodedUInt(f);
+			WriteEncodedInt64(f);
 			return;
 		}
 	}
@@ -2448,11 +2456,11 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		WriteByteCode(func);
 
 		count = (asUINT)func->objVariablePos.GetLength();
-		WriteEncodedUInt(count);
+		WriteEncodedInt64(count);
 		for( i = 0; i < count; ++i )
 		{
 			WriteObjectType(func->objVariableTypes[i]);
-			WriteEncodedUInt(AdjustStackPosition(func->objVariablePos[i]));
+			WriteEncodedInt64(AdjustStackPosition(func->objVariablePos[i]));
 			WriteData(&func->objVariableIsOnHeap[i], 1);
 		}
 
@@ -2460,27 +2468,27 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
 		//                 also for pointers pushed on the stack as function arguments.
 		//                 Perhaps it is easier to recalculate the stack needed at loadtime
-		WriteEncodedUInt(AdjustStackPosition(func->stackNeeded));
+		WriteEncodedInt64(AdjustStackPosition(func->stackNeeded));
 
-		WriteEncodedUInt((asUINT)func->objVariableInfo.GetLength());
+		WriteEncodedInt64((asUINT)func->objVariableInfo.GetLength());
 		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
 		{
 			// The program position must be adjusted to be in number of instructions
-			WriteEncodedUInt(bytecodeNbrByPos[func->objVariableInfo[i].programPos]);
-			WriteEncodedUInt(AdjustStackPosition(func->objVariableInfo[i].variableOffset)); // TODO: should be int
-			WriteEncodedUInt(func->objVariableInfo[i].option);
+			WriteEncodedInt64(bytecodeNbrByPos[func->objVariableInfo[i].programPos]);
+			WriteEncodedInt64(AdjustStackPosition(func->objVariableInfo[i].variableOffset)); // TODO: should be int
+			WriteEncodedInt64(func->objVariableInfo[i].option);
 		}
 
 		// The program position (every even number) needs to be adjusted
 		// to be in number of instructions instead of DWORD offset
 		asUINT length = (asUINT)func->lineNumbers.GetLength();
-		WriteEncodedUInt(length);
+		WriteEncodedInt64(length);
 		for( i = 0; i < length; ++i )
 		{
 			if( (i & 1) == 0 )
-				WriteEncodedUInt(bytecodeNbrByPos[func->lineNumbers[i]]);
+				WriteEncodedInt64(bytecodeNbrByPos[func->lineNumbers[i]]);
 			else
-				WriteEncodedUInt(func->lineNumbers[i]);
+				WriteEncodedInt64(func->lineNumbers[i]);
 		}
 
 		WriteData(&func->isShared, 1);
@@ -2489,7 +2497,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{
-		WriteEncodedUInt(func->vfTableIdx);
+		WriteEncodedInt64(func->vfTableIdx);
 	}
 
 	// Store script section name
@@ -2516,13 +2524,13 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		{
 			// The size for script objects may vary from platform to platform so 
 			// only store 1 to diferentiate from interfaces that have size 0.
-			WriteEncodedUInt(1); 
+			WriteEncodedInt64(1); 
 		}
 		else
 		{
 			// Enums, typedefs, and interfaces have fixed sizes independently
 			// of platform so it is safe to serialize the size directly.
-			WriteEncodedUInt(ot->size);
+			WriteEncodedInt64(ot->size);
 		}
 
 		// namespace
@@ -2534,7 +2542,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		{
 			// enumValues[]
 			int size = (int)ot->enumValues.GetLength();
-			WriteEncodedUInt(size);
+			WriteEncodedInt64(size);
 
 			for( int n = 0; n < size; n++ )
 			{
@@ -2545,7 +2553,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
 			eTokenType t = ot->templateSubType.GetTokenType();
-			WriteEncodedUInt(t);
+			WriteEncodedInt64(t);
 		}
 		else
 		{
@@ -2553,7 +2561,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 
 			// interfaces[]
 			int size = (asUINT)ot->interfaces.GetLength();
-			WriteEncodedUInt(size);
+			WriteEncodedInt64(size);
 			asUINT n;
 			for( n = 0; n < ot->interfaces.GetLength(); n++ )
 			{
@@ -2565,7 +2573,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			{
 				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
 				size = (int)ot->beh.constructors.GetLength();
-				WriteEncodedUInt(size);
+				WriteEncodedInt64(size);
 				for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 				{
 					WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
@@ -2575,7 +2583,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 
 			// methods[]
 			size = (int)ot->methods.GetLength();
-			WriteEncodedUInt(size);
+			WriteEncodedInt64(size);
 			for( n = 0; n < ot->methods.GetLength(); n++ )
 			{
 				WriteFunction(engine->scriptFunctions[ot->methods[n]]);
@@ -2583,7 +2591,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 
 			// virtualFunctionTable[]
 			size = (int)ot->virtualFunctionTable.GetLength();
-			WriteEncodedUInt(size);
+			WriteEncodedInt64(size);
 			for( n = 0; n < (asUINT)size; n++ )
 			{
 				WriteFunction(ot->virtualFunctionTable[n]);
@@ -2594,7 +2602,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 	{
 		// properties[]
 		asUINT size = (asUINT)ot->properties.GetLength();
-		WriteEncodedUInt(size);
+		WriteEncodedInt64(size);
 		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
 		{
 			WriteObjectProperty(ot->properties[n]);
@@ -2602,62 +2610,54 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 }
 
-void asCWriter::WriteEncodedUInt(asQWORD i)
+void asCWriter::WriteEncodedInt64(asINT64 i)
 {
+	asBYTE signBit = ( i & asINT64(1)<<63 ) ? 0x80 : 0;
+	if( signBit ) i = -i;
+
 	asBYTE b;
-	if( i < (1<<7) )
+	if( i < (1<<6) )
 	{
-		b = (asBYTE)i; WriteData(&b, 1);
+		b = (asBYTE)(signBit + i); WriteData(&b, 1);
 	}
-	else if( i < (1<<14) )
+	else if( i < (1<<13) )
 	{
-		b = asBYTE(0x80 + (i >> 8)); WriteData(&b, 1);
+		b = asBYTE(0x40 + signBit + (i >> 8)); WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);        WriteData(&b, 1);
 	}
-	else if( i < (1<<21) )
+	else if( i < (1<<20) )
 	{
-		b = asBYTE(0xC0 + (i >> 16)); WriteData(&b, 1);
+		b = asBYTE(0x60 + signBit + (i >> 16)); WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
-	else if( i < (1<<28) )
+	else if( i < (1<<27) )
 	{
-		b = asBYTE(0xE0 + (i >> 24)); WriteData(&b, 1);
+		b = asBYTE(0x70 + signBit + (i >> 24)); WriteData(&b, 1);
 		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
-	else if( i < (asQWORD(1)<<35) )
+	else if( i < (asQWORD(1)<<34) )
 	{
-		b = asBYTE(0xF0 + (i >> 32)); WriteData(&b, 1);
+		b = asBYTE(0x78 + signBit + (i >> 32)); WriteData(&b, 1);
 		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
-	else if( i < (asQWORD(1)<<42) )
+	else if( i < (asQWORD(1)<<41) )
 	{
-		b = asBYTE(0xF8 + (i >> 40)); WriteData(&b, 1);
+		b = asBYTE(0x7C + signBit + (i >> 40)); WriteData(&b, 1);
 		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
 		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
 	}
-	else if( i < (asQWORD(1)<<49) )
+	else if( i < (asQWORD(1)<<48) )
 	{
-		b = asBYTE(0xFC + (i >> 48)); WriteData(&b, 1);
-		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
-	}
-	else if( i < (asQWORD(1)<<56) )
-	{
-		b = asBYTE(0xFE);             WriteData(&b, 1);
-		b = asBYTE((i >> 48) & 0xFF); WriteData(&b, 1);
+		b = asBYTE(0x7E + signBit + (i >> 48)); WriteData(&b, 1);
 		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
@@ -2667,7 +2667,7 @@ void asCWriter::WriteEncodedUInt(asQWORD i)
 	}
 	else 
 	{
-		b = asBYTE(0xFF);             WriteData(&b, 1);
+		b = asBYTE(0x7F + signBit);   WriteData(&b, 1);
 		b = asBYTE((i >> 56) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 48) & 0xFF); WriteData(&b, 1);
 		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
@@ -2700,7 +2700,7 @@ void asCWriter::WriteString(asCString* str)
 		// Save a reference to the existing string
 		char b = 'r';
 		WriteData(&b, 1);
-		WriteEncodedUInt(cursor->value);
+		WriteEncodedInt64(cursor->value);
 		return;
 	}
 
@@ -2709,7 +2709,7 @@ void asCWriter::WriteString(asCString* str)
 	WriteData(&b, 1);
 
 	asUINT len = (asUINT)str->GetLength();
-	WriteEncodedUInt(len);
+	WriteEncodedInt64(len);
 	stream->Write(str->AddressOf(), (asUINT)len);
 
 	savedStrings.PushLast(*str);
@@ -2754,8 +2754,8 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 		if( *dt == savedDataTypes[n] )
 		{
 			asUINT c = 0;
-			WriteEncodedUInt(c);
-			WriteEncodedUInt(n);
+			WriteEncodedInt64(c);
+			WriteEncodedInt64(n);
 			return;
 		}
 	}
@@ -2765,7 +2765,7 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 
 	bool b;
 	int t = dt->GetTokenType();
-	WriteEncodedUInt(t);
+	WriteEncodedInt64(t);
 	if( t == ttIdentifier )
 	{
 		WriteObjectType(dt->GetObjectType());
@@ -2816,7 +2816,7 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 				ch = 't';
 				WriteData(&ch, 1);
 				eTokenType t = ot->templateSubType.GetTokenType();
-				WriteEncodedUInt(t);
+				WriteEncodedInt64(t);
 			}
 		}
 		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
@@ -3003,7 +3003,6 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			// Find the funcdef from the local variable
 			//int var = asBC_SWORDARG0(&func->byteCode[n]);
 			// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
-			asASSERT( false && "not yet implemented" );
 			return offset;
 		}
 		else if( bc == asBC_REFCPY )
@@ -3061,7 +3060,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 	// The length cannot be stored, because it is platform dependent, 
 	// instead we store the number of instructions
 	asUINT count = bytecodeNbrByPos[bytecodeNbrByPos.GetLength()-1] + 1;
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 
 	asDWORD *startBC = bc;
 	while( length )
@@ -3243,7 +3242,9 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			asBC_WORDARG0(tmp) = (asWORD)AdjustStackPosition(asBC_WORDARG0(tmp));
 		}
 				 
-		// TODO: bytecode: Must make sure that bytecode instructions that contain pointers are always stored the same way regardless of platform
+		// TODO: bytecode: Must make sure that floats and doubles are always stored the sameway regardless of platform. 
+		//                 Some platforms may not use the IEEE 754 standard, in which case it is necessary to encode the values
+		
 		// Now store the instruction in the smallest possible way
 		switch( asBCInfo[c].type )
 		{
@@ -3263,8 +3264,8 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 				
 				// Write the argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WriteData(&w, 2);
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
 			}
 			break;
 		case asBCTYPE_rW_DW_ARG:
@@ -3276,12 +3277,11 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the word argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WriteData(&w, 2);
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
 
 				// Write the dword argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[1]);
+				WriteEncodedInt64((int)tmp[1]);
 			}
 			break;
 		case asBCTYPE_DW_ARG:
@@ -3291,8 +3291,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[1]);
+				WriteEncodedInt64((int)tmp[1]);
 			}
 			break;
 		case asBCTYPE_DW_DW_ARG:
@@ -3302,12 +3301,10 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the dword argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[1]);
+				WriteEncodedInt64((int)tmp[1]);
 
 				// Write the dword argument
-				// TODO: Should be WriteEncodedInt since we do not know if it is a signed value or not
-				WriteEncodedUInt(tmp[2]);
+				WriteEncodedInt64((int)tmp[2]);
 			}
 			break;
 		case asBCTYPE_wW_rW_rW_ARG:
@@ -3317,16 +3314,16 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WriteData(&w, 2);
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
 
 				// Write the second argument
-				w = *(((asWORD*)tmp)+2);
-				WriteData(&w, 2);
+				w = *(((short*)tmp)+2);
+				WriteEncodedInt64(w);
 
 				// Write the third argument
-				w = *(((asWORD*)tmp)+3);
-				WriteData(&w, 2);
+				w = *(((short*)tmp)+3);
+				WriteEncodedInt64(w);
 			}
 			break;
 		case asBCTYPE_wW_rW_ARG:
@@ -3338,12 +3335,12 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WriteData(&w, 2);
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
 
 				// Write the second argument
-				w = *(((asWORD*)tmp)+2);
-				WriteData(&w, 2);
+				w = *(((short*)tmp)+2);
+				WriteEncodedInt64(w);
 			}
 			break;
 		case asBCTYPE_wW_rW_DW_ARG:
@@ -3354,17 +3351,16 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WriteData(&w, 2);
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
 
 				// Write the second argument
-				w = *(((asWORD*)tmp)+2);
-				WriteData(&w, 2);
+				w = *(((short*)tmp)+2);
+				WriteEncodedInt64(w);
 
 				// Write the third argument
-				// TODO: This could be encoded as an int to decrease the size
-				asDWORD dw = tmp[2];
-				WriteEncodedUInt(dw);
+				int dw = tmp[2];
+				WriteEncodedInt64(dw);
 			}
 			break;
 		case asBCTYPE_QW_ARG:
@@ -3374,9 +3370,8 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the argument
-				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WriteEncodedUInt(qw);
+				WriteEncodedInt64(qw);
 			}
 			break;
 		case asBCTYPE_QW_DW_ARG:
@@ -3388,12 +3383,12 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WriteEncodedUInt(qw);
+				WriteEncodedInt64(qw);
 
 				// Write the second argument
 				// TODO: This could be encoded as an int to decrease the size
-				asDWORD dw = tmp[3];
-				WriteEncodedUInt(dw);
+				int dw = tmp[3];
+				WriteEncodedInt64(dw);
 			}
 			break;
 		case asBCTYPE_rW_QW_ARG:
@@ -3404,13 +3399,13 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the first argument
-				asWORD w = *(((asWORD*)tmp)+1);
-				WriteData(&w, 2);
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
 
 				// Write the argument
 				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
-				WriteEncodedUInt(qw);
+				WriteEncodedInt64(qw);
 			}
 			break;
 		default:
@@ -3433,7 +3428,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 void asCWriter::WriteUsedTypeIds()
 {
 	asUINT count = (asUINT)usedTypeIds.GetLength();
-	WriteEncodedUInt(count);
+	WriteEncodedInt64(count);
 	for( asUINT n = 0; n < count; n++ )
 	{
 		asCDataType dt = engine->GetDataTypeFromTypeId(usedTypeIds[n]);
@@ -3453,7 +3448,7 @@ int asCWriter::FindGlobalPropPtrIndex(void *ptr)
 void asCWriter::WriteUsedGlobalProps()
 {
 	int c = (int)usedGlobalProperties.GetLength();
-	WriteEncodedUInt(c);
+	WriteEncodedInt64(c);
 
 	for( int n = 0; n < c; n++ )
 	{
@@ -3500,7 +3495,7 @@ void asCWriter::WriteUsedGlobalProps()
 void asCWriter::WriteUsedObjectProps()
 {
 	int c = (int)usedObjectProperties.GetLength();
-	WriteEncodedUInt(c);
+	WriteEncodedInt64(c);
 
 	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
 	{

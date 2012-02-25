@@ -68,6 +68,7 @@ protected:
 	asCObjectType *    ReadObjectType();
 	void               ReadObjectTypeDeclaration(asCObjectType *ot, int phase);
 	void               ReadByteCode(asCScriptFunction *func);
+	asWORD             ReadEncodedUInt16();
 	asUINT             ReadEncodedUInt();
 	asQWORD            ReadEncodedUInt64();
 
@@ -138,7 +139,7 @@ protected:
 	void WriteObjectType(asCObjectType *ot);
 	void WriteObjectTypeDeclaration(asCObjectType *ot, int phase);
 	void WriteByteCode(asCScriptFunction *func);
-	void WriteEncodedUInt(asQWORD i);
+	void WriteEncodedInt64(asINT64 i);
 
 	// Helper functions for storing variable data
 	int FindObjectTypeIdx(asCObjectType*);
