@@ -19,6 +19,7 @@ SRCNAMES = \
   test_addon_scripthandle.cpp \
   test_addon_scriptmath.cpp \
   test_addon_serializer.cpp \
+  test_addon_dictionary.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -45,7 +46,6 @@ SRCNAMES = \
   test_defaultarg.cpp \
   test_destructor.cpp \
   test_dict.cpp \
-  test_dictionary.cpp \
   test_discard.cpp \
   test_dump.cpp \
   test_dynamicconfig.cpp \

@@ -151,7 +151,7 @@
 		75B81B670DCC0E1400FD2C4F /* test_implicitcast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B610DCC0E1400FD2C4F /* test_implicitcast.cpp */; };
 		75B81B680DCC0E1400FD2C4F /* test_rz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B620DCC0E1400FD2C4F /* test_rz.cpp */; };
 		75B81B690DCC0E1400FD2C4F /* test_typedef.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75B81B630DCC0E1400FD2C4F /* test_typedef.cpp */; };
-		75C5F4E10C6E1B8B00CAEC26 /* test_dictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75C5F4E00C6E1B8B00CAEC26 /* test_dictionary.cpp */; };
+		75C5F4E10C6E1B8B00CAEC26 /* test_addon_dictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75C5F4E00C6E1B8B00CAEC26 /* test_addon_dictionary.cpp */; };
 		75C5F4E40C6E1BA400CAEC26 /* scriptdictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75C5F4E20C6E1BA400CAEC26 /* scriptdictionary.cpp */; };
 		75C5F4E50C6E1BA400CAEC26 /* scriptdictionary.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 75C5F4E30C6E1BA400CAEC26 /* scriptdictionary.h */; };
 		75C5F4F00C6E1BF300CAEC26 /* test_scriptmath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 75C5F4EE0C6E1BF300CAEC26 /* test_scriptmath.cpp */; };
@@ -344,7 +344,7 @@
 		75B81B610DCC0E1400FD2C4F /* test_implicitcast.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_implicitcast.cpp; path = ../../source/test_implicitcast.cpp; sourceTree = SOURCE_ROOT; };
 		75B81B620DCC0E1400FD2C4F /* test_rz.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_rz.cpp; path = ../../source/test_rz.cpp; sourceTree = SOURCE_ROOT; };
 		75B81B630DCC0E1400FD2C4F /* test_typedef.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_typedef.cpp; path = ../../source/test_typedef.cpp; sourceTree = SOURCE_ROOT; };
-		75C5F4E00C6E1B8B00CAEC26 /* test_dictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_dictionary.cpp; path = ../../source/test_dictionary.cpp; sourceTree = SOURCE_ROOT; };
+		75C5F4E00C6E1B8B00CAEC26 /* test_addon_dictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_addon_dictionary.cpp; path = ../../source/test_addon_dictionary.cpp; sourceTree = SOURCE_ROOT; };
 		75C5F4E20C6E1BA400CAEC26 /* scriptdictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = scriptdictionary.cpp; path = ../../../../add_on/scriptdictionary/scriptdictionary.cpp; sourceTree = SOURCE_ROOT; };
 		75C5F4E30C6E1BA400CAEC26 /* scriptdictionary.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scriptdictionary.h; path = ../../../../add_on/scriptdictionary/scriptdictionary.h; sourceTree = SOURCE_ROOT; };
 		75C5F4EE0C6E1BF300CAEC26 /* test_scriptmath.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = test_scriptmath.cpp; path = ../../source/test_scriptmath.cpp; sourceTree = SOURCE_ROOT; };
@@ -435,7 +435,7 @@
 				75C5F4EF0C6E1BF300CAEC26 /* test_vartype.cpp */,
 				75C5F4E20C6E1BA400CAEC26 /* scriptdictionary.cpp */,
 				75C5F4E30C6E1BA400CAEC26 /* scriptdictionary.h */,
-				75C5F4E00C6E1B8B00CAEC26 /* test_dictionary.cpp */,
+				75C5F4E00C6E1B8B00CAEC26 /* test_addon_dictionary.cpp */,
 				751CD9D30C258B3F00DF4D72 /* scriptstring_utils.cpp */,
 				7526F5AC0BEE45A300BAE32D /* angelscript.h */,
 				7526F5A80BEE459500BAE32D /* scriptstring.cpp */,
@@ -722,7 +722,7 @@
 				7526F5AA0BEE459600BAE32D /* scriptstring.cpp in Sources */,
 				75CEB8D50C20D7D7009B3031 /* test_bool.cpp in Sources */,
 				751CD9D40C258B3F00DF4D72 /* scriptstring_utils.cpp in Sources */,
-				75C5F4E10C6E1B8B00CAEC26 /* test_dictionary.cpp in Sources */,
+				75C5F4E10C6E1B8B00CAEC26 /* test_addon_dictionary.cpp in Sources */,
 				75C5F4E40C6E1BA400CAEC26 /* scriptdictionary.cpp in Sources */,
 				75C5F4F00C6E1BF300CAEC26 /* test_scriptmath.cpp in Sources */,
 				75C5F4F10C6E1BF300CAEC26 /* test_vartype.cpp in Sources */,

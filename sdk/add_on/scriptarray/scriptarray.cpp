@@ -169,8 +169,9 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "void sortDesc()", asMETHODPR(CScriptArray, SortDesc, (), void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void sortDesc(uint, uint)", asMETHODPR(CScriptArray, SortDesc, (asUINT, asUINT), void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void reverse()", asMETHOD(CScriptArray, Reverse), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("array<T>", "int find(const T&in) const", asMETHODPR(CScriptArray, Find, (void*), int), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("array<T>", "int find(uint, const T&in) const", asMETHODPR(CScriptArray, Find, (asUINT, void*), int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "int find(const T&in) const", asMETHODPR(CScriptArray, Find, (void*) const, int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "int find(uint, const T&in) const", asMETHODPR(CScriptArray, Find, (asUINT, void*) const, int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "bool opEquals(const array<T>&in) const", asMETHOD(CScriptArray, operator==), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register virtual properties
 	r = engine->RegisterObjectMethod("array<T>", "uint get_length() const", asMETHOD(CScriptArray, GetSize), asCALL_THISCALL); assert( r >= 0 );
@@ -651,8 +652,40 @@ void CScriptArray::Reverse()
 	}
 }
 
+bool CScriptArray::operator==(const CScriptArray &other) const
+{
+	if( objType != other.objType )
+		return false;
+
+	if( GetSize() != other.GetSize() )
+		return false;
+
+	asIScriptContext *cmpContext = 0;
+
+	if( subTypeId > asTYPEID_DOUBLE )
+	{
+		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
+		//       create a new one everytime. We could keep a context with the array object 
+		//       but that would consume a lot of resources as each context is quite heavy.
+		cmpContext = objType->GetEngine()->CreateContext();
+	}
+	
+	for( asUINT n = 0; n < GetSize(); n++ )
+		if( !Equals(At(n), other.At(n), cmpContext) )
+		{
+			if( cmpContext )
+				cmpContext->Release();
+			return false;
+		}
+
+	if( cmpContext )
+		cmpContext->Release();
+
+	return true;
+}
+
 // internal
-bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx)
+bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx) const
 {
 	if( subTypeId <= asTYPEID_DOUBLE )
 	{
@@ -710,12 +743,12 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx)
 	return false;
 }
 
-int CScriptArray::Find(void *value)
+int CScriptArray::Find(void *value) const
 {
 	return Find(0, value);
 }
 
-int CScriptArray::Find(asUINT index, void *value)
+int CScriptArray::Find(asUINT index, void *value) const
 {
 	// Subtype isn't primitive and doesn't have opEquals / opCmp
 	if( subTypeId > asTYPEID_DOUBLE && (cmpFuncId <= 0 && eqFuncId <= 0) )

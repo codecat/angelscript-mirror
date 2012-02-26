@@ -1977,7 +1977,12 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	// The stack needed by the function will be adjusted by the highest variable shift
 	// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
 	//                 also for pointers pushed on the stack as function arguments.
-	//                 Calculate this similarly to how asCByteCode::PostProcess calculates it
+	//                 Calculate this similarly to how asCByteCode::PostProcess calculates it.
+	//                 Instead of calculating it which will be a complex task as it is necessary
+	//                 to trace all possible paths, perhaps the compiler can inform the number
+	//                 pointers that is in the highest stack. This value is not that important
+	//                 anyway, it just has to be large enough, but it doesn't matter much if it
+	//                 is larger than necessary.
 	func->stackNeeded = AdjustStackPosition(func->stackNeeded);
 }
 

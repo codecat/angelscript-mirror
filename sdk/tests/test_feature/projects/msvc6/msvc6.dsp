@@ -231,7 +231,7 @@ SOURCE=..\..\source\test_dict.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\source\test_dictionary.cpp
+SOURCE=..\..\source\test_addon_dictionary.cpp
 # End Source File
 # Begin Source File
 

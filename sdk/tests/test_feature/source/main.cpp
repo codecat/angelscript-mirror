@@ -123,7 +123,6 @@ namespace TestBool              { bool Test(); }
 namespace TestInt8              { bool Test(); }
 namespace TestScriptMath        { bool Test(); }
 namespace TestVarType           { bool Test(); }
-namespace TestDictionary        { bool Test(); }
 namespace TestDestructor        { bool Test(); }
 namespace TestRegisterType      { bool Test(); }
 namespace TestFactory           { bool Test(); }
@@ -153,6 +152,7 @@ namespace Test_Addon_ScriptHandle  { bool Test(); }
 namespace Test_Addon_Serializer    { bool Test(); }
 namespace Test_Addon_ScriptMath    { bool Test(); }
 namespace Test_Addon_ScriptBuilder { bool Test(); }
+namespace Test_Addon_Dictionary    { bool Test(); }
 
 #include "utils.h"
 
@@ -198,6 +198,7 @@ int main(int argc, char **argv)
 	if( Test_Addon_Serializer::Test()    ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
 	if( Test_Addon_ScriptHandle::Test()  ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
 	if( Test_Addon_ScriptArray::Test()   ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
+	if( Test_Addon_Dictionary::Test()    ) goto failed; else printf("-- Test_Addon_Dictionary passed\n");
 	if( TestNamespace::Test()           ) goto failed; else printf("-- TestNamespace passed\n");
 	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
@@ -233,7 +234,6 @@ int main(int argc, char **argv)
 	if( TestArray::Test()               ) goto failed; else printf("-- TestArray passed\n");
 	if( TestAny::Test()                 ) goto failed; else printf("-- TestAny passed\n");
 	if( TestObjHandle2::Test()          ) goto failed; else printf("-- TestObjHandle2 passed\n");
-	if( TestDictionary::Test()          ) goto failed; else printf("-- TestDictionary passed\n");
 	if( TestVector3()                   ) goto failed; else printf("-- TestVector3 passed\n");
 	if( TestConstObject::Test()         ) goto failed; else printf("-- TestConstObject passed\n");
 	if( TestImplicitCast::Test()        ) goto failed; else printf("-- TestImplicitCast passed\n");

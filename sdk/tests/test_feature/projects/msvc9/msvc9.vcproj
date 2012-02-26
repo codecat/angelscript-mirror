@@ -358,6 +358,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_addon_dictionary.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_addon_scriptarray.cpp"
 				>
 			</File>
@@ -483,10 +487,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_dict.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\test_dictionary.cpp"
 				>
 			</File>
 			<File

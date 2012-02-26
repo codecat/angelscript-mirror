@@ -2,7 +2,7 @@
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 
 
-namespace TestDictionary
+namespace Test_Addon_Dictionary
 {
 
 const char *script =
@@ -10,51 +10,55 @@ const char *script =
 "{                                 \n"
 "  dictionary dict;                \n"
 // Test integer with the dictionary
-"  dict.set(\"a\", 42);            \n"
-"  assert(dict.exists(\"a\"));     \n"
+"  dict.set('a', 42);            \n"
+"  assert(dict.exists('a'));     \n"
 "  uint u = 0;                     \n"
-"  dict.get(\"a\", u);             \n"
+"  dict.get('a', u);             \n"
 "  assert(u == 42);                \n"
-"  dict.delete(\"a\");             \n"
-"  assert(!dict.exists(\"a\"));    \n"
-// Test string by handle
-"  string a = \"t\";               \n"
-"  dict.set(\"a\", @a);            \n"
-"  string @b;                      \n"
-"  dict.get(\"a\", @b);            \n"
-"  assert(b == \"t\");             \n"
+"  dict.delete('a');             \n"
+"  assert(!dict.exists('a'));    \n"
+// Test array by handle
+"  array<string> a = {'t'};               \n"
+"  dict.set('a', @a);            \n"
+"  array<string> @b;                      \n"
+"  dict.get('a', @b);            \n"
+"  assert(b == a);             \n"
 // Test string by value
-"  dict.set(\"a\", a);             \n"
+"  dict.set('a', 't');             \n"
 "  string c;                       \n"
-"  dict.get(\"a\", c);             \n"
-"  assert(c == \"t\");             \n"
+"  dict.get('a', c);             \n"
+"  assert(c == 't');             \n"
 // Test int8 with the dictionary
 "  int8 q = 41;                    \n"
-"  dict.set(\"b\", q);             \n"
-"  dict.get(\"b\", q);             \n"
+"  dict.set('b', q);             \n"
+"  dict.get('b', q);             \n"
 "  assert(q == 41);                \n"
 // Test float with the dictionary
 "  float f = 300;                  \n"
-"  dict.set(\"c\", f);             \n"
-"  dict.get(\"c\", f);             \n"
+"  dict.set('c', f);             \n"
+"  dict.get('c', f);             \n"
 "  assert(f == 300);               \n"
 // Test automatic conversion between int and float in the dictionary
 "  int i;                          \n"
-"  dict.get(\"c\", i);             \n"
+"  dict.get('c', i);             \n"
 "  assert(i == 300);               \n"
-"  dict.get(\"b\", f);             \n"
+"  dict.get('b', f);             \n"
 "  assert(f == 41);                \n"
 // Test booleans with the variable type
 "  bool bl;                        \n"
-"  dict.set(\"true\", true);       \n"
-"  dict.set(\"false\", false);     \n"
+"  dict.set('true', true);       \n"
+"  dict.set('false', false);     \n"
 "  bl = false;                     \n"
-"  dict.get(\"true\", bl);         \n"
+"  dict.get('true', bl);         \n"
 "  assert( bl == true );           \n"
-"  dict.get(\"false\", bl);        \n"
+"  dict.get('false', bl);        \n"
 "  assert( bl == false );          \n"
 // Test circular reference with itself
-"  dict.set(\"self\", @dict);      \n"
+"  dict.set('self', @dict);      \n"
+// Test the keys
+"  array<string> @keys = dict.getKeys(); \n"
+"  assert( keys.find('a') != -1 ); \n"
+"  assert( keys.length == 6 ); \n"
 "}                                 \n";
 
 // Test circular reference including a script class and the dictionary
@@ -74,7 +78,8 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
+	RegisterScriptArray(engine, true);
 	RegisterScriptDictionary(engine);
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
@@ -100,7 +105,7 @@ bool Test()
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( gcCurrentSize != 1 || gcTotalDestroyed != 2 || gcTotalDetected != 1 )
+	if( gcCurrentSize != 5 || gcTotalDestroyed != 4 || gcTotalDetected != 1 )
 		TEST_FAILED;
 
 	// Test circular references including a script class and the dictionary
@@ -117,7 +122,7 @@ bool Test()
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( gcCurrentSize != 4 || gcTotalDestroyed != 6 || gcTotalDetected != 3  )
+	if( gcCurrentSize != 8 || gcTotalDestroyed != 8 || gcTotalDetected != 3  )
 		TEST_FAILED;
 
 	// Test invalid ref cast together with the variable argument
@@ -140,7 +145,8 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
+	RegisterScriptArray(engine, true);
 	RegisterScriptDictionary_Generic(engine);
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
@@ -169,7 +175,8 @@ bool Test()
 
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		RegisterScriptString(engine);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
 		RegisterScriptDictionary(engine);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -177,7 +184,7 @@ bool Test()
 		const char *script =
 			"class Test \n"
 			"{ \n"
-			"  Test() { dict.set('int', 1); dict.set('string', 'test'); dict.set('handle', @'handle'); } \n"
+			"  Test() { dict.set('int', 1); dict.set('string', 'test'); dict.set('handle', @array<string>()); } \n"
 			"  dictionary dict; \n"
 			"} \n"
 			"void main() \n"
@@ -209,6 +216,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
 		RegisterScriptDictionary(engine);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
