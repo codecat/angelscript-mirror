@@ -88,6 +88,8 @@ protected:
 	void CalculateAdjustmentByPos(asCScriptFunction *func);
 	int  AdjustStackPosition(int pos);
 	int  AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos);
+	void CalculateStackNeeded(asCScriptFunction *func);
+	asCScriptFunction *GetCalledFunction(asCScriptFunction *func, asDWORD programPos);
 
 	// Temporary storage for persisting variable data
 	asCArray<int>                usedTypeIds;

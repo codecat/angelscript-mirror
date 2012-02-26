@@ -324,7 +324,8 @@ int asCReader::Read()
 	engine->deferValidationOfTemplateTypes = false;
 
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-		TranslateFunction(module->scriptFunctions[i]);
+		if( module->scriptFunctions[i]->funcType == asFUNC_SCRIPT )
+			TranslateFunction(module->scriptFunctions[i]);
 	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
 		if( module->scriptGlobals[i]->GetInitFunc() )
 			TranslateFunction(module->scriptGlobals[i]->GetInitFunc());
@@ -1973,17 +1974,160 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		func->lineNumbers[n] = instructionNbrToPos[func->lineNumbers[n]];
 	}
 
+	CalculateStackNeeded(func);
+}
 
-	// The stack needed by the function will be adjusted by the highest variable shift
-	// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
-	//                 also for pointers pushed on the stack as function arguments.
-	//                 Calculate this similarly to how asCByteCode::PostProcess calculates it.
-	//                 Instead of calculating it which will be a complex task as it is necessary
-	//                 to trace all possible paths, perhaps the compiler can inform the number
-	//                 pointers that is in the highest stack. This value is not that important
-	//                 anyway, it just has to be large enough, but it doesn't matter much if it
-	//                 is larger than necessary.
-	func->stackNeeded = AdjustStackPosition(func->stackNeeded);
+void asCReader::CalculateStackNeeded(asCScriptFunction *func)
+{
+	int largestStackUsed = 0;
+
+	// Clear the known stack size for each bytecode
+	asCArray<int> stackSize;
+	stackSize.SetLength(func->byteCode.GetLength());
+	memset(&stackSize[0], -1, stackSize.GetLength()*4);
+
+	// Add the first instruction to the list of unchecked code 
+	// paths and set the stack size at that instruction to 0
+	asCArray<asUINT> paths;
+	paths.PushLast(0);
+	stackSize[0] = 0;
+
+	// Go through each of the code paths
+	for( asUINT p = 0; p < paths.GetLength(); ++p )
+	{
+		asUINT pos = paths[p];
+		int currStackSize = stackSize[pos];
+		
+		asBYTE bc = *(asBYTE*)&func->byteCode[pos];
+		if( bc == asBC_RET )
+			continue;
+
+		// Determine the change in stack size for this instruction
+		int stackInc = asBCInfo[bc].stackInc;
+		if( stackInc == 0xFFFF )
+		{
+			// Determine the true delta from the instruction arguments
+			if( bc == asBC_POP )
+			{
+				stackInc = -(int)asBC_WORDARG0(&func->byteCode[pos]);
+			}
+			else if( bc == asBC_PUSH )
+			{
+				stackInc = asBC_WORDARG0(&func->byteCode[pos]);
+			}
+			else if( bc == asBC_CALL ||
+			         bc == asBC_CALLSYS ||
+					 bc == asBC_CALLBND ||
+					 bc == asBC_ALLOC ||
+					 bc == asBC_CALLINTF )
+			{
+				asCScriptFunction *called = GetCalledFunction(func, pos);
+				if( called )
+				{
+					stackInc = -called->GetSpaceNeededForArguments();
+
+					if( called->objectType )
+						stackInc -= AS_PTR_SIZE;
+				}
+				else
+				{
+					// It is an allocation for an object without a constructor
+					asASSERT( bc == asBC_ALLOC );
+					stackInc = -AS_PTR_SIZE;
+				}
+			}
+			else if ( bc == asBC_CallPtr )
+			{
+				// TODO: bytecode: Determine the function signature from the variable
+				break;
+			}
+		}
+		
+		currStackSize += stackInc;
+		asASSERT( currStackSize >= 0 );
+
+		if( currStackSize > largestStackUsed )
+			largestStackUsed = currStackSize;
+
+		if( bc == asBC_JMP )
+		{
+			// Find the label that we should jump to
+			int offset = asBC_INTARG(&func->byteCode[pos]);
+			pos += 2 + offset;
+
+			// Add the destination as a new path
+			if( stackSize[pos] == -1 )
+			{
+				stackSize[pos] = currStackSize;
+				paths.PushLast(pos);
+			}
+			else
+				asASSERT(stackSize[pos] == currStackSize);
+			continue;
+		}
+		else if( bc == asBC_JZ || bc == asBC_JNZ ||
+				 bc == asBC_JS || bc == asBC_JNS ||
+				 bc == asBC_JP || bc == asBC_JNP )
+		{
+			// Find the label that is being jumped to
+			int offset = asBC_INTARG(&func->byteCode[pos]);
+			
+			// Add both paths to the code paths
+			pos += 2;
+			if( stackSize[pos] == -1 )
+			{
+				stackSize[pos] = currStackSize;
+				paths.PushLast(pos);
+			}
+			else
+				asASSERT(stackSize[pos] == currStackSize);
+
+			pos += offset;
+			if( stackSize[pos] == -1 )
+			{
+				stackSize[pos] = currStackSize;
+				paths.PushLast(pos);
+			}
+			else
+				asASSERT(stackSize[pos] == currStackSize);
+
+			continue;
+		}
+		else if( bc == asBC_JMPP )
+		{
+			pos++;
+			
+			// Add all subsequent JMP instructions to the path
+			while( *(asBYTE*)&func->byteCode[pos] == asBC_JMP )
+			{
+				if( stackSize[pos] == -1 )
+				{
+					stackSize[pos] = currStackSize;
+					paths.PushLast(pos);
+				}
+				else
+					asASSERT(stackSize[pos] == currStackSize);
+				pos += 2;
+			}			
+			continue;				
+		}
+		else
+		{
+			// Add next instruction to the paths
+			pos += asBCTypeSize[asBCInfo[bc].type];
+			if( stackSize[pos] == -1 )
+			{
+				stackSize[pos] = currStackSize;
+				paths.PushLast(pos);
+			}
+			else
+				asASSERT(stackSize[pos] == currStackSize);
+
+			continue;
+		}
+	}
+
+	func->stackNeeded = largestStackUsed;
 }
 
 void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
@@ -2036,6 +2180,7 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 	// The bytecode has been stored as if all object variables take up only 1 dword. 
 	// It is necessary to adjust to the size according to the current platform.
 	adjustments.SetLength(0);
+	int highestPos = 0;
 	for( n = 0; n < func->objVariableTypes.GetLength(); n++ )
 	{
 		if( func->objVariableTypes[n] )
@@ -2055,6 +2200,9 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 			// Check if type has a different size than stored
 			if( size > 1 )
 			{
+				if( func->objVariablePos[n] > highestPos )
+					highestPos = func->objVariablePos[n];
+
 				adjustments.PushLast(func->objVariablePos[n]);
 				adjustments.PushLast(size-1);
 			}
@@ -2062,6 +2210,7 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 
 	// Count position 0 too
+	// TODO: bytecode: Cannot use stackNeeded here because it is not yet known
 	adjustByPos.SetLength(func->stackNeeded+1);
 	memset(adjustByPos.AddressOf(), 0, adjustByPos.GetLength()*sizeof(int));
 
@@ -2090,6 +2239,41 @@ int asCReader::AdjustStackPosition(int pos)
 	return pos;
 }
 
+asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD programPos)
+{
+	asBYTE bc = *(asBYTE*)&func->byteCode[programPos];
+
+	if( bc == asBC_CALL ||
+		bc == asBC_CALLSYS ||
+		bc == asBC_CALLINTF )
+	{
+		// Find the function from the function id in bytecode
+		int funcId = asBC_INTARG(&func->byteCode[programPos]);
+		return engine->scriptFunctions[funcId];
+	}
+	else if( bc == asBC_ALLOC )
+	{
+		// Find the function from the function id in the bytecode
+		int funcId = asBC_INTARG(&func->byteCode[programPos+AS_PTR_SIZE]);
+		return engine->scriptFunctions[funcId];
+	}
+	else if( bc == asBC_CALLBND )
+	{
+		// Find the function from the engine's bind array
+		int funcId = asBC_INTARG(&func->byteCode[programPos]);
+		return engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
+	}
+	else if( bc == asBC_CallPtr )
+	{
+		// Find the funcdef from the local variable
+		//int var = asBC_SWORDARG0(&func->byteCode[programPos]);
+		// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
+		return 0;
+	}
+
+	return 0;
+}
+
 int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD programPos)
 {
 	// TODO: optimize: multiple instructions for the same function doesn't need to look for the function everytime
@@ -2105,25 +2289,12 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		asBYTE bc = *(asBYTE*)&func->byteCode[n];
 		if( bc == asBC_CALL ||
 			bc == asBC_CALLSYS ||
-			bc == asBC_CALLINTF )
+			bc == asBC_CALLINTF || 
+			bc == asBC_ALLOC ||
+			bc == asBC_CALLBND )
 		{
-			// Find the function from the function id in bytecode
-			int funcId = asBC_INTARG(&func->byteCode[n]);
-			calledFunc = engine->scriptFunctions[funcId];
+			calledFunc = GetCalledFunction(func, n);
 			break;
-		}
-		else if( bc == asBC_ALLOC )
-		{
-			// Find the function from the function id in the bytecode
-			int funcId = asBC_INTARG(&func->byteCode[n+AS_PTR_SIZE]);
-			calledFunc = engine->scriptFunctions[funcId];
-			break;
-		}
-		else if( bc == asBC_CALLBND )
-		{
-			// Find the function from the engine's bind array
-			int funcId = asBC_INTARG(&func->byteCode[n]);
-			calledFunc = engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
 		}
 		else if( bc == asBC_CallPtr )
 		{
@@ -3247,7 +3418,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			asBC_WORDARG0(tmp) = (asWORD)AdjustStackPosition(asBC_WORDARG0(tmp));
 		}
 				 
-		// TODO: bytecode: Must make sure that floats and doubles are always stored the sameway regardless of platform. 
+		// TODO: bytecode: Must make sure that floats and doubles are always stored the same way regardless of platform. 
 		//                 Some platforms may not use the IEEE 754 standard, in which case it is necessary to encode the values
 		
 		// Now store the instruction in the smallest possible way
