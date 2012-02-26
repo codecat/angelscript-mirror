@@ -351,6 +351,11 @@ bool Test()
 		printf("The saved byte code contains a different amount of zeroes than the expected 392. Counted %d\n", zeroes);
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
+	asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
+	if( crc32 != 0xE115719C )
+	{
+		printf("The saved byte code has different checksum than the expected 0xE115719C. Got 0x%X\n", crc32);
+	}
 
 	// Test loading without releasing the engine first
 	mod->LoadByteCode(&stream);

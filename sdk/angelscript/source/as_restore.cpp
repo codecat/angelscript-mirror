@@ -957,88 +957,59 @@ asQWORD asCReader::ReadEncodedUInt64()
 	
 	if( (b & 0x7F) == 0x7F )
 	{
-		ReadData(&b, 1);
-		i = asQWORD(b) << 56;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 48;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 40;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i = asQWORD(b) << 56;
+		ReadData(&b, 1); i += asQWORD(b) << 48;
+		ReadData(&b, 1); i += asQWORD(b) << 40;
+		ReadData(&b, 1); i += asQWORD(b) << 32;
+		ReadData(&b, 1); i += asUINT(b) << 24;
+		ReadData(&b, 1); i += asUINT(b) << 16;
+		ReadData(&b, 1); i += asUINT(b) << 8;
+		ReadData(&b, 1); i += b;
 	}
 	else if( (b & 0x7E) == 0x7E )
 	{
 		i = asQWORD(b & 0x01) << 48;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 40;
-		ReadData(&b, 1);
-		i = asQWORD(b) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i += asQWORD(b) << 40;
+		ReadData(&b, 1); i += asQWORD(b) << 32;
+		ReadData(&b, 1); i += asUINT(b) << 24;
+		ReadData(&b, 1); i += asUINT(b) << 16;
+		ReadData(&b, 1); i += asUINT(b) << 8;
+		ReadData(&b, 1); i += b;
 	}	
 	else if( (b & 0x7C) == 0x7C )
 	{
 		i = asQWORD(b & 0x03) << 40;
-		ReadData(&b, 1);
-		i += asQWORD(b) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i += asQWORD(b) << 32;
+		ReadData(&b, 1); i += asUINT(b) << 24;
+		ReadData(&b, 1); i += asUINT(b) << 16;
+		ReadData(&b, 1); i += asUINT(b) << 8;
+		ReadData(&b, 1); i += b;
 	}	
 	else if( (b & 0x78) == 0x78 )
 	{
 		i = asQWORD(b & 0x07) << 32;
-		ReadData(&b, 1);
-		i += asUINT(b) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i += asUINT(b) << 24;
+		ReadData(&b, 1); i += asUINT(b) << 16;
+		ReadData(&b, 1); i += asUINT(b) << 8;
+		ReadData(&b, 1); i += b;
 	}	
 	else if( (b & 0x70) == 0x70 )
 	{
 		i = asUINT(b & 0x0F) << 24;
-		ReadData(&b, 1);
-		i += asUINT(b) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i += asUINT(b) << 16;
+		ReadData(&b, 1); i += asUINT(b) << 8;
+		ReadData(&b, 1); i += b;
 	}
 	else if( (b & 0x60) == 0x60 )
 	{
 		i = asUINT(b & 0x1F) << 16;
-		ReadData(&b, 1);
-		i += asUINT(b) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i += asUINT(b) << 8;
+		ReadData(&b, 1); i += b;
 	}
 	else if( (b & 0x40) == 0x40 )
 	{
 		i = asUINT(b & 0x3F) << 8;
-		ReadData(&b, 1);
-		i += b;
+		ReadData(&b, 1); i += b;
 	}
 	else
 	{
@@ -2794,47 +2765,47 @@ void asCWriter::WriteEncodedInt64(asINT64 i)
 	else if( i < (1<<13) )
 	{
 		b = asBYTE(0x40 + signBit + (i >> 8)); WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);        WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);                  WriteData(&b, 1);
 	}
 	else if( i < (1<<20) )
 	{
 		b = asBYTE(0x60 + signBit + (i >> 16)); WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);            WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);                   WriteData(&b, 1);
 	}
 	else if( i < (1<<27) )
 	{
 		b = asBYTE(0x70 + signBit + (i >> 24)); WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);            WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);                   WriteData(&b, 1);
 	}
-	else if( i < (asQWORD(1)<<34) )
+	else if( i < (asINT64(1)<<34) )
 	{
 		b = asBYTE(0x78 + signBit + (i >> 32)); WriteData(&b, 1);
-		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);            WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);                   WriteData(&b, 1);
 	}
-	else if( i < (asQWORD(1)<<41) )
+	else if( i < (asINT64(1)<<41) )
 	{
 		b = asBYTE(0x7C + signBit + (i >> 40)); WriteData(&b, 1);
-		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+		b = asBYTE((i >> 32) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);            WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);                   WriteData(&b, 1);
 	}
-	else if( i < (asQWORD(1)<<48) )
+	else if( i < (asINT64(1)<<48) )
 	{
 		b = asBYTE(0x7E + signBit + (i >> 48)); WriteData(&b, 1);
-		b = asBYTE((i >> 40) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 32) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 24) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 16) & 0xFF); WriteData(&b, 1);
-		b = asBYTE((i >> 8) & 0xFF);  WriteData(&b, 1);
-		b = asBYTE(i & 0xFF);         WriteData(&b, 1);
+		b = asBYTE((i >> 40) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 32) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 24) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 16) & 0xFF);           WriteData(&b, 1);
+		b = asBYTE((i >> 8) & 0xFF);            WriteData(&b, 1);
+		b = asBYTE(i & 0xFF);                   WriteData(&b, 1);
 	}
 	else 
 	{

@@ -188,6 +188,8 @@ inline bool CompareFloat(float a,float b)
 	return true;
 }
 
+asDWORD ComputeCRC32(const asBYTE *buf, asUINT length);
+
 #define UNUSED_VAR(x) ((void)(x))
 
 #define TEST_FAILED do { fail = true; printf("Failed on line %d in %s\n", __LINE__, __FILE__); } while(0)

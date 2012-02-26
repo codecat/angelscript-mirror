@@ -240,3 +240,30 @@ int GetNumAllocs()
 	return numAllocs;
 }
 
+
+asDWORD ComputeCRC32(const asBYTE *buf, asUINT length)
+{
+	// Compute the lookup table
+	asDWORD lup[256];
+	for( asUINT pos = 0; pos < 256; pos++ )
+	{
+		asDWORD val = pos;
+		for( int i = 8; i > 0; i-- )
+		{
+			if( val & 1 )
+				val = (val >> 1) ^ 0xEDB88320;
+			else
+				val >>= 1;
+		}
+		lup[pos] = val;
+	}
+
+	// Calculate the CRC32 value
+	asDWORD crc = 0xFFFFFFFF;
+	for( asUINT i = 0; i < length; i++ )
+	{
+		crc = ((crc) >> 8) ^ lup[*buf++ ^ (crc & 0x000000FF)];
+	}
+
+	return ~crc;
+}
