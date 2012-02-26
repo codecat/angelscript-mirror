@@ -540,8 +540,6 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 			func->objVariableIsOnHeap.PushLast(b);
 		}
 
-		func->stackNeeded = ReadEncodedUInt();
-
 		int length = ReadEncodedUInt();
 		func->objVariableInfo.SetLength(length);
 		for( i = 0; i < length; ++i )
@@ -2210,8 +2208,7 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 
 	// Count position 0 too
-	// TODO: bytecode: Cannot use stackNeeded here because it is not yet known
-	adjustByPos.SetLength(func->stackNeeded+1);
+	adjustByPos.SetLength(highestPos+1);
 	memset(adjustByPos.AddressOf(), 0, adjustByPos.GetLength()*sizeof(int));
 
 	// Build look-up table with the adjustments for each stack position
@@ -2227,8 +2224,12 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 
 int asCReader::AdjustStackPosition(int pos)
 {
-	if( pos >= (int)adjustByPos.GetLength() ) 
-		error = true;
+	if( pos >= (int)adjustByPos.GetLength() )
+	{
+		// It can be higher for primitives allocated on top of highest object variable
+		if( adjustByPos.GetLength() )
+			pos += (short)adjustByPos[adjustByPos.GetLength()-1];
+	}
 	else if( pos >= 0 ) 
 		pos += (short)adjustByPos[pos];
 	else if( -pos >= (int)adjustNegativeStackByPos.GetLength() )
@@ -2639,12 +2640,6 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			WriteEncodedInt64(AdjustStackPosition(func->objVariablePos[i]));
 			WriteData(&func->objVariableIsOnHeap[i], 1);
 		}
-
-		// The stack needed by the function will be adjusted by the highest variable shift
-		// TODO: bytecode: When bytecode is adjusted for 32/64bit it is necessary to adjust 
-		//                 also for pointers pushed on the stack as function arguments.
-		//                 Perhaps it is easier to recalculate the stack needed at loadtime
-		WriteEncodedInt64(AdjustStackPosition(func->stackNeeded));
 
 		WriteEncodedInt64((asUINT)func->objVariableInfo.GetLength());
 		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
