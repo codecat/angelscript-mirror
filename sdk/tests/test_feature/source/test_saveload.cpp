@@ -341,20 +341,20 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1419 ) 
+	if( stream.buffer.size() != 1419 )
 	{
 		printf("The saved byte code is not of the expected size 1419. It is %d bytes\n", stream.buffer.size());
 	}
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 392 ) 
+	if( zeroes != 397 ) 
 	{
-		printf("The saved byte code contains a different amount of zeroes than the expected 392. Counted %d\n", zeroes);
+		printf("The saved byte code contains a different amount of zeroes than the expected 397. Counted %d\n", zeroes);
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
 	asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-	if( crc32 != 0xE115719C )
+	if( crc32 != 0x370192FC )
 	{
-		printf("The saved byte code has different checksum than the expected 0xE115719C. Got 0x%X\n", crc32);
+		printf("The saved byte code has different checksum than the expected 0x370192FC. Got 0x%X\n", crc32);
 	}
 
 	// Test loading without releasing the engine first

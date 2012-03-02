@@ -1718,6 +1718,14 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			else
 				asBC_SWORDARG0(&bc[n]) = (short)dt.GetSizeInMemoryDWords();
 		}
+		else if( c == asBC_RET )
+		{
+			// Determine the correct amount of DWORDs to pop
+			asWORD dw = (asWORD)func->GetSpaceNeededForArguments();
+			if( func->DoesReturnOnStack() ) dw += AS_PTR_SIZE;
+			if( func->objectType ) dw += AS_PTR_SIZE;
+			asBC_WORDARG0(&bc[n]) = dw;
+		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||
 				 c == asBC_CALLSYS )
@@ -3265,6 +3273,11 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
 
 			// Update the WORDARG0 to 0, as this will be recalculated on the target platform
+			asBC_WORDARG0(tmp) = 0;
+		}
+		else if( c == asBC_RET ) // W_ARG
+		{
+			// Save with arg 0, as this will be recalculated on the target platform
 			asBC_WORDARG0(tmp) = 0;
 		}
 		else if( c == asBC_CALL ||     // DW_ARG
