@@ -625,7 +625,7 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 		// TODO: Add proper error handling
 		r = ctx->Prepare(cmpFuncId); assert(r >= 0);
 		r = ctx->SetObject((void*)a); assert(r >= 0);
-		r = ctx->SetArgAddress(0, (void*)b); assert(r >= 0);
+		r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
 		r = ctx->Execute();
 
 		if( r == asEXECUTION_FINISHED )
@@ -718,7 +718,7 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx) c
 			// TODO: Add proper error handling
 			r = ctx->Prepare(eqFuncId); assert(r >= 0);
 			r = ctx->SetObject((void*)a); assert(r >= 0);
-			r = ctx->SetArgAddress(0, (void*)b); assert(r >= 0);
+			r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
@@ -733,7 +733,7 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx) c
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cmpFuncId); assert(r >= 0);
 			r = ctx->SetObject((void*)a); assert(r >= 0);
-			r = ctx->SetArgAddress(0, (void*)b); assert(r >= 0);
+			r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
@@ -995,7 +995,9 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 void CScriptArray::Precache()
 {
 	// TODO: optimize: This information could be stored in the object type as user data,
-	//                 then it wouldn't be necessary to look for this for each array initialization
+	//                 then it wouldn't be necessary to look for this for each array initialization.
+	//                 It cannot be stored in the user data, because then the cleanup function will
+	//                 not know how to cleanup the application's other user data.
 
 	subTypeId = objType->GetSubTypeId();
 
@@ -1019,8 +1021,12 @@ void CScriptArray::Precache()
 					asDWORD flags = 0;
 					int returnTypeId = func->GetReturnTypeId();
 					int paramTypeId = func->GetParamTypeId(0, &flags);
-				
-					if( flags == asTM_INREF && paramTypeId == subTypeId )
+
+					// The parameter must either be a reference to the subtype or a handle to the subtype			
+					if( ((flags & asTM_INREF) && paramTypeId == subTypeId) ||
+						(flags == 0 && 
+						 (paramTypeId & asTYPEID_OBJHANDLE) &&
+						 (paramTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == (subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST))) )
 					{
 						if( returnTypeId == asTYPEID_INT32 && strcmp(func->GetName(), "opCmp") == 0 )
 						{
