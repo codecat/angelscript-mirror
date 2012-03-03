@@ -175,7 +175,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	int offset = (int)outFunc->GetSpaceNeededForArguments();
 	for( int a = int(outFunc->parameterTypes.GetLength()) - 1; a >= 0; a-- )
 	{
-		if( outFunc->parameterTypes[a].GetObjectType() ||
+		if( !outFunc->parameterTypes[a].IsPrimitive() ||
 			outFunc->parameterTypes[a].IsReference() )
 		{
 			offset -= AS_PTR_SIZE;
