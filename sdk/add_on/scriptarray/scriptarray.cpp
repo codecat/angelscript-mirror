@@ -617,6 +617,10 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 			#undef COMPARE
 		}
 	}
+	else if( subTypeId & asTYPEID_OBJHANDLE )
+	{
+		return *((void**)a) < *((void**)b);
+	}
 	else
 	{
 		int r = 0;
@@ -664,7 +668,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 
 	asIScriptContext *cmpContext = 0;
 
-	if( subTypeId > asTYPEID_DOUBLE )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
@@ -707,6 +711,10 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx) c
 			default: return COMPARE(signed int); // All enums fall here
 			#undef COMPARE
 		}
+	}
+	else if( subTypeId & asTYPEID_OBJHANDLE )
+	{
+		return *((void**)a) == *((void**)b);
 	}
 	else
 	{
@@ -754,7 +762,7 @@ int CScriptArray::Find(void *value) const
 int CScriptArray::Find(asUINT index, void *value) const
 {
 	// Subtype isn't primitive and doesn't have opEquals / opCmp
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && (cmpFuncId <= 0 && eqFuncId <= 0) )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) && (cmpFuncId <= 0 && eqFuncId <= 0) )
 	{
 		asIScriptContext *ctx = asGetActiveContext();
 		asIObjectType* subType = objType->GetEngine()->GetObjectTypeById(subTypeId);
@@ -776,7 +784,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 
 	asIScriptContext *cmpContext = 0;
 
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
@@ -869,7 +877,7 @@ void CScriptArray::SortDesc(asUINT index, asUINT count)
 void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 {
 	// Subtype isn't primitive and doesn't have opCmp
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && cmpFuncId <= 0 )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) && cmpFuncId <= 0 )
 	{
 		asIScriptContext *ctx = asGetActiveContext();
 		asIObjectType* subType = objType->GetEngine()->GetObjectTypeById(subTypeId);
@@ -915,7 +923,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 	asBYTE tmp[16];
 	asIScriptContext *cmpContext = 0;
 
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 

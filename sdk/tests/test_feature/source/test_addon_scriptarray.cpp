@@ -839,6 +839,50 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem with arrays and opEquals reported by Philip Bennefall
+	{
+		const char *script = 
+			"class fish \n"
+			"{ \n"
+			"  bool opEquals(fish@ other) \n"
+			"  { \n"
+			"    return false; \n"
+			"  } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  fish@[] ocean(100); \n"
+			"  for(uint i=0; i<ocean.length(); i++) \n"
+			"  { \n"
+			"    fish fred; \n"
+			"    @(ocean[i]) = fred; \n"
+			"  } \n"
+			"  fish nemo; \n"
+			"  int index = ocean.find(nemo); \n"
+			"} \n";
+
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
