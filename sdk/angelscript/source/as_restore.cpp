@@ -1726,6 +1726,10 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			if( func->objectType ) dw += AS_PTR_SIZE;
 			asBC_WORDARG0(&bc[n]) = dw;
 		}
+		else if( c == asBC_POP )
+		{
+			asBC_WORDARG0(&bc[n]) = AS_PTR_SIZE;
+		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||
 				 c == asBC_CALLSYS )
@@ -3277,6 +3281,14 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		}
 		else if( c == asBC_RET ) // W_ARG
 		{
+			// Save with arg 0, as this will be recalculated on the target platform
+			asBC_WORDARG0(tmp) = 0;
+		}
+		else if( c == asBC_POP ) // W_ARG
+		{
+			// The pop instruction always pop a single pointer
+			asASSERT(asBC_WORDARG0(tmp) == AS_PTR_SIZE);
+			
 			// Save with arg 0, as this will be recalculated on the target platform
 			asBC_WORDARG0(tmp) = 0;
 		}

@@ -799,24 +799,6 @@ int asCByteCode::Optimize()
 			InsertBefore(curr, instr);
 			instr = GoBack(instr);
 		}
-		// PshV4 y, POP x -> POP x-1
-		// PshC4 y, POP x -> POP x-1
-		else if( (IsCombination(curr, asBC_PshV4, asBC_POP) ||
-		          IsCombination(curr, asBC_PshC4, asBC_POP)) && instr->wArg[0] >= 1 )
-		{
-			DeleteInstruction(curr);
-			instr->wArg[0]--;
-			instr = GoBack(instr);
-		}
-		// PshV8 y, POP x -> POP x-2
-		// PshC8 y, POP x -> POP x-2
-		else if( (IsCombination(curr, asBC_PshV8, asBC_POP) ||
-			      IsCombination(curr, asBC_PshC8, asBC_POP)) && instr->wArg[0] >= 2 )
-		{
-			DeleteInstruction(curr);
-			instr->wArg[0] -= 2;
-			instr = GoBack(instr);
-		}
 		// PshVPtr y, POP x -> POP x-AS_PTR_SIZE
 		// PSF y    , POP x -> POP x-AS_PTR_SIZE
 		// VAR y    , POP x -> POP x-AS_PTR_SIZE
@@ -829,6 +811,9 @@ int asCByteCode::Optimize()
 			      IsCombination(curr, asBC_PshNull, asBC_POP)) && 
 				 instr->wArg[0] >= AS_PTR_SIZE )
 		{
+			// The pop instruction will always only pop a single pointer
+			asASSERT( instr->wArg[0] == AS_PTR_SIZE );
+
 			// A pointer is pushed on the stack then immediately removed
 			DeleteInstruction(curr);
 			instr->wArg[0] -= AS_PTR_SIZE;
@@ -2002,6 +1987,10 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 // Decrease stack with "numDwords"
 int asCByteCode::Pop(int numDwords)
 {
+	// Only single pointers are popped
+	// TODO: optimize: Change the instruction to be PopPtr and remove the argument
+	asASSERT(numDwords == AS_PTR_SIZE);
+
 	asASSERT(asBCInfo[asBC_POP].type == asBCTYPE_W_ARG);
 
 	if( AddInstruction() < 0 )
