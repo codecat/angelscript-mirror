@@ -23,6 +23,8 @@ static const char *script1 =
 "import void Test() from 'DynamicModule';     \n"
 "OBJ g_obj;                                   \n"
 "A @gHandle;                                  \n"
+"funcdef void func_t(OBJ, float, A @);        \n"
+"void func(OBJ o, float f, A @a) {}           \n"
 "enum ETest {}                                \n"
 "void main()                                  \n"
 "{                                            \n"
@@ -31,6 +33,8 @@ static const char *script1 =
 "  TestArray();                               \n"
 "  GlobalCharArray.resize(1);                 \n"
 "  string @s = ARRAYTOHEX(GlobalCharArray);   \n"
+"  func_t @f = func;                          \n"
+"  f(OBJ(), 1, A());                          \n"
 "}                                            \n"
 "void TestObj(OBJ &out obj)                   \n"
 "{                                            \n"
@@ -325,7 +329,7 @@ bool Test()
 		TEST_FAILED;
 
 	// Validate the number of global functions
-	if( mod->GetFunctionCount() != 5 )
+	if( mod->GetFunctionCount() != 6 )
 		TEST_FAILED;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
@@ -341,26 +345,26 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1526 )
+	if( stream.buffer.size() != 1783 )
 	{
-		printf("The saved byte code is not of the expected size 1526. It is %d bytes\n", stream.buffer.size());
+		printf("The saved byte code is not of the expected size 1783. It is %d bytes\n", stream.buffer.size());
 	}
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 430 ) 
+	if( zeroes != 512 ) 
 	{
-		printf("The saved byte code contains a different amount of zeroes than the expected 430. Counted %d\n", zeroes);
+		printf("The saved byte code contains a different amount of zeroes than the expected 512. Counted %d\n", zeroes);
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
 	asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-	if( crc32 != 0xC39F19AD )
+	if( crc32 != 0xAA6597C2 )
 	{
-		printf("The saved byte code has different checksum than the expected 0xC39F19AD. Got 0x%X\n", crc32);
+		printf("The saved byte code has different checksum than the expected 0xAA6597C2. Got 0x%X\n", crc32);
 	}
 
 	// Test loading without releasing the engine first
 	mod->LoadByteCode(&stream);
 
-	if( mod->GetFunctionCount() != 5 )
+	if( mod->GetFunctionCount() != 6 )
 		TEST_FAILED;
 
 	if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
@@ -383,7 +387,7 @@ bool Test()
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->LoadByteCode(&stream);
 
-	if( mod->GetFunctionCount() != 5 )
+	if( mod->GetFunctionCount() != 6 )
 		TEST_FAILED;
 
 	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);

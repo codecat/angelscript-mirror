@@ -1873,8 +1873,15 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// Adjust all variable positions
+	// Adjust the variable information. This will be used during the adjustment below
 	CalculateAdjustmentByPos(func);
+	for( n = 0; n < func->variables.GetLength(); n++ )
+	{
+		func->variables[n]->declaredAtProgramPos = instructionNbrToPos[func->variables[n]->declaredAtProgramPos];
+		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
+	}
+
+	// Adjust all variable positions
 	bc = func->byteCode.AddressOf();
 	for( n = 0; n < func->byteCode.GetLength(); )
 	{
@@ -1951,13 +1958,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		func->objVariableInfo[n].programPos = instructionNbrToPos[func->objVariableInfo[n].programPos];
 
 		func->objVariableInfo[n].variableOffset = AdjustStackPosition(func->objVariableInfo[n].variableOffset);
-	}
-
-	// variables
-	for( n = 0; n < func->variables.GetLength(); n++ )
-	{
-		func->variables[n]->declaredAtProgramPos = instructionNbrToPos[func->variables[n]->declaredAtProgramPos];
-		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
 	}
 
 	// The program position (every even number) needs to be adjusted
