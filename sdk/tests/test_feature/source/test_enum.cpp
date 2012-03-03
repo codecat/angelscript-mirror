@@ -548,6 +548,44 @@ static bool TestEnum()
 		engine->Release();
 	}
 
+	// Test problem reported by Andrew Ackermann
+	// The code crashed in ALLOC as the enum was copied as 8bytes on 64bit platforms
+	{
+		const char *script = 
+		"enum TestEnum { \n"
+		" TE_0, \n"
+		" TE_1, \n"
+		"}; \n"
+		"class TestClass { \n"
+		" TestClass(TestEnum en) { \n"
+		" } \n"
+		"}; \n"
+		"void init() { \n"
+		" TestClass@ cl = TestClass(TE_1); \n"
+		"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	
+		r = ExecuteString(engine, "init()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
