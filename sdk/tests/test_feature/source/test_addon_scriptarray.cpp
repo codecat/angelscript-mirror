@@ -760,6 +760,47 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem with arrays of enums reported by Philip Bennefall
+	{
+		const char *script = 
+			"enum fruit \n"
+			"{ \n"
+			"APPLE, ORANGE, BANANA \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"fruit[] basket; \n"
+			"basket.insertLast(APPLE); \n"
+			"basket.insertLast(ORANGE); \n"
+			"basket.sortDesc(); \n"
+			"int index = basket.find(APPLE); \n"
+			"assert( index == 1 ); \n"
+			"} \n";
+
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+
+	}
+
 	// Success
 	return fail;
 }

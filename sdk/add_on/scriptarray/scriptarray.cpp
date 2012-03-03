@@ -300,7 +300,8 @@ void CScriptArray::SetValue(asUINT index, void *value)
 		*(short*)ptr = *(short*)value;
 	else if( subTypeId == asTYPEID_INT32 ||
 			 subTypeId == asTYPEID_UINT32 ||
-			 subTypeId == asTYPEID_FLOAT )
+			 subTypeId == asTYPEID_FLOAT ||
+			 subTypeId > asTYPEID_DOUBLE ) // enums have a type id larger than doubles
 		*(int*)ptr = *(int*)value;
 	else if( subTypeId == asTYPEID_INT64 ||
 			 subTypeId == asTYPEID_UINT64 ||
@@ -597,7 +598,7 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 		b = TEMP;
 	}
 
-	if( subTypeId <= asTYPEID_DOUBLE )
+	if( !(subTypeId & ~asTYPEID_MASK_SEQNBR) )
 	{
 		// Simple compare of values
 		switch( subTypeId )
@@ -612,6 +613,7 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 			case asTYPEID_UINT32: return COMPARE(unsigned int);
 			case asTYPEID_FLOAT: return COMPARE(float);
 			case asTYPEID_DOUBLE: return COMPARE(double);
+			default: return COMPARE(signed int); // All enums fall in this case
 			#undef COMPARE
 		}
 	}
@@ -687,7 +689,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 // internal
 bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx) const
 {
-	if( subTypeId <= asTYPEID_DOUBLE )
+	if( !(subTypeId & ~asTYPEID_MASK_SEQNBR) )
 	{
 		// Simple compare of values
 		switch( subTypeId )
@@ -702,6 +704,7 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx) c
 			case asTYPEID_UINT32: return COMPARE(unsigned int);
 			case asTYPEID_FLOAT: return COMPARE(float);
 			case asTYPEID_DOUBLE: return COMPARE(double);
+			default: return COMPARE(signed int); // All enums fall here
 			#undef COMPARE
 		}
 	}
@@ -751,7 +754,7 @@ int CScriptArray::Find(void *value) const
 int CScriptArray::Find(asUINT index, void *value) const
 {
 	// Subtype isn't primitive and doesn't have opEquals / opCmp
-	if( subTypeId > asTYPEID_DOUBLE && (cmpFuncId <= 0 && eqFuncId <= 0) )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && (cmpFuncId <= 0 && eqFuncId <= 0) )
 	{
 		asIScriptContext *ctx = asGetActiveContext();
 		asIObjectType* subType = objType->GetEngine()->GetObjectTypeById(subTypeId);
@@ -773,7 +776,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 
 	asIScriptContext *cmpContext = 0;
 
-	if( subTypeId > asTYPEID_DOUBLE )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) )
 	{
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
@@ -866,7 +869,7 @@ void CScriptArray::SortDesc(asUINT index, asUINT count)
 void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 {
 	// Subtype isn't primitive and doesn't have opCmp
-	if( subTypeId > asTYPEID_DOUBLE && cmpFuncId <= 0 )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && cmpFuncId <= 0 )
 	{
 		asIScriptContext *ctx = asGetActiveContext();
 		asIObjectType* subType = objType->GetEngine()->GetObjectTypeById(subTypeId);
@@ -912,7 +915,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 	asBYTE tmp[16];
 	asIScriptContext *cmpContext = 0;
 
-	if( subTypeId > asTYPEID_DOUBLE )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) )
 	{
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
@@ -1000,7 +1003,8 @@ void CScriptArray::Precache()
 	eqFuncId = -1;
 
 	// Object - search for opCmp / opEquals
-	if( subTypeId > asTYPEID_DOUBLE )
+	// Type ids for primitives and enums only has the sequence number part
+	if( subTypeId & ~asTYPEID_MASK_SEQNBR )
 	{
 		asIObjectType *subType = objType->GetEngine()->GetObjectTypeById(subTypeId);
 
