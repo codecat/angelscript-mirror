@@ -211,6 +211,7 @@ public:
 
 	// Used by asFUNC_SCRIPT
 	asCArray<asDWORD>               byteCode;
+	// TODO: cleanup: These objVariable members should be stored in the variables member
 	asCArray<asCObjectType*>        objVariableTypes;
 	asCArray<int>	                objVariablePos;
 	asCArray<bool>                  objVariableIsOnHeap;

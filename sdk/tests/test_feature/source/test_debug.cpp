@@ -12,16 +12,18 @@ static const char * const TESTNAME = "TestDebug";
 
 static const char *script1 =
 "import void Test2() from \"Module2\";  \n"
+"funcdef void func_t();                 \n"
 "void main()                            \n"
 "{                                      \n"
 "  int a = 1;                           \n"
-"  string s = \"text\";                 \n" // 5
-"  c _c; _c.Test1();                    \n" // 6
+"  string s = \"text\";                 \n" // 6
+"  c _c; _c.Test1();                    \n" // 7
+"  func_t @t = main;                    \n"
 "  Test2();                             \n"
 "}                                      \n"
 "class c                                \n" 
 "{                                      \n"
-"  void Test1()                         \n" // 11
+"  void Test1()                         \n" // 13
 "  {                                    \n"
 "    int d = 4;                         \n"
 "  }                                    \n"
@@ -44,33 +46,19 @@ static const char *script2 =
 std::string printBuffer;
 
 static const char *correct =
-"Module1:void main():4,3\n"
-//" int a = -842150451\n"
-//" string s = <null>\n"
 "Module1:void main():5,3\n"
-//" int a = 1\n"
-//" string s = <null>\n"
 "Module1:void main():6,3\n"
-"Module1:void main():6,9\n"
-//" int a = 1\n"
-//" string s = 'text'\n"
-" Module1:void c::Test1():13,5\n"
-//" int d = 6179008\n"
-" Module1:void c::Test1():14,4\n"
-//" int d = 4\n"
 "Module1:void main():7,3\n"
-//" int a = 1\n"
-//" string s = 'text'\n"
+"Module1:void main():7,9\n"
+" Module1:void c::Test1():15,5\n"
+" Module1:void c::Test1():16,4\n"
+"Module1:void main():8,3\n"
+"Module1:void main():9,3\n"
 " Module2:void Test2():3,3\n"
-//" int b = 4\n"
 " Module2:void Test2():4,3\n"
-//" int b = 2\n"
 "  Module2:void Test3():8,3\n"
-//" int c = -842150451\n"
 "  Module2:void Test3():9,3\n"
-//" int c = 3\n"
 "  Module2:void Test3():10,3\n"
-//" int c = 3\n"
 "--- exception ---\n"
 "desc: Index out of bounds\n"
 "func: void Test3()\n"
@@ -78,12 +66,15 @@ static const char *correct =
 "sect: :2\n"
 "line: 10,3\n"
 " int c = 3\n"
+" int[] a = {...}\n"
 "--- call stack ---\n"
 "Module2:void Test2():5,2\n"
 " int b = 2\n"
-"Module1:void main():8,2\n"
+"Module1:void main():10,2\n"
 " int a = 1\n"
 " string s = 'text'\n"
+" c _c = {...}\n"
+" func_t@ t = {...}\n"
 "--- exception ---\n"
 "desc: Index out of bounds\n"
 "func: void Test3()\n"
@@ -91,12 +82,15 @@ static const char *correct =
 "sect: :2\n"
 "line: 10,3\n"
 " int c = 3\n"
+" int[] a = {...}\n"
 "--- call stack ---\n"
 "Module2:void Test2():5,2\n"
 " int b = 2\n"
-"Module1:void main():8,2\n"
+"Module1:void main():10,2\n"
 " int a = 1\n"
-" string s = 'text'\n";
+" string s = 'text'\n"
+" c _c = {...}\n"
+" func_t@ t = {...}\n";
 
 void print(const char *format, ...)
 {
@@ -153,6 +147,10 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 				print(" %s = '%s'\n", ctx->GetVarDeclaration(n, stackLevel), str->buffer.c_str());
 			else
 				print(" %s = <null>\n", ctx->GetVarDeclaration(n, stackLevel));
+		}
+		else
+		{
+			print(" %s = {...}\n", ctx->GetVarDeclaration(n, stackLevel));
 		}
 	}
 }

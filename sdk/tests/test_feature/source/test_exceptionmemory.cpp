@@ -380,6 +380,35 @@ bool Test()
 
  	engine->Release();
 
+	// Test proper release of function pointers on exception
+	{
+		COutStream out;
+
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_CDECL);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"funcdef void func_t(); \n"
+			"void main() \n"
+			"{ \n"
+			"  func_t @f = main; \n"
+			"  RaiseException(); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

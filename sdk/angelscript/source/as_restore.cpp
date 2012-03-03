@@ -555,6 +555,20 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 			func->lineNumbers[i] = ReadEncodedUInt();
 
 		ReadData(&func->isShared, 1);
+
+		// Read the variable information
+		length = ReadEncodedUInt();
+		func->variables.SetLength(length);
+		for( i = 0; i < length; i++ )
+		{
+			asSScriptVariable *var = asNEW(asSScriptVariable);
+			func->variables[i] = var;
+
+			var->declaredAtProgramPos = ReadEncodedUInt();
+			var->stackOffset = ReadEncodedUInt();
+			ReadString(&var->name);
+			ReadDataType(&var->type);
+		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{
@@ -1939,14 +1953,12 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		func->objVariableInfo[n].variableOffset = AdjustStackPosition(func->objVariableInfo[n].variableOffset);
 	}
 
-	// variables[x].stackOffset
-	// TODO: The variables should also be loaded and adjusted
-/*
+	// variables
 	for( n = 0; n < func->variables.GetLength(); n++ )
 	{
+		func->variables[n]->declaredAtProgramPos = instructionNbrToPos[func->variables[n]->declaredAtProgramPos];
 		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
 	}
-*/
 
 	// The program position (every even number) needs to be adjusted
 	// for the line numbers to be in number of dwords instead of number of instructions 
@@ -2647,7 +2659,17 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 
 		WriteData(&func->isShared, 1);
 
-		// TODO: Write variables
+		// Write the variable information
+		WriteEncodedInt64((asUINT)func->variables.GetLength());
+		for( i = 0; i < func->variables.GetLength(); i++ )
+		{
+			// The program position must be adjusted to be in number of instructions
+			WriteEncodedInt64(bytecodeNbrByPos[func->variables[i]->declaredAtProgramPos]);
+			// The stack position must be adjusted according to the pointer sizes
+			WriteEncodedInt64(AdjustStackPosition(func->variables[i]->stackOffset));
+			WriteString(&func->variables[i]->name);
+			WriteDataType(&func->variables[i]->type);
+		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{
