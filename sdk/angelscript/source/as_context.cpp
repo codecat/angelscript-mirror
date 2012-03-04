@@ -1244,6 +1244,11 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 
 void asCContext::CallScriptFunction(asCScriptFunction *func)
 {
+	// TODO: Should perhaps call CallLineCallback() if set. This will allow the 
+	//       application that compiles without line cues to interrupt scripts
+	//       with endless recursive calls. Without this there is no guarantee
+	//       that the SUSPEND instruction is guaranteed to be executed.
+
 	// Push the framepointer, function id and programCounter on the stack
 	PushCallState();
 

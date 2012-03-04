@@ -66,12 +66,20 @@ The line cues are normally placed in the bytecode between each script
 statement. These are where the VM will allow the execution to be suspended, and
 also where the line callback is invoked.
 
-If you do not use the line callback then you may get a little more performance 
-out of the script by compiling without the line cues.
+If you do not need to receive a callback for every statement executed in a script 
+then you may get a little more performance out of the script by compiling without 
+the line cues. 
+
+The line callback will still work and is guaranteed to be invoked at least once 
+per loop in the script to allow the application to interrupt infinite loops.
 
 \code
 engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES);
 \endcode
+
+
+
+
 
 
 

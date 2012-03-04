@@ -1873,15 +1873,10 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// Adjust the variable information. This will be used during the adjustment below
+	// Calculate the stack adjustments
 	CalculateAdjustmentByPos(func);
-	for( n = 0; n < func->variables.GetLength(); n++ )
-	{
-		func->variables[n]->declaredAtProgramPos = instructionNbrToPos[func->variables[n]->declaredAtProgramPos];
-		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
-	}
 
-	// Adjust all variable positions
+	// Adjust all variable positions in the bytecode
 	bc = func->byteCode.AddressOf();
 	for( n = 0; n < func->byteCode.GetLength(); )
 	{
@@ -1923,15 +1918,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			break;
 		}
 
-		// Adjust the get offsets. This must be done in the second iteration because
-		// it relies on the function ids already being correct in the bytecode ahead
-		if( c == asBC_GETREF ||
-		    c == asBC_GETOBJ ||
-		    c == asBC_GETOBJREF )
-		{
-			asBC_WORDARG0(&bc[n]) = (asWORD)AdjustGetOffset(asBC_WORDARG0(&bc[n]), func, n);
-		}
-
 		if( c == asBC_PUSH )
 		{
 			// TODO: Maybe the push instruction should be removed, and be kept in 
@@ -1940,6 +1926,35 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 			// PUSH is only used to reserve stack space for variables
 			asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
+		}
+
+		n += asBCTypeSize[asBCInfo[c].type];
+	}
+
+	// Adjust the variable information. This will be used during the adjustment below
+	for( n = 0; n < func->variables.GetLength(); n++ )
+	{
+		func->variables[n]->declaredAtProgramPos = instructionNbrToPos[func->variables[n]->declaredAtProgramPos];
+		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
+	}
+
+	// Adjust the get offsets. This must be done in the second iteration because
+	// it relies on the function ids and variable position already being correct in the 
+	// bytecodes that come after the GET instructions.
+	// TODO: optimize: Instead of doing a full extra loop. We can push the GET instructions
+	//                 on a stack, and then when a call instruction is found update all of them.
+	//                 This will also make the AdjustGetOffset() function quicker as it can 
+	//                 receive the called function directly instead of having to search for it.
+	bc = func->byteCode.AddressOf();
+	for( n = 0; n < func->byteCode.GetLength(); )
+	{
+		int c = *(asBYTE*)&bc[n];
+
+		if( c == asBC_GETREF ||
+		    c == asBC_GETOBJ ||
+		    c == asBC_GETOBJREF )
+		{
+			asBC_WORDARG0(&bc[n]) = (asWORD)AdjustGetOffset(asBC_WORDARG0(&bc[n]), func, n);
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
