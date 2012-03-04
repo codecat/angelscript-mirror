@@ -2262,9 +2262,10 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 	else if( bc == asBC_CallPtr )
 	{
 		// Find the funcdef from the local variable
-		//int var = asBC_SWORDARG0(&func->byteCode[programPos]);
-		// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
-		return 0;
+		int var = asBC_SWORDARG0(&func->byteCode[programPos]);
+		for( asUINT v = 0; v < func->variables.GetLength(); v++ )
+			if( func->variables[v]->stackOffset == var )
+				return func->variables[v]->type.GetFuncDef();
 	}
 
 	return 0;
@@ -2287,17 +2288,11 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			bc == asBC_CALLSYS ||
 			bc == asBC_CALLINTF || 
 			bc == asBC_ALLOC ||
-			bc == asBC_CALLBND )
+			bc == asBC_CALLBND ||
+			bc == asBC_CallPtr )
 		{
 			calledFunc = GetCalledFunction(func, n);
 			break;
-		}
-		else if( bc == asBC_CallPtr )
-		{
-			// Find the funcdef from the local variable
-			//int var = asBC_SWORDARG0(&func->byteCode[n]);
-			// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
-			return offset;
 		}
 		else if( bc == asBC_REFCPY )
 		{
@@ -2307,6 +2302,13 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		}
 
 		n += asBCTypeSize[asBCInfo[bc].type];
+	}
+
+	if( calledFunc == 0 )
+	{
+		// TODO: Report error
+		error = true;
+		return offset;
 	}
 
 	// Count the number of pointers pushed on the stack above the 
@@ -3173,13 +3175,19 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			// Find the function from the engine's bind array
 			int funcId = asBC_INTARG(&func->byteCode[n]);
 			calledFunc = engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
+			break;
 		}
 		else if( bc == asBC_CallPtr )
 		{
 			// Find the funcdef from the local variable
-			//int var = asBC_SWORDARG0(&func->byteCode[n]);
-			// TODO: bytecode: The func def for the variable needs to be stored with the function. This is also needed for debugging and for exception handling
-			return offset;
+			int var = asBC_SWORDARG0(&func->byteCode[n]);
+			for( asUINT v = 0; v < func->variables.GetLength(); v++ )
+				if( func->variables[v]->stackOffset == var )
+				{
+					calledFunc = func->variables[v]->type.GetFuncDef();
+					break;
+				}
+			break;
 		}
 		else if( bc == asBC_REFCPY )
 		{
@@ -3190,6 +3198,8 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 
 		n += asBCTypeSize[asBCInfo[bc].type];
 	}
+
+	asASSERT( calledFunc );
 
 	// Count the number of pointers pushed on the stack above the 
 	// current offset, and then adjust the offset accordingly
