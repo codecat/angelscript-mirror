@@ -599,6 +599,9 @@ int asCByteCode::Optimize()
 	// TODO: optimize: A bytecode BC_RefCpyV that copies a handle from a local variable to another local variable
 	//                 can easily substitute the frequently appearing pattern BC_PshV4, BC_PSF, BC_REFCPY, BC_POP
 
+	// TODO: optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
+	//                 loops a lot. How often do these loops really occur?
+
 	// TODO: optimize: Script class methods are currently implemented to increase the ref count of the object upon
 	//                 entry, and then release it upon exit. When the method isn't doing anything at all, this is
 	//                 not necessary, as the function could simply do a RET immediately. This optimization is only
@@ -606,6 +609,9 @@ int asCByteCode::Optimize()
 	//                 function, then we can't do this optimization. Of course, this optimization may not be all
 	//                 that useful, since in a real world app, it is probably not very common that empty class 
 	//                 methods are called.
+
+	// TODO: optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
+	//                 function calls that can suspend the execution.
 
 	cByteInstruction *instr = first;
 	while( instr )

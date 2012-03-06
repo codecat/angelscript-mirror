@@ -1400,6 +1400,8 @@ void asCContext::ExecuteNext()
 
 	// Decrease the stack pointer with n dwords (stack grows downward)
 	case asBC_POP:
+		// TODO: optimize: This instruction always pop a single pointer, so there is not really any need for it to take an argument
+		asASSERT( asBC_WORDARG0(l_bc) == AS_PTR_SIZE );
 		l_sp += asBC_WORDARG0(l_bc);
 		l_bc++;
 		break;
@@ -3246,7 +3248,7 @@ void asCContext::ExecuteNext()
 			}
 
 			// Not a JIT resume point, treat as nop
-			l_bc++;
+			l_bc += 1+AS_PTR_SIZE;
 		}
 		break;
 
