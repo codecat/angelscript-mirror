@@ -285,7 +285,7 @@ int CScriptMgr::ExecuteCall(asIScriptContext *ctx)
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			cout << "Exception: " << ctx->GetExceptionString() << endl;
-			cout << "Function: " << engine->GetFunctionById(ctx->GetExceptionFunction())->GetDeclaration() << endl;
+			cout << "Function: " << ctx->GetExceptionFunction()->GetDeclaration() << endl;
 			cout << "Line: " << ctx->GetExceptionLineNumber() << endl;
 
 			// It is possible to print more information about the location of the 
