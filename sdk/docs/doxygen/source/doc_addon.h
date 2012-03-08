@@ -15,7 +15,6 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_serializer
  - \subpage doc_addon_helpers
  - \subpage doc_addon_autowrap
- - \subpage doc_addon_clib
 
 \page doc_addon_script Script extensions
 
@@ -343,10 +342,14 @@ public:
   void   Resize(asUINT numElements);
   
   // Get a pointer to an element. Returns 0 if out of bounds
-  void  *At(asUINT index);
+  void       *At(asUINT index);
+  const void *At(asUINT index) const;
 
   // Copy the contents of one array to another (only if the types are the same)
   CScriptArray &operator=(const CScriptArray&);
+
+  // Compare two arrays
+  bool operator==(const CScriptArray &) const;
 
   // Array manipulation
   void InsertAt(asUINT index, void *value);
@@ -358,8 +361,8 @@ public:
   void SortDesc();
   void SortDesc(asUINT index, asUINT count);
   void Reverse();
-  int  Find(void *value);
-  int  Find(asUINT index, void *value);
+  int  Find(void *value) const;
+  int  Find(asUINT index, void *value) const;
 };
 \endcode
 
@@ -375,11 +378,12 @@ public:
     T       &opIndex(uint);
     const T &opIndex(uint) const;
 
-    array<T> opAssign(const array<T> & in);
+    array<T> opAssign(const array<T> &in);
+    bool     opEquals(const array<T> &in) const;
     
     uint length { get const; set; }
     
-    void insertAt(uint index, const T& in);
+    void insertAt(uint index, const T &in);
     void removeAt(uint index);
     void insertLast(const T& in);
     void removeLast();
@@ -390,8 +394,8 @@ public:
     void sortDesc();
     void sortDesc(uint index, uint count);
     void reverse();
-    int  find(const T& in);
-    int  find(uint index, const T& in);
+    int  find(const T& in) const;
+    int  find(uint index, const T& in) const;
   }
 </pre>
 
@@ -756,6 +760,9 @@ public:
   void Set(const std::string &key, double &value);
   bool Get(const std::string &key, double &value) const;
 
+  // Get an array of all keys
+  CScriptArray *GetKeys() const;
+  
   // Returns true if the key is set
   bool Exists(const std::string &key) const;
   
@@ -775,14 +782,16 @@ public:
     dictionary &opAssign(const dictionary &in other);
 
     void set(const string &in key, ? &in value);
-    bool get(const string &in value, ? &out value) const;
+    bool get(const string &in key, ? &out value) const;
     
     void set(const string &in key, int64 &in value);
     bool get(const string &in key, int64 &out value) const;
     
     void set(const string &in key, double &in value);
     bool get(const string &in key, double &out value) const;
-    
+
+    array<string> \@getKeys() const;    
+
     bool exists(const string &in key) const;
     void delete(const string &in key);
     void deleteAll();
@@ -1264,87 +1273,7 @@ void RegisterWrapper(asIScriptEngine *engine)
 
 
 
-\page doc_addon_clib ANSI C library interface
 
-<b>Path:</b> /sdk/add_on/clib/
-
-This add-on defines a pure C interface, that can be used in those applications that do not
-understand C++ code but do understand C, e.g. Delphi, Java, and D.
-
-To compile the AngelScript C library, you need to compile the library source files in sdk/angelscript/source together 
-with the source files in sdk/add-on/clib, and link them as a shared dynamic library. In the application that will use 
-the AngelScript C library, you'll include the <code>angelscript_c.h</code> header file, instead of the ordinary 
-<code>%angelscript.h</code> header file. After that you can use the library much the same way that it's used in C++. 
-
-To find the name of the C functions to call, you normally take the corresponding interface method
-and give a prefix according to the following table:
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td><b>interface      &nbsp;</b></td><td><b>prefix&nbsp;</b></td></tr>
-<tr><td>asIScriptEngine   &nbsp;</td>    <td>asEngine_</td></tr>
-<tr><td>asIScriptModule   &nbsp;</td>    <td>asModule_</td></tr>
-<tr><td>asIScriptContext  &nbsp;</td>    <td>asContext_</td></tr>
-<tr><td>asIScriptGeneric  &nbsp;</td>    <td>asGeneric_</td></tr>
-<tr><td>asIScriptObject   &nbsp;</td>    <td>asObject_</td></tr>
-<tr><td>asIObjectType     &nbsp;</td>    <td>asObjectType_</td></tr>
-<tr><td>asIScriptFunction &nbsp;</td>    <td>asFunction_</td></tr>
-</table>
-
-All interface methods take the interface pointer as the first parameter when in the C function format, the rest
-of the parameters are the same as in the C++ interface. There are a few exceptions though, e.g. all parameters that
-take an <code>asSFuncPtr</code> take a normal function pointer in the C function format. 
-
-Example:
-
-\code
-#include <stdio.h>
-#include <assert.h>
-#include "angelscript_c.h"
-
-void MessageCallback(asSMessageInfo *msg, void *);
-void PrintSomething();
-
-int main(int argc, char **argv)
-{
-  int r = 0;
-
-  // Create and initialize the script engine
-  asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-  r = asEngine_SetMessageCallback(engine, (asFUNCTION_t)MessageCallback, 0, asCALL_CDECL); assert( r >= 0 );
-  r = asEngine_RegisterGlobalFunction(engine, "void print()", (asFUNCTION_t)PrintSomething, asCALL_CDECL); assert( r >= 0 );
-
-  // Execute a simple script
-  r = asEngine_ExecuteString(engine, 0, "print()", 0, 0);
-  if( r != asEXECUTION_FINISHED )
-  {
-      printf("Something wen't wrong with the execution\n");
-  }
-  else
-  {
-      printf("The script was executed successfully\n");
-  }
-
-  // Release the script engine
-  asEngine_Release(engine);
-  
-  return r;
-}
-
-void MessageCallback(asSMessageInfo *msg, void *)
-{
-  const char *msgType = 0;
-  if( msg->type == 0 ) msgType = "Error  ";
-  if( msg->type == 1 ) msgType = "Warning";
-  if( msg->type == 2 ) msgType = "Info   ";
-
-  printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
-}
-
-void PrintSomething()
-{
-  printf("Called from the script\n");
-}
-\endcode
 
 
 
