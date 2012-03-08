@@ -61,9 +61,16 @@ protected:
    to false with \ref asIScriptEngine::SetEngineProperty, so the script engine doesn't attempt to initialize 
    the global variables after the script has been built.
 
- - The saved bytecode is almost fully platform independent, with the exception of the difference in 
-   pointer size. A script compiled on a 32bit platform will generally not work on a 64bit platform 
-   and vice versa.
+ - The saved bytecode is almost fully platform independent. The following is properly handled, pointer size,
+   size of registered types, offsets of registered properties, CPU endianess, etc. Some things that are not
+   handled include difference in size of primitive types (e.g. bool on older Mac PPC platforms) and CPU floating point
+   representation (e.g. IEEE 754 versus non-IEEE 754).
+
+ - If the application is not going to compile scripts from source code, but only load pre-compiled scripts,
+   then it may be beneficial to compile the library with the AS_NO_COMPILER define so as to reduce the size
+   of the executable.
+
+
 
 
 

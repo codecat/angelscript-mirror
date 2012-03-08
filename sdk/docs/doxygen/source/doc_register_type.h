@@ -12,7 +12,7 @@ cannot be passed by value to application registered functions, a value type
 doesn't support handles and can be passed by value to application registered
 functions.
 
-\todo Expand this page to better describe the difference between reference types and value types
+\todo Write guide on how to choose how to register a type
 
  - \subpage doc_reg_basicref
  - \subpage doc_register_val_type
@@ -98,6 +98,32 @@ r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asMETHO
 \endcode
 
 
+\section doc_reg_nocount Reference types without reference counting
+
+If the application provides its own memory management that isn't based on reference counting,
+then it is possible to register the type without the addref and release behaviours if the flag,
+asOBJ_NOCOUNT is informed in the call to RegisterObjectType, i.e.
+
+\code
+// Registering the reference type
+r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+\endcode
+
+Without the addref and release behaviours the application must be careful to not destroy any
+objects that may potentially still be referenced by the script engine, e.g. in a global variable,
+or other location.
+
+Unless the objects are guaranteed to stay alive as long as the script engine is instanciated, you
+may want to consider disabling global variables with engine property \ref asEP_DISALLOW_GLOBAL_VARS. 
+This will make it much easier for the application to know where references to the objects are kept.
+An alternative to disabling all global variables, is to selectively disallow only the global variables,
+that can eventually store a reference to the object type. This can be done by 
+\ref asIScriptModule::GetGlobalVarCount "enumerating the compiled global variables" after script has
+been built and giving an error to the user incase he includes a variable he shouldn't. 
+
+
+
+
 
 
 \section doc_reg_noinst Registering an uninstanciable reference type
@@ -111,6 +137,10 @@ scripts to access objects created by the application via object handles.
 This would be used when the application has a limited number of objects
 available and doesn't want to create new ones. For example singletons, or
 pooled objects.
+
+
+
+
 
 
 
@@ -231,6 +261,12 @@ respective system, so if you find that you really need to use these flags, make 
 to guarantee that your functions are called correctly by the script engine. If neither of these flags work, and you're 
 not able to change the class to work without them, then the only other option is to use the generic calling convention,
 preferably with the \ref doc_addon_autowrap "auto wrappers".
+
+
+
+
+
+
 
 
 

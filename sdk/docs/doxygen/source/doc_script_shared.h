@@ -40,10 +40,9 @@ same source file, but this is not a requirement.
 
 \section doc_script_shared_2 What can be shared
 
-Currently only the \ref doc_script_class "class", \ref doc_global_interface "interface"
-and \ref doc_global_function "function" entities can be shared. 
+Currently only the \ref doc_script_class "class", \ref doc_global_interface "interface",
+\ref doc_global_function "function", and \ref doc_global_enums "enum" entities can be shared. 
 
-Future versions may allow more entities, for example global 
-\ref doc_global_enums "enums" and \ref doc_global_variable "variables".
+Future versions may allow \ref doc_global_variable "global variables" to be shared too.
 
 */
