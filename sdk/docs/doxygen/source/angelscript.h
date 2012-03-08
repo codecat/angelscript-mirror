@@ -45,6 +45,9 @@
 #define ANGELSCRIPT_H
 
 #include <stddef.h>
+#ifndef _MSC_VER
+#include <stdint.h>
+#endif
 
 #ifdef AS_USE_NAMESPACE
  #define BEGIN_AS_NAMESPACE namespace AngelScript {
@@ -60,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.22.2
-#define ANGELSCRIPT_VERSION        22202
-#define ANGELSCRIPT_VERSION_STRING "2.22.2"
+//! \details Version 2.23.0
+#define ANGELSCRIPT_VERSION        22300
+#define ANGELSCRIPT_VERSION_STRING "2.23.0"
 
 // Data types
 
@@ -206,7 +209,9 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_ALLINTS          = 0x8000,
 	//! The C++ class can be treated as if all its members are floats or doubles.
 	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
-	asOBJ_MASK_VALID_FLAGS           = 0x1FFFF,
+	//! The type doesn't use reference counting. Only valid for reference types.
+	asOBJ_NOCOUNT                    = 0x20000,
+	asOBJ_MASK_VALID_FLAGS           = 0x3FFFF,
 	//! The object is a script class or an interface.
 	asOBJ_SCRIPT_OBJECT              = 0x80000,
 	//! Type object type is shared between modules.
@@ -529,7 +534,14 @@ enum asEFuncType
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
-typedef size_t         asPWORD;
+#if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC6 
+	// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
+	// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
+	// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
+	typedef size_t	       asPWORD;
+#else
+	typedef uintptr_t      asPWORD;
+#endif
 #ifdef __LP64__
     typedef unsigned int  asDWORD;
     typedef unsigned long asQWORD;
@@ -537,8 +549,8 @@ typedef size_t         asPWORD;
 #else
     typedef unsigned long asDWORD;
   #if defined(__GNUC__) || defined(__MWERKS__)
-    typedef unsigned long long asQWORD;
-    typedef long long asINT64;
+    typedef uint64_t asQWORD;
+    typedef int64_t asINT64;
   #else
     typedef unsigned __int64 asQWORD;
     typedef __int64 asINT64;
@@ -953,13 +965,25 @@ public:
 	//! \brief Returns the detail on the registered global property.
 	//! \param[in] index The index of the global variable.
 	//! \param[out] name Receives the name of the property.
+	//! \param[out] nameSpace Receives the namespace of the property.
 	//! \param[out] typeId Receives the typeId of the property.
 	//! \param[out] isConst Receives the constness indicator of the property.
 	//! \param[out] configGroup Receives the config group in which the property was registered.
 	//! \param[out] pointer Receives the pointer of the property.
+	//! \param[out] accessMask Receives the access mask of the property.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
-	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0) const = 0;
+	virtual int    GetGlobalPropertyByIndex(asUINT index, const char **name, const char **nameSpace = 0, int *typeId = 0, bool *isConst = 0, const char **configGroup = 0, void **pointer = 0, asDWORD *accessMask = 0) const = 0;
+	//! \brief Returns the index of the property.
+	//! \param[in] name The name of the property.
+	//! \return The index of the matching property or negative on error.
+	//! \retval asNO_GLOBAL_VAR No matching property was found.
+	virtual int    GetGlobalPropertyIndexByName(const char *name) const = 0;
+	//! \brief Returns the index of the property.
+	//! \param[in] decl The declaration of the property to search for.
+	//! \return The index of the matching property or negative on error.
+	//! \retval asNO_GLOBAL_VAR No matching property was found.
+	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const = 0;
 	//! \}
 
 	// Object types
@@ -1083,6 +1107,10 @@ public:
 	//! \param[in] index The index of the type.
 	//! \return The registered object type interface for the type, or null if not found.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
+	//! \brief Returns a matching object type by name.
+	//! \param[in] name The name of the type.
+	//! \return The object type or null if no match is found.
+	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
 	//! \}
 
 	// String factory
@@ -1175,9 +1203,11 @@ public:
 	//! \brief Returns the registered enum type.
 	//! \param[in] index The index of the enum type.
 	//! \param[out] enumTypeId Receives the type if of the enum type.
+	//! \param[out] nameSpace Receives the namespace of the enum.
 	//! \param[out] configGroup Receives the config group in which the enum was registered.
+	//! \param[out] accessMask Receives the access mask of the enum.
 	//! \return The name of the registered enum type, or null on error.
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **configGroup = 0) const = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 	//! \brief Returns the number of enum values for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \return The number of enum values for the enum type.
@@ -1211,11 +1241,10 @@ public:
 	virtual asUINT             GetFuncdefCount() const = 0;
 	//! \brief Returns a registered function definition.
 	//! \param[in] index The index of the funcdef.
-	//! \param[out] configGroup The config group in which the funcdef was registered.
 	//! \return The funcdef.
 	//!
 	//! This function does not increase the reference count of the return function definition.
-	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index, const char **configGroup = 0) const = 0;
+	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const = 0;
 	//! \}
 
 	// Typedefs
@@ -1243,9 +1272,11 @@ public:
 	//! \brief Returns a registered typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
+	//! \param[out] nameSpace The namespace in which the typedef was registered.
 	//! \param[out] configGroup Receives the config group in which the type def was registered.
+	//! \param[out] accessMask The access mask for the typedef.
 	//! \return The name of the typedef.
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **configGroup = 0) const = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 	//! \}
 
 	// Configuration groups
@@ -1263,7 +1294,7 @@ public:
 	//! visible to specific modules, and it can also be removed when it is no longer used.
 	//!
 	//! \see \ref doc_adv_dynamic_config
-	virtual int BeginConfigGroup(const char *groupName) = 0;
+	virtual int     BeginConfigGroup(const char *groupName) = 0;
 	//! \brief Ends the configuration group.
 	//!
 	//! \return A negative value on error
@@ -1273,7 +1304,7 @@ public:
 	//! but it can be removed when it is no longer used.
 	//!
 	//! \see \ref doc_adv_dynamic_config
-	virtual int EndConfigGroup() = 0;
+	virtual int     EndConfigGroup() = 0;
 	//! \brief Removes a previously registered configuration group.
 	//!
 	//! \param[in] groupName The name of the configuration group
@@ -1286,18 +1317,24 @@ public:
 	//! in the group.
 	//!
 	//! \see \ref doc_adv_dynamic_config
-	virtual int RemoveConfigGroup(const char *groupName) = 0;
+	virtual int     RemoveConfigGroup(const char *groupName) = 0;
 	//! \brief Sets the access mask that should be used for subsequent registered entities.
 	//! \param[in] defaultMask The default access bit mask.
 	//! \return The previous default mask.
 	//!
 	//! \see \ref doc_adv_access_mask
 	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-04
-	//! \deprecated \since 2011-10-03. Use \ref asIScriptModule::SetAccessMask instead
-	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
-#endif
+	//! \brief Sets the current default namespace for registrations and searches.
+	//! \param[in] nameSpace The namespace that should be used.
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG The namespace is invalid
+	//!
+	//! Call this method to set the default namespace for which the following calls
+	//! should assume. This applies to registration of the application interface and
+	//! also to the functions that searches for registered entities.
+	//!
+	//! Nested namespaces can be informed by separating them with the scope token, i.e. ::
+	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
 	//! \}
 
 	// Script modules
@@ -1339,11 +1376,6 @@ public:
 	//!
 	//! This does not increment the reference count of the returned function interface.
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	//! \deprecated \since 2011-10-03. Use \ref asIScriptEngine::GetFunctionById instead
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
-#endif
 	//! \}
 
 	// Type identification
@@ -1381,8 +1413,9 @@ public:
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	//! \brief Returns a type declaration.
 	//! \param[in] typeId The type id of the type.
+	//! \param[in] includeNamespace Set to true if the namespace should be included in the formatted declaration.
 	//! \return A null terminated string with the type declaration, or null if not found.
-	virtual const char    *GetTypeDeclaration(int typeId) const = 0;
+	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	//! \brief Returns the size of a primitive type.
 	//! \param[in] typeId The type id of the type.
 	//! \return The size of the type in bytes.
@@ -1527,14 +1560,14 @@ public:
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0, asUINT *newObjects = 0, asUINT *totalNewDestroyed = 0) const = 0;
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
 	//! \param[in] obj A pointer to the newly created object.
-	//! \param[in] typeId The type id of the object.
+	//! \param[in] type The type of the object.
 	//!
 	//! This method should be called when a new garbage collected object is created. 
 	//! The GC will then store a reference to the object so that it can automatically 
 	//! detect whether the object is involved in any circular references that should be released.
 	//!
 	//! \see \ref doc_gc_object
-	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
+	virtual void NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type) = 0;
 	//! \brief Used by the garbage collector to enumerate all references held by an object.
 	//! \param[in] reference A pointer to the referenced object.
 	//!
@@ -1746,6 +1779,16 @@ public:
 	//!
 	//! \see \ref doc_adv_access_mask
 	virtual asDWORD SetAccessMask(asDWORD accessMask) = 0;
+	//! \brief Sets the default namespace that should be used in the following calls.
+	//! \param[in] nameSpace The namespace that should be used.
+	//! \return A negative value on error.
+	//! \retval asINVALID_ARG The namespace is null.
+	//! \retval asINVALID_DECLARATION The namespace is invalid.
+	//!
+	//! Set the default namespace that should be used in the following 
+	//! calls for searching for declared entities, or when compiling new
+	//! individual entities.
+	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
 	//! \}
 
 	// Functions
@@ -1800,13 +1843,6 @@ public:
 	//! \param[in] name The function name
 	//! \return The function or null if not found or there are multiple matches.
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	//! \deprecated \since 2011-10-03. Use \ref asIScriptModule::GetFunctionByIndex instead
-	virtual asIScriptFunction *GetFunctionDescriptorByIndex(asUINT index) const = 0;
-	//! \deprecated \since 2011-10-03. Use \ref asIScriptEngine::GetFunctionById
-	virtual asIScriptFunction *GetFunctionDescriptorById(int funcId) const = 0;
-#endif
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] funcId The id of the function to remove.
 	//! \return A negative value on error.
@@ -1816,6 +1852,15 @@ public:
 	//! scope of the module. The function is not destroyed immediately though,
 	//! only when no more references point to it.
 	virtual int                RemoveFunction(int funcId) = 0;
+	//! \brief Remove a single function from the scope of the module
+	//! \param[in] func The pointer to the function that should be removed.
+	//! \return A negative value on error.
+	//! \retval asNO_FUNCTION The function is not part of the scope.
+	//!
+	//! This method allows the application to remove a single function from the
+	//! scope of the module. The function is not destroyed immediately though,
+	//! only when no more references point to it.
+	virtual int                RemoveFunction(asIScriptFunction *func) = 0;
 	//! \}
 
 	// Global variables
@@ -1855,21 +1900,23 @@ public:
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
 	//! \brief Returns the global variable declaration.
 	//! \param[in] index The index of the global variable.
+	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
 	//! \return A null terminated string with the variable declaration, or null if not found.
 	//!
 	//! This method can be used to retrieve the variable declaration of the script variables 
 	//! that the host application will access. Verifying the declaration is important because, 
 	//! even though the script may compile correctly the user may not have used the variable 
 	//! types as intended.
-	virtual const char *GetGlobalVarDeclaration(asUINT index) const = 0;
+	virtual const char *GetGlobalVarDeclaration(asUINT index, bool includeNamespace = false) const = 0;
 	//! \brief Returns the global variable properties.
 	//! \param[in] index The index of the global variable.
 	//! \param[out] name The name of the variable.
+	//! \param[out] nameSpace The namespace of the variable.
 	//! \param[out] typeId The type of the variable.
 	//! \param[out] isConst Whether or not the variable is const.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The index is out of range.
-	virtual int         GetGlobalVar(asUINT index, const char **name, int *typeId = 0, bool *isConst = 0) const = 0;
+	virtual int         GetGlobalVar(asUINT index, const char **name, const char **nameSpace = 0, int *typeId = 0, bool *isConst = 0) const = 0;
 	//! \brief Returns the pointer to the global variable.
 	//! \param[in] index The index of the global variable.
 	//! \return A pointer to the global variable, or null if not found.
@@ -1930,8 +1977,9 @@ public:
 	//! \brief Returns the enum type.
 	//! \param[in] index The index of the enum type.
 	//! \param[out] enumTypeId Receives the type id of the enum type.
+	//! \param[out] nameSpace Receives the namespace of the enum.
 	//! \return The name of the enum type, or null on error.
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId) const = 0;
+	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0) const = 0;
 	//! \brief Returns the number of values defined for the enum type.
 	//! \param[in] enumTypeId The type id of the enum type.
 	//! \return The number of enum values or a negative value on error.
@@ -1955,8 +2003,9 @@ public:
 	//! \brief Returns the typedef.
 	//! \param[in] index The index of the typedef.
 	//! \param[out] typeId The type that the typedef aliases.
+	//! \param[out] nameSpace Receives the namespace of the typedef.
 	//! \return The name of the typedef.
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId) const = 0;
+	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0) const = 0;
 	//! \}
 
 	// Dynamic binding between modules
@@ -2363,7 +2412,7 @@ public:
 	//!
 	//! Note that if your system function sets an exception, it should not return any 
 	//! object references because the engine will not release the returned reference.
-	virtual int         SetException(const char *string) = 0;
+	virtual int                SetException(const char *string) = 0;
 	//! \brief Returns the line number where the exception occurred.
 	//! \param[out] column The variable will receive the column number.
 	//! \param[out] sectionName The variable will receive the name of the script section.
@@ -2371,13 +2420,13 @@ public:
 	//!
 	//! This method returns the line number where the exception ocurred. The line number 
 	//! is relative to the script section where the function was implemented.
-	virtual int         GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
-	//! \brief Returns the function id of the function where the exception occurred.
-	//! \return The function id where the exception occurred.
-	virtual int         GetExceptionFunction() = 0;
+	virtual int                GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
+	//! \brief Returns the function where the exception occurred.
+	//! \return The function where the exception occurred.
+	virtual asIScriptFunction *GetExceptionFunction() = 0;
 	//! \brief Returns the exception string text.
 	//! \return A null terminated string describing the exception that occurred.
-	virtual const char *GetExceptionString() = 0;
+	virtual const char *       GetExceptionString() = 0;
 	//! \brief Sets an exception callback function. The function will be called if a script exception occurs.
 	//! \param[in] callback The callback function/method that should be called upon an exception.
 	//! \param[in] obj The object pointer on which the callback is called.
@@ -2392,10 +2441,10 @@ public:
 	//! callstack is cleaned up.
 	//!
 	//! See \ref SetLineCallback for details on the calling convention.
-	virtual int         SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
+	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
 	//! Removes a previously registered callback.
-	virtual void        ClearExceptionCallback() = 0;
+	virtual void               ClearExceptionCallback() = 0;
 	//! \}
 
 	// Debugging
@@ -2503,6 +2552,9 @@ public:
 	//! \param[in] stackLevel The index on the call stack.
 	//! \return Returns a pointer to the object if it is a class method.
 	virtual void              *GetThisPointer(asUINT stackLevel = 0) = 0;
+	//! \brief Returns the registered function that is currently being called by the context.
+	//! \return Returns the registered function that is currently being called, or null if no registered function is being called at the moment.
+	virtual asIScriptFunction *GetSystemFunction() = 0;
 	//! \}
 
 	// User data
@@ -2545,11 +2597,6 @@ public:
 	//! \brief Returns the function that is being called.
 	//! \return The function that is being called.
 	virtual asIScriptFunction *GetFunction() const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	//! \deprecated \since 2011-10-03. Use \ref asIScriptGeneric::GetFunction instead
-	virtual asIScriptFunction *GetFunctionDescriptor() const = 0;
-#endif
 	//! \brief Returns the user data for the called function.
 	//! \return The user data for the called function.
 	virtual void              *GetFunctionUserData() const = 0;
@@ -2800,6 +2847,9 @@ public:
 	//! \brief Returns the config group in which the type was registered.
 	//! \return The name of the config group, or null if not set.
 	virtual const char      *GetConfigGroup() const = 0;
+	//! \brief Returns the access mask for this type.
+	//! \return The access mask for this type.
+	virtual asDWORD          GetAccessMask() const = 0;
 	//! \}
 
 	// Memory management
@@ -2827,6 +2877,9 @@ public:
 	//! \brief Returns a temporary pointer to the name of the datatype.
 	//! \return A null terminated string with the name of the object type.
 	virtual const char      *GetName() const = 0;
+	//! \brief Return the namespace of the object type.
+	//! \returns The namespace of the object type.
+	virtual	const char      *GetNamespace() const = 0;
 	//! \brief Returns the object type that this type derives from.
 	//! \return A pointer to the object type that this type derives from.
 	//!
@@ -2994,11 +3047,6 @@ public:
 	//!
 	//! The method will find the script method with the exact same declaration.
 	virtual asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual = true) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2011-10-03
-	//! \deprecated \since 2011-10-03. Use asIObjectType::GetMethodByIndex instead
-	virtual asIScriptFunction *GetMethodDescriptorByIndex(asUINT index, bool getVirtual = true) const = 0;
-#endif
 	//! \}
 
 	// Properties
@@ -3015,9 +3063,10 @@ public:
 	//! \param[out] isPrivate Whether the property is private or not
 	//! \param[out] offset The offset into the object where the property is stored
 	//! \param[out] isReference True is the property is not stored inline
+	//! \param[out] accessMask The access mask of the property.
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG The \a index is out of bounds
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
 	//! \brief Returns the declaration of the property
 	//! \param[in] index The index of the property
 	//! \return The declaration of the property, or null on error.
@@ -3102,6 +3151,9 @@ public:
 	//! \brief Returns the name of the config group in which the function was registered.
 	//! \return The name of the config group, or null if not in any group.
 	virtual const char      *GetConfigGroup() const = 0;
+	//! \brief Returns the access mast of the function.
+	//! \return The access mask of the function.
+	virtual asDWORD          GetAccessMask() const = 0;
 	//! \}
 
 	//! \name Function info
@@ -3118,16 +3170,29 @@ public:
 	//! \brief Returns the name of the function or method
 	//! \return A null terminated string with the name of the function.
 	virtual const char      *GetName() const = 0;
+	//! \brief Returns the namespace of the function.
+	//! \return The namespace of the function.
+	virtual const char      *GetNamespace() const = 0;
 	//! \brief Returns the function declaration
 	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
+	//! \param[in] includeNamespace Indicates whether the namespace should be prepended to the function name
 	//! \return A null terminated string with the function declaration.
-	virtual const char      *GetDeclaration(bool includeObjectName = true) const = 0;
+	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const = 0;
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only
 	virtual bool             IsReadOnly() const = 0;
 	//! \brief Returns true if the class method is private
 	//! \return True if the class method is private
 	virtual bool             IsPrivate() const = 0;
+	//! \brief Returns true if the method is final.
+	//! \return True if the method is final.
+	virtual bool             IsFinal() const = 0;
+	//! \brief Returns true if the method is meant to override a method in the base class.
+	//! \return True if the method is meant to override a method in the base class.
+	virtual bool             IsOverride() const = 0;
+	//! \brief Returns true if the function is shared.
+	//! \return True if the function is shared.
+	virtual bool             IsShared() const = 0;
 	//! \}
 
 	//! \name Parameter and return types
@@ -3262,7 +3327,9 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = (asFUNCTION_t)(size_t)func;
+
+	// Casting to PWORD to support constant 0 without compiler warnings
+	p.ptr.f.func = (asFUNCTION_t)(asPWORD)func;
 
 	// Mark this as a global function
 	p.flag = 2;
@@ -4285,7 +4352,7 @@ const asSBCInfo asBCInfo[256] =
 //! \brief Macro to access the first float argument in the bytecode instruction
 #define asBC_FLOATARG(x)  (*(float*)(x+1))
 //! \brief Macro to access the first pointer argument in the bytecode instruction
-#define asBC_PTRARG(x)    (*(asPTRWORD*)(x+1))
+#define asBC_PTRARG(x)    (*(asPWORD*)(x+1))
 //! \brief Macro to access the first WORD argument in the bytecode instruction
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
 //! \brief Macro to access the second WORD argument in the bytecode instruction
