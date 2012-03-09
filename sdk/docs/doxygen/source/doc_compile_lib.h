@@ -12,6 +12,7 @@ all the files in the sdk/angelscript/source directory, and configuring the proje
 have a new compiler/target that hasn't been used with AngelScript before, you may need to edit the 
 as_config.h file to make sure the library is compiled properly.
 
+\see \ref doc_compile_platforms 
 
 
 
@@ -133,6 +134,58 @@ asCreateScriptEngine = (t_asCreateScriptEngine*)GetProcAddress(dll, "_asCreateSc
 
 // ... Start using the library
 \endcode
+
+
+\section doc_compile_platforms Considerations for specific platforms
+
+As mentioned before, for most platforms the compilation of the library is as easy as including all 
+source files and compiling them. However, on some platforms specific actions needs to be performed
+to compile the library correctly.
+
+\subsection doc_compile_win64 Windows 64bit
+
+The MSVC compiler doesn't support inline assembler for the x86 64bit CPU family. To support this platform a
+separate assembler file has been created: as_callfunc_x64_msvc_asm.asm.
+
+To compile this file it is necessary to configure a custom build command with the following:
+
+\code
+ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)
+\endcode
+
+\subsection doc_compile_gnuc GNUC based compilers
+
+In order to properly intergrate with C++ without the need for wrappers AngelScript uses a lot of pointer casts.
+Unfortunately it is not possible to always guarantee strict aliasing because of this, so on GNUC based compilers
+it is necessary to disable compiler optimizations that assume strict aliasing.
+
+Use the following compiler argument to disable this:
+
+\code
+-fno-strict-aliasing
+\endcode
+
+\subsection doc_compile_pocketpc Pocket PC with ARM CPU
+
+The MSVC compiler doesn't support inline assembler for the ARM CPU, so a separate assembler file has been 
+written with this code: as_callfunc_arm_msvc.asm.
+
+In order to compile this file properly it is necessary to configure a custom build command with the following:
+
+\code
+armasm -g $(InputPath)
+\endcode
+
+\subsection doc_compile_marmalade Marmalade
+
+Marmalade is a cross platform SDK created with mobile devices in mind. It functions by abstracting the underlying OS
+with its own C runtime library even though it uses the common C++ compilers, e.g. MSVC on Windows, and GNUC on Linux and Mac.
+
+Unfortunately Marmalade doesn't provide a specific pre-processor define that can be used to automatically detect that 
+the library is being compiled for use with Marmalade. So in this case it is necessary to manually define the word 
+MARMALADE in the project settings or makefile to allow AngelScript to detect this.
+
+
 
 
 */
