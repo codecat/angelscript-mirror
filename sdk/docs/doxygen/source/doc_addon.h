@@ -1232,17 +1232,28 @@ automatically generate wrapper functions using the \ref doc_generic "generic cal
 a simple call to a preprocessor macro. This is useful for those platforms where the native calling 
 conventions are not yet supported.
 
-The macros are defined as
+The macros are defined as:
 
 \code
-#define asDECLARE_FUNCTION_WRAPPER(wrapper_name,func)
-#define asDECLARE_FUNCTION_WRAPPERPR(wrapper_name,func,params,rettype)
-#define asDECLARE_METHOD_WRAPPER(wrapper_name,cl,func)
-#define asDECLARE_METHOD_WRAPPERPR(wrapper_name,cl,func,params,rettype)
+// Wrap a global function with implicit or explicit signature
+#define WRAP_FN(name)
+#define WRAP_FN_PR(name, Parameters, ReturnType)
+
+// Wrap a class method with implicit or explicit signature
+#define WRAP_MFN(ClassType, name)
+#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType)
+
+// Wrap a global function that will emulate a class method and receives the 'this' pointer as the first argument
+#define WRAP_OBJ_FIRST(name)
+#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)
+
+// Wrap a global function that will emulate a class method and receives the 'this' pointer as the last argument
+#define WRAP_OBJ_LAST(name)
+#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)
 \endcode
 
-where wrapper_name is the name of the function that you want to generate, and func is a function pointer 
-to the function you want to wrap, cl is the class name, params is the parameter list, and rettype is the return type. 
+As you can see they are very similar to the \ref doc_register_func_1 "asFUNCTION" and 
+\ref doc_register_func_1 "asMETHOD" macros,  and are used the same way.
 
 Unfortunately the template functions needed to perform this generation are quite complex and older
 compilers may not be able to handle them. One such example is Microsoft Visual C++ 6, though luckily 
@@ -1256,21 +1267,26 @@ it has no need for them as AngelScript already supports native calling conventio
 // The application function that we want to register
 void DoSomething(std::string param1, int param2);
 
-// Generate the wrapper for the function
-asDECLARE_FUNCTION_WRAPPER(DoSomething_Generic, DoSomething);
-
 // Registering the wrapper with AngelScript
 void RegisterWrapper(asIScriptEngine *engine)
 {
   int r;
 
-  r = engine->RegisterGlobalFunction("void DoSomething(string, int)", asFUNCTION(DoSomething_Generic), asCALL_GENERIC); assert( r >= 0 );
+  // The WRAP_FN macro automatically implements and returns the function pointer of the generic wrapper
+  // function. Observe, that the calling convention should be set as asCALL_GENERIC in this case.
+  r = engine->RegisterGlobalFunction("void DoSomething(string, int)", WRAP_FN(DoSomething), asCALL_GENERIC); assert( r >= 0 );
 }
 \endcode
 
+\section doc_addon_autowrap_2 Adding support for more parameters
 
+The aswrappedcall.h header file is by default prepared to support functions with up to 4 arguments. 
+If you have a need for more arguments then you can use the generator that you find in the sub-directory 
+to prepare a new header file.
 
-
+Open the generateheader.cpp in an editor and set the max_args variable to the number of arguments you need
+and then compile and run the code. It will print the new header file to the standard output so you just need
+to direct this to a file.
 
 
 
