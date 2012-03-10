@@ -98,6 +98,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_precompile
  - \subpage doc_finetuning
  - \subpage doc_adv_access_mask
+ - \subpage doc_adv_namespace
  - \subpage doc_adv_dynamic_config
  - \subpage doc_adv_jit_topic
 
