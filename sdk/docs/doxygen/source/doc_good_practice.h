@@ -36,6 +36,14 @@ library will then send messages explaining the error or warning in clear text.
 See \ref doc_compile_script_msg for more information on the message callback.
 
 
+\section doc_checkexceptions Always verify return value after executing script function
+
+The VM can provide detailed information on any exception that occur in the script, for
+example in which function and line of code the problem occurred. It is also possible to
+enumerate the callstack and even the local variables.
+
+See \ref doc_call_script_4
+
 
 
 

@@ -12,23 +12,23 @@ Primitives in AngelScript have direct matches in C++.
 <tr><td>void  </td><td>void              </td><td>0     </td></tr>
 <tr><td>int8  </td><td>signed char       </td><td>8     </td></tr>
 <tr><td>int16 </td><td>signed short      </td><td>16    </td></tr>
-<tr><td>int   </td><td>signed long (*)   </td><td>32    </td></tr>
-<tr><td>int64 </td><td>signed long long  </td><td>64    </td></tr>
+<tr><td>int   </td><td>signed int (*)    </td><td>32    </td></tr>
+<tr><td>int64 </td><td>signed int64_t    </td><td>64    </td></tr>
 <tr><td>uint8 </td><td>unsigned char     </td><td>8     </td></tr>
 <tr><td>uint16</td><td>unsigned short    </td><td>16    </td></tr>
-<tr><td>uint  </td><td>unsigned long (*) </td><td>32    </td></tr>
-<tr><td>uint64</td><td>unsigned long long</td><td>64    </td></tr>
+<tr><td>uint  </td><td>unsigned int (*)  </td><td>32    </td></tr>
+<tr><td>uint64</td><td>unsigned uint64_t </td><td>64    </td></tr>
 <tr><td>float </td><td>float             </td><td>32    </td></tr>
 <tr><td>double</td><td>double            </td><td>64    </td></tr>
 <tr><td>bool  </td><td>bool              </td><td>8 (**)</td></tr>
 </table>
 
 
-%*) If the target CPU is 32 bit, the C++ type long is 32 bit, but on 64 bit CPUs
-   it is commonly 64 bit, but in AngelScript an int is always 32 bits.
+(*) An int can actually be of varying size on different platforms in C++, but most commonly it is 32 bits long. 
+    AngelScript will always assume 32 bits though.
 
-%**) On 32 bit PowerPC platforms the bool type commonly have the size of 32 bit,
-   when compiled on such platforms AngelScript also uses 32 bits for the bool type
+(**) On 32 bit PowerPC platforms the bool type commonly have the size of 32 bit,
+     when compiled on such platforms AngelScript also uses 32 bits for the bool type
 
 \section doc_as_vs_cpp_types_5 Strings
 

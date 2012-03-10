@@ -64,6 +64,8 @@ int SetArgDWord(int arg, asDWORD value);
 int SetArgQWord(int arg, asQWORD value);
 int SetArgFloat(int arg, float value);
 int SetArgDouble(int arg, double value);
+int SetArgByte(int arg, asBYTE value);
+int SetArgWord(int arg, asWORD value);
 \endcode
 
 <code>arg</code> is the argument number, where the first argument is on 0, the second 
@@ -76,13 +78,14 @@ method SetArgObject() should be used, which will be described in the next sectio
 \code
 // The context has been prepared for a script 
 // function with the following signature:
-// int function(int, double, int&in)
+// int function(int, double, bool, int &out)
 
 // Put the arguments on the context stack, starting with the first one
 ctx->SetArgDWord(0, 1);
 ctx->SetArgDouble(1, 3.141592);
+ctx->SetArgByte(2, true);
 int val;
-ctx->SetArgDWord(2, (asDWORD)&val);
+ctx->SetArgAddress(3, &val);
 \endcode
 
 Once the script function has been executed the return value is retrieved in 
@@ -93,6 +96,8 @@ asDWORD GetReturnDWord();
 asQWORD GetReturnQWord();
 float   GetReturnFloat();
 double  GetReturnDouble();
+asBYTE  GetReturnByte();
+asWORD  GetReturnWord();
 \endcode
 
 Note that you must make sure the returned value is in fact valid, for 
@@ -172,12 +177,11 @@ void PrintExceptionInfo(asIScriptContext *ctx)
   printf("desc: %s\n", ctx->GetExceptionString());
 
   // Determine the function where the exception occurred
-  int funcId = ctx->GetExceptionFunction();
-  const asIScriptFunction *function = engine->GetFunctionById(funcId);
+  const asIScriptFunction *function = ctx->GetExceptionFunction();
   printf("func: %s\n", function->GetDeclaration());
   printf("modl: %s\n", function->GetModuleName());
   printf("sect: %s\n", function->GetScriptSectionName());
-  
+
   // Determine the line number where the exception occurred
   printf("line: %d\n", ctx->GetExceptionLineNumber());
 }
