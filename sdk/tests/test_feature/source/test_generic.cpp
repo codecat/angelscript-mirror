@@ -235,14 +235,10 @@ class C : public A, B
 {
 public:
 	C() {id = 2;}
+	~C() {}
 	virtual void c(int) {assert(id == 2);}
 	virtual void c(float) const {assert(id == 2);}
 };
-
-void Construct_C(C *ptr)
-{
-	new(ptr) C();
-}
 
 bool Test2()
 {
@@ -319,7 +315,8 @@ bool Test2()
 	}
 
 	r = engine->RegisterObjectType("C", sizeof(C), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_FIRST(Construct_C), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("C", asBEHAVE_CONSTRUCT, "void f()", WRAP_CON(C, ()), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("C", asBEHAVE_DESTRUCT, "void f()", WRAP_DES(C), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("C", "void a() const", WRAP_MFN(A, a), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("C", "void b()", WRAP_MFN(B, b), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("C", "void c(int)", WRAP_MFN_PR(C, c, (int), void), asCALL_GENERIC); assert( r >= 0 );

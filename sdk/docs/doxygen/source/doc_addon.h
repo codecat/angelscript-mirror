@@ -1250,6 +1250,12 @@ The macros are defined as:
 // Wrap a global function that will emulate a class method and receives the 'this' pointer as the last argument
 #define WRAP_OBJ_LAST(name)
 #define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)
+
+// Wrap a constructor with an explicit signature
+#define WRAP_CON(ClassType, Parameters)
+
+// Wrap a destructor
+#define WRAP_DES(ClassType)
 \endcode
 
 As you can see they are very similar to the \ref doc_register_func_1 "asFUNCTION" and 

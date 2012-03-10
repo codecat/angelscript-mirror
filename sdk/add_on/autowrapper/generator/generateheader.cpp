@@ -22,6 +22,7 @@ const int max_args = 4;
 using namespace std;
 
 void PrintTemplate(const char *base, const char *typeNameList, const char *retType, const char *objType, const char *isConst, const char *newExpr, const char *objExpr, const char *argList1, const char *argList2, const char *wrapName);
+void PrintConstructor(const char *comma, const char *typeNameList, const char *typeList, const char *argList);
 
 int main()
 {
@@ -47,7 +48,13 @@ int main()
 	"\n"
 	"template <typename T> struct Wrapper {};\n"
 	"template <typename T> struct ObjFirst {};\n"
-	"template <typename T> struct ObjLast {};\n");
+	"template <typename T> struct ObjLast {};\n"
+	"template <typename T> struct Constructor {};\n"
+	"\n"
+	"template <typename T>\n"
+	"void destroy(asIScriptGeneric * gen) {\n"
+	"	static_cast<T *>(gen->GetObject())->~T();\n"
+	"}\n");
 
 	string typename_list = "typename A0";
 	string type_list     = "A0";
@@ -68,6 +75,8 @@ int main()
 	PrintTemplate("typename T",             "", "void", "",    "",       "",              "",      "T",    obj_arg_exp.c_str(), "ObjLast");
 	PrintTemplate("typename T, typename R", "", "R",    "",    "",       new_exp.c_str(), "",      "T",    obj_arg_exp.c_str(), "ObjLast");
 
+	PrintConstructor("", "", "", "");
+
 	for( int i = 0; i < max_args; i++ )
 	{
 		PrintTemplate("",                         typename_list.c_str(), "void", "",    "",       "",              "",              type_list.c_str(), arg_list.c_str(), "Wrapper");
@@ -81,6 +90,8 @@ int main()
 		PrintTemplate("typename T, typename R, ", typename_list.c_str(), "R",    "", "", new_exp.c_str(), "", ("T, " + type_list).c_str(), (obj_arg_exp + "," + arg_list).c_str(), "ObjFirst");
 		PrintTemplate("typename T, ",             typename_list.c_str(), "void", "", "", "",              "", (type_list + ", T").c_str(), (arg_list + "," + obj_arg_exp).c_str(), "ObjLast");
 		PrintTemplate("typename T, typename R, ", typename_list.c_str(), "R",    "", "", new_exp.c_str(), "", (type_list + ", T").c_str(), (arg_list + "," + obj_arg_exp).c_str(), "ObjLast");
+
+		PrintConstructor(", ", typename_list.c_str(), type_list.c_str(), arg_list.c_str());
 
 		char buf[5];
 		sprintf(buf, "%d", i + 1);
@@ -109,26 +120,18 @@ int main()
 	"#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)      asFUNCTION((::gw::ObjFirst<ReturnType (*)Parameters>::f< name >))\n"
 	"#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)       asFUNCTION((::gw::ObjLast<ReturnType (*)Parameters>::f< name >))\n"
 	"\n"
+	"#define WRAP_CON(ClassType, Parameters) asFUNCTION((::gw::Constructor<ClassType Parameters>::f))\n"
+	"#define WRAP_DES(ClassType)             asFUNCTION((::gw::destroy<ClassType>))\n"
+	"\n"
 	"} // end namespace gw\n"
 	"\n"
 	"#endif\n");
 
-    return 0;
+	return 0;
 }
 
-//                              0                       1                     2                    3                     4                  5                    6                      7                   8                       9
 void PrintTemplate(const char *base, const char *typeNameList, const char *retType, const char *objType, const char *isConst, const char *newExpr, const char *objExpr, const char *argList1, const char *argList2, const char *wrapName)
 {
-/*
-	template <{0}{1}>
-	struct {9}<{2} ({3}*)({7}){4}> {{
-		template <{2} ({3}*fp)({7}){4}>
-		static void f(AS_NAMESPACE_QUALIFIER asIScriptGeneric * gen) {{
-			{5}(({6}fp)({8}));
-		}}
-	}};
-*/
-
 	printf("template <%s%s>\n", base, typeNameList);
 	printf("struct %s<%s (%s*)(%s)%s> {\n", wrapName, retType, objType, argList1, isConst);
 	printf("	template <%s (%s*fp)(%s)%s>\n", retType, objType, argList1, isConst);
@@ -138,3 +141,12 @@ void PrintTemplate(const char *base, const char *typeNameList, const char *retTy
 	printf("};\n");
 }
 
+void PrintConstructor(const char *comma, const char *typeNameList, const char *typeList, const char *argList)
+{
+	printf("template <typename T%s%s>\n", comma, typeNameList);
+	printf("struct Constructor <T (%s)> {\n", typeList);
+	printf("	static void f(AS_NAMESPACE_QUALIFIER asIScriptGeneric * gen) {\n");
+	printf("		new (gen->GetObject()) T(%s);\n", argList);
+	printf("	}\n");
+	printf("};\n");
+}
