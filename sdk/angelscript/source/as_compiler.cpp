@@ -242,6 +242,7 @@ void asCCompiler::FinalizeFunction()
 		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
 		{
 			outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+			outFunc->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
 			outFunc->objVariablePos.PushLast(GetVariableOffset(n));
 			outFunc->objVariableIsOnHeap.PushLast(variableIsOnHeap[n]);
 		}

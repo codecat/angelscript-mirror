@@ -345,20 +345,20 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1783 )
+	if( stream.buffer.size() != 1819 )
 	{
-		printf("The saved byte code is not of the expected size 1783. It is %d bytes\n", stream.buffer.size());
+		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 	}
 	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 512 ) 
+	if( zeroes != 523 ) 
 	{
-		printf("The saved byte code contains a different amount of zeroes than the expected 512. Counted %d\n", zeroes);
+		printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
 	asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-	if( crc32 != 0xAA6597C2 )
+	if( crc32 != 0x7ADF54E0 )
 	{
-		printf("The saved byte code has different checksum than the expected 0xAA6597C2. Got 0x%X\n", crc32);
+		printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 	}
 
 	// Test loading without releasing the engine first
@@ -1115,6 +1115,54 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		engine->Release();
+	}
+
+	// Test problem reported by Philip Bennefall
+	{
+		const char *script = 
+			"class dummy\n"
+			"{\n"
+			"  bool set_callback(menu_callback@ callback, string user_data)\n"
+			"  {\n"
+			"    @callback_handle=@callback;\n"
+			"    callback_data=user_data;\n"
+			"    return true;\n"
+			"  }\n"
+			"  void do_something()\n"
+			"  {\n"
+			"    if(@callback_handle!=null)\n"
+			"    {\n"
+			"      int callback_result=callback_handle(this, callback_data);\n"
+			"    }\n"
+			"  }\n"
+			"  menu_callback@ callback_handle;\n"
+			"  string callback_data;\n"
+			"}\n"
+			"funcdef int menu_callback(dummy@, string);\n"
+			"void main()\n"
+			"{\n"
+			"}\n";
+
+		CBytecodeStream stream(__FILE__"1");
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod->SaveByteCode(&stream);
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
 
 		engine->Release();
 	}

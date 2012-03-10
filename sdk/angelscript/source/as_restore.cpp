@@ -393,43 +393,51 @@ void asCReader::ReadUsedFunctions()
 		// Is the function from the module or the application?
 		ReadData(&c, 1);
 
-		asCScriptFunction func(engine, c == 'm' ? module : 0, asFUNC_DUMMY);
-		ReadFunctionSignature(&func);
-
-		// Find the correct function
-		if( c == 'm' )
+		if( c == 'n' )
 		{
-			for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
-			{
-				asCScriptFunction *f = module->scriptFunctions[i];
-				if( !func.IsSignatureEqual(f) ||
-					func.objectType != f->objectType ||
-					func.funcType != f->funcType || 
-					func.nameSpace != f->nameSpace )
-					continue;
-
-				usedFunctions[n] = f;
-				break;
-			}
+			// Null function pointer
+			usedFunctions[n] = 0;
 		}
 		else
 		{
-			for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
+			asCScriptFunction func(engine, c == 'm' ? module : 0, asFUNC_DUMMY);
+			ReadFunctionSignature(&func);
+
+			// Find the correct function
+			if( c == 'm' )
 			{
-				asCScriptFunction *f = engine->scriptFunctions[i];
-				if( f == 0 ||
-					!func.IsSignatureEqual(f) ||
-					func.objectType != f->objectType ||
-					func.nameSpace != f->nameSpace )
-					continue;
+				for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
+				{
+					asCScriptFunction *f = module->scriptFunctions[i];
+					if( !func.IsSignatureEqual(f) ||
+						func.objectType != f->objectType ||
+						func.funcType != f->funcType || 
+						func.nameSpace != f->nameSpace )
+						continue;
 
-				usedFunctions[n] = f;
-				break;
+					usedFunctions[n] = f;
+					break;
+				}
 			}
-		}
+			else
+			{
+				for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
+				{
+					asCScriptFunction *f = engine->scriptFunctions[i];
+					if( f == 0 ||
+						!func.IsSignatureEqual(f) ||
+						func.objectType != f->objectType ||
+						func.nameSpace != f->nameSpace )
+						continue;
 
-		// Set the type to dummy so it won't try to release the id
-		func.funcType = asFUNC_DUMMY;
+					usedFunctions[n] = f;
+					break;
+				}
+			}
+
+			// Set the type to dummy so it won't try to release the id
+			func.funcType = asFUNC_DUMMY;
+		}
 	}
 }
 
@@ -531,9 +539,12 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		count = ReadEncodedUInt();
 		func->objVariablePos.Allocate(count, 0);
 		func->objVariableTypes.Allocate(count, 0);
+		func->funcVariableTypes.Allocate(count, 0);
 		for( i = 0; i < count; ++i )
 		{
 			func->objVariableTypes.PushLast(ReadObjectType());
+			asUINT idx = ReadEncodedUInt();
+			func->funcVariableTypes.PushLast((asCScriptFunction*)(asPWORD)idx);
 			num = ReadEncodedUInt();
 			func->objVariablePos.PushLast(num);
 			bool b; ReadData(&b, 1);
@@ -1938,6 +1949,13 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		func->variables[n]->stackOffset = AdjustStackPosition(func->variables[n]->stackOffset);
 	}
 
+	// objVariablePos
+	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
+	{
+		func->objVariablePos[n] = AdjustStackPosition(func->objVariablePos[n]);
+		func->funcVariableTypes[n] = FindFunction((int)func->funcVariableTypes[n]);
+	}
+
 	// Adjust the get offsets. This must be done in the second iteration because
 	// it relies on the function ids and variable position already being correct in the 
 	// bytecodes that come after the GET instructions.
@@ -1960,18 +1978,11 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// objVariablePos
-	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
-	{
-		func->objVariablePos[n] = AdjustStackPosition(func->objVariablePos[n]);
-	}
-
 	// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
 	for( n = 0; n < func->objVariableInfo.GetLength(); n++ )
 	{
 		// The program position must be adjusted as it is stored in number of instructions
 		func->objVariableInfo[n].programPos = instructionNbrToPos[func->objVariableInfo[n].programPos];
-
 		func->objVariableInfo[n].variableOffset = AdjustStackPosition(func->objVariableInfo[n].variableOffset);
 	}
 
@@ -2278,9 +2289,9 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 	{
 		// Find the funcdef from the local variable
 		int var = asBC_SWORDARG0(&func->byteCode[programPos]);
-		for( asUINT v = 0; v < func->variables.GetLength(); v++ )
-			if( func->variables[v]->stackOffset == var )
-				return func->variables[v]->type.GetFuncDef();
+		for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
+			if( func->objVariablePos[v] == var )
+				return func->funcVariableTypes[v];
 	}
 
 	return 0;
@@ -2554,11 +2565,19 @@ void asCWriter::WriteUsedFunctions()
 
 		// Write enough data to be able to uniquely identify the function upon load
 
-		// Is the function from the module or the application?
-		c = usedFunctions[n]->module ? 'm' : 'a';
-		WriteData(&c, 1);
-
-		WriteFunctionSignature(usedFunctions[n]);
+		if( usedFunctions[n] )
+		{
+			// Is the function from the module or the application?
+			c = usedFunctions[n]->module ? 'm' : 'a';
+			WriteData(&c, 1);
+			WriteFunctionSignature(usedFunctions[n]);
+		}
+		else
+		{
+			// null function pointer
+			c = 'n'; 
+			WriteData(&c, 1);
+		}
 	}
 }
 
@@ -2649,6 +2668,8 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		for( i = 0; i < count; ++i )
 		{
 			WriteObjectType(func->objVariableTypes[i]);
+			// TODO: Only write this if the object type is the builtin function type
+			WriteEncodedInt64(FindFunctionIndex(func->funcVariableTypes[i]));
 			WriteEncodedInt64(AdjustStackPosition(func->objVariablePos[i]));
 			WriteData(&func->objVariableIsOnHeap[i], 1);
 		}
@@ -3196,10 +3217,10 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		{
 			// Find the funcdef from the local variable
 			int var = asBC_SWORDARG0(&func->byteCode[n]);
-			for( asUINT v = 0; v < func->variables.GetLength(); v++ )
-				if( func->variables[v]->stackOffset == var )
+			for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
+				if( func->objVariablePos[v] == var )
 				{
-					calledFunc = func->variables[v]->type.GetFuncDef();
+					calledFunc = func->funcVariableTypes[v];
 					break;
 				}
 			break;
