@@ -1953,7 +1953,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
 	{
 		func->objVariablePos[n] = AdjustStackPosition(func->objVariablePos[n]);
-		func->funcVariableTypes[n] = FindFunction((int)func->funcVariableTypes[n]);
+		func->funcVariableTypes[n] = FindFunction((int)(asPWORD)func->funcVariableTypes[n]);
 	}
 
 	// Adjust the get offsets. This must be done in the second iteration because
