@@ -11,6 +11,13 @@ To register the property, you just need to call the \ref asIScriptEngine::Regist
 Remember that the registered property must stay alive as long as its registration is 
 valid in the engine.
 
+Make sure you give the correct pointer to AngelScript. The pointer should be to value that the 
+declaration refers to, i.e. if the declaration is an integer then the pointer should be to the 
+integer value, if the declaration is an object handle then the pointer should be to the pointer
+to the object, etc. Unfortunately there is no way for AngelScript to validate that the pointer 
+is correct, so if the wrong pointer is given, you will only detect it at runtime when seeing 
+unexpected behaviours from the application.
+
 \code
 // Variables that should be accessible through the script.
 int      g_number       = 0;
