@@ -62,7 +62,7 @@ const int RESERVE_STACK = 2*AS_PTR_SIZE;
 const int CALLSTACK_FRAME_SIZE = 5;
 
 
-#if defined(AS_DEBUG) && defined(AS_DEBUG_STATS)
+#if defined(AS_DEBUG)
 
 class asCDebugStats
 {
@@ -1347,9 +1347,9 @@ void asCContext::ExecuteNext()
 	{
 
 #ifdef AS_DEBUG
-#ifdef AS_DEBUG_STATS
+	// Gather statistics on executed bytecode 
 	stats.Instr(*(asBYTE*)l_bc);
-#endif
+
 	// Used to verify that the size of the instructions are correct
 	asDWORD *old = l_bc;
 #endif

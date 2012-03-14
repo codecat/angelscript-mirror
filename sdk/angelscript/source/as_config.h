@@ -60,12 +60,7 @@
 
 // AS_DEBUG
 // This flag can be defined to make the library write some extra output when
-// compiling and executing scripts.
-
-// AS_DEBUG_STATS
-// This flag, combined with AS_DEBUG, make the library write out statistics
-// from the VM, for example how many times each bytecode instruction is executed,
-// etc. It is used to help identify potential code for optimizations.
+// compiling and executing scripts. 
 
 // AS_DEPRECATED
 // If this flag is defined then some backwards compatibility is maintained.

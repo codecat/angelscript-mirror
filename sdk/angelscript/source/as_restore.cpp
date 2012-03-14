@@ -2038,14 +2038,16 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 			         bc == asBC_CALLSYS ||
 					 bc == asBC_CALLBND ||
 					 bc == asBC_ALLOC ||
-					 bc == asBC_CALLINTF )
+					 bc == asBC_CALLINTF ||
+					 bc == asBC_CallPtr )
 			{
 				asCScriptFunction *called = GetCalledFunction(func, pos);
 				if( called )
 				{
 					stackInc = -called->GetSpaceNeededForArguments();
-
 					if( called->objectType )
+						stackInc -= AS_PTR_SIZE;
+					if( called->DoesReturnOnStack() )
 						stackInc -= AS_PTR_SIZE;
 				}
 				else
@@ -2054,11 +2056,6 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 					asASSERT( bc == asBC_ALLOC );
 					stackInc = -AS_PTR_SIZE;
 				}
-			}
-			else if ( bc == asBC_CallPtr )
-			{
-				// TODO: bytecode: Determine the function signature from the variable
-				break;
 			}
 		}
 		

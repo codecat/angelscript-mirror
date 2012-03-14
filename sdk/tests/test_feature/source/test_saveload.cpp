@@ -165,6 +165,15 @@ int number2 = 0;
 COutStream out;
 CScriptArray* GlobalCharArray = 0;
 
+void print(const string &)
+{
+}
+
+int getInt()
+{
+	return 42;
+}
+
 void ArrayToHexStr(asIScriptGeneric *gen)
 {
 }
@@ -1167,6 +1176,74 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem reported by Markus Larsson from Skygoblin
+	{
+		const char *script1 = 
+			"void main() {"
+			"  print(\"a\" + \"b\");"
+			"}";
+
+		const char *script2 =
+			"void main() {"
+			"  if(getInt()==1)"
+			"    print(\"a\" + \"b\");"
+			"}";
+
+		int r;
+		asIScriptContext* ctx;
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void print(const string& in)", asFUNCTION(print), asCALL_CDECL);
+		engine->RegisterGlobalFunction("int getInt()", asFUNCTION(getInt), asCALL_CDECL);
+		
+		ctx = engine->CreateContext();
+		
+		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection(":1", script1, strlen(script1), 0); assert (r >= 0);
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+		
+		CBytecodeStream stream(__FILE__"1");
+		
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream); 
+		if( r < 0 )
+			TEST_FAILED;
+		
+		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+	
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		CBytecodeStream stream2(__FILE__"2");
+		r = mod->AddScriptSection(":1", script2, strlen(script2), 0); assert (r >= 0);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		r = mod->SaveByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+		r = ctx->Execute();		
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		ctx->Release();
+		engine->Release();
+	}
 
 	// Success
 	return fail;

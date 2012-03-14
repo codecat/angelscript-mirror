@@ -613,6 +613,8 @@ int asCByteCode::Optimize()
 	// TODO: optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
 	//                 function calls that can suspend the execution.
 
+	// TODO: optimize: ADDd v2, v1, v2; CpyVtoV8 v1, v2; -> ADDd v1, v1, v2; (when v2 isn't used again)
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -1483,13 +1485,9 @@ int asCByteCode::FindLabel(int label, cByteInstruction *from, cByteInstruction *
 
 int asCByteCode::ResolveJumpAddresses()
 {
-	int pos = 0;
 	cByteInstruction *instr = first;
 	while( instr )
 	{
-		// The program pointer is updated as the instruction is read
-		pos += instr->GetSize();
-
 		if( instr->op == asBC_JMP || 
 			instr->op == asBC_JZ || instr->op == asBC_JNZ ||
 			instr->op == asBC_JS || instr->op == asBC_JNS || 

@@ -50,7 +50,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				WholeProgramOptimization="false"
-				PreprocessorDefinitions="ANGELSCRIPT_EXPORT;AS_DEBUG;AS_DEBUG_STATS;WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="ANGELSCRIPT_EXPORT;AS_DEBUG;WIN32;_DEBUG;_LIB"
 				StringPooling="true"
 				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
