@@ -22,6 +22,7 @@ public:
 	int            GetArrayTypeId() const;
 	int            GetElementTypeId() const;
 
+	void   Reserve(asUINT maxElements);
 	void   Resize(asUINT numElements);
 	asUINT GetSize() const;
 	bool   IsEmpty() const;

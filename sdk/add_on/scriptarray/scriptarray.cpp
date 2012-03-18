@@ -15,6 +15,7 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine);
 
 struct SArrayBuffer
 {
+	asDWORD maxElements;
 	asDWORD numElements;
 	asBYTE  data[1];
 };
@@ -163,6 +164,7 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "void removeLast()", asMETHOD(CScriptArray, RemoveLast), asCALL_THISCALL); assert( r >= 0 );
 	// TODO: Should length() and resize() be deprecated as the property accessors do the same thing?
 	r = engine->RegisterObjectMethod("array<T>", "uint length() const", asMETHOD(CScriptArray, GetSize), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void reserve(uint)", asMETHOD(CScriptArray, Reserve), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void resize(uint)", asMETHODPR(CScriptArray, Resize, (asUINT), void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void sortAsc()", asMETHODPR(CScriptArray, SortAsc, (), void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void sortAsc(uint, uint)", asMETHODPR(CScriptArray, SortAsc, (asUINT, asUINT), void), asCALL_THISCALL); assert( r >= 0 );
@@ -192,16 +194,30 @@ CScriptArray &CScriptArray::operator=(const CScriptArray &other)
 	if( &other != this && 
 		other.GetArrayObjectType() == GetArrayObjectType() )
 	{
-		if( buffer )
+		if( buffer && buffer->maxElements >= other.buffer->numElements )
 		{
-			DeleteBuffer(buffer);
-			buffer = 0;
-		}
-
-		// Copy all elements from the other array
-		CreateBuffer(&buffer, other.buffer->numElements);
-		if( buffer )
+			// The other array fits in the memory allocated for this array
 			CopyBuffer(buffer, other.buffer);
+			if( buffer->numElements > other.buffer->numElements )
+			{
+				Destruct(buffer, other.buffer->numElements, buffer->numElements);
+				buffer->numElements = other.buffer->numElements;
+			}
+		}
+		else
+		{
+			// Reallocate the memory
+			if( buffer )
+			{
+				DeleteBuffer(buffer);
+				buffer = 0;
+			}
+
+			// Copy all elements from the other array
+			CreateBuffer(&buffer, other.buffer->numElements);
+			if( buffer )
+				CopyBuffer(buffer, other.buffer);
+		}
 	}
 
 	return *this;
@@ -289,8 +305,11 @@ void CScriptArray::SetValue(asUINT index, void *value)
 		objType->GetEngine()->CopyScriptObject(ptr, value, subTypeId);
 	else if( subTypeId & asTYPEID_OBJHANDLE )
 	{
+		void *tmp = *(void**)ptr;
 		*(void**)ptr = *(void**)value;
 		objType->GetEngine()->AddRefScriptObject(*(void**)value, objType->GetSubType());
+		if( tmp )
+			objType->GetEngine()->ReleaseScriptObject(*(void**)value, objType->GetSubType());
 	}
 	else if( subTypeId == asTYPEID_BOOL ||
 			 subTypeId == asTYPEID_INT8 ||
@@ -330,6 +349,40 @@ bool CScriptArray::IsEmpty() const
 	return buffer->numElements == 0;
 }
 
+void CScriptArray::Reserve(asUINT maxElements)
+{
+	if( maxElements <= buffer->maxElements )
+		return;
+
+	// Allocate memory for the buffer
+	SArrayBuffer *newBuffer;
+	#if defined(AS_MARMALADE)
+	newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*maxElements];
+	#else
+	newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*maxElements];
+	#endif
+	if( newBuffer )
+	{
+		newBuffer->numElements = buffer->numElements;
+		newBuffer->maxElements = maxElements;
+	}
+	else
+	{
+		// Out of memory
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )	
+			ctx->SetException("Out of memory");
+		return;
+	}
+
+	memcpy(newBuffer->data, buffer->data, buffer->numElements*elementSize);
+
+	// Release the old buffer
+	delete[] (asBYTE*)buffer;
+
+	buffer = newBuffer;
+}
+
 void CScriptArray::Resize(asUINT numElements)
 {
 	if( numElements & 0x80000000 )
@@ -363,42 +416,53 @@ void CScriptArray::Resize(int delta, asUINT at)
 
 	if( delta == 0 ) return;
 
-	// Allocate memory for the buffer
-	SArrayBuffer *newBuffer;
-	#if defined(AS_MARMALADE)
-	newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
-	#else
-	newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
-	#endif
-	if( newBuffer )
-		newBuffer->numElements = buffer->numElements + delta;
+	if( buffer->maxElements < buffer->numElements + delta )
+	{
+		// Allocate memory for the buffer
+		SArrayBuffer *newBuffer;
+		#if defined(AS_MARMALADE)
+		newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
+		#else
+		newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
+		#endif
+		if( newBuffer )
+		{
+			newBuffer->numElements = buffer->numElements + delta;
+			newBuffer->maxElements = newBuffer->numElements;
+		}
+		else
+		{
+			// Out of memory
+			asIScriptContext *ctx = asGetActiveContext();
+			if( ctx )	
+				ctx->SetException("Out of memory");
+			return;
+		}
+
+		memcpy(newBuffer->data, buffer->data, at*elementSize);
+		if( at < buffer->numElements )
+			memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);
+
+		if( subTypeId & asTYPEID_MASK_OBJECT )
+			Construct(newBuffer, at, at+delta);
+
+		// Release the old buffer
+		delete[] (asBYTE*)buffer;
+
+		buffer = newBuffer;
+	}
+	else if( delta < 0 )
+	{
+		Destruct(buffer, at, at-delta);
+		memmove(buffer->data + at*elementSize, buffer->data + (at-delta)*elementSize, (buffer->numElements - (at-delta))*elementSize);
+		buffer->numElements += delta;
+	}
 	else
 	{
-		// Out of memory
-		asIScriptContext *ctx = asGetActiveContext();
-		if( ctx )	
-			ctx->SetException("Out of memory");
-		return;
+		memmove(buffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements - at)*elementSize);
+		Construct(buffer, at, at+delta);
+		buffer->numElements += delta;
 	}
-
-	memcpy(newBuffer->data, buffer->data, at*elementSize);
-	if( delta > 0 && at < buffer->numElements )
-		memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);
-	else if( delta < 0 && at < buffer->numElements )
-		memcpy(newBuffer->data + at*elementSize, buffer->data + (at-delta)*elementSize, (buffer->numElements-at+delta)*elementSize);
-
-	if( subTypeId & asTYPEID_MASK_OBJECT )
-	{
-		if( delta > 0 )
-			Construct(newBuffer, at, at+delta);
-		else if( delta < 0 )
-			Destruct(buffer, at, at-delta);
-	}
-
-	// Release the old buffer
-	delete[] (asBYTE*)buffer;
-
-	buffer = newBuffer;
 }
 
 // internal
@@ -533,6 +597,7 @@ void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 	if( *buf )
 	{
 		(*buf)->numElements = numElements;
+		(*buf)->maxElements = numElements;
 		Construct(*buf, 0, numElements);
 	}
 	else
@@ -974,9 +1039,13 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 			
 			for( ; d < max; d++, s++ )
 			{
+				void *tmp = *d;
 				*d = *s;
 				if( *d )
 					engine->AddRefScriptObject(*d, objType->GetSubType());
+				// Release the old ref after incrementing the new to avoid problem incase it is the same ref
+				if( tmp )
+					engine->ReleaseScriptObject(tmp, objType->GetSubType());
 			}
 		}
 	}

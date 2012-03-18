@@ -318,6 +318,19 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
+	// Test reserve()
+	{
+		const char *script = 
+			"array<int> f; \n"
+			"f.reserve(10); \n"
+			"for( uint n = 0; n < 10; n++ ) \n"
+			"  f.insertAt(n, n); \n"
+			"Assert( f.length() == 10 ); \n";
+		r = ExecuteString(engine, script, mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+	}
+
 	// Make sure it is possible to do multiple assignments with the array type
 	r = ExecuteString(engine, "array<int> a, b, c; a = b = c;");
 	if( r < 0 )
