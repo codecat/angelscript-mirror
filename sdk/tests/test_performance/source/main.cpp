@@ -46,17 +46,17 @@ double testTimesOrig[18] =
 
 // Times for 2.23.1 WIP
 double testTimesOrig2[18] = 
-{1.23, // Basic
+{1.22, // Basic
 .281,  // Basic2
-1.18,  // Call
+1.17,  // Call
 1.55,  // Call2
-1.96,  // Fib
+1.93,  // Fib
 .258,  // Int
 1.78,  // Intf
 1.57,  // Mthd
 1.86,  // String
 .876,  // String2
-1.14,  // StringPooled
+1.13,  // StringPooled
 .789,  // ThisProp
 .401,  // Vector3
 .00455,// Assign.1
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");
 #if defined(WIN32)
-	while(!getch());
+	while(!_getch());
 #endif
 	return 0;
 }

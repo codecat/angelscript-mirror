@@ -612,7 +612,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 				PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType(), true, offset);
 
 				// Pop the reference left by the function call
-				ctx.bc.Pop(AS_PTR_SIZE);
+				ctx.bc.Instr(asBC_PopPtr);
 			}
 			else
 			{
@@ -623,7 +623,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 				ctx.bc.Instr(asBC_RDSPtr);
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
 				ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
-				ctx.bc.Pop(AS_PTR_SIZE);
+				ctx.bc.Instr(asBC_PopPtr);
 				ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 			}
 
@@ -708,7 +708,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType(), true, offset);
 
 				// Pop the reference left by the function call
-				ctx.bc.Pop(AS_PTR_SIZE);
+				ctx.bc.Instr(asBC_PopPtr);
 			}
 			else
 			{
@@ -719,7 +719,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				ctx.bc.Instr(asBC_RDSPtr);
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
 				ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
-				ctx.bc.Pop(AS_PTR_SIZE);
+				ctx.bc.Instr(asBC_PopPtr);
 				ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 			}
 
@@ -960,7 +960,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 							ctx.bc.Instr(asBC_RDSPtr);
 							ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[gvar->index]->GetAddressOfValue());
 							ctx.bc.InstrPTR(asBC_REFCPY, gvar->datatype.GetObjectType());
-							ctx.bc.Pop(AS_PTR_SIZE);
+							ctx.bc.Instr(asBC_PopPtr);
 							ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 						}
 						else
@@ -1070,7 +1070,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				if( assigned )
 				{
 					// Pop the resulting value
-					ctx.bc.Pop(AS_PTR_SIZE);
+					ctx.bc.Instr(asBC_PopPtr);
 
 					// Release the argument
 					ProcessDeferredParams(&ctx);
@@ -1101,7 +1101,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 				// Release temporary variables used by expression
 				ReleaseTemporaryVariable(expr.type, &ctx.bc);
 
-				ctx.bc.Pop(AS_PTR_SIZE);
+				ctx.bc.Instr(asBC_PopPtr);
 			}
 		}
 	}
@@ -1268,7 +1268,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
 
-					ctx->bc.Pop(AS_PTR_SIZE);
+					ctx->bc.Instr(asBC_PopPtr);
 
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
@@ -1362,7 +1362,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					ctx->bc.Instr(asBC_RDSPtr);
 				ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
 				ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
-				ctx->bc.Pop(AS_PTR_SIZE);
+				ctx->bc.Instr(asBC_PopPtr);
 				ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
 
 				dt.MakeHandle(false);
@@ -1467,7 +1467,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 			if( ctx->type.isVariable || ctx->type.isTemporary )
 			{
-				ctx->bc.Pop(AS_PTR_SIZE);
+				ctx->bc.Instr(asBC_PopPtr);
 				ctx->bc.InstrSHORT(asBC_VAR, ctx->type.stackOffset);
 
 				ProcessDeferredParams(ctx);
@@ -1952,7 +1952,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 								MakeFunctionCall(&ctx, funcs[0], 0, args, node, true, v->stackOffset);
 
 								// Pop the reference left by the function call
-								ctx.bc.Pop(AS_PTR_SIZE);
+								ctx.bc.Instr(asBC_PopPtr);
 							}
 							else
 							{
@@ -2076,7 +2076,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						if( assigned )
 						{
 							// Pop the resulting value
-							ctx.bc.Pop(AS_PTR_SIZE);
+							ctx.bc.Instr(asBC_PopPtr);
 
 							// Release the argument
 							ProcessDeferredParams(&ctx);
@@ -2111,7 +2111,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 						// Release temporary variables used by expression
 						ReleaseTemporaryVariable(expr.type, &ctx.bc);
 
-						ctx.bc.Pop(AS_PTR_SIZE);
+						ctx.bc.Instr(asBC_PopPtr);
 
 						ProcessDeferredParams(&ctx);
 					}
@@ -2175,7 +2175,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	{
 		// Call factory and store the handle in the given variable
 		PerformFunctionCall(funcId, &ctx, false, &args, 0, true, var->stackOffset);
-		ctx.bc.Pop(AS_PTR_SIZE);
+		ctx.bc.Instr(asBC_PopPtr);
 	}
 	else
 	{
@@ -2185,7 +2185,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		ctx.bc.Instr(asBC_RDSPtr);
 		ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
 		ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
-		ctx.bc.Pop(AS_PTR_SIZE);
+		ctx.bc.Instr(asBC_PopPtr);
 		ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 	}
 
@@ -2283,7 +2283,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
 
 			if( !lctx.type.dataType.IsPrimitive() )
-				ctx.bc.Pop(AS_PTR_SIZE);
+				ctx.bc.Instr(asBC_PopPtr);
 
 			// Release temporary variables used by expression
 			ReleaseTemporaryVariable(ctx.type, &ctx.bc);
@@ -3079,7 +3079,7 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 
 		// Pop the value from the stack
 		if( !expr.type.dataType.IsPrimitive() )
-			expr.bc.Pop(AS_PTR_SIZE);
+			expr.bc.Instr(asBC_PopPtr);
 
 		// Release temporary variables used by expression
 		ReleaseTemporaryVariable(expr.type, &expr.bc);
@@ -3102,7 +3102,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 		// the expression needs to be reevaluated to a reference
 		if( !ctx->type.dataType.IsReference() )
 		{
-			ctx->bc.Pop(AS_PTR_SIZE);
+			ctx->bc.Instr(asBC_PopPtr);
 			ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 			ctx->type.dataType.MakeReference(true);
 		}
@@ -3156,7 +3156,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 			}
 
 			// Pop the original reference
-			ctx->bc.Pop(AS_PTR_SIZE);
+			ctx->bc.Instr(asBC_PopPtr);
 		}
 	}
 
@@ -3376,7 +3376,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 						lexpr.type.Set(v->type);
 						lexpr.type.isLValue = true;
 						PerformAssignment(&lexpr.type, &expr.type, &expr.bc, rnode->firstChild);
-						expr.bc.Pop(AS_PTR_SIZE);
+						expr.bc.Instr(asBC_PopPtr);
 
 						// Release any temporary variable
 						ReleaseTemporaryVariable(expr.type, &expr.bc);
@@ -3395,7 +3395,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					PrepareArgument(&v->type, &expr, rnode->firstChild, false, 0);
 
 					// Pop the reference to the temporary variable
-					expr.bc.Pop(AS_PTR_SIZE);
+					expr.bc.Instr(asBC_PopPtr);
 
 					// Clean up the local variables and process deferred parameters
 					DestroyVariables(&expr.bc);
@@ -3708,10 +3708,7 @@ void asCCompiler::Dereference(asSExprContext *ctx, bool generateCode)
 		{
 			ctx->type.dataType.MakeReference(false);
 			if( generateCode )
-			{
-				ctx->bc.Instr(asBC_CHKREF);
 				ctx->bc.Instr(asBC_RDSPtr);
-			}
 		}
 		else
 		{
@@ -4043,7 +4040,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				// being a class method, and the this pointer cannot be null.
 
 				if( ctx->type.isVariable )
-					ctx->bc.Pop(AS_PTR_SIZE);
+					ctx->bc.Instr(asBC_PopPtr);
 				else
 				{
 					Dereference(ctx, true);
@@ -4069,7 +4066,7 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				asCArray<asSExprContext *> args;
 				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
 
-				ctx->bc.Pop(AS_PTR_SIZE);
+				ctx->bc.Instr(asBC_PopPtr);
 
 				int endLabel = nextLabel++;
 
@@ -6126,7 +6123,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				}
 				PerformAssignment(&rtemp, &le.type, &ctx->bc, cexpr->next);
 				if( !rtemp.dataType.IsPrimitive() )
-					ctx->bc.Pop(AS_PTR_SIZE); // Pop the original value (always a pointer)
+					ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
 
 				// Release the old temporary variable
 				ReleaseTemporaryVariable(le.type, &ctx->bc);
@@ -6147,7 +6144,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				}
 				PerformAssignment(&rtemp, &re.type, &ctx->bc, cexpr->next);
 				if( !rtemp.dataType.IsPrimitive() )
-					ctx->bc.Pop(AS_PTR_SIZE); // Pop the original value (always a pointer)
+					ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
 
 				// Release the old temporary variable
 				ReleaseTemporaryVariable(re.type, &ctx->bc);
@@ -7421,7 +7418,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				asSExprContext o(engine);
 				DoAssignment(&o, expr, &rctx, outParam.argNode, outParam.argNode, ttAssignment, outParam.argNode);
 
-				if( !o.type.dataType.IsPrimitive() ) o.bc.Pop(AS_PTR_SIZE);
+				if( !o.type.dataType.IsPrimitive() ) o.bc.Instr(asBC_PopPtr);
 
 				MergeExprBytecode(ctx, &o);
 			}
@@ -7430,7 +7427,7 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				// We must still evaluate the expression
 				MergeExprBytecode(ctx, expr);
 				if( !expr->type.isConstant || expr->type.IsNullConstant() )
-					ctx->bc.Pop(AS_PTR_SIZE);
+					ctx->bc.Instr(asBC_PopPtr);
 
 				// Give a warning, except if the argument is null or 0 which indicate the argument is really to be ignored
 				if( !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
@@ -7708,9 +7705,6 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			ctx->type.SetVariable(dt, 0, false);
 			ctx->type.dataType.MakeReference(true);
 
-			// TODO: optimize: This adds a CHKREF. Is that really necessary? It isn't as the 
-			//                 VM will check for null pointer anyway before calling the method.
-			//                 The bytecode optimizer should know this and remove the unnecessary CHKREF
 			Dereference(ctx, true);
 		}			
 	}
@@ -7847,7 +7841,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 					ConvertToVariable(&funcPtr);
 					ctx->bc.AddCode(&funcPtr.bc);
 					if( !funcPtr.type.isTemporary )
-						ctx->bc.Pop(AS_PTR_SIZE);
+						ctx->bc.Instr(asBC_PopPtr);
 				}
 
 				MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
@@ -9668,7 +9662,7 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 		if( ctx->type.IsNullConstant() )
 		{
 			if( ctx->bc.GetLastInstr() == asBC_PshNull )
-				ctx->bc.Pop(AS_PTR_SIZE); // Pop the null constant pushed onto the stack
+				ctx->bc.Instr(asBC_PopPtr); // Pop the null constant pushed onto the stack
 			ctx->bc.InstrSHORT(asBC_ClrVPtr, (short)offset);
 		}
 		else
@@ -9677,7 +9671,7 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 			ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
 			// TODO: optimize: REFCPY should pop both arguments, and store the return in the register, just like a normal function
-			ctx->bc.Pop(AS_PTR_SIZE);
+			ctx->bc.Instr(asBC_PopPtr);
 		}
 
 		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -10891,9 +10885,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 	// Need to pop the value if it is a null constant
 	if( lctx->type.IsNullConstant() )
-		lctx->bc.Pop(AS_PTR_SIZE);
+		lctx->bc.Instr(asBC_PopPtr);
 	if( rctx->type.IsNullConstant() )
-		rctx->bc.Pop(AS_PTR_SIZE);
+		rctx->bc.Instr(asBC_PopPtr);
 
 	// Convert both sides to explicit handles
 	to.MakeHandle(true);
@@ -10927,9 +10921,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	{
 		// If the object handle already is in a variable we must manually pop it from the stack
 		if( lctx->type.isVariable )
-			lctx->bc.Pop(AS_PTR_SIZE);
+			lctx->bc.Instr(asBC_PopPtr);
 		if( rctx->type.isVariable )
-			rctx->bc.Pop(AS_PTR_SIZE);
+			rctx->bc.Instr(asBC_PopPtr);
 
 		// TODO: optimize: Treat the object handles as two integers, i.e. don't do REFCPY
 		ConvertToVariableNotIn(lctx, rctx);

@@ -742,13 +742,13 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
-		// POP a, RET b -> RET b
-		else if( IsCombination(curr, asBC_POP, asBC_RET) )
+		// PopPtr, RET b -> RET b
+		else if( IsCombination(curr, asBC_PopPtr, asBC_RET) )
 		{
-			// We don't combine the POP+RET because RET first restores
+			// We don't combine the PopPtr+RET because RET first restores
 			// the previous stack pointer and then pops the arguments
 
-			// Delete POP
+			// Delete PopPtr
 			instr = GoBack(DeleteInstruction(curr));
 		}
 		// Delete JitEntry if the JIT instructions are not supposed to be included
@@ -823,29 +823,26 @@ int asCByteCode::Optimize()
 			InsertBefore(curr, instr);
 			instr = GoBack(instr);
 		}
-		// PshVPtr y, POP x -> POP x-AS_PTR_SIZE
-		// PSF y    , POP x -> POP x-AS_PTR_SIZE
-		// VAR y    , POP x -> POP x-AS_PTR_SIZE
-		// PshNull  , POP x -> POP x-AS_PTR_SIZE
-		// PshRPtr  , POP x -> POP x-AS_PTR_SIZE
-		else if( (IsCombination(curr, asBC_PshRPtr, asBC_POP) ||
-			      IsCombination(curr, asBC_PSF    , asBC_POP) ||
-				  IsCombination(curr, asBC_VAR    , asBC_POP) || 
-				  IsCombination(curr, asBC_PshVPtr, asBC_POP) ||
-			      IsCombination(curr, asBC_PshNull, asBC_POP)) && 
-				 instr->wArg[0] >= AS_PTR_SIZE )
+		// PshVPtr y, PopPtr -> nothing
+		// PSF y    , PopPtr -> nothing
+		// VAR y    , PopPtr -> nothing
+		// PshNull  , PopPtr -> nothing
+		// PshRPtr  , PopPtr -> nothing
+		else if( IsCombination(curr, asBC_PshRPtr, asBC_PopPtr) ||
+			     IsCombination(curr, asBC_PSF    , asBC_PopPtr) ||
+				 IsCombination(curr, asBC_VAR    , asBC_PopPtr) || 
+				 IsCombination(curr, asBC_PshVPtr, asBC_PopPtr) ||
+			     IsCombination(curr, asBC_PshNull, asBC_PopPtr) )
 		{
-			// The pop instruction will always only pop a single pointer
-			asASSERT( instr->wArg[0] == AS_PTR_SIZE );
-
 			// A pointer is pushed on the stack then immediately removed
+			// Remove both instructions as they cancel each other
+			cByteInstruction *instr2 = instr->next;
 			DeleteInstruction(curr);
-			instr->wArg[0] -= AS_PTR_SIZE;
-			instr = GoBack(instr);
+			DeleteInstruction(instr);
+			instr = GoBack(instr2);
 		}
-		// POP 0 -> remove
 		// PUSH 0 -> remove
-		else if( (curr->op == asBC_POP || curr->op == asBC_PUSH ) && curr->wArg[0] == 0 )  
+		else if( curr->op == asBC_PUSH && curr->wArg[0] == 0 )  
 			instr = GoBack(DeleteInstruction(curr));
 // Begin PATTERN
 		// T**; J** +x -> J** +x
@@ -887,23 +884,21 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr->next);
 			instr = GoBack(curr);
 		}
-		// PSF, ChkRefS, POP -> ChkNullV
-		else if( (IsCombination(curr, asBC_PSF, asBC_ChkRefS) &&
-		          IsCombination(instr, asBC_ChkRefS, asBC_POP) &&
-		          instr->next->wArg[0] >= AS_PTR_SIZE) )
+		// PSF, ChkRefS, PopPtr -> ChkNullV
+		else if( IsCombination(curr, asBC_PSF, asBC_ChkRefS) &&
+		         IsCombination(instr, asBC_ChkRefS, asBC_PopPtr) )
 		{
 			curr->op = asBC_ChkNullV;
 			curr->stackInc = 0;
-			// Decrease the number of DWORDs popped
-			instr->next->wArg[0] -= AS_PTR_SIZE;
+			// Delete the PopPtr instruction
+			DeleteInstruction(instr->next);
 			// Delete the ChkRefS instruction
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
-		// PshVPtr, CHKREF, POP -> ChkNullV
-		else if( (IsCombination(curr, asBC_PshVPtr, asBC_CHKREF) &&
-		          IsCombination(instr, asBC_CHKREF, asBC_POP) &&
-		          instr->next->wArg[0] == AS_PTR_SIZE) )
+		// PshVPtr, CHKREF, PopPtr -> ChkNullV
+		else if( IsCombination(curr, asBC_PshVPtr, asBC_CHKREF) &&
+		         IsCombination(instr, asBC_CHKREF, asBC_PopPtr) )
 		{
 			curr->op = asBC_ChkNullV;
 			curr->stackInc = 0;
@@ -2003,26 +1998,6 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 #endif
 
 //=============================================================================
-
-// Decrease stack with "numDwords"
-int asCByteCode::Pop(int numDwords)
-{
-	// Only single pointers are popped
-	// TODO: optimize: Change the instruction to be PopPtr and remove the argument
-	asASSERT(numDwords == AS_PTR_SIZE);
-
-	asASSERT(asBCInfo[asBC_POP].type == asBCTYPE_W_ARG);
-
-	if( AddInstruction() < 0 )
-		return 0;
-
-	last->op = asBC_POP;
-	last->wArg[0] = (short)numDwords;
-	last->size = asBCTypeSize[asBCInfo[asBC_POP].type];
-	last->stackInc = -numDwords;
-
-	return last->stackInc;
-}
 
 // Increase stack with "numDwords"
 int asCByteCode::Push(int numDwords)

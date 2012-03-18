@@ -1180,7 +1180,7 @@ public:
 // Byte code instructions
 enum asEBCInstr
 {
-	asBC_POP			= 0,
+	asBC_PopPtr			= 0,
 	asBC_PUSH			= 1,
 	asBC_PshC4			= 2,
 	asBC_PshV4			= 3,
@@ -1459,7 +1459,7 @@ struct asSBCInfo
 
 const asSBCInfo asBCInfo[256] =
 {
-	asBCINFO(POP,		W_ARG,			0xFFFF),
+	asBCINFO(PopPtr,	NO_ARG,			-AS_PTR_SIZE),
 	asBCINFO(PUSH,		W_ARG,			0xFFFF),
 	asBCINFO(PshC4,		DW_ARG,			1),
 	asBCINFO(PshV4,		rW_ARG,			1),
