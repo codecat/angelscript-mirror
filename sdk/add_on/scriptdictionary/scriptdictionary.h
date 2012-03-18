@@ -43,6 +43,8 @@ public:
 
     // Returns true if the key is set
     bool Exists(const std::string &key) const;
+	bool IsEmpty() const;
+	asUINT GetSize() const;
 
     // Deletes the key
     void Delete(const std::string &key);
