@@ -192,18 +192,8 @@ static const char *script =
 "}                                                                \n";
 
                                          
-void Test()
+void Test(double *testTime)
 {
-	printf("---------------------------------------------\n");
-	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.18.0             : 2.48 secs\n");
-	printf("AngelScript 2.18.1 WIP         : 2.61 secs\n");
-	printf("AngelScript 2.19.1 WIP         : 2.63 secs\n");
-	printf("AS 2.20.0 (home)               : 1.10 secs\n");
-	printf("AS 2.20.3 (home)               : .971 secs\n");
-
-	printf("\nBuilding...\n");
-
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -218,8 +208,6 @@ void Test()
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(mod->GetFunctionIdByDecl("void TestStringP()"));
 
-		printf("Executing AngelScript version...\n");
-
 		double time = GetSystemTimer();
 
 		r = ctx->Execute();
@@ -232,14 +220,14 @@ void Test()
 			if( r == asEXECUTION_EXCEPTION )
 			{
 				printf("Script exception\n");
-				asIScriptFunction *func = engine->GetFunctionById(ctx->GetExceptionFunction());
+				asIScriptFunction *func = ctx->GetExceptionFunction();
 				printf("Func: %s\n", func->GetName());
 				printf("Line: %d\n", ctx->GetExceptionLineNumber());
 				printf("Desc: %s\n", ctx->GetExceptionString());
 			}
 		}
 		else
-			printf("Time = %f secs\n", time);
+			*testTime = time;
 
 		ctx->Release();
 	}
@@ -250,6 +238,7 @@ void Test()
 	// Clean up the string pool
 	for( asUINT n = 0; n < pool.size(); n++ )
 		delete pool[n];
+	pool.clear();
 }
 
 } // namespace

@@ -58,18 +58,8 @@ void RegisterScriptMath3D(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("vector3", "vector3 opMul(float) const", asFUNCTIONPR(operator*, (float, const Vector3&), Vector3), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 }
 
-void Test()
+void Test(double *testTime)
 {
-	printf("---------------------------------------------\n");
-	printf("%s\n\n", TESTNAME);
-	// If this test is run alone, it gets 0.631 secs. I believe this has to do with
-	// the memory allocations for the return type that are faster due to less fractioned memory
-	printf("AS 2.20.1 (home)               : 1.65 secs\n");
-	printf("AS 2.20.3 (home)               : .511 secs\n");
-
-
-	printf("\nBuilding...\n");
-
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -83,8 +73,6 @@ void Test()
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(mod->GetFunctionIdByDecl("void TestVector3()"));
 
-	printf("Executing AngelScript version...\n");
-
 	double time = GetSystemTimer();
 
 	int r = ctx->Execute();
@@ -97,14 +85,14 @@ void Test()
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			printf("Script exception\n");
-			asIScriptFunction *func = engine->GetFunctionById(ctx->GetExceptionFunction());
+			asIScriptFunction *func = ctx->GetExceptionFunction();
 			printf("Func: %s\n", func->GetName());
 			printf("Line: %d\n", ctx->GetExceptionLineNumber());
 			printf("Desc: %s\n", ctx->GetExceptionString());
 		}
 	}
 	else
-		printf("Time = %f secs\n", time);
+		*testTime = time;
 
 	ctx->Release();
 	engine->Release();

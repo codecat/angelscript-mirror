@@ -31,17 +31,8 @@ static const char *script =
 "    return cur;                      \n"
 "}                                    \n";
 
-void Test()
+void Test(double *testTime)
 {
-	printf("---------------------------------------------\n");
-	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.18.1 WIP         : 2.25 secs\n");
-	printf("AngelScript 2.19.1 WIP         : 2.09 secs\n");
-	printf("AS 2.20.0 (home)               : 2.11 secs\n");
-	printf("AS 2.20.3 (home)               : 1.97 secs\n");
-
-	printf("\nBuilding...\n");
-
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, true);
 
@@ -60,8 +51,6 @@ void Test()
 	ctx->Prepare(fibR);
 	ctx->SetArgDWord(0, 35); // 43
 
-	printf("Executing AngelScript version...\n");
-
 	double time = GetSystemTimer();
 
 	int r = ctx->Execute();
@@ -74,14 +63,14 @@ void Test()
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			printf("Script exception\n");
-			asIScriptFunction *func = engine->GetFunctionById(ctx->GetExceptionFunction());
+			asIScriptFunction *func = ctx->GetExceptionFunction();
 			printf("Func: %s\n", func->GetName());
 			printf("Line: %d\n", ctx->GetExceptionLineNumber());
 			printf("Desc: %s\n", ctx->GetExceptionString());
 		}
 	}
 	else
-		printf("Time = %f secs\n", time);
+		*testTime = time;
 
 	// Verify the result
 	int fib = ctx->GetReturnDWord();

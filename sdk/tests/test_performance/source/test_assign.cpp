@@ -80,26 +80,8 @@ static const char *script =
 "} \n";
 
                                        
-void Test()
+void Test(double *testTimes)
 {
-	printf("---------------------------------------------\n");
-	printf("%s\n\n", TESTNAME);
-	printf("AS 2.20.3 (home)               : .00665 secs\n");
-	printf("Original...\n");
-	printf("Time = 0.010541 secs\n"
-		   "Time = 0.024077 secs\n"
-		   "Time = 0.009444 secs\n"
-		   "Time = 0.022281 secs\n"
-		   "Time = 0.019826 secs\n");
-	printf("Current...\n");
-	printf("Time = 0.004959 secs\n"
-		   "Time = 0.010941 secs\n"
-		   "Time = 0.004622 secs\n"
-		   "Time = 0.009473 secs\n"
-		   "Time = 0.009446 secs\n");
-
-	printf("\nBuilding...\n");
-
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -116,40 +98,38 @@ void Test()
 	double time;
 	asIScriptContext *ctx = engine->CreateContext();
 
-	printf("Executing AngelScript version...\n");
-
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test1()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
-	printf("Time = %f secs\n", time);
+	testTimes[0] = time;
 
 	// TODO: optimize: PSF, ADDSi, PopRPtr -> LoadObjR
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test2()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
-	printf("Time = %f secs\n", time);
+	testTimes[1] = time;
 
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test3()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
-	printf("Time = %f secs\n", time);
+	testTimes[2] = time;
 
 	// TODO: optimize: This will benefit from when value types are inlined in script classes
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test4()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
-	printf("Time = %f secs\n", time);
+	testTimes[3] = time;
 
 	// TODO: optimize: This will benefit from when value types are inlined in script classes
 	ctx->Prepare(mod->GetFunctionIdByDecl("void test5()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
-	printf("Time = %f secs\n", time);
+	testTimes[4] = time;
 
 	if( r != 0 )
 	{
@@ -157,7 +137,7 @@ void Test()
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			printf("Script exception\n");
-			asIScriptFunction *func = engine->GetFunctionById(ctx->GetExceptionFunction());
+			asIScriptFunction *func = ctx->GetExceptionFunction();
 			printf("Func: %s\n", func->GetName());
 			printf("Line: %d\n", ctx->GetExceptionLineNumber());
 			printf("Desc: %s\n", ctx->GetExceptionString());
