@@ -795,6 +795,37 @@ bool Test()
 		TEST_FAILED;
 	}
 
+	// Test const/non-const overloads for get and set accessors
+	const char *script22 = 
+		"class Test                                       \n"
+		"{                                                \n"
+		"  int get_c() { return 41; }                     \n"
+		"  int get_c() const { return 42; }               \n"
+		"  void set_c(int v) { assert( v == 41 ); }       \n"
+		"  void set_c(int v) const { assert( v == 42 ); } \n"
+		"}                                                \n"
+		"void func()                  \n"
+		"{                            \n"
+		"  Test @s = @Test();         \n"
+		"  const Test @t = @s;        \n"
+		"  assert( s.c == 41 );       \n"
+		"  assert( t.c == 42 );       \n"
+		"  s.c = 41;                  \n"
+		"  t.c = 42;                  \n"
+		"}                            \n";
+	mod->AddScriptSection("script", script22);
+	bout.buffer = "";
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+	r = ExecuteString(engine, "func()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	// TODO: Test non-const get accessor for object type with const overloaded dual operator
 	

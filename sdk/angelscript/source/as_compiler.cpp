@@ -8347,27 +8347,55 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		}
 	}
 
+	bool isConst = false;
+	if( ctx->type.dataType.IsObjectHandle() )
+		isConst = ctx->type.dataType.IsHandleToConst();
+	else
+		isConst = ctx->type.dataType.IsReadOnly();
+
 	// Check for multiple matches
 	if( multipleGetFuncs.GetLength() > 0 )
 	{
-		asCString str;
-		str.Format(TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s, name.AddressOf());
-		Error(str.AddressOf(), node);
+		// Filter the list by constness
+		FilterConst(multipleGetFuncs, !isConst);
 
-		PrintMatchingFuncs(multipleGetFuncs, node);
+		if( multipleGetFuncs.GetLength() > 1 )
+		{
+			asCString str;
+			str.Format(TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s, name.AddressOf());
+			Error(str.AddressOf(), node);
 
-		return -1;
+			PrintMatchingFuncs(multipleGetFuncs, node);
+
+			return -1;
+		}
+		else
+		{
+			// The id may have changed
+			getId = multipleGetFuncs[0];
+		}
 	}
 
 	if( multipleSetFuncs.GetLength() > 0 )
 	{
-		asCString str;
-		str.Format(TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s, name.AddressOf());
-		Error(str.AddressOf(), node);
+		// Filter the list by constness
+		FilterConst(multipleSetFuncs, !isConst);
 
-		PrintMatchingFuncs(multipleSetFuncs, node);
+		if( multipleSetFuncs.GetLength() > 1 )
+		{
+			asCString str;
+			str.Format(TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s, name.AddressOf());
+			Error(str.AddressOf(), node);
 
-		return -1;
+			PrintMatchingFuncs(multipleSetFuncs, node);
+
+			return -1;
+		}
+		else
+		{
+			// The id may have changed
+			setId = multipleSetFuncs[0];
+		}
 	}
 
 	// Check for type compatibility between get and set accessor
@@ -11197,7 +11225,7 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 	// Do not copy the origExpr member
 }
 
-void asCCompiler::FilterConst(asCArray<int> &funcs)
+void asCCompiler::FilterConst(asCArray<int> &funcs, bool removeConst)
 {
 	if( funcs.GetLength() == 0 ) return;
 
@@ -11211,7 +11239,7 @@ void asCCompiler::FilterConst(asCArray<int> &funcs)
 	for( n = 0; n < funcs.GetLength(); n++ )
 	{
 		desc = builder->GetFunctionDescription(funcs[n]);
-		if( !desc->isReadOnly )
+		if( desc->isReadOnly != removeConst )
 		{
 			foundNonConst = true;
 			break;
@@ -11224,7 +11252,7 @@ void asCCompiler::FilterConst(asCArray<int> &funcs)
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			desc = builder->GetFunctionDescription(funcs[n]);
-			if( desc->isReadOnly )
+			if( desc->isReadOnly == removeConst )
 			{
 				if( n == funcs.GetLength() - 1 )
 					funcs.PopLast();
