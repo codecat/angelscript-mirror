@@ -325,6 +325,11 @@ asUINT CScriptArray::GetSize() const
 	return buffer->numElements;
 }
 
+bool CScriptArray::IsEmpty() const
+{
+	return buffer->numElements == 0;
+}
+
 void CScriptArray::Resize(asUINT numElements)
 {
 	if( numElements & 0x80000000 )
