@@ -44,6 +44,28 @@ double testTimesOrig[18] =
 .00560 // Assign.5
 };
 
+// Times for 2.23.1 WIP
+double testTimesOrig2[18] = 
+{1.32, // Basic
+.281,  // Basic2
+1.18,  // Call
+1.55,  // Call2
+1.96,  // Fib
+.276,  // Int
+1.79,  // Intf
+1.75,  // Mthd
+1.86,  // String
+.915,  // String2
+1.14,  // StringPooled
+.789,  // ThisProp
+.401,  // Vector3
+.00455,// Assign.1
+.00663,// Assign.2
+.00416,// Assign.3
+.00574,// Assign.4
+.00574 // Assign.5
+};
+
 double testTimesBest[18];
 double testTimes[18];
 
@@ -96,24 +118,24 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 	
-	printf("Basic          %.3f    %.3f%s\n", testTimesOrig[ 0], testTimesBest[ 0], testTimesBest[ 0] < testTimesOrig[ 0] ? " <+>" : ""); 
-	printf("Basic2         %.3f    %.3f%s\n", testTimesOrig[ 1], testTimesBest[ 1], testTimesBest[ 1] < testTimesOrig[ 1] ? " <+>" : ""); 
-	printf("Call           %.3f    %.3f%s\n", testTimesOrig[ 2], testTimesBest[ 2], testTimesBest[ 2] < testTimesOrig[ 2] ? " <+>" : ""); 
-	printf("Call2          %.3f    %.3f%s\n", testTimesOrig[ 3], testTimesBest[ 3], testTimesBest[ 3] < testTimesOrig[ 3] ? " <+>" : ""); 
-	printf("Fib            %.3f    %.3f%s\n", testTimesOrig[ 4], testTimesBest[ 4], testTimesBest[ 4] < testTimesOrig[ 4] ? " <+>" : ""); 
-	printf("Int            %.3f    %.3f%s\n", testTimesOrig[ 5], testTimesBest[ 5], testTimesBest[ 5] < testTimesOrig[ 5] ? " <+>" : ""); 
-	printf("Intf           %.3f    %.3f%s\n", testTimesOrig[ 6], testTimesBest[ 6], testTimesBest[ 6] < testTimesOrig[ 6] ? " <+>" : ""); 
-	printf("Mthd           %.3f    %.3f%s\n", testTimesOrig[ 7], testTimesBest[ 7], testTimesBest[ 7] < testTimesOrig[ 7] ? " <+>" : ""); 
-	printf("String         %.3f    %.3f%s\n", testTimesOrig[ 8], testTimesBest[ 8], testTimesBest[ 8] < testTimesOrig[ 8] ? " <+>" : ""); 
-	printf("String2        %.3f    %.3f%s\n", testTimesOrig[ 9], testTimesBest[ 9], testTimesBest[ 9] < testTimesOrig[ 9] ? " <+>" : ""); 
-	printf("StringPooled   %.3f    %.3f%s\n", testTimesOrig[10], testTimesBest[10], testTimesBest[10] < testTimesOrig[10] ? " <+>" : ""); 
-	printf("ThisProp       %.3f    %.3f%s\n", testTimesOrig[11], testTimesBest[11], testTimesBest[11] < testTimesOrig[11] ? " <+>" : ""); 
-	printf("Vector3        %.3f    %.3f%s\n", testTimesOrig[12], testTimesBest[12], testTimesBest[12] < testTimesOrig[12] ? " <+>" : ""); 
-	printf("Assign.1       %.5f  %.5f%s\n",   testTimesOrig[13], testTimesBest[13], testTimesBest[13] < testTimesOrig[13] ? " <+>" : ""); 
-	printf("Assign.2       %.5f  %.5f%s\n",   testTimesOrig[14], testTimesBest[14], testTimesBest[14] < testTimesOrig[14] ? " <+>" : ""); 
-	printf("Assign.3       %.5f  %.5f%s\n",   testTimesOrig[15], testTimesBest[15], testTimesBest[15] < testTimesOrig[15] ? " <+>" : ""); 
-	printf("Assign.4       %.5f  %.5f%s\n",   testTimesOrig[16], testTimesBest[16], testTimesBest[16] < testTimesOrig[16] ? " <+>" : ""); 
-	printf("Assign.5       %.5f  %.5f%s\n",   testTimesOrig[17], testTimesBest[17], testTimesBest[17] < testTimesOrig[17] ? " <+>" : ""); 
+	printf("Basic          %.3f    %.3f    %.3f%s\n", testTimesOrig[ 0], testTimesOrig2[ 0], testTimesBest[ 0], testTimesBest[ 0] < testTimesOrig2[ 0] ? " +" : " -"); 
+	printf("Basic2         %.3f    %.3f    %.3f%s\n", testTimesOrig[ 1], testTimesOrig2[ 1], testTimesBest[ 1], testTimesBest[ 1] < testTimesOrig2[ 1] ? " +" : " -"); 
+	printf("Call           %.3f    %.3f    %.3f%s\n", testTimesOrig[ 2], testTimesOrig2[ 2], testTimesBest[ 2], testTimesBest[ 2] < testTimesOrig2[ 2] ? " +" : " -"); 
+	printf("Call2          %.3f    %.3f    %.3f%s\n", testTimesOrig[ 3], testTimesOrig2[ 3], testTimesBest[ 3], testTimesBest[ 3] < testTimesOrig2[ 3] ? " +" : " -"); 
+	printf("Fib            %.3f    %.3f    %.3f%s\n", testTimesOrig[ 4], testTimesOrig2[ 4], testTimesBest[ 4], testTimesBest[ 4] < testTimesOrig2[ 4] ? " +" : " -"); 
+	printf("Int            %.3f    %.3f    %.3f%s\n", testTimesOrig[ 5], testTimesOrig2[ 5], testTimesBest[ 5], testTimesBest[ 5] < testTimesOrig2[ 5] ? " +" : " -"); 
+	printf("Intf           %.3f    %.3f    %.3f%s\n", testTimesOrig[ 6], testTimesOrig2[ 6], testTimesBest[ 6], testTimesBest[ 6] < testTimesOrig2[ 6] ? " +" : " -"); 
+	printf("Mthd           %.3f    %.3f    %.3f%s\n", testTimesOrig[ 7], testTimesOrig2[ 7], testTimesBest[ 7], testTimesBest[ 7] < testTimesOrig2[ 7] ? " +" : " -"); 
+	printf("String         %.3f    %.3f    %.3f%s\n", testTimesOrig[ 8], testTimesOrig2[ 8], testTimesBest[ 8], testTimesBest[ 8] < testTimesOrig2[ 8] ? " +" : " -"); 
+	printf("String2        %.3f    %.3f    %.3f%s\n", testTimesOrig[ 9], testTimesOrig2[ 9], testTimesBest[ 9], testTimesBest[ 9] < testTimesOrig2[ 9] ? " +" : " -"); 
+	printf("StringPooled   %.3f    %.3f    %.3f%s\n", testTimesOrig[10], testTimesOrig2[10], testTimesBest[10], testTimesBest[10] < testTimesOrig2[10] ? " +" : " -"); 
+	printf("ThisProp       %.3f    %.3f    %.3f%s\n", testTimesOrig[11], testTimesOrig2[11], testTimesBest[11], testTimesBest[11] < testTimesOrig2[11] ? " +" : " -"); 
+	printf("Vector3        %.3f    %.3f    %.3f%s\n", testTimesOrig[12], testTimesOrig2[12], testTimesBest[12], testTimesBest[12] < testTimesOrig2[12] ? " +" : " -"); 
+	printf("Assign.1       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[13], testTimesOrig2[13], testTimesBest[13], testTimesBest[13] < testTimesOrig2[13] ? " +" : " -"); 
+	printf("Assign.2       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[14], testTimesOrig2[14], testTimesBest[14], testTimesBest[14] < testTimesOrig2[14] ? " +" : " -"); 
+	printf("Assign.3       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[15], testTimesOrig2[15], testTimesBest[15], testTimesBest[15] < testTimesOrig2[15] ? " +" : " -"); 
+	printf("Assign.4       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[16], testTimesOrig2[16], testTimesBest[16], testTimesBest[16] < testTimesOrig2[16] ? " +" : " -"); 
+	printf("Assign.5       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[17], testTimesOrig2[17], testTimesBest[17], testTimesBest[17] < testTimesOrig2[17] ? " +" : " -"); 
 
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

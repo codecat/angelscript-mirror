@@ -26,6 +26,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added proper support for const overloads in property accessors (Thanks Andrew Ackermann)
 </ul>
+<li>Virtual machine
+<ul>
+<li>Changed ADDSi to check if the pointer is a null pointer. 
+<li>Bytecode optimizer removes CHKREF instructions before and after the ADDSi instruction
+</ul>
 <li>Add-ons &amp; Samples
 <ul>
 <li>Added GetSize() and IsEmpty() to the dictionary add-on (Thanks _Vicious_)

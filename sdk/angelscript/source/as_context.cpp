@@ -2390,7 +2390,21 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_ADDSi:
-		*(asPWORD*)l_sp = asPWORD(*(asPWORD*)l_sp) + asBC_SWORDARG0(l_bc);
+		{
+			// The pointer must not be null
+			asPWORD a = *(asPWORD*)l_sp;
+			if( a == 0 )
+			{
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
+
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+			// Add an offset to the pointer
+			*(asPWORD*)l_sp = a + asBC_SWORDARG0(l_bc);
+		}
 		l_bc += 2;
 		break;
 
@@ -2806,7 +2820,7 @@ void asCContext::ExecuteNext()
 		{
 			// Verify if the pointer on the stack refers to a non-null value
 			// This is used to validate a reference to a handle
-			asDWORD *a = (asDWORD*)*(asPWORD*)l_sp;
+			asPWORD *a = (asPWORD*)*(asPWORD*)l_sp;
 			if( *a == 0 )
 			{
 				regs.programPointer = l_bc;
