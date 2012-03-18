@@ -1898,8 +1898,21 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_RDSPtr:
-		// Pop an address from the stack, read a pointer from that address and push it on the stack
-		*(asPWORD*)l_sp = *(asPWORD*)*(asPWORD*)l_sp;
+		{
+			// The pointer must not be null
+			asPWORD a = *(asPWORD*)l_sp;
+			if( a == 0 )
+			{
+				regs.programPointer = l_bc;
+				regs.stackPointer = l_sp;
+				regs.stackFramePointer = l_fp;
+
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return;
+			}
+			// Pop an address from the stack, read a pointer from that address and push it on the stack
+			*(asPWORD*)l_sp = *(asPWORD*)a;
+		}
 		l_bc++;
 		break;
 

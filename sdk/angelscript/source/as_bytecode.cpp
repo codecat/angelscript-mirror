@@ -652,9 +652,11 @@ int asCByteCode::Optimize()
 			instr = GoBack(curr);
 		}
 		// CHKREF, ADDSi -> ADDSi
-		else if( IsCombination(curr, asBC_CHKREF, asBC_ADDSi) )
+		// CHKREF, RDSPtr -> RDSPtr
+		else if( IsCombination(curr, asBC_CHKREF, asBC_ADDSi) ||
+			     IsCombination(curr, asBC_CHKREF, asBC_RDSPtr) )
 		{
-			// As ADDSi already checks the pointer, the CHKREF instruction is unnecessary
+			// As ADDSi & RDSPtr already checks the pointer, the CHKREF instruction is unnecessary
 			DeleteInstruction(curr);
 			instr = GoBack(instr);
 		}
