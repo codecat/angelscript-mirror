@@ -1273,9 +1273,10 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	// Update framepointer and programCounter
 	regs.stackFramePointer = regs.stackPointer;
 
+	// Set all object variables to 0 to guarantee that they are null before they are used
 	// TODO: optimize: This can be avoided handling this as is done for value types in the exception handler
-	// Set all object variables to 0
-	for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
+	asUINT n = currentFunction->objVariablePos.GetLength();
+	while( n-- > 0 )
 	{
 		if( !currentFunction->objVariableIsOnHeap[n] ) continue;
 
@@ -3819,11 +3820,15 @@ void asCContext::CleanStackFrame()
 		// the function has actually been entered
 		if( currentFunction->objectType && regs.programPointer != currentFunction->byteCode.AddressOf() )
 		{
-			asSTypeBehaviour *beh = &currentFunction->objectType->beh;
-			if( beh->release && *(asPWORD*)&regs.stackFramePointer[0] != 0 )
+			// Methods returning a reference or constructors don't add a reference
+			if( !currentFunction->returnType.IsReference() && currentFunction->name != currentFunction->objectType->name )
 			{
-				engine->CallObjectMethod((void*)*(asPWORD*)&regs.stackFramePointer[0], beh->release);
-				*(asPWORD*)&regs.stackFramePointer[0] = 0;
+				asSTypeBehaviour *beh = &currentFunction->objectType->beh;
+				if( beh->release && *(asPWORD*)&regs.stackFramePointer[0] != 0 )
+				{
+					engine->CallObjectMethod((void*)*(asPWORD*)&regs.stackFramePointer[0], beh->release);
+					*(asPWORD*)&regs.stackFramePointer[0] = 0;
+				}
 			}
 		}
 	}

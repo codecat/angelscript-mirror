@@ -46,19 +46,19 @@ double testTimesOrig[18] =
 
 // Times for 2.23.1 WIP
 double testTimesOrig2[18] = 
-{1.22, // Basic
-.281,  // Basic2
+{1.19, // Basic
+.317,  // Basic2
 1.17,  // Call
-1.55,  // Call2
-1.93,  // Fib
-.258,  // Int
+1.54,  // Call2
+1.77,  // Fib
+.261,  // Int
 1.78,  // Intf
 1.57,  // Mthd
-1.86,  // String
+1.83,  // String
 .876,  // String2
 1.13,  // StringPooled
-.789,  // ThisProp
-.401,  // Vector3
+.748,  // ThisProp
+.400,  // Vector3
 .00455,// Assign.1
 .00663,// Assign.2
 .00409,// Assign.3
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	for( int n = 0; n < 18; n++ )
 		testTimesBest[n] = 1000;
 
-	for( int n = 0; n < 3; n++ )
+	for( int n = 0; n < 5; n++ )
 	{
 		TestBasic::Test(&testTimes[0]); printf(".");
 		TestBasic2::Test(&testTimes[1]); printf(".");

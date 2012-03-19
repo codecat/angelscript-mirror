@@ -597,7 +597,7 @@ int asCByteCode::Optimize()
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
 	// TODO: optimize: A bytecode BC_RefCpyV that copies a handle from a local variable to another local variable
-	//                 can easily substitute the frequently appearing pattern BC_PshV4, BC_PSF, BC_REFCPY, BC_POP
+	//                 can easily substitute the frequently appearing pattern BC_PSF, BC_REFCPY
 
 	// TODO: optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
 	//                 loops a lot. How often do these loops really occur?

@@ -50,6 +50,18 @@
 
 BEGIN_AS_NAMESPACE
 
+//
+// The calling convention rules for script functions:
+// - If a class method returns a reference, the caller must guarantee the object pointer stays alive until the function returns, and the reference is no longer going to be used
+// - If a class method doesn't return a reference, it must guarantee by itself that the this pointer stays alive during the function call. If no outside access is made, then the function is guaranteed to stay alive and nothing needs to be done
+// - The object pointer is always passed as the first argument, position 0
+// - If the function returns a value type the caller must reserve the memory for this and pass the pointer as the first argument after the object pointer
+//
+
+
+
+
+
 // TODO: I must correct the interpretation of a references to objects in the compiler.
 //       A reference should mean that a pointer to the object is on the stack.
 //       No expression should end up as non-references to objects, as the actual object is
@@ -499,10 +511,17 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		}
 
 		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
-		// TODO: optimize: This is probably not necessary for constructors as no outside reference to the object is created yet
-		byteCode.InstrSHORT(asBC_PSF, 0);
-		byteCode.Instr(asBC_RDSPtr);
-		byteCode.Call(asBC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
+		if( !m_isConstructor && !outFunc->returnType.IsReference() )
+		{
+			// TODO: optimize: If the function is trivial, i.e. doesn't access any outside functions, 
+			//                 then this is not necessary. If I implement this, then the function needs 
+			//                 to set a flag so the exception handler doesn't try to release the handle.
+			// It is not necessary to do this for constructors, as they have no outside references that can be released anyway
+			// It is not necessary to do this for methods that return references, as the caller is guaranteed to hold a reference to the object
+			byteCode.InstrSHORT(asBC_PSF, 0);
+			byteCode.Instr(asBC_RDSPtr);
+			byteCode.Call(asBC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
+		}
 	}
 
 	// Add the code for the statement block
@@ -541,7 +560,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 	}
 
 	// Release the object pointer again
-	if( outFunc->objectType )
+	if( outFunc->objectType && !m_isConstructor && !outFunc->returnType.IsReference() )
 	{
 		byteCode.InstrW_PTR(asBC_FREE, 0, outFunc->objectType);
 	}
