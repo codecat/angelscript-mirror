@@ -37,33 +37,33 @@ double testTimesOrig[18] =
 1.14,  // StringPooled
 .714,  // ThisProp
 .382,  // Vector3
-.00459,// Assign.1
-.00663,// Assign.2
-.00406,// Assign.3
-.00551,// Assign.4
-.00560 // Assign.5
+.459,  // Assign.1
+.663,  // Assign.2
+.406,  // Assign.3
+.551,  // Assign.4
+.560   // Assign.5
 };
 
 // Times for 2.23.1 WIP
 double testTimesOrig2[18] = 
-{1.31, // Basic
-.292,  // Basic2
+{1.20, // Basic
+.281,  // Basic2
 1.17,  // Call
-1.55,  // Call2
-1.99,  // Fib
-.290,  // Int
-1.79,  // Intf
-1.59,  // Mthd
-1.88,  // String
-.862,  // String2
-1.23,  // StringPooled
-.869,  // ThisProp
-.414,  // Vector3
-.00580,// Assign.1
-.00831,// Assign.2
-.00573,// Assign.3
-.00584,// Assign.4
-.00531 // Assign.5
+1.51,  // Call2
+1.96,  // Fib
+.265,  // Int
+1.77,  // Intf
+1.56,  // Mthd
+1.82,  // String
+.858,  // String2
+1.15,  // StringPooled
+.686,  // ThisProp
+.390,  // Vector3
+.421,  // Assign.1
+.671,  // Assign.2
+.390,  // Assign.3
+.561,  // Assign.4
+.546   // Assign.5
 };
 
 double testTimesBest[18];
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	for( int n = 0; n < 18; n++ )
 		testTimesBest[n] = 1000;
 
-	for( int n = 0; n < 5; n++ )
+	for( int n = 0; n < 3; n++ )
 	{
 		TestBasic::Test(&testTimes[0]); printf(".");
 		TestBasic2::Test(&testTimes[1]); printf(".");
@@ -131,11 +131,11 @@ int main(int argc, char **argv)
 	printf("StringPooled   %.3f    %.3f    %.3f%s\n", testTimesOrig[10], testTimesOrig2[10], testTimesBest[10], testTimesBest[10] < testTimesOrig2[10] ? " +" : " -"); 
 	printf("ThisProp       %.3f    %.3f    %.3f%s\n", testTimesOrig[11], testTimesOrig2[11], testTimesBest[11], testTimesBest[11] < testTimesOrig2[11] ? " +" : " -"); 
 	printf("Vector3        %.3f    %.3f    %.3f%s\n", testTimesOrig[12], testTimesOrig2[12], testTimesBest[12], testTimesBest[12] < testTimesOrig2[12] ? " +" : " -"); 
-	printf("Assign.1       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[13], testTimesOrig2[13], testTimesBest[13], testTimesBest[13] < testTimesOrig2[13] ? " +" : " -"); 
-	printf("Assign.2       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[14], testTimesOrig2[14], testTimesBest[14], testTimesBest[14] < testTimesOrig2[14] ? " +" : " -"); 
-	printf("Assign.3       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[15], testTimesOrig2[15], testTimesBest[15], testTimesBest[15] < testTimesOrig2[15] ? " +" : " -"); 
-	printf("Assign.4       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[16], testTimesOrig2[16], testTimesBest[16], testTimesBest[16] < testTimesOrig2[16] ? " +" : " -"); 
-	printf("Assign.5       %.5f  %.5f  %.5f%s\n"    , testTimesOrig[17], testTimesOrig2[17], testTimesBest[17], testTimesBest[17] < testTimesOrig2[17] ? " +" : " -"); 
+	printf("Assign.1       %.3f    %.3f    %.3f%s\n", testTimesOrig[13], testTimesOrig2[13], testTimesBest[13], testTimesBest[13] < testTimesOrig2[13] ? " +" : " -"); 
+	printf("Assign.2       %.3f    %.3f    %.3f%s\n", testTimesOrig[14], testTimesOrig2[14], testTimesBest[14], testTimesBest[14] < testTimesOrig2[14] ? " +" : " -"); 
+	printf("Assign.3       %.3f    %.3f    %.3f%s\n", testTimesOrig[15], testTimesOrig2[15], testTimesBest[15], testTimesBest[15] < testTimesOrig2[15] ? " +" : " -"); 
+	printf("Assign.4       %.3f    %.3f    %.3f%s\n", testTimesOrig[16], testTimesOrig2[16], testTimesBest[16], testTimesBest[16] < testTimesOrig2[16] ? " +" : " -"); 
+	printf("Assign.5       %.3f    %.3f    %.3f%s\n", testTimesOrig[17], testTimesOrig2[17], testTimesBest[17], testTimesBest[17] < testTimesOrig2[17] ? " +" : " -"); 
 
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

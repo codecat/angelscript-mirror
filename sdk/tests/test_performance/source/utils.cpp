@@ -13,8 +13,23 @@ bool timerInitialized = false;
 bool usePerformance   = false;
 double performanceBase = 0;
 
+asQWORD GetCPUTime()
+{
+	HANDLE hProcess = GetCurrentProcess();
+    FILETIME ftCreation, ftExit, ftKernel, ftUser;
+
+    GetProcessTimes(hProcess, &ftCreation, &ftExit, &ftKernel, &ftUser);
+
+	asQWORD ns100User = (asQWORD(ftUser.dwHighDateTime)<<32) + ftUser.dwLowDateTime;
+	asQWORD ns100Kernel = (asQWORD(ftKernel.dwHighDateTime)<<32) + ftKernel.dwLowDateTime;
+
+	// Get the time in seconds
+	return ns100User+ns100Kernel; 	
+}
+
 double GetSystemTimer()
 {
+	/*
 	if( !timerInitialized )
 	{
 		// We need to know how often the clock is updated
@@ -53,6 +68,9 @@ double GetSystemTimer()
 	}
 	else
         return (double)timeGetTime()/1000.0;
+		*/
+
+	return double(GetCPUTime())/10000000;
 }
 
 #else
