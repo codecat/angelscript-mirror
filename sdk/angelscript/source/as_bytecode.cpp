@@ -596,9 +596,6 @@ int asCByteCode::Optimize()
 
 	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
-	// TODO: optimize: A bytecode BC_RefCpyV that copies a handle from a local variable to another local variable
-	//                 can easily substitute the frequently appearing pattern BC_PSF, BC_REFCPY
-
 	// TODO: optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
 	//                 loops a lot. How often do these loops really occur?
 
@@ -689,6 +686,24 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr->next);
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
+		}
+		// PSF x, REFCPY -> RefCpyV x
+		else if( IsCombination(curr, asBC_PSF, asBC_REFCPY) )
+		{
+			instr->op = asBC_RefCpyV;
+			instr->wArg[0] = curr->wArg[0];
+			instr->stackInc = asBCInfo[asBC_LoadVObjR].stackInc;
+			DeleteInstruction(curr);
+			instr = GoBack(instr);
+		}
+		// PshNull, RefCpyV, PopPtr -> FREE
+		else if( IsCombination(curr, asBC_PshNull, asBC_RefCpyV) &&
+			     IsCombination(instr, asBC_RefCpyV, asBC_PopPtr) )
+		{
+			DeleteInstruction(curr);
+			instr->op = asBC_FREE;
+			DeleteInstruction(instr->next);
+			instr = GoBack(instr);
 		}
 		// PSF x, ADDSi, PopRPtr -> LoadVObjR
 		else if( IsCombination(curr, asBC_PSF, asBC_ADDSi) &&

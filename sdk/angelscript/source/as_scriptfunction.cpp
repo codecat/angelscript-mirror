@@ -597,6 +597,7 @@ void asCScriptFunction::AddReferences()
 		case asBC_OBJTYPE:
 		case asBC_FREE:
 		case asBC_REFCPY:
+		case asBC_RefCpyV:
 			{
                 asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				objType->AddRef();
@@ -704,6 +705,7 @@ void asCScriptFunction::ReleaseReferences()
 		case asBC_OBJTYPE:
 		case asBC_FREE:
 		case asBC_REFCPY:
+		case asBC_RefCpyV:
 			{
 				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				if( objType ) 
@@ -979,6 +981,7 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 		case asBC_OBJTYPE:
 		case asBC_FREE:
 		case asBC_REFCPY:
+		case asBC_RefCpyV:
 			{
                 asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				engine->GCEnumCallback(objType);
@@ -1068,6 +1071,7 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		case asBC_OBJTYPE:
 		case asBC_FREE:
 		case asBC_REFCPY:
+		case asBC_RefCpyV:
 			{
 				asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&byteCode[n]);
 				if( objType )

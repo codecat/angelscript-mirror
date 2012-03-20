@@ -3424,9 +3424,42 @@ void asCContext::ExecuteNext()
 		}
 		break;
 
+	case asBC_RefCpyV:
+		// Same as PSF v, REFCPY
+		{
+			asCObjectType *objType = (asCObjectType*)asBC_PTRARG(l_bc);
+			asSTypeBehaviour *beh = &objType->beh;
+
+			// Determine destination from argument
+			void **d = (void**)asPWORD(l_fp - asBC_SWORDARG0(l_bc));
+			
+			// Read wanted pointer from the stack
+			void *s = (void*)*(asPWORD*)l_sp;
+
+			// Need to move the values back to the context as the called functions
+			// may use the debug interface to inspect the registers
+			regs.programPointer = l_bc;
+			regs.stackPointer = l_sp;
+			regs.stackFramePointer = l_fp;
+
+			if( !(objType->flags & asOBJ_NOCOUNT) )
+			{
+				// Release previous object held by destination pointer
+				if( *d != 0 )
+					engine->CallObjectMethod(*d, beh->release);
+				// Increase ref counter of wanted object
+				if( s != 0 )
+					engine->CallObjectMethod(s, beh->addref);
+			}
+
+			// Set the new object in the destination
+			*d = s;
+		}
+		l_bc += 1+AS_PTR_SIZE;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 186: l_bc = (asDWORD*)186; break;
 	case 187: l_bc = (asDWORD*)187; break;
 	case 188: l_bc = (asDWORD*)188; break;
 	case 189: l_bc = (asDWORD*)189; break;

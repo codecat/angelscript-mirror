@@ -1693,7 +1693,9 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	{
 		int c = *(asBYTE*)&bc[n];
 		if( c == asBC_FREE ||
-			c == asBC_REFCPY || c == asBC_OBJTYPE )
+			c == asBC_REFCPY || 
+			c == asBC_RefCpyV ||
+			c == asBC_OBJTYPE )
 		{
 			// Translate the index to the true object type
 			asPWORD *ot = (asPWORD*)&bc[n+1];
@@ -3292,9 +3294,10 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			if( ot->flags & asOBJ_SCRIPT_OBJECT )
 				*(int*)&tmp[1+AS_PTR_SIZE] = FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[1+AS_PTR_SIZE]]);
 		}
-		else if( c == asBC_FREE   || // wW_PTR_ARG
-			     c == asBC_REFCPY || // PTR_ARG
-				 c == asBC_OBJTYPE ) // PTR_ARG
+		else if( c == asBC_FREE    || // wW_PTR_ARG
+			     c == asBC_REFCPY  || // PTR_ARG
+				 c == asBC_RefCpyV || // wW_PTR_ARG
+				 c == asBC_OBJTYPE )  // PTR_ARG
 		{
 			// Translate object type pointers into indices
 			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));

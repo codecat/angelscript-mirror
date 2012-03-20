@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.1 WIP - 2012/03/18</h2>
+<h2>Version 2.23.1 WIP - 2012/03/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,14 +26,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added proper support for const overloads in property accessors (Thanks Andrew Ackermann)
 </ul>
+<li>Library
+<ul>
+<li>Changed config to enable multithread support on Mac OS X 64bit (Thanks Radu Braniste)
+</ul>
 <li>Virtual machine
 <ul>
 <li>Changed ADDSi to check if the pointer is a null pointer. 
 <li>Changed RDSPtr to check if the pointer is a null pointer.
 <li>Renamed the bytecode POP to PopPtr, and removed it's argument as it was always popping a single pointer.
+<li>Created the new instruction RefCpyV that is used to replace the oft occurring pair PSF and REFCPY
 <li>Bytecode optimizer removes CHKREF instructions before and after the ADDSi instruction
 <li>Bytecode optimizer removes CHKREF instructions before RDSPtr instruction
 <li>Removed unnecessary ADDREF to object pointer in some class methods
+<li>Bytecode optimizer replaces PshNull, RefCpyV, PopPtr with FREE
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
