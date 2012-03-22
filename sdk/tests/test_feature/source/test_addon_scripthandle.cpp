@@ -33,6 +33,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void ReceiveRefByVal(ref@)", asFUNCTION(ReceiveRefByValue), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void ReceiveRefByRef(ref&in)", asFUNCTION(ReceiveRefByRef), asCALL_CDECL);
 
+		// TODO: optimize: assert( ha !is null ); is producing code that unecessarily calls ClrVPtr and FREE for the null handle
 		const char *script = 
 							 "class A {} \n"
 							 "class B {} \n"

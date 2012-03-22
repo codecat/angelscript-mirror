@@ -194,7 +194,7 @@ void asCScriptFunction::DestroyInternal()
 	// Release all references the function holds to other objects
 	ReleaseReferences();
 	parameterTypes.SetLength(0);
-	returnType == asCDataType::CreatePrimitive(ttVoid, false);
+	returnType = asCDataType::CreatePrimitive(ttVoid, false);
 	byteCode.SetLength(0);
 
 	for( asUINT n = 0; n < variables.GetLength(); n++ )
