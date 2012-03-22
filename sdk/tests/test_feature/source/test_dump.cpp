@@ -375,6 +375,7 @@ void DumpModule(asIScriptModule *mod)
 		" void resize(uint)\n"
 		" uint get_length() const\n"
 		" void set_length(uint)\n"
+		" bool isEmpty() const\n"
 		" uint8& opIndex(uint)\n"
 		" const uint8& opIndex(uint) const\n"
 		" string& opAssign(double)\n"

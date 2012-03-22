@@ -223,6 +223,47 @@ bool Test()
 
 	engine->Release();
 
+	// Problem reported by ekimr
+	{
+		const char *script = 
+			"class END_MenuItem : Widget \n"
+			"{ \n"
+			"	END_MenuItem() \n"
+			"	{ \n"
+			"		//super(null); \n"
+			"	} \n"
+			"}; \n"
+			"class Widget \n"
+			"{ \n"
+			"	Widget( Widget@ parent = null ) \n"
+			"	{ \n"
+			"	} \n"
+			"}; \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, true);
+		RegisterScriptString(engine);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "TestCompiler (3, 2) : Info    : Compiling END_MenuItem::END_MenuItem()\n"
+						   "TestCompiler (4, 2) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Problem reported by Philip Bennefall
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

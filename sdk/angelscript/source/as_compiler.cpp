@@ -505,9 +505,16 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		// Call the base class' default constructor unless called manually in the code
 		if( m_isConstructor && !m_isConstructorCalled && outFunc->objectType->derivedFrom )
 		{
-			byteCode.InstrSHORT(asBC_PSF, 0);
-			byteCode.Instr(asBC_RDSPtr);
-			byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+			if( outFunc->objectType->derivedFrom->beh.construct )
+			{
+				byteCode.InstrSHORT(asBC_PSF, 0);
+				byteCode.Instr(asBC_RDSPtr);
+				byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+			}
+			else
+			{
+				Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
+			}
 		}
 
 		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call

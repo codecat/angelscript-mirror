@@ -15,12 +15,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.1 WIP - 2012/03/19</h2>
+<h2>Version 2.23.1 WIP - 2012/03/21</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed assert failure when loading bytecode containing calls to functions returning value types by value in an if-case (Thanks Markus Larsson)
+<li>Fixed crash when compiling constructor and base class doesn't have default constructor (Thanks Ekimr)
 </ul>
 <li>Script language
 <ul>
@@ -44,7 +45,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Add-ons &amp; Samples
 <ul>
 <li>Added GetSize() and IsEmpty() to the dictionary add-on (Thanks _Vicious_)
-<li>Added IsEmpty() to the array add-on (Thanks _Vicious_)
+<li>Added IsEmpty() to the array and string add-on (Thanks _Vicious_)
 <li>Added Reserve() to the array add-on (Thanks Philip Bennefall)
 </ul>
 </ul>
