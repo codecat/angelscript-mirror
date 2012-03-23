@@ -1853,13 +1853,15 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				return;
 			}
 		}
-		else if( c == asBC_JMP ||
-			     c == asBC_JZ ||
-				 c == asBC_JNZ ||
-				 c == asBC_JS ||
-				 c == asBC_JNS ||
-				 c == asBC_JP ||
-				 c == asBC_JNP ) // The JMPP instruction doesn't need modification
+		else if( c == asBC_JMP    ||
+			     c == asBC_JZ     ||
+				 c == asBC_JNZ    ||
+			     c == asBC_JLowZ  ||
+				 c == asBC_JLowNZ ||
+				 c == asBC_JS     ||
+				 c == asBC_JNS    ||
+				 c == asBC_JP     ||
+				 c == asBC_JNP    ) // The JMPP instruction doesn't need modification
 		{
 			// Get the offset 
 			int offset = int(bc[n+1]);
@@ -2075,9 +2077,10 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 				asASSERT(stackSize[pos] == currStackSize);
 			continue;
 		}
-		else if( bc == asBC_JZ || bc == asBC_JNZ ||
-				 bc == asBC_JS || bc == asBC_JNS ||
-				 bc == asBC_JP || bc == asBC_JNP )
+		else if( bc == asBC_JZ    || bc == asBC_JNZ    ||
+				 bc == asBC_JLowZ || bc == asBC_JLowNZ ||
+				 bc == asBC_JS    || bc == asBC_JNS    ||
+				 bc == asBC_JP    || bc == asBC_JNP )
 		{
 			// Find the label that is being jumped to
 			int offset = asBC_INTARG(&func->byteCode[pos]);
@@ -3386,13 +3389,15 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			// Translate global variable pointers into indices
 			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
 		}
-		else if( c == asBC_JMP ||	// DW_ARG
-			     c == asBC_JZ ||
-				 c == asBC_JNZ ||
-				 c == asBC_JS ||
-				 c == asBC_JNS ||
-				 c == asBC_JP ||
-				 c == asBC_JNP ) // The JMPP instruction doesn't need modification
+		else if( c == asBC_JMP    ||	// DW_ARG
+			     c == asBC_JZ     ||
+				 c == asBC_JNZ    ||
+				 c == asBC_JLowZ  ||
+				 c == asBC_JLowNZ ||
+				 c == asBC_JS     ||
+				 c == asBC_JNS    ||
+				 c == asBC_JP     ||
+				 c == asBC_JNP    ) // The JMPP instruction doesn't need modification
 		{
 			// Get the DWORD offset from arg
 			int offset = *(int*)(tmp+1);

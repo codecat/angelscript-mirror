@@ -648,6 +648,20 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(curr);
 		}
+		// ClrHi, JZ -> JLowZ
+		else if( IsCombination(curr, asBC_ClrHi, asBC_JZ) )
+		{
+			DeleteInstruction(curr);
+			instr->op = asBC_JLowZ;
+			instr = GoBack(instr);
+		}
+		// ClrHi, JNZ -> JLowNZ
+		else if( IsCombination(curr, asBC_ClrHi, asBC_JNZ) )
+		{
+			DeleteInstruction(curr);
+			instr->op = asBC_JLowNZ;
+			instr = GoBack(instr);
+		}
 		// CHKREF, ADDSi -> ADDSi
 		// CHKREF, RDSPtr -> RDSPtr
 		else if( IsCombination(curr, asBC_CHKREF, asBC_ADDSi) ||
@@ -962,6 +976,8 @@ bool asCByteCode::IsInstrJmpOrLabel(cByteInstruction *curr)
 		curr->op == asBC_JMP     ||
 		curr->op == asBC_JZ      ||
 		curr->op == asBC_JNZ     ||
+		curr->op == asBC_JLowZ   ||
+		curr->op == asBC_JLowNZ  ||
 		curr->op == asBC_LABEL   )
 		return true;
 
@@ -1020,9 +1036,10 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 
 				break;
 			}
-			else if( curr->op == asBC_JZ || curr->op == asBC_JNZ ||
-				     curr->op == asBC_JS || curr->op == asBC_JNS ||
-					 curr->op == asBC_JP || curr->op == asBC_JNP )
+			else if( curr->op == asBC_JZ    || curr->op == asBC_JNZ    ||
+				     curr->op == asBC_JS    || curr->op == asBC_JNS    ||
+					 curr->op == asBC_JP    || curr->op == asBC_JNP    ||
+					 curr->op == asBC_JLowZ || curr->op == asBC_JLowNZ )
 			{
 				cByteInstruction *dest = 0;
 				int label = *((int*)ARG_DW(curr->arg));
@@ -1101,6 +1118,8 @@ bool asCByteCode::IsTempRegUsed(cByteInstruction *curr)
 			curr->op == asBC_TNP      ||
 			curr->op == asBC_JZ       ||
 			curr->op == asBC_JNZ      ||
+			curr->op == asBC_JLowZ    ||
+			curr->op == asBC_JLowNZ   ||
 			curr->op == asBC_JS       ||
 			curr->op == asBC_JNS      ||
 			curr->op == asBC_JP       ||
@@ -1132,6 +1151,8 @@ bool asCByteCode::IsTempRegUsed(cByteInstruction *curr)
 			curr->op == asBC_JMP       ||
 			curr->op == asBC_JZ        ||
 			curr->op == asBC_JNZ       ||
+			curr->op == asBC_JLowZ     ||
+			curr->op == asBC_JLowNZ    ||
 			curr->op == asBC_CMPi      ||
 			curr->op == asBC_CMPu      ||
 			curr->op == asBC_CMPf      ||
@@ -1175,6 +1196,10 @@ bool asCByteCode::IsSimpleExpression()
 
 void asCByteCode::ExtractLineNumbers()
 {
+	// It necessary to guarantee that there is at least 1 SUSPEND instruction 
+	// in each function, to allow interrupting infinitely recursive scripts
+	bool isFirst = true;
+
 	int lastLinePos = -1;
 	int pos = 0;
 	cByteInstruction *instr = first;
@@ -1195,12 +1220,13 @@ void asCByteCode::ExtractLineNumbers()
 			lineNumbers.PushLast(pos);
 			lineNumbers.PushLast(*(int*)ARG_DW(curr->arg));
 
-			if( !engine->ep.buildWithoutLineCues )
+			if( !engine->ep.buildWithoutLineCues || isFirst )
 			{
 				// Transform BC_LINE into BC_SUSPEND
 				curr->op = asBC_SUSPEND;
 				curr->size = asBCTypeSize[asBCInfo[asBC_SUSPEND].type];
 				pos += curr->size;
+				isFirst = false;
 			}
 			else
 			{
@@ -1514,10 +1540,11 @@ int asCByteCode::ResolveJumpAddresses()
 	cByteInstruction *instr = first;
 	while( instr )
 	{
-		if( instr->op == asBC_JMP || 
-			instr->op == asBC_JZ || instr->op == asBC_JNZ ||
-			instr->op == asBC_JS || instr->op == asBC_JNS || 
-			instr->op == asBC_JP || instr->op == asBC_JNP )
+		if( instr->op == asBC_JMP   || 
+			instr->op == asBC_JZ    || instr->op == asBC_JNZ    ||
+			instr->op == asBC_JLowZ || instr->op == asBC_JLowNZ ||
+			instr->op == asBC_JS    || instr->op == asBC_JNS    || 
+			instr->op == asBC_JP    || instr->op == asBC_JNP    )
 		{
 			int label = *((int*) ARG_DW(instr->arg));
 			int labelPosOffset;			
@@ -1665,9 +1692,10 @@ void asCByteCode::PostProcess()
 				AddPath(paths, dest, stackSize);
 				break;
 			}
-			else if( instr->op == asBC_JZ || instr->op == asBC_JNZ ||
-					 instr->op == asBC_JS || instr->op == asBC_JNS ||
-					 instr->op == asBC_JP || instr->op == asBC_JNP )
+			else if( instr->op == asBC_JZ    || instr->op == asBC_JNZ ||
+					 instr->op == asBC_JLowZ || instr->op == asBC_JLowNZ ||
+					 instr->op == asBC_JS    || instr->op == asBC_JNS ||
+					 instr->op == asBC_JP    || instr->op == asBC_JNP )
 			{
 				// Find the label that is being jumped to
 				int label = *((int*) ARG_DW(instr->arg));
@@ -1894,9 +1922,11 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 
 			case asBC_JMP:
 			case asBC_JZ:
+			case asBC_JLowZ:
 			case asBC_JS:
 			case asBC_JP:
 			case asBC_JNZ:
+			case asBC_JLowNZ:
 			case asBC_JNS:
 			case asBC_JNP:
 				fprintf(file, "   %-8s %+d              (d:%d)\n", asBCInfo[instr->op].name, *((int*) ARG_DW(instr->arg)), pos+*((int*) ARG_DW(instr->arg)));

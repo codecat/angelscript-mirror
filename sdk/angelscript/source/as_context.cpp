@@ -1216,10 +1216,7 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 
 void asCContext::CallScriptFunction(asCScriptFunction *func)
 {
-	// TODO: Should perhaps call CallLineCallback() if set. This will allow the 
-	//       application that compiles without line cues to interrupt scripts
-	//       with endless recursive calls. Without this there is no guarantee
-	//       that the SUSPEND instruction is guaranteed to be executed.
+	// TODO: optimize: Almost all script functions start with PUSH x, SUSPEND. If we make this part of the CallScriptFunction we can skip those two instructions
 
 	// Push the framepointer, function id and programCounter on the stack
 	PushCallState();
@@ -1274,10 +1271,10 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	regs.stackFramePointer = regs.stackPointer;
 
 	// Set all object variables to 0 to guarantee that they are null before they are used
-	// TODO: optimize: This can be avoided handling this as is done for value types in the exception handler
 	asUINT n = currentFunction->objVariablePos.GetLength();
 	while( n-- > 0 )
 	{
+		// TODO: optimize: Keep separate list for objects not on heap so it is not necessary to check this
 		if( !currentFunction->objVariableIsOnHeap[n] ) continue;
 
 		int pos = currentFunction->objVariablePos[n];
@@ -3461,10 +3458,22 @@ void asCContext::ExecuteNext()
 		l_bc += 1+AS_PTR_SIZE;
 		break;
 
+	case asBC_JLowZ:
+		if( *(asBYTE*)&regs.valueRegister == 0 )
+			l_bc += asBC_INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
+		break;
+
+	case asBC_JLowNZ:
+		if( *(asBYTE*)&regs.valueRegister != 0 )
+			l_bc += asBC_INTARG(l_bc) + 2;
+		else
+			l_bc += 2;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 187: l_bc = (asDWORD*)187; break;
-	case 188: l_bc = (asDWORD*)188; break;
 	case 189: l_bc = (asDWORD*)189; break;
 	case 190: l_bc = (asDWORD*)190; break;
 	case 191: l_bc = (asDWORD*)191; break;
@@ -3538,18 +3547,19 @@ void asCContext::ExecuteNext()
 		asASSERT(false);
 		SetInternalException(TXT_UNRECOGNIZED_BYTE_CODE);
 #endif
-/*
+#if defined(_MSC_VER) && !defined(AS_DEBUG)
 	default:
 		// This Microsoft specific code allows the
 		// compiler to optimize the switch case as
 		// it will know that the code will never
 		// reach this point
 		__assume(0);
-*/	}
+#endif
+	}
 
 #ifdef AS_DEBUG
 		asDWORD instr = *(asBYTE*)old;
-		if( instr != asBC_JMP && instr != asBC_JMPP && (instr < asBC_JZ || instr > asBC_JNP) &&
+		if( instr != asBC_JMP && instr != asBC_JMPP && (instr < asBC_JZ || instr > asBC_JNP) && instr != asBC_JLowZ && instr != asBC_JLowNZ &&
 			instr != asBC_CALL && instr != asBC_CALLBND && instr != asBC_CALLINTF && instr != asBC_RET && instr != asBC_ALLOC && instr != asBC_CallPtr && 
 			instr != asBC_JitEntry )
 		{

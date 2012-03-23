@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.1 WIP - 2012/03/21</h2>
+<h2>Version 2.23.1 WIP - 2012/03/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,6 +31,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>Changed config to enable multithread support on Mac OS X 64bit (Thanks Radu Braniste)
+<li>Bytecode optimizer replaces PshNull, RefCpyV, PopPtr with FREE
+<li>Bytecode optimizer removes CHKREF instructions before and after the ADDSi instruction
+<li>Bytecode optimizer removes CHKREF instructions before RDSPtr instruction
+<li>Removed unnecessary ADDREF to object pointer in some class methods
+<li>At least 1 SUSPEND instruction is guaranteed in each function to allow interruption of infinite recursive calls (Thanks Philip Bennefall)
+<li>For loop has been rearranged to avoid one JMP instruction
 </ul>
 <li>Virtual machine
 <ul>
@@ -38,10 +44,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Changed RDSPtr to check if the pointer is a null pointer.
 <li>Renamed the bytecode POP to PopPtr, and removed it's argument as it was always popping a single pointer.
 <li>Created the new instruction RefCpyV that is used to replace the oft occurring pair PSF and REFCPY
-<li>Bytecode optimizer removes CHKREF instructions before and after the ADDSi instruction
-<li>Bytecode optimizer removes CHKREF instructions before RDSPtr instruction
-<li>Removed unnecessary ADDREF to object pointer in some class methods
-<li>Bytecode optimizer replaces PshNull, RefCpyV, PopPtr with FREE
+<li>Added JLowZ and JLowNZ to replace ClrHi + JZ and ClrHi + JNZ
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

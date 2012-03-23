@@ -2803,27 +2803,14 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 {
-	// TODO: optimize: We should be able to remove the static JMP to the beginning of the loop by rearranging the
-	//                 byte code a bit.
-	//
-	//                 init
-	//                 jump to before
-	//                 begin:
-	//                 statements
-	//                 continue:
-	//                 next
-	//                 before:
-	//                 condition
-	//                 if loop jump to begin
-	//                 break:
-
 	// Add a variable scope that will be used by CompileBreak/Continue to know where to stop deallocating variables
 	AddVariableScope(true, true);
 
 	// We will use three labels for the for loop
-	int beforeLabel = nextLabel++;
+	int conditionLabel = nextLabel++;
 	int afterLabel = nextLabel++;
 	int continueLabel = nextLabel++;
+	int insideLabel = nextLabel++;
 
 	continueLabels.PushLast(continueLabel);
 	breakLabels.PushLast(afterLabel);
@@ -2858,7 +2845,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				ConvertToVariable(&expr);
 				expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
 				expr.bc.Instr(asBC_ClrHi);
-				expr.bc.InstrDWORD(asBC_JZ, afterLabel);
+				expr.bc.InstrDWORD(asBC_JNZ, insideLabel);
 				ReleaseTemporaryVariable(expr.type, &expr.bc);
 			}
 		}
@@ -2880,20 +2867,24 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	//-------------------------------
 	// Join the code pieces
 	bc->AddCode(&initBC);
-	bc->Label((short)beforeLabel);
+	bc->InstrDWORD(asBC_JMP, conditionLabel);
+
+	bc->Label((short)insideLabel);
 
 	// Add a suspend bytecode inside the loop to guarantee
 	// that the application can suspend the execution
 	bc->Instr(asBC_SUSPEND);
 	bc->InstrPTR(asBC_JitEntry, 0);
 
-
-	bc->AddCode(&expr.bc);
 	LineInstr(bc, fnode->lastChild->tokenPos);
 	bc->AddCode(&forBC);
+
 	bc->Label((short)continueLabel);
 	bc->AddCode(&nextBC);
-	bc->InstrINT(asBC_JMP, beforeLabel);
+
+	bc->Label((short)conditionLabel);
+	bc->AddCode(&expr.bc);
+
 	bc->Label((short)afterLabel);
 
 	continueLabels.PopLast();

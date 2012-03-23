@@ -1367,8 +1367,10 @@ enum asEBCInstr
 	asBC_LoadRObjR      = 184,
 	asBC_LoadVObjR      = 185,
 	asBC_RefCpyV        = 186,
+	asBC_JLowZ          = 187,
+	asBC_JLowNZ         = 188,
 
-	asBC_MAXBYTECODE	= 187,
+	asBC_MAXBYTECODE	= 189,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl        = 251,
@@ -1647,9 +1649,9 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(LoadRObjR, rW_W_DW_ARG,    0),
 	asBCINFO(LoadVObjR, rW_W_DW_ARG,    0),
 	asBCINFO(RefCpyV,   wW_PTR_ARG,     0),
+	asBCINFO(JLowZ,     DW_ARG,         0),
+	asBCINFO(JLowNZ,    DW_ARG,         0),
 
-	asBCINFO_DUMMY(187),
-	asBCINFO_DUMMY(188),
 	asBCINFO_DUMMY(189),
 	asBCINFO_DUMMY(190),
 	asBCINFO_DUMMY(191),
