@@ -536,6 +536,8 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		
 		ReadByteCode(func);
 
+		func->variableSpace = ReadEncodedUInt();
+
 		count = ReadEncodedUInt();
 		func->objVariablePos.Allocate(count, 0);
 		func->objVariableTypes.Allocate(count, 0);
@@ -1930,18 +1932,11 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			break;
 		}
 
-		if( c == asBC_PUSH )
-		{
-			// TODO: Maybe the push instruction should be removed, and be kept in 
-			//       the asCScriptFunction as a property instead. CallScriptFunction 
-			//       can immediately reserve the space
-
-			// PUSH is only used to reserve stack space for variables
-			asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
-		}
-
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
+
+	// Adjust the space needed for local variables
+	func->variableSpace = AdjustStackPosition(func->variableSpace);
 
 	// Adjust the variable information. This will be used during the adjustment below
 	for( n = 0; n < func->variables.GetLength(); n++ )
@@ -2007,10 +2002,10 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 	memset(&stackSize[0], -1, stackSize.GetLength()*4);
 
 	// Add the first instruction to the list of unchecked code 
-	// paths and set the stack size at that instruction to 0
+	// paths and set the stack size at that instruction to variableSpace
 	asCArray<asUINT> paths;
 	paths.PushLast(0);
-	stackSize[0] = 0;
+	stackSize[0] = func->variableSpace;
 
 	// Go through each of the code paths
 	for( asUINT p = 0; p < paths.GetLength(); ++p )
@@ -2027,11 +2022,7 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 		if( stackInc == 0xFFFF )
 		{
 			// Determine the true delta from the instruction arguments
-			if( bc == asBC_PUSH )
-			{
-				stackInc = asBC_WORDARG0(&func->byteCode[pos]);
-			}
-			else if( bc == asBC_CALL ||
+			if( bc == asBC_CALL ||
 			         bc == asBC_CALLSYS ||
 					 bc == asBC_CALLBND ||
 					 bc == asBC_ALLOC ||
@@ -2657,6 +2648,9 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		CalculateAdjustmentByPos(func);
 
 		WriteByteCode(func);
+
+		asDWORD varSpace = AdjustStackPosition(func->variableSpace);
+		WriteEncodedInt64(varSpace);
 
 		count = (asUINT)func->objVariablePos.GetLength();
 		WriteEncodedInt64(count);
@@ -3458,16 +3452,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			break;
 		}
 
-		if( c == asBC_PUSH )
-		{
-			// TODO: Maybe the push instruction should be removed, and be kept in 
-			//       the asCScriptFunction as a property instead. CallScriptFunction 
-			//       can immediately reserve the space
-
-			// PUSH is only used to reserve stack space for variables
-			asBC_WORDARG0(tmp) = (asWORD)AdjustStackPosition(asBC_WORDARG0(tmp));
-		}
-				 
 		// TODO: bytecode: Must make sure that floats and doubles are always stored the same way regardless of platform. 
 		//                 Some platforms may not use the IEEE 754 standard, in which case it is necessary to encode the values
 		

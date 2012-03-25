@@ -1181,7 +1181,7 @@ public:
 enum asEBCInstr
 {
 	asBC_PopPtr			= 0,
-	asBC_PUSH			= 1,
+	asBC_PshGPtr        = 1,
 	asBC_PshC4			= 2,
 	asBC_PshV4			= 3,
 	asBC_PSF			= 4,
@@ -1369,9 +1369,8 @@ enum asEBCInstr
 	asBC_RefCpyV        = 186,
 	asBC_JLowZ          = 187,
 	asBC_JLowNZ         = 188,
-	asBC_PshGPtr        = 189,
 
-	asBC_MAXBYTECODE	= 190,
+	asBC_MAXBYTECODE	= 189,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl        = 251,
@@ -1464,7 +1463,7 @@ struct asSBCInfo
 const asSBCInfo asBCInfo[256] =
 {
 	asBCINFO(PopPtr,	NO_ARG,			-AS_PTR_SIZE),
-	asBCINFO(PUSH,		W_ARG,			0xFFFF),
+	asBCINFO(PshGPtr,	PTR_ARG,		AS_PTR_SIZE),
 	asBCINFO(PshC4,		DW_ARG,			1),
 	asBCINFO(PshV4,		rW_ARG,			1),
 	asBCINFO(PSF,		rW_ARG,			AS_PTR_SIZE),
@@ -1652,8 +1651,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(RefCpyV,   wW_PTR_ARG,     0),
 	asBCINFO(JLowZ,     DW_ARG,         0),
 	asBCINFO(JLowNZ,    DW_ARG,         0),
-	asBCINFO(PshGPtr,	PTR_ARG,		AS_PTR_SIZE),
 
+	asBCINFO_DUMMY(189),
 	asBCINFO_DUMMY(190),
 	asBCINFO_DUMMY(191),
 	asBCINFO_DUMMY(192),

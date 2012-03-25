@@ -179,11 +179,11 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	// Allocate the class and instanciate it with the constructor
 	int varOffset = AllocateVariable(dt, true);
 
-	byteCode.Push(AS_PTR_SIZE);
+	outFunc->variableSpace = AS_PTR_SIZE;
 	byteCode.InstrSHORT(asBC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
-	// TODO: optimize: Might be interesting to have a specific instruction for copying all arguments
+	// TODO: runtime optimize: Might be interesting to have a specific instruction for copying all arguments
 	int offset = (int)outFunc->GetSpaceNeededForArguments();
 	for( int a = int(outFunc->parameterTypes.GetLength()) - 1; a >= 0; a-- )
 	{
@@ -264,7 +264,7 @@ void asCCompiler::FinalizeFunction()
 	outFunc->byteCode.SetLength(byteCode.GetSize());
 	byteCode.Output(outFunc->byteCode.AddressOf());
 	outFunc->AddReferences();
-	outFunc->stackNeeded = byteCode.largestStackUsed;
+	outFunc->stackNeeded = byteCode.largestStackUsed + outFunc->variableSpace;
 	outFunc->lineNumbers = byteCode.lineNumbers;
 }
 
@@ -498,7 +498,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	// Count total variable size
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
-	byteCode.Push(varSize);
+	outFunc->variableSpace = varSize;
 
 	if( outFunc->objectType )
 	{
@@ -520,9 +520,9 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
 		if( !m_isConstructor && !outFunc->returnType.IsReference() )
 		{
-			// TODO: optimize: If the function is trivial, i.e. doesn't access any outside functions, 
-			//                 then this is not necessary. If I implement this, then the function needs 
-			//                 to set a flag so the exception handler doesn't try to release the handle.
+			// TODO: runtime optimize: If the function is trivial, i.e. doesn't access any outside functions, 
+			//                         then this is not necessary. If I implement this, then the function needs 
+			//                         to set a flag so the exception handler doesn't try to release the handle.
 			// It is not necessary to do this for constructors, as they have no outside references that can be released anyway
 			// It is not necessary to do this for methods that return references, as the caller is guaranteed to hold a reference to the object
 			byteCode.InstrSHORT(asBC_PSF, 0);
@@ -1061,9 +1061,9 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		}
 		else
 		{
-			// TODO: optimize: Here we should look for the best matching constructor, instead of
-			//                 just the copy constructor. Only if no appropriate constructor is
-			//                 available should the assignment operator be used.
+			// TODO: runtime optimize: Here we should look for the best matching constructor, instead of
+			//                         just the copy constructor. Only if no appropriate constructor is
+			//                         available should the assignment operator be used.
 
 			if( !gvar->datatype.IsObjectHandle() )
 			{
@@ -1149,7 +1149,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	LineInstr(&byteCode, pos);
 
 	// Reserve space for all local variables
-	byteCode.Push(varSize);
+	outFunc->variableSpace = varSize;
 
 	byteCode.AddCode(&ctx.bc);
 
@@ -1572,8 +1572,8 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 					if( (args[n]->type.isVariable || args[n]->type.isTemporary) )
 					{
 						if( !IsVariableOnHeap(args[n]->type.stackOffset) )
-							// TODO: optimize: Actually the reference can be pushed on the stack directly
-							//                 as the value allocated on the stack is guaranteed to be safe
+							// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
+							//                         as the value allocated on the stack is guaranteed to be safe
 							bc->InstrWORD(asBC_GETREF, (asWORD)offset);
 						else 
 							bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
@@ -1590,8 +1590,8 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 					// Send the object as a reference to the object,
 					// and not to the variable holding the object
 					if( !IsVariableOnHeap(args[n]->type.stackOffset) )
-						// TODO: optimize: Actually the reference can be pushed on the stack directly
-						//                 as the value allocated on the stack is guaranteed to be safe
+						// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
+						//                         as the value allocated on the stack is guaranteed to be safe
 						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
 					else
 						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
@@ -2070,7 +2070,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				}
 				else
 				{
-					// TODO: optimize: We can use a copy constructor here
+					// TODO: runtime optimize: We can use a copy constructor here
 
 					sVariable *v = variables->GetVariable(name.AddressOf());
 
@@ -2521,8 +2521,8 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	expr.bc.InstrDWORD(asBC_JP, defaultLabel);
 	ReleaseTemporaryVariable(tmpOffset, &expr.bc);
 
-	// TODO: optimize: We could possibly optimize this even more by doing a
-	//                 binary search instead of a linear search through the ranges
+	// TODO: runtime optimize: We could possibly optimize this even more by doing a
+	//                         binary search instead of a linear search through the ranges
 
 	// For each range
 	int range;
@@ -3360,9 +3360,9 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				// that has been reserved by the calling function. 
 				if( outFunc->DoesReturnOnStack() )
 				{
-					// TODO: optimize: If the return type has a constructor that takes the type of the expression,
-					//                 it should be called directly instead of first converting the expression and 
-					//                 then copy the value.
+					// TODO: runtime optimize: If the return type has a constructor that takes the type of the expression,
+					//                         it should be called directly instead of first converting the expression and 
+					//                         then copy the value.
 					if( !v->type.IsEqualExceptRefAndConst(expr.type.dataType) ) 
 					{
 						ImplicitConversion(&expr, v->type, rnode->firstChild, asIC_IMPLICIT_CONV);
@@ -3933,7 +3933,7 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 			}
 
 			// Copy larger data types from a reference
-			// TODO: optimize: COPY should pop both arguments and store the reference in the register. 
+			// TODO: runtime optimize: COPY should pop both arguments and store the reference in the register. 
 			bc->InstrSHORT_DW(asBC_COPY, (short)lvalue->dataType.GetSizeInMemoryDWords(), engine->GetTypeIdFromDataType(lvalue->dataType));
 		}
 	}
@@ -3946,7 +3946,6 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 			return -1;
 		}
 
-		// TODO: optimize: Convert to register based
 		bc->InstrPTR(asBC_REFCPY, lvalue->dataType.GetObjectType());
 
 		// Mark variable as initialized
@@ -4043,14 +4042,14 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 		{
 			if( generateCode )
 			{
-				// TODO: optimize: Instead of producing bytecode for checking if the handle is
-				//                 null, we can create a special CALLSYS instruction that checks
-				//                 if the object pointer is null and if so sets the object register
-				//                 to null directly without executing the function.
+				// TODO: runtime optimize: Instead of producing bytecode for checking if the handle is
+				//                         null, we can create a special CALLSYS instruction that checks
+				//                         if the object pointer is null and if so sets the object register
+				//                         to null directly without executing the function.
 				//
-				//                 Alternatively I could force the ref cast behaviours be global
-				//                 functions with 1 parameter, even though they should still be
-				//                 registered with RegisterObjectBehaviour()
+				//                         Alternatively I could force the ref cast behaviours be global
+				//                         functions with 1 parameter, even though they should still be
+				//                         registered with RegisterObjectBehaviour()
 
 				// Add code to avoid calling the cast behaviour if the handle is already null,
 				// because that will raise a null pointer exception due to the cast behaviour
@@ -4064,9 +4063,9 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 					ConvertToVariable(ctx);
 				}
 
-				// TODO: optimize: should have immediate comparison for null pointer
+				// TODO: runtime optimize: should have immediate comparison for null pointer
 				int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
-				// TODO: optimize: ClrVPtr is not necessary, because the VM will initialize the variable to null anyway
+				// TODO: runtime optimize: ClrVPtr is not necessary, because the VM should initialize the variable to null anyway (it is currently not done for null pointers though)
 				ctx->bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
 				ctx->bc.InstrW_W(asBC_CmpPtr, ctx->type.stackOffset, offset);
 				DeallocateVariable(offset);
@@ -5966,9 +5965,9 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		if( !simpleExpr )
 		{
 			if( (rctx->type.isVariable || rctx->type.isTemporary) && !IsVariableOnHeap(rctx->type.stackOffset) )
-				// TODO: optimize: Actually the reference can be pushed on the stack directly
-				//                 as the value allocated on the stack is guaranteed to be safe.
-				//                 The bytecode optimizer should be able to determine this and optimize away the VAR + GETREF
+				// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
+				//                         as the value allocated on the stack is guaranteed to be safe.
+				//                         The bytecode optimizer should be able to determine this and optimize away the VAR + GETREF
 				ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
 			else
 				ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
@@ -6458,7 +6457,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				// Reference to primitive must be stored in the temp register
 				if( prop->type.IsPrimitive() )
 				{
-					// TODO: optimize: The ADD offset command should store the reference in the register directly
+					// TODO: runtime optimize: The ADD offset command should store the reference in the register directly
 					ctx->bc.Instr(asBC_PopRPtr);
 				}
 
@@ -6581,7 +6580,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 							if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
 								!ctx->type.dataType.IsObjectHandle() )
 							{
-								// TODO: optimize: This is not necessary for application registered properties
+								// TODO: runtime optimize: This is not necessary for application registered properties
 								ctx->bc.Instr(asBC_ChkRefS);
 							}
 						}
@@ -9687,7 +9686,6 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 			// Copy the object handle to a variable
 			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 			ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
-			// TODO: optimize: REFCPY should pop both arguments, and store the return in the register, just like a normal function
 			ctx->bc.Instr(asBC_PopPtr);
 		}
 
@@ -10942,7 +10940,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		if( rctx->type.isVariable )
 			rctx->bc.Instr(asBC_PopPtr);
 
-		// TODO: optimize: Treat the object handles as two integers, i.e. don't do REFCPY
+		// TODO: runtime optimize: don't do REFCPY
 		ConvertToVariableNotIn(lctx, rctx);
 		ConvertToVariable(rctx);
 
@@ -11005,7 +11003,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		// The class method we're calling is returning a reference, which may be to a member of the object.
 		// In order to guarantee the lifetime of the reference, we must hold a local reference to the object.
-		// TODO: optimize: This can be avoided for local variables (non-handles) as they have a well defined life time
+		// TODO: runtime optimize: This can be avoided for local variables (non-handles) as they have a well defined life time
 		int tempRef = AllocateVariable(ctx->type.dataType, true);
 		ctx->bc.InstrSHORT(asBC_PSF, (short)tempRef);
 		ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
@@ -11056,13 +11054,13 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			argSize += AS_PTR_SIZE;
 		}
 
-		// TODO: optimize: If it is known that a class method cannot be overridden the call
-		//                 should be made with asBC_CALL as it is faster. Examples where this
-		//                 is known is for example finalled methods where the class doesn't derive 
-		//                 from any other, or even non-finalled methods but where it is known
-		//                 at compile time the true type of the object. The first should be
-		//                 quite easy to determine, but the latter will be quite complex and possibly
-		//                 not worth it.
+		// TODO: runtime optimize: If it is known that a class method cannot be overridden the call
+		//                         should be made with asBC_CALL as it is faster. Examples where this
+		//                         is known is for example finalled methods where the class doesn't derive 
+		//                         from any other, or even non-finalled methods but where it is known
+		//                         at compile time the true type of the object. The first should be
+		//                         quite easy to determine, but the latter will be quite complex and possibly
+		//                         not worth it.
 		if( descr->funcType == asFUNC_IMPORTED )
 			ctx->bc.Call(asBC_CALLBND , descr->id, argSize);
 		// TODO: Maybe we need two different byte codes

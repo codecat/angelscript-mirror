@@ -46,24 +46,25 @@ double testTimesOrig[18] =
 
 // Times for 2.23.1 WIP
 double testTimesOrig2[18] = 
-{1.21, // Basic
-.250,  // Basic2
-1.18,  // Call
-1.70,  // Call2
-2.30,  // Fib
-.281,  // Int
-2.12,  // Intf
-1.77,  // Mthd
-2.37,  // String
-1.01,  // String2
-1.29,  // StringPooled
+{
+1.27,  // Basic
+.265,  // Basic2
+1.24,  // Call
+1.59,  // Call2
+2.12,  // Fib
+.218,  // Int
+1.90,  // Intf
+1.73,  // Mthd
+2.02,  // String
+.952,  // String2
+1.17,  // StringPooled
 .920,  // ThisProp
-.437,  // Vector3
-.421,  // Assign.1
-.858,  // Assign.2
-.421,  // Assign.3
-.671,  // Assign.4
-.702   // Assign.5
+.421,  // Vector3
+.406,  // Assign.1
+.562,  // Assign.2
+.468,  // Assign.3
+.874,  // Assign.4
+.905   // Assign.5
 };
 
 double testTimesBest[18];

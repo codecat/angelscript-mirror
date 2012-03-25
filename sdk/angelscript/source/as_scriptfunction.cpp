@@ -148,11 +148,12 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	id                     = 0;
 	accessMask             = 0xFFFFFFFF;
 	isShared               = false;
+	variableSpace          = 0;
 
-	// TODO: optimize: The engine could notify the GC just before it wants to
-	//                 discard the function. That way the GC won't waste time
-	//                 trying to determine if the functions are garbage before
-	//                 they can actually be considered garbage.
+	// TODO: runtime optimize: The engine could notify the GC just before it wants to
+	//                         discard the function. That way the GC won't waste time
+	//                         trying to determine if the functions are garbage before
+	//                         they can actually be considered garbage.
 	// Notify the GC of script functions
 	if( funcType == asFUNC_SCRIPT )
 		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);

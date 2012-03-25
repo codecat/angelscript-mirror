@@ -318,7 +318,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 		initialFunction->AddRef();
 		currentFunction = initialFunction;
 
-		// TODO: optimize: GetSpaceNeededForArguments() should be precomputed
+		// TODO: runtime optimize: GetSpaceNeededForArguments() should be precomputed
 		argumentsSize = currentFunction->GetSpaceNeededForArguments() + (currentFunction->objectType ? AS_PTR_SIZE : 0);
 
 		// Reserve space for the arguments and return value
@@ -385,7 +385,9 @@ int asCContext::Prepare(asIScriptFunction *func)
 
 	if( currentFunction->funcType == asFUNC_SCRIPT )
 	{
+		// TODO: clean up: This should be done in Execute, just as is done for virtual script methods 
 		regs.programPointer = currentFunction->byteCode.AddressOf();
+		regs.stackPointer -= currentFunction->variableSpace;
 
 		// Set all object variables to 0
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -1057,6 +1059,7 @@ int asCContext::Execute()
 					{
 						currentFunction = realFunc;
 						regs.programPointer = currentFunction->byteCode.AddressOf();
+						regs.stackPointer -= currentFunction->variableSpace;
 
 						// Set the local objects to 0
 						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
@@ -1121,7 +1124,7 @@ int asCContext::Execute()
 
 void asCContext::PushCallState()
 {
-	callStack.SetLength(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
+	callStack.SetLengthNoConstruct(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
     // Separating the loads and stores limits data cache trash, and with a smart compiler
     // could turn into SIMD style loading/storing if available.
@@ -1216,8 +1219,6 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 
 void asCContext::CallScriptFunction(asCScriptFunction *func)
 {
-	// TODO: optimize: Almost all script functions start with PUSH x, SUSPEND. If we make this part of the CallScriptFunction we can skip those two instructions
-
 	// Push the framepointer, function id and programCounter on the stack
 	PushCallState();
 
@@ -1274,11 +1275,24 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	asUINT n = currentFunction->objVariablePos.GetLength();
 	while( n-- > 0 )
 	{
-		// TODO: optimize: Keep separate list for objects not on heap so it is not necessary to check this
+		// TODO: runtime optimize: Keep separate list for objects not on heap so it is not necessary to check this
 		if( !currentFunction->objVariableIsOnHeap[n] ) continue;
 
 		int pos = currentFunction->objVariablePos[n];
 		*(asPWORD*)&regs.stackFramePointer[-pos] = 0;
+	}
+
+	// Initialize the stack pointer with the space needed for local variables
+	regs.stackPointer -= currentFunction->variableSpace;
+
+	// Call the line callback for each script function, to guarantee that infinitely recursive scripts can
+	// be interrupted, even if the scripts have been compiled with asEP_BUILD_WITHOUT_LINE_CUES
+	if( regs.doProcessSuspend )
+	{
+		if( lineCallback )
+			CallLineCallback();
+		if( doSuspend )
+			status = asEXECUTION_SUSPENDED;
 	}
 }
 
@@ -1294,14 +1308,14 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 
 	asCObjectType *objType = obj->objType;
 
-	// TODO: optimize: The object type should have a list of only those methods that 
-	//                 implement interface methods. This list should be ordered by
-	//                 the signatureId so that a binary search can be made, instead
-	//                 of a linear search.
+	// TODO: runtime optimize: The object type should have a list of only those methods that 
+	//                         implement interface methods. This list should be ordered by
+	//                         the signatureId so that a binary search can be made, instead
+	//                         of a linear search.
 	//
-	//                 When this is done, we must also make sure the signatureId of a 
-	//                 function never changes, e.g. when if the signature functions are
-	//                 released.
+	//                         When this is done, we must also make sure the signatureId of a 
+	//                         function never changes, e.g. when if the signature functions are
+	//                         released.
 
 	// Search the object type for a function that matches the interface function
 	asCScriptFunction *realFunc = 0;
@@ -1363,17 +1377,17 @@ void asCContext::ExecuteNext()
 //--------------
 // memory access functions
 
-	// Decrease the stack pointer with n dwords (stack grows downward)
 	case asBC_PopPtr:
 		// Pop a pointer from the stack
 		l_sp += AS_PTR_SIZE;
 		l_bc++;
 		break;
 
-	// Increase the stack pointer with n dwords
-	case asBC_PUSH:
-		l_sp -= asBC_WORDARG0(l_bc);
-		l_bc++;
+	case asBC_PshGPtr:
+		// Replaces PGA + RDSPtr
+		l_sp -= AS_PTR_SIZE;
+		*(asPWORD*)l_sp = *(asPWORD*)asBC_PTRARG(l_bc);
+		l_bc += 1 + AS_PTR_SIZE;
 		break;
 
 	// Push a dword value on the stack
@@ -2533,8 +2547,8 @@ void asCContext::ExecuteNext()
 
 	case asBC_CmpPtr:
 		{
-			// TODO: optimize: This instruction should really just be an equals, and return true or false.
-			//                 The instruction is only used for is and !is tests anyway.
+			// TODO: runtime optimize: This instruction should really just be an equals, and return true or false.
+			//                         The instruction is only used for is and !is tests anyway.
 			asPWORD p1 = *(asPWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			asPWORD p2 = *(asPWORD*)(l_fp - asBC_SWORDARG1(l_bc));
 			if( p1 == p2 )     *(int*)&regs.valueRegister =  0;
@@ -3472,15 +3486,9 @@ void asCContext::ExecuteNext()
 			l_bc += 2;
 		break;
 
-	case asBC_PshGPtr:
-		// Replaces PGA + RDSPtr
-		l_sp -= AS_PTR_SIZE;
-		*(asPWORD*)l_sp = *(asPWORD*)asBC_PTRARG(l_bc);
-		l_bc += 1 + AS_PTR_SIZE;
-		break;
-
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
+	case 189: l_bc = (asDWORD*)189; break;
 	case 190: l_bc = (asDWORD*)190; break;
 	case 191: l_bc = (asDWORD*)191; break;
 	case 192: l_bc = (asDWORD*)192; break;

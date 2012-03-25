@@ -128,8 +128,6 @@ public:
 	int InstrW_FLOAT(asEBCInstr bc, asWORD a, float b);
 	int InstrW_W(asEBCInstr bc, int w, int b);
 
-	int Push(int numDwords);
-
 	asCArray<int> lineNumbers;
 	int largestStackUsed;
 

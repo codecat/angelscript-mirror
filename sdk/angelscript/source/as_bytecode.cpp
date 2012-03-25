@@ -390,7 +390,7 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 
 bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next)
 {
-	// TODO: optimize: Should work for 64bit types as well
+	// TODO: runtime optimize: Should work for 64bit types as well
 
 	// The value isn't used for anything
 	if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG ||
@@ -414,7 +414,7 @@ bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **n
 		return true;
 	}
 
-	// TODO: optimize: There should be one for doubles as well
+	// TODO: runtime optimize: There should be one for doubles as well
 	// The value is immediately used and then never again
 	if( curr->op == asBC_SetV4 &&
 		curr->next && 
@@ -590,19 +590,17 @@ bool asCByteCode::IsTemporary(short offset)
 
 int asCByteCode::Optimize()
 {
-	// TODO: optimize: The optimizer should be able to inline function calls.
-	//                 If the called function has only a few instructions, the function call should be inlined.
-	//                 This is especially useful with the factory stubs used for template types and script classes.
+	// TODO: runtime optimize: The optimizer should be able to inline function calls.
+	//                         If the called function has only a few instructions, the function call should be inlined.
+	//                         This is especially useful with the factory stubs used for template types and script classes.
 
-	// TODO: optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
+	// TODO: runtime optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 	
-	// TODO: optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
-	//                 loops a lot. How often do these loops really occur?
+	// TODO: runtime optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
+	//                         loops a lot. How often do these loops really occur?
 
-	// TODO: optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
-	//                 function calls that can suspend the execution.
-
-	// TODO: optimize: ADDd v2, v1, v2; CpyVtoV8 v1, v2; -> ADDd v1, v1, v2; (when v2 isn't used again)
+	// TODO: runtime optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
+	//                         function calls that can suspend the execution.
 
 	cByteInstruction *instr = first;
 	while( instr )
@@ -694,7 +692,7 @@ int asCByteCode::Optimize()
 			DeleteInstruction(curr);
 			instr = GoBack(ChangeFirstDeleteNext(instr, asBC_LoadThisR));
 		}
-		// TODO: Optimize: PshVPtr x, PopRPtr -> LoadRObjR x, 0
+		// TODO: runtime optimize: PshVPtr x, PopRPtr -> LoadRObjR x, 0
 		// PshVPtr x, ADDSi, PopRPtr -> LoadRObjR
 		else if( IsCombination(curr, asBC_PshVPtr, asBC_ADDSi) &&
 		         IsCombination(instr, asBC_ADDSi, asBC_PopRPtr) &&
@@ -817,16 +815,6 @@ int asCByteCode::Optimize()
 			// Delete the first instruction
 			instr = GoBack(DeleteInstruction(curr));
 		}
-		// PUSH a, PUSH b -> PUSH a+b
-		else if( IsCombination(curr, asBC_PUSH, asBC_PUSH) )
-		{
-			// Combine the two PUSH
-			instr->wArg[0] = curr->wArg[0] + instr->wArg[0];
-			// Delete current
-			DeleteInstruction(curr);
-			// Continue with the instruction before the one removed
-			instr = GoBack(instr);
-		}
 		// VAR a, GETREF 0 -> PSF a
 		else if( IsCombination(curr, asBC_VAR, asBC_GETREF) && instr->wArg[0] == 0 )
 		{
@@ -878,9 +866,6 @@ int asCByteCode::Optimize()
 			DeleteInstruction(instr);
 			instr = GoBack(instr2);
 		}
-		// PUSH 0 -> remove
-		else if( curr->op == asBC_PUSH && curr->wArg[0] == 0 )  
-			instr = GoBack(DeleteInstruction(curr));
 // Begin PATTERN
 		// T**; J** +x -> J** +x
 		else if( IsCombination(curr, asBC_TZ , asBC_JZ ) || 
@@ -1204,10 +1189,6 @@ bool asCByteCode::IsSimpleExpression()
 
 void asCByteCode::ExtractLineNumbers()
 {
-	// It necessary to guarantee that there is at least 1 SUSPEND instruction 
-	// in each function, to allow interrupting infinitely recursive scripts
-	bool isFirst = true;
-
 	int lastLinePos = -1;
 	int pos = 0;
 	cByteInstruction *instr = first;
@@ -1228,13 +1209,12 @@ void asCByteCode::ExtractLineNumbers()
 			lineNumbers.PushLast(pos);
 			lineNumbers.PushLast(*(int*)ARG_DW(curr->arg));
 
-			if( !engine->ep.buildWithoutLineCues || isFirst )
+			if( !engine->ep.buildWithoutLineCues )
 			{
 				// Transform BC_LINE into BC_SUSPEND
 				curr->op = asBC_SUSPEND;
 				curr->size = asBCTypeSize[asBCInfo[asBC_SUSPEND].type];
 				pos += curr->size;
-				isFirst = false;
 			}
 			else
 			{
@@ -1852,7 +1832,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 		fprintf(file, "%5d ", pos);
 		pos += instr->GetSize();
 
-		fprintf(file, "%3d %c ", instr->stackSize, instr->marked ? '*' : ' ');
+		fprintf(file, "%3d %c ", instr->stackSize + func->variableSpace, instr->marked ? '*' : ' ');
 
 		switch( asBCInfo[instr->op].type )
 		{
@@ -2051,23 +2031,6 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 #endif
 
 //=============================================================================
-
-// Increase stack with "numDwords"
-int asCByteCode::Push(int numDwords)
-{
-	asASSERT(asBCInfo[asBC_PUSH].type == asBCTYPE_W_ARG);
-
-	if( AddInstruction() < 0 )
-		return 0;
-
-	last->op = asBC_PUSH;
-	last->wArg[0] = (short)numDwords;
-	last->size = asBCTypeSize[asBCInfo[asBC_PUSH].type];
-	last->stackInc = numDwords;
-
-	return last->stackInc;
-}
-
 
 int asCByteCode::InsertFirstInstrDWORD(asEBCInstr bc, asDWORD param)
 {
