@@ -47,6 +47,7 @@ std::string printBuffer;
 
 static const char *correct =
 "Module1:void main():5,3\n"
+"Module1:void main():5,3\n"
 "Module1:void main():6,3\n"
 "Module1:void main():7,3\n"
 " Module1:c@ c():0,0\n"
