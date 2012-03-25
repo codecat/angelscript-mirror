@@ -354,7 +354,7 @@ bool Test()
 	mod = engine->GetModule(0);
 	mod->SaveByteCode(&stream);
 
-	if( stream.buffer.size() != 1809 )
+	if( stream.buffer.size() != 1807 )
 	{
 		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 	}
@@ -365,7 +365,7 @@ bool Test()
 		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 	}
 	asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-	if( crc32 != 0x7B880431 )
+	if( crc32 != 0x32004944 )
 	{
 		printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 	}

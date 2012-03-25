@@ -1834,13 +1834,14 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				return;
 			}
 		}
-		else if( c == asBC_PGA ||
-			     c == asBC_LDG ||
-				 c == asBC_PshG4 ||
-				 c == asBC_LdGRdR4 ||
+		else if( c == asBC_PGA      ||
+			     c == asBC_PshGPtr  ||
+			     c == asBC_LDG      ||
+				 c == asBC_PshG4    ||
+				 c == asBC_LdGRdR4  ||
 				 c == asBC_CpyGtoV4 ||
 				 c == asBC_CpyVtoG4 ||
-				 c == asBC_SetG4 )
+				 c == asBC_SetG4    )
 		{
 			// Translate the global var index to pointer
 			asPWORD *index = (asPWORD*)&bc[n+1];
@@ -3378,13 +3379,14 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 
 			tmp[1] = funcId;
 		}
-		else if( c == asBC_PGA ||      // PTR_ARG
-			     c == asBC_LDG ||      // PTR_ARG
-				 c == asBC_PshG4 ||    // PTR_ARG
-				 c == asBC_LdGRdR4 ||  // wW_PTR_ARG
+		else if( c == asBC_PGA      || // PTR_ARG
+			     c == asBC_PshGPtr  || // PTR_ARG 
+			     c == asBC_LDG      || // PTR_ARG
+				 c == asBC_PshG4    || // PTR_ARG
+				 c == asBC_LdGRdR4  || // wW_PTR_ARG
 				 c == asBC_CpyGtoV4 || // wW_PTR_ARG
 				 c == asBC_CpyVtoG4 || // rW_PTR_ARG
-				 c == asBC_SetG4 )     // PTR_DW_ARG
+				 c == asBC_SetG4    )  // PTR_DW_ARG
 		{
 			// Translate global variable pointers into indices
 			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));

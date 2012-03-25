@@ -3472,9 +3472,15 @@ void asCContext::ExecuteNext()
 			l_bc += 2;
 		break;
 
+	case asBC_PshGPtr:
+		// Replaces PGA + RDSPtr
+		l_sp -= AS_PTR_SIZE;
+		*(asPWORD*)l_sp = *(asPWORD*)asBC_PTRARG(l_bc);
+		l_bc += 1 + AS_PTR_SIZE;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 189: l_bc = (asDWORD*)189; break;
 	case 190: l_bc = (asDWORD*)190; break;
 	case 191: l_bc = (asDWORD*)191; break;
 	case 192: l_bc = (asDWORD*)192; break;

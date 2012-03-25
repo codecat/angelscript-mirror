@@ -599,14 +599,6 @@ int asCByteCode::Optimize()
 	// TODO: optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
 	//                 loops a lot. How often do these loops really occur?
 
-	// TODO: optimize: Script class methods are currently implemented to increase the ref count of the object upon
-	//                 entry, and then release it upon exit. When the method isn't doing anything at all, this is
-	//                 not necessary, as the function could simply do a RET immediately. This optimization is only
-	//                 possible if the code has been built without the line cues, as if the SUSPEND is within the 
-	//                 function, then we can't do this optimization. Of course, this optimization may not be all
-	//                 that useful, since in a real world app, it is probably not very common that empty class 
-	//                 methods are called.
-
 	// TODO: optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
 	//                 function calls that can suspend the execution.
 
@@ -637,11 +629,11 @@ int asCByteCode::Optimize()
 			instr = GoBack(instr);
 		}
 		// T??, ClrHi -> T??
-		else if( IsCombination(curr, asBC_TZ, asBC_ClrHi) ||
+		else if( IsCombination(curr, asBC_TZ , asBC_ClrHi) ||
 				 IsCombination(curr, asBC_TNZ, asBC_ClrHi) ||
-				 IsCombination(curr, asBC_TS, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TS , asBC_ClrHi) ||
 				 IsCombination(curr, asBC_TNS, asBC_ClrHi) ||
-				 IsCombination(curr, asBC_TP, asBC_ClrHi) ||
+				 IsCombination(curr, asBC_TP , asBC_ClrHi) ||
 				 IsCombination(curr, asBC_TNP, asBC_ClrHi) )
 		{
 			// Remove the ClrHi instruction, since the test instructions always clear the top bytes anyway
@@ -661,6 +653,22 @@ int asCByteCode::Optimize()
 			DeleteInstruction(curr);
 			instr->op = asBC_JLowNZ;
 			instr = GoBack(instr);
+		}
+		// PGA, RDSPtr -> PshGPtr
+		else if( IsCombination(curr, asBC_PGA, asBC_RDSPtr) )
+		{
+			curr->op = asBC_PshGPtr;
+			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// ChkRefS, RDSPtr -> RDSPtr, CHKREF
+		else if( IsCombination(curr, asBC_ChkRefS, asBC_RDSPtr) )
+		{
+			// This exchange removes one pointer dereference, and also 
+			// makes it easier to completely remove the CHKREF instruction
+			curr->op = asBC_RDSPtr;
+			instr->op = asBC_CHKREF;
+			instr = GoBack(curr);
 		}
 		// CHKREF, ADDSi -> ADDSi
 		// CHKREF, RDSPtr -> RDSPtr

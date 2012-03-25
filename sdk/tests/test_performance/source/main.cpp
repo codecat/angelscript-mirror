@@ -48,22 +48,22 @@ double testTimesOrig[18] =
 double testTimesOrig2[18] = 
 {1.21, // Basic
 .250,  // Basic2
-1.17,  // Call
-1.52,  // Call2
-2.20,  // Fib
-.265,  // Int
-1.79,  // Intf
-1.62,  // Mthd
-1.79,  // String
-.858,  // String2
-1.23,  // StringPooled
-.967,  // ThisProp
-.359,  // Vector3
-.390,  // Assign.1
-.593,  // Assign.2
-.390,  // Assign.3
-.577,  // Assign.4
-.577   // Assign.5
+1.18,  // Call
+1.70,  // Call2
+2.30,  // Fib
+.281,  // Int
+2.12,  // Intf
+1.77,  // Mthd
+2.37,  // String
+1.01,  // String2
+1.29,  // StringPooled
+.920,  // ThisProp
+.437,  // Vector3
+.421,  // Assign.1
+.858,  // Assign.2
+.421,  // Assign.3
+.671,  // Assign.4
+.702   // Assign.5
 };
 
 double testTimesBest[18];

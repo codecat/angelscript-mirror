@@ -618,6 +618,7 @@ void asCScriptFunction::AddReferences()
 
 		// Global variables
 		case asBC_PGA:
+		case asBC_PshGPtr:
 		case asBC_LDG:
 		case asBC_PshG4:
 		case asBC_LdGRdR4:
@@ -738,6 +739,7 @@ void asCScriptFunction::ReleaseReferences()
 
 		// Global variables
 		case asBC_PGA:
+		case asBC_PshGPtr:
 		case asBC_LDG:
 		case asBC_PshG4:
 		case asBC_LdGRdR4:
@@ -1019,6 +1021,7 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 
 		// Global variables
 		case asBC_PGA:
+		case asBC_PshGPtr:
 		case asBC_LDG:
 		case asBC_PshG4:
 		case asBC_LdGRdR4:
