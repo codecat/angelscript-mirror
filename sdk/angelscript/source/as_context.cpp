@@ -365,6 +365,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 		stackIndex              = 0;
 	}
 	status = asEXECUTION_PREPARED;
+	regs.programPointer = 0;
 
 	// Reserve space for the arguments and return value
 	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize - returnValueSize;
@@ -382,24 +383,6 @@ int asCContext::Prepare(asIScriptFunction *func)
 
 		*(void**)ptr = (void*)(stackBlocks[0] + stackBlockSize - returnValueSize);
 	}
-
-	if( currentFunction->funcType == asFUNC_SCRIPT )
-	{
-		// TODO: clean up: This should be done in Execute, just as is done for virtual script methods 
-		regs.programPointer = currentFunction->byteCode.AddressOf();
-		regs.stackPointer -= currentFunction->variableSpace;
-
-		// Set all object variables to 0
-		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
-		{
-			if( !currentFunction->objVariableIsOnHeap[n] ) continue;
-
-			int pos = currentFunction->objVariablePos[n];
-			*(asPWORD*)&regs.stackFramePointer[-pos] = 0;
-		}
-	}
-	else
-		regs.programPointer = 0;
 
 	return asSUCCESS;
 }
@@ -1052,24 +1035,19 @@ int asCContext::Execute()
 				if( realFunc )
 				{
 					if( realFunc->signatureId != currentFunction->signatureId )
-					{
 						SetInternalException(TXT_NULL_POINTER_ACCESS);
-					}
 					else
-					{
 						currentFunction = realFunc;
-						regs.programPointer = currentFunction->byteCode.AddressOf();
-						regs.stackPointer -= currentFunction->variableSpace;
-
-						// Set the local objects to 0
-						for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
-						{
-							int pos = currentFunction->objVariablePos[n];
-							*(asPWORD*)&regs.stackFramePointer[-pos] = 0;
-						}
-					}
 				}
 			}
+		}
+
+		if( currentFunction->funcType == asFUNC_SCRIPT )
+		{
+			regs.programPointer = currentFunction->byteCode.AddressOf();
+
+			// Set up the internal registers for executing the script function
+			PrepareScriptFunction();
 		}
 		else if( currentFunction->funcType == asFUNC_SYSTEM )
 		{
@@ -1222,8 +1200,9 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	// Push the framepointer, function id and programCounter on the stack
 	PushCallState();
 
+	// Update the current function and program position before increasing the stack 
+	// so the exception handler will know what to do if there is a stack overflow
 	currentFunction = func;
-
 	regs.programPointer = currentFunction->byteCode.AddressOf();
 
 	// Verify if there is enough room in the stack block. Allocate new block if not
@@ -1268,6 +1247,11 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 		memcpy(regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
 	}
 
+	PrepareScriptFunction();
+}
+
+void asCContext::PrepareScriptFunction()
+{
 	// Update framepointer and programCounter
 	regs.stackFramePointer = regs.stackPointer;
 
