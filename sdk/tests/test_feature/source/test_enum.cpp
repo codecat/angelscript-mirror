@@ -586,6 +586,46 @@ static bool TestEnum()
 		engine->Release();
 	}
 
+	// Test problem reported by SadSingleton
+	// http://www.gamedev.net/topic/622524-crash-using-the-identity-operator-with-enum-values/
+	{
+		const char *script = 
+			"enum MyEnum { MyEnumValue = 1 } \n"
+			"void Update() \n"
+			"{ \n"
+			"        MyEnum enumValue = MyEnumValue; \n"
+			"        bool condition = true; \n"
+			"        if (condition) \n"
+			"        { \n"
+			"                if(enumValue is MyEnumValue) \n"
+			"                { \n"
+			"                        int i = 0; \n"
+			"                } \n"
+			"        } \n"
+			"        else \n"
+			"        { \n"
+			"                int j = 1; \n"
+			"        } \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (2, 1) : Info    : Compiling void Update()\n"
+		                   "script (8, 30) : Error   : Both operands must be handles when comparing identity\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

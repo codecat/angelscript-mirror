@@ -10929,6 +10929,12 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		Error(str.AddressOf(), node);
 	}
 
+	// Make sure it really is handles that are being compared
+	if( !lctx->type.dataType.IsObjectHandle() )
+	{
+		Error(TXT_OPERANDS_MUST_BE_HANDLES, node);
+	}
+
 	ctx->type.Set(asCDataType::CreatePrimitive(ttBool, true));
 
 	int op = node->tokenType;

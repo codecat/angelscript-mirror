@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.1 WIP - 2012/03/22</h2>
+<h2>Version 2.23.1 WIP - 2012/04/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure when loading bytecode containing calls to functions returning value types by value in an if-case (Thanks Markus Larsson)
 <li>Fixed crash when compiling constructor and base class doesn't have default constructor (Thanks Ekimr)
 <li>Fixed bug in asCScriptFunction (Thanks Richard Viney)
+<li>Compiler no longer accepts non-handles with the identity operator 'is' (Thanks SadSingleton)
 </ul>
 <li>Script language
 <ul>
@@ -36,18 +37,18 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Bytecode optimizer removes CHKREF instructions before RDSPtr instruction
 <li>Bytecode optimizer replaces ChkRefS, RDSPtr with RDSPtr, CHKREF
 <li>Removed unnecessary ADDREF to object pointer in some class methods
-<li>At least 1 SUSPEND instruction is guaranteed in each function to allow interruption of infinite recursive calls (Thanks Philip Bennefall)
 <li>For loop has been rearranged to avoid one JMP instruction
 </ul>
 <li>Virtual machine
 <ul>
-<li>Changed ADDSi to check if the pointer is a null pointer. 
-<li>Changed RDSPtr to check if the pointer is a null pointer.
+<li>Changed ADDSi to check if the pointer is a null pointer 
+<li>Changed RDSPtr to check if the pointer is a null pointer
 <li>Renamed the bytecode POP to PopPtr, and removed it's argument as it was always popping a single pointer.
 <li>Created the new instruction RefCpyV that is used to replace the oft occurring pair PSF and REFCPY
 <li>Added JLowZ and JLowNZ to replace ClrHi + JZ and ClrHi + JNZ
 <li>Added PshGPtr that replaces PGA + RDSPtr
-<li>Removed the PUSH instructions
+<li>Removed the PUSH instruction
+<li>The VM is guaranteed to call line callback at least once per function to allow interruption of inifinitely recursive calls (Thanks Philip Bennefall)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

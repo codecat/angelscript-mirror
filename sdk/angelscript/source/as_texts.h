@@ -169,6 +169,7 @@
 #define TXT_ONLY_ONE_ARGUMENT_IN_CAST      "A cast operator has one argument"
 #define TXT_ONLY_ONE_FUNCTION_ALLOWED      "The code must contain one and only one function"
 #define TXT_ONLY_ONE_VARIABLE_ALLOWED      "The code must contain one and only one global variable"
+#define TXT_OPERANDS_MUST_BE_HANDLES       "Both operands must be handles when comparing identity"
 
 #define TXT_PARAMETER_ALREADY_DECLARED            "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s                   "Parameter type can't be '%s', because the type cannot be instanciated."
