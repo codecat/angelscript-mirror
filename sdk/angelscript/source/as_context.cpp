@@ -288,10 +288,20 @@ asIScriptFunction *asCContext::GetSystemFunction()
 int asCContext::Prepare(asIScriptFunction *func)
 {
 	if( func == 0 ) 
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s, "Prepare", "null");
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asNO_FUNCTION;
+	}
 
 	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s, "Prepare");
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_ACTIVE;
+	}
 
 	// Clean the stack if not done before
 	if( status != asEXECUTION_FINISHED && status != asEXECUTION_UNINITIALIZED )
@@ -984,7 +994,12 @@ int asCContext::Execute()
 	asASSERT( engine != 0 );
 
 	if( status != asEXECUTION_SUSPENDED && status != asEXECUTION_PREPARED )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s, "Execute");
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asERROR;
+	}
 
 	status = asEXECUTION_ACTIVE;
 
