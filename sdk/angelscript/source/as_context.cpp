@@ -1102,6 +1102,11 @@ int asCContext::Execute()
 
 void asCContext::PushCallState()
 {
+	if( callStack.GetLength() == callStack.GetCapacity() )
+	{
+		// Allocate space for 10 call states at a time to save time
+		callStack.AllocateNoConstruct(callStack.GetLength() + 10*CALLSTACK_FRAME_SIZE, true);
+	}
 	callStack.SetLengthNoConstruct(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
     // Separating the loads and stores limits data cache trash, and with a smart compiler
