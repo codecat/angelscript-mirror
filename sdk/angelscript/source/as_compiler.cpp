@@ -297,10 +297,19 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	if( !signature )
 	{
-		// Skip the private keyword if it is there
 		node = func->firstChild;
-		if( node->nodeType == snUndefined && node->tokenType == ttPrivate )
+		if( outFunc->objectType )
+		{
+			// Skip the private keyword if it is there
+			if( node->nodeType == snUndefined && node->tokenType == ttPrivate )
+				node = node->next;
+		}
+		else if( outFunc->IsShared() )
+		{
+			// Skip the shared keyword
+			asASSERT( node->nodeType == ttIdentifier );
 			node = node->next;
+		}
 
 		//----------------------------------------------
 		// Examine return type

@@ -303,6 +303,34 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem reported by TheAtom
+	// http://www.gamedev.net/topic/622841-shared-issues/
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		const char *code = 
+			"shared int f() \n"
+			"{ \n"
+			"  return 0; \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("code", code);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}		
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
