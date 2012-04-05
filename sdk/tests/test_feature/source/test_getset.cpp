@@ -1389,6 +1389,66 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class Test {} \n"
+			"Test get_test(int a) { \n"
+			"    return Test(); \n"
+			"} \n"
+			"void f() { \n"
+			"    test[0]; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Test problem reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptMath3D(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"vector3 global; \n"
+			"vector3 get_global_accessor() { return vector3(1,1,1); } \n"
+			"void f() { \n"
+			"   global = global_accessor; \n"
+			"   assert( global.x == 1 && global.y == 1 && global.z == 1 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "f()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success

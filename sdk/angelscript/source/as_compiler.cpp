@@ -3103,6 +3103,12 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 		asSExprContext expr(engine);
 		CompileAssignment(enode->firstChild, &expr);
 
+		// If we get here and there is still an unprocessed property
+		// accessor, then process it as a get access. Don't call if there is 
+		// already a compile error, or we might report an error that is not valid
+		if( !hasCompileErrors )
+			ProcessPropertyGetAccessor(&expr, enode);
+
 		// Pop the value from the stack
 		if( !expr.type.dataType.IsPrimitive() )
 			expr.bc.Instr(asBC_PopPtr);
@@ -5965,8 +5971,14 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 				return -1;
 			}
 		}
-		else if( rctx->type.dataType.IsReference() && (!(rctx->type.isVariable || rctx->type.isTemporary) || IsVariableOnHeap(rctx->type.stackOffset)) )
-			rctx->bc.Instr(asBC_RDSPtr);
+		else 
+		{
+			// Process any property accessor first, before placing the final reference on the stack
+			ProcessPropertyGetAccessor(rctx, rexpr);
+
+			if( rctx->type.dataType.IsReference() && (!(rctx->type.isVariable || rctx->type.isTemporary) || IsVariableOnHeap(rctx->type.stackOffset)) )
+				rctx->bc.Instr(asBC_RDSPtr);
+		}
 
 		MergeExprBytecode(ctx, rctx);
 		MergeExprBytecode(ctx, lctx);
@@ -9011,6 +9023,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
 				if( ctx->property_ref )	ctx->type.dataType.MakeReference(true);
 			}
+			else
+			{
+				ctx->type.SetDummy();
+			}
+
 			ctx->property_get = ctx->property_set = 0;
 			if( ctx->property_arg )
 			{

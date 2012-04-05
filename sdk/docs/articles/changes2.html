@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.1 WIP - 2012/04/02</h2>
+<h2>Version 2.23.1 WIP - 2012/04/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in asCScriptFunction (Thanks Richard Viney)
 <li>Compiler no longer accepts non-handles with the identity operator 'is' (Thanks SadSingleton)
 <li>Shared global functions didn't failed to compile unless the return type was 'void' (Thanks TheAtom)
+<li>Fixed problem with global get property accessor that returns a POD value type (Thanks Andrew Ackermann)
+<li>Fixed problem with global get property accessor with index that returns an object type (Thanks Andrew Ackermann)
 </ul>
 <li>Script language
 <ul>
