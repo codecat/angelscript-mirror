@@ -249,14 +249,30 @@ void asCCompiler::FinalizeFunction()
 	byteCode.ExtractObjectVariableInfo(outFunc);
 
 	// Compile the list of object variables for the exception handler
+	// Start with the variables allocated on the heap, and then the ones allocated on the stack
 	for( n = 0; n < variableAllocations.GetLength(); n++ )
 	{
 		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
 		{
-			outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
-			outFunc->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
-			outFunc->objVariablePos.PushLast(GetVariableOffset(n));
-			outFunc->objVariableIsOnHeap.PushLast(variableIsOnHeap[n]);
+			if( variableIsOnHeap[n] )
+			{
+				outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+				outFunc->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
+				outFunc->objVariablePos.PushLast(GetVariableOffset(n));
+			}
+		}
+	}
+	outFunc->objVariablesOnHeap = outFunc->objVariablePos.GetLength();
+	for( n = 0; n < variableAllocations.GetLength(); n++ )
+	{
+		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
+		{
+			if( !variableIsOnHeap[n] )
+			{
+				outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+				outFunc->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
+				outFunc->objVariablePos.PushLast(GetVariableOffset(n));
+			}
 		}
 	}
 

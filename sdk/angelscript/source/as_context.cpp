@@ -1272,16 +1272,14 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 
 void asCContext::PrepareScriptFunction()
 {
-	// Update framepointer and programCounter
+	// Update framepointer
 	regs.stackFramePointer = regs.stackPointer;
 
 	// Set all object variables to 0 to guarantee that they are null before they are used
-	asUINT n = currentFunction->objVariablePos.GetLength();
+	// Only variables on the heap should be cleared. The rest will be cleared by calling the constructor
+	asUINT n = currentFunction->objVariablesOnHeap;
 	while( n-- > 0 )
 	{
-		// TODO: runtime optimize: Keep separate list for objects not on heap so it is not necessary to check this
-		if( !currentFunction->objVariableIsOnHeap[n] ) continue;
-
 		int pos = currentFunction->objVariablePos[n];
 		*(asPWORD*)&regs.stackFramePointer[-pos] = 0;
 	}
@@ -3840,7 +3838,7 @@ void asCContext::CleanStackFrame()
 		for( asUINT n = 0; n < currentFunction->objVariablePos.GetLength(); n++ )
 		{
 			int pos = currentFunction->objVariablePos[n];
-			if( currentFunction->objVariableIsOnHeap[n] )
+			if( n < currentFunction->objVariablesOnHeap )
 			{
 				// Check if the pointer is initialized
 				if( *(asPWORD*)&regs.stackFramePointer[-pos] )
@@ -4226,7 +4224,7 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
 			{
 				if( func->objVariablePos[n] == pos )
 				{
-					onHeap = func->objVariableIsOnHeap[n];
+					onHeap = n < func->objVariablesOnHeap;
 
 					if( !onHeap )
 					{

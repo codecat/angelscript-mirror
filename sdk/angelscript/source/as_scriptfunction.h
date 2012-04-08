@@ -211,6 +211,7 @@ public:
 
 	// Used by asFUNC_SCRIPT
 	asCArray<asDWORD>               byteCode;
+	// The stack space needed for the local variables
 	asDWORD                         variableSpace;
 
 	// These hold information objects and function pointers, including temporary
@@ -218,7 +219,9 @@ public:
 	asCArray<asCObjectType*>        objVariableTypes;
 	asCArray<asCScriptFunction*>    funcVariableTypes;
 	asCArray<int>	                objVariablePos;
-	asCArray<bool>                  objVariableIsOnHeap;
+	// The first variables in above array are allocated on the heap, the rest on the stack.
+	// This variable shows how many are on the heap.
+	asUINT                          objVariablesOnHeap;
 
 	// Holds information on scope for object variables on the stack
 	asCArray<asSObjectVariableInfo> objVariableInfo;

@@ -2967,6 +2967,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 		}
 		func->inOutFlags[p-1] = factory->inOutFlags[p];
 	}
+	func->objVariablesOnHeap = 0;
 
 	SetScriptFunction(func);
 

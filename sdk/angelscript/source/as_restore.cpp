@@ -549,9 +549,11 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 			func->funcVariableTypes.PushLast((asCScriptFunction*)(asPWORD)idx);
 			num = ReadEncodedUInt();
 			func->objVariablePos.PushLast(num);
-			bool b; ReadData(&b, 1);
-			func->objVariableIsOnHeap.PushLast(b);
 		}
+		if( count > 0 )
+			func->objVariablesOnHeap = ReadEncodedUInt();
+		else
+			func->objVariablesOnHeap = 0;
 
 		int length = ReadEncodedUInt();
 		func->objVariableInfo.SetLength(length);
@@ -2193,7 +2195,7 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 			// Determine the size the variable currently occupies on the stack
 			int size = AS_PTR_SIZE;
 			if( (func->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
-				!func->objVariableIsOnHeap[n] )
+				n >= func->objVariablesOnHeap )
 			{
 				size = func->objVariableTypes[n]->GetSize();
 				if( size < 4 ) 
@@ -2660,8 +2662,9 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			// TODO: Only write this if the object type is the builtin function type
 			WriteEncodedInt64(FindFunctionIndex(func->funcVariableTypes[i]));
 			WriteEncodedInt64(AdjustStackPosition(func->objVariablePos[i]));
-			WriteData(&func->objVariableIsOnHeap[i], 1);
 		}
+		if( count > 0 )
+			WriteEncodedInt64(func->objVariablesOnHeap);
 
 		WriteEncodedInt64((asUINT)func->objVariableInfo.GetLength());
 		for( i = 0; i < func->objVariableInfo.GetLength(); ++i )
@@ -3099,7 +3102,7 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 			// Determine the size the variable currently occupies on the stack
 			int size = AS_PTR_SIZE;
 			if( (func->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
-				!func->objVariableIsOnHeap[n] )
+				n >= func->objVariablesOnHeap )
 			{
 				size = func->objVariableTypes[n]->GetSize();
 				if( size < 4 ) 
