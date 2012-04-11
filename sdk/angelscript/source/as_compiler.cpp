@@ -2908,7 +2908,11 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	bc->AddCode(&nextBC);
 
 	bc->Label((short)conditionLabel);
-	bc->AddCode(&expr.bc);
+	if( expr.bc.GetLastInstr() == -1 )
+		// There is no condition, so we just always jump
+		bc->InstrDWORD(asBC_JMP, insideLabel);
+	else
+		bc->AddCode(&expr.bc);
 
 	bc->Label((short)afterLabel);
 

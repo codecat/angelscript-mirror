@@ -60,9 +60,12 @@ bool Test()
 	}
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )
-	{
 		TEST_FAILED;
-	}
+
+	// TODO: runtime optimize: bytecode compiler should optimize away the first jump
+	r = ExecuteString(engine, "bool called = false; for(;;) { called = true; break; } Assert( called );");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	engine->Release();
 
