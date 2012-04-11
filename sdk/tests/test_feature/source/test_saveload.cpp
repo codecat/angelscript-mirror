@@ -491,6 +491,54 @@ bool Test()
 		engine->Release();
 	}
 
+	//------------------------------------
+	// Test problem detected by TheAtom
+	// http://www.gamedev.net/topic/623170-crash-on-bytecode-loading/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("0", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("0",
+			"shared class T\n"
+			"{\n"
+			"        void f() { }\n"
+			"};\n"
+			"shared class T2 : T\n"
+			"{\n"
+			"};\n"
+			"class T3 : T\n"
+			"{\n"
+			"        void f() { T::f(); }\n"
+			"};\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"0");
+		mod->SaveByteCode(&stream);
+
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		stream.Restart();
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	//---------------------------------
 	// Must be possible to load scripts with classes declared out of order
 	// Built-in array types must be able to be declared even though the complete script structure hasn't been loaded yet

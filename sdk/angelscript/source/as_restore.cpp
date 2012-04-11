@@ -875,10 +875,15 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							// TODO: Write message
 							error = true;
 						}
-						// Destroy the function without releasing any references
-						func->id = 0;
-						func->byteCode.SetLength(0);
-						func->Release();
+						// If the function received wasn't an already existing 
+						// function we must now destroy it
+						if( !savedFunctions.Exists(func) )
+						{
+							// Destroy the function without releasing any references
+							func->id = 0;
+							func->byteCode.SetLength(0);
+							func->Release();
+						}
 					}
 					else
 					{
@@ -924,10 +929,15 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							// TODO: Write message
 							error = true;
 						}
-						// Destroy the function without releasing any references
-						func->id = 0;
-						func->byteCode.SetLength(0);
-						func->Release();
+						// If the function received wasn't an already existing 
+						// function we must now destroy it
+						if( !savedFunctions.Exists(func) )
+						{
+							// Destroy the function without releasing any references
+							func->id = 0;
+							func->byteCode.SetLength(0);
+							func->Release();
+						}
 					}
 					else
 					{
@@ -2025,11 +2035,11 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 		{
 			// Determine the true delta from the instruction arguments
 			if( bc == asBC_CALL ||
-			         bc == asBC_CALLSYS ||
-					 bc == asBC_CALLBND ||
-					 bc == asBC_ALLOC ||
-					 bc == asBC_CALLINTF ||
-					 bc == asBC_CallPtr )
+			    bc == asBC_CALLSYS ||
+				bc == asBC_CALLBND ||
+				bc == asBC_ALLOC ||
+				bc == asBC_CALLINTF ||
+				bc == asBC_CallPtr )
 			{
 				asCScriptFunction *called = GetCalledFunction(func, pos);
 				if( called )
