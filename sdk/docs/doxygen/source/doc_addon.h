@@ -337,9 +337,15 @@ public:
 
   // Get the current size
   asUINT GetSize() const;
+  
+  // Returns true if the array is empty
+  bool IsEmpty() const;
 
+  // Pre-allocates memory for elements
+  void Reserve(asUINT numElements);
+  
   // Resize the array
-  void   Resize(asUINT numElements);
+  void Resize(asUINT numElements);
   
   // Get a pointer to an element. Returns 0 if out of bounds
   void       *At(asUINT index);
@@ -388,7 +394,9 @@ public:
     void insertLast(const T& in);
     void removeLast();
     uint length() const;
+    uint isEmpty() const;
     void resize(uint);
+    void reserve(uint);
     void sortAsc();
     void sortAsc(uint index, uint count);
     void sortDesc();
@@ -656,6 +664,9 @@ Refer to the <code>std::string</code> implementation for your compiler.
     uint length() const;
     void resize(uint);
     
+    // Returns true if the string is empty
+    bool isEmpty() const;
+    
     // Assignment and concatenation
     string &opAssign(const string &in other);
     string &opAddAssign(const string &in other);
@@ -766,6 +777,12 @@ public:
   // Returns true if the key is set
   bool Exists(const std::string &key) const;
   
+  // Returns true if the dictionary is empty
+  bool IsEmpty() const;
+  
+  // Returns the number of keys in the dictionary
+  asUINT GetSize() const;
+  
   // Deletes the key
   void Delete(const std::string &key);
   
@@ -795,6 +812,8 @@ public:
     bool exists(const string &in key) const;
     void delete(const string &in key);
     void deleteAll();
+    bool isEmpty() const;
+    uint getSize() const;
   }
 </pre>
 

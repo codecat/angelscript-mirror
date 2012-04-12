@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.23.0
-#define ANGELSCRIPT_VERSION        22300
-#define ANGELSCRIPT_VERSION_STRING "2.23.0"
+//! \details Version 2.23.1
+#define ANGELSCRIPT_VERSION        22301
+#define ANGELSCRIPT_VERSION_STRING "2.23.1"
 
 // Data types
 
@@ -3582,10 +3582,10 @@ public:
 //! \see \ref doc_adv_jit_1
 enum asEBCInstr
 {
-	//! \brief Decrease the stack with the amount in the argument
-	asBC_POP			= 0,
-	//! \brief Increase the stack with the amount in the argument
-	asBC_PUSH			= 1,
+	//! \brief Removes a pointer from the stack
+	asBC_PopPtr			= 0,
+	//! \brief Pushes a pointer from a global variable onto the stack
+	asBC_PshGPtr		= 1,
 	//! \brief Push the 32bit value in the argument onto the stack
 	asBC_PshC4			= 2,
 	//! \brief Push the 32bit value from a variable onto the stack
@@ -3935,13 +3935,13 @@ enum asEBCInstr
 	//! \brief If a JIT function is available and the argument is not 0 then call the JIT function
 	asBC_JitEntry		= 175,
 	//! \brief Call a function stored in a local function pointer
-	asBC_CallPtr        = 176,
+	asBC_CallPtr		= 176,
 	//! \brief Push a function pointer on the stack
-	asBC_FuncPtr        = 177,
+	asBC_FuncPtr		= 177,
 	//! \brief Load the address to a property of the local object into the stack. PshV4 0, ADDSi x, PopRPtr
-	asBC_LoadThisR      = 178,
+	asBC_LoadThisR		= 178,
 	//! \brief Push the 64bit value from a variable onto the stack
-	asBC_PshV8          = 179,
+	asBC_PshV8			= 179,
 	//! \brief Divide the values of two 32bit unsigned integer variables and store in a third variable
 	asBC_DIVu			= 180,
 	//! \brief Calculate the modulo of values of two 32bit unsigned integer variables and store in a third variable
@@ -3951,15 +3951,21 @@ enum asEBCInstr
 	//! \brief Calculate the modulo of values of two 64bit unsigned integer variables and store in a third variable
 	asBC_MODu64			= 183,
 	//! \brief Load address of member of reference object into register
-	asBC_LoadRObjR      = 184,
+	asBC_LoadRObjR		= 184,
 	//! \brief Load address of member of value object into register
-	asBC_LoadVObjR      = 185,
+	asBC_LoadVObjR		= 185,
+	//! \brief Copies a handle to a variable
+	asBC_RefCpyV		= 186,
+	//! \brief Jump if low byte of value register is 0
+	asBC_JLowZ			= 187,
+	//! \brief Jump if low byte of value register is not 0
+	asBC_JLowNZ			= 188,
 
-	asBC_MAXBYTECODE	= 186,
+	asBC_MAXBYTECODE	= 189,
 
 	// Temporary tokens. Can't be output to the final program
-	asBC_VarDecl        = 251,
-	asBC_Block          = 252,
+	asBC_VarDecl		= 251,
+	asBC_Block			= 252,
 	asBC_ObjInfo		= 253,
 	asBC_LINE			= 254,
 	asBC_LABEL			= 255
@@ -4082,8 +4088,8 @@ struct asSBCInfo
 //! \brief Information on each bytecode instruction
 const asSBCInfo asBCInfo[256] =
 {
-	asBCINFO(POP,		W_ARG,			0xFFFF),
-	asBCINFO(PUSH,		W_ARG,			0xFFFF),
+	asBCINFO(PopPtr,	NO_ARG,			-AS_PTR_SIZE),
+	asBCINFO(PshGPtr,	PTR_ARG,		AS_PTR_SIZE),
 	asBCINFO(PshC4,		DW_ARG,			1),
 	asBCINFO(PshV4,		rW_ARG,			1),
 	asBCINFO(PSF,		rW_ARG,			AS_PTR_SIZE),
@@ -4155,8 +4161,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(CHKREF,	NO_ARG,			0),
 	asBCINFO(GETOBJREF,	W_ARG,			0),
 	asBCINFO(GETREF,	W_ARG,			0),
-	asBCINFO(PshNull,   NO_ARG,			AS_PTR_SIZE),
-	asBCINFO(ClrVPtr,   rW_ARG,			0),
+	asBCINFO(PshNull,	NO_ARG,			AS_PTR_SIZE),
+	asBCINFO(ClrVPtr,	rW_ARG,			0),
 	asBCINFO(OBJTYPE,	PTR_ARG,		AS_PTR_SIZE),
 	asBCINFO(TYPEID,	DW_ARG,			1),
 	asBCINFO(SetV4,		wW_DW_ARG,		0),
@@ -4258,20 +4264,20 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(ChkNullS,	W_ARG,			0),
 	asBCINFO(ClrHi,		NO_ARG,			0),
 	asBCINFO(JitEntry,	PTR_ARG,		0),
-	asBCINFO(CallPtr,   rW_ARG,         0xFFFF),
-	asBCINFO(FuncPtr,   PTR_ARG,        AS_PTR_SIZE),
-	asBCINFO(LoadThisR, W_DW_ARG,       0),
+	asBCINFO(CallPtr,	rW_ARG,			0xFFFF),
+	asBCINFO(FuncPtr,	PTR_ARG,		AS_PTR_SIZE),
+	asBCINFO(LoadThisR,	W_DW_ARG,		0),
 	asBCINFO(PshV8,		rW_ARG,			2),
 	asBCINFO(DIVu,		wW_rW_rW_ARG,	0),
 	asBCINFO(MODu,		wW_rW_rW_ARG,	0),
 	asBCINFO(DIVu64,	wW_rW_rW_ARG,	0),
 	asBCINFO(MODu64,	wW_rW_rW_ARG,	0),
-	asBCINFO(LoadRObjR, rW_W_DW_ARG,    0),
-	asBCINFO(LoadVObjR, rW_W_DW_ARG,    0),
+	asBCINFO(LoadRObjR,	rW_W_DW_ARG,	0),
+	asBCINFO(LoadVObjR,	rW_W_DW_ARG,	0),
+	asBCINFO(RefCpyV,	wW_PTR_ARG,		0),
+	asBCINFO(JLowZ,		DW_ARG,			0),
+	asBCINFO(JLowNZ,	DW_ARG,			0),
 
-	asBCINFO_DUMMY(186),
-	asBCINFO_DUMMY(187),
-	asBCINFO_DUMMY(188),
 	asBCINFO_DUMMY(189),
 	asBCINFO_DUMMY(190),
 	asBCINFO_DUMMY(191),
