@@ -16,7 +16,7 @@ BEGIN_AS_NAMESPACE
 // In case the AngelScript engine is recreated the memory pool
 // will be cleaned out by RegisterStdString to avoid errors as
 // AngelScript may reuse pointers for different string values.
-// TODO: optimize: Use unordered_map if C++11 is supported, i.e. MSVC10+, gcc 4.?+
+// TODO: runtime optimize: Use unordered_map if C++11 is supported, i.e. MSVC10+, gcc 4.?+
 static map<const char *, string> g_pool;
 static const string &StringFactory(asUINT length, const char *s)
 {
@@ -27,7 +27,7 @@ static const string &StringFactory(asUINT length, const char *s)
 		return it->second;
 
 	// Create a new string object
-	g_pool.insert(map<const char *, string>::value_type(s, s));
+	g_pool.insert(map<const char *, string>::value_type(s, string(s, length)));
 	it = g_pool.find(s);
 	return it->second;
 }

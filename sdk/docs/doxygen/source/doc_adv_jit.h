@@ -186,6 +186,10 @@ Copy the object handle from one address to another. The reference count of the o
 
  - \ref asBC_REFCPY
  
+Copy the object handle on stack to a handle in a variable. The reference count of the object is updated to reflect the copy.
+
+ - \ref asBC_RefCpyV
+ 
 Push the pointer of an object type on the stack
  
  - \ref asBC_OBJTYPE
@@ -210,6 +214,8 @@ Load the address to a property of the object into the value register. Substitute
 Load the address to a property of a value object into the value register. Substitutes the sequence PSF, ADDSi, PopRPtr.
 
  - \ref asBC_LoadVObjR
+
+ 
 
 
 
@@ -415,6 +421,8 @@ Make a jump to a relative position depending on the value in the value register
  - \ref asBC_JP
  - \ref asBC_JNP
  - \ref asBC_JMPP
+ - \ref asBC_JLowZ
+ - \ref asBC_JLowNZ
 
 Call an application registered function
 
@@ -433,11 +441,6 @@ Give control of execution to the JIT compiled function
 
 \section doc_adv_jit_1_8 Stack and data management
 
-Update the stack pointer.
-
- - \ref asBC_POP
- - \ref asBC_PUSH
- 
 Push a constant value on the stack.
  
  - \ref asBC_PshC4
@@ -452,11 +455,11 @@ Swap the top values on the stack.
 
  - \ref asBC_SwapPtr
 
-Pop an address from the stack, read a value from the address and push it on the stack.
+Dereference top pointer on stack. Raises exception if pointer is null.
 
  - \ref asBC_RDSPtr
 
-Add an offset to the top address on the stack.
+Add an offset to the top address on the stack. Raises exception if address is null.
 
  - \ref asBC_ADDSi
 
@@ -496,6 +499,10 @@ Replace a variable index on the stack with an address.
  - \ref asBC_GETOBJ
  - \ref asBC_GETOBJREF
 
+Pop and discard an address from the stack.
+
+ - \ref asBC_PopPtr
+ 
 Pop or push an address to or from the value register.
 
  - \ref asBC_PopRPtr
@@ -538,6 +545,7 @@ Clear the upper bytes of the value register
 Push the value of a global variable on the stack
 
  - \ref asBC_PshG4
+ - \ref asBC_PshGPtr
 
 Load the address of a global variable into the value register
 

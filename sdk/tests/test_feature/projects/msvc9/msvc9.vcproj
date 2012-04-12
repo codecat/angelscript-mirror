@@ -350,6 +350,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\scriptmath3d.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\scriptstring.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\scriptstring_utils.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test2modules.cpp"
 				>
 			</File>
@@ -912,6 +924,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\scriptmath3d.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\scriptstring.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\stdvector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\utils.h"
 				>
 			</File>
@@ -1010,14 +1034,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\scriptmath3d.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\scriptmath3d.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\add_on\scriptmath\scriptmathcomplex.cpp"
 				>
 			</File>
@@ -1038,31 +1054,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\scriptstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\scriptstring.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\scriptstring_utils.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\add_on\serializer\serializer.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\add_on\serializer\serializer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\stdstring.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\stdvector.h"
 				>
 			</File>
 		</Filter>
