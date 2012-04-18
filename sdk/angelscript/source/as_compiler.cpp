@@ -323,7 +323,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		else if( outFunc->IsShared() )
 		{
 			// Skip the shared keyword
-			asASSERT( node->nodeType == ttIdentifier );
+			asASSERT( node->nodeType == snIdentifier );
 			node = node->next;
 		}
 

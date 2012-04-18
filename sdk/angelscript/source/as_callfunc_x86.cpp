@@ -299,18 +299,21 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
+	// It is not possible to rely on ESP or BSP to refer to variables or arguments on the stack
+	// depending on compiler settings BSP may not even be used, and the ESP is not always on the 
+	// same offset from the local variables. Because the code adjusts the ESP register it is not
+	// possible to inform the arguments through symbolic names below.
 
-	// GNUC 4.6.1 seems to have a bug when compiling with -O2. This wasn't a problem in earlier versions.
-	// Even though the clobber list is specifically listing the esp register, it still doesn't understand
-	// that it cannot rely on esp for getting the function arguments. So in order to work around this
-	// I'm passing the address of the first arg in edx to the inline assembly, and then copy it to ebx
-	// where it is guaranteed to be maintained over the function call.
+	// It's not also not possible to rely on the memory layout of the function arguments, because
+	// on some compiler versions and settings the arguments may be copied to local variables with a 
+	// different ordering before they are accessed by the rest of the code. 
+
+	// I'm copying the arguments into this array where I know the exact memory layout. The address
+	// of this array will then be passed to the inline asm in the EDX register.
+	volatile asPWORD a[] = {asPWORD(args), asPWORD(paramSize), asPWORD(func)};
 
 	asm __volatile__(
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -343,9 +346,9 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
-		:                          // output
-		: "d"(&args)               // input - pass pointer of args in edx
-		: "%eax", "%ecx", "%esp"   // clobber
+		:                           // output
+		: "d"(a)                    // input - pass pointer of args in edx
+		: "%eax", "%ecx"            // clobber
 		);
 
 #endif
@@ -397,13 +400,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(obj);
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
+	volatile asPWORD a[] = {asPWORD(obj), asPWORD(args), asPWORD(paramSize), asPWORD(func)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -439,8 +439,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&obj)                // input - pass pointer of obj in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of obj in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
@@ -492,13 +492,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(obj);
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
+	volatile asPWORD a[] = {asPWORD(obj), asPWORD(args), asPWORD(paramSize), asPWORD(func)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -534,8 +531,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&obj)                // input - pass pointer of obj in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of obj in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
@@ -595,14 +592,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(obj);
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
-	UNUSED_VAR(retPtr);
+	volatile asPWORD a[] = {asPWORD(obj), asPWORD(args), asPWORD(paramSize), asPWORD(func), asPWORD(retPtr)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -642,8 +635,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&obj)                // input - pass pointer of obj in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of obj in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 #endif
 }
@@ -697,13 +690,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
-	UNUSED_VAR(retPtr);
+	volatile asPWORD a[] = {asPWORD(args), asPWORD(paramSize), asPWORD(func), asPWORD(retPtr)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -740,8 +730,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&args)               // input - pass pointer of args in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of args in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
@@ -799,14 +789,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(obj);
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
-	UNUSED_VAR(retPtr);
+	volatile asPWORD a[] = {asPWORD(obj), asPWORD(args), asPWORD(paramSize), asPWORD(func), asPWORD(retPtr)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -846,8 +832,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&obj)                // input - pass pointer of obj in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of obj in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
@@ -894,12 +880,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
+	volatile asPWORD a[] = {asPWORD(args), asPWORD(paramSize), asPWORD(func)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -932,8 +916,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&args)               // input - pass pointer of args in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of args in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
@@ -996,13 +980,10 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(obj);
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
+	volatile asPWORD a[] = {asPWORD(obj), asPWORD(args), asPWORD(paramSize), asPWORD(func)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
+		_S(CLEAR_FPU_STACK)    "\n"
 		"pushl %%ebx            \n"
 		"movl  %%edx, %%ebx     \n"	
 
@@ -1039,8 +1020,8 @@ endcopy:
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
 		:                          // output
-		: "d"(&obj)                // input - pass pointer of obj in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of obj in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
@@ -1110,16 +1091,12 @@ endcopy:
 
 #elif defined ASM_AT_N_T
 
-	UNUSED_VAR(obj);
-	UNUSED_VAR(args);
-	UNUSED_VAR(paramSize);
-	UNUSED_VAR(func);
-	UNUSED_VAR(retPtr);
+	volatile asPWORD a[] = {asPWORD(obj), asPWORD(args), asPWORD(paramSize), asPWORD(func), asPWORD(retPtr)};
 
 	asm __volatile__ (
-		_S(CLEAR_FPU_STACK)  "\n"
-		"pushl %%ebx            \n"
-		"movl  %%edx, %%ebx     \n"	
+		_S(CLEAR_FPU_STACK)   "\n"
+		"pushl %%ebx           \n"
+		"movl  %%edx, %%ebx    \n"	
 
 		// Need to align the stack pointer so that it is aligned to 16 bytes when making the function call.
 		// It is assumed that when entering this function, the stack pointer is already aligned, so we need
@@ -1156,10 +1133,10 @@ endcopy:
 		                           // the return pointer was popped by the callee
 		// Pop the alignment bytes
 		"popl  %%esp           \n"
-		"popl  %%ebx            \n" 
+		"popl  %%ebx           \n" 
 		:                          // output
-		: "d"(&obj)                // input - pass pointer of obj in edx
-		: "%eax", "%ecx", "%esp"   // clobber 
+		: "d"(a)                   // input - pass pointer of obj in edx
+		: "%eax", "%ecx"           // clobber 
 		);
 
 #endif
