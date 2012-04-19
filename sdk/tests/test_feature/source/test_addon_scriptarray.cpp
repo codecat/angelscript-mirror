@@ -896,6 +896,29 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem with arrays and opAssign reported by Philip Bennefall
+	{
+		const char *script = 
+			"array<uint> a, b = {0,1,2,3}; \n"
+			"a.reserve(10); \n"
+			"a = b; \n"
+			"assert( a.length() == b.length() ); \n"
+			"assert( a.length() == 4 ); \n"
+			"for( uint n = 0; n < a.length(); n++ ) \n"
+			"  assert( a[n] == n ); \n";
+
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, script);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

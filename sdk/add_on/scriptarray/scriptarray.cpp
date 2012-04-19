@@ -194,30 +194,11 @@ CScriptArray &CScriptArray::operator=(const CScriptArray &other)
 	if( &other != this && 
 		other.GetArrayObjectType() == GetArrayObjectType() )
 	{
-		if( buffer && buffer->maxElements >= other.buffer->numElements )
-		{
-			// The other array fits in the memory allocated for this array
-			CopyBuffer(buffer, other.buffer);
-			if( buffer->numElements > other.buffer->numElements )
-			{
-				Destruct(buffer, other.buffer->numElements, buffer->numElements);
-				buffer->numElements = other.buffer->numElements;
-			}
-		}
-		else
-		{
-			// Reallocate the memory
-			if( buffer )
-			{
-				DeleteBuffer(buffer);
-				buffer = 0;
-			}
+		// Make sure the arrays are of the same size
+		Resize(other.buffer->numElements);
 
-			// Copy all elements from the other array
-			CreateBuffer(&buffer, other.buffer->numElements);
-			if( buffer )
-				CopyBuffer(buffer, other.buffer);
-		}
+		// Copy the value of each element
+		CopyBuffer(buffer, other.buffer);
 	}
 
 	return *this;
