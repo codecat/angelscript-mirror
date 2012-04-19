@@ -42,21 +42,27 @@
 
 BEGIN_AS_NAMESPACE
 
-// Singleton
-static asCThreadManager *threadManager = 0;
-static DECLARECRITICALSECTION(criticalSection)
-
 //======================================================================
 
 extern "C"
 {
 
+// Global API function
 AS_API int asThreadCleanup()
 {
 	return asCThreadManager::CleanupLocalData();
 }
 
 }
+
+//=======================================================================
+
+// Singleton
+static asCThreadManager *threadManager = 0;
+
+#ifndef AS_NO_THREADS
+static DECLARECRITICALSECTION(criticalSection)
+#endif
 
 //======================================================================
 
