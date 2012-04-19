@@ -44,6 +44,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Removed unnecessary ADDREF to object pointer in some class methods
 <li>For loop has been rearranged to avoid one JMP instruction
 <li>Context writes messages to callback if application does something wrong with Prepare or Execute.
+<li>Improved thread safety of the thread manager when multiple threads create separate engines (Thanks Carsten Orthbandt)
 </ul>
 <li>Virtual machine
 <ul>

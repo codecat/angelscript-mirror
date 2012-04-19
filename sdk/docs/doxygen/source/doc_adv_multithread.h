@@ -30,6 +30,9 @@ Even if you don't want or can't use multithreading, you can still write applicat
  - Resources that are shared by script modules such as registered properties and objects must be protected 
    by the application for simultaneous access, as the script engine doesn't do this automatically.
 
+ - Many of the add-ons are not thread safe. Either create your own or make sure you review the add-ons you 
+   wish to use to guarantee thread safety.
+
 \section doc_adv_fibers Fibers
 
 AngelScript can be used with fibers as well. However, as fibers are not real threads you need to be careful

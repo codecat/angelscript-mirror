@@ -383,13 +383,7 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 asCScriptEngine::asCScriptEngine() 
 {
-	// Instanciate the thread manager
-	ENTERCRITICALSECTION(engineCritical);
-	if( threadManager == 0 )
-		threadManager = asNEW(asCThreadManager);
-	else
-		threadManager->AddRef();
-	LEAVECRITICALSECTION(engineCritical);
+	asCThreadManager::AddRef();
 
 	// Engine properties
 	{
@@ -671,8 +665,7 @@ asCScriptEngine::~asCScriptEngine()
 	if( userData && cleanEngineFunc )
 		cleanEngineFunc(this);
 
-	// Release the thread manager
-	threadManager->Release();
+	asCThreadManager::Release();
 }
 
 // interface
@@ -3609,8 +3602,7 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, bool includeNamespac
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
-	asASSERT(threadManager);
-	asCString *tempString = &threadManager->GetLocalData()->string;
+	asCString *tempString = &asCThreadManager::GetLocalData()->string;
 	*tempString = dt.Format(includeNamespace);
 
 	return tempString->AddressOf();

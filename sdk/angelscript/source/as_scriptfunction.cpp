@@ -489,8 +489,7 @@ const char *asCScriptFunction::GetVarDecl(asUINT index) const
 	if( index >= variables.GetLength() )
 		return 0;
 
-	asASSERT(threadManager);
-	asCString *tempString = &threadManager->GetLocalData()->string;
+	asCString *tempString = &asCThreadManager::GetLocalData()->string;
 	*tempString = variables[index]->type.Format();
 	*tempString += " " + variables[index]->name;
 
@@ -848,8 +847,7 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 // interface
 const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace) const
 {
-	asASSERT(threadManager);
-	asCString *tempString = &threadManager->GetLocalData()->string;
+	asCString *tempString = &asCThreadManager::GetLocalData()->string;
 	*tempString = GetDeclarationStr(includeObjectName, includeNamespace);
 	return tempString->AddressOf();
 }

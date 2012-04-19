@@ -137,8 +137,7 @@ public:
 
 AS_API asIScriptContext *asGetActiveContext()
 {
-	asASSERT(threadManager);
-	asCThreadLocalData *tld = threadManager->GetLocalData();
+	asCThreadLocalData *tld = asCThreadManager::GetLocalData();
 	if( tld->activeContexts.GetLength() == 0 )
 		return 0;
 	return tld->activeContexts[tld->activeContexts.GetLength()-1];
@@ -146,15 +145,13 @@ AS_API asIScriptContext *asGetActiveContext()
 
 void asPushActiveContext(asIScriptContext *ctx)
 {
-	asASSERT(threadManager);
-	asCThreadLocalData *tld = threadManager->GetLocalData();
+	asCThreadLocalData *tld = asCThreadManager::GetLocalData();
 	tld->activeContexts.PushLast(ctx);
 }
 
 void asPopActiveContext(asIScriptContext *ctx)
 {
-	asASSERT(threadManager);
-	asCThreadLocalData *tld = threadManager->GetLocalData();
+	asCThreadLocalData *tld = asCThreadManager::GetLocalData();
 
 	asASSERT(tld->activeContexts.GetLength() > 0);
 	asASSERT(tld->activeContexts[tld->activeContexts.GetLength()-1] == ctx);

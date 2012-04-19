@@ -20,7 +20,11 @@
 // Declaration
 //
 
+#ifndef ANGELSCRIPT_H 
+// Avoid having to inform include path if header is already include before
 #include <angelscript.h>
+#endif
+
 
 #if defined(_MSC_VER) && _MSC_VER <= 1200 
 // disable the annoying warnings on MSVC 6

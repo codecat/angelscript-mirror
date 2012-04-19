@@ -413,6 +413,26 @@ bool Test()
 		engine->Release();
 	}
 
+	// Registering an object property with invalid declaration
+	// http://www.gamedev.net/topic/623515-reference-object-with-properties/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		r = engine->RegisterObjectType("Npc", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectProperty("Npc", "unsigned int hp",  0); assert( r < 0 );
+
+		// TODO: The 'Failed in call' message should show the return code too (and if possible the symbolic name, i.e. asINVALID_DECL)
+		if( bout.buffer != "Property (1, 10) : Error   : Expected identifier\n"
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'Npc' and 'unsigned int hp'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// TODO:
 	// What about asOBJ_NOHANDLE and asEP_ALLOW_UNSAFE_REFERENCES? Should it allow &inout?
 
