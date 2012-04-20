@@ -72,7 +72,6 @@ BEGIN_AS_NAMESPACE
 #define _S(x) _TOSTRING(x)
 #define _TOSTRING(x) #x
 
-typedef asQWORD (*t_CallCDeclQW)(const asDWORD *, int, asFUNCTION_t);
 typedef asQWORD (*t_CallCDeclQWObj)(void *obj, const asDWORD *, int, asFUNCTION_t);
 typedef asDWORD (*t_CallCDeclRetByRef)(const asDWORD *, int, asFUNCTION_t, void *);
 typedef asDWORD (*t_CallCDeclObjRetByRef)(void *obj, const asDWORD *, int, asFUNCTION_t, void *);
@@ -81,7 +80,7 @@ typedef asQWORD (*t_CallThisCallQW)(const void *, const asDWORD *, int, asFUNCTI
 typedef asDWORD (*t_CallThisCallRetByRef)(const void *, const asDWORD *, int, asFUNCTION_t, void *);
 
 // Prototypes
-void CallCDeclFunction(const asDWORD *args, int paramSize, asFUNCTION_t func);
+asQWORD CallCDeclFunction(const asDWORD *args, int paramSize, asFUNCTION_t func);
 void CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func);
 void CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func);
 void CallCDeclFunctionRetByRef_impl(const asDWORD *args, int paramSize, asFUNCTION_t func, void *retPtr);
@@ -92,7 +91,6 @@ void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, a
 void CallThisCallFunctionRetByRef_impl(const void *, const asDWORD *, int, asFUNCTION_t, void *retPtr);
 
 // Initialize function pointers
-const t_CallCDeclQW CallCDeclFunctionQWord = (t_CallCDeclQW)CallCDeclFunction;
 const t_CallCDeclQWObj CallCDeclFunctionQWordObjLast = (t_CallCDeclQWObj)CallCDeclFunctionObjLast;
 const t_CallCDeclQWObj CallCDeclFunctionQWordObjFirst = (t_CallCDeclQWObj)CallCDeclFunctionObjFirst;
 const t_CallCDeclRetByRef CallCDeclFunctionRetByRef = (t_CallCDeclRetByRef)CallCDeclFunctionRetByRef_impl;
@@ -168,7 +166,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	switch( callConv )
 	{
 	case ICC_CDECL:
-		retQW = CallCDeclFunctionQWord(args, paramSize<<2, func);
+		retQW = CallCDeclFunction(args, paramSize<<2, func);
 		break;
 
 	case ICC_CDECL_RETURNINMEM:
@@ -257,8 +255,10 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 #endif
 
 
-void NOINLINE CallCDeclFunction(const asDWORD *args, int paramSize, asFUNCTION_t func)
+asQWORD NOINLINE CallCDeclFunction(const asDWORD *args, int paramSize, asFUNCTION_t func)
 {
+	volatile asQWORD retQW;
+
 #if defined ASM_INTEL
 
 	// Copy the data to the real stack. If we fail to do
@@ -291,10 +291,13 @@ endcopy:
 		// Pop arguments from stack
 		add  esp, paramSize
 
+		// Copy return value from EAX:EDX
+		lea  ecx, retQW
+		mov  [ecx], eax
+		mov  4[ecx], edx
+
 		// Restore registers
 		pop  ecx
-
-		// return value in EAX or EAX:EDX
 	}
 
 #elif defined ASM_AT_N_T
@@ -329,6 +332,7 @@ endcopy:
 		"subl  %%ecx, %%esp     \n"
 		"pushl %%eax            \n" // Store the original stack pointer
 
+		// Copy all arguments to the stack and call the function
 		"movl  4(%%ebx), %%ecx  \n" // paramSize
 		"movl  0(%%ebx), %%eax  \n" // args
 		"addl  %%ecx, %%eax     \n" // push arguments on the stack
@@ -342,16 +346,24 @@ endcopy:
 		"endcopy:               \n"
 		"call  *8(%%ebx)        \n"
 		"addl  4(%%ebx), %%esp  \n" // pop arguments
-		
+
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
+
+		// Copy EAX:EDX to retQW. As the stack pointer has been 
+		// restored it is now safe to access the local variable
+		"movl  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
-		: "d"(a)                    // input - pass pointer of args in edx
+		: "d"(a), "m"(&retQW)       // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
 		);
 
 #endif
+
+	return retQW;
 }
 
 void NOINLINE CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func)
