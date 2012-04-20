@@ -144,7 +144,10 @@ int asCThreadManager::CleanupLocalData()
 	ENTERCRITICALSECTION(criticalSection);
 
 	if( threadManager == 0 )
+	{
+		LEAVECRITICALSECTION(criticalSection);
 		return 0;
+	}
 
 	asSMapNode<asPWORD,asCThreadLocalData*> *cursor = 0;
 	if( threadManager->tldMap.MoveTo(&cursor, id) )
@@ -216,7 +219,10 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 	asASSERT(threadManager);
 
 	if( threadManager == 0 )
+	{
+		LEAVECRITICALSECTION(criticalSection);
 		return 0;
+	}
 
 	asCThreadLocalData *tld = threadManager->GetLocalData(id);
 	if( tld == 0 )
