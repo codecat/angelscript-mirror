@@ -353,11 +353,11 @@ endcopy:
 
 		// Copy EAX:EDX to retQW. As the stack pointer has been 
 		// restored it is now safe to access the local variable
-		"movl  %1, %%ecx        \n"
+		"leal  %1, %%ecx        \n"
 		"movl  %%eax, 0(%%ecx)  \n"
 		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
-		: "d"(a), "m"(&retQW)       // input - pass pointer of args in edx, pass pointer of retQW in memory argument
+		: "d"(a), "m"(retQW)       // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
 		);
 
