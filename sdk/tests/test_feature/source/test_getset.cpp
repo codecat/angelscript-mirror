@@ -844,6 +844,38 @@ bool Test()
 
 	engine->Release();
 
+
+	// Test private property accessors
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		const char *script = 
+			"class TestClass \n"
+			"{ \n"
+			"        private int MyProp \n"
+			"        { \n"
+			"                get { return 1; } \n"
+			"        } \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		int typeId = mod->GetTypeIdByDecl("TestClass");
+		asIObjectType *type = engine->GetObjectTypeById(typeId);
+		if( type->GetMethodCount() != 1 )
+			TEST_FAILED;
+		asIScriptFunction *func = type->GetMethodByDecl("int get_MyProp()");
+		if( func == 0 || !func->IsPrivate() )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test property accessor on temporary object handle
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
