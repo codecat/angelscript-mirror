@@ -72,10 +72,6 @@ BEGIN_AS_NAMESPACE
 #define _S(x) _TOSTRING(x)
 #define _TOSTRING(x) #x
 
-typedef asQWORD (*t_CallSTDCallQW)(const asDWORD *, int, asFUNCTION_t);
-typedef asQWORD (*t_CallThisCallQW)(const void *, const asDWORD *, int, asFUNCTION_t);
-typedef asDWORD (*t_CallThisCallRetByRef)(const void *, const asDWORD *, int, asFUNCTION_t, void *);
-
 // Prototypes
 asQWORD CallCDeclFunction(const asDWORD *args, int paramSize, asFUNCTION_t func);
 asQWORD CallCDeclFunctionObjLast(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func);
@@ -83,14 +79,9 @@ asQWORD CallCDeclFunctionObjFirst(const void *obj, const asDWORD *args, int para
 asQWORD CallCDeclFunctionRetByRef(const asDWORD *args, int paramSize, asFUNCTION_t func, void *retPtr);
 asQWORD CallCDeclFunctionRetByRefObjLast(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func, void *retPtr);
 asQWORD CallCDeclFunctionRetByRefObjFirst(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func, void *retPtr);
-void CallSTDCallFunction(const asDWORD *args, int paramSize, asFUNCTION_t func);
-void CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func);
-void CallThisCallFunctionRetByRef_impl(const void *, const asDWORD *, int, asFUNCTION_t, void *retPtr);
-
-// Initialize function pointers
-const t_CallSTDCallQW CallSTDCallFunctionQWord = (t_CallSTDCallQW)CallSTDCallFunction;
-const t_CallThisCallQW CallThisCallFunctionQWord = (t_CallThisCallQW)CallThisCallFunction;
-const t_CallThisCallRetByRef CallThisCallFunctionRetByRef = (t_CallThisCallRetByRef)CallThisCallFunctionRetByRef_impl;
+asQWORD CallSTDCallFunction(const asDWORD *args, int paramSize, asFUNCTION_t func);
+asQWORD CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func);
+asQWORD CallThisCallFunctionRetByRef(const void *, const asDWORD *, int, asFUNCTION_t, void *retPtr);
 
 asDWORD GetReturnedFloat();
 asQWORD GetReturnedDouble();
@@ -163,7 +154,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		break;
 
 	case ICC_STDCALL:
-		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, func);
+		retQW = CallSTDCallFunction(args, paramSize<<2, func);
 		break;
 
 	case ICC_STDCALL_RETURNINMEM:
@@ -172,11 +163,11 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		args--;
 		*(asPWORD*)args = (size_t)retPointer;
 
-		retQW = CallSTDCallFunctionQWord(args, paramSize<<2, func);
+		retQW = CallSTDCallFunction(args, paramSize<<2, func);
 		break;
 
 	case ICC_THISCALL:
-		retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, func);
+		retQW = CallThisCallFunction(obj, args, paramSize<<2, func);
 		break;
 
 	case ICC_THISCALL_RETURNINMEM:
@@ -187,7 +178,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		{
 			// Get virtual function table from the object pointer
 			asFUNCTION_t *vftable = *(asFUNCTION_t**)obj;
-			retQW = CallThisCallFunctionQWord(obj, args, paramSize<<2, vftable[FuncPtrToUInt(func)>>2]);
+			retQW = CallThisCallFunction(obj, args, paramSize<<2, vftable[FuncPtrToUInt(func)>>2]);
 		}
 		break;
 
@@ -910,8 +901,10 @@ endcopy:
 	return retQW;
 }
 
-void NOINLINE CallSTDCallFunction(const asDWORD *args, int paramSize, asFUNCTION_t func)
+asQWORD NOINLINE CallSTDCallFunction(const asDWORD *args, int paramSize, asFUNCTION_t func)
 {
+	volatile asQWORD retQW;
+
 #if defined ASM_INTEL
 
 	// Copy the data to the real stack. If we fail to do
@@ -943,10 +936,13 @@ endcopy:
 
 		// The callee already removed parameters from the stack
 
+		// Copy return value from EAX:EDX
+		lea  ecx, retQW
+		mov  [ecx], eax
+		mov  4[ecx], edx
+
 		// Restore registers
 		pop  ecx
-
-		// return value in EAX or EAX:EDX
 	}
 
 #elif defined ASM_AT_N_T
@@ -986,17 +982,27 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
-		:                          // output
-		: "d"(a)                   // input - pass pointer of args in edx
-		: "%eax", "%ecx"           // clobber 
+
+		// Copy EAX:EDX to retQW. As the stack pointer has been 
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
+		:                           // output
+		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
+		: "%eax", "%ecx"            // clobber
 		);
 
 #endif
+
+	return retQW;
 }
 
 
-void NOINLINE CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func)
+asQWORD NOINLINE CallThisCallFunction(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func)
 {
+	volatile asQWORD retQW;
+
 #if defined ASM_INTEL
 
 	// Copy the data to the real stack. If we fail to do
@@ -1043,10 +1049,13 @@ endcopy:
 #endif
 #endif
 
+		// Copy return value from EAX:EDX
+		lea  ecx, retQW
+		mov  [ecx], eax
+		mov  4[ecx], edx
+
 		// Restore registers
 		pop  ecx
-
-		// Return value in EAX or EAX:EDX
 	}
 
 #elif defined ASM_AT_N_T
@@ -1090,16 +1099,26 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
-		:                          // output
-		: "d"(a)                   // input - pass pointer of obj in edx
-		: "%eax", "%ecx"           // clobber 
+
+		// Copy EAX:EDX to retQW. As the stack pointer has been 
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
+		:                           // output
+		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
+		: "%eax", "%ecx"            // clobber
 		);
 
 #endif
+
+	return retQW;
 }
 
-void NOINLINE CallThisCallFunctionRetByRef_impl(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func, void *retPtr)
+asQWORD NOINLINE CallThisCallFunctionRetByRef(const void *obj, const asDWORD *args, int paramSize, asFUNCTION_t func, void *retPtr)
 {
+	volatile asQWORD retQW;
+
 #if defined ASM_INTEL
 
 	// Copy the data to the real stack. If we fail to do
@@ -1154,10 +1173,13 @@ endcopy:
 #endif
 #endif
 
+		// Copy return value from EAX:EDX
+		lea  ecx, retQW
+		mov  [ecx], eax
+		mov  4[ecx], edx
+
 		// Restore registers
 		pop  ecx
-
-		// Return value in EAX or EAX:EDX
 	}
 
 #elif defined ASM_AT_N_T
@@ -1205,12 +1227,20 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp           \n"
 		"popl  %%ebx           \n" 
-		:                          // output
-		: "d"(a)                   // input - pass pointer of obj in edx
-		: "%eax", "%ecx"           // clobber 
+
+		// Copy EAX:EDX to retQW. As the stack pointer has been 
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
+		:                           // output
+		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
+		: "%eax", "%ecx"            // clobber
 		);
 
 #endif
+
+	return retQW;
 }
 
 asDWORD GetReturnedFloat()
