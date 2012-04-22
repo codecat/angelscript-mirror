@@ -66,28 +66,7 @@ typedef asQWORD ( *funcptr_t )( void );
 		: "%rax"                                 \
 	)
 
-#define ASM_GET_REG( name, dest )                \
-	__asm__ __volatile__ (                       \
-		"movq %" name ", %0\n"                   \
-		:                                        \
-		: "m" ( dest )                           \
-		: name                                   \
-	)
-
-static void __attribute__((noinline)) GetReturnedXmm0Xmm1(asQWORD &a, asQWORD &b)
-{
-	__asm__ __volatile__ (
-		"lea     %0, %%rax\n"
-		"movq  %%xmm0, (%%rax)\n"
-		"lea     %1, %%rdx\n"
-		"movq  %%xmm1, (%%rdx)\n" 
-		: // no optput
-		: "m" (a), "m" (b)
-		: "%rax", "%rdx", "%xmm0", "%xmm1"
-	);
-}
-
-static asQWORD __attribute__((noinline)) X64_CallFunction( const asQWORD *args, int cnt, funcptr_t func ) 
+static asQWORD __attribute__((noinline)) X64_CallFunction(const asQWORD *args, int cnt, funcptr_t func, asQWORD &retQW2, bool returnFloat) 
 {
 	asQWORD   retval;
 	funcptr_t call    = func;
@@ -141,6 +120,28 @@ static asQWORD __attribute__((noinline)) X64_CallFunction( const asQWORD *args, 
 
 	// Restore the stack pointer
 	__asm__ __volatile__ ("  mov %%r15, %%rsp \n" : : : "%r15", "%rsp");
+
+	if( !returnFloat )
+	{
+		// Retrieve the value of the RDX register for return values larger than 64bits
+		__asm__ __volatile__ (                       
+			"movq %%rdx, %0\n"                   
+			:                                        
+			: "m"(retQW2)                           
+			: "%rdx" );
+	}
+	else
+	{
+		// If the return is a float value we need to get the value from the FP register
+		__asm__ __volatile__ (
+			"lea     %0, %%rax\n"
+			"movq  %%xmm0, (%%rax)\n"
+			"lea     %1, %%rdx\n"
+			"movq  %%xmm1, (%%rdx)\n" 
+			: // no optput
+			: "m" (retval), "m" (retQW2)
+			: "%rax", "%rdx", "%xmm0", "%xmm1");
+	}
 
 	return retval;
 }
@@ -394,12 +395,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		}
 	}
 
-	retQW = X64_CallFunction( tempBuff, used_stack_args, func );
-	ASM_GET_REG( "%rdx", retQW2 );
-
-	// If the return is a float value we need to get the value from the FP register
-	if( sysFunc->hostReturnFloat )
-		GetReturnedXmm0Xmm1(retQW, retQW2);
+	retQW = X64_CallFunction( tempBuff, used_stack_args, func, retQW2, sysFunc->hostReturnFloat );
 
 	return retQW;
 }
