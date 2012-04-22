@@ -19,6 +19,18 @@
 
 #include <map>
 
+// Sometimes it may be desired to use the same method names as used by C++ STL.
+// This may for example reduce time when converting code from script to C++ or
+// back.
+//
+//  0 = off
+//  1 = on
+
+#ifndef AS_USE_STLNAMES
+#define AS_USE_STLNAMES 0
+#endif
+
+
 BEGIN_AS_NAMESPACE
 
 class CScriptArray;

@@ -493,12 +493,23 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint base = 10, uint &out byteCount = 0)", asFUNCTION(parseInt), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("double parseFloat(const string &in, uint &out byteCount = 0)", asFUNCTION(parseFloat), asCALL_CDECL); assert(r >= 0);
 
+#if AS_USE_STLNAMES == 1
+	// Same as length
+	r = engine->RegisterObjectMethod("string", "uint size() const", asFUNCTION(StringLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	// Same as isEmpty
+	r = engine->RegisterObjectMethod("string", "bool empty() const", asMETHOD(string, empty), asCALL_THISCALL); assert( r >= 0 );
+	// Same as findFirst
+	r = engine->RegisterObjectMethod("string", "int find(const string &in, uint start = 0) const", asFUNCTION(StringFindFirst), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	// Same as findLast
+	r = engine->RegisterObjectMethod("string", "int rfind(const string &in, int start = -1) const", asFUNCTION(StringFindLast), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+#endif
+
 	// TODO: Implement the following
 	// findFirstOf
 	// findLastOf
 	// findFirstNotOf
 	// findLastNotOf
-	// replace - replaces a text found in the string
+	// findAndReplace - replaces a text found in the string
 	// replaceRange - replaces a range of bytes in the string
 	// trim/trimLeft/trimRight
 	// multiply/times/opMul/opMul_r - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
