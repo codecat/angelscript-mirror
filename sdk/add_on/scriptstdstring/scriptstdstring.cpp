@@ -11,12 +11,14 @@ using namespace std;
 
 BEGIN_AS_NAMESPACE
 
+#if AS_USE_STRINGPOOL == 1
 // By keeping the literal strings in a pool the application
 // performance is improved as there are less string copies created.
 // In case the AngelScript engine is recreated the memory pool
 // will be cleaned out by RegisterStdString to avoid errors as
 // AngelScript may reuse pointers for different string values.
 // TODO: make thread-safe
+// TODO: make it work with multiple engine instances
 // TODO: runtime optimize: Use unordered_map if C++11 is supported, i.e. MSVC10+, gcc 4.?+
 static map<const char *, string> g_pool;
 static const string &StringFactory(asUINT length, const char *s)
@@ -32,6 +34,12 @@ static const string &StringFactory(asUINT length, const char *s)
 	it = g_pool.find(s);
 	return it->second;
 }
+#else
+static string StringFactory(asUINT length, const char *s)
+{
+	return string(s, length);
+}
+#endif
 
 static void ConstructString(string *thisPointer)
 {
@@ -416,14 +424,20 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 {
 	int r;
 
-	// Clean the memory pool
-	g_pool.clear();
 
 	// Register the string type
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 
+#if AS_USE_STRINGPOOL == 1
+	// Clean the memory pool
+	g_pool.clear();
+
 	// Register the string factory
 	r = engine->RegisterStringFactory("const string &", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
+#else
+	// Register the string factory
+	r = engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
+#endif
 
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -490,11 +504,23 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	// multiply/times/opMul/opMul_r - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
 }
 
+#if AS_USE_STRINGPOOL == 1
 static void StringFactoryGeneric(asIScriptGeneric *gen) {
   asUINT length = gen->GetArgDWord(0);
   const char *s = (const char*)gen->GetArgAddress(1);
+
+  // Return a reference to a string
   gen->SetReturnAddress(const_cast<string*>(&StringFactory(length, s)));
 }
+#else
+static void StringFactoryGeneric(asIScriptGeneric *gen) {
+  asUINT length = gen->GetArgDWord(0);
+  const char *s = (const char*)gen->GetArgAddress(1);
+
+  // Return a string value
+  new (gen->GetAddressOfReturnLocation()) string(StringFactory(length, s));
+}
+#endif
 
 static void ConstructStringGeneric(asIScriptGeneric * gen) {
   new (gen->GetObject()) string();
@@ -736,14 +762,20 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 {
 	int r;
 
-	// Clean the memory pool
-	g_pool.clear();
 
 	// Register the string type
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 
+#if AS_USE_STRINGPOOL == 1
+	// Clean the memory pool
+	g_pool.clear();
+
 	// Register the string factory
 	r = engine->RegisterStringFactory("const string &", asFUNCTION(StringFactoryGeneric), asCALL_GENERIC); assert( r >= 0 );
+#else
+	// Register the string factory
+	r = engine->RegisterStringFactory("string", asFUNCTION(StringFactoryGeneric), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );

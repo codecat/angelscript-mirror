@@ -18,6 +18,23 @@
 
 #include <string>
 
+//---------------------------
+// Compilation settings
+//
+
+// The use of the string pool can improve performance quite drastically
+// for scripts that work with a lot of literal string constants. However,
+// the string pool doesn't currently work with multithreading or if
+// multiple engines are in use at the same time. For this reason the 
+// string pool is turned off by default.
+//
+//  0 = off
+//  1 = on
+
+#ifndef AS_USE_STRINGPOOL
+#define AS_USE_STRINGPOOL 0
+#endif
+
 BEGIN_AS_NAMESPACE
 
 void RegisterStdString(asIScriptEngine *engine);
