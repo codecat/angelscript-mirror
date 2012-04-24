@@ -382,6 +382,47 @@ bool Test()
 		engine->Release();
 	}
 
+	// http://www.gamedev.net/topic/623880-crash-after-get-property-of-null-class-in-function/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = 
+			"class BugClass \n"
+			"{ \n"
+			"         int ID; \n"
+			"} \n"
+			"void CallBug( BugClass @bc ) \n"
+			"{ \n"
+			"         int id = bc.ID; \n"
+			"} \n"
+			"void startGame() \n"
+			"{ \n"
+			"         CallBug( null ); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "startGame()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION || string(ctx->GetExceptionString()) != "Null pointer access" || string(ctx->GetExceptionFunction()->GetName()) != "CallBug" )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";
