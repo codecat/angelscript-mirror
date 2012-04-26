@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.23.1 WIP - 2012/04/22</h2>
+<h2>Version 2.23.1 WIP - 2012/04/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when loading bytecode that contained shared classes in specific scenarios (Thanks TheAtom)
 <li>Fixed crash with native calling convention on 32bit Mac OS 10.7 with XCode 4.3 (Thanks Matt Bush)
 <li>Fixed crash with compiling private virtual property accessors (Thanks SadSingleton)
+<li>Fixed assert failure when compiling identity operator on non-handle operands (Thanks FDsagizi)
 </ul>
 <li>Script language
 <ul>
@@ -66,6 +67,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added Reserve() to the array add-on (Thanks Philip Bennefall)
 <li>The string pool is now turned off by default, since it is not threadsafe. Turn it on with AS_USE_STRINGPOOL=1
 <li>Array, string, and dictionary now register their methods using the names from STL if AS_USE_STLNAMES=1 is defined (Thanks Thomas Grip)
+<li>Corrected the syntax in autowrapper add-on to allow it to compile for Android (Thanks brumi)
 </ul>
 </ul>
 

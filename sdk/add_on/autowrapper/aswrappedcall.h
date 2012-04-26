@@ -551,18 +551,18 @@ struct Id {
 template <typename T>
 Id<T> id(T fn_ptr) { return Id<T>(); }
 
-#define WRAP_FN(name)             (::gw::id(name).f< name >())
-#define WRAP_MFN(ClassType, name) (::gw::id(&ClassType::name).f< &ClassType::name >())
-#define WRAP_OBJ_FIRST(name)      (::gw::id(name).of< name >())
-#define WRAP_OBJ_LAST(name)       (::gw::id(name).ol< name >())
+#define WRAP_FN(name)             (::gw::id(name).template f< name >())
+#define WRAP_MFN(ClassType, name) (::gw::id(&ClassType::name).template f< &ClassType::name >())
+#define WRAP_OBJ_FIRST(name)      (::gw::id(name).template of< name >())
+#define WRAP_OBJ_LAST(name)       (::gw::id(name).template ol< name >())
 
-#define WRAP_FN_PR(name, Parameters, ReturnType)             asFUNCTION((::gw::Wrapper<ReturnType (*)Parameters>::f< name >))
-#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType) asFUNCTION((::gw::Wrapper<ReturnType (ClassType::*)Parameters>::f< &ClassType::name >))
-#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)      asFUNCTION((::gw::ObjFirst<ReturnType (*)Parameters>::f< name >))
-#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)       asFUNCTION((::gw::ObjLast<ReturnType (*)Parameters>::f< name >))
+#define WRAP_FN_PR(name, Parameters, ReturnType)             asFUNCTION((::gw::template Wrapper<ReturnType (*)Parameters>::template f< name >))
+#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType) asFUNCTION((::gw::template Wrapper<ReturnType (ClassType::*)Parameters>::template f< &ClassType::name >))
+#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)      asFUNCTION((::gw::template ObjFirst<ReturnType (*)Parameters>::template f< name >))
+#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)       asFUNCTION((::gw::template ObjLast<ReturnType (*)Parameters>::template f< name >))
 
-#define WRAP_CON(ClassType, Parameters) asFUNCTION((::gw::Constructor<ClassType Parameters>::f))
-#define WRAP_DES(ClassType)             asFUNCTION((::gw::destroy<ClassType>))
+#define WRAP_CON(ClassType, Parameters) asFUNCTION((::gw::template Constructor<ClassType Parameters>::f))
+#define WRAP_DES(ClassType)             asFUNCTION((::gw::template destroy<ClassType>))
 
 } // end namespace gw
 

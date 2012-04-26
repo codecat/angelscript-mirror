@@ -382,6 +382,41 @@ bool Test()
 		engine->Release();
 	}
 
+	// http://www.gamedev.net/topic/623846-asccompiler-with-out-asasserts-in-debug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script = 
+			"class AAA \n"
+			"{ \n"
+			"  Car @car; \n"
+			"  void Update() \n"
+			"  { \n"
+			"    if( car !is null ) \n"
+			"      car.Update(); \n"
+			"  } \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "TestCompiler (3, 3) : Error   : Identifier 'Car' is not a data type\n"
+						   "TestCompiler (4, 3) : Info    : Compiling void AAA::Update()\n"
+						   "TestCompiler (6, 13) : Error   : Both operands must be handles when comparing identity\n"
+						   "TestCompiler (7, 10) : Error   : Illegal operation on 'int&'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// http://www.gamedev.net/topic/623880-crash-after-get-property-of-null-class-in-function/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
