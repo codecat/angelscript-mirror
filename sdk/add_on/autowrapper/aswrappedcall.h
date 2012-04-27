@@ -551,18 +551,28 @@ struct Id {
 template <typename T>
 Id<T> id(T fn_ptr) { return Id<T>(); }
 
-#define WRAP_FN(name)             (::gw::id(name).template f< name >())
-#define WRAP_MFN(ClassType, name) (::gw::id(&ClassType::name).template f< &ClassType::name >())
-#define WRAP_OBJ_FIRST(name)      (::gw::id(name).template of< name >())
-#define WRAP_OBJ_LAST(name)       (::gw::id(name).template ol< name >())
+// On Android it is necessary to use the template keyword as disambiguator
+// but on GNUC for example it is prohibited. On MSVC it works either way.
+// We need to write compiler specific code here.
+#if defined(ANDROID)
+#define TMPL template
+#else
+#define TMPL
+#endif
 
-#define WRAP_FN_PR(name, Parameters, ReturnType)             asFUNCTION((::gw::template Wrapper<ReturnType (*)Parameters>::template f< name >))
-#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType) asFUNCTION((::gw::template Wrapper<ReturnType (ClassType::*)Parameters>::template f< &ClassType::name >))
-#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)      asFUNCTION((::gw::template ObjFirst<ReturnType (*)Parameters>::template f< name >))
-#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)       asFUNCTION((::gw::template ObjLast<ReturnType (*)Parameters>::template f< name >))
+#define WRAP_FN(name)             (::gw::id(name).TMPL f< name >())
+#define WRAP_MFN(ClassType, name) (::gw::id(&ClassType::name).TMPL f< &ClassType::name >())
+#define WRAP_OBJ_FIRST(name)      (::gw::id(name).TMPL of< name >())
+#define WRAP_OBJ_LAST(name)       (::gw::id(name).TMPL ol< name >())
 
-#define WRAP_CON(ClassType, Parameters) asFUNCTION((::gw::template Constructor<ClassType Parameters>::f))
-#define WRAP_DES(ClassType)             asFUNCTION((::gw::template destroy<ClassType>))
+#define WRAP_FN_PR(name, Parameters, ReturnType)             asFUNCTION((::gw::Wrapper<ReturnType (*)Parameters>::TMPL f< name >))
+#define WRAP_MFN_PR(ClassType, name, Parameters, ReturnType) asFUNCTION((::gw::Wrapper<ReturnType (ClassType::*)Parameters>::TMPL f< &ClassType::name >))
+#define WRAP_OBJ_FIRST_PR(name, Parameters, ReturnType)      asFUNCTION((::gw::ObjFirst<ReturnType (*)Parameters>::TMPL f< name >))
+#define WRAP_OBJ_LAST_PR(name, Parameters, ReturnType)       asFUNCTION((::gw::ObjLast<ReturnType (*)Parameters>::TMPL f< name >))
+
+#define WRAP_CON(ClassType, Parameters) asFUNCTION((::gw::Constructor<ClassType Parameters>::f))
+#define WRAP_DES(ClassType)             asFUNCTION((::gw::destroy<ClassType>))
+
 
 } // end namespace gw
 
