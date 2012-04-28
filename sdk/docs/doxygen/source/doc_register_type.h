@@ -281,8 +281,43 @@ The memory management behaviours are described with the registeration of registe
 
 Other advanced behaviours are described with the \ref doc_advanced_api "advanced types".
 
-Only a few operators have special behaviours for them, the other operators are registered as 
-ordinary \ref doc_script_class_ops "class methods with predefined names".
+Most behaviours are implemented as ordinary class methods, except with specific names that the 
+compiler can understand.
+
+\section doc_reg_opbeh_1 Operator overloads
+
+In AngelScript all operator overloads are implemented as \ref doc_script_class_ops "class methods with predefined names", 
+which is different from C++ where both class methods and global functions may be used. Especially the dual operators, i.e.
+those that take two operands, usually has one implemented as a class method, and a global function for the reverse order.
+
+Two register C++ operator overloads you'll use the methods described in \ref doc_register_func_1.
+
+Example on how to register operator overloads
+
+\code
+class MyClass
+{
+  ...
+
+  // The operator 'MyClass - int' has been implemented as a method
+  MyClass operator-(int) const;
+
+  // The operator 'int - MyClass' has been implemented as a global function
+  static MyClass operator-(int, const MyClass &);
+}
+
+void RegisterMyClass(asIScriptEngine *engine)
+{
+  // Registering the operator 'MyClass - int'
+  engine->RegisterObjectMethod("MyClass", "MyClass opSub(int) const", asMETHODPR(MyClass, operator-, (int) const, MyClass), asCALL_THISCALL); 
+
+  // Registering the operator 'int - MyClass'
+  engine->RegisterObjectMethod("MyClass", "MyClass opSub_r(int) const", asFUNCTIONPR(operator-, (int, const MyClass &), MyClass), asCALL_CDECL_OBJLAST);
+}
+\endcode
+
+
+
 
 \section doc_reg_opbeh_2 Value cast operators
 
