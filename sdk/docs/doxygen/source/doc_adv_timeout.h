@@ -10,7 +10,7 @@ ways to do so.
 
 The line callback feature can be used to perform some special treatment 
 during execution of the scripts. The callback is called for every script 
-statement, which for example makes it possible to verify if the script has  
+statement, which makes it possible to verify if the script has  
 executed for too long time and if so suspend the execution to be resumed at
 a later time.
 
@@ -45,6 +45,10 @@ void LineCallback(asIScriptContext *ctx, DWORD *timeOut)
 
 Take a look at the sample \ref doc_samples_events to 
 see this working.
+
+Observe that if the script is compiled with \ref asEP_BUILD_WITHOUT_LINE_CUES, the line
+callback will be invoked less frequently, though it is guaranteed to be invoked at least
+for every loop or function call.
 
 \section doc_adv_timeout_2 With a secondary thread
 

@@ -315,6 +315,10 @@ array types that are most commonly used.
 The type is registered with <code>RegisterScriptArray(asIScriptEngine *engine, bool defaultArrayType)</code>. The second 
 parameter should be set to true if you wish to allow the syntax form <code>type[]</code> to declare arrays.
 
+Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register the methods with the same names as used by C++ STL where 
+the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent once are 
+so a port from script to C++ and vice versa might be easier if STL names are used.
+
 \section doc_addon_array_1 Public C++ interface
 
 \code
@@ -644,6 +648,14 @@ Register the type with <code>RegisterStdString(asIScriptEngine*)</code>. Registe
 split method and global join function with <code>RegisterStdStringUtils(asIScriptEngine*)</code>. 
 The optional functions require that the \ref doc_addon_array has been registered first.
 
+Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register the methods with the same names as used by C++ STL where 
+the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent once are 
+so a port from script to C++ and vice versa might be easier if STL names are used.
+
+A string pool has been implemented to improve the performance of std strings when the scripts use a lot of string literals. The string
+pool is not threadsafe though, nor does it work well if you use multiple script engine instances, so by default it is turned off. To use
+it you need to compile the add-on with the pre-processor define AS_USE_STRINGPOOL=1.
+
 \section doc_addon_std_string_1 Public C++ interface
 
 Refer to the <code>std::string</code> implementation for your compiler.
@@ -744,6 +756,10 @@ Refer to the <code>std::string</code> implementation for your compiler.
 The dictionary object maps string values to values or objects of other types. 
 
 Register with <code>RegisterScriptDictionary(asIScriptEngine*)</code>.
+
+Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register the methods with the same names as used by C++ STL where 
+the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent once are 
+so a port from script to C++ and vice versa might be easier if STL names are used.
 
 \section doc_addon_dict_1 Public C++ interface
 

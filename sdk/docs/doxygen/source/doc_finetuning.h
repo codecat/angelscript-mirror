@@ -71,7 +71,8 @@ then you may get a little more performance out of the script by compiling withou
 the line cues. 
 
 The line callback will still work and is guaranteed to be invoked at least once 
-per loop in the script to allow the application to interrupt infinite loops.
+per loop and every function call in the script to allow the application to interrupt 
+infinite loops or infinitely recursive calls.
 
 \code
 engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES);
