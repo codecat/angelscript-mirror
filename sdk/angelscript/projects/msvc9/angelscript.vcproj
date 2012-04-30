@@ -56,7 +56,6 @@
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="false"
 				RuntimeLibrary="1"
-				DisableLanguageExtensions="true"
 				RuntimeTypeInfo="false"
 				WarningLevel="4"
 				WarnAsError="true"

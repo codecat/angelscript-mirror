@@ -153,6 +153,15 @@ To compile this file it is necessary to configure a custom build command with th
 ml64.exe /c  /nologo /Fo$(OutDir)\as_callfunc_x64_msvc_asm.obj /W3 /Zi /Ta $(InputDir)\$(InputFileName)
 \endcode
 
+\subsection doc_compile_msvc_sdk Microsoft Visual C++
+
+While AngelScript doesn't use Microsoft's language extensions you may still face trouble compiling the library
+if you disable the language extensions. This is because Microsoft's own SDK may have code that relies on the 
+language extensions, e.g. in version 6.0a you might get compiler errors due to the existance of $ in the macro
+definitions in the specstrings.h header from the Platform SDK. This particular problem was fixed by Microsoft 
+in version 6.1 of their SDK, but there may be others so it might just easier to leave the language extensions
+turned on.
+
 \subsection doc_compile_gnuc GNUC based compilers
 
 In order to properly intergrate with C++ without the need for wrappers AngelScript uses a lot of pointer casts.
