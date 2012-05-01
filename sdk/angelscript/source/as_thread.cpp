@@ -61,7 +61,7 @@ AS_API int asThreadCleanup()
 static asCThreadManager *threadManager = 0;
 
 #ifndef AS_NO_THREADS
-static DECLARECRITICALSECTION(criticalSection)
+static DECLARECRITICALSECTION(g_criticalSection)
 #endif
 
 //======================================================================
@@ -81,14 +81,14 @@ void asCThreadManager::AddRef()
 	// It's necessary to protect this section to 
 	// avoid two threads attempting to create thread
 	// managers at the same time.
-	ENTERCRITICALSECTION(criticalSection);
+	ENTERCRITICALSECTION(g_criticalSection);
 
 	if( threadManager == 0 )
 		threadManager = asNEW(asCThreadManager);
 	else
 		threadManager->refCount++;
 
-	LEAVECRITICALSECTION(criticalSection);
+	LEAVECRITICALSECTION(g_criticalSection);
 }
 
 void asCThreadManager::Release()
@@ -96,7 +96,7 @@ void asCThreadManager::Release()
 	// It's necessary to protect this section so no
 	// other thread attempts to call AddRef or Release
 	// while clean up is in progress.
-	ENTERCRITICALSECTION(criticalSection);
+	ENTERCRITICALSECTION(g_criticalSection);
 	if( --threadManager->refCount == 0 )
 	{
 		// The last engine has been destroyed, so we 
@@ -104,7 +104,7 @@ void asCThreadManager::Release()
 		asDELETE(threadManager,asCThreadManager);
 		threadManager = 0;
 	}
-	LEAVECRITICALSECTION(criticalSection);
+	LEAVECRITICALSECTION(g_criticalSection);
 }
 
 asCThreadManager::~asCThreadManager()
@@ -141,11 +141,11 @@ int asCThreadManager::CleanupLocalData()
 	asPWORD id = (asPWORD)GetCurrentThreadId();
 #endif
 
-	ENTERCRITICALSECTION(criticalSection);
+	ENTERCRITICALSECTION(g_criticalSection);
 
 	if( threadManager == 0 )
 	{
-		LEAVECRITICALSECTION(criticalSection);
+		LEAVECRITICALSECTION(g_criticalSection);
 		return 0;
 	}
 
@@ -165,7 +165,7 @@ int asCThreadManager::CleanupLocalData()
 			r = asCONTEXT_ACTIVE;
 	}
 
-	LEAVECRITICALSECTION(criticalSection);
+	LEAVECRITICALSECTION(g_criticalSection);
 
 	return r;
 #else
@@ -214,13 +214,13 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 	asPWORD id = (asPWORD)GetCurrentThreadId();
 #endif
 
-	ENTERCRITICALSECTION(criticalSection);
+	ENTERCRITICALSECTION(g_criticalSection);
 
 	asASSERT(threadManager);
 
 	if( threadManager == 0 )
 	{
-		LEAVECRITICALSECTION(criticalSection);
+		LEAVECRITICALSECTION(g_criticalSection);
 		return 0;
 	}
 
@@ -232,7 +232,7 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 		threadManager->SetLocalData(id, tld);
 	}
 
-	LEAVECRITICALSECTION(criticalSection);
+	LEAVECRITICALSECTION(g_criticalSection);
 
 	return tld;
 #else
@@ -262,45 +262,45 @@ asCThreadLocalData::~asCThreadLocalData()
 asCThreadCriticalSection::asCThreadCriticalSection()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_init(&criticalSection, 0);
+	pthread_mutex_init(&m_criticalSection, 0);
 #elif defined AS_WINDOWS_THREADS
-	InitializeCriticalSection(&criticalSection);
+	InitializeCriticalSection(&m_criticalSection);
 #endif
 }
 
 asCThreadCriticalSection::~asCThreadCriticalSection()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_destroy(&criticalSection);
+	pthread_mutex_destroy(&m_criticalSection);
 #elif defined AS_WINDOWS_THREADS
-	DeleteCriticalSection(&criticalSection);
+	DeleteCriticalSection(&m_criticalSection);
 #endif
 }
 
 void asCThreadCriticalSection::Enter()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_lock(&criticalSection);
+	pthread_mutex_lock(&m_criticalSection);
 #elif defined AS_WINDOWS_THREADS
-	EnterCriticalSection(&criticalSection);
+	EnterCriticalSection(&m_criticalSection);
 #endif
 }
 
 void asCThreadCriticalSection::Leave()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_unlock(&criticalSection);
+	pthread_mutex_unlock(&m_criticalSection);
 #elif defined AS_WINDOWS_THREADS
-	LeaveCriticalSection(&criticalSection);
+	LeaveCriticalSection(&m_criticalSection);
 #endif
 }
 
 bool asCThreadCriticalSection::TryEnter()
 {
 #if defined AS_POSIX_THREADS
-	return !pthread_mutex_trylock(&criticalSection);
+	return !pthread_mutex_trylock(&m_criticalSection);
 #elif defined AS_WINDOWS_THREADS
-	return TryEnterCriticalSection(&criticalSection) ? true : false;
+	return TryEnterCriticalSection(&m_criticalSection) ? true : false;
 #else
 	return true;
 #endif

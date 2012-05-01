@@ -52,6 +52,8 @@ bool TestExecute()
 	p = ctx->SetUserData((void*)(size_t)0xDEADF00D); assert(p == 0);
 	engine->SetContextUserDataCleanupCallback(cleanContext);
 	called = false;
+	// Prepare the context, but don't execute the function. The clean-up should work properly
+	ctx->Prepare(engine->GetGlobalFunctionByDecl("void cfunction()"));
 	ctx->Release();
 	if( !called )
 		TEST_FAILED;

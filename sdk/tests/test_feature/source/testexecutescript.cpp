@@ -44,8 +44,14 @@ bool TestExecuteScript()
 		fail = ExecuteScript();
 	}
 
+	// Create a second engine before releasing the first
+	asIScriptEngine *en2 = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
 	engine->Release();
 	engine = NULL;
+
+	// Release the second engine after the first
+	en2->Release();
 
 	return fail;
 }

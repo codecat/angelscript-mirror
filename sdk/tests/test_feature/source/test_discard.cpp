@@ -45,6 +45,16 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
+	asIScriptContext *ctx = engine->CreateContext();
+	ctx->Prepare(mod->GetFunctionByDecl("void Test()"));
+	r = ctx->Execute();
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	// Prepare the context again, but don't execute it to see if the cleanup is proper
+	ctx->Prepare(mod->GetFunctionByDecl("void Test()"));
+	ctx->Release();
+
 	engine->DiscardModule(0);
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);

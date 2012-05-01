@@ -3189,7 +3189,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 
 	// Find out which function that will be called
 	asCScriptFunction *calledFunc = 0;
-	for( asUINT n = programPos; func->byteCode.GetLength(); )
+	for( asUINT n = programPos; n < func->byteCode.GetLength(); )
 	{
 		asBYTE bc = *(asBYTE*)&func->byteCode[n];
 		if( bc == asBC_CALL ||

@@ -76,7 +76,7 @@ public:
 	bool TryEnter();
 
 protected:
-	pthread_mutex_t criticalSection;
+	pthread_mutex_t m_criticalSection;
 };
 
 #elif defined(AS_WINDOWS_THREADS)
@@ -108,7 +108,7 @@ public:
 	bool TryEnter();
 
 protected:
-	CRITICAL_SECTION criticalSection;
+	CRITICAL_SECTION m_criticalSection;
 };
 
 #endif
