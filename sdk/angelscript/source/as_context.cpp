@@ -3851,8 +3851,10 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 
 void asCContext::CleanStackFrame()
 {
-	// Clean object variables
-	if( !isStackMemoryNotAllocated )
+	// Clean object variables on the stack
+	// If the stack memory is not allocated or the program pointer
+	// is not set, then there is nothing to clean up on the stack frame
+	if( !isStackMemoryNotAllocated && regs.programPointer )
 	{
 		// Determine which object variables that are really live ones
 		asCArray<int> liveObjects;

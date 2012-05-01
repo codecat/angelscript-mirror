@@ -97,6 +97,18 @@ bool TestException()
 		obj->Release();
 	}
 
+	// Another test to validate Unprepare without execution
+	{
+		asIObjectType *type = mod->GetObjectTypeByIndex(0);
+		// Get the real method, not the virtual method
+		int funcId = type->GetMethodIdByDecl("void Test(string c)", false);
+		ctx = engine->CreateContext();
+		ctx->Prepare(funcId);
+		// Don't set the object, nor the arguments
+		ctx->Unprepare();
+		ctx->Release();
+	}
+
 	// A test to verify behaviour when exception occurs in script class constructor
 	const char *script2 = "class SomeClassA \n"
 	"{ \n"
