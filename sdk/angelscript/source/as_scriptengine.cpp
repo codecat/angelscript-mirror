@@ -383,7 +383,7 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 asCScriptEngine::asCScriptEngine() 
 {
-	asCThreadManager::AddRef();
+	asCThreadManager::Prepare();
 
 	// Engine properties
 	{
@@ -665,7 +665,7 @@ asCScriptEngine::~asCScriptEngine()
 	if( userData && cleanEngineFunc )
 		cleanEngineFunc(this);
 
-	asCThreadManager::Release();
+	asCThreadManager::Unprepare();
 }
 
 // interface

@@ -21,6 +21,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Bug fixes
 <ul>
 <li>Fixed a potential crash if context is prepared but never executed (Thanks Andrew Ackermann)
+<li>Fixed crash with release of the thread manager if the last engine was released as part of destructor in global variable (Thanks Friggle)
 </ul>
 </ul>
 

@@ -108,7 +108,7 @@ public:
 	bool TryEnter();
 
 protected:
-	CRITICAL_SECTION m_criticalSection;
+	CRITICAL_SECTION cs;
 };
 
 #endif

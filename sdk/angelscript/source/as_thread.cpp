@@ -60,10 +60,6 @@ AS_API int asThreadCleanup()
 // Singleton
 static asCThreadManager *threadManager = 0;
 
-#ifndef AS_NO_THREADS
-static DECLARECRITICALSECTION(g_criticalSection)
-#endif
-
 //======================================================================
 
 asCThreadManager::asCThreadManager()
@@ -76,35 +72,54 @@ asCThreadManager::asCThreadManager()
 	refCount = 1;
 }
 
-void asCThreadManager::AddRef()
+void asCThreadManager::Prepare()
 {
-	// It's necessary to protect this section to 
-	// avoid two threads attempting to create thread
-	// managers at the same time.
-	ENTERCRITICALSECTION(g_criticalSection);
+	// The critical section cannot be declared globally, as there is no
+	// guarantee for the order in which global variables are initialized
+	// or uninitialized.
 
+	// For this reason it's not possible to prevent two threads from calling 
+	// AddRef at the same time, so there is a chance for a race condition here.
+
+	// To avoid the race condition when the thread manager is first created, 
+	// the application must make sure to call the global asPrepareForMultiThread()
+	// in the main thread before any other thread creates a script engine. 
 	if( threadManager == 0 )
 		threadManager = asNEW(asCThreadManager);
 	else
+	{
+		ENTERCRITICALSECTION(threadManager->criticalSection);
 		threadManager->refCount++;
-
-	LEAVECRITICALSECTION(g_criticalSection);
+		LEAVECRITICALSECTION(threadManager->criticalSection);
+	}
 }
 
-void asCThreadManager::Release()
+void asCThreadManager::Unprepare()
 {
+	asASSERT(threadManager);
+
+	if( threadManager == 0 )
+		return;
+
 	// It's necessary to protect this section so no
 	// other thread attempts to call AddRef or Release
 	// while clean up is in progress.
-	ENTERCRITICALSECTION(g_criticalSection);
+	ENTERCRITICALSECTION(threadManager->criticalSection);
 	if( --threadManager->refCount == 0 )
 	{
-		// The last engine has been destroyed, so we 
-		// need to delete the thread manager as well
-		asDELETE(threadManager,asCThreadManager);
+		// As the critical section will be destroyed together 
+		// with the thread manager we must first clear the global
+		// variable in case a new thread manager needs to be created;
+		asCThreadManager *mgr = threadManager;
 		threadManager = 0;
+
+		// Leave the critical section before it is destroyed
+		LEAVECRITICALSECTION(mgr->criticalSection);
+
+		asDELETE(mgr,asCThreadManager);
 	}
-	LEAVECRITICALSECTION(g_criticalSection);
+	else
+		LEAVECRITICALSECTION(threadManager->criticalSection);
 }
 
 asCThreadManager::~asCThreadManager()
@@ -133,6 +148,9 @@ asCThreadManager::~asCThreadManager()
 
 int asCThreadManager::CleanupLocalData()
 {
+	if( threadManager == 0 )
+		return 0;
+
 #ifndef AS_NO_THREADS
 	int r = 0;
 #if defined AS_POSIX_THREADS
@@ -141,13 +159,7 @@ int asCThreadManager::CleanupLocalData()
 	asPWORD id = (asPWORD)GetCurrentThreadId();
 #endif
 
-	ENTERCRITICALSECTION(g_criticalSection);
-
-	if( threadManager == 0 )
-	{
-		LEAVECRITICALSECTION(g_criticalSection);
-		return 0;
-	}
+	ENTERCRITICALSECTION(threadManager->criticalSection);
 
 	asSMapNode<asPWORD,asCThreadLocalData*> *cursor = 0;
 	if( threadManager->tldMap.MoveTo(&cursor, id) )
@@ -165,11 +177,11 @@ int asCThreadManager::CleanupLocalData()
 			r = asCONTEXT_ACTIVE;
 	}
 
-	LEAVECRITICALSECTION(g_criticalSection);
+	LEAVECRITICALSECTION(threadManager->criticalSection);
 
 	return r;
 #else
-	if( threadManager && threadManager->tld )
+	if( threadManager->tld )
 	{
 		if( threadManager->tld->activeContexts.GetLength() == 0 )
 		{
@@ -207,6 +219,9 @@ void asCThreadManager::SetLocalData(asPWORD threadId, asCThreadLocalData *tld)
 
 asCThreadLocalData *asCThreadManager::GetLocalData()
 {
+	if( threadManager == 0 )
+		return 0;
+
 #ifndef AS_NO_THREADS
 #if defined AS_POSIX_THREADS
 	asPWORD id = (asPWORD)pthread_self();
@@ -214,15 +229,7 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 	asPWORD id = (asPWORD)GetCurrentThreadId();
 #endif
 
-	ENTERCRITICALSECTION(g_criticalSection);
-
-	asASSERT(threadManager);
-
-	if( threadManager == 0 )
-	{
-		LEAVECRITICALSECTION(g_criticalSection);
-		return 0;
-	}
+	ENTERCRITICALSECTION(threadManager->criticalSection);
 
 	asCThreadLocalData *tld = threadManager->GetLocalData(id);
 	if( tld == 0 )
@@ -232,13 +239,10 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 		threadManager->SetLocalData(id, tld);
 	}
 
-	LEAVECRITICALSECTION(g_criticalSection);
+	LEAVECRITICALSECTION(threadManager->criticalSection);
 
 	return tld;
 #else
-	if( threadManager == 0 )
-		return 0;
-
 	if( threadManager->tld == 0 )
 		threadManager->tld = asNEW(asCThreadLocalData)();
 
@@ -262,45 +266,45 @@ asCThreadLocalData::~asCThreadLocalData()
 asCThreadCriticalSection::asCThreadCriticalSection()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_init(&m_criticalSection, 0);
+	pthread_mutex_init(&cs, 0);
 #elif defined AS_WINDOWS_THREADS
-	InitializeCriticalSection(&m_criticalSection);
+	InitializeCriticalSection(&cs);
 #endif
 }
 
 asCThreadCriticalSection::~asCThreadCriticalSection()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_destroy(&m_criticalSection);
+	pthread_mutex_destroy(&cs);
 #elif defined AS_WINDOWS_THREADS
-	DeleteCriticalSection(&m_criticalSection);
+	DeleteCriticalSection(&cs);
 #endif
 }
 
 void asCThreadCriticalSection::Enter()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_lock(&m_criticalSection);
+	pthread_mutex_lock(&cs);
 #elif defined AS_WINDOWS_THREADS
-	EnterCriticalSection(&m_criticalSection);
+	EnterCriticalSection(&cs);
 #endif
 }
 
 void asCThreadCriticalSection::Leave()
 {
 #if defined AS_POSIX_THREADS
-	pthread_mutex_unlock(&m_criticalSection);
+	pthread_mutex_unlock(&cs);
 #elif defined AS_WINDOWS_THREADS
-	LeaveCriticalSection(&m_criticalSection);
+	LeaveCriticalSection(&cs);
 #endif
 }
 
 bool asCThreadCriticalSection::TryEnter()
 {
 #if defined AS_POSIX_THREADS
-	return !pthread_mutex_trylock(&m_criticalSection);
+	return !pthread_mutex_trylock(&cs);
 #elif defined AS_WINDOWS_THREADS
-	return TryEnterCriticalSection(&m_criticalSection) ? true : false;
+	return TryEnterCriticalSection(&cs) ? true : false;
 #else
 	return true;
 #endif
