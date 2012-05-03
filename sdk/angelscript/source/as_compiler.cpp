@@ -6556,7 +6556,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			bool isPureConstant = false;
 			bool isAppProp = false;
 			asQWORD constantValue;
-			asCString ns = scope == "::" ? "" : scope;
+			asCString ns = scope;
 
 			if( ns == "" )
 			{
@@ -6565,6 +6565,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
 					ns = outFunc->objectType->nameSpace;
 			}
+			else if( ns == "::" )
+				ns = "";
 
 			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
@@ -6642,7 +6644,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	if( !noFunction && !found && !objType )
 	{
 		asCArray<int> funcs;
-		asCString ns = scope == "::" ? "" : scope;
+		asCString ns = scope;
 
 		if( ns == "" )
 		{
@@ -6651,6 +6653,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
 				ns = outFunc->objectType->nameSpace;
 		}
+		else if( ns == "::" )
+			ns = "";
 
 		builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
@@ -6718,7 +6722,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		else if( !engine->ep.requireEnumScope )
 		{
 			// Look for the enum value without explicitly informing the enum type
-			asCString ns = scope == "::" ? "" : scope;
+			asCString ns = scope;
 
 			if( ns == "" )
 			{
@@ -6729,6 +6733,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
 					ns = outFunc->objectType->nameSpace;
 			}
+			else if( ns == "::" )
+				ns = "";
 
 			int e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
 			if( e )
@@ -7815,7 +7821,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		else
 		{
 			// The scope is used to define the namespace
-			asCString ns = scope == "::" ? "" : scope;
+			asCString ns = scope;
 
 			if( ns == "" )
 			{
@@ -7824,6 +7830,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
 					ns = outFunc->objectType->nameSpace;
 			}
+			else if( ns == "::" )
+				ns = "";
 
 			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 

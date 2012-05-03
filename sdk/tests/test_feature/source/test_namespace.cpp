@@ -9,6 +9,7 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 	COutStream out;
+	CBufferedOutStream bout;
 
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -166,6 +167,65 @@ bool Test()
 		engine->Release();
 	}
 
+
+	// Test accessing registered properties in different namespaces from within function in another namespace
+	// http://www.gamedev.net/topic/624376-accessing-global-property-from-within-script-namespace/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		int a = 0, b = 0;
+		r = engine->RegisterGlobalProperty("int a", &a);
+		r = engine->SetDefaultNamespace("test");
+		r = engine->RegisterGlobalProperty("int b", &b);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"namespace script { \n"
+			"void func() \n"
+			"{ \n"
+			"  a = 1; \n"
+			"} \n"
+			"} \n");
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		// TODO: Should have better error message. Perhaps show variables declared in other scopes
+		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
+						   "test (4, 3) : Error   : 'a' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		mod->AddScriptSection("test", 
+			"namespace script { \n"
+			"void func() \n"
+			"{ \n"
+			"  ::a = 1; \n"
+			"  test::b = 2; \n"
+			"} \n"
+			"} \n");
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "script::func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( a != 1 || b != 2 )
+			TEST_FAILED;
+
+		engine->Release();		
+	}
 
 	// Success
 	return fail;
