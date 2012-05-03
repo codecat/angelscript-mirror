@@ -747,12 +747,25 @@ extern "C"
 	AS_API asIScriptContext * asGetActiveContext();
 
 	// Thread support
+	//! \brief Sets up the internally shared resources for multithreading
+	//!
+	//! Call this function from the main thread to set up shared resources 
+	//! for multithreading if engines are to be created in multiple threads.
+	//!
+	//! \see \ref doc_adv_multithread
+	AS_API void asPrepareMultithread();
+	//! \brief Frees resources prepared for multithreading
+	//!
+	//! If \ref asPrepareMultithread() has been called, then this function
+	//! should be called after the last engine has been released to free the
+	//! resources prepared for multithreading.
+	AS_API void asUnprepareMultithread();
 	//! \brief Cleans up memory allocated for the current thread.
 	//!
 	//! \return A negative value on error.
 	//! \retval asCONTEXT_ACTIVE A context is still active.
 	//!
-	//! Call this method before terminating a thread that has
+	//! Call this function before terminating a thread that has
 	//! accessed the engine to clean up memory allocated for that thread.
 	//!
 	//! It's not necessary to call this if only a single thread accesses the engine.

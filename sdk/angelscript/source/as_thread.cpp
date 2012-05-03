@@ -44,13 +44,23 @@ BEGIN_AS_NAMESPACE
 
 //======================================================================
 
+// Global API functions
 extern "C"
 {
 
-// Global API function
 AS_API int asThreadCleanup()
 {
 	return asCThreadManager::CleanupLocalData();
+}
+
+AS_API void asPrepareMultithread()
+{
+	asCThreadManager::Prepare();
+}
+
+AS_API void asUnprepareMultithread()
+{
+	asCThreadManager::Unprepare();
 }
 
 }

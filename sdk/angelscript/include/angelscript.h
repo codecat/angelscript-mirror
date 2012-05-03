@@ -479,6 +479,8 @@ extern "C"
 	AS_API asIScriptContext * asGetActiveContext();
 
 	// Thread support
+	AS_API void asPrepareMultithread();
+	AS_API void asUnprepareMultithread();
 	AS_API int asThreadCleanup();
 
 	// Memory management
