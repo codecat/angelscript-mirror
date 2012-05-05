@@ -169,10 +169,16 @@ void DetectMemoryLeaks()
 #endif
 }
 
-extern "C" void BreakPoint()
+// This class is just to verify that releasing the engine as part of the cleanup
+// of global variables doesn't cause crashes due to out-of-order cleanup with
+// internally shared objects in the engine.
+class EngineDestroyer
 {
-	printf("Breakpoint\n");
-}
+public:
+	EngineDestroyer() { en = 0; }
+	~EngineDestroyer() { if( en ) en->Release(); }
+	asIScriptEngine *en;
+} g_engine;
 
 //----------------------------------
 // Test with these flags as well
@@ -346,6 +352,10 @@ int main(int argc, char **argv)
 //	if( TestPointer::Test()           ) goto failed; else printf("-- TestPointer passed\n");
 
 	RemoveMemoryManager();
+
+	// Populate the global engine destroyer after the memory manager has 
+	// been removed so we don't get false positives for memory leaks.
+	g_engine.en = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 //succeed:
 	printf("--------------------------------------------\n");

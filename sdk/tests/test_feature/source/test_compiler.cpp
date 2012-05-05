@@ -414,6 +414,29 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		mod->AddScriptSection(TESTNAME, 
+			"class A{} \n"
+			"class SomeClass \n"
+			"{ \n"
+			"         A @a; \n"
+			"         void Create() \n"
+			"         { \n"
+			"                  int some_val = 15; + \n"
+			"                  @a = A();\n"
+			"         }\n"
+			"}\n");
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "TestCompiler (5, 10) : Info    : Compiling void SomeClass::Create()\n"
+						   "TestCompiler (7, 38) : Error   : Illegal operation on this datatype\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 

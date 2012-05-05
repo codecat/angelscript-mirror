@@ -467,6 +467,42 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test private methods that return a value
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = "class C { \n"
+			"  int a(int i) { return ABS(i); } \n"
+			"  private int ABS(int i) \n"
+			"  { \n"
+			"    if(i <= 0) return (-1 * i); \n"
+			"    else return i; \n"
+			"  } \n"
+			"} \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("s", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "C c; assert( c.a(-10) == 10 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test private methods with inheritance
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

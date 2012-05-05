@@ -7973,9 +7973,10 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		if( makeConst )
 			ctx->type.dataType.MakeReadOnly(true);
 	}
-	else if( (op == ttMinus || op == ttBitNot || op == ttInc || op == ttDec) && ctx->type.dataType.IsObject() )
+	else if( (op == ttMinus || op == ttPlus || op == ttBitNot || op == ttInc || op == ttDec) && ctx->type.dataType.IsObject() )
 	{
 		// Look for the appropriate method
+		// There is no overloadable operator for unary plus
 		const char *opName = 0;
 		switch( op )
 		{
@@ -8041,6 +8042,12 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 				ctx->type.SetDummy();
 				return -1;
 			}
+		}
+		else if( op == ttPlus )
+		{
+			Error(TXT_ILLEGAL_OPERATION, node);
+			ctx->type.SetDummy();
+			return -1;
 		}
 	}
 	else if( op == ttPlus || op == ttMinus )
