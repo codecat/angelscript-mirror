@@ -180,13 +180,13 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 	modifiedScript = script;
 
 	// First perform the checks for #if directives to exclude code that shouldn't be compiled
-	int pos = 0;
+	unsigned int pos = 0;
 	int nested = 0;
-	while( pos < (int)modifiedScript.size() )
+	while( pos < modifiedScript.size() )
 	{
 		int len;
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-		if( t == asTC_UNKNOWN && modifiedScript[pos] == '#' )
+		if( t == asTC_UNKNOWN && modifiedScript[pos] == '#' && (pos + 1 < modifiedScript.size()) )
 		{
 			int start = pos++;
 
@@ -251,7 +251,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 
 	// Then check for meta data and #include directives
 	pos = 0;
-	while( pos < (int)modifiedScript.size() )
+	while( pos < modifiedScript.size() )
 	{
 		int len;
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
@@ -275,7 +275,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			currentClass = modifiedScript.substr(pos,len);
 			
 			// Search until first { is encountered
-			while( pos < (int)modifiedScript.length() )
+			while( pos < modifiedScript.length() )
 			{
 				engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			
@@ -321,7 +321,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 		else 
 #endif
 		// Is this a preprocessor directive?
-		if( modifiedScript[pos] == '#' )
+		if( modifiedScript[pos] == '#' && (pos + 1 < modifiedScript.size()) )
 		{
 			int start = pos++;
 

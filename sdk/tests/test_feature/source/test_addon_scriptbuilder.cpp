@@ -67,6 +67,7 @@ bool Test()
 	bool fail = false;
 	int r = 0;
 	COutStream out;
+	CBufferedOutStream bout;
 
 	// TODO: Preprocessor directives should be alone on the line
 
@@ -141,6 +142,22 @@ bool Test()
 	if( metadata != " var of type myclass " )
 		TEST_FAILED;
 #endif
+
+	// http://www.gamedev.net/topic/624445-cscriptbuilder-asset-string-subscript-out-of-range/
+	{
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("#");
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = builder.BuildModule();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != " (1, 1) : Error   : Unexpected token '<unrecognized token>'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
 
 	engine->Release();
 
