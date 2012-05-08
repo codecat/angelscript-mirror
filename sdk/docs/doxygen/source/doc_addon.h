@@ -441,15 +441,18 @@ CScriptArray *CreateArrayOfStrings()
   {
     asIScriptEngine* engine = ctx->GetEngine();
 
-    // The script array needs to know its type to properly handle the elements
-    asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
+    // The script array needs to know its type to properly handle the elements.
+    // Note that the object type should be cached to avoid performance issues
+    // if the function is called frequently.
+    asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
 
+    // Create an array with the initial size of 3 elements
     CScriptArray* arr = new CScriptArray(3, t);
     for( asUINT i = 0; i < arr->GetSize(); i++ )
     {
-      // Get the pointer to the element so it can be set
-      CScriptString** p = static_cast<CScriptString**>(arr->At(i));
-      *p = new CScriptString("test");
+      // Set the value of each element
+      string val("test");
+      arr->SetValue(i, &val);
     }
 
     // The ref count for the returned handle was already set in the array's constructor
