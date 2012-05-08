@@ -355,6 +355,10 @@ public:
   void       *At(asUINT index);
   const void *At(asUINT index) const;
 
+  // Set value of an element. The value arg should be a pointer
+  // to the value that will be copied to the element
+  void  SetValue(asUINT index, void *value);
+
   // Copy the contents of one array to another (only if the types are the same)
   CScriptArray &operator=(const CScriptArray&);
 

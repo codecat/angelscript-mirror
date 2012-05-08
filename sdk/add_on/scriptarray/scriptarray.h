@@ -45,6 +45,9 @@ public:
 	void       *At(asUINT index);
 	const void *At(asUINT index) const;
 
+	// Set value of an element
+	void  SetValue(asUINT index, void *value);
+
 	CScriptArray &operator=(const CScriptArray&);
 	bool operator==(const CScriptArray &) const;
 
@@ -85,7 +88,6 @@ protected:
 	void  Precache();
 	bool  CheckMaxSize(asUINT numElements);
 	void  Resize(int delta, asUINT at);
-	void  SetValue(asUINT index, void *value);
 	void  CreateBuffer(SArrayBuffer **buf, asUINT numElements);
 	void  DeleteBuffer(SArrayBuffer *buf);
 	void  CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src);

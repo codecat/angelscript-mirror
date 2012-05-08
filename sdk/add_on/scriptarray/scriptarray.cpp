@@ -291,9 +291,10 @@ CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
 		SetValue(n, defVal);
 }
 
-// Internal
 void CScriptArray::SetValue(asUINT index, void *value)
 {
+	// At() will take care of the out-of-bounds checking, though  
+	// if called from the application then nothing will be done
 	void *ptr = At(index);
 	if( ptr == 0 ) return;
 
