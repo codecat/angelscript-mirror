@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/05/07</h2>
+<h2>Version 2.24.0 WIP - 2012/05/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash with release of the thread manager if the last engine was released as part of destructor in global variable (Thanks Friggle)
 <li>Accessing entitites in global scope from a function in a namespace didn't work (Thanks _Vicious_)
 <li>Fixed assert failure on compiling unary plus operator on non-primitive (Thanks FDsagizi)
+<li>Fixed error in compiler with index operator on a value returned by a property index accessor (Thanks Andrew Ackermann)
 </ul>
 <li>Library interface
 <ul>

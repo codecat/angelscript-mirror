@@ -9037,10 +9037,14 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( op == ttOpenBracket )
 	{
-		// If the property access takes an index arg, then we should use that instead of processing it now
+		// If the property access takes an index arg and the argument hasn't been evaluated yet, 
+		// then we should use that instead of processing it now. If the argument has already been
+		// evaluated, then we should process the property accessor as a get access now as the new
+		// index operator is on the result of that accessor.
 		asCString propertyName;
-		if( (ctx->property_get && builder->GetFunctionDescription(ctx->property_get)->GetParamCount() == 1) ||
-			(ctx->property_set && builder->GetFunctionDescription(ctx->property_set)->GetParamCount() == 2) )
+		if( ((ctx->property_get && builder->GetFunctionDescription(ctx->property_get)->GetParamCount() == 1) ||
+			 (ctx->property_set && builder->GetFunctionDescription(ctx->property_set)->GetParamCount() == 2)) &&
+			(ctx->property_arg && ctx->property_arg->type.dataType.GetTokenType() == ttUnrecognizedToken) )
 		{
 			// Determine the name of the property accessor
 			asCScriptFunction *func = 0;

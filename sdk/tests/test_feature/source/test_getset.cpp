@@ -1481,6 +1481,51 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptMath3D(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class Index { \n"
+			"	uint opIndex(uint i) { \n"
+			"		return i; \n"
+			"	} \n"
+			"}; \n"
+			"class IndexProperty { \n"
+			"	Index@ get_instance(uint i) { \n"
+			"		return Index(); \n"
+			"	} \n"
+			"}; \n"
+			"void f() { \n"
+			"	IndexProperty test; \n"
+			"    \n"
+			"	//Works \n"
+			"	uint a = test.get_instance(0)[0]; \n"
+			"	//Errors (Can't cast Index@ to int) \n"
+			"	uint x = test.instance[0][0]; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "f()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success
