@@ -626,6 +626,35 @@ static bool TestEnum()
 		engine->Release();
 	}
 
+	// http://www.gamedev.net/topic/624715-bug-in-compiler/
+	{
+		const char *script = 
+			"enum E \n"
+			"{ \n"
+			"  VALUE1 = 20somegarbage, \n"
+			"  VALUE2 = 30moregarbage \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (3, 10) : Info    : Compiling E VALUE1\n"
+						   "script (3, 14) : Error   : Unexpected token '<identifier>'\n"
+						   "script (4, 10) : Info    : Compiling E VALUE2\n"
+						   "script (4, 14) : Error   : Unexpected token '<identifier>'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

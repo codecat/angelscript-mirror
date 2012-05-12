@@ -2611,6 +2611,15 @@ int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
 		Error(ExpectedOneOf(tokens, 2).AddressOf(), &t);
 	}
 
+	// Don't allow any more tokens after the expression
+	GetToken(&t);
+	if( t.type != ttEnd && t.type != ttEndStatement && t.type != ttListSeparator && t.type != ttEndStatementBlock )
+	{
+		asCString msg;
+		msg.Format(TXT_UNEXPECTED_TOKEN_s, asCTokenizer::GetDefinition(t.type));
+		Error(msg.AddressOf(), &t);
+	}
+
 	if( isSyntaxError || errorWhileParsing )
 		return -1;
 
