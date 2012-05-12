@@ -9206,13 +9206,41 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, 
 			desc->inOutFlags[paramNum] == asTM_INOUTREF &&
 			desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
 		{
+			// Observe, that these checks are only necessary for when unsafe references have been
+			// enabled by the application. Without this the &inout reference form wouldn't be allowed
+			// for these value types.
+
+			// Don't allow a primitive to be converted to a reference of another primitive type
 			if( desc->parameterTypes[paramNum].IsPrimitive() &&
 				desc->parameterTypes[paramNum].GetTokenType() != argType->dataType.GetTokenType() )
+			{
+				asASSERT( engine->ep.allowUnsafeReferences );
 				continue;
+			}
 
+			// Don't allow an enum to be converted to a reference of another enum type
 			if( desc->parameterTypes[paramNum].IsEnumType() &&
 				desc->parameterTypes[paramNum].GetObjectType() != argType->dataType.GetObjectType() )
+			{
+				asASSERT( engine->ep.allowUnsafeReferences );
 				continue;
+			}
+
+			// Don't allow a non-handle expression to be converted to a reference to a handle
+			if( desc->parameterTypes[paramNum].IsObjectHandle() &&
+				!argType->dataType.IsObjectHandle() )
+			{
+				asASSERT( engine->ep.allowUnsafeReferences );
+				continue;
+			}
+
+			// Don't allow a value type to be converted
+			if( (desc->parameterTypes[paramNum].GetObjectType() && (desc->parameterTypes[paramNum].GetObjectType()->GetFlags() & asOBJ_VALUE)) &&
+				(desc->parameterTypes[paramNum].GetObjectType() != argType->dataType.GetObjectType()) )
+			{
+				asASSERT( engine->ep.allowUnsafeReferences );
+				continue;
+			}
 		}
 
 		// How well does the argument match the function parameter?

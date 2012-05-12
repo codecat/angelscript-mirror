@@ -181,6 +181,44 @@ bool Test()
 		engine->Release();		
 	}
 
+	// http://www.gamedev.net/topic/624722-bug-with/
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"class T { T() { val = 123; } int val; } \n"
+			"T g_t; \n"
+			"T &GetTest() { return g_t; } \n"
+			"void f(T@& t) { \n"
+			"  assert( t.val == 123 ); \n"
+			"} \n"
+			"void func() { \n"
+			"  f(GetTest()); \n"
+			"  T @t = GetTest(); \n"
+			"  f(t); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "TestUnsafeRef (7, 1) : Info    : Compiling void func()\n"
+						   "TestUnsafeRef (8, 3) : Error   : No matching signatures to 'f(T)'\n"
+						   "TestUnsafeRef (8, 3) : Info    : Candidates are:\n"
+						   "TestUnsafeRef (8, 3) : Info    : void f(T@&inout)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();		
+	}
+
 	// Success
 	return fail;
 }

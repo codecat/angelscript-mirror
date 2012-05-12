@@ -131,6 +131,61 @@ bool Test()
 		engine->Release();
 	}
 
+	// http://www.gamedev.net/topic/604890-dynamic-reloading-script/page__st__20
+	// TODO: The CSerializer needs to use CreateUninitializedScriptObject
+/*	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char* script =
+			"array<TestScript@> arr; \n"
+			"class TestScript \n"
+			"{ \n"
+			"         TestScript()   \n"
+			"         { \n"
+			"                  arr.insertLast( this ); \n"
+			"         }       \n"
+			"} \n"
+			"void startGame()          \n"
+			"{ \n"
+			"         TestScript @t = TestScript(); \n"
+			"}  \n";
+
+		mod->AddScriptSection( 0, script );
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "startGame()", mod);
+
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		CSerializer modStore;
+		modStore.AddUserType(new CStringType(), "string");
+		modStore.AddUserType(new CArrayType(), "array");
+
+		r = modStore.Store(mod);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->DiscardModule(0);
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = modStore.Restore(mod);
+		if( r < 0 )
+			TEST_FAILED;
+	}*/
+
 	return fail;
 }
 

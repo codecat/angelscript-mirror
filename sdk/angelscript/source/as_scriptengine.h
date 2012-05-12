@@ -167,6 +167,7 @@ public:
 	virtual asIScriptContext *CreateContext();
 	virtual void             *CreateScriptObject(int typeId);
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId);
+	// TODO: interface: Rename to AssignScriptObject to avoid confusion
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId);
 	virtual void              ReleaseScriptObject(void *obj, int typeId);
 	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type);
