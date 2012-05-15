@@ -166,7 +166,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "Test(@c_obj);", mod);
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Test(const obj@const&)'\n"
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Test(const obj@&)'\n"
 		               "ExecuteString (1, 1) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 1) : Info    : void Test(obj@)\n" )
 	{

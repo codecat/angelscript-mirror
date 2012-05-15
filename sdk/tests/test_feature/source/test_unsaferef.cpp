@@ -199,6 +199,7 @@ bool Test()
 			"} \n"
 			"void func() { \n"
 			"  f(GetTest()); \n"
+			"  f(@GetTest()); \n"
 			"  T @t = GetTest(); \n"
 			"  f(t); \n"
 			"} \n");
@@ -215,6 +216,50 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		engine->Release();		
+	}
+
+	// http://www.gamedev.net/topic/624722-bug-with/
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"class T { T() { val = 123; } int val; } \n"
+			"T g_t; \n"
+			"T &GetTest() { return g_t; } \n"
+			"void f(T@& t) { \n"
+			"  assert( t.val == 123 ); \n"
+			"} \n"
+			"void func() { \n"
+			"  f(cast<T>(GetTest())); \n"
+			"  f(@GetTest()); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "func()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			TEST_FAILED;
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx, true);
+		}
+		ctx->Release();
 
 		engine->Release();		
 	}

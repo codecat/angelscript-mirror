@@ -208,8 +208,11 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "TestObjHandle2 (3, 1) : Info    : Compiling void Test()\n"
-                       "TestObjHandle2 (6, 6) : Error   : Reference is read-only\n" )
+                       "TestObjHandle2 (6, 3) : Error   : Expression is not an l-value\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
+	}
 	engine->Release();
 
 	// Success

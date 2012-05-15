@@ -1437,6 +1437,12 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 			else if( ctx->type.dataType.IsPrimitive() )
 				ctx->bc.Instr(asBC_PshRPtr);
+			else if( ctx->type.dataType.IsObjectHandle() && !ctx->type.dataType.IsReference() )
+			{
+				asCDataType dt = ctx->type.dataType;
+				dt.MakeReference(true);
+				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, false);
+			}
 		}
 	}
 	else
@@ -4973,10 +4979,41 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 
 		if( !ctx->type.dataType.IsObjectHandle() )
 		{
-			// An object type can be directly converted to a handle of the same type
+			// An object type can be directly converted to a handle of the 
+			// same type by doing a ref copy to a new variable
 			if( ctx->type.dataType.SupportHandles() )
 			{
-				ctx->type.dataType.MakeHandle(true);
+				asCDataType dt = ctx->type.dataType;
+				dt.MakeHandle(true);
+				dt.MakeReference(false);
+
+				if( generateCode )
+				{
+					// TODO: runtime optimize: This copy is not always necessary. 
+					//                         How to determine when not to do it?
+					int offset = AllocateVariable(dt, true);
+
+					if( ctx->type.dataType.IsReference() )
+						ctx->bc.Instr(asBC_RDSPtr);
+					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+					ctx->bc.InstrPTR(asBC_REFCPY, dt.GetObjectType());
+					ctx->bc.Instr(asBC_PopPtr);
+					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+					if( to.IsReference() )
+						dt.MakeReference(true);
+					else
+						ctx->bc.Instr(asBC_RDSPtr);
+
+					ctx->type.SetVariable(dt, offset, true);
+				}
+				else
+					ctx->type.dataType = dt;
+
+				// When this conversion is done the expression is no longer an lvalue
+				ctx->type.isLValue = false;
 			}
 
 			if( ctx->type.dataType.IsObjectHandle() )
@@ -7964,14 +8001,25 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			return -1;
 		}
 
-		// If this is really an object then the handle created is a const handle
-		bool makeConst = !ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE);
+		// Convert the expression to a handle
+		if( !ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+		{
+			asCDataType to = ctx->type.dataType;
+			to.MakeHandle(true);
+			to.MakeReference(true);
+			to.MakeHandleToConst(ctx->type.dataType.IsReadOnly());
+			ImplicitConversion(ctx, to, node, asIC_IMPLICIT_CONV, true, false);
 
-		// Mark the type as an object handle
-		ctx->type.dataType.MakeHandle(true);
+			asASSERT( ctx->type.dataType.IsObjectHandle() );
+		}
+		else if( ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
+		{
+			// For the ASHANDLE type we'll simply set the expression as a handle
+			ctx->type.dataType.MakeHandle(true);
+		}
+
+		// Mark the expression as an explicit handle to avoid implicit conversions to non-handle expressions
 		ctx->type.isExplicitHandle = true;
-		if( makeConst )
-			ctx->type.dataType.MakeReadOnly(true);
 	}
 	else if( (op == ttMinus || op == ttPlus || op == ttBitNot || op == ttInc || op == ttDec) && ctx->type.dataType.IsObject() )
 	{
@@ -9206,7 +9254,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, 
 			desc->inOutFlags[paramNum] == asTM_INOUTREF &&
 			desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
 		{
-			// Observe, that these checks are only necessary for when unsafe references have been
+			// Observe, that the below checks are only necessary for when unsafe references have been
 			// enabled by the application. Without this the &inout reference form wouldn't be allowed
 			// for these value types.
 
