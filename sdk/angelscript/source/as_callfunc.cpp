@@ -442,19 +442,23 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			args += AS_PTR_SIZE;
 		}
 	}
-
-	context->regs.objectType = descr->returnType.GetObjectType();
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
+	
+	if( descr->DoesReturnOnStack() )
 	{
 		// Get the address of the location for the return value from the stack
 		retPointer = (void*)*(asPWORD*)(args);
 		popSize += AS_PTR_SIZE;
 		args += AS_PTR_SIZE;
 
-		// When returning the value on the location allocated by the called we shouldn't set the object type in the register
+		// When returning the value on the location allocated by the called 
+		// we shouldn't set the object type in the register
 		context->regs.objectType = 0;
 	}
-
+	else
+	{
+		// Set the object type of the reference held in the register
+		context->regs.objectType = descr->returnType.GetObjectType();
+	}
 
 	context->callingSystemFunction = descr;
 	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
@@ -464,10 +468,12 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	if( sysFunc->takesObjByVal )
 	{
 		// Need to free the complex objects passed by value, but that the 
-		// calling convention implicitly passes by reference behind the scene
-		args = context->regs.stackPointer;
-		if( callConv >= ICC_THISCALL && !objectPointer )
-			args += AS_PTR_SIZE;
+		// calling convention implicitly passes by reference behind the scene as the 
+		// calling function is the owner of that memory.
+
+		// args is pointing to the first real argument as used in CallSystemFunctionNative,
+		// i.e. hidden arguments such as the object pointer and return address have already 
+		// been skipped.
 
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
