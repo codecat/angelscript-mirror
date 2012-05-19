@@ -183,8 +183,8 @@ public:
 	int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
 
 	// User data
-	void *SetUserData(void *data);
-	void *GetUserData() const;
+	void *SetUserData(void *data, asPWORD type);
+	void *GetUserData(asPWORD type) const;
 
 //===========================================
 // Internal
@@ -227,8 +227,8 @@ public:
 	bool           acceptValueSubType;
 	bool           acceptRefSubType;
 
-	asCScriptEngine *engine;
-	void            *userData;
+	asCScriptEngine  *engine;
+	asCArray<asPWORD> userData;
 
 protected:
 	mutable asCAtomic refCount;

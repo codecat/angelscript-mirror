@@ -191,7 +191,7 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback);
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback);
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback);
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type);
 
 //===========================================================
 // internal methods
@@ -386,7 +386,8 @@ public:
 	asCLEANMODULEFUNC_t     cleanModuleFunc;
 	asCLEANCONTEXTFUNC_t    cleanContextFunc;
 	asCLEANFUNCTIONFUNC_t   cleanFunctionFunc;
-	asCLEANOBJECTTYPEFUNC_t cleanObjectTypeFunc;
+	struct SObjTypeClean { asPWORD type; asCLEANOBJECTTYPEFUNC_t cleanFunc; };
+	asCArray<SObjTypeClean> cleanObjectTypeFuncs;
 
 	// Critical sections for threads
 	DECLARECRITICALSECTION(engineCritical)

@@ -428,7 +428,6 @@ asCScriptEngine::asCScriptEngine()
 	cleanModuleFunc     = 0;
 	cleanContextFunc    = 0;
 	cleanFunctionFunc   = 0;
-	cleanObjectTypeFunc = 0;
 
 
 	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
@@ -4416,6 +4415,10 @@ bool asCScriptEngine::IsTemplateType(const char *name) const
 // internal
 int asCScriptEngine::AddConstantString(const char *str, size_t len)
 {
+	// This is only called when build a script module, so it is 
+	// known that only one thread can enter the function at a time.
+	asASSERT( isBuilding );
+
 	// The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
 
 	// Has the string been registered before?
@@ -4444,6 +4447,8 @@ const asCString &asCScriptEngine::GetConstantString(int id)
 // internal
 int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 {
+	ENTERCRITICALSECTION(engineCritical);
+
 	// TODO: These names are only released when the engine is freed. The assumption is that
 	//       the same script section names will be reused instead of there always being new
 	//       names. Is this assumption valid? Do we need to add reference counting?
@@ -4452,11 +4457,18 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 	for( asUINT n = 0; n < scriptSectionNames.GetLength(); n++ )
 	{
 		if( scriptSectionNames[n]->Compare(name) == 0 )
+		{
+			LEAVECRITICALSECTION(engineCritical);
 			return n;
+		}
 	}
 
 	scriptSectionNames.PushLast(asNEW(asCString)(name));
-	return int(scriptSectionNames.GetLength()-1);
+	int n = int(scriptSectionNames.GetLength()-1);
+
+	LEAVECRITICALSECTION(engineCritical);
+
+	return n;
 }
 
 // interface 
@@ -4484,9 +4496,25 @@ void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t c
 }
 
 // interface
-void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback)
+void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type)
 {
-	cleanObjectTypeFunc = callback;
+	ENTERCRITICALSECTION(engineCritical);
+
+	for( asUINT n = 0; n < cleanObjectTypeFuncs.GetLength(); n++ )
+	{
+		if( cleanObjectTypeFuncs[n].type == type )
+		{
+			cleanObjectTypeFuncs[n].cleanFunc = callback;
+
+			LEAVECRITICALSECTION(engineCritical);
+
+			return;
+		}
+	}
+	SObjTypeClean otc = {type, callback};
+	cleanObjectTypeFuncs.PushLast(otc);
+
+	LEAVECRITICALSECTION(engineCritical);
 }
 
 END_AS_NAMESPACE

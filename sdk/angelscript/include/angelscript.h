@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22301
-#define ANGELSCRIPT_VERSION_STRING "2.23.1"
+#define ANGELSCRIPT_VERSION        22400
+#define ANGELSCRIPT_VERSION_STRING "2.24.0 WIP"
 
 // Data types
 
@@ -609,7 +609,7 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback) = 0;
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback) = 0;
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type = 0) = 0;
 
 protected:
 	virtual ~asIScriptEngine() {}
@@ -881,8 +881,8 @@ public:
 	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 
 	// User data
-	virtual void *SetUserData(void *data) = 0;
-	virtual void *GetUserData() const = 0;
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
 
 protected:
 	virtual ~asIObjectType() {}

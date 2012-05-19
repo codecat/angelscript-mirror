@@ -131,8 +131,6 @@ asCObjectType::asCObjectType()
 	acceptRefSubType   = true;
 
 	accessMask = 0xFFFFFFFF;
-
-	userData = 0;
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
@@ -145,8 +143,6 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 	acceptRefSubType = true;
 
 	accessMask = 0xFFFFFFFF;
-
-	userData = 0;
 }
 
 int asCObjectType::AddRef() const
@@ -161,16 +157,53 @@ int asCObjectType::Release() const
 	return refCount.atomicDec();
 }
 
-void *asCObjectType::SetUserData(void *data)
+void *asCObjectType::SetUserData(void *data, asPWORD type)
 {
-	void *oldData = userData;
-	userData = data;
-	return oldData;
+	// As a thread might add a new new user data at the same time as another
+	// it is necessary to protect both read and write access to the userData member
+	ENTERCRITICALSECTION(engine->engineCritical);
+
+	// It is not intended to store a lot of different types of userdata,
+	// so a more complex structure like a associative map would just have
+	// more overhead than a simple array.
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n] == type )
+		{
+			void *oldData = reinterpret_cast<void*>(userData[n+1]);
+			userData[n+1] = reinterpret_cast<asPWORD>(data);
+
+			LEAVECRITICALSECTION(engine->engineCritical);
+
+			return oldData;
+		}
+	}
+
+	userData.PushLast(type);
+	userData.PushLast(reinterpret_cast<asPWORD>(data));
+
+	LEAVECRITICALSECTION(engine->engineCritical);
+
+	return 0;
 }
 
-void *asCObjectType::GetUserData() const
+void *asCObjectType::GetUserData(asPWORD type) const
 {
-	return userData;
+	// TODO: optimize: It should be possible to have multiple readers, but only one writer
+	ENTERCRITICALSECTION(engine->engineCritical);
+
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n] == type )
+		{
+			LEAVECRITICALSECTION(engine->engineCritical);
+			return reinterpret_cast<void*>(userData[n+1]);
+		}
+	}
+
+	LEAVECRITICALSECTION(engine->engineCritical);
+
+	return 0;
 }
 
 int asCObjectType::GetRefCount()
@@ -224,8 +257,15 @@ asCObjectType::~asCObjectType()
 	enumValues.SetLength(0);
 
 	// Clean the user data
-	if( userData && engine->cleanObjectTypeFunc )
-		engine->cleanObjectTypeFunc(this);
+	for( asUINT n = 0; n < userData.GetLength(); n++ )
+	{
+		if( userData[n+1] )
+		{
+			for( asUINT c = 0; c < engine->cleanObjectTypeFuncs.GetLength(); c++ )
+				if( engine->cleanObjectTypeFuncs[c].type == userData[n] )
+					engine->cleanObjectTypeFuncs[c].cleanFunc(this);
+		}
+	}
 }
 
 // interface
