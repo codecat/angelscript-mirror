@@ -115,9 +115,9 @@ bool Test()
 	else
 	{
 		// Internal return
-		int funcId = engine->GetModule(0)->GetFunctionIdByName("AddPoints");
+		asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("AddPoints");
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(funcId);
+		ctx->Prepare(func);
 		Point a, b, c;
 		a.x = 1; a.y = 1;
 		b.x = 2; b.y = 2;

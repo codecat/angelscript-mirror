@@ -219,8 +219,8 @@ void TestScripts(asIScriptEngine *engine)
 	r = mod->BindAllImportedFunctions(); assert( r >= 0 );
 
 	// Verify if handles are properly resolved
-	int funcID = mod->GetFunctionIdByDecl("void TestHandle(string @)");
-	if( funcID < 0 ) 
+	asIScriptFunction *func = mod->GetFunctionByDecl("void TestHandle(string @)");
+	if( func == 0 ) 
 	{
 		printf("%s: Failed to identify function with handle\n", TESTNAME);
 		TEST_FAILED;

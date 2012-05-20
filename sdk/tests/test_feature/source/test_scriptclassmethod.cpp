@@ -307,8 +307,8 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 	
-	int func = mod->GetFunctionIdByDecl("void func()");
-	if( func < 0 ) TEST_FAILED;
+	asIScriptFunction *func = mod->GetFunctionByDecl("void func()");
+	if( func == 0 ) TEST_FAILED;
 
 	engine->Release();
 

@@ -63,8 +63,8 @@ static void BindImportedFunctions(asIScriptEngine *engine, const char *module)
 		// Get module name from where the function should be imported
 		const char *moduleName = mod->GetImportedFunctionSourceModule(n);
 
-		int funcID = engine->GetModule(moduleName)->GetFunctionIdByDecl(decl);
-		mod->BindImportedFunction(n, funcID);
+		asIScriptFunction *func = engine->GetModule(moduleName)->GetFunctionByDecl(decl);
+		mod->BindImportedFunction(n, func->GetId());
 	}
 }
 

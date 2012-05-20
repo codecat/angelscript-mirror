@@ -743,7 +743,7 @@ int TestNalin()
 	module->Build();
 
 	// Get our function.
-	int update = module->GetFunctionIdByDecl("void Update()");
+	asIScriptFunction *update = module->GetFunctionByDecl("void Update()");
 
 	// Prepare and execute the context.
 	asIScriptContext* context = engine->CreateContext();

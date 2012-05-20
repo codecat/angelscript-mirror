@@ -529,10 +529,10 @@ static bool Test2()
 	}
 	else
 	{
-		int func_id = mod->GetFunctionIdByDecl("void main()"); assert(func_id >= 0);
+		asIScriptFunction *func = mod->GetFunctionByDecl("void main()"); assert(func);
 		asIScriptContext * ctx = engine->CreateContext();
 
-		r = ctx->Prepare(func_id); assert(r >= 0);
+		r = ctx->Prepare(func); assert(r >= 0);
 		r = ctx->Execute(); assert(r >= 0);
 
 		ctx->Release();

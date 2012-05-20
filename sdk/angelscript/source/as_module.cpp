@@ -237,6 +237,8 @@ int asCModule::ResetGlobalVars(asIScriptContext *ctx)
 	return CallInit(ctx);
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-20
 // interface
 int asCModule::GetFunctionIdByIndex(asUINT index) const
 {
@@ -245,6 +247,7 @@ int asCModule::GetFunctionIdByIndex(asUINT index) const
 
 	return globalFunctions[index]->id;
 }
+#endif
 
 // interface
 asIScriptFunction *asCModule::GetFunctionByIndex(asUINT index) const
@@ -440,6 +443,8 @@ void asCModule::InternalReset()
 	funcDefs.SetLength(0);
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-20
 // interface
 int asCModule::GetFunctionIdByName(const char *name) const
 {
@@ -462,15 +467,28 @@ int asCModule::GetFunctionIdByName(const char *name) const
 
 	return id;
 }
+#endif
 
 // interface
 asIScriptFunction *asCModule::GetFunctionByName(const char *name) const
 {
-	int id = GetFunctionIdByName(name);
-	if( id < 0 )
-		return 0;
+	asIScriptFunction *func = 0;
+	for( size_t n = 0; n < globalFunctions.GetLength(); n++ )
+	{
+		if( globalFunctions[n]->name == name &&
+			globalFunctions[n]->nameSpace == defaultNamespace )
+		{
+			if( func == 0 )
+				func = globalFunctions[n];
+			else
+			{
+				// Multiple functions with the same name
+				return 0;
+			}
+		}
+	}
 
-	return engine->GetFunctionById(id);
+	return func;
 }
 
 // interface
@@ -527,6 +545,8 @@ asUINT asCModule::GetFunctionCount() const
 	return (asUINT)globalFunctions.GetLength();
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-20
 // interface
 int asCModule::GetFunctionIdByDecl(const char *decl) const
 {
@@ -575,12 +595,58 @@ int asCModule::GetFunctionIdByDecl(const char *decl) const
 
 	return id;
 }
+#endif
 
 // interface
 asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 {
-	int id = GetFunctionIdByDecl(decl);
-	return engine->GetFunctionById(id);
+	asCBuilder bld(engine, const_cast<asCModule*>(this));
+
+	asCScriptFunction func(engine, const_cast<asCModule*>(this), asFUNC_DUMMY);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
+	if( r < 0 )
+	{
+		// Invalid declaration
+		// TODO: Write error to message stream
+		return 0;
+	}
+
+	// Use the defaultNamespace implicitly unless an explicit namespace has been provided
+	asCString ns = func.nameSpace == "" ? defaultNamespace : func.nameSpace;
+
+	// TODO: optimize: Improve linear search
+	// Search script functions for matching interface
+	asIScriptFunction *f = 0;
+	for( size_t n = 0; n < globalFunctions.GetLength(); ++n )
+	{
+		if( globalFunctions[n]->objectType  == 0 && 
+			func.name                       == globalFunctions[n]->name && 
+			func.returnType                 == globalFunctions[n]->returnType &&
+			func.parameterTypes.GetLength() == globalFunctions[n]->parameterTypes.GetLength() &&
+			ns                              == globalFunctions[n]->nameSpace )
+		{
+			bool match = true;
+			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
+			{
+				if( func.parameterTypes[p] != globalFunctions[n]->parameterTypes[p] )
+				{
+					match = false;
+					break;
+				}
+			}
+
+			if( match )
+			{
+				if( f == 0 )
+					f = globalFunctions[n];
+				else
+					// Multiple functions
+					return 0;
+			}
+		}
+	}
+
+	return f;
 }
 
 // interface
@@ -1014,7 +1080,10 @@ int asCModule::BindAllImportedFunctions()
 		asCModule *srcMod = engine->GetModule(moduleName, false);
 		int funcId = -1;
 		if( srcMod )
-			funcId = srcMod->GetFunctionIdByDecl(str.AddressOf());
+		{
+			asIScriptFunction *func = srcMod->GetFunctionByDecl(str.AddressOf());
+			funcId = func ? func->GetId() : -1;
+		}
 
 		if( funcId < 0 )
 			notAllFunctionsWereBound = true;
@@ -1597,6 +1666,8 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 #endif
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-20
 // interface
 int asCModule::RemoveFunction(int funcId)
 {
@@ -1605,6 +1676,7 @@ int asCModule::RemoveFunction(int funcId)
 
 	return asNO_FUNCTION;
 }
+#endif
 
 // interface
 int asCModule::RemoveFunction(asIScriptFunction *func)

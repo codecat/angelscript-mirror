@@ -59,7 +59,7 @@ bool Test1()
 
 	// Make sure ref count is properly updated
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("CreateInstance"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByName("CreateInstance"));
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -220,7 +220,7 @@ bool Test2()
 
 	// Make sure ref count is properly updated
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("CreateInstance"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByName("CreateInstance"));
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
@@ -416,7 +416,7 @@ bool Test3()
 	r = mod->Build();
 
 	// create two instances of our classes
-	int funcId = mod->GetFunctionIdByDecl( "any@ GetClass()" );
+	int funcId = mod->GetFunctionByDecl( "any@ GetClass()" )->GetId();
 	
 	asIScriptObject* objA;
 	int objATypeId;

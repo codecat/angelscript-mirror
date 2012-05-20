@@ -232,7 +232,7 @@ bool Test()
 	asIScriptContext *ctx =	engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_CDECL);
 	ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), 0, asCALL_CDECL);
-	ctx->Prepare(mod->GetFunctionIdByDecl("void main()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void main()"));
 	int r = ctx->Execute();
 	if( r == asEXECUTION_EXCEPTION )
 	{

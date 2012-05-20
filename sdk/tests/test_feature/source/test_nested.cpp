@@ -49,7 +49,7 @@ bool TestNested()
 
 	// Make the call with a separate context (should work)
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByIndex(0));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByIndex(0));
 	ctx->Execute();
 
 	if( i != 4 )

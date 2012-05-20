@@ -35,7 +35,7 @@ bool TestStack()
 
 	asIScriptContext *ctx = engine->CreateContext();
 	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 32); // 32 byte limit
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void recursive(int)"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void recursive(int)"));
 	ctx->SetArgDWord(0, 100);
 	r = ctx->Execute();
 	if( r != asEXECUTION_EXCEPTION )

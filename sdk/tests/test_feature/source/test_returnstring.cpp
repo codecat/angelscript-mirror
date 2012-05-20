@@ -145,11 +145,11 @@ bool Test()
 	r = mod->Build();
 	if (r < 0) std::cout << "Error: " << r;
 
-	int func_id = engine->GetModule(0)->GetFunctionIdByName("test");
-	if (func_id < 0) std::cout << r;
+	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("test");
+	if (func == 0) std::cout << r;
 
 	asIScriptContext* ctx = engine->CreateContext();
-	r = ctx->Prepare(func_id);
+	r = ctx->Prepare(func);
 	if (r < 0) std::cout << "Error: " << r;
 
 	Foo f;
@@ -171,11 +171,11 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) std::cout << "Error: " << r;
 
-	func_id = engine->GetModule(0)->GetFunctionIdByName("test");
-	if( func_id < 0 ) std::cout << r;
+	func = engine->GetModule(0)->GetFunctionByName("test");
+	if( func == 0 ) std::cout << r;
 
 	ctx = engine->CreateContext();
-	r = ctx->Prepare(func_id);
+	r = ctx->Prepare(func);
 	if( r < 0 ) std::cout << "Error: " << r;
 
 	r = ctx->SetArgObject(0,&f);
@@ -194,11 +194,11 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) std::cout << "Error: " << r;
 
-	func_id = engine->GetModule(0)->GetFunctionIdByName("test");
-	if( func_id < 0 ) std::cout << r;
+	func = engine->GetModule(0)->GetFunctionByName("test");
+	if( func == 0 ) std::cout << r;
 
 	ctx = engine->CreateContext();
-	r = ctx->Prepare(func_id);
+	r = ctx->Prepare(func);
 	if( r < 0 ) std::cout << "Error: " << r;
 
 	r = ctx->Execute();

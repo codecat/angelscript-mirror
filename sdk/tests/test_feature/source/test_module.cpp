@@ -95,7 +95,7 @@ bool Test()
 		TEST_FAILED;
 
 	// It should be possible to remove a function from the scope of the module
-	r = mod->RemoveFunction(mod->GetFunctionIdByIndex(0));
+	r = mod->RemoveFunction(mod->GetFunctionByIndex(0));
 	if( r < 0 )
 		TEST_FAILED;
 	if( mod->GetFunctionCount() != 0 )

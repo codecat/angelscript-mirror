@@ -136,7 +136,7 @@ bool Test()
 		printf("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
-	int func = engine->GetModule(0)->GetFunctionIdByName("TestObjHandle"); assert(r >= 0);
+	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("TestObjHandle");
 
 	CRefClass cref;	
 	r = ctx->Prepare(func); assert(r >= 0);

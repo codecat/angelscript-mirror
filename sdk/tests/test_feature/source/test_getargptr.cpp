@@ -37,7 +37,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
-	int func = engine->GetModule(0)->GetFunctionIdByName("test");
+	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("test");
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(func);
 
@@ -52,7 +52,7 @@ bool Test()
 
 	if( *(int*)ctx->GetAddressOfReturnValue() != 107 ) TEST_FAILED;
 
-	func = engine->GetModule(0)->GetFunctionIdByName("test2");
+	func = engine->GetModule(0)->GetFunctionByName("test2");
 	ctx->Prepare(func);
 
 	r = ctx->Execute();

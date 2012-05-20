@@ -71,7 +71,7 @@ bool Test()
     {
         // Execute
         //printf("----- execute\n");
-        ctx->Prepare(mod->GetFunctionIdByDecl("void main()"));
+        ctx->Prepare(mod->GetFunctionByDecl("void main()"));
         ctx->Execute();
  
         // GC

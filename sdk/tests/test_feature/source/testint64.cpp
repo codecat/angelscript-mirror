@@ -51,7 +51,7 @@ bool TestInt64()
 	mod->AddScriptSection("test", script);
 	mod->Build();
 
-	int f = engine->GetModule(0)->GetFunctionIdByDecl("int Main()");
+	asIScriptFunction *f = engine->GetModule(0)->GetFunctionByDecl("int Main()");
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(f);
 	int r = ctx->Execute();

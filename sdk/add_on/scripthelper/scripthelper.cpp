@@ -362,7 +362,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	c = engine->GetGlobalFunctionCount();
 	for( n = 0; n < c; n++ )
 	{
-		asIScriptFunction *func = engine->GetFunctionById(engine->GetGlobalFunctionIdByIndex(n));
+		asIScriptFunction *func = engine->GetGlobalFunctionByIndex(n);
 		const char *nameSpace = func->GetNamespace();
 		if( nameSpace != currNamespace )
 		{

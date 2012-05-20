@@ -59,9 +59,9 @@ bool TestBStr()
 		TEST_FAILED;
 	}
 
-	int funcId = mod->GetFunctionIdByIndex(0);
+	asIScriptFunction *func = mod->GetFunctionByIndex(0);
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(funcId);
+	ctx->Prepare(func);
 
 	// Create the object and initialize it, then give 
 	// the pointer directly to the script engine. 

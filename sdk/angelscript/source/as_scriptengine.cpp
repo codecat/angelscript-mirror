@@ -2361,6 +2361,8 @@ asUINT asCScriptEngine::GetGlobalFunctionCount() const
 	return asUINT(registeredGlobalFuncs.GetLength());
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-20
 // interface
 int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index) const
 {
@@ -2369,6 +2371,7 @@ int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index) const
 
 	return registeredGlobalFuncs[index]->id;
 }
+#endif
 
 // interface
 asIScriptFunction *asCScriptEngine::GetGlobalFunctionByIndex(asUINT index) const

@@ -125,8 +125,8 @@ bool Test()
 		if( t1 < 0 )
 			TEST_FAILED;
 
-		int f1 = mod->GetFunctionIdByDecl("void func()");
-		if( f1 < 0 )
+		asIScriptFunction *f1 = mod->GetFunctionByDecl("void func()");
+		if( f1 == 0 )
 			TEST_FAILED;
 
 		int fact1 = engine->GetObjectTypeById(t1)->GetFactoryIdByIndex(0);
@@ -149,7 +149,7 @@ bool Test()
 		if( t1 != t2 )
 			TEST_FAILED;
 
-		int f2 = mod2->GetFunctionIdByDecl("void func()");
+		asIScriptFunction *f2 = mod2->GetFunctionByDecl("void func()");
 		if( f1 != f2 )
 			TEST_FAILED;
 
@@ -175,7 +175,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		int f3 = mod3->GetFunctionIdByDecl("void func()");
+		asIScriptFunction *f3 = mod3->GetFunctionByDecl("void func()");
 		if( f1 != f3 )
 			TEST_FAILED;
 

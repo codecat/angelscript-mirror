@@ -127,7 +127,7 @@ bool TestSwitch()
 	}
 
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void _switch()"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void _switch()"));
 	ctx->Execute();
 
 	if( sum != 254 )

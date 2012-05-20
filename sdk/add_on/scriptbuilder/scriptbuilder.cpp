@@ -436,9 +436,9 @@ int CScriptBuilder::Build()
 			if( decl->parentClass == "" )
 			{
 				// Find the function id
-				int funcId = module->GetFunctionIdByDecl(decl->declaration.c_str());
-				if( funcId >= 0 )
-					funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+				asIScriptFunction *func = module->GetFunctionByDecl(decl->declaration.c_str());
+				if( func )
+					funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
 			}
 			else
 			{
@@ -462,12 +462,12 @@ int CScriptBuilder::Build()
 			if( decl->parentClass == "" )
 			{
 				// Find the global virtual property accessors
-				int funcId = module->GetFunctionIdByName(("get_" + decl->declaration).c_str());
-				if( funcId >= 0 )
-					funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
-				funcId = module->GetFunctionIdByName(("set_" + decl->declaration).c_str());
-				if( funcId >= 0 )
-					funcMetadataMap.insert(map<int, string>::value_type(funcId, decl->metadata));
+				asIScriptFunction *func = module->GetFunctionByName(("get_" + decl->declaration).c_str());
+				if( func )
+					funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
+				func = module->GetFunctionByName(("set_" + decl->declaration).c_str());
+				if( func )
+					funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
 			}
 			else
 			{

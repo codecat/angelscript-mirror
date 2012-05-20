@@ -34,15 +34,15 @@ bool Test2Modules()
 
 	if( !fail )
 	{
-		int aFuncID = engine->GetModule("a")->GetFunctionIdByName("Test");
-		if( aFuncID < 0 )
+		asIScriptFunction *aFunc = engine->GetModule("a")->GetFunctionByName("Test");
+		if( aFunc == 0 )
 		{
 			printf("%s: failed to retrieve func ID for module a\n", TESTNAME);
 			TEST_FAILED;
 		}
 
-		int bFuncID = engine->GetModule("b")->GetFunctionIdByName("Test");
-		if( bFuncID < 0 )
+		asIScriptFunction *bFunc = engine->GetModule("b")->GetFunctionByName("Test");
+		if( bFunc == 0 )
 		{
 			printf("%s: failed to retrieve func ID for module b\n", TESTNAME);
 			TEST_FAILED;

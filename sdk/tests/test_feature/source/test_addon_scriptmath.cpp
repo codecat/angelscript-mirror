@@ -70,7 +70,7 @@ bool Test()
 		v.r = 0; v.i = 0;
 
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(mod->GetFunctionIdByDecl("complex TestComplex()"));
+		ctx->Prepare(mod->GetFunctionByDecl("complex TestComplex()"));
 
 		ctx->Execute();
 		Complex *ret = (Complex*)ctx->GetReturnObject();
@@ -80,7 +80,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		ctx->Prepare(mod->GetFunctionIdByDecl("complex TestComplexVal(complex)"));
+		ctx->Prepare(mod->GetFunctionByDecl("complex TestComplexVal(complex)"));
 		v.r = 3; v.i = 2;
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
@@ -91,7 +91,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		ctx->Prepare(mod->GetFunctionIdByDecl("void TestComplexRef(complex &out)"));
+		ctx->Prepare(mod->GetFunctionByDecl("void TestComplexRef(complex &out)"));
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
 		if( v.r != 1 || v.i != 2 )

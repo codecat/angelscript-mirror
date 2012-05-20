@@ -200,7 +200,7 @@ bool Test()
 
 	// Call TestObjReturnHandle() from the application to verify that references are updated as necessary
 	ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("refclass@ TestObjReturnHandle(refclass@)"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("refclass@ TestObjReturnHandle(refclass@)"));
 	CRefClass *refclass = new CRefClass();
 
 	ctx->SetArgObject(0, refclass);

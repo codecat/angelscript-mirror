@@ -82,7 +82,7 @@ bool Test()
 
 	ctx = engine->CreateContext();
 	ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
-	if( ctx->Prepare(mod->GetFunctionIdByDecl("void TestSuspend()")) >= 0 )
+	if( ctx->Prepare(mod->GetFunctionByDecl("void TestSuspend()")) >= 0 )
 	{
 		while( loopCount < 5 && !doSuspend )
 			ctx->Execute();
@@ -114,7 +114,7 @@ bool Test()
 
 		ctx = engine->CreateContext();
 		ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
-		ctx->Prepare(engine->GetModule(0)->GetFunctionIdByDecl("void TestSuspend2()"));
+		ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void TestSuspend2()"));
 		loopCount = 0;
 		while( ctx->GetState() != asEXECUTION_FINISHED )
 			ctx->Execute();

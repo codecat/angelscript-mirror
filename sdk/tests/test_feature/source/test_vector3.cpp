@@ -67,7 +67,7 @@ bool TestVector3()
 		v.x = 0; v.y = 0; v.z = 0;
 
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(mod->GetFunctionIdByDecl("vector3 TestVector3()"));
+		ctx->Prepare(mod->GetFunctionByDecl("vector3 TestVector3()"));
 
 		ctx->Execute();
 		Vector3 *ret = (Vector3*)ctx->GetReturnObject();
@@ -77,7 +77,7 @@ bool TestVector3()
 			TEST_FAILED;
 		}
 
-		ctx->Prepare(mod->GetFunctionIdByDecl("vector3 TestVector3Val(vector3)"));
+		ctx->Prepare(mod->GetFunctionByDecl("vector3 TestVector3Val(vector3)"));
 		v.x = 3; v.y = 2; v.z = 1;
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
@@ -88,7 +88,7 @@ bool TestVector3()
 			TEST_FAILED;
 		}
 
-		ctx->Prepare(mod->GetFunctionIdByDecl("void TestVector3Ref(vector3 &out)"));
+		ctx->Prepare(mod->GetFunctionByDecl("void TestVector3Ref(vector3 &out)"));
 		ctx->SetArgObject(0, &v);
 		ctx->Execute();
 		if( v.x != 1 || v.y != 2 || v.z != 3 )
@@ -172,8 +172,8 @@ bool TestVector3()
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 
-		int func = mod->GetFunctionIdByName("func");
-		if( func < 0 ) TEST_FAILED;
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		if( func == 0 ) TEST_FAILED;
 
 		asIScriptContext *ctx = engine->CreateContext();
 

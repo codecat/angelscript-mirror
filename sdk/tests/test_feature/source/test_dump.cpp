@@ -243,9 +243,9 @@ void DumpModule(asIScriptModule *mod)
 	c = engine->GetGlobalFunctionCount();
 	for( n = 0; n < c; n++ )
 	{
-		int funcId = engine->GetGlobalFunctionIdByIndex(n);
-		const char *group = engine->GetFunctionById(funcId)->GetConfigGroup();
-		s << "reg func: " << engine->GetFunctionById(funcId)->GetDeclaration() << 
+		asIScriptFunction *func = engine->GetGlobalFunctionByIndex(n);
+		const char *group = func->GetConfigGroup();
+		s << "reg func: " << func->GetDeclaration() << 
 			" group: " << (group ? group : "<null>") << endl;
 	}
 

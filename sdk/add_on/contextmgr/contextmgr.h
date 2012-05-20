@@ -50,12 +50,12 @@ public:
 	// Create a new context, prepare it with the function id, then return 
 	// it so that the application can pass the argument values. The context
 	// will be released by the manager after the execution has completed.
-    asIScriptContext *AddContext(asIScriptEngine *engine, int funcId);
+    asIScriptContext *AddContext(asIScriptEngine *engine, asIScriptFunction *func);
 
 	// Create a new context, prepare it with the function id, then return
 	// it so that the application can pass the argument values. The context
 	// will be added as a co-routine in the same thread as the currCtx.
-	asIScriptContext *AddContextForCoRoutine(asIScriptContext *currCtx, int funcId);
+	asIScriptContext *AddContextForCoRoutine(asIScriptContext *currCtx, asIScriptFunction *func);
 
 	// Execute each script that is not currently sleeping. The function returns after 
 	// each script has been executed once. The application should call this function

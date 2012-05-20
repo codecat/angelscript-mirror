@@ -152,9 +152,9 @@ bool Exec(asIScriptEngine *engine, Creep &c)
 	CreepClient &cc = dynamic_cast<CreepClient&>(c);
 
 	asIScriptModule *mod = engine->GetModule("mod");
-	int funcId = mod->GetFunctionIdByIndex(0);
+	asIScriptFunction *func = mod->GetFunctionByIndex(0);
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(funcId);
+	ctx->Prepare(func);
 	ctx->SetArgObject(0, &cc);
 	int r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )

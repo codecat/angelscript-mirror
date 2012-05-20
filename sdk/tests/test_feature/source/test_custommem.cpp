@@ -72,7 +72,7 @@ bool Test()
 	mod->AddScriptSection(0, script, strlen(script));
 	mod->Build();
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(engine->GetModule(0)->GetFunctionIdByName("test"));
+	ctx->Prepare(engine->GetModule(0)->GetFunctionByName("test"));
 	int v = 0;
 	ctx->SetArgObject(0, &v);
 	ctx->Execute();

@@ -92,13 +92,13 @@ bool Test()
 	if( r < 0 )
 		TEST_FAILED;
 
-	int funcId = engine->GetModule(0)->GetFunctionIdByName("func1");
-	string metadata = builder.GetMetadataStringForFunc(funcId);
+	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("func1");
+	string metadata = builder.GetMetadataStringForFunc(func->GetId());
 	if( metadata != " my meta data test " )
 		TEST_FAILED;
 
-	funcId = engine->GetModule(0)->GetFunctionIdByName("func2");
-	metadata = builder.GetMetadataStringForFunc(funcId);
+	func = engine->GetModule(0)->GetFunctionByName("func2");
+	metadata = builder.GetMetadataStringForFunc(func->GetId());
 	if( metadata != " test['hello'] " )
 		TEST_FAILED;
 

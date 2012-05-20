@@ -23,9 +23,9 @@ bool TestModuleRef()
 		TEST_FAILED;
 	}
 
-	int funcID = engine->GetModule("a")->GetFunctionIdByDecl("void Test()");
+	asIScriptFunction *func = engine->GetModule("a")->GetFunctionByDecl("void Test()");
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(funcID);
+	ctx->Prepare(func);
 
 	if( engine->GetModule("a")->GetFunctionCount() < 0 )
 	{
