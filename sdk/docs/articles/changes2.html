@@ -34,11 +34,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added the global functions asPrepareMultithread() and asUnprepareMultithread()
 <li>The object type can now hold multiple different user data
+<li>Added the global functions asAcquireExclusiveLock() and asReleaseExclusiveLock()
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
 <li>SetValue is now a public method in the CScriptArray (Thanks saejox)
 <li>The array add-on takes advantage of the multiple user data types to share its cache between arrays of the same type
+<li>The array uses the new global functions to create the shared cache in a thread safe manner
 </ul>
 </ul>
 

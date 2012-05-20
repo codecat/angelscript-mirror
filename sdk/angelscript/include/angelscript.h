@@ -481,7 +481,9 @@ extern "C"
 	// Thread support
 	AS_API void asPrepareMultithread();
 	AS_API void asUnprepareMultithread();
-	AS_API int asThreadCleanup();
+	AS_API void asAcquireExclusiveLock();
+	AS_API void asReleaseExclusiveLock();
+	AS_API int  asThreadCleanup();
 
 	// Memory management
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);

@@ -42,6 +42,11 @@
 
 BEGIN_AS_NAMESPACE
 
+//=======================================================================
+
+// Singleton
+static asCThreadManager *threadManager = 0;
+
 //======================================================================
 
 // Global API functions
@@ -63,12 +68,19 @@ AS_API void asUnprepareMultithread()
 	asCThreadManager::Unprepare();
 }
 
+AS_API void asAcquireExclusiveLock()
+{
+	if( threadManager )
+		ACQUIREEXCLUSIVE(threadManager->appRWLock);
 }
 
-//=======================================================================
+AS_API void asReleaseExclusiveLock()
+{
+	if( threadManager )
+		RELEASEEXCLUSIVE(threadManager->appRWLock);
+}
 
-// Singleton
-static asCThreadManager *threadManager = 0;
+}
 
 //======================================================================
 

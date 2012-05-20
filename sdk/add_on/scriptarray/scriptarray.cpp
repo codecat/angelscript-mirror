@@ -1124,9 +1124,20 @@ void CScriptArray::Precache()
 	SArrayCache *cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
 	if( cache )	return;
 
-	// TODO: multithread: We need to make sure the cache is created only once, even  
-	//                    if multiple threads reach the same point at the same time
+	// We need to make sure the cache is created only once, even  
+	// if multiple threads reach the same point at the same time
+	asAcquireExclusiveLock();
 
+	// Now that we got the lock, we need to check again to make sure the 
+	// cache wasn't created while we were waiting for the lock
+	cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
+	if( cache )
+	{
+		asReleaseExclusiveLock();
+		return;
+	}
+
+	// Create the cache
 	cache = new SArrayCache();
 	memset(cache, 0, sizeof(SArrayCache));
 
@@ -1164,6 +1175,8 @@ void CScriptArray::Precache()
 
 	// Set the user data only at the end so others that retrieve it will know it is complete
 	objType->SetUserData(cache, ARRAY_CACHE);
+
+	asReleaseExclusiveLock();
 }
 
 // GC behaviour
