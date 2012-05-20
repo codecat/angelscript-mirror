@@ -1112,7 +1112,7 @@ void CScriptArray::Precache()
 {
 	subTypeId = objType->GetSubTypeId();
 
-	// Check if it is an array of objects
+	// Check if it is an array of objects. Only for these do we need to cache anything
 	// Type ids for primitives and enums only has the sequence number part
 	if( !(subTypeId & ~asTYPEID_MASK_SEQNBR) )
 		return;

@@ -805,6 +805,8 @@
 			#undef STDCALL
 			#define STDCALL
 
+			#undef GNU_STYLE_VIRTUAL_METHOD
+
 			#define AS_ARM
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define AS_ALIGN
