@@ -161,7 +161,7 @@ void *asCObjectType::SetUserData(void *data, asPWORD type)
 {
 	// As a thread might add a new new user data at the same time as another
 	// it is necessary to protect both read and write access to the userData member
-	ENTERCRITICALSECTION(engine->engineCritical);
+	ACQUIREEXCLUSIVE(engine->engineRWLock);
 
 	// It is not intended to store a lot of different types of userdata,
 	// so a more complex structure like a associative map would just have
@@ -173,7 +173,7 @@ void *asCObjectType::SetUserData(void *data, asPWORD type)
 			void *oldData = reinterpret_cast<void*>(userData[n+1]);
 			userData[n+1] = reinterpret_cast<asPWORD>(data);
 
-			LEAVECRITICALSECTION(engine->engineCritical);
+			RELEASEEXCLUSIVE(engine->engineRWLock);
 
 			return oldData;
 		}
@@ -182,26 +182,27 @@ void *asCObjectType::SetUserData(void *data, asPWORD type)
 	userData.PushLast(type);
 	userData.PushLast(reinterpret_cast<asPWORD>(data));
 
-	LEAVECRITICALSECTION(engine->engineCritical);
+	RELEASEEXCLUSIVE(engine->engineRWLock);
 
 	return 0;
 }
 
 void *asCObjectType::GetUserData(asPWORD type) const
 {
-	// TODO: optimize: It should be possible to have multiple readers, but only one writer
-	ENTERCRITICALSECTION(engine->engineCritical);
+	// There may be multiple threads reading, but when  
+	// setting the user data nobody must be reading.
+	ACQUIRESHARED(engine->engineRWLock);
 
 	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
 	{
 		if( userData[n] == type )
 		{
-			LEAVECRITICALSECTION(engine->engineCritical);
+			RELEASESHARED(engine->engineRWLock);
 			return reinterpret_cast<void*>(userData[n+1]);
 		}
 	}
 
-	LEAVECRITICALSECTION(engine->engineCritical);
+	RELEASESHARED(engine->engineRWLock);
 
 	return 0;
 }

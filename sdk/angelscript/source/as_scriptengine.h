@@ -389,8 +389,8 @@ public:
 	struct SObjTypeClean { asPWORD type; asCLEANOBJECTTYPEFUNC_t cleanFunc; };
 	asCArray<SObjTypeClean> cleanObjectTypeFuncs;
 
-	// Critical sections for threads
-	DECLARECRITICALSECTION(engineCritical)
+	// Synchronization for threads
+	DECLAREREADWRITELOCK(engineRWLock)
 
 	// Engine properties
 	struct

@@ -319,6 +319,86 @@ bool asCThreadCriticalSection::TryEnter()
 	return true;
 #endif
 }
+
+asCThreadReadWriteLock::asCThreadReadWriteLock()
+{
+#if defined AS_POSIX_THREADS
+	int r = pthread_rwlock_init(&lock, 0);
+	asASSERT( r == 0 );
+#elif defined AS_WINDOWS_THREADS
+	InitializeSRWLock(&lock);
+#endif
+}
+
+asCThreadReadWriteLock::~asCThreadReadWriteLock()
+{
+#if defined AS_POSIX_THREADS
+	pthread_rwlock_destroy(&lock);
+#elif defined AS_WINDOWS_THREADS
+	// no cleanup needed
+#endif
+}
+
+void asCThreadReadWriteLock::AcquireExclusive()
+{
+#if defined AS_POSIX_THREADS
+	pthread_rwlock_wrlock(&lock);
+#elif defined AS_WINDOWS_THREADS
+	AcquireSRWLockExclusive(&lock);
+#endif
+}
+
+void asCThreadReadWriteLock::ReleaseExclusive()
+{
+#if defined AS_POSIX_THREADS
+	pthread_rwlock_unlock(&lock);
+#elif defined AS_WINDOWS_THREADS
+	ReleaseSRWLockExclusive(&lock);
+#endif
+}
+
+void asCThreadReadWriteLock::AcquireShared()
+{
+#if defined AS_POSIX_THREADS
+	pthread_rwlock_rdlock(&lock);
+#elif defined AS_WINDOWS_THREADS
+	AcquireSRWLockShared(&lock);
+#endif
+}
+
+void asCThreadReadWriteLock::ReleaseShared()
+{
+#if defined AS_POSIX_THREADS
+	pthread_rwlock_unlock(&lock);
+#elif defined AS_WINDOWS_THREADS
+	ReleaseSRWLockShared(&lock);
+#endif
+}
+
+/* The Windows version is only available from Win7 so we won't implement it
+bool asCThreadReadWriteLock::TryAcquireExclusive()
+{
+#if defined AS_POSIX_THREADS
+	return pthread_rwlock_trywrlock(&lock) ? false : true;
+#elif defined AS_WINDOWS_THREADS
+	return TryAcquireSRWLockExclusive(&lock) ? true : false;
+#else
+	return true;
+#endif
+}
+
+bool asCThreadReadWriteLock::TryAcquireShared()
+{
+#if defined AS_POSIX_THREADS
+	return pthread_rwlock_tryrdlock(&lock) ? false : true;
+#elif defined AS_WINDOWS_THREADS
+	return TryAcquireSRWLockShared(&lock) ? true : false;
+#else
+	return true;
+#endif
+}
+*/
+
 #endif
 
 //========================================================================

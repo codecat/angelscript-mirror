@@ -2687,14 +2687,14 @@ asCModule *asCScriptEngine::GetModuleFromFuncId(int id)
 // internal
 int asCScriptEngine::RequestBuild()
 {
-	ENTERCRITICALSECTION(engineCritical);
+	ACQUIREEXCLUSIVE(engineRWLock);
 	if( isBuilding )
 	{
-		LEAVECRITICALSECTION(engineCritical);
+		RELEASEEXCLUSIVE(engineRWLock);
 		return asBUILD_IN_PROGRESS;
 	}
 	isBuilding = true;
-	LEAVECRITICALSECTION(engineCritical);
+	RELEASEEXCLUSIVE(engineRWLock);
 
 	return 0;
 }
@@ -4447,7 +4447,7 @@ const asCString &asCScriptEngine::GetConstantString(int id)
 // internal
 int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 {
-	ENTERCRITICALSECTION(engineCritical);
+	ACQUIREEXCLUSIVE(engineRWLock);
 
 	// TODO: These names are only released when the engine is freed. The assumption is that
 	//       the same script section names will be reused instead of there always being new
@@ -4458,7 +4458,7 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 	{
 		if( scriptSectionNames[n]->Compare(name) == 0 )
 		{
-			LEAVECRITICALSECTION(engineCritical);
+			RELEASEEXCLUSIVE(engineRWLock);
 			return n;
 		}
 	}
@@ -4466,7 +4466,7 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 	scriptSectionNames.PushLast(asNEW(asCString)(name));
 	int n = int(scriptSectionNames.GetLength()-1);
 
-	LEAVECRITICALSECTION(engineCritical);
+	RELEASEEXCLUSIVE(engineRWLock);
 
 	return n;
 }
@@ -4498,7 +4498,7 @@ void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t c
 // interface
 void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type)
 {
-	ENTERCRITICALSECTION(engineCritical);
+	ACQUIREEXCLUSIVE(engineRWLock);
 
 	for( asUINT n = 0; n < cleanObjectTypeFuncs.GetLength(); n++ )
 	{
@@ -4506,7 +4506,7 @@ void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC
 		{
 			cleanObjectTypeFuncs[n].cleanFunc = callback;
 
-			LEAVECRITICALSECTION(engineCritical);
+			RELEASEEXCLUSIVE(engineRWLock);
 
 			return;
 		}
@@ -4514,7 +4514,7 @@ void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC
 	SObjTypeClean otc = {type, callback};
 	cleanObjectTypeFuncs.PushLast(otc);
 
-	LEAVECRITICALSECTION(engineCritical);
+	RELEASEEXCLUSIVE(engineRWLock);
 }
 
 END_AS_NAMESPACE
