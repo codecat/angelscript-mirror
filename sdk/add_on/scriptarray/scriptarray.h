@@ -20,6 +20,7 @@
 BEGIN_AS_NAMESPACE
 
 struct SArrayBuffer;
+struct SArrayCache;
 
 class CScriptArray
 {
@@ -77,8 +78,6 @@ protected:
 	asIObjectType    *objType;
 	SArrayBuffer     *buffer;
 	int               elementSize;
-	int               cmpFuncId;
-	int               eqFuncId;
 	int               subTypeId;
 
 	bool  Less(const void *a, const void *b, bool asc, asIScriptContext *ctx);
@@ -93,7 +92,7 @@ protected:
 	void  CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src);
 	void  Construct(SArrayBuffer *buf, asUINT start, asUINT end);
 	void  Destruct(SArrayBuffer *buf, asUINT start, asUINT end);
-	bool  Equals(const void *a, const void *b, asIScriptContext *ctx) const;
+	bool  Equals(const void *a, const void *b, asIScriptContext *ctx, SArrayCache *cache) const;
 };
 
 void RegisterScriptArray(asIScriptEngine *engine, bool defaultArray);
