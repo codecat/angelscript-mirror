@@ -258,7 +258,7 @@ asCObjectType::~asCObjectType()
 	enumValues.SetLength(0);
 
 	// Clean the user data
-	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	for( n = 0; n < userData.GetLength(); n += 2 )
 	{
 		if( userData[n+1] )
 		{

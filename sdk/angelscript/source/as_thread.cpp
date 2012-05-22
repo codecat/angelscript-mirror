@@ -338,7 +338,8 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	int r = pthread_rwlock_init(&lock, 0);
 	asASSERT( r == 0 );
 #elif defined AS_WINDOWS_THREADS
-	InitializeSRWLock(&lock);
+	// With SRWLOCK - InitializeSRWLock(&lock);
+	InitializeCriticalSection(&cs);
 #endif
 }
 
@@ -347,7 +348,8 @@ asCThreadReadWriteLock::~asCThreadReadWriteLock()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_destroy(&lock);
 #elif defined AS_WINDOWS_THREADS
-	// no cleanup needed
+	// With SRWLOCK - no cleanup needed
+	DeleteCriticalSection(&cs);
 #endif
 }
 
@@ -356,7 +358,8 @@ void asCThreadReadWriteLock::AcquireExclusive()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_wrlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	AcquireSRWLockExclusive(&lock);
+	// With SRWLOCK - AcquireSRWLockExclusive(&lock);
+	EnterCriticalSection(&cs);
 #endif
 }
 
@@ -365,7 +368,8 @@ void asCThreadReadWriteLock::ReleaseExclusive()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_unlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	ReleaseSRWLockExclusive(&lock);
+	// With SRWLOCK - ReleaseSRWLockExclusive(&lock);
+	LeaveCriticalSection(&cs);
 #endif
 }
 
@@ -374,7 +378,8 @@ void asCThreadReadWriteLock::AcquireShared()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_rdlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	AcquireSRWLockShared(&lock);
+	// With SRWLOCK - AcquireSRWLockShared(&lock);
+	EnterCriticalSection(&cs);
 #endif
 }
 
@@ -383,11 +388,12 @@ void asCThreadReadWriteLock::ReleaseShared()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_unlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	ReleaseSRWLockShared(&lock);
+	// With SRWLOCK - ReleaseSRWLockShared(&lock);
+	LeaveCriticalSection(&cs);
 #endif
 }
 
-/* The Windows version is only available from Win7 so we won't implement it
+/* The Try options for SRWLOCK are only available from Win7 so we won't implement it
 bool asCThreadReadWriteLock::TryAcquireExclusive()
 {
 #if defined AS_POSIX_THREADS

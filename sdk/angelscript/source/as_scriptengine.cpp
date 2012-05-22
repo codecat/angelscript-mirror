@@ -4467,11 +4467,11 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 	}
 
 	scriptSectionNames.PushLast(asNEW(asCString)(name));
-	int n = int(scriptSectionNames.GetLength()-1);
+	int r = int(scriptSectionNames.GetLength()-1);
 
 	RELEASEEXCLUSIVE(engineRWLock);
 
-	return n;
+	return r;
 }
 
 // interface 

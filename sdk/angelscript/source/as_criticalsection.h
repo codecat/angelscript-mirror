@@ -154,7 +154,10 @@ public:
 	void ReleaseShared();
 
 protected:
-	SRWLOCK lock;
+	// The Slim Read Write Lock object, SRWLOCK, is more efficient 
+	// but it is only available from Windows Vista. As fallback 
+	// we'll have to use the CRITICAL_SECTION
+	CRITICAL_SECTION cs;
 };
 
 #endif
