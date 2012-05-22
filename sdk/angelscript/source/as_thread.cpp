@@ -338,8 +338,10 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	int r = pthread_rwlock_init(&lock, 0);
 	asASSERT( r == 0 );
 #elif defined AS_WINDOWS_THREADS
-	// With SRWLOCK - InitializeSRWLock(&lock);
-	InitializeCriticalSection(&cs);
+	// Create a semaphore to allow up to maxReaders simultaneous readers
+	readLocks = CreateSemaphore(NULL, maxReaders, maxReaders, 0);
+	// Create a critical section to synchronize writers
+	InitializeCriticalSection(&writeLock);
 #endif
 }
 
@@ -348,8 +350,8 @@ asCThreadReadWriteLock::~asCThreadReadWriteLock()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_destroy(&lock);
 #elif defined AS_WINDOWS_THREADS
-	// With SRWLOCK - no cleanup needed
-	DeleteCriticalSection(&cs);
+	DeleteCriticalSection(&writeLock);
+	CloseHandle(readLocks);
 #endif
 }
 
@@ -358,8 +360,19 @@ void asCThreadReadWriteLock::AcquireExclusive()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_wrlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	// With SRWLOCK - AcquireSRWLockExclusive(&lock);
-	EnterCriticalSection(&cs);
+	// Synchronize writers, so only one tries to lock out the readers
+	EnterCriticalSection(&writeLock);
+
+	// Lock all reader out from the semaphore. Do this one by one,
+	// so the lock doesn't have to wait until there are no readers at all.
+	// If we try to lock all at once it is quite possible the writer will
+	// never succeed.
+	for( asUINT n = 0; n < maxReaders; n++ )
+		WaitForSingleObject(readLocks, INFINITE);
+
+	// Allow another writer to lock. It will only be able to
+	// lock the readers when this writer releases them anyway.
+	LeaveCriticalSection(&writeLock);
 #endif
 }
 
@@ -368,8 +381,8 @@ void asCThreadReadWriteLock::ReleaseExclusive()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_unlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	// With SRWLOCK - ReleaseSRWLockExclusive(&lock);
-	LeaveCriticalSection(&cs);
+	// Release all readers at once
+	ReleaseSemaphore(readLocks, maxReaders, 0);
 #endif
 }
 
@@ -378,8 +391,8 @@ void asCThreadReadWriteLock::AcquireShared()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_rdlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	// With SRWLOCK - AcquireSRWLockShared(&lock);
-	EnterCriticalSection(&cs);
+	// Lock a reader slot
+	WaitForSingleObject(readLocks, INFINITE);
 #endif
 }
 
@@ -388,34 +401,10 @@ void asCThreadReadWriteLock::ReleaseShared()
 #if defined AS_POSIX_THREADS
 	pthread_rwlock_unlock(&lock);
 #elif defined AS_WINDOWS_THREADS
-	// With SRWLOCK - ReleaseSRWLockShared(&lock);
-	LeaveCriticalSection(&cs);
+	// Release the reader slot
+	ReleaseSemaphore(readLocks, 1, 0);
 #endif
 }
-
-/* The Try options for SRWLOCK are only available from Win7 so we won't implement it
-bool asCThreadReadWriteLock::TryAcquireExclusive()
-{
-#if defined AS_POSIX_THREADS
-	return pthread_rwlock_trywrlock(&lock) ? false : true;
-#elif defined AS_WINDOWS_THREADS
-	return TryAcquireSRWLockExclusive(&lock) ? true : false;
-#else
-	return true;
-#endif
-}
-
-bool asCThreadReadWriteLock::TryAcquireShared()
-{
-#if defined AS_POSIX_THREADS
-	return pthread_rwlock_tryrdlock(&lock) ? false : true;
-#elif defined AS_WINDOWS_THREADS
-	return TryAcquireSRWLockShared(&lock) ? true : false;
-#else
-	return true;
-#endif
-}
-*/
 
 #endif
 

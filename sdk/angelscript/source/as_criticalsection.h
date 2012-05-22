@@ -155,9 +155,23 @@ public:
 
 protected:
 	// The Slim Read Write Lock object, SRWLOCK, is more efficient 
-	// but it is only available from Windows Vista. As fallback 
-	// we'll have to use the CRITICAL_SECTION
-	CRITICAL_SECTION cs;
+	// but it is only available from Windows Vista so we cannot use it and
+	// maintain compatibility with olders versions of Windows.
+
+	// Critical sections and semaphores are available on Windows XP and onwards. 
+	// Windows XP is oldest version we support with multithreading.
+	
+	// The implementation is based on the following article, that shows
+	// how to implement a fair read/write lock that doesn't risk starving
+	// the writers:
+
+	// http://doc.qt.nokia.com/qq/qq11-mutex.html
+
+	// TODO: Allow use of SRWLOCK through configuration in as_config.h
+
+	CRITICAL_SECTION    writeLock;
+	HANDLE              readLocks;
+	static const asUINT maxReaders = 10;
 };
 
 #endif
