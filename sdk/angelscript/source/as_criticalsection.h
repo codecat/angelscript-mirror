@@ -171,8 +171,11 @@ protected:
 
 	CRITICAL_SECTION    writeLock;
 	HANDLE              readLocks;
-	static const asUINT maxReaders = 10;
 };
+
+// This constant really should be a member of asCThreadReadWriteLock,
+// but it gives a compiler error on MSVC6 so I'm leaving it outside
+static const asUINT maxReaders = 10;
 
 #endif
 

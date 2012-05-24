@@ -227,6 +227,61 @@ bool Test()
 		engine->Release();		
 	}
 
+	// Test registering enum with the same name in two different namespaces
+	// http://www.gamedev.net/topic/625214-enum-collision-across-namespaces/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("A");
+		r = engine->RegisterEnum("ENUM"); assert( r >= 0 );
+		r = engine->RegisterEnumValue("ENUM", "VALUE", 1); assert( r >= 0 );
+
+		engine->SetDefaultNamespace("B");
+		r = engine->RegisterEnum("ENUM"); assert( r >= 0 );
+		r = engine->RegisterEnumValue("ENUM", "VALUE", 2); assert( r >= 0 );
+
+		engine->SetDefaultNamespace("");
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		r = ExecuteString(engine, "int a = A::ENUM::VALUE; assert(a == 1)", 0, 0);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int b = B::ENUM::VALUE; assert(b == 2)", 0, 0);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// It shouldn't be necessary to inform the name of the enum 
+		// type as the engine property is not set to enforce that
+		r = ExecuteString(engine, "int a = A::VALUE; assert(a == 1)", 0, 0);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int b = B::VALUE; assert(b == 2)", 0, 0);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, true);
+		r = ExecuteString(engine, "int a = A::VALUE; assert(a == 1)", 0, 0);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 9) : Error   : 'A::VALUE' is not declared\n"
+		                   "ExecuteString (1, 28) : Warning : 'a' is not initialized.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

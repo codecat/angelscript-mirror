@@ -1093,8 +1093,7 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code, const asCString &ns)
 {
 	// Check against registered object types
-	// TODO: namespace: Check in correct namespace
-	if( engine->GetObjectType(name) != 0 )
+	if( engine->GetObjectType(name, ns) != 0 )
 	{
 		if( code )
 		{
@@ -3942,8 +3941,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 
 asCObjectType *asCBuilder::GetObjectType(const char *type, const asCString &ns)
 {
-	// TODO: namespace: Registered types should also allow namespaces
-	asCObjectType *ot = engine->GetObjectType(type);
+	asCObjectType *ot = engine->GetObjectType(type, ns);
 	if( !ot && module )
 		ot = module->GetObjectType(type, ns);
 

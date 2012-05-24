@@ -253,7 +253,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const char *type);
+	asCObjectType *GetObjectType(const char *type, const asCString &ns);
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 

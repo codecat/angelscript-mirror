@@ -37,6 +37,14 @@
 // Written by Fredrik Ehnbom in June 2009, based on as_callfunc_x86.cpp
 
 
+// This code has conform to both AAPCS and the modified ABI for iOS
+//
+// Reference:
+//
+// AAPCS: http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042d/IHI0042D_aapcs.pdf
+// iOS: http://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/iPhoneOSABIReference.pdf
+
+
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY

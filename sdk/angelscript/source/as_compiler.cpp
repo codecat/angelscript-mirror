@@ -1936,7 +1936,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		asCString name(&script->code[node->tokenPos], node->tokenLength);
 
 		// Verify that the name isn't used by a dynamic data type
-		if( engine->GetObjectType(name.AddressOf()) != 0 )
+		if( engine->GetObjectType(name.AddressOf(), outFunc->nameSpace) != 0 )
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_VARIABLE_NAME_s, name.AddressOf());

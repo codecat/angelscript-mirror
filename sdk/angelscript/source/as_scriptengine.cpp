@@ -1422,14 +1422,18 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		asUINT n;
 		for( n = 0; n < objectTypes.GetLength(); n++ )
 		{
-			if( objectTypes[n] && objectTypes[n]->name == typeName )
+			if( objectTypes[n] && 
+				objectTypes[n]->name == typeName &&
+				objectTypes[n]->nameSpace == defaultNamespace )
 				// This is not an irrepairable error, as it may just be that the same type is registered twice
 				return asALREADY_REGISTERED;
 		}
 
 		for( n = 0; n < templateTypes.GetLength(); n++ )
 		{
-			if( templateTypes[n] && templateTypes[n]->name == typeName )
+			if( templateTypes[n] && 
+				templateTypes[n]->name == typeName &&
+				templateTypes[n]->nameSpace == defaultNamespace )
 				// This is not an irrepairable error, as it may just be that the same type is registered twice
 				return asALREADY_REGISTERED;
 		}
@@ -2428,12 +2432,13 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 }
 
 
-asCObjectType *asCScriptEngine::GetObjectType(const char *type)
+asCObjectType *asCScriptEngine::GetObjectType(const char *type, const asCString &ns)
 {
 	// TODO: optimize: Improve linear search
 	for( asUINT n = 0; n < objectTypes.GetLength(); n++ )
 		if( objectTypes[n] &&
-			objectTypes[n]->name == type ) // TODO: template: Should we check the subtype in case of template instances?
+			objectTypes[n]->name == type &&
+			objectTypes[n]->nameSpace == ns ) // TODO: template: Should we check the subtype in case of template instances?
 			return objectTypes[n];
 
 	return 0;
@@ -4150,9 +4155,10 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 
 	// Put the data type in the list
 	asCObjectType *object= asNEW(asCObjectType)(this);
-	object->flags = asOBJ_TYPEDEF;
-	object->size = dataType.GetSizeInMemoryBytes();
-	object->name = type;
+	object->flags           = asOBJ_TYPEDEF;
+	object->size            = dataType.GetSizeInMemoryBytes();
+	object->name            = type;
+	object->nameSpace       = defaultNamespace;
 	object->templateSubType = dataType;
 
 	objectTypes.PushLast(object);
