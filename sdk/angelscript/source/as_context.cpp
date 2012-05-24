@@ -4238,31 +4238,62 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
 		return 0;
 
 	// For object variables it's necessary to dereference the pointer to get the address of the value
-	if( func->variables[varIndex]->type.IsObject() && !func->variables[varIndex]->type.IsObjectHandle() )
+	// Reference parameters must also be dereferenced to give the address of the value
+	int pos = func->variables[varIndex]->stackOffset;
+	if( (func->variables[varIndex]->type.IsObject() && !func->variables[varIndex]->type.IsObjectHandle()) || (pos <= 0) )
 	{
 		// Determine if the object is really on the heap
-		bool onHeap = true;
-		if( func->variables[varIndex]->type.GetObjectType()->GetFlags() & asOBJ_VALUE )
+		bool onHeap = false;
+		if( func->variables[varIndex]->type.IsObject() && 
+			!func->variables[varIndex]->type.IsObjectHandle() )
 		{
-			int pos = func->variables[varIndex]->stackOffset;
-			for( asUINT n = 0; n < func->objVariablePos.GetLength(); n++ )
+			onHeap = true;
+			if( func->variables[varIndex]->type.GetObjectType()->GetFlags() & asOBJ_VALUE )
 			{
-				if( func->objVariablePos[n] == pos )
+				for( asUINT n = 0; n < func->objVariablePos.GetLength(); n++ )
 				{
-					onHeap = n < func->objVariablesOnHeap;
-
-					if( !onHeap )
+					if( func->objVariablePos[n] == pos )
 					{
-						// If the object on the stack is not initialized return a null pointer instead
-						asCArray<int> liveObjects;
-						DetermineLiveObjects(liveObjects, stackLevel);
+						onHeap = n < func->objVariablesOnHeap;
 
-						if( liveObjects[n] <= 0 )
-							return 0;
+						if( !onHeap )
+						{
+							// If the object on the stack is not initialized return a null pointer instead
+							asCArray<int> liveObjects;
+							DetermineLiveObjects(liveObjects, stackLevel);
+
+							if( liveObjects[n] <= 0 )
+								return 0;
+						}
+
+						break;
 					}
+				}
+			}
+		}
+
+		// If it wasn't an object on the heap, then check if it is a reference parameter
+		if( !onHeap && pos <= 0 )
+		{
+			// Determine what function argument this position matches
+			int stackPos = 0;
+			if( func->objectType )
+				stackPos -= AS_PTR_SIZE;
+
+			if( func->DoesReturnOnStack() )
+				stackPos -= AS_PTR_SIZE;
+
+			for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+			{
+				if( stackPos == pos )
+				{
+					// The right argument was found. Is this a reference parameter?
+					if( func->inOutFlags[n] != asTM_NONE )
+						onHeap = true;
 
 					break;
 				}
+				stackPos -= func->parameterTypes[n].GetSizeOnStackDWords();
 			}
 		}
 

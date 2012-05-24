@@ -14,6 +14,7 @@ SRCNAMES = \
   test_addon_scripthandle.cpp \
   test_addon_scriptmath.cpp \
   test_addon_serializer.cpp \
+  test_addon_debugger.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -135,6 +136,7 @@ SRCNAMES = \
   testnotcomplexthiscall.cpp \
   testoutput.cpp \
   test_registertype.cpp \
+  test_cdecl_objlast.cpp \
   test_cdecl_return.cpp \
   test_rz.cpp \
   teststdcall4args.cpp \

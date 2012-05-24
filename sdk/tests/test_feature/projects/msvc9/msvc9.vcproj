@@ -370,6 +370,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_addon_debugger.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_addon_dictionary.cpp"
 				>
 			</File>
@@ -435,6 +439,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\test_castop.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\test_cdecl_objlast.cpp"
 				>
 			</File>
 			<File

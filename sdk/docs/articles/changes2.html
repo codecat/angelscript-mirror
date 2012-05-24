@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/05/23</h2>
+<h2>Version 2.24.0 WIP - 2012/05/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,6 +36,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added the global functions asPrepareMultithread() and asUnprepareMultithread()
 <li>The object type can now hold multiple different user data
 <li>Added the global functions asAcquireExclusiveLock() and asReleaseExclusiveLock()
+<li>Deprecated engine::GetGlobalFunctionIdByIndex()
+<li>Deprecated module::GetFunctionIdBy...() and module::RemoveFunction(funcId)
+<li>Changed asIScriptContext::GetAddressOfVar() to dereference parameter references to make it easier to use (Thanks virious)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

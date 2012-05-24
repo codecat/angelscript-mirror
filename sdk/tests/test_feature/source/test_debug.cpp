@@ -263,8 +263,8 @@ void DebugCall()
 	// Get the address of the output parameter
 	void *varPointer = ctx->GetAddressOfVar(0, 0);
 
-	// We got the address to the reference to the handle
-	CScriptString **str = *(CScriptString***)varPointer;
+	// We got the address to the handle
+	CScriptString **str = (CScriptString**)varPointer;
 
 	// Set the handle to point to a new string
 	*str = new CScriptString("test");

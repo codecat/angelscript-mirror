@@ -99,6 +99,10 @@ SOURCE=..\..\source\test_2func.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_debugger.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_addon_dictionary.cpp
 # End Source File
 # Begin Source File
@@ -164,6 +168,10 @@ SOURCE=..\..\source\test_bool.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_castop.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_cdecl_objlast.cpp
 # End Source File
 # Begin Source File
 
@@ -676,6 +684,14 @@ SOURCE=..\..\..\..\add_on\contextmgr\contextmgr.h
 # Begin Source File
 
 SOURCE=..\..\source\cstring.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\debugger\debugger.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\debugger\debugger.h
 # End Source File
 # Begin Source File
 

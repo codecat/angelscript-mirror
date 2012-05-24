@@ -146,6 +146,7 @@ namespace TestScriptRetRef      { bool Test(); }
 namespace TestDefaultArg        { bool Test(); }
 namespace TestShared            { bool Test(); }
 namespace TestNamespace         { bool Test(); }
+namespace TestCDeclObjLast      { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -153,6 +154,7 @@ namespace Test_Addon_Serializer    { bool Test(); }
 namespace Test_Addon_ScriptMath    { bool Test(); }
 namespace Test_Addon_ScriptBuilder { bool Test(); }
 namespace Test_Addon_Dictionary    { bool Test(); }
+namespace Test_Addon_Debugger      { bool Test(); }
 
 #include "utils.h"
 
@@ -199,6 +201,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( Test_Addon_Debugger::Test()      ) goto failed; else printf("-- Test_Addon_Debugger passed\n");
 	if( Test_Addon_ScriptBuilder::Test() ) goto failed; else printf("-- Test_Addon_ScriptBuilder passed\n");
 	if( Test_Addon_ScriptMath::Test()    ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");
 	if( Test_Addon_Serializer::Test()    ) goto failed; else printf("-- Test_Addon_Serializer passed\n");
@@ -309,6 +312,8 @@ int main(int argc, char **argv)
 	if( Test2Func::Test()               ) goto failed; else printf("-- Test2Func passed\n");
 	if( TestCircularImport::Test()      ) goto failed; else printf("-- TestCircularImport passed\n");
 	if( TestNeverVisited()              ) goto failed; else printf("-- TestNeverVisited passed\n");
+	if( TestReturnString::Test()        ) goto failed; else printf("-- TestReturnString passed\n");
+	if( TestNegateOperator()            ) goto failed; else printf("-- TestNegateOperator passed\n");
 
 	// The following tests are designed specifically to test the native calling conventions.
 	// These are grouped by calling convention and ordered in increasing complexity.
@@ -330,8 +335,7 @@ int main(int argc, char **argv)
 		if( TestCDecl_ClassK()            ) goto failed; else printf("-- TestCDecl_ClassK passed\n");
 
 		// cdecl_objlast and cdecl_objfirst
-		if( TestReturnString::Test()      ) goto failed; else printf("-- TestReturnString passed\n");
-		if( TestNegateOperator()          ) goto failed; else printf("-- TestNegateOperator passed\n");
+		if( TestCDeclObjLast::Test()      ) goto failed; else printf("-- TestCDeclObjLast passed\n");
 		if( TestReturnWithCDeclObjFirst() ) goto failed; else printf("-- TestReturnWithCDeclObjFirst passed\n");
 
 		// thiscall
