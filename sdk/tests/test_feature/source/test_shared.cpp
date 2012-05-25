@@ -129,7 +129,7 @@ bool Test()
 		if( f1 == 0 )
 			TEST_FAILED;
 
-		int fact1 = engine->GetObjectTypeById(t1)->GetFactoryIdByIndex(0);
+		asIScriptFunction *fact1 = engine->GetObjectTypeById(t1)->GetFactoryByIndex(0);
 		if( fact1 < 0 )
 			TEST_FAILED;
 
@@ -153,7 +153,7 @@ bool Test()
 		if( f1 != f2 )
 			TEST_FAILED;
 
-		int fact2 = engine->GetObjectTypeById(t2)->GetFactoryIdByIndex(0);
+		asIScriptFunction *fact2 = engine->GetObjectTypeById(t2)->GetFactoryByIndex(0);
 		if( fact1 != fact2 )
 			TEST_FAILED;
 
@@ -179,7 +179,7 @@ bool Test()
 		if( f1 != f3 )
 			TEST_FAILED;
 
-		int fact3 = engine->GetObjectTypeById(t3)->GetFactoryIdByIndex(0);
+		asIScriptFunction *fact3 = engine->GetObjectTypeById(t3)->GetFactoryByIndex(0);
 		if( fact1 != fact3 )
 			TEST_FAILED;
 

@@ -50,7 +50,7 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	if( r < 0 )
 		return 0;
 
-	r = ctx->Prepare(objType->beh.factory);
+	r = ctx->Prepare(engine->scriptFunctions[objType->beh.factory]);
 	if( r < 0 )
 	{
 		ctx->Release();
@@ -293,7 +293,7 @@ void asCScriptObject::CallDestructor()
 				if( r < 0 ) return;
 			}
 
-			int r = ctx->Prepare(funcIndex);
+			int r = ctx->Prepare(objType->engine->scriptFunctions[funcIndex]);
 			if( r >= 0 )
 			{
 				ctx->SetObject(this);

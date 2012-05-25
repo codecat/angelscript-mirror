@@ -64,7 +64,7 @@ static void BindImportedFunctions(asIScriptEngine *engine, const char *module)
 		const char *moduleName = mod->GetImportedFunctionSourceModule(n);
 
 		asIScriptFunction *func = engine->GetModule(moduleName)->GetFunctionByDecl(decl);
-		mod->BindImportedFunction(n, func->GetId());
+		mod->BindImportedFunction(n, func);
 	}
 }
 

@@ -154,7 +154,7 @@ public:
 	virtual int         GetImportedFunctionIndexByDecl(const char *decl) const;
 	virtual const char *GetImportedFunctionDeclaration(asUINT importIndex) const;
 	virtual const char *GetImportedFunctionSourceModule(asUINT importIndex) const;
-	virtual int         BindImportedFunction(asUINT index, int sourceID);
+	virtual int         BindImportedFunction(asUINT index, asIScriptFunction *func);
 	virtual int         UnbindImportedFunction(asUINT importIndex);
 	virtual int         BindAllImportedFunctions();
 	virtual int         UnbindAllImportedFunctions();

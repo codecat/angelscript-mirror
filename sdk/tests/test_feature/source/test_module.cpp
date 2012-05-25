@@ -24,7 +24,7 @@ bool Test()
 		TEST_FAILED;
 
 	// Execute the function
-	r = ctx->Prepare(func->GetId());
+	r = ctx->Prepare(func);
 	if( r < 0 )
 		TEST_FAILED;
 

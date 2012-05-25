@@ -122,7 +122,7 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 	// Show factory functions
 	for( asUINT f = 0; f < objType->GetFactoryCount(); f++ )
 	{
-		s << " " << engine->GetFunctionById(objType->GetFactoryIdByIndex(f))->GetDeclaration() << endl;
+		s << " " << objType->GetFactoryByIndex(f)->GetDeclaration() << endl;
 	}
 
 	if( !( objType->GetFlags() & asOBJ_SCRIPT_OBJECT ) )
@@ -131,8 +131,8 @@ void DumpObjectType(stringstream &s, asIObjectType *objType)
 		for( asUINT b = 0; b < objType->GetBehaviourCount(); b++ )
 		{
 			asEBehaviours beh;
-			int bid = objType->GetBehaviourByIndex(b, &beh);
-			s << " beh(" << beh << ") " << engine->GetFunctionById(bid)->GetDeclaration(false) << endl;
+			asIScriptFunction *bid = objType->GetBehaviourByIndex(b, &beh);
+			s << " beh(" << beh << ") " << bid->GetDeclaration(false) << endl;
 		}
 	}
 

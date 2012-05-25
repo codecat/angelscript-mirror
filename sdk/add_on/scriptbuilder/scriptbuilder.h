@@ -80,7 +80,7 @@ public:
 	const char *GetMetadataStringForType(int typeId);
 
 	// Get metadata declared for functions
-	const char *GetMetadataStringForFunc(int funcId);
+	const char *GetMetadataStringForFunc(asIScriptFunction *func);
 
 	// Get metadata declared for global variables
 	const char *GetMetadataStringForVar(int varIdx);
@@ -89,7 +89,7 @@ public:
 	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 
 	// Get metadata declared for class functions
-	const char *GetMetadataStringForTypeMethod(int typeId, int methodId);
+	const char *GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
 #endif
 
 protected:

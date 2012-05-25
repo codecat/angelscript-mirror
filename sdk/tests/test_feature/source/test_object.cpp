@@ -227,7 +227,7 @@ bool Test()
 	
 	// Test calling an application registered method directly with context
 	ctx = engine->CreateContext();
-	ctx->Prepare(funcId);
+	ctx->Prepare(engine->GetFunctionById(funcId));
 	ctx->SetObject(&obj);
 	ctx->SetArgDWord(0, 42);
 	r = ctx->Execute();

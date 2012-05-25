@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/05/24</h2>
+<h2>Version 2.24.0 WIP - 2012/05/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,12 +39,18 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Deprecated engine::GetGlobalFunctionIdByIndex()
 <li>Deprecated module::GetFunctionIdBy...() and module::RemoveFunction(funcId)
 <li>Changed asIScriptContext::GetAddressOfVar() to dereference parameter references to make it easier to use (Thanks virious)
+<li>Changed BindImportedFunction to take a asIScriptFunction pointer
+<li>Deprecated context::Prepare(int id)
+<li>Deprecated generic::GetFunctionId() and GetFunctionUserData()
+<li>Deprecated objecttype::GetFactoryId...() and GetMethodId...()
+<li>Changed objecttype::GetBehaviourByIndex() to return asIScriptFunction*
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
 <li>SetValue is now a public method in the CScriptArray (Thanks saejox)
 <li>The array add-on takes advantage of the multiple user data types to share its cache between arrays of the same type
 <li>The array uses the new global functions to create the shared cache in a thread safe manner
+<li>CScriptBuilder::GetMetadataStringForFunc() and GetMetadataStringForTypeMethod() now takes a asIScriptFunction*
 </ul>
 </ul>
 

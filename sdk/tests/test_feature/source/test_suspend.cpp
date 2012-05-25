@@ -114,7 +114,8 @@ bool Test()
 
 		ctx = engine->CreateContext();
 		ctx->SetLineCallback(asFUNCTION(LineCallback), 0, asCALL_STDCALL);
-		ctx->Prepare(engine->GetModule(0)->GetFunctionByDecl("void TestSuspend2()"));
+		asIScriptFunction *func = engine->GetModule(0)->GetFunctionByDecl("void TestSuspend2()");
+		ctx->Prepare(func);
 		loopCount = 0;
 		while( ctx->GetState() != asEXECUTION_FINISHED )
 			ctx->Execute();
@@ -124,7 +125,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		ctx->Prepare(asPREPARE_PREVIOUS);
+		ctx->Prepare(func);
 		loopCount = 0;
 		while( ctx->GetState() != asEXECUTION_FINISHED )
 			ctx->Execute();

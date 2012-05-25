@@ -55,7 +55,7 @@ bool TestExecute1Arg()
 	called = false;
 	asIScriptContext *ctx = engine->CreateContext();
 
-	r = ctx->Prepare(funcId);
+	r = ctx->Prepare(engine->GetFunctionById(funcId));
 	if( r < 0 )
 	{
 		TEST_FAILED;

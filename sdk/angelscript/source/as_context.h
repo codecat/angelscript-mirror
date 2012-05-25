@@ -63,8 +63,10 @@ public:
 	asEContextState GetState() const;
 
 	int  Prepare(asIScriptFunction *func);
-	// TODO: interface: deprecate this
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	int  Prepare(int functionId);
+#endif
 	int  Unprepare();
 
 	int SetArgByte(asUINT arg, asBYTE value);

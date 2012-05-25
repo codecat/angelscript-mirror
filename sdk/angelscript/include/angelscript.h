@@ -256,8 +256,11 @@ enum asETokenClass
 	asTC_WHITESPACE = 5
 };
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-25
 // Prepare flags
 const int asPREPARE_PREVIOUS = -1;
+#endif
 
 // Type id flags
 enum asETypeIdFlags
@@ -682,7 +685,7 @@ public:
 	virtual int         GetImportedFunctionIndexByDecl(const char *decl) const = 0;
 	virtual const char *GetImportedFunctionDeclaration(asUINT importIndex) const = 0;
 	virtual const char *GetImportedFunctionSourceModule(asUINT importIndex) const = 0;
-	virtual int         BindImportedFunction(asUINT importIndex, int funcId) = 0;
+	virtual int         BindImportedFunction(asUINT importIndex, asIScriptFunction *func) = 0;
 	virtual int         UnbindImportedFunction(asUINT importIndex) = 0;
 	virtual int         BindAllImportedFunctions() = 0;
 	virtual int         UnbindAllImportedFunctions() = 0;
@@ -711,7 +714,10 @@ public:
 
 	// Execution
 	virtual int             Prepare(asIScriptFunction *func) = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	virtual int             Prepare(int funcId) = 0;
+#endif
 	virtual int             Unprepare() = 0;
 	virtual int             SetObject(void *obj) = 0;
 	virtual int             Execute() = 0;
@@ -778,9 +784,12 @@ class asIScriptGeneric
 public:
 	// Miscellaneous
 	virtual asIScriptEngine   *GetEngine() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	virtual int                GetFunctionId() const = 0;
-	virtual asIScriptFunction *GetFunction() const = 0;
 	virtual void              *GetFunctionUserData() const = 0;
+#endif
+	virtual asIScriptFunction *GetFunction() const = 0;
 
 	// Object
 	virtual void   *GetObject() = 0;
@@ -868,16 +877,22 @@ public:
 
 	// Factories
 	virtual asUINT             GetFactoryCount() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	virtual int                GetFactoryIdByIndex(asUINT index) const = 0;
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
+#endif
 	virtual asIScriptFunction *GetFactoryByIndex(asUINT index) const = 0;
 	virtual asIScriptFunction *GetFactoryByDecl(const char *decl) const = 0;
 
 	// Methods
 	virtual asUINT             GetMethodCount() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	virtual int                GetMethodIdByIndex(asUINT index, bool getVirtual = true) const = 0;
 	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
 	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
+#endif
 	virtual asIScriptFunction *GetMethodByIndex(asUINT index, bool getVirtual = true) const = 0;
 	virtual asIScriptFunction *GetMethodByName(const char *name, bool getVirtual = true) const = 0;
 	virtual asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual = true) const = 0;
@@ -888,8 +903,8 @@ public:
 	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
 
 	// Behaviours
-	virtual asUINT GetBehaviourCount() const = 0;
-	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	virtual asUINT             GetBehaviourCount() const = 0;
+	virtual asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

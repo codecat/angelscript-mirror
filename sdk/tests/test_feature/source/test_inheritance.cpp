@@ -233,7 +233,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test that it is possible to call base class methods from within overridden methods in derived class 
 	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("Derived"));
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(obj->GetObjectType()->GetMethodIdByDecl("void func()"));
+	ctx->Prepare(obj->GetObjectType()->GetMethodByDecl("void func()"));
 	ctx->SetObject(obj);
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
@@ -382,10 +382,10 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	// Test factory id
 	if( d->GetFactoryCount() != 2 )
 		TEST_FAILED;
-	int fid = d->GetFactoryIdByDecl("Derived@ Derived(int)");
+	asIScriptFunction *fid = d->GetFactoryByDecl("Derived@ Derived(int)");
 	if( fid < 0 )
 		TEST_FAILED;
-	if( fid != d->GetFactoryIdByIndex(1) )
+	if( fid != d->GetFactoryByIndex(1) )
 		TEST_FAILED;
 
 	// Test various levels of inheritance

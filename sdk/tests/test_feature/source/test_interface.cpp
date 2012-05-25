@@ -110,9 +110,9 @@ bool Test()
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("myintf");
 	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);
-	int funcId = type->GetMethodIdByDecl("void test()");
+	asIScriptFunction *func = type->GetMethodByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
-	r = ctx->Prepare(funcId);
+	r = ctx->Prepare(func);
 	if( r < 0 ) TEST_FAILED;
 	ctx->SetObject(obj);
 	ctx->Execute();
@@ -121,9 +121,9 @@ bool Test()
 
 	intfTypeId = engine->GetTypeIdByDecl("appintf");
 	type = engine->GetObjectTypeById(intfTypeId);
-	funcId = type->GetMethodIdByDecl("void test()");
+	func = type->GetMethodByDecl("void test()");
 
-	r = ctx->Prepare(funcId);
+	r = ctx->Prepare(func);
 	if( r < 0 ) TEST_FAILED;
 	ctx->SetObject(obj);
 	ctx->Execute();

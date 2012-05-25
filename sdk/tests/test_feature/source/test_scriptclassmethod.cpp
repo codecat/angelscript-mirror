@@ -231,13 +231,13 @@ bool Test()
 		asIObjectType *type = engine->GetObjectTypeById(typeId);
 		if( type->GetMethodCount() != 2 ) 
 			TEST_FAILED;
-		int methodId = type->GetMethodIdByDecl("void method2()");
-		if( methodId < 0 ) 
+		asIScriptFunction *method = type->GetMethodByDecl("void method2()");
+		if( method == 0 ) 
 			TEST_FAILED;
 		else
 		{
 			asIScriptContext *ctx = engine->CreateContext();
-			ctx->Prepare(methodId);
+			ctx->Prepare(method);
 			ctx->SetObject(s);
 			int r = ctx->Execute();
 			if( r != asEXECUTION_FINISHED )
@@ -266,14 +266,14 @@ bool Test()
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
-	int mtdId = type->GetMethodIdByDecl("void func()");
+	asIScriptFunction *mtd = type->GetMethodByDecl("void func()");
 	asIScriptObject *obj = (asIScriptObject *)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("c"));
 
-	if( mtdId < 0 || obj == 0 ) TEST_FAILED;
+	if( mtd == 0 || obj == 0 ) TEST_FAILED;
 	else
 	{
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(mtdId);
+		ctx->Prepare(mtd);
 		ctx->SetObject(obj);
 		r = ctx->Execute();
 		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
@@ -281,12 +281,12 @@ bool Test()
 	}
 
 	type = engine->GetObjectTypeById(typeId);
-	mtdId = type->GetMethodIdByDecl("void func(int, int)");
-	if( mtdId < 0 || obj == 0 ) TEST_FAILED;
+	mtd = type->GetMethodByDecl("void func(int, int)");
+	if( mtd == 0 || obj == 0 ) TEST_FAILED;
 	else
 	{
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(mtdId);
+		ctx->Prepare(mtd);
 		ctx->SetObject(obj);
 		ctx->SetArgDWord(0, 1);
 		ctx->SetArgDWord(1, 1);

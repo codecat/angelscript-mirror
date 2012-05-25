@@ -93,12 +93,12 @@ bool Test()
 		TEST_FAILED;
 
 	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("func1");
-	string metadata = builder.GetMetadataStringForFunc(func->GetId());
+	string metadata = builder.GetMetadataStringForFunc(func);
 	if( metadata != " my meta data test " )
 		TEST_FAILED;
 
 	func = engine->GetModule(0)->GetFunctionByName("func2");
-	metadata = builder.GetMetadataStringForFunc(func->GetId());
+	metadata = builder.GetMetadataStringForFunc(func);
 	if( metadata != " test['hello'] " )
 		TEST_FAILED;
 
@@ -119,10 +119,10 @@ bool Test()
 		TEST_FAILED;
 
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
-	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodIdByName("get_prop"));
+	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("get_prop"));
 	if( metadata != " prop " )
 		TEST_FAILED;
-	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodIdByName("set_prop"));
+	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("set_prop"));
 	if( metadata != " prop " )
 		TEST_FAILED;
 

@@ -155,10 +155,10 @@ bool Test()
 
 	if (testClassObj)
 	{
-		int methodID = testClassObj->GetObjectType()->GetMethodIdByName("dont_work");
+		asIScriptFunction *method = testClassObj->GetObjectType()->GetMethodByName("dont_work");
 		asIScriptContext* ctx = engine->CreateContext();
 
-		r = ctx->Prepare(methodID);
+		r = ctx->Prepare(method);
 		r = ctx->SetObject(testClassObj);
 		r = ctx->SetArgObject(0, a);
 		r = ctx->Execute();

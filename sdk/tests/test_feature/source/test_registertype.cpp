@@ -519,7 +519,7 @@ bool TestRefScoped()
 		TEST_FAILED;
 
 	// Must be possible to determine type id for scoped types with handle
-	asIScriptFunction *func = engine->GetFunctionById(ot->GetFactoryIdByIndex(0));
+	asIScriptFunction *func = ot->GetFactoryByIndex(0);
 	int typeId = func->GetReturnTypeId();
 	if( typeId != engine->GetTypeIdByDecl("scoped@") )
 		TEST_FAILED;

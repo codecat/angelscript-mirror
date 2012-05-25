@@ -368,13 +368,13 @@ bool Test()
 
 	// Calling a function that returns an object directly must release the object upon releasing the context
 	ctx = engine->CreateContext();
-	ctx->Prepare(suspendId);
+	ctx->Prepare(engine->GetFunctionById(suspendId));
 	ctx->Execute();
 	ctx->Release();
 
 	// Calling a function that returns an object but raised an exception shouldn't try to destroy the object
 	ctx = engine->CreateContext();
-	ctx->Prepare(exceptionId);
+	ctx->Prepare(engine->GetFunctionById(exceptionId));
 	ctx->Execute();
 	ctx->Release();
 

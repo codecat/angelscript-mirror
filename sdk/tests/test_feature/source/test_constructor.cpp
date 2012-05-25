@@ -164,12 +164,12 @@ bool TestConstructor()
 
 		int typeId = mod->GetTypeIdByDecl("Obj");
 		asIObjectType *type = engine->GetObjectTypeById(typeId);
-		int funcId = type->GetFactoryIdByDecl("Obj @Obj(const vector3 &in)");
-		if( funcId < 0 )
+		asIScriptFunction *func = type->GetFactoryByDecl("Obj @Obj(const vector3 &in)");
+		if( func == 0 )
 			TEST_FAILED;
 
 		asIScriptContext *ctx = engine->CreateContext();
-		ctx->Prepare(funcId);
+		ctx->Prepare(func);
 		Vector3 pos(1,2,3);
 		*(Vector3**)ctx->GetAddressOfArg(0) = &pos;
 		r = ctx->Execute();

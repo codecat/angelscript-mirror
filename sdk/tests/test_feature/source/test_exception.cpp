@@ -84,9 +84,9 @@ bool TestException()
 	// A test to validate Unprepare without execution
 	{
 		asIObjectType *type = mod->GetObjectTypeByIndex(0);
-		int funcId = type->GetMethodIdByDecl("void Test(string c)");
+		asIScriptFunction *func = type->GetMethodByDecl("void Test(string c)");
 		ctx = engine->CreateContext();
-		ctx->Prepare(funcId);
+		ctx->Prepare(func);
 		asIScriptContext *obj = (asIScriptContext*)engine->CreateScriptObject(type->GetTypeId());
 		ctx->SetObject(obj); // Just sets the address
 		CScriptString *str = new CScriptString();
@@ -101,9 +101,9 @@ bool TestException()
 	{
 		asIObjectType *type = mod->GetObjectTypeByIndex(0);
 		// Get the real method, not the virtual method
-		int funcId = type->GetMethodIdByDecl("void Test(string c)", false);
+		asIScriptFunction *func = type->GetMethodByDecl("void Test(string c)", false);
 		ctx = engine->CreateContext();
-		ctx->Prepare(funcId);
+		ctx->Prepare(func);
 		// Don't set the object, nor the arguments
 		ctx->Unprepare();
 		ctx->Release();

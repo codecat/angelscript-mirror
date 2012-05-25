@@ -288,7 +288,7 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 					break;
 			}
 
-			r = ctx->Prepare(scriptGlobals[n]->GetInitFunc()->id);
+			r = ctx->Prepare(scriptGlobals[n]->GetInitFunc());
 			if( r >= 0 )
 			{
 				r = ctx->Execute();
@@ -988,7 +988,7 @@ asCScriptFunction *asCModule::GetImportedFunction(int index) const
 }
 
 // interface
-int asCModule::BindImportedFunction(asUINT index, int sourceId)
+int asCModule::BindImportedFunction(asUINT index, asIScriptFunction *func)
 {
 	// First unbind the old function
 	int r = UnbindImportedFunction(index);
@@ -998,7 +998,10 @@ int asCModule::BindImportedFunction(asUINT index, int sourceId)
 	asCScriptFunction *dst = GetImportedFunction(index);
 	if( dst == 0 ) return asNO_FUNCTION;
 
-	asCScriptFunction *src = engine->GetScriptFunction(sourceId);
+	if( func == 0 )
+		return asINVALID_ARG;
+
+	asCScriptFunction *src = engine->GetScriptFunction(func->GetId());
 	if( src == 0 ) 
 		return asNO_FUNCTION;
 
@@ -1015,8 +1018,8 @@ int asCModule::BindImportedFunction(asUINT index, int sourceId)
 			return asINVALID_INTERFACE;
 	}
 
-	bindInformations[index]->boundFunctionId = sourceId;
-	engine->scriptFunctions[sourceId]->AddRef();
+	bindInformations[index]->boundFunctionId = src->GetId();
+	src->AddRef();
 
 	return asSUCCESS;
 }
@@ -1068,28 +1071,25 @@ int asCModule::BindAllImportedFunctions()
 	int c = GetImportedFunctionCount();
 	for( int n = 0; n < c; ++n )
 	{
-		asCScriptFunction *func = GetImportedFunction(n);
-		if( func == 0 ) return asERROR;
+		asCScriptFunction *importFunc = GetImportedFunction(n);
+		if( importFunc == 0 ) return asERROR;
 
-		asCString str = func->GetDeclarationStr();
+		asCString str = importFunc->GetDeclarationStr();
 
 		// Get module name from where the function should be imported
 		const char *moduleName = GetImportedFunctionSourceModule(n);
 		if( moduleName == 0 ) return asERROR;
 
 		asCModule *srcMod = engine->GetModule(moduleName, false);
-		int funcId = -1;
+		asIScriptFunction *func = 0;
 		if( srcMod )
-		{
-			asIScriptFunction *func = srcMod->GetFunctionByDecl(str.AddressOf());
-			funcId = func ? func->GetId() : -1;
-		}
+			func = srcMod->GetFunctionByDecl(str.AddressOf());
 
-		if( funcId < 0 )
+		if( func == 0 )
 			notAllFunctionsWereBound = true;
 		else
 		{
-			if( BindImportedFunction(n, funcId) < 0 )
+			if( BindImportedFunction(n, func) < 0 )
 				notAllFunctionsWereBound = true;
 		}
 	}
@@ -1597,7 +1597,7 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 			if( r < 0 )
 				return r;
 
-			r = ctx->Prepare(prop->GetInitFunc()->id);
+			r = ctx->Prepare(prop->GetInitFunc());
 			if( r >= 0 )
 				r = ctx->Execute();
 

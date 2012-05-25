@@ -348,11 +348,11 @@ void Print()
 	g_printCount++;
 }
 
-void GetClassInstance(asIScriptEngine *engine, int funcId, asIScriptObject* &retObj, int& retTypeId)
+void GetClassInstance(asIScriptEngine *engine, asIScriptFunction *func, asIScriptObject* &retObj, int& retTypeId)
 {
 	int r;
 	asIScriptContext* ctxt = engine->CreateContext();	
-	r = ctxt->Prepare( funcId );
+	r = ctxt->Prepare( func );
 	r = ctxt->Execute();
 	
 	CScriptAny *anyResult = *(CScriptAny **)ctxt->GetAddressOfReturnValue();
@@ -416,25 +416,25 @@ bool Test3()
 	r = mod->Build();
 
 	// create two instances of our classes
-	int funcId = mod->GetFunctionByDecl( "any@ GetClass()" )->GetId();
+	asIScriptFunction *func = mod->GetFunctionByDecl( "any@ GetClass()" );
 	
 	asIScriptObject* objA;
 	int objATypeId;
-	GetClassInstance( engine, funcId, objA, objATypeId );
+	GetClassInstance( engine, func, objA, objATypeId );
 
 	asIScriptObject* objB;
 	int objBTypeId;
-	GetClassInstance( engine, funcId, objB, objBTypeId );
+	GetClassInstance( engine, func, objB, objBTypeId );
 
 	// resolve method functions we want to call
 	asIObjectType* typeA = engine->GetObjectTypeById( objATypeId );
-	int setFuncId = typeA->GetMethodIdByDecl( "void SetObj( IMyInterface@ obj )" );
-	int clearFuncId = typeA->GetMethodIdByDecl( "void ClearObj()" );
+	asIScriptFunction *setFunc = typeA->GetMethodByDecl( "void SetObj( IMyInterface@ obj )" );
+	asIScriptFunction *clearFunc = typeA->GetMethodByDecl( "void ClearObj()" );
 
 	// set our objB into objA
 	{
 		asIScriptContext* ctxt = engine->CreateContext();
-		r = ctxt->Prepare( setFuncId );
+		r = ctxt->Prepare( setFunc );
 		r = ctxt->SetObject( objA );
 		r = ctxt->SetArgObject( 0, objB );
 		r = ctxt->Execute();
@@ -449,7 +449,7 @@ bool Test3()
 	// clear objB from objA
 	{
 		asIScriptContext* ctxt = engine->CreateContext();
-		r = ctxt->Prepare( clearFuncId );
+		r = ctxt->Prepare( clearFunc );
 		r = ctxt->SetObject( objA );
 		r = ctxt->Execute();
 		ctxt->Release();

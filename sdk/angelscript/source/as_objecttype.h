@@ -159,16 +159,22 @@ public:
 
 	// Factories
 	asUINT             GetFactoryCount() const;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	int                GetFactoryIdByIndex(asUINT index) const;
 	int                GetFactoryIdByDecl(const char *decl) const;
+#endif
 	asIScriptFunction *GetFactoryByIndex(asUINT index) const;
 	asIScriptFunction *GetFactoryByDecl(const char *decl) const;
 
 	// Methods
 	asUINT             GetMethodCount() const;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	int                GetMethodIdByIndex(asUINT index, bool getVirtual) const;
 	int                GetMethodIdByName(const char *name, bool getVirtual) const;
 	int                GetMethodIdByDecl(const char *decl, bool getVirtual) const;
+#endif
 	asIScriptFunction *GetMethodByIndex(asUINT index, bool getVirtual) const;
 	asIScriptFunction *GetMethodByName(const char *name, bool getVirtual) const;
 	asIScriptFunction *GetMethodByDecl(const char *decl, bool getVirtual) const;
@@ -179,8 +185,8 @@ public:
 	const char *GetPropertyDeclaration(asUINT index) const;
 
 	// Behaviours
-	asUINT GetBehaviourCount() const;
-	int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
+	asUINT             GetBehaviourCount() const;
+	asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
 
 	// User data
 	void *SetUserData(void *data, asPWORD type);

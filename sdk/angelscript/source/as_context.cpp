@@ -262,6 +262,8 @@ void *asCContext::GetUserData() const
 	return userData;
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-25
 // interface
 int asCContext::Prepare(int funcId)
 {
@@ -274,6 +276,7 @@ int asCContext::Prepare(int funcId)
 	}
 	return Prepare(engine->GetFunctionById(funcId));
 }
+#endif
 
 // interface
 asIScriptFunction *asCContext::GetSystemFunction()
