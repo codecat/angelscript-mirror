@@ -160,6 +160,12 @@ void asCArray<T>::PushLast(const T &element)
 			Allocate(1, false);
 		else
 			Allocate(2*maxLength, true);
+
+		if( length == maxLength )
+		{
+			// Out of memory. Return without doing anything
+			return;
+		}
 	}
 
 	array[length++] = element;
@@ -189,8 +195,15 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 			// Use the internal buffer
 			tmp = (T*)buf;
 		else
+		{
 			// Allocate the array and construct each of the elements
 			tmp = asNEWARRAY(T,numElements);
+			if( tmp == 0 )
+			{
+				// Out of memory. Return without doing anything
+				return;
+			}
+		}
 
 		if( array == tmp )
 		{
@@ -266,8 +279,15 @@ void asCArray<T>::AllocateNoConstruct(size_t numElements, bool keepData)
 			// Use the internal buffer
 			tmp = (T*)buf;
 		else
+		{
 			// Allocate the array and construct each of the elements
 			tmp = asNEWARRAY(T,numElements);
+			if( tmp == 0 )
+			{
+				// Out of memory. Return without doing anything
+				return;
+			}
+		}
 	}
 
 	if( array )
@@ -313,7 +333,14 @@ template <class T>
 void asCArray<T>::SetLength(size_t numElements)
 {
 	if( numElements > maxLength )
+	{
 		Allocate(numElements, true);
+		if( numElements > maxLength )
+		{
+			// Out of memory. Return without doing anything
+			return;
+		}
+	}
 
 	length = numElements;
 }
@@ -322,7 +349,14 @@ template <class T>
 void asCArray<T>::SetLengthNoConstruct(size_t numElements)
 {
 	if( numElements > maxLength )
+	{
 		AllocateNoConstruct(numElements, true);
+		if( numElements > maxLength )
+		{
+			// Out of memory. Return without doing anything
+			return;
+		}
+	}
 
 	length = numElements;
 }
@@ -331,7 +365,14 @@ template <class T>
 void asCArray<T>::Copy(const T *data, size_t count)
 {
 	if( maxLength < count )
+	{
 		Allocate(count, false);
+		if( maxLength < count )
+		{
+			// Out of memory. Return without doing anything
+			return;
+		}
+	}
 
 	for( size_t n = 0; n < count; n++ )
 		array[n] = data[n];

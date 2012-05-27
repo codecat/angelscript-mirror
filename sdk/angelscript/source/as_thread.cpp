@@ -258,7 +258,8 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 	{
 		// Create a new tld
 		tld = asNEW(asCThreadLocalData)();
-		threadManager->SetLocalData(id, tld);
+		if( tld )
+			threadManager->SetLocalData(id, tld);
 	}
 
 	LEAVECRITICALSECTION(threadManager->criticalSection);

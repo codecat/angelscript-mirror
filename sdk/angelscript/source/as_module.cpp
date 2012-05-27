@@ -158,7 +158,11 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 	return asNOT_SUPPORTED;
 #else
 	if( !builder )
+	{
 		builder = asNEW(asCBuilder)(engine, this);
+		if( builder == 0 )
+			return asOUT_OF_MEMORY;
+	}
 
 	return builder->AddCode(name, code, (int)codeLength, lineOffset, (int)engine->GetScriptSectionNameIndex(name ? name : ""), engine->ep.copyScriptSections);
 #endif
@@ -896,6 +900,9 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 
 	// Store the function information
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT);
+	if( func == 0 )
+		return asOUT_OF_MEMORY;
+
 	func->name             = name;
 	func->nameSpace        = ns;
 	func->id               = id;
@@ -956,6 +963,9 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 
 	// Store the function information
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, asFUNC_IMPORTED);
+	if( func == 0 )
+		return asOUT_OF_MEMORY;
+
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
@@ -967,6 +977,9 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	func->objectType = 0;
 
 	sBindInfo *info = asNEW(sBindInfo);
+	if( info == 0 )
+		return asOUT_OF_MEMORY;
+
 	info->importedFunctionSignature = func;
 	info->boundFunctionId = -1;
 	info->importFromModule = moduleName;
@@ -1700,6 +1713,9 @@ int asCModule::RemoveFunction(asIScriptFunction *func)
 int asCModule::AddFuncDef(const char *name, const asCString &ns)
 {
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, 0, asFUNC_FUNCDEF);
+	if( func == 0 )
+		return asOUT_OF_MEMORY;
+
 	func->name      = name;
 	func->nameSpace = ns;
 

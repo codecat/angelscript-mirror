@@ -410,7 +410,10 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 				asCString name(&script->code[node->tokenPos], node->tokenLength);
 
 				if( vs.DeclareVariable(name.AddressOf(), type, stackPos, true) < 0 )
+				{
+					// TODO: It might be an out-of-memory too
 					Error(TXT_PARAMETER_ALREADY_DECLARED, node);
+				}
 
 				// Add marker for variable declaration
 				byteCode.VarDecl((int)outFunc->variables.GetLength());
@@ -1681,6 +1684,11 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 		if( r < 0 ) anyErrors = true;
 
 		args[n] = asNEW(asSExprContext)(engine);
+		if( args[n] == 0 )
+		{
+			// Out of memory
+			return -1;
+		}
 		MergeExprBytecodeAndType(args[n], &expr);
 
 		n--;
@@ -1739,6 +1747,12 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		}
 
 		args[n] = asNEW(asSExprContext)(engine);
+		if( args[n] == 0 )
+		{
+			// Out of memory
+			return -1;
+		}
+
 		MergeExprBytecodeAndType(args[n], &expr);
 
 		// Make sure the default arg expression doesn't end up
@@ -1946,6 +1960,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		int offset = AllocateVariable(type, false);
 		if( variables->DeclareVariable(name.AddressOf(), type, offset, IsVariableOnHeap(offset)) < 0 )
 		{
+			// TODO: It might be an out-of-memory too
+
 			asCString str;
 			str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
 			Error(str.AddressOf(), node);
@@ -3504,6 +3520,11 @@ void asCCompiler::DestroyVariables(asCByteCode *bc)
 void asCCompiler::AddVariableScope(bool isBreakScope, bool isContinueScope)
 {
 	variables = asNEW(asCVariableScope)(variables);
+	if( variables == 0 )
+	{
+		// Out of memory
+		return;
+	}
 	variables->isBreakScope    = isBreakScope;
 	variables->isContinueScope = isContinueScope;
 }
@@ -8618,6 +8639,12 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		if( arg )
 		{
 			ctx->property_arg = asNEW(asSExprContext)(engine);
+			if( ctx->property_arg == 0 )
+			{
+				// Out of memory
+				return -1;
+			}
+
 			MergeExprBytecodeAndType(ctx->property_arg, arg);
 		}
 
@@ -9315,6 +9342,11 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	{
 		// Store the original bytecode so that it can be reused when processing the deferred output parameter
 		asSExprContext *orig = asNEW(asSExprContext)(engine);
+		if( orig == 0 )
+		{
+			// Out of memory
+			return;
+		}
 		MergeExprBytecodeAndType(orig, arg);
 		arg->origExpr = orig;
 	}

@@ -780,6 +780,12 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, cons
 
 	// Store the properties in the object type descriptor
 	asCObjectProperty *prop = asNEW(asCObjectProperty);
+	if( prop == 0 )
+	{
+		// Out of memory
+		return 0;
+	}
+
 	prop->name      = name;
 	prop->type      = dt;
 	prop->isPrivate = isPrivate;

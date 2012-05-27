@@ -79,6 +79,9 @@ int asCReader::Read()
 	for( i = 0; i < count; i++ )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
+		if( ot == 0 )
+			return asOUT_OF_MEMORY;
+
 		ReadObjectTypeDeclaration(ot, 1);
 		engine->classTypes.PushLast(ot);
 		module->enumTypes.PushLast(ot);
@@ -93,6 +96,9 @@ int asCReader::Read()
 	for( i = 0; i < count; ++i )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
+		if( ot == 0 )
+			return asOUT_OF_MEMORY;
+
 		ReadObjectTypeDeclaration(ot, 1);
 
 		// If the type is shared, then we should use the original if it exists
@@ -190,6 +196,9 @@ int asCReader::Read()
 	for( i = 0; i < count; i++ )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
+		if( ot == 0 )
+			return asOUT_OF_MEMORY;
+
 		ReadObjectTypeDeclaration(ot, 1);
 		engine->classTypes.PushLast(ot);
 		module->typeDefs.PushLast(ot);
@@ -263,6 +272,9 @@ int asCReader::Read()
 	for( i = 0; i < count; ++i )
 	{
 		sBindInfo *info = asNEW(sBindInfo);
+		if( info == 0 )
+			return asOUT_OF_MEMORY;
+
 		info->importedFunctionSignature = ReadFunction(false, false);
 		if( engine->freeImportedFunctionIdxs.GetLength() )
 		{
@@ -477,6 +489,12 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 		for( i = 0; i < count; i++ )
 		{
 			asCString *str = asNEW(asCString);
+			if( str == 0 )
+			{
+				// Out of memory
+				error = true;
+				return;
+			}
 			func->defaultArgs[func->defaultArgs.GetLength()-1-i] = str;
 			ReadString(str);
 		}
@@ -519,6 +537,12 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 
 	// Load the new function
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_DUMMY);
+	if( func == 0 )
+	{
+		// Out of memory
+		error = true;
+		return 0;
+	}
 	savedFunctions.PushLast(func);
 
 	int i, count;
@@ -577,6 +601,12 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		for( i = 0; i < length; i++ )
 		{
 			asSScriptVariable *var = asNEW(asSScriptVariable);
+			if( var == 0 )
+			{
+				// Out of memory
+				error = true;
+				return 0;
+			}
 			func->variables[i] = var;
 
 			var->declaredAtProgramPos = ReadEncodedUInt();
@@ -648,6 +678,12 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			for( int n = 0; n < count; n++ )
 			{
 				asSEnumValue *e = asNEW(asSEnumValue);
+				if( e == 0 )
+				{
+					// Out of memory
+					error = true;
+					return;
+				}
 				ReadString(&e->name);
 				ReadData(&e->value, 4);
 				ot->enumValues.PushLast(e);

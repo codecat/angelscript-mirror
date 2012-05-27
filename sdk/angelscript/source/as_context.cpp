@@ -358,6 +358,9 @@ int asCContext::Prepare(asIScriptFunction *func)
 			stackBlockSize = stackSize;
 
 			asDWORD *stack = asNEWARRAY(asDWORD,stackBlockSize);
+			if( stack == 0 )
+				return asOUT_OF_MEMORY;
+
 			stackBlocks.PushLast(stack);
 		}
 	}
@@ -1246,7 +1249,6 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 					// Set the stackFramePointer, even though the stackPointer wasn't updated
 					regs.stackFramePointer = regs.stackPointer;
 
-					// TODO: Make sure the exception handler doesn't try to free objects that have not been initialized
 					SetInternalException(TXT_STACK_OVERFLOW);
 					return;
 				}
@@ -1256,6 +1258,17 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 			if( (int)stackBlocks.GetLength() == stackIndex )
 			{
 				asDWORD *stack = asNEWARRAY(asDWORD,(stackBlockSize << stackIndex));
+				if( stack == 0 )
+				{
+					// Out of memory
+					isStackMemoryNotAllocated = true;
+
+					// Set the stackFramePointer, even though the stackPointer wasn't updated
+					regs.stackFramePointer = regs.stackPointer;
+
+					SetInternalException(TXT_STACK_OVERFLOW);
+					return;
+				}
 				stackBlocks.PushLast(stack);
 			}
 
