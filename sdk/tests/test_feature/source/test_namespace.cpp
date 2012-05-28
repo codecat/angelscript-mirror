@@ -37,6 +37,8 @@ bool Test()
 			"  namespace b { \n"
 			"    int var = 2; \n"
 			"  } \n"
+			// Accessing global variables from within a namespace is also possible
+			"  int getglobalvar() { return ::var; } \n"
 			"} \n"
 			// It's possible to specify exactly which one is wanted
 			"cl gc; \n"
@@ -63,6 +65,7 @@ bool Test()
 			"  assert(ca.v == 1); \n"
 			"  assert(gc.v == 0); \n"
 			"  assert(gca.v == 1); \n"
+			"  assert(a::getglobalvar() == 0); \n"
 			"} \n";
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);

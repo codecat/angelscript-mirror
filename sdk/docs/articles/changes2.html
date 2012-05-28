@@ -35,7 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added the global functions asPrepareMultithread() and asUnprepareMultithread()
 <li>The object type can now hold multiple different user data
-<li>Added the global functions asAcquireExclusiveLock() and asReleaseExclusiveLock()
+<li>Added the global functions asAcquireExclusiveLock(), asReleaseExclusiveLock(), asAcquireSharedLock() and asReleaseSharedLock()
 <li>Deprecated engine::GetGlobalFunctionIdByIndex()
 <li>Deprecated module::GetFunctionIdBy...() and module::RemoveFunction(funcId)
 <li>Changed asIScriptContext::GetAddressOfVar() to dereference parameter references to make it easier to use (Thanks virious)
@@ -55,6 +55,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The array add-on takes advantage of the multiple user data types to share its cache between arrays of the same type
 <li>The array uses the new global functions to create the shared cache in a thread safe manner
 <li>CScriptBuilder::GetMetadataStringForFunc() and GetMetadataStringForTypeMethod() now takes a asIScriptFunction*
+<li>The string pool is now threadsafe
 </ul>
 </ul>
 

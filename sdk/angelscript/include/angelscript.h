@@ -487,6 +487,8 @@ extern "C"
 	AS_API void asUnprepareMultithread();
 	AS_API void asAcquireExclusiveLock();
 	AS_API void asReleaseExclusiveLock();
+	AS_API void asAcquireSharedLock();
+	AS_API void asReleaseSharedLock();
 	AS_API int  asThreadCleanup();
 
 	// Memory management

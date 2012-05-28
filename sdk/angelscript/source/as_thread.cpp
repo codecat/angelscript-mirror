@@ -80,6 +80,18 @@ AS_API void asReleaseExclusiveLock()
 		RELEASEEXCLUSIVE(threadManager->appRWLock);
 }
 
+AS_API void asAcquireSharedLock()
+{
+	if( threadManager )
+		ACQUIRESHARED(threadManager->appRWLock);
+}
+
+AS_API void asReleaseSharedLock()
+{
+	if( threadManager )
+		RELEASESHARED(threadManager->appRWLock);
+}
+
 }
 
 //======================================================================

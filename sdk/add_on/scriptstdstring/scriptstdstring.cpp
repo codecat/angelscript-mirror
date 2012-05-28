@@ -17,21 +17,38 @@ BEGIN_AS_NAMESPACE
 // In case the AngelScript engine is recreated the memory pool
 // will be cleaned out by RegisterStdString to avoid errors as
 // AngelScript may reuse pointers for different string values.
-// TODO: make thread-safe
 // TODO: make it work with multiple engine instances
 // TODO: runtime optimize: Use unordered_map if C++11 is supported, i.e. MSVC10+, gcc 4.?+
 static map<const char *, string> g_pool;
 static const string &StringFactory(asUINT length, const char *s)
 {
+	// We can't let other threads modify the pool while we query it
+	asAcquireSharedLock();
+
 	// First check if a string object hasn't been created already
 	map<const char *, string>::iterator it;
 	it = g_pool.find(s);
 	if( it != g_pool.end() )
+	{
+		asReleaseSharedLock();
 		return it->second;
+	}
 
-	// Create a new string object
-	g_pool.insert(map<const char *, string>::value_type(s, string(s, length)));
+	asReleaseSharedLock();
+
+	// Acquire an exclusive lock so we can add the new string to the pool
+	asAcquireExclusiveLock();
+
+	// Make sure the string wasn't created while we were waiting for the exclusive lock
 	it = g_pool.find(s);
+	if( it == g_pool.end() )
+	{
+		// Create a new string object
+		g_pool.insert(map<const char *, string>::value_type(s, string(s, length)));
+		it = g_pool.find(s);
+	}
+
+	asReleaseExclusiveLock();
 	return it->second;
 }
 #else
