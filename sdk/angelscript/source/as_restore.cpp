@@ -2354,7 +2354,8 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			calledFunc = GetCalledFunction(func, n);
 			break;
 		}
-		else if( bc == asBC_REFCPY )
+		else if( bc == asBC_REFCPY ||
+				 bc == asBC_COPY )
 		{
 			// In this case we know there is only 1 pointer on the stack above
 			asASSERT( offset == 1 );
@@ -3263,7 +3264,8 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 				}
 			break;
 		}
-		else if( bc == asBC_REFCPY )
+		else if( bc == asBC_REFCPY ||
+				 bc == asBC_COPY )
 		{
 			// In this case we know there is only 1 pointer on the stack above
 			asASSERT( offset == AS_PTR_SIZE );

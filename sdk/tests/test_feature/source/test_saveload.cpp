@@ -322,12 +322,15 @@ public:
 	int refCount;
 };
 
+bool TestAndrewPrice();
+
 bool Test()
 {
 	int r;
 	COutStream out;
 	
 	Test2();
+	TestAndrewPrice();
 
 	asIScriptEngine *engine = ConfigureEngine(0);
 
@@ -1332,6 +1335,61 @@ bool Test2()
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	engine->Release();
+
+	return fail;
+}
+
+
+
+const char *APStringFactory(int length, const char *s)
+{
+	return s;
+}
+
+void APStringConstruct(const char **s)
+{
+	*s = 0;
+}
+
+bool TestAndrewPrice()
+{
+	COutStream out;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
+	RegisterScriptArray(engine, true);
+
+	// This POD type doesn't have an opAssign, so the bytecode will have asBC_COPY 
+	engine->RegisterObjectType("char_ptr", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+	engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(APStringConstruct), asCALL_CDECL_OBJLAST);
+	engine->RegisterStringFactory("char_ptr", asFUNCTION(APStringFactory), asCALL_CDECL);
+		
+	asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+	char Data2[] = 
+		"const char_ptr[] STORAGE_STRINGS = {'Storage[0]','Storage[1]'}; ";
+	mod->AddScriptSection("Part2",Data2,(int)strlen(Data2));
+	int r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+
+	mod->BindAllImportedFunctions();
+
+	CBytecodeStream stream(__FILE__"1");
+	r = mod->SaveByteCode(&stream);
+	if( r < 0 )
+		TEST_FAILED;
+
+	mod = engine->GetModule("Test2", asGM_ALWAYS_CREATE);
+	r = mod->LoadByteCode(&stream);
+	if( r < 0 )
+		TEST_FAILED;
+
+	CScriptArray *arr = reinterpret_cast<CScriptArray*>(mod->GetAddressOfGlobalVar(0));
+	if( arr->GetSize() != 2 || strcmp(*reinterpret_cast<const char**>(arr->At(1)), "Storage[1]") != 0 )
 		TEST_FAILED;
 
 	engine->Release();

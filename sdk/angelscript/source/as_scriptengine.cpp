@@ -3729,20 +3729,30 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	// Is the type id valid?
 	if( !dt.IsValid() ) return 0;
 
-	// Allocate the memory
 	asCObjectType *objType = dt.GetObjectType();
 	void *ptr = 0;
 
 	// Construct the object
 	if( objType->flags & asOBJ_SCRIPT_OBJECT )
+	{
+		// Call the script class' default factory with a context
 		ptr = ScriptObjectFactory(objType, this);
+	}
 	else if( objType->flags & asOBJ_TEMPLATE )
-		// The registered factory is moved to the construct behaviour when the type is instanciated
+	{
+		// The registered factory that takes the object type is moved 
+		// to the construct behaviour when the type is instanciated
 		ptr = CallGlobalFunctionRetPtr(objType->beh.construct, objType);
+	}
 	else if( objType->flags & asOBJ_REF )
+	{
+		// Call the default factory directly
 		ptr = CallGlobalFunctionRetPtr(objType->beh.factory);
+	}
 	else
 	{
+		// Manually allocate the memory, then
+		// call the default constructor
 		ptr = CallAlloc(objType);
 		int funcIndex = objType->beh.construct;
 		if( funcIndex )
