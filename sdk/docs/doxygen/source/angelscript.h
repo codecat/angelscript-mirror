@@ -2514,10 +2514,16 @@ public:
 	//! \param[out] column The variable will receive the column number.
 	//! \param[out] sectionName The variable will receive the name of the script section.
 	//! \return The line number for the call stack level referred to by the index.
+	//!
+	//! This function returns the line number, and optionally the column number
+	//! and the name of the script section where the program is current at. 
+	//!
+	//! The sectionName pointer will point to an internal buffer, so do not deallocate it.
 	virtual int                GetLineNumber(asUINT stackLevel = 0, int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Returns the number of local variables at the specified callstack level.
 	//! \param[in] stackLevel The index on the call stack.
-	//! \return The number of variables in the function on the call stack level.
+	//! \return The number of variables in the function on the call stack level. Or negative value on error.
+	//! \retval asINVALID_ARG The stackLevel is invalid.
 	//!
 	//! Returns the number of declared variables, including the parameters, in the function on the stack.
 	virtual int                GetVarCount(asUINT stackLevel = 0) = 0;

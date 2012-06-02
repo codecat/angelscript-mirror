@@ -1357,42 +1357,78 @@ void APStringConstruct(const char **s)
 bool TestAndrewPrice()
 {
 	COutStream out;
+	CBufferedOutStream bout;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
-	RegisterScriptArray(engine, true);
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_COPY_SCRIPT_SECTIONS, true);
+		RegisterScriptArray(engine, true);
 
-	// This POD type doesn't have an opAssign, so the bytecode will have asBC_COPY 
-	engine->RegisterObjectType("char_ptr", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(APStringConstruct), asCALL_CDECL_OBJLAST);
-	engine->RegisterStringFactory("char_ptr", asFUNCTION(APStringFactory), asCALL_CDECL);
+		// This POD type doesn't have an opAssign, so the bytecode will have asBC_COPY 
+		engine->RegisterObjectType("char_ptr", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(APStringConstruct), asCALL_CDECL_OBJLAST);
+		engine->RegisterStringFactory("char_ptr", asFUNCTION(APStringFactory), asCALL_CDECL);
+			
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		char Data2[] = 
+			"const char_ptr[] STORAGE_STRINGS = {'Storage[0]','Storage[1]'}; ";
+		mod->AddScriptSection("Part2",Data2,(int)strlen(Data2));
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod->BindAllImportedFunctions();
+
+		CBytecodeStream stream(__FILE__"1");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("Test2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		CScriptArray *arr = reinterpret_cast<CScriptArray*>(mod->GetAddressOfGlobalVar(0));
+		if( arr->GetSize() != 2 || strcmp(*reinterpret_cast<const char**>(arr->At(1)), "Storage[1]") != 0 )
+			TEST_FAILED;
+
+		engine->Release();
+
+		// Try loading the bytecode again, except this time without configuring the engine
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		
-	asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
-	char Data2[] = 
-		"const char_ptr[] STORAGE_STRINGS = {'Storage[0]','Storage[1]'}; ";
-	mod->AddScriptSection("Part2",Data2,(int)strlen(Data2));
-	int r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		mod = engine->GetModule("Test3", asGM_ALWAYS_CREATE);
+		stream.Restart();
+		bout.buffer = "";
+		r = mod->LoadByteCode(&stream);
+		if( r >= 0 )
+			TEST_FAILED;
 
-	mod->BindAllImportedFunctions();
+		if( bout.buffer != " (0, 0) : Error   : Template type 'array' doesn't exist\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
-	CBytecodeStream stream(__FILE__"1");
-	r = mod->SaveByteCode(&stream);
-	if( r < 0 )
-		TEST_FAILED;
+		RegisterScriptArray(engine, true);
+		stream.Restart();
+		bout.buffer = "";
+		r = mod->LoadByteCode(&stream);
+		if( r >= 0 )
+			TEST_FAILED;
 
-	mod = engine->GetModule("Test2", asGM_ALWAYS_CREATE);
-	r = mod->LoadByteCode(&stream);
-	if( r < 0 )
-		TEST_FAILED;
+		if( bout.buffer != " (0, 0) : Error   : Object type 'char_ptr' doesn't exist\n"
+		                   " (0, 0) : Error   : Failed to read subtype of template type 'array'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
-	CScriptArray *arr = reinterpret_cast<CScriptArray*>(mod->GetAddressOfGlobalVar(0));
-	if( arr->GetSize() != 2 || strcmp(*reinterpret_cast<const char**>(arr->At(1)), "Storage[1]") != 0 )
-		TEST_FAILED;
-
-	engine->Release();
+		engine->Release();
+	}
 
 	return fail;
 }

@@ -417,12 +417,15 @@ void asCModule::InternalReset()
 	// Free bind information
 	for( n = 0; n < bindInformations.GetLength(); n++ )
 	{
-		asUINT id = bindInformations[n]->importedFunctionSignature->id & 0xFFFF;
-		engine->importedFunctions[id] = 0;
-		engine->freeImportedFunctionIdxs.PushLast(id);
+		if( bindInformations[n] )
+		{
+			asUINT id = bindInformations[n]->importedFunctionSignature->id & 0xFFFF;
+			engine->importedFunctions[id] = 0;
+			engine->freeImportedFunctionIdxs.PushLast(id);
 
-		asDELETE(bindInformations[n]->importedFunctionSignature, asCScriptFunction);
-		asDELETE(bindInformations[n], sBindInfo);
+			asDELETE(bindInformations[n]->importedFunctionSignature, asCScriptFunction);
+			asDELETE(bindInformations[n], sBindInfo);
+		}
 	}
 	bindInformations.SetLength(0);
 
@@ -1044,11 +1047,14 @@ int asCModule::UnbindImportedFunction(asUINT index)
 		return asINVALID_ARG;
 
 	// Remove reference to old module
-	int oldFuncID = bindInformations[index]->boundFunctionId;
-	if( oldFuncID != -1 )
+	if( bindInformations[index] )
 	{
-		bindInformations[index]->boundFunctionId = -1;
-		engine->scriptFunctions[oldFuncID]->Release();
+		int oldFuncID = bindInformations[index]->boundFunctionId;
+		if( oldFuncID != -1 )
+		{
+			bindInformations[index]->boundFunctionId = -1;
+			engine->scriptFunctions[oldFuncID]->Release();
+		}
 	}
 
 	return asSUCCESS;
