@@ -172,6 +172,40 @@ bool Test()
 		ctx->Release();
 	}
 
+	// Test cleaning up while context is suspended
+	{
+ 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_GENERIC);
+
+		COutStream out;
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1", 
+			"void func() \n"
+			"{ \n"
+			"  string s; \n"
+			"  s = method(); \n"
+			"} \n"
+			"string method() { \n"
+			"  Suspend(); \n"
+			"  return 'test'; \n"
+			"} \n"
+			);
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod->Build();
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "func();", mod, ctx);
+		if( r != asEXECUTION_SUSPENDED )
+			TEST_FAILED;
+
+		// Free the context while still suspended
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

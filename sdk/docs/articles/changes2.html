@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/06/02</h2>
+<h2>Version 2.24.0 WIP - 2012/06/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved compatibility with native calling convention on Android with gnuc (Thanks Lasse &Ouml;&ouml;rni)
 <li>SaveByteCode() was crashing when the script contained assignment of POD types without explicit opAssign method (Thanks Andrew Price)
 <li>Improved error handling when loading incorrect bytecode (Thanks Andrew Price)
+<li>Fixed crash with releasing a suspended context when a function was returning a value type by value (Thanks Andrew Price)
 </ul>
 <li>Library interface
 <ul>

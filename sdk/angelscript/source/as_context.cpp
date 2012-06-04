@@ -3702,6 +3702,11 @@ void asCContext::CleanStack()
 	// Run the clean up code for each of the functions called
 	CleanStackFrame();
 
+	// Set the status to exception so that the stack unwind is done correctly.
+	// This shouldn't be done for the current function, which is why we only 
+	// do this after the first CleanStackFrame() is done.
+	status = asEXECUTION_EXCEPTION;
+
 	while( callStack.GetLength() > 0 )
 	{
 		PopCallState();
@@ -3777,22 +3782,26 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 	{
 		func = currentFunction;
 		pos = asUINT(regs.programPointer - func->byteCode.AddressOf());
+
+		if( status == asEXECUTION_EXCEPTION )
+		{
+			// Don't consider the last instruction as executed, as it failed with an exception
+			// It's not actually necessary to decrease the exact size of the instruction. Just 
+			// before the current position is enough to disconsider it.
+			pos--;
+		}
 	}
 	else
 	{
 		asPWORD *s = callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		pos = asUINT((asDWORD*)s[2] - func->byteCode.AddressOf());
-	}
 
-	if( status == asEXECUTION_EXCEPTION )
-	{
-		// Don't consider the last instruction as executed, as it failed with an exception
-		// It's not actually necessary to decrease the exact size of the instruction. Just 
-		// before the current position is enough to disconsider it.
+		// Don't consider the last instruction as executed, as the function that was called by it
+		// is still being executed. If we consider it as executed already, then a value object 
+		// returned by value would be considered alive, which it is not.
 		pos--;
 	}
-
 
 	// Determine which object variables that are really live ones
 	liveObjects.SetLength(func->objVariablePos.GetLength());
