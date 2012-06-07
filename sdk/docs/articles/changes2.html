@@ -47,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Deprecated generic::GetFunctionId() and GetFunctionUserData()
 <li>Deprecated objecttype::GetFactoryId...() and GetMethodId...()
 <li>Changed objecttype::GetBehaviourByIndex() to return asIScriptFunction*
+<li>Added the method engine::CreateUninitializedScriptObject() that will create an object without calling the constructor
 </ul>
 <li>Library
 <ul>
@@ -59,6 +60,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The array uses the new global functions to create the shared cache in a thread safe manner
 <li>CScriptBuilder::GetMetadataStringForFunc() and GetMetadataStringForTypeMethod() now takes a asIScriptFunction*
 <li>The string pool is now threadsafe and supports multiple engines
+<li>CSerializer now works when script class constructors modify global variables too (Thanks FDsagizi)
 </ul>
 </ul>
 

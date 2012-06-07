@@ -597,6 +597,7 @@ public:
 	virtual asIScriptContext *CreateContext() = 0;
 	virtual void             *CreateScriptObject(int typeId) = 0;
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void             *CreateUninitializedScriptObject(int typeId) = 0;
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;

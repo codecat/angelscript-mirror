@@ -304,7 +304,10 @@ void CSerializedValue::Restore(void *ref, int typeId)
 		{
 			asIObjectType *type = m_children[0]->GetType();
 
-			void *newObject = m_serializer->m_engine->CreateScriptObject(type->GetTypeId());
+			// Create a new script object, but don't call its constructor as we will initialize the members. 
+			// Calling the constructor may have unwanted side effects if for example the constructor changes
+			// any outside entities, such as setting global variables to point to new objects, etc.
+			void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(type->GetTypeId());
 
 			m_children[0]->Restore(newObject, type->GetTypeId());	
 		}

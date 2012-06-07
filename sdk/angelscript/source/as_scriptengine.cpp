@@ -3805,6 +3805,34 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	return ptr;
 }
 
+// interface
+void *asCScriptEngine::CreateUninitializedScriptObject(int typeId)
+{
+	// Make sure the type id is for an object type, and not a primitive or a handle.
+	// This function only works for script classes. Registered types cannot be created this way.
+	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return 0;
+	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return 0;
+	if( (typeId & asTYPEID_SCRIPTOBJECT) == 0 ) return 0;
+
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
+
+	// Is the type id valid?
+	if( !dt.IsValid() ) return 0;
+
+	asCObjectType *objType = dt.GetObjectType();
+
+	asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
+
+	// Construct the object, but do not call the actual constructor that initializes the members
+	// The initialization will be done by the application afterwards, e.g. through serialization.
+	asCScriptObject *obj = reinterpret_cast<asCScriptObject*>(CallAlloc(objType));
+
+	// Pre-initialize the memory so there are no invalid pointers
+	ScriptObject_ConstructUnitialized(objType, obj);
+
+	return obj;
+}
+
 // TODO: interface: Should deprecate this. The application should be calling the factory directly
 void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 {

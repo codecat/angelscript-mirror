@@ -131,9 +131,9 @@ bool Test()
 		engine->Release();
 	}
 
+	// Make sure it is possible to restore objects, where the constructor itself is changing other objects
 	// http://www.gamedev.net/topic/604890-dynamic-reloading-script/page__st__20
-	// TODO: The CSerializer needs to use CreateUninitializedScriptObject
-/*	{
+	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterScriptString(engine);
@@ -184,7 +184,9 @@ bool Test()
 		r = modStore.Restore(mod);
 		if( r < 0 )
 			TEST_FAILED;
-	}*/
+
+		engine->Release();
+	}
 
 	return fail;
 }

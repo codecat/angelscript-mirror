@@ -170,10 +170,15 @@ void ScriptObject_Construct(asCObjectType *objType, asCScriptObject *self)
 	new(self) asCScriptObject(objType);
 }
 
-asCScriptObject::asCScriptObject(asCObjectType *ot)
+void ScriptObject_ConstructUnitialized(asCObjectType *objType, asCScriptObject *self)
+{
+	new(self) asCScriptObject(objType, false);
+}
+
+asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 {
 	refCount.set(1);
-	objType          = ot;
+	objType = ot;
 	objType->AddRef();
 	isDestructCalled = false;
 
@@ -195,7 +200,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot)
 			else
 			{
 				// Allocate the object and call it's constructor
-				*ptr = (asPWORD)AllocateObject(prop->type.GetObjectType(), engine);
+				*ptr = (asPWORD)AllocateObject(prop->type.GetObjectType(), engine, doInitialize);
 			}
 		}
 	}
@@ -468,13 +473,19 @@ int asCScriptObject::CopyFrom(asIScriptObject *other)
 	return 0;
 }
 
-void *asCScriptObject::AllocateObject(asCObjectType *objType, asCScriptEngine *engine)
+void *asCScriptObject::AllocateObject(asCObjectType *objType, asCScriptEngine *engine, bool doInitialize)
 {
 	void *ptr = 0;
 
 	if( objType->flags & asOBJ_SCRIPT_OBJECT )
 	{
-		ptr = ScriptObjectFactory(objType, engine);
+		if( doInitialize )
+			ptr = ScriptObjectFactory(objType, engine);
+		else
+		{
+			ptr = engine->CallAlloc(objType);
+			ScriptObject_ConstructUnitialized(objType, reinterpret_cast<asCScriptObject*>(ptr));
+		}
 	}
 	else if( objType->flags & asOBJ_TEMPLATE )
 	{
