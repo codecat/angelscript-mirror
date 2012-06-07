@@ -61,13 +61,51 @@ void asCReader::ReadData(void *data, asUINT size)
 #endif
 }
 
-int asCReader::Read() 
+int asCReader::Read()
 {
-	engine->deferValidationOfTemplateTypes = true;
-
 	// Before starting the load, make sure that 
 	// any existing resources have been freed
 	module->InternalReset();
+
+	// Call the inner method to do the actual loading
+	int r = ReadInner();
+	if( r < 0 )
+	{
+		// Something went wrong while loading the bytecode, so we need
+		// to clean-up whatever has been created during the process.
+
+		// Make sure none of the loaded functions attempt to release
+		// references that have not yet been increased
+		asUINT i;
+		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
+			if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
+				module->scriptFunctions[i]->byteCode.SetLength(0);
+		for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
+			if( module->scriptGlobals[i]->GetInitFunc() )
+				module->scriptGlobals[i]->GetInitFunc()->byteCode.SetLength(0);
+
+		module->InternalReset();
+	}
+	else
+	{
+		// Init system functions properly
+		engine->PrepareEngine();
+
+		// Initialize the global variables (unless requested not to)
+		if( engine->ep.initGlobalVarsAfterBuild )
+			r = module->ResetGlobalVars(0);
+	}
+
+	return r;
+}
+
+int asCReader::ReadInner() 
+{
+	// This function will load each entity one by one from the stream.
+	// If any error occurs, it will return to the caller who is 
+	// responsible for cleaning up the partially loaded entities.
+
+	engine->deferValidationOfTemplateTypes = true;
 
 	unsigned long i, count;
 
@@ -88,6 +126,8 @@ int asCReader::Read()
 		ot->AddRef();
 		ReadObjectTypeDeclaration(ot, 2);
 	}
+
+	if( error ) return asERROR;
 
 	// classTypes[]
 	// First restore the structure names, then the properties
@@ -134,6 +174,8 @@ int asCReader::Read()
 		module->classTypes.PushLast(ot);
 		ot->AddRef();
 	}
+
+	if( error ) return asERROR;
 
 	// Read func defs
 	count = ReadEncodedUInt();
@@ -193,6 +235,8 @@ int asCReader::Read()
 			ReadObjectTypeDeclaration(module->classTypes[i], 3);
 	}
 
+	if( error ) return asERROR;
+
 	// Read typedefs
 	count = ReadEncodedUInt();
 	module->typeDefs.Allocate(count, 0);
@@ -208,6 +252,8 @@ int asCReader::Read()
 		ot->AddRef();
 		ReadObjectTypeDeclaration(ot, 2);
 	}
+
+	if( error ) return asERROR;
 
 	// scriptGlobals[]
 	count = ReadEncodedUInt();
@@ -279,9 +325,11 @@ int asCReader::Read()
 			error = true;
 	}
 
+	if( error ) return asERROR;
+
 	// bindInformations[]
 	count = ReadEncodedUInt();
-	module->bindInformations.SetLength(count);
+	module->bindInformations.Allocate(count, 0);
 	for( i = 0; i < count && !error; ++i )
 	{
 		sBindInfo *info = asNEW(sBindInfo);
@@ -308,8 +356,10 @@ int asCReader::Read()
 		}
 		ReadString(&info->importFromModule);
 		info->boundFunctionId = -1;
-		module->bindInformations[i] = info;
+		module->bindInformations.PushLast(info);
 	}
+
+	if( error ) return asERROR;
 
 	// usedTypes[]
 	count = ReadEncodedUInt();
@@ -359,6 +409,10 @@ int asCReader::Read()
 	}
 	engine->deferValidationOfTemplateTypes = false;
 
+	if( error ) return asERROR;
+
+	// Update the loaded bytecode to point to the correct types, property offsets,
+	// function ids, etc. This is basically a linking stage.
 	for( i = 0; i < module->scriptFunctions.GetLength() && !error; i++ )
 		if( module->scriptFunctions[i]->funcType == asFUNC_SCRIPT )
 			TranslateFunction(module->scriptFunctions[i]);
@@ -366,35 +420,15 @@ int asCReader::Read()
 		if( module->scriptGlobals[i]->GetInitFunc() )
 			TranslateFunction(module->scriptGlobals[i]->GetInitFunc());
 
-	// Init system functions properly
-	engine->PrepareEngine();
+	if( error ) return asERROR;
 
 	// Add references for all functions (except for the pre-existing shared code)
-	if( !error )
-	{
-		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-			if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
-				module->scriptFunctions[i]->AddReferences();
-		for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-			if( module->scriptGlobals[i]->GetInitFunc() )
-				module->scriptGlobals[i]->GetInitFunc()->AddReferences();
-
-		if( engine->ep.initGlobalVarsAfterBuild )
-		{
-			int r = module->ResetGlobalVars(0);
-			if( r < 0 ) error = true;
-		}
-	}
-	else
-	{
-		// Make sure none of the loaded functions attempt to release references that have not yet been increased
-		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-			if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
-				module->scriptFunctions[i]->byteCode.SetLength(0);
-		for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-			if( module->scriptGlobals[i]->GetInitFunc() )
-				module->scriptGlobals[i]->GetInitFunc()->byteCode.SetLength(0);
-	}
+	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
+		if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
+			module->scriptFunctions[i]->AddReferences();
+	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
+		if( module->scriptGlobals[i]->GetInitFunc() )
+			module->scriptGlobals[i]->GetInitFunc()->AddReferences();
 
 	return error ? asERROR : asSUCCESS;
 }
@@ -405,11 +439,11 @@ void asCReader::ReadUsedStringConstants()
 
 	asUINT count;
 	count = ReadEncodedUInt();
-	usedStringConstants.SetLength(count);
+	usedStringConstants.Allocate(count, 0);
 	for( asUINT i = 0; i < count; ++i ) 
 	{
 		ReadString(&str);
-		usedStringConstants[i] = engine->AddConstantString(str.AddressOf(), str.GetLength());
+		usedStringConstants.PushLast(engine->AddConstantString(str.AddressOf(), str.GetLength()));
 	}
 }
 
@@ -510,6 +544,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( count )
 	{
 		func->defaultArgs.SetLength(func->parameterTypes.GetLength());
+		memset(func->defaultArgs.AddressOf(), 0, sizeof(asCString*)*func->parameterTypes.GetLength());
 		for( i = 0; i < count; i++ )
 		{
 			asCString *str = asNEW(asCString);
@@ -622,7 +657,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 
 		// Read the variable information
 		length = ReadEncodedUInt();
-		func->variables.SetLength(length);
+		func->variables.Allocate(length, 0);
 		for( i = 0; i < length; i++ )
 		{
 			asSScriptVariable *var = asNEW(asSScriptVariable);
@@ -632,7 +667,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 				error = true;
 				return 0;
 			}
-			func->variables[i] = var;
+			func->variables.PushLast(var);
 
 			var->declaredAtProgramPos = ReadEncodedUInt();
 			var->stackOffset = ReadEncodedUInt();
@@ -1620,12 +1655,12 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 void asCReader::ReadUsedTypeIds()
 {
 	asUINT count = ReadEncodedUInt();
-	usedTypeIds.SetLength(count);
+	usedTypeIds.Allocate(count, 0);
 	for( asUINT n = 0; n < count; n++ )
 	{
 		asCDataType dt;
 		ReadDataType(&dt);
-		usedTypeIds[n] = engine->GetTypeIdFromDataType(dt);
+		usedTypeIds.PushLast(engine->GetTypeIdFromDataType(dt));
 	}
 }
 
@@ -1633,7 +1668,7 @@ void asCReader::ReadUsedGlobalProps()
 {
 	int c = ReadEncodedUInt();
 
-	usedGlobalProperties.SetLength(c);
+	usedGlobalProperties.Allocate(c, 0);
 
 	for( int n = 0; n < c; n++ )
 	{
@@ -1676,7 +1711,7 @@ void asCReader::ReadUsedGlobalProps()
 			}
 		}
 
-		usedGlobalProperties[n] = prop;
+		usedGlobalProperties.PushLast(prop);
 
 		if( prop == 0 )
 		{

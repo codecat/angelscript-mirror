@@ -204,24 +204,57 @@ bool Test()
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
 	COutStream out;
+	asIScriptModule *mod;
 
- 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	RegisterScriptArray(engine, true);
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
-                       "TestCompiler (3, 2) : Error   : Identifier 'Assert' is not a data type\n" )
+	// Problem reported by Ricky C
+	// http://www.gamedev.net/topic/625484-c99-hexfloats/#entry4943881
 	{
-		printf("%s", bout.buffer.c_str());
-		TEST_FAILED;
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		// Parsing a C99 hex float constant doesn't give error
+		// TODO: Maybe one day I'll implement support for this form of float constants
+		r = ExecuteString(engine, "float v = 0x219AEFp-24;\n"
+								  "v = 0x219AEFp-24;\n"
+								  "if( v == 0x219AEFp-24 ) {}\n");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 19) : Error   : Expected ',' or ';'\n"
+						   "ExecuteString (2, 13) : Error   : Expected ';'\n"
+						   "ExecuteString (3, 18) : Error   : Expected ')'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
 	}
 
-	engine->Release();
+
+	{
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
+						   "TestCompiler (3, 2) : Error   : Identifier 'Assert' is not a data type\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Problem reported by ekimr
 	{
