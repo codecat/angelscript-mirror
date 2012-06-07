@@ -188,9 +188,9 @@ public:
 	virtual void GCEnumCallback(void *reference);
 
 	// User data
-	virtual void *SetUserData(void *data);
-	virtual void *GetUserData() const;
-	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback);
+	virtual void *SetUserData(void *data, asPWORD type = 0);
+	virtual void *GetUserData(asPWORD type = 0) const;
+	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback, asPWORD type = 0);
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback);
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback);
@@ -384,8 +384,10 @@ public:
 	asCMap<asCStringPointer, int> stringToIdMap;
 
 	// User data
-	void                   *userData;
-	asCLEANENGINEFUNC_t     cleanEngineFunc;
+	asCArray<asPWORD>       userData;
+
+	struct SEngineClean { asPWORD type; asCLEANENGINEFUNC_t cleanFunc; };
+	asCArray<SEngineClean> cleanEngineFuncs;
 	asCLEANMODULEFUNC_t     cleanModuleFunc;
 	asCLEANCONTEXTFUNC_t    cleanContextFunc;
 	asCLEANFUNCTIONFUNC_t   cleanFunctionFunc;
@@ -393,7 +395,7 @@ public:
 	asCArray<SObjTypeClean> cleanObjectTypeFuncs;
 
 	// Synchronization for threads
-	DECLAREREADWRITELOCK(engineRWLock)
+	DECLAREREADWRITELOCK(mutable engineRWLock)
 
 	// Engine properties
 	struct

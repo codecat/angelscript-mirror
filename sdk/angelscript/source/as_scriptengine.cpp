@@ -423,8 +423,6 @@ asCScriptEngine::asCScriptEngine()
 	lastModule = 0;
 
 	// User data
-	userData            = 0;
-	cleanEngineFunc     = 0;
 	cleanModuleFunc     = 0;
 	cleanContextFunc    = 0;
 	cleanFunctionFunc   = 0;
@@ -661,8 +659,15 @@ asCScriptEngine::~asCScriptEngine()
 	scriptSectionNames.SetLength(0);
 
 	// Clean the user data
-	if( userData && cleanEngineFunc )
-		cleanEngineFunc(this);
+	for( n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n+1] )
+		{
+			for( asUINT c = 0; c < cleanEngineFuncs.GetLength(); c++ )
+				if( cleanEngineFuncs[c].type == userData[n] )
+					cleanEngineFuncs[c].cleanFunc(this);
+		}
+	}
 
 	asCThreadManager::Unprepare();
 }
@@ -720,17 +725,55 @@ int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
 }
 
 // interface
-void *asCScriptEngine::SetUserData(void *data)
+void *asCScriptEngine::SetUserData(void *data, asPWORD type)
 {
-	void *old = userData;
-	userData = data;
-	return old;
+	// As a thread might add a new new user data at the same time as another
+	// it is necessary to protect both read and write access to the userData member
+	ACQUIREEXCLUSIVE(engineRWLock);
+
+	// It is not intended to store a lot of different types of userdata,
+	// so a more complex structure like a associative map would just have
+	// more overhead than a simple array.
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n] == type )
+		{
+			void *oldData = reinterpret_cast<void*>(userData[n+1]);
+			userData[n+1] = reinterpret_cast<asPWORD>(data);
+
+			RELEASEEXCLUSIVE(engineRWLock);
+
+			return oldData;
+		}
+	}
+
+	userData.PushLast(type);
+	userData.PushLast(reinterpret_cast<asPWORD>(data));
+
+	RELEASEEXCLUSIVE(engineRWLock);
+
+	return 0;
 }
 
 // interface
-void *asCScriptEngine::GetUserData() const
+void *asCScriptEngine::GetUserData(asPWORD type) const
 {
-	return userData;
+	// There may be multiple threads reading, but when  
+	// setting the user data nobody must be reading.
+	ACQUIRESHARED(engineRWLock);
+
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n] == type )
+		{
+			RELEASESHARED(engineRWLock);
+			return reinterpret_cast<void*>(userData[n+1]);
+		}
+	}
+
+	RELEASESHARED(engineRWLock);
+
+	return 0;
 }
 
 // interface
@@ -4604,9 +4647,25 @@ int asCScriptEngine::GetScriptSectionNameIndex(const char *name)
 }
 
 // interface 
-void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback)
+void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback, asPWORD type)
 {
-	cleanEngineFunc = callback;
+	ACQUIREEXCLUSIVE(engineRWLock);
+
+	for( asUINT n = 0; n < cleanEngineFuncs.GetLength(); n++ )
+	{
+		if( cleanEngineFuncs[n].type == type )
+		{
+			cleanEngineFuncs[n].cleanFunc = callback;
+
+			RELEASEEXCLUSIVE(engineRWLock);
+
+			return;
+		}
+	}
+	SEngineClean otc = {type, callback};
+	cleanEngineFuncs.PushLast(otc);
+
+	RELEASEEXCLUSIVE(engineRWLock);
 }
 
 // interface 
