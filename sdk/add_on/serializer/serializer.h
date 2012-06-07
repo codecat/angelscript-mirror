@@ -164,6 +164,12 @@ public:
 	// Restore all global variables after reloading script
 	int Restore(asIScriptModule *mod);
 
+	// Store extra objects that are not seen from the module's global variables
+	void AddExtraObjectToStore(asIScriptObject *object);
+
+	// Return new pointer to restored object
+	void *GetPointerToRestoredObject(void *originalObject);
+
 protected:
 	friend class CSerializedValue;
 
@@ -172,6 +178,15 @@ protected:
 	asIScriptModule  *m_mod;
 
 	std::map<std::string, CUserType*> m_userTypes;
+
+	struct SExtraObject
+	{
+		asIScriptObject *originalObject;
+		std::string      originalClassName;
+		int              originalTypeId;
+	};
+
+	std::vector<SExtraObject> m_extraObjects;
 };
 
 

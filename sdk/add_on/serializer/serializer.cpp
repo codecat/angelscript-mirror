@@ -1,4 +1,3 @@
-
 //
 // CSerializer
 //
@@ -61,6 +60,10 @@ int CSerializer::Store(asIScriptModule *mod)
 		m_root.m_children.push_back(new CSerializedValue(&m_root, name, nameSpace, mod->GetAddressOfGlobalVar(i), typeId));
 	}
 
+	// Second store extra objects
+	for( size_t i =0; i < m_extraObjects.size(); i++ )
+		m_root.m_children.push_back( new CSerializedValue( &m_root, "", "", m_extraObjects[i].originalObject, m_extraObjects[i].originalTypeId ) );
+
 	// For the handles that were stored, we need to substitute the stored pointer
 	// that is still pointing to the original object to an internal reference so
 	// it can be restored later on.
@@ -79,7 +82,26 @@ int CSerializer::Restore(asIScriptModule *mod)
 	if( m_engine ) m_engine->Release();
 	m_engine = mod->GetEngine();
 
-	// First restore the global variables
+	// First restore extra objects, i.e. the ones that are not directly seen from the module's global variables
+	for( size_t i =0; i < m_extraObjects.size(); i++ )
+	{
+		SExtraObject &o = m_extraObjects[i];
+		asIObjectType *type = m_mod->GetObjectTypeByName( o.originalClassName.c_str() );
+		if( type )
+		{
+			for( size_t i2 = 0; i2 < m_root.m_children.size(); i2++ )
+			{
+				if( m_root.m_children[i2]->m_ptr == o.originalObject )
+				{
+					void *new_ptr = m_engine->CreateScriptObject( type->GetTypeId() );
+
+					m_root.m_children[i2]->Restore( new_ptr, type->GetTypeId() ); 
+				}
+			}
+		}
+	}
+
+	// Second restore the global variables
 	asUINT varCount = mod->GetGlobalVarCount();
 	for( asUINT i = 0; i < varCount; i++ )
 	{
@@ -98,6 +120,30 @@ int CSerializer::Restore(asIScriptModule *mod)
 
 	return 0;
 }
+
+void *CSerializer::GetPointerToRestoredObject(void *ptr)
+{
+	return m_root.GetPointerToRestoredObject( ptr );
+}
+
+void CSerializer::AddExtraObjectToStore( asIScriptObject *object )
+{
+	if( !object )
+		return;
+
+	// Check if the object hasn't been included already
+	for( size_t i=0; i < m_extraObjects.size(); i++ )
+		if( m_extraObjects[i].originalObject == object )
+			return;
+
+	SExtraObject o;
+	o.originalObject    = object;
+	o.originalClassName = object->GetObjectType()->GetName();
+	o.originalTypeId    = object->GetTypeId();
+
+	m_extraObjects.push_back( o );
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -304,12 +350,18 @@ void CSerializedValue::Restore(void *ref, int typeId)
 		{
 			asIObjectType *type = m_children[0]->GetType();
 
-			// Create a new script object, but don't call its constructor as we will initialize the members. 
-			// Calling the constructor may have unwanted side effects if for example the constructor changes
-			// any outside entities, such as setting global variables to point to new objects, etc.
-			void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(type->GetTypeId());
-
-			m_children[0]->Restore(newObject, type->GetTypeId());	
+			if( type->GetFactoryCount() == 0 )
+			{
+				*(void**)m_restorePtr = m_handlePtr;
+			}
+			else
+			{
+				// Create a new script object, but don't call its constructor as we will initialize the members. 
+				// Calling the constructor may have unwanted side effects if for example the constructor changes
+				// any outside entities, such as setting global variables to point to new objects, etc.
+				void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(type->GetTypeId());
+				m_children[0]->Restore(newObject, type->GetTypeId());	
+			}
 		}
 	}
 	else if( m_typeId & asTYPEID_SCRIPTOBJECT )
@@ -332,11 +384,22 @@ void CSerializedValue::Restore(void *ref, int typeId)
 	else
 	{
 		if( m_mem.size() )
+		{
+			// POD values can be restored with direct copy
 			memcpy(ref, &m_mem[0], m_mem.size());
-		
-		// user type restore
+		}
 		else if( m_serializer->m_userTypes[m_typeName] )
+		{
+			// user type restore
 			m_serializer->m_userTypes[m_typeName]->Restore(this, m_restorePtr);
+		}
+		else
+		{
+			std::string str = "Cannot restore type '";
+			str += type->GetName();
+			str += "'";
+			m_serializer->m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.c_str());
+		}
 	}
 }
 

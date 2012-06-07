@@ -31,7 +31,6 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Namespaces are now properly considered for registered types as well (Thanks Ricky C and adam4813)
 <li>Improved compatibility with native calling convention on Android with gnuc (Thanks Lasse &Ouml;&ouml;rni)
 <li>SaveByteCode() was crashing when the script contained assignment of POD types without explicit opAssign method (Thanks Andrew Price)
-<li>Improved error handling when loading incorrect bytecode (Thanks Andrew Price)
 <li>Fixed crash with releasing a suspended context when a function was returning a value type by value (Thanks Andrew Price)
 <li>The engine allowed to register multiple ref cast behaviours to the same type, which would cause assert failure in compiler (Thanks Andew Ackermann)
 </ul>
@@ -49,10 +48,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Deprecated objecttype::GetFactoryId...() and GetMethodId...()
 <li>Changed objecttype::GetBehaviourByIndex() to return asIScriptFunction*
 <li>Added the method engine::CreateUninitializedScriptObject() that will create an object without calling the constructor
+<li>Added module::GetObjectTypeByName()
 </ul>
 <li>Library
 <ul>
 <li>Improved stability in out-of-memory conditions to allow graceful exits (Thanks Zylann)
+<li>Improved error handling when loading incorrect bytecode (Thanks Andrew Price)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
@@ -62,6 +63,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>CScriptBuilder::GetMetadataStringForFunc() and GetMetadataStringForTypeMethod() now takes a asIScriptFunction*
 <li>The string pool is now threadsafe and supports multiple engines
 <li>CSerializer now works when script class constructors modify global variables too (Thanks FDsagizi)
+<li>Added method AddExtraObjectToStore on CSerializer to allow serializing objects not referenced by global variables in module (Thanks FDsagizi)
 </ul>
 </ul>
 

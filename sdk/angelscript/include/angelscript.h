@@ -672,6 +672,7 @@ public:
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
+	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 
 	// Enums
