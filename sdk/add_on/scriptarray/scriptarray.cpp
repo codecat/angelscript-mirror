@@ -318,7 +318,7 @@ void CScriptArray::SetValue(asUINT index, void *value)
 	if( ptr == 0 ) return;
 
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
-		objType->GetEngine()->CopyScriptObject(ptr, value, subTypeId);
+		objType->GetEngine()->AssignScriptObject(ptr, value, subTypeId);
 	else if( subTypeId & asTYPEID_OBJHANDLE )
 	{
 		void *tmp = *(void**)ptr;
@@ -1093,7 +1093,7 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 				void **s   = (void**)src->data;
 
 				for( ; d < max; d++, s++ )
-					engine->CopyScriptObject(*d, *s, subTypeId);
+					engine->AssignScriptObject(*d, *s, subTypeId);
 			}
 			else
 			{

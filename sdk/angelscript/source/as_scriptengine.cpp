@@ -3870,7 +3870,7 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 	void *newObj = CreateScriptObject(typeId);
 	if( newObj == 0 ) return 0;
 
-	CopyScriptObject(newObj, origObj, typeId);
+	AssignScriptObject(newObj, origObj, typeId);
 
 	return newObj;
 }
@@ -3886,11 +3886,19 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 	if( funcIndex )
 		CallObjectMethod(mem, funcIndex);
 
-	CopyScriptObject(mem, obj, type->GetTypeId());
+	AssignScriptObject(mem, obj, type->GetTypeId());
 }
 
-// TODO: interface: Should deprecate this. The application should be calling the opAssign method directly
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-06-07
 void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
+{
+	AssignScriptObject(dstObj, srcObj, typeId);
+}
+#endif
+
+// interface
+void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
 	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return;

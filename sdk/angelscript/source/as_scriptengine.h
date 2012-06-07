@@ -171,8 +171,11 @@ public:
 	virtual void             *CreateScriptObject(int typeId);
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId);
 	virtual void             *CreateUninitializedScriptObject(int typeId);
-	// TODO: interface: Rename to AssignScriptObject to avoid confusion
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-06-07
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId);
+#endif
+	virtual void              AssignScriptObject(void *dstObj, void *srcObj, int typeId);
 	virtual void              ReleaseScriptObject(void *obj, int typeId);
 	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type);
 	virtual void              AddRefScriptObject(void *obj, int typeId);
