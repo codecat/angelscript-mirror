@@ -23,16 +23,13 @@
 //
 
 // The use of the string pool can improve performance quite drastically
-// for scripts that work with a lot of literal string constants. However,
-// the string pool doesn't currently work with multithreading or if
-// multiple engines are in use at the same time. For this reason the 
-// string pool is turned off by default.
+// for scripts that work with a lot of literal string constants. 
 //
-//  0 = off
 //  1 = on
+//  0 = off
 
 #ifndef AS_USE_STRINGPOOL
-#define AS_USE_STRINGPOOL 0
+#define AS_USE_STRINGPOOL 1
 #endif
 
 // Sometimes it may be desired to use the same method names as used by C++ STL.
