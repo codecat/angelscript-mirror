@@ -1972,11 +1972,42 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		if( !(func.parameterTypes.GetLength() == 0 && func.returnType.IsObjectHandle()) &&
 			!(func.parameterTypes.GetLength() == 1 && func.parameterTypes[0].GetTokenType() == ttQuestion && func.inOutFlags[0] == asTM_OUTREF && func.returnType.GetTokenType() == ttVoid) )
-		{
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-		}
 
-		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
+		// Currently it is not supported to register const overloads for the ref cast behaviour
+		if( func.IsReadOnly() )
+			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+
+		// Verify that the same cast is not registered already 
+		// (const or non-const is treated the same for the return type)
+		if( func.parameterTypes.GetLength() == 1 )
+		{
+			// Check for existing behaviour with ?&out
+			for( asUINT n = 0; n < beh->operators.GetLength(); n+= 2 )
+			{
+				if( beh->operators[n] == asBEHAVE_REF_CAST ||
+					beh->operators[n] == asBEHAVE_IMPLICIT_REF_CAST )
+				{
+					asCScriptFunction *f = scriptFunctions[beh->operators[n+1]];
+					if( f->parameterTypes.GetLength() == 1 )
+						return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+				}
+			}
+		}
+		else
+		{
+			// Check for existing behaviour with same return type
+			for( asUINT n = 0; n < beh->operators.GetLength(); n+= 2 )
+			{
+				if( beh->operators[n] == asBEHAVE_REF_CAST ||
+					beh->operators[n] == asBEHAVE_IMPLICIT_REF_CAST )
+				{
+					asCScriptFunction *f = scriptFunctions[beh->operators[n+1]];
+					if( f->returnType.GetObjectType() == func.returnType.GetObjectType() )
+						return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+				}
+			}
+		}
 
 		beh->operators.PushLast(behaviour);
 		func.id = AddBehaviourFunction(func, internal);

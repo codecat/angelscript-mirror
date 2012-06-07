@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>SaveByteCode() was crashing when the script contained assignment of POD types without explicit opAssign method (Thanks Andrew Price)
 <li>Improved error handling when loading incorrect bytecode (Thanks Andrew Price)
 <li>Fixed crash with releasing a suspended context when a function was returning a value type by value (Thanks Andrew Price)
+<li>The engine allowed to register multiple ref cast behaviours to the same type, which would cause assert failure in compiler (Thanks Andew Ackermann)
 </ul>
 <li>Library interface
 <ul>

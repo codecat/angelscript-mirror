@@ -281,6 +281,36 @@ bool Test()
 	}
 	engine->Release();
 
+	// Problem reported by ThyReaper
+	// It must not be possible to register multiple ref cast behaviours for the same type
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		r = engine->RegisterObjectType("A", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectType("B", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A @f()", asFUNCTION(0), asCALL_GENERIC);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A @f()", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "const A@ f() const", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()'\n"
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'const A@ f() const'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Ref types without default factory must not be allowed to be initialized, nor must it be allowed to be passed by value in parameters or returned by value
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
