@@ -62,7 +62,7 @@ int CSerializer::Store(asIScriptModule *mod)
 
 	// Second store extra objects
 	for( size_t i =0; i < m_extraObjects.size(); i++ )
-		m_root.m_children.push_back( new CSerializedValue( &m_root, "", "", m_extraObjects[i].originalObject, m_extraObjects[i].originalTypeId ) );
+		m_root.m_children.push_back(new CSerializedValue(&m_root, "", "", m_extraObjects[i].originalObject, m_extraObjects[i].originalTypeId));
 
 	// For the handles that were stored, we need to substitute the stored pointer
 	// that is still pointing to the original object to an internal reference so
@@ -91,11 +91,11 @@ int CSerializer::Restore(asIScriptModule *mod)
 		{
 			for( size_t i2 = 0; i2 < m_root.m_children.size(); i2++ )
 			{
-				if( m_root.m_children[i2]->m_ptr == o.originalObject )
+				if( m_root.m_children[i2]->m_originalPtr == o.originalObject )
 				{
-					void *new_ptr = m_engine->CreateScriptObject( type->GetTypeId() );
+					void *newPtr = m_engine->CreateScriptObject( type->GetTypeId() );
 
-					m_root.m_children[i2]->Restore( new_ptr, type->GetTypeId() ); 
+					m_root.m_children[i2]->Restore( newPtr, type->GetTypeId() ); 
 				}
 			}
 		}
@@ -164,13 +164,13 @@ CSerializedValue::CSerializedValue(CSerializedValue *parent, const std::string &
 
 void CSerializedValue::Init()
 {
-	m_handlePtr  = 0;
-	m_restorePtr = 0;
-	m_typeId     = 0;
-	m_isInit     = false;
-	m_serializer = 0;
-	m_userData   = 0;
-	m_ptr        = 0;
+	m_handlePtr   = 0;
+	m_restorePtr  = 0;
+	m_typeId      = 0;
+	m_isInit      = false;
+	m_serializer  = 0;
+	m_userData    = 0;
+	m_originalPtr = 0;
 }
 
 void CSerializedValue::Uninit()
@@ -219,7 +219,7 @@ CSerializedValue *CSerializedValue::FindByName(const std::string &name, const st
 
 void  CSerializedValue::GetAllPointersOfChildren(std::vector<void*> *ptrs)
 {
-	ptrs->push_back(m_ptr);
+	ptrs->push_back(m_originalPtr);
 
 	for( size_t i = 0; i < m_children.size(); ++i )
 		m_children[i]->GetAllPointersOfChildren(ptrs);
@@ -227,7 +227,7 @@ void  CSerializedValue::GetAllPointersOfChildren(std::vector<void*> *ptrs)
 
 CSerializedValue *CSerializedValue::FindByPtr(void *ptr)
 {
-	if( m_ptr == ptr )
+	if( m_originalPtr == ptr )
 		return this;
 
 	for( size_t i = 0; i < m_children.size(); i++ )
@@ -242,7 +242,7 @@ CSerializedValue *CSerializedValue::FindByPtr(void *ptr)
 
 void *CSerializedValue::GetPointerToRestoredObject(void *ptr)
 {
-	if( m_ptr == ptr )
+	if( m_originalPtr == ptr )
 		return m_restorePtr;
 
 	for( size_t i = 0; i < m_children.size(); ++i )
@@ -261,7 +261,7 @@ CSerializedValue *CSerializedValue::FindByPtrInHandles(void *ptr)
 	// if this handle created object
 	if( (m_typeId & asTYPEID_OBJHANDLE) && m_children.size() == 1 )
 	{
-		if( m_children[0]->m_ptr == ptr )
+		if( m_children[0]->m_originalPtr == ptr )
 			return this;
 	}
 
@@ -282,7 +282,7 @@ void CSerializedValue::Store(void *ref, int typeId)
 {
 	m_isInit = true;
 	SetType(typeId);
-	m_ptr = ref;
+	m_originalPtr = ref;
 
 	if( m_typeId & asTYPEID_OBJHANDLE )
 	{
@@ -312,7 +312,7 @@ void CSerializedValue::Store(void *ref, int typeId)
 		{			
 			// if it is user type( string, array, etc ... )
 			if( m_serializer->m_userTypes[m_typeName] )
-				m_serializer->m_userTypes[m_typeName]->Store(this, m_ptr);
+				m_serializer->m_userTypes[m_typeName]->Store(this, m_originalPtr);
 			
 			// it is script class
 			else if( GetType() )
