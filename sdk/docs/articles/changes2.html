@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/06/07</h2>
+<h2>Version 2.24.0 WIP - 2012/06/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>SaveByteCode() was crashing when the script contained assignment of POD types without explicit opAssign method (Thanks Andrew Price)
 <li>Fixed crash with releasing a suspended context when a function was returning a value type by value (Thanks Andrew Price)
 <li>The engine allowed to register multiple ref cast behaviours to the same type, which would cause assert failure in compiler (Thanks Andew Ackermann)
+<li>Improved compatibility with native calling conventions on iOS (Thanks Lasse &Ouml;&ouml;rni)
 </ul>
 <li>Library interface
 <ul>
