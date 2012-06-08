@@ -870,8 +870,12 @@ bool asCParser::CheckTemplateType(sToken &t)
 		if( t.type != ttLessThan )
 			return false;
 
-		// Now there must be a data type
+		// There might optionally be a 'const'
 		GetToken(&t);
+		if( t.type == ttConst )
+			GetToken(&t);
+
+		// Now there must be a data type
 		if( !IsDataType(t) )
 			return false;
 

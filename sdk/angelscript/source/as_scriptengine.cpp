@@ -3183,10 +3183,19 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 		if( func->returnType.GetObjectType() == templateType->templateSubType.GetObjectType() )
 		{
 			func2->returnType = subType;
-			if( func->returnType.IsObjectHandle() )
+			if( func->returnType.IsObjectHandle() && !subType.IsObjectHandle() )
+			{
+				// The return type is a handle to the subtype
 				func2->returnType.MakeHandle(true, true);
-			func2->returnType.MakeReference(func->returnType.IsReference());
-			func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
+				func2->returnType.MakeReference(func->returnType.IsReference());
+				func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
+			}
+			else
+			{
+				// The return type is the subtype directly
+				func2->returnType.MakeReference(func->returnType.IsReference());
+				func2->returnType.MakeReadOnly(subType.IsReadOnly() || func->returnType.IsReadOnly());
+			}
 		}
 		else if( func->returnType.GetObjectType() == templateType )
 		{
@@ -3208,9 +3217,18 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 			{
 				func2->parameterTypes[p] = subType;
 				if( func->parameterTypes[p].IsObjectHandle() )
+				{
+					// The parameter is a handle to the subtype
 					func2->parameterTypes[p].MakeHandle(true);
-				func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
-				func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReference());
+					func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
+					func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReadOnly());
+				}
+				else
+				{
+					// The parameter is the subtype directly
+					func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
+					func2->parameterTypes[p].MakeReadOnly(subType.IsReadOnly() || func->parameterTypes[p].IsReference());
+				}
 			}
 			else if( func->parameterTypes[p].GetObjectType() == templateType )
 			{

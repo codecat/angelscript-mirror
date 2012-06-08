@@ -32,8 +32,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved compatibility with native calling convention on Android with gnuc (Thanks Lasse &Ouml;&ouml;rni)
 <li>SaveByteCode() was crashing when the script contained assignment of POD types without explicit opAssign method (Thanks Andrew Price)
 <li>Fixed crash with releasing a suspended context when a function was returning a value type by value (Thanks Andrew Price)
-<li>The engine allowed to register multiple ref cast behaviours to the same type, which would cause assert failure in compiler (Thanks Andew Ackermann)
+<li>The engine allowed to register multiple ref cast behaviours to the same type, which would cause assert failure in compiler (Thanks Andrew Ackermann)
 <li>Improved compatibility with native calling conventions on iOS (Thanks Lasse &Ouml;&ouml;rni)
+<li>Templates with const subtypes are now properly handled (Thanks Andrew Ackermann)
 </ul>
 <li>Library interface
 <ul>

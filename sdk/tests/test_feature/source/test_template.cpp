@@ -144,6 +144,43 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+
+	// Reported by ThyReaper
+	// array<const int> and array<const Obj@> doesn't give expected result
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class Test {} \n"
+			"void func() \n"
+			"{ \n"
+			"  array<const int> i(1); \n"
+			"  array<const Test@> t(1); \n"
+			"  i[0] = 1; \n" // should fail
+			"  @t[0] = Test(); \n"
+			"  t[0] = Test(); \n" // should fail
+			"} \n");
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
+					  	   "test (6, 8) : Error   : Reference is read-only\n"
+						   "test (8, 8) : Error   : Reference is read-only\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterStdString(engine);

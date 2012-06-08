@@ -35,7 +35,7 @@
 // These functions handle the actual calling of system functions
 //
 // This version is Xenon specific
-// Modified from as_callfunc_ppc.cpp by Laszlo Perneky Februar 2007
+// Modified from as_callfunc_ppc.cpp by Laszlo Perneky February 2007
 //
 // Modified by Cyril Tissier March 2010:
 // various fixes in 'float' args passing / function return
@@ -43,6 +43,54 @@
 // various fixes in asm ppcFunc
 // fix for variable arguments
 //
+
+
+
+// XBox 360 calling convention
+// ===========================
+// I've yet to find an official document with the ABI for XBox 360, 
+// but I'll describe what I've gathered from the code and tests
+// performed by the AngelScript community.
+//
+// Arguments are passed in the following registers:
+// r3  - r10   : integer/pointer arguments (each register is 64bit)
+// fr1 - fr13  : float/double arguments    (each register is 64bit)
+// 
+// Arguments that don't fit in the registers will be pushed on the stack.
+// 
+// When a float or double is passed as argument, its value will be placed
+// in the next available float register, but it will also reserve general
+// purpose register. 
+// 
+// Example: void foo(float a, int b). a will be passed in fr1 and b in r4.
+//
+// For each argument passed to a function an 8byte slot is reserved on the 
+// stack, so that the function can offload the value there if needed.
+//
+// If the function is a class method, the this pointer is passed as hidden 
+// first argument. If the function returns an object in memory, the address
+// for that memory is passed as hidden first argument.
+//
+// Return value are placed in the following registers:
+// r3  : integer/pointer values
+// fr1 : float/double values
+//
+// Rules for registers
+// r1          : stack pointer
+// r14-r31     : nonvolatile, i.e. their values must be preserved
+// fr14-fr31   : nonvolatile, i.e. their values must be preserved
+// r0, r2, r13 : dedicated. I'm not sure what it means, but it is probably best not to use them
+//
+// The stack pointer must always be aligned at 8 bytes.
+//
+// References:
+// https://www-01.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF77852569970071B0D6/$file/eabi_app.pdf
+//
+// TODO: The code doesn't handle int64 and uint64 parameters
+// TODO: The code doesn't handle objects passed by value (unless they are max 4 bytes in size)
+
+
+
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY
@@ -60,34 +108,24 @@
 BEGIN_AS_NAMESPACE
 
 #define AS_PPC_MAX_ARGS         32
-#define AS_MAX_REG_FLOATS       13
-#define AS_MAX_REG_INTS         8
 #define AS_PPC_THISCALL_REG     1
 #define AS_PPC_RETURNINMEM_REG  1
 #define AS_PPC_ENDOFARGS        1
 
 // The array used to send values to the correct places.
 // Contains a byte of argTypes to indicate the register type to load, or zero if end of arguments
-
-extern "C" {
-	enum argTypes
-	{
-		ppcENDARG = 0,
-		ppcINTARG,
-		ppcFLOATARG,
-		ppcDOUBLEARG
-	};
-	static asBYTE ppcArgsType[AS_PPC_MAX_ARGS + AS_PPC_RETURNINMEM_REG + AS_PPC_THISCALL_REG + AS_PPC_ENDOFARGS];
-	static asDWORD ppcArgs[AS_PPC_MAX_ARGS + AS_PPC_RETURNINMEM_REG + AS_PPC_THISCALL_REG];
-}
-
-#define PPC_LINKAGE_SIZE  (0x14)                                 // how big the PPC linkage area is in a stack frame
+enum argTypes
+{
+	ppcENDARG    = 0,
+	ppcINTARG    = 1,
+	ppcFLOATARG  = 2,
+	ppcDOUBLEARG = 3
+};
 
 // Loads all data into the correct places and calls the function.
-// ppcArgsType is an array containing a byte type (enum argTypes) for each argument.
-// iStackArgSize is the size in bytes for how much data to put on the stack frame
-//--------------------------------------------------------------------
-asQWORD __declspec( naked ) ppcFunc(const asDWORD* pArgs, int iStackArgSize, asDWORD dwFunc)
+// pArgTypes is an array containing a byte indicating the type (enum argTypes) for each argument.
+// iStackArgSize is the size of the pArgTypes array, i.e. pArgTypes[iStackArgSize] == ppcENDARG;
+asQWORD __declspec( naked ) ppcFunc(const asDWORD* pArgs, int iStackArgSize, asDWORD dwFunc, const asBYTE* pArgTypes)
 {
 	__asm
 	{
@@ -115,28 +153,17 @@ _ppcFunc:
 		// Move stack pointer
 		stwu    r1,-0A0h(r1)
 
-		mr r29, r3			//pArgs
-		mr r30, r4			//iStackArgSize
-		mr r27, r5			//dwFunc
+		mr r26, r3			// pArgs
+		mr r30, r4			// iStackArgSize
+		mr r27, r5			// dwFunc
+		mr r25, r6			// pArgTypes
 
 		addi r31, r1, 14h	// stack args for next function call
 
-		// Clear some registers
-		sub r0, r0, r0
 		// Counting of used/assigned GPR's
-		mr  r23, r0
+		sub  r23, r23, r23
 		// Counting of used/assigned Float Registers
-		mr  r22, r0
-		// Counting extra stack size
-		mr  r21, r0
-
-		// Fetch argument types array address
-		lau r25, ppcArgsType
-		lal r25, r25, ppcArgsType
-
-		// Fetch arguments array address
-		lau r26, ppcArgs
-		lal r26, r26, ppcArgs
+		sub  r22, r22, r22
 
 		// Begin loading and stacking registers
 		subi r25, r25, 1
@@ -218,8 +245,7 @@ ppcArgIsInteger:
 		addi	r31, r31, 8			// inc stack by 1 reg
 
 		addi r23, r23, 1			// Increment used int register count
-		addi r29, r29, 4			// Increment rArgsPtr
-		addi r26, r26, 4			// Increment rStackPtr
+		addi r26, r26, 4			// Increment pArgs
 		b ppcNextArg				// Call next arg
 
 //////////////////////////////////////////////////////////////////////////
@@ -306,8 +332,7 @@ ppcArgIsFloat:
 		
 		addi r22, r22, 1			// Increment used float register count
 		addi r23, r23, 1			// Increment used int register count - a float reg eats up a GPR		
-		addi r29, r29, 4			// Increment rArgsPtr		
-		addi r26, r26, 4			// Increment rStackPtr
+		addi r26, r26, 4			// Increment pArgs
 		b ppcNextArg				// Call next arg
 
 //////////////////////////////////////////////////////////////////////////
@@ -394,8 +419,7 @@ ppcArgIsDouble:
 		
 		addi r22, r22, 1			// Increment used float register count		
 		addi r23, r23, 1			// Increment used int register count
-		addi r29, r29, 8			// Increment rArgsPtr
-		addi r26, r26, 8			// Increment rStackPtr
+		addi r26, r26, 8			// Increment pArgs
 		b ppcNextArg
 
 //////////////////////////////////////////////////////////////////////////
@@ -428,104 +452,6 @@ ppcArgsEnd:
 	}
 }
 
-
-
-
-// Puts the arguments in the correct place in the stack array.
-//-------------------------------------------------------------------
-void stackArgs(const asDWORD *pArgs, int& iNumIntArgs, int& iNumFloatArgs, int& iNumDoubleArgs)
-{
-	asBYTE * pSrcArgs	= (asBYTE *) pArgs;		// pSrcArgs += (4*iArgWordPos);
-	asBYTE * pDstArgs	= (asBYTE *) ppcArgs;	// pDstArgs += (4*iArgWordPos);
-
-	for(int iArg = 0; iArg < AS_PPC_MAX_ARGS; iArg++)
-	{
-		if ( ppcArgsType[iArg] == ppcENDARG )
-			break;
-
-		if ( ppcArgsType[iArg] == ppcFLOATARG )
-		{
-			// stow float			
-			*((float*) pDstArgs) = *((float*) pSrcArgs);
-			pSrcArgs += 4;
-			pDstArgs += 4;
-			iNumFloatArgs++;
-		}
-		else if ( ppcArgsType[iArg] == ppcDOUBLEARG )
-		{
-			// stow double
-			*((double*) pDstArgs) = *((double*) pSrcArgs);
-			pSrcArgs += 8;
-			pDstArgs += 8;
-			iNumDoubleArgs++;
-		}
-		else if ( ppcArgsType[iArg] == ppcINTARG )
-		{
-			// stow register
-			*((int*) pDstArgs) = *((int*) pSrcArgs);
-			pSrcArgs += 4;
-			pDstArgs += 4;
-			iNumIntArgs++;
-		}
-	}
-}
-
-// Prepare the arg list for a CDecl funtion and then call it
-//--------------------------------------------------------------------
-asQWORD CallCDeclFunction(const asDWORD* pArgs, int iArgSize, asDWORD dwFunc)
-{
-	int iIntArgs = 0;
-	int iFloatArgs = 0;
-	int iDoubleArgs = 0;
-
-	// Put the arguments in the correct places in the ppcArgs array
-	if ( iArgSize > 0 )
-		stackArgs( pArgs, iIntArgs, iFloatArgs, iDoubleArgs );
-	
-	return ppcFunc( ppcArgs, iArgSize, dwFunc);
-}
-
-// This function is identical to CallCDeclFunction, with the only difference that
-// the value in the first parameter is the object
-//--------------------------------------------------------------------
-asQWORD CallThisCallFunction(const void* pObj, const asDWORD* pArgs, int iArgSize, asDWORD dwFunc )
-{
-	int iIntArgs = 0;
-	int iFloatArgs = 0;
-	int iDoubleArgs = 0;
-
-	// Put the arguments in the correct places in the ppcArgs array /the this ptr is already in pArgs/
-	if ( iArgSize > 0 )
-		stackArgs( pArgs, iIntArgs, iFloatArgs, iDoubleArgs );
-
-	return ppcFunc( ppcArgs, iArgSize, dwFunc);
-}
-
-// This function is identical to CallCDeclFunction, with the only difference that
-// the value in the last parameter is the object
-//--------------------------------------------------------------------
-asQWORD CallThisCallFunction_objLast(const void* pObj, const asDWORD* pArgs, int iArgSize, asDWORD dwFunc)
-{
-	int iIntArgs = 0;
-	int iFloatArgs = 0;
-	int iDoubleArgs = 0;
-
-	// Put the arguments in the correct places in the ppcArgs array /the this ptr is already in pArgs/
-	if ( iArgSize > 0 )
-		stackArgs( pArgs, iIntArgs, iFloatArgs, iDoubleArgs );
-
-	int iNumArgs	= iIntArgs + iFloatArgs + iDoubleArgs;
-	int iDWordCount = (iIntArgs + iFloatArgs + 2*iDoubleArgs);
-	if ( iDWordCount < AS_PPC_MAX_ARGS )
-	{
-		ppcArgs[iDWordCount]  = (asDWORD)pObj;
-		ppcArgsType[iNumArgs] = ppcINTARG;
-	}
-
-	return ppcFunc( ppcArgs, iArgSize + sizeof(pObj), dwFunc );
-}
-
-//--------------------------------------------------------------------
 asDWORD GetReturnedFloat()
 {
 	asDWORD f;
@@ -538,9 +464,7 @@ asDWORD GetReturnedFloat()
 	return f;
 }
 
-
 asQWORD GetReturnedDouble()
-//--------------------------------------------------------------------
 {
 	asQWORD f;
 
@@ -560,61 +484,53 @@ inline bool IsVariableArgument( asCDataType type )
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/)
 {
-	// TODO: optimize: This memset shouldn't be necessary
-	memset( ppcArgsType, 0, sizeof(ppcArgsType));
+	asCScriptEngine            *engine    = context->engine;
+	asSSystemFunctionInterface *sysFunc   = descr->sysFuncIntf;	
+	int                         callConv  = sysFunc->callConv;
+	asQWORD                     retQW     = 0;
+	void                       *func      = (void*)sysFunc->func;
+	asDWORD                    *vftable;
 
-	asCScriptEngine            *engine  = context->engine;
-	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;	
-
-	int callConv = sysFunc->callConv;
-
-	asQWORD retQW = 0;
-
-	void*    func       = (void*)sysFunc->func;
-	int      paramSize  = sysFunc->paramSize;
-	asDWORD* vftable;
-
-	// We generate the parameter list to this, so it fits to teh callingconvention
-	asDWORD fixedArgs[ AS_PPC_MAX_ARGS + AS_PPC_RETURNINMEM_REG + AS_PPC_THISCALL_REG ];
-	memset(fixedArgs, 0, sizeof(fixedArgs));
-	int argsPtr = 0;
+	// Pack the arguments into an array that ppcFunc() can use to load each CPU register properly
+	asBYTE  ppcArgsType[AS_PPC_MAX_ARGS + AS_PPC_RETURNINMEM_REG + AS_PPC_THISCALL_REG + AS_PPC_ENDOFARGS];
+	asDWORD ppcArgs[AS_PPC_MAX_ARGS + AS_PPC_RETURNINMEM_REG + AS_PPC_THISCALL_REG];
+	int     argsCnt = 0;
 
 	// If the function returns an object in memory, we allocate the memory and put the ptr to the front (will go to r3)
-	if ( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
+	if( descr->returnType.IsObject() && !descr->returnType.IsReference() && !descr->returnType.IsObjectHandle() )
 	{
-		fixedArgs  [ argsPtr ] = (asDWORD)retPointer;
-		ppcArgsType[ argsPtr ] = ppcINTARG;
-		argsPtr++;
+		ppcArgs[argsCnt] = (asDWORD)retPointer;
+		ppcArgsType[argsCnt] = ppcINTARG;
+		argsCnt++;
 	}
 
-
-
-	// If we have an object and it's not objectlast, then we put it az the first arg
-	if ( obj
-		&& callConv != ICC_CDECL_OBJLAST
-		&& callConv != ICC_CDECL_OBJLAST_RETURNINMEM )
+	// If we have an object and it's not objectlast, then we put it as the first arg
+	if ( obj &&
+		 callConv != ICC_CDECL_OBJLAST &&
+		 callConv != ICC_CDECL_OBJLAST_RETURNINMEM )
 	{
-		fixedArgs  [ argsPtr ] = (asDWORD)obj;
-		ppcArgsType[ argsPtr ] = ppcINTARG;
-		argsPtr++;
+		ppcArgs[argsCnt] = (asDWORD)obj;
+		ppcArgsType[argsCnt] = ppcINTARG;
+		argsCnt++;
 	}
 
-	asASSERT(descr->parameterTypes.GetLength() <= AS_PPC_MAX_ARGS);
-
-	// Parameter calculation magic
-	asDWORD paramBuffer[64];
-	if ( sysFunc->takesObjByVal )
+	// If the function takes any objects by value, they must be copied 
+	// to the stack, shifting the other arguments as necessary. paramBuffer
+	// will then replace the args pointer that was received from the VM.
+	// TODO: Is this really how XBox 360 passes objects by value?
+	asDWORD paramBuffer[AS_PPC_MAX_ARGS];
+	if( sysFunc->takesObjByVal )
 	{
-		paramSize = 0;
+		int paramSize = 0;
 		int spos = 0;
 		int dpos = 1;
 
-		for ( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			// Parameter object by value
-			if (  descr->parameterTypes[n].IsObject()
-				&& !descr->parameterTypes[n].IsObjectHandle()
-				&& !descr->parameterTypes[n].IsReference() )
+			if( descr->parameterTypes[n].IsObject() && 
+				!descr->parameterTypes[n].IsObjectHandle() &&
+				!descr->parameterTypes[n].IsReference() )
 			{
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
@@ -627,8 +543,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				{
 					// Copy the object's memory to the buffer
 					memcpy( &paramBuffer[dpos], *(void**)(args + spos), descr->parameterTypes[n].GetSizeInMemoryBytes() );
+
 					// Delete the original memory
-					engine->CallFree(*(char**)(args + spos) );
+					engine->CallFree(*(char**)(args + spos));
 
 					spos++;
 					dpos += descr->parameterTypes[n].GetSizeInMemoryDWords();
@@ -644,10 +561,10 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				paramSize += descr->parameterTypes[n].GetSizeOnStackDWords();
 			}
 
-			// if this was a variable argument parameter, then account for the implicit typeID
+			// If this was a variable argument parameter, then account for the implicit typeId
 			if( IsVariableArgument( descr->parameterTypes[n] ) )
 			{
-				// the TypeID is just a DWORD
+				// the TypeId is just a DWORD
 				paramBuffer[dpos++] = args[spos++];
 				++paramSize;
 			}
@@ -655,18 +572,20 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		// Keep a free location at the beginning
 		args = &paramBuffer[1];
+
+		asASSERT( paramSize <= AS_PPC_MAX_ARGS );
 	}
 
 
 	const asUINT paramCount = (asUINT)descr->parameterTypes.GetLength();
 
-	asBYTE * pCurArgType		= (asBYTE*)&ppcArgsType[argsPtr];
-	asBYTE * pCurFixedArgValue	= (asBYTE*)&fixedArgs[argsPtr];
+	asBYTE * pCurArgType		= (asBYTE*)&ppcArgsType[argsCnt];
+	asBYTE * pCurFixedArgValue	= (asBYTE*)&ppcArgs[argsCnt];
 	asBYTE * pCurStackArgValue	= (asBYTE*)args;
 
-	for( asUINT n = 0; n < paramCount ; n++ )
+	for( asUINT n = 0; n < paramCount; n++ )
 	{		
-		argsPtr++;
+		argsCnt++;
 
 		if (descr->parameterTypes[n].IsFloatType() && !descr->parameterTypes[n].IsReference())
 		{
@@ -718,22 +637,25 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 			pCurFixedArgValue += 4;
 			pCurStackArgValue += 4;
-		}
 
-		// if it is a variable argument, account for the typeID
-		// implicitly add another parameter (AFTER the parameter above), for the TypeID
-		if( IsVariableArgument(descr->parameterTypes[n]) )
-		{			
-			argsPtr++;
+			// if it is a variable argument, account for the typeId
+			// implicitly add another parameter (AFTER the parameter above) for the typeId
+			if( IsVariableArgument(descr->parameterTypes[n]) )
+			{			
+				argsCnt++;
 
-			*pCurArgType++ = ppcINTARG;
+				*pCurArgType++ = ppcINTARG;
 
-			*((int*) pCurFixedArgValue) = *((int*) pCurStackArgValue);
+				*((int*) pCurFixedArgValue) = *((int*) pCurStackArgValue);
 
-			pCurFixedArgValue += 4;
-			pCurStackArgValue += 4;
+				pCurFixedArgValue += 4;
+				pCurStackArgValue += 4;
+			}
 		}
 	}
+
+	// Add the arg list end indicator
+	ppcArgsType[argsCnt] = ppcENDARG;
 
 	switch( callConv )
 	{
@@ -741,26 +663,32 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	case ICC_CDECL_RETURNINMEM:
 	case ICC_STDCALL:
 	case ICC_STDCALL_RETURNINMEM:
-		retQW = CallCDeclFunction( fixedArgs, argsPtr, (asDWORD)func );
-		break;
 	case ICC_THISCALL:
 	case ICC_THISCALL_RETURNINMEM:
-		retQW = CallThisCallFunction( obj, fixedArgs, argsPtr, (asDWORD)func );
-		break;
-	case ICC_VIRTUAL_THISCALL:
-	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
-		// Get virtual function table from the object pointer
-		vftable = *(asDWORD**)obj;
-		retQW = CallThisCallFunction( obj, fixedArgs, argsPtr, vftable[asDWORD(func)>>2] );
-		break;
-	case ICC_CDECL_OBJLAST:
-	case ICC_CDECL_OBJLAST_RETURNINMEM:
-		retQW = CallThisCallFunction_objLast( obj, fixedArgs, argsPtr, (asDWORD)func );
-		break;
 	case ICC_CDECL_OBJFIRST:
 	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-		retQW = CallThisCallFunction( obj, fixedArgs, argsPtr, (asDWORD)func );
+	{
+		retQW = ppcFunc( ppcArgs, argsCnt, (asDWORD)func, ppcArgsType );
 		break;
+	}
+	case ICC_VIRTUAL_THISCALL:
+	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
+	{
+		// Get virtual function table from the object pointer
+		vftable = *(asDWORD**)obj;
+		retQW = ppcFunc( ppcArgs, argsCnt, vftable[asDWORD(func)>>2], ppcArgsType );
+		break;
+	}
+	case ICC_CDECL_OBJLAST:
+	case ICC_CDECL_OBJLAST_RETURNINMEM:
+	{
+		// Add the object pointer as the last argument
+		ppcArgsType[argsCnt++] = ppcINTARG;
+		ppcArgsType[argsCnt] = ppcENDARG;
+		*((asPWORD*)pCurFixedArgValue) = (asPWORD)obj;
+		retQW = ppcFunc( ppcArgs, argsCnt, (asDWORD)func, ppcArgsType );
+		break;
+	}
 	default:
 		context->SetInternalException( TXT_INVALID_CALLING_CONVENTION );
 	}
@@ -787,5 +715,5 @@ END_AS_NAMESPACE
 #endif // AS_XENON
 #endif // AS_MAX_PORTABILITY
 
-//------------------------------------------------------------------
+
 

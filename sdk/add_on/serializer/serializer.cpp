@@ -52,7 +52,8 @@ int CSerializer::Store(asIScriptModule *mod)
 	m_root.m_serializer = this;
 
 	// First store global variables
-	for( asUINT i = 0; i < mod->GetGlobalVarCount(); i++ )
+	asUINT i;
+	for( i = 0; i < mod->GetGlobalVarCount(); i++ )
 	{
 		const char *name, *nameSpace;
 		int typeId;
@@ -61,7 +62,7 @@ int CSerializer::Store(asIScriptModule *mod)
 	}
 
 	// Second store extra objects
-	for( size_t i =0; i < m_extraObjects.size(); i++ )
+	for( i = 0; i < m_extraObjects.size(); i++ )
 		m_root.m_children.push_back(new CSerializedValue(&m_root, "", "", m_extraObjects[i].originalObject, m_extraObjects[i].originalTypeId));
 
 	// For the handles that were stored, we need to substitute the stored pointer
@@ -83,7 +84,8 @@ int CSerializer::Restore(asIScriptModule *mod)
 	m_engine = mod->GetEngine();
 
 	// First restore extra objects, i.e. the ones that are not directly seen from the module's global variables
-	for( size_t i =0; i < m_extraObjects.size(); i++ )
+	asUINT i;
+	for( i = 0; i < m_extraObjects.size(); i++ )
 	{
 		SExtraObject &o = m_extraObjects[i];
 		asIObjectType *type = m_mod->GetObjectTypeByName( o.originalClassName.c_str() );
@@ -103,7 +105,7 @@ int CSerializer::Restore(asIScriptModule *mod)
 
 	// Second restore the global variables
 	asUINT varCount = mod->GetGlobalVarCount();
-	for( asUINT i = 0; i < varCount; i++ )
+	for( i = 0; i < varCount; i++ )
 	{
 		const char *name, *nameSpace;
 		int typeId;
