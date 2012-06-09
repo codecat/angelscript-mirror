@@ -3547,6 +3547,24 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
+	else if( i->callConv == ICC_VIRTUAL_THISCALL )
+	{
+		// For virtual thiscalls we must call the method as a true class method
+		// so that the compiler will lookup the function address in the vftable
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			struct
+			{
+				asFUNCTION_t func;
+				asPWORD baseOffset;  // Same size as the pointer
+			} f;
+		} p;
+		p.f.func = (void (*)())(i->func);
+		p.f.baseOffset = asPWORD(i->baseOffset);
+		void (asCSimpleDummy::*f)(void*) = (void (asCSimpleDummy::*)(void*))(p.mthd);
+		(((asCSimpleDummy*)obj)->*f)(param);
+	}
 	else /*if( i->callConv == ICC_CDECL_OBJFIRST || i->callConv == ICC_THISCALL )*/
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);

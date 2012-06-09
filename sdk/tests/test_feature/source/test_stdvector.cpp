@@ -256,7 +256,7 @@ bool Test()
 	}
 
 	ctx = engine->CreateContext();
-	r = ctx->Prepare(mod->GetFunctionIdByDecl("void Test(string[] v)"));
+	r = ctx->Prepare(mod->GetFunctionByDecl("void Test(string[] v)"));
 	if( r < 0 ) TEST_FAILED;
 	vector<string> local;
 	local.push_back(string("test"));
