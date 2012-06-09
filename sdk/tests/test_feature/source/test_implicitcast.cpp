@@ -464,6 +464,33 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Reported by ThyReaper
+		{
+			mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("script", 
+				"class C \n"
+				"{ \n"
+				"  B b; \n"
+				"  B@ get_a() { return b; } \n"
+				"  void set_a(B@ value) { } \n"
+				"} \n"
+				"void func() \n"
+				"{ \n"
+				"  C c; \n"
+				"  A @a; \n"
+				"  @a = c.a; \n"
+				"  assert( a is c.b ); \n"
+				"} \n");
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			r = ExecuteString(engine, "func()", mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
+
+
 		// TODO: This requires implicit value cast
 		// Test passing a value of B to a function expecting its base class
 		// the compiler will automatically create a copy
