@@ -13,7 +13,7 @@
  - \ref relation
  - \ref identity
  - \ref increment
- - \ref index
+ - \ref opindex
  - \ref condition
  - \ref member
  - \ref handle
@@ -250,7 +250,7 @@ is used in the expression. The value is always incremented or decremented with 1
 
 
 
-\section index Indexing operator
+\section opindex Indexing operator
 
 <pre>
   arr[i] = 1;
@@ -307,6 +307,10 @@ when no more handles reference an object is the object destroyed.
 The members of the object that the handle references are accessed the same way through the handle as if
 accessed directly through the object variable, i.e. with <code>.</code> operator.
 
+\see \ref doc_script_handle
+
+
+
 
 
 \section parenthesis Parenthesis
@@ -323,13 +327,15 @@ Parenthesis are used to group expressions when the \ref doc_operator_precedence 
 not give the desired order of evaluation.
 
 
+
+
 \section scope Scope resolution
 
 <pre>
   int value;
   void function()
   {
-    int value;        // local variable overloads the global variable
+    int value;       // local variable overloads the global variable
     ::&empty;value = value; // use scope resolution operator to refer to the global variable 
   } 
 </pre>
@@ -337,4 +343,6 @@ not give the desired order of evaluation.
 The scope resolution operator <code>::</code> can be used to access variables or functions from another scope when 
 the name is overloaded by a local variable or function. Write the scope name on the left (or blank for the global scope)
 and the name of the variable/function on the right.
+
+\see \ref doc_global_namespace
 */
