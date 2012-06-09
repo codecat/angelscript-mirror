@@ -206,6 +206,48 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by _Vicious_
+	// http://www.gamedev.net/topic/625747-multiple-matching-signatures-to/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptString(engine);
+
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Cvar", sizeof(int), asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectBehaviour("Cvar", asBEHAVE_CONSTRUCT, "void f(const string &in, const string &in, const uint)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Cvar", "void set(string&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Cvar", "void set(float)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Cvar", "void set(int)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Cvar", "void set(double)", asFUNCTION(0), asCALL_GENERIC);
+
+		engine->RegisterObjectType("ElementFormControl", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("ElementFormControl", "string@ get_value() const", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("ElementFormControl", "void set_value(const string&in)", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() \n"
+			"{ \n"
+			"  ElementFormControl @login_form_username; \n"
+			"  Cvar mm_user( 'cl_mm_user', '', 0 ); \n"
+			"  mm_user.set( login_form_username.value ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Problem reported by Ricky C
 	// http://www.gamedev.net/topic/625484-c99-hexfloats/#entry4943881
 	{
