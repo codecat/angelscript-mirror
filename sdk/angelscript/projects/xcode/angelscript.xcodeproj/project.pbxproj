@@ -84,7 +84,6 @@
 		7547BD8F1523FF2300EFAB3F /* as_typeinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD401523FF2300EFAB3F /* as_typeinfo.h */; };
 		7547BD901523FF2300EFAB3F /* as_variablescope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD411523FF2300EFAB3F /* as_variablescope.cpp */; };
 		7547BD911523FF2300EFAB3F /* as_variablescope.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD421523FF2300EFAB3F /* as_variablescope.h */; };
-		7547BD921523FF2300EFAB3F /* foo.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD431523FF2300EFAB3F /* foo.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -166,8 +165,6 @@
 		7547BD401523FF2300EFAB3F /* as_typeinfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_typeinfo.h; sourceTree = "<group>"; };
 		7547BD411523FF2300EFAB3F /* as_variablescope.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = as_variablescope.cpp; sourceTree = "<group>"; };
 		7547BD421523FF2300EFAB3F /* as_variablescope.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_variablescope.h; sourceTree = "<group>"; };
-		7547BD431523FF2300EFAB3F /* foo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = foo.h; sourceTree = "<group>"; };
-		7547BD441523FF2300EFAB3F /* test.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = test.cpp; sourceTree = "<group>"; };
 		D2AAC07E0554694100DB518D /* libangelscript.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libangelscript.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -296,8 +293,6 @@
 				7547BD401523FF2300EFAB3F /* as_typeinfo.h */,
 				7547BD411523FF2300EFAB3F /* as_variablescope.cpp */,
 				7547BD421523FF2300EFAB3F /* as_variablescope.h */,
-				7547BD431523FF2300EFAB3F /* foo.h */,
-				7547BD441523FF2300EFAB3F /* test.cpp */,
 			);
 			name = source;
 			path = ../../source;
@@ -345,7 +340,6 @@
 				7547BD8D1523FF2300EFAB3F /* as_tokenizer.h in Headers */,
 				7547BD8F1523FF2300EFAB3F /* as_typeinfo.h in Headers */,
 				7547BD911523FF2300EFAB3F /* as_variablescope.h in Headers */,
-				7547BD921523FF2300EFAB3F /* foo.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

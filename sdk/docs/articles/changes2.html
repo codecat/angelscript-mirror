@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/06/08</h2>
+<h2>Version 2.24.0 WIP - 2012/06/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,6 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The engine allowed to register multiple ref cast behaviours to the same type, which would cause assert failure in compiler (Thanks Andrew Ackermann)
 <li>Improved compatibility with native calling conventions on iOS (Thanks Lasse &Ouml;&ouml;rni)
 <li>Templates with const subtypes are now properly handled (Thanks Andrew Ackermann)
+<li>Fixed SegV with gnuc when using a virtual method for the message callback (Thanks Tzarls)
 </ul>
 <li>Library interface
 <ul>
