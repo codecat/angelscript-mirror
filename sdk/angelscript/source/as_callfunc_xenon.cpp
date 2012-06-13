@@ -461,7 +461,11 @@ ppcArgsEnd:
 
 asDWORD GetReturnedFloat()
 {
-	asDWORD f;
+	// This variable must be declared volatile so that the 
+	// compiler optimizations do not remove its initialization
+	// with the fr1 register due to believing the fr1 register
+	// isn't initialized.
+	volatile asDWORD f;
 
 	__asm
 	{
@@ -473,7 +477,11 @@ asDWORD GetReturnedFloat()
 
 asQWORD GetReturnedDouble()
 {
-	asQWORD f;
+	// This variable must be declared volatile so that the 
+	// compiler optimizations do not remove its initialization
+	// with the fr1 register due to believing the fr1 register
+	// isn't initialized.
+	volatile asQWORD f;
 
 	__asm
 	{
