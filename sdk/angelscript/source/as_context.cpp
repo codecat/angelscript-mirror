@@ -194,6 +194,35 @@ asCContext::~asCContext()
 	DetachEngine();
 }
 
+int asCContext::PushState()
+{
+	// TODO: context: 
+	// Only allow the state to be pushed when active or suspended
+	// If the status is active, then the context must be currently calling a system function (to avoid PushState() to be called from the line callback for example)
+	// If the status is suspended, then the context must not currently be in the Execute method.
+	// A marker needs to be placed on the callStack. If the status was active then the system function that is being called should be placed there for consulting
+	// The current state should be moved to asEXECUTION_UNINITIALIZED
+	// Function arguments and space for return value must be stowed away
+	return asNOT_SUPPORTED;
+}
+
+int asCContext::PopState()
+{
+	// TODO: context:
+	// PopState() can be called in the same state as Unprepare() normally is called
+	// The stack should be cleaned up until the top most marker.
+	// If the context is not nested an error should be returned
+	// The original function arguments and space for return value must be restored
+	return asNOT_SUPPORTED;
+}
+
+bool asCContext::IsNested() const
+{
+	// TODO: context:
+	// If the callStack contains a marker for nested executions it should return true
+	return false;
+}
+
 int asCContext::AddRef() const
 {
 	return refCount.atomicInc();
@@ -215,6 +244,8 @@ int asCContext::Release() const
 void asCContext::DetachEngine()
 {
 	if( engine == 0 ) return;
+
+	// TODO: context: Must clean up nested calls too
 
 	// Abort any execution
 	Abort();
@@ -310,6 +341,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	// Release the returned object (if any)
 	CleanReturnObject();
 
+	// TODO: context: Nested calls shouldn't reallocate the stack
 	if( initialFunction && initialFunction == func )
 	{
 		// If the same function is executed again, we can skip a lot of the setup 
@@ -317,7 +349,6 @@ int asCContext::Prepare(asIScriptFunction *func)
 	}
 	else
 	{
-		// Check engine pointer
 		asASSERT( engine );
 
 		if( initialFunction )
@@ -380,6 +411,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	status = asEXECUTION_PREPARED;
 	regs.programPointer = 0;
 
+	// TODO: context: Nested calls shouldn't reallocate the stack
 	// Reserve space for the arguments and return value
 	regs.stackFramePointer = stackBlocks[0] + stackBlockSize - argumentsSize - returnValueSize;
 	regs.stackPointer      = regs.stackFramePointer;
@@ -403,6 +435,8 @@ int asCContext::Prepare(asIScriptFunction *func)
 // Free all resources
 int asCContext::Unprepare()
 {
+	// TODO: context: Only unprepare the inner most nested execution
+
 	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
@@ -3697,6 +3731,8 @@ void asCContext::CleanReturnObject()
 
 void asCContext::CleanStack()
 {
+	// TODO: context: Only clean up until the top most marker for a nested call
+
 	inExceptionHandler = true;
 
 	// Run the clean up code for each of the functions called

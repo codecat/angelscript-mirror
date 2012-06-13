@@ -65,7 +65,8 @@
 // Example: void foo(float a, int b). a will be passed in fr1 and b in r4.
 //
 // For each argument passed to a function an 8byte slot is reserved on the 
-// stack, so that the function can offload the value there if needed.
+// stack, so that the function can offload the value there if needed. The
+// first slot is at r1+20, the next at r1+28, etc.
 //
 // If the function is a class method, the this pointer is passed as hidden 
 // first argument. If the function returns an object in memory, the address
@@ -123,42 +124,50 @@ enum argTypes
 };
 
 // Loads all data into the correct places and calls the function.
+// pArgs     is the array of the argument values
 // pArgTypes is an array containing a byte indicating the type (enum argTypes) for each argument.
-// iStackArgSize is the size of the pArgTypes array, i.e. pArgTypes[iStackArgSize] == ppcENDARG;
-asQWORD __declspec( naked ) ppcFunc(const asDWORD* pArgs, int iStackArgSize, asDWORD dwFunc, const asBYTE* pArgTypes)
+// dwFunc    is the address of the function that will be called
+asQWORD __declspec( naked ) ppcFunc(const asDWORD* pArgs, asDWORD dwFunc, const asBYTE* pArgTypes)
 {
 	__asm
 	{
-//////////////////////////////////////////////////////////////////////////
-// Prepare args
-//////////////////////////////////////////////////////////////////////////
 _ppcFunc:
-		// setup stack
-		// Read link register
+		// Prologue
+		// Read and stack the link register (return address)
 		mflr    r12
-		// Stack the link register
 		stw     r12,-8(r1)
-		// backup all registers we use in this fct
-		std     r31,-10h(r1)
-		std     r30,-18h(r1)
-		std     r29,-20h(r1)
-		std     r28,-28h(r1)
-		std     r27,-30h(r1)
-		std     r26,-38h(r1)
-		std     r25,-40h(r1)
-		std     r24,-48h(r1)
-		std     r23,-50h(r1)
-		std     r22,-58h(r1)
-		std     r21,-60h(r1)
-		// Move stack pointer
-		stwu    r1,-0A0h(r1)
+
+		// Backup all non-volatile registers we use in this function
+		std     r31,-10h(r1) // stack pointer for pushing arguments
+		std     r27,-18h(r1) // dwFunc
+		std     r26,-20h(r1) // pArgs
+		std     r25,-28h(r1) // pArgTypes
+		std     r24,-30h(r1) // current arg type
+		std     r23,-38h(r1) // counter for used GPRs
+		std     r22,-40h(r1) // counter for used float registers
+
+		// Setup the stack frame to make room for the backup of registers
+		// and the arguments that will be passed to the application function.
+		// 512 bytes is enough for about 50 arguments plus backup of 8
+		// TODO: Should perhaps make this dynamic based on number of arguments
+		stwu	r1,-200h(r1)
+
+//////////////////////////////////////////////////////////////////////////
+// Initialize local variables
+//////////////////////////////////////////////////////////////////////////
+
+		// r31 is our pointer into the stack where the arguments will be place
+		// The MSVC optimizer seems to rely on nobody copying the r1 register directly
+		// so we can't just do a simple 'addi r31, r1, 14h' as the optimizer may
+		// end up moving this instruction to before the update of r1 above. 
+		// Instead we'll read the previous stack pointer from the stack, and then 
+		// subtract to get the correct offset.
+		lwz		r31, 0(r1)
+		subi	r31, r31, 1ECh	// prev r1 - 512 + 20 = curr r1 + 20
 
 		mr r26, r3			// pArgs
-		mr r30, r4			// iStackArgSize
-		mr r27, r5			// dwFunc
-		mr r25, r6			// pArgTypes
-
-		addi r31, r1, 14h	// stack args for next function call
+		mr r27, r4			// dwFunc
+		mr r25, r5			// pArgTypes
 
 		// Counting of used/assigned GPR's
 		sub  r23, r23, r23
@@ -241,7 +250,7 @@ ppcArgIsInteger:
 		b ppcLoadIntRegUpd
 
 		ppcLoadIntRegUpd:
-		stw	    r12, 0(r31)			// push on the statck
+		stw	    r12, 0(r31)			// push on the stack
 		addi	r31, r31, 8			// inc stack by 1 reg
 
 		addi r23, r23, 1			// Increment used int register count
@@ -327,7 +336,7 @@ ppcArgIsFloat:
 		b ppcLoadFloatRegUpd
 
 		ppcLoadFloatRegUpd:
-		stfs	fr0, 0(r31)			// push on the statck
+		stfs	fr0, 0(r31)			// push on the stack
 		addi	r31, r31, 8			// inc stack by 1 reg
 		
 		addi r22, r22, 1			// Increment used float register count
@@ -414,7 +423,7 @@ ppcArgIsDouble:
 		b ppcLoadDoubleRegUpd
 
 		ppcLoadDoubleRegUpd:
-		stfd	fr0, 0(r31)			// push on the statck
+		stfd	fr0, 0(r31)			// push on the stack
 		addi	r31, r31, 8			// inc stack by 1 reg
 		
 		addi r22, r22, 1			// Increment used float register count		
@@ -430,24 +439,22 @@ ppcArgsEnd:
 		mtctr r27
 		bctrl
 
-		// Function returned
+		// Epilogue
 		// Restore callers stack
-		addi	r1, r1, 0A0h
+		addi	r1, r1, 200h
+
+		// restore all registers we used in this fct
+		ld     r22,-40h(r1)
+		ld     r23,-38h(r1)
+		ld     r24,-30h(r1)
+		ld     r25,-28h(r1)
+		ld     r26,-20h(r1)
+		ld     r27,-18h(r1)
+		ld     r31,-10h(r1)
+
 		// Fetch return link to caller
 		lwz     r12,-8(r1)
 		mtlr	r12
-		// restore all registers we used in this fct
-		ld     r31,-10h(r1)
-		ld     r30,-18h(r1)
-		ld     r29,-20h(r1)
-		ld     r28,-28h(r1)
-		ld     r27,-30h(r1)
-		ld     r26,-38h(r1)
-		ld     r25,-40h(r1)
-		ld     r24,-48h(r1)
-		ld     r23,-50h(r1)
-		ld     r22,-58h(r1)
-		ld     r21,-60h(r1) 
 		blr
 	}
 }
@@ -668,7 +675,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	case ICC_CDECL_OBJFIRST:
 	case ICC_CDECL_OBJFIRST_RETURNINMEM:
 	{
-		retQW = ppcFunc( ppcArgs, argsCnt, (asDWORD)func, ppcArgsType );
+		retQW = ppcFunc( ppcArgs, (asDWORD)func, ppcArgsType );
 		break;
 	}
 	case ICC_VIRTUAL_THISCALL:
@@ -676,7 +683,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 		// Get virtual function table from the object pointer
 		vftable = *(asDWORD**)obj;
-		retQW = ppcFunc( ppcArgs, argsCnt, vftable[asDWORD(func)>>2], ppcArgsType );
+		retQW = ppcFunc( ppcArgs, vftable[asDWORD(func)>>2], ppcArgsType );
 		break;
 	}
 	case ICC_CDECL_OBJLAST:
@@ -686,7 +693,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		ppcArgsType[argsCnt++] = ppcINTARG;
 		ppcArgsType[argsCnt] = ppcENDARG;
 		*((asPWORD*)pCurFixedArgValue) = (asPWORD)obj;
-		retQW = ppcFunc( ppcArgs, argsCnt, (asDWORD)func, ppcArgsType );
+		retQW = ppcFunc( ppcArgs, (asDWORD)func, ppcArgsType );
 		break;
 	}
 	default:

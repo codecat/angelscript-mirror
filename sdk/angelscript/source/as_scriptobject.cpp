@@ -46,6 +46,8 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 
 	// TODO: It must be possible for the application to debug the creation of the object too
 
+	// TODO: context: Use nested call in the context if there is an active context
+
 	int r = engine->CreateContext(&ctx, true);
 	if( r < 0 )
 		return 0;
@@ -281,6 +283,7 @@ void asCScriptObject::CallDestructor()
 	// reference count is increased and then decreased again
 	isDestructCalled = true;
 
+	// TODO: context: Use nested call if there already is an active context
 	asIScriptContext *ctx = 0;
 
 	// Call the destructor for this class and all the super classes

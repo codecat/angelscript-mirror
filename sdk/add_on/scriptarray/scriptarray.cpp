@@ -757,6 +757,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 	if( GetSize() != other.GetSize() )
 		return false;
 
+	// TODO: context: Use nested call if an active context already exists
 	asIScriptContext *cmpContext = 0;
 
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
@@ -764,6 +765,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
 		//       but that would consume a lot of resources as each context is quite heavy.
+		// TODO: context: Use nested call if an active context already exists
 		cmpContext = objType->GetEngine()->CreateContext();
 	}
 	
@@ -887,6 +889,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
 		//       but that would consume a lot of resources as each context is quite heavy.
+		// TODO: context: Use nested call if an active context already exists
 		cmpContext = objType->GetEngine()->CreateContext();
 	}
 
@@ -1030,6 +1033,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
 		//       create a new one everytime. We could keep a context with the array object 
 		//       but that would consume a lot of resources as each context is quite heavy.
+		// TODO: context: Use nested call if an active context already exists
 		cmpContext = objType->GetEngine()->CreateContext();
 	}
 

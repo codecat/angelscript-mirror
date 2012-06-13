@@ -728,11 +728,16 @@ public:
 	virtual int             Prepare(int funcId) = 0;
 #endif
 	virtual int             Unprepare() = 0;
-	virtual int             SetObject(void *obj) = 0;
 	virtual int             Execute() = 0;
 	virtual int             Abort() = 0;
 	virtual int             Suspend() = 0;
 	virtual asEContextState GetState() const = 0;
+	virtual int             PushState() = 0;
+	virtual int             PopState() = 0;
+	virtual bool            IsNested() const = 0;
+
+	// Object pointer for calling class methods
+	virtual int   SetObject(void *obj) = 0;
 
 	// Arguments
 	virtual int   SetArgByte(asUINT arg, asBYTE value) = 0;

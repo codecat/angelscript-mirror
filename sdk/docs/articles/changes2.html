@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/06/09</h2>
+<h2>Version 2.24.0 WIP - 2012/06/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,6 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved compatibility with native calling conventions on iOS (Thanks Lasse &Ouml;&ouml;rni)
 <li>Templates with const subtypes are now properly handled (Thanks Andrew Ackermann)
 <li>Fixed SegV with gnuc when using a virtual method for the message callback (Thanks Tzarls)
+<li>Fixed problem with calling registered functions with more than 8 parameters on XBox 360 (Thanks virious)
 </ul>
 <li>Library interface
 <ul>
@@ -58,6 +59,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Improved stability in out-of-memory conditions to allow graceful exits (Thanks Zylann)
 <li>Improved error handling when loading incorrect bytecode (Thanks Andrew Price)
+<li>Improved thread safety in XBox 360 native code
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

@@ -54,21 +54,32 @@ class asCScriptEngine;
 class asCContext : public asIScriptContext
 {
 public:
-	// From asIScriptContext
+	// Memory management
 	int  AddRef() const;
 	int  Release() const;
 
+	// Miscellaneous
 	asIScriptEngine *GetEngine() const;
 
-	asEContextState GetState() const;
-
-	int  Prepare(asIScriptFunction *func);
+	// Execution
+	int             Prepare(asIScriptFunction *func);
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-25
-	int  Prepare(int functionId);
+	int             Prepare(int functionId);
 #endif
-	int  Unprepare();
+	int             Unprepare();
+	int             Execute();
+	int             Abort();
+	int             Suspend();
+	asEContextState GetState() const;
+	int             PushState();
+	int             PopState();
+	bool            IsNested() const;
 
+	// Object pointer for calling class methods
+	int SetObject(void *obj);
+
+	// Arguments
 	int SetArgByte(asUINT arg, asBYTE value);
 	int SetArgWord(asUINT arg, asWORD value);
 	int SetArgDWord(asUINT arg, asDWORD value);
@@ -79,8 +90,7 @@ public:
 	int SetArgObject(asUINT arg, void *obj);
 	void *GetAddressOfArg(asUINT arg);
 
-	int SetObject(void *obj);
-
+	// Return value
 	asBYTE  GetReturnByte();
 	asWORD  GetReturnWord();
 	asDWORD GetReturnDWord();
@@ -91,20 +101,17 @@ public:
 	void   *GetReturnObject();
 	void   *GetAddressOfReturnValue();
 
-	int  Execute();
-	int  Abort();
-	int  Suspend();
-
+	// Exception handling
 	int                SetException(const char *descr);
 	int                GetExceptionLineNumber(int *column, const char **sectionName);
 	asIScriptFunction *GetExceptionFunction();
 	const char *       GetExceptionString();
+	int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv);
+	void               ClearExceptionCallback();
 
-	int  SetLineCallback(asSFuncPtr callback, void *obj, int callConv);
-	void ClearLineCallback();
-	int  SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv);
-	void ClearExceptionCallback();
-
+	// Debugging
+	int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv);
+	void               ClearLineCallback();
 	asUINT             GetCallstackSize();
 	asIScriptFunction *GetFunction(asUINT stackLevel);
 	int                GetLineNumber(asUINT stackLevel, int *column, const char **sectionName);
@@ -118,6 +125,7 @@ public:
     void              *GetThisPointer(asUINT stackLevel);
 	asIScriptFunction *GetSystemFunction();
 
+	// User data
 	void *SetUserData(void *data);
 	void *GetUserData() const;
 
