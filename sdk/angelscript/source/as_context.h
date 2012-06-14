@@ -161,49 +161,49 @@ public:
 	void SetInternalException(const char *descr);
 
 	// Must be protected for multiple accesses
-	mutable asCAtomic refCount;
+	mutable asCAtomic m_refCount;
 
-	bool holdEngineRef;
-	asCScriptEngine *engine;
+	bool m_holdEngineRef;
+	asCScriptEngine *m_engine;
 
-	asEContextState status;
-	bool doSuspend;
-	bool doAbort;
-	bool externalSuspendRequest;
+	asEContextState m_status;
+	bool m_doSuspend;
+	bool m_doAbort;
+	bool m_externalSuspendRequest;
 
-	asCScriptFunction *currentFunction;
-	asCScriptFunction *callingSystemFunction;
-	bool isStackMemoryNotAllocated;
+	asCScriptFunction *m_currentFunction;
+	asCScriptFunction *m_callingSystemFunction;
+	bool m_isStackMemoryNotAllocated;
 
-	asCArray<size_t> callStack;
-	asCArray<asDWORD *> stackBlocks;
-	int stackBlockSize;
-	int stackIndex;
+	asCArray<size_t>    m_callStack;
+	asCArray<asDWORD *> m_stackBlocks;
+	int                 m_stackBlockSize;
+	int                 m_stackIndex;
 
-	bool inExceptionHandler;
-	asCString exceptionString;
-	int exceptionFunction;
-	int exceptionLine;
-	int exceptionColumn;
+	bool      m_inExceptionHandler;
+	asCString m_exceptionString;
+	int       m_exceptionFunction;
+	int       m_exceptionLine;
+	int       m_exceptionColumn;
 
-	int returnValueSize;
-	int argumentsSize;
+	int m_returnValueSize;
+	int m_argumentsSize;
 
-	asCScriptFunction *initialFunction;
+	asCScriptFunction *m_initialFunction;
 
 	// callbacks
-	bool lineCallback;
-	asSSystemFunctionInterface lineCallbackFunc;
-	void *lineCallbackObj;
+	bool                       m_lineCallback;
+	asSSystemFunctionInterface m_lineCallbackFunc;
+	void *                     m_lineCallbackObj;
 
-	bool exceptionCallback;
-	asSSystemFunctionInterface exceptionCallbackFunc;
-	void *exceptionCallbackObj;
+	bool                       m_exceptionCallback;
+	asSSystemFunctionInterface m_exceptionCallbackFunc;
+	void *                     m_exceptionCallbackObj;
 
-	void *userData;
+	void *m_userData;
 
 	// Registers available to JIT compiler functions
-	asSVMRegisters regs;
+	asSVMRegisters m_regs;
 };
 
 END_AS_NAMESPACE

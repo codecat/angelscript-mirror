@@ -65,7 +65,7 @@ extern "C" asQWORD armFuncR0ObjLast(const asDWORD *, int, asFUNCTION_t, asDWORD 
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/)
 {
-	asCScriptEngine *engine = context->engine;
+	asCScriptEngine *engine = context->m_engine;
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 
