@@ -112,7 +112,7 @@ public:
 	// Debugging
 	int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv);
 	void               ClearLineCallback();
-	asUINT             GetCallstackSize();
+	asUINT             GetCallstackSize() const;
 	asIScriptFunction *GetFunction(asUINT stackLevel);
 	int                GetLineNumber(asUINT stackLevel, int *column, const char **sectionName);
 	int                GetVarCount(asUINT stackLevel);
@@ -152,6 +152,8 @@ public:
 
 	void PushCallState();
 	void PopCallState();
+	void PushNestedCallState();
+	int  PopNestedCallState();
 	void CallScriptFunction(asCScriptFunction *func);
 	void CallInterfaceMethod(asCScriptFunction *func);
 	void PrepareScriptFunction();

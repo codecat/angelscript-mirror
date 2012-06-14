@@ -196,30 +196,57 @@ asCContext::~asCContext()
 
 int asCContext::PushState()
 {
-	// TODO: context: 
-	// Only allow the state to be pushed when active or suspended
-	// If the status is active, then the context must be currently calling a system function (to avoid PushState() to be called from the line callback for example)
-	// If the status is suspended, then the context must not currently be in the Execute method.
-	// A marker needs to be placed on the callStack. If the status was active then the system function that is being called should be placed there for consulting
-	// The current state should be moved to asEXECUTION_UNINITIALIZED
+	// Only allow the state to be pushed when active and currently calling a 
+	// system function to avoid PushState() to be called from the line callback
+	// TODO: Can we support a suspended state too? So the reuse of
+	//       the context can be done outside the Execute() call?
+	if( status != asEXECUTION_ACTIVE && callingSystemFunction )
+	{
+		// TODO: Write message. Wrong usage
+		return asERROR;
+	}
+
+	// Place a marker on the call stack
+	PushNestedCallState();
+
+	// TODO: context:
 	// Function arguments and space for return value must be stowed away
-	return asNOT_SUPPORTED;
+
+	// Set the status to uninitialized as application
+	// should call Prepare() after this to reuse the context
+	status = asEXECUTION_UNINITIALIZED;
+
+	return asSUCCESS;
 }
 
 int asCContext::PopState()
 {
+	int r = PopNestedCallState();
+	if( r != asSUCCESS )
+		return r;
+
 	// TODO: context:
-	// PopState() can be called in the same state as Unprepare() normally is called
-	// The stack should be cleaned up until the top most marker.
-	// If the context is not nested an error should be returned
 	// The original function arguments and space for return value must be restored
+
+	status = asEXECUTION_ACTIVE;
+
 	return asNOT_SUPPORTED;
 }
 
 bool asCContext::IsNested() const
 {
-	// TODO: context:
-	// If the callStack contains a marker for nested executions it should return true
+	asUINT c = GetCallstackSize();
+	if( c == 0 )
+		return false;
+
+	// Search for a marker on the call stack
+	for( asUINT n = 1; n <= c; n++ )
+	{
+		const asPWORD *s = callStack.AddressOf() + (c - n)*CALLSTACK_FRAME_SIZE;
+		if( s[0] == 0 )
+			return true;
+	}
+
 	return false;
 }
 
@@ -245,13 +272,16 @@ void asCContext::DetachEngine()
 {
 	if( engine == 0 ) return;
 
-	// TODO: context: Must clean up nested calls too
+	// Clean up all calls, included nested ones
+	do
+	{
+		// Abort any execution
+		Abort();
 
-	// Abort any execution
-	Abort();
-
-	// Free all resources
-	Unprepare();
+		// Free all resources
+		Unprepare();
+	} 
+	while( IsNested() );
 
 	// Free the stack blocks
 	for( asUINT n = 0; n < stackBlocks.GetLength(); n++ )
@@ -435,8 +465,6 @@ int asCContext::Prepare(asIScriptFunction *func)
 // Free all resources
 int asCContext::Unprepare()
 {
-	// TODO: context: Only unprepare the inner most nested execution
-
 	if( status == asEXECUTION_ACTIVE || status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
@@ -1152,6 +1180,49 @@ int asCContext::Execute()
 	return asERROR;
 }
 
+void asCContext::PushNestedCallState()
+{
+	// Push the current script function that is calling the system function
+	PushCallState();
+
+	// Push the system function too, which will serve both as a marker and 
+	// informing which system function that created the nested call
+	if( callStack.GetLength() == callStack.GetCapacity() )
+	{
+		// Allocate space for 10 call states at a time to save time
+		callStack.AllocateNoConstruct(callStack.GetLength() + 10*CALLSTACK_FRAME_SIZE, true);
+	}
+	callStack.SetLengthNoConstruct(callStack.GetLength() + CALLSTACK_FRAME_SIZE);
+
+	asPWORD *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	tmp[0] = 0;
+	tmp[1] = (asPWORD)callingSystemFunction;
+	tmp[2] = 0;
+	tmp[3] = 0;
+	tmp[4] = 0;
+
+	// After this the state should appear as if uninitialized
+	callingSystemFunction = 0;
+}
+
+int asCContext::PopNestedCallState()
+{
+	// The topmost state must be a marker, i.e. a system function
+	asPWORD *tmp = callStack.AddressOf() + callStack.GetLength() - CALLSTACK_FRAME_SIZE;
+	if( tmp[0] != 0 || tmp[1] == 0 || 
+		reinterpret_cast<asCScriptFunction*>(tmp[1])->funcType != asFUNC_SYSTEM )
+		return asERROR;
+
+	// Restore the previous state
+	callingSystemFunction = reinterpret_cast<asCScriptFunction*>(tmp[1]);
+	callStack.SetLength(callStack.GetLength() - CALLSTACK_FRAME_SIZE);
+
+	// Pop the current script function too
+	PopCallState();
+
+	return asSUCCESS;
+}
+
 void asCContext::PushCallState()
 {
 	if( callStack.GetLength() == callStack.GetCapacity() )
@@ -1204,7 +1275,7 @@ void asCContext::PopCallState()
 }
 
 // interface
-asUINT asCContext::GetCallstackSize()
+asUINT asCContext::GetCallstackSize() const
 {
 	if( currentFunction == 0 ) return 0;
 
@@ -3731,8 +3802,6 @@ void asCContext::CleanReturnObject()
 
 void asCContext::CleanStack()
 {
-	// TODO: context: Only clean up until the top most marker for a nested call
-
 	inExceptionHandler = true;
 
 	// Run the clean up code for each of the functions called
@@ -3745,6 +3814,11 @@ void asCContext::CleanStack()
 
 	while( callStack.GetLength() > 0 )
 	{
+		// Only clean up until the top most marker for a nested call
+		asPWORD *s = callStack.AddressOf() + (GetCallstackSize()-1)*CALLSTACK_FRAME_SIZE;
+		if( s[0] == 0 )
+			break;
+
 		PopCallState();
 
 		CleanStackFrame();

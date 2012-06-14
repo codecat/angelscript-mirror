@@ -67,6 +67,7 @@ public:
 	const T &operator [](size_t index) const;
 	T &operator [](size_t index);
 	T *AddressOf();
+	const T *AddressOf() const;
 
 	void Concatenate(const asCArray<T> &);
 	void Concatenate(T*, unsigned int count);
@@ -90,6 +91,12 @@ protected:
 
 template <class T>
 T *asCArray<T>::AddressOf()
+{
+	return array;
+}
+
+template <class T>
+const T *asCArray<T>::AddressOf() const
 {
 	return array;
 }
