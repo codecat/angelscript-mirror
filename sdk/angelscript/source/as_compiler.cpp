@@ -1231,18 +1231,6 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 	// Need to protect arguments by reference
 	if( isFunction && dt.IsReference() )
 	{
-		if( paramType->GetTokenType() == ttQuestion )
-		{
-			asCByteCode tmpBC(engine);
-
-			// Place the type id on the stack as a hidden parameter
-			tmpBC.InstrDWORD(asBC_TYPEID, engine->GetTypeIdFromDataType(param));
-
-			// Insert the code before the expression code
-			tmpBC.AddCode(&ctx->bc);
-			ctx->bc.AddCode(&tmpBC);
-		}
-
 		// Allocate a temporary variable of the same type as the argument
 		dt.MakeReference(false);
 		dt.MakeReadOnly(false);
@@ -1251,6 +1239,19 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		if( refType == 1 ) // &in
 		{
 			ProcessPropertyGetAccessor(ctx, node);
+
+			// Add the type id as hidden arg if the parameter is a ? type
+			if( paramType->GetTokenType() == ttQuestion )
+			{
+				asCByteCode tmpBC(engine);
+
+				// Place the type id on the stack as a hidden parameter
+				tmpBC.InstrDWORD(asBC_TYPEID, engine->GetTypeIdFromDataType(param));
+
+				// Insert the code before the expression code
+				tmpBC.AddCode(&ctx->bc);
+				ctx->bc.AddCode(&tmpBC);
+			}
 
 			// If the reference is const, then it is not necessary to make a copy if the value already is a variable
 			// Even if the same variable is passed in another argument as non-const then there is no problem
@@ -1347,6 +1348,19 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		}
 		else if( refType == 2 ) // &out
 		{
+			// Add the type id as hidden arg if the parameter is a ? type
+			if( paramType->GetTokenType() == ttQuestion )
+			{
+				asCByteCode tmpBC(engine);
+
+				// Place the type id on the stack as a hidden parameter
+				tmpBC.InstrDWORD(asBC_TYPEID, engine->GetTypeIdFromDataType(param));
+
+				// Insert the code before the expression code
+				tmpBC.AddCode(&ctx->bc);
+				ctx->bc.AddCode(&tmpBC);
+			}
+
 			// Make sure the variable is not used in the expression
 			offset = AllocateVariableNotIn(dt, true, false, ctx);
 
@@ -1384,6 +1398,19 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		else if( refType == asTM_INOUTREF )
 		{
 			ProcessPropertyGetAccessor(ctx, node);
+
+			// Add the type id as hidden arg if the parameter is a ? type
+			if( paramType->GetTokenType() == ttQuestion )
+			{
+				asCByteCode tmpBC(engine);
+
+				// Place the type id on the stack as a hidden parameter
+				tmpBC.InstrDWORD(asBC_TYPEID, engine->GetTypeIdFromDataType(param));
+
+				// Insert the code before the expression code
+				tmpBC.AddCode(&ctx->bc);
+				ctx->bc.AddCode(&tmpBC);
+			}
 
 			// Literal constants cannot be passed to inout ref arguments
 			if( !ctx->type.isVariable && ctx->type.isConstant )

@@ -46,6 +46,37 @@ void Log(const string& s)
 //	printf("Log: %s\n", s.c_str());
 }
 
+class TestClass 
+{
+    float m_offsetVars[5];
+public:
+    TestClass()
+    {
+         m_offsetVars[0] = 0.666f;
+         m_offsetVars[1] = 1.666f;
+         m_offsetVars[2] = 2.666f;
+         m_offsetVars[3] = 3.666f;
+         m_offsetVars[4] = 4.666f;
+    }
+    float get_OffsetVars(unsigned int index)
+    {
+        return m_offsetVars[index];
+    }
+};
+
+void formattedPrintAS( std::string& format, void* a, int typeId_a )
+{
+	bool fail = false;
+	if( typeId_a != asTYPEID_FLOAT ) fail = true;
+	if( *(float*)a > 0.667f || *(float*)a < 0.665f ) fail = true;
+
+	if( fail )
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		ctx->SetException("Wrong args");
+	}
+}
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -61,6 +92,48 @@ bool Test()
 	asIScriptModule *mod;
  	asIScriptEngine *engine;
 	
+
+	// Test problem reported by virious
+	// virtual property access with index and var args must work together
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		r = engine->RegisterGlobalFunction("void Log(string&, ?&)", asFUNCTIONPR(formattedPrintAS, (std::string&, void*, int), void), asCALL_CDECL);
+		r = engine->RegisterObjectType("TestClass", 0, asOBJ_REF | asOBJ_NOCOUNT); 
+		r = engine->RegisterObjectMethod("TestClass", "float get_OffsetVars(uint)", asMETHOD(TestClass, get_OffsetVars), asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test",
+			"void main( TestClass@ a ) \n"
+			"{ \n"
+			"    Log( 'ladder - %0.3f', a.OffsetVars[ 0 ] ); \n"
+			"    Log( 'ladder - %0.3f', a.get_OffsetVars( 0 ) ); \n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByDecl("void main( TestClass@ )");
+		
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(func);
+
+		TestClass testClass;
+		ctx->SetArgObject( 0, &testClass );
+
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		ctx->Release();
+
+		engine->Release();
+	}
+
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
