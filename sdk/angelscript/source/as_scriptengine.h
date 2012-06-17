@@ -303,7 +303,7 @@ public:
 //===========================================================
 	asCMemoryMgr memoryMgr;
 
-	int initialContextStackSize;
+	asUINT initialContextStackSize;
 
 	asCObjectType   *defaultArrayObjectType;
 	asCObjectType    scriptTypeBehaviours;
@@ -404,24 +404,24 @@ public:
 	// Engine properties
 	struct
 	{
-		bool allowUnsafeReferences;
-		bool optimizeByteCode;
-		bool copyScriptSections;
-		int  maximumContextStackSize;
-		bool useCharacterLiterals;
-		bool allowMultilineStrings;
-		bool allowImplicitHandleTypes;
-		bool buildWithoutLineCues;
-		bool initGlobalVarsAfterBuild;
-		bool requireEnumScope;
-		int  scanner;
-		bool includeJitInstructions;
-		int  stringEncoding;
-		int  propertyAccessorMode;
-		bool expandDefaultArrayToTemplate;
-		bool autoGarbageCollect;
-		bool disallowGlobalVars;
-		bool alwaysImplDefaultConstruct;
+		bool   allowUnsafeReferences;
+		bool   optimizeByteCode;
+		bool   copyScriptSections;
+		asUINT maximumContextStackSize;
+		bool   useCharacterLiterals;
+		bool   allowMultilineStrings;
+		bool   allowImplicitHandleTypes;
+		bool   buildWithoutLineCues;
+		bool   initGlobalVarsAfterBuild;
+		bool   requireEnumScope;
+		int    scanner;
+		bool   includeJitInstructions;
+		int    stringEncoding;
+		int    propertyAccessorMode;
+		bool   expandDefaultArrayToTemplate;
+		bool   autoGarbageCollect;
+		bool   disallowGlobalVars;
+		bool   alwaysImplDefaultConstruct;
 	} ep;
 };
 

@@ -194,45 +194,6 @@ asCContext::~asCContext()
 	DetachEngine();
 }
 
-int asCContext::PushState()
-{
-	// Only allow the state to be pushed when active and currently calling a 
-	// system function to avoid PushState() to be called from the line callback
-	// TODO: Can we support a suspended state too? So the reuse of
-	//       the context can be done outside the Execute() call?
-	if( m_status != asEXECUTION_ACTIVE && m_callingSystemFunction )
-	{
-		// TODO: Write message. Wrong usage
-		return asERROR;
-	}
-
-	// Place a marker on the call stack
-	PushNestedCallState();
-
-	// TODO: context:
-	// Function arguments and space for return value must be stowed away
-
-	// Set the status to uninitialized as application
-	// should call Prepare() after this to reuse the context
-	m_status = asEXECUTION_UNINITIALIZED;
-
-	return asSUCCESS;
-}
-
-int asCContext::PopState()
-{
-	int r = PopNestedCallState();
-	if( r != asSUCCESS )
-		return r;
-
-	// TODO: context:
-	// The original function arguments and space for return value must be restored
-
-	m_status = asEXECUTION_ACTIVE;
-
-	return asNOT_SUPPORTED;
-}
-
 bool asCContext::IsNested() const
 {
 	asUINT c = GetCallstackSize();
@@ -348,7 +309,7 @@ asIScriptFunction *asCContext::GetSystemFunction()
 // interface
 int asCContext::Prepare(asIScriptFunction *func)
 {
-	if( func == 0 ) 
+	if( func == 0 )
 	{
 		asCString str;
 		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s, "Prepare", "null");
@@ -371,18 +332,25 @@ int asCContext::Prepare(asIScriptFunction *func)
 	// Release the returned object (if any)
 	CleanReturnObject();
 
-	// TODO: context: Nested calls shouldn't reallocate the stack
 	if( m_initialFunction && m_initialFunction == func )
 	{
 		// If the same function is executed again, we can skip a lot of the setup 
 		m_currentFunction = m_initialFunction;
+
+		// Reset stack pointer
+		m_regs.stackPointer = m_regs.stackPointer + m_argumentsSize + m_returnValueSize;
 	}
 	else
 	{
 		asASSERT( m_engine );
 
 		if( m_initialFunction )
+		{
 			m_initialFunction->Release();
+
+			// Reset stack pointer
+			m_regs.stackPointer = m_regs.stackPointer + m_argumentsSize + m_returnValueSize;
+		}
 
 		// We trust the application not to pass anything else but a asCScriptFunction
 		m_initialFunction = reinterpret_cast<asCScriptFunction *>(func);
@@ -402,28 +370,11 @@ int asCContext::Prepare(asIScriptFunction *func)
 			m_returnValueSize = 0;
 
 		// Determine the minimum stack size needed
-		int stackSize = m_argumentsSize + m_returnValueSize + m_currentFunction->stackNeeded + RESERVE_STACK;
+		int stackSize = m_argumentsSize + m_returnValueSize + m_currentFunction->stackNeeded;
 
-		stackSize = stackSize > m_engine->initialContextStackSize ? stackSize : m_engine->initialContextStackSize;
-
-		if( stackSize > m_stackBlockSize )
-		{
-			// Free old stack blocks so new ones can be allocted
-			for( asUINT n = 0; n < m_stackBlocks.GetLength(); n++ )
-				if( m_stackBlocks[n] )
-				{
-					asDELETEARRAY(m_stackBlocks[n]);
-				}
-			m_stackBlocks.SetLength(0);
-
-			m_stackBlockSize = stackSize;
-
-			asDWORD *stack = asNEWARRAY(asDWORD,m_stackBlockSize);
-			if( stack == 0 )
-				return asOUT_OF_MEMORY;
-
-			m_stackBlocks.PushLast(stack);
-		}
+		// Make sure there is enough space on the stack for the arguments and return value
+		if( !ReserveStackSpace(stackSize) )
+			return asOUT_OF_MEMORY;
 	}
 
 	// Reset state
@@ -436,14 +387,12 @@ int asCContext::Prepare(asIScriptFunction *func)
 		m_doSuspend               = false;
 		m_regs.doProcessSuspend   = m_lineCallback;
 		m_externalSuspendRequest  = false;
-		m_stackIndex              = 0;
 	}
 	m_status = asEXECUTION_PREPARED;
 	m_regs.programPointer = 0;
 
-	// TODO: context: Nested calls shouldn't reallocate the stack
 	// Reserve space for the arguments and return value
-	m_regs.stackFramePointer = m_stackBlocks[0] + m_stackBlockSize - m_argumentsSize - m_returnValueSize;
+	m_regs.stackFramePointer = m_regs.stackPointer - m_argumentsSize - m_returnValueSize;
 	m_regs.stackPointer      = m_regs.stackFramePointer;
 
 	// Set arguments to 0
@@ -456,7 +405,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 		if( m_currentFunction->objectType )
 			ptr += AS_PTR_SIZE;
 
-		*(void**)ptr = (void*)(m_stackBlocks[0] + m_stackBlockSize - m_returnValueSize);
+		*(void**)ptr = (void*)(m_regs.stackFramePointer + m_argumentsSize);
 	}
 
 	return asSUCCESS;
@@ -478,7 +427,12 @@ int asCContext::Unprepare()
 
 	// Release the initial function
 	if( m_initialFunction )
+	{
 		m_initialFunction->Release();
+
+		// Reset stack pointer
+		m_regs.stackPointer = m_regs.stackPointer + m_argumentsSize + m_returnValueSize;
+	}
 
 	// Clear function pointers
 	m_initialFunction = 0;
@@ -490,8 +444,6 @@ int asCContext::Unprepare()
 	m_status = asEXECUTION_UNINITIALIZED;
 
 	m_regs.stackFramePointer = 0;
-	m_regs.stackPointer = 0;
-	m_stackIndex = 0;
 	
 	return 0;
 }
@@ -573,7 +525,14 @@ void *asCContext::GetReturnAddress()
 	else if( dt->IsObject() )
 	{
 		if( m_initialFunction->DoesReturnOnStack() )
-			return (void*)(m_stackBlocks[0] + m_stackBlockSize - m_returnValueSize);
+		{
+			// The address of the return value was passed as the first argument, after the object pointer
+			int offset = 0;
+			if( m_initialFunction->objectType )
+				offset += AS_PTR_SIZE;
+
+			return *(void**)(&m_regs.stackFramePointer[offset]);
+		}
 
 		return m_regs.objectRegister;
 	}
@@ -594,7 +553,14 @@ void *asCContext::GetReturnObject()
 	else
 	{
 		if( m_initialFunction->DoesReturnOnStack() )
-			return (void*)(m_stackBlocks[0] + m_stackBlockSize - m_returnValueSize);
+		{
+			// The address of the return value was passed as the first argument, after the object pointer
+			int offset = 0;
+			if( m_initialFunction->objectType )
+				offset += AS_PTR_SIZE;
+
+			return *(void**)(&m_regs.stackFramePointer[offset]);
+		}
 
 		return m_regs.objectRegister;
 	}
@@ -613,7 +579,14 @@ void *asCContext::GetAddressOfReturnValue()
 		if( !dt->IsObjectHandle() )
 		{
 			if( m_initialFunction->DoesReturnOnStack() )
-				return (void*)(m_stackBlocks[0] + m_stackBlockSize - m_returnValueSize);
+			{
+				// The address of the return value was passed as the first argument, after the object pointer
+				int offset = 0;
+				if( m_initialFunction->objectType )
+					offset += AS_PTR_SIZE;
+
+				return *(void**)(&m_regs.stackFramePointer[offset]);
+			}
 
 			return *(void**)&m_regs.objectRegister;
 		}
@@ -1180,8 +1153,18 @@ int asCContext::Execute()
 	return asERROR;
 }
 
-void asCContext::PushNestedCallState()
+int asCContext::PushState()
 {
+	// Only allow the state to be pushed when active and currently calling a 
+	// system function to avoid PushState() to be called from the line callback
+	// TODO: Can we support a suspended state too? So the reuse of
+	//       the context can be done outside the Execute() call?
+	if( m_status != asEXECUTION_ACTIVE && m_callingSystemFunction )
+	{
+		// TODO: Write message. Wrong usage
+		return asERROR;
+	}
+
 	// Push the current script function that is calling the system function
 	PushCallState();
 
@@ -1194,18 +1177,31 @@ void asCContext::PushNestedCallState()
 	}
 	m_callStack.SetLengthNoConstruct(m_callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
+	// Need to push m_initialFunction as it must be restored later
 	asPWORD *tmp = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 	tmp[0] = 0;
 	tmp[1] = (asPWORD)m_callingSystemFunction;
-	tmp[2] = 0;
-	tmp[3] = 0;
-	tmp[4] = 0;
+	tmp[2] = (asPWORD)m_initialFunction;
+	tmp[3] = (asPWORD)m_returnValueSize;
+	tmp[4] = (asPWORD)m_argumentsSize;
+
+	// Clear the initial function so that Prepare() knows it must do all validations
+	m_initialFunction = 0;
 
 	// After this the state should appear as if uninitialized
 	m_callingSystemFunction = 0;
+
+	// TODO: context:
+	// Function arguments and space for return value must be stowed away
+
+	// Set the status to uninitialized as application
+	// should call Prepare() after this to reuse the context
+	m_status = asEXECUTION_UNINITIALIZED;
+
+	return asSUCCESS;
 }
 
-int asCContext::PopNestedCallState()
+int asCContext::PopState()
 {
 	// The topmost state must be a marker, i.e. a system function
 	asPWORD *tmp = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
@@ -1217,8 +1213,22 @@ int asCContext::PopNestedCallState()
 	m_callingSystemFunction = reinterpret_cast<asCScriptFunction*>(tmp[1]);
 	m_callStack.SetLength(m_callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 
+	// Release the current initial function that may have been set by Prepare
+	if( m_initialFunction )
+		m_initialFunction->Release();
+
+	// Restore the previous initial function and the associated values
+	m_initialFunction = reinterpret_cast<asCScriptFunction*>(tmp[2]);
+	m_returnValueSize = (int)tmp[3];
+	m_argumentsSize   = (int)tmp[4];
+
 	// Pop the current script function too
 	PopCallState();
+
+	// TODO: context:
+	// The original function arguments and space for return value must be restored
+
+	m_status = asEXECUTION_ACTIVE;
 
 	return asSUCCESS;
 }
@@ -1323,6 +1333,78 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 	return (line & 0xFFFFF);
 }
 
+// internal
+bool asCContext::ReserveStackSpace(asUINT size)
+{
+	// Make sure the first stack block is allocated
+	if( m_stackBlocks.GetLength() == 0 )
+	{
+		m_stackBlockSize = m_engine->initialContextStackSize;
+		asASSERT( m_stackBlockSize > 0 );
+
+		asDWORD *stack = asNEWARRAY(asDWORD,m_stackBlockSize);
+		if( stack == 0 )
+		{
+			// Out of memory
+			return false;
+		}
+
+		m_stackBlocks.PushLast(stack);
+		m_stackIndex = 0;
+		m_regs.stackPointer = m_stackBlocks[0] + m_stackBlockSize;
+	}
+
+	// Check if there is enough space on the current stack block, otherwise move 
+	// to the next one. New and larger blocks will be allocated as necessary
+	while( m_regs.stackPointer - (size + RESERVE_STACK) < m_stackBlocks[m_stackIndex] )
+	{
+		// Make sure we don't allocate more space than allowed
+		if( m_engine->ep.maximumContextStackSize )
+		{
+			// This test will only stop growth once it has already crossed the limit
+			if( m_stackBlockSize * ((1 << (m_stackIndex+1)) - 1) > m_engine->ep.maximumContextStackSize )
+			{
+				m_isStackMemoryNotAllocated = true;
+
+				// Set the stackFramePointer, even though the stackPointer wasn't updated
+				m_regs.stackFramePointer = m_regs.stackPointer;
+
+				SetInternalException(TXT_STACK_OVERFLOW);
+				return false;
+			}
+		}
+
+		m_stackIndex++;
+		if( (int)m_stackBlocks.GetLength() == m_stackIndex )
+		{
+			// Allocate the new stack block, with twice the size of the previous
+			asDWORD *stack = asNEWARRAY(asDWORD,(m_stackBlockSize << m_stackIndex));
+			if( stack == 0 )
+			{
+				// Out of memory
+				m_isStackMemoryNotAllocated = true;
+
+				// Set the stackFramePointer, even though the stackPointer wasn't updated
+				m_regs.stackFramePointer = m_regs.stackPointer;
+
+				SetInternalException(TXT_STACK_OVERFLOW);
+				return false;
+			}
+			m_stackBlocks.PushLast(stack);
+		}
+
+		// Update the stack pointer to point to the new block
+		m_regs.stackPointer = m_stackBlocks[m_stackIndex] + 
+			                  (m_stackBlockSize<<m_stackIndex) - 
+			                  m_currentFunction->GetSpaceNeededForArguments() - 
+			                  (m_currentFunction->objectType ? AS_PTR_SIZE : 0) - 
+			                  (m_currentFunction->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
+	}
+
+	return true;
+}
+
+// internal
 void asCContext::CallScriptFunction(asCScriptFunction *func)
 {
 	// Push the framepointer, function id and programCounter on the stack
@@ -1333,54 +1415,15 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	m_currentFunction = func;
 	m_regs.programPointer = m_currentFunction->byteCode.AddressOf();
 
-	// Verify if there is enough room in the stack block. Allocate new block if not
-	if( m_regs.stackPointer - (func->stackNeeded + RESERVE_STACK) < m_stackBlocks[m_stackIndex] )
+	// Make sure there is space on the stack to execute the function
+	asDWORD *oldStackPointer = m_regs.stackPointer;
+	if( !ReserveStackSpace(func->stackNeeded) )
+		return;
+
+	// If a new stack block was allocated then we'll need to move 
+	// over the function arguments to the new block
+	if( m_regs.stackPointer != oldStackPointer )
 	{
-		asDWORD *oldStackPointer = m_regs.stackPointer;
-
-		// The size of each stack block is determined by the following formula:
-		// size = stackBlockSize << index
-
-		while( m_regs.stackPointer - (func->stackNeeded + RESERVE_STACK) < m_stackBlocks[m_stackIndex] )
-		{
-			// Make sure we don't allocate more space than allowed
-			if( m_engine->ep.maximumContextStackSize )
-			{
-				// This test will only stop growth once it has already crossed the limit
-				if( m_stackBlockSize * ((1 << (m_stackIndex+1)) - 1) > m_engine->ep.maximumContextStackSize )
-				{
-					m_isStackMemoryNotAllocated = true;
-
-					// Set the stackFramePointer, even though the stackPointer wasn't updated
-					m_regs.stackFramePointer = m_regs.stackPointer;
-
-					SetInternalException(TXT_STACK_OVERFLOW);
-					return;
-				}
-			}
-
-			m_stackIndex++;
-			if( (int)m_stackBlocks.GetLength() == m_stackIndex )
-			{
-				asDWORD *stack = asNEWARRAY(asDWORD,(m_stackBlockSize << m_stackIndex));
-				if( stack == 0 )
-				{
-					// Out of memory
-					m_isStackMemoryNotAllocated = true;
-
-					// Set the stackFramePointer, even though the stackPointer wasn't updated
-					m_regs.stackFramePointer = m_regs.stackPointer;
-
-					SetInternalException(TXT_STACK_OVERFLOW);
-					return;
-				}
-				m_stackBlocks.PushLast(stack);
-			}
-
-			m_regs.stackPointer = m_stackBlocks[m_stackIndex] + (m_stackBlockSize<<m_stackIndex) - func->GetSpaceNeededForArguments() - (func->objectType ? AS_PTR_SIZE : 0) - (func->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
-		} 
-
-		// Copy the function arguments to the new stack space
 		int numDwords = func->GetSpaceNeededForArguments() + (func->objectType ? AS_PTR_SIZE : 0) + (func->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
 		memcpy(m_regs.stackPointer, oldStackPointer, sizeof(asDWORD)*numDwords);
 	}
@@ -3766,7 +3809,7 @@ void asCContext::CleanReturnObject()
 	{
 		// If function returns on stack we need to call the destructor on the returned object
 		if( m_initialFunction->returnType.GetObjectType()->beh.destruct )
-			m_engine->CallObjectMethod((void*)(m_stackBlocks[0] + m_stackBlockSize - m_returnValueSize), m_initialFunction->returnType.GetObjectType()->beh.destruct);
+			m_engine->CallObjectMethod(GetReturnObject(), m_initialFunction->returnType.GetObjectType()->beh.destruct);
 
 		return;
 	}

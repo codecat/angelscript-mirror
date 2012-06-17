@@ -235,10 +235,23 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		break;
 
 	case asEP_MAX_STACK_SIZE:
-		// The size is given in bytes, but we only store dwords
-		ep.maximumContextStackSize = (int)value/4;
-		if( initialContextStackSize > ep.maximumContextStackSize )
-			initialContextStackSize = ep.maximumContextStackSize;
+		if( value == 0 )
+		{
+			// Restore default: no limit and initially size 4KB
+			ep.maximumContextStackSize = 0;
+			initialContextStackSize    = 1024;
+		}
+		else
+		{
+			// The size is given in bytes, but we only store dwords
+			ep.maximumContextStackSize = (asUINT)value/4;
+			if( initialContextStackSize > ep.maximumContextStackSize )
+			{
+				initialContextStackSize = ep.maximumContextStackSize;
+				if( initialContextStackSize == 0 )
+					initialContextStackSize = 1;
+			}
+		}
 		break;
 
 	case asEP_USE_CHARACTER_LITERALS:

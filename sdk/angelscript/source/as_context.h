@@ -152,44 +152,48 @@ public:
 
 	void PushCallState();
 	void PopCallState();
-	void PushNestedCallState();
-	int  PopNestedCallState();
 	void CallScriptFunction(asCScriptFunction *func);
 	void CallInterfaceMethod(asCScriptFunction *func);
 	void PrepareScriptFunction();
+
+	bool ReserveStackSpace(asUINT size);
 
 	void SetInternalException(const char *descr);
 
 	// Must be protected for multiple accesses
 	mutable asCAtomic m_refCount;
 
-	bool m_holdEngineRef;
+	bool             m_holdEngineRef;
 	asCScriptEngine *m_engine;
 
 	asEContextState m_status;
-	bool m_doSuspend;
-	bool m_doAbort;
-	bool m_externalSuspendRequest;
+	bool            m_doSuspend;
+	bool            m_doAbort;
+	bool            m_externalSuspendRequest;
 
 	asCScriptFunction *m_currentFunction;
 	asCScriptFunction *m_callingSystemFunction;
-	bool m_isStackMemoryNotAllocated;
 
+	// The call stack holds program pointer, stack pointer, etc for caller functions
 	asCArray<size_t>    m_callStack;
-	asCArray<asDWORD *> m_stackBlocks;
-	int                 m_stackBlockSize;
-	int                 m_stackIndex;
 
+	// Dynamically growing local stack
+	asCArray<asDWORD *> m_stackBlocks;
+	asUINT              m_stackBlockSize;
+	asUINT              m_stackIndex;
+
+	// Exception handling
+	bool      m_isStackMemoryNotAllocated;
 	bool      m_inExceptionHandler;
 	asCString m_exceptionString;
 	int       m_exceptionFunction;
 	int       m_exceptionLine;
 	int       m_exceptionColumn;
 
-	int m_returnValueSize;
-	int m_argumentsSize;
-
+	// The last prepared function, and some cached values related to it
 	asCScriptFunction *m_initialFunction;
+	int                m_returnValueSize;
+	int                m_argumentsSize;
 
 	// callbacks
 	bool                       m_lineCallback;
