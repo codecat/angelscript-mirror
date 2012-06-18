@@ -1159,7 +1159,7 @@ int asCContext::PushState()
 	// system function to avoid PushState() to be called from the line callback
 	// TODO: Can we support a suspended state too? So the reuse of
 	//       the context can be done outside the Execute() call?
-	if( m_status != asEXECUTION_ACTIVE && m_callingSystemFunction )
+	if( m_status != asEXECUTION_ACTIVE || !m_callingSystemFunction )
 	{
 		// TODO: Write message. Wrong usage
 		return asERROR;
@@ -1191,9 +1191,6 @@ int asCContext::PushState()
 	// After this the state should appear as if uninitialized
 	m_callingSystemFunction = 0;
 
-	// TODO: context:
-	// Function arguments and space for return value must be stowed away
-
 	// Set the status to uninitialized as application
 	// should call Prepare() after this to reuse the context
 	m_status = asEXECUTION_UNINITIALIZED;
@@ -1203,6 +1200,12 @@ int asCContext::PushState()
 
 int asCContext::PopState()
 {
+	if( !IsNested() )
+		return asERROR;
+
+	// Clean up the current execution
+	Unprepare();
+
 	// The topmost state must be a marker, i.e. a system function
 	asPWORD *tmp = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 	if( tmp[0] != 0 || tmp[1] == 0 || 
@@ -1224,9 +1227,6 @@ int asCContext::PopState()
 
 	// Pop the current script function too
 	PopCallState();
-
-	// TODO: context:
-	// The original function arguments and space for return value must be restored
 
 	m_status = asEXECUTION_ACTIVE;
 
@@ -1654,7 +1654,9 @@ void asCContext::ExecuteNext()
 	// Return to the caller, and remove the arguments from the stack
 	case asBC_RET:
 		{
-			if( m_callStack.GetLength() == 0 )
+			// Return if this was the first function, or a nested execution
+			if( m_callStack.GetLength() == 0 ||
+				m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE] == 0 )
 			{
 				m_status = asEXECUTION_FINISHED;
 				return;

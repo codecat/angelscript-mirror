@@ -39,30 +39,65 @@ BEGIN_AS_NAMESPACE
 // This helper function will call the default factory, that is a script function
 asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngine *engine)
 {
-	asIScriptContext *ctx;
+	asIScriptContext *ctx = 0;
+	int r = 0;
+	bool isNested = false;
 
 	// TODO: optimize: There should be a pool for the context so it doesn't 
 	//                 have to be allocated just for creating the script object
 
 	// TODO: It must be possible for the application to debug the creation of the object too
 
-	// TODO: context: Use nested call in the context if there is an active context
+	// Use nested call in the context if there is an active context
+	ctx = asGetActiveContext();
+	if( ctx )
+	{
+		r = ctx->PushState();
 
-	int r = engine->CreateContext(&ctx, true);
-	if( r < 0 )
-		return 0;
+		// It may not always be possible to reuse the current context, 
+		// in which case we'll have to create a new one any way.
+		// TODO: context: One scenario where it is currently not possible to reuse is when
+		//                instanciating members of a script class that is being constructed.
+		//                This should be supported, but requires further changes
+		if( r == asSUCCESS )
+			isNested = true;
+		else
+			ctx = 0;
+	}
+	
+	if( ctx == 0 )
+	{
+		r = engine->CreateContext(&ctx, true);
+		if( r < 0 )
+			return 0;
+	}
 
 	r = ctx->Prepare(engine->scriptFunctions[objType->beh.factory]);
 	if( r < 0 )
 	{
-		ctx->Release();
+		if( isNested )
+			ctx->PopState();
+		else
+			ctx->Release();
 		return 0;
 	}
 
-	r = ctx->Execute();
+	for(;;)
+	{
+		r = ctx->Execute();
+
+		// We can't allow this execution to be suspended 
+		// so resume the execution immediately
+		if( r != asEXECUTION_SUSPENDED )
+			break;
+	}
+
 	if( r != asEXECUTION_FINISHED )
 	{
-		ctx->Release();
+		if( isNested )
+			ctx->PopState();
+		else
+			ctx->Release();
 		return 0;
 	}
 
@@ -71,7 +106,10 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	// Increase the reference, because the context will release it's pointer
 	ptr->AddRef();
 
-	ctx->Release();
+	if( isNested )
+		ctx->PopState();
+	else
+		ctx->Release();
 
 	return ptr;
 }

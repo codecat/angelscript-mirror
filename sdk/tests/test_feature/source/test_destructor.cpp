@@ -80,6 +80,7 @@ bool Test()
 	bool fail = false;
 	COutStream out;
 	int r;
+	asIScriptModule *mod;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -89,7 +90,7 @@ bool Test()
 
 	// Test destructor for script class as local variable and global variable
 	count = 0;
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script1, strlen(script1));
 	r = mod->Build();
 	if( r < 0 )
