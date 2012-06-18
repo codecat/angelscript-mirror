@@ -56,6 +56,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added the method engine::CreateUninitializedScriptObject() that will create an object without calling the constructor
 <li>Added module::GetObjectTypeByName()
 <li>Renamed engine::CopyScriptObject() to AssignScriptObject() to avoid common confusion with the intent of the method
+<li>Added PushState(), PopState(), and IsNested() to the context that can be used to reuse an active context in a system call
 </ul>
 <li>Library
 <ul>

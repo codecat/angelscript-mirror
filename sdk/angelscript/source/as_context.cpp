@@ -1155,11 +1155,10 @@ int asCContext::Execute()
 
 int asCContext::PushState()
 {
-	// Only allow the state to be pushed when active and currently calling a 
-	// system function to avoid PushState() to be called from the line callback
+	// Only allow the state to be pushed when active
 	// TODO: Can we support a suspended state too? So the reuse of
 	//       the context can be done outside the Execute() call?
-	if( m_status != asEXECUTION_ACTIVE || !m_callingSystemFunction )
+	if( m_status != asEXECUTION_ACTIVE )
 	{
 		// TODO: Write message. Wrong usage
 		return asERROR;
@@ -1185,11 +1184,16 @@ int asCContext::PushState()
 	tmp[3] = (asPWORD)m_returnValueSize;
 	tmp[4] = (asPWORD)m_argumentsSize;
 
+	// Decrease stackpointer to the top value from being overwritten
+	m_regs.stackPointer -= 2;
+
 	// Clear the initial function so that Prepare() knows it must do all validations
 	m_initialFunction = 0;
 
 	// After this the state should appear as if uninitialized
 	m_callingSystemFunction = 0;
+
+	asASSERT(m_regs.objectRegister == 0);
 
 	// Set the status to uninitialized as application
 	// should call Prepare() after this to reuse the context
@@ -1206,24 +1210,21 @@ int asCContext::PopState()
 	// Clean up the current execution
 	Unprepare();
 
-	// The topmost state must be a marker, i.e. a system function
-	asPWORD *tmp = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
-	if( tmp[0] != 0 || tmp[1] == 0 || 
-		reinterpret_cast<asCScriptFunction*>(tmp[1])->funcType != asFUNC_SYSTEM )
-		return asERROR;
+	// The topmost state must be a marker for nested call
+	asASSERT( m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE] == 0 );
 
 	// Restore the previous state
+	asPWORD *tmp = &m_callStack[m_callStack.GetLength() - CALLSTACK_FRAME_SIZE];
 	m_callingSystemFunction = reinterpret_cast<asCScriptFunction*>(tmp[1]);
 	m_callStack.SetLength(m_callStack.GetLength() - CALLSTACK_FRAME_SIZE);
-
-	// Release the current initial function that may have been set by Prepare
-	if( m_initialFunction )
-		m_initialFunction->Release();
 
 	// Restore the previous initial function and the associated values
 	m_initialFunction = reinterpret_cast<asCScriptFunction*>(tmp[2]);
 	m_returnValueSize = (int)tmp[3];
 	m_argumentsSize   = (int)tmp[4];
+
+	// Restore stack pointer
+	m_regs.stackPointer += 2;
 
 	// Pop the current script function too
 	PopCallState();

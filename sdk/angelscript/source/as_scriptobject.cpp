@@ -56,9 +56,6 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 
 		// It may not always be possible to reuse the current context, 
 		// in which case we'll have to create a new one any way.
-		// TODO: context: One scenario where it is currently not possible to reuse is when
-		//                instanciating members of a script class that is being constructed.
-		//                This should be supported, but requires further changes
 		if( r == asSUCCESS )
 			isNested = true;
 		else
@@ -103,7 +100,7 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 
 	asIScriptObject *ptr = (asIScriptObject*)ctx->GetReturnAddress();
 
-	// Increase the reference, because the context will release it's pointer
+	// Increase the reference, because the context will release its pointer
 	ptr->AddRef();
 
 	if( isNested )
@@ -317,12 +314,12 @@ int asCScriptObject::Release() const
 
 void asCScriptObject::CallDestructor()
 {
+	asIScriptContext *ctx = 0;
+	bool isNested = false;
+
 	// Make sure the destructor is called once only, even if the  
 	// reference count is increased and then decreased again
 	isDestructCalled = true;
-
-	// TODO: context: Use nested call if there already is an active context
-	asIScriptContext *ctx = 0;
 
 	// Call the destructor for this class and all the super classes
 	asCObjectType *ot = objType;
@@ -333,17 +330,40 @@ void asCScriptObject::CallDestructor()
 		{
 			if( ctx == 0 )
 			{
-				// Setup a context for calling the default constructor
-				asCScriptEngine *engine = objType->engine;
-				int r = engine->CreateContext(&ctx, true);
-				if( r < 0 ) return;
+				// Check for active context first as it is quicker
+				// to reuse than to set up a new one.
+				ctx = asGetActiveContext();
+				if( ctx )
+				{
+					int r = ctx->PushState();
+					if( r == asSUCCESS )
+						isNested = true;
+					else
+						ctx = 0;
+				}
+
+				if( ctx == 0 )
+				{
+					// Setup a context for calling the default constructor
+					asCScriptEngine *engine = objType->engine;
+					int r = engine->CreateContext(&ctx, true);
+					if( r < 0 ) return;
+				}
 			}
 
 			int r = ctx->Prepare(objType->engine->scriptFunctions[funcIndex]);
 			if( r >= 0 )
 			{
 				ctx->SetObject(this);
-				ctx->Execute();
+
+				for(;;)
+				{
+					r = ctx->Execute();
+
+					// If the script tries to suspend itself just restart it
+					if( r != asEXECUTION_SUSPENDED )
+						break;
+				}
 
 				// There's not much to do if the execution doesn't 
 				// finish, so we just ignore the result
@@ -355,7 +375,10 @@ void asCScriptObject::CallDestructor()
 
 	if( ctx )
 	{
-		ctx->Release();
+		if( isNested )
+			ctx->PopState();
+		else
+			ctx->Release();
 	}
 }
 
