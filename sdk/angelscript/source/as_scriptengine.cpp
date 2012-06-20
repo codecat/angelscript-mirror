@@ -4057,6 +4057,7 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
 	}
 }
 
+// interface
 bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const
 {
 	// if equal, then it is obvious they are compatible
@@ -4087,7 +4088,7 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 	return false;
 }
 
-
+// interface
 int asCScriptEngine::BeginConfigGroup(const char *groupName)
 {
 	// Make sure the group name doesn't already exist
@@ -4112,6 +4113,7 @@ int asCScriptEngine::BeginConfigGroup(const char *groupName)
 	return 0;
 }
 
+// interface
 int asCScriptEngine::EndConfigGroup()
 {
 	// Raise error if trying to end the default config
@@ -4123,6 +4125,7 @@ int asCScriptEngine::EndConfigGroup()
 	return 0;
 }
 
+// interface
 int asCScriptEngine::RemoveConfigGroup(const char *groupName)
 {
 	// It is not allowed to remove a group that is still in use. 

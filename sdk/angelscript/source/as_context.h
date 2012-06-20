@@ -74,7 +74,7 @@ public:
 	asEContextState GetState() const;
 	int             PushState();
 	int             PopState();
-	bool            IsNested() const;
+	bool            IsNested(asUINT *nestCount = 0) const;
 
 	// Object pointer for calling class methods
 	int SetObject(void *obj);

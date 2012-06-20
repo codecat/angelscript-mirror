@@ -734,7 +734,7 @@ public:
 	virtual asEContextState GetState() const = 0;
 	virtual int             PushState() = 0;
 	virtual int             PopState() = 0;
-	virtual bool            IsNested() const = 0;
+	virtual bool            IsNested(asUINT *nestCount = 0) const = 0;
 
 	// Object pointer for calling class methods
 	virtual int   SetObject(void *obj) = 0;

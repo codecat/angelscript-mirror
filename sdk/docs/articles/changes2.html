@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/06/17</h2>
+<h2>Version 2.24.0 WIP - 2012/06/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -73,6 +73,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The string pool is now threadsafe and supports multiple engines
 <li>CSerializer now works when script class constructors modify global variables too (Thanks FDsagizi)
 <li>Added method AddExtraObjectToStore on CSerializer to allow serializing objects not referenced by global variables in module (Thanks FDsagizi)
+<li>Improved C++ interface for the CScriptHandle class to make it easier to use from application
+<li>The CScriptHandle is now capable of casting to inherited script classes or implemented interfaces (Thanks saejox)
 </ul>
 </ul>
 

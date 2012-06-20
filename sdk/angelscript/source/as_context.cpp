@@ -194,8 +194,12 @@ asCContext::~asCContext()
 	DetachEngine();
 }
 
-bool asCContext::IsNested() const
+// interface
+bool asCContext::IsNested(asUINT *nestCount) const
 {
+	if( nestCount )
+		*nestCount = 0;
+
 	asUINT c = GetCallstackSize();
 	if( c == 0 )
 		return false;
@@ -205,17 +209,24 @@ bool asCContext::IsNested() const
 	{
 		const asPWORD *s = m_callStack.AddressOf() + (c - n)*CALLSTACK_FRAME_SIZE;
 		if( s[0] == 0 )
-			return true;
+		{
+			if( nestCount )
+				*nestCount++;
+			else
+				return true;
+		}
 	}
 
 	return false;
 }
 
+// interface
 int asCContext::AddRef() const
 {
 	return m_refCount.atomicInc();
 }
 
+// interface
 int asCContext::Release() const
 {
 	int r = m_refCount.atomicDec();
@@ -229,6 +240,7 @@ int asCContext::Release() const
 	return r;
 }
 
+// internal
 void asCContext::DetachEngine()
 {
 	if( m_engine == 0 ) return;
@@ -265,6 +277,7 @@ void asCContext::DetachEngine()
 	m_engine = 0;
 }
 
+// interface
 asIScriptEngine *asCContext::GetEngine() const
 {
 	return m_engine;

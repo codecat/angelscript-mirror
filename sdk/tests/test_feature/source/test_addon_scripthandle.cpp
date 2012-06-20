@@ -15,6 +15,24 @@ static void ReceiveRefByRef(CScriptHandle &/*hndl*/)
 {
 }
 
+static CScriptHandle ReturnRef()
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+	asIScriptModule *mod = engine->GetModule("test");
+	asIObjectType *type = mod->GetObjectTypeByName("CTest");
+
+	asIScriptObject *obj = reinterpret_cast<asIScriptObject *>(engine->CreateScriptObject(type->GetTypeId()));
+
+	CScriptHandle ref;
+	ref.Set(obj, type);
+
+	// Need to release our reference as the CScriptHandle counts its own, and we will not keep our reference
+	obj->Release();
+
+	return ref;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -32,6 +50,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("void ReceiveRefByVal(ref@)", asFUNCTION(ReceiveRefByValue), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void ReceiveRefByRef(ref&in)", asFUNCTION(ReceiveRefByRef), asCALL_CDECL);
+		engine->RegisterGlobalFunction("ref @ReturnRef()", asFUNCTION(ReturnRef), asCALL_CDECL);
 
 		// TODO: optimize: assert( ha !is null ); is producing code that unecessarily calls ClrVPtr and FREE for the null handle
 		const char *script = 
@@ -80,9 +99,18 @@ bool Test()
 							 "  assert( func(a) is a ); \n"
 							 "} \n"
 							 "ref@ func(ref@ r) { return r; } \n"
-							 "void func2(ref@r) { assert( r is null ); } \n";
+							 "void func2(ref@r) { assert( r is null ); } \n"
+							 "interface ITest {} \n"
+							 "class CTest : ITest \n"
+							 "{ \n"
+							 "  int val; \n"
+							 "  CTest() \n"
+							 "  { \n"
+							 "    val = 42; \n"
+							 "  } \n"
+							 "} \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
 		if( r < 0 )
@@ -109,6 +137,22 @@ bool Test()
 
 		// This will cause an implicit cast to 'ref'. The object must be release properly afterwards
 		r = ExecuteString(engine, "ReceiveRefByRef(A());", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test return by ref
+		r = ExecuteString(engine, "ref @r = ReturnRef(); \n"
+								  "assert( r !is null ); \n"
+		                          "CTest @t = cast<CTest>(r); \n"
+								  "assert( t !is null ); \n"
+								  "assert( t.val == 42 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test that the cast op can determine relationship between object types
+		r = ExecuteString(engine, "ref @r(CTest()); \n"
+								  "ITest @t = cast<ITest>(r); \n"
+								  "assert( t !is null ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

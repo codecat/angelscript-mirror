@@ -9,7 +9,7 @@ of properties and methods to manipulate them.
 Script classes are reference types, which means that multiple references 
 or \ref doc_script_handle "handles" can be held for the same object instance.
 The classes uses automatic memory management so the object instances are only
-destroyed when the last reference ot the instance is cleared.
+destroyed when the last reference to the instance is cleared.
 
 The class methods are implemented the same way as \ref doc_global_function "global functions", 
 with the addition that the class method can access the class instance properties through either
