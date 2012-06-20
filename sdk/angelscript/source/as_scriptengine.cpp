@@ -4079,9 +4079,13 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 	}
 	else if( objDt.IsScriptObject() && obj )
 	{
-		// There's still a chance the object implements the requested interface
+		// Get the true type from the object instance
 		asCObjectType *objType = ((asCScriptObject*)obj)->objType;
-		if( objType->Implements(hdlDt.GetObjectType()) )
+
+		// Check if the object implements the interface, or derives from the base class
+		// This will also return true, if the requested handle type is an exact match for the object type
+		if( objType->Implements(hdlDt.GetObjectType()) ||
+		    objType->DerivesFrom(hdlDt.GetObjectType()) )
 			return true;
 	}
 

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.0 WIP - 2012/06/19</h2>
+<h2>Version 2.24.0 WIP - 2012/06/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed problem with calling registered functions with more than 8 parameters on XBox 360 (Thanks virious)
 <li>Fixed problem with returning float/double on XBox 360 when the library is compiled with optimizations (Thanks virious)
 <li>Fixed bug with virtual property access with index and variable type argument (Thanks virious)
+<li>IsHandleCompatibleWithObject() was ignoring inheritance for script objects (Thanks saejox)
 </ul>
 <li>Library interface
 <ul>
@@ -75,6 +76,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added method AddExtraObjectToStore on CSerializer to allow serializing objects not referenced by global variables in module (Thanks FDsagizi)
 <li>Improved C++ interface for the CScriptHandle class to make it easier to use from application
 <li>The CScriptHandle is now capable of casting to inherited script classes or implemented interfaces (Thanks saejox)
+<li>The script array is using the nested context functionality to avoid instanciating temporary contexts
 </ul>
 </ul>
 

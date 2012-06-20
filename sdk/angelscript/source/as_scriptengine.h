@@ -168,18 +168,28 @@ public:
 
 	// Script execution
 	virtual asIScriptContext *CreateContext();
+	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
 	virtual void             *CreateScriptObject(int typeId);
+	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId);
+	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
 	virtual void             *CreateUninitializedScriptObject(int typeId);
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-06-07
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId);
 #endif
+	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
 	virtual void              AssignScriptObject(void *dstObj, void *srcObj, int typeId);
+	// TODO: interface: Deprecate this
 	virtual void              ReleaseScriptObject(void *obj, int typeId);
 	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type);
+	// TODO: interface: Deprecate this
 	virtual void              AddRefScriptObject(void *obj, int typeId);
 	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type);
+	// TODO: interface: Should have a method void *CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType); 
+	//                  For script objects it should simply check if the object implements or derives from the toType
+	//                  For application objects it should look for ref cast behaviours and call the matching one
+	//                  Once implemented the IsHandleCompatibleWithObject should be removed from the engine
 	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
 
 	// String interpretation

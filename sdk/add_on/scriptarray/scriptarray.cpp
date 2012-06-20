@@ -757,31 +757,46 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 	if( GetSize() != other.GetSize() )
 		return false;
 
-	// TODO: context: Use nested call if an active context already exists
 	asIScriptContext *cmpContext = 0;
+	bool isNested = false;
 
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
-		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
-		//       create a new one everytime. We could keep a context with the array object 
-		//       but that would consume a lot of resources as each context is quite heavy.
-		// TODO: context: Use nested call if an active context already exists
-		cmpContext = objType->GetEngine()->CreateContext();
+		// Try to reuse the active context
+		cmpContext = asGetActiveContext();
+		if( cmpContext )
+		{
+			if( cmpContext->PushState() >= 0 )
+				isNested = true;
+			else
+				cmpContext = 0;
+		}
+		if( cmpContext == 0 )
+		{
+			// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
+			//       create a new one everytime. We could keep a context with the array object 
+			//       but that would consume a lot of resources as each context is quite heavy.
+			cmpContext = objType->GetEngine()->CreateContext();
+		}
 	}
 	
+	// Check if all elements are equal
+	bool isEqual = true;
 	SArrayCache *cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
 	for( asUINT n = 0; n < GetSize(); n++ )
 		if( !Equals(At(n), other.At(n), cmpContext, cache) )
 		{
-			if( cmpContext )
-				cmpContext->Release();
-			return false;
+			isEqual = false;
+			break;
 		}
 
 	if( cmpContext )
-		cmpContext->Release();
+		if( isNested )
+			cmpContext->PopState();
+		else
+			cmpContext->Release();
 
-	return true;
+	return isEqual;
 }
 
 // internal
@@ -883,16 +898,29 @@ int CScriptArray::Find(asUINT index, void *value) const
 	}
 
 	asIScriptContext *cmpContext = 0;
+	bool isNested = false;
 
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
-		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
-		//       create a new one everytime. We could keep a context with the array object 
-		//       but that would consume a lot of resources as each context is quite heavy.
-		// TODO: context: Use nested call if an active context already exists
-		cmpContext = objType->GetEngine()->CreateContext();
+		// Try to reuse the active context
+		cmpContext = asGetActiveContext();
+		if( cmpContext )
+		{
+			if( cmpContext->PushState() >= 0 )
+				isNested = true;
+			else
+				cmpContext = 0;
+		}
+		if( cmpContext == 0 )
+		{
+			// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
+			//       create a new one everytime. We could keep a context with the array object 
+			//       but that would consume a lot of resources as each context is quite heavy.
+			cmpContext = objType->GetEngine()->CreateContext();
+		}
 	}
 
+	// Find the matching element
 	int ret = -1;
 	asUINT size = GetSize();
 
@@ -910,7 +938,10 @@ int CScriptArray::Find(asUINT index, void *value) const
 	}
 
 	if( cmpContext )
-		cmpContext->Release();
+		if( isNested )
+			cmpContext->PopState();
+		else
+			cmpContext->Release();
 
 	return ret;
 }
@@ -1027,14 +1058,26 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 
 	asBYTE tmp[16];
 	asIScriptContext *cmpContext = 0;
+	bool isNested = false;
 
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
-		// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
-		//       create a new one everytime. We could keep a context with the array object 
-		//       but that would consume a lot of resources as each context is quite heavy.
-		// TODO: context: Use nested call if an active context already exists
-		cmpContext = objType->GetEngine()->CreateContext();
+		// Try to reuse the active context
+		cmpContext = asGetActiveContext();
+		if( cmpContext )
+		{
+			if( cmpContext->PushState() >= 0 )
+				isNested = true;
+			else
+				cmpContext = 0;
+		}
+		if( cmpContext == 0 )
+		{
+			// TODO: Ideally this context would be retrieved from a pool, so we don't have to 
+			//       create a new one everytime. We could keep a context with the array object 
+			//       but that would consume a lot of resources as each context is quite heavy.
+			cmpContext = objType->GetEngine()->CreateContext();
+		}
 	}
 
 	// Insertion sort
@@ -1054,7 +1097,10 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 	}
 
 	if( cmpContext )
-		cmpContext->Release();
+		if( isNested )
+			cmpContext->PopState();
+		else
+			cmpContext->Release();
 }
 
 // internal

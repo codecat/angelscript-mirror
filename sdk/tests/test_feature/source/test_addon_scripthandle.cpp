@@ -101,7 +101,8 @@ bool Test()
 							 "ref@ func(ref@ r) { return r; } \n"
 							 "void func2(ref@r) { assert( r is null ); } \n"
 							 "interface ITest {} \n"
-							 "class CTest : ITest \n"
+							 "class CBase {} \n"
+							 "class CTest : ITest, CBase \n"
 							 "{ \n"
 							 "  int val; \n"
 							 "  CTest() \n"
@@ -152,7 +153,15 @@ bool Test()
 		// Test that the cast op can determine relationship between object types
 		r = ExecuteString(engine, "ref @r(CTest()); \n"
 								  "ITest @t = cast<ITest>(r); \n"
-								  "assert( t !is null ); \n", mod);
+								  "assert( t !is null ); \n"
+								  "CBase @b = cast<CBase>(r); \n"
+								  "assert( b !is null ); \n"
+								  "@r = null; \n" // Clear the content
+								  "@r = b; \n" // Set the same object, but this time as the base type
+								  "@t = cast<ITest>(r); \n"
+								  "assert( t !is null ); \n"
+								  "CTest @d = cast<CTest>(r); \n"
+								  "assert( d !is null ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
