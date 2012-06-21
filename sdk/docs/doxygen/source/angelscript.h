@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.23.1
-#define ANGELSCRIPT_VERSION        22301
-#define ANGELSCRIPT_VERSION_STRING "2.23.1"
+//! \details Version 2.24.0
+#define ANGELSCRIPT_VERSION        22400
+#define ANGELSCRIPT_VERSION_STRING "2.24.0"
 
 // Data types
 
@@ -326,7 +326,9 @@ enum asERetCodes
 	//! A build is currently in progress
 	asBUILD_IN_PROGRESS                    = -25,
 	//! The initialization of global variables failed
-	asINIT_GLOBAL_VARS_FAILED              = -26
+	asINIT_GLOBAL_VARS_FAILED              = -26,
+	//! It wasn't possible to allocate the needed memory
+	asOUT_OF_MEMORY                        = -27
 };
 
 // Context states
@@ -398,11 +400,11 @@ enum asETokenClass
 	asTC_WHITESPACE = 5
 };
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.24.0 - 2012-05-25
 // Prepare flags
 const int asPREPARE_PREVIOUS = -1;
-
-// Config groups
-const char * const asALL_MODULES = (const char * const)-1;
+#endif
 
 // Type id flags
 //! \brief Type id flags
@@ -934,11 +936,14 @@ public:
 	//! \brief Returns the number of registered functions.
 	//! \return The number of registered functions.
 	virtual asUINT             GetGlobalFunctionCount() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-20
 	//! \brief Returns the function id of the registered function.
 	//! \param[in] index The index of the registered global function.
 	//! \return The id of the function, or a negative value on error.
 	//! \retval asINVALID_ARG \a index is too large.
 	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const = 0;
+#endif
 	//! \brief Returns the registered function.
 	//! \param[in] index The index of the registered global function.
 	//! \return The function object, or null on error.
@@ -1467,6 +1472,8 @@ public:
 	//! This only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-06-07
 	//! \brief Copy one script object to another.
 	//! \param[in] dstObj A pointer to the destination object.
 	//! \param[in] srcObj A pointer to the source object.
@@ -1476,6 +1483,7 @@ public:
 	//! 
 	//! This only works for objects.
 	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+#endif
 	//! \brief Release the script object pointer.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] typeId The type id of the object.
@@ -1813,6 +1821,8 @@ public:
 	//!
 	//! This method retrieves the number of compiled script functions.
 	virtual asUINT             GetFunctionCount() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-20
 	//! \brief Returns the function id by index.
 	//! \param[in] index The index of the function.
 	//! \return A negative value on error, or the function id.
@@ -1844,6 +1854,7 @@ public:
 	//!
 	//! The method will find the script function with the exact same declaration.
 	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
+#endif
 	//! \brief Returns the function by index
 	//! \param[in] index The index of the function
 	//! \return The function or null in case of error.
@@ -1856,6 +1867,8 @@ public:
 	//! \param[in] name The function name
 	//! \return The function or null if not found or there are multiple matches.
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-20
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] funcId The id of the function to remove.
 	//! \return A negative value on error.
@@ -1865,6 +1878,7 @@ public:
 	//! scope of the module. The function is not destroyed immediately though,
 	//! only when no more references point to it.
 	virtual int                RemoveFunction(int funcId) = 0;
+#endif
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] func The pointer to the function that should be removed.
 	//! \return A negative value on error.
@@ -2206,6 +2220,8 @@ public:
 	//!
 	//! \see \ref doc_call_script_func
 	virtual int             Prepare(asIScriptFunction *func) = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	//! \brief Prepares the context for execution of the function identified by funcId.
 	//! \param[in] funcId The id of the function/method that will be executed.
 	//! \return A negative value on error.
@@ -2220,6 +2236,7 @@ public:
 	//!
 	//! \see \ref doc_call_script_func
 	virtual int             Prepare(int funcId) = 0;
+#endif
 	//! \brief Frees resources held by the context.
 	//! \return A negative value on error.
 	//! \retval asCONTEXT_ACTIVE The context is still active or suspended.
@@ -2228,14 +2245,6 @@ public:
 	//! to call this function as the resources are automatically freed when the context
 	//! is released, or reused when \ref Prepare is called again.
 	virtual int             Unprepare() = 0;
-	//! \brief Sets the object for a class method call.
-	//! \param[in] obj A pointer to the object.
-	//! \return A negative value on error.
-	//! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
-	//! \retval asERROR The prepared function is not a class method.
-	//!
-	//! This method sets object pointer when calling class methods.
-	virtual int             SetObject(void *obj) = 0;
 	//! \brief Executes the prepared function.
 	//! \return A negative value on error, or one of \ref asEContextState.
 	//! \retval asERROR Invalid context object, the context is not prepared, or it is not in suspended state.
@@ -2272,6 +2281,20 @@ public:
 	//! \brief Returns the state of the context.
 	//! \return The current state of the context.
 	virtual asEContextState GetState() const = 0;
+	//! \}
+
+	// Object pointer for calling class methods
+	//! \name Object pointer for calling class methods
+	//! \{
+
+	//! \brief Sets the object for a class method call.
+	//! \param[in] obj A pointer to the object.
+	//! \return A negative value on error.
+	//! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+	//! \retval asERROR The prepared function is not a class method.
+	//!
+	//! This method sets object pointer when calling class methods.
+	virtual int   SetObject(void *obj) = 0;
 	//! \}
 
 	// Arguments
@@ -2501,13 +2524,23 @@ public:
 	//!
 	//! This methods returns the size of the callstack. It can be used to enumerate the callstack in order 
 	//! to generate a detailed report when an exception occurs, or for debugging running scripts.
-	virtual asUINT             GetCallstackSize() = 0;
+	virtual asUINT             GetCallstackSize() const = 0;
 	//! \brief Returns the function at the specified callstack level.
 	//! \param[in] stackLevel The index on the call stack.
 	//! \return The function descriptor on the call stack referred to by the index.
 	//!
 	//! Index 0 refers to the current function, index 1 to the calling function, and so on. 
 	//! The highest index is the originating function that the application called.
+	//!
+	//! The returned value will be null if the stackLevel is invalid, or if the requested 
+	//! stack level doesn't have a defined function. The latter scenario happens when 
+	//! the engine performs a nested call internally, e.g. to call a constructor for a
+	//! script object indirectly created.
+	//!
+	//! If the application performs a nested call, then the returned value will give the
+	//! application registered function that was called by the previous script. 
+	//!
+	//! \see \ref PushState
 	virtual asIScriptFunction *GetFunction(asUINT stackLevel = 0) = 0;
 	//! \brief Returns the line number at the specified callstack level.
 	//! \param[in] stackLevel The index on the call stack.
@@ -2610,15 +2643,18 @@ public:
 	//! \brief Returns a pointer to the script engine.
 	//! \return A pointer to the engine.
 	virtual asIScriptEngine   *GetEngine() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	//! \brief Returns the function id of the called function.
 	//! \return The function id of the function being called.
 	virtual int                GetFunctionId() const = 0;
-	//! \brief Returns the function that is being called.
-	//! \return The function that is being called.
-	virtual asIScriptFunction *GetFunction() const = 0;
 	//! \brief Returns the user data for the called function.
 	//! \return The user data for the called function.
 	virtual void              *GetFunctionUserData() const = 0;
+#endif
+	//! \brief Returns the function that is being called.
+	//! \return The function that is being called.
+	virtual asIScriptFunction *GetFunction() const = 0;
 	//! \}
 
 	// Object
@@ -2917,7 +2953,7 @@ public:
 	//! Script classes are identified by having the asOBJ_SCRIPT_OBJECT flag set. 
 	//! Interfaces are identified as a script class with a size of zero.
 	//!
-	//! \see GetSize
+	//! \see \ref GetSize
 	virtual asDWORD          GetFlags() const = 0;
 	//! \brief Returns the size of the object type.
 	//! \return The number of bytes necessary to store instances of this type.
@@ -2961,6 +2997,8 @@ public:
 	//! \brief Returns the number of factory functions for the object type.
 	//! \return The number of factory functions for this object.
 	virtual asUINT             GetFactoryCount() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	//! \brief Returns the factory id by index.
 	//! \param[in] index The index of the factory function.
 	//! \return A negative value on error, or the factory id.
@@ -2980,6 +3018,7 @@ public:
 	//! id = type->GetFactoryIdByDecl("object@ object(int arg1, int arg2)");
 	//! \endcode
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
+#endif
 	//! \brief Returns the factory function by the index
 	//! \param[in] index The index of the factory function.
 	//! \return The factory function or null if the index is invalid.
@@ -2997,6 +3036,8 @@ public:
 	//! \brief Returns the number of methods for the object type.
 	//! \return The number of methods for this object.
 	virtual asUINT             GetMethodCount() const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.24.0 - 2012-05-25
 	//! \brief Returns the method id by index.
 	//! \param[in] index The index of the method.
 	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
@@ -3035,6 +3076,7 @@ public:
 	//!
 	//! The method will find the script method with the exact same declaration.
 	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
+#endif
 	//! \brief Returns the method by index.
 	//! \param[in] index The index of the method.
 	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
@@ -3098,13 +3140,12 @@ public:
 
 	//! \brief Returns the number of behaviours.
 	//! \return The number of behaviours for this type.
-	virtual asUINT GetBehaviourCount() const = 0;
-	//! \brief Returns the function id and type of the behaviour.
+	virtual asUINT             GetBehaviourCount() const = 0;
+	//! \brief Returns the function and type of the behaviour.
 	//! \param[in] index The index of the behaviour.
 	//! \param[out] outBehaviour Receives the type of the behaviour.
-	//! \return The function id of the behaviour.
-	//! \retval asINVALID_ARG The \a index is too large.
-	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	//! \return The function of the behaviour, or null on error.
+	virtual asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 	//! \}
 
 	// User data

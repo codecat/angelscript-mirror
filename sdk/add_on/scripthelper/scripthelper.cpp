@@ -441,9 +441,25 @@ void PrintException(asIScriptContext *ctx, bool printStack)
 		for( asUINT n = 1; n < ctx->GetCallstackSize(); n++ )
 		{
 			function = ctx->GetFunction(n);
-			printf("%s (%d): %s\n", function->GetScriptSectionName(),
-			                        ctx->GetLineNumber(n),
-								    function->GetDeclaration());
+			if( function )
+			{
+				if( function->GetFuncType() == asFUNC_SCRIPT )
+				{
+					printf("%s (%d): %s\n", function->GetScriptSectionName(),
+											ctx->GetLineNumber(n),
+											function->GetDeclaration());
+				}
+				else
+				{
+					// The context is being reused by the application for a nested call
+					printf("{...application...}: %s\n", function->GetDeclaration());
+				}
+			}
+			else
+			{
+				// The context is being reused by the script engine for a nested call
+				printf("{...script engine...}\n");
+			}			
 		}
 	}
 }

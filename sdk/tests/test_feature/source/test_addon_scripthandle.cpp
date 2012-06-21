@@ -165,6 +165,13 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Test that it is possible to cast the return value directly
+		r = ExecuteString(engine, "CTest @t = cast<CTest>(ReturnRef()); \n"
+                                  "assert( t !is null ); \n"
+                                  "assert( t.val == 42 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
