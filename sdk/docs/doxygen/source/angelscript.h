@@ -762,6 +762,25 @@ extern "C"
 	//! should be called after the last engine has been released to free the
 	//! resources prepared for multithreading.
 	AS_API void asUnprepareMultithread();
+	//! \brief Acquire an exclusive lock.
+	//!
+	//! This function will block the calling thread until there are no 
+	//! other threads that hold shared or exclusive locks.
+	AS_API void asAcquireExclusiveLock();
+	//! \brief Release an exclusive lock.
+	//!
+	//! Releases the previously acquired exclusive lock.
+	AS_API void asReleaseExclusiveLock();
+	//! \brief Acquire a shared lock.
+	//!
+	//! This function will block the calling thread until there are no 
+	//! other threads that hold exclusive locks. Other threads may hold
+	//! shared locks.
+	AS_API void asAcquireSharedLock();
+	//! \brief Release a shared lock.
+	//!
+	//! Releases the previously acquired shared lock.
+	AS_API void asReleaseSharedLock();
 	//! \brief Cleans up memory allocated for the current thread.
 	//!
 	//! \return A negative value on error.
@@ -771,7 +790,7 @@ extern "C"
 	//! accessed the engine to clean up memory allocated for that thread.
 	//!
 	//! It's not necessary to call this if only a single thread accesses the engine.
-	AS_API int asThreadCleanup();
+	AS_API int  asThreadCleanup();
 
 	// Memory management
 	//! \brief Set the memory management functions that AngelScript should use.
@@ -938,10 +957,7 @@ public:
 	virtual asUINT             GetGlobalFunctionCount() const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-20
-	//! \brief Returns the function id of the registered function.
-	//! \param[in] index The index of the registered global function.
-	//! \return The id of the function, or a negative value on error.
-	//! \retval asINVALID_ARG \a index is too large.
+	//! \deprecated Use \ref asIScriptEngine::GetGlobalFunctionByIndex instead
 	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const = 0;
 #endif
 	//! \brief Returns the registered function.
@@ -1472,8 +1488,27 @@ public:
 	//! This only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	//! \brief Creates an uninitialized script object defined by its type id.
+	//! \param[in] typeId The type id of the object to create.
+	//! \return A pointer to the new object if successful, or null if not.
+	//! 
+	//! This method can only be used to create instances of script classes. 
+	//!
+	//! The returned object will only be initialized so far that
+	//! there are no invalid pointers or references. The constructor of the
+	//! script class will not be invoked.
+	//!
+	//! If the script class has any registered types as members, the default 
+	//! constructor for those members will be executed.
+	//!
+	//! This method is meant for objects that will be initialized manually 
+	//! by the application, e.g. when restoring a serialized object.
+	virtual void             *CreateUninitializedScriptObject(int typeId) = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-06-07
+	//! \deprecated Use \ref asIScriptEngine::AssignScriptObject instead
+	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+#endif
 	//! \brief Copy one script object to another.
 	//! \param[in] dstObj A pointer to the destination object.
 	//! \param[in] srcObj A pointer to the source object.
@@ -1482,8 +1517,7 @@ public:
 	//! This calls the assignment operator to copy the object from one to the other.
 	//! 
 	//! This only works for objects.
-	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-#endif
+	virtual void              AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 	//! \brief Release the script object pointer.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] typeId The type id of the object.
@@ -1605,24 +1639,29 @@ public:
 
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The previous pointer stored in the engine.
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the engine instance.
 	//!
+	//! The type values 1000 through 1999 are reserved for use by the official add-ons.
+	//!
 	//! Optionally, a callback function can be \ref SetEngineUserDataCleanupCallback "registered" to clean up the user data when the engine is destroyed.
-	virtual void *SetUserData(void *data) = 0;
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
 	//! \brief Returns the address of the previously registered user data.
+	//! \param[in] type An identifier specifying the user data to get.
 	//! \return The pointer to the user data.
-	virtual void *GetUserData() const = 0;
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
 	//! \brief Set the function that should be called when the engine is destroyed
 	//! \param[in] callback A pointer to the function
+	//! \param[in] type An identifier specifying which user data the callback is to be used with.
 	//!
 	//! The function given with this call will be invoked when the engine
 	//! is destroyed if any \ref SetUserData "user data" has been registered with the engine.
 	//!
 	//! The function is called from within the engine destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
-	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback) = 0;
+	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback, asPWORD type = 0) = 0;
 	//! \brief Set the function that should be called when the module is destroyed
 	//! \param[in] callback A pointer to the function
 	//!
@@ -1652,13 +1691,14 @@ public:
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
 	//! \brief Set the function that should be called when an object type is destroyed
 	//! \param[in] callback A pointer to the function
+	//! \param[in] type An identifier specifying which user data the callback is to be used with.
 	//!
 	//! The function given with this call will be invoked when an object type
 	//! is destroyed if any \ref asIObjectType::SetUserData "user data" has been registered with the type.
 	//!
 	//! The function is called from within the object type destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback) = 0;
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type = 0) = 0;
 	//! \}
 
 protected:
@@ -1823,36 +1863,11 @@ public:
 	virtual asUINT             GetFunctionCount() const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-20
-	//! \brief Returns the function id by index.
-	//! \param[in] index The index of the function.
-	//! \return A negative value on error, or the function id.
-	//! \retval asNO_FUNCTION There is no function with that index. 
-	//!
-	//! This method should be used to retrieve the id of the script function that you wish to 
-	//! execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare"  method.
+	//! \deprecated Use \ref asIScriptModule::GetFunctionByIndex instead
 	virtual int                GetFunctionIdByIndex(asUINT index) const = 0;
-	//! \brief Returns the function id by name.
-	//! \param[in] name The name of the function.
-	//! \return A negative value on error, or the function id.
-	//! \retval asERROR The module was not compiled successfully.
-	//! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
-	//! \retval asNO_FUNCTION Didn't find any matching functions.
-	//!
-	//! This method should be used to retrieve the id of the script function that you 
-	//! wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//! \deprecated Use \ref asIScriptModule::GetFunctionByName instead
 	virtual int                GetFunctionIdByName(const char *name) const = 0;
-	//! \brief Returns the function id by declaration.
-	//! \param[in] decl The function signature.
-	//! \return A negative value on error, or the function id.
-	//! \retval asERROR The module was not compiled successfully.
-	//! \retval asINVALID_DECLARATION The \a decl is invalid.
-	//! \retval asMULTIPLE_FUNCTIONS Found multiple matching functions.
-	//! \retval asNO_FUNCTION Didn't find any matching functions.
-	//!
-	//! This method should be used to retrieve the id of the script function that you wish 
-	//! to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	//!
-	//! The method will find the script function with the exact same declaration.
+	//! \deprecated Use \ref asIScriptModule::GetFunctionByDecl instead
 	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
 #endif
 	//! \brief Returns the function by index
@@ -1869,14 +1884,7 @@ public:
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-20
-	//! \brief Remove a single function from the scope of the module
-	//! \param[in] funcId The id of the function to remove.
-	//! \return A negative value on error.
-	//! \retval asNO_FUNCTION The function is not part of the scope.
-	//!
-	//! This method allows the application to remove a single function from the
-	//! scope of the module. The function is not destroyed immediately though,
-	//! only when no more references point to it.
+	//! \deprecated Use \ref asIScriptModule::RemoveFunction(asIScriptFunction*) instead
 	virtual int                RemoveFunction(int funcId) = 0;
 #endif
 	//! \brief Remove a single function from the scope of the module
@@ -1973,6 +1981,12 @@ public:
 	//!
 	//! This does not increase the reference count of the returned object.
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
+	//! \brief Returns the object type interface by name.
+	//! \param[in] name The name of the type.
+	//! \return The object type interface for the type, or null if not found.
+	//!
+	//! This does not increase the reference count of the returned object.
+	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
 	//! \brief Returns a type id by declaration.
 	//! \param[in] decl The declaration of the type.
 	//! \return A negative value on error, or the type id of the type.
@@ -2070,14 +2084,14 @@ public:
 	virtual const char *GetImportedFunctionSourceModule(asUINT importIndex) const = 0;
 	//! \brief Binds an imported function to the function from another module.
 	//! \param[in] importIndex The index of the imported function.
-	//! \param[in] funcId The function id of the function that will be bound to the imported function.
+	//! \param[in] func The true function that will be bound to the imported function.
 	//! \return A negative value on error.
-	//! \retval asNO_FUNCTION \a importIndex or \a fundId is incorrect.
+	//! \retval asNO_FUNCTION \a importIndex or \a func is incorrect.
 	//! \retval asINVALID_INTERFACE The signature of function doesn't match the import statement.
 	//!
 	//! The imported function is only bound if the functions have the exact same signature, 
 	//! i.e the same return type, and parameters.
-	virtual int         BindImportedFunction(asUINT importIndex, int funcId) = 0;
+	virtual int         BindImportedFunction(asUINT importIndex, asIScriptFunction *func) = 0;
 	//! \brief Unbinds an imported function.
 	//! \param[in] importIndex The index of the imported function.
 	//! \return A negative value on error.
@@ -2222,19 +2236,7 @@ public:
 	virtual int             Prepare(asIScriptFunction *func) = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-25
-	//! \brief Prepares the context for execution of the function identified by funcId.
-	//! \param[in] funcId The id of the function/method that will be executed.
-	//! \return A negative value on error.
-	//! \retval asCONTEXT_ACTIVE The context is still active or suspended.
-	//! \retval asNO_FUNCTION The function id doesn't exist.
-	//!
-	//! This method prepares the context for execution of a script function. It allocates 
-	//! the stack space required and reserves space for return value and parameters. The 
-	//! default value for parameters and return value is 0.
-	//!
-	//! This method is slightly slower than the \ref Prepare(asIScriptFunction*) variant.
-	//!
-	//! \see \ref doc_call_script_func
+	//! \deprecated Use \ref asIScriptContext::Prepare(asIScriptFunction *) instead
 	virtual int             Prepare(int funcId) = 0;
 #endif
 	//! \brief Frees resources held by the context.
@@ -2281,6 +2283,31 @@ public:
 	//! \brief Returns the state of the context.
 	//! \return The current state of the context.
 	virtual asEContextState GetState() const = 0;
+	//! \brief Backups the current state to prepare the context for a nested call.
+	//! \return A negative value on error.
+	//! \retval asERROR The state couldn't be pushed.
+	//! 
+	//! This method can be invoked on an active context in order
+	//! to reuse the context for a nested call, e.g. when a function
+	//! called by a script needs to call another script before returning.
+	//! After the method returns with success the method \ref Prepare()
+	//! shall be invoked to prepare the new execution.
+	//!
+	//! By reusing an active context the application can avoid creating a 
+	//! temporary context, and thus improve the run time performance.
+	//!
+	//! For each successful call to PushState() the method \ref PopState() must
+	//! be called to return the state in order to resume the previous script 
+	//! execution.
+	virtual int             PushState() = 0;
+	//! \brief Restores the state to resume previous script execution
+	//! \return A negative value on error.
+	//! \retval asERROR The state couldn't be restored.
+	virtual int             PopState() = 0;
+	//! \brief Returns true if the context has any nested calls.
+	//! \param[out] nestCount This argument receives the nesting level.
+	//! \return true if there are any nested calls.
+	virtual bool            IsNested(asUINT *nestCount = 0) const = 0;
 	//! \}
 
 	// Object pointer for calling class methods
@@ -2645,11 +2672,9 @@ public:
 	virtual asIScriptEngine   *GetEngine() const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-25
-	//! \brief Returns the function id of the called function.
-	//! \return The function id of the function being called.
+	//! \deprecated Use \ref asIScriptGeneric::GetFunction instead
 	virtual int                GetFunctionId() const = 0;
-	//! \brief Returns the user data for the called function.
-	//! \return The user data for the called function.
+	//! \deprecated Use \ref asIScriptFunction::GetUserData instead
 	virtual void              *GetFunctionUserData() const = 0;
 #endif
 	//! \brief Returns the function that is being called.
@@ -2999,24 +3024,9 @@ public:
 	virtual asUINT             GetFactoryCount() const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-25
-	//! \brief Returns the factory id by index.
-	//! \param[in] index The index of the factory function.
-	//! \return A negative value on error, or the factory id.
-	//! \retval asINVALID_ARG \a index is out of bounds.
+	//! \deprecated Use \ref asIObjectType::GetFactoryByIndex instead
 	virtual int                GetFactoryIdByIndex(asUINT index) const = 0;
-	//! \brief Returns the factory id by declaration.
-	//! \param[in] decl The factory signature.
-	//! \return A negative value on error, or the factory id.
-	//! \retval asNO_FUNCTION Didn't find any matching functions.
-	//! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
-	//! \retval asERROR The module for the type was not built successfully.
-	//!
-	//! The factory function is named after the object type and 
-	//! returns a handle to the object. Example:
-	//! 
-	//! \code
-	//! id = type->GetFactoryIdByDecl("object@ object(int arg1, int arg2)");
-	//! \endcode
+	//! \deprecated Use \ref asIObjectType::GetFactoryByDecl instead
 	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
 #endif
 	//! \brief Returns the factory function by the index
@@ -3038,43 +3048,11 @@ public:
 	virtual asUINT             GetMethodCount() const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-25
-	//! \brief Returns the method id by index.
-	//! \param[in] index The index of the method.
-	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
-	//! \return A negative value on error, or the method id.
-	//! \retval asINVALID_ARG \a index is out of bounds.
-	//!
-	//! This method should be used to retrieve the id of the script method for the object 
-	//! that you wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	//!
-	//! By default this returns the virtual method for script classes. This will allow you to 
-	//! call the virtual method on classes, and rely on the polymorphism to call the correct 
-	//! implementation. If you wish to inspect the real method, then you should set the second
-	//! parameter to false to retrieve the real method.
+	//! \deprecated Use \ref asIObjectType::GetMethodByIndex instead
 	virtual int                GetMethodIdByIndex(asUINT index, bool getVirtual = true) const = 0;
-	//! \brief Returns the method id by name.
-	//! \param[in] name The name of the method.
-	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
-	//! \return A negative value on error, or the method id.
-	//! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
-	//! \retval asNO_FUNCTION Didn't find any matching method.
-	//!
-	//! This method should be used to retrieve the id of the script method for the object 
-	//! that you wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
+	//! \deprecated Use \ref asIObjectType::GetMethodByName instead
 	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
-	//! \brief Returns the method id by declaration.
-	//! \param[in] decl The method signature.
-	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.
-	//! \return A negative value on error, or the method id.
-	//! \retval asMULTIPLE_FUNCTIONS Found multiple matching methods.
-	//! \retval asNO_FUNCTION Didn't find any matching method.
-	//! \retval asINVALID_DECLARATION \a decl is not a valid declaration.
-	//! \retval asERROR The module for the type was not built successfully.
-	//!
-	//! This method should be used to retrieve the id of the script method for the object 
-	//! that you wish to execute. The id is then sent to the context's \ref asIScriptContext::Prepare "Prepare" method.
-	//!
-	//! The method will find the script method with the exact same declaration.
+	//! \deprecated Use \ref asIObjectType::GetMethodByDecl instead
 	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
 #endif
 	//! \brief Returns the method by index.
@@ -3154,17 +3132,21 @@ public:
 
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
+	//! \param[in] type An identifier used to identify which user data to set.
 	//! \return The previous pointer stored in the object type.
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the object type instance.
+	//! Multiple different values can be defined where the type argument identifies which is referred to.
+	//! 
+	//! The user data types identifiers between 1000 and 1999 are reserved for use by official add-ons.
 	//!
 	//! Optionally, a callback function can be \ref asIScriptEngine::SetObjectTypeUserDataCleanupCallback "registered" 
-	//! to clean up the user data when the object type is destroyed. As the callback is registered with the engine, it is
-	//! only necessary to do it once, even if more than one context is used.
-	virtual void *SetUserData(void *data) = 0;
+	//! to clean up the user data when the object type is destroyed.
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
 	//! \brief Returns the address of the previously registered user data.
+	//! \param[in] type An identifier used to identify which user data to get.
 	//! \return The pointer to the user data.
-	virtual void *GetUserData() const = 0;
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
 	//! \}
 
 protected:
@@ -4143,7 +4125,7 @@ struct asSBCInfo
 #endif
 
 #define asBCINFO(b,t,s) {asBC_##b, asBCTYPE_##t, s, #b}
-#define asBCINFO_DUMMY(b) {asEBCInstr(b), asBCTYPE_INFO, 0, "BC_" #b}
+#define asBCINFO_DUMMY(b) {asBC_MAXBYTECODE, asBCTYPE_INFO, 0, "BC_" #b}
 
 //! \brief Information on each bytecode instruction
 const asSBCInfo asBCInfo[256] =

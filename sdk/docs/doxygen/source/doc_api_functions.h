@@ -9,6 +9,12 @@
  
 \section doc_api_funcs_2 Multithread support
  
+ - \ref asPrepareMultithread
+ - \ref asUnprepareMultithread
+ - \ref asAcquireExclusiveLock
+ - \ref asReleaseExclusiveLock
+ - \ref asAcquireSharedLock
+ - \ref asReleaseSharedLock
  - \ref asThreadCleanup
  
 \section doc_api_funcs_3 Custom memory management
