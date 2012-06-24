@@ -57,6 +57,30 @@ void ReturnContextToPool(asIScriptContext *ctx)
 }
 \endcode
 
+Whenever an application registered function that is called from a script needs to 
+execute another script it can reuse the already active context for a nested call.
+This way it is not look for an available context from a pool or allocate a new context
+just for this call.
+
+\code
+void Func()
+{
+  // Get the active context
+  asIScriptContext *ctx = asGetActiveContext();
+
+  // Store the current context state so we can restore it later
+  if( ctx && ctx->PushState() > 0 )
+  {
+    // Use the context normally, e.g.
+    //  ctx->Prepare(...);
+    //  ctx->Execute(...);
+
+    // Once done, restore the previous state
+    ctx->PopState();
+  }
+}
+\endcode
+
 
 
 
