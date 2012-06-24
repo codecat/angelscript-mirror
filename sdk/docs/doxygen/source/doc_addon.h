@@ -68,6 +68,12 @@ public:
 
   // Restore all global variables after reloading script
   int Restore(asIScriptModule *mod);
+  
+  // Store extra objects that are not seen from the module's global variables
+  void AddExtraObjectToStore(asIScriptObject *object);
+
+  // Return new pointer to restored object
+  void *GetPointerToRestoredObject(void *originalObject);
 };
 \endcode
 
@@ -266,15 +272,15 @@ public:
   //  void yield()
   void RegisterCoRoutineSupport(asIScriptEngine *engine);
 
-  // Create a new context, prepare it with the function id, then return 
+  // Create a new context, prepare it with the function, then return 
   // it so that the application can pass the argument values. The context
   // will be released by the manager after the execution has completed.
-  asIScriptContext *AddContext(asIScriptEngine *engine, int funcId);
+  asIScriptContext *AddContext(asIScriptEngine *engine, asIScriptContext *func);
 
-  // Create a new context, prepare it with the function id, then return
+  // Create a new context, prepare it with the function, then return
   // it so that the application can pass the argument values. The context
   // will be added as a co-routine in the same thread as the currCtx.
-  asIScriptContext *AddContextForCoRoutine(asIScriptContext *currCtx, int funcId);
+  asIScriptContext *AddContextForCoRoutine(asIScriptContext *currCtx, asIScriptContext *func);
 
   // Execute each script that is not currently sleeping. The function returns after 
   // each script has been executed once. The application should call this function
@@ -595,14 +601,17 @@ public:
 
   // Copy the stored reference from another handle object
   CScriptHandle &operator=(const CScriptHandle &other);
-  CScriptHandle &opAssign(void *ref, int typeId);
+  
+  // Set the reference
+  void Set(void *ref, int typeId);
 
   // Compare equalness
-  bool opEquals(const CScriptHandle &o) const;
+  bool operator==(const CScriptHandle &o) const;
+  bool operator!=(const CScriptHandle &o) const;
   bool opEquals(void *ref, int typeId) const;
 
   // Dynamic cast to desired handle type
-  void opCast(void **outRef, int typeId);
+  void Cast(void **outRef, int typeId);
 };
 \endcode
 
@@ -655,13 +664,14 @@ Register the type with <code>RegisterStdString(asIScriptEngine*)</code>. Registe
 split method and global join function with <code>RegisterStdStringUtils(asIScriptEngine*)</code>. 
 The optional functions require that the \ref doc_addon_array has been registered first.
 
-Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register the methods with the same names as used by C++ STL where 
-the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent once are 
+Compile the add-on with the pre-processor define AS_USE_STLNAMES = 1 to register the methods with the same names as used by C++ STL where 
+the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent ones are 
 so a port from script to C++ and vice versa might be easier if STL names are used.
 
-A string pool has been implemented to improve the performance of std strings when the scripts use a lot of string literals. The string
-pool is not threadsafe though, nor does it work well if you use multiple script engine instances, so by default it is turned off. To use
-it you need to compile the add-on with the pre-processor define AS_USE_STRINGPOOL=1.
+A string pool has been implemented to improve the performance of std strings when the 
+scripts use a lot of string literals. If for some reason you do not wish to use the 
+string pool, then it can be turned off by compiling the add-on with the pre-processor
+define AS_USE_STRINGPOOL = 0.
 
 \section doc_addon_std_string_1 Public C++ interface
 
@@ -1134,7 +1144,7 @@ public:
   const char *GetMetadataStringForType(int typeId);
 
   // Get metadata declared for functions
-  const char *GetMetadataStringForFunc(int funcId);
+  const char *GetMetadataStringForFunc(asIScriptFunction *func);
 
   // Get metadata declared for global variables
   const char *GetMetadataStringForVar(int varIdx);

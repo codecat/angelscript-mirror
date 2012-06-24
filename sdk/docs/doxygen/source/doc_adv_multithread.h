@@ -33,7 +33,9 @@ Even if you don't want or can't use multithreading, you can still write applicat
    other threads.
 
  - Resources that are shared by script modules such as registered properties and objects must be protected 
-   by the application for simultaneous access, as the script engine doesn't do this automatically.
+   by the application for simultaneous access, as the script engine doesn't do this automatically. A read-write
+   lock is provided by the library that can be used for this. See \ref asAcquireExclusiveLock(), 
+   \ref asReleaseExclusiveLock(), \ref asAcquireSharedLock(), and \ref asReleaseSharedLock().
 
  - Many of the add-ons are not thread safe. Either create your own or make sure you review the add-ons you 
    wish to use to guarantee thread safety.
