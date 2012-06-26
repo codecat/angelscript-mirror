@@ -4051,6 +4051,47 @@ asCObjectType *asCBuilder::GetObjectType(const char *type, const asCString &ns)
 	return ot;
 }
 
+// This function will return true if there are any types in the engine or module 
+// with the given name. The namespace is ignored in this verification.
+bool asCBuilder::DoesTypeExist(const char *type)
+{
+	asUINT n;
+
+	// TODO: optimize: Improve linear searches
+
+	// Check if it is a registered type
+	for( n = 0; n < engine->objectTypes.GetLength(); n++ )
+		if( engine->objectTypes[n] &&
+			engine->objectTypes[n]->name == type ) // TODO: template: Should we check the subtype in case of template instances?
+			return true;
+
+	for( n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
+		if( engine->registeredFuncDefs[n]->name == type )
+			return true;
+
+	// Check if it is a script type
+	if( module )
+	{
+		for( n = 0; n < module->classTypes.GetLength(); n++ )
+			if( module->classTypes[n]->name == type )
+				return true;
+
+		for( n = 0; n < module->enumTypes.GetLength(); n++ )
+			if( module->enumTypes[n]->name == type )
+				return true;
+
+		for( n = 0; n < module->typeDefs.GetLength(); n++ )
+			if( module->typeDefs[n]->name == type )
+				return true;
+
+		for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
+			if( module->funcDefs[n]->name == type )
+				return true;
+	}
+
+	return false;
+}
+
 asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType)
 {
 	if( currentType->name == type )
@@ -4082,23 +4123,15 @@ asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type,
 asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
 {
 	for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
-	{
 		// TODO: access: Only return the definitions that the module has access to
 		if( engine->registeredFuncDefs[n]->name == type )
-		{
 			return engine->registeredFuncDefs[n];
-		}
-	}
 
 	if( module )
 	{
 		for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
-		{
 			if( module->funcDefs[n]->name == type )
-			{
 				return module->funcDefs[n];
-			}
-		}
 	}
 
 	return 0;

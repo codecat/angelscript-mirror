@@ -785,11 +785,10 @@ bool asCParser::IsDataType(const sToken &token)
 	{
 		if( checkValidTypes )
 		{
-			// Check if this is a registered type
+			// Check if this is an existing type, regardless of namespace
 			asCString str;
 			str.Assign(&script->code[token.pos], token.length);
-			// TODO: namespace: Should parser really keep track of namespace?
-			if( !builder->GetObjectType(str.AddressOf(), "") && !builder->GetFuncDef(str.AddressOf()) )
+			if( !builder->DoesTypeExist(str.AddressOf()) )
 				return false;
 		}
 		return true;

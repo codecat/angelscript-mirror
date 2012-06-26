@@ -285,6 +285,62 @@ bool Test()
 		engine->Release();
 	}
 
+	// http://www.gamedev.net/topic/626970-2240-cannot-instantiate-a-class-outside-of-its-namespace/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"namespace TestNamespace \n"
+			"{ \n"
+			"        class MyHappyClass \n"
+			"        { \n"
+			"                MyHappyClass () \n"
+			"                { \n"
+			"                } \n"
+			"                void DoSomething () \n"
+			"                { \n"
+			"                } \n"
+			"        } \n"
+			"} \n"
+			"void main () \n"
+			"{ \n"
+			"        TestNamespace::MyHappyClass ClassInstance; \n"
+			" \n"
+			"        ClassInstance.DoSomething (); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// http://www.gamedev.net/topic/626314-compiler-error-when-using-namespace-with-the-array-addon/
+/*	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"namespace A \n"
+			"{ \n"
+			"        class Test {} \n"
+			"} \n"
+			"void main () \n"
+			"{ \n"
+			"  array<A::Test@> a; \n"
+			"  A::Test@[] b; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	} */
+
 	// Success
 	return fail;
 }
