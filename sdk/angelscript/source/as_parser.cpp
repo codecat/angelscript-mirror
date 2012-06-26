@@ -874,6 +874,20 @@ bool asCParser::CheckTemplateType(sToken &t)
 		if( t.type == ttConst )
 			GetToken(&t);
 
+		// The type may be initiated with the scope operator
+		if( t.type == ttScope )
+			GetToken(&t);
+
+		// There may be multiple levels of scope operators
+		sToken t2;
+		GetToken(&t2);
+		while( t.type == ttIdentifier && t2.type == ttScope )
+		{
+			GetToken(&t);
+			GetToken(&t2);
+		}
+		RewindTo(&t2);
+
 		// Now there must be a data type
 		if( !IsDataType(t) )
 			return false;

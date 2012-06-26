@@ -318,7 +318,7 @@ bool Test()
 	}
 
 	// http://www.gamedev.net/topic/626314-compiler-error-when-using-namespace-with-the-array-addon/
-/*	{
+	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
@@ -339,7 +339,7 @@ bool Test()
 			TEST_FAILED;
 
 		engine->Release();
-	} */
+	}
 
 	// Success
 	return fail;
