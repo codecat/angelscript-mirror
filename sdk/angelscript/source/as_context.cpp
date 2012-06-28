@@ -162,31 +162,28 @@ void asPopActiveContext(asIScriptContext *ctx)
 
 asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 {
+	m_refCount.set(1);
+
 	m_holdEngineRef = holdRef;
 	if( holdRef )
 		engine->AddRef();
-	m_engine = engine;
 
-	m_status = asEXECUTION_UNINITIALIZED;
-	m_stackBlockSize = 0;
-	m_refCount.set(1);
-	m_inExceptionHandler = false;
+	m_engine                    = engine;
+	m_status                    = asEXECUTION_UNINITIALIZED;
+	m_stackBlockSize            = 0;
+	m_originalStackPointer      = 0;
+	m_inExceptionHandler        = false;
 	m_isStackMemoryNotAllocated = false;
-
-	m_currentFunction = 0;
-	m_callingSystemFunction = 0;
-	m_regs.objectRegister = 0;
-	m_initialFunction = 0;
-
-	m_lineCallback = false;
-	m_exceptionCallback = false;
-
-	m_regs.doProcessSuspend = false;
-	m_doSuspend = false;
-
-	m_userData = 0;
-
-	m_regs.ctx = this;
+	m_currentFunction           = 0;
+	m_callingSystemFunction     = 0;
+	m_regs.objectRegister       = 0;
+	m_initialFunction           = 0;
+	m_lineCallback              = false;
+	m_exceptionCallback         = false;
+	m_regs.doProcessSuspend     = false;
+	m_doSuspend                 = false;
+	m_userData                  = 0;
+	m_regs.ctx                  = this;
 }
 
 asCContext::~asCContext()
@@ -208,7 +205,7 @@ bool asCContext::IsNested(asUINT *nestCount) const
 	for( asUINT n = 1; n <= c; n++ )
 	{
 		const asPWORD *s = m_callStack.AddressOf() + (c - n)*CALLSTACK_FRAME_SIZE;
-		if( s[0] == 0 )
+		if( s && s[0] == 0 )
 		{
 			if( nestCount )
 				*nestCount++;
@@ -351,7 +348,11 @@ int asCContext::Prepare(asIScriptFunction *func)
 		m_currentFunction = m_initialFunction;
 
 		// Reset stack pointer
-		m_regs.stackPointer = m_regs.stackPointer + m_argumentsSize + m_returnValueSize;
+		m_regs.stackPointer = m_originalStackPointer;
+
+		// Make sure the stack pointer is pointing to the original position, 
+		// otherwise something is wrong with the way it is being updated
+		asASSERT( IsNested() || m_stackIndex > 0 || (m_regs.stackPointer == m_stackBlocks[0] + m_stackBlockSize) );
 	}
 	else
 	{
@@ -362,7 +363,11 @@ int asCContext::Prepare(asIScriptFunction *func)
 			m_initialFunction->Release();
 
 			// Reset stack pointer
-			m_regs.stackPointer = m_regs.stackPointer + m_argumentsSize + m_returnValueSize;
+			m_regs.stackPointer = m_originalStackPointer;
+
+			// Make sure the stack pointer is pointing to the original position, 
+			// otherwise something is wrong with the way it is being updated
+			asASSERT( IsNested() || m_stackIndex > 0 || (m_regs.stackPointer == m_stackBlocks[0] + m_stackBlockSize) );
 		}
 
 		// We trust the application not to pass anything else but a asCScriptFunction
@@ -406,6 +411,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 
 	// Reserve space for the arguments and return value
 	m_regs.stackFramePointer = m_regs.stackPointer - m_argumentsSize - m_returnValueSize;
+	m_originalStackPointer   = m_regs.stackPointer;
 	m_regs.stackPointer      = m_regs.stackFramePointer;
 
 	// Set arguments to 0
@@ -444,7 +450,11 @@ int asCContext::Unprepare()
 		m_initialFunction->Release();
 
 		// Reset stack pointer
-		m_regs.stackPointer = m_regs.stackPointer + m_argumentsSize + m_returnValueSize;
+		m_regs.stackPointer = m_originalStackPointer;
+
+		// Make sure the stack pointer is pointing to the original position, 
+		// otherwise something is wrong with the way it is being updated
+		asASSERT( IsNested() || m_stackIndex > 0 || (m_regs.stackPointer == m_stackBlocks[0] + m_stackBlockSize) );
 	}
 
 	// Clear function pointers
@@ -1194,10 +1204,10 @@ int asCContext::PushState()
 	tmp[0] = 0;
 	tmp[1] = (asPWORD)m_callingSystemFunction;
 	tmp[2] = (asPWORD)m_initialFunction;
-	tmp[3] = (asPWORD)m_returnValueSize;
+	tmp[3] = (asPWORD)m_originalStackPointer;
 	tmp[4] = (asPWORD)m_argumentsSize;
 
-	// Decrease stackpointer to the top value from being overwritten
+	// Decrease stackpointer to prevent the top value from being overwritten
 	m_regs.stackPointer -= 2;
 
 	// Clear the initial function so that Prepare() knows it must do all validations
@@ -1232,14 +1242,17 @@ int asCContext::PopState()
 	m_callStack.SetLength(m_callStack.GetLength() - CALLSTACK_FRAME_SIZE);
 
 	// Restore the previous initial function and the associated values
-	m_initialFunction = reinterpret_cast<asCScriptFunction*>(tmp[2]);
-	m_returnValueSize = (int)tmp[3];
-	m_argumentsSize   = (int)tmp[4];
+	m_initialFunction      = reinterpret_cast<asCScriptFunction*>(tmp[2]);
+	m_originalStackPointer = (asDWORD*)tmp[3];
+	m_argumentsSize        = (int)tmp[4];
 
-	// Restore stack pointer
-	m_regs.stackPointer += 2;
+	// Calculate the returnValueSize
+	if( m_initialFunction->DoesReturnOnStack() )
+		m_returnValueSize = m_initialFunction->returnType.GetSizeInMemoryDWords();
+	else
+		m_returnValueSize = 0;
 
-	// Pop the current script function too
+	// Pop the current script function. This will also restore the previous stack pointer
 	PopCallState();
 
 	m_status = asEXECUTION_ACTIVE;
@@ -1407,7 +1420,8 @@ bool asCContext::ReserveStackSpace(asUINT size)
 			m_stackBlocks.PushLast(stack);
 		}
 
-		// Update the stack pointer to point to the new block
+		// Update the stack pointer to point to the new block.
+		// Leave enough room above the stackpointer to copy the arguments from the previous stackblock
 		m_regs.stackPointer = m_stackBlocks[m_stackIndex] + 
 			                  (m_stackBlockSize<<m_stackIndex) - 
 			                  m_currentFunction->GetSpaceNeededForArguments() - 
@@ -2059,8 +2073,8 @@ void asCContext::ExecuteNext()
 			if( s == 0 || d == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -2093,8 +2107,8 @@ void asCContext::ExecuteNext()
 			asPWORD a = *(asPWORD*)l_sp;
 			if( a == 0 )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -2220,8 +2234,8 @@ void asCContext::ExecuteNext()
 
 			// Need to move the values back to the context as the called functions
 			// may use the debug interface to inspect the registers
-			m_regs.programPointer = l_bc;
-			m_regs.stackPointer = l_sp;
+			m_regs.programPointer    = l_bc;
+			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
 			l_sp += CallSystemFunction(i, this, 0);
@@ -2234,8 +2248,8 @@ void asCContext::ExecuteNext()
 				// Should the execution be suspended?
 				if( m_doSuspend )
 				{
-					m_regs.programPointer = l_bc;
-					m_regs.stackPointer = l_sp;
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
 					m_regs.stackFramePointer = l_fp;
 
 					m_status = asEXECUTION_SUSPENDED;
@@ -2244,8 +2258,8 @@ void asCContext::ExecuteNext()
 				// An exception might have been raised
 				if( m_status != asEXECUTION_ACTIVE )
 				{
-					m_regs.programPointer = l_bc;
-					m_regs.stackPointer = l_sp;
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
 					m_regs.stackFramePointer = l_fp;
 
 					return;
@@ -2264,8 +2278,8 @@ void asCContext::ExecuteNext()
 			asASSERT( i & FUNC_IMPORTED );
 
 			// Need to move the values back to the context
-			m_regs.programPointer = l_bc;
-			m_regs.stackPointer = l_sp;
+			m_regs.programPointer    = l_bc;
+			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
 			int funcId = m_engine->importedFunctions[i&0xFFFF]->boundFunctionId;
@@ -2297,8 +2311,8 @@ void asCContext::ExecuteNext()
 		{
 			if( m_lineCallback )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				CallLineCallback();
@@ -2308,8 +2322,8 @@ void asCContext::ExecuteNext()
 				l_bc++;
 
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				m_status = asEXECUTION_SUSPENDED;
@@ -2346,8 +2360,8 @@ void asCContext::ExecuteNext()
 				l_bc += 2+AS_PTR_SIZE;
 
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				CallScriptFunction(f);
@@ -2370,8 +2384,8 @@ void asCContext::ExecuteNext()
 				{
 					// Need to move the values back to the context as the called functions
 					// may use the debug interface to inspect the registers
-					m_regs.programPointer = l_bc;
-					m_regs.stackPointer = l_sp;
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
 					m_regs.stackFramePointer = l_fp;
 
 					l_sp += CallSystemFunction(func, this, mem);
@@ -2389,8 +2403,8 @@ void asCContext::ExecuteNext()
 					// Should the execution be suspended?
 					if( m_doSuspend )
 					{
-						m_regs.programPointer = l_bc;
-						m_regs.stackPointer = l_sp;
+						m_regs.programPointer    = l_bc;
+						m_regs.stackPointer      = l_sp;
 						m_regs.stackFramePointer = l_fp;
 
 						m_status = asEXECUTION_SUSPENDED;
@@ -2399,8 +2413,8 @@ void asCContext::ExecuteNext()
 					// An exception might have been raised
 					if( m_status != asEXECUTION_ACTIVE )
 					{
-						m_regs.programPointer = l_bc;
-						m_regs.stackPointer = l_sp;
+						m_regs.programPointer    = l_bc;
+						m_regs.stackPointer      = l_sp;
 						m_regs.stackFramePointer = l_fp;
 
 						m_engine->CallFree(mem);
@@ -2424,8 +2438,8 @@ void asCContext::ExecuteNext()
 
 				// Need to move the values back to the context as the called functions
 				// may use the debug interface to inspect the registers
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				if( objType->flags & asOBJ_REF )
@@ -2495,8 +2509,8 @@ void asCContext::ExecuteNext()
 
 			// Need to move the values back to the context as the called functions
 			// may use the debug interface to inspect the registers
-			m_regs.programPointer = l_bc;
-			m_regs.stackPointer = l_sp;
+			m_regs.programPointer    = l_bc;
+			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
 			if( !(objType->flags & asOBJ_NOCOUNT) )
@@ -2522,8 +2536,8 @@ void asCContext::ExecuteNext()
 			asPWORD a = *(asPWORD*)l_sp;
 			if( a == 0 )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -2601,8 +2615,8 @@ void asCContext::ExecuteNext()
 			asPWORD a = *(asPWORD*)l_sp;
 			if( a == 0 )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -2844,8 +2858,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -2863,8 +2877,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -2897,8 +2911,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -2916,8 +2930,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -2950,8 +2964,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -2970,8 +2984,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3029,8 +3043,8 @@ void asCContext::ExecuteNext()
 			asPWORD *a = (asPWORD*)*(asPWORD*)l_sp;
 			if( *a == 0 )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -3046,8 +3060,8 @@ void asCContext::ExecuteNext()
 			asDWORD *a = *(asDWORD**)(l_fp - asBC_SWORDARG0(l_bc));
 			if( a == 0 )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -3066,8 +3080,8 @@ void asCContext::ExecuteNext()
 			asASSERT( (i & FUNC_IMPORTED) == 0 );
 
 			// Need to move the values back to the context
-			m_regs.programPointer = l_bc;
-			m_regs.stackPointer = l_sp;
+			m_regs.programPointer    = l_bc;
+			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
 			CallInterfaceMethod(m_engine->GetScriptFunction(i));
@@ -3287,8 +3301,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3306,8 +3320,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3377,8 +3391,8 @@ void asCContext::ExecuteNext()
 			asPWORD a = *(asPWORD*)(l_sp + asBC_WORDARG0(l_bc));
 			if( a == 0 )
 			{
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				SetInternalException(TXT_NULL_POINTER_ACCESS);
@@ -3416,8 +3430,8 @@ void asCContext::ExecuteNext()
 				if( jitArg )
 				{
 					// Resume JIT operation
-					m_regs.programPointer = l_bc;
-					m_regs.stackPointer = l_sp;
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
 					m_regs.stackFramePointer = l_fp;
 
 					(m_currentFunction->jitFunction)(&m_regs, jitArg);
@@ -3445,8 +3459,8 @@ void asCContext::ExecuteNext()
 			asCScriptFunction *func = *(asCScriptFunction**)(l_fp - asBC_SWORDARG0(l_bc));
 
 			// Need to move the values back to the context
-			m_regs.programPointer = l_bc;
-			m_regs.stackPointer = l_sp;
+			m_regs.programPointer    = l_bc;
+			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
 			if( func == 0 )
@@ -3501,8 +3515,8 @@ void asCContext::ExecuteNext()
 			if( tmp == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3532,8 +3546,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3551,8 +3565,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3570,8 +3584,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3589,8 +3603,8 @@ void asCContext::ExecuteNext()
 			if( divider == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3611,8 +3625,8 @@ void asCContext::ExecuteNext()
 			if( tmp == 0 )
 			{
 				// Need to move the values back to the context
-				m_regs.programPointer = l_bc;
-				m_regs.stackPointer = l_sp;
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
 				m_regs.stackFramePointer = l_fp;
 
 				// Raise exception
@@ -3657,8 +3671,8 @@ void asCContext::ExecuteNext()
 
 			// Need to move the values back to the context as the called functions
 			// may use the debug interface to inspect the registers
-			m_regs.programPointer = l_bc;
-			m_regs.stackPointer = l_sp;
+			m_regs.programPointer    = l_bc;
+			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
 			if( !(objType->flags & asOBJ_NOCOUNT) )
@@ -3882,6 +3896,7 @@ void asCContext::CleanStack()
 
 		CleanStackFrame();
 	}
+
 	m_inExceptionHandler = false;
 }
 
@@ -4050,6 +4065,9 @@ void asCContext::CleanStackFrame()
 	// is not set, then there is nothing to clean up on the stack frame
 	if( !m_isStackMemoryNotAllocated && m_regs.programPointer )
 	{
+		// Restore the stack pointer
+		m_regs.stackPointer += m_currentFunction->variableSpace;
+
 		// Determine which object variables that are really live ones
 		asCArray<int> liveObjects;
 		DetermineLiveObjects(liveObjects, 0);

@@ -181,6 +181,7 @@ public:
 	asCArray<asDWORD *> m_stackBlocks;
 	asUINT              m_stackBlockSize;
 	asUINT              m_stackIndex;
+	asDWORD            *m_originalStackPointer;
 
 	// Exception handling
 	bool      m_isStackMemoryNotAllocated;
