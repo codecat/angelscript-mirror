@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/06/28</h2>
+<h2>Version 2.24.1 WIP - 2012/07/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Parser now recognizes declarations where the type is declared in a different namespace (Thanks alraz)
 <li>Parser can now parse templates where the subtype is in a different namespace (Thanks sylexer)
 <li>Stack pointer wasn't restored correctly when reusing context, which lead to memory invasions (Thanks virious)
+</ul>
+<li>Library
+<ul>
+<li>Removed functionality where interfaces would be automatically shared if the declaration was identical. This was already deprecated in version 2.23.0
+<li>Improved internal handling of namespaces
 </ul>
 </ul>
 

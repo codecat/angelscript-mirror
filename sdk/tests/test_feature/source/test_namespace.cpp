@@ -113,9 +113,6 @@ bool Test()
 		engine->Release();
 	}
 
-	// TODO: It should be possible to inform the namespace when querying by declaration
-	// TODO: It should be possible to choose whether to include namespace or not when getting declarations
-
 	// Test registering interface with namespace
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -340,6 +337,84 @@ bool Test()
 
 		engine->Release();
 	}
+
+	// It should be possible to register types with the same name in different namespaces
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		
+		r = engine->RegisterObjectType("TestObj", 0, asOBJ_REF);
+		if( r < 0 ) TEST_FAILED;
+
+		engine->SetDefaultNamespace("A");
+		r = engine->RegisterObjectType("TestObj", 0, asOBJ_REF);
+		if( r < 0 ) TEST_FAILED;
+
+		r = engine->RegisterObjectType("TestObj", 0, asOBJ_REF);
+		if( r != asALREADY_REGISTERED ) TEST_FAILED;
+
+		engine->SetDefaultNamespace("");
+		asIObjectType *o1 = engine->GetObjectTypeByName("TestObj");
+		engine->SetDefaultNamespace("A");
+		asIObjectType *o2 = engine->GetObjectTypeByName("TestObj");
+		if( o1 == 0 || o2 == 0 )
+			TEST_FAILED;
+		if( o1 == o2 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Dynamically adding functions/variables to modules should also support namespaces
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		asIScriptFunction *f1;
+		r = mod->CompileFunction("", "void func() {}", 0, asCOMP_ADD_TO_MODULE, &f1);
+		if( r < 0 ) TEST_FAILED;
+
+		mod->SetDefaultNamespace("A");
+		asIScriptFunction *f2;
+		r = mod->CompileFunction("", "void func() {}", 0, asCOMP_ADD_TO_MODULE, &f2);
+		if( r < 0 ) TEST_FAILED;
+
+
+		mod->SetDefaultNamespace("");
+		asIScriptFunction *f3 = mod->GetFunctionByName("func");
+		mod->SetDefaultNamespace("A");
+		asIScriptFunction *f4 = mod->GetFunctionByName("func");
+
+		if( f1 != f3 ) TEST_FAILED;
+		if( f2 != f4 ) TEST_FAILED;
+		if( f1 == f2 ) TEST_FAILED;
+
+		// The functions received from CompileFunction must be released
+		if( f1 ) f1->Release();
+		if( f2 ) f2->Release();
+
+		mod->SetDefaultNamespace("");
+		r = mod->CompileGlobalVar("", "int var;", 0);
+		if( r < 0 ) TEST_FAILED;
+
+		mod->SetDefaultNamespace("A");
+		r = mod->CompileGlobalVar("", "int var;", 0);
+		if( r < 0 ) TEST_FAILED;
+
+		mod->SetDefaultNamespace("");
+		int v1 = mod->GetGlobalVarIndexByName("var");
+		mod->SetDefaultNamespace("A");
+		int v2 = mod->GetGlobalVarIndexByName("var");
+
+		if( v1 < 0 || v2 < 0 ) TEST_FAILED;
+		if( v1 == v2 ) TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// TODO: It should be possible to inform the namespace when querying by declaration
+	// TODO: It should be possible to choose whether to include namespace or not when getting declarations
 
 	// Success
 	return fail;

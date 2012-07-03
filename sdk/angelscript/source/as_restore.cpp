@@ -196,31 +196,6 @@ int asCReader::ReadInner()
 			ReadObjectTypeDeclaration(module->classTypes[i], 2);
 	}
 
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.23.0 - 2012-01-30
-	asCArray<void*> substitutions;
-	module->ResolveInterfaceIds(&substitutions);
-
-	// The above method may have replaced the interface object types
-	// so we must updated this in the savedDataTypes if it is there.
-	// All the interface methods were also substituted so the 
-	// savedFunctions must also be updated
-	for( i = 0; i < substitutions.GetLength() && !error; i += 2 )
-	{
-		for( asUINT d = 0; d < savedDataTypes.GetLength() && !error; d++ )
-		{
-			if( savedDataTypes[d].GetObjectType() == substitutions[i] )
-				savedDataTypes[d].SetObjectType(reinterpret_cast<asCObjectType*>(substitutions[i+1]));
-		}
-
-		for( asUINT f = 0; f < savedFunctions.GetLength() && !error; f++ )
-		{
-			if( savedFunctions[f] == substitutions[i] )
-				savedFunctions[f] = reinterpret_cast<asCScriptFunction*>(substitutions[i+1]);
-		}
-	}
-#endif
-
 	// Read class methods and behaviours
 	for( i = 0; i < module->classTypes.GetLength() && !error; ++i )
 	{

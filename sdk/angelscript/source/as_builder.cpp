@@ -239,9 +239,7 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 
 	node = node->firstChild;
 	node->DisconnectParent();
-	// TODO: namespace: How should we allow informing the namespace? Perhaps the module 
-	//                  needs a SetDefaultNamespace() method that can be called before
-	RegisterGlobalVar(node, script, "");
+	RegisterGlobalVar(node, script, module->defaultNamespace);
 
 	CompileGlobalVariables();
 
@@ -319,9 +317,6 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	// Find the function node
 	node = node->firstChild;
 
-	// TODO: namespace: How should we allow informing the namespace? Perhaps the module 
-	//                  needs a SetDefaultNamespace() method that can be called before
-
 	// Create the function
 	bool isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared;
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
@@ -331,6 +326,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
+	func->nameSpace        = module->defaultNamespace;
 
 	// Make sure the default args are declared correctly
 	int r = ValidateDefaultArgs(script, node, func);
@@ -453,15 +449,6 @@ void asCBuilder::ParseScripts()
 				node = next;
 			}
 		}
-
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.23.0 - 2012-01-30
-
-		// Now the interfaces have been completely established, now we need to determine if
-		// the same interface has already been registered before, and if so reuse the interface id.
-		// TODO: deprecate this. interfaces should be explicitly marked as shared
-		module->ResolveInterfaceIds();
-#endif
 
 		// Register script methods found in the structures
 		for( n = 0; n < classDeclarations.GetLength(); n++ )
