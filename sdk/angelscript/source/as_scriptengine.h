@@ -68,6 +68,13 @@ struct sBindInfo;
 
 // TODO: Should allow enumerating modules, in case they have not been named.
 
+struct asSNameSpace
+{
+	asCString name;
+
+	// TODO: namespace: A namespace should have access masks. The application should be 
+	//                  able to restrict specific namespaces from access to specific modules
+};
 
 class asCScriptEngine : public asIScriptEngine
 {
@@ -267,7 +274,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const char *type, const asCString &ns);
+	asCObjectType *GetObjectType(const char *type, asSNameSpace *ns);
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 
@@ -307,6 +314,10 @@ public:
 	void FreeUnusedGlobalProperties();
 
 	int GetScriptSectionNameIndex(const char *name);
+
+	// Namespace management
+	asSNameSpace *AddNameSpace(const char *name);
+	asSNameSpace *FindNameSpace(const char *name);
 
 //===========================================================
 // internal properties
@@ -384,7 +395,7 @@ public:
 	asCArray<asCConfigGroup*>  configGroups;
 	asCConfigGroup            *currentGroup;
 	asDWORD                    defaultAccessMask;
-	asCString                  defaultNamespace;
+	asSNameSpace              *defaultNamespace;
 
 	// Message callback
 	bool                        msgCallback;
@@ -393,7 +404,14 @@ public:
 
     asIJITCompiler              *jitCompiler;
 
+	// Namespaces
+	// These are shared between all entities and are 
+	// only deleted once the engine is destroyed
+	asCArray<asSNameSpace*> nameSpaces;
+
 	// String constants
+	// These are shared between all scripts and are
+	// only deleted once the engine is destroyed
 	asCArray<asCString*>          stringConstants;
 	asCMap<asCStringPointer, int> stringToIdMap;
 

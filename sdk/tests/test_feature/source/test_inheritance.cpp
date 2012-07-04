@@ -627,14 +627,14 @@ bool Test2()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::method()\n"
-					   "script (1, 27) : Error   : No matching signatures to 'B::test()'\n"
+					   "script (1, 27) : Error   : Namespace 'B' doesn't exist.\n"
 					   "script (1, 38) : Error   : No matching signatures to 'A::method(const uint)'\n"
 					   "script (1, 38) : Info    : Candidates are:\n"
 					   "script (1, 38) : Info    : void A::method()\n"
 					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"
 					   "script (1, 65) : Info    : Candidates are:\n"
 					   "script (1, 65) : Info    : void A::method()\n"
-					   "script (1, 79) : Error   : No matching signatures to 'B::A::a()'\n" )
+					   "script (1, 79) : Error   : Namespace 'B::A' doesn't exist.\n" )
 	{
 		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());

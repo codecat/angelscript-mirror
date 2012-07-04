@@ -132,6 +132,7 @@
 #define TXT_MUST_BE_OBJECT                          "Only objects have constructors"
 #define TXT_MUST_RETURN_VALUE                       "Must return a value"
 
+#define TXT_NAMESPACE_s_DOESNT_EXIST               "Namespace '%s' doesn't exist."
 #define TXT_NAME_CONFLICT_s_EXTENDED_TYPE          "Name conflict. '%s' is an extended data type."
 #define TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY        "Name conflict. '%s' is a global property."
 #define TXT_NAME_CONFLICT_s_IS_NAMED_TYPE          "Name conflict. '%s' is a named type."

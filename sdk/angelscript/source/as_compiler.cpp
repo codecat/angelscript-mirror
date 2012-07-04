@@ -333,7 +333,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		if( node->nodeType == snDataType )
 		{
 			// TODO: namespace: Use correct implicit namespace from function
-			returnType = builder->CreateDataTypeFromNode(node, script, "");
+			returnType = builder->CreateDataTypeFromNode(node, script, engine->nameSpaces[0]);
 			returnType = builder->ModifyDataTypeFromNode(returnType, node->next, script, 0, 0);
 
 			// Make sure the return type is instanciable or is void
@@ -383,7 +383,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		{
 			// Get the parameter type
 			// TODO: namespace: Use correct implicit namespace from function
-			asCDataType type = builder->CreateDataTypeFromNode(node, script, "");
+			asCDataType type = builder->CreateDataTypeFromNode(node, script, engine->nameSpaces[0]);
 
 			asETypeModifiers inoutFlag = asTM_NONE;
 			type = builder->ModifyDataTypeFromNode(type, node->next, script, &inoutFlag, 0);
@@ -1943,7 +1943,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
 	// Get the data type
 	// TODO: namespace: Use correct implicit namespace from function
-	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, "");
+	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, engine->nameSpaces[0]);
 
 	// Declare all variables in this declaration
 	asCScriptNode *node = decl->firstChild->next;
@@ -6645,20 +6645,11 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			bool isCompiled = true;
 			bool isPureConstant = false;
 			bool isAppProp = false;
-			asQWORD constantValue;
-			asCString ns = scope;
-
-			if( ns == "" )
-			{
-				if( outFunc->nameSpace != "" )
-					ns = outFunc->nameSpace;
-				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
-					ns = outFunc->objectType->nameSpace;
-			}
-			else if( ns == "::" )
-				ns = "";
-
-			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
+			asQWORD constantValue = 0;
+			asSNameSpace *ns = DetermineNameSpace(scope);
+			asCGlobalProperty *prop = 0;
+			if( ns )
+				prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
 			{
 				found = true;
@@ -6734,19 +6725,10 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	if( !noFunction && !found && !objType )
 	{
 		asCArray<int> funcs;
-		asCString ns = scope;
-
-		if( ns == "" )
-		{
-			if( outFunc->nameSpace != "" )
-				ns = outFunc->nameSpace;
-			else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
-				ns = outFunc->objectType->nameSpace;
-		}
-		else if( ns == "::" )
-			ns = "";
-
-		builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+		
+		asSNameSpace *ns = DetermineNameSpace(scope);
+		if( ns )
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
 		if( funcs.GetLength() > 1 )
 		{
@@ -6790,16 +6772,17 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		{
 			// Use the last scope name as the enum type
 			asCString enumType = scope;
-			asCString ns;
+			asCString nsScope;
 			int p = scope.FindLast("::");
 			if( p != -1 )
 			{
 				enumType = scope.SubString(p+2);
-				ns = scope.SubString(0, p);
+				nsScope = scope.SubString(0, p);
 			}
 
-			// resolve the type before the scope
-			scopeType = builder->GetObjectType(enumType.AddressOf(), ns);
+			asSNameSpace *ns = engine->FindNameSpace(nsScope.AddressOf());
+			if( ns )
+				scopeType = builder->GetObjectType(enumType.AddressOf(), ns);
 		}
 
 		asDWORD value = 0;
@@ -6812,21 +6795,10 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		else if( !engine->ep.requireEnumScope )
 		{
 			// Look for the enum value without explicitly informing the enum type
-			asCString ns = scope;
-
-			if( ns == "" )
-			{
-				// Use implicit scope from the current function that is being compiled
-				// TODO: cleanup: This is repeated in a lot of places. Should use function for it
-				if( outFunc->nameSpace != "" )
-					ns = outFunc->nameSpace;
-				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
-					ns = outFunc->objectType->nameSpace;
-			}
-			else if( ns == "::" )
-				ns = "";
-
-			int e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
+			asSNameSpace *ns = DetermineNameSpace(scope);
+			int e = 0;
+			if( ns )
+				e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
 			if( e )
 			{
 				found = true;
@@ -7364,7 +7336,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 		// Determine the requested type
 		// TODO: namespace: Use correct implicit namespace from function
-		to = builder->CreateDataTypeFromNode(node->firstChild, script, "");
+		to = builder->CreateDataTypeFromNode(node->firstChild, script, engine->nameSpaces[0]);
 		to.MakeReadOnly(true); // Default to const
 		asASSERT(to.IsPrimitive());
 	}
@@ -7379,7 +7351,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 		// Determine the requested type
 		// TODO: namespace: Use correct implicit namespace from function
-		to = builder->CreateDataTypeFromNode(node->firstChild, script, "");
+		to = builder->CreateDataTypeFromNode(node->firstChild, script, engine->nameSpaces[0]);
 		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
 
 		// If the type support object handles, then use it
@@ -7628,7 +7600,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	// It is possible that the name is really a constructor
 	asCDataType dt;
 	// TODO: namespace: Use correct implicit namespace from function
-	dt = builder->CreateDataTypeFromNode(node->firstChild, script, "");
+	dt = builder->CreateDataTypeFromNode(node->firstChild, script, engine->nameSpaces[0]);
 	if( dt.IsPrimitive() )
 	{
 		// This is a cast to a primitive type
@@ -7911,19 +7883,16 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		else
 		{
 			// The scope is used to define the namespace
-			asCString ns = scope;
-
-			if( ns == "" )
+			asSNameSpace *ns = DetermineNameSpace(scope);
+			if( ns )
+				builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+			else
 			{
-				if( outFunc->nameSpace != "" )
-					ns = outFunc->nameSpace;
-				else if( outFunc->objectType && outFunc->objectType->nameSpace != "" )
-					ns = outFunc->objectType->nameSpace;
+				asCString msg;
+				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+				Error(msg.AddressOf(), node);
+				return -1;
 			}
-			else if( ns == "::" )
-				ns = "";
-
-			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
 			// TODO: funcdef: It is still possible that there is a global variable of a function type
 		}
@@ -8024,6 +7993,27 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		}
 
 	return 0;
+}
+
+asSNameSpace *asCCompiler::DetermineNameSpace(const asCString &scope)
+{
+	asSNameSpace *ns;
+
+	if( scope == "" )
+	{
+		if( outFunc->nameSpace->name != "" )
+			ns = outFunc->nameSpace;
+		else if( outFunc->objectType && outFunc->objectType->nameSpace->name != "" )
+			ns = outFunc->objectType->nameSpace;
+		else
+			ns = engine->nameSpaces[0];
+	}
+	else if( scope == "::" )
+		ns = engine->nameSpaces[0];
+	else
+		ns = engine->FindNameSpace(scope.AddressOf());
+
+	return ns;
 }
 
 int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx)
@@ -8473,7 +8463,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		asCArray<int> funcs;
 		asUINT n;
 		// TODO: namespace: use the proper namespace
-		builder->GetFunctionDescriptions(getName.AddressOf(), funcs, "");
+		builder->GetFunctionDescriptions(getName.AddressOf(), funcs, engine->nameSpaces[0]);
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
@@ -8494,7 +8484,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 		funcs.SetLength(0);
 		// TODO: namespace: use the proper namespace
-		builder->GetFunctionDescriptions(setName.AddressOf(), funcs, "");
+		builder->GetFunctionDescriptions(setName.AddressOf(), funcs, engine->nameSpaces[0]);
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
