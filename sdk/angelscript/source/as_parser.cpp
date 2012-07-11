@@ -1386,6 +1386,11 @@ asCScriptNode *asCParser::ParseExprPostOp()
 
 		node->UpdateSourcePos(t.pos, t.length);
 	}
+	else if( t.type == ttOpenParanthesis )
+	{
+		RewindTo(&t);
+		node->AddChildLast(ParseArgList());
+	}
 
 	return node;
 }
@@ -1491,10 +1496,11 @@ bool asCParser::IsPreOperator(int tokenType)
 
 bool asCParser::IsPostOperator(int tokenType)
 {
-	if( tokenType == ttInc ||
-		tokenType == ttDec ||
-		tokenType == ttDot ||
-		tokenType == ttOpenBracket )
+	if( tokenType == ttInc ||            // post increment
+		tokenType == ttDec ||            // post decrement
+		tokenType == ttDot ||            // member access
+		tokenType == ttOpenBracket ||    // index operator
+		tokenType == ttOpenParanthesis ) // argument list for call on function pointer
 		return true;
 	return false;
 }

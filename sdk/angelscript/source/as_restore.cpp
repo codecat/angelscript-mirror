@@ -1220,6 +1220,10 @@ void asCReader::ReadDataType(asCDataType *dt)
 		return;
 	}
 
+	// Reserve a spot in the savedDataTypes
+	int saveSlot = savedDataTypes.GetLength();
+	savedDataTypes.PushLast(asCDataType());
+
 	// Read the datatype for the first time
 	asCObjectType *objType = 0;
 	bool isObjectHandle  = false;
@@ -1265,6 +1269,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 			}
 		}
 
+		// Set to dummy to avoid unwanted release of resources
 		func.funcType = asFUNC_DUMMY;
 	}
 
@@ -1282,7 +1287,8 @@ void asCReader::ReadDataType(asCDataType *dt)
 	dt->MakeReadOnly(isReadOnly);
 	dt->MakeReference(isReference);
 
-	savedDataTypes.PushLast(*dt);
+	// Update the previously saved slot
+	savedDataTypes[saveSlot] = *dt;
 }
 
 asCObjectType* asCReader::ReadObjectType() 
@@ -1308,23 +1314,10 @@ asCObjectType* asCReader::ReadObjectType()
 		ReadData(&ch, 1);
 		if( ch == 's' )
 		{
-			ot = ReadObjectType();
-			if( ot == 0 )
-			{
-				asCString str;
-				str.Format(TXT_FAILED_READ_SUBTYPE_OF_TEMPLATE_s, typeName.AddressOf());
-				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				error = true;
-				return 0;
-			}
+			asCDataType dt;
+			ReadDataType(&dt);
 
-			asCDataType dt = asCDataType::CreateObject(ot, false);
-
-			ReadData(&ch, 1);
-			if( ch == 'h' )
-				dt.MakeHandle(true);
-
-			if( tmpl->templateSubType.GetObjectType() == ot )
+			if( tmpl->templateSubType.GetObjectType() == dt.GetObjectType() )
 				ot = tmpl;
 			else
 				ot = engine->GetTemplateInstanceType(tmpl, dt);
@@ -3095,7 +3088,6 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 {
 	char ch;
 
-	// Only write the object type name
 	if( ot )
 	{
 		// Check for template instances/specializations
@@ -3109,13 +3101,7 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 			{
 				ch = 's';
 				WriteData(&ch, 1);
-				WriteObjectType(ot->templateSubType.GetObjectType());
-
-				if( ot->templateSubType.IsObjectHandle() )
-					ch = 'h';
-				else
-					ch = 'o';
-				WriteData(&ch, 1);
+				WriteDataType(&ot->templateSubType);
 			}
 			else
 			{

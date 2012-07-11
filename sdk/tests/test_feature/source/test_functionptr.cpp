@@ -392,6 +392,37 @@ bool Test()
 		engine->Release();
 	}
 
+	// It should be possible to call functions through function pointers returned by an expression
+	// http://www.gamedev.net/topic/627386-bug-with-parsing-of-callable-expressions/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("Test",
+			"funcdef void F(); \n"
+			"array<F@> arr;    \n"
+			"F@ g()            \n"
+			"{                 \n"
+			"  return null;    \n"
+			"}                 \n"
+			"void f()          \n"
+			"{                 \n"
+			"  arr[0]();       \n"
+			"  g()();          \n"
+			"}                 \n");
+
+		r = mod->Build();
+
+		// TODO: This shouldn't fail 
+		if( r >= 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

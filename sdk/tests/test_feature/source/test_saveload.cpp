@@ -328,143 +328,181 @@ bool Test()
 {
 	int r;
 	COutStream out;
+	asIScriptEngine* engine;
+	asIScriptModule* mod;
 	
 	Test2();
 	TestAndrewPrice();
 
-	asIScriptEngine *engine = ConfigureEngine(0);
 
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":1", script1, strlen(script1), 0);
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	// Validate the number of global functions
-	if( mod->GetFunctionCount() != 6 )
-		TEST_FAILED;
-
-	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":2", script2, strlen(script2), 0);
-	mod->Build();
-
-	TestScripts(engine);
-	asUINT currentSize, totalDestroyed, totalDetected;
-	engine->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
-
-	// Save the compiled byte code
-	CBytecodeStream stream(__FILE__"1");
-	mod = engine->GetModule(0);
-	mod->SaveByteCode(&stream);
-
-	if( stream.buffer.size() != 1827 )
+	// Test saving/loading with array of function pointers
+	// http://www.gamedev.net/topic/627737-bytecode-loading-error/
 	{
-		printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
-	}
-	asUINT zeroes = stream.CountZeroes();
-	if( zeroes != 531 ) 
-	{
-		printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
-		// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
-	}
-	asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-	if( crc32 != 0xE2140898 )
-	{
-		printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void F(); \n"
+			"array<F@> arr = { f }; \n"
+			"void f() {} \n");
+
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+		
+		CBytecodeStream stream(__FILE__"1");
+		
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream); 
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
 	}
 
-	// Test loading without releasing the engine first
-	mod->LoadByteCode(&stream);
+	{
+		engine = ConfigureEngine(0);
 
-	if( mod->GetFunctionCount() != 6 )
-		TEST_FAILED;
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1", script1, strlen(script1), 0);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
-		TEST_FAILED;
+		// Validate the number of global functions
+		if( mod->GetFunctionCount() != 6 )
+			TEST_FAILED;
 
-	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":2", script2, strlen(script2), 0);
-	mod->Build();
+		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->Build();
 
-	TestScripts(engine);
+		TestScripts(engine);
+		asUINT currentSize, totalDestroyed, totalDetected;
+		engine->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
 
-	// Test loading for a new engine
-	GlobalCharArray->Release();
-	GlobalCharArray = 0;
+		// Save the compiled byte code
+		CBytecodeStream stream(__FILE__"1");
+		mod = engine->GetModule(0);
+		mod->SaveByteCode(&stream);
 
-	engine->Release();
-	engine = ConfigureEngine(1);
-
-	stream.Restart();
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->LoadByteCode(&stream);
-
-	if( mod->GetFunctionCount() != 6 )
-		TEST_FAILED;
-
-	mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(":2", script2, strlen(script2), 0);
-	mod->Build();
-
-	TestScripts(engine);
-	asUINT currentSize2, totalDestroyed2, totalDetected2;
-	engine->GetGCStatistics(&currentSize2, &totalDestroyed2, &totalDetected2);
-	assert( currentSize == currentSize2 &&
-		    totalDestroyed == totalDestroyed2 &&
-			totalDetected == totalDetected2 );
-
-	GlobalCharArray->Release();
-	GlobalCharArray = 0;
-	engine->Release();
-
-	//---------------------------------------
-	// A tiny file for comparison
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", "void f() {}");
-	mod->Build();
-	CBytecodeStream streamTiny(__FILE__"tiny");
-	mod->SaveByteCode(&streamTiny);
-	engine->Release();
-
-	asBYTE expected[] = {0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x6E,0x01,0x66,0x00,0x40,0x4E,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x00,0x02,0x00,0x70,0xC0,0x00,0x01,0x00,0x00,0x6E,0x06,0x73,0x63,0x72,0x69,0x70,0x74,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-	bool match = true;
-	for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
-		if( streamTiny.buffer[n] != expected[n] )
+		if( stream.buffer.size() != 1767 )
 		{
-			match = false;
-			break;
+			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		}
-	if( !match )
-	{
-		printf("Tiny module gave a different result than expected:\n");
-		printf("got     : ");
+		asUINT zeroes = stream.CountZeroes();
+		if( zeroes != 538 ) 
+		{
+			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
+			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
+		}
+		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
+		if( crc32 != 0x17700C8D )
+		{
+			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+		}
+
+		// Test loading without releasing the engine first
+		mod->LoadByteCode(&stream);
+
+		if( mod->GetFunctionCount() != 6 )
+			TEST_FAILED;
+
+		if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
+			TEST_FAILED;
+
+		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->Build();
+
+		TestScripts(engine);
+
+		// Test loading for a new engine
+		GlobalCharArray->Release();
+		GlobalCharArray = 0;
+
+		engine->Release();
+		engine = ConfigureEngine(1);
+
+		stream.Restart();
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->LoadByteCode(&stream);
+
+		if( mod->GetFunctionCount() != 6 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->Build();
+
+		TestScripts(engine);
+		asUINT currentSize2, totalDestroyed2, totalDetected2;
+		engine->GetGCStatistics(&currentSize2, &totalDestroyed2, &totalDetected2);
+		assert( currentSize == currentSize2 &&
+				totalDestroyed == totalDestroyed2 &&
+				totalDetected == totalDetected2 );
+
+		GlobalCharArray->Release();
+		GlobalCharArray = 0;
+		engine->Release();
+
+		//---------------------------------------
+		// A tiny file for comparison
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", "void f() {}");
+		mod->Build();
+		CBytecodeStream streamTiny(__FILE__"tiny");
+		mod->SaveByteCode(&streamTiny);
+		engine->Release();
+
+		asBYTE expected[] = {0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x6E,0x01,0x66,0x00,0x40,0x4E,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x00,0x02,0x00,0x70,0xC0,0x00,0x01,0x00,0x00,0x6E,0x06,0x73,0x63,0x72,0x69,0x70,0x74,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+		bool match = true;
 		for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
-			printf("%0.2X", streamTiny.buffer[n]);
-		printf("\n");
-		printf("expected: ");
-		for( asUINT m = 0; m < sizeof(expected); m++ )
-			printf("%0.2X", expected[m]);
-		printf("\n");
+			if( streamTiny.buffer[n] != expected[n] )
+			{
+				match = false;
+				break;
+			}
+		if( !match )
+		{
+			printf("Tiny module gave a different result than expected:\n");
+			printf("got     : ");
+			for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
+				printf("%0.2X", streamTiny.buffer[n]);
+			printf("\n");
+			printf("expected: ");
+			for( asUINT m = 0; m < sizeof(expected); m++ )
+				printf("%0.2X", expected[m]);
+			printf("\n");
+		}
 	}
 
 	//-----------------------------------------
 	// A different case
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script3", script3, strlen(script3));
-	mod->Build();
-	CBytecodeStream stream2(__FILE__"2");
-	mod->SaveByteCode(&stream2);
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script3", script3, strlen(script3));
+		mod->Build();
+		CBytecodeStream stream2(__FILE__"2");
+		mod->SaveByteCode(&stream2);
 
-	engine->Release();
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->Release();
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->LoadByteCode(&stream2);
-	ExecuteString(engine, "Test(3)", mod);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->LoadByteCode(&stream2);
+		ExecuteString(engine, "Test(3)", mod);
 
-	engine->Release();
+		engine->Release();
+	}
 
 	//-----------------------------------
 	// save/load with overloaded array types should work as well
@@ -545,91 +583,49 @@ bool Test()
 	//---------------------------------
 	// Must be possible to load scripts with classes declared out of order
 	// Built-in array types must be able to be declared even though the complete script structure hasn't been loaded yet
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	RegisterScriptArray(engine, true);
-	RegisterScriptString(engine);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script4, strlen(script4));
-	r = mod->Build();
-	if( r < 0 ) 
-		TEST_FAILED;
-	else
 	{
-		// Test the script with compiled byte code
-		asIScriptContext *ctx = engine->CreateContext();
-		r = ExecuteString(engine, "g_inGame.Initialize(0);", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
-		{
-			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
-			TEST_FAILED;
-		}
-		if( ctx ) ctx->Release();
-
-		// Save the bytecode
-		CBytecodeStream stream4(__FILE__"4");
-		mod = engine->GetModule(0);
-		mod->SaveByteCode(&stream4);
-		engine->Release();
-
-		// Now load the bytecode into a fresh engine and test the script again
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		RegisterScriptString(engine);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->LoadByteCode(&stream4);
-		r = ExecuteString(engine, "g_inGame.Initialize(0);", mod);
-		if( r != asEXECUTION_FINISHED )
+		mod->AddScriptSection("script", script4, strlen(script4));
+		r = mod->Build();
+		if( r < 0 ) 
 			TEST_FAILED;
-	}
-	engine->Release();
-	//----------------
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	RegisterScriptArray(engine, true);
-	RegisterScriptString(engine);
-	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-
-	r = engine->RegisterObjectType("IsoSprite", sizeof(int), asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_FACTORY, "IsoSprite@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("IsoSprite", "IsoSprite &opAssign(const IsoSprite &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
-
-	r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_FACTORY, "IsoMap@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("IsoMap", "IsoMap &opAssign(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("IsoMap", "bool AddEntity(const IsoSprite@+, int col, int row, int layer)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script5, strlen(script5));
-	r = mod->Build();
-	if( r < 0 ) 
-		TEST_FAILED;
-	else
-	{
-		// Test the script with compiled byte code
-		asIScriptContext *ctx = engine->CreateContext();
-		r = ExecuteString(engine, "Initialize();", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		else
 		{
-			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
-			TEST_FAILED;
+			// Test the script with compiled byte code
+			asIScriptContext *ctx = engine->CreateContext();
+			r = ExecuteString(engine, "g_inGame.Initialize(0);", mod, ctx);
+			if( r != asEXECUTION_FINISHED )
+			{
+				if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
+				TEST_FAILED;
+			}
+			if( ctx ) ctx->Release();
+
+			// Save the bytecode
+			CBytecodeStream stream4(__FILE__"4");
+			mod = engine->GetModule(0);
+			mod->SaveByteCode(&stream4);
+			engine->Release();
+
+			// Now load the bytecode into a fresh engine and test the script again
+			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+			RegisterScriptArray(engine, true);
+			RegisterScriptString(engine);
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			mod->LoadByteCode(&stream4);
+			r = ExecuteString(engine, "g_inGame.Initialize(0);", mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
 		}
-		if( ctx ) ctx->Release();
-
-		// Save the bytecode
-		CBytecodeStream stream(__FILE__"5");
-		mod = engine->GetModule(0);
-		mod->SaveByteCode(&stream);
 		engine->Release();
-
-		// Now load the bytecode into a fresh engine and test the script again
+	}
+	//----------------
+	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
@@ -644,7 +640,7 @@ bool Test()
 		r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
 		r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_REF); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_FACTORY, "IsoMap@ f()", asFUNCTION(IsoMapFactory), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_FACTORY, "IsoMap@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("IsoMap", "IsoMap &opAssign(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
@@ -652,12 +648,58 @@ bool Test()
 		r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->LoadByteCode(&stream);
-		r = ExecuteString(engine, "Initialize();", mod);
-		if( r != asEXECUTION_FINISHED )
+		mod->AddScriptSection("script", script5, strlen(script5));
+		r = mod->Build();
+		if( r < 0 ) 
 			TEST_FAILED;
+		else
+		{
+			// Test the script with compiled byte code
+			asIScriptContext *ctx = engine->CreateContext();
+			r = ExecuteString(engine, "Initialize();", mod, ctx);
+			if( r != asEXECUTION_FINISHED )
+			{
+				if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
+				TEST_FAILED;
+			}
+			if( ctx ) ctx->Release();
+
+			// Save the bytecode
+			CBytecodeStream stream(__FILE__"5");
+			mod = engine->GetModule(0);
+			mod->SaveByteCode(&stream);
+			engine->Release();
+
+			// Now load the bytecode into a fresh engine and test the script again
+			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+			RegisterScriptArray(engine, true);
+			RegisterScriptString(engine);
+			r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+			r = engine->RegisterObjectType("IsoSprite", sizeof(int), asOBJ_REF); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_FACTORY, "IsoSprite@ f()", asFUNCTION(IsoSpriteFactory), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour("IsoSprite", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("IsoSprite", "IsoSprite &opAssign(const IsoSprite &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("IsoSprite", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+
+			r = engine->RegisterObjectType("IsoMap", sizeof(int), asOBJ_REF); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_FACTORY, "IsoMap@ f()", asFUNCTION(IsoMapFactory), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyAddref), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour("IsoMap", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyRelease), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("IsoMap", "IsoMap &opAssign(const IsoMap &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("IsoMap", "bool AddEntity(const IsoSprite@+, int col, int row, int layer)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
+
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			mod->LoadByteCode(&stream);
+			r = ExecuteString(engine, "Initialize();", mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
+		engine->Release();
 	}
-	engine->Release();
 
 	//------------------------------
 	// Test to make sure the script constants are stored correctly
@@ -682,6 +724,7 @@ bool Test()
 		if( _out != " i = (123)aaabbb" )
 			TEST_FAILED;
 
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -721,6 +764,7 @@ bool Test()
 		mod->AddScriptSection(0, script);
 		r = mod->Build();
 		
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -755,6 +799,7 @@ bool Test()
 		mod->AddScriptSection(0, script);
 		r = mod->Build();
 		
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -790,6 +835,7 @@ bool Test()
 		mod->AddScriptSection(0, script);
 		r = mod->Build();
 		
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -819,6 +865,7 @@ bool Test()
 		mod->AddScriptSection(0, script);
 		r = mod->Build();
 		
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -853,6 +900,7 @@ bool Test()
 		mod->AddScriptSection(0, script);
 		r = mod->Build();
 		
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -895,6 +943,7 @@ bool Test()
 		if( *(int*)(&test) != 1 || *((int*)(&test)+1) != 2 )
 			TEST_FAILED;
 
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -942,6 +991,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -998,6 +1048,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		CBytecodeStream stream(__FILE__);
 		mod->SaveByteCode(&stream);
 		engine->Release();
 
@@ -1420,8 +1471,7 @@ bool TestAndrewPrice()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Object type 'char_ptr' doesn't exist\n"
-		                   " (0, 0) : Error   : Failed to read subtype of template type 'array'\n" )
+		if( bout.buffer != " (0, 0) : Error   : Object type 'char_ptr' doesn't exist\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

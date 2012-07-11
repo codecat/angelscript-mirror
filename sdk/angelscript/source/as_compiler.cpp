@@ -6646,8 +6646,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			bool isPureConstant = false;
 			bool isAppProp = false;
 			asQWORD constantValue = 0;
-			asSNameSpace *ns = DetermineNameSpace(scope);
 			asCGlobalProperty *prop = 0;
+			asSNameSpace *ns = DetermineNameSpace(scope);
 			if( ns )
 				prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			if( prop )
@@ -9212,6 +9212,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 			MergeExprBytecodeAndType(ctx, &lctx);
 		}
+	}
+	else if( op == ttOpenParanthesis )
+	{
+		Error("Argument list for a function call is not currently supported", node);
+		return -1;
 	}
 
 	return 0;

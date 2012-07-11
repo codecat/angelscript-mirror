@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/02</h2>
+<h2>Version 2.24.1 WIP - 2012/07/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Parser now recognizes declarations where the type is declared in a different namespace (Thanks alraz)
 <li>Parser can now parse templates where the subtype is in a different namespace (Thanks sylexer)
 <li>Stack pointer wasn't restored correctly when reusing context, which lead to memory invasions (Thanks virious)
+<li>Fixed problem with loading bytecode that contained arrays of function pointers (Thanks TheAtom)
 </ul>
 <li>Library
 <ul>
