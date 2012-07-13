@@ -931,7 +931,8 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 	// Count number of parameters
 	int paramCount = 0;
-	n = n->next->firstChild;
+	asCScriptNode *paramList = n->next;
+	n = paramList->firstChild;
 	while( n )
 	{
 		paramCount++;
@@ -949,7 +950,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	func->defaultArgs.Allocate(paramCount, false);
 	if( paramAutoHandles ) paramAutoHandles->Allocate(paramCount, false);
 
-	n = node->firstChild->next->next->next->firstChild;
+	n = paramList->firstChild;
 	while( n )
 	{
 		asETypeModifiers inOutFlags;

@@ -36,6 +36,7 @@ bool Test()
 			// Nested namespaces are allowed
 			"  namespace b { \n"
 			"    int var = 2; \n"
+			"    void funcParams(int a, float b) { a+b; } \n"
 			"  } \n"
 			// Accessing global variables from within a namespace is also possible
 			"  int getglobalvar() { return ::var; } \n"
@@ -95,6 +96,11 @@ bool Test()
 		int t1 = mod->GetTypeIdByDecl("cl");
 		int t2 = mod->GetTypeIdByDecl("a::cl");
 		if( t1 < 0 || t1 != t2 )
+			TEST_FAILED;
+
+		// Functions with parameters must work too
+		asIScriptFunction *f = mod->GetFunctionByDecl("void a::b::funcParams(int, float)");
+		if( f == 0 || std::string(f->GetDeclaration(true, true)) != "void a::b::funcParams(int, float)" )
 			TEST_FAILED;
 
 		// Test saving and loading 
