@@ -185,13 +185,16 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 				int line = func->FindNextLineWithCode(breakPoints[n].lineNbr);
 				if( line >= 0 )
 				{
-					stringstream s;
-					s << "Moving break point " << n << " in file '" << file << "' to next line with code at line " << line << endl;
-					Output(s.str());
-
-					// Move the breakpoint to the next line
 					breakPoints[n].needsAdjusting = false;
-					breakPoints[n].lineNbr = line;
+					if( line != breakPoints[n].lineNbr )
+					{
+						stringstream s;
+						s << "Moving break point " << n << " in file '" << file << "' to next line with code at line " << line << endl;
+						Output(s.str());
+
+						// Move the breakpoint to the next line
+						breakPoints[n].lineNbr = line;
+					}
 				}
 			}
 		}

@@ -2544,11 +2544,19 @@ asCScriptNode *asCParser::ParseClass()
 	// Optional list of interfaces that are being implemented and classes that are being inherited
 	if( t.type == ttColon )
 	{
-		node->AddChildLast(ParseIdentifier());
+		asCScriptNode *inherit = CreateNode(snIdentifier);
+		node->AddChildLast(inherit);
+
+		ParseOptionalScope(inherit);
+		inherit->AddChildLast(ParseIdentifier());
 		GetToken(&t);
 		while( t.type == ttListSeparator )
 		{
-			node->AddChildLast(ParseIdentifier());
+			inherit = CreateNode(snIdentifier);
+			node->AddChildLast(inherit);
+
+			ParseOptionalScope(inherit);
+			inherit->AddChildLast(ParseIdentifier());
 			GetToken(&t);
 		}
 	}

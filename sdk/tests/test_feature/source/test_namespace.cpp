@@ -419,8 +419,32 @@ bool Test()
 		engine->Release();
 	}
 
-	// TODO: It should be possible to inform the namespace when querying by declaration
-	// TODO: It should be possible to choose whether to include namespace or not when getting declarations
+	// Inheritance from class in a different namespace
+	// http://www.gamedev.net/topic/626970-2240-cannot-instantiate-a-class-outside-of-its-namespace/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test",
+			"namespace A \n"
+			"{ \n"
+			"  class a {} \n"
+			"  class a2 : a {} \n"
+			"} \n"
+			"class b : A::a {} \n"
+			"namespace C \n"
+			"{ \n"
+			"  class c : ::b {} \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

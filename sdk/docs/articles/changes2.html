@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/12</h2>
+<h2>Version 2.24.1 WIP - 2012/07/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,11 +25,16 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Stack pointer wasn't restored correctly when reusing context, which lead to memory invasions (Thanks virious)
 <li>Fixed problem with loading bytecode that contained arrays of function pointers (Thanks TheAtom)
 <li>GetFunctionByDecl() failed to find functions with parameters when they were declared in a namespace (Thanks alraz)
+<li>The scope operator can now be used in the inheritance list when a class is deriving from a class in another namespace (Thanks alraz)
 </ul>
 <li>Library
 <ul>
 <li>Removed functionality where interfaces would be automatically shared if the declaration was identical. This was already deprecated in version 2.23.0
 <li>Improved internal handling of namespaces
+</ul>
+<li>Add-ons
+<ul>
+<li>Corrected the implementation of Complex::operator/() to calculate the proper result (Thanks CMRM)
 </ul>
 </ul>
 

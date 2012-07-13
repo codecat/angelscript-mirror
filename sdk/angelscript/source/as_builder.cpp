@@ -1881,12 +1881,37 @@ void asCBuilder::CompileClasses()
 
 		while( node && node->nodeType == snIdentifier )
 		{
+			// Get the optional scope from the node
+			asCString scope = GetScopeFromNode(node->firstChild, file);
+			asSNameSpace *ns = 0;
+			if( scope == "" )
+				// No scope was informed, use the same namespace as the class itself
+				ns = decl->objType->nameSpace;
+			else if( scope == "::" )
+				// The global scope was informed
+				ns = engine->nameSpaces[0];
+			else
+			{
+				ns = engine->FindNameSpace(scope.AddressOf());
+				if( ns == 0 )
+				{
+					asCString msg;
+					msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+					int r,c;
+					file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
+					WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+				}
+
+				// Move to the next node
+				node = node->next;
+				continue;
+			}
+
 			// Get the interface name from the node
-			asCString name(&file->code[node->tokenPos], node->tokenLength);
+			asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 			// Find the object type for the interface
-			// TODO: namespace: Use correct namespace
-			asCObjectType *objType = GetObjectType(name.AddressOf(), engine->nameSpaces[0]);
+			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
 
 			if( objType == 0 )
 			{
