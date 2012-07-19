@@ -7,11 +7,11 @@ using namespace std;
 #include <direct.h>
 #endif
 #ifdef _WIN32_WCE
-#include <windows.h> // For GetModuleFileName
+#include <windows.h> // For GetModuleFileName()
 #endif
 
-#if defined(AS_MARMALADE)
-#include <unistd.h>
+#if defined(AS_MARMALADE) || defined(__APPLE__)
+#include <unistd.h> // For getcwd()
 #endif
 
 BEGIN_AS_NAMESPACE
