@@ -28,11 +28,16 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The scope operator can now be used in the inheritance list when a class is deriving from a class in another namespace (Thanks alraz)
 <li>IsVarInScope() and GetAddressOfVar() now works properly even before Execute() (Thanks Friggle)
 <li>The garbage collector could enter an infinite recursive loop if invoked while calling a class destructor (Thanks Philip Bennefall)
+<li>Aborting a nested script call could cause a crash in the VM (Thanks Philip Bennefall)
 </ul>
 <li>Library
 <ul>
 <li>Removed functionality where interfaces would be automatically shared if the declaration was identical. This was already deprecated in version 2.23.0
 <li>Improved internal handling of namespaces
+</ul>
+<li>Virtual machine
+<ul>
+<li>Each call to Execute() will now tell the GC to process at least one step unless automatic garbage collection is turned off
 </ul>
 <li>Add-ons
 <ul>

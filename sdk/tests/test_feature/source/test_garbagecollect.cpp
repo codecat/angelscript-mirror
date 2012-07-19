@@ -39,6 +39,13 @@ void Yield()
 		ctx->Suspend();
 }
 
+void Exit()
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx )
+		ctx->Abort();
+}
+
 void GCLineCallback(asIScriptContext *ctx)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -209,7 +216,7 @@ bool Test()
 		// tries to access them should throw exception, but should not cause the application to crash
 		called = 0;
 		engine->Release();
-		if( called != 2 )
+		if( called != 1 )
 			TEST_FAILED;
 	}
 
@@ -229,6 +236,8 @@ bool Test()
 			"    destroyed_instances+=1; \n"
 			"    if(destroyed_instances==number_of_instances) \n"
 			"    { \n"
+			"      print('Destroying last class' + 'The last class instance is now being destroyed after having existed for ' + 0.0f + ' milliseconds.'); \n"
+			"      exit(); \n"
 			"    } \n"
 			"  } \n"
 			"} \n"
@@ -251,7 +260,10 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
+		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void yield()", asFUNCTION(Yield), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void exit()", asFUNCTION(Exit), asCALL_CDECL);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
@@ -259,12 +271,24 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
+		// Make sure the garbage is collected properly when calling it step-by-step from line callback
+		// As the classes have a destructor, the garbage collector will also be invoked recursively when
+		// calling the destructor.
+		engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, false);
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->SetLineCallback(asFUNCTION(GCLineCallback), 0, asCALL_CDECL);
 		ctx->Prepare(mod->GetFunctionByName("main"));
 		while( ctx->Execute() == asEXECUTION_SUSPENDED ) {};
-
 		ctx->Release();
+
+		// Make sure the automatic garbage collection can also free up the memory properly
+		mod->ResetGlobalVars();
+		engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, true);
+		ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		while( ctx->Execute() == asEXECUTION_SUSPENDED ) {};
+		ctx->Release();
+
 		engine->Release();
 	}
 

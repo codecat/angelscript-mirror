@@ -1145,8 +1145,29 @@ int asCContext::Execute()
 		}
 	}
 
+	asUINT gcPreObjects = 0;
+	if( m_engine->ep.autoGarbageCollect )
+		m_engine->gc.GetStatistics(&gcPreObjects, 0, 0, 0, 0);
+
 	while( m_status == asEXECUTION_ACTIVE )
 		ExecuteNext();
+
+	if( m_engine->ep.autoGarbageCollect )
+	{
+		asUINT gcPosObjects = 0;
+		m_engine->gc.GetStatistics(&gcPosObjects, 0, 0, 0, 0);
+		if( gcPosObjects > gcPreObjects )
+		{
+			// Execute as many steps as there were new objects created
+			while( gcPosObjects-- > gcPreObjects )
+				m_engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
+		}
+		else if( gcPosObjects > 0 )
+		{
+			// Execute at least one step, even if no new objects were created
+			m_engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
+		}
+	}
 
 	m_doSuspend = false;
 	m_regs.doProcessSuspend = m_lineCallback;
@@ -3888,7 +3909,7 @@ void asCContext::CleanStack()
 	while( m_callStack.GetLength() > 0 )
 	{
 		// Only clean up until the top most marker for a nested call
-		asPWORD *s = m_callStack.AddressOf() + (GetCallstackSize()-1)*CALLSTACK_FRAME_SIZE;
+		asPWORD *s = m_callStack.AddressOf() + m_callStack.GetLength() - CALLSTACK_FRAME_SIZE;
 		if( s[0] == 0 )
 			break;
 
