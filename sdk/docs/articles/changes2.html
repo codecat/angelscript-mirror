@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetFunctionByDecl() failed to find functions with parameters when they were declared in a namespace (Thanks alraz)
 <li>The scope operator can now be used in the inheritance list when a class is deriving from a class in another namespace (Thanks alraz)
 <li>IsVarInScope() and GetAddressOfVar() now works properly even before Execute() (Thanks Friggle)
+<li>The garbage collector could enter an infinite recursive loop if invoked while calling a class destructor (Thanks Philip Bennefall)
 </ul>
 <li>Library
 <ul>

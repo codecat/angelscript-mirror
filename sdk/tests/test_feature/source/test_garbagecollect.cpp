@@ -32,8 +32,18 @@ private:
 };
 
 
+void Yield()
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx )
+		ctx->Suspend();
+}
 
-
+void GCLineCallback(asIScriptContext *ctx)
+{
+	asIScriptEngine *engine = ctx->GetEngine();
+	engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
+}
 
 bool Test()
 {
@@ -202,6 +212,62 @@ bool Test()
 		if( called != 2 )
 			TEST_FAILED;
 	}
+
+	{
+		const char *script =
+			"const int number_of_instances=50; \n"
+			"int destroyed_instances=0; \n"
+			"class dummy \n"
+			"{ \n"
+			"  dummy@ other_dummy; \n"
+			"  dummy() \n"
+			"  { \n"
+			"    @other_dummy=this; \n"
+			"  } \n"
+			"  ~dummy() \n"
+			"  { \n"
+			"    destroyed_instances+=1; \n"
+			"    if(destroyed_instances==number_of_instances) \n"
+			"    { \n"
+			"    } \n"
+			"  } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  generate_garbage(); \n"
+			"  while( destroyed_instances < number_of_instances ) \n"
+			"  { \n"
+			"    yield(); \n"
+			"  } \n"
+			"} \n"
+			"void generate_garbage() \n"
+			"{ \n"
+			"  dummy[] dummy_list(number_of_instances); \n"
+			"} \n";
+
+		COutStream out;
+		int r;
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void yield()", asFUNCTION(Yield), asCALL_CDECL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->SetLineCallback(asFUNCTION(GCLineCallback), 0, asCALL_CDECL);
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		while( ctx->Execute() == asEXECUTION_SUSPENDED ) {};
+
+		ctx->Release();
+		engine->Release();
+	}
+
 /*
 	{
 		// This test forces a memory leak due to not registering the GC behaviours for the CFoo class

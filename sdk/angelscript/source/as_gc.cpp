@@ -54,6 +54,7 @@ asCGarbageCollector::asCGarbageCollector()
 	numDestroyed    = 0;
 	numNewDestroyed = 0;
 	numDetected     = 0;
+	isProcessing    = false;
 }
 
 void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
@@ -107,9 +108,13 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 int asCGarbageCollector::GarbageCollect(asDWORD flags)
 {
 	// If the GC is already processing in another thread, then don't enter here again
-	// TODO: What if it is already processing in this thread?
 	if( TRYENTERCRITICALSECTION(gcCollecting) )
 	{
+		// If the GC is already processing in this thread, then don't enter here again
+		if( isProcessing ) return 1;
+
+		isProcessing = true;
+
 		bool doDetect  = (flags & asGC_DETECT_GARBAGE)  || !(flags & asGC_DESTROY_GARBAGE);
 		bool doDestroy = (flags & asGC_DESTROY_GARBAGE) || !(flags & asGC_DETECT_GARBAGE);
 
@@ -153,6 +158,7 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 			// Take the opportunity to clear unused types as well
 			engine->ClearUnusedTypes();
 
+			isProcessing = false;
 			LEAVECRITICALSECTION(gcCollecting);
 			return 0;
 		}
@@ -170,6 +176,7 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 				IdentifyGarbageWithCyclicRefs();
 		}
 
+		isProcessing = false;
 		LEAVECRITICALSECTION(gcCollecting);
 	}
 	
