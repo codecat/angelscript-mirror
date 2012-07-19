@@ -3903,7 +3903,10 @@ void asCContext::CleanStack()
 // Interface
 bool asCContext::IsVarInScope(asUINT varIndex, asUINT stackLevel)
 {
-	asASSERT( stackLevel < GetCallstackSize() );
+	// Don't return anything if there is no bytecode, e.g. before calling Execute()
+	if( m_regs.programPointer == 0 ) return false;
+
+	if( stackLevel >= GetCallstackSize() ) return false;
 
 	asCScriptFunction *func;
 	asUINT pos;
@@ -4427,6 +4430,9 @@ int asCContext::GetVarTypeId(asUINT varIndex, asUINT stackLevel)
 // interface
 void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
 {
+	// Don't return anything if there is no bytecode, e.g. before calling Execute()
+	if( m_regs.programPointer == 0 ) return 0;
+
 	if( stackLevel >= GetCallstackSize() ) return 0;
 
 	asCScriptFunction *func;

@@ -216,6 +216,12 @@ bool Test()
 
 		ctx->Prepare(mod->GetFunctionByName("Func"));
 
+		// Before the function is actually executed the variables don't exist
+		if( ctx->IsVarInScope(0) )
+			TEST_FAILED;
+		if( ctx->GetAddressOfVar(0) )
+			TEST_FAILED;
+
 		// It will break twice on line 8. Once when setting up the function stack frame, and then on the first line that is executed
 		// TODO: The first SUSPEND in the bytecode should be optimized away as it is unnecessary
 		for( int n = 0; n < 2; n++ )
