@@ -493,9 +493,6 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	int num;
 
 	ReadString(&func->name);
-	asCString ns;
-	ReadString(&ns);
-	func->nameSpace = engine->AddNameSpace(ns.AddressOf());
 	ReadDataType(&func->returnType);
 
 	count = ReadEncodedUInt();
@@ -543,6 +540,13 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 		ReadData(&b, 1);
 		func->isReadOnly = (b & 1) ? true : false;
 		func->isPrivate  = (b & 2) ? true : false;
+		func->nameSpace = engine->nameSpaces[0];
+	}
+	else
+	{
+		asCString ns;
+		ReadString(&ns);
+		func->nameSpace = engine->AddNameSpace(ns.AddressOf());
 	}
 }
 
@@ -621,7 +625,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 		for( i = 0; i < length; ++i )
 		{
 			func->objVariableInfo[i].programPos     = ReadEncodedUInt();
-			func->objVariableInfo[i].variableOffset = ReadEncodedUInt(); // TODO: should be int
+			func->objVariableInfo[i].variableOffset = ReadEncodedUInt();
 			func->objVariableInfo[i].option         = ReadEncodedUInt();
 		}
 
@@ -2068,7 +2072,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
 
-	// objVariableInfo[x].variableOffset  // TODO: should be an index into the objVariablePos array
 	for( n = 0; n < func->objVariableInfo.GetLength(); n++ )
 	{
 		// The program position must be adjusted as it is stored in number of instructions
@@ -2667,7 +2670,6 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	asUINT i, count;
 
 	WriteString(&func->name);
-	WriteString(&func->nameSpace->name);
 	WriteDataType(&func->returnType);
 
 	count = (asUINT)func->parameterTypes.GetLength();
@@ -2700,6 +2702,10 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		b += func->isReadOnly ? 1 : 0;
 		b += func->isPrivate  ? 2 : 0;
 		WriteData(&b, 1);
+	}
+	else
+	{
+		WriteString(&func->nameSpace->name);
 	}
 }
 
@@ -2764,7 +2770,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		{
 			// The program position must be adjusted to be in number of instructions
 			WriteEncodedInt64(bytecodeNbrByPos[func->objVariableInfo[i].programPos]);
-			WriteEncodedInt64(AdjustStackPosition(func->objVariableInfo[i].variableOffset)); // TODO: should be int
+			WriteEncodedInt64(AdjustStackPosition(func->objVariableInfo[i].variableOffset));
 			WriteEncodedInt64(func->objVariableInfo[i].option);
 		}
 
@@ -3681,12 +3687,10 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteData(&b, 1);
 
 				// Write the argument
-				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
 				WriteEncodedInt64(qw);
 
 				// Write the second argument
-				// TODO: This could be encoded as an int to decrease the size
 				int dw = tmp[3];
 				WriteEncodedInt64(dw);
 			}
@@ -3703,7 +3707,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				WriteEncodedInt64(w);
 
 				// Write the argument
-				// TODO: This could be encoded as an int to decrease the size
 				asQWORD qw = *(asQWORD*)&tmp[1];
 				WriteEncodedInt64(qw);
 			}
