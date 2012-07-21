@@ -6005,7 +6005,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 
 			ReleaseTemporaryVariable(rctx->type, &ctx->bc);
 
-			ctx->type = rctx->type;
+			ctx->type = lctx->type;
 		}
 	}
 	else // if( lctx->type.dataType.IsObject() )
@@ -9215,8 +9215,72 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	}
 	else if( op == ttOpenParanthesis )
 	{
-		Error("Argument list for a function call is not currently supported", node);
-		return -1;
+		// TODO: Most of this is already done by CompileFunctionCall(). Can we share the code?
+
+		// Make sure the expression is a funcdef
+		if( !ctx->type.dataType.GetFuncDef() )
+		{
+			Error(TXT_EXPR_DOESNT_EVAL_TO_FUNC, node);
+			return -1;
+		}
+
+		// Compile arguments
+		asCArray<asSExprContext *> args;
+		if( CompileArgumentList(node->lastChild, args) >= 0 )
+		{
+			// Match arguments with the funcdef
+			asCArray<int> funcs;
+			funcs.PushLast(ctx->type.dataType.GetFuncDef()->id);
+			MatchFunctions(funcs, args, node, ctx->type.dataType.GetFuncDef()->name.AddressOf());
+
+			if( funcs.GetLength() != 1 )
+			{
+				// The error was reported by MatchFunctions()
+
+				// Dummy value
+				ctx->type.SetDummy();
+			}
+			else
+			{
+				int r = asSUCCESS;
+
+				// Add the default values for arguments not explicitly supplied
+				asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+				if( func && args.GetLength() < (asUINT)func->GetParamCount() )
+					r = CompileDefaultArgs(node, args, func);
+
+				// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
+				//                is it enough to make sure it is in a local variable?
+
+				// For function pointer we must guarantee that the function is safe, i.e.
+				// by first storing the function pointer in a local variable (if it isn't already in one)
+				if( r == asSUCCESS )
+				{
+					Dereference(ctx, true);
+					if( !ctx->type.isVariable )
+						ConvertToVariable(ctx);
+					else
+					{
+						// Remove the reference from the stack as the asBC_CALLPTR instruction takes the variable as argument
+						ctx->bc.Instr(asBC_PopPtr);
+					}
+					asCTypeInfo t = ctx->type;
+
+					MakeFunctionCall(ctx, funcs[0], 0, args, node, false, 0, ctx->type.stackOffset);
+
+					ReleaseTemporaryVariable(t, &ctx->bc);
+				}
+			}
+		}
+		else
+			ctx->type.SetDummy();
+
+		// Cleanup
+		for( asUINT n = 0; n < args.GetLength(); n++ )
+			if( args[n] )
+			{
+				asDELETE(args[n],asSExprContext);
+			}
 	}
 
 	return 0;

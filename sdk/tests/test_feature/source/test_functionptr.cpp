@@ -398,26 +398,45 @@ bool Test()
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection("Test",
-			"funcdef void F(); \n"
-			"array<F@> arr;    \n"
+			"funcdef void F(int); \n"
+			"array<F@> arr(1); \n"
 			"F@ g()            \n"
 			"{                 \n"
-			"  return null;    \n"
+			"  return test;    \n"
 			"}                 \n"
+			"void test(int a)  \n"
+			"{                 \n"
+			"  assert(a == 42); \n"
+			"  called++;       \n"
+			"}                 \n"
+			"int called = 0;   \n"
 			"void f()          \n"
 			"{                 \n"
-			"  arr[0]();       \n"
-			"  g()();          \n"
-			"}                 \n");
+			"  @arr[0] = test; \n"
+			"  arr[0](42);     \n"
+			"  g()(42);        \n"
+			"  F@ p; \n"
+			"  (@p = arr[0])(42);     \n"
+			"  (@p = g())(42);        \n"
+			"}                        \n");
 
+	//	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-		// TODO: This shouldn't fail 
-		if( r >= 0 )
+		r = ExecuteString(engine, "f()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		int idx = mod->GetGlobalVarIndexByName("called");
+		int *called = (int*)mod->GetAddressOfGlobalVar(idx);
+		if( *called != 4 )
 			TEST_FAILED;
 
 		engine->Release();

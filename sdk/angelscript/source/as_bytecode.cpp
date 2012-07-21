@@ -602,6 +602,8 @@ int asCByteCode::Optimize()
 	// TODO: runtime optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
 	//                         function calls that can suspend the execution.
 
+	// TODO: runtime optimize: Remove temporary copies of handles, when the temp is just copied to yet another location
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{
@@ -657,6 +659,31 @@ int asCByteCode::Optimize()
 		{
 			curr->op = asBC_PshGPtr;
 			DeleteInstruction(instr);
+			instr = GoBack(curr);
+		}
+		// RDSPtr, PopPtr -> PopPtr
+		else if( IsCombination(curr, asBC_RDSPtr, asBC_PopPtr) )
+		{
+			DeleteInstruction(curr);
+			instr = GoBack(instr);
+		}
+		// VAR, FREE -> FREE, VAR
+		else if( IsCombination(curr, asBC_VAR, asBC_FREE) )
+		{
+			// Swap the two instructions, so that the VAR instruction 
+			// gets closer to its corresponding GET instruction and thus
+			// has a greater chance of getting optimized
+			RemoveInstruction(instr);
+			InsertBefore(curr, instr);
+			instr = GoBack(instr);
+		}
+		// VAR, PSF, GETOBJREF {PTR_SIZE} -> PshVPtr, PSF
+		else if( IsCombination(curr, asBC_VAR, asBC_PSF) &&
+				 IsCombination(instr, asBC_PSF, asBC_GETOBJREF) &&
+				 instr->next->wArg[0] == AS_PTR_SIZE )
+		{
+			curr->op = asBC_PshVPtr;
+			DeleteInstruction(instr->next);
 			instr = GoBack(curr);
 		}
 		// ChkRefS, RDSPtr -> RDSPtr, CHKREF

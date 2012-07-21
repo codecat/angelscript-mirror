@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/19</h2>
+<h2>Version 2.24.1 WIP - 2012/07/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,6 +35,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Removed functionality where interfaces would be automatically shared if the declaration was identical. This was already deprecated in version 2.23.0
 <li>Improved internal handling of namespaces
 <li>Reduced the size of saved bytecode by not storing the namespace of class methods
+<li>Bytecode optimizer exchanges some more sequences with shorter ones for better performance
+</ul>
+<li>Script language
+<ul>
+<li>Function pointers can now be invoked from arbitrary expressions without first assigning them to a variable (Thanks TheAtom)
 </ul>
 <li>Virtual machine
 <ul>
