@@ -170,6 +170,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptfile.o \
   obj/scriptbuilder.o \
   obj/serializer.o \
+  obj/debugger.o \
 
 
 BIN = ../../bin/testgnuc
@@ -219,6 +220,9 @@ obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/serializer.o: ../../../../add_on/serializer/serializer.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/debugger.o: ../../../../add_on/debugger/debugger.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

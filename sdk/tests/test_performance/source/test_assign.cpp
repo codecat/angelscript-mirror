@@ -98,34 +98,34 @@ void Test(double *testTimes)
 	double time;
 	asIScriptContext *ctx = engine->CreateContext();
 
-	ctx->Prepare(mod->GetFunctionIdByDecl("void test1()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void test1()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
 	testTimes[0] = time;
 
 	// TODO: optimize: PSF, ADDSi, PopRPtr -> LoadObjR
-	ctx->Prepare(mod->GetFunctionIdByDecl("void test2()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void test2()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
 	testTimes[1] = time;
 
-	ctx->Prepare(mod->GetFunctionIdByDecl("void test3()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void test3()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
 	testTimes[2] = time;
 
 	// TODO: optimize: This will benefit from when value types are inlined in script classes
-	ctx->Prepare(mod->GetFunctionIdByDecl("void test4()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void test4()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;
 	testTimes[3] = time;
 
 	// TODO: optimize: This will benefit from when value types are inlined in script classes
-	ctx->Prepare(mod->GetFunctionIdByDecl("void test5()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void test5()"));
 	time = GetSystemTimer();
 	r = ctx->Execute();
 	time = GetSystemTimer() - time;

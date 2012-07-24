@@ -45,8 +45,8 @@ void Test(double *testTime)
 
 	asIScriptContext *ctx = engine->CreateContext();
 
-	int fibI = mod->GetFunctionIdByDecl("int fibI(int)");
-	int fibR = mod->GetFunctionIdByDecl("int fibR(int)");
+	asIScriptFunction *fibI = mod->GetFunctionByDecl("int fibI(int)");
+	asIScriptFunction *fibR = mod->GetFunctionByDecl("int fibR(int)");
 
 	ctx->Prepare(fibR);
 	ctx->SetArgDWord(0, 35); // 43

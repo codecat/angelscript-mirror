@@ -37,7 +37,7 @@ void Test(double *testTime)
 	mod->Build();
 
 	asIScriptContext *ctx = engine->CreateContext();
-	ctx->Prepare(mod->GetFunctionIdByDecl("void TestBasic2()"));
+	ctx->Prepare(mod->GetFunctionByDecl("void TestBasic2()"));
 
 	double time = GetSystemTimer();
 

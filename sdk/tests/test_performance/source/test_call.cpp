@@ -26,14 +26,14 @@ void Test(double *testTime)
 	mod->Build();
 
 	asIScriptContext *ctx = engine->CreateContext();
-	int funcId = mod->GetFunctionIdByDecl("void TestCall()");
+	asIScriptFunction *func = mod->GetFunctionByDecl("void TestCall()");
 
 	double time = GetSystemTimer();
 	int r;
 
 	for( int n = 0; n < 10000000; n++ )
 	{
-		ctx->Prepare(funcId);
+		ctx->Prepare(func);
 		r = ctx->Execute();
 		if( r != 0 ) break;
 	}

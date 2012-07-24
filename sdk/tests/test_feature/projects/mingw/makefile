@@ -14,6 +14,7 @@ SRCNAMES = \
   test_addon_scripthandle.cpp \
   test_addon_scriptmath.cpp \
   test_addon_serializer.cpp \
+  test_addon_dictionary.cpp \
   test_addon_debugger.cpp \
   test_any.cpp \
   test_argref.cpp \
@@ -41,7 +42,6 @@ SRCNAMES = \
   test_defaultarg.cpp \
   test_destructor.cpp \
   test_dict.cpp \
-  test_dictionary.cpp \
   test_discard.cpp \
   test_dump.cpp \
   test_dynamicconfig.cpp \
@@ -165,6 +165,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptfile.o \
   obj/scriptbuilder.o \
   obj/serializer.o \
+  obj/debugger.o \
 
 
 BIN = ../../bin/mingw.exe
@@ -216,6 +217,9 @@ obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/serializer.o: ../../../../add_on/serializer/serializer.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/debugger.o: ../../../../add_on/debugger/debugger.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

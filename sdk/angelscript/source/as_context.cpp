@@ -54,11 +54,11 @@
 
 BEGIN_AS_NAMESPACE
 
-// We need at least 2 DWORDs reserved for exception handling
-// We need at least 1 DWORD reserved for calling system functions
+// We need at least 2 PTRs reserved for exception handling
+// We need at least 1 PTR reserved for calling system functions
 const int RESERVE_STACK = 2*AS_PTR_SIZE;
 
-// For each script function call we push 5 DWORDs on the call stack
+// For each script function call we push 5 PTRs on the call stack
 const int CALLSTACK_FRAME_SIZE = 5;
 
 
@@ -1423,7 +1423,7 @@ bool asCContext::ReserveStackSpace(asUINT size)
 		}
 
 		m_stackIndex++;
-		if( (int)m_stackBlocks.GetLength() == m_stackIndex )
+		if( m_stackBlocks.GetLength() == m_stackIndex )
 		{
 			// Allocate the new stack block, with twice the size of the previous
 			asDWORD *stack = asNEWARRAY(asDWORD,(m_stackBlockSize << m_stackIndex));

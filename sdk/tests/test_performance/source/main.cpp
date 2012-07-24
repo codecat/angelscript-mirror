@@ -95,20 +95,20 @@ int main(int argc, char **argv)
 
 	for( int n = 0; n < 3; n++ )
 	{
-		TestBasic::Test(&testTimes[0]); printf(".");
-		TestBasic2::Test(&testTimes[1]); printf(".");
-		TestCall::Test(&testTimes[2]); printf(".");
-		TestCall2::Test(&testTimes[3]); printf(".");
-		TestFib::Test(&testTimes[4]); printf(".");
-		TestInt::Test(&testTimes[5]); printf(".");
-		TestIntf::Test(&testTimes[6]); printf(".");
-		TestMthd::Test(&testTimes[7]); printf(".");
-		TestString::Test(&testTimes[8]); printf(".");
-		TestString2::Test(&testTimes[9]); printf(".");
-		TestStringPooled::Test(&testTimes[10]); printf(".");
-		TestThisProp::Test(&testTimes[11]); printf(".");
-		TestVector3::Test(&testTimes[12]); printf(".");
-		TestAssign::Test(&testTimes[13]); printf(".");
+		TestBasic::Test(&testTimes[0]); printf("."); fflush(stdout);
+		TestBasic2::Test(&testTimes[1]); printf("."); fflush(stdout);
+		TestCall::Test(&testTimes[2]); printf("."); fflush(stdout);
+		TestCall2::Test(&testTimes[3]); printf("."); fflush(stdout);
+		TestFib::Test(&testTimes[4]); printf("."); fflush(stdout);
+		TestInt::Test(&testTimes[5]); printf("."); fflush(stdout);
+		TestIntf::Test(&testTimes[6]); printf("."); fflush(stdout);
+		TestMthd::Test(&testTimes[7]); printf("."); fflush(stdout);
+		TestString::Test(&testTimes[8]); printf("."); fflush(stdout);
+		TestString2::Test(&testTimes[9]); printf("."); fflush(stdout);
+		TestStringPooled::Test(&testTimes[10]); printf("."); fflush(stdout);
+		TestThisProp::Test(&testTimes[11]); printf("."); fflush(stdout);
+		TestVector3::Test(&testTimes[12]); printf("."); fflush(stdout);
+		TestAssign::Test(&testTimes[13]); printf("."); fflush(stdout);
 
 		for( int t = 0; t < 18; t++ )
 		{

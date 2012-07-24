@@ -93,11 +93,11 @@ public:
 		{
 			if( lastAddress == "" )
 			{
-				lastAddress = str.substr(1,8);
-				return "{XXXXXXXX"+str.substr(9);
+				lastAddress = str.substr(1,str.find("}", 0));
+				return "{XXXXXXXX"+str.substr(lastAddress.length());
 			}
-			else if( str.substr(1,8) == lastAddress )
-				return "{XXXXXXXX"+str.substr(9);
+			else if( str.substr(1,str.find("}", 0)) == lastAddress )
+				return "{XXXXXXXX"+str.substr(lastAddress.length());
 			else
 				return str;
 		}

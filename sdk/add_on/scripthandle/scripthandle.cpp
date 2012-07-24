@@ -7,7 +7,8 @@ BEGIN_AS_NAMESPACE
 
 static void Construct(CScriptHandle *self) { new(self) CScriptHandle(); }
 static void Construct(CScriptHandle *self, const CScriptHandle &o) { new(self) CScriptHandle(o); }
-static void Construct(CScriptHandle *self, void *ref, int typeId) { new(self) CScriptHandle(ref, typeId); }
+// This one is not static because it needs to be friend with the CScriptHandle class
+void Construct(CScriptHandle *self, void *ref, int typeId) { new(self) CScriptHandle(ref, typeId); }
 static void Destruct(CScriptHandle *self) { self->~CScriptHandle(); }
 
 CScriptHandle::CScriptHandle()
@@ -209,7 +210,7 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 	}
 }
 
-static void RegisterScriptHandle_Native(asIScriptEngine *engine)
+void RegisterScriptHandle_Native(asIScriptEngine *engine)
 {
 	int r;
 

@@ -247,7 +247,7 @@ void CScriptMgr::CallOnThink(asIScriptObject *object)
 	SController *ctrl = reinterpret_cast<SController*>(object->GetObjectType()->GetUserData());
 
 	// Call the method using the shared context
-	if( ctrl->onThinkMethod == 0 )
+	if( ctrl->onThinkMethod != 0 )
 	{
 		asIScriptContext *ctx = PrepareContextFromPool(ctrl->onThinkMethod);
 		ctx->SetObject(object);
@@ -262,7 +262,7 @@ void CScriptMgr::CallOnMessage(asIScriptObject *object, CScriptHandle &msg, CGam
 	SController *ctrl = reinterpret_cast<SController*>(object->GetObjectType()->GetUserData());
 
 	// Call the method using the shared context
-	if( ctrl->onMessageMethod > 0 )
+	if( ctrl->onMessageMethod != 0 )
 	{
 		asIScriptContext *ctx = PrepareContextFromPool(ctrl->onMessageMethod);
 		ctx->SetObject(object);

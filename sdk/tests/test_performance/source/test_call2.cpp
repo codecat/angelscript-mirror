@@ -30,18 +30,18 @@ void Test(double *testTime)
 	mod->Build();
 
 	asIScriptContext *ctx = engine->CreateContext();
-	int funcId_A = mod->GetFunctionIdByDecl("void TestCall2_A()");
-	int funcId_B = mod->GetFunctionIdByDecl("void TestCall2_B()");
+	asIScriptFunction *func_A = mod->GetFunctionByDecl("void TestCall2_A()");
+	asIScriptFunction *func_B = mod->GetFunctionByDecl("void TestCall2_B()");
 
 	double time = GetSystemTimer();
 	int r;
 
 	for( int n = 0; n < 5000000; n++ )
 	{
-		ctx->Prepare(funcId_A);
+		ctx->Prepare(func_A);
 		r = ctx->Execute();
 		if( r != 0 ) break;
-		ctx->Prepare(funcId_B);
+		ctx->Prepare(func_B);
 		r = ctx->Execute();
 		if( r != 0 ) break;
 	}

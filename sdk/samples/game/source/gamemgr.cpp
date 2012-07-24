@@ -119,7 +119,11 @@ void CGameMgr::Render()
 		buf[gameObjects[n]->y][gameObjects[n]->x] = gameObjects[n]->displayCharacter;
 
 	// Clear the screen
+#ifdef _WIN32
 	system("cls");
+#else
+	system("clear");
+#endif
 
 	// Print some useful information and start the input loop
 	cout << "Sample game using AngelScript " << asGetLibraryVersion() << "." << endl;
