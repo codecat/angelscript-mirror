@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/20</h2>
+<h2>Version 2.24.1 WIP - 2012/07/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>IsVarInScope() and GetAddressOfVar() now works properly even before Execute() (Thanks Friggle)
 <li>The garbage collector could enter an infinite recursive loop if invoked while calling a class destructor (Thanks Philip Bennefall)
 <li>Aborting a nested script call could cause a crash in the VM (Thanks Philip Bennefall)
+<li>AS_64BIT_PTR is now defined in angelscript.h instead of in as_config.h (Thanks quarnster)
 </ul>
 <li>Library
 <ul>
@@ -36,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved internal handling of namespaces
 <li>Reduced the size of saved bytecode by not storing the namespace of class methods
 <li>Bytecode optimizer exchanges some more sequences with shorter ones for better performance
+<li>When the engine receives a request to abort a script in a nested call it will now forward the request to the outer call, after aborting the inner call (Thanks Philip Bennefall)
 </ul>
 <li>Script language
 <ul>
@@ -49,6 +51,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Corrected the implementation of Complex::operator/() to calculate the proper result (Thanks CMRM)
 <li>Fixed compilation error in scriptbuilder.cpp on XCode 4.3 with CLang++ 3.1 (Thanks Ricky C)
+<li>The script array will forward requests to abort a script to the outer call when performing comparisons, which uses nested calls (Thanks Philip Bennefall)
 </ul>
 </ul>
 

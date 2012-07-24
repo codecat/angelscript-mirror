@@ -792,7 +792,12 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 
 	if( cmpContext )
 		if( isNested )
+		{
+			asEContextState state = cmpContext->GetState();
 			cmpContext->PopState();
+			if( state == asEXECUTION_ABORTED )
+				cmpContext->Abort();
+		}
 		else
 			cmpContext->Release();
 
@@ -939,7 +944,12 @@ int CScriptArray::Find(asUINT index, void *value) const
 
 	if( cmpContext )
 		if( isNested )
+		{
+			asEContextState state = cmpContext->GetState();
 			cmpContext->PopState();
+			if( state == asEXECUTION_ABORTED )
+				cmpContext->Abort();
+		}
 		else
 			cmpContext->Release();
 
@@ -1098,7 +1108,12 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 
 	if( cmpContext )
 		if( isNested )
+		{
+			asEContextState state = cmpContext->GetState();
 			cmpContext->PopState();
+			if( state == asEXECUTION_ABORTED )
+				cmpContext->Abort();
+		}
 		else
 			cmpContext->Release();
 }

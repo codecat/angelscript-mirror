@@ -914,13 +914,6 @@
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
-// Is the target a 64bit system?
-#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64)
-	#ifndef AS_64BIT_PTR
-		#define AS_64BIT_PTR
-	#endif
-#endif
-
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
 #if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_X64_MSVC) && !defined(AS_ARM) && !defined(AS_X64_MINGW))
@@ -969,19 +962,13 @@
 	#define	ALIGN(b) (b)
 #endif
 
-#define	ARG_W(b)    ((asWORD*)&b)
-#define	ARG_DW(b)   ((asDWORD*)&b)
-#define	ARG_QW(b)   ((asQWORD*)&b)
-#define	BCARG_W(b)  ((asWORD*)&(b)[1])
-#define	BCARG_DW(b) ((asDWORD*)&(b)[1])
-#define	BCARG_QW(b) ((asQWORD*)&(b)[1])
-
-#ifdef AS_64BIT_PTR
-	#define AS_PTR_SIZE  2
-#else
-	#define AS_PTR_SIZE  1
-#endif
+#define ARG_W(b)     ((asWORD*)&b)
+#define ARG_DW(b)    ((asDWORD*)&b)
+#define ARG_QW(b)    ((asQWORD*)&b)
 #define ARG_PTR(b)   ((asPWORD*)&b)
+#define BCARG_W(b)   ((asWORD*)&(b)[1])
+#define BCARG_DW(b)  ((asDWORD*)&(b)[1])
+#define BCARG_QW(b)  ((asQWORD*)&(b)[1])
 #define BCARG_PTR(b) ((asPWORD*)&(b)[1])
 
 // This macro is used to avoid warnings about unused variables.

@@ -355,6 +355,13 @@ typedef unsigned int   asUINT;
   #endif
 #endif
 
+// Is the target a 64bit system?
+#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64)
+	#ifndef AS_64BIT_PTR
+		#define AS_64BIT_PTR
+	#endif
+#endif
+
 typedef void (*asFUNCTION_t)();
 typedef void (*asGENFUNC_t)(asIScriptGeneric *);
 typedef void *(*asALLOCFUNC_t)(size_t);
