@@ -38,6 +38,15 @@ set(ANGELSCRIPT_SOURCE
         ../../source/as_variablescope.cpp
 )
 
+if(ANDROID)
+        enable_language(ASM)
+        if(CMAKE_ASM_COMPILER_WORKS)
+                set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_arm.cpp ../../source/as_callfunc_arm_gcc.S)
+        else()
+                message(FATAL ERROR "Android target requires a working assembler")
+        endif(CMAKE_ASM_COMPILER_WORKS)
+endif()
+
 set(ANGELSCRIPT_HEADERS
         ../../include/angelscript.h
         ../../source/as_array.h

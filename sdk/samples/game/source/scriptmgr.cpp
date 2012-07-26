@@ -2,6 +2,8 @@
 #include "gamemgr.h"
 #include "gameobj.h"
 #include <iostream>  // cout
+#include <stdio.h>  // fopen, fclose
+#include <string.h> // strcmp
 #include <assert.h>
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"

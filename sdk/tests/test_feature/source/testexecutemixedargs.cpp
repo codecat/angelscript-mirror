@@ -17,7 +17,7 @@ static float  t2 = 0;
 static double t3 = 0;
 static char   t4 = 0;
 
-static void cfunction(int f1, float f2, double f3, int f4) 
+static void cfunction(int f1, float f2, double f3, int f4)
 {
 	called = true;
 
@@ -25,11 +25,12 @@ static void cfunction(int f1, float f2, double f3, int f4)
 	t2 = f2;
 	t3 = f3;
 	t4 = (char)f4;
-	
+
 	testVal = (f1 == 10) && (f2 == 1.92f) && (f3 == 3.88) && (f4 == 97);
 }
 
-static void cfunction_gen(asIScriptGeneric *gen) 
+
+static void cfunction_gen(asIScriptGeneric *gen)
 {
 	called = true;
 
@@ -37,7 +38,7 @@ static void cfunction_gen(asIScriptGeneric *gen)
 	t2 = gen->GetArgFloat(1);
 	t3 = gen->GetArgDouble(2);
 	t4 = (char)gen->GetArgDWord(3);
-	
+
 	testVal = (t1 == 10) && (t2 == 1.92f) && (t3 == 3.88) && (t4 == 97);
 }
 
@@ -49,12 +50,36 @@ static int     g4 = 0;
 static void cfunction2(asINT64 i1, float f2, char i3, int i4)
 {
 	called = true;
-	
+
 	g1 = i1;
 	g2 = f2;
 	g3 = i3;
 	g4 = i4;
-	
+
+	testVal = ((i1 == I64(0x102030405)) && (f2 == 3) && (i3 == 24) && (i4 == 128));
+}
+
+static void cfunction3(int f1, double f3, float f2, int f4)
+{
+	called = true;
+
+	t1 = f1;
+	t2 = f2;
+	t3 = f3;
+	t4 = (char)f4;
+
+	testVal = (f1 == 10) && (f2 == 1.92f) && (f3 == 3.88) && (f4 == 97);
+}
+
+static void cfunction4(int i4, asINT64 i1, float f2, char i3)
+{
+	called = true;
+
+	g1 = i1;
+	g2 = f2;
+	g3 = i3;
+	g4 = i4;
+
 	testVal = ((i1 == I64(0x102030405)) && (f2 == 3) && (i3 == 24) && (i4 == 128));
 }
 
@@ -69,7 +94,7 @@ bool TestExecuteMixedArgs()
 		engine->RegisterGlobalFunction("void cfunction(int, float, double, int)", asFUNCTION(cfunction), asCALL_CDECL);
 
 	ExecuteString(engine, "cfunction(10, 1.92f, 3.88, 97)");
-	
+
 	if (!called) {
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
@@ -82,16 +107,41 @@ bool TestExecuteMixedArgs()
 	{
 		called = false;
 		testVal = false;
-		
+
 		COutStream out;
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void cfunction2(int64, float, int8, int)", asFUNCTION(cfunction2), asCALL_CDECL);
-		
+		engine->RegisterGlobalFunction("void cfunction3(int, double, float, int)", asFUNCTION(cfunction3), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void cfunction4(int, int64, float, int8)", asFUNCTION(cfunction4), asCALL_CDECL);
+
 		ExecuteString(engine, "cfunction2(0x102030405, 3, 24, 128)");
-		
+
 		if( !called )
 		{
 			printf("%s: cfunction2 not called\n", TESTNAME);
+			TEST_FAILED;
+		}
+		else if( !testVal )
+		{
+			printf("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
+			TEST_FAILED;
+		}
+
+		// TODO: This currently doesn't work on Android as the double is not properly aligned on a 8byte boundary
+		ExecuteString(engine, "cfunction3(10, 3.88, 1.92f, 97)");
+		if (!called) {
+			printf("\n%s: cfunction3 not called from script\n\n", TESTNAME);
+			TEST_FAILED;
+		} else if (!testVal) {
+			printf("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
+			TEST_FAILED;
+		}
+
+		// TODO: This currently doesn't work on Android as the int64 is not properly aligned on a 8byte boundary
+		ExecuteString(engine, "cfunction4(128, 0x102030405, 3, 24)");
+		if( !called )
+		{
+			printf("%s: cfunction4 not called\n", TESTNAME);
 			TEST_FAILED;
 		}
 		else if( !testVal )
