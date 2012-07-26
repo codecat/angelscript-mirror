@@ -3340,14 +3340,16 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 	{
 		if( offset <= currOffset ) break;
 
-		if( calledFunc->parameterTypes[p].GetObjectType() ||
+		if( !calledFunc->parameterTypes[p].IsPrimitive() ||
 			calledFunc->parameterTypes[p].IsReference() )
 		{
+			// objects and references are passed by pointer
 			numPtrs++;
 			currOffset += AS_PTR_SIZE;
 		}
 		else
 		{
+			// built-in primitives or enums are passed by value
 			asASSERT( calledFunc->parameterTypes[p].IsPrimitive() );
 			currOffset += calledFunc->parameterTypes[p].GetSizeOnStackDWords();
 		}

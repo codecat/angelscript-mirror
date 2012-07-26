@@ -1347,6 +1347,47 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem on 64bit
+	// http://www.gamedev.net/topic/628452-linux-x86-64-not-loading-or-saving-bytecode-correctly/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"enum TestEnum \n"
+			"{ \n"
+			"  TestEnum_A \n"
+			"} \n"
+			"class NonPrimitive \n"
+			"{ \n"
+			"} \n"
+			"void Foo( TestEnum e, NonPrimitive o ) \n"
+			"{ \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  NonPrimitive o; \n"
+			"  Foo( TestEnum_A, o ); \n" // Crashes saving bytecode for where it's called
+			"} \n");
+
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"1");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
