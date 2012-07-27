@@ -2439,7 +2439,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 	{
 		if( offset <= currOffset ) break;
 
-		if( calledFunc->parameterTypes[p].GetObjectType() ||
+		if( !calledFunc->parameterTypes[p].IsPrimitive() ||
 			calledFunc->parameterTypes[p].IsReference() )
 		{
 			numPtrs++;
@@ -2447,6 +2447,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		}
 		else
 		{
+			// Enums or built-in primitives are passed by value
 			asASSERT( calledFunc->parameterTypes[p].IsPrimitive() );
 			currOffset += calledFunc->parameterTypes[p].GetSizeOnStackDWords();
 		}
