@@ -1352,23 +1352,29 @@ bool Test()
 	{
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"enum TestEnum \n"
 			"{ \n"
-			"  TestEnum_A \n"
+			"  TestEnum_A = 42 \n"
 			"} \n"
 			"class NonPrimitive \n"
 			"{ \n"
+			"  int val; \n"
 			"} \n"
-			"void Foo( TestEnum e, NonPrimitive o ) \n"
+			"void Foo( int a, TestEnum e, NonPrimitive o ) \n"
 			"{ \n"
+			"  assert( a == 1 ); \n"
+			"  assert( e == TestEnum_A ); \n"
+			"  assert( o.val == 513 ); \n"
 			"} \n"
 			"void main() \n"
 			"{ \n"
 			"  NonPrimitive o; \n"
-			"  Foo( TestEnum_A, o ); \n" // Crashes saving bytecode for where it's called
+			"  o.val = 513; \n"
+			"  Foo( 1, TestEnum_A, o ); \n"
 			"} \n");
 
 		int r = mod->Build();
@@ -1383,6 +1389,10 @@ bool Test()
 		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
 		r = mod2->LoadByteCode(&stream);
 		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod2);
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		engine->Release();

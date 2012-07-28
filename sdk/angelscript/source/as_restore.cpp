@@ -2253,7 +2253,7 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
-		if( func->parameterTypes[n].GetObjectType() ||
+		if( !func->parameterTypes[n].IsPrimitive() ||
 			func->parameterTypes[n].IsReference() )
 		{
 			adjustments.PushLast(offset);
@@ -3159,7 +3159,7 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
-		if( func->parameterTypes[n].GetObjectType() ||
+		if( !func->parameterTypes[n].IsPrimitive() ||
 			func->parameterTypes[n].IsReference() )
 		{
 			adjustments.PushLast(offset);
