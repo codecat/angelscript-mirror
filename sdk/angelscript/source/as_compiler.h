@@ -84,6 +84,22 @@ struct asSExprContext
 		if( property_arg )
 			asDELETE(property_arg, asSExprContext);
 	}
+	void Clear()
+	{
+		bc.ClearAll();
+		type.SetDummy();
+		if( property_arg )
+			asDELETE(property_arg, asSExprContext);
+		property_arg = 0;
+		deferredParams.SetLength(0);
+		exprNode        = 0; 
+		origExpr        = 0; 
+		property_get    = 0; 
+		property_set    = 0; 
+		property_const  = false;
+		property_handle = false;
+		property_ref    = false;
+	}
 
 	asCByteCode bc;
 	asCTypeInfo type;
@@ -185,7 +201,6 @@ protected:
 	int  ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node);
 	int  FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node, bool isThisAccess = false);
 	int  FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node, bool isThisAccess = false);
-	void SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target);
 	void PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ctx, bool forceOnHeap = false);
 	void PrepareOperand(asSExprContext *ctx, asCScriptNode *node);
 	void PrepareForAssignment(asCDataType *lvalue, asSExprContext *rvalue, asCScriptNode *node, bool toTemporary, asSExprContext *lvalueExpr = 0);

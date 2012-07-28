@@ -6349,7 +6349,6 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 
 	asCArray<asCScriptNode *> stack(count);
 	asCArray<asCScriptNode *> stack2(count);
-	asCArray<asCScriptNode *> postfix(count);
 
 	node = expr->firstChild;
 	while( node )
@@ -6368,29 +6367,8 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 	while( stack.GetLength() > 0 )
 		stack2.PushLast(stack.PopLast());
 
-	// We need to swap operands so that the left
-	// operand is always computed before the right
-	SwapPostFixOperands(stack2, postfix);
-
 	// Compile the postfix formatted expression
-	return CompilePostFixExpression(&postfix, ctx);
-}
-
-void asCCompiler::SwapPostFixOperands(asCArray<asCScriptNode *> &postfix, asCArray<asCScriptNode *> &target)
-{
-	if( postfix.GetLength() == 0 ) return;
-
-	asCScriptNode *node = postfix.PopLast();
-	if( node->nodeType == snExprTerm )
-	{
-		target.PushLast(node);
-		return;
-	}
-
-	SwapPostFixOperands(postfix, target);
-	SwapPostFixOperands(postfix, target);
-
-	target.PushLast(node);
+	return CompilePostFixExpression(&stack2, ctx);
 }
 
 int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asSExprContext *ctx)
@@ -6402,23 +6380,54 @@ int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, as
 	// errors in case the expression fails to compile
 	ctx->type.SetDummy();
 
-	// Pop the last node
-	asCScriptNode *node = postfix->PopLast();
-	ctx->exprNode = node;
+	// Evaluate the operands and operators
+	asCArray<asSExprContext*> free;
+	asCArray<asSExprContext*> expr;
+	int ret = 0;
+	for( asUINT n = 0; ret == 0 && n < postfix->GetLength(); n++ )
+	{
+		asCScriptNode *node = (*postfix)[n];
+		if( node->nodeType == snExprTerm )
+		{
+			asSExprContext *e = free.GetLength() ? free.PopLast() : asNEW(asSExprContext)(engine);
+			expr.PushLast(e);
+			e->exprNode = node;
+			ret = CompileExpressionTerm(node, e);
+		}
+		else
+		{
+			asSExprContext *r = expr.PopLast();
+			asSExprContext *l = expr.PopLast();
 
-	// If term, compile the term
-	if( node->nodeType == snExprTerm )
-		return CompileExpressionTerm(node, ctx);
+			// Now compile the operator
+			asSExprContext *e = free.GetLength() ? free.PopLast() : asNEW(asSExprContext)(engine);
+			ret = CompileOperator(node, l, r, e);
 
-	// Compile the two expression terms
-	asSExprContext r(engine), l(engine);
+			expr.PushLast(e);
 
-	int ret;
-	ret = CompilePostFixExpression(postfix, &l); if( ret < 0 ) return ret;
-	ret = CompilePostFixExpression(postfix, &r); if( ret < 0 ) return ret;
+			// Free the operands
+			l->Clear();
+			free.PushLast(l);
+			r->Clear();
+			free.PushLast(r);
+		}
+	}
 
-	// Compile the operation
-	return CompileOperator(node, &l, &r, ctx);
+	if( ret == 0 )
+	{
+		asASSERT(expr.GetLength() == 1);
+
+		// The final result should be moved to the output context
+		MergeExprBytecodeAndType(ctx, expr[0]);
+	}
+	
+	// Clean up
+	for( asUINT e = 0; e < expr.GetLength(); e++ )
+		asDELETE(expr[e], asSExprContext);
+	for( asUINT f = 0; f < free.GetLength(); f++ )
+		asDELETE(free[f], asSExprContext);
+
+	return ret;
 }
 
 int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/26</h2>
+<h2>Version 2.24.1 WIP - 2012/07/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Reduced the size of saved bytecode by not storing the namespace of class methods
 <li>Bytecode optimizer exchanges some more sequences with shorter ones for better performance
 <li>When the engine receives a request to abort a script in a nested call it will now forward the request to the outer call, after aborting the inner call (Thanks Philip Bennefall)
+<li>Reduced recursiveness in compiler to allow it to compile extremely long expressions without stack overflow (Thanks Philip Bennefall)
 </ul>
 <li>Script language
 <ul>

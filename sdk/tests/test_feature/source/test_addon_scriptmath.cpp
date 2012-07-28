@@ -104,7 +104,9 @@ bool Test()
 	}
 
 	// Assignment of temporary object
-	r = ExecuteString(engine, "complex v; float r = (v = complex(10.0f,7)).r; assert( r > 9.9999f && r < 10.0001f );");
+	r = ExecuteString(engine, "complex v; \n"
+		                      "float r = (v = complex(10.0f,7)).r; \n"
+							  "assert( r > 9.9999f && r < 10.0001f );");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;

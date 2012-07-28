@@ -2190,6 +2190,29 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test extremely long expressions
+	// Previously this was failing due to the recursiveness in the compiler
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		string script;
+		script.reserve(20000);
+		script += "int a = 1; \na = ";
+		for( asUINT n = 0; n < 9500; n++ )
+			script += "a+";
+		script += "a; \nassert( a == 9501 ); \n";
+
+		r = ExecuteString(engine, script.c_str());
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
