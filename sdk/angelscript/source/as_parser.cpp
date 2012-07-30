@@ -2059,20 +2059,16 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	GetToken(&t);
 	RewindTo(&t);
 
-	// A class method decl can be preceded by 'private' 
 	if( isMethod )
 	{
-		sToken t1;
+		// A class method decl can be preceded by 'private' 
+		sToken t1, t2;
 		GetToken(&t1);
 		if( t1.type != ttPrivate )
 			RewindTo(&t1);
-	}
 
-	// A class constructor starts with identifier followed by parenthesis
-	// A class destructor starts with the ~ token
-	if( isMethod )
-	{
-		sToken t1, t2;
+		// A class constructor starts with identifier followed by parenthesis
+		// A class destructor starts with the ~ token
 		GetToken(&t1);
 		GetToken(&t2);
 		RewindTo(&t1);

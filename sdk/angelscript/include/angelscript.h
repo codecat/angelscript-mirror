@@ -998,7 +998,7 @@ public:
 // Use our own memset() and memcpy() implementations for better portability
 inline void asMemClear(void *_p, size_t size)
 {
-	char *p = (char *)_p;
+	char *p = reinterpret_cast<char *>(_p);
 	const char *e = p + size;
 	for( ; p < e; p++ )
 		*p = 0;
@@ -1006,8 +1006,8 @@ inline void asMemClear(void *_p, size_t size)
 
 inline void asMemCopy(void *_d, const void *_s, size_t size)
 {
-	char *d = (char *)_d;
-	const char *s = (const char *)_s;
+	char *d = reinterpret_cast<char *>(_d);
+	const char *s = reinterpret_cast<const char *>(_s);
 	const char *e = s + size;
 	for( ; s < e; d++, s++ )
 		*d = *s;
@@ -1020,9 +1020,7 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-
-	// Casting to PWORD to support constant 0 without compiler warnings
-	p.ptr.f.func = (asFUNCTION_t)(asPWORD)func;
+	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
 
 	// Mark this as a global function
 	p.flag = 2;
@@ -1036,7 +1034,7 @@ inline asSFuncPtr asFunctionPtr<asGENFUNC_t>(asGENFUNC_t func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = (asFUNCTION_t)func;
+	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
 
 	// Mark this as a generic function
 	p.flag = 1;
@@ -1149,7 +1147,7 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 			// Copy the virtual table index to the 4th dword so that AngelScript
 			// can properly detect and deny the use of methods with virtual inheritance.
-			*(((asDWORD*)&p)+3) = *(((asDWORD*)&p)+2);
+			*(static_cast<asDWORD*>(&p)+3) = *(static_cast<asDWORD*>(&p)+2);
 		}
 #endif
 

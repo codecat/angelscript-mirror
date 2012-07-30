@@ -47,7 +47,7 @@ template <class T> class asCArray
 public:
 	asCArray();
 	asCArray(const asCArray<T> &);
-	asCArray(int reserve);
+	asCArray(size_t reserve);
 	~asCArray();
 
 	void   Allocate(size_t numElements, bool keepData);
@@ -120,7 +120,7 @@ asCArray<T>::asCArray(const asCArray<T> &copy)
 }
 
 template <class T>
-asCArray<T>::asCArray(int reserve)
+asCArray<T>::asCArray(size_t reserve)
 {
 	array     = 0;
 	length    = 0;
@@ -200,7 +200,7 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 	{
 		if( sizeof(T)*numElements <= 8 )
 			// Use the internal buffer
-			tmp = (T*)buf;
+			tmp = reinterpret_cast<T*>(buf);
 		else
 		{
 			// Allocate the array and construct each of the elements
@@ -261,7 +261,7 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 			for( size_t n = 0; n < oldLength; n++ )
 				array[n].~T();
 
-			if( array != (T*)buf )
+			if( array != reinterpret_cast<T*>(buf) )
 				asDELETEARRAY(array);
 		}
 	}
@@ -284,7 +284,7 @@ void asCArray<T>::AllocateNoConstruct(size_t numElements, bool keepData)
 	{
 		if( sizeof(T)*numElements <= 8 )
 			// Use the internal buffer
-			tmp = (T*)buf;
+			tmp = reinterpret_cast<T*>(buf);
 		else
 		{
 			// Allocate the array and construct each of the elements
@@ -321,7 +321,7 @@ void asCArray<T>::AllocateNoConstruct(size_t numElements, bool keepData)
 			else
 				length = 0;
 
-			if( array != (T*)buf )
+			if( array != reinterpret_cast<T*>(buf) )
 				asDELETEARRAY(array);
 		}
 	}
@@ -400,7 +400,7 @@ bool asCArray<T>::operator ==(const asCArray<T> &other) const
 {
 	if( length != other.length ) return false;
 
-	for( asUINT n = 0; n < length; n++ )
+	for( size_t n = 0; n < length; n++ )
 		if( array[n] != other.array[n] )
 			return false;
 
@@ -442,7 +442,7 @@ template <class T>
 int asCArray<T>::IndexOf(T &e) const
 {
 	for( size_t n = 0; n < length; n++ )
-		if( array[n] == e ) return (int)n;
+		if( array[n] == e ) return static_cast<int>(n);
 
 	return -1;
 }

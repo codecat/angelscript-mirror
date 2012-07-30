@@ -208,7 +208,7 @@ bool asCContext::IsNested(asUINT *nestCount) const
 		if( s && s[0] == 0 )
 		{
 			if( nestCount )
-				*nestCount++;
+				(*nestCount)++;
 			else
 				return true;
 		}
@@ -1371,6 +1371,10 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 		asPWORD *s = m_callStack.AddressOf() + (GetCallstackSize()-stackLevel-1)*CALLSTACK_FRAME_SIZE;
 		func = (asCScriptFunction*)s[1];
 		bytePos = (asDWORD*)s[2];
+
+		// Subract 1 from the bytePos, because we want the line where 
+		// the call was made, and not the instruction after the call
+		bytePos -= 1;
 	}
 
 	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()));

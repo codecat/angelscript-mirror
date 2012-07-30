@@ -70,13 +70,13 @@ asCModule::~asCModule()
 		builder = 0;
 	}
 
-	// Clean the user data
-	if( userData && engine->cleanModuleFunc )
-		engine->cleanModuleFunc(this);
-
-	// Remove the module from the engine
 	if( engine )
 	{
+		// Clean the user data
+		if( userData && engine->cleanModuleFunc )
+			engine->cleanModuleFunc(this);
+
+		// Remove the module from the engine
 		if( engine->lastModule == this )
 			engine->lastModule = 0;
 
@@ -1318,7 +1318,7 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 
 	engine->BuildCompleted();
 
-	if( r >= 0 && outFunc )
+	if( r >= 0 && outFunc && func )
 	{
 		// Return the function to the caller
 		*outFunc = func;
