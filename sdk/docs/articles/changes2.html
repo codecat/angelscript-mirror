@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/29</h2>
+<h2>Version 2.24.1 WIP - 2012/07/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>AS_64BIT_PTR is now defined in angelscript.h instead of in as_config.h (Thanks quarnster)
 <li>Saving bytecode with functions that take enums by value could fail on 64bit platforms (Thanks m4ttbush)
 <li>asIScriptContext::GetLineNumber() will now return the line where the function call was made from (Thanks quarnster)
+<li>Registering object properties when both object and property type is in a namespace is now working properly (Thanks Starfox)
 </ul>
 <li>Library
 <ul>

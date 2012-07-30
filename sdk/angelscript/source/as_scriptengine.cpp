@@ -1104,7 +1104,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 	asCBuilder bld(this, mod);
 
 	asCScriptFunction func(this, mod, asFUNC_DUMMY);
-	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
@@ -2492,7 +2492,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
-	r = bld.ParseFunctionDeclaration(0, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
+	r = bld.ParseFunctionDeclaration(0, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle, defaultNamespace);
 	if( r < 0 )
 	{
 		// Set as dummy function before deleting
@@ -2571,7 +2571,7 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
 
 	asCScriptFunction func(const_cast<asCScriptEngine*>(this), 0, asFUNC_DUMMY);
-	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 	if( r < 0 )
 		return 0;
 
@@ -4344,7 +4344,7 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 		return ConfigError(asOUT_OF_MEMORY, "RegisterFuncdef", decl, 0);
 
 	asCBuilder bld(this, 0);
-	int r = bld.ParseFunctionDeclaration(0, decl, func, false, 0, 0);
+	int r = bld.ParseFunctionDeclaration(0, decl, func, false, 0, 0, defaultNamespace);
 	if( r < 0 )
 	{
 		// Set as dummy function before deleting

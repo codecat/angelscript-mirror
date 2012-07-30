@@ -514,7 +514,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl) const
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
 
 	asCScriptFunction func(engine, const_cast<asCModule*>(this), asFUNC_DUMMY);
-	bld.ParseFunctionDeclaration(0, decl, &func, false);
+	bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 
 	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
@@ -564,7 +564,7 @@ int asCModule::GetFunctionIdByDecl(const char *decl) const
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
 
 	asCScriptFunction func(engine, const_cast<asCModule*>(this), asFUNC_DUMMY);
-	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
@@ -614,7 +614,7 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
 
 	asCScriptFunction func(engine, const_cast<asCModule*>(this), asFUNC_DUMMY);
-	int r = bld.ParseFunctionDeclaration(0, decl, &func, false);
+	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 	if( r < 0 )
 	{
 		// Invalid declaration

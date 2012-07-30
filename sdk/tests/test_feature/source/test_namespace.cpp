@@ -446,6 +446,28 @@ bool Test()
 		engine->Release();
 	}
 
+	// Registering types with namespaces
+	// http://www.gamedev.net/topic/628401-problem-binding-two-similarly-named-objects-in-different-namespaces/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("A");
+		engine->RegisterEnum("ETest");
+		engine->RegisterObjectType("CTest", 0, asOBJ_REF| asOBJ_NOCOUNT);
+		r = engine->RegisterObjectProperty("CTest", "ETest e", 0);
+		if( r < 0 )
+			TEST_FAILED;
+		engine->RegisterObjectType("CTest2", 0, asOBJ_REF| asOBJ_NOCOUNT);
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterObjectMethod("CTest2", "ETest Method(ETest)", asFUNCTION(0), asCALL_GENERIC);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
