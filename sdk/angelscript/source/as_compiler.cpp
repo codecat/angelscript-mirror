@@ -119,6 +119,9 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 {
 	Reset(builder, script, outFunc);
 	
+	// Insert a JitEntry at the start of the function for JIT compilers
+	byteCode.InstrPTR(asBC_JitEntry, 0);
+
 	// Make sure all the class members can be initialized with default constructors
 	for( asUINT n = 0; n < outFunc->objectType->properties.GetLength(); n++ )
 	{
@@ -162,12 +165,13 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 {
 	Reset(builder, script, outFunc);
 
-	unsigned int n;
+	// Insert a JitEntry at the start of the function for JIT compilers
+	byteCode.InstrPTR(asBC_JitEntry, 0);
 
 	// Find the corresponding constructor
 	asCDataType dt = asCDataType::CreateObject(outFunc->returnType.GetObjectType(), false);
 	int constructor = 0;
-	for( n = 0; n < dt.GetBehaviour()->factories.GetLength(); n++ )
+	for( unsigned int n = 0; n < dt.GetBehaviour()->factories.GetLength(); n++ )
 	{
 		if( dt.GetBehaviour()->factories[n] == outFunc->id )
 		{

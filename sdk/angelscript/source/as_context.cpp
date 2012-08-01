@@ -2366,6 +2366,12 @@ void asCContext::ExecuteNext()
 
 			if( objType->flags & asOBJ_SCRIPT_OBJECT )
 			{
+				// Need to move the values back to the context as the construction
+				// of the script object may reuse the context for nested calls.
+				m_regs.programPointer    = l_bc;
+				m_regs.stackPointer      = l_sp;
+				m_regs.stackFramePointer = l_fp;
+
 				// Pre-allocate the memory
 				asDWORD *mem = (asDWORD*)m_engine->CallAlloc(objType);
 
@@ -2375,19 +2381,14 @@ void asCContext::ExecuteNext()
 				// Call the constructor to initalize the memory
 				asCScriptFunction *f = m_engine->scriptFunctions[func];
 
-				asDWORD **a = (asDWORD**)*(asPWORD*)(l_sp + f->GetSpaceNeededForArguments());
+				asDWORD **a = (asDWORD**)*(asPWORD*)(m_regs.stackPointer + f->GetSpaceNeededForArguments());
 				if( a ) *a = mem;
 
 				// Push the object pointer on the stack
-				l_sp -= AS_PTR_SIZE;
-				*(asPWORD*)l_sp = (asPWORD)mem;
+				m_regs.stackPointer -= AS_PTR_SIZE;
+				*(asPWORD*)m_regs.stackPointer = (asPWORD)mem;
 
-				l_bc += 2+AS_PTR_SIZE;
-
-				// Need to move the values back to the context
-				m_regs.programPointer    = l_bc;
-				m_regs.stackPointer      = l_sp;
-				m_regs.stackFramePointer = l_fp;
+				m_regs.programPointer += 2+AS_PTR_SIZE;
 
 				CallScriptFunction(f);
 

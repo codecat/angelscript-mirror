@@ -3176,10 +3176,23 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	SetScriptFunction(func);
 
 	// Generate the bytecode for the factory stub
-	func->byteCode.SetLength(asBCTypeSize[asBCInfo[asBC_OBJTYPE].type] + 
-	                         asBCTypeSize[asBCInfo[asBC_CALLSYS].type] +
-	                         asBCTypeSize[asBCInfo[asBC_RET].type]);
+	asUINT bcLength = asBCTypeSize[asBCInfo[asBC_OBJTYPE].type] + 
+	                  asBCTypeSize[asBCInfo[asBC_CALLSYS].type] +
+	                  asBCTypeSize[asBCInfo[asBC_RET].type];
+
+	if( ep.includeJitInstructions )
+		bcLength += asBCTypeSize[asBCInfo[asBC_JitEntry].type];
+
+	func->byteCode.SetLength(bcLength);
 	asDWORD *bc = func->byteCode.AddressOf();
+
+	if( ep.includeJitInstructions )
+	{
+		*(asBYTE*)bc = asBC_JitEntry;
+		*(asPWORD*)(bc+1) = 0;
+		bc += asBCTypeSize[asBCInfo[asBC_JitEntry].type];
+	}
+
 	*(asBYTE*)bc = asBC_OBJTYPE;
 	*(asPWORD*)(bc+1) = (asPWORD)ot;
 	bc += asBCTypeSize[asBCInfo[asBC_OBJTYPE].type];
@@ -3194,6 +3207,8 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 	// Tell the virtual machine not to clean up the object on exception
 	func->dontCleanUpOnException = true;
+
+	func->JITCompile();
 
 	return func;
 }

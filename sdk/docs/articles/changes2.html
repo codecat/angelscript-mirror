@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/07/30</h2>
+<h2>Version 2.24.1 WIP - 2012/08/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Saving bytecode with functions that take enums by value could fail on 64bit platforms (Thanks m4ttbush)
 <li>asIScriptContext::GetLineNumber() will now return the line where the function call was made from (Thanks quarnster)
 <li>Registering object properties when both object and property type is in a namespace is now working properly (Thanks Starfox)
+<li>Fixed memory invasion when script allocated script class that had other script classes as members (Thanks Andrew Ackermann)
 </ul>
 <li>Library
 <ul>
@@ -42,6 +43,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Bytecode optimizer exchanges some more sequences with shorter ones for better performance
 <li>When the engine receives a request to abort a script in a nested call it will now forward the request to the outer call, after aborting the inner call (Thanks Philip Bennefall)
 <li>Reduced recursiveness in compiler to allow it to compile extremely long expressions without stack overflow (Thanks Philip Bennefall)
+<li>Added JitEntry instructions in the factory stub functions and generated default constructor 
 </ul>
 <li>Script language
 <ul>

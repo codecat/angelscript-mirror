@@ -2213,6 +2213,94 @@ bool Test()
 		engine->Release();
 	}
 
+
+	// This test caught a problem when the script code allocated a script class,
+	// which in turn used nested contexts to initialize some members. The VM
+	// hadn't updated the members with the stack pointer/program pointer before 
+	// the nested call so the memory was overwritten.
+	// Reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"shared class Alignment { \n"
+			"  Alignment(int lt, float lp, int lx, \n"
+			" 		     int tt, float tp, int tx, \n"
+			"		     int rt, float rp, int rx, \n"
+			"		     int bt, float bp, int bx) \n"
+			"  { \n"
+			"    assert(lt == AS_Left); \n"
+			"    assert(tt == AS_Bottom); \n"
+			"    assert(rt == AS_Right); \n"
+			"    assert(bt == AS_Bottom); \n"
+			"    assert(lp == 3.14f); \n"
+			"    assert(tp == 1.43f); \n"
+			"    assert(rp == 4.13f); \n"
+			"    assert(bp == 4.34f); \n"
+			"    assert(lx == 42); \n"
+			"    assert(tx == 53); \n"
+			"    assert(rx == 64); \n"
+			"    assert(bx == 75); \n"
+			"  }\n"
+			"  AlignedPoint left; \n"
+		//	"  AlignedPoint right; \n"
+		//	"  AlignedPoint top; \n"
+		//	"  AlignedPoint bottom; \n"
+		//	"  double aspectRatio; \n"
+		//	"  double aspectHorizAlign; \n"
+		//	"  double aspectVertAlign; \n"
+			"} \n"
+			"shared class AlignedPoint { \n"
+		//	"  int type; \n"
+		//	"  float percent; \n"
+		//	"  int pixels; \n"
+		//	"  int size; \n"
+			"  \n"
+			"  AlignedPoint() { \n"
+		//	"    type = AS_Left; \n"
+		//	"    pixels = 0; \n"
+		//	"    percent = 0; \n"
+		//	"    size = 0; \n"
+			"  } \n"
+			"} \n"
+			"shared enum AlignmentSide \n"
+			"{ \n"
+			"  AS_Left, AS_Right, AS_Top = AS_Left, AS_Bottom = AS_Right \n"
+			"} \n"
+			"class Fault { \n"
+			"  Alignment @get_alignment() {return A;} \n"
+			"  void set_alignment(Alignment@ value) {@A = value;} \n"
+			"  Fault() { \n"
+			"    a = 3.14f; \n"
+			"    b = 1.43f; \n"
+			"    c = 4.13f; \n"
+			"    d = 4.34f; \n"
+			"    @alignment = Alignment( \n"
+			"                    AS_Left,   a + 0.0f, 42, \n"
+			"                    AS_Bottom, b + 0.0f, 53, \n"
+			"                    AS_Right,  c + 0.0f, 64, \n"
+			"                    AS_Bottom, d + 0.0f, 75); \n"
+			"  } \n"
+			"  Alignment @A; \n"
+			"  float a; float b; float c; float d; \n"
+			"} \n";
+			
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Fault f()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
