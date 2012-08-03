@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.24.0
-#define ANGELSCRIPT_VERSION        22400
-#define ANGELSCRIPT_VERSION_STRING "2.24.0"
+//! \details Version 2.24.1
+#define ANGELSCRIPT_VERSION        22401
+#define ANGELSCRIPT_VERSION_STRING "2.24.1"
 
 // Data types
 
@@ -557,6 +557,13 @@ typedef unsigned int   asUINT;
     typedef unsigned __int64 asQWORD;
     typedef __int64 asINT64;
   #endif
+#endif
+
+// Is the target a 64bit system?
+#if defined(__LP64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_X64)
+	#ifndef AS_64BIT_PTR
+		#define AS_64BIT_PTR
+	#endif
 #endif
 
 typedef void (*asFUNCTION_t)();
@@ -3347,7 +3354,7 @@ public:
 // Use our own memset() and memcpy() implementations for better portability
 inline void asMemClear(void *_p, size_t size)
 {
-	char *p = (char *)_p;
+	char *p = reinterpret_cast<char *>(_p);
 	const char *e = p + size;
 	for( ; p < e; p++ )
 		*p = 0;
@@ -3355,8 +3362,8 @@ inline void asMemClear(void *_p, size_t size)
 
 inline void asMemCopy(void *_d, const void *_s, size_t size)
 {
-	char *d = (char *)_d;
-	const char *s = (const char *)_s;
+	char *d = reinterpret_cast<char *>(_d);
+	const char *s = reinterpret_cast<const char *>(_s);
 	const char *e = s + size;
 	for( ; s < e; d++, s++ )
 		*d = *s;
@@ -3369,9 +3376,7 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-
-	// Casting to PWORD to support constant 0 without compiler warnings
-	p.ptr.f.func = (asFUNCTION_t)(asPWORD)func;
+	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
 
 	// Mark this as a global function
 	p.flag = 2;
@@ -3385,7 +3390,7 @@ inline asSFuncPtr asFunctionPtr<asGENFUNC_t>(asGENFUNC_t func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = (asFUNCTION_t)func;
+	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
 
 	// Mark this as a generic function
 	p.flag = 1;
@@ -3498,7 +3503,7 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 			// Copy the virtual table index to the 4th dword so that AngelScript
 			// can properly detect and deny the use of methods with virtual inheritance.
-			*(((asDWORD*)&p)+3) = *(((asDWORD*)&p)+2);
+			*(static_cast<asDWORD*>(&p)+3) = *(static_cast<asDWORD*>(&p)+2);
 		}
 #endif
 
@@ -4383,8 +4388,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(249),
 	asBCINFO_DUMMY(250),
 
-	asBCINFO(VarDecl,   W_ARG,          0),
-	asBCINFO(Block,     INFO,           0),
+	asBCINFO(VarDecl,	W_ARG,			0),
+	asBCINFO(Block,		INFO,			0),
 	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
 	asBCINFO(LINE,		INFO,			0),
 	asBCINFO(LABEL,		INFO,			0)

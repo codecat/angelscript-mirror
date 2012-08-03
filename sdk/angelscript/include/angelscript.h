@@ -1762,8 +1762,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(249),
 	asBCINFO_DUMMY(250),
 
-	asBCINFO(VarDecl,   W_ARG,          0),
-	asBCINFO(Block,     INFO,           0),
+	asBCINFO(VarDecl,	W_ARG,			0),
+	asBCINFO(Block,		INFO,			0),
 	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
 	asBCINFO(LINE,		INFO,			0),
 	asBCINFO(LABEL,		INFO,			0)
