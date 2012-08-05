@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.24.1 WIP - 2012/08/01</h2>
+<h2>Version 2.24.1 WIP - 2012/08/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asIScriptContext::GetLineNumber() will now return the line where the function call was made from (Thanks quarnster)
 <li>Registering object properties when both object and property type is in a namespace is now working properly (Thanks Starfox)
 <li>Fixed memory invasion when script allocated script class that had other script classes as members (Thanks Andrew Ackermann)
+<li>Registering global properties with a type from another namespace failed (Thanks _Engine_)
 </ul>
 <li>Library
 <ul>

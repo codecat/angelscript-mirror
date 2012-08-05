@@ -29,33 +29,7 @@ Global functions are declared normally, just as in C/C++. The function body must
 i.e. it is not possible to declare prototypes, nor is it necessary as the compiler can resolve 
 the function names anyway.
 
-For parameters sent by reference, i.e. with the <code>&amp;</code> modifier it is necessary to 
-specify in which direction the value is passed, <code>in</code>, <code>out</code>, or <code>inout</code>, e.g. <code>&amp;out</code>. If no keyword 
-is used, the compiler assumes the <code>inout</code> modifier. For parameters marked with <code>in</code>, the value is 
-passed in to the function, and for parameters marked with <code>out</code> the value is returned from the function.
-
-Parameters can also be declared as <code>const</code> which prohibits the alteration of their value. It is
-good practice to declare variables that will not be changed as <code>const</code>,
-because it makes for more readable code and the compiler is also able to take advantage 
-of it some times. Especially for <code>const &amp;in</code> the compiler is many times able to avoid a copy of the value.
-
-Parameters can have default arguments. When a function with default arguments is called, it is not necessary to explicitly inform the value of the arguments, as the compiler can automatically use the default arg. This is especially useful when functions have some arguments that rarely change.
-
-<pre>
-  // Declaration of a normal function
-  int MyFunction(int a, int b)
-  {
-    return a + b;
-  }
-
-  // Declaration of a function with default argument
-  int MyFuncWithDefArg(int a, int b = 0)
-  {
-    return a + b;
-  }
-</pre>
-
-\todo Promote to individual article, that should explain function overloading, default args, and parameter references
+\see \ref doc_script_func
 
 
 

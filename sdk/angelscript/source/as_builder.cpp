@@ -3848,7 +3848,9 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	// Determine namespace
 	asCString scope = GetScopeFromNode(n, file, &n);
 	asSNameSpace *ns = implicitNamespace;
-	if( scope != "" ) 
+	if( scope == "::" )
+		ns = engine->nameSpaces[0];
+	else if( scope != "" ) 
 	{
 		ns = engine->FindNameSpace(scope.AddressOf());
 		if( ns == 0 )

@@ -468,6 +468,23 @@ bool Test()
 		engine->Release();
 	}
 
+	// Registering properties using types from other namespaces
+	// http://www.gamedev.net/topic/629088-looks-like-bug-with-namespaces-in-revision-1380/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		engine->SetDefaultNamespace("mynamespace");
+		r = engine->RegisterGlobalProperty("::string val", (void*)1);
+		// TODO: Once recursive searches in the namespaces is implemented the scope operator is not needed
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

@@ -127,6 +127,7 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_expressions
  - \subpage doc_datatypes
  - \subpage doc_script_handle
+ - \subpage doc_script_func
  - \subpage doc_script_class
  - \subpage doc_script_class_prop
  - \subpage doc_script_retref
