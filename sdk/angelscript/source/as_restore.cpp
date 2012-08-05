@@ -1225,7 +1225,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 	}
 
 	// Reserve a spot in the savedDataTypes
-	int saveSlot = savedDataTypes.GetLength();
+	size_t saveSlot = savedDataTypes.GetLength();
 	savedDataTypes.PushLast(asCDataType());
 
 	// Read the datatype for the first time
@@ -3227,7 +3227,7 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 
 	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
-	asUINT length = func->byteCode.GetLength();
+	size_t length = func->byteCode.GetLength();
 	asDWORD *bc = func->byteCode.AddressOf();
 	bytecodeNbrByPos.SetLength(length);
 	asUINT num;
@@ -3365,7 +3365,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 void asCWriter::WriteByteCode(asCScriptFunction *func)
 {
 	asDWORD *bc   = func->byteCode.AddressOf();
-	asUINT length = func->byteCode.GetLength();
+	size_t length = func->byteCode.GetLength();
 
 	// The length cannot be stored, because it is platform dependent, 
 	// instead we store the number of instructions
@@ -3385,7 +3385,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		{
 			// Translate the object type 
 			asCObjectType *ot = *(asCObjectType**)(tmp+1);
-			*(int*)(tmp+1) = FindObjectTypeIdx(ot);
+			*(asPWORD*)(tmp+1) = FindObjectTypeIdx(ot);
 
 			// Translate the constructor func id, if it is a script class
 			if( ot->flags & asOBJ_SCRIPT_OBJECT )
@@ -3397,7 +3397,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				 c == asBC_OBJTYPE )  // PTR_ARG
 		{
 			// Translate object type pointers into indices
-			*(int*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
+			*(asPWORD*)(tmp+1) = FindObjectTypeIdx(*(asCObjectType**)(tmp+1));
 		}
 		else if( c == asBC_JitEntry ) // PTR_ARG
 		{
@@ -3482,7 +3482,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				 c == asBC_SetG4    )  // PTR_DW_ARG
 		{
 			// Translate global variable pointers into indices
-			*(int*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
+			*(asPWORD*)(tmp+1) = FindGlobalPropPtrIndex(*(void**)(tmp+1));
 		}
 		else if( c == asBC_JMP    ||	// DW_ARG
 			     c == asBC_JZ     ||
@@ -3510,7 +3510,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				 c == asBC_GETREF )
 		{
 			// Adjust the offset according to the function call that comes after
-			asBC_WORDARG0(tmp) = (asWORD)AdjustGetOffset(asBC_WORDARG0(tmp), func, bc - startBC);
+			asBC_WORDARG0(tmp) = (asWORD)AdjustGetOffset(asBC_WORDARG0(tmp), func, asDWORD(bc - startBC));
 		}
 
 		// Adjust the variable offsets

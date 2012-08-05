@@ -1020,7 +1020,10 @@ inline asSFuncPtr asFunctionPtr(T func)
 {
 	asSFuncPtr p;
 	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
+
+	// The size_t cast is to avoid a compiler warning with asFUNCTION(0) 
+	// on 64bit, as 0 is interpreted as a 32bit int value
+	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(size_t(func));
 
 	// Mark this as a global function
 	p.flag = 2;

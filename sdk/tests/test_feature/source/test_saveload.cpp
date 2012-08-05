@@ -392,6 +392,7 @@ bool Test()
 		mod = engine->GetModule(0);
 		mod->SaveByteCode(&stream);
 
+#ifndef STREAM_TO_FILE
 		if( stream.buffer.size() != 1756 )
 		{
 			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
@@ -407,7 +408,7 @@ bool Test()
 		{
 			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 		}
-
+#endif
 		// Test loading without releasing the engine first
 		mod->LoadByteCode(&stream);
 
@@ -454,6 +455,7 @@ bool Test()
 
 		//---------------------------------------
 		// A tiny file for comparison
+#ifndef STREAM_TO_FILE
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", "void f() {}");
@@ -482,6 +484,7 @@ bool Test()
 				printf("%0.2X", expected[m]);
 			printf("\n");
 		}
+#endif
 	}
 
 	//-----------------------------------------

@@ -129,12 +129,21 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_script_handle
  - \subpage doc_script_func
  - \subpage doc_script_class
- - \subpage doc_script_class_prop
- - \subpage doc_script_retref
  - \subpage doc_script_shared
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
 
+ 
+\page doc_script_func Functions
+
+Global functions provide the mean to implement routines that should operate on some input and produce a result. 
+
+- \subpage doc_script_func_decl
+- \subpage doc_script_func_ref
+- \subpage doc_script_func_retref
+- \subpage doc_script_func_overload
+- \subpage doc_script_func_defarg
+ 
 
 \page doc_script_class Script classes
 
@@ -146,7 +155,7 @@ for classes is similar to C++ and Java.
  - \subpage doc_script_class_inheritance
  - \subpage doc_script_class_private
  - \subpage doc_script_class_ops
- - \ref doc_script_class_prop
+ - \subpage doc_script_class_prop
 
 
 

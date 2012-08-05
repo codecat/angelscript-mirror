@@ -266,7 +266,7 @@ void asCCompiler::FinalizeFunction()
 			}
 		}
 	}
-	outFunc->objVariablesOnHeap = outFunc->objVariablePos.GetLength();
+	outFunc->objVariablesOnHeap = asUINT(outFunc->objVariablePos.GetLength());
 	for( n = 0; n < variableAllocations.GetLength(); n++ )
 	{
 		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
