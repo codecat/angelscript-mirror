@@ -409,6 +409,39 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test failure when allocating very large array
+	{
+		COutStream out;
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class test\n"
+			"{\n"
+			"  double x;\n"
+			"  double y;\n"
+			"  double z;\n"
+			"  double other;\n"
+			"}\n"
+			"void main()\n"
+			"{\n"
+			"  test[] list(1000000000);\n"
+			"}\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

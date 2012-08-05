@@ -47,7 +47,7 @@ static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
 	{
-		delete a;
+		a->Release();
 		return 0;
 	}
 
@@ -63,7 +63,7 @@ static CScriptArray* ScriptArrayFactoryDefVal(asIObjectType *ot, asUINT length, 
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
 	{
-		delete a;
+		a->Release();
 		return 0;
 	}
 
