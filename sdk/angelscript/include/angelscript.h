@@ -1127,9 +1127,8 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 		// Microsoft has a terrible optimization on class methods with virtual inheritance.
 		// They are hardcoding an important offset, which is not coming in the method pointer.
-#ifdef _MSC_VER
-		if( sizeof(void*) == 4 )
-		{
+
+#if defined(_MSC_VER) && !defined(AS_64BIT_PTR)
 			// Method pointers for virtual inheritance is not supported,
 			// as it requires the location of the vbase table, which is 
 			// only available to the C++ compiler, but not in the method
@@ -1148,7 +1147,6 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 			// Copy the virtual table index to the 4th dword so that AngelScript
 			// can properly detect and deny the use of methods with virtual inheritance.
 			*(static_cast<asDWORD*>(&p)+3) = *(static_cast<asDWORD*>(&p)+2);
-		}
 #endif
 
 		return p;

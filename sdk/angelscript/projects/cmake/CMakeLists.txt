@@ -38,6 +38,15 @@ set(ANGELSCRIPT_SOURCE
         ../../source/as_variablescope.cpp
 )
 
+if(MSVC AND CMAKE_CL_64)
+            enable_language(ASM_MASM)
+            if(CMAKE_ASM_MASM_COMPILER_WORKS)
+                            set(ANGELSCRIPT_SOURCE ${ANGELSCRIPT_SOURCE} ../../source/as_callfunc_x64_msvc_asm.asm)
+            else()
+                            message(FATAL ERROR "MSVC x86_64 target requires a working assembler")
+            endif()
+endif()
+
 if(ANDROID)
         enable_language(ASM)
         if(CMAKE_ASM_COMPILER_WORKS)
