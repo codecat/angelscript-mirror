@@ -1430,6 +1430,10 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 	asUINT numInstructions = ReadEncodedUInt();
 
 	// Reserve some space for the instructions
+	// TODO: optimize: Large functions take a long time to load
+	//                 as the bytecode buffer is resized too often.
+	//                 Need to find a good way to reduce the number 
+	//                 of resizes, yet, still avoid wasting memory.
 	func->byteCode.Allocate(numInstructions, 0);
 
 	asUINT pos = 0;

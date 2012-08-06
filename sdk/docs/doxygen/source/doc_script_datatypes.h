@@ -5,8 +5,8 @@
 Note that the host application may add types specific to that application, refer to the application's manual for more information.
 
  - \subpage doc_datatypes_primitives 
- - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_obj
+ - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_strings
  - \subpage doc_datatypes_funcptr
 
@@ -74,12 +74,13 @@ infinite, and NaN (Not-a-Number). For <code>float</code> NaN is represented by t
 for using arrays may differ for the application you're working with so consult the application's manual
 for more details.
 
-It is possible to declare array variables by appending the [] brackets to the type. When declaring a 
-variable with a type modifier, i.e. [], the type modifier affects the type of all variables in the list.
+It is possible to declare array variables with the array identifier followed by the type of the 
+elements within angle brackets. 
+
 Example:
 
 <pre>
-  int[] a, b, c;
+  array<int> a, b, c;
 </pre>
 
 <code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers.
@@ -89,19 +90,19 @@ a parameter to the constructor. The elements can also be individually initialize
 initialization list. Example:
 
 <pre>
-  int[] a;           // A zero-length array of integers
-  int[] b(3);        // An array of integers with 3 elements
-  int[] c(3, 1);     // An array of integers with 3 elements, all set to 1 by default
-  int[] d = {,3,4,}; // An array of integers with 4 elements, where
-                     // the second and third elements are initialized
+  array<int> a;           // A zero-length array of integers
+  array<int> b(3);        // An array of integers with 3 elements
+  array<int> c(3, 1);     // An array of integers with 3 elements, all set to 1 by default
+  array<int> d = {,3,4,}; // An array of integers with 4 elements, where
+                          // the second and third elements are initialized
 </pre>
 
 Multidimensional arrays are supported as arrays of arrays, for example:
 
 <pre>
-  int[][] a;                // An empty array of arrays of integers
-  int[][] b = {{1,2},{3,4}} // A 2 by 2 array with initialized values
-  int[][] c(10, int[](10)); // A 10 by 10 array of integers with uninitialized values
+  array<array<int>> a;                     // An empty array of arrays of integers
+  array<array<int>> b = {{1,2},{3,4}}      // A 2 by 2 array with initialized values
+  array<array<int>> c(10, array<int>(10)); // A 10 by 10 array of integers with uninitialized values
 </pre>
 
 Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the
@@ -111,30 +112,59 @@ range of valid indices are from 0 to length - 1.
   a[0] = some_value;
 </pre>
 
-The standard array implementation also has the following methods:
+\section doc_datatypes_arrays_addon Supporting array object and functions
+
+The array object supports a number of operators and has several class methods to facilitate the manipulation of strings.
+
+The array object is a \ref doc_datatypes_obj "reference type" even if the elements are not, so it's possible
+to use handles to the array object when passing it around to avoid costly copies.
+
+\subsection doc_datatypes_strings_addon_ops Operators
+
+ - =       assignment
+ - []      index operator
+ - ==, !=  equality
+
+\subsection doc_datatypes_strings_addon_mthd Methods
+
+  - uint length() const;
+  - void resize(uint);
+  - void reverse();
+  - void insertAt(uint index, const T& in);
+  - void insertLast(const T& in);
+  - void removeAt(uint index);
+  - void removeLast();
+  - void sortAsc();
+  - void sortAsc(uint index, uint count);
+  - void sortDesc();
+  - void sortDesc(uint index, uint count);
+  - int  find(const T& in);
+  - int  find(uint index, const T& in);
+
+The T represents the type of the array elements.
+  
+Script example:
 
 <pre>
-  // Adding and removing elements
-  void insertAt(uint index, const T& in);
-  void removeAt(uint index);
-  void insertLast(const T& in);
-  void removeLast();
+  int main()
+  {
+    array<int> arr = {1,2,3}; // 1,2,3
+    arr.insertLast(0);        // 1,2,3,0
+    arr.insertAt(2,4);        // 1,2,4,3,0
+    arr.removeAt(1);          // 1,4,3,0
 
-  // Determine size of array
-  uint length() const;
-  void resize(uint);
-
-  // Sort the array
-  void sortAsc();
-  void sortAsc(uint index, uint count);
-  void sortDesc();
-  void sortDesc(uint index, uint count);
-  void reverse();
-
-  // Find elements
-  int  find(const T& in);
-  int  find(uint index, const T& in);
+    arr.sortAsc();            // 0,1,3,4
+  
+    int sum = 0;
+    for( uint n = 0; n < arr.length(); n++ )
+      sum += arr[n];
+      
+    return sum;
+  }
 </pre>
+
+
+
 
 
 
@@ -300,60 +330,65 @@ UTF-8 or UTF-16 encoded sequence depending on the application settings. Only val
 code points are accepted, i.e. code points between U+D800 and U+DFFF (reserved for surrogate pairs) 
 or above U+10FFFF are not accepted.
 
-The standard string implementation also comes with the following methods:
+\section doc_datatypes_strings_addon Supporting string object and functions
+
+The string object supports a number of operators, and has several class methods and supporting 
+global functions to facilitate the manipulation of strings.
+
+\subsection doc_datatypes_strings_addon_ops Operators
+
+ - =            assignment
+ - +, +=        concatenation
+ - ==, !=       equality
+ - <, >, <=, >= comparison
+ - []           index operator
+
+Concatenation or assignment with primitives is allowed, and will then do
+a default transformation of the primitive to a string.
+ 
+\subsection doc_datatypes_strings_addon_mthd Methods
+
+ - uint           length() const;
+ - void           resize(uint);
+ - bool           isEmpty() const;
+ - string         substr(uint start = 0, int count = -1) const;
+ - int            findFirst(const string &in str, uint start = 0) const;
+ - int            findLast(const string &in str, int start = -1) const;
+ - array<string>@ split(const string &in delimiter) const;  
+
+\subsection doc_datatypes_strings_addon_funcs Functions
+
+ - string join(const array<string> &in arr, const string &in delimiter);
+ - int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0);
+ - double parseFloat(const string &in, uint &out byteCount = 0);
+ - string formatInt(int64 val, const string &in options, uint width = 0);
+ - string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0);
+
+The format functions takes a string that defines how the number should be formatted. The string
+is a combination of the following characters:
+
+  - l = left justify
+  - 0 = pad with zeroes
+  - + = always include the sign, even if positive
+  - space = add a space in case of positive number
+  - h = hexadecimal integer small letters
+  - H = hexadecimal integer capital letters
+  - e = exponent character with small e
+  - E = exponent character with capital E
+
+Examples:
 
 <pre>
-  // Returns the length of the string
-  uint length() const;
+  // Left justify number in string with 10 characters
+  string justified = formatInt(number, 'l', 10);
   
-  // Assignment and concatenation
-  string &opAssign(const string &in other);
-  string &opAddAssign(const string &in other);
-  string  opAdd(const string &in right) const;
+  // Create hexadecimal representation with capital letters, right justified
+  string hex = formatInt(number, 'H', 10);
   
-  // Access individual characters
-  uint8       &opIndex(uint);
-  const uint8 &opIndex(uint) const;
-  
-  // Comparison operators
-  bool opEquals(const string &in right) const;
-  int  opCmp(const string &in right) const;
-  
-  // Substring
-  string substr(uint start = 0, int count = -1) const;
-  array<string>@ split(const string &in delimiter) const;
-  
-  // Search
-  int findFirst(const string &in str, uint start = 0) const;
-  int findLast(const string &in str, int start = -1) const;
-  
-  // Automatic conversion from primitive types to string type
-  string &opAssign(double val);
-  string &opAddAssign(double val);
-  string  opAdd(double val) const;
-  string  opAdd_r(double val) const;
-  
-  string &opAssign(int val);
-  string &opAddAssign(int val);
-  string  opAdd(int val) const;
-  string  opAdd_r(int val) const;
-  
-  string &opAssign(uint val);
-  string &opAddAssign(uint val);
-  string  opAdd(uint val) const;
-  string  opAdd_r(uint val) const;
-
-  string &opAssign(bool val);
-  string &opAddAssign(bool val);
-  string  opAdd(bool val) const;
-  string  opAdd_r(bool val) const;
+  // Right justified, padded with zeroes and two digits after decimal separator
+  string num = formatFloat(number, '0', 8, 2);
 </pre>
 
-There is also a standard global function joining an array of strings into a single string with delimeter.
-
-<pre>
-  string join(const array<string> &in arr, const string &in delimiter);
-</pre>
 
 
 

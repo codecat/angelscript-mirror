@@ -143,7 +143,47 @@ Primitive values can be used though, as these do not require cleanup upon exit.
 
 \page doc_script_func_overload Function overloading
 
-\todo Explain how function overloading works, and how the compiler chooses which function to call
+Function overloading happens when more than one function with the same name is declared with
+different parameters. This is a useful feature when an operation needs to be able to work with
+different types of input, yet produce similar result. 
+
+The compiler is able to resolve which function to call by matching the type of each argument 
+expression to the function parameter, and eliminating the functions where there is no possible 
+conversion available. The compiler will do this for each argument from first to last. When all
+arguments have been evaluated only one function should be the best match, otherwise the compiler
+will give an error about the impossibility to determine the correct function to call.
+
+The type of conversion that needs to be performed on the argument to get to the type of the 
+parameter determines how well a function matches. The following list gives the order of how one 
+type of conversion compares to another.
+
+ - no conversion needed
+ - conversion to const
+ - size of primitive changes 
+ - integer type to float type and vice versa
+ - reference cast
+ - object to primitive conversion
+ - conversion to object
+ - variable argument type
+
+Observe that it is not possible to create overloads where the only difference is the return
+type. This is because the return type is not part of the selection criteria that the compiler
+uses to determine which function to call, the return type is just the result of the called 
+function.
+
+<pre>
+  void Function(int a, float b, string c) {}
+  void Function(string a, int b, float c) {}
+  void Function(float a, string b, int c) {}
+
+  void main()
+  {
+    Function(1, 2.5f, 'a');  // Will call the first overload
+    Function('a', 1, 2.5f);  // Will call the second overload
+    Function(2.5f, 'a', 1);  // Will call the third overload
+  }  
+</pre>
+
 
 
 

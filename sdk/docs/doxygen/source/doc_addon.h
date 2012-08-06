@@ -388,53 +388,7 @@ public:
 
 \section doc_addon_array_2 Public script interface
 
-<pre>
-  class array<class T>
-  {
-    array();
-    array(uint length);
-    array(uint length, const T &in defaultValue);
-    
-    T       &opIndex(uint);
-    const T &opIndex(uint) const;
-
-    array<T> opAssign(const array<T> &in);
-    bool     opEquals(const array<T> &in) const;
-    
-    uint length { get const; set; }
-    
-    void insertAt(uint index, const T &in);
-    void removeAt(uint index);
-    void insertLast(const T& in);
-    void removeLast();
-    uint length() const;
-    uint isEmpty() const;
-    void resize(uint);
-    void reserve(uint);
-    void sortAsc();
-    void sortAsc(uint index, uint count);
-    void sortDesc();
-    void sortDesc(uint index, uint count);
-    void reverse();
-    int  find(const T& in) const;
-    int  find(uint index, const T& in) const;
-  }
-</pre>
-
-\section doc_addon_array_3 Script example
-
-<pre>
-  int main()
-  {
-    array<int> arr = {1,2,3};
-    
-    int sum = 0;
-    for( uint n = 0; n < arr.length; n++ )
-      sum += arr[n];
-      
-    return sum;
-  }
-</pre>
+\see \ref doc_datatypes_arrays_addon "Arrays in the script language"
 
 \section doc_addon_array_4 C++ example
 
@@ -679,87 +633,8 @@ Refer to the <code>std::string</code> implementation for your compiler.
 
 \section doc_addon_std_string_2 Public script interface
 
-<pre>
-  class string
-  {
-    // Constructors
-    string();
-    string(const string &in);
-    
-    // Property accessor for getting and setting the length
-    uint length { get const; set; }
-    
-    // Methods for getting and setting the length
-    uint length() const;
-    void resize(uint);
-    
-    // Returns true if the string is empty
-    bool isEmpty() const;
-    
-    // Assignment and concatenation
-    string &opAssign(const string &in other);
-    string &opAddAssign(const string &in other);
-    string  opAdd(const string &in right) const;
-    
-    // Access individual characters
-    uint8       &opIndex(uint);
-    const uint8 &opIndex(uint) const;
-    
-    // Comparison operators
-    bool opEquals(const string &in right) const;
-    int  opCmp(const string &in right) const;
-    
-    // Substring
-    string substr(uint start = 0, int count = -1) const;
-    array<string>@ split(const string &in delimiter) const;
-    
-    // Search
-    int findFirst(const string &in str, uint start = 0) const;
-    int findLast(const string &in str, int start = -1) const;
-    
-    // Automatic conversion from primitive types to string type
-    string &opAssign(double val);
-    string &opAddAssign(double val);
-    string  opAdd(double val) const;
-    string  opAdd_r(double val) const;
-    
-    string &opAssign(int val);
-    string &opAddAssign(int val);
-    string  opAdd(int val) const;
-    string  opAdd_r(int val) const;
-    
-    string &opAssign(uint val);
-    string &opAddAssign(uint val);
-    string  opAdd(uint val) const;
-    string  opAdd_r(uint val) const;
+\see \ref doc_datatypes_strings_addon "Strings in the script language"
 
-    string &opAssign(bool val);
-    string &opAddAssign(bool val);
-    string  opAdd(bool val) const;
-    string  opAdd_r(bool val) const;
-  }
-
-  // Takes an array of strings and joins them into one string separated by the specified delimiter
-  string join(const array<string> &in arr, const string &in delimiter);
-  
-  // Formatting numbers into strings
-  // The options should be informed as characters in a string
-  //  l = left justify
-  //  0 = pad with zeroes
-  //  + = always include the sign, even if positive
-  //    = add a space in case of positive number
-  //  h = hexadecimal integer small letters
-  //  H = hexadecimal integer capital letters
-  //  e = exponent character with small e
-  //  E = exponent character with capital E
-  string formatInt(int64 val, const string &in options, uint width = 0);
-  string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0);
-  
-  // Parsing numbers from strings
-  int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0);
-  double parseFloat(const string &in, uint &out byteCount = 0);
-
-</pre>
 
 
 

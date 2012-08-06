@@ -11,6 +11,7 @@ it.
     <ul>
     <li>\ref doc_global_function
     <li>\ref doc_global_variable
+	<li>\ref doc_global_virtprop
     <li>\ref doc_global_class
     <li>\ref doc_global_interface
     <li>\ref doc_global_import
@@ -64,6 +65,22 @@ will get unpredictable behaviour or a null-pointer exception.
 
 
 
+\section doc_global_virtprop Virtual properties
+
+Virtual properties is a property with special behaviour for reading and writing to it. 
+These can be declared globally, but are most usually found as members of classes.
+
+<pre>
+  int prop
+  {
+    get { return SomeValue(); }
+    set { UpdateValue(value); }
+  }
+</pre>
+
+\see \ref doc_script_class_prop
+
+ 
 
 
 
