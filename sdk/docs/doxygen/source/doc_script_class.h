@@ -49,8 +49,6 @@ aren't, or to implement specific routines that must be executed everytime a prop
 A script class can also \ref doc_script_class_inheritance "inherit" from other classes, and 
 implement \ref doc_global_interface "interfaces".
 
-\todo Explain const methods
-
 
 
 
@@ -137,6 +135,36 @@ directly invoke the cleanup, then you should implement a public method for that.
 
 
 
+
+\section doc_script_class_const Const methods
+
+Classes add a new type of \ref doc_script_func_overload "function overload", i.e. const overload. 
+When a class method is accessed through a read-only reference or handle, only methods that have
+been marked as constant can be invoked. When the reference or handle is writable, then both types can be 
+invoked, with the preference being the non-const version in case both matches.
+
+<pre>
+  class CMyClass
+  {
+    int method()       { a++; return a; } 
+    int method() const {      return a; }
+    int a;
+  }
+  void Function()
+  {
+     CMyClass o;
+     const CMyClass @h = o;
+
+     o.method(); // invokes the non-const version that increments the member a
+     h.method(); // invokes the const version that doesn't increment the member a
+  }
+</pre>
+
+
+
+
+
+
 \page doc_script_class_inheritance Inheritance and polymorphism
 
 AngelScript supports single inheritance, where a derived class inherits the 
@@ -155,7 +183,7 @@ need to manually do this.
 
 <pre>
   // A derived class
-  class MyDerived : MyClass
+  class MyDerived : MyBase
   {
     // The default constructor
     MyDerived()
@@ -170,7 +198,7 @@ need to manually do this.
     void DoSomething()
     {
       // Call the base class' implementation
-      MyClass::DoSomething();
+      MyBase::DoSomething();
       
       // Do something more
       b = a;
@@ -180,7 +208,32 @@ need to manually do this.
   }
 </pre>
 
-\todo Show how the polymorphism is used with cast behaviours
+A class that is derived from another can be implicitly cast to the base class. The same works for 
+interfaces that are implemented by a class. The other direction requires an \ref conversion "explicit cast", as it
+is not known at compile time if the cast is valid.
+
+<pre>
+  class A {}
+  class B : A {}
+  void Foo()
+  {
+    A \@handle_to_A;
+    B \@handle_to_B;
+
+    \@handle_to_A = A(); // OK
+    \@handle_to_A = B(); // OK. The reference will be implicitly cast to A@
+
+    \@handle_to_B = A(); // Not OK. This will give a compilation error
+    \@handle_to_B = B(); // OK
+
+    \@handle_to_A = handle_to_B; // OK. The reference will be implicitly cast to A@
+    \@handle_to_B = handle_to_A; // Not OK. This will give a compilation error
+
+    \@handle_to_B = cast<B>(handle_to_A); // OK. Though, the explicit cast will return null 
+                                         // if the object in handle_to_a is not really an
+                                         // instance of B
+  }
+</pre>
 
 \section doc_script_class_inheritance_2 Extra control with final and override
 
