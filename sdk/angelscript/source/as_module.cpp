@@ -833,10 +833,10 @@ const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId, const char 
 		return 0;
 
 	if( enumTypeId )
-		*enumTypeId = GetTypeIdByDecl(enumTypes[index]->name.AddressOf());
+		*enumTypeId = engine->GetTypeIdFromDataType(asCDataType::CreateObject(enumTypes[index], false));
 
 	if( nameSpace )
-		*nameSpace = enumTypes[index]->name.AddressOf();
+		*nameSpace = enumTypes[index]->nameSpace->name.AddressOf();
 
 	return enumTypes[index]->name.AddressOf();
 }
@@ -882,7 +882,7 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId, const char *
 		return 0;
 
 	if( typeId )
-		*typeId = GetTypeIdByDecl(typeDefs[index]->name.AddressOf());
+		*typeId = engine->GetTypeIdFromDataType(typeDefs[index]->templateSubType); 
 
 	if( nameSpace )
 		*nameSpace = typeDefs[index]->nameSpace->name.AddressOf();

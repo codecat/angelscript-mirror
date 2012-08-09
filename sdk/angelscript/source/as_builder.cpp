@@ -1901,11 +1901,11 @@ void asCBuilder::CompileClasses()
 					int r,c;
 					file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
 					WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
-				}
 
-				// Move to the next node
-				node = node->next;
-				continue;
+					// Move to the next node
+					node = node->next;
+					continue;
+				}
 			}
 
 			// Get the interface name from the node

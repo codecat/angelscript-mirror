@@ -91,6 +91,9 @@
 // for those applications that will load pre-compiled bytecode and wants to decrease
 // the size of the executable.
 
+// AS_NO_EXCEPTIONS
+// Define this if exception handling is turned off or not available on the target platform.
+
 
 //
 // Library usage

@@ -4509,7 +4509,7 @@ const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const 
 		return 0;
 
 	if( typeId )
-		*typeId = GetTypeIdByDecl(registeredTypeDefs[index]->name.AddressOf());
+		*typeId = GetTypeIdFromDataType(registeredTypeDefs[index]->templateSubType);
 
 	if( configGroup )
 	{
@@ -4651,7 +4651,7 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 		*accessMask = registeredEnums[index]->accessMask;
 
 	if( enumTypeId )
-		*enumTypeId = GetTypeIdByDecl(registeredEnums[index]->name.AddressOf());
+		*enumTypeId = GetTypeIdFromDataType(asCDataType::CreateObject(registeredEnums[index], false));
 
 	if( nameSpace )
 		*nameSpace = registeredEnums[index]->nameSpace->name.AddressOf();

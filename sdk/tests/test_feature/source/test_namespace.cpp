@@ -33,6 +33,7 @@ bool Test()
 			"  interface i {} \n"
 			"  enum e { e1 = 1 } \n"
 			"  funcdef void fd(); \n"
+			"  ::e MyFunc() { return ::e1; } \n"
 			// Nested namespaces are allowed
 			"  namespace b { \n"
 			"    int var = 2; \n"
@@ -41,6 +42,13 @@ bool Test()
 			// Accessing global variables from within a namespace is also possible
 			"  int getglobalvar() { return ::var; } \n"
 			"} \n"
+			// The class should be able to declare methods to return and take types from other namespaces
+			"class MyClass { \n"
+			"  a::e func(a::e val) { return val; } \n"
+			"  ::e func(::e val) { return val; } \n"
+			"} \n"
+			// Global functions must also be able to return and take types from other namespaces
+			"a::e MyFunc(a::e val) { return val; } \n"
 			// It's possible to specify exactly which one is wanted
 			"cl gc; \n"
 			"a::cl gca; \n"
@@ -430,10 +438,11 @@ bool Test()
 		mod->AddScriptSection("test",
 			"namespace A \n"
 			"{ \n"
+			"  interface i {} \n"
 			"  class a {} \n"
-			"  class a2 : a {} \n"
+			"  class a2 : a, i {} \n"
 			"} \n"
-			"class b : A::a {} \n"
+			"class b : A::a, A::i {} \n"
 			"namespace C \n"
 			"{ \n"
 			"  class c : ::b {} \n"
@@ -442,6 +451,18 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 ) 
 			TEST_FAILED;
+
+		asIObjectType *type = mod->GetObjectTypeByName("b");
+		if( type == 0 )
+			TEST_FAILED;
+		else
+		{
+			mod->SetDefaultNamespace("A");
+			if( !type->DerivesFrom(mod->GetObjectTypeByName("a")) )
+				TEST_FAILED;
+			if( !type->Implements(mod->GetObjectTypeByName("i")) )
+				TEST_FAILED;
+		}
 
 		engine->Release();
 	}
@@ -463,6 +484,25 @@ bool Test()
 			TEST_FAILED;
 		r = engine->RegisterObjectMethod("CTest2", "ETest Method(ETest)", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
+			TEST_FAILED;
+
+		// Make sure it's possible to retrieve the enum again
+		int typeId;
+		const char *ns;
+		const char *e = engine->GetEnumByIndex(0, &typeId, &ns);
+		if( std::string(e) != "ETest" )
+			TEST_FAILED;
+		if( std::string(ns) != "A" )
+			TEST_FAILED;
+		if( typeId != engine->GetTypeIdByDecl("ETest") )
+			TEST_FAILED;
+		engine->SetDefaultNamespace("");
+		e = engine->GetEnumByIndex(0, &typeId, &ns);
+		if( std::string(e) != "ETest" )
+			TEST_FAILED;
+		if( std::string(ns) != "A" )
+			TEST_FAILED;
+		if( typeId != engine->GetTypeIdByDecl("A::ETest") )
 			TEST_FAILED;
 
 		engine->Release();

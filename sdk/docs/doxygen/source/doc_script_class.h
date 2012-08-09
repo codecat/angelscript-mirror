@@ -153,7 +153,7 @@ invoked, with the preference being the non-const version in case both matches.
   void Function()
   {
      CMyClass o;
-     const CMyClass @h = o;
+     const CMyClass \@h = o;
 
      o.method(); // invokes the non-const version that increments the member a
      h.method(); // invokes the const version that doesn't increment the member a

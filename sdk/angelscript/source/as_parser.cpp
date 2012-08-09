@@ -1644,7 +1644,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttFuncDef )
 				node->AddChildLast(ParseFuncDef());
-			else if( t1.type == ttConst || IsDataType(t1) )
+			else if( t1.type == ttConst || t1.type == ttScope || IsDataType(t1) )
 			{
 				if( IsVirtualPropertyDecl() )
 					node->AddChildLast(ParseVirtualPropertyDecl(false, false));
@@ -2087,12 +2087,29 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	if( t1.type == ttConst )
 		GetToken(&t1);
 
+	// The return type can be optionally preceeded by a scope
+	if( t1.type == ttScope )
+		GetToken(&t1);
+	while( t1.type == ttIdentifier )
+	{
+		sToken t2;
+		GetToken(&t2);
+		if( t2.type == ttScope )
+			GetToken(&t1);
+		else
+		{
+			RewindTo(&t2);
+			break;
+		}
+	}
+
 	if( !IsDataType(t1) )
 	{
 		RewindTo(&t);
 		return false;
 	}
 
+	// If the type is a template type, then skip the angle brackets holding the subtype
 	if( !CheckTemplateType(t1) )
 	{
 		RewindTo(&t);
