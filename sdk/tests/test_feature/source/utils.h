@@ -142,6 +142,7 @@ public:
 	}
 	void Read(void *ptr, asUINT size) 
 	{
+		assert( rpointer + size <= buffer.size() );
 		memcpy(ptr, &buffer[rpointer], size); 
 		rpointer += size;
 	}

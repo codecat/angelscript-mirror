@@ -57,8 +57,8 @@ public:
 	void PushLast(const T &element);
 	T    PopLast();
 
-	void   SetLength(size_t numElements);
-	void   SetLengthNoConstruct(size_t numElements);
+	bool   SetLength(size_t numElements);
+	bool   SetLengthNoConstruct(size_t numElements);
 	size_t GetLength() const;
 
 	void Copy(const T*, size_t count);
@@ -337,7 +337,7 @@ size_t asCArray<T>::GetCapacity() const
 }
 
 template <class T>
-void asCArray<T>::SetLength(size_t numElements)
+bool asCArray<T>::SetLength(size_t numElements)
 {
 	if( numElements > maxLength )
 	{
@@ -345,15 +345,16 @@ void asCArray<T>::SetLength(size_t numElements)
 		if( numElements > maxLength )
 		{
 			// Out of memory. Return without doing anything
-			return;
+			return false;
 		}
 	}
 
 	length = numElements;
+	return true;
 }
 
 template <class T>
-void asCArray<T>::SetLengthNoConstruct(size_t numElements)
+bool asCArray<T>::SetLengthNoConstruct(size_t numElements)
 {
 	if( numElements > maxLength )
 	{
@@ -361,11 +362,12 @@ void asCArray<T>::SetLengthNoConstruct(size_t numElements)
 		if( numElements > maxLength )
 		{
 			// Out of memory. Return without doing anything
-			return;
+			return false;
 		}
 	}
 
 	length = numElements;
+	return true;
 }
 
 template <class T>

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/08</h2>
+<h2>Version 2.25.0 WIP - 2012/08/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>The VM will catch C++ exceptions thrown by the registered functions and set a script exception. This can be turned off by AS_NO_EXCEPTIONS if exception handling is not supported (Thanks Polyák István)
+<li>Loading large precompiled bytecode files will now be significantly faster. Performance should now be similar to pre 2.23.0 (Thanks loboWu)
 </ul>
 </ul>
 

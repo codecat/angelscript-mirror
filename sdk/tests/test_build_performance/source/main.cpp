@@ -6,6 +6,8 @@
 #include "angelscript.h"
 
 namespace TestBasic { void Test(); }
+namespace TestBigArrays { void Test(); }
+namespace TestManySymbols { void Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -28,6 +30,8 @@ int main(int argc, char **argv)
 	printf("AngelScript %s\n", asGetLibraryVersion()); 
 
 	TestBasic::Test();
+	TestBigArrays::Test();
+	TestManySymbols::Test();
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

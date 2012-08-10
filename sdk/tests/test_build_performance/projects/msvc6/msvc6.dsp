@@ -91,6 +91,10 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\script_factory.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.cpp
 # End Source File
 # Begin Source File
@@ -103,6 +107,14 @@ SOURCE=..\..\source\test_basic.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_big_arrays.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_many_symbols.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\utils.cpp
 # End Source File
 # End Group
@@ -112,6 +124,14 @@ SOURCE=..\..\source\utils.cpp
 # Begin Source File
 
 SOURCE=..\..\..\..\angelscript\include\angelscript.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\memory_stream.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\script_factory.h
 # End Source File
 # Begin Source File
 

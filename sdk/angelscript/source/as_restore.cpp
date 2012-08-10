@@ -1427,14 +1427,11 @@ asCObjectType* asCReader::ReadObjectType()
 void asCReader::ReadByteCode(asCScriptFunction *func)
 {
 	// Read number of instructions
-	asUINT numInstructions = ReadEncodedUInt();
+	asUINT total, numInstructions;
+	total = numInstructions = ReadEncodedUInt();
 
 	// Reserve some space for the instructions
-	// TODO: optimize: Large functions take a long time to load
-	//                 as the bytecode buffer is resized too often.
-	//                 Need to find a good way to reduce the number 
-	//                 of resizes, yet, still avoid wasting memory.
-	func->byteCode.Allocate(numInstructions, 0);
+	func->byteCode.AllocateNoConstruct(numInstructions, false);
 
 	asUINT pos = 0;
 	while( numInstructions )
@@ -1444,7 +1441,20 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 		// Allocate the space for the instruction
 		asUINT len = asBCTypeSize[asBCInfo[b].type];
-		func->byteCode.SetLength(func->byteCode.GetLength() + len);
+		asUINT newSize = func->byteCode.GetLength() + len;
+		if( func->byteCode.GetCapacity() < newSize )
+		{
+			// Determine the average size of the loaded instructions and re-estimate the final size
+			asUINT size = asUINT(float(newSize) / (total - numInstructions) * total) + 1;
+			func->byteCode.AllocateNoConstruct(size, true);
+		}
+		if( !func->byteCode.SetLengthNoConstruct(newSize) )
+		{
+			// Out of memory
+			error = true;
+			return;
+		}
+
 		asDWORD *bc = func->byteCode.AddressOf() + pos;
 		pos += len;
 
@@ -1635,6 +1645,9 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 		numInstructions--;
 	}
+
+	// Correct the final size in case we over-estimated it
+	func->byteCode.SetLengthNoConstruct(pos);
 }
 
 void asCReader::ReadUsedTypeIds()
@@ -1787,6 +1800,11 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	{
 		int c = *(asBYTE*)&bc[n];
 		asUINT size = asBCTypeSize[asBCInfo[c].type];
+		if( size == 0 )
+		{
+			error = true;
+			return;
+		}
 		bcSizes.PushLast(size);
 		instructionNbrToPos.PushLast(n);
 		n += size;

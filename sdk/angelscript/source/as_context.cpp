@@ -306,7 +306,7 @@ int asCContext::Prepare(int funcId)
 
 		funcId = m_initialFunction->GetId();
 	}
-	return Prepare(engine->GetFunctionById(funcId));
+	return Prepare(m_engine->GetFunctionById(funcId));
 }
 #endif
 
