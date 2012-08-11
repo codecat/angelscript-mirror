@@ -31,6 +31,7 @@ void Test()
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.25.0 WIP 1: 14.93 secs\n");
+	printf("AngelScript 2.25.0 WIP 3: 10.47 secs (rewind optimization in parser)\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -40,6 +41,7 @@ void Test()
 	RegisterScriptArray(engine, true);
 	RegisterStdString(engine);
 
+	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
 	string script;
@@ -53,6 +55,7 @@ void Test()
 	}
 	script += scriptEnd;
 
+	////////////////////////////////////////////
 	printf("\nBuilding...\n");
 
 	double time = GetSystemTimer();
@@ -68,6 +71,7 @@ void Test()
 	else
 		printf("Time = %f secs\n", time);
 
+	////////////////////////////////////////////
 	printf("\nSaving...\n");
 
 	time = GetSystemTimer();
@@ -79,6 +83,7 @@ void Test()
 	printf("Time = %f secs\n", time);
 	printf("Size = %d\n", int(stream.buffer.size()));
 
+	////////////////////////////////////////////
 	printf("\nLoading...\n");
 
 	time = GetSystemTimer();

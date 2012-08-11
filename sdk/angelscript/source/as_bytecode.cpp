@@ -604,6 +604,10 @@ int asCByteCode::Optimize()
 
 	// TODO: runtime optimize: Remove temporary copies of handles, when the temp is just copied to yet another location
 
+	// TODO: optimize: make a bytecode lookup-table to speedup the optimization. Currently a lot of time is lost
+	//                 inside the IsCombination method
+
+
 	cByteInstruction *instr = first;
 	while( instr )
 	{

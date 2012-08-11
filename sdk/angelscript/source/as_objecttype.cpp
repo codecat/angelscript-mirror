@@ -123,9 +123,9 @@ void RegisterObjectTypeGCBehaviours(asCScriptEngine *engine)
 
 asCObjectType::asCObjectType() 
 {
-	this->engine = 0; 
+	engine = 0; 
 	refCount.set(0); 
-	derivedFrom  = 0;
+	derivedFrom = 0;
 
 	acceptValueSubType = true;
 	acceptRefSubType = true;

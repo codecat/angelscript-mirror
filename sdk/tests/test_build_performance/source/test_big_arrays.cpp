@@ -4,6 +4,8 @@
 
 #include "utils.h"
 #include "script_factory.h"
+#include "memory_stream.h"
+
 #include <string>
 #include <sstream>
 using std::string;
@@ -28,6 +30,7 @@ void Test()
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.25.0 WIP 1: 4.04 secs\n");
+	printf("AngelScript 2.25.0 WIP 2: 2.37 secs (list separator optimization in tokenizer)\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -38,11 +41,13 @@ void Test()
 	RegisterStdString(engine);
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
 
+	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
 	string script;
 	create_array_test(c_array_cnt, c_elem_cnt, script);
 
+	////////////////////////////////////////////
 	printf("\nBuilding...\n");
 
 	double time = GetSystemTimer();
@@ -57,6 +62,29 @@ void Test()
 		printf("Build failed\n", TESTNAME);
 	else
 		printf("Time = %f secs\n", time);
+
+	////////////////////////////////////////////
+	printf("\nSaving...\n");
+
+	time = GetSystemTimer();
+
+	CBytecodeStream stream("");
+	mod->SaveByteCode(&stream);
+
+	time = GetSystemTimer() - time;
+	printf("Time = %f secs\n", time);
+	printf("Size = %d\n", int(stream.buffer.size()));
+
+	////////////////////////////////////////////
+	printf("\nLoading...\n");
+
+	time = GetSystemTimer();
+
+	asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod2->LoadByteCode(&stream);
+
+	time = GetSystemTimer() - time;
+	printf("Time = %f secs\n", time);
 
 	engine->Release();
 }

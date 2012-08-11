@@ -81,6 +81,8 @@ void asCParser::Reset()
 	scriptNode = 0;
 
 	script = 0;
+
+	lastToken.pos = size_t(-1);
 }
 
 asCScriptNode *asCParser::GetScriptNode()
@@ -386,9 +388,7 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 		else
 		{
 			// Break the token so that only the first > is parsed
-			sToken t2 = t;
-			t2.pos = t.pos + 1;
-			RewindTo(&t2);
+			SetPos(t.pos + 1);
 		}
 	}
 
@@ -720,8 +720,22 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 
 void asCParser::GetToken(sToken *token)
 {
-	size_t sourceLength = script->codeLength;
+	// Check if the token has already been parsed
+	if( lastToken.pos == sourcePos )
+	{
+		*token = lastToken;
+		sourcePos += token->length;
 
+		if( token->type == ttWhiteSpace ||
+			token->type == ttOnelineComment ||
+			token->type == ttMultilineComment )
+			GetToken(token);
+
+		return;
+	}
+
+	// Parse new token
+	size_t sourceLength = script->codeLength;
 	do
 	{
 		if( sourcePos >= sourceLength )
@@ -743,8 +757,22 @@ void asCParser::GetToken(sToken *token)
 		   token->type == ttMultilineComment );
 }
 
+void asCParser::SetPos(size_t pos)
+{
+	lastToken.pos = size_t(-1);
+	sourcePos = pos;
+}
+
 void asCParser::RewindTo(const sToken *token)
 {
+	// TODO: optimize: Perhaps we can optimize this further by having the parser 
+	//                 set an explicit return point, after which each token will 
+	//                 be stored. That way not just one token will be reused but
+	//                 no token will have to be tokenized more than once.
+
+	// Store the token so it doesn't have to be tokenized again
+	lastToken = *token;
+
 	sourcePos = token->pos;
 }
 
@@ -919,9 +947,7 @@ bool asCParser::CheckTemplateType(sToken &t)
 		else if( t.length != 1 )
 		{
 			// We need to break the token, so that only the first character is parsed
-			sToken t2 = t;
-			t2.pos = t.pos + 1;
-			RewindTo(&t2);
+			SetPos(t.pos + 1);
 		}
 	}
 
@@ -2422,9 +2448,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 			}
 		}
 		else if( t1.type == ttEndStatementBlock )
-		{
 			break;
-		}
 		else
 		{
 			const char *tokens[] = { GET_TOKEN, SET_TOKEN, asCTokenizer::GetDefinition(ttEndStatementBlock) };
@@ -3198,7 +3222,7 @@ asCScriptNode *asCParser::ParseSwitch()
 	{
 		GetToken(&t);
 		
-		if( t.type == ttEndStatementBlock || t.type == ttDefault)
+		if( t.type == ttEndStatementBlock || t.type == ttDefault )
 			break;
 
 		RewindTo(&t);
@@ -3615,7 +3639,7 @@ void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
 {
 	sToken t1;
 
-	for( ; ; )
+	for(;;)
 	{
 		GetToken(&t1);
 		RewindTo(&t1);
