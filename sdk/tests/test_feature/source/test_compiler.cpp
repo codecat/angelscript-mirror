@@ -206,6 +206,53 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test",
+			"string[] get_list() \n"
+			"{ \n"
+			"  string[]@ null_handle; \n"
+			"  return null_handle; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  string[] result=get_list(); \n"
+			"} \n");
+
+//		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( string(ctx->GetExceptionString()) != "Null pointer access" )
+			TEST_FAILED;
+		if( string(ctx->GetExceptionFunction()->GetName()) != "get_list" )
+			TEST_FAILED;
+
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Problem reported by _Vicious_
 	// http://www.gamedev.net/topic/625747-multiple-matching-signatures-to/
 	{

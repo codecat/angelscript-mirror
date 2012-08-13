@@ -5138,7 +5138,18 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 			if( ctx->type.dataType.IsObjectHandle() && !ctx->type.isExplicitHandle )
 			{
 				if( generateCode )
-					ctx->bc.Instr(asBC_CHKREF);
+				{
+					if( ctx->type.dataType.IsReference() )
+					{
+						// The pointer on the stack refers to the handle
+						ctx->bc.Instr(asBC_ChkRefS);
+					}
+					else
+					{
+						// The pointer on the stack refers to the object
+						ctx->bc.Instr(asBC_CHKREF);
+					}
+				}
 
 				ctx->type.dataType.MakeHandle(false);
 			}
