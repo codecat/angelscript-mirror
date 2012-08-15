@@ -273,21 +273,23 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 		return asERROR;
 
 	// Each global variable needs to be cleared individually
-	asUINT n;
-	for( n = 0; n < scriptGlobals.GetLength(); n++ )
+	asCSymbolTableIterator<asCGlobalProperty> it = scriptGlobals.List();
+	while( it )
 	{
-		if( scriptGlobals[n] )
-		{
-			memset(scriptGlobals[n]->GetAddressOfValue(), 0, sizeof(asDWORD)*scriptGlobals[n]->type.GetSizeOnStackDWords());
-		}
+		asCGlobalProperty *desc = *it;
+		memset(desc->GetAddressOfValue(), 0, sizeof(asDWORD)*desc->type.GetSizeOnStackDWords());
+		it++;
 	}
 
 	// Call the init function for each of the global variables
 	asIScriptContext *ctx = myCtx;
 	int r = asEXECUTION_FINISHED;
-	for( n = 0; n < scriptGlobals.GetLength() && r == asEXECUTION_FINISHED; n++ )
+	it = scriptGlobals.List();
+	while( it && r == asEXECUTION_FINISHED )
 	{
-		if( scriptGlobals[n]->GetInitFunc() )
+		asCGlobalProperty *desc = *it;
+		it++;
+		if( desc->GetInitFunc() )
 		{
 			if( ctx == 0 )
 			{
@@ -296,15 +298,15 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 					break;
 			}
 
-			r = ctx->Prepare(scriptGlobals[n]->GetInitFunc());
+			r = ctx->Prepare(desc->GetInitFunc());
 			if( r >= 0 )
 			{
 				r = ctx->Execute();
 				if( r != asEXECUTION_FINISHED )
 				{
 					asCString msg;
-					msg.Format(TXT_FAILED_TO_INITIALIZE_s, scriptGlobals[n]->name.AddressOf());
-					asCScriptFunction *func = scriptGlobals[n]->GetInitFunc();
+					msg.Format(TXT_FAILED_TO_INITIALIZE_s, desc->name.AddressOf());
+					asCScriptFunction *func = desc->GetInitFunc();
 
 					engine->WriteMessage(func->scriptSectionIdx >= 0 ? engine->scriptSectionNames[func->scriptSectionIdx]->AddressOf() : "",
 										 func->GetLineNumber(0) & 0xFFFFF, 
@@ -352,14 +354,15 @@ void asCModule::CallExit()
 {
 	if( !isGlobalVarInitialized ) return;
 
-	for( size_t n = 0; n < scriptGlobals.GetLength(); n++ )
+	asCSymbolTableIterator<asCGlobalProperty> it = scriptGlobals.List();
+	while( it )
 	{
-		if( scriptGlobals[n]->type.IsObject() )
+		if( (*it)->type.IsObject() )
 		{
-			void **obj = (void**)scriptGlobals[n]->GetAddressOfValue();
+			void **obj = (void**)(*it)->GetAddressOfValue();
 			if( *obj )
 			{
-				asCObjectType *ot = scriptGlobals[n]->type.GetObjectType();
+				asCObjectType *ot = (*it)->type.GetObjectType();
 
 				if( ot->flags & asOBJ_REF )
 				{
@@ -379,6 +382,7 @@ void asCModule::CallExit()
 				*obj = 0;
 			}
 		}
+		it++;
 	}
 
 	isGlobalVarInitialized = false;
@@ -412,9 +416,13 @@ void asCModule::InternalReset()
 	scriptFunctions.SetLength(0);
 
 	// Release the global properties declared in the module
-	for( n = 0; n < scriptGlobals.GetLength(); n++ )
-		scriptGlobals[n]->Release();
-	scriptGlobals.SetLength(0);
+	asCSymbolTableIterator<asCGlobalProperty> it = scriptGlobals.List();
+	while( it )
+	{
+		(*it)->Release();
+		it++;
+	}
+	scriptGlobals.Clear();
 
 	UnbindAllImportedFunctions();
 
@@ -663,23 +671,14 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 // interface
 asUINT asCModule::GetGlobalVarCount() const
 {
-	return (asUINT)scriptGlobals.GetLength();
+	return (asUINT)scriptGlobals.GetSize();
 }
 
 // interface
 int asCModule::GetGlobalVarIndexByName(const char *name) const
 {
 	// Find the global var id
-	int id = -1;
-	for( size_t n = 0; n < scriptGlobals.GetLength(); n++ )
-	{
-		if( scriptGlobals[n]->name == name &&
-			scriptGlobals[n]->nameSpace == defaultNamespace )
-		{
-			id = (int)n;
-			break;
-		}
-	}
+	int id = scriptGlobals.GetFirstIndex(defaultNamespace, name);
 
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
@@ -689,14 +688,30 @@ int asCModule::GetGlobalVarIndexByName(const char *name) const
 // interface
 int asCModule::RemoveGlobalVar(asUINT index)
 {
-	if( index >= scriptGlobals.GetLength() )
+	asCGlobalProperty *prop = scriptGlobals.Get(index);
+	if( !prop )
 		return asINVALID_ARG;
-
-	scriptGlobals[index]->Release();
-	scriptGlobals.RemoveIndex(index);
+	prop->Release();
+	scriptGlobals.Erase(index);
 
 	return 0;
 }
+
+class asCCompGlobPropType : public asIFilter
+{
+public:
+	const asCDataType &m_type;
+
+	asCCompGlobPropType(const asCDataType &type) : m_type(type) {}
+
+	bool operator()(const void *p) const
+	{
+		const asCGlobalProperty* prop = reinterpret_cast<const asCGlobalProperty*>(p);
+		return prop->type == m_type;
+	}
+private:
+	asCCompGlobPropType &operator=(const asCCompGlobPropType &) {return *this;}
+};
 
 // interface
 int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
@@ -708,46 +723,34 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 	asCDataType dt;
 	bld.ParseVariableDeclaration(decl, defaultNamespace, name, nameSpace, dt);
 
-	// TODO: optimize: Improve linear search
 	// Search global variables for a match
-	int id = -1;
-	for( size_t n = 0; n < scriptGlobals.GetLength(); ++n )
-	{
-		if( name      == scriptGlobals[n]->name && 
-			nameSpace == scriptGlobals[n]->nameSpace &&
-			dt        == scriptGlobals[n]->type )
-		{
-			id = (int)n;
-			break;
-		}
-	}
+	int id = scriptGlobals.GetIndex(nameSpace, name, asCCompGlobPropType(dt));
+	if( id != -1 )
+		return id;
 
-	if( id == -1 ) return asNO_GLOBAL_VAR;
-
-	return id;
+	return asNO_GLOBAL_VAR;
 }
 
 // interface
 void *asCModule::GetAddressOfGlobalVar(asUINT index)
 {
-	if( index >= scriptGlobals.GetLength() )
+	asCGlobalProperty *prop = scriptGlobals.Get(index);
+	if( !prop ) 
 		return 0;
 
 	// For object variables it's necessary to dereference the pointer to get the address of the value
-	if( scriptGlobals[index]->type.IsObject() && 
-		!scriptGlobals[index]->type.IsObjectHandle() )
-		return *(void**)(scriptGlobals[index]->GetAddressOfValue());
+	if( prop->type.IsObject() &&
+		!prop->type.IsObjectHandle() )
+		return *(void**)(prop->GetAddressOfValue());
 
-	return (void*)(scriptGlobals[index]->GetAddressOfValue());
+	return (void*)(prop->GetAddressOfValue());
 }
 
 // interface
 const char *asCModule::GetGlobalVarDeclaration(asUINT index, bool includeNamespace) const
 {
-	if( index >= scriptGlobals.GetLength() )
-		return 0;
-
-	asCGlobalProperty *prop = scriptGlobals[index];
+	const asCGlobalProperty *prop = scriptGlobals.Get(index);
+	if (!prop) return 0;
 
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
 	*tempString = prop->type.Format();
@@ -762,10 +765,8 @@ const char *asCModule::GetGlobalVarDeclaration(asUINT index, bool includeNamespa
 // interface
 int asCModule::GetGlobalVar(asUINT index, const char **name, const char **nameSpace, int *typeId, bool *isConst) const
 {
-	if( index >= scriptGlobals.GetLength() )
-		return asINVALID_ARG;
-
-	asCGlobalProperty *prop = scriptGlobals[index];
+	const asCGlobalProperty *prop = scriptGlobals.Get(index);
+	if (!prop) return 0;
 
 	if( name )
 		*name = prop->name.AddressOf();
@@ -1173,7 +1174,7 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 	prop->AllocateMemory();
 
 	// Store the variable in the module scope (the reference count is already set to 1)
-	scriptGlobals.PushLast(prop);
+	scriptGlobals.Put(prop);
 
 	return prop;
 }
@@ -1252,22 +1253,25 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 	if( r >= 0 && engine->ep.initGlobalVarsAfterBuild )
 	{
 		// Clear the memory 
-		asCGlobalProperty *prop = scriptGlobals[scriptGlobals.GetLength()-1];
-		memset(prop->GetAddressOfValue(), 0, sizeof(asDWORD)*prop->type.GetSizeOnStackDWords());
-
-		if( prop->GetInitFunc() )
+		asCGlobalProperty *prop = scriptGlobals.GetLast();
+		if( prop )
 		{
-			// Call the init function for the global variable
-			asIScriptContext *ctx = 0;
-			int r = engine->CreateContext(&ctx, true);
-			if( r < 0 )
-				return r;
-
-			r = ctx->Prepare(prop->GetInitFunc());
-			if( r >= 0 )
-				r = ctx->Execute();
-
-			ctx->Release();
+			memset(prop->GetAddressOfValue(), 0, sizeof(asDWORD)*prop->type.GetSizeOnStackDWords());
+	
+			if( prop->GetInitFunc() )
+			{
+				// Call the init function for the global variable
+				asIScriptContext *ctx = 0;
+				int r = engine->CreateContext(&ctx, true);
+				if( r < 0 )
+					return r;
+	
+				r = ctx->Prepare(prop->GetInitFunc());
+				if( r >= 0 )
+					r = ctx->Execute();
+	
+				ctx->Release();
+			}
 		}
 	}
 

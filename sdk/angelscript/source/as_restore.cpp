@@ -80,9 +80,11 @@ int asCReader::Read()
 		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 			if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
 				module->scriptFunctions[i]->byteCode.SetLength(0);
-		for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-			if( module->scriptGlobals[i]->GetInitFunc() )
-				module->scriptGlobals[i]->GetInitFunc()->byteCode.SetLength(0);
+
+		asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
+		for( ; it; it++ )
+			if( (*it)->GetInitFunc() )
+				(*it)->GetInitFunc()->byteCode.SetLength(0);
 
 		module->InternalReset();
 	}
@@ -391,9 +393,15 @@ int asCReader::ReadInner()
 	for( i = 0; i < module->scriptFunctions.GetLength() && !error; i++ )
 		if( module->scriptFunctions[i]->funcType == asFUNC_SCRIPT )
 			TranslateFunction(module->scriptFunctions[i]);
-	for( i = 0; i < module->scriptGlobals.GetLength() && !error; i++ )
-		if( module->scriptGlobals[i]->GetInitFunc() )
-			TranslateFunction(module->scriptGlobals[i]->GetInitFunc());
+
+	asCSymbolTable<asCGlobalProperty>::iterator globIt = module->scriptGlobals.List();
+	while( globIt && !error )
+	{
+		asCScriptFunction *initFunc = (*globIt)->GetInitFunc();
+		if( initFunc )
+			TranslateFunction(initFunc);
+		globIt++;
+	}
 
 	if( error ) return asERROR;
 
@@ -401,10 +409,15 @@ int asCReader::ReadInner()
 	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 		if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
 			module->scriptFunctions[i]->AddReferences();
-	for( i = 0; i < module->scriptGlobals.GetLength(); i++ )
-		if( module->scriptGlobals[i]->GetInitFunc() )
-			module->scriptGlobals[i]->GetInitFunc()->AddReferences();
 
+	globIt = module->scriptGlobals.List();
+	while( globIt )
+	{
+		asCScriptFunction *initFunc = (*globIt)->GetInitFunc();
+		if( initFunc )
+			initFunc->AddReferences();
+		globIt++;
+	}
 	return error ? asERROR : asSUCCESS;
 }
 
@@ -1685,15 +1698,10 @@ void asCReader::ReadUsedGlobalProps()
 		void *prop = 0;
 		if( moduleProp )
 		{
-			for( asUINT p = 0; p < module->scriptGlobals.GetLength(); p++ )
+			asCGlobalProperty *globProp = module->scriptGlobals.GetFirst(nameSpace, name);
+			if( globProp && globProp->type == type )
 			{
-				if( module->scriptGlobals[p]->name == name &&
-					module->scriptGlobals[p]->nameSpace == nameSpace &&
-					module->scriptGlobals[p]->type == type )
-				{
-					prop = module->scriptGlobals[p]->GetAddressOfValue();
-					break;
-				}
+				prop = globProp->GetAddressOfValue();
 			}
 		}
 		else
@@ -2585,10 +2593,11 @@ int asCWriter::Write()
 	}
 
 	// scriptGlobals[]
-	count = (asUINT)module->scriptGlobals.GetLength();
+	count = (asUINT)module->scriptGlobals.GetSize();
 	WriteEncodedInt64(count);
-	for( i = 0; i < count; ++i ) 
-		WriteGlobalProperty(module->scriptGlobals[i]);
+	asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
+	for( ; it; it++ )
+		WriteGlobalProperty(*it);
 
 	// scriptFunctions[]
 	count = 0;
@@ -3785,11 +3794,12 @@ void asCWriter::WriteUsedGlobalProps()
 		// First search for the global in the module
 		char moduleProp = 0;
 		asCGlobalProperty *prop = 0;
-		for( int i = 0; i < (signed)module->scriptGlobals.GetLength(); i++ )
+		asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
+		for( ; it; it++ )
 		{
-			if( p == module->scriptGlobals[i]->GetAddressOfValue() )
+			if( p == (*it)->GetAddressOfValue() )
 			{
-				prop = module->scriptGlobals[i];
+				prop = (*it);
 				moduleProp = 1;
 				break;
 			}

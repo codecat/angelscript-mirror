@@ -2182,7 +2182,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	prop->accessMask  = defaultAccessMask;
 
 	prop->SetRegisteredAddress(pointer);
-	
+
 	registeredGlobalProps.PushLast(prop);
 	currentGroup->globalProps.PushLast(prop);
 

@@ -40,6 +40,7 @@
 #define AS_MODULE_H
 
 #include "as_config.h"
+#include "as_symboltable.h"
 #include "as_atomic.h"
 #include "as_string.h"
 #include "as_array.h"
@@ -71,6 +72,7 @@ struct sObjectTypePair
 	asCObjectType *a;
 	asCObjectType *b;
 };
+
 
 // TODO: import: Remove function imports. When I have implemented function 
 //               pointers the function imports should be deprecated.
@@ -218,8 +220,8 @@ public:
 	asCArray<sBindInfo *>          bindInformations;
 
 	// This array holds the global variables declared in the script
-	asCArray<asCGlobalProperty *>  scriptGlobals;
-	bool                           isGlobalVarInitialized;
+	asCSymbolTable<asCGlobalProperty> scriptGlobals;
+	bool                              isGlobalVarInitialized;
 
 	// This array holds class and interface types
 	asCArray<asCObjectType*>       classTypes;

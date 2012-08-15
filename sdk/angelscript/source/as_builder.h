@@ -40,6 +40,7 @@
 #define AS_BUILDER_H
 
 #include "as_config.h"
+#include "as_symboltable.h"
 #include "as_scriptengine.h"
 #include "as_module.h"
 #include "as_array.h"
@@ -88,6 +89,12 @@ struct sGlobalVariableDescription
 	bool isEnumValue;
 	asQWORD constantValue;
 };
+
+
+// asCSymbolTable template specializations for sGlobalVariableDescription entries
+template<>
+void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const;
+
 
 struct sClassDeclaration
 {
@@ -207,13 +214,13 @@ protected:
 	int                GetEnumValueFromObjectType(asCObjectType *objType, const char *name, asCDataType &outDt, asDWORD &outValue);
 	int                GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outValue, asSNameSpace *ns);
 
-	asCArray<asCScriptCode *>              scripts;
-	asCArray<sFunctionDescription *>       functions;
-	asCArray<sGlobalVariableDescription *> globVariables;
-	asCArray<sClassDeclaration *>          classDeclarations;
-	asCArray<sClassDeclaration *>          interfaceDeclarations;
-	asCArray<sClassDeclaration *>          namedTypeDeclarations;
-	asCArray<sFuncDef *>                   funcDefs;
+	asCArray<asCScriptCode *>                  scripts;
+	asCArray<sFunctionDescription *>           functions;
+	asCSymbolTable<sGlobalVariableDescription> globVariables;
+	asCArray<sClassDeclaration *>              classDeclarations;
+	asCArray<sClassDeclaration *>              interfaceDeclarations;
+	asCArray<sClassDeclaration *>              namedTypeDeclarations;
+	asCArray<sFuncDef *>                       funcDefs;
 #endif
 };
 

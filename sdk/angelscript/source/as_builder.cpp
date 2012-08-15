@@ -48,6 +48,35 @@
 
 BEGIN_AS_NAMESPACE
 
+
+// asCSymbolTable template specializations for sGlobalVariableDescription entries
+template<>
+void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const
+{
+	// TODO: optimize: The key should be a struct, composed of namespace pointer and the name string
+	asSNameSpace *ns = entry->property->nameSpace;
+	asCString name = entry->property->name;
+	key = ns->name + "::" + name;
+}
+
+// Comparator for exact variable search
+class asCCompGlobVarType : public asIFilter
+{
+public:
+	const asCDataType &m_type;
+	asCCompGlobVarType(const asCDataType &type) : m_type(type) {}
+
+	bool operator()(const void *p) const
+	{
+		const sGlobalVariableDescription* desc = reinterpret_cast<const sGlobalVariableDescription*>(p);
+		return desc->datatype == m_type;
+	}
+private:
+	asCCompGlobVarType &operator=(const asCCompGlobVarType &) {return *this;}
+};
+
+
+
 asCBuilder::asCBuilder(asCScriptEngine *engine, asCModule *module)
 {
 	this->engine = engine;
@@ -81,19 +110,15 @@ asCBuilder::~asCBuilder()
 	}
 
 	// Free all global variables
-	for( n = 0; n < globVariables.GetLength(); n++ )
+	asCSymbolTable<sGlobalVariableDescription>::iterator it = globVariables.List();
+	while( it )
 	{
-		if( globVariables[n] )
-		{
-			if( globVariables[n]->nextNode )
-			{
-				globVariables[n]->nextNode->Destroy(engine);
-			}
-
-			asDELETE(globVariables[n],sGlobalVariableDescription);
-			globVariables[n] = 0;
-		}
+		if( (*it)->nextNode )
+			(*it)->nextNode->Destroy(engine);
+		asDELETE((*it),sGlobalVariableDescription);
+		it++;
 	}
+	globVariables.Clear();
 
 	// Free all the loaded files
 	for( n = 0; n < scripts.GetLength(); n++ )
@@ -246,10 +271,8 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 	if( numErrors > 0 )
 	{
 		// Remove the variable from the module, if it was registered
-		if( globVariables.GetLength() > 0 )
-		{
+		if( globVariables.GetSize() > 0 )
 			module->RemoveGlobalVar(module->GetGlobalVarCount()-1);
-		}
 
 		return asERROR;
 	}
@@ -819,9 +842,9 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 {
 	asUINT n;
 
-	if( isCompiled ) *isCompiled = true;
+	if( isCompiled )     *isCompiled     = true;
 	if( isPureConstant ) *isPureConstant = false;
-	if( isAppProp ) *isAppProp = false;
+	if( isAppProp )      *isAppProp      = false;
 
 	// TODO: optimize: Improve linear search
 	// Check application registered properties
@@ -849,38 +872,22 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 		}
 
 #ifndef AS_NO_COMPILER
-	// TODO: optimize: Improve linear search
 	// Check properties being compiled now
-	asCArray<sGlobalVariableDescription *> &gvars = globVariables;
-	for( n = 0; n < gvars.GetLength(); ++n )
+	sGlobalVariableDescription* desc = globVariables.GetFirst(ns, prop);
+	if( desc )
 	{
-		if( gvars[n] == 0 ) continue;
-		asCGlobalProperty *p = gvars[n]->property;
-		if( p && 
-			p->name == prop &&
-			p->nameSpace == ns )
-		{
-			if( isCompiled )     *isCompiled     = gvars[n]->isCompiled;
-			if( isPureConstant ) *isPureConstant = gvars[n]->isPureConstant;
-			if( constantValue  ) *constantValue  = gvars[n]->constantValue;
-
-			return p;
-		}
+		if( isCompiled )     *isCompiled     = desc->isCompiled;
+		if( isPureConstant ) *isPureConstant = desc->isPureConstant;
+		if( constantValue  ) *constantValue  = desc->constantValue;
+		return desc->property;
 	}
 #else
 	UNUSED_VAR(constantValue);
 #endif
 
-	// TODO: optimize: Improve linear search
 	// Check previously compiled global variables
 	if( module )
-	{
-		asCArray<asCGlobalProperty *> &props = module->scriptGlobals;
-		for( n = 0; n < props.GetLength(); ++n )
-			if( props[n]->name == prop &&
-				props[n]->nameSpace == ns )
-				return props[n];
-	}
+		return module->scriptGlobals.GetFirst(ns, prop);
 
 	return 0;
 }
@@ -1330,8 +1337,6 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 			node->Destroy(engine);
 			return asOUT_OF_MEMORY;
 		}
-			
-		globVariables.PushLast(gvar);
 
 		gvar->script      = file;
 		gvar->name        = name;
@@ -1355,6 +1360,8 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 
 		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype, ns);
 		gvar->index    = gvar->property->id;
+
+		globVariables.Put(gvar);
 
 		n = n->next;
 	}
@@ -1578,7 +1585,7 @@ void asCBuilder::CompileGlobalVariables()
 	asCOutputBuffer finalOutput;
 	asCScriptFunction *initFunc = 0;
 
-	asCArray<asCGlobalProperty*> initOrder;
+	asCSymbolTable<asCGlobalProperty> initOrder;
 
 	// We first try to compile all the primitive global variables, and only after that
 	// compile the non-primitive global variables. This permits the constructors 
@@ -1598,9 +1605,10 @@ void asCBuilder::CompileGlobalVariables()
 
 		// Restore state of compilation
 		finalOutput.Clear();
-		for( asUINT n = 0; n < globVariables.GetLength(); n++ )
+		asCSymbolTable<sGlobalVariableDescription>::iterator it = globVariables.List();
+		for( ; it; it++ )
 		{
-			sGlobalVariableDescription *gvar = globVariables[n];
+			sGlobalVariableDescription *gvar = *it;
 			if( gvar->isCompiled )
 				continue;
 
@@ -1647,10 +1655,12 @@ void asCBuilder::CompileGlobalVariables()
 
 					// When there is no assignment the value is the last + 1
 					int enumVal = 0;
-					if( n > 0 )
+					asCSymbolTable<sGlobalVariableDescription>::iterator prev_it = it;
+					prev_it--;
+					if( prev_it )
 					{
-						sGlobalVariableDescription *gvar2 = globVariables[n-1];
-						if( gvar2->datatype == gvar->datatype )
+						sGlobalVariableDescription *gvar2 = *prev_it;
+						if(gvar2->datatype == gvar->datatype )
 						{
 							// The integer value is stored in the lower bytes
 							enumVal = (*(int*)&gvar2->constantValue) + 1;
@@ -1725,7 +1735,7 @@ void asCBuilder::CompileGlobalVariables()
 
 				// Determine order of variable initializations
 				if( gvar->property && !gvar->isEnumValue )
-					initOrder.PushLast(gvar->property);
+					initOrder.Put(gvar->property);
 
 				// Does the function contain more than just a SUSPEND followed by a RET instruction?
 				if( initFunc && initFunc->byteCode.GetLength() > 2 )
@@ -1820,16 +1830,20 @@ void asCBuilder::CompileGlobalVariables()
 		// If the length of the arrays are not the same, then this is the compilation 
 		// of a single variable, in which case the initialization order of the previous 
 		// variables must be preserved.
-		if( module->scriptGlobals.GetLength() == initOrder.GetLength() )
+		if( module->scriptGlobals.GetSize() == initOrder.GetSize() )
 			module->scriptGlobals = initOrder;
 	}
 
 	// Delete the enum expressions
-	for( asUINT n = 0; n < globVariables.GetLength(); n++ )
+	asCSymbolTableIterator<sGlobalVariableDescription> it = globVariables.List();
+	while( it )
 	{
-		sGlobalVariableDescription *gvar = globVariables[n];
+		sGlobalVariableDescription *gvar = *it;
 		if( gvar->isEnumValue )
 		{
+			// Remove from symboltable. This has to be done prior to freeing the memeory
+			globVariables.Erase(it.GetIndex());
+
 			// Destroy the gvar property
 			if( gvar->nextNode )
 			{
@@ -1843,8 +1857,8 @@ void asCBuilder::CompileGlobalVariables()
 			}
 
 			asDELETE(gvar, sGlobalVariableDescription);
-			globVariables[n] = 0;
 		}
+		it++;
 	}
 }
 
@@ -2656,21 +2670,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 			else
 			{
 				// Check for name conflict errors with other values in the enum
-				r = 0;
-				for( size_t n = globVariables.GetLength(); n-- > 0; )
-				{
-					sGlobalVariableDescription *gvar = globVariables[n];
-					if( gvar->datatype != type )
-						break;
-
-					if( gvar->name == name &&
-						gvar->property->nameSpace == ns )
-					{
-						r = asNAME_TAKEN;
-						break;
-					}
-				}
-				if( asSUCCESS != r )
+				if( globVariables.Get(ns, name, asCCompGlobVarType(type)) )
 				{
 					int r, c;
 					file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
@@ -2697,8 +2697,6 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				if( gvar == 0 )
 					return asOUT_OF_MEMORY;
 
-				globVariables.PushLast(gvar);
-
 				gvar->script		  = file;
 				gvar->idNode          = 0;
 				gvar->nextNode		  = asnNode;
@@ -2722,6 +2720,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				gvar->property->type      = gvar->datatype;
 				gvar->property->id        = 0;
 
+				globVariables.Put(gvar);
 				tmp = tmp->next;
 			}
 		}

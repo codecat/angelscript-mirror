@@ -623,6 +623,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\as_symboltable.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\as_texts.h"
 				>
 			</File>
