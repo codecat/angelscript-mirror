@@ -1599,6 +1599,24 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test memory leak in interface
+	// http://www.gamedev.net/topic/629718-memory-leak/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"interface Intf { \n"
+			"	int prop { get; set; } \n"
+			"}; \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	fail = Test2() || fail;
 
 	// Success

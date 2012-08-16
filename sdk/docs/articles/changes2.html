@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/15</h2>
+<h2>Version 2.25.0 WIP - 2012/08/16</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Functions and class methods didn't accept the scope operator in the return type (Thanks Polyák István)
 <li>Compiler missed adding a validation for a null pointer when compiling a return statement for a function returning object by value (Thanks Philip Bennefall)
 <li>Fixed crash when cleaning up after a script exception in a function that returns a value object by value (Thanks Philip Bennefall)
+<li>Fixed memory leak when compiling script that declares interface with virtual properties (Thanks brumi)
+<li>Functions that take 64bit types as arguments now work with Android native calling conventions (Thanks Fredrik Ehnbom)
 </ul>
 <li>Library
 <ul>

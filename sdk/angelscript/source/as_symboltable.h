@@ -56,8 +56,14 @@
 
 BEGIN_AS_NAMESPACE
 
-// Forward declaration
-struct asSNameSpace;
+// TODO: cleanup: This should be in its own header. It is only hear, because it is needed for the template, and cannot be resolved with a forward declaration
+struct asSNameSpace
+{
+	asCString name;
+
+	// TODO: namespace: A namespace should have access masks. The application should be 
+	//                  able to restrict specific namespaces from access to specific modules
+};
 
 // Interface to avoid nested templates which is not well supported by older compilers, e.g. MSVC6
 struct asIFilter

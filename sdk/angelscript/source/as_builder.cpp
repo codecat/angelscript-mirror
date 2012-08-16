@@ -3378,10 +3378,13 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 			objType->methods.PushLast(funcId);
 	}
 
-	// We need to delete the node already if this is an interface method
-	if( isInterface && node )
+	// We need to free some memory that isn't used later when registering interfaces
+	if( isInterface )
 	{
-		node->Destroy(engine);
+		if( node )
+			node->Destroy(engine);
+		if( signature )
+			asDELETE(signature, sExplicitSignature);
 	}
 
 	return 0;

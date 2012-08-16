@@ -21,6 +21,12 @@ public:
 	asDWORD b;
 };
 
+class Class2_2
+{
+public:
+	asQWORD a;
+};
+
 class Class3
 {
 public:
@@ -41,15 +47,76 @@ static Class2 class2()
 	return c;
 }
 
+static Class2_2 class2_2()
+{
+	Class2_2 c = {0xDEADC0DE01234567L};
+	return c;
+}
+
+
 static Class3 class3()
 {
 	Class3 c = {0xDEADC0DE, 0x01234567, 0x89ABCDEF};
 	return c;
 }
 
+
+class Class4
+{
+public:
+	asDWORD a;
+
+	Class1 class1()
+	{
+		Class1 c = {0xDEADC0DE};
+		return c;
+	}
+
+	Class2 class2()
+	{
+		Class2 c = {0xDEADC0DE, 0x01234567};
+		return c;
+	}
+	Class2_2 class2_2()
+	{
+		Class2_2 c = {0xDEADC0DE01234567L};
+		return c;
+	}
+
+	Class3 class3()
+	{
+		Class3 c = {0xDEADC0DE, 0x01234567, 0x89ABCDEF};
+		return c;
+	}
+
+	void class1ByVal(Class1 c)
+	{
+		assert( c.a == 0xDEADC0DE );
+	}
+
+	void class2ByVal(Class2 c)
+	{
+		assert( c.a == 0xDEADC0DE && c.b == 0x01234567 );
+	}
+
+	void class2_2ByVal(Class2_2 c)
+	{
+		assert( c.a == 0xDEADC0DE01234567L );
+	}
+
+	void class3ByVal(Class3 c)
+	{
+		assert( c.a == 0xDEADC0DE && c.b == 0x01234567 && c.c == 0x89ABCDEF );
+	}
+};
+
+
+
 static Class1 c1;
 static Class2 c2;
+static Class2_2 c2_2;
 static Class3 c3;
+static Class4 c4;
 
 static void class1ByVal(Class1 c)
 {
@@ -58,7 +125,7 @@ static void class1ByVal(Class1 c)
 
 static void class2ByVal(Class2 c)
 {
-	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 ); 
+	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 );
 }
 
 static void class3ByVal(Class3 c)
@@ -81,6 +148,7 @@ static asvec3_t vec3_123()
 	asvec3_t v = {1,2,3};
 	return v;
 }
+
 
 static asvec3_t v3;
 
@@ -107,15 +175,29 @@ bool TestCDecl_Class()
 	// On 64bit Linux these types would be returned in RAX:RDX, and must be informed with asOBJ_APP_CLASS_ALLINTS
 	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+	engine->RegisterObjectType("class2_2", sizeof(Class2_2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
-	
+	engine->RegisterObjectType("class4", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
+	engine->RegisterGlobalProperty("class2_2 c2_2", &c2_2);
 	engine->RegisterGlobalProperty("class3 c3", &c3);
+	engine->RegisterGlobalProperty("class4 c4", &c4);
 
 	engine->RegisterGlobalFunction("class1 _class1()", asFUNCTION(class1), asCALL_CDECL);
 	engine->RegisterGlobalFunction("class2 _class2()", asFUNCTION(class2), asCALL_CDECL);
+	engine->RegisterGlobalFunction("class2_2 _class2_2()", asFUNCTION(class2_2), asCALL_CDECL);
 	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(class3), asCALL_CDECL);
+
+	engine->RegisterObjectMethod("class4", "class1 class1()", asMETHOD(Class4, class1), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "class2 class2()", asMETHOD(Class4, class2), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "class2_2 class2_2()", asMETHOD(Class4, class2_2), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "class3 class3()", asMETHOD(Class4, class3), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "void class1ByVal(class1)", asMETHOD(Class4, class1ByVal), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "void class2ByVal(class2)", asMETHOD(Class4, class2ByVal), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "void class2_2ByVal(class2_2)", asMETHOD(Class4, class2_2ByVal), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "void class3ByVal(class3)", asMETHOD(Class4, class3ByVal), asCALL_THISCALL);
 
 	COutStream out;
 
@@ -158,6 +240,21 @@ bool TestCDecl_Class()
 		TEST_FAILED;
 	}
 
+	c2_2.a = 0;
+
+	r = ExecuteString(engine, "c2_2 = _class2_2();");
+	if( r < 0 )
+	{
+		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		TEST_FAILED;
+	}
+
+	if( c2_2.a != 0xDEADC0DE01234567L )
+	{
+		printf("%s: Failed to assign object returned from function. c2_2.a = %X\n", TESTNAME, (unsigned int)c2_2.a);
+		TEST_FAILED;
+	}
+
 	c3.a = 0;
 	c3.b = 0;
 	c3.c = 0;
@@ -186,6 +283,93 @@ bool TestCDecl_Class()
 		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)c3.c);
 		TEST_FAILED;
 	}
+
+
+
+
+	c1.a = 0;
+
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	r = ExecuteString(engine, "c1 = c4.class1();");
+	if( r < 0 )
+	{
+		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		TEST_FAILED;
+	}
+
+	if( c1.a != 0xDEADC0DE )
+	{
+		printf("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, (unsigned int)c1.a);
+		TEST_FAILED;
+	}
+
+
+	c2.a = 0;
+	c2.b = 0;
+
+	r = ExecuteString(engine, "c2 = c4.class2();");
+	if( r < 0 )
+	{
+		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		TEST_FAILED;
+	}
+
+	if( c2.a != 0xDEADC0DE )
+	{
+		printf("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, (unsigned int)c2.a);
+		TEST_FAILED;
+	}
+
+	if( c2.b != 0x01234567 )
+	{
+		printf("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, (unsigned int)c2.b);
+		TEST_FAILED;
+	}
+
+	c2_2.a = 0;
+	r = ExecuteString(engine, "c2_2 = c4.class2_2();");
+	if( r < 0 )
+	{
+		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		TEST_FAILED;
+	}
+
+	if( c2_2.a != 0xDEADC0DE01234567L )
+	{
+		printf("%s: Failed to assign object returned from function. c2.a = %lx\n", TESTNAME, c2_2.a);
+		TEST_FAILED;
+	}
+
+	c3.a = 0;
+	c3.b = 0;
+	c3.c = 0;
+
+	r = ExecuteString(engine, "c3 = c4.class3();");
+	if( r < 0 )
+	{
+		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		TEST_FAILED;
+	}
+
+	if( c3.a != 0xDEADC0DE )
+	{
+		printf("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, (unsigned int)c3.a);
+		TEST_FAILED;
+	}
+
+	if( c3.b != 0x01234567 )
+	{
+		printf("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, (unsigned int)c3.b);
+		TEST_FAILED;
+	}
+
+	if( c3.c != 0x89ABCDEF )
+	{
+		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)c3.c);
+		TEST_FAILED;
+	}
+
+
 
 	// Test the vec3 C structure
 	// On 64bit Linux this type would be returned in XMM0:XMM1, which is why we need to inform asOBJ_APP_CLASS_ALLFLOATS
@@ -222,6 +406,22 @@ bool TestCDecl_Class()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
+	// Test passing the object types by value to a system function
+	r = ExecuteString(engine, "class1 c = c4.class1(); c4.class1ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	r = ExecuteString(engine, "class2 c = c4.class2(); c4.class2ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	r = ExecuteString(engine, "class2_2 c = c4.class2_2(); c4.class2_2ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	r = ExecuteString(engine, "class3 c = c4.class3(); c4.class3ByVal(c)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 	engine->Release();
 
 	return fail;

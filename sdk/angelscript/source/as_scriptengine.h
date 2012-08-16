@@ -68,13 +68,6 @@ struct sBindInfo;
 
 // TODO: Should allow enumerating modules, in case they have not been named.
 
-struct asSNameSpace
-{
-	asCString name;
-
-	// TODO: namespace: A namespace should have access masks. The application should be 
-	//                  able to restrict specific namespaces from access to specific modules
-};
 
 class asCScriptEngine : public asIScriptEngine
 {
