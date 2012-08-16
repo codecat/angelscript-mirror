@@ -939,12 +939,15 @@ void *asCScriptFunction::GetUserData() const
 }
 
 // internal
+// TODO: cleanup: This method should probably be a member of the engine
 asCGlobalProperty *asCScriptFunction::GetPropertyByGlobalVarPtr(void *gvarPtr)
 {
-	for( asUINT g = 0; g < engine->globalProperties.GetLength(); g++ )
-		if( engine->globalProperties[g] && engine->globalProperties[g]->GetAddressOfValue() == gvarPtr )
-			return engine->globalProperties[g];
-
+	asSMapNode<void*, asCGlobalProperty*> *node;
+	if( engine->varAddressMap.MoveTo(&node, gvarPtr) )
+	{
+		asASSERT(gvarPtr == node->value->GetAddressOfValue());
+		return node->value;
+	}
 	return 0;
 }
 

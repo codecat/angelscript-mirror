@@ -697,22 +697,6 @@ int asCModule::RemoveGlobalVar(asUINT index)
 	return 0;
 }
 
-class asCCompGlobPropType : public asIFilter
-{
-public:
-	const asCDataType &m_type;
-
-	asCCompGlobPropType(const asCDataType &type) : m_type(type) {}
-
-	bool operator()(const void *p) const
-	{
-		const asCGlobalProperty* prop = reinterpret_cast<const asCGlobalProperty*>(p);
-		return prop->type == m_type;
-	}
-private:
-	asCCompGlobPropType &operator=(const asCCompGlobPropType &) {return *this;}
-};
-
 // interface
 int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 {
@@ -1172,6 +1156,9 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 	// Allocate the memory for this property based on its type
 	prop->type = dt;
 	prop->AllocateMemory();
+
+	// Make an entry in the address to variable map
+	engine->varAddressMap.Insert(prop->GetAddressOfValue(), prop);
 
 	// Store the variable in the module scope (the reference count is already set to 1)
 	scriptGlobals.Put(prop);

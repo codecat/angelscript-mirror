@@ -145,6 +145,44 @@ bool TestException()
 
 	engine->Release();
 
+	// Problem reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test",
+			"string post_score(string url, string channel, string channel_password, int score, string name, string email, string country) \n"
+			"{ \n"
+			"  string[] list={'something'}; \n"
+			"  return list[1]; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  string result=post_score('hello', 'palacepunchup', 'anka', -1, 'Philip', 'philip@blastbay.com', 'Sweden'); \n"
+			"}\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( string(ctx->GetExceptionString()) != "Index out of bounds" )
+			TEST_FAILED;
+		if( string(ctx->GetExceptionFunction()->GetName()) != "post_score" )
+			TEST_FAILED;
+
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

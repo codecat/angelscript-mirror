@@ -27,6 +27,7 @@ void Test()
 	printf("AngelScript 2.25.0 WIP 3: 10.55 secs (rewind optimization in parser)\n");
 	printf("AngelScript 2.25.0 WIP 4:  5.72 secs (1st gen symbol table for global props in builder)\n");
 	printf("AngelScript 2.25.0 WIP 5:  0.96 secs (1st gen symbol table for global props in module)\n");
+	printf("AngelScript 2.25.0 WIP 6:  0.75 secs (map glob var addr to property)\n");
 
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/14</h2>
+<h2>Version 2.25.0 WIP - 2012/08/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Inheriting from a class or interface in a different namespace didn't work (Thanks Polyák István)
 <li>Functions and class methods didn't accept the scope operator in the return type (Thanks Polyák István)
 <li>Compiler missed adding a validation for a null pointer when compiling a return statement for a function returning object by value (Thanks Philip Bennefall)
+<li>Fixed crash when cleaning up after a script exception in a function that returns a value object by value (Thanks Philip Bennefall)
 </ul>
 <li>Library
 <ul>
@@ -31,7 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Loading large precompiled bytecode files will now be significantly faster. Performance should now be similar to pre 2.23.0 (Thanks loboWu)
 <li>Improved performance of tokenizer for large initialization lists (Thanks Markus Lenger)
 <li>Improved performance of parser for scripts with a lot of statements
-<li>Improved performance of searching for global properties in builder and module (Thanks Markus Lenger)
+<li>Improved performance of searching for global properties by name (Thanks Markus Lenger)
 </ul>
 </ul>
 

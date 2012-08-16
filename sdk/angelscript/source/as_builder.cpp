@@ -71,7 +71,9 @@ public:
 		const sGlobalVariableDescription* desc = reinterpret_cast<const sGlobalVariableDescription*>(p);
 		return desc->datatype == m_type;
 	}
+
 private:
+	// The assignment operator is required for MSVC9, otherwise it will complain that it is not possible to auto generate the operator
 	asCCompGlobVarType &operator=(const asCCompGlobVarType &) {return *this;}
 };
 
@@ -840,36 +842,31 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 
 asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace *ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp)
 {
-	asUINT n;
-
 	if( isCompiled )     *isCompiled     = true;
 	if( isPureConstant ) *isPureConstant = false;
 	if( isAppProp )      *isAppProp      = false;
 
-	// TODO: optimize: Improve linear search
 	// Check application registered properties
-	asCArray<asCGlobalProperty *> &props = engine->registeredGlobalProps;
-	for( n = 0; n < props.GetLength(); ++n )
-		if( props[n] && 
-			props[n]->name == prop &&
-			props[n]->nameSpace == ns )
+	asCString name(prop);
+	asCGlobalProperty *globProp = engine->registeredGlobalProps.GetFirst(ns, name);
+	if( globProp )
+	{
+		if( module )
 		{
-			if( module )
+			// Determine if the module has access to the property
+			if( module->accessMask & globProp->accessMask )
 			{
-				// Determine if the module has access to the property
-				if( module->accessMask & props[n]->accessMask )
-				{
-					if( isAppProp ) *isAppProp = true;
-					return props[n];
-				}
-			}
-			else
-			{
-				// We're not compiling a module right now, so it must be a registered global property
 				if( isAppProp ) *isAppProp = true;
-				return props[n];
+				return globProp;
 			}
 		}
+		else
+		{
+			// We're not compiling a module right now, so it must be a registered global property
+			if( isAppProp ) *isAppProp = true;
+			return globProp;
+		}
+	}
 
 #ifndef AS_NO_COMPILER
 	// Check properties being compiled now
@@ -1831,7 +1828,10 @@ void asCBuilder::CompileGlobalVariables()
 		// of a single variable, in which case the initialization order of the previous 
 		// variables must be preserved.
 		if( module->scriptGlobals.GetSize() == initOrder.GetSize() )
+		{
+			// TODO: optimize: Swap the contents instead of copying it
 			module->scriptGlobals = initOrder;
+		}
 	}
 
 	// Delete the enum expressions

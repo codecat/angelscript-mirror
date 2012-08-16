@@ -4170,9 +4170,9 @@ void asCContext::CleanStackFrame()
 	// Clean object and parameters
 	int offset = 0;
 	if( m_currentFunction->objectType )
-	{
 		offset += AS_PTR_SIZE;
-	}
+	if( m_currentFunction->DoesReturnOnStack() )
+		offset += AS_PTR_SIZE;
 	for( asUINT n = 0; n < m_currentFunction->parameterTypes.GetLength(); n++ )
 	{
 		if( m_currentFunction->parameterTypes[n].IsObject() && !m_currentFunction->parameterTypes[n].IsReference() )

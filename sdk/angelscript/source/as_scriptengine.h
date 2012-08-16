@@ -333,13 +333,13 @@ public:
 	asCObjectType    globalPropertyBehaviours;
 
 	// Registered interface
-	asCArray<asCObjectType *>      registeredObjTypes;
-	asCArray<asCObjectType *>      registeredTypeDefs;
-	asCArray<asCObjectType *>      registeredEnums;
-	asCArray<asCGlobalProperty *>  registeredGlobalProps;
-	asCArray<asCScriptFunction *>  registeredGlobalFuncs;
-	asCArray<asCScriptFunction *>  registeredFuncDefs;
-	asCScriptFunction             *stringFactory;
+	asCArray<asCObjectType *>          registeredObjTypes;
+	asCArray<asCObjectType *>          registeredTypeDefs;
+	asCArray<asCObjectType *>          registeredEnums;
+	asCSymbolTable<asCGlobalProperty>  registeredGlobalProps;
+	asCArray<asCScriptFunction *>      registeredGlobalFuncs;
+	asCArray<asCScriptFunction *>      registeredFuncDefs;
+	asCScriptFunction                 *stringFactory;
 	bool configFailed;
 
 	// Stores all known object types, both application registered, and script declared
@@ -352,6 +352,11 @@ public:
 	// Stores all global properties, both those registered by application, and those declared by scripts.
 	// The id of a global property is the index in this array.
 	asCArray<asCGlobalProperty *> globalProperties;
+
+	// This map is used to quickly find a property by its memory address
+	// It is used principally during building, cleanup, and garbage detection for script functions
+	asCMap<void*, asCGlobalProperty*> varAddressMap;
+
 	asCArray<int>                 freeGlobalPropertyIds;
 
 	// Stores all functions, i.e. registered functions, script functions, class methods, behaviours, etc.

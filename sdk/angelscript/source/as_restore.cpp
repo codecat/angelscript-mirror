@@ -1695,29 +1695,15 @@ void asCReader::ReadUsedGlobalProps()
 		asSNameSpace *nameSpace = engine->AddNameSpace(ns.AddressOf());
 
 		// Find the real property
-		void *prop = 0;
+		asCGlobalProperty *globProp = 0;
 		if( moduleProp )
-		{
-			asCGlobalProperty *globProp = module->scriptGlobals.GetFirst(nameSpace, name);
-			if( globProp && globProp->type == type )
-			{
-				prop = globProp->GetAddressOfValue();
-			}
-		}
+			globProp = module->scriptGlobals.GetFirst(nameSpace, name);
 		else
-		{
-			for( asUINT p = 0; p < engine->registeredGlobalProps.GetLength(); p++ )
-			{
-				if( engine->registeredGlobalProps[p] &&
-					engine->registeredGlobalProps[p]->name == name &&
-					engine->registeredGlobalProps[p]->nameSpace == nameSpace &&
-					engine->registeredGlobalProps[p]->type == type )
-				{
-					prop = engine->registeredGlobalProps[p]->GetAddressOfValue();
-					break;
-				}
-			}
-		}
+			globProp = engine->registeredGlobalProps.GetFirst(nameSpace, name);
+
+		void *prop = 0;
+		if( globProp && globProp->type == type )
+			prop = globProp->GetAddressOfValue();
 
 		usedGlobalProperties.PushLast(prop);
 
@@ -3808,11 +3794,12 @@ void asCWriter::WriteUsedGlobalProps()
 		// If it is not in the module, it must be an application registered property
 		if( !prop )
 		{
-			for( int i = 0; i < (signed)engine->registeredGlobalProps.GetLength(); i++ )
+			asCSymbolTable<asCGlobalProperty>::iterator it = engine->registeredGlobalProps.List();
+			for( ; it; it++ )
 			{
-				if( engine->registeredGlobalProps[i]->GetAddressOfValue() == p )
+				if( it->GetAddressOfValue() == p )
 				{
-					prop = engine->registeredGlobalProps[i];
+					prop = *it;
 					break;
 				}
 			}

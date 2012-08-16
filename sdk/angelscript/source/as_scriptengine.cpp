@@ -608,12 +608,10 @@ asCScriptEngine::~asCScriptEngine()
 	// Remove what is remaining
 	defaultGroup.RemoveConfiguration(this);
 
-	for( n = 0; n < registeredGlobalProps.GetLength(); n++ )
-	{
-		if( registeredGlobalProps[n] )
-			registeredGlobalProps[n]->Release();
-	}
-	registeredGlobalProps.SetLength(0);
+	asCSymbolTable<asCGlobalProperty>::iterator it = registeredGlobalProps.List();
+	for( ; it; it++ )
+		(*it)->Release();
+	registeredGlobalProps.Clear();
 	FreeUnusedGlobalProperties();
 
 	for( n = 0; n < templateTypes.GetLength(); n++ )
@@ -2182,8 +2180,9 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	prop->accessMask  = defaultAccessMask;
 
 	prop->SetRegisteredAddress(pointer);
+	varAddressMap.Insert(prop->GetAddressOfValue(), prop);
 
-	registeredGlobalProps.PushLast(prop);
+	registeredGlobalProps.Put(prop);
 	currentGroup->globalProps.PushLast(prop);
 
 	// If from another group add reference
@@ -2227,6 +2226,13 @@ void asCScriptEngine::FreeUnusedGlobalProperties()
 		if( globalProperties[n] && globalProperties[n]->GetRefCount() == 0 )
 		{
 			freeGlobalPropertyIds.PushLast(n);
+
+			asSMapNode<void*, asCGlobalProperty*> *node;
+			varAddressMap.MoveTo(&node, globalProperties[n]->GetAddressOfValue());
+			asASSERT(node);
+			if( node )
+				varAddressMap.Erase(node);
+
 			asDELETE(globalProperties[n], asCGlobalProperty);
 			globalProperties[n] = 0;
 		}
@@ -2236,20 +2242,23 @@ void asCScriptEngine::FreeUnusedGlobalProperties()
 // interface
 asUINT asCScriptEngine::GetGlobalPropertyCount() const
 {
-	return asUINT(registeredGlobalProps.GetLength());
+	return asUINT(registeredGlobalProps.GetSize());
 }
 
 // interface
 // TODO: If the typeId ever encodes the const flag, then the isConst parameter should be removed
 int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, const char **nameSpace, int *typeId, bool *isConst, const char **configGroup, void **pointer, asDWORD *accessMask) const
 {
-	if( index >= registeredGlobalProps.GetLength() )
+	const asCGlobalProperty *prop = registeredGlobalProps.Get(index);
+	if( !prop )
 		return asINVALID_ARG;
 
-	if( name )
-		*name = registeredGlobalProps[index]->name.AddressOf();
-	if( nameSpace )
-		*nameSpace = registeredGlobalProps[index]->nameSpace->name.AddressOf();
+	if( name )       *name       = prop->name.AddressOf();
+	if( nameSpace )  *nameSpace  = prop->nameSpace->name.AddressOf();
+	if( typeId )     *typeId     = GetTypeIdFromDataType(prop->type);
+	if( isConst )    *isConst    = prop->type.IsReadOnly();
+	if( pointer )    *pointer    = prop->GetRegisteredAddress();
+	if( accessMask ) *accessMask = prop->accessMask;
 
 	if( configGroup )
 	{
@@ -2260,18 +2269,6 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, c
 			*configGroup = 0;
 	}
 
-	if( typeId )
-		*typeId = GetTypeIdFromDataType(registeredGlobalProps[index]->type);
-
-	if( isConst )
-		*isConst = registeredGlobalProps[index]->type.IsReadOnly();
-
-	if( pointer )
-		*pointer = registeredGlobalProps[index]->GetRegisteredAddress();
-
-	if( accessMask )
-		*accessMask = registeredGlobalProps[index]->accessMask;
-
 	return asSUCCESS;
 }
 
@@ -2279,17 +2276,7 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, c
 int asCScriptEngine::GetGlobalPropertyIndexByName(const char *name) const
 {
 	// Find the global var id
-	int id = -1;
-	for( size_t n = 0; n < registeredGlobalProps.GetLength(); n++ )
-	{
-		if( registeredGlobalProps[n]->name == name &&
-			registeredGlobalProps[n]->nameSpace == defaultNamespace )
-		{
-			id = (int)n;
-			break;
-		}
-	}
-
+	int id = registeredGlobalProps.GetFirstIndex(defaultNamespace, name);
 	if( id == -1 ) return asNO_GLOBAL_VAR;
 
 	return id;
@@ -2306,21 +2293,10 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 	asCDataType dt;
 	bld.ParseVariableDeclaration(decl, defaultNamespace, name, ns, dt);
 
-	// TODO: optimize: Improve linear search
 	// Search for a match
-	int id = -1;
-	for( size_t n = 0; n < registeredGlobalProps.GetLength(); ++n )
-	{
-		if( name == registeredGlobalProps[n]->name && 
-			dt   == registeredGlobalProps[n]->type && 
-			ns   == registeredGlobalProps[n]->nameSpace )
-		{
-			id = (int)n;
-			break;
-		}
-	}
-
-	if( id == -1 ) return asNO_GLOBAL_VAR;
+	int id = registeredGlobalProps.GetIndex(ns, name, asCCompGlobPropType(dt));
+	if (id < 0)
+		return asNO_GLOBAL_VAR;
 
 	return id;
 }
@@ -3113,6 +3089,10 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	// Verify if the subtype contains a garbage collected object, in which case this template is a potential circular reference.
 	// A handle can potentially hold derived types, which may be garbage collected so to be safe we have to set the GC flag.
+	// This is done so that classes that include the template instance type as member can be properly marked as garbage collected,
+	// it doesn't necessarily mean that the template type itself has all the necessary behaviours to be garbage collected, that
+	// is the responsibility of the object itself to check.
+	// TODO: This should be the responsibility of the template type to determine this. It could for example be done in the template callback
 	if( ot->templateSubType.IsObjectHandle() || (ot->templateSubType.GetObjectType() && (ot->templateSubType.GetObjectType()->flags & asOBJ_GC)) )
 		ot->flags |= asOBJ_GC;
 
