@@ -80,7 +80,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		callConv++;
 	}
 
-	asDWORD paramBuffer[64];
+	asDWORD paramBuffer[64+2];
 	// Android needs to align 64bit types on even registers, but this isn't done on iOS or Windows Phone
 	// TODO: optimize runtime: There should be a check for this in PrepareSystemFunction() so this 
 	//                         doesn't have to be done for functions that don't have any 64bit types
@@ -126,6 +126,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				else
 #endif
 				{
+#ifdef AS_ANDROID
+					if( (descr->parameterTypes[n].GetObjectType()->flags & asOBJ_APP_CLASS_ALIGN8) &&
+						((dpos & 1) == mask) )
+					{
+						// 64 bit value align
+						dpos++;
+						paramSize++;
+					}
+#endif
 					// Copy the object's memory to the buffer
 					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
 
@@ -143,7 +152,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				if( !descr->parameterTypes[n].IsObjectHandle() && 
 					!descr->parameterTypes[n].IsReference() && 
 					descr->parameterTypes[n].GetSizeOnStackDWords() == 2 && 
-					((dpos & mask) == mask) )
+					((dpos & 1) == mask) )
 				{
 					// 64 bit value align
 					dpos++;

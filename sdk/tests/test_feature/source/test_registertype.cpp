@@ -1197,6 +1197,12 @@ void Construct_dim2f(float x, float y, dimension2df *mem)
 	new(mem) dimension2df(x, y);
 }
 
+void ByValue(dimension2df val)
+{
+	assert( fabsf(val.Width - 1.0f) <= 0.0001f );
+	assert( fabsf(val.Height - 2.0f) <= 0.0001f );
+}
+
 bool TestIrrTypes()
 {
 	bool fail = false;
@@ -1218,11 +1224,13 @@ bool TestIrrTypes()
 	r = engine->RegisterObjectProperty("dim2f", "float x", asOFFSET(dimension2df, Width)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("dim2f", "float y", asOFFSET(dimension2df, Height)); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void ByValue(dim2f)", asFUNCTION(ByValue), asCALL_CDECL); assert( r >= 0 );
 
 	r = ExecuteString(engine, "dim2f video_res(800,600);\n"
 		                      "dim2f total_res;\n"
 							  "total_res = video_res + video_res;\n"
-							  "assert( total_res.x == 1600 && total_res.y == 1200 );\n");
+							  "assert( total_res.x == 1600 && total_res.y == 1200 );\n"
+							  "ByValue(dim2f(1,2)); \n");
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;

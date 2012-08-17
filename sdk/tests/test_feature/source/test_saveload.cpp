@@ -318,7 +318,7 @@ public:
 	void AddRef() {refCount++;}
 	void Release() {if( --refCount == 0 ) delete this;}
 	static Tmpl *TmplFactory(asIObjectType*) {return new Tmpl;}
-	static bool TmplCallback(asIObjectType *ot) {return false;}
+	static bool TmplCallback(asIObjectType *ot, bool &dontGC) {return false;}
 	int refCount;
 };
 
@@ -1216,7 +1216,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
 
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		bout.buffer = "";

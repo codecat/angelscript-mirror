@@ -1935,8 +1935,13 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.returnType != asCDataType::CreatePrimitive(ttBool, false) )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
-		// Verify that there is one parameters
-		if( func.parameterTypes.GetLength() != 1 )
+		// Verify that there are two parameters
+		if( func.parameterTypes.GetLength() != 2 )
+			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+
+		// The first parameter must be an inref (to receive the object type), and 
+		// the second must be a bool out ref (to return if the type should or shouldn't be garbage collected)
+		if( func.inOutFlags[0] != asTM_INREF || func.inOutFlags[1] != asTM_OUTREF || !func.parameterTypes[1].IsEqualExceptRef(asCDataType::CreatePrimitive(ttBool, false)) )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
 		func.id = beh->templateCallback = AddBehaviourFunction(func, internal);
@@ -2985,14 +2990,25 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Before filling in the methods, call the template instance callback behaviour to validate the type
 	if( templateType->beh.templateCallback )
 	{
+		bool dontGarbageCollect = false;
+
 		asCScriptFunction *callback = scriptFunctions[templateType->beh.templateCallback];
-		if( !deferValidationOfTemplateTypes && !CallGlobalFunctionRetBool(ot, 0, callback->sysFuncIntf, callback) )
+		if( !CallGlobalFunctionRetBool(ot, &dontGarbageCollect, callback->sysFuncIntf, callback) )
 		{
-			// The type cannot be instanciated
-			ot->templateSubType = asCDataType();
-			asDELETE(ot, asCObjectType);
-			return 0;
+			// If the validation is deferred then the validation will be done later,
+			// so it is necessary to continue the preparation of the template instance type
+			if( !deferValidationOfTemplateTypes )
+			{
+				// The type cannot be instanciated
+				ot->templateSubType = asCDataType();
+				asDELETE(ot, asCObjectType);
+				return 0;
+			}
 		}
+
+		// If the callback said this template instance won't be garbage collected then remove the flag
+		if( dontGarbageCollect )
+			ot->flags &= ~asOBJ_GC;
 
 		ot->beh.templateCallback = templateType->beh.templateCallback;
 		scriptFunctions[ot->beh.templateCallback]->AddRef();
@@ -3086,15 +3102,6 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	// Increase ref counter for sub type if it is an object type
 	if( ot->templateSubType.GetObjectType() ) ot->templateSubType.GetObjectType()->AddRef();
-
-	// Verify if the subtype contains a garbage collected object, in which case this template is a potential circular reference.
-	// A handle can potentially hold derived types, which may be garbage collected so to be safe we have to set the GC flag.
-	// This is done so that classes that include the template instance type as member can be properly marked as garbage collected,
-	// it doesn't necessarily mean that the template type itself has all the necessary behaviours to be garbage collected, that
-	// is the responsibility of the object itself to check.
-	// TODO: This should be the responsibility of the template type to determine this. It could for example be done in the template callback
-	if( ot->templateSubType.IsObjectHandle() || (ot->templateSubType.GetObjectType() && (ot->templateSubType.GetObjectType()->flags & asOBJ_GC)) )
-		ot->flags |= asOBJ_GC;
 
 	templateTypes.PushLast(ot);
 

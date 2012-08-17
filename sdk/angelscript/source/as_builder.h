@@ -90,10 +90,13 @@ struct sGlobalVariableDescription
 	asQWORD constantValue;
 };
 
+#ifndef AS_NO_COMPILER
 
 // asCSymbolTable template specializations for sGlobalVariableDescription entries
 template<>
 void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const;
+
+#endif
 
 
 struct sClassDeclaration

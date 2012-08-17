@@ -77,8 +77,10 @@ static CScriptArray* ScriptArrayFactory(asIObjectType *ot)
 
 // This optional callback is called when the template type is first used by the compiler.
 // It allows the application to validate if the template can be instanciated for the requested 
-// subtype at compile time, instead of at runtime.
-static bool ScriptArrayTemplateCallback(asIObjectType *ot)
+// subtype at compile time, instead of at runtime. The output argument dontGarbageCollect
+// allow the callback to tell the engine if the template instance type shouldn't be garbage collected, 
+// i.e. no asOBJ_GC flag. 
+static bool ScriptArrayTemplateCallback(asIObjectType *ot, bool &dontGarbageCollect)
 {
 	// Make sure the subtype can be instanciated with a default factory/constructor, 
 	// otherwise we won't be able to instanciate the elements. 
@@ -92,6 +94,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 		if( (flags & asOBJ_VALUE) && !(flags & asOBJ_POD) )
 		{
 			// Verify that there is a default constructor
+			bool found = false;
 			for( asUINT n = 0; n < subtype->GetBehaviourCount(); n++ )
 			{
 				asEBehaviours beh;
@@ -101,29 +104,48 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 				if( func->GetParamCount() == 0 )
 				{
 					// Found the default constructor
-					return true;
+					found = true;
+					break;
 				}
 			}
 
-			// There is no default constructor
-			return false;
+			if( !found )
+			{
+				// There is no default constructor
+				return false;
+			}
 		}
 		else if( (flags & asOBJ_REF) )
 		{
 			// Verify that there is a default factory
+			bool found = false;
 			for( asUINT n = 0; n < subtype->GetFactoryCount(); n++ )
 			{
 				asIScriptFunction *func = subtype->GetFactoryByIndex(n);
 				if( func->GetParamCount() == 0 )
 				{
 					// Found the default factory
-					return true;
+					found = true;
+					break;
 				}
 			}	
 
-			// No default factory
-			return false;
+			if( !found )
+			{
+				// No default factory
+				return false;
+			}
 		}
+
+		// If the object type is not garbage collected then the array also doesn't need to be
+		if( !(flags & asOBJ_GC) )
+			dontGarbageCollect = true;
+	}
+	else if( !(typeId & asTYPEID_OBJHANDLE) )
+	{
+		// Arrays with primitives cannot form circular references, 
+		// thus there is no need to garbage collect them
+		dontGarbageCollect = true;
 	}
 
 	// The type is ok
@@ -155,7 +177,7 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("array<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
 
 	// Register a callback for validating the subtype before it is used
-	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(ScriptArrayTemplateCallback), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", asFUNCTION(ScriptArrayTemplateCallback), asCALL_CDECL); assert( r >= 0 );
 
 	// Templates receive the object type as the first parameter. To the script writer this is hidden
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTIONPR(ScriptArrayFactory, (asIObjectType*), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
@@ -1329,7 +1351,8 @@ static void ScriptArrayFactoryDefVal_Generic(asIScriptGeneric *gen)
 static void ScriptArrayTemplateCallback_Generic(asIScriptGeneric *gen)
 {
 	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
-	*(bool*)gen->GetAddressOfReturnLocation() = ScriptArrayTemplateCallback(ot);
+	bool *dontGarbageCollect = *(bool**)gen->GetAddressOfArg(1);
+	*(bool*)gen->GetAddressOfReturnLocation() = ScriptArrayTemplateCallback(ot, *dontGarbageCollect);
 }
 
 static void ScriptArrayAssignment_Generic(asIScriptGeneric *gen)
@@ -1416,7 +1439,7 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("array<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
 
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in)", asFUNCTION(ScriptArrayFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(ScriptArrayTemplateCallback_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", asFUNCTION(ScriptArrayTemplateCallback_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTION(ScriptArrayFactory2_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint, const T &in)", asFUNCTION(ScriptArrayFactoryDefVal_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_LIST_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTION(ScriptArrayFactory2_Generic), asCALL_GENERIC); assert( r >= 0 );

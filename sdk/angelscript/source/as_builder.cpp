@@ -48,6 +48,7 @@
 
 BEGIN_AS_NAMESPACE
 
+#ifndef AS_NO_COMPILER
 
 // asCSymbolTable template specializations for sGlobalVariableDescription entries
 template<>
@@ -77,7 +78,7 @@ private:
 	asCCompGlobVarType &operator=(const asCCompGlobVarType &) {return *this;}
 };
 
-
+#endif
 
 asCBuilder::asCBuilder(asCScriptEngine *engine, asCModule *module)
 {

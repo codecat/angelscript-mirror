@@ -68,44 +68,52 @@ public:
 
 	Class1 class1()
 	{
+		assert(a == 0x1337C0DE);
 		Class1 c = {0xDEADC0DE};
 		return c;
 	}
 
 	Class2 class2()
 	{
+		assert(a == 0x1337C0DE);
 		Class2 c = {0xDEADC0DE, 0x01234567};
 		return c;
 	}
 	Class2_2 class2_2()
 	{
+		assert(a == 0x1337C0DE);
 		Class2_2 c = {0xDEADC0DE01234567L};
 		return c;
 	}
 
 	Class3 class3()
 	{
+		assert(a == 0x1337C0DE);
 		Class3 c = {0xDEADC0DE, 0x01234567, 0x89ABCDEF};
 		return c;
 	}
 
 	void class1ByVal(Class1 c)
 	{
+		assert(a == 0x1337C0DE);
 		assert( c.a == 0xDEADC0DE );
 	}
 
 	void class2ByVal(Class2 c)
 	{
+		assert(a == 0x1337C0DE);
 		assert( c.a == 0xDEADC0DE && c.b == 0x01234567 );
 	}
 
 	void class2_2ByVal(Class2_2 c)
 	{
+		assert(a == 0x1337C0DE);
 		assert( c.a == 0xDEADC0DE01234567L );
 	}
 
 	void class3ByVal(Class3 c)
 	{
+		assert(a == 0x1337C0DE);
 		assert( c.a == 0xDEADC0DE && c.b == 0x01234567 && c.c == 0x89ABCDEF );
 	}
 };
@@ -175,9 +183,11 @@ bool TestCDecl_Class()
 	// On 64bit Linux these types would be returned in RAX:RDX, and must be informed with asOBJ_APP_CLASS_ALLINTS
 	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
-	engine->RegisterObjectType("class2_2", sizeof(Class2_2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+	engine->RegisterObjectType("class2_2", sizeof(Class2_2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS | asOBJ_APP_CLASS_ALIGN8);
 	engine->RegisterObjectType("class3", sizeof(Class3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class4", sizeof(Class4), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
+
+	c4.a = 0x1337C0DE;
 
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
