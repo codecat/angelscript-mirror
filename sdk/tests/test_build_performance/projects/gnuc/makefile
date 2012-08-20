@@ -18,6 +18,7 @@ SRCNAMES = \
   test_basic.cpp \
   test_big_arrays.cpp \
   test_many_symbols.cpp \
+  test_many_funcs.cpp \
   script_factory.cpp \
   utils.cpp  
      

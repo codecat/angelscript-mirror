@@ -272,13 +272,9 @@ CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)
 
 	// Determine element size
 	if( subTypeId & asTYPEID_MASK_OBJECT )
-	{
 		elementSize = sizeof(asPWORD);
-	}
 	else
-	{
 		elementSize = objType->GetEngine()->GetSizeOfPrimitiveType(subTypeId);
-	}
 
 	// Make sure the array size isn't too large for us to handle
 	if( !CheckMaxSize(length) )
@@ -306,13 +302,9 @@ CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
 
 	// Determine element size
 	if( subTypeId & asTYPEID_MASK_OBJECT )
-	{
 		elementSize = sizeof(asPWORD);
-	}
 	else
-	{
 		elementSize = objType->GetEngine()->GetSizeOfPrimitiveType(subTypeId);
-	}
 
 	// Make sure the array size isn't too large for us to handle
 	if( !CheckMaxSize(length) )

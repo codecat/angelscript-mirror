@@ -295,7 +295,7 @@ int asCReader::ReadInner()
 		func = ReadFunction(false, false);
 		if( func )
 		{
-			module->globalFunctions.PushLast(func);
+			module->globalFunctions.Put(func);
 			func->AddRef();
 		}
 		else
@@ -2597,11 +2597,13 @@ int asCWriter::Write()
 			WriteFunction(module->scriptFunctions[i]);
 
 	// globalFunctions[]
-	count = (int)module->globalFunctions.GetLength();
+	count = (int)module->globalFunctions.GetSize();
+	asCSymbolTable<asCScriptFunction>::iterator funcIt = module->globalFunctions.List();
 	WriteEncodedInt64(count);
-	for( i = 0; i < count; i++ )
+	while( funcIt )
 	{
-		WriteFunction(module->globalFunctions[i]);
+		WriteFunction(*funcIt);
+		funcIt++;
 	}
 
 	// bindInformations[]

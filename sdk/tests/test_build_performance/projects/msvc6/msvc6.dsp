@@ -111,6 +111,10 @@ SOURCE=..\..\source\test_big_arrays.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_many_funcs.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_many_symbols.cpp
 # End Source File
 # Begin Source File

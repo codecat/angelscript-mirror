@@ -260,10 +260,7 @@ int asCModule::GetFunctionIdByIndex(asUINT index) const
 // interface
 asIScriptFunction *asCModule::GetFunctionByIndex(asUINT index) const
 {
-	if( index >= globalFunctions.GetLength() )
-		return 0;
-
-	return globalFunctions[index];
+	return const_cast<asCScriptFunction*>(globalFunctions.Get(index));
 }
 
 // internal
@@ -396,12 +393,10 @@ void asCModule::InternalReset()
 	size_t n;
 
 	// Release all global functions
-	for( n = 0; n < globalFunctions.GetLength(); n++ )
-	{
-		if( globalFunctions[n] )
-			globalFunctions[n]->Release();
-	}
-	globalFunctions.SetLength(0);
+	asCSymbolTable<asCScriptFunction>::iterator funcIt = globalFunctions.List();
+	for( ; funcIt; funcIt++ )
+		(*funcIt)->Release();
+	globalFunctions.Clear();
 
 	// First release all compiled functions
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
@@ -416,11 +411,11 @@ void asCModule::InternalReset()
 	scriptFunctions.SetLength(0);
 
 	// Release the global properties declared in the module
-	asCSymbolTableIterator<asCGlobalProperty> it = scriptGlobals.List();
-	while( it )
+	asCSymbolTableIterator<asCGlobalProperty> globIt = scriptGlobals.List();
+	while( globIt )
 	{
-		(*it)->Release();
-		it++;
+		(*globIt)->Release();
+		globIt++;
 	}
 	scriptGlobals.Clear();
 
@@ -491,23 +486,21 @@ int asCModule::GetFunctionIdByName(const char *name) const
 // interface
 asIScriptFunction *asCModule::GetFunctionByName(const char *name) const
 {
-	asIScriptFunction *func = 0;
-	for( size_t n = 0; n < globalFunctions.GetLength(); n++ )
+	const asIScriptFunction *func = 0;
+	asCSymbolTable<asCScriptFunction>::const_range_iterator it = globalFunctions.GetRange(defaultNamespace, name);
+	while( it )
 	{
-		if( globalFunctions[n]->name == name &&
-			globalFunctions[n]->nameSpace == defaultNamespace )
+		if( !func )
+			func = *it;
+		else
 		{
-			if( func == 0 )
-				func = globalFunctions[n];
-			else
-			{
-				// Multiple functions with the same name
-				return 0;
-			}
+			// Multiple functions with the same name
+			return 0;
 		}
+		it++;
 	}
 
-	return func;
+	return const_cast<asIScriptFunction*>(func);
 }
 
 // interface
@@ -561,7 +554,7 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl) const
 // interface
 asUINT asCModule::GetFunctionCount() const
 {
-	return (asUINT)globalFunctions.GetLength();
+	return (asUINT)globalFunctions.GetSize();
 }
 
 #ifdef AS_DEPRECATED
@@ -633,21 +626,21 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 	// Use the defaultNamespace implicitly unless an explicit namespace has been provided
 	asSNameSpace *ns = func.nameSpace == engine->nameSpaces[0] ? defaultNamespace : func.nameSpace;
 
-	// TODO: optimize: Improve linear search
 	// Search script functions for matching interface
 	asIScriptFunction *f = 0;
-	for( size_t n = 0; n < globalFunctions.GetLength(); ++n )
+	asCSymbolTable<asCScriptFunction>::const_range_iterator it = globalFunctions.GetRange(ns, func.name);
+	while( it )
 	{
-		if( globalFunctions[n]->objectType  == 0 && 
-			func.name                       == globalFunctions[n]->name && 
-			func.returnType                 == globalFunctions[n]->returnType &&
-			func.parameterTypes.GetLength() == globalFunctions[n]->parameterTypes.GetLength() &&
-			ns                              == globalFunctions[n]->nameSpace )
+		const asCScriptFunction *funcPtr = *it;
+		if( funcPtr->objectType == 0 &&
+			func.returnType                 == funcPtr->returnType &&
+			func.parameterTypes.GetLength() == funcPtr->parameterTypes.GetLength()
+			)
 		{
 			bool match = true;
 			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
-				if( func.parameterTypes[p] != globalFunctions[n]->parameterTypes[p] )
+				if( func.parameterTypes[p] != funcPtr->parameterTypes[p] )
 				{
 					match = false;
 					break;
@@ -657,12 +650,13 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 			if( match )
 			{
 				if( f == 0 )
-					f = globalFunctions[n];
+					f = const_cast<asCScriptFunction*>(funcPtr);
 				else
 					// Multiple functions
 					return 0;
 			}
 		}
+		it++;
 	}
 
 	return f;
@@ -935,7 +929,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const char *name, const
 	// Add reference
 	if( isGlobalFunction )
 	{
-		globalFunctions.PushLast(func);
+		globalFunctions.Put(func);
 		func->AddRef();
 	}
 
@@ -1341,10 +1335,10 @@ int asCModule::RemoveFunction(asIScriptFunction *func)
 {
 	// Find the global function
 	asCScriptFunction *f = static_cast<asCScriptFunction*>(func);
-	int idx = globalFunctions.IndexOf(f);
+	int idx = globalFunctions.GetIndex(f);
 	if( idx >= 0 )
 	{
-		globalFunctions.RemoveIndex(idx);
+		globalFunctions.Erase(idx);
 		f->Release();
 		scriptFunctions.RemoveValue(f);
 		f->Release();

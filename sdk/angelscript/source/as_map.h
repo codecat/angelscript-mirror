@@ -70,6 +70,9 @@ public:
 	int CheckIntegrity(asSMapNode<KEY,VAL> *node) const;
 
 protected:
+	// Don't allow value assignment
+	asCMap &operator=(const asCMap &) { return *this; }
+
 	void BalanceInsert(asSMapNode<KEY,VAL> *node);
 	void BalanceErase(asSMapNode<KEY,VAL> *child, asSMapNode<KEY,VAL> *parent);
 

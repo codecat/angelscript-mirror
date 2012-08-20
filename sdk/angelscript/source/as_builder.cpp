@@ -372,7 +372,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 			return asERROR;
 		}
 
-		module->globalFunctions.PushLast(func);
+		module->globalFunctions.Put(func);
 		func->AddRef();
 		module->AddScriptFunction(func);
 	}
@@ -406,7 +406,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		// If the function was added to the module then remove it again
 		if( compileFlags & asCOMP_ADD_TO_MODULE )
 		{
-			module->globalFunctions.RemoveValue(func);
+			module->globalFunctions.Erase(module->globalFunctions.GetIndex(func));
 			module->scriptFunctions.RemoveValue(func);
 			func->Release();
 			func->Release();
@@ -1829,10 +1829,7 @@ void asCBuilder::CompileGlobalVariables()
 		// of a single variable, in which case the initialization order of the previous 
 		// variables must be preserved.
 		if( module->scriptGlobals.GetSize() == initOrder.GetSize() )
-		{
-			// TODO: optimize: Swap the contents instead of copying it
-			module->scriptGlobals = initOrder;
-		}
+			module->scriptGlobals.SwapWith(initOrder);
 	}
 
 	// Delete the enum expressions
@@ -3128,7 +3125,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	{
 		asCScriptFunction *f = engine->scriptFunctions[funcId];
 		module->AddScriptFunction(f);
-		module->globalFunctions.PushLast(f);
+		module->globalFunctions.Put(f);
 		f->AddRef();
 	}
 	else
@@ -3672,28 +3669,23 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs, asSNameSpace *ns)
 {
-	// TODO: optimize: Improve linear searches in GetFunctionDescriptions
-	//                 A large part of the compilation time seems to be spent in this function
-	//                 I need to have a map with all global functions so that it will be
-	//                 quicker to find them by name. The key should be the function name, and 
-	//                 the value a list with all the functions using that name
-
-	asUINT n;
-	for( n = 0; n < module->scriptFunctions.GetLength(); n++ )
+	asCSymbolTable<asCScriptFunction>::const_range_iterator it = module->globalFunctions.GetRange(ns, name);
+	for( ; it; it++ )
 	{
-		asCScriptFunction *f = module->scriptFunctions[n];
-		if( f->name == name &&
-			f->nameSpace == ns && 
-			f->objectType == 0 )
-			funcs.PushLast(f->id);
+		const asCScriptFunction *f = *it;
+		asASSERT( f->objectType == 0 );
+		funcs.PushLast(f->id);
 	}
-
+	
+	// TODO: optimize: Linear search: This is probably not that critial. Also bindInformation will probably be removed in near future
+	asUINT n;
 	for( n = 0; n < module->bindInformations.GetLength(); n++ )
 	{
 		if( module->bindInformations[n]->importedFunctionSignature->name == name )
 			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 
+	// TODO: optimize: Linear search. The registered global functions should be stored in a symbol table too
 	for( n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
 	{
 		asCScriptFunction *f = engine->registeredGlobalFuncs[n];

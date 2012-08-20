@@ -213,11 +213,11 @@ public:
 	asSNameSpace    *defaultNamespace;
 
 	// This array holds all functions, class members, factories, etc that were compiled with the module
-	asCArray<asCScriptFunction *>  scriptFunctions;
+	asCArray<asCScriptFunction *>     scriptFunctions;
 	// This array holds global functions declared in the module
-	asCArray<asCScriptFunction *>  globalFunctions;
+	asCSymbolTable<asCScriptFunction> globalFunctions;
 	// This array holds imported functions in the module
-	asCArray<sBindInfo *>          bindInformations;
+	asCArray<sBindInfo *>             bindInformations;
 
 	// This array holds the global variables declared in the script
 	asCSymbolTable<asCGlobalProperty> scriptGlobals;

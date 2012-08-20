@@ -2603,9 +2603,9 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_ClrVPtr:
-		// TODO: optimize: Is this instruction really necessary? 
-		//                 CallScriptFunction() can clear the null handles upon entry, just as is done for 
-		//                 all other object variables
+		// TODO: runtime optimize: Is this instruction really necessary? 
+		//                         CallScriptFunction() can clear the null handles upon entry, just as is done for 
+		//                         all other object variables
 		// Clear pointer variable
 		*(asPWORD*)(l_fp - asBC_SWORDARG0(l_bc)) = 0;
 		l_bc++;

@@ -61,12 +61,13 @@ public:
 	bool   SetLengthNoConstruct(size_t numElements);
 	size_t GetLength() const;
 
-	void Copy(const T*, size_t count);
+	void         Copy(const T*, size_t count);
 	asCArray<T> &operator =(const asCArray<T> &);
+	void         SwapWith(asCArray<T> &other);
 
 	const T &operator [](size_t index) const;
-	T &operator [](size_t index);
-	T *AddressOf();
+	T       &operator [](size_t index);
+	T       *AddressOf();
 	const T *AddressOf() const;
 
 	void Concatenate(const asCArray<T> &);
@@ -227,7 +228,7 @@ void asCArray<T>::Allocate(size_t numElements, bool keepData)
 	}
 
 	if( array )
-	{
+	{	
 		size_t oldLength = length;
 
 		if( array == tmp )
@@ -395,6 +396,32 @@ asCArray<T> &asCArray<T>::operator =(const asCArray<T> &copy)
 	Copy(copy.array, copy.length);
 
 	return *this;
+}
+
+template <class T>
+void asCArray<T>::SwapWith(asCArray<T> &other)
+{
+	T      *tmpArray = array;
+	size_t  tmpLength = length;
+	size_t  tmpMaxLength = maxLength;
+	char    tmpBuf[sizeof(buf)];
+	memcpy(tmpBuf, buf, sizeof(buf));
+
+	array = other.array;
+	length = other.length;
+	maxLength = other.maxLength;
+	memcpy(buf, other.buf, sizeof(buf));
+
+	other.array = tmpArray;
+	other.length = tmpLength;
+	other.maxLength = tmpMaxLength;
+	memcpy(other.buf, tmpBuf, sizeof(buf));
+
+	// If the data is in the internal buffer, then the array pointer must refer to it
+	if( array == reinterpret_cast<T*>(other.buf) )
+		array = reinterpret_cast<T*>(buf);
+	if( other.array == reinterpret_cast<T*>(buf) )
+		other.array = reinterpret_cast<T*>(other.buf);
 }
 
 template <class T>

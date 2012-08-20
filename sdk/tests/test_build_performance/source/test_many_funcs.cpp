@@ -3,35 +3,37 @@
 //
 
 #include "utils.h"
-#include "memory_stream.h"
 #include <string>
+#include <sstream>
+#include "memory_stream.h"
 using std::string;
+using std::stringstream;
 
-namespace TestBasic
+namespace TestManyFuncs
 {
 
-#define TESTNAME "TestBasic"
+#define TESTNAME "TestManyFuncs"
 
 static const char *scriptBegin =
 "void main()                                                 \n"
-"{                                                           \n"
-"   int[] arr(2);                                            \n"
-"   int[][] PWToGuild(26);                                   \n"
-"   string test;                                             \n";
+"{                                                           \n";
+
+static const char *scriptFuncDecl = 
+"void Func%d() {} \n";
 
 static const char *scriptMiddle = 
-"   arr[0] = 121; arr[1] = 196; PWToGuild[0] = arr; test = '%d';  \n";
+"   Func%d();  \n";
 
 static const char *scriptEnd =
 "}                                                           \n";
-
 
 void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.25.0 WIP 1: 14.93 secs\n");
-	printf("AngelScript 2.25.0 WIP 3: 10.47 secs (rewind optimization in parser)\n");
+	printf("AngelScript 2.25.0 WIP 6: 11.11 secs\n");
+	printf("AngelScript 2.25.0 WIP 7: 0.83 secs (global funcs stored in map)\n");
+
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -45,12 +47,18 @@ void Test()
 	printf("\nGenerating...\n");
 
 	string script;
-	script.reserve(strlen(scriptBegin) + 40000*(strlen(scriptMiddle)+5) + strlen(scriptEnd));
-	script += scriptBegin;
-	for( int n = 0; n < 40000; n++ )
+	script.reserve(strlen(scriptBegin) + 2000*(strlen(scriptFuncDecl)+5) + 20000*(strlen(scriptMiddle)+5) + strlen(scriptEnd));
+	for( int a = 0; a < 2000; a++ )
 	{
 		char buf[500];
-		sprintf(buf, scriptMiddle, n);
+		sprintf(buf, scriptFuncDecl, a);
+		script += buf;
+	}
+	script += scriptBegin;
+	for( int n = 0; n < 20000; n++ )
+	{
+		char buf[500];
+		sprintf(buf, scriptMiddle, n%2000);
 		script += buf;
 	}
 	script += scriptEnd;

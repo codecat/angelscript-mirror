@@ -44,8 +44,8 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	int r = 0;
 	bool isNested = false;
 
-	// TODO: optimize: There should be a pool for the context so it doesn't 
-	//                 have to be allocated just for creating the script object
+	// TODO: runtime optimize: There should be a pool for the context so it doesn't 
+	//                         have to be allocated just for creating the script object
 
 	// TODO: It must be possible for the application to debug the creation of the object too
 
