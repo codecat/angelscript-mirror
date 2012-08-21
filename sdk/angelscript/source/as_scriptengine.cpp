@@ -2299,7 +2299,7 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 	bld.ParseVariableDeclaration(decl, defaultNamespace, name, ns, dt);
 
 	// Search for a match
-	int id = registeredGlobalProps.GetIndex(ns, name, asCCompGlobPropType(dt));
+	int id = registeredGlobalProps.GetFirstIndex(ns, name, asCCompGlobPropType(dt));
 	if (id < 0)
 		return asNO_GLOBAL_VAR;
 

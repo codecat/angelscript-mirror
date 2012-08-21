@@ -486,20 +486,11 @@ int asCModule::GetFunctionIdByName(const char *name) const
 // interface
 asIScriptFunction *asCModule::GetFunctionByName(const char *name) const
 {
-	const asIScriptFunction *func = 0;
-	asCSymbolTable<asCScriptFunction>::const_range_iterator it = globalFunctions.GetRange(defaultNamespace, name);
-	while( it )
-	{
-		if( !func )
-			func = *it;
-		else
-		{
-			// Multiple functions with the same name
-			return 0;
-		}
-		it++;
-	}
+	const asCArray<unsigned int> &idxs = globalFunctions.GetIndexes(defaultNamespace, name);
+	if( idxs.GetLength() != 1 )
+		return 0;
 
+	const asIScriptFunction *func = globalFunctions.Get(idxs[0]);
 	return const_cast<asIScriptFunction*>(func);
 }
 
@@ -628,10 +619,10 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 
 	// Search script functions for matching interface
 	asIScriptFunction *f = 0;
-	asCSymbolTable<asCScriptFunction>::const_range_iterator it = globalFunctions.GetRange(ns, func.name);
-	while( it )
+	const asCArray<unsigned int> &idxs = globalFunctions.GetIndexes(ns, func.name);
+	for( unsigned int n = 0; n < idxs.GetLength(); n++ )
 	{
-		const asCScriptFunction *funcPtr = *it;
+		const asCScriptFunction *funcPtr = globalFunctions.Get(idxs[n]);
 		if( funcPtr->objectType == 0 &&
 			func.returnType                 == funcPtr->returnType &&
 			func.parameterTypes.GetLength() == funcPtr->parameterTypes.GetLength()
@@ -656,7 +647,6 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 					return 0;
 			}
 		}
-		it++;
 	}
 
 	return f;
@@ -702,7 +692,7 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 	bld.ParseVariableDeclaration(decl, defaultNamespace, name, nameSpace, dt);
 
 	// Search global variables for a match
-	int id = scriptGlobals.GetIndex(nameSpace, name, asCCompGlobPropType(dt));
+	int id = scriptGlobals.GetFirstIndex(nameSpace, name, asCCompGlobPropType(dt));
 	if( id != -1 )
 		return id;
 

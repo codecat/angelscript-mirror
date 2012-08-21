@@ -2668,7 +2668,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 			else
 			{
 				// Check for name conflict errors with other values in the enum
-				if( globVariables.Get(ns, name, asCCompGlobVarType(type)) )
+				if( globVariables.GetFirst(ns, name, asCCompGlobVarType(type)) )
 				{
 					int r, c;
 					file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
@@ -3669,16 +3669,16 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs, asSNameSpace *ns)
 {
-	asCSymbolTable<asCScriptFunction>::const_range_iterator it = module->globalFunctions.GetRange(ns, name);
-	for( ; it; it++ )
+	asUINT n;
+	const asCArray<unsigned int> &idxs = module->globalFunctions.GetIndexes(ns, name);
+	for( n = 0; n < idxs.GetLength(); n++ )
 	{
-		const asCScriptFunction *f = *it;
+		const asCScriptFunction *f = module->globalFunctions.Get(idxs[n]);
 		asASSERT( f->objectType == 0 );
 		funcs.PushLast(f->id);
 	}
 	
 	// TODO: optimize: Linear search: This is probably not that critial. Also bindInformation will probably be removed in near future
-	asUINT n;
 	for( n = 0; n < module->bindInformations.GetLength(); n++ )
 	{
 		if( module->bindInformations[n]->importedFunctionSignature->name == name )

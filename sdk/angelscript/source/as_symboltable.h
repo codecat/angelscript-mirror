@@ -41,12 +41,6 @@
 #ifndef AS_SYMBOLTABLE_H
 #define AS_SYMBOLTABLE_H
 
-// due to cygwin bug
-#undef min
-#undef max
-
-#include <map>
-
 #include "as_config.h"
 #include "as_memory.h"
 #include "as_string.h"
@@ -76,25 +70,6 @@ struct asIFilter
 };
 
 
-
-
-// Filter class that accepts all entries
-struct asCAcceptAll : public asIFilter
-{
-    bool operator()(const void*) const
-    {
-        return true;
-    }
-};
-
-
-
-/**
- *  Map type used internally for mapping namespace::name to symbols
- *  Currently this is a std::multimap. Later it will be replaced by
- *  a STL independent class.
- */
-typedef std::multimap<asCString, unsigned> _asSSymMap;
 
 
 // forward declaration
@@ -130,31 +105,6 @@ private:
 
 
 
-// Iterator for iterating over a list of entries with same namespace and name
-template<class T, class T2 = T>
-class asCSymbolTableRangeIterator
-{
-public:
-    T2* operator*() const;
-    T2* operator->() const;
-    asCSymbolTableRangeIterator<T, T2>& operator++(int);
-    operator bool() const;
-    int GetIndex() const;
-
-private:
-    friend class asCSymbolTable<T>;
-    asCSymbolTableRangeIterator(
-            const asCSymbolTable<T>          *table,
-            const _asSSymMap::const_iterator &begin,
-            const _asSSymMap::const_iterator &end);
-
-    const asCSymbolTable<T>    *m_table;
-    _asSSymMap::const_iterator  m_current;
-    _asSSymMap::const_iterator  m_end;
-};
-
-
-
 // Symbol table mapping namespace + name to symbols
 template<class T>
 class asCSymbolTable
@@ -162,43 +112,42 @@ class asCSymbolTable
 public:
     typedef asCSymbolTableIterator<T, T> iterator;
     typedef asCSymbolTableIterator<T, const T> const_iterator;
-    typedef asCSymbolTableRangeIterator<T, const T> const_range_iterator;
 
-	asCSymbolTable(unsigned initial_capacity = 0);
+	asCSymbolTable(unsigned int initialCapacity = 0);
 
-	int GetIndex(const asSNameSpace *ns, const asCString &name, const asIFilter &comparator) const;
+	int      GetFirstIndex(const asSNameSpace *ns, const asCString &name, const asIFilter &comparator) const;
+	int      GetFirstIndex(const asSNameSpace *ns, const asCString &name) const;
+	int      GetLastIndex() const;
 
-	int GetFirstIndex(const asSNameSpace *ns, const asCString &name) const;
-	int GetIndex(const T*) const;
-	int GetLastId() const;
-	T* GetFirst(const asSNameSpace *ns, const asCString &name);
+	int      GetIndex(const T*) const;
 
-	T* Get(const asSNameSpace *ns, const asCString &name, const asIFilter &comparator) const;
-
-	T* Get(unsigned index);
-	T* GetLast();
+	T*       GetFirst(const asSNameSpace *ns, const asCString &name, const asIFilter &comparator) const;
+	T*       GetFirst(const asSNameSpace *ns, const asCString &name);
 	const T* GetFirst(const asSNameSpace *ns, const asCString &name) const;
-    const T* Get(unsigned index) const;
+	T*       Get(unsigned int index);
+    const T* Get(unsigned int index) const;
+	T*       GetLast();
     const T* GetLast() const;
 
-    const_range_iterator GetRange(
-            const asSNameSpace *ns, const asCString &name) const;
+    const asCArray<unsigned int> &GetIndexes(const asSNameSpace *ns, const asCString &name) const;
 
-	int Put(T* entry);
-	void Set(unsigned idx, T* p_entry);
-	unsigned GetSize() const;
-	asCSymbolTable<T>& operator=(const asCSymbolTable<T> &other);
+	int          Put(T* entry);
+
+	unsigned int GetSize() const;
 
 	void SwapWith(asCSymbolTable<T> &other);
 
 	void Clear();
-	bool Erase(unsigned idx);
-	void Allocate(unsigned elem_cnt, bool keep_data);
+	bool Erase(unsigned int idx);
+	void Allocate(unsigned int elem_cnt, bool keep_data);
 
 	iterator List();
 	const_iterator List() const;
 
 private:
+	// Don't allow assignment
+	asCSymbolTable<T>& operator=(const asCSymbolTable<T> &other) { return *this; }
+
     friend class asCSymbolTableIterator<T, T>;
     friend class asCSymbolTableIterator<T, const T>;
 	
@@ -206,80 +155,86 @@ private:
 	void BuildKey(const asSNameSpace *ns, const asCString &name, asCString &key) const;
 	bool CheckIdx(unsigned idx) const;
 
-	/*
-	 * severe problems with asCMap (Segmentation Fault).
-	 * guess this is due to the missing deep-copy implementation.
-	 * before implementing a deep-copy one should check if a simple
-	 * move (moving the RB-Tree from one asCMap-object to the other
-	 * while invaldiating the first one) would be sufficient.
-	 *
-	 * UPDATE: Multimap needed due to entries that only differ in
-	 * type.
-	 */
-
-	//asCMap<asCString, unsigned> _map;
-	typedef std::pair<_asSSymMap::iterator, _asSSymMap::iterator> symmap_range_t;
-	typedef std::pair<_asSSymMap::const_iterator, _asSSymMap::const_iterator> symmap_const_range_t;
-
-	_asSSymMap    _map;
-	asCArray<T*>  _entries;
+	asCMap<asCString, asCArray<unsigned int> > m_map;
+	asCArray<T*>                               m_entries;
+	unsigned int                               m_size;
 };
 
 
-
-// Assignment operator
-template<class T>
-asCSymbolTable<T>& asCSymbolTable<T>::operator=(const asCSymbolTable<T> &other)
-{
-    _map = other._map;
-    _entries = other._entries;
-    return *this;
-}
 
 
 template<class T>
 void asCSymbolTable<T>::SwapWith(asCSymbolTable<T> &other)
 {
-	_map.swap(other._map);
-	_entries.SwapWith(other._entries);
+	m_map.SwapWith(other.m_map);
+	m_entries.SwapWith(other.m_entries);
+
+	unsigned int tmp = m_size;
+	m_size = other.m_size;
+	other.m_size = tmp;
 }
+
+
 
 
 // Constructor
-// initial_capacity gives the number of entries to allocate in advance
+// initialCapacity gives the number of entries to allocate in advance
 template<class T>
-asCSymbolTable<T>::asCSymbolTable(unsigned initial_capacity) : _entries(initial_capacity)
+asCSymbolTable<T>::asCSymbolTable(unsigned initialCapacity) : m_entries(initialCapacity)
 {
+	m_size = 0;
 }
 
 
 
 template<class T>
-int asCSymbolTable<T>::GetIndex(
+int asCSymbolTable<T>::GetFirstIndex(
         const asSNameSpace *ns,
         const asCString &name,
         const asIFilter &filter) const
 {
 	asCString key;
 	BuildKey(ns, name, key);
-	symmap_const_range_t range = _map.equal_range(key);
-	for( _asSSymMap::const_iterator it = range.first; it != range.second; it++ )
+
+	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	if( m_map.MoveTo(&cursor, key) )
 	{
-		T *entry = _entries[it->second];
-		if( entry && filter(entry) )
-			return it->second;
+		const asCArray<unsigned int> &arr = m_map.GetValue(cursor);
+		for( unsigned int n = 0; n < arr.GetLength(); n++ )
+		{
+			T *entry = m_entries[arr[n]];
+			if( entry && filter(entry) )
+				return arr[n];
+		}
 	}
+
 	return -1;
+}
+
+
+
+template<class T>
+const asCArray<unsigned int> &asCSymbolTable<T>::GetIndexes(const asSNameSpace *ns, const asCString &name) const
+{
+	asCString key;
+	BuildKey(ns, name, key);
+
+	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	if( m_map.MoveTo(&cursor, key) )
+		return m_map.GetValue(cursor);
+
+	static asCArray<unsigned int> dummy;
+	return dummy;	
 }
 
 
 
 
 template<class T>
-T* asCSymbolTable<T>::Get(const asSNameSpace *ns, const asCString &name, const asIFilter &comp) const
+T* asCSymbolTable<T>::GetFirst(const asSNameSpace *ns, const asCString &name, const asIFilter &comp) const
 {
-    int idx = GetIndex(ns, name, comp);
-    if (idx != -1) return _entries[idx];
+    int idx = GetFirstIndex(ns, name, comp);
+    if (idx != -1) return m_entries[idx];
     return 0;
 }
 
@@ -291,28 +246,30 @@ int asCSymbolTable<T>::GetFirstIndex(const asSNameSpace *ns, const asCString &na
 {
     asCString key;
     BuildKey(ns, name, key);
-    if (_map.count(key))
-    {
-        return _map.find(key)->second;
-    }
+
+	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	if( m_map.MoveTo(&cursor, key) )
+        return m_map.GetValue(cursor)[0];
+
     return -1;
 }
+
+
 
 
 // Find the index of a certain symbol
 // ATTENTION: this function has linear runtime complexity O(n)!!
 template<class T>
-int asCSymbolTable<T>::GetIndex(const T* p_entry) const
+int asCSymbolTable<T>::GetIndex(const T* entry) const
 {
-    asCSymbolTableIterator<T, const T> it = List();
-    while( it )
-	{
-        if( *it == p_entry )
-            return it.GetIndex();
-        it++;
-	}
-    return -1;
+	for( unsigned int n = 0; n < m_entries.GetLength(); n++ )
+		if( m_entries[n] == entry )
+			return n;
+
+	return -1;
 }
+
+
 
 
 
@@ -323,25 +280,8 @@ T* asCSymbolTable<T>::Get(unsigned idx)
     if( !CheckIdx(idx) )
         return 0;
 
-    return _entries[idx];
+    return m_entries[idx];
 }
-
-
-template<class T>
-T* asCSymbolTable<T>::GetFirst(const asSNameSpace *ns, const asCString &name)
-{
-    int idx = GetFirstIndex(ns, name);
-    return Get(idx);
-}
-
-
-template<class T>
-T* asCSymbolTable<T>::GetLast()
-{
-    return Get(GetLastId());
-}
-
-
 
 template<class T>
 const T* asCSymbolTable<T>::Get(unsigned idx) const
@@ -351,6 +291,15 @@ const T* asCSymbolTable<T>::Get(unsigned idx) const
 
 
 
+
+
+template<class T>
+T* asCSymbolTable<T>::GetFirst(const asSNameSpace *ns, const asCString &name)
+{
+    int idx = GetFirstIndex(ns, name);
+    return Get(idx);
+}
+
 template<class T>
 const T* asCSymbolTable<T>::GetFirst(const asSNameSpace *ns, const asCString &name) const
 {
@@ -358,6 +307,14 @@ const T* asCSymbolTable<T>::GetFirst(const asSNameSpace *ns, const asCString &na
 }
 
 
+
+
+
+template<class T>
+T* asCSymbolTable<T>::GetLast()
+{
+    return Get(GetLastIndex());
+}
 
 template<class T>
 const T* asCSymbolTable<T>::GetLast() const
@@ -368,27 +325,15 @@ const T* asCSymbolTable<T>::GetLast() const
 
 
 
-template<class T>
-asCSymbolTableRangeIterator<T, const T> asCSymbolTable<T>::GetRange(
-            const asSNameSpace *ns,
-            const asCString &name) const
-{
-    asCString key;
-    BuildKey(ns, name, key);
-    symmap_const_range_t range = _map.equal_range(key);
-    return asCSymbolTableRangeIterator<T, const T>(this, range.first, range.second);
-}
-
-
 
 // Clear the symbol table
 // ATTENTION: The contained symbols are not rleased. This is up to the client
 template<class T>
 void asCSymbolTable<T>::Clear()
 {
-    _entries.SetLength(0);
-    //_map.EraseAll();
-    _map.clear();
+    m_entries.SetLength(0);
+    m_map.EraseAll();
+	m_size = 0;
 }
 
 
@@ -398,9 +343,10 @@ void asCSymbolTable<T>::Clear()
 template<class T>
 void asCSymbolTable<T>::Allocate(unsigned elemCnt, bool keepData)
 {
-    _entries.Allocate(elemCnt, keepData);
-    if (!keepData)
-        _map.clear();
+	asASSERT( elemCnt >= m_entries.GetLength() );
+    m_entries.Allocate(elemCnt, keepData);
+    if( !keepData )
+        m_map.EraseAll();
 }
 
 
@@ -414,26 +360,36 @@ bool asCSymbolTable<T>::Erase(unsigned idx)
         return false;
     }
 
-    T *p_entry = _entries[idx];
-    asASSERT(p_entry);
-    if( !p_entry ) 
+    T *entry = m_entries[idx];
+    asASSERT(entry);
+    if( !entry ) 
 		return false;
 
-    asCString key;
-    GetKey(p_entry, key);
-    symmap_range_t range = _map.equal_range(key);
-    for( _asSSymMap::iterator it = range.first; it != range.second; it++ )
-    {
-        if (it->second == idx)
-        {
-            _entries[idx] = 0;
-            _map.erase(it);
-            return true;
-        }
-    }
+	if( idx == m_entries.GetLength() - 1 )
+	{
+		m_entries.PopLast();
 
-    asASSERT(false);
-    return false;
+		// TODO: Should remove all trailing empty slots
+	}
+	else
+		m_entries[idx] = 0;
+	m_size--;
+
+    asCString key;
+    GetKey(entry, key);
+
+	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	if( m_map.MoveTo(&cursor, key) )
+	{
+		asCArray<unsigned int> &arr = m_map.GetValue(cursor);
+		arr.RemoveValue(idx);
+		if( arr.GetLength() == 0 )
+			m_map.Erase(cursor);
+	}
+	else
+		asASSERT(false);
+
+	return true;
 }
 
 
@@ -442,46 +398,39 @@ bool asCSymbolTable<T>::Erase(unsigned idx)
 template<class T>
 int asCSymbolTable<T>::Put(T *entry)
 {
-	unsigned idx = _entries.GetLength();
+	unsigned int idx = m_entries.GetLength();
 	asCString key;
 	GetKey(entry, key);
-	_map.insert(std::pair<asCString, unsigned>(key, idx));
-	_entries.PushLast(entry);
+
+	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	if( m_map.MoveTo(&cursor, key) )
+		m_map.GetValue(cursor).PushLast(idx);
+	else
+	{
+		asCArray<unsigned int> arr(1);
+		arr.PushLast(idx);
+		m_map.Insert(key, arr);
+	}
+
+	m_entries.PushLast(entry);
+	m_size++;
 	return idx;
 }
-
-
-
-// Sets the entry for a specific id. If the id is associated
-// with another id this association will be removed
-template<class T>
-void asCSymbolTable<T>::Set(unsigned idx, T* p_entry)
-{
-    if( idx >= _entries.GetLength() )
-        _entries.SetLength(idx + 1);
-    else
-    {
-        // remove any existing entry
-        if( _entries[idx] )
-            Erase(idx);
-    }
-
-    asCString key;
-    GetKey(p_entry, key);
-    _map.insert(std::pair<asCString, unsigned>(key, idx));
-    _entries[idx] = p_entry;
-}
-
 
 
 
 template<class T>
 void asCSymbolTable<T>::BuildKey(const asSNameSpace *ns, const asCString &name, asCString &key) const
 {
-	// TODO: The key shouldn't be just an asCString. It should keep the 
-	//       namespace as a pointer, so it can be compared as pointer.
+	// TODO: optimize: The key shouldn't be just an asCString. It should keep the 
+	//                 namespace as a pointer, so it can be compared as pointer.
+	//                 Which should be compared first, the namespace or the name? There is likely 
+	//                 going to be many symbols with the same namespace, so it is probably best to 
+	//                 compare the name first
     key = ns->name + "::" + name;
 }
+
+
 
 
 // Return key for specified symbol (namespace and name are used to generate the key)
@@ -493,10 +442,31 @@ void asCSymbolTable<T>::GetKey(const T *entry, asCString &key) const
 
 
 
+
 template<class T>
-unsigned asCSymbolTable<T>::GetSize() const
+unsigned int asCSymbolTable<T>::GetSize() const
 {
-    return _map.size();
+	return m_size;
+}
+
+
+
+
+template<class T>
+bool asCSymbolTable<T>::CheckIdx(unsigned idx) const
+{
+    return (idx >= 0 && idx < m_entries.GetLength());
+}
+
+
+
+
+template<class T>
+int asCSymbolTable<T>::GetLastIndex() const
+{
+    unsigned idx = m_entries.GetLength() - 1;
+	asASSERT( idx == -1 || m_entries[idx] );
+    return idx;
 }
 
 
@@ -518,44 +488,37 @@ typename asCSymbolTable<T>::const_iterator asCSymbolTable<T>::List() const
 }
 
 
-
-
-template<class T>
-bool asCSymbolTable<T>::CheckIdx(unsigned idx) const
-{
-    return (idx >= 0 && idx < _entries.GetLength());
-}
-
-
-
-
-template<class T>
-int asCSymbolTable<T>::GetLastId() const
-{
-    unsigned idx = _entries.GetLength() - 1;
-    if (!CheckIdx(idx))
-    {
-        return -1;
-    }
-    return idx;
-}
-
-
-
+/////////////////////////////////////////////////////////////////////////////////////////////////
 // Iterator
+
+
+template<class T, class T2>
+asCSymbolTableIterator<T, T2>::asCSymbolTableIterator(asCSymbolTable<T> *table) : m_table(table), m_idx(0)
+{
+    unsigned int sz = m_table->m_entries.GetLength();
+    while( m_idx < sz && m_table->m_entries[m_idx] == 0 )
+        m_idx++;
+}
+
+
+
 template<class T, class T2>
 T2* asCSymbolTableIterator<T, T2>::operator*() const
 {
     asASSERT(m_table->CheckIdx(m_idx));
-    return m_table->_entries[m_idx];
+    return m_table->m_entries[m_idx];
 }
+
+
 
 template<class T, class T2>
 T2* asCSymbolTableIterator<T, T2>::operator->() const
 {
     asASSERT(m_table->CheckIdx(m_idx));
-    return m_table->_entries[m_idx];
+    return m_table->m_entries[m_idx];
 }
+
+
 
 template<class T, class T2>
 asCSymbolTableIterator<T, T2>& asCSymbolTableIterator<T, T2>::operator++(int)
@@ -564,15 +527,6 @@ asCSymbolTableIterator<T, T2>& asCSymbolTableIterator<T, T2>::operator++(int)
     return *this;
 }
 
-template<class T, class T2>
-asCSymbolTableIterator<T, T2>::asCSymbolTableIterator(asCSymbolTable<T> *table) : m_table(table), m_idx(0)
-{
-    unsigned int sz = m_table->_entries.GetLength();
-    while( m_idx < sz && m_table->_entries[m_idx] == 0 )
-    {
-        m_idx++;
-    }
-}
 
 
 // Return true if more elements are following
@@ -581,7 +535,7 @@ asCSymbolTableIterator<T, T2>::asCSymbolTableIterator(asCSymbolTable<T> *table) 
 template<class T, class T2>
 asCSymbolTableIterator<T, T2>::operator bool() const
 {
-    return m_idx < m_table->_entries.GetLength() && m_table->_entries[m_idx] != 0;
+    return m_idx < m_table->m_entries.GetLength() && m_table->m_entries[m_idx] != 0;
 }
 
 
@@ -589,9 +543,9 @@ asCSymbolTableIterator<T, T2>::operator bool() const
 template<class T, class T2>
 void asCSymbolTableIterator<T, T2>::Next()
 {
-    unsigned int sz = m_table->_entries.GetLength();
+    unsigned int sz = m_table->m_entries.GetLength();
     m_idx++;
-    while( m_idx < sz && m_table->_entries[m_idx] == 0 )
+    while( m_idx < sz && m_table->m_entries[m_idx] == 0 )
         m_idx++;
 }
 
@@ -601,9 +555,9 @@ template<class T, class T2>
 void asCSymbolTableIterator<T, T2>::Previous()
 {
     // overflow on stepping over first element
-    unsigned int sz = m_table->_entries.GetLength();
+    unsigned int sz = m_table->m_entries.GetLength();
     m_idx--;
-    while( m_idx < sz && m_table->_entries[m_idx] == 0 )
+    while( m_idx < sz && m_table->m_entries[m_idx] == 0 )
         m_idx--;
 }
 
@@ -614,62 +568,6 @@ asCSymbolTableIterator<T, T2>& asCSymbolTableIterator<T, T2>::operator--(int)
 {
     Previous();
     return *this;
-}
-
-
-
-//
-// Implementation of asCSymbolTableRangeIterator
-//
-
-
-template <class T, class T2>
-T2* asCSymbolTableRangeIterator<T, T2>::operator*() const
-{
-    return m_table->Get(m_current->second);
-}
-
-
-
-template <class T, class T2>
-T2* asCSymbolTableRangeIterator<T, T2>::operator->() const
-{
-    return m_current->second;
-}
-
-
-template <class T, class T2>
-asCSymbolTableRangeIterator<T, T2>& asCSymbolTableRangeIterator<T, T2>::operator++(int)
-{
-    m_current++;
-
-    return *this;
-}
-
-
-template <class T, class T2>
-asCSymbolTableRangeIterator<T, T2>::operator bool() const
-{
-    return m_current != m_end;
-}
-
-
-
-template <class T, class T2>
-int asCSymbolTableRangeIterator<T, T2>::GetIndex() const
-{
-    return m_current->second;
-}
-
-
-
-template <class T, class T2>
-asCSymbolTableRangeIterator<T, T2>::asCSymbolTableRangeIterator(
-        const asCSymbolTable<T> *table,
-        const _asSSymMap::const_iterator &begin,
-        const _asSSymMap::const_iterator &end) :
-            m_table(table), m_current(begin), m_end(end)
-{
 }
 
 
