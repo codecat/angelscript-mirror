@@ -7,8 +7,11 @@ namespace Test_Addon_ScriptHandle
 
 static const char *TESTNAME = "Test_Addon_ScriptHandle";
 
-static void ReceiveRefByValue(CScriptHandle /*hndl*/)
+static void ReceiveRefByValue(CScriptHandle hndl)
 {
+	asIObjectType *type = hndl.GetType();
+	if( type )
+		std::string str(type->GetName());
 }
 
 static void ReceiveRefByRef(CScriptHandle &/*hndl*/)
@@ -169,6 +172,23 @@ bool Test()
 		r = ExecuteString(engine, "CTest @t = cast<CTest>(ReturnRef()); \n"
                                   "assert( t !is null ); \n"
                                   "assert( t.val == 42 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test function handles in ref object
+		mod->AddScriptSection("test", 
+			"funcdef void FUNC1(); \n"
+			"funcdef void FUNC2(int); \n"
+			"void func1() {} \n"
+			"void func2(int) {} \n"
+			"void func3(float) {} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "ref @r; \n"
+								  "@r = @func1; ReceiveRefByVal(r); \n"
+								  "@r = func2; ReceiveRefByVal(r); \n"
+								  "@r = @func3; ReceiveRefByVal(r); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

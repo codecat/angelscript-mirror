@@ -97,6 +97,11 @@ void CScriptHandle::Set(void *ref, asIObjectType *type)
 	AddRefHandle();
 }
 
+asIObjectType *CScriptHandle::GetType()
+{
+	return m_type;
+}
+
 // This method shouldn't be called from the application 
 // directly as it requires an active script context
 CScriptHandle &CScriptHandle::Assign(void *ref, int typeId)

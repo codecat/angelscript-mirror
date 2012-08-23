@@ -1751,7 +1751,14 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		asCScriptCode code;
 		code.SetCode("default arg", func->defaultArgs[n]->AddressOf(), false);
 		int r = parser.ParseExpression(&code);
-		if( r < 0 ) { anyErrors = true; continue; }
+		if( r < 0 ) 
+		{ 
+			asCString msg;
+			msg.Format(TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s, n, func->GetDeclaration());
+			Error(msg.AddressOf(), node);
+			anyErrors = true; 
+			continue; 
+		}
 
 		asCScriptNode *arg = parser.GetScriptNode();
 
@@ -5990,7 +5997,24 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		if( lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
 		{
 			// The object is a value type but that should be treated as a handle
-			// TODO: handle: Make sure the right hand value is a handle
+
+			// Make sure the right hand value is a handle
+			if( !rctx->type.isExplicitHandle && 
+				!(rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+			{
+				asCDataType dt = rctx->type.dataType;
+				dt.MakeHandle(true);
+				dt.MakeReference(false);
+
+				PrepareArgument(&dt, rctx, rexpr, true, asTM_INREF);
+				if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
+				{
+					asCString str;
+					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
+					Error(str.AddressOf(), rexpr);
+					return -1;
+				}
+			}
 
 			if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx) )
 			{
@@ -6007,7 +6031,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(false);
 
-			PrepareArgument(&dt, rctx, rexpr, true, 1);
+			PrepareArgument(&dt, rctx, rexpr, true, asTM_INREF);
 			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
 			{
 				asCString str;

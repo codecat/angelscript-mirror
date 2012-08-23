@@ -2489,6 +2489,8 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	r = bld.CheckNameConflict(func->name.AddressOf(), 0, 0, defaultNamespace);
 	if( r < 0 )
 	{
+		// Set as dummy function before deleting
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN, "RegisterGlobalFunction", declaration, 0);
 	}

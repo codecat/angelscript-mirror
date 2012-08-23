@@ -290,6 +290,27 @@ CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)
 		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType);
 }
 
+CScriptArray::CScriptArray(const CScriptArray &other)
+{
+	refCount = 1;
+	gcFlag = false;
+	objType = other.objType;
+	objType->AddRef();
+	buffer = 0;
+
+	Precache();
+
+	elementSize = other.elementSize;
+
+	if( objType->GetFlags() & asOBJ_GC )
+		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType);
+
+	CreateBuffer(&buffer, 0);
+
+	// Copy the content
+	*this = other;
+}
+
 CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
 {
 	refCount = 1;

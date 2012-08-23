@@ -3768,6 +3768,7 @@ void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, i
 		preMessage.c = c;
 		preMessage.r = r;
 		preMessage.message = message;
+		preMessage.scriptname = scriptname;
 	}
 	else
 	{
@@ -3782,7 +3783,7 @@ void asCBuilder::WriteError(const char *scriptname, const char *message, int r, 
 
 	// Need to pass the preMessage first
 	if( preMessage.isSet )
-		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
+		WriteInfo(preMessage.scriptname.AddressOf(), preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
 
 	engine->WriteMessage(scriptname, r, c, asMSGTYPE_ERROR, message);
 }

@@ -1570,6 +1570,8 @@ int asCParser::ParseExpression(asCScriptCode *script)
 
 	this->script = script;
 
+	checkValidTypes = true;
+
 	scriptNode = ParseExpression();
 	if( errorWhileParsing )
 		return -1;

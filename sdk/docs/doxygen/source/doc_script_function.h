@@ -219,6 +219,19 @@ default arguments.
 When defining a default argument to one of the parameters, all subsequent parameters must have a 
 default argument too. 
 
+The default argument expression will be evaluated in the context that the function is called, so
+if the expression contains any identifiers you need to remember that those will be resolved in the
+local scope where the function is called and not in the scope where the function in declared.
+
+<pre>
+  int myvar = 42;
+  void Function(int a, int b = myvar) {}
+  void main()
+  {
+    int myvar = 1;
+    Function(1);    // This will use the local myvar and not the global myvar
+  }
+</pre>
 
 
 

@@ -54,7 +54,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		r = engine->RegisterGlobalFunction("void defarg(bool, int a = 34 + /* comments will be removed */ 45, int b = 23)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("void defarg(bool, int a = 34 + /* comments will be removed *""/ 45, int b = 23)", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
 			TEST_FAILED;
 		asIScriptFunction *func = engine->GetFunctionById(r);
@@ -105,8 +105,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		// TODO: The first line in the error message should show the real script name
-		if( bout.buffer != "default arg (2, 1) : Info    : Compiling void main()\n"
+		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
 		                   "default arg (1, 1) : Error   : 'n' is not declared\n"
 		                   "script (5, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void func(int arg0 = n)'\n" )
 		{
@@ -217,6 +216,87 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test that default argument expression can access index in global array
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"int[] my_array(5);\n"
+			"int index=3;\n"
+			"void my_function(int arg1, int arg2=my_array[index])\n"
+			"{\n"
+			"  assert( arg2 == 42 ); \n"
+			"}\n"
+			"void main()\n"
+			"{\n"
+			"  my_array[index] = 42;\n"
+			"  my_function(1);\n"
+			"}\n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
+	// Test invalid default argument expression
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char *script = 
+			"void my_function(int arg1, int arg2=my_array[i[])\n"
+			"{\n"
+			"}\n"
+			"void main()\n"
+			"{\n"
+			"  my_function(1);\n"
+			"}\n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (4, 1) : Info    : Compiling void main()\n"
+						   "default arg (1, 16) : Error   : Expected expression value\n"
+						   "default arg (1, 17) : Error   : Expected ']'\n"
+						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int arg1 = my_array [ i [ ])'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// The test to make sure the saved bytecode keeps the default args is done in test_saveload.cpp
 	// A test to make sure script class methods with default args work is done in test_saveload.cpp

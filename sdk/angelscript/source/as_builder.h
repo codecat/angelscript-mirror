@@ -178,6 +178,7 @@ protected:
 	{
 		bool isSet;
 		asCString message;
+		asCString scriptname;
 		int r;
 		int c;
 	} preMessage;
