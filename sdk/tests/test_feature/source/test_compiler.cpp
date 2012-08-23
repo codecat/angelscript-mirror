@@ -210,6 +210,47 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test", 
+			"int DATE_YEAR { get { return 2012; } } \n"
+			"void alert( string t, string v ) { assert( v == '2012' ); } \n"
+			"void main() \n"
+			"{ \n"
+			"  int[] dates(5); \n"
+			"  alert('Year', '' + DATE_YEAR);   \n"
+			"  dates[3]=DATE_YEAR; \n" // This was storing 3 in the array
+			"  alert('Assigned year', '' + dates[3]); \n"
+			"} \n" );
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Problem reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);

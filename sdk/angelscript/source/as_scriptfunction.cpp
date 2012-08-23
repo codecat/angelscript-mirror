@@ -155,6 +155,13 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	//                         discard the function. That way the GC won't waste time
 	//                         trying to determine if the functions are garbage before
 	//                         they can actually be considered garbage.
+	//                         Should have a method called Orphan(void *owner). The module
+	//                         should call this method instead of Release() when freeing
+	//                         its reference to the object. The script function would then
+	//                         check if module that is calling Orphan is the owner, and if 
+	//                         so notify the GC. If the module that is calling method isn't
+	//                         the owner, then the script function would simply call Release 
+	//                         as normal.
 	// Notify the GC of script functions
 	if( funcType == asFUNC_SCRIPT )
 		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);

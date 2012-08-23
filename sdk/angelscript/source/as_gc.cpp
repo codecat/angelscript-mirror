@@ -75,24 +75,31 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	if( engine->ep.autoGarbageCollect && gcNewObjects.GetLength() )
 	{
 		// If the GC is already processing in another thread, then don't try this again
-		// TODO: What if it is already processing in this thread?
 		if( TRYENTERCRITICALSECTION(gcCollecting) )
 		{
-			// TODO: The number of iterations should be dynamic, and increase 
-			//       if the number of objects in the garbage collector grows high
-
-			// Run one step of DetectGarbage
-			if( gcOldObjects.GetLength() )
+			// Skip this if the GC is already running in this thread
+			if( !isProcessing )
 			{
-				IdentifyGarbageWithCyclicRefs();
-				DestroyOldGarbage();
-			}
+				isProcessing = true;
 
-			// Run a few steps of DestroyGarbage
-			int iter = (int)gcNewObjects.GetLength();
-			if( iter > 10 ) iter = 10;
-			while( iter-- > 0 )
-				DestroyNewGarbage();
+				// TODO: The number of iterations should be dynamic, and increase 
+				//       if the number of objects in the garbage collector grows high
+
+				// Run one step of DetectGarbage
+				if( gcOldObjects.GetLength() )
+				{
+					IdentifyGarbageWithCyclicRefs();
+					DestroyOldGarbage();
+				}
+
+				// Run a few steps of DestroyGarbage
+				int iter = (int)gcNewObjects.GetLength();
+				if( iter > 10 ) iter = 10;
+				while( iter-- > 0 )
+					DestroyNewGarbage();
+
+				isProcessing = false;
+			}
 
 			LEAVECRITICALSECTION(gcCollecting);
 		}
@@ -111,7 +118,11 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 	if( TRYENTERCRITICALSECTION(gcCollecting) )
 	{
 		// If the GC is already processing in this thread, then don't enter here again
-		if( isProcessing ) return 1;
+		if( isProcessing ) 
+		{	
+			LEAVECRITICALSECTION(gcCollecting);
+			return 1;
+		}
 
 		isProcessing = true;
 

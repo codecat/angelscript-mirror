@@ -116,6 +116,52 @@ bool Test()
     ctx->Release();
     engine->Release();
 
+	// Test problem reported by Polyák István
+	{	
+		COutStream out;
+		int r;
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"class C1 \n"
+			"{ \n"
+			"    C1 () {} \n"
+			"    ~C1 () { close(); } \n"
+			"    void close () {} \n"
+			"} \n"
+			"class C2 \n"
+			"{ \n"
+			"    C2 (C1 @ c1) { @c1_ = @c1; } \n"
+			"    ~C2 () { close(); } \n"
+			"    void close () { @c1_ = null; } \n"
+			"    private C1 @ c1_; \n"
+			"} \n"
+			"void f1 ()  \n"
+			"{  \n"
+			"    C1 c1; \n"
+			"    C2 c2(c1); \n"
+			"    c2.close(); \n"
+			"} \n"
+			"void main () \n"
+			"{ \n"
+			"    const uint c = 5; \n"
+			"    for ( uint i = 0; i < c; ++i ) \n"
+			"        f1(); \n"
+			"} \n" );
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test 
 	{	
 		COutStream out;

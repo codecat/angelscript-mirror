@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/19</h2>
+<h2>Version 2.25.0 WIP - 2012/08/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when cleaning up after a script exception in a function that returns a value object by value (Thanks Philip Bennefall)
 <li>Fixed memory leak when compiling script that declares interface with virtual properties (Thanks brumi)
 <li>Functions that take 64bit types as arguments now work with Android native calling conventions (Thanks Fredrik Ehnbom)
+<li>Fixed bug in compiler when assigning value from property accessor to array element (Thanks Philip Bennefall)
+<li>Fixed crash in garbage collector when using automatic collections (Thanks Polyák István)
 </ul>
 <li>Library
 <ul>

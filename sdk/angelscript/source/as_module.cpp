@@ -318,7 +318,7 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 						msg.Format(TXT_EXCEPTION_s_IN_s, ctx->GetExceptionString(), function->GetDeclaration());
 
 						engine->WriteMessage(function->GetScriptSectionName(), 
-						                     ctx->GetExceptionLineNumber(), 
+											 ctx->GetExceptionLineNumber(), 
 											 0,
 											 asMSGTYPE_INFORMATION,
 											 msg.AddressOf());

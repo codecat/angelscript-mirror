@@ -3873,6 +3873,11 @@ void asCCompiler::PrepareOperand(asSExprContext *ctx, asCScriptNode *node)
 
 void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx, asCScriptNode *node, bool toTemporary, asSExprContext *lvalueExpr)
 {
+	// Reserve the temporary variables used in the lvalue expression so they won't end up being used by the rvalue too
+	int l = int(reservedVariables.GetLength());
+	if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(reservedVariables);
+
+
 	ProcessPropertyGetAccessor(rctx, node);
 
 	// Make sure the rvalue is initialized if it is a variable
@@ -3890,10 +3895,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		}
 
 		// Implicitly convert the value to the right type
-		int l = int(reservedVariables.GetLength());
-		if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(reservedVariables);
 		ImplicitConversion(rctx, *lvalue, node, asIC_IMPLICIT_CONV);
-		reservedVariables.SetLength(l);
 
 		// Check data type
 		if( !lvalue->IsEqualExceptRefAndConst(rctx->type.dataType) )
@@ -3945,6 +3947,9 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 				asASSERT(!rctx->type.dataType.IsReference());
 		}
 	}
+
+	// Unreserve variables
+	reservedVariables.SetLength(l);
 }
 
 bool asCCompiler::IsLValue(asCTypeInfo &type)
