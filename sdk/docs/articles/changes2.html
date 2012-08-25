@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/23</h2>
+<h2>Version 2.25.0 WIP - 2012/08/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -45,12 +45,15 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added asOBJ_APP_CLASS_ALIGN8 used to inform AngelScript that a type may need to be aligned on 8byte boundaries (Thanks Fredrik Ehnbom)
 <li>The template callback behaviour now take a second argument to allow the application to tell the engine if an instance shouldn't be garbage collected
+<li>Added asOBJ_SCRIPT_FUNCTION flag to identify the object type that represents script functions
+<li>Added asIScriptFunction::IsCompatibleWithTypeId() 
 </ul>
 <li>Add-ons
 <ul>
 <li>The script array is no longer garbage collected if the type cannot form circular references (Thanks Philip Bennefall)
 <li>Implemented the C++ copy constructor for the CScriptArray
 <li>Added GetType() to CScriptHandle
+<li>CScriptHandle::Cast() properly handles function pointers
 </ul>
 </ul>
 

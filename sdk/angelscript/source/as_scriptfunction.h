@@ -120,6 +120,7 @@ public:
 	bool                 IsFinal() const;
 	bool                 IsOverride() const;
 	bool                 IsShared() const;
+	bool                 IsCompatibleWithTypeId(int typeId) const;
 
 	asUINT               GetParamCount() const;
 	int                  GetParamTypeId(asUINT index, asDWORD *flags = 0) const;

@@ -102,7 +102,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	int r = 0;
 	UNUSED_VAR(r); // It is only used in debug mode
 	engine->functionBehaviours.engine = engine;
-	engine->functionBehaviours.flags = asOBJ_REF | asOBJ_GC;
+	engine->functionBehaviours.flags = asOBJ_REF | asOBJ_GC | asOBJ_SCRIPT_FUNCTION;
 	engine->functionBehaviours.name = "_builtin_function_";
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCScriptFunction,AddRef), asCALL_THISCALL); asASSERT( r >= 0 );
@@ -244,6 +244,26 @@ int asCScriptFunction::Release() const
 		asDELETE(const_cast<asCScriptFunction*>(this),asCScriptFunction);
 
 	return r;
+}
+
+// interface
+bool asCScriptFunction::IsCompatibleWithTypeId(int typeId) const
+{
+	asCDataType dt = engine->GetDataTypeFromTypeId(typeId);
+
+	// Make sure the type is a function
+	asCScriptFunction *func = dt.GetFuncDef();
+	if( func == 0 )
+		return false;
+
+	if( !IsSignatureExceptNameEqual(func) )
+		return false;
+
+	// If this is a class method, then only return true if the object type is the same
+	if( objectType != func->objectType )
+		return false;
+
+	return true;
 }
 
 // interface

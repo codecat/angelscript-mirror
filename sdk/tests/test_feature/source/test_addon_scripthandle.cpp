@@ -192,6 +192,14 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		r = ExecuteString(engine, "ref @r; \n"
+								  "@r = func1; \n"
+								  "assert( cast<FUNC1>(r) !is null ); \n"
+								  "@r = func2; \n"
+								  "assert( cast<FUNC1>(r) is null ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
