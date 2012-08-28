@@ -87,7 +87,8 @@ enum eScriptNode
 	snVariableAccess,
 	snFuncDef,
 	snVirtualProperty,
-	snNamespace
+	snNamespace,
+	snMixin
 };
 
 struct sToken

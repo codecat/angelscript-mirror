@@ -946,12 +946,15 @@ public:
 	virtual int              AddRef() const = 0;
 	virtual int              Release() const = 0;
 
+	// Miscellaneous
 	virtual int              GetId() const = 0;
 	virtual asEFuncType      GetFuncType() const = 0;
 	virtual const char      *GetModuleName() const = 0;
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
+
+	// Function signature
 	virtual asIObjectType   *GetObjectType() const = 0;
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
@@ -962,12 +965,13 @@ public:
 	virtual bool             IsFinal() const = 0;
 	virtual bool             IsOverride() const = 0;
 	virtual bool             IsShared() const = 0;
-
-	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;
-
 	virtual asUINT           GetParamCount() const = 0;
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
 	virtual int              GetReturnTypeId() const = 0;
+
+	// Type id for function pointers 
+	virtual int              GetTypeId() const = 0;
+	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;
 
 	// Debug information
 	virtual asUINT           GetVarCount() const = 0;

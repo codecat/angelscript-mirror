@@ -598,6 +598,10 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 				node->DisconnectParent();
 				RegisterFuncDef(node, script, ns);
 			}
+			else if( node->nodeType == snMixin )
+			{
+				// TODO: mixin: Register the mixin
+			}
 		}
 
 		node = next;

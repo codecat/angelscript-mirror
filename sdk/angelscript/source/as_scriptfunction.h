@@ -104,27 +104,32 @@ public:
 	int AddRef() const;
 	int Release() const;
 
+	// Miscellaneous
 	int                  GetId() const;
 	asEFuncType          GetFuncType() const;
 	const char          *GetModuleName() const;
+	const char          *GetScriptSectionName() const;
+	const char          *GetConfigGroup() const;
+	asDWORD              GetAccessMask() const;
+
+	// Function signature
 	asIObjectType       *GetObjectType() const;
 	const char          *GetObjectName() const;
 	const char          *GetName() const;
 	const char          *GetNamespace() const;
 	const char          *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const;
-	const char          *GetScriptSectionName() const;
-	const char          *GetConfigGroup() const;
-	asDWORD              GetAccessMask() const;
 	bool                 IsReadOnly() const;
 	bool                 IsPrivate() const;
 	bool                 IsFinal() const;
 	bool                 IsOverride() const;
 	bool                 IsShared() const;
-	bool                 IsCompatibleWithTypeId(int typeId) const;
-
 	asUINT               GetParamCount() const;
 	int                  GetParamTypeId(asUINT index, asDWORD *flags = 0) const;
 	int                  GetReturnTypeId() const;
+
+	// Type id for function pointers 
+	int                  GetTypeId() const;
+	bool                 IsCompatibleWithTypeId(int typeId) const;
 
 	// Debug information
 	asUINT               GetVarCount() const;

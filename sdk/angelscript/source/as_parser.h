@@ -118,6 +118,7 @@ protected:
 	asCScriptNode *ParseFuncDef();
 	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseClass();
+	asCScriptNode *ParseMixin();
 	asCScriptNode *ParseInitList();
 	asCScriptNode *ParseInterface();
 	asCScriptNode *ParseInterfaceMethod();

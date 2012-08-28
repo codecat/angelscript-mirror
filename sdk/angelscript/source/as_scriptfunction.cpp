@@ -247,6 +247,14 @@ int asCScriptFunction::Release() const
 }
 
 // interface
+int asCScriptFunction::GetTypeId() const
+{
+	// This const cast is ok, the object won't be modified
+	asCDataType dt = asCDataType::CreateFuncDef(const_cast<asCScriptFunction*>(this));
+	return engine->GetTypeIdFromDataType(dt);
+}
+
+// interface
 bool asCScriptFunction::IsCompatibleWithTypeId(int typeId) const
 {
 	asCDataType dt = engine->GetDataTypeFromTypeId(typeId);

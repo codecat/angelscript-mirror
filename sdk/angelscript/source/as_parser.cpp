@@ -53,8 +53,8 @@ asCParser::asCParser(asCBuilder *builder)
 	this->builder    = builder;
 	this->engine     = builder->engine;
 
-	script			      = 0;
-	scriptNode		      = 0;
+	script                = 0;
+	scriptNode            = 0;
 	checkValidTypes       = false;
 	isParsingAppInterface = false;
 }
@@ -754,7 +754,7 @@ void asCParser::GetToken(sToken *token)
 	// Filter out whitespace and comments
 	while( token->type == ttWhiteSpace || 
 	       token->type == ttOnelineComment ||
-		   token->type == ttMultilineComment );
+	       token->type == ttMultilineComment );
 }
 
 void asCParser::SetPos(size_t pos)
@@ -1024,8 +1024,8 @@ asCScriptNode *asCParser::ParseExprValue()
 
 	// TODO: namespace: Datatypes can be defined in namespaces, thus types too must allow scope prefix
 	if( IsDataType(t1) && (t2.type == ttOpenParanthesis || 
-		                   t2.type == ttLessThan || 
-						   t2.type == ttOpenBracket) )
+	                       t2.type == ttLessThan || 
+	                       t2.type == ttOpenBracket) )
 		node->AddChildLast(ParseConstructCall());
 	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{
@@ -1661,13 +1661,15 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
 			else if( t1.type == ttEnum || (IdentifierIs(t1, SHARED_TOKEN) && t2.type == ttEnum) )
-				node->AddChildLast(ParseEnumeration());	//	Handle enumerations
+				node->AddChildLast(ParseEnumeration());	// Handle enumerations
 			else if( t1.type == ttTypedef )
-				node->AddChildLast(ParseTypedef());		//	Handle primitive typedefs
+				node->AddChildLast(ParseTypedef());		// Handle primitive typedefs
 			else if( t1.type == ttClass || 
 					 ((IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN)) && t2.type == ttClass) || 
 					 (IdentifierIs(t1, SHARED_TOKEN) && IdentifierIs(t2, FINAL_TOKEN)) )
 				node->AddChildLast(ParseClass());
+			else if( t1.type == ttMixin )
+				node->AddChildLast(ParseMixin());
 			else if( t1.type == ttInterface || (t1.type == ttIdentifier && t2.type == ttInterface) )
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttFuncDef )
@@ -2532,6 +2534,28 @@ asCScriptNode *asCParser::ParseInterface()
 	}
 
 	node->UpdateSourcePos(t.pos, t.length);
+
+	return node;
+}
+
+asCScriptNode *asCParser::ParseMixin()
+{
+	asCScriptNode *node = CreateNode(snMixin);
+	if( node == 0 ) return 0;
+
+	sToken t;
+	GetToken(&t);
+
+	if( t.type != ttMixin )
+	{
+		Error(ExpectedToken("mixin").AddressOf(), &t);
+		return node;
+	}
+
+	node->SetToken(&t);
+
+	// A mixin token must be followed by a class declaration
+	node->AddChildLast(ParseClass());
 
 	return node;
 }
