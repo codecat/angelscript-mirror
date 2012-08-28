@@ -189,6 +189,18 @@ asCBuilder::~asCBuilder()
 		}
 	}
 
+	for( n = 0; n < mixinClasses.GetLength(); n++ )
+	{
+		if( mixinClasses[n] )
+		{
+			if( mixinClasses[n]->node )
+				mixinClasses[n]->node->Destroy(engine);
+
+			asDELETE(mixinClasses[n],sMixinClass);
+			mixinClasses[n] = 0;
+		}
+	}
+
 #endif // AS_NO_COMPILER
 }
 
@@ -600,7 +612,8 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 			}
 			else if( node->nodeType == snMixin )
 			{
-				// TODO: mixin: Register the mixin
+				node->DisconnectParent();
+				RegisterMixinClass(node, script, ns);
 			}
 		}
 
@@ -1222,6 +1235,25 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			return -1;
 		}
 	}
+
+	// Check against mixin classes
+	for( n = 0; n < mixinClasses.GetLength(); n++ )
+	{
+		if( mixinClasses[n]->name == name &&
+			mixinClasses[n]->ns == ns )
+		{
+			if( code )
+			{
+				int r, c;
+				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				asCString str;
+				str.Format(TXT_NAME_CONFLICT_s_IS_MIXIN, name);
+				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+			}
+
+			return -1;
+		}
+	}
 #endif
 
 	return 0;
@@ -1373,6 +1405,49 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 	return 0;
 }
 
+int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
+{
+	asCScriptNode *cl = node->firstChild;
+	asASSERT( cl->nodeType == snClass );
+
+	asCScriptNode *n = cl->firstChild;
+	
+	// Skip potential 'final' and 'shared' tokens
+	while( n->tokenType == ttIdentifier && 
+		   (file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) || 
+		    file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN)) )
+	{
+		// TODO: Report error, because mixin class cannot be final or shared
+		n = n->next;
+	}
+
+	asCString name(&file->code[n->tokenPos], n->tokenLength);
+
+	int r, c;
+	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
+
+	CheckNameConflict(name.AddressOf(), n, file, ns);
+
+	sMixinClass *decl = asNEW(sMixinClass);
+	if( decl == 0 )
+	{
+		node->Destroy(engine);
+		return asOUT_OF_MEMORY;
+	}
+
+	mixinClasses.PushLast(decl);
+	decl->name   = name;
+	decl->ns     = ns;
+	decl->node   = cl;
+	decl->script = file;
+
+	// Clean up memory
+	cl->DisconnectParent();
+	node->Destroy(engine);
+
+	return 0;
+}
+
 int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
 	asCScriptNode *n = node->firstChild;
@@ -1407,7 +1482,10 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 
 	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	if( decl == 0 )
+	{
+		node->Destroy(engine);
 		return asOUT_OF_MEMORY;
+	}
 
 	classDeclarations.PushLast(decl);
 	decl->name             = name;
@@ -1507,7 +1585,10 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 
 	sClassDeclaration *decl = asNEW(sClassDeclaration);
 	if( decl == 0 )
+	{
+		node->Destroy(engine);
 		return asOUT_OF_MEMORY;
+	}
 
 	interfaceDeclarations.PushLast(decl);
 	decl->name             = name;

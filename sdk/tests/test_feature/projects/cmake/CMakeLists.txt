@@ -68,6 +68,7 @@ add_executable(
         ../../source/test_inheritance.cpp
         ../../source/test_int8.cpp
         ../../source/test_interface.cpp
+        ../../source/test_mixin.cpp
         ../../source/test_module.cpp
         ../../source/test_multiassign.cpp
         ../../source/test_namespace.cpp

@@ -90,14 +90,9 @@ struct sGlobalVariableDescription
 	asQWORD constantValue;
 };
 
-#ifndef AS_NO_COMPILER
-
 // asCSymbolTable template specializations for sGlobalVariableDescription entries
 template<>
 void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const;
-
-#endif
-
 
 struct sClassDeclaration
 {
@@ -118,6 +113,14 @@ struct sFuncDef
 	asCScriptNode *node;
 	asCString name;
 	int idx;
+};
+
+struct sMixinClass
+{
+	asCScriptCode *script;
+	asCScriptNode *node;
+	asCString name;
+	asSNameSpace *ns;
 };
 
 #endif // AS_NO_COMPILER
@@ -199,6 +202,7 @@ protected:
 	int                RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
+	int                RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
@@ -225,6 +229,7 @@ protected:
 	asCArray<sClassDeclaration *>              interfaceDeclarations;
 	asCArray<sClassDeclaration *>              namedTypeDeclarations;
 	asCArray<sFuncDef *>                       funcDefs;
+	asCArray<sMixinClass *>                    mixinClasses;
 #endif
 };
 

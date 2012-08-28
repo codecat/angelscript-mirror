@@ -335,6 +335,10 @@ SOURCE=..\..\source\test_interface.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_mixin.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_module.cpp
 # End Source File
 # Begin Source File

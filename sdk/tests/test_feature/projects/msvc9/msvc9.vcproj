@@ -602,6 +602,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_mixin.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_module.cpp"
 				>
 			</File>

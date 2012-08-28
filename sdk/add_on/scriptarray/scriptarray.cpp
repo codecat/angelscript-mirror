@@ -360,7 +360,7 @@ void CScriptArray::SetValue(asUINT index, void *value)
 		*(void**)ptr = *(void**)value;
 		objType->GetEngine()->AddRefScriptObject(*(void**)value, objType->GetSubType());
 		if( tmp )
-			objType->GetEngine()->ReleaseScriptObject(*(void**)value, objType->GetSubType());
+			objType->GetEngine()->ReleaseScriptObject(tmp, objType->GetSubType());
 	}
 	else if( subTypeId == asTYPEID_BOOL ||
 			 subTypeId == asTYPEID_INT8 ||

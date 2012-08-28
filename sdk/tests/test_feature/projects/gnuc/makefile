@@ -68,6 +68,7 @@ SRCNAMES = \
   test_import2.cpp \
   test_inheritance.cpp \
   test_interface.cpp \
+  test_mixin.cpp \
   test_module.cpp \
   test_multiassign.cpp \
   test_namespace.cpp \

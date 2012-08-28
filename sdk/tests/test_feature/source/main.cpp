@@ -147,6 +147,7 @@ namespace TestDefaultArg        { bool Test(); }
 namespace TestShared            { bool Test(); }
 namespace TestNamespace         { bool Test(); }
 namespace TestCDeclObjLast      { bool Test(); }
+namespace TestMixin             { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -208,6 +209,7 @@ int main(int argc, char **argv)
 	if( Test_Addon_ScriptHandle::Test()  ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
 	if( Test_Addon_ScriptArray::Test()   ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
 	if( Test_Addon_Dictionary::Test()    ) goto failed; else printf("-- Test_Addon_Dictionary passed\n");
+	if( TestMixin::Test()               ) goto failed; else printf("-- TestMixin passed\n");
 	if( TestNamespace::Test()           ) goto failed; else printf("-- TestNamespace passed\n");
 	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
