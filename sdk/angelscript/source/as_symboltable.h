@@ -453,7 +453,7 @@ unsigned int asCSymbolTable<T>::GetSize() const
 
 
 template<class T>
-bool asCSymbolTable<T>::CheckIdx(unsigned idx) const
+bool asCSymbolTable<T>::CheckIdx(unsigned int idx) const
 {
     return (idx >= 0 && idx < m_entries.GetLength());
 }
@@ -464,9 +464,9 @@ bool asCSymbolTable<T>::CheckIdx(unsigned idx) const
 template<class T>
 int asCSymbolTable<T>::GetLastIndex() const
 {
-    unsigned idx = m_entries.GetLength() - 1;
-	asASSERT( idx == -1 || m_entries[idx] );
-    return idx;
+    unsigned int idx = m_entries.GetLength() - 1;
+	asASSERT( idx == asUINT(-1) || m_entries[idx] );
+    return int(idx);
 }
 
 

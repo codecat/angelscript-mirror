@@ -273,7 +273,7 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 		node->firstChild != node->lastChild ||
 		node->firstChild->nodeType != snGlobalVar )
 	{
-		WriteError(script->name.AddressOf(), TXT_ONLY_ONE_VARIABLE_ALLOWED, 0, 0);
+		WriteError(TXT_ONLY_ONE_VARIABLE_ALLOWED, script, 0);
 		return asERROR;
 	}
 
@@ -305,13 +305,9 @@ int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, 
 			firstArgWithDefaultValue = n;
 		else if( firstArgWithDefaultValue >= 0 )
 		{
-			int r, c;
-			script->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 			asCString str;
 			str.Format(TXT_DEF_ARG_MISSING_IN_FUNC_s, func->GetDeclaration());
-
-			WriteError(script->name.AddressOf(), str.AddressOf(), r, c);
+			WriteError(str.AddressOf(), script, node);
 			return asINVALID_DECLARATION;
 		}
 	}
@@ -348,7 +344,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		node->firstChild != node->lastChild || 
 		node->firstChild->nodeType != snFunction )
 	{
-		WriteError(script->name.AddressOf(), TXT_ONLY_ONE_FUNCTION_ALLOWED, 0, 0);
+		WriteError(TXT_ONLY_ONE_FUNCTION_ALLOWED, script, 0);
 		return asERROR;
 	}
 
@@ -1103,12 +1099,9 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 		{
 			if( code )
 			{
-				int r, c;
-				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_OBJ_PROPERTY, name);
-				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), code, node);
 			}
 
 			return -1;
@@ -1125,12 +1118,9 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 			{
 				if( code )
 				{
-					int r, c;
-					code->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
 					asCString str;
 					str.Format(TXT_NAME_CONFLICT_s_METHOD, name);
-					WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+					WriteError(str.AddressOf(), code, node);
 				}
 
 				return -1;
@@ -1148,11 +1138,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	{
 		if( code )
 		{
-			int r, c;
-			code->ConvertPosToRowCol(node->tokenPos, &r, &c);
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_EXTENDED_TYPE, name);
-			WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+			WriteError(str.AddressOf(), code, node);
 		}
 
 		return -1;
@@ -1165,11 +1153,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	{
 		if( code )
 		{
-			int r, c;
-			code->ConvertPosToRowCol(node->tokenPos, &r, &c);
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY, name);
-			WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+			WriteError(str.AddressOf(), code, node);
 		}
 
 		return -1;
@@ -1187,11 +1173,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			if( code )
 			{
-				int r, c;
-				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_STRUCT, name);
-				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), code, node);
 			}
 
 			return -1;
@@ -1206,11 +1190,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			if( code )
 			{
-				int r, c;
-				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_IS_NAMED_TYPE, name);
-				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), code, node);
 			}
 
 			return -1;
@@ -1225,11 +1207,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			if( code )
 			{
-				int r, c;
-				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_IS_FUNCDEF, name);
-				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), code, node);
 			}
 
 			return -1;
@@ -1244,11 +1224,9 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			if( code )
 			{
-				int r, c;
-				code->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_IS_MIXIN, name);
-				WriteError(code->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), code, node);
 			}
 
 			return -1;
@@ -1334,11 +1312,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 {
 	// Has the application disabled global vars?
 	if( engine->ep.disallowGlobalVars )
-	{
-		int r, c;
-		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-		WriteError(file->name.AddressOf(), TXT_GLOBAL_VARS_NOT_ALLOWED, r, c);
-	}
+		WriteError(TXT_GLOBAL_VARS_NOT_ALLOWED, file, node);
 
 	// What data type is it?
 	// TODO: namespace: Use correct implicit namespace
@@ -1353,7 +1327,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 		int r, c;
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-		WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+		WriteError(str.AddressOf(), file, node);
 	}
 
 	asCScriptNode *n = node->firstChild->next;
@@ -1417,8 +1391,17 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 		   (file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) || 
 		    file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN)) )
 	{
-		// TODO: Report error, because mixin class cannot be final or shared
+		// Report error, because mixin class cannot be final or shared
+		asCString msg;
+		msg.Format(TXT_MIXIN_CANNOT_BE_DECLARED_AS_s, asCString(&file->code[n->tokenPos], n->tokenLength).AddressOf());
+		WriteError(msg.AddressOf(), file, n);
+
+		asCScriptNode *tmp = n;
 		n = n->next;
+
+		// Remove the invalid node, so compilation can continue as if it wasn't there
+		tmp->DisconnectParent();
+		tmp->Destroy(engine);
 	}
 
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
@@ -1444,6 +1427,26 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 	// Clean up memory
 	cl->DisconnectParent();
 	node->Destroy(engine);
+
+	// Do a quick check on the declaration to report error only once and remove unwanted stuff
+	n = cl->firstChild->next;
+	if( n && n->nodeType == ttIdentifier )
+	{
+		// TODO: mixin: Inheritance should be allowed
+		WriteError(TXT_MIXIN_CLASS_CANNOT_INHERIT, file, n);
+
+		// Remove the invalid nodes, so compilation can continue as if they weren't there
+		do
+		{
+			asCScriptNode *tmp = n;
+			n = n->next;
+
+			tmp->DisconnectParent();
+			tmp->Destroy(engine);
+		} while( n->tokenType == ttIdentifier );
+	}
+
+	// TODO: mixin: Report and remove declarations of constructors and destructors
 
 	return 0;
 }
@@ -1995,9 +1998,7 @@ void asCBuilder::CompileClasses()
 				{
 					asCString msg;
 					msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-					int r,c;
-					file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
-					WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+					WriteError(msg.AddressOf(), file, node->firstChild);
 
 					// Move to the next node
 					node = node->next;
@@ -2013,22 +2014,18 @@ void asCBuilder::CompileClasses()
 
 			if( objType == 0 )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
 				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
-				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), file, node);
 			}
 			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) || 
 					 objType->flags & asOBJ_NOINHERIT )
 			{
 				// Either the class is not a script class or interface
 				// or the class has been declared as 'final'
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString str;
 				str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
-				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), file, node);
 			}
 			else if( objType->size != 0 )
 			{
@@ -2037,9 +2034,7 @@ void asCBuilder::CompileClasses()
 				{
 					if( !multipleInheritance )
 					{
-						int r, c;
-						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-						WriteError(file->name.AddressOf(), TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES, r, c);
+						WriteError(TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES, file, node);
 						multipleInheritance = true;
 					}
 				}
@@ -2052,9 +2047,7 @@ void asCBuilder::CompileClasses()
 					{
 						if( base == decl->objType )
 						{
-							int r, c;
-							file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-							WriteError(file->name.AddressOf(), TXT_CANNOT_INHERIT_FROM_SELF, r, c);
+							WriteError(TXT_CANNOT_INHERIT_FROM_SELF, file, node);
 							error = true;
 							break;
 						}
@@ -2067,11 +2060,9 @@ void asCBuilder::CompileClasses()
 						// A shared type may only inherit from other shared types
 						if( (decl->objType->IsShared()) && !(objType->IsShared()) )
 						{
-							int r, c;
-							file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 							asCString msg;
 							msg.Format(TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s, objType->name.AddressOf());
-							WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+							WriteError(msg.AddressOf(), file, node);
 							error = true;
 						}
 					}
@@ -2082,11 +2073,7 @@ void asCBuilder::CompileClasses()
 						{
 							// Verify that the base class is the same as the original shared type
 							if( decl->objType->derivedFrom != objType )
-							{
-								int r, c;
-								file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-								WriteError(file->name.AddressOf(), TXT_SHARED_DOESNT_MATCH_ORIGINAL, r, c);
-							}
+								WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, node);
 						}
 						else
 						{
@@ -2113,11 +2100,9 @@ void asCBuilder::CompileClasses()
 					// A shared type may only implement from shared interfaces
 					if( (decl->objType->IsShared()) && !(objType->IsShared()) )
 					{
-						int r, c;
-						file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 						asCString msg;
 						msg.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->name.AddressOf());
-						WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+						WriteError(msg.AddressOf(), file, node);
 					}
 					else
 					{
@@ -2125,16 +2110,10 @@ void asCBuilder::CompileClasses()
 						{
 							// Verify that the original implements the same interface
 							if( !decl->objType->Implements(objType) )
-							{
-								int r, c;
-								file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-								WriteError(file->name.AddressOf(), TXT_SHARED_DOESNT_MATCH_ORIGINAL, r, c);
-							}
+								WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, node);
 						}
 						else
-						{
 							decl->objType->interfaces.PushLast(objType);
-						}
 					}
 				}
 			}
@@ -2231,11 +2210,9 @@ void asCBuilder::CompileClasses()
 					{
 						if( baseFunc->IsFinal() )
 						{
-							int r, c;
-							decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
 							asCString msg;
 							msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
-							WriteError(decl->script->name.AddressOf(), msg.AddressOf(), r, c);
+							WriteError(msg.AddressOf(), decl->script, decl->node);
 						}
 
 						// Move the function from the methods array to the virtualFunctionTable
@@ -2301,20 +2278,13 @@ void asCBuilder::CompileClasses()
 
 				if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 					asCString msg;
 					msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
-					WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+					WriteError(msg.AddressOf(), file, node);
 				}
 
 				if( dt.IsReadOnly() )
-				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-					WriteError(file->name.AddressOf(), TXT_PROPERTY_CANT_BE_CONST, r, c);
-				}
+					WriteError(TXT_PROPERTY_CANT_BE_CONST, file, node);
 
 				CheckNameConflictMember(decl->objType, name.AddressOf(), node->lastChild, file, true);
 
@@ -2357,12 +2327,10 @@ void asCBuilder::CompileClasses()
 				asUINT overrideIndex;
 				if( !DoesMethodExist(decl->objType, objType->methods[i], &overrideIndex) )
 				{
-					int r, c;
-					decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
 					asCString str;
 					str.Format(TXT_MISSING_IMPLEMENTATION_OF_s,
 						engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
-					WriteError(decl->script->name.AddressOf(), str.AddressOf(), r, c);
+					WriteError(str.AddressOf(), decl->script, decl->node);
 				}
 				else
 					overrideValidations[overrideIndex] = true;
@@ -2375,11 +2343,9 @@ void asCBuilder::CompileClasses()
 		{
 			if( !overrideValidations[j] && (!hasBaseClass || !DoesMethodExist(decl->objType->derivedFrom, decl->objType->methods[j])) )
 			{
-				int r, c;
-				decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
 				asCString msg;
 				msg.Format(TXT_METHOD_s_DOES_NOT_OVERRIDE, decl->objType->GetMethodByIndex(j, false)->GetDeclaration());
-				WriteError(decl->script->name.AddressOf(), msg.AddressOf(), r, c);
+				WriteError(msg.AddressOf(), decl->script, decl->node);
 			}
 		}
 	}
@@ -2427,9 +2393,7 @@ void asCBuilder::CompileClasses()
 					{
 						if( pdecl->objType == decl->objType )
 						{
-							int r, c;
-							decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
-							WriteError(decl->script->name.AddressOf(), TXT_ILLEGAL_MEMBER_TYPE, r, c);
+							WriteError(TXT_ILLEGAL_MEMBER_TYPE, decl->script, decl->node);
 							validState = 2;
 							break;
 						}
@@ -2463,9 +2427,7 @@ void asCBuilder::CompileClasses()
 
 		if( numClasses == toValidate.GetLength() )
 		{
-			int r, c;
-			toValidate[0]->script->ConvertPosToRowCol(toValidate[0]->node->tokenPos, &r, &c);
-			WriteError(toValidate[0]->script->name.AddressOf(), TXT_ILLEGAL_MEMBER_TYPE, r, c);
+			WriteError(TXT_ILLEGAL_MEMBER_TYPE, toValidate[0]->script, toValidate[0]->node);
 			break;
 		}
 	}
@@ -2549,11 +2511,9 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 	{
 		if( file && node )
 		{
-			int r, c;
-			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 			asCString str;
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-			WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			WriteError(str.AddressOf(), file, node);
 		}
 		return 0;
 	}
@@ -2739,9 +2699,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 
 				if( !found )
 				{
-					int r, c;
-					file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
-					WriteError(file->name.AddressOf(), TXT_SHARED_DOESNT_MATCH_ORIGINAL, r, c);
+					WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, tmp);
 					break;
 				}
 
@@ -2755,12 +2713,9 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				// Check for name conflict errors with other values in the enum
 				if( globVariables.GetFirst(ns, name, asCCompGlobVarType(type)) )
 				{
-					int r, c;
-					file->ConvertPosToRowCol(tmp->tokenPos, &r, &c);
-
 					asCString str;
 					str.Format(TXT_NAME_CONFLICT_s_ALREADY_USED, name.AddressOf());
-					WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+					WriteError(str.AddressOf(), file, tmp);
 
 					tmp = tmp->next;
 					if( tmp && tmp->nodeType == snAssignment )
@@ -3070,11 +3025,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		}
 
 		if( !found )
-		{
-			int r, c;
-			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-			WriteError(file->name.AddressOf(), TXT_SHARED_DOESNT_MATCH_ORIGINAL, r, c);
-		}
+			WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, node);
 
 		node->Destroy(engine);
 		return 0;
@@ -3088,11 +3039,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			CheckNameConflictMember(objType, name.AddressOf(), node, file, false);
 
 			if( name == objType->name )
-			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-				WriteError(file->name.AddressOf(), TXT_METHOD_CANT_HAVE_NAME_OF_CLASS, r, c);
-			}
+				WriteError(TXT_METHOD_CANT_HAVE_NAME_OF_CLASS, file, node);
 		}
 		else
 		{
@@ -3103,11 +3050,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	{
 		// Verify that the name of the constructor/destructor is the same as the class
 		if( name != objType->name )
-		{
-			int r, c;
-			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-			WriteError(file->name.AddressOf(), TXT_CONSTRUCTOR_NAME_ERROR, r, c);
-		}
+			WriteError(TXT_CONSTRUCTOR_NAME_ERROR, file, node);
 
 		if( isDestructor )
 			name = "~" + name;
@@ -3152,12 +3095,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 
 	// Destructors may not have any parameters
 	if( isDestructor && parameterTypes.GetLength() > 0 )
-	{
-		int r, c;
-		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-		WriteError(file->name.AddressOf(), TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, r, c);
-	}
+		WriteError(TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, file, node);
 
 	// If a function, class, or interface is shared then only shared types may be used in the signature
 	if( (objType && objType->IsShared()) || isShared )
@@ -3165,11 +3103,9 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		asCObjectType *ot = returnType.GetObjectType();
 		if( ot && !ot->IsShared() )
 		{
-			int r, c;
-			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 			asCString msg;
 			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-			WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+			WriteError(msg.AddressOf(), file, node);
 		}
 		
 		for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
@@ -3177,11 +3113,9 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			asCObjectType *ot = parameterTypes[p].GetObjectType();
 			if( ot && !ot->IsShared() )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-				WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+				WriteError(msg.AddressOf(), file, node);
 			}
 		}
 	}
@@ -3196,10 +3130,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
 			if( func->IsSignatureExceptNameAndReturnTypeEqual(parameterTypes, inOutFlags, objType, isConstMethod) )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-				WriteError(file->name.AddressOf(), TXT_FUNCTION_ALREADY_EXIST, r, c);
+				WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
 				break;
 			}
 		}
@@ -3214,9 +3145,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		f->AddRef();
 	}
 	else
-	{
 		module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared, ns);
-	}
 
 	// Make sure the default args are declared correctly
 	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);
@@ -3333,12 +3262,7 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 
 	// Destructors may not have any parameters
 	if( isDestructor && parameterTypes.GetLength() > 0 )
-	{
-		int r, c;
-		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-		WriteError(file->name.AddressOf(), TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, r, c);
-	}
+		WriteError(TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, file, node);
 
 	// If class or interface is shared, then only shared types may be used in the method signature
 	if( objType && (objType->flags & asOBJ_SHARED) )
@@ -3346,11 +3270,9 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 		asCObjectType *ot = signature->returnType.GetObjectType();
 		if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
 		{
-			int r, c;
-			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 			asCString msg;
 			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-			WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+			WriteError(msg.AddressOf(), file, node);
 		}
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
@@ -3358,11 +3280,9 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 			asCObjectType *ot = parameterTypes[p].GetObjectType();
 			if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-				WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+				WriteError(msg.AddressOf(), file, node);
 			}
 		}
 	}
@@ -3397,10 +3317,7 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 
 				if( match )
 				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-					WriteError(file->name.AddressOf(), TXT_FUNCTION_ALREADY_EXIST, r, c);
+					WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
 					break;
 				}
 			}
@@ -3484,9 +3401,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 
 	if( engine->ep.propertyAccessorMode != 2 )
 	{
-		int r, c;
-		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-		WriteError(file->name.AddressOf(), TXT_PROPERTY_ACCESSOR_DISABLED, r, c);
+		WriteError(TXT_PROPERTY_ACCESSOR_DISABLED, file, node);
 		node->Destroy(engine);
 		return 0;
 	}
@@ -3558,10 +3473,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				// TODO: getset: If no implementation is supplied the builder should provide an automatically generated implementation
 				//               The compiler needs to be able to handle the different types, primitive, value type, and handle
 				//               The code is also different for global property accessors
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-				WriteError(file->name.AddressOf(), TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, r, c);
+				WriteError(TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, file, node);
 			}
 
 			signature = asNEW(sExplicitSignature);
@@ -3597,12 +3509,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				funcNode->DisconnectParent();
 
 			if( funcNode == 0 && (objType == 0 || !objType->IsInterface()) )
-			{
-				int r, c;
-				file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-				WriteError(file->name.AddressOf(), TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, r, c);
-			}
+				WriteError(TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, file, node);
 
 			signature = asNEW(sExplicitSignature)(1);
 			if( signature == 0 )
@@ -3619,12 +3526,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 			success = true;
 		}
 		else
-		{
-			int r, c;
-			file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-			WriteError(file->name.AddressOf(), TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE, r, c);
-		}
+			WriteError(TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE, file, node);
 
 		if( success )
 			RegisterScriptFunctionWithSignature(engine->GetNextScriptFunctionId(), funcNode, file, name, signature, objType, isInterface, isGlobalFunction, isPrivate, isConst, isFinal, isOverride, true, ns);
@@ -3680,11 +3582,9 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 		if( type.GetTokenType() == ttVoid )
 		{
-			int r, c;
-			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
 			asCString str;
 			str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
-			WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+			WriteError(str.AddressOf(), file, n);
 			break;
 		}
 
@@ -3717,10 +3617,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 				if( match )
 				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-
-					WriteError(file->name.AddressOf(), TXT_FUNCTION_ALREADY_EXIST, r, c);
+					WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
 					break;
 				}
 			}
@@ -3862,6 +3759,15 @@ void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, i
 	}
 }
 
+void asCBuilder::WriteError(const char *message, asCScriptCode *file, asCScriptNode *node)
+{
+	int r = 0, c = 0;
+	if( node )
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+	WriteError(file->name.AddressOf(), message, r, c);
+}
+
 void asCBuilder::WriteError(const char *scriptname, const char *message, int r, int c)
 {
 	numErrors++;
@@ -3938,9 +3844,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		{
 			asCString msg;
 			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-			int r, c;
-			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-			WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+			WriteError(msg.AddressOf(), file, n);
 			
 			dt = asCDataType::CreatePrimitive(ttInt, false);
 			return dt;
@@ -4003,9 +3907,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							{
 								asCString msg;
 								msg.Format(TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subType.Format().AddressOf());
-								int r, c;
-								file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-								WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+								WriteError(msg.AddressOf(), file, n);
 							}
 
 							ot = otInstance;
@@ -4023,11 +3925,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				asCString msg;
 				msg.Format(TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE, (const char *)str.AddressOf());
-
-				int r, c;
-				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-
-				WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+				WriteError(msg.AddressOf(), file, n);
 
 				dt.SetTokenType(ttInt);
 			}
@@ -4045,11 +3943,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				asCString msg;
 				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, (const char *)str.AddressOf());
-
-				int r, c;
-				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-
-				WriteError(file->name.AddressOf(), msg.AddressOf(), r, c);
+				WriteError(msg.AddressOf(), file, n);
 
 				dt = asCDataType::CreatePrimitive(ttInt, isConst);
 				return dt;
@@ -4071,22 +3965,16 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			// Make sure the sub type can be instanciated
 			if( !dt.CanBeInstanciated() )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-
 				asCString str;
 				// TODO: Change to "Array sub type cannot be 'type'"
 				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-
-				WriteError(file->name.AddressOf(), str.AddressOf(), r, c);
+				WriteError(str.AddressOf(), file, n);
 			}
 
 			// Make the type an array (or multidimensional array)
 			if( dt.MakeArray(engine) < 0 )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-				WriteError(file->name.AddressOf(), TXT_NO_DEFAULT_ARRAY_TYPE, r, c);
+				WriteError(TXT_NO_DEFAULT_ARRAY_TYPE, file, n);
 				break;
 			}
 		}
@@ -4095,9 +3983,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			// Make the type a handle
 			if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
 			{
-				int r, c;
-				file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-				WriteError(file->name.AddressOf(), TXT_OBJECT_HANDLE_NOT_SUPPORTED, r, c);
+				WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
 				break;
 			}
 		}
@@ -4108,11 +3994,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	{
 		// Make the type a handle
 		if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
-		{
-			int r, c;
-			file->ConvertPosToRowCol(n->tokenPos, &r, &c);
-			WriteError(file->name.AddressOf(), TXT_OBJECT_HANDLE_NOT_SUPPORTED, r, c);
-		}
+			WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
 	}
 
 	return dt;
@@ -4158,11 +4040,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 		{
 			// Verify that the base type support &inout parameter types
 			if( !dt.IsObject() || dt.IsObjectHandle() || !((dt.GetObjectType()->flags & asOBJ_NOCOUNT) || (dt.GetObjectType()->beh.addref && dt.GetObjectType()->beh.release)) )
-			{
-				int r, c;
-				file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
-				WriteError(file->name.AddressOf(), TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT, r, c);
-			}
+				WriteError(TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT, file, node->firstChild);
 		}
 	}
 
@@ -4172,11 +4050,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 	{
 		// Autohandles are not supported for types with NOCOUNT
 		if( dt.GetObjectType()->flags & asOBJ_NOCOUNT )
-		{
-			int r, c;
-			file->ConvertPosToRowCol(node->firstChild->tokenPos, &r, &c);
-			WriteError(file->name.AddressOf(), TXT_AUTOHANDLE_CANNOT_BE_USED_FOR_NOCOUNT, r, c);
-		}
+			WriteError(TXT_AUTOHANDLE_CANNOT_BE_USED_FOR_NOCOUNT, file, node->firstChild);
 
 		if( autoHandle ) *autoHandle = true;
 	}

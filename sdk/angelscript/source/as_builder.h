@@ -156,6 +156,7 @@ protected:
 
 	void               WriteInfo(const char *scriptname, const char *msg, int r, int c, bool preMessage);
 	void               WriteError(const char *scriptname, const char *msg, int r, int c);
+	void               WriteError(const char *msg, asCScriptCode *file, asCScriptNode *node);
 	void               WriteWarning(const char *scriptname, const char *msg, int r, int c);
 
 	asCObjectProperty *GetObjectProperty(asCDataType &obj, const char *prop);

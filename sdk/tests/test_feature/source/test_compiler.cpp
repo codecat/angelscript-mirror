@@ -206,6 +206,77 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test", 
+			"class Data {\n"
+			"	int x;\n"
+			"	Data() {\n"
+			"		print('create Data()\\n');\n"
+			"	}\n"
+			"	~Data() {\n"
+			"		print('delete Data()\\n');\n"
+			"	}\n"
+			"	Data& opAssign(const Data&in other) {\n"
+			"		x = other.x;\n"
+			"		return this;\n"
+			"	}\n"
+			"};\n"
+			"Data a;\n"
+			"Data b;\n"
+			"void TestCopyGlobals() {\n"
+			"	Data c;\n"
+			"	print('--a = b--\\n');\n"
+			"	a = b; //Implicitly creates and then deletes a temporary copy\n"
+			"	print('--a = c--\\n');\n"
+			"	a = c; //Does not create a temporary copy\n"
+			"	print('--end--\\n');\n"
+			"}\n" );
+
+		g_printbuf = "";
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "TestCopyGlobals()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( g_printbuf != "create Data()\n"
+		                  "create Data()\n"
+		                  "create Data()\n"
+		                  "--a = b--\n"
+		                  "--a = c--\n"
+		                  "--end--\n"
+		                  "delete Data()\n" )
+		{
+			printf("%s", g_printbuf.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Problem reported by Philip Bennefall
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -2136,6 +2207,8 @@ bool Test()
 		int r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;		
+
+		g_printbuf = "";
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )

@@ -6109,14 +6109,16 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		bool simpleExpr = (lctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) && lctx->bc.IsSimpleExpression();
 
 		// Implicitly convert the rvalue to the type of the lvalue
+		bool needConversion = false;
 		if( !lctx->type.dataType.IsEqualExceptRefAndConst(rctx->type.dataType) )
-			simpleExpr = false;
-		if( !simpleExpr )
+			needConversion = true;
+
+		if( !simpleExpr || needConversion )
 		{
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(true);
 			dt.MakeReadOnly(true);
-			PrepareArgument(&dt, rctx, rexpr, true, 1);
+			PrepareArgument(&dt, rctx, rexpr, true, 1, !needConversion);
 			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
 			{
 				asCString str;
@@ -6137,15 +6139,18 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		MergeExprBytecode(ctx, rctx);
 		MergeExprBytecode(ctx, lctx);
 
-		if( !simpleExpr )
+		if( !simpleExpr || needConversion )
 		{
-			if( (rctx->type.isVariable || rctx->type.isTemporary) && !IsVariableOnHeap(rctx->type.stackOffset) )
-				// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
-				//                         as the value allocated on the stack is guaranteed to be safe.
-				//                         The bytecode optimizer should be able to determine this and optimize away the VAR + GETREF
-				ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
-			else
-				ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+			if( (rctx->type.isVariable || rctx->type.isTemporary) )
+			{
+				if( !IsVariableOnHeap(rctx->type.stackOffset) )
+					// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
+					//                         as the value allocated on the stack is guaranteed to be safe.
+					//                         The bytecode optimizer should be able to determine this and optimize away the VAR + GETREF
+					ctx->bc.InstrWORD(asBC_GETREF, AS_PTR_SIZE);
+				else
+					ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+			}
 		}
 
 		PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/27</h2>
+<h2>Version 2.25.0 WIP - 2012/08/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler when assigning value from property accessor to array element (Thanks Philip Bennefall)
 <li>Fixed crash in garbage collector when using automatic collections (Thanks Polyák István)
 <li>Compiler failed to compile default argument expression that accessed an index in global array (Thanks Philip Bennefall)
+<li>Avoid temporary copy of script object without explicit opAssign method when assigned from global variable (Thanks Andrew Ackermann)
 </ul>
 <li>Library
 <ul>
@@ -40,6 +41,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved performance of searching for global properties by name (Thanks Markus Lenger)
 <li>Improved performance of searching for global script functions (Thanks Markus Lenger)
 <li>Compiler will now implicitly convert rvalue to handle when doing a handle assignment to ASHANDLE type
+<li>Types registered with asOBJ_APP_PRIMITIVE or asOBJ_APP_FLOAT can now be passed by value in native calling convention on 64bit Linux and Mac (Thanks Cordan)
 </ul>
 <li>Library interface
 <ul>
