@@ -3,7 +3,6 @@
 //
 
 #include "utils.h"
-#include "script_factory.h"
 #include "memory_stream.h"
 
 #include <string>
@@ -15,11 +14,6 @@ namespace TestBigArrays
 {
 
 #define TESTNAME "TestBigArray"
-
-enum {
-    c_elem_cnt = 100000,
-    c_array_cnt = 2
-};
 
 void print( const string & )
 {
@@ -44,8 +38,26 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+	const int numArrays = 2;
+	const int numElements = 100000;
+
 	string script;
-	create_array_test(c_array_cnt, c_elem_cnt, script);
+    std::stringstream script_buffer;
+    for (unsigned i = 0; i < numArrays; i++)
+    {
+        script_buffer << "int[] array_" << i << " = {";
+        if (numElements > 0)
+        {
+            script_buffer << 0;
+        }
+        for (unsigned j = 1; j < numElements; j++)
+        {
+            script_buffer << ", " << j;
+        }
+        script_buffer << "};";
+    }
+    script_buffer << std::endl << "int main() { print (\"elem 999 = \" + array_0[999] + \"\\n\"); return 0; }";
+    script = script_buffer.str();
 
 	////////////////////////////////////////////
 	printf("\nBuilding...\n");

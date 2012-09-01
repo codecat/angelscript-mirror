@@ -635,6 +635,10 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 	// Simply parse everything until the first , or ), whichever comes first. 
 	// Keeping in mind that () and {} can group expressions.
 
+	sToken start;
+	GetToken(&start);
+	RewindTo(&start);
+
 	asCString stack;
 	sToken t;
 	for(;;)
@@ -708,6 +712,7 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 			// Wrong syntax
 			RewindTo(&t);
 			Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+			Info(TXT_WHILE_PARSING_EXPRESSION, &start);
 			return node;
 		}
 
@@ -788,6 +793,20 @@ void asCParser::Error(const char *text, sToken *token)
 
 	if( builder )
 		builder->WriteError(script->name.AddressOf(), text, row, col);
+}
+
+void asCParser::Info(const char *text, sToken *token)
+{
+	RewindTo(token);
+
+	isSyntaxError     = true;
+	errorWhileParsing = true;
+
+	int row, col;
+	script->ConvertPosToRowCol(token->pos, &row, &col);
+
+	if( builder )
+		builder->WriteInfo(script->name.AddressOf(), text, row, col, false);
 }
 
 bool asCParser::IsRealType(int tokenType)
@@ -2801,6 +2820,8 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 		GetToken(&t);
 		if( t.type == ttStartStatementBlock )
 		{
+			sToken start = t;
+
 			// Find the end of the initialization list
 			int indent = 1;
 			while( indent )
@@ -2813,12 +2834,15 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 				else if( t.type == ttEnd )
 				{
 					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+					Info(TXT_WHILE_PARSING_INIT_LIST, &start);
 					break;
 				}
 			}
 		}
 		else
 		{
+			sToken start = t;
+
 			// Find the end of the expression
 			int indent = 0;
 			while( indent || (t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock) )
@@ -2830,6 +2854,7 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 				else if( t.type == ttEnd )
 				{
 					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+					Info(TXT_WHILE_PARSING_EXPRESSION, &start);
 					break;
 				}
 				GetToken(&t);
@@ -2841,6 +2866,8 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 	}
 	else if( t.type == ttOpenParanthesis )
 	{
+		sToken start = t;
+
 		// Find the end of the argument list
 		int indent = 1;
 		while( indent )
@@ -2853,6 +2880,7 @@ asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
 			else if( t.type == ttEnd )
 			{
 				Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+				Info(TXT_WHILE_PARSING_ARG_LIST, &start);
 				break;
 			}
 		}
@@ -2883,6 +2911,8 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 
 	node->UpdateSourcePos(t1.pos, t1.length);
 
+	sToken start = t1;
+
 	int level = 1;
 	while( level > 0 && !isSyntaxError )
 	{
@@ -2892,7 +2922,11 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 		else if( t1.type == ttStartStatementBlock )
 			level++;
 		else if( t1.type == ttEnd )
+		{
 			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
+			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
+			break;
+		}
 	}
 
 	node->UpdateSourcePos(t1.pos, t1.length);
@@ -2913,6 +2947,8 @@ asCScriptNode *asCParser::ParseStatementBlock()
 		Error(ExpectedToken("{").AddressOf(), &t1);
 		return node;
 	}
+
+	sToken start = t1;
 
 	node->UpdateSourcePos(t1.pos, t1.length);
 
@@ -2969,6 +3005,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 			else if( t1.type == ttEnd )
 			{
 				Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
+				Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
 				return node;
 			}
 

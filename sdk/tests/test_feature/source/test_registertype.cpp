@@ -32,7 +32,7 @@ bool Test()
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n" )
+		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -86,11 +86,11 @@ bool Test()
 	if( r != asILLEGAL_BEHAVIOUR_FOR_TYPE )
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'void f()'\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'void f()' (Code: -23)\n"
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'void f()'\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'void f()' (Code: -23)\n"
 					   " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'int f()'\n" )
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'int f()' (Code: -23)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -109,8 +109,8 @@ bool Test()
 	r = engine->RegisterGlobalFunction("ref f()", asFUNCTION(0), asCALL_GENERIC);
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(ref)'\n"
-	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref f()'\n" )
+	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(ref)' (Code: -10)\n"
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref f()' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -165,11 +165,11 @@ bool Test()
 		TEST_FAILED;
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_FACTORY, "ref @f()", asFUNCTION(0), asCALL_GENERIC);
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n"
 		               " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n"
 					   "System function (1, 5) : Error   : Object handle is not supported for this type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'ref @f()'\n" )
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'ref @f()' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -271,9 +271,9 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n"
 					   " (0, 0) : Error   : The behaviour is not compatible with the type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()'\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n"
 					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
@@ -301,8 +301,8 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()'\n"
-		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'const A@ f() const'\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()' (Code: -13)\n"
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'const A@ f() const' (Code: -10)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -380,7 +380,7 @@ bool Test()
 	if( bout.buffer != "ExecuteString (1, 5) : Error   : Object handle is not supported for this type\n"
 	                   "ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
 	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()'\n" )
+					   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -454,7 +454,7 @@ bool Test()
 
 		// TODO: The 'Failed in call' message should show the return code too (and if possible the symbolic name, i.e. asINVALID_DECL)
 		if( bout.buffer != "Property (1, 10) : Error   : Expected identifier\n"
-		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'Npc' and 'unsigned int hp'\n" )
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'Npc' and 'unsigned int hp' (Code: -10)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -629,7 +629,7 @@ bool TestRefScoped()
 	r = engine->RegisterGlobalFunction("void f(scoped@)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n"
-	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped@)'\n" )
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped@)' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -640,7 +640,7 @@ bool TestRefScoped()
 	r = engine->RegisterGlobalFunction("void f(scoped&)", asFUNCTION(DummyFunc), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
-	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped&)'\n" )
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped&)' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

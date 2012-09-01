@@ -17,9 +17,9 @@ SRCNAMES = \
   main.cpp \
   test_basic.cpp \
   test_big_arrays.cpp \
+  test_complex.cpp \
   test_many_symbols.cpp \
   test_many_funcs.cpp \
-  script_factory.cpp \
   utils.cpp  
      
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
@@ -45,7 +45,6 @@ obj/scriptstdstring_utils.o: ../../../../add_on/scriptstdstring/scriptstdstring_
 	
 obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
 
 clean:
 	$(DELETER) $(OBJ) $(BIN)

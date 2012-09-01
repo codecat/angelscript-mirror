@@ -2219,7 +2219,7 @@ public:
 	virtual int             Unprepare() = 0;
 	//! \brief Executes the prepared function.
 	//! \return A negative value on error, or one of \ref asEContextState.
-	//! \retval asERROR Invalid context object, the context is not prepared, or it is not in suspended state.
+	//! \retval asCONTEXT_NOT_PREPARED The context is not prepared or it is not in suspended state.
 	//! \retval asEXECUTION_ABORTED The execution was aborted with a call to \ref Abort.
 	//! \retval asEXECUTION_SUSPENDED The execution was suspended with a call to \ref Suspend.
 	//! \retval asEXECUTION_FINISHED The execution finished successfully.

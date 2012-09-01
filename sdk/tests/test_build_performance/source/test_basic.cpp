@@ -44,10 +44,12 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+	const int numLines = 40000;
+
 	string script;
-	script.reserve(strlen(scriptBegin) + 40000*(strlen(scriptMiddle)+5) + strlen(scriptEnd));
+	script.reserve(strlen(scriptBegin) + numLines*(strlen(scriptMiddle)+5) + strlen(scriptEnd));
 	script += scriptBegin;
-	for( int n = 0; n < 40000; n++ )
+	for( int n = 0; n < numLines; n++ )
 	{
 		char buf[500];
 		sprintf(buf, scriptMiddle, n);

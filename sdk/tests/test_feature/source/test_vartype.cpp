@@ -130,7 +130,7 @@ bool Test()
 	r = engine->RegisterGlobalProperty("? prop", (void*)1);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
-	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with '? prop'\n" ) 
+	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with '? prop' (Code: -10)\n" ) 
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -145,7 +145,7 @@ bool Test()
 	r = engine->RegisterObjectProperty("test", "? prop", 0);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
-		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'test' and '? prop'\n" )
+		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'test' and '? prop' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -230,7 +230,7 @@ bool Test()
 	r = engine->RegisterGlobalFunction("? testFunc()", asFUNCTION(testFuncI), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "System function (1, 1) : Error   : Expected data type\n"
-		               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with '? testFunc()'\n" )
+		               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with '? testFunc()' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

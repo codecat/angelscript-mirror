@@ -220,7 +220,7 @@ bool Test()
 	{
 		TEST_FAILED;
 	}
-	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'type' and 'bool f()'\n" )
+	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'type' and 'bool f()' (Code: -7)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

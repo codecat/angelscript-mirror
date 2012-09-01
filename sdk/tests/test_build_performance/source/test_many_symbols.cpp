@@ -3,7 +3,6 @@
 //
 
 #include "utils.h"
-#include "script_factory.h"
 #include "memory_stream.h"
 #include <string>
 #include <sstream>
@@ -14,10 +13,6 @@ namespace TestManySymbols
 {
 
 #define TESTNAME "TestManySymbols"
-
-enum {
-    c_elem_cnt = 10000
-};
 
 void Test()
 {
@@ -41,8 +36,17 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+	const int numSymbols = 10000;
+
 	string script;
-	create_symbol_test(c_elem_cnt, script);
+	script.reserve(numSymbols * 30);
+
+    for( int i = 0; i < numSymbols; i++ )
+    {
+		char buf[500];
+		sprintf(buf, "const int const_%d = %d;\n", i, i);
+		script += buf;
+    }
 
 	////////////////////////////////////////////
 	printf("\nBuilding...\n");

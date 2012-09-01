@@ -76,7 +76,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "System function (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void defarg(bool, int arg1 = 34 + 45, int)'\n"
-			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void defarg(bool, int a = 34+45, int)'\n" )
+			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void defarg(bool, int a = 34+45, int)' (Code: -10)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

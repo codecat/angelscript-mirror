@@ -600,9 +600,11 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	// Release the object pointer again
 	if( outFunc->objectType && !m_isConstructor && !outFunc->returnType.IsReference() )
-	{
 		byteCode.InstrW_PTR(asBC_FREE, 0, outFunc->objectType);
-	}
+
+	// Check if the number of labels in the functions isn't too many to be handled
+	if( nextLabel >= (1<<15) )
+		Error(TXT_TOO_MANY_JUMP_LABELS, func);
 
 	// If there are compile errors, there is no reason to build the final code
 	if( hasCompileErrors || builder->numErrors != buildErrors )

@@ -46,19 +46,22 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+	const int numFuncs = 2000;
+	const int numCalls = 20000;
+
 	string script;
-	script.reserve(strlen(scriptBegin) + 2000*(strlen(scriptFuncDecl)+5) + 20000*(strlen(scriptMiddle)+5) + strlen(scriptEnd));
-	for( int a = 0; a < 2000; a++ )
+	script.reserve(strlen(scriptBegin) + numFuncs*(strlen(scriptFuncDecl)+5) + numCalls*(strlen(scriptMiddle)+5) + strlen(scriptEnd));
+	for( int a = 0; a < numFuncs; a++ )
 	{
 		char buf[500];
 		sprintf(buf, scriptFuncDecl, a);
 		script += buf;
 	}
 	script += scriptBegin;
-	for( int n = 0; n < 20000; n++ )
+	for( int n = 0; n < numCalls; n++ )
 	{
 		char buf[500];
-		sprintf(buf, scriptMiddle, n%2000);
+		sprintf(buf, scriptMiddle, n%numFuncs);
 		script += buf;
 	}
 	script += scriptEnd;

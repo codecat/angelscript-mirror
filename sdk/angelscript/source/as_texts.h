@@ -205,6 +205,7 @@
 #define TXT_SWITCH_MUST_BE_INTEGRAL                    "Switch expressions must be integral numbers"
 
 #define TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE  "Type '%s' is not available for this module"
+#define TXT_TOO_MANY_JUMP_LABELS             "The function has too many jump labels to handle. Split the function into smaller ones."
 
 #define TXT_UNEXPECTED_END_OF_FILE        "Unexpected end of file"
 #define TXT_UNEXPECTED_TOKEN_s            "Unexpected token '%s'"
@@ -214,6 +215,11 @@
 #define TXT_UNUSED_SCRIPT_NODE            "Unused script node"
 
 #define TXT_VALUE_TOO_LARGE_FOR_TYPE      "Value is too large for data type"
+
+#define TXT_WHILE_PARSING_ARG_LIST        "While parsing argument list"
+#define TXT_WHILE_PARSING_EXPRESSION      "While parsing expression"
+#define TXT_WHILE_PARSING_INIT_LIST       "While parsing initialization list"
+#define TXT_WHILE_PARSING_STATEMENT_BLOCK "While parsing statement block"
 
 // Global variable initialization
 
@@ -243,9 +249,9 @@
 #define TXT_TEMPLATE_SUBTYPE_s_DOESNT_EXIST        "Template subtype '%s' doesn't exist"
 #define TXT_FAILED_READ_SUBTYPE_OF_TEMPLATE_s      "Failed to read subtype of template type '%s'"
 #define TXT_INSTANCING_INVLD_TMPL_TYPE_s_s         "Attempting to instanciate invalid template type '%s<%s>'"
-#define TXT_FAILED_IN_FUNC_s                       "Failed in call to function '%s'"
-#define TXT_FAILED_IN_FUNC_s_WITH_s                "Failed in call to function '%s' with '%s'"
-#define TXT_FAILED_IN_FUNC_s_WITH_s_AND_s          "Failed in call to function '%s' with '%s' and '%s'"
+#define TXT_FAILED_IN_FUNC_s_d                     "Failed in call to function '%s' (Code: %d)"
+#define TXT_FAILED_IN_FUNC_s_WITH_s_d              "Failed in call to function '%s' with '%s' (Code: %d)"
+#define TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_d        "Failed in call to function '%s' with '%s' and '%s' (Code: %d)"
 #define TXT_GC_RECEIVED_NULL_PTR                   "AddScriptObjectToGC called with null pointer"
 #define TXT_EXCEPTION_IN_NESTED_CALL               "An exception occurred in a nested call"
 

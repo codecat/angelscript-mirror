@@ -2707,12 +2707,12 @@ int asCScriptEngine::ConfigError(int err, const char *funcName, const char *arg1
 		if( arg1 )
 		{
 			if( arg2 )
-				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_AND_s, funcName, arg1, arg2);
+				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_d, funcName, arg1, arg2, err);
 			else
-				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s, funcName, arg1);
+				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, funcName, arg1, err);
 		}
 		else
-			str.Format(TXT_FAILED_IN_FUNC_s, funcName);
+			str.Format(TXT_FAILED_IN_FUNC_s_d, funcName, err);
 			
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 	}

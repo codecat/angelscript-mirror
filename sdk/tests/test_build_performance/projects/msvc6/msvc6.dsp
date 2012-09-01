@@ -91,11 +91,11 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\source\script_factory.cpp
+SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.cpp
+SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp
 # End Source File
 # Begin Source File
 
@@ -108,6 +108,10 @@ SOURCE=..\..\source\test_basic.cpp
 # Begin Source File
 
 SOURCE=..\..\source\test_big_arrays.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\source\test_complex.cpp
 # End Source File
 # Begin Source File
 
@@ -135,11 +139,11 @@ SOURCE=..\..\source\memory_stream.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\source\script_factory.h
+SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptarray\scriptarray.h
+SOURCE=..\..\..\..\add_on\scriptdictionary\scriptdictionary.h
 # End Source File
 # Begin Source File
 

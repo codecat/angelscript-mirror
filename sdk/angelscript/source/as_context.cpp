@@ -322,7 +322,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	if( func == 0 )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s, "Prepare", "null");
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", "null", asNO_FUNCTION);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asNO_FUNCTION;
 	}
@@ -330,7 +330,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s, "Prepare");
+		str.Format(TXT_FAILED_IN_FUNC_s_d, "Prepare", asCONTEXT_ACTIVE);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_ACTIVE;
 	}
@@ -1057,9 +1057,9 @@ int asCContext::Execute()
 	if( m_status != asEXECUTION_SUSPENDED && m_status != asEXECUTION_PREPARED )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s, "Execute");
+		str.Format(TXT_FAILED_IN_FUNC_s_d, "Execute", asCONTEXT_NOT_PREPARED);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-		return asERROR;
+		return asCONTEXT_NOT_PREPARED;
 	}
 
 	m_status = asEXECUTION_ACTIVE;
