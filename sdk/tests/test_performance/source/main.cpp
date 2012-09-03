@@ -90,10 +90,11 @@ int main(int argc, char **argv)
 	printf("\n");
 	printf("AngelScript %s\n", asGetLibraryVersion()); 
 
-	for( int n = 0; n < 18; n++ )
+	int n;
+	for( n = 0; n < 18; n++ )
 		testTimesBest[n] = 1000;
 
-	for( int n = 0; n < 3; n++ )
+	for( n = 0; n < 3; n++ )
 	{
 		TestBasic::Test(&testTimes[0]); printf("."); fflush(stdout);
 		TestBasic2::Test(&testTimes[1]); printf("."); fflush(stdout);

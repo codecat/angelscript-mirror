@@ -954,6 +954,7 @@ bool Test2()
 	asIScriptModule *module = engine->GetModule("module", asGM_ALWAYS_CREATE);
 
 	module->AddScriptSection("script", script);
+
 	int r = module->Build();
 	if( r < 0 )
 	{

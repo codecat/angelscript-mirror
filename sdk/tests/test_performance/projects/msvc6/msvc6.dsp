@@ -91,10 +91,6 @@ SOURCE=..\..\source\main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp
 # End Source File
 # Begin Source File

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/08/31</h2>
+<h2>Version 2.25.0 WIP - 2012/09/03</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,14 +36,15 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>The VM will catch C++ exceptions thrown by the registered functions and set a script exception. This can be turned off by AS_NO_EXCEPTIONS if exception handling is not supported (Thanks Polyák István)
 <li>Loading large precompiled bytecode files will now be significantly faster. Performance should now be similar to pre 2.23.0 (Thanks loboWu)
-<li>Improved performance of tokenizer for large initialization lists (Thanks Markus Lenger)
-<li>Improved performance of parser for scripts with a lot of statements
-<li>Improved performance of searching for global properties by name (Thanks Markus Lenger)
-<li>Improved performance of searching for global script functions (Thanks Markus Lenger)
+<li>Improved build performance of tokenizer for large initialization lists (Thanks Markus Lenger)
+<li>Improved build performance of parser for scripts with a lot of statements
+<li>Improved build performance of searching for global properties by name (Thanks Markus Lenger)
+<li>Improved build performance of searching for global script functions (Thanks Markus Lenger)
 <li>Compiler will now implicitly convert rvalue to handle when doing a handle assignment to ASHANDLE type
 <li>Types registered with asOBJ_APP_PRIMITIVE or asOBJ_APP_FLOAT can now be passed by value in native calling convention on 64bit Linux and Mac (Thanks Cordan)
 <li>Error message now includes the error code when an improper call to an engine function is made
 <li>Improved error message when parser encounters unexpected end of file (Thanks Philip Bennefall)
+<li>Improved build performance when optimizing bytecode with a large amount of conditions
 </ul>
 <li>Library interface
 <ul>

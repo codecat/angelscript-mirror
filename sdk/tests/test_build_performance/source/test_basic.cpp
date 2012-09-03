@@ -32,6 +32,7 @@ void Test()
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.25.0 WIP 1: 14.93 secs\n");
 	printf("AngelScript 2.25.0 WIP 3: 10.47 secs (rewind optimization in parser)\n");
+	printf("AngelScript 2.25.0 WIP 9: 10.00 secs (improved bytecode optimization)\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 

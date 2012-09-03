@@ -100,6 +100,7 @@ public:
 	void ObjInfo(int offset, int info);
 	void Block(bool start);
 	void VarDecl(int varDeclIdx);
+	void DiscardVar(int varIdx);
 	void Call(asEBCInstr bc, int funcID, int pop);
 	void CallPtr(asEBCInstr bc, int funcPtrVar, int pop);
 	void Alloc(asEBCInstr bc, void *objID, int funcID, int pop);
@@ -136,8 +137,6 @@ public:
 protected:
 	// Helpers for Optimize
 	bool CanBeSwapped(cByteInstruction *curr);
-	bool IsCombination(cByteInstruction *curr, asEBCInstr bc1, asEBCInstr bc2);
-	bool IsCombination(cByteInstruction *curr, asEBCInstr bc1, asEBCInstr bc2, asEBCInstr bc3);
 	cByteInstruction *ChangeFirstDeleteNext(cByteInstruction *curr, asEBCInstr bc);
 	cByteInstruction *DeleteFirstChangeNext(cByteInstruction *curr, asEBCInstr bc);
 	cByteInstruction *DeleteInstruction(cByteInstruction *instr);

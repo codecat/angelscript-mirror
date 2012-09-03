@@ -70,7 +70,7 @@ double GetSystemTimer()
         return (double)timeGetTime()/1000.0;
 		*/
 
-	return double(GetCPUTime())/10000000;
+	return double(asINT64(GetCPUTime()))/10000000;
 }
 
 #else
