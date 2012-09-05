@@ -197,13 +197,16 @@ protected:
 protected:
 	friend class asCCompiler;
 
+	int                RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
+	sMixinClass       *GetMixinClass(const char *name, asSNameSpace *ns);
+	void               IncludePropertiesFromMixins(sClassDeclaration *decl);
+
 	int                RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false);
 	int                RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false, asSNameSpace *ns = 0);
 	int                RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false);
 	int                RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
-	int                RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);

@@ -1217,20 +1217,16 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	}
 
 	// Check against mixin classes
-	for( n = 0; n < mixinClasses.GetLength(); n++ )
+	if( GetMixinClass(name, ns) )
 	{
-		if( mixinClasses[n]->name == name &&
-			mixinClasses[n]->ns == ns )
+		if( code )
 		{
-			if( code )
-			{
-				asCString str;
-				str.Format(TXT_NAME_CONFLICT_s_IS_MIXIN, name);
-				WriteError(str.AddressOf(), code, node);
-			}
-
-			return -1;
+			asCString str;
+			str.Format(TXT_NAME_CONFLICT_s_IS_MIXIN, name);
+			WriteError(str.AddressOf(), code, node);
 		}
+
+		return -1;
 	}
 #endif
 
@@ -1238,6 +1234,16 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 }
 
 #ifndef AS_NO_COMPILER
+sMixinClass *asCBuilder::GetMixinClass(const char *name, asSNameSpace *ns)
+{
+	for( asUINT n = 0; n < mixinClasses.GetLength(); n++ )
+		if( mixinClasses[n]->name == name &&
+			mixinClasses[n]->ns == ns )
+			return mixinClasses[n];
+
+	return 0;
+}
+
 int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
 	// Find the name
@@ -1445,8 +1451,6 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 			tmp->Destroy(engine);
 		} while( n->tokenType == ttIdentifier );
 	}
-
-	// TODO: mixin: Report and remove declarations of constructors and destructors
 
 	return 0;
 }
@@ -2014,9 +2018,16 @@ void asCBuilder::CompileClasses()
 
 			if( objType == 0 )
 			{
-				asCString str;
-				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
-				WriteError(str.AddressOf(), file, node);
+				// TODO: mixin: When the mixin classes can implement interfaces or inherit classes themselves, 
+				//              it will no longer be possible to simply skip them in this loop.
+
+				// Check if the name is a mixin class
+				if( !GetMixinClass(name.AddressOf(), ns) )
+				{
+					asCString str;
+					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
+					WriteError(str.AddressOf(), file, node);
+				}
 			}
 			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) || 
 					 objType->flags & asOBJ_NOINHERIT )
@@ -2162,6 +2173,8 @@ void asCBuilder::CompileClasses()
 			continue;
 		}
 
+		// TODO: mixin: Methods included from mixin classes should take precedence over inherited methods
+
 		// Add all properties and methods from the base class
 		if( decl->objType->derivedFrom )
 		{
@@ -2295,6 +2308,9 @@ void asCBuilder::CompileClasses()
 
 			node = node->next;
 		}
+
+		// Add properties from included mixin classes that don't conflict with existing properties
+		IncludePropertiesFromMixins(decl);
 
 		toValidate.PushLast(decl);
 	}
@@ -2468,6 +2484,116 @@ void asCBuilder::CompileClasses()
 				}
 			}
 		}
+	}
+}
+
+void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
+{
+	asCScriptNode *node = decl->node->firstChild;
+
+	// Skip the 'final' and 'shared' keywords
+	if( decl->objType->IsShared() )
+		node = node->next;
+	if( decl->objType->flags & asOBJ_NOINHERIT )
+		node = node->next;
+
+	// Skip the name of the class
+	node = node->next;
+
+	// Find the included mixin classes
+	while( node && node->nodeType == snIdentifier )
+	{
+		// TODO: clean-up: implement a function to retrieve namespace and name from node and reuse it here and in CompileClasses
+		// Get the optional scope from the node
+		asCString scope = GetScopeFromNode(node->firstChild, decl->script);
+		asSNameSpace *ns = 0;
+		if( scope == "" )
+			// No scope was informed, use the same namespace as the class itself
+			ns = decl->objType->nameSpace;
+		else if( scope == "::" )
+			// The global scope was informed
+			ns = engine->nameSpaces[0];
+		else
+		{
+			ns = engine->FindNameSpace(scope.AddressOf());
+			if( ns == 0 )
+			{
+				asCString msg;
+				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+				WriteError(msg.AddressOf(), decl->script, node->firstChild);
+
+				// Move to the next node
+				node = node->next;
+				continue;
+			}
+		}
+
+		// Get the interface name from the node
+		asCString name(&decl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
+				
+		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
+		if( mixin )
+		{
+			// Find properties from mixin declaration
+			asCScriptNode *n = mixin->node->firstChild;
+
+			// Skip to the member declarations
+			// Possible keywords 'final' and 'shared' are removed in RegisterMixinClass so we don't need to worry about those here
+			while( n && n->nodeType == snIdentifier )
+				n = n->next;
+
+			// Add properties from the mixin that are not already existing in the class
+			while( n )
+			{
+				if( n->nodeType == snDeclaration )
+				{
+					bool isPrivate = false;
+					if( n->firstChild && n->firstChild->tokenType == ttPrivate )
+						isPrivate = true;
+
+					asCScriptCode *file = mixin->script;
+					// TODO: namespace: Use correct implicit namespace from mixin
+					asCDataType dt = CreateDataTypeFromNode(isPrivate ? n->firstChild->next : n->firstChild, file, engine->nameSpaces[0]);
+					asCString name(&file->code[n->lastChild->tokenPos], n->lastChild->tokenLength);
+
+					if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
+					{
+						asCString msg;
+						msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
+						WriteError(msg.AddressOf(), file, n);
+						// TODO: mixin: Need to show information that the property is included from mixin to class
+					}
+
+					if( dt.IsReadOnly() )
+					{
+						WriteError(TXT_PROPERTY_CANT_BE_CONST, file, node);
+						// TODO: mixin: Need to show information that the property is included from mixin to class
+					}
+
+					// Add the property only if it doesn't already exist in the class
+					bool exists = false;
+					for( asUINT p = 0; p < decl->objType->properties.GetLength(); p++ )
+						if( decl->objType->properties[p]->name == name )
+						{
+							exists = true;
+							break;
+						}
+
+					if( !exists )
+					{
+						// It must not conflict with the name of methods
+						CheckNameConflictMember(decl->objType, name.AddressOf(), n->lastChild, file, true);
+						// TODO: mixin: Need to show information that the property is included from mixin to class
+
+						AddPropertyToClass(decl, name, dt, isPrivate, file, n);
+					}
+				}	
+
+				n = n->next;
+			}
+		}
+
+		node = node->next;
 	}
 }
 
