@@ -220,6 +220,7 @@
 #define TXT_WHILE_PARSING_EXPRESSION      "While parsing expression"
 #define TXT_WHILE_PARSING_INIT_LIST       "While parsing initialization list"
 #define TXT_WHILE_PARSING_STATEMENT_BLOCK "While parsing statement block"
+#define TXT_WHILE_INCLUDING_MIXIN         "Previous error occurred while including mixin"
 
 // Global variable initialization
 

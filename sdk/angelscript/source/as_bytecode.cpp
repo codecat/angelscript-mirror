@@ -81,7 +81,7 @@ void asCByteCode::Finalize()
 
 void asCByteCode::ClearAll()
 {
-	cByteInstruction *del = first;
+	asCByteInstruction *del = first;
 
 	while( del ) 
 	{
@@ -108,7 +108,7 @@ void asCByteCode::InsertIfNotExists(asCArray<int> &vars, int var)
 
 void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 {
-	cByteInstruction *curr = first;
+	asCByteInstruction *curr = first;
 	while( curr )
 	{
 		if( asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG )
@@ -145,7 +145,7 @@ void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 
 bool asCByteCode::IsVarUsed(int offset)
 {
-	cByteInstruction *curr = first;
+	asCByteInstruction *curr = first;
 	while( curr )
 	{
 		// Verify all ops that use variables
@@ -188,7 +188,7 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 {
 	asASSERT(oldOffset != 0);
 
-	cByteInstruction *curr = first;
+	asCByteInstruction *curr = first;
 	while( curr )
 	{
 		// Verify all ops that use variables
@@ -224,7 +224,7 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 	}
 }
 
-void asCByteCode::AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction *instr, int stackSize)
+void asCByteCode::AddPath(asCArray<asCByteInstruction *> &paths, asCByteInstruction *instr, int stackSize)
 {
 	if( instr->marked )
 	{
@@ -240,7 +240,7 @@ void asCByteCode::AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction 
 	}
 }
 
-cByteInstruction *asCByteCode::ChangeFirstDeleteNext(cByteInstruction *curr, asEBCInstr bc)
+asCByteInstruction *asCByteCode::ChangeFirstDeleteNext(asCByteInstruction *curr, asEBCInstr bc)
 {
 	curr->op = bc;
 	
@@ -253,11 +253,11 @@ cByteInstruction *asCByteCode::ChangeFirstDeleteNext(cByteInstruction *curr, asE
 		return curr;
 }
 
-cByteInstruction *asCByteCode::DeleteFirstChangeNext(cByteInstruction *curr, asEBCInstr bc)
+asCByteInstruction *asCByteCode::DeleteFirstChangeNext(asCByteInstruction *curr, asEBCInstr bc)
 {
 	asASSERT( curr->next );
 	
-	cByteInstruction *instr = curr->next;
+	asCByteInstruction *instr = curr->next;
 	instr->op = bc;
 	
 	DeleteInstruction(curr);
@@ -269,7 +269,7 @@ cByteInstruction *asCByteCode::DeleteFirstChangeNext(cByteInstruction *curr, asE
 		return instr;
 }
 
-void asCByteCode::InsertBefore(cByteInstruction *before, cByteInstruction *instr)
+void asCByteCode::InsertBefore(asCByteInstruction *before, asCByteInstruction *instr)
 {
 	asASSERT(instr->next == 0);
 	asASSERT(instr->prev == 0);
@@ -282,7 +282,7 @@ void asCByteCode::InsertBefore(cByteInstruction *before, cByteInstruction *instr
 	if( first == before ) first = instr;
 }
 
-void asCByteCode::RemoveInstruction(cByteInstruction *instr)
+void asCByteCode::RemoveInstruction(asCByteInstruction *instr)
 {
 	if( instr == first ) first = first->next;
 	if( instr == last ) last = last->prev;
@@ -294,12 +294,12 @@ void asCByteCode::RemoveInstruction(cByteInstruction *instr)
 	instr->prev = 0;
 }
 
-bool asCByteCode::CanBeSwapped(cByteInstruction *curr)
+bool asCByteCode::CanBeSwapped(asCByteInstruction *curr)
 {
 	if( !curr || !curr->next || !curr->next->next ) return false;
 	if( curr->next->next->op != asBC_SwapPtr ) return false;
 
-	cByteInstruction *next = curr->next;
+	asCByteInstruction *next = curr->next;
 
 	if( curr->op != asBC_PshNull &&
 		curr->op != asBC_PshVPtr &&
@@ -314,7 +314,7 @@ bool asCByteCode::CanBeSwapped(cByteInstruction *curr)
 	return true;
 }
 
-cByteInstruction *asCByteCode::GoBack(cByteInstruction *curr)
+asCByteInstruction *asCByteCode::GoBack(asCByteInstruction *curr)
 {
 	// Go back 2 instructions
 	if( !curr ) return 0;
@@ -323,7 +323,7 @@ cByteInstruction *asCByteCode::GoBack(cByteInstruction *curr)
 	return curr;
 }
 
-bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **next)
+bool asCByteCode::PostponeInitOfTemp(asCByteInstruction *curr, asCByteInstruction **next)
 {
 	// This is not done for pointers
 	if( (curr->op != asBC_SetV4 && curr->op != asBC_SetV8) || 
@@ -331,7 +331,7 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 
 	// Move the initialization to just before it's use. 
 	// Don't move it beyond any labels or jumps.
-	cByteInstruction *use = curr->next;
+	asCByteInstruction *use = curr->next;
 	while( use )
 	{
 		if( IsTempVarReadByInstr(use, curr->wArg[0]) )
@@ -355,7 +355,7 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 		InsertBefore(use, curr);
 
 		// Try a RemoveUnusedValue to see if it can be combined with the other 
-		cByteInstruction *temp;
+		asCByteInstruction *temp;
 		if( RemoveUnusedValue(curr, &temp) )
 		{
 			*next = GoBack(*next);
@@ -370,7 +370,7 @@ bool asCByteCode::PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **
 	return false;
 }
 
-bool asCByteCode::RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next)
+bool asCByteCode::RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction **next)
 {
 	// TODO: runtime optimize: Should work for 64bit types as well
 
@@ -588,10 +588,10 @@ int asCByteCode::Optimize()
 	// TODO: optimize: Reorganize checks to avoid checking the same instructions multiple times
 
 
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
-		cByteInstruction *curr = instr;
+		asCByteInstruction *curr = instr;
 		instr = instr->next;
 
 		// Remove or combine instructions 
@@ -914,7 +914,7 @@ int asCByteCode::Optimize()
 			{
 				// A pointer is pushed on the stack then immediately removed
 				// Remove both instructions as they cancel each other
-				cByteInstruction *instr2 = instr->next;
+				asCByteInstruction *instr2 = instr->next;
 				DeleteInstruction(curr);
 				DeleteInstruction(instr);
 				instr = GoBack(instr2);
@@ -993,7 +993,7 @@ int asCByteCode::Optimize()
 	return 0;
 }
 
-bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
+bool asCByteCode::IsTempVarReadByInstr(asCByteInstruction *curr, int offset)
 {
 	// Which instructions read from variables?
 	if( asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG && 
@@ -1019,7 +1019,7 @@ bool asCByteCode::IsTempVarReadByInstr(cByteInstruction *curr, int offset)
 	return false;
 }
 
-bool asCByteCode::IsInstrJmpOrLabel(cByteInstruction *curr)
+bool asCByteCode::IsInstrJmpOrLabel(asCByteInstruction *curr)
 {
 	if( curr->op == asBC_JS      ||
 		curr->op == asBC_JNS     ||
@@ -1037,7 +1037,7 @@ bool asCByteCode::IsInstrJmpOrLabel(cByteInstruction *curr)
 	return false;
 }
 
-bool asCByteCode::IsTempVarOverwrittenByInstr(cByteInstruction *curr, int offset)
+bool asCByteCode::IsTempVarOverwrittenByInstr(asCByteInstruction *curr, int offset)
 {
 	// Which instructions overwrite the variable or discard it?
 	if( curr->op == asBC_RET     ||
@@ -1058,10 +1058,10 @@ bool asCByteCode::IsTempVarOverwrittenByInstr(cByteInstruction *curr, int offset
 	return false;
 }
 
-bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
+bool asCByteCode::IsTempVarRead(asCByteInstruction *curr, int offset)
 {
-	asCArray<cByteInstruction *> openPaths;
-	asCArray<cByteInstruction *> closedPaths;
+	asCArray<asCByteInstruction *> openPaths;
+	asCArray<asCByteInstruction *> closedPaths;
 
 	// We're not interested in the first instruction, since it is the one that sets the variable
 	openPaths.PushLast(curr->next);
@@ -1075,7 +1075,8 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 
 		while( curr )
 		{
-			if( IsTempVarReadByInstr(curr, offset) ) return true;
+			if( IsTempVarReadByInstr(curr, offset) ) 
+				return true;
 
 			if( IsTempVarOverwrittenByInstr(curr, offset) ) break;
 
@@ -1096,7 +1097,7 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 					 curr->op == asBC_JP    || curr->op == asBC_JNP    ||
 					 curr->op == asBC_JLowZ || curr->op == asBC_JLowNZ )
 			{
-				cByteInstruction *dest = 0;
+				asCByteInstruction *dest = 0;
 				int label = *((int*)ARG_DW(curr->arg));
 				int r = FindLabel(label, curr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 
@@ -1112,7 +1113,7 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 				curr = curr->next;
 				while( curr->op == asBC_JMP )
 				{
-					cByteInstruction *dest = 0;
+					asCByteInstruction *dest = 0;
 					int label = *((int*)ARG_DW(curr->arg));
 					int r = FindLabel(label, curr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 
@@ -1136,7 +1137,7 @@ bool asCByteCode::IsTempVarRead(cByteInstruction *curr, int offset)
 	return false;
 }
 
-bool asCByteCode::IsTempRegUsed(cByteInstruction *curr)
+bool asCByteCode::IsTempRegUsed(asCByteInstruction *curr)
 {
 	// We're not interested in the first instruction, since it is the one that sets the register
 	while( curr->next )
@@ -1229,7 +1230,7 @@ bool asCByteCode::IsSimpleExpression()
 {
 	// A simple expression is one that cannot be suspended at any time, i.e.
 	// it doesn't have any calls to other routines, and doesn't have any suspend instructions
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		if( instr->op == asBC_ALLOC ||
@@ -1253,10 +1254,10 @@ void asCByteCode::ExtractLineNumbers()
 {
 	int lastLinePos = -1;
 	int pos = 0;
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
-		cByteInstruction *curr = instr;
+		asCByteInstruction *curr = instr;
 		instr = instr->next;
 		
 		if( curr->op == asBC_LINE )
@@ -1292,7 +1293,7 @@ void asCByteCode::ExtractLineNumbers()
 void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 {
 	int pos = 0;
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		if( instr->op == asBC_Block )
@@ -1325,7 +1326,7 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 int asCByteCode::GetSize()
 {
 	int size = 0;
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		size += instr->GetSize();
@@ -1367,7 +1368,7 @@ int asCByteCode::AddInstruction()
 		return 0;
 	}
 
-	cByteInstruction *instr = new(ptr) cByteInstruction();
+	asCByteInstruction *instr = new(ptr) asCByteInstruction();
 	if( first == 0 )
 	{
 		first = last = instr;
@@ -1390,7 +1391,7 @@ int asCByteCode::AddInstructionFirst()
 		return 0;
 	}
 
-	cByteInstruction *instr = new(ptr) cByteInstruction();
+	asCByteInstruction *instr = new(ptr) asCByteInstruction();
 	if( first == 0 )
 	{
 		first = last = instr;
@@ -1560,12 +1561,12 @@ void asCByteCode::DiscardVar(int varIdx)
 }
 
 
-int asCByteCode::FindLabel(int label, cByteInstruction *from, cByteInstruction **dest, int *positionDelta)
+int asCByteCode::FindLabel(int label, asCByteInstruction *from, asCByteInstruction **dest, int *positionDelta)
 {
 	// Search forward
 	int labelPos = -from->GetSize();
 
-	cByteInstruction *labelInstr = from;
+	asCByteInstruction *labelInstr = from;
 	while( labelInstr )
 	{
 		labelPos += labelInstr->GetSize();
@@ -1612,7 +1613,7 @@ int asCByteCode::FindLabel(int label, cByteInstruction *from, cByteInstruction *
 
 int asCByteCode::ResolveJumpAddresses()
 {
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		if( instr->op == asBC_JMP   || 
@@ -1637,11 +1638,11 @@ int asCByteCode::ResolveJumpAddresses()
 }
 
 
-cByteInstruction *asCByteCode::DeleteInstruction(cByteInstruction *instr)
+asCByteInstruction *asCByteCode::DeleteInstruction(asCByteInstruction *instr)
 {
 	if( instr == 0 ) return 0;
 
-	cByteInstruction *ret = instr->prev ? instr->prev : instr->next;
+	asCByteInstruction *ret = instr->prev ? instr->prev : instr->next;
 	
 	RemoveInstruction(instr);
 
@@ -1656,7 +1657,7 @@ void asCByteCode::Output(asDWORD *array)
 
 	asDWORD *ap = array;
 
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		if( instr->GetSize() > 0 )
@@ -1731,7 +1732,7 @@ void asCByteCode::PostProcess()
 
 	largestStackUsed = 0;
 
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		instr->marked = false;
@@ -1740,7 +1741,7 @@ void asCByteCode::PostProcess()
 	}
 
 	// Add the first instruction to the list of unchecked code paths
-	asCArray<cByteInstruction *> paths;
+	asCArray<asCByteInstruction *> paths;
 	AddPath(paths, first, 0);
 
 	// Go through each of the code paths
@@ -1761,7 +1762,7 @@ void asCByteCode::PostProcess()
 			{
 				// Find the label that we should jump to
 				int label = *((int*) ARG_DW(instr->arg));
-				cByteInstruction *dest = 0;
+				asCByteInstruction *dest = 0;
 				int r = FindLabel(label, instr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 				
 				AddPath(paths, dest, stackSize);
@@ -1774,7 +1775,7 @@ void asCByteCode::PostProcess()
 			{
 				// Find the label that is being jumped to
 				int label = *((int*) ARG_DW(instr->arg));
-				cByteInstruction *dest = 0;
+				asCByteInstruction *dest = 0;
 				int r = FindLabel(label, instr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
 				
 				AddPath(paths, dest, stackSize);
@@ -1790,7 +1791,7 @@ void asCByteCode::PostProcess()
 				asDWORD max = *ARG_DW(instr->arg);
 								
 				// Add all destinations to the code paths
-				cByteInstruction *dest = instr->next;
+				asCByteInstruction *dest = instr->next;
 				for( asDWORD n = 0; n <= max && dest != 0; ++n )
 				{
 					AddPath(paths, dest, stackSize);
@@ -1817,7 +1818,7 @@ void asCByteCode::PostProcess()
 			// TODO: Give warning of unvisited code
 
 			// Remove it
-			cByteInstruction *curr = instr;
+			asCByteInstruction *curr = instr;
 			instr = instr->next;
 			DeleteInstruction(curr);
 		}
@@ -1906,7 +1907,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 
 	int pos = 0;
 	asUINT lineIndex = 0;
-	cByteInstruction *instr = first;
+	asCByteInstruction *instr = first;
 	while( instr )
 	{
 		if( lineIndex < lineNumbers.GetLength() && lineNumbers[lineIndex] == pos )
@@ -2512,7 +2513,7 @@ int asCByteCode::RemoveLastInstr()
 	}
 	else
 	{
-		cByteInstruction *bc = last;
+		asCByteInstruction *bc = last;
 		last = bc->prev;
 
 		bc->Remove();
@@ -2536,24 +2537,24 @@ void asCByteCode::DefineTemporaryVariable(int varOffset)
 
 //===================================================================
 
-cByteInstruction::cByteInstruction()
+asCByteInstruction::asCByteInstruction()
 {
-	next      = 0;
-	prev      = 0;
+	next          = 0;
+	prev          = 0;
 
-	op        = asBC_LABEL;
+	op            = asBC_LABEL;
 
-	arg       = 0;
-	wArg[0]   = 0;
-	wArg[1]   = 0;
-	wArg[2]   = 0;
-	size      = 0;
-	stackInc  = 0;
-	marked    = false;
-	stackSize = 0;
+	arg           = 0;
+	wArg[0]       = 0;
+	wArg[1]       = 0;
+	wArg[2]       = 0;
+	size          = 0;
+	stackInc      = 0;
+	marked        = false;
+	stackSize     = 0;
 }
 
-void cByteInstruction::AddAfter(cByteInstruction *nextCode)
+void asCByteInstruction::AddAfter(asCByteInstruction *nextCode)
 {
 	if( next )
 		next->prev = nextCode;
@@ -2563,7 +2564,7 @@ void cByteInstruction::AddAfter(cByteInstruction *nextCode)
 	next = nextCode;
 }
 
-void cByteInstruction::AddBefore(cByteInstruction *prevCode)
+void asCByteInstruction::AddBefore(asCByteInstruction *prevCode)
 {
 	if( prev )
 		prev->next = prevCode;
@@ -2573,17 +2574,17 @@ void cByteInstruction::AddBefore(cByteInstruction *prevCode)
 	prev = prevCode;
 }
 
-int cByteInstruction::GetSize()
+int asCByteInstruction::GetSize()
 {
 	return size;
 }
 
-int cByteInstruction::GetStackIncrease()
+int asCByteInstruction::GetStackIncrease()
 {
 	return stackInc;
 }
 
-void cByteInstruction::Remove()
+void asCByteInstruction::Remove()
 {
 	if( prev ) prev->next = next;
 	if( next ) next->prev = prev;

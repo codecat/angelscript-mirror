@@ -54,7 +54,7 @@ BEGIN_AS_NAMESPACE
 
 class asCScriptEngine;
 class asCScriptFunction;
-class cByteInstruction;
+class asCByteInstruction;
 
 class asCByteCode
 {
@@ -72,9 +72,9 @@ public:
 	void ExtractLineNumbers();
 	void ExtractObjectVariableInfo(asCScriptFunction *outFunc);
 	int  ResolveJumpAddresses();
-	int  FindLabel(int label, cByteInstruction *from, cByteInstruction **dest, int *positionDelta);
+	int  FindLabel(int label, asCByteInstruction *from, asCByteInstruction **dest, int *positionDelta);
 
-	void AddPath(asCArray<cByteInstruction *> &paths, cByteInstruction *instr, int stackSize);
+	void AddPath(asCArray<asCByteInstruction *> &paths, asCByteInstruction *instr, int stackSize);
 
 	void Output(asDWORD *array);
 	void AddCode(asCByteCode *bc);
@@ -136,47 +136,47 @@ public:
 
 protected:
 	// Helpers for Optimize
-	bool CanBeSwapped(cByteInstruction *curr);
-	cByteInstruction *ChangeFirstDeleteNext(cByteInstruction *curr, asEBCInstr bc);
-	cByteInstruction *DeleteFirstChangeNext(cByteInstruction *curr, asEBCInstr bc);
-	cByteInstruction *DeleteInstruction(cByteInstruction *instr);
-	void RemoveInstruction(cByteInstruction *instr);
-	cByteInstruction *GoBack(cByteInstruction *curr);
-	void InsertBefore(cByteInstruction *before, cByteInstruction *instr);
-	bool RemoveUnusedValue(cByteInstruction *curr, cByteInstruction **next);
+	bool CanBeSwapped(asCByteInstruction *curr);
+	asCByteInstruction *ChangeFirstDeleteNext(asCByteInstruction *curr, asEBCInstr bc);
+	asCByteInstruction *DeleteFirstChangeNext(asCByteInstruction *curr, asEBCInstr bc);
+	asCByteInstruction *DeleteInstruction(asCByteInstruction *instr);
+	void RemoveInstruction(asCByteInstruction *instr);
+	asCByteInstruction *GoBack(asCByteInstruction *curr);
+	void InsertBefore(asCByteInstruction *before, asCByteInstruction *instr);
+	bool RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction **next);
 	bool IsTemporary(short offset);
-	bool IsTempRegUsed(cByteInstruction *curr);
-	bool IsTempVarRead(cByteInstruction *curr, int offset);
-	bool PostponeInitOfTemp(cByteInstruction *curr, cByteInstruction **next);
-	bool IsTempVarReadByInstr(cByteInstruction *curr, int var);
-	bool IsTempVarOverwrittenByInstr(cByteInstruction *curr, int var);
-	bool IsInstrJmpOrLabel(cByteInstruction *curr);
+	bool IsTempRegUsed(asCByteInstruction *curr);
+	bool IsTempVarRead(asCByteInstruction *curr, int offset);
+	bool PostponeInitOfTemp(asCByteInstruction *curr, asCByteInstruction **next);
+	bool IsTempVarReadByInstr(asCByteInstruction *curr, int var);
+	bool IsTempVarOverwrittenByInstr(asCByteInstruction *curr, int var);
+	bool IsInstrJmpOrLabel(asCByteInstruction *curr);
 
 	int AddInstruction();
 	int AddInstructionFirst();
 
-	cByteInstruction *first;
-	cByteInstruction *last;
+	asCByteInstruction *first;
+	asCByteInstruction *last;
 
 	asCArray<int> temporaryVariables;
 
 	asCScriptEngine *engine;
 };
 
-class cByteInstruction
+class asCByteInstruction
 {
 public:
-	cByteInstruction();
+	asCByteInstruction();
 
-	void AddAfter(cByteInstruction *nextCode);
-	void AddBefore(cByteInstruction *nextCode);
+	void AddAfter(asCByteInstruction *nextCode);
+	void AddBefore(asCByteInstruction *nextCode);
 	void Remove();
 
 	int  GetSize();
 	int  GetStackIncrease();
 
-	cByteInstruction *next;
-	cByteInstruction *prev;
+	asCByteInstruction *next;
+	asCByteInstruction *prev;
 
 	asEBCInstr op;
 	asQWORD arg;
@@ -186,7 +186,7 @@ public:
 
 	// Testing
 	bool marked;
-	int stackSize;
+	int  stackSize;
 };
 
 END_AS_NAMESPACE

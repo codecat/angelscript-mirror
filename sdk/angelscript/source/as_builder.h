@@ -155,6 +155,7 @@ protected:
 	void               Reset();
 
 	void               WriteInfo(const char *scriptname, const char *msg, int r, int c, bool preMessage);
+	void               WriteInfo(const char *msg, asCScriptCode *file, asCScriptNode *node);
 	void               WriteError(const char *scriptname, const char *msg, int r, int c);
 	void               WriteError(const char *msg, asCScriptCode *file, asCScriptNode *node);
 	void               WriteWarning(const char *scriptname, const char *msg, int r, int c);
@@ -200,6 +201,7 @@ protected:
 	int                RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	sMixinClass       *GetMixinClass(const char *name, asSNameSpace *ns);
 	void               IncludePropertiesFromMixins(sClassDeclaration *decl);
+	void               IncludeMethodsFromMixins(sClassDeclaration *decl);
 
 	int                RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false);
 	int                RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false, asSNameSpace *ns = 0);

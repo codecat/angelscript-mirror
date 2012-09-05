@@ -14,16 +14,14 @@ bool Test()
 	const char *script;
 	asIScriptModule *mod;
 
-	// TODO: mixins are parsed as classes but cannot be instanciated, i.e. the object type doesn't exist
-	// TODO: mixin class methods are compiled in the context of the inherited class, so they can access properties of the class
 	// TODO: mixin class methods are ignored if the class explicitly declares its own
-	// TODO: mixin class methods are included even if an inherited base class implements them (the mixin method overrides the base class' method)
 	// TODO: mixin classes cannot implement constructors/destructors (at least not to start with)
 
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptString(engine);
 		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 
 		// Test basic parsing of mixin classes
@@ -160,6 +158,97 @@ bool Test()
 				TEST_FAILED;
 			if( string(name) != "prop" || typeId != asTYPEID_FLOAT )
 				TEST_FAILED;
+		}
+
+		// methods from mixin class are included into the class
+		// mixin class methods are compiled in the context of the inherited class, 
+		// so they can access properties of the class
+		{
+			script =
+				"mixin class Mix { void mthd() { prop++; } } \n"
+				"class Clss : Mix { int prop; } \n"
+				"class Clss2 : Mix { float prop; } \n"
+				"void func() { \n"
+				"  Clss c; \n"
+				"  c.mthd(); \n"
+				"  Clss2 c2; \n"
+				"  c2.mthd(); \n"
+				"} \n";
+			mod->AddScriptSection("", script);
+
+			bout.buffer = "";
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+		}
+
+		// mixin class methods are included even if an inherited base class 
+		// implements them (the mixin method overrides the base class' method)
+		{
+			script = 
+				"mixin class Mix { int mthd() { return 42; } } \n"
+				"class Base { int mthd() { return 24; } } \n"
+				"class Clss : Base, Mix { } \n";
+			mod->AddScriptSection("", script);
+
+			bout.buffer = "";
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			r = ExecuteString(engine, "Clss c; assert( c.mthd() == 42 );", mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
+
+
+		// The error messages must show that the origin of the problem is from the mixin class
+		{
+			script = 
+				"mixin class Mix { \n"
+				"  const int prop; \n"  // const properties are disallowed
+				"  int mthd; \n"		// conflict with class methods will give error
+				"  void func() { prop++; } \n"
+				"} \n"
+				"class Clss : Mix { \n"
+				"  void mthd() {} \n"
+				"} \n"
+				"class Clss2 : Mix { \n"
+				"  string prop; \n" // The mixins prop is not used, so ++ is invalid
+				"} \n"
+				"Mix m; \n" // mixins cannot be instanciated, i.e. the object type doesn't exist
+			    "void func() { \n"
+				"  Mix m; \n"
+				"} \n";
+			mod->AddScriptSection("test", script);
+
+			bout.buffer = "";
+			r = mod->Build();
+			if( r >= 0 )
+				TEST_FAILED;
+			if( bout.buffer != "test (12, 1) : Error   : Identifier 'Mix' is not a data type\n"
+				               "test (2, 3) : Error   : Class properties cannot be declared as const\n"
+			                   "test (3, 7) : Error   : Name conflict. 'mthd' is a class method.\n"
+							   "test (6, 14) : Info    : Previous error occurred while including mixin\n"
+				               "test (2, 3) : Error   : Class properties cannot be declared as const\n"
+							   "test (13, 1) : Info    : Compiling void func()\n"
+			                   "test (14, 3) : Error   : Identifier 'Mix' is not a data type\n"
+							   "test (4, 3) : Info    : Compiling void Clss2::func()\n"
+			                   "test (4, 21) : Error   : Function 'opPostInc()' not found\n" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
 		}
 
 		engine->Release();

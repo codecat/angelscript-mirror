@@ -484,7 +484,7 @@ void asCBuilder::ParseScripts()
 			}
 		}
 
-		// Register script methods found in the structures
+		// Register script methods found in the classes
 		for( n = 0; n < classDeclarations.GetLength(); n++ )
 		{
 			sClassDeclaration *decl = classDeclarations[n];
@@ -2173,7 +2173,8 @@ void asCBuilder::CompileClasses()
 			continue;
 		}
 
-		// TODO: mixin: Methods included from mixin classes should take precedence over inherited methods
+		// Methods included from mixin classes should take precedence over inherited methods
+		IncludeMethodsFromMixins(decl);
 
 		// Add all properties and methods from the base class
 		if( decl->objType->derivedFrom )
@@ -2487,6 +2488,88 @@ void asCBuilder::CompileClasses()
 	}
 }
 
+void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
+{
+	asCScriptNode *node = decl->node->firstChild;
+
+	// Skip the 'final' and 'shared' keywords
+	if( decl->objType->IsShared() )
+		node = node->next;
+	if( decl->objType->flags & asOBJ_NOINHERIT )
+		node = node->next;
+
+	// Skip the name of the class
+	node = node->next;
+
+	// Find the included mixin classes
+	while( node && node->nodeType == snIdentifier )
+	{
+		// TODO: clean-up: implement a function to retrieve namespace and name from node and reuse it here and in CompileClasses
+		// Get the optional scope from the node
+		asCString scope = GetScopeFromNode(node->firstChild, decl->script);
+		asSNameSpace *ns = 0;
+		if( scope == "" )
+			// No scope was informed, use the same namespace as the class itself
+			ns = decl->objType->nameSpace;
+		else if( scope == "::" )
+			// The global scope was informed
+			ns = engine->nameSpaces[0];
+		else
+		{
+			ns = engine->FindNameSpace(scope.AddressOf());
+			if( ns == 0 )
+			{
+				asCString msg;
+				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+				WriteError(msg.AddressOf(), decl->script, node->firstChild);
+
+				// Move to the next node
+				node = node->next;
+				continue;
+			}
+		}
+
+		// Get the interface name from the node
+		asCString name(&decl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
+				
+		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
+		if( mixin )
+		{
+			// Find properties from mixin declaration
+			asCScriptNode *n = mixin->node->firstChild;
+
+			// Skip to the member declarations
+			// Possible keywords 'final' and 'shared' are removed in RegisterMixinClass so we don't need to worry about those here
+			while( n && n->nodeType == snIdentifier )
+				n = n->next;
+
+			// Add properties from the mixin that are not already existing in the class
+			while( n )
+			{
+				if( n->nodeType == snFunction )
+				{
+					// TODO: mixin: Only include the method if it doesn't already exist in the class
+
+					// Instead of disconnecting the node, we need to clone it, otherwise other 
+					// classes that include the same mixin will not see the methods
+					asCScriptNode *copy = n->CreateCopy(engine);
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), copy, decl->script, decl->objType);
+				}
+				else if( n->nodeType == snVirtualProperty )
+				{
+					// TODO: mixin: Support virtual properties too
+					//node->DisconnectParent();
+					//RegisterVirtualProperty(node, decl->script, decl->objType, false, false);
+				}
+
+				n = n->next;
+			}
+		}
+
+		node = node->next;
+	}
+}
+
 void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 {
 	asCScriptNode *node = decl->node->firstChild;
@@ -2561,14 +2644,11 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 						asCString msg;
 						msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
 						WriteError(msg.AddressOf(), file, n);
-						// TODO: mixin: Need to show information that the property is included from mixin to class
+						WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
 					}
 
 					if( dt.IsReadOnly() )
-					{
-						WriteError(TXT_PROPERTY_CANT_BE_CONST, file, node);
-						// TODO: mixin: Need to show information that the property is included from mixin to class
-					}
+						WriteError(TXT_PROPERTY_CANT_BE_CONST, file, n);
 
 					// Add the property only if it doesn't already exist in the class
 					bool exists = false;
@@ -2582,8 +2662,9 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 					if( !exists )
 					{
 						// It must not conflict with the name of methods
-						CheckNameConflictMember(decl->objType, name.AddressOf(), n->lastChild, file, true);
-						// TODO: mixin: Need to show information that the property is included from mixin to class
+						int r = CheckNameConflictMember(decl->objType, name.AddressOf(), n->lastChild, file, true);
+						if( r < 0 )
+							WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
 
 						AddPropertyToClass(decl, name, dt, isPrivate, file, n);
 					}
@@ -3883,6 +3964,15 @@ void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, i
 		preMessage.isSet = false;
 		engine->WriteMessage(scriptname, r, c, asMSGTYPE_INFORMATION, message);
 	}
+}
+
+void asCBuilder::WriteInfo(const char *message, asCScriptCode *file, asCScriptNode *node)
+{
+	int r = 0, c = 0;
+	if( node )
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+	WriteInfo(file->name.AddressOf(), message, r, c, false);
 }
 
 void asCBuilder::WriteError(const char *message, asCScriptCode *file, asCScriptNode *node)
