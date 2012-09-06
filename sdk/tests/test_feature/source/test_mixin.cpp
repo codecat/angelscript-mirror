@@ -14,9 +14,6 @@ bool Test()
 	const char *script;
 	asIScriptModule *mod;
 
-	// TODO: mixin class methods are ignored if the class explicitly declares its own
-	// TODO: mixin classes cannot implement constructors/destructors (at least not to start with)
-
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -211,7 +208,28 @@ bool Test()
 				TEST_FAILED;
 		}
 
+		// mixin class methods are ignored if the class explicitly declares its own
+		{
+			script = 
+				"mixin class Mix { int mthd() { return 42; } } \n"
+				"class Clss : Mix { int mthd() { return 24; } } \n";
+			mod->AddScriptSection("", script);
 
+			bout.buffer = "";
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			r = ExecuteString(engine, "Clss c; assert( c.mthd() == 24 );", mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
+	
 		// The error messages must show that the origin of the problem is from the mixin class
 		{
 			script = 
@@ -245,6 +263,28 @@ bool Test()
 			                   "test (14, 3) : Error   : Identifier 'Mix' is not a data type\n"
 							   "test (4, 3) : Info    : Compiling void Clss2::func()\n"
 			                   "test (4, 21) : Error   : Function 'opPostInc()' not found\n" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+		}
+
+		// mixin classes cannot implement constructors/destructors (at least not to start with)
+		{
+			script = 
+				"mixin class Mix { \n"
+				"  Mix() {} \n"
+				"  ~Mix() {} \n"
+				"} \n"
+				"class Clss : Mix {} \n";
+			mod->AddScriptSection("test", script);
+
+			bout.buffer = "";
+			r = mod->Build();
+			if( r >= 0 )
+				TEST_FAILED;
+			if( bout.buffer != "test (2, 3) : Error   : Mixin classes cannot have constructors or destructors\n"
+			                   "test (3, 3) : Error   : Mixin classes cannot have constructors or destructors\n" )
 			{
 				printf("%s", bout.buffer.c_str());
 				TEST_FAILED;

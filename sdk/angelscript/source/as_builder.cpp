@@ -2548,17 +2548,17 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 			{
 				if( n->nodeType == snFunction )
 				{
-					// TODO: mixin: Only include the method if it doesn't already exist in the class
-
 					// Instead of disconnecting the node, we need to clone it, otherwise other 
 					// classes that include the same mixin will not see the methods
 					asCScriptNode *copy = n->CreateCopy(engine);
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), copy, decl->script, decl->objType);
+
+					// Register the method, but only if it doesn't already exist in the class
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), copy, decl->script, decl->objType, false, false, 0, false, true);
 				}
 				else if( n->nodeType == snVirtualProperty )
 				{
 					// TODO: mixin: Support virtual properties too
-					//node->DisconnectParent();
+					WriteError("The virtual property syntax is currently not supported for mixin classes", mixin->script, n);
 					//RegisterVirtualProperty(node, decl->script, decl->objType, false, false);
 				}
 
@@ -3186,7 +3186,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared)
+int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -3249,12 +3249,18 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 				WriteError(TXT_METHOD_CANT_HAVE_NAME_OF_CLASS, file, node);
 		}
 		else
-		{
 			CheckNameConflict(name.AddressOf(), node, file, ns);
-		}
 	}
 	else
 	{
+		if( isMixin )
+		{
+			// Mixins cannot implement constructors/destructors
+			WriteError(TXT_MIXIN_CANNOT_HAVE_CONSTRUCTOR, file, node);
+			node->Destroy(engine);
+			return 0;
+		}
+
 		// Verify that the name of the constructor/destructor is the same as the class
 		if( name != objType->name )
 			WriteError(TXT_CONSTRUCTOR_NAME_ERROR, file, node);
@@ -3329,7 +3335,10 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 
 	// Check that the same function hasn't been registered already in the namespace
 	asCArray<int> funcs;
-	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+	if( objType )
+		GetObjectMethodDescriptions(name.AddressOf(), objType, funcs, false);
+	else
+		GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 	if( funcs.GetLength() )
 	{
 		for( asUINT n = 0; n < funcs.GetLength(); ++n )
@@ -3337,6 +3346,16 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
 			if( func->IsSignatureExceptNameAndReturnTypeEqual(parameterTypes, inOutFlags, objType, isConstMethod) )
 			{
+				if( isMixin )
+				{
+					// Clean up the memory, as the function will not be registered
+					if( node )
+						node->Destroy(engine);
+					sFunctionDescription *func = functions.PopLast();
+					asDELETE(func, sFunctionDescription);
+					return 0;
+				}
+
 				WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
 				break;
 			}
@@ -3411,9 +3430,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 
 	// We need to delete the node already if this is an interface method
 	if( isInterface && node )
-	{
 		node->Destroy(engine);
-	}
 
 	return 0;
 }

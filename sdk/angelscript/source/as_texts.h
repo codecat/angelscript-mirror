@@ -62,7 +62,7 @@
 #define TXT_CHANGE_SIGN                          "Implicit conversion changed sign of value"
 #define TXT_COMPILING_s                          "Compiling %s"
 #define TXT_COMPOUND_ASGN_WITH_PROP              "Compound assignments with property accessors are not allowed"
-#define TXT_CONSTRUCTOR_NAME_ERROR               "The constructor name must be the same as the class"
+#define TXT_CONSTRUCTOR_NAME_ERROR               "The name of constructors and destructors must be the same as the class"
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
 #define TXT_DECL_IN_SWITCH                "Variables cannot be declared in switch cases, except inside statement blocks"
@@ -126,6 +126,7 @@
 #define TXT_METHOD_s_DOES_NOT_OVERRIDE              "Method '%s' marked as override but does not replace any base class or interface method"
 #define TXT_MISSING_IMPLEMENTATION_OF_s             "Missing implementation of '%s'"
 #define TXT_MIXIN_CANNOT_BE_DECLARED_AS_s           "Mixin class cannot be declared as '%s'"
+#define TXT_MIXIN_CANNOT_HAVE_CONSTRUCTOR           "Mixin classes cannot have constructors or destructors"
 #define TXT_MIXIN_CLASS_CANNOT_INHERIT              "Mixin class cannot inherit from classes or implement interfaces"
 #define TXT_MORE_THAN_ONE_MATCHING_OP               "Found more than one matching operator"
 #define TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s       "Multiple matching signatures to '%s'"

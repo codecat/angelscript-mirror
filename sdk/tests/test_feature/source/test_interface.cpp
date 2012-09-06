@@ -282,7 +282,9 @@ bool Test2()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-		const char *script2 = "shared interface A { B@ f(); } shared interface B { A@ f(); C@ f(); } shared interface C { A@ f(); }";
+		const char *script2 = "shared interface A { B@ f(); } \n"
+			                  "shared interface B { A@ f1(); C@ f2(); } \n"
+							  "shared interface C { A@ f(); } \n";
 		mod = engine->GetModule("a", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script2, strlen(script2));
 		r = mod->Build();

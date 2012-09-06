@@ -193,7 +193,11 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, "class t{ s() {} };", 18, 0);
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The constructor name must be the same as the class\n" ) TEST_FAILED;
+	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The name of constructors and destructors must be the same as the class\n" ) 
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 
 	// Make sure the default constructor can be overloaded
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
