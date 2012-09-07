@@ -1449,7 +1449,7 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 
 			tmp->DisconnectParent();
 			tmp->Destroy(engine);
-		} while( n->tokenType == ttIdentifier );
+		} while( n && n->tokenType == ttIdentifier );
 	}
 
 	return 0;

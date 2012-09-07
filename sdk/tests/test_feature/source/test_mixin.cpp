@@ -103,6 +103,25 @@ bool Test()
 			}
 		}
 
+		// Mixin class including mixin class was crashing
+		// http://www.gamedev.net/topic/630332-angelscript-mixin-classes-preview/
+		{
+			script = 
+				"mixin class Mixin1 { int a; }; \n"
+				"mixin class Mixin2 : Mixin1 { }; \n";
+			mod->AddScriptSection("", script);
+
+			bout.buffer = "";
+			r = mod->Build();
+			if( r >= 0 )
+				TEST_FAILED;
+			if( bout.buffer != " (2, 22) : Error   : Mixin class cannot inherit from classes or implement interfaces\n" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+		}
+
 		// including a mixin class adds the properties from the mixin to the class
 		{
 			script = 
@@ -290,6 +309,7 @@ bool Test()
 				TEST_FAILED;
 			}
 		}
+
 
 		engine->Release();
 	}
