@@ -6555,7 +6555,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asSExprContext *ctx)
 	return 0;
 }
 
-int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, asCObjectType *objType)
+int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, bool noGlobal, asCObjectType *objType)
 {
 	bool found = false;
 
@@ -6709,7 +6709,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it a global property?
-	if( !found && !objType )
+	if( !found && !objType && !noGlobal )
 	{
 		// See if there are any matching global property accessors
 		// TODO: namespace: Support namespaces for global property accessors too
@@ -6818,7 +6818,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it the name of a global function?
-	if( !noFunction && !found && !objType )
+	if( !noFunction && !found && !objType && !noGlobal )
 	{
 		asCArray<int> funcs;
 		
@@ -6860,7 +6860,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// Is it an enum value?
-	if( !found && !objType )
+	if( !found && !objType && !noGlobal )
 	{
 		// The enum type may be declared in a namespace too
 		asCObjectType *scopeType = 0;
@@ -7882,62 +7882,33 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	asCString name;
 	asCTypeInfo tempObj;
 	asCArray<int> funcs;
-	int r = -1;
+	int localVar = -1;
 
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
-	// If we're compiling a class method, then the call may be to a class method
-	// even though it looks like an ordinary call to a global function. If it is 
-	// to a class method it is necessary to implicitly add the this pointer.
-	if( objectType == 0 && outFunc && outFunc->objectType && scope != "::" )
-	{
-		// The special keyword 'super' may be used in constructors to invoke the base 
-		// class' constructor. This can only be used without any scoping operator
-		if( m_isConstructor && name == SUPER_TOKEN && scope == "" )
-		{
-			// We are calling the base class' constructor, so set the objectType
-			objectType = outFunc->objectType;
-		}
-		else
-		{
-			// Are there any class methods that may match?
-			// TODO: namespace: Should really make sure the scope also match. Because the scope
-			//                  may match a base class, or it may match a global namespace. If it is
-			//                  matching a global scope then we're not calling a class method even
-			//                  if there is a method with the same name.
-			asCArray<int> funcs;
-			builder->GetObjectMethodDescriptions(name.AddressOf(), outFunc->objectType, funcs, false);
-
-			if( funcs.GetLength() )
-			{
-				// We're calling a class method, so set the objectType
-				objectType = outFunc->objectType;
-			}
-		}
-	
-		// If a class method is being called then implicitly add the this pointer for the call
-		if( objectType )
-		{
-			asCDataType dt = asCDataType::CreateObject(objectType, false);
-
-			// The object pointer is located at stack position 0
-			ctx->bc.InstrSHORT(asBC_PSF, 0);
-			ctx->type.SetVariable(dt, 0, false);
-			ctx->type.dataType.MakeReference(true);
-
-			Dereference(ctx, true);
-		}			
-	}
-
-	// First check for a local variable of a function type
+	// First check for a local variable of a function type as it would take precedence
 	// Must not allow function names, nor global variables to be returned in this instance
+	// If objectType is set then this is a post op expression and we shouldn't look for local variables
 	asSExprContext funcPtr(engine);
 	if( objectType == 0 )
-		r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
-	if( r < 0 )
 	{
-		if( objectType )
+		localVar = CompileVariableAccess(name, scope, &funcPtr, node, true, true, true);
+		if( localVar >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+		{
+			// The variable is not a function
+			asCString msg;
+			msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+			Error(msg.AddressOf(), node);
+			return -1;
+		}
+	}
+
+	if( localVar < 0 )
+	{
+		// If this is an expression post op, or if a class method is 
+		// being compiled, then we should look for matching class methods
+		if( objectType || (outFunc && outFunc->objectType && scope != "::") )
 		{
 			// If we're compiling a constructor and the name of the function is super then
 			// the constructor of the base class is being called.
@@ -7945,8 +7916,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			if( scope == "" && m_isConstructor && name == SUPER_TOKEN )
 			{
 				// If the class is not derived from anyone else, calling super should give an error
-				if( objectType->derivedFrom )
-					funcs = objectType->derivedFrom->beh.constructors;
+				if( outFunc && outFunc->objectType->derivedFrom )
+					funcs = outFunc->objectType->derivedFrom->beh.constructors;
 
 				// Must not allow calling base class' constructor multiple times
 				if( continueLabels.GetLength() > 0 )
@@ -7969,19 +7940,61 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			else
 			{
 				// The scope is can be used to specify the base class
-				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType, funcs, objIsConst, scope);
+				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType ? objectType : outFunc->objectType, funcs, objIsConst, scope);
 			}
 
 			// It is still possible that there is a class member of a function type
 			if( funcs.GetLength() == 0 )
-				CompileVariableAccess(name, scope, &funcPtr, node, true, true, objectType);
+			{
+				int r = CompileVariableAccess(name, scope, &funcPtr, node, true, true, true, objectType);
+				if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+				{
+					// The variable is not a function
+					asCString msg;
+					msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+					Error(msg.AddressOf(), node);
+					return -1;
+				}
+			}
+
+			// If a class method is being called implicitly, then add the this pointer for the call
+			if( funcs.GetLength() && !objectType )
+			{
+				objectType = outFunc->objectType;
+
+				asCDataType dt = asCDataType::CreateObject(objectType, false);
+
+				// The object pointer is located at stack position 0
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->type.SetVariable(dt, 0, false);
+				ctx->type.dataType.MakeReference(true);
+
+				Dereference(ctx, true);
+			}
 		}
-		else
+
+		// If it is not a class method or member function pointer, 
+		// then look for global functions or global function pointers
+		if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() == 0 )
 		{
 			// The scope is used to define the namespace
 			asSNameSpace *ns = DetermineNameSpace(scope);
 			if( ns )
+			{
 				builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+				if( funcs.GetLength() == 0 )
+				{
+					int r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
+					if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+					{
+						// The variable is not a function
+						asCString msg;
+						msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+						Error(msg.AddressOf(), node);
+						return -1;
+					}
+				}
+			}
 			else
 			{
 				asCString msg;
@@ -7989,17 +8002,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				Error(msg.AddressOf(), node);
 				return -1;
 			}
-
-			// TODO: funcdef: It is still possible that there is a global variable of a function type
 		}
-	}
-	else if( !funcPtr.type.dataType.GetFuncDef() )
-	{
-		// The variable is not a function
-		asCString msg;
-		msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
-		Error(msg.AddressOf(), node);
-		return -1;
 	}
 
 	if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() )

@@ -505,7 +505,7 @@ bool Test2()
 	// TODO: The error message should explain that it is not possible to call super 
 	//       because the class doesn't derived from another class
 	if( bout.buffer != "script (1, 11) : Info    : Compiling A::A()\n"
-					   "script (1, 17) : Error   : No matching signatures to 'A::super()'\n" )
+					   "script (1, 17) : Error   : No matching signatures to 'super()'\n" )
 	{
 		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());

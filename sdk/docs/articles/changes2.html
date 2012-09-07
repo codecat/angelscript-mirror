@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/09/06</h2>
+<h2>Version 2.25.0 WIP - 2012/09/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler failed to compile default argument expression that accessed an index in global array (Thanks Philip Bennefall)
 <li>Avoid temporary copy of script object without explicit opAssign method when assigned from global variable (Thanks Andrew Ackermann)
 <li>Duplicate class methods are now detected at their declaration (Thanks FDsagizi)
+<li>Local function pointers variables now properly take precedence over class methods of the same name (Thanks cellulose)
 </ul>
 <li>Library
 <ul>

@@ -442,6 +442,49 @@ bool Test()
 		engine->Release();
 	}
 
+	// Global function pointers must not overload local class methods
+	// Local variables take precedence over class methods
+	// http://www.gamedev.net/topic/626746-function-call-operators-in-the-future/
+	{
+		const char *script = 
+			"funcdef void FUNC(); \n"
+			"FUNC @func; \n"
+			"class Class \n"
+			"{ \n"
+			"  void func() {} \n"
+			"  void method() \n"
+			"  { \n"
+			"    func(); \n"       // Should call Class::func()
+			"  } \n"
+			"  void func2() {} \n"
+			"  void method2() \n"
+			"  { \n"
+			"    FUNC @func2; \n"
+			"    func2(); \n"      // Should call variable func2
+			"  } \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Class c; c.method();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Class c; c.method2();", mod);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
