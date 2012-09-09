@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/09/07</h2>
+<h2>Version 2.25.0 WIP - 2012/09/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -67,6 +67,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetType() to CScriptHandle
 <li>CScriptHandle::Cast() properly handles function pointers
 <li>Fixed bug in CScriptArray::SetValue() when replacing a handle in an element (Thanks Andrew Ackermann)
+<li>Added wrapper for std::string::operator== since it may be implemented as a member function or global function on different platforms (Thanks Piotr Rak)
 </ul>
 </ul>
 
