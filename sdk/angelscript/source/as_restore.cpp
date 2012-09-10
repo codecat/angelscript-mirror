@@ -61,7 +61,7 @@ void asCReader::ReadData(void *data, asUINT size)
 #endif
 }
 
-int asCReader::Read()
+int asCReader::Read(bool *wasDebugInfoStripped)
 {
 	// Before starting the load, make sure that 
 	// any existing resources have been freed
@@ -96,6 +96,9 @@ int asCReader::Read()
 		// Initialize the global variables (unless requested not to)
 		if( engine->ep.initGlobalVarsAfterBuild )
 			r = module->ResetGlobalVars(0);
+
+		if( wasDebugInfoStripped )
+			*wasDebugInfoStripped = noDebugInfo;
 	}
 
 	return r;
@@ -110,8 +113,9 @@ int asCReader::ReadInner()
 	engine->deferValidationOfTemplateTypes = true;
 
 	unsigned long i, count;
-
 	asCScriptFunction* func;
+
+	ReadData(&noDebugInfo, 1);
 
 	// Read enums
 	count = ReadEncodedUInt();
@@ -643,31 +647,37 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 			func->objVariableInfo[i].option         = ReadEncodedUInt();
 		}
 
-		length = ReadEncodedUInt();
-		func->lineNumbers.SetLength(length);
-		for( i = 0; i < length; ++i )
-			func->lineNumbers[i] = ReadEncodedUInt();
+		if( !noDebugInfo )
+		{
+			length = ReadEncodedUInt();
+			func->lineNumbers.SetLength(length);
+			for( i = 0; i < length; ++i )
+				func->lineNumbers[i] = ReadEncodedUInt();
+		}
 
 		ReadData(&func->isShared, 1);
 
 		// Read the variable information
-		length = ReadEncodedUInt();
-		func->variables.Allocate(length, 0);
-		for( i = 0; i < length; i++ )
+		if( !noDebugInfo )
 		{
-			asSScriptVariable *var = asNEW(asSScriptVariable);
-			if( var == 0 )
+			length = ReadEncodedUInt();
+			func->variables.Allocate(length, 0);
+			for( i = 0; i < length; i++ )
 			{
-				// Out of memory
-				error = true;
-				return 0;
-			}
-			func->variables.PushLast(var);
+				asSScriptVariable *var = asNEW(asSScriptVariable);
+				if( var == 0 )
+				{
+					// Out of memory
+					error = true;
+					return 0;
+				}
+				func->variables.PushLast(var);
 
-			var->declaredAtProgramPos = ReadEncodedUInt();
-			var->stackOffset = ReadEncodedUInt();
-			ReadString(&var->name);
-			ReadDataType(&var->type);
+				var->declaredAtProgramPos = ReadEncodedUInt();
+				var->stackOffset = ReadEncodedUInt();
+				ReadString(&var->name);
+				ReadDataType(&var->type);
+			}
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
@@ -676,9 +686,12 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 	}
 
 	// Read script section name
-	asCString name;
-	ReadString(&name);
-	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
+	if( !noDebugInfo )
+	{
+		asCString name;
+		ReadString(&name);
+		func->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
+	}
 
 	if( addToModule )
 	{
@@ -2499,8 +2512,8 @@ asCObjectType *asCReader::FindObjectType(int idx)
 
 #ifndef AS_NO_COMPILER
 
-asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
- : module(_module), stream(_stream), engine(_engine)
+asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine, bool _stripDebug)
+ : module(_module), stream(_stream), engine(_engine), stripDebugInfo(_stripDebug)
 {
 }
 
@@ -2521,7 +2534,12 @@ int asCWriter::Write()
 	unsigned long i, count;
 
 	// Store everything in the same order that the builder parses scripts
-	
+
+	// TODO: Should be possible to skip saving the enum values. They are usually not needed after the script is compiled anyway
+	// TODO: Should be possible to skip saving the typedefs. They are usually not needed after the script is compiled anyway
+	// TODO: Should be possible to skip saving constants. They are usually not needed after the script is compiled anyway
+	WriteData(&stripDebugInfo, sizeof(stripDebugInfo));
+
 	// Store enums
 	count = (asUINT)module->enumTypes.GetLength();
 	WriteEncodedInt64(count);
@@ -2544,9 +2562,7 @@ int asCWriter::Write()
 	count = (asUINT)module->funcDefs.GetLength();
 	WriteEncodedInt64(count);
 	for( i = 0; i < count; i++ )
-	{
 		WriteFunction(module->funcDefs[i]);
-	}
 
 	// Now store all interface methods
 	count = (asUINT)module->classTypes.GetLength();
@@ -2797,28 +2813,34 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 
 		// The program position (every even number) needs to be adjusted
 		// to be in number of instructions instead of DWORD offset
-		asUINT length = (asUINT)func->lineNumbers.GetLength();
-		WriteEncodedInt64(length);
-		for( i = 0; i < length; ++i )
+		if( !stripDebugInfo )
 		{
-			if( (i & 1) == 0 )
-				WriteEncodedInt64(bytecodeNbrByPos[func->lineNumbers[i]]);
-			else
-				WriteEncodedInt64(func->lineNumbers[i]);
+			asUINT length = (asUINT)func->lineNumbers.GetLength();
+			WriteEncodedInt64(length);
+			for( i = 0; i < length; ++i )
+			{
+				if( (i & 1) == 0 )
+					WriteEncodedInt64(bytecodeNbrByPos[func->lineNumbers[i]]);
+				else
+					WriteEncodedInt64(func->lineNumbers[i]);
+			}
 		}
 
 		WriteData(&func->isShared, 1);
 
 		// Write the variable information
-		WriteEncodedInt64((asUINT)func->variables.GetLength());
-		for( i = 0; i < func->variables.GetLength(); i++ )
+		if( !stripDebugInfo )
 		{
-			// The program position must be adjusted to be in number of instructions
-			WriteEncodedInt64(bytecodeNbrByPos[func->variables[i]->declaredAtProgramPos]);
-			// The stack position must be adjusted according to the pointer sizes
-			WriteEncodedInt64(AdjustStackPosition(func->variables[i]->stackOffset));
-			WriteString(&func->variables[i]->name);
-			WriteDataType(&func->variables[i]->type);
+			WriteEncodedInt64((asUINT)func->variables.GetLength());
+			for( i = 0; i < func->variables.GetLength(); i++ )
+			{
+				// The program position must be adjusted to be in number of instructions
+				WriteEncodedInt64(bytecodeNbrByPos[func->variables[i]->declaredAtProgramPos]);
+				// The stack position must be adjusted according to the pointer sizes
+				WriteEncodedInt64(AdjustStackPosition(func->variables[i]->stackOffset));
+				WriteString(&func->variables[i]->name);
+				WriteDataType(&func->variables[i]->type);
+			}
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
@@ -2827,12 +2849,15 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	}
 
 	// Store script section name
-	if( func->scriptSectionIdx >= 0 )
-		WriteString(engine->scriptSectionNames[func->scriptSectionIdx]);
-	else
+	if( !stripDebugInfo )
 	{
-		char c = 0;
-		WriteData(&c, 1);
+		if( func->scriptSectionIdx >= 0 )
+			WriteString(engine->scriptSectionNames[func->scriptSectionIdx]);
+		else
+		{
+			char c = 0;
+			WriteData(&c, 1);
+		}
 	}
 }
 

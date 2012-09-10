@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.24.1
-#define ANGELSCRIPT_VERSION        22401
-#define ANGELSCRIPT_VERSION_STRING "2.24.1"
+//! \details Version 2.25.0
+#define ANGELSCRIPT_VERSION        22500
+#define ANGELSCRIPT_VERSION_STRING "2.25.0"
 
 // Data types
 
@@ -211,13 +211,17 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
 	//! The type doesn't use reference counting. Only valid for reference types.
 	asOBJ_NOCOUNT                    = 0x20000,
-	asOBJ_MASK_VALID_FLAGS           = 0x3FFFF,
+	//! The C++ class contains types that may require 8byte alignment. Only valid for value types.
+	asOBJ_APP_CLASS_ALIGN8           = 0x40000,
+	asOBJ_MASK_VALID_FLAGS           = 0x7FFFF,
 	//! The object is a script class or an interface.
 	asOBJ_SCRIPT_OBJECT              = 0x80000,
 	//! Type object type is shared between modules.
 	asOBJ_SHARED                     = 0x100000,
 	//! The object type is marked as final and cannot be inherited.
-	asOBJ_NOINHERIT                  = 0x200000
+	asOBJ_NOINHERIT                  = 0x200000,
+	//! The object type is a script function
+	asOBJ_SCRIPT_FUNCTION            = 0x400000
 };
 
 // Behaviours
@@ -2094,6 +2098,7 @@ public:
 
 	//! \brief Save compiled bytecode to a binary stream.
 	//! \param[in] out The output stream.
+	//! \param[in] stripDebugInfo Set to true to skip saving the debug information.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The stream object wasn't specified.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
@@ -2102,12 +2107,12 @@ public:
 	//! The application must implement an object that inherits from \ref asIBinaryStream to provide
 	//! the necessary stream operations.
 	//!
-	//! The pre-compiled byte code is currently not platform independent, so you need to make
-	//! sure the byte code is compiled on a platform that is compatible with the one that will load it.
-	virtual int SaveByteCode(asIBinaryStream *out) const = 0;
+	//! \see \ref doc_adv_precompile
+	virtual int SaveByteCode(asIBinaryStream *out, bool stripDebugInfo = false) const = 0;
 	//! \brief Load pre-compiled bytecode from a binary stream.
 	//!
 	//! \param[in] in The input stream.
+	//! \param[out] wasDebugInfoStripped Set to true if the bytecode was saved without debug information.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The stream object wasn't specified.
 	//! \retval asBUILD_IN_PROGRESS Another thread is currently building.
@@ -2119,7 +2124,9 @@ public:
 	//! pre-compiled byte code is from a trusted source. The application should also make sure the
 	//! pre-compiled byte code is compatible with the current engine configuration, i.e. that the
 	//! engine has been configured in the same way as when the byte code was first compiled.
-	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+	//!
+	//! \see \ref doc_adv_precompile
+	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped = 0) = 0;
 	//! \}
 
 	// User data
@@ -3142,6 +3149,7 @@ public:
 	//! Call this method when you will no longer use the references that you own.
 	virtual int              Release() const = 0;
 
+	// Miscellaneous
 	//! \brief Returns the id of the function
 	//! \return The id of the function
 	virtual int              GetId() const = 0;
@@ -3165,9 +3173,10 @@ public:
 	virtual asDWORD          GetAccessMask() const = 0;
 	//! \}
 
-	//! \name Function info
+	//! \name Function signature
 	//! \{
 
+	// Function signature
 	//! \brief Returns the object type for class or interface method
 	//! \return A pointer to the object type interface if this is a method.
 	//!
@@ -3202,11 +3211,6 @@ public:
 	//! \brief Returns true if the function is shared.
 	//! \return True if the function is shared.
 	virtual bool             IsShared() const = 0;
-	//! \}
-
-	//! \name Parameter and return types
-	//! \{
-
 	//! \brief Returns the number of parameters for this function.
 	//! \return The number of parameters.
 	virtual asUINT           GetParamCount() const = 0;
@@ -3219,6 +3223,18 @@ public:
 	//! \brief Returns the type id of the return type.
 	//! \return The type id of the return type.
 	virtual int              GetReturnTypeId() const = 0;
+	//! \}
+
+	//! \name Type id for function pointers
+	//! \{
+
+	// Type id for function pointers 
+	//! \brief Returns the type id representing a function pointer for this function
+	//! \return The type id that represents a function pointer for this function
+	virtual int              GetTypeId() const = 0;
+	//! \brief Checks if the given type id can represent this function.
+	//! \return Returns true if the type id can represent this function.
+	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;
 	//! \}
 
 	//! \name Debug information
@@ -3584,9 +3600,9 @@ public:
 	virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) = 0;
 	//! \brief Called by AngelScript when the JIT function is released
 	//! \param [in] func Pointer to the JIT function
-    virtual void ReleaseJITFunction(asJITFunction func) = 0;
+	virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
-    virtual ~asIJITCompiler() {}
+	virtual ~asIJITCompiler() {}
 };
 
 // Byte code instructions
@@ -3976,6 +3992,7 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 189,
 
 	// Temporary tokens. Can't be output to the final program
+	asBC_DiscardVar		= 250,
 	asBC_VarDecl		= 251,
 	asBC_Block			= 252,
 	asBC_ObjInfo		= 253,
@@ -4351,13 +4368,13 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(247),
 	asBCINFO_DUMMY(248),
 	asBCINFO_DUMMY(249),
-	asBCINFO_DUMMY(250),
 
-	asBCINFO(VarDecl,	W_ARG,			0),
-	asBCINFO(Block,		INFO,			0),
-	asBCINFO(ObjInfo,	rW_DW_ARG,		0),
-	asBCINFO(LINE,		INFO,			0),
-	asBCINFO(LABEL,		INFO,			0)
+	asBCINFO(DiscardVar,	W_ARG,			0),
+	asBCINFO(VarDecl,		W_ARG,			0),
+	asBCINFO(Block,			INFO,			0),
+	asBCINFO(ObjInfo,		rW_DW_ARG,		0),
+	asBCINFO(LINE,			INFO,			0),
+	asBCINFO(LABEL,			INFO,			0)
 };
 
 // Macros to access bytecode instruction arguments

@@ -1151,7 +1151,7 @@ asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asC
 }
 
 // interface
-int asCModule::SaveByteCode(asIBinaryStream *out) const
+int asCModule::SaveByteCode(asIBinaryStream *out, bool stripDebugInfo) const
 {
 #ifdef AS_NO_COMPILER
 	UNUSED_VAR(out);
@@ -1159,13 +1159,13 @@ int asCModule::SaveByteCode(asIBinaryStream *out) const
 #else
 	if( out == 0 ) return asINVALID_ARG;
 
-	asCWriter write(const_cast<asCModule*>(this), out, engine);
+	asCWriter write(const_cast<asCModule*>(this), out, engine, stripDebugInfo);
 	return write.Write();
 #endif
 }
 
 // interface
-int asCModule::LoadByteCode(asIBinaryStream *in)
+int asCModule::LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped)
 {
 	if( in == 0 ) return asINVALID_ARG;
 
@@ -1176,7 +1176,7 @@ int asCModule::LoadByteCode(asIBinaryStream *in)
 		return r;
 
 	asCReader read(this, in, engine);
-	r = read.Read();
+	r = read.Read(wasDebugInfoStripped);
 
     JITCompile();
 

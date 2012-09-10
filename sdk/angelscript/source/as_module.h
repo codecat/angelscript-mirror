@@ -163,8 +163,8 @@ public:
 	virtual int         UnbindAllImportedFunctions();
 
 	// Bytecode Saving/Loading
-	virtual int SaveByteCode(asIBinaryStream *out) const;
-	virtual int LoadByteCode(asIBinaryStream *in);
+	virtual int SaveByteCode(asIBinaryStream *out, bool stripDebugInfo) const;
+	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped);
 
 	// User data
 	virtual void *SetUserData(void *data);

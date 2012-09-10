@@ -142,6 +142,7 @@ public:
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const;
 
 	// Typedefs
+	// TODO: interface: Should perhaps rename this to Alias, since it doesn't really create a new type
 	virtual int         RegisterTypedef(const char *type, const char *decl);
 	virtual asUINT      GetTypedefCount() const;
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace, const char **configGroup = 0, asDWORD *accessMask = 0) const;

@@ -709,8 +709,8 @@ public:
 	virtual int         UnbindAllImportedFunctions() = 0;
 
 	// Bytecode saving and loading
-	virtual int SaveByteCode(asIBinaryStream *out) const = 0;
-	virtual int LoadByteCode(asIBinaryStream *in) = 0;
+	virtual int SaveByteCode(asIBinaryStream *out, bool stripDebugInfo = false) const = 0;
+	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped = 0) = 0;
 
 	// User data
 	virtual void *SetUserData(void *data) = 0;
@@ -1234,9 +1234,9 @@ class asIJITCompiler
 {
 public:
 	virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) = 0;
-    virtual void ReleaseJITFunction(asJITFunction func) = 0;
+	virtual void ReleaseJITFunction(asJITFunction func) = 0;
 public:
-    virtual ~asIJITCompiler() {}
+	virtual ~asIJITCompiler() {}
 };
 
 // Byte code instructions

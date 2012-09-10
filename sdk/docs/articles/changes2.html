@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/09/09</h2>
+<h2>Version 2.25.0 WIP - 2012/09/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -54,6 +54,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The template callback behaviour now take a second argument to allow the application to tell the engine if an instance shouldn't be garbage collected
 <li>Added asOBJ_SCRIPT_FUNCTION flag to identify the object type that represents script functions
 <li>Added asIScriptFunction::IsCompatibleWithTypeId() and GetTypeId() to work with function pointers as generic types
+<li>Added an optional argument to asIScriptModule::SaveByteCode to strip the debug info
+<li>Added an optional argument to asIScriptModule::LoadByteCode to determine if the bytecode contains debug info or not
 </ul>
 <li>Script language
 <ul>
@@ -67,7 +69,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetType() to CScriptHandle
 <li>CScriptHandle::Cast() properly handles function pointers
 <li>Fixed bug in CScriptArray::SetValue() when replacing a handle in an element (Thanks Andrew Ackermann)
-<li>Added wrapper for std::string::operator== since it may be implemented as a member function or global function on different platforms (Thanks Piotr Rak)
+<li>Added wrapper for std::string::operator== to fix compile error on gcc 4.7 (Thanks Piotr Rak)
+<li>Fixed bug in CSerializer related to extra objects (Thanks FDsagizi)
 </ul>
 </ul>
 

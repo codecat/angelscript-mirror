@@ -389,25 +389,30 @@ bool Test()
 
 		// Save the compiled byte code
 		CBytecodeStream stream(__FILE__"1");
+		CBytecodeStream stream2(__FILE__"2");
 		mod = engine->GetModule(0);
 		mod->SaveByteCode(&stream);
+		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-		if( stream.buffer.size() != 1756 )
-		{
+		if( stream.buffer.size() != 1757 )
 			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
-		}
 		asUINT zeroes = stream.CountZeroes();
-		if( zeroes != 527 ) 
+		if( zeroes != 528 ) 
 		{
 			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-		if( crc32 != 0x8E92EBF0 )
-		{
+		if( crc32 != 0xA398B111 )
 			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
-		}
+
+		// Without debug info
+		if( stream2.buffer.size() != 1449 )
+			printf("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
+		zeroes = stream.CountZeroes();
+		if( zeroes != 528 )
+			printf("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
 		mod->LoadByteCode(&stream);
@@ -431,9 +436,9 @@ bool Test()
 		engine->Release();
 		engine = ConfigureEngine(1);
 
-		stream.Restart();
+		stream2.Restart();
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->LoadByteCode(&stream);
+		mod->LoadByteCode(&stream2);
 
 		if( mod->GetFunctionCount() != 6 )
 			TEST_FAILED;
@@ -461,10 +466,10 @@ bool Test()
 		mod->AddScriptSection("script", "void f() {}");
 		mod->Build();
 		CBytecodeStream streamTiny(__FILE__"tiny");
-		mod->SaveByteCode(&streamTiny);
+		mod->SaveByteCode(&streamTiny, true);
 		engine->Release();
 
-		asBYTE expected[] = {0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x6E,0x01,0x66,0x40,0x4E,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x00,0x02,0x00,0x70,0xC0,0x00,0x01,0x00,0x00,0x6E,0x06,0x73,0x63,0x72,0x69,0x70,0x74,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+		asBYTE expected[] = {0x01,0x00,0x00,0x00,0x00,0x00,0x01,0x66,0x6E,0x01,0x66,0x40,0x4E,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x3F,0x0A,0x00,0x00,0x00,0x00,0x00,0x01,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 		bool match = true;
 		for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
 			if( streamTiny.buffer[n] != expected[n] )
