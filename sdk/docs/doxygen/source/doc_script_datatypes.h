@@ -186,7 +186,7 @@ when the variable goes out of scope. Only the application can register these typ
 with the application's documentation for more information about the registered types.
 
 Reference types are allocated on the memory heap, and may outlive the initial variable that allocates
-them if another reference to the instance is kept. All \ref doc_global_class "script declared classes" are reference types. 
+them if another reference to the instance is kept. All \ref doc_script_class "script declared classes" are reference types. 
 \ref doc_global_interface "Interfaces" are a special form of reference types, that cannot be instanciated, but can be used to access
 the objects that implement the interfaces without knowing exactly what type of object it is.
 

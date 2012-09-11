@@ -122,18 +122,40 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 
 This is the reference documentation for the AngelScript scripting language.
 
- - \subpage doc_global
+ - \subpage doc_script_global
  - \subpage doc_script_statements
  - \subpage doc_expressions
  - \subpage doc_datatypes
  - \subpage doc_script_handle
- - \subpage doc_script_func
- - \subpage doc_script_class
  - \subpage doc_script_shared
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
 
- 
+
+
+
+\page doc_script_global Global entities
+
+All global declarations share the same namespace so their names may not
+conflict. This includes extended data types and built-in functions registered
+by the host application. Also, all declarations are visible to all, e.g. a
+function to be called does not have to be declared above the function that calls
+it.
+
+ - \subpage doc_script_func
+ - \subpage doc_global_variable
+ - \subpage doc_global_virtprop
+ - \subpage doc_script_class
+ - \subpage doc_global_interface
+ - \subpage doc_script_mixin
+ - \subpage doc_global_enums
+ - \subpage doc_global_funcdef
+ - \subpage doc_global_typedef
+ - \subpage doc_global_namespace
+ - \subpage doc_global_import
+
+
+
 \page doc_script_func Functions
 
 Global functions provide the mean to implement routines that should operate on some input and produce a result. 
@@ -147,7 +169,7 @@ Global functions provide the mean to implement routines that should operate on s
 
 \page doc_script_class Script classes
 
-Script classes are declared \ref doc_global "globally" and provides an
+Script classes are declared globally and provides an
 easy way of grouping properties and methods into logical units. The syntax
 for classes is similar to C++ and Java.
 

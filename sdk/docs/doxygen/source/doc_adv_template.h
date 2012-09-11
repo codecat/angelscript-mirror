@@ -61,6 +61,8 @@ the script engine won't be able to instanciate the template type for primitives 
 
 \section doc_adv_template_4 Validating template instantiations at compile time
 
+\todo Update this section with the changes for 2.25.0
+
 In order to avoid unnecessary runtime validations of invalid template instantiations, the application 
 should preferably register the \ref asBEHAVE_TEMPLATE_CALLBACK behaviour. This is a special behaviour function
 that the script engine will invoke everytime a new template instance type is generated. The callback

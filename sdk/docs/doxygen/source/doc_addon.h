@@ -332,6 +332,7 @@ class CScriptArray
 {
 public:
   // Constructor
+  CScriptArray(const CScriptArray &other);
   CScriptArray(asUINT length, asIObjectType *ot);
   CscriptArray(asUINT length, void *defaultValue, asIObjectType *ot);
   virtual ~CScriptArray();
@@ -566,6 +567,9 @@ public:
 
   // Dynamic cast to desired handle type
   void Cast(void **outRef, int typeId);
+
+  // Returns the type of the reference held
+  asIObjectType *GetType();
 };
 \endcode
 

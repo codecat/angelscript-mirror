@@ -70,7 +70,9 @@ protected:
    then it may be beneficial to compile the library with the AS_NO_COMPILER define so as to reduce the size
    of the executable.
 
-
+ - To reduce the size of the saved bytecode you can strip the debug information from the code. This will skip
+   saving information that is not necessary for executing the scripts, such as the name of script sections,
+   line numbers, and the name and type of local variables. 
 
 
 

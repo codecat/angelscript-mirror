@@ -1,41 +1,7 @@
 /**
 
-\page doc_global Global script entities
 
-All global declarations share the same namespace so their names may not
-conflict. This includes extended data types and built-in functions registered
-by the host application. Also, all declarations are visible to all, e.g. a
-function to be called does not have to be declared above the function that calls
-it.
-
-    <ul>
-    <li>\ref doc_global_function
-    <li>\ref doc_global_variable
-	<li>\ref doc_global_virtprop
-    <li>\ref doc_global_class
-    <li>\ref doc_global_interface
-    <li>\ref doc_global_import
-    <li>\ref doc_global_enums
-    <li>\ref doc_global_typedef
-    <li>\ref doc_global_funcdef
-    <li>\ref doc_global_namespace
-    </ul>
-
-
-
-
-\section doc_global_function Functions
-
-Global functions are declared normally, just as in C/C++. The function body must be defined, 
-i.e. it is not possible to declare prototypes, nor is it necessary as the compiler can resolve 
-the function names anyway.
-
-\see \ref doc_script_func
-
-
-
-
-\section doc_global_variable Variables
+\page doc_global_variable Variables
 
 Global variables may be declared in the scripts, which will then be shared between 
 all contexts accessing the script module.
@@ -65,7 +31,7 @@ will get unpredictable behaviour or a null-pointer exception.
 
 
 
-\section doc_global_virtprop Virtual properties
+\page doc_global_virtprop Virtual properties
 
 Virtual properties is a property with special behaviour for reading and writing to it. 
 These can be declared globally, but are most usually found as members of classes.
@@ -84,19 +50,9 @@ These can be declared globally, but are most usually found as members of classes
 
 
 
-\section doc_global_class Classes
-
-Script classes are declared globally and provides an
-easy way of grouping properties and methods into logical units. The syntax
-for classes is similar to C++ and Java.
-
-\see \ref doc_script_class
 
 
-
-
-
-\section doc_global_interface Interfaces
+\page doc_global_interface Interfaces
 
 An interface works like a contract, the classes that implements an interface
 are guaranteed to implement the methods declared in the interface. This allows
@@ -129,7 +85,8 @@ separated by a comma.
 
 
 
-\section doc_global_import Imports
+
+\page doc_global_import Imports
 
 Sometimes it may be useful to load script modules dynamically without having to recompile 
 the main script, but still let the modules interact with each other. In that case the script 
@@ -151,7 +108,7 @@ aborted with a script exception.
 
 
 
-\section doc_global_enums Enums
+\page doc_global_enums Enums
 
 Enums are a convenient way of registering a family of integer constants that may be used throughout the script 
 as named literals instead of numeric constants. Using enums often help improve the readability of the code, as
@@ -180,7 +137,7 @@ unless otherwise specified.
 
 
 
-\section doc_global_typedef Typedefs
+\page doc_global_typedef Typedefs
 
 Typedefs are used to define aliases for other types.
 
@@ -194,7 +151,7 @@ more complete support for all kinds of types.
 
 
 
-\section doc_global_funcdef Funcdefs
+\page doc_global_funcdef Funcdefs
 
 Funcdefs are used to define a function signature that will be used to store pointers to 
 functions with matching signatures. With this a function pointer can be created, which is 
@@ -210,7 +167,7 @@ able to store dynamic pointers that can be invoked at a later time as a normal f
 
 
 
-\section doc_global_namespace Namespaces
+\page doc_global_namespace Namespaces
 
 Namespaces can be used to organize large projects in logical units that may be easier 
 to remember. When using namespaces it is also not necessary to worry about using names

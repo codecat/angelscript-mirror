@@ -14,6 +14,13 @@ Shared entities have a restriction in that they cannot access non-shared
 entities because the non-shared entities are exclusive to the script module 
 in which they were compiled.
 
+Once a shared entity has been compiled in one module it will not be compiled again in
+another module. This can be taken advantage of as a module that is to use a shared
+entity already compiled in a previous module doesn't have to provide the complete
+implementation in the script. If this is done, the application must make sure the module
+that has the complete implementation is always compiled first.
+
+
 \section doc_script_shared_1 How to declare shared entities
 
 To declare a shared entity simply put the keyword 'shared' before the ordinary
@@ -41,7 +48,7 @@ same source file, but this is not a requirement.
 \section doc_script_shared_2 What can be shared
 
 Currently only the \ref doc_script_class "class", \ref doc_global_interface "interface",
-\ref doc_global_function "function", and \ref doc_global_enums "enum" entities can be shared. 
+\ref doc_script_func "function", and \ref doc_global_enums "enum" entities can be shared. 
 
 Future versions may allow \ref doc_global_variable "global variables" to be shared too.
 

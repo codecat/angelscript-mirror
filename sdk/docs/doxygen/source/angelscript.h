@@ -3163,7 +3163,8 @@ public:
 	//! \return A null terminated string with the script section name where the function was implemented.
 	//!
 	//! The returned pointer is null when the function doesn't originate from a script file, i.e.
-	//! a registered function or an auto-generated script function.
+	//! a registered function or an auto-generated script function. It can also be null if the information
+	//! has been removed, e.g. when saving bytecode without debug info.
 	virtual const char      *GetScriptSectionName() const = 0;
 	//! \brief Returns the name of the config group in which the function was registered.
 	//! \return The name of the config group, or null if not in any group.

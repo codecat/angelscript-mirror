@@ -262,6 +262,7 @@ to guarantee that your functions are called correctly by the script engine. If n
 not able to change the class to work without them, then the only other option is to use the generic calling convention,
 preferably with the \ref doc_addon_autowrap "auto wrappers".
 
+\todo Describe \ref asOBJ_APP_CLASS_ALIGN8
 
 
 

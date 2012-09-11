@@ -93,8 +93,7 @@ set(ANGELSCRIPT_HEADERS
         ../../source/as_variablescope.h
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../include
-)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
 add_definitions("-D_CRT_SECURE_NO_WARNINGS -DANGELSCRIPT_EXPORT -D_LIB")
 
@@ -106,6 +105,9 @@ endif()
 add_library(Angelscript STATIC ${ANGELSCRIPT_SOURCE} ${ANGELSCRIPT_HEADERS})
 set(LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/../../lib)
 
+find_package(Threads)
+target_link_libraries(Angelscript ${CMAKE_THREAD_LIBS_INIT})
+
 if(MSVC)
         set_target_properties(Angelscript PROPERTIES COMPILE_FLAGS "/MP")
 endif(MSVC)
@@ -113,5 +115,4 @@ endif(MSVC)
 set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin)
 
 add_subdirectory(../../../samples/game/projects/cmake/ ./game)
-add_subdirectory(../../../tests/test_feature/projects/cmake/ ./test_feature)
-add_subdirectory(../../../tests/test_performance/projects/cmake/ ./test_performance)
+

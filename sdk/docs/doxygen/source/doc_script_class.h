@@ -11,7 +11,7 @@ or \ref doc_script_handle "handles" can be held for the same object instance.
 The classes uses automatic memory management so the object instances are only
 destroyed when the last reference to the instance is cleared.
 
-The class methods are implemented the same way as \ref doc_global_function "global functions", 
+The class methods are implemented the same way as \ref doc_script_func "global functions", 
 with the addition that the class method can access the class instance properties through either
 directly or through the 'this' keyword in the case a local variable has the same name.
 
@@ -169,7 +169,8 @@ invoked, with the preference being the non-const version in case both matches.
 
 AngelScript supports single inheritance, where a derived class inherits the 
 properties and methods of its base class. Multiple inheritance is not supported,
-but polymorphism is supprted by implementing \ref doc_global_interface "interfaces".
+but polymorphism is supported by implementing \ref doc_global_interface "interfaces", 
+and code reuse is provided by including \ref doc_script_mixin "mixin classes".
 
 All the class methods are virtual, so it is not necessary to specify this manually. 
 When a derived class overrides an implementation, it can extend 
