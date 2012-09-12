@@ -2474,6 +2474,10 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		{
 			numPtrs++;
 			currOffset++;
+
+			// The variable arg ? has an additiona 32bit integer with the typeid
+			if( calledFunc->parameterTypes[p].IsAnyType() )
+				currOffset += 1;
 		}
 		else
 		{
@@ -3392,6 +3396,10 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			// objects and references are passed by pointer
 			numPtrs++;
 			currOffset += AS_PTR_SIZE;
+
+			// The variable arg ? has an additional 32bit int with the typeid
+			if( calledFunc->parameterTypes[p].IsAnyType() )
+				currOffset += 1;
 		}
 		else
 		{

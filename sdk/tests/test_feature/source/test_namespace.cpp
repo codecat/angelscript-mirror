@@ -525,6 +525,29 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		const char *script = 
+			"namespace Test { \n"
+			"  class A { \n"
+			"  } \n"
+			"}; \n"
+			"void init() { \n"
+			"  Test::A@ a = Test::A(); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

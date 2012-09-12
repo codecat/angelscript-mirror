@@ -2149,41 +2149,48 @@ void asCContext::ExecuteNext()
 	// Comparisons
 	case asBC_CMPd:
 		{
-			double dbl = *(double*)(l_fp - asBC_SWORDARG0(l_bc)) - *(double*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( dbl == 0 )     *(int*)&m_regs.valueRegister =  0;
-			else if( dbl < 0 ) *(int*)&m_regs.valueRegister = -1;
-			else               *(int*)&m_regs.valueRegister =  1;
+			// Do a comparison of the values, rather than a subtraction  
+			// in order to get proper behaviour for infinity values.
+			double dbl1 = *(double*)(l_fp - asBC_SWORDARG0(l_bc));
+			double dbl2 = *(double*)(l_fp - asBC_SWORDARG1(l_bc));
+			if( dbl1 == dbl2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( dbl1 < dbl2 ) *(int*)&m_regs.valueRegister = -1;
+			else                   *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
 
 	case asBC_CMPu:
 		{
-			asDWORD d = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+			asDWORD d1 = *(asDWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			asDWORD d2 = *(asDWORD*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( d == d2 )     *(int*)&m_regs.valueRegister =  0;
-			else if( d < d2 ) *(int*)&m_regs.valueRegister = -1;
-			else              *(int*)&m_regs.valueRegister =  1;
+			if( d1 == d2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( d1 < d2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
 
 	case asBC_CMPf:
 		{
-			float f = *(float*)(l_fp - asBC_SWORDARG0(l_bc)) - *(float*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( f == 0 )     *(int*)&m_regs.valueRegister =  0;
-			else if( f < 0 ) *(int*)&m_regs.valueRegister = -1;
-			else             *(int*)&m_regs.valueRegister =  1;
+			// Do a comparison of the values, rather than a subtraction  
+			// in order to get proper behaviour for infinity values.
+			float f1 = *(float*)(l_fp - asBC_SWORDARG0(l_bc));
+			float f2 = *(float*)(l_fp - asBC_SWORDARG1(l_bc));
+			if( f1 == f2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( f1 < f2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
 
 	case asBC_CMPi:
 		{
-			int i = *(int*)(l_fp - asBC_SWORDARG0(l_bc)) - *(int*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( i == 0 )     *(int*)&m_regs.valueRegister =  0;
-			else if( i < 0 ) *(int*)&m_regs.valueRegister = -1;
-			else             *(int*)&m_regs.valueRegister =  1;
+			int i1 = *(int*)(l_fp - asBC_SWORDARG0(l_bc));
+			int i2 = *(int*)(l_fp - asBC_SWORDARG1(l_bc));
+			if( i1 == i2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( i1 < i2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
@@ -2192,20 +2199,24 @@ void asCContext::ExecuteNext()
 	// Comparisons with constant value
 	case asBC_CMPIi:
 		{
-			int i = *(int*)(l_fp - asBC_SWORDARG0(l_bc)) - asBC_INTARG(l_bc);
-			if( i == 0 )     *(int*)&m_regs.valueRegister =  0;
-			else if( i < 0 ) *(int*)&m_regs.valueRegister = -1;
-			else             *(int*)&m_regs.valueRegister =  1;
+			int i1 = *(int*)(l_fp - asBC_SWORDARG0(l_bc));
+			int i2 = asBC_INTARG(l_bc);
+			if( i1 == i2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( i1 < i2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
 
 	case asBC_CMPIf:
 		{
-			float f = *(float*)(l_fp - asBC_SWORDARG0(l_bc)) - asBC_FLOATARG(l_bc);
-			if( f == 0 )     *(int*)&m_regs.valueRegister =  0;
-			else if( f < 0 ) *(int*)&m_regs.valueRegister = -1;
-			else             *(int*)&m_regs.valueRegister =  1;
+			// Do a comparison of the values, rather than a subtraction  
+			// in order to get proper behaviour for infinity values.
+			float f1 = *(float*)(l_fp - asBC_SWORDARG0(l_bc));
+			float f2 = asBC_FLOATARG(l_bc);
+			if( f1 == f2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( f1 < f2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
@@ -3391,21 +3402,22 @@ void asCContext::ExecuteNext()
 
 	case asBC_CMPi64:
 		{
-			asINT64 i = *(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) - *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( i == 0 )     *(int*)&m_regs.valueRegister =  0;
-			else if( i < 0 ) *(int*)&m_regs.valueRegister = -1;
-			else             *(int*)&m_regs.valueRegister =  1;
+			asINT64 i1 = *(asINT64*)(l_fp - asBC_SWORDARG0(l_bc));
+			asINT64 i2 = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc));
+			if( i1 == i2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( i1 < i2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;
 
 	case asBC_CMPu64:
 		{
-			asQWORD d = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
+			asQWORD d1 = *(asQWORD*)(l_fp - asBC_SWORDARG0(l_bc));
 			asQWORD d2 = *(asQWORD*)(l_fp - asBC_SWORDARG1(l_bc));
-			if( d == d2 )     *(int*)&m_regs.valueRegister =  0;
-			else if( d < d2 ) *(int*)&m_regs.valueRegister = -1;
-			else              *(int*)&m_regs.valueRegister =  1;
+			if( d1 == d2 )     *(int*)&m_regs.valueRegister =  0;
+			else if( d1 < d2 ) *(int*)&m_regs.valueRegister = -1;
+			else               *(int*)&m_regs.valueRegister =  1;
 			l_bc += 2;
 		}
 		break;

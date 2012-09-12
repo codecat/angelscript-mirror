@@ -88,6 +88,7 @@ public:
 	bool IsHandleToConst()  const;
 	bool IsArrayType()      const;
 	bool IsEnumType()       const;
+	bool IsAnyType()        const {return tokenType == ttQuestion;}
 
 	bool IsSamePrimitiveBaseType(const asCDataType &dt)    const;
 	bool IsEqualExceptRef(const asCDataType &)             const;

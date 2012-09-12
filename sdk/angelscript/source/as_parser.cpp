@@ -1041,14 +1041,34 @@ asCScriptNode *asCParser::ParseExprValue()
 	GetToken(&t2);
 	RewindTo(&t1);
 
-	// TODO: namespace: Datatypes can be defined in namespaces, thus types too must allow scope prefix
-	if( IsDataType(t1) && (t2.type == ttOpenParanthesis || 
-	                       t2.type == ttLessThan || 
-	                       t2.type == ttOpenBracket) )
+	if( IsRealType(t1.type) )
 		node->AddChildLast(ParseConstructCall());
 	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{
-		if( IsFunctionCall() )
+		// Determine the last identifier in order to check if it is a type
+		sToken t;
+		if( t1.type == ttScope ) t = t2; else t = t1;
+		RewindTo(&t);
+		GetToken(&t2);
+		while( t.type == ttIdentifier )
+		{
+			t2 = t;
+			GetToken(&t);
+			if( t.type == ttScope )
+				GetToken(&t);
+			else 
+				break;
+		}
+		
+		// Rewind so the real parsing can be done, after deciding what to parse
+		RewindTo(&t1);
+
+		// Check if this is a construct call
+		if( IsDataType(t2) && (t.type == ttOpenParanthesis || 
+		                       t.type == ttLessThan || 
+		                       t.type == ttOpenBracket) )
+			node->AddChildLast(ParseConstructCall());
+		else if( IsFunctionCall() )
 			node->AddChildLast(ParseFunctionCall());
 		else
 			node->AddChildLast(ParseVariableAccess());
