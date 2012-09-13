@@ -12,15 +12,22 @@ Functions implementing the generic calling conventions are always global functio
 that take as parameter a pointer to an asIScriptGeneric interface and returns void.
 
 \code
+// The function has been registered with signature:
+//  MyIntf @func(int, float, MyIntf @)
 void MyGenericFunction(asIScriptGeneric *gen)
 {
-  // Code to extract arguments from the generic 
-  // interface and to execute the real function
-  ...
+  // Extract the arguments
+  int arg0              = gen->GetArgDWord(0);
+  float arg1            = gen->GetArgFloat(1);
+  asIScriptObject *arg2 = reinterpret_cast<asIScriptObject*>(gen->GetArgObject(2));
+  
+  // Call the real function
+  asIScriptObject *ret = MyFunction(arg0, arg1, arg2);
+  
+  // Set the return value
+  gen->SetReturnObject(ret);
 }
 \endcode
-
-\todo Improve the example to better describe how it works
 
 Functions using the generic calling convention can be registered anywhere the script engine is expecting 
 global functions or class methods (except where explicitly written otherwise). 

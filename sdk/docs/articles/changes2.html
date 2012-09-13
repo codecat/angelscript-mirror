@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.0 WIP - 2012/09/12</h2>
+<h2>Version 2.25.0 WIP - 2012/09/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,6 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Local function pointers variables now properly take precedence over class methods of the same name (Thanks cellulose)
 <li>Serializing bytecode that called funcions with variable arguments didn't work properly (Thanks Markus Lenger)
 <li>Construct calls in expressions are now parsed properly when the type is preceeded with the namespace (Thanks Andrew Ackermann)
+<li>Compiler gave error when compiling non-const methods that returned const references to members (Thanks Polyák István)
 </ul>
 <li>Library
 <ul>

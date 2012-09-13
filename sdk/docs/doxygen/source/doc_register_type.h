@@ -248,12 +248,13 @@ On some platforms the native calling convention may require further knowledge ab
 properly; most notable are the Linux 64bit and Mac OSX 64bit systems with the GNUC compiler. On these systems small classes 
 that do not have a destructor or a copy constructor will have different behaviours depending on the type of their members.
 
-AngelScript lets the application inform the two most common variants, i.e. the class should be treated as if all members are integers, 
-or it should be treated as if all members are floats. 
+AngelScript lets the application give information that cover the most common variants, e.g. the class should be treated as 
+if all members are integers, or it should be treated as if all members are floats. 
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td>\ref asOBJ_APP_CLASS_ALLINTS   &nbsp; </td><td>The C++ class members can be treated as if all integers</td></tr>
 <tr><td>\ref asOBJ_APP_CLASS_ALLFLOATS &nbsp; </td><td>The C++ class members can be treated as if all floats or doubles</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALIGN8    &nbsp; </td><td>The C++ class contains members that may require 8byte alignment, e.g. a double.</td></tr>
 </table>
 
 It is difficult to explain when one or the other should be used as it requires indepth knowledge of the ABI for the 
@@ -262,7 +263,6 @@ to guarantee that your functions are called correctly by the script engine. If n
 not able to change the class to work without them, then the only other option is to use the generic calling convention,
 preferably with the \ref doc_addon_autowrap "auto wrappers".
 
-\todo Describe \ref asOBJ_APP_CLASS_ALIGN8
 
 
 

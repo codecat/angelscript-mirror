@@ -59,9 +59,11 @@ the script engine won't be able to instanciate the template type for primitives 
 
 \see \ref doc_addon_array
 
-\section doc_adv_template_4 Validating template instantiations at compile time
 
-\todo Update this section with the changes for 2.25.0
+
+
+
+\section doc_adv_template_4 Validating template instantiations at compile time
 
 In order to avoid unnecessary runtime validations of invalid template instantiations, the application 
 should preferably register the \ref asBEHAVE_TEMPLATE_CALLBACK behaviour. This is a special behaviour function
@@ -70,17 +72,27 @@ function can then perform necessary validations to verify if the type can be han
 the engine that the instance isn't supported. 
 
 The callback function must be a global function that receives an asIObjectType pointer, and should return 
-a boolean. If the template instance is valid the return value should be true.
+a boolean. If the template instance is valid the return value should be true. 
+
+The function should also take a second parameter with an output reference to a boolean. This parameter 
+should be set to true by the function if the template instance should not be garbage collected, which will
+make AngelScript clear the asOBJ_GC flag for the object type. If the template 
+instance cannot form any circular references, then it doesn't need to be garbage collected, which reduces
+the work that has to be done by the garbage collector. When the callback tells AngelScript that the template
+instance is not garbage collected, AngelScript will clear the asOBJ_GC flag for the object type. 
+
+
 
 \code
 // Register the template callback
-r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int &in)", asFUNCTION(myTemplateCallback), asCALL_CDECL); assert( r >= 0 );
+// Observe that the asIObjectType pointer argument is represented by the int reference
+r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int &in, bool&out)", asFUNCTION(myTemplateCallback), asCALL_CDECL); assert( r >= 0 );
 \endcode
 
 Here's an example callback function:
 
 \code
-bool myTemplateCallback(asIObjectType *ot)
+bool myTemplateCallback(asIObjectType *ot, bool &dontGarbageCollect)
 {
   // This template will only support primitive types
   int typeId = ot->GetSubTypeId();
@@ -90,6 +102,9 @@ bool myTemplateCallback(asIObjectType *ot)
     // template with an object type, this is not allowed.
     return false;
   }
+  
+  // Tell AngelScript that this instance doesn't require garbage collection
+  dontGarbageCollect = true;
     
   // Primitive types are allowed
   return true;

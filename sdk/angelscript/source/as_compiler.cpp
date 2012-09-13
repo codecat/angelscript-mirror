@@ -3372,8 +3372,11 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 
 			// The type must match exactly as we cannot convert
 			// the reference without loosing the original value
-			if( !(v->type == expr.type.dataType ||
-				(expr.type.dataType.IsObject() && !expr.type.dataType.IsObjectHandle() && v->type.IsEqualExceptRef(expr.type.dataType))) )
+			if( !(v->type.IsEqualExceptConst(expr.type.dataType) ||
+				  (expr.type.dataType.IsObject() && 
+				   !expr.type.dataType.IsObjectHandle() && 
+				   v->type.IsEqualExceptRefAndConst(expr.type.dataType))) ||
+				(!v->type.IsReadOnly() && expr.type.dataType.IsReadOnly()) )
 			{
 				// Clean up the potential deferred parameters
 				ProcessDeferredParams(&expr);

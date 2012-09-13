@@ -66,6 +66,9 @@ struct asSDeferredParam
 	asSExprContext *origExpr;
 };
 
+// TODO: refactor: asSExprContext should have indicators to inform where the value is, 
+//                 i.e. if the reference to an object is pushed on the stack or not, etc
+
 struct asSExprContext
 {
 	asSExprContext(asCScriptEngine *engine) : bc(engine) 
@@ -105,9 +108,9 @@ struct asSExprContext
 	asCTypeInfo type;
 	int  property_get;
 	int  property_set;
-	bool property_const; // If the object that is being accessed through property accessor is read-only
+	bool property_const;  // If the object that is being accessed through property accessor is read-only
 	bool property_handle; // If the property accessor is called on an object stored in a handle
-	bool property_ref; // If the property accessor is called on a reference
+	bool property_ref;    // If the property accessor is called on a reference
 	asSExprContext *property_arg;
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;

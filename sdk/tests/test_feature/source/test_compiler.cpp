@@ -206,6 +206,65 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by Polyak Istvan
+	{
+		const char *script = 
+			"class X1 {} \n"
+			"class X2 \n"
+			"{ \n"
+			"    const X1 @ f1 (void) \n"
+			"    { \n"
+			"        return x1_; \n" // ok
+			"    } \n"
+			"    const X1 & f2 (void) const \n"
+			"    { \n"
+			"        return x1_; \n" // ok
+			"    } \n"
+			"    const X1 & f3 (void) \n"
+			"    { \n"
+			"        return x1_; \n" // ok
+			"    } \n"
+			"    const int & f4 (void) \n"
+			"    { \n"
+			"        return i1_; \n" // ok 
+			"    } \n"
+			"    int & f5 (void) const \n"
+			"    { \n"
+			"        return i1_; \n" // should fail
+			"    } \n"
+			"	 X1 & f6 (void) const \n"
+			"    { \n"
+			"        return x1_; \n" // should fail
+			"    } \n"
+			"    private X1 x1_; \n"
+			"    private int i1_; \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (20, 5) : Info    : Compiling int& X2::f5() const\n"
+						   "test (22, 9) : Error   : Can't implicitly convert from 'const int&' to 'int&'.\n"
+						   "test (24, 3) : Info    : Compiling X1& X2::f6() const\n"
+						   "test (26, 9) : Error   : Can't implicitly convert from 'const X1' to 'X1&'.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Problem reported by Andrew Ackermann
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
