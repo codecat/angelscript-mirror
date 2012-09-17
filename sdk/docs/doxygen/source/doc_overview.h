@@ -4,14 +4,10 @@
 
 AngelScript is structured around an \ref asIScriptEngine "engine" where the application should
 \ref doc_register_api "register" the \ref doc_register_func "functions", \ref doc_register_prop "properties", and even \ref doc_register_type "types", 
-that the scripts will be able to use. The scripts are then compiled into \ref asIScriptModule "modules",
+that the scripts will be able to use. The scripts are then compiled into \ref doc_module "modules",
 where the application may have one or more modules, depending on the need of the application. The application can also expose
-a different interface to each module through the use of \ref asIScriptEngine::BeginConfigGroup "configuration groups". 
+a different interface to each module through the use of \ref doc_adv_access_mask "access profiles". 
 This is especially useful when the application works with multiple types of scripts, e.g. GUI, AI control, etc.
-
-Each \ref asIScriptModule "module" has it's own scope of script functions, global variables, and classes. These
-are normally not shared between modules, even though multiple modules may be built from the same source scripts.
-However modules may interact with each others through \ref asIScriptModule::BindImportedFunction "function binding".
 
 As the scripts are compiled into bytecode AngelScript also provides a virtual machine, also known 
 as a \ref asIScriptContext "script context", for \ref doc_call_script_func "executing" the bytecode. The application can have any number of 

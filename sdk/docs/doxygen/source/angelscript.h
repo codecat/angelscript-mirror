@@ -826,8 +826,8 @@ extern "C"
 //!
 //! It is allowed to have multiple instances of script engines, but there is rarely a need for it.
 //! Even if the application needs to expose different interfaces to different types of scripts
-//! this can usually be accomplished through the use of dynamic configuration groups and access
-//! profiles.
+//! this can usually be accomplished through the use of \ref doc_adv_dynamic_config "configuration groups" 
+//! and \ref doc_adv_access_mask "access profiles".
 class asIScriptEngine
 {
 public:
@@ -1686,26 +1686,13 @@ protected:
 
 //! \brief The interface to the script modules
 //!
-//! A script module can be thought of a library of script functions, objects, and global variables. These
-//! are built from a single or multiple script files, also known as script sections.
+//! A script module can be thought of a library of script functions, classes, and global variables. 
 //! 
-//! An application can load multiple modules independently, and can even discard modules that are no longer
-//! used without affecting the other modules. This makes modules convenient for use with on-demand script logic, 
-//! i.e. the script is loaded and compiled only as it needed, rather than everything up front.
-//!
-//! If two modules are built using the same source script files, they will each hold unique copies of the 
-//! global variables, functions, and objects declared in the script. There may be valid reasons to do
-//! this, but if your only reason is to give a set of individual scripted properties to application objects, 
-//! then you should consider designing your scripts to use script classes. The use of script classes will
-//! allow each application object to maintain its own instance of the script class, while still sharing the 
-//! same implementation in a single module.
-//!
-//! While different modules are independent, they can communicate with each other with a little help from the
-//! application. It is for example possible to import functions between modules, or a handle to an interface
-//! might be passed from one module to another to allow. To facilitate the information exchange between 
-//! modules, the script language permits the declaration of shared entities, e.g. classes and interfaces. 
-//! These shared entities will be seen and shared by all modules that declare them, thus making guaranteeing
-//! that the modules speak the same language, so to speak.
+//! A pointer to the module interface is obtained by calling asIScriptEngine::GetModule. The module can
+//! then be \ref asIScriptModule::Build "built" from a single or multiple script files, also known as script sections. Alternatively
+//! pre-built bytecode can be \ref asIScriptModule::LoadByteCode "loaded", if it has been saved from a previous build.
+//! 
+//! \see \ref doc_module
 class asIScriptModule
 {
 public:
