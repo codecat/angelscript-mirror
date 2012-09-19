@@ -26,7 +26,7 @@ bool Test()
 			script =
 				"mixin class Test {\n"
 				"  void Method() {} \n"
-				"  int Property; \n"
+				"  int Prop1, Prop2; \n"
 				"} \n";
 
 			mod->AddScriptSection("", script);

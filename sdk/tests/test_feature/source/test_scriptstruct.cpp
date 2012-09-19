@@ -240,6 +240,20 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+	// Test declaring multiple properties in same declaration separated by ,
+	{
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"class A { \n"
+			"  int a, b, c; \n"
+			"  void f() { a = b = c; } \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+	}
+
+
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1);
 	r = mod->Build();

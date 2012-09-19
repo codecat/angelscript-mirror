@@ -291,7 +291,7 @@ byte values that might not be possible to write in your normal editor.
 
 
 <pre>
-  string str1 = "This is a string with \"escape sequences\".";
+  string str1 = "This is a string with \"escape sequences\" .";
   string str2 = 'If single quotes are used then double quotes can be included without "escape sequences".';
 </pre>
 

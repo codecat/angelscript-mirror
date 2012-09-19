@@ -2281,15 +2281,20 @@ void asCBuilder::CompileClasses()
 		{
 			if( node->nodeType == snDeclaration )
 			{
-				bool isPrivate = false;
-				if( node->firstChild && node->firstChild->tokenType == ttPrivate )
-					isPrivate = true;
+				asCScriptNode *n = node->firstChild;
 
+				// Is the property declared as private?
+				bool isPrivate = false;
+				if( n && n->tokenType == ttPrivate )
+				{
+					isPrivate = true;
+					n = n->next;
+				}
+
+				// Determine the type of the property
 				asCScriptCode *file = decl->script;
 				// TODO: namespace: Use correct implicit namespace
-				asCDataType dt = CreateDataTypeFromNode(isPrivate ? node->firstChild->next : node->firstChild, file, engine->nameSpaces[0]);
-				asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
-
+				asCDataType dt = CreateDataTypeFromNode(n, file, engine->nameSpaces[0]);
 				if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 				{
 					asCString msg;
@@ -2300,9 +2305,15 @@ void asCBuilder::CompileClasses()
 				if( dt.IsReadOnly() )
 					WriteError(TXT_PROPERTY_CANT_BE_CONST, file, node);
 
-				CheckNameConflictMember(decl->objType, name.AddressOf(), node->lastChild, file, true);
-
-				AddPropertyToClass(decl, name, dt, isPrivate, file, node);
+				// Multiple properties can be declared separated by ,
+				n = n->next;
+				while( n )
+				{
+					asCString name(&file->code[n->tokenPos], n->tokenLength);
+					CheckNameConflictMember(decl->objType, name.AddressOf(), n, file, true);
+					AddPropertyToClass(decl, name, dt, isPrivate, file, node);
+					n = n->next;
+				}
 			}
 			else
 				asASSERT(false);
@@ -2630,14 +2641,17 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 			{
 				if( n->nodeType == snDeclaration )
 				{
+					asCScriptNode *n2 = n->firstChild;
 					bool isPrivate = false;
-					if( n->firstChild && n->firstChild->tokenType == ttPrivate )
+					if( n2 && n2->tokenType == ttPrivate )
+					{
 						isPrivate = true;
+						n2 = n2->next;
+					}
 
 					asCScriptCode *file = mixin->script;
 					// TODO: namespace: Use correct implicit namespace from mixin
-					asCDataType dt = CreateDataTypeFromNode(isPrivate ? n->firstChild->next : n->firstChild, file, engine->nameSpaces[0]);
-					asCString name(&file->code[n->lastChild->tokenPos], n->lastChild->tokenLength);
+					asCDataType dt = CreateDataTypeFromNode(n2, file, engine->nameSpaces[0]);
 
 					if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 					{
@@ -2650,23 +2664,31 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 					if( dt.IsReadOnly() )
 						WriteError(TXT_PROPERTY_CANT_BE_CONST, file, n);
 
-					// Add the property only if it doesn't already exist in the class
-					bool exists = false;
-					for( asUINT p = 0; p < decl->objType->properties.GetLength(); p++ )
-						if( decl->objType->properties[p]->name == name )
+					n2 = n2->next;
+					while( n2 )
+					{
+						asCString name(&file->code[n2->tokenPos], n2->tokenLength);
+
+						// Add the property only if it doesn't already exist in the class
+						bool exists = false;
+						for( asUINT p = 0; p < decl->objType->properties.GetLength(); p++ )
+							if( decl->objType->properties[p]->name == name )
+							{
+								exists = true;
+								break;
+							}
+
+						if( !exists )
 						{
-							exists = true;
-							break;
+							// It must not conflict with the name of methods
+							int r = CheckNameConflictMember(decl->objType, name.AddressOf(), n2, file, true);
+							if( r < 0 )
+								WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
+
+							AddPropertyToClass(decl, name, dt, isPrivate, file, n);
 						}
 
-					if( !exists )
-					{
-						// It must not conflict with the name of methods
-						int r = CheckNameConflictMember(decl->objType, name.AddressOf(), n->lastChild, file, true);
-						if( r < 0 )
-							WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
-
-						AddPropertyToClass(decl, name, dt, isPrivate, file, n);
+						n2 = n2->next;
 					}
 				}	
 

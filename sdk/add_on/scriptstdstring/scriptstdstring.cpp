@@ -88,8 +88,7 @@ static const string &StringFactory(asUINT length, const char *s)
 	if( it == pool->end() )
 	{
 		// Create a new string object
-		pool->insert(map<const char *, string>::value_type(s, string(s, length)));
-		it = pool->find(s);
+		it = pool->insert(map<const char *, string>::value_type(s, string(s, length))).first;
 	}
 
 	asReleaseExclusiveLock();
