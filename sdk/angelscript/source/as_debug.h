@@ -68,7 +68,7 @@ BEGIN_AS_NAMESPACE
 struct TimeCount
 {
 	double time;
-	int count;
+	int    count;
 	double max;
 	double min;
 };
@@ -78,16 +78,6 @@ class CProfiler
 public:
 	CProfiler()
 	{
-		_mkdir("AS_DEBUG");
-		#if _MSC_VER >= 1500 
-			fopen_s(&fp, "AS_DEBUG/profiling.xml", "wt");
-		#else
-			fp = fopen("AS_DEBUG/profiling.xml", "wt");
-		#endif
-
-		if( fp )
-			fprintf(fp, "<profiling>\n");
-
 		// We need to know how often the clock is updated
 		__int64 tps;
 		if( !QueryPerformanceFrequency((LARGE_INTEGER *)&tps) )
@@ -103,13 +93,7 @@ public:
 
 	~CProfiler()
 	{
-		if( fp )
-		{
-			fprintf(fp, "</profiling>\n");
-			fclose(fp);
-		}
-		
-		Analyze();
+		WriteSummary();
 	}
 
 	double GetTime()
@@ -129,7 +113,10 @@ public:
 	{
 		double time = GetTime();
 
-		fprintf(fp, "<s name=\"%s\">\n", name);
+		// Add the scope to the key
+		if( key.GetLength() )
+			key += "|";
+		key += name;
 
 		// Compensate for the time spent writing to the file
 		timeOffset += GetTime() - time;
@@ -141,86 +128,42 @@ public:
 	{
 		double time = GetTime();
 
-		fprintf(fp, "<timing begin=\"%f\" elapsed=\"%f\"/>\n</s>\n", 
-			    beginTime, time - beginTime);
+		double elapsed = time - beginTime;
+
+		// Update the profile info for this scope
+		asSMapNode<asCString, TimeCount> *cursor;
+		if( map.MoveTo(&cursor, key) )
+		{
+			cursor->value.time += elapsed;
+			cursor->value.count++;
+			if( cursor->value.max < elapsed ) 
+				cursor->value.max = elapsed;
+			if( cursor->value.min > elapsed ) 
+				cursor->value.min = elapsed;
+		}
+		else
+		{
+			TimeCount tc = {elapsed, 1, elapsed, elapsed};
+			map.Insert(key, tc);
+		}
+
+		// Remove the inner most scope from the key
+		int n = key.FindLast("|");
+		if( n > 0 )
+			key.SetLength(n);
+		else
+			key.SetLength(0);
 
 		// Compensate for the time spent writing to the file
 		timeOffset += GetTime() - time;
 	}
 	
 protected:
-	void Analyze()
+	void WriteSummary()
 	{
-		#if _MSC_VER >= 1500 
-			fopen_s(&fp, "AS_DEBUG/profiling.xml", "rt");
-		#else
-			fp = fopen("AS_DEBUG/profiling.xml", "rt");
-		#endif
-		if( fp == 0 )
-			return;
-
-		char buf[500];
-		int indent = 0;
-
-		asCString key;
-		asCMap<asCString, TimeCount> map;
-
-		// Skip <profiling>
-		fgets(buf, 500, fp);
-
-		// Read each line until </profiling>
-		fgets(buf, 500, fp);
-		while( strcmp(buf, "</profiling>\n") != 0 )
-		{
-			if( strncmp(buf, "<s", 2) == 0 )
-			{
-				indent++;
-				strtok(buf, "\"");
-				const char *name = strtok(0, "\"");
-
-				if( key.GetLength() )
-					key += "|";
-				key += name;
-			}
-			else if( strncmp(buf, "</s>", 4) == 0 )
-			{
-				indent--;
-				int n = key.FindLast("|");
-				if( n > 0 )
-					key.SetLength(n);
-				else
-					key.SetLength(0);
-			}
-			else 
-			{
-				strtok(buf, "\"");
-				strtok(0, "\""); 
-				strtok(0, "\""); 
-				const char *elapsed = strtok(0, "\"");
-				double time = asStringScanDouble(elapsed, 0);
-
-				asSMapNode<asCString, TimeCount> *cursor;
-				if( map.MoveTo(&cursor, key) )
-				{
-					cursor->value.time += time;
-					cursor->value.count++;
-					if( cursor->value.max < time ) 
-						cursor->value.max = time;
-					if( cursor->value.min > time ) 
-						cursor->value.min = time;
-				}
-				else
-				{
-					TimeCount tc = {time, 1, time, time};
-					map.Insert(key, tc);
-				}
-			}
-			fgets(buf, 500, fp);
-		}
-
-		fclose(fp);
-
 		// Write the analyzed info into a file for inspection
+		_mkdir("AS_DEBUG");
+		FILE *fp;
 		#if _MSC_VER >= 1500 
 			fopen_s(&fp, "AS_DEBUG/profiling_summary.txt", "wt");
 		#else
@@ -251,11 +194,12 @@ protected:
 		fclose(fp);
 	}
 
-
-	FILE   *fp;
 	double  timeOffset;
 	double  ticksPerSecond;
 	bool    usePerformance;
+
+	asCString                    key;
+	asCMap<asCString, TimeCount> map;
 };
 
 extern CProfiler g_profiler;
