@@ -51,8 +51,19 @@
 #include "as_scriptobject.h"
 #include "as_compiler.h"
 #include "as_bytecode.h"
+#include "as_debug.h"
 
 BEGIN_AS_NAMESPACE
+
+
+
+#ifdef AS_PROFILE
+// Instanciate the profiler once
+CProfiler g_profiler;
+#endif
+
+
+
 
 extern "C"
 {
@@ -217,6 +228,9 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 
 	return asNEW(asCScriptEngine)();
 }
+
+} // extern "C"
+
 
 int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 {
@@ -387,12 +401,6 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	return 0;
 }
-
-} // extern "C"
-
-
-
-
 
 asCScriptEngine::asCScriptEngine() 
 {

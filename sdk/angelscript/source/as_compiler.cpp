@@ -47,6 +47,7 @@
 #include "as_string_util.h"
 #include "as_texts.h"
 #include "as_parser.h"
+#include "as_debug.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -238,6 +239,8 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 
 void asCCompiler::FinalizeFunction()
 {
+	TimeIt("asCCompiler::FinalizeFunction");
+
 	asUINT n;
 
 	// Tell the bytecode which variables are temporary
@@ -291,6 +294,8 @@ void asCCompiler::FinalizeFunction()
 // Entry
 int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
 {
+	TimeIt("asCCompiler::CompileFunction");
+
 	// TODO: The compiler should take the return type and parameter types from the 
 	//       outFunc, instead of interpreting the script nodes again. The builder
 	//       must pass the list of parameter names. Making this change we can
@@ -504,6 +509,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		blockBegin = func;
 
 	// TODO: memory: We can parse the statement block one statement at a time, thus save even more memory
+	// TODO: optimize: For large functions, the parsing of the statement block can take a long time. Presumably because a lot of memory needs to be allocated
 	asCParser parser(builder);
 	int r = parser.ParseStatementBlock(script, blockBegin);
 	if( r < 0 ) return -1;

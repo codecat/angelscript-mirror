@@ -41,6 +41,7 @@
 #include "as_parser.h"
 #include "as_tokendef.h"
 #include "as_texts.h"
+#include "as_debug.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4702) // unreachable code
@@ -1816,6 +1817,8 @@ asCScriptNode *asCParser::ParseNamespace()
 
 int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 {
+	TimeIt("asCParser::ParseStatementBlock");
+
 	Reset();
 
 	// Tell the parser to validate the identifiers as valid types

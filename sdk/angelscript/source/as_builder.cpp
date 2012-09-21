@@ -45,6 +45,7 @@
 #include "as_outputbuffer.h"
 #include "as_texts.h"
 #include "as_scriptobject.h"
+#include "as_debug.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -430,6 +431,8 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 
 void asCBuilder::ParseScripts()
 {
+	TimeIt("asCBuilder::ParseScripts");
+
 	asCArray<asCParser*> parsers((int)scripts.GetLength());
 
 	// Parse all the files as if they were one

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2007 Andreas Jonsson
+   Copyright (c) 2003-2012 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -36,6 +36,8 @@
 #ifndef AS_DEBUG_H
 #define AS_DEBUG_H
 
+#include "as_config.h"
+
 #ifndef AS_WII
 // The Wii SDK doesn't have these, we'll survive without AS_DEBUG
 
@@ -51,8 +53,252 @@
 #else
 #include <direct.h>
 #endif
-#endif
-#endif
+
+
+#if defined(_MSC_VER) && defined(AS_PROFILE)
+// Currently only do profiling with MSVC++
+
+#include <mmsystem.h>
+#include "as_string.h"
+#include "as_map.h"
+#include "as_string_util.h"
+
+BEGIN_AS_NAMESPACE
+
+struct TimeCount
+{
+	double time;
+	int count;
+	double max;
+	double min;
+};
+
+class CProfiler
+{
+public:
+	CProfiler()
+	{
+		_mkdir("AS_DEBUG");
+		#if _MSC_VER >= 1500 
+			fopen_s(&fp, "AS_DEBUG/profiling.xml", "wt");
+		#else
+			fp = fopen("AS_DEBUG/profiling.xml", "wt");
+		#endif
+
+		if( fp )
+			fprintf(fp, "<profiling>\n");
+
+		// We need to know how often the clock is updated
+		__int64 tps;
+		if( !QueryPerformanceFrequency((LARGE_INTEGER *)&tps) )
+			usePerformance = false;
+		else
+		{
+			usePerformance = true;
+			ticksPerSecond = double(tps);
+		}
+
+		timeOffset = GetTime();
+	}
+
+	~CProfiler()
+	{
+		if( fp )
+		{
+			fprintf(fp, "</profiling>\n");
+			fclose(fp);
+		}
+		
+		Analyze();
+	}
+
+	double GetTime()
+	{
+		if( usePerformance )
+		{
+			__int64 ticks;
+			QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
+
+			return double(ticks)/ticksPerSecond - timeOffset;
+		}
+		
+		return double(timeGetTime())/1000.0 - timeOffset;
+	}
+
+	double Begin(const char *name)
+	{
+		double time = GetTime();
+
+		fprintf(fp, "<s name=\"%s\">\n", name);
+
+		// Compensate for the time spent writing to the file
+		timeOffset += GetTime() - time;
+
+		return time;
+	}
+
+	void End(const char *name, double beginTime)
+	{
+		double time = GetTime();
+
+		fprintf(fp, "<timing begin=\"%f\" elapsed=\"%f\"/>\n</s>\n", 
+			    beginTime, time - beginTime);
+
+		// Compensate for the time spent writing to the file
+		timeOffset += GetTime() - time;
+	}
+	
+protected:
+	void Analyze()
+	{
+		#if _MSC_VER >= 1500 
+			fopen_s(&fp, "AS_DEBUG/profiling.xml", "rt");
+		#else
+			fp = fopen("AS_DEBUG/profiling.xml", "rt");
+		#endif
+		if( fp == 0 )
+			return;
+
+		char buf[500];
+		int indent = 0;
+
+		asCString key;
+		asCMap<asCString, TimeCount> map;
+
+		// Skip <profiling>
+		fgets(buf, 500, fp);
+
+		// Read each line until </profiling>
+		fgets(buf, 500, fp);
+		while( strcmp(buf, "</profiling>\n") != 0 )
+		{
+			if( strncmp(buf, "<s", 2) == 0 )
+			{
+				indent++;
+				strtok(buf, "\"");
+				const char *name = strtok(0, "\"");
+
+				if( key.GetLength() )
+					key += "|";
+				key += name;
+			}
+			else if( strncmp(buf, "</s>", 4) == 0 )
+			{
+				indent--;
+				int n = key.FindLast("|");
+				if( n > 0 )
+					key.SetLength(n);
+				else
+					key.SetLength(0);
+			}
+			else 
+			{
+				strtok(buf, "\"");
+				strtok(0, "\""); 
+				strtok(0, "\""); 
+				const char *elapsed = strtok(0, "\"");
+				double time = asStringScanDouble(elapsed, 0);
+
+				asSMapNode<asCString, TimeCount> *cursor;
+				if( map.MoveTo(&cursor, key) )
+				{
+					cursor->value.time += time;
+					cursor->value.count++;
+					if( cursor->value.max < time ) 
+						cursor->value.max = time;
+					if( cursor->value.min > time ) 
+						cursor->value.min = time;
+				}
+				else
+				{
+					TimeCount tc = {time, 1, time, time};
+					map.Insert(key, tc);
+				}
+			}
+			fgets(buf, 500, fp);
+		}
+
+		fclose(fp);
+
+		// Write the analyzed info into a file for inspection
+		#if _MSC_VER >= 1500 
+			fopen_s(&fp, "AS_DEBUG/profiling_summary.txt", "wt");
+		#else
+			fp = fopen("AS_DEBUG/profiling_summary.txt", "wt");
+		#endif
+		if( fp == 0 )
+			return;
+
+		fprintf(fp, "%-60s %10s %15s %15s %15s %15s\n\n", "Scope", "Count", "Tot time", "Avg time", "Max time", "Min time");
+
+		asSMapNode<asCString, TimeCount> *cursor;
+		map.MoveLast(&cursor);
+		while( cursor )
+		{
+			asCString key = cursor->key;
+			int count;
+			int n = key.FindLast("|", &count);
+			if( count )
+			{
+				key = asCString("                                               ", count) + key.SubString(n+1);
+			}
+
+			fprintf(fp, "%-60s %10d %15.6f %15.6f %15.6f %15.6f\n", key.AddressOf(), cursor->value.count, cursor->value.time, cursor->value.time / cursor->value.count, cursor->value.max, cursor->value.min);
+
+			map.MovePrev(&cursor, cursor);
+		}
+
+		fclose(fp);
+	}
+
+
+	FILE   *fp;
+	double  timeOffset;
+	double  ticksPerSecond;
+	bool    usePerformance;
+};
+
+extern CProfiler g_profiler;
+
+class CProfilerScope
+{
+public:
+	CProfilerScope(const char *name)
+	{
+		this->name = name;
+		beginTime = g_profiler.Begin(name);
+	}
+
+	~CProfilerScope()
+	{
+		g_profiler.End(name, beginTime);
+	}
+
+protected:
+	const char *name;
+	double      beginTime;
+};
+
+#define TimeIt(x) CProfilerScope profilescope(x)
+
+END_AS_NAMESPACE
+
+#else // _MSC_VER && AS_PROFILE
+
+// Define it so nothing is done
+#define TimeIt(x) 
+
+#endif // !(_MSC_VER && AS_PROFILE)
+
+
+
+
+
+
+
+
+#endif // _WIN32_WCE
+#endif // AS_WII
 
 #endif
 
