@@ -469,6 +469,11 @@ void asCBuilder::ParseScripts()
 		{
 			sClassDeclaration *decl = interfaceDeclarations[n];
 			asCScriptNode *node = decl->node->firstChild->next;
+
+			// Skip list of inherited interfaces
+			while( node && node->nodeType == snIdentifier )
+				node = node->next;
+
 			while( node )
 			{
 				asCScriptNode *next = node->next;

@@ -204,6 +204,23 @@ bool Test()
 		engine->Release();			
 	}
 
+	// Allow script declared interfaces to inherit from other interfaces
+/*	{
+		const char *script = 
+			"interface A { void a(); } \n"
+			"interface B : A { void b(); } \n"
+			"class C : B {} \n"; // Must implement both a() and b()
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		engine->Release();			
+	}
+*/
 	// Success
 	return fail;
 }

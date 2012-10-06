@@ -2540,7 +2540,27 @@ asCScriptNode *asCParser::ParseInterface()
 
 	node->AddChildLast(ParseIdentifier());
 
+	// Can optionally have a list of interfaces that are inherited
 	GetToken(&t);
+	if( t.type == ttColon )
+	{
+		asCScriptNode *inherit = CreateNode(snIdentifier);
+		node->AddChildLast(inherit);
+
+		ParseOptionalScope(inherit);
+		inherit->AddChildLast(ParseIdentifier());
+		GetToken(&t);
+		while( t.type == ttListSeparator )
+		{
+			inherit = CreateNode(snIdentifier);
+			node->AddChildLast(inherit);
+
+			ParseOptionalScope(inherit);
+			inherit->AddChildLast(ParseIdentifier());
+			GetToken(&t);
+		}
+	}
+
 	if( t.type != ttStartStatementBlock )
 	{
 		Error(ExpectedToken("{").AddressOf(), &t);
