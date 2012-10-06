@@ -428,6 +428,21 @@ bool Test()
 		engine->Release();
 	}
 
+	// Reported by slicer4ever
+	// http://www.gamedev.net/topic/632288-registering-specialized-template-class/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = engine->RegisterObjectType("ConvexHull", 0, asOBJ_REF|asOBJ_NOCOUNT);
+		r = engine->RegisterObjectType("LLObject<class T>", 0, asOBJ_REF|asOBJ_NOCOUNT|asOBJ_TEMPLATE);
+		r = engine->RegisterObjectType("LLObject<ConvexHull@>", 0, asOBJ_REF|asOBJ_NOCOUNT);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
  	return fail;
 }
 
