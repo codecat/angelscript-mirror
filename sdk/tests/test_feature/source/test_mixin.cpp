@@ -310,6 +310,25 @@ bool Test()
 			}
 		}
 
+		// mixin class declared in a different section than the class that will use it
+		{
+			const char *script1 =
+				"mixin class Mix { void func() {} }\n";
+			const char *script2 =
+				"class Clss : Mix {}\n";
+
+			mod->AddScriptSection("mix", script1);
+			mod->AddScriptSection("clss", script2);
+			bout.buffer = "";
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+		}
 
 		engine->Release();
 	}
