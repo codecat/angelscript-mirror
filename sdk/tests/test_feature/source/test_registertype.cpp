@@ -13,6 +13,12 @@ bool TestRefScoped();
 
 bool TestHelper();
 
+int g_widget;
+int *CreateWidget()
+{
+	return &g_widget;
+}
+
 bool Test()
 {
 	bool fail = TestHelper();
@@ -22,6 +28,47 @@ bool Test()
 	CBufferedOutStream bout;
  	asIScriptEngine *engine;
 	const char *script;
+
+	// Problem reported by FDsagizi
+	// http://www.gamedev.net/topic/632067-asassert-call-release-method-from-object-with-out-ref-counting/
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		r = engine->RegisterObjectType( "Widget", 0,  asOBJ_REF | asOBJ_NOCOUNT ); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("Widget @CreateWidget()", asFUNCTION(CreateWidget), asCALL_CDECL); assert( r >= 0 );
+
+		const char *script = 
+			"class NoRef\n"
+			"{\n"
+			"         Widget @no_ref_count;\n"
+			"}\n"
+			"void startGame()\n"
+			"{\n"
+			"         NoRef nr;\n"
+			"         @nr.no_ref_count = CreateWidget();\n"
+			"         NoRef nr2 = nr;\n"
+			"}\n";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "startGame()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// A type registered with asOBJ_REF must not register destructor
 	bout.buffer = "";

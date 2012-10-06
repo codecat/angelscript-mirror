@@ -630,10 +630,13 @@ void asCScriptObject::CopyObject(void *src, void *dst, asCObjectType *objType, a
 
 void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *objType, asCScriptEngine *engine)
 {
-	if( *dst )
+	// asOBJ_NOCOUNT doesn't have addref or release behaviours
+	asASSERT( (objType->flags & asOBJ_NOCOUNT) || (objType->beh.release && objType->beh.addref) );
+
+	if( *dst && objType->beh.release )
 		engine->CallObjectMethod(*(void**)dst, objType->beh.release);
 	*dst = *src;
-	if( *dst )
+	if( *dst && objType->beh.addref )
 		engine->CallObjectMethod(*(void**)dst, objType->beh.addref);
 }
 
