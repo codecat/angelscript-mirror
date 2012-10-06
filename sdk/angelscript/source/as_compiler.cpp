@@ -8251,6 +8251,20 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( op == ttPlus || op == ttMinus )
 	{
+		// This is only for primitives. Objects are treated in the above block
+
+		// Make sure the type is a math type
+		if( !(ctx->type.dataType.IsIntegerType()  ||
+			  ctx->type.dataType.IsUnsignedType() ||
+			  ctx->type.dataType.IsEnumType()     ||
+			  ctx->type.dataType.IsFloatType()    ||
+			  ctx->type.dataType.IsDoubleType()     ) )
+		{
+			Error(TXT_ILLEGAL_OPERATION, node);
+			return -1;
+		}
+
+
 		ProcessPropertyGetAccessor(ctx, node);
 
 		asCDataType to = ctx->type.dataType;
@@ -8320,17 +8334,6 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 				}
 
 				return 0;
-			}
-		}
-
-		if( op == ttPlus )
-		{
-			if( !ctx->type.dataType.IsIntegerType() &&
-				!ctx->type.dataType.IsFloatType() &&
-				!ctx->type.dataType.IsDoubleType() )
-			{
-				Error(TXT_ILLEGAL_OPERATION, node);
-				return -1;
 			}
 		}
 	}

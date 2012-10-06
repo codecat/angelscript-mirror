@@ -206,6 +206,42 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by FDsagizi
+	// http://www.gamedev.net/topic/632123-compiler-assertion/
+	{
+		const char *script = 
+			"void startGame() \n"
+			"{ \n"
+			"		 array<int> arr; \n"
+			"		 string s; \n"
+			"		 s +- \n"
+			"		 arr.insertLast( 1 ); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+		
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void startGame()\n"
+		                   "test (5, 7) : Error   : Illegal operation on this datatype\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Problem reported by Polyak Istvan
 	{
 		const char *script = 
