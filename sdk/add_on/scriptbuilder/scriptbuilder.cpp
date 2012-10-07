@@ -272,22 +272,25 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
 
-			currentClass = modifiedScript.substr(pos,len);
-			
-			// Search until first { is encountered
-			while( pos < modifiedScript.length() )
+			if( t == asTC_IDENTIFIER )
 			{
-				engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-			
-				// If start of class section encountered stop
-				if( modifiedScript[pos] == '{' ) 
+				currentClass = modifiedScript.substr(pos,len);
+				
+				// Search until first { is encountered
+				while( pos < modifiedScript.length() )
 				{
-					pos += len;
-					break;
-				}
+					engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+				
+					// If start of class section encountered stop
+					if( modifiedScript[pos] == '{' ) 
+					{
+						pos += len;
+						break;
+					}
 
-				// Check next symbol
-				pos += len;
+					// Check next symbol
+					pos += len;
+				}
 			}
 
 			continue;

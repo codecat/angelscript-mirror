@@ -145,6 +145,7 @@ bool Test()
 
 	// http://www.gamedev.net/topic/624445-cscriptbuilder-asset-string-subscript-out-of-range/
 	{
+		bout.buffer = "";
 		CScriptBuilder builder;
 		builder.StartNewModule(engine, "mod");
 		builder.AddSectionFromMemory("#");
@@ -153,6 +154,24 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != " (1, 1) : Error   : Unexpected token '<unrecognized token>'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+	// http://www.gamedev.net/topic/631848-cscriptbuilder-bug/
+	{
+		bout.buffer = "";
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("class ");
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = builder.BuildModule();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != " (1, 7) : Error   : Expected identifier\n"
+		                   " (1, 7) : Error   : Expected '{'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
