@@ -581,6 +581,7 @@
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
 			#define AS_X86
+			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#undef COMPLEX_MASK
 			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 			#undef COMPLEX_RETURN_MASK
@@ -660,6 +661,13 @@
 		#if defined(i386) && !defined(__LP64__)
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
+
+			// As of version 4.7 MinGW no longer passes the object pointer on the stack
+			// presumably this change was made to be better aligned with how MSVC works
+			#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
+				#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
+			#endif
+
 		#elif defined(__x86_64__)
 			#define AS_X64_MINGW
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
@@ -685,6 +693,7 @@
 			#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 
 			// Support native calling conventions on Intel 32bit CPU
+			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
 		#elif defined(__LP64__)
 			#define AS_X64_GCC
@@ -735,6 +744,7 @@
 			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
 			#undef COMPLEX_RETURN_MASK
 			#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
 		#elif defined(__LP64__)
 			#define AS_X64_GCC
@@ -836,6 +846,7 @@
 		// for future compatibility
 		#if defined(i386) && !defined(__LP64__)
 			#define AS_X86
+			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
@@ -857,6 +868,7 @@
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 
 			// Support native calling conventions on Intel 32bit CPU
+			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
 		#elif defined(__LP64__)
 			#define AS_X64_GCC

@@ -269,6 +269,11 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			do 
 			{
 				pos += len;
+				if( pos >= modifiedScript.size() )
+				{
+					t = asTC_UNKNOWN;
+					break;
+				}
 				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
 

@@ -1091,11 +1091,14 @@ endcopy:
 		"jne   copyloop1        \n"
 		"endcopy1:              \n"
 		"movl  0(%%ebx), %%ecx  \n" // move obj into ECX
+#ifdef THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 		"pushl %%ecx            \n" // push obj on the stack
+#endif
 		"call  *12(%%ebx)       \n"
 		"addl  8(%%ebx), %%esp  \n" // pop arguments
+#ifdef THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 		"addl  $4, %%esp        \n" // pop obj
-
+#endif
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n" 
@@ -1215,14 +1218,18 @@ endcopy:
 		"jne   copyloop3       \n"
 		"endcopy3:             \n"
 		"movl  0(%%ebx), %%ecx \n" // move obj into ECX
+#ifdef THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 		"pushl %%ecx           \n" // push obj on the stack
+#endif
 		"pushl 16(%%ebx)       \n" // push retPtr on the stack
 		"call  *12(%%ebx)      \n"
 #ifndef THISCALL_CALLEE_POPS_HIDDEN_RETURN_POINTER
 		"addl  $4, %%esp       \n" // pop return pointer
 #endif
 		"addl  8(%%ebx), %%esp \n" // pop arguments
+#ifdef THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 		"addl  $4, %%esp       \n" // pop the object pointer
+#endif
 		                           // the return pointer was popped by the callee
 		// Pop the alignment bytes
 		"popl  %%esp           \n"
