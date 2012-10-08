@@ -55,6 +55,8 @@ static const char *script3 =
 "    thing.foo(); // Null dereference  \n"
 "}                                     \n";
 
+static int CObject_constructCount = 0;
+static int CObject_destructCount = 0;
 class CObject
 {
 public:
@@ -64,11 +66,13 @@ public:
 		mem = new int[1]; 
 		*mem = ('M' | ('e'<<8) | ('m'<<16) | (' '<<24)); 
 		//printf("C: %x\n", this);
+		CObject_constructCount++;
 	}
 	~CObject() 
 	{
 		delete[] mem; 
 		//printf("D: %x\n", this);
+		CObject_destructCount++;
 	}
 	int val;
 	int *mem;
@@ -111,6 +115,11 @@ void RefObjFactory_gen(asIScriptGeneric *gen)
 }
 
 void Construct(CObject *o)
+{
+	new(o) CObject();
+}
+
+void CopyConstruct(const CObject &, CObject *o)
 {
 	new(o) CObject();
 }
@@ -406,6 +415,58 @@ bool Test()
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
 		
+		engine->Release();
+	}
+
+	// Test problem reported by FDsagizi
+	// http://www.gamedev.net/topic/631801-pod-type-and-null-pointer-exception-bug-with-call-destructor/
+	{
+		COutStream out;
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("TestLink", sizeof(CObject), asOBJ_VALUE | asOBJ_APP_CLASS_CD);	
+		engine->RegisterObjectBehaviour("TestLink", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("TestLink", asBEHAVE_CONSTRUCT, "void f(const TestLink &in)", asFUNCTION(CopyConstruct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("TestLink", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Object3 \n"
+			"{ \n"
+			"    Object3( TestLink str ) \n"
+			"    { \n"
+			"        Object3 @null_object = null; \n"
+			"        null_object.Do(); \n"
+			"    } \n"
+			"    void Do() {} \n"
+			"} \n"
+			"void Main() \n"
+			"{ \n"
+			"   Object3 @oo = Object3( TestLink() ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CObject_constructCount = 0;
+		CObject_destructCount = 0;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Main()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		if( CObject_constructCount != 2 ||
+			CObject_destructCount != 1 )
+			TEST_FAILED;
+
+		ctx->Release();
+
+		if( CObject_constructCount != 2 ||
+			CObject_destructCount != 2 )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
