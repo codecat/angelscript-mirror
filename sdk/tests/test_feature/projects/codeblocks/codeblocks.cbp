@@ -39,6 +39,11 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="..\..\..\..\add_on\autowrapper\aswrappedcall.h" />
+		<Unit filename="..\..\..\..\add_on\contextmgr\contextmgr.cpp" />
+		<Unit filename="..\..\..\..\add_on\contextmgr\contextmgr.h" />
+		<Unit filename="..\..\..\..\add_on\debugger\debugger.cpp" />
+		<Unit filename="..\..\..\..\add_on\debugger\debugger.h" />
 		<Unit filename="..\..\..\..\add_on\scriptany\scriptany.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptany\scriptany.h" />
 		<Unit filename="..\..\..\..\add_on\scriptarray\scriptarray.cpp" />
@@ -53,10 +58,11 @@
 		<Unit filename="..\..\..\..\add_on\scripthandle\scripthandle.h" />
 		<Unit filename="..\..\..\..\add_on\scripthelper\scripthelper.cpp" />
 		<Unit filename="..\..\..\..\add_on\scripthelper\scripthelper.h" />
-		<Unit filename="..\..\..\..\add_on\scriptmath3d\scriptmath3d.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptmath3d\scriptmath3d.h" />
 		<Unit filename="..\..\..\..\add_on\scriptmath\scriptmath.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptmath\scriptmath.h" />
+		<Unit filename="..\..\..\..\add_on\scriptmath\scriptmathcomplex.cpp" />
+		<Unit filename="..\..\..\..\add_on\scriptmath\scriptmathcomplex.h" />
 		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring.cpp" />
 		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring.h" />
 		<Unit filename="..\..\..\..\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
@@ -68,15 +74,20 @@
 		<Unit filename="..\..\source\bstr.h" />
 		<Unit filename="..\..\source\cstring.h" />
 		<Unit filename="..\..\source\main.cpp" />
+		<Unit filename="..\..\source\scriptmath3d.cpp" />
+		<Unit filename="..\..\source\scriptmath3d.h" />
 		<Unit filename="..\..\source\scriptstring.cpp" />
 		<Unit filename="..\..\source\scriptstring.h" />
 		<Unit filename="..\..\source\scriptstring_utils.cpp" />
 		<Unit filename="..\..\source\stdvector.h" />
 		<Unit filename="..\..\source\test2modules.cpp" />
 		<Unit filename="..\..\source\test_2func.cpp" />
+		<Unit filename="..\..\source\test_addon_debugger.cpp" />
+		<Unit filename="..\..\source\test_addon_dictionary.cpp" />
 		<Unit filename="..\..\source\test_addon_scriptarray.cpp" />
 		<Unit filename="..\..\source\test_addon_scriptbuilder.cpp" />
 		<Unit filename="..\..\source\test_addon_scripthandle.cpp" />
+		<Unit filename="..\..\source\test_addon_scriptmath.cpp" />
 		<Unit filename="..\..\source\test_addon_serializer.cpp" />
 		<Unit filename="..\..\source\test_any.cpp" />
 		<Unit filename="..\..\source\test_argref.cpp" />
@@ -89,6 +100,7 @@
 		<Unit filename="..\..\source\test_bits.cpp" />
 		<Unit filename="..\..\source\test_bool.cpp" />
 		<Unit filename="..\..\source\test_castop.cpp" />
+		<Unit filename="..\..\source\test_cdecl_objlast.cpp" />
 		<Unit filename="..\..\source\test_cdecl_return.cpp" />
 		<Unit filename="..\..\source\test_circularimport.cpp" />
 		<Unit filename="..\..\source\test_compiler.cpp" />
@@ -106,7 +118,6 @@
 		<Unit filename="..\..\source\test_defaultarg.cpp" />
 		<Unit filename="..\..\source\test_destructor.cpp" />
 		<Unit filename="..\..\source\test_dict.cpp" />
-		<Unit filename="..\..\source\test_dictionary.cpp" />
 		<Unit filename="..\..\source\test_discard.cpp" />
 		<Unit filename="..\..\source\test_dump.cpp" />
 		<Unit filename="..\..\source\test_dynamicconfig.cpp" />
@@ -130,8 +141,10 @@
 		<Unit filename="..\..\source\test_inheritance.cpp" />
 		<Unit filename="..\..\source\test_int8.cpp" />
 		<Unit filename="..\..\source\test_interface.cpp" />
+		<Unit filename="..\..\source\test_mixin.cpp" />
 		<Unit filename="..\..\source\test_module.cpp" />
 		<Unit filename="..\..\source\test_multiassign.cpp" />
+		<Unit filename="..\..\source\test_namespace.cpp" />
 		<Unit filename="..\..\source\test_nested.cpp" />
 		<Unit filename="..\..\source\test_nevervisited.cpp" />
 		<Unit filename="..\..\source\test_notinitialized.cpp" />
