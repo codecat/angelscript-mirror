@@ -267,8 +267,6 @@ void asCScriptObject::Destruct()
 
 asCScriptObject::~asCScriptObject()
 {
-	objType->Release();
-
 	// The engine pointer should be available from the objectType
 	asCScriptEngine *engine = objType->engine;
 
@@ -287,6 +285,8 @@ asCScriptObject::~asCScriptObject()
 			}
 		}
 	}
+
+	objType->Release();
 }
 
 asIScriptEngine *asCScriptObject::GetEngine() const

@@ -679,6 +679,8 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 				ReadDataType(&var->type);
 			}
 		}
+
+		ReadData(&func->dontCleanUpOnException, 1);
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{
@@ -2846,6 +2848,8 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				WriteDataType(&func->variables[i]->type);
 			}
 		}
+
+		WriteData(&func->dontCleanUpOnException, 1);
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
 	{

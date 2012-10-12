@@ -467,6 +467,29 @@ bool Test()
 			CObject_destructCount != 2 )
 			TEST_FAILED;
 
+		CBytecodeStream stream(__FILE__"1");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		r = mod->LoadByteCode(&stream); 
+		if( r < 0 )
+			TEST_FAILED;
+
+		CObject_constructCount = 0;
+		CObject_destructCount = 0;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Main()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		if( CObject_constructCount != 2 ||
+			CObject_destructCount != 1 )
+			TEST_FAILED;
+
+		ctx->Release();
+
 		engine->Release();
 	}
 
