@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.1 WIP - 2012/10/11</h2>
+<h2>Version 2.25.1 WIP - 2012/10/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,12 +24,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Registering template specializations for templates without default constructor is now working (Thanks slicer4ever)
 <li>Fixed compiler assert on unary negate operator on void expression (Thanks FDsagizi)
 <li>Fixed bug with NOCOUNT object when copying script class members (Thanks FDsagizi)
-<li>Fixed native thiscall on MinGW 4.7 (Thanks Heuristics)
 <li>Problem with exception handling after loading pre-compiled bytecode when class constructor takes object in argument (Thanks FDsagizi)
 </ul>
 <li>Library
 <ul>
 <li>Implemented an inline profiler to get better understanding of bottlenecks in the code
+<li>Added support for the new ABI in MinGW32 4.7 (Thanks Heuristics)
 </ul>
 <li>Script language
 <ul>
