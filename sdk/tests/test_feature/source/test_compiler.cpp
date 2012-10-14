@@ -148,6 +148,11 @@ static void StringLengthGeneric(asIScriptGeneric * gen) {
   *static_cast<asUINT *>(gen->GetAddressOfReturnLocation()) = (asUINT)self->length();
 }
 
+static bool StringEquals(const std::string& lhs, const std::string& rhs)
+{
+    return lhs == rhs;
+}
+
 static void AddString2IntGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   int * b = static_cast<int *>(gen->GetAddressOfArg(0));
@@ -209,7 +214,7 @@ bool Test()
 	// Problem reported by FDsagizi
 	// http://www.gamedev.net/topic/632123-compiler-assertion/
 	{
-		const char *script = 
+		const char *script =
 			"void startGame() \n"
 			"{ \n"
 			"		 array<int> arr; \n"
@@ -224,7 +229,7 @@ bool Test()
 		RegisterStdString(engine);
 
 		bout.buffer = "";
-		
+
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 
@@ -244,7 +249,7 @@ bool Test()
 
 	// Problem reported by Polyak Istvan
 	{
-		const char *script = 
+		const char *script =
 			"class X1 {} \n"
 			"class X2 \n"
 			"{ \n"
@@ -262,7 +267,7 @@ bool Test()
 			"    } \n"
 			"    const int & f4 (void) \n"
 			"    { \n"
-			"        return i1_; \n" // ok 
+			"        return i1_; \n" // ok
 			"    } \n"
 			"    int & f5 (void) const \n"
 			"    { \n"
@@ -316,7 +321,7 @@ bool Test()
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"class Data {\n"
 			"	int x;\n"
 			"	Data() {\n"
@@ -385,7 +390,7 @@ bool Test()
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"int DATE_YEAR { get { return 2012; } } \n"
 			"void alert( string t, string v ) { assert( v == '2012' ); } \n"
 			"void main() \n"
@@ -554,7 +559,7 @@ bool Test()
 
 	// Problem reported by ekimr
 	{
-		const char *script = 
+		const char *script =
 			"class END_MenuItem : Widget \n"
 			"{ \n"
 			"	END_MenuItem() \n"
@@ -612,10 +617,10 @@ bool Test()
 		r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterGlobalFunction("void alert(string &in, string &in)", asFUNCTION(AlertGeneric), asCALL_GENERIC); assert( r >= 0 );
-	
+
 		// This script should not compile, because true cannot be passed to int& in
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(TESTNAME, 
+		mod->AddScriptSection(TESTNAME,
 			"void string_contains_bulk(string the_string, string the_bulk)\n"
 			"{\n"
 			"  string_contains(the_bulk[0], true);\n"
@@ -635,7 +640,7 @@ bool Test()
 		}
 
 		// This script should correctly return the strings
-		mod->AddScriptSection(TESTNAME, 
+		mod->AddScriptSection(TESTNAME,
 			"void main() \n"
 			"{ \n"
 			"	string test='food'; \n"
@@ -669,7 +674,7 @@ bool Test()
 
 		engine->Release();
 	}
-	
+
 	// Problem reported by Philip Bennefall
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -683,12 +688,12 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(operator ==, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(StringEquals, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-	
+
 		// Condition was failing due to the string factory returning a const reference
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(TESTNAME, 
+		mod->AddScriptSection(TESTNAME,
 			"void func(int value)\n"
 			"{\n"
 			"  string result= (value<5) ? 'less than 5' : (value>8) ? 'Greater than 8' : 'greater than 5';\n"
@@ -717,7 +722,7 @@ bool Test()
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-		const char *script = 
+		const char *script =
 			"class AAA \n"
 			"{ \n"
 			"  Car @car; \n"
@@ -743,7 +748,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		mod->AddScriptSection(TESTNAME, 
+		mod->AddScriptSection(TESTNAME,
 			"class A{} \n"
 			"class SomeClass \n"
 			"{ \n"
@@ -775,7 +780,7 @@ bool Test()
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-		const char *script = 
+		const char *script =
 			"class BugClass \n"
 			"{ \n"
 			"         int ID; \n"
@@ -817,7 +822,7 @@ bool Test()
 
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, "void f(){\n  int a;\n  a(0)=0;}");
-		
+
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
@@ -845,7 +850,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		
+
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
@@ -871,7 +876,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		
+
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
@@ -904,7 +909,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		
+
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
 		r = mod->Build();
@@ -1185,7 +1190,7 @@ bool Test()
 	// Test 20
 	// Don't crash on invalid script code
 	bout.buffer = "";
-	const char *script20 = 
+	const char *script20 =
 		"class A { A @b; } \n"
 		"void test()       \n"
 		"{ A a; if( @a.b == a.GetClient() ) {} } \n";
@@ -1227,7 +1232,7 @@ bool Test()
 
 	// Test 22
 	bout.buffer = "";
-	const char *script22 = 
+	const char *script22 =
 		"class Some{} \n"
 		"void Func(Some@ some) \n"
 		"{ \n"
@@ -1423,7 +1428,7 @@ bool Test()
 
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
-		const char *script = 
+		const char *script =
 			"void test(int a) { }        \n"
 			"void test(float a) { }      \n"
 			"void test(bool c) { }       \n"
@@ -1464,7 +1469,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// 
+	//
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -1496,7 +1501,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-		
+
 		engine->Release();
 	}
 
@@ -1506,7 +1511,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		RegisterScriptString(engine);
-		const char *scriptMain = 
+		const char *scriptMain =
 		"void error()"
 		"{"
 		"\"\" + (a.a() - b);"
@@ -1531,7 +1536,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		const char *script = 
+		const char *script =
 			"class Hoge \n"
 			"{ \n"
 			"  int mValue; \n"
@@ -1570,7 +1575,7 @@ bool Test()
 		RegisterScriptString(engine);
 		bout.buffer = "";
 
-		const char *script = 
+		const char *script =
 			"class Test \n"
 			"{ \n"
 			"  const string @get_id() \n"
@@ -1611,7 +1616,7 @@ bool Test()
 		engine->RegisterObjectType("Entity", 0, asOBJ_REF);
 		engine->RegisterObjectBehaviour("Entity", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("Entity", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
-		
+
 		engine->RegisterObjectType("EntityArray", 0, asOBJ_REF);
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_FACTORY, "EntityArray @f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("EntityArray", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
@@ -1621,9 +1626,9 @@ bool Test()
 		engine->RegisterGlobalFunction("Entity @DeleteEntity(Entity &in)", asFUNCTION(0), asCALL_GENERIC);
 
 		// Because the DeleteEntity is taking &in, the object must be copied to a variable
-		// to make sure the original object is not modified by the function. Because the 
+		// to make sure the original object is not modified by the function. Because the
 		// Entity doesn't have a default factory, this is supposed to fail
-		const char *script = 
+		const char *script =
 			"void func() { \n"
 			"EntityArray arr; \n"
 			"Entity @temp = @arr[0]; \n"
@@ -1655,7 +1660,7 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection("test", "class C { int x; int get_x() {return x;} }\n");
-		r = mod->Build(); 
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -1688,7 +1693,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
-		const char *script = 
+		const char *script =
 			"void my_method() \n"
 			"{ \n"
 			"    int[] arr; \n"
@@ -1716,7 +1721,7 @@ bool Test()
 
 	/////////////////
 	{
-		const char *script = 
+		const char *script =
 			"void main()\n"
 			"{\n"
 			"  while(turn()) {}\n"
@@ -1749,7 +1754,7 @@ bool Test()
 
 	//////////////
 	{
-		const char *script = 
+		const char *script =
 			"class irc_event\n"
 			"{\n"
 			"	irc_event() \n"
@@ -1791,7 +1796,7 @@ bool Test()
 
 	//////////////
 	{
-		const char *script = 
+		const char *script =
 			"enum wf_type \n"
 			"{ \n"
 			"  sawtooth=1, \n"
@@ -1833,7 +1838,7 @@ bool Test()
 
 	//////////////
 	{
-		const char *script = 
+		const char *script =
 			"class Obj {}; \n"
 			"class Hoge \n"
 			"{ \n"
@@ -1872,7 +1877,7 @@ bool Test()
 
 	//////////////
 	{
-		const char *script = 
+		const char *script =
 			"class dummy \n"
 			"{ \n"
 			"int x; \n"
@@ -1915,7 +1920,7 @@ bool Test()
 
 	//////////////
 	{
-		const char *script = 
+		const char *script =
 			"void main() { \n"
 			"  int r = 2; \n"
 			"  while(r-- > 0) {}; } \n";
@@ -1940,10 +1945,10 @@ bool Test()
 	}
 
 	/////////////////////
-	// This test validates that the temporary variable used to store the return 
+	// This test validates that the temporary variable used to store the return
 	// value while the output parameter is evaluated isn't overwritten
 	{
-		const char *script = 
+		const char *script =
 			"class obj {} \n"
 			"bool getPendingMats(obj@&out TL) \n"
 			"{ \n"
@@ -2009,7 +2014,7 @@ bool Test()
 
 	// Make sure the deferred parameters are processed in the switch condition
 	{
-		const char *script = 
+		const char *script =
 			"int[] level1(9); \n"
 			"void move_x() \n"
 			"{ \n"
@@ -2066,18 +2071,18 @@ bool Test()
 			"  array<int> @retArray() { return array<int>(); } \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 ) 
+		if( r < 0 )
 			TEST_FAILED;
 
 		engine->Release();
 	}
-	
+
 	// Test complex expression
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
-		
+
 		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script",
 			"class vec { \n"
@@ -2099,28 +2104,28 @@ bool Test()
 			"    else \n"
 			"      _feuilleRonce00.rotation = _feuilleRonce00.rotation + (((plant[0].path.angleAt(easeIn(plant[0].alpha) - 0.1f))) - _feuilleRonce00.rotation) * 0.1f; \n"
 			"}} \n");
-		
+
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-		
+
 		engine->Release();
 	}
 
-	// Test parser error 
+	// Test parser error
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
-		
+
 		asIScriptModule *mod = engine->GetModule("", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script",
 			"void main() \n"
 			"{ \n"
 			"  int[] _countKill; \n"
-			"  _countKill[12)++; \n" 
+			"  _countKill[12)++; \n"
 			"} \n");
-		
+
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
@@ -2130,7 +2135,7 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-		
+
 		engine->Release();
 	}
 
@@ -2173,7 +2178,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-		
+
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -2218,7 +2223,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-		
+
 		r = ExecuteString(engine, "tone_player tp; tp.play_tone();", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -2228,7 +2233,7 @@ bool Test()
 
 	// Test - Philip Bennefall
 	{
-		const char *script = 
+		const char *script =
 			"class Technique {\n"
 			"  string hitsound;\n"
 			"}\n"
@@ -2249,7 +2254,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-		
+
 		r = ExecuteString(engine, "main();", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -2266,7 +2271,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
 
-		const char *script = 
+		const char *script =
 			"double round(double d, int i) {return double(int64(d*1000+0.5))/1000;}\n"
 	//		"string input_box(string &in, string &in) {return '';}\n"
 	//		"int string_to_number(string) {return 0;}\n"
@@ -2301,7 +2306,7 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		int r = mod->Build();
 		if( r < 0 )
-			TEST_FAILED;		
+			TEST_FAILED;
 
 		g_printbuf = "";
 
@@ -2472,7 +2477,7 @@ bool Test()
 
 	// This test caught a problem when the script code allocated a script class,
 	// which in turn used nested contexts to initialize some members. The VM
-	// hadn't updated the members with the stack pointer/program pointer before 
+	// hadn't updated the members with the stack pointer/program pointer before
 	// the nested call so the memory was overwritten.
 	// Reported by Andrew Ackermann
 	{
@@ -2481,7 +2486,7 @@ bool Test()
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		const char *script = 
+		const char *script =
 			"shared class Alignment { \n"
 			"  Alignment(int lt, float lp, int lx, \n"
 			" 		     int tt, float tp, int tx, \n"
@@ -2543,7 +2548,7 @@ bool Test()
 			"  Alignment @A; \n"
 			"  float a; float b; float c; float d; \n"
 			"} \n";
-			
+
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
@@ -2580,7 +2585,7 @@ bool Test2()
 
 #if defined(__GNUC__) && defined(__amd64__)
 	// TODO: Add this support
-	// Passing non-complex objects by value is not yet supported, because 
+	// Passing non-complex objects by value is not yet supported, because
 	// it means moving each property of the object into different registers
 	return false;
 #endif
@@ -2844,7 +2849,7 @@ bool Test7()
 
 	bool fail = false;
 
-	const char *script = 
+	const char *script =
 	"void GENERIC_CommandDropItem( cClient @client )	\n"
 	"{													\n"
 	"	client.getEnt().health -= 1;					\n"
@@ -2913,7 +2918,7 @@ bool Test8()
 	}
 
 	r = ExecuteString(engine, "string str = func(); assert( str == '' );", mod);
-	if( r != asEXECUTION_FINISHED ) 
+	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
 	engine->Release();
@@ -2957,7 +2962,7 @@ bool Test9()
 // http://www.gamedev.net/topic/614727-crash-with-temporary-value-types-and-unsafe-references/
 // http://www.gamedev.net/topic/615762-assert-failures-of-unfreed-temp-variables/page__gopid__4887763#entry4887763
 
-class Variant 
+class Variant
 {
 public:
 	Variant() {val = "test";}
@@ -3053,7 +3058,7 @@ bool TestRetRef()
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", asMETHOD(Node, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", asMETHODPR(Node, GetAttribute, (), Variant), asCALL_THISCALL);
 	engine->RegisterObjectProperty("Node", "VariantMap vars", asOFFSET(Node, vars));
-	
+
 	engine->RegisterGlobalFunction("Node@+ get_node()", asFUNCTION(GetGlobalNode), asCALL_CDECL);
 	g_node = NodeFactory();
 
