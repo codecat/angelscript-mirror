@@ -64,7 +64,7 @@ static void class1ByVal(ClassK1 c)
 
 static void class2ByVal(ClassK2 c)
 {
-	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 ); 
+	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 );
 }
 
 static void class3ByVal(ClassK3 c)
@@ -87,7 +87,7 @@ bool TestCDecl_ClassK()
 	engine->RegisterObjectType("class1", sizeof(ClassK1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);
 	engine->RegisterObjectType("class2", sizeof(ClassK2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);
 	engine->RegisterObjectType("class3", sizeof(ClassK3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK);
-	
+
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
 	engine->RegisterGlobalProperty("class3 c3", &c3);
@@ -97,10 +97,10 @@ bool TestCDecl_ClassK()
 	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(classK3), asCALL_CDECL);
 
 	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	c1.a = 0;
 
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = ExecuteString(engine, "c1 = _class1();");
 	if( r < 0 )
 	{

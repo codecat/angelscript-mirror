@@ -35,34 +35,6 @@ static void cfunction2(double f1, double f2, double f3, double f4)
 	assert(f4 == 1340.0);
 }
 
-class Class1
-{
-public:
-	int a;
-
-	void cfunc(float f1, float f2, double f3, float f4)
-	{
-		assert(a == 0xDEADC0DE);
-		called = true;
-		t1 = f1;
-		t2 = f2;
-		t3 = f3;
-		t4 = f4;
-		testVal = (f1 == 9.2f) && (f2 == 13.3f) && (f3 == 18.8) && (f4 == 3.1415f);
-	}
-	void cfunc2(double f1, double f2, double f3, double f4)
-	{
-		assert(a == 0xDEADC0DE);
-		called = true;
-		assert(f1 == 1337.0);
-		assert(f2 == 1338.0);
-		assert(f3 == 1339.0);
-		assert(f4 == 1340.0);
-	}
-};
-
-static Class1 c1;
-
 static void cfunction_gen(asIScriptGeneric *gen)
 {
 	called = true;
@@ -86,23 +58,20 @@ bool TestExecute4Argsf()
 		int r;
 		r = engine->RegisterGlobalFunction("void cfunction(float, float, double, float)", asFUNCTION(cfunction), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterGlobalFunction("void cfunction2(double, double, double, double)", asFUNCTION(cfunction), asCALL_CDECL); assert( r >= 0 );
-		r = engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("class1", "void cfunction(float, float, double, float)", asMETHOD(Class1, cfunc), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("class1", "void cfunction2(double, double, double, double)", asMETHOD(Class1, cfunc2), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterGlobalProperty("class1 c1", &c1); assert( r >= 0 );
 	}
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
 	ExecuteString(engine, "cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
 
-	if( !called ) 
+	if( !called )
 	{
 		// failure
 		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
-	} 
-	else if( !testVal ) 
+	}
+	else if( !testVal )
 	{
 		// failure
 		printf("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
@@ -111,8 +80,6 @@ bool TestExecute4Argsf()
 
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
-		c1.a = 0xDEADC0DE;
-
 		called = false;
 		testVal = false;
 		ExecuteString(engine, "cfunction2(1337.0, 1338.0, 1339.0, 1340.0)");
@@ -122,33 +89,10 @@ bool TestExecute4Argsf()
 			printf("\n%s: cfunction2 not called from script\n\n", TESTNAME);
 			TEST_FAILED;
 		}
-
-		called = false;
-		ExecuteString(engine, "c1.cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
-		if( !called )
-		{
-			// failure
-			printf("\n%s: c1.cfunction1 not called from script\n\n", TESTNAME);
-			TEST_FAILED;
-		}
-		else if( !testVal )
-		{
-			// failure
-			printf("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
-			TEST_FAILED;
-		}
-		called = false;
-		ExecuteString(engine, "c1.cfunction2(1337.0, 1338.0, 1339.0, 1340.0)");
-		if( !called )
-		{
-			// failure
-			printf("\n%s: c1.cfunction2 not called from script\n\n", TESTNAME);
-			TEST_FAILED;
-		}
 	}
 
 	engine->Release();
-	
+
 	// Success
 	return fail;
 }

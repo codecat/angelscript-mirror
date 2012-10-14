@@ -40,6 +40,7 @@ bool TestCDecl_ClassA();
 bool TestCDecl_ClassC();
 bool TestCDecl_ClassD();
 bool TestCDecl_ClassK();
+bool TestThiscallClass();
 bool TestNotComplexThisCall();
 bool TestNotComplexStdcall();
 bool TestReturnWithCDeclObjFirst();
@@ -342,6 +343,7 @@ int main(int argc, char **argv)
 
 		// thiscall
 		if( TestExecuteThis32MixedArgs()  ) goto failed; else printf("-- TestExecuteThis32MixedArgs passed\n");
+		if( TestThiscallClass()           ) goto failed; else printf("-- TestThiscallClass passed\n");
 		if( TestNotComplexThisCall()      ) goto failed; else printf("-- TestNotComplexThisCall passed\n");
 		if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
 		if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
@@ -359,7 +361,7 @@ int main(int argc, char **argv)
 
 	RemoveMemoryManager();
 
-	// Populate the global engine destroyer after the memory manager has 
+	// Populate the global engine destroyer after the memory manager has
 	// been removed so we don't get false positives for memory leaks.
 	g_engine.en = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 

@@ -110,6 +110,7 @@ bool TestExecuteMixedArgs()
 
 		COutStream out;
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
 		engine->RegisterGlobalFunction("void cfunction2(int64, float, int8, int)", asFUNCTION(cfunction2), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void cfunction3(int, double, float, int)", asFUNCTION(cfunction3), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void cfunction4(int, int64, float, int8)", asFUNCTION(cfunction4), asCALL_CDECL);

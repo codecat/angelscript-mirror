@@ -5,7 +5,7 @@ namespace TestCDeclObjLast
 
 class Foo
 {
-public: 
+public:
 	Foo() {}
 	~Foo() {}
 
@@ -89,7 +89,7 @@ bool Test()
 	r = ExecuteString(engine, "float a = foo.mixargs(1, 2, 3, 4); assert( a < 12.1 && a > 11.9 );");
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
-	
+
 	r = ExecuteString(engine, "string a = foo.retstring(1); assert( a == 'test' );");
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;

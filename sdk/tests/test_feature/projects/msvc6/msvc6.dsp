@@ -491,6 +491,10 @@ SOURCE=..\..\source\test_template.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_thiscall_class.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_typedef.cpp
 # End Source File
 # Begin Source File

@@ -71,7 +71,7 @@ bool TestReturnWithCDeclObjFirst()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	// On Linux 64bit it is necessary to inform angelscript that the class 
+	// On Linux 64bit it is necessary to inform angelscript that the class
 	// contains only integers, otherwise it will not be possible to know how
 	// the type is returned (either RAX:RDX, or XMM0:XMM1)
 	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
@@ -89,9 +89,9 @@ bool TestReturnWithCDeclObjFirst()
 	engine->RegisterObjectMethod("factory", "class3 notComplex3(int, int, int)", asFUNCTION(notComplex3), asCALL_CDECL_OBJFIRST);
 
 	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	c1.a = 0;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = 0;
 	r = ExecuteString(engine, "c1 = f.notComplex1(int(0xDEADC0DE));");
 	if( r < 0 )

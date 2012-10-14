@@ -8,11 +8,11 @@
 
 static const char * const TESTNAME = "TestCDecl_ClassC";
 
-// A complex class is a class that has a defined constructor or 
+// A complex class is a class that has a defined constructor or
 // destructor, or an overridden assignment operator. Compilers
 // normally treat these classes differently in that they are
-// returned by reference even though they are small enough to 
-// fit in registers. This is because of the need of exception 
+// returned by reference even though they are small enough to
+// fit in registers. This is because of the need of exception
 // handling in case something goes wrong.
 
 class ClassC1
@@ -68,7 +68,7 @@ static void class1ByVal(ClassC1 c)
 
 static void class2ByVal(ClassC2 c)
 {
-	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 ); 
+	assert( c.a == 0xDEADC0DE && c.b == 0x01234567 );
 }
 
 static void class3ByVal(ClassC3 c)
@@ -91,7 +91,7 @@ bool TestCDecl_ClassC()
 	engine->RegisterObjectType("class1", sizeof(ClassC1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class2", sizeof(ClassC2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class3", sizeof(ClassC3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLINTS);
-	
+
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
 	engine->RegisterGlobalProperty("class3 c3", &c3);
@@ -101,10 +101,10 @@ bool TestCDecl_ClassC()
 	engine->RegisterGlobalFunction("class3 _class3()", asFUNCTION(classC3), asCALL_CDECL);
 
 	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	c1.a = 0;
 
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	int r = ExecuteString(engine, "c1 = _class1();");
 	if( r < 0 )
 	{

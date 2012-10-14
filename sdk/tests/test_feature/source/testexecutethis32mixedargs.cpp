@@ -63,8 +63,8 @@ public:
 		fvalues[13] = f30;
 		fvalues[14] = f31;
 		fvalues[15] = f32;
-		
-	
+
+
 		testVal =	(f1  ==  1) && (f2  ==  2) && (f3  ==  3) && (f4  ==  4) &&
 				(f5  ==  5.0f) && (f6  ==  6.0f) && (f7  ==  7.0f) && (f8  ==  8.0f) &&
 				(f9  ==  9) && (f10 == 10) && (f11 == 11) && (f12 == 12) &&
@@ -74,7 +74,7 @@ public:
 				(f25 == 25) && (f26 == 26) && (f27 == 27) && (f28 == 28) &&
 				(f29 == 29.0f) && (f30 == 30.0f) && (f31 == 31.0f) && (f32 == 32.0f);
 	}
-	static void cfunction_gen(asIScriptGeneric *gen) 
+	static void cfunction_gen(asIScriptGeneric *gen)
 	{
 		TestClass *self = (TestClass*)gen->GetObject();
 		self->called = true;
@@ -112,8 +112,8 @@ public:
 		fvalues[13] = gen->GetArgFloat(29);
 		fvalues[14] = gen->GetArgFloat(30);
 		fvalues[15] = gen->GetArgFloat(31);
-		
-	
+
+
 		self->testVal =	(ivalues[0]  ==  1) && (ivalues[1]  ==  2) && (ivalues[2]  ==  3) && (ivalues[3]  ==  4) &&
 				(fvalues[0]  ==  5.0f) && (fvalues[1]  ==  6.0f) && (fvalues[2]  ==  7.0f) && (fvalues[3]  ==  8.0f) &&
 				(ivalues[4]  ==  9) && (ivalues[5] == 10) && (ivalues[6] == 11) && (ivalues[7] == 12) &&
@@ -127,12 +127,80 @@ public:
 
 static TestClass test;
 
+static bool testVal = false;
+static bool called  = false;
+
+static float  t1 = 0;
+static float  t2 = 0;
+static double t3 = 0;
+static float  t4 = 0;
+
+class Class1
+{
+public:
+	int a;
+
+	void cfunc(float f1, float f2, double f3, float f4)
+	{
+		assert(a == 0xDEADC0DE);
+		called = true;
+		t1 = f1;
+		t2 = f2;
+		t3 = f3;
+		t4 = f4;
+		testVal = (f1 == 9.2f) && (f2 == 13.3f) && (f3 == 18.8) && (f4 == 3.1415f);
+	}
+	void cfunc2(double f1, double f2, double f3, double f4)
+	{
+		assert(a == 0xDEADC0DE);
+		called = true;
+		assert(f1 == 1337.0);
+		assert(f2 == 1338.0);
+		assert(f3 == 1339.0);
+		assert(f4 == 1340.0);
+	}
+};
+
+static Class1 c1;
+
 bool TestExecuteThis32MixedArgs()
 {
 	bool fail = false;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	int r;
+
+    r = engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("class1", "void cfunction(float, float, double, float)", asMETHOD(Class1, cfunc), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("class1", "void cfunction2(double, double, double, double)", asMETHOD(Class1, cfunc2), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterGlobalProperty("class1 c1", &c1); assert( r >= 0 );
+
+	c1.a = 0xDEADC0DE;
+
+    called = false;
+    ExecuteString(engine, "c1.cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
+    if( !called )
+    {
+        // failure
+        printf("\n%s: c1.cfunction1 not called from script\n\n", TESTNAME);
+        TEST_FAILED;
+    }
+    else if( !testVal )
+    {
+        // failure
+        printf("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
+        TEST_FAILED;
+    }
+    called = false;
+    ExecuteString(engine, "c1.cfunction2(1337.0, 1338.0, 1339.0, 1340.0)");
+    if( !called )
+    {
+        // failure
+        printf("\n%s: c1.cfunction2 not called from script\n\n", TESTNAME);
+        TEST_FAILED;
+    }
+
+
 	r = engine->RegisterObjectType("TestClass", 0/*sizeof(TestClass)*/, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
@@ -148,7 +216,7 @@ bool TestExecuteThis32MixedArgs()
 				"int, int, int, int,"
 				"float, float, float, float"
 			")",
-			
+
 			asFUNCTION(TestClass::cfunction_gen)
 			, asCALL_GENERIC); assert(r >= 0);
 	}
@@ -166,13 +234,13 @@ bool TestExecuteThis32MixedArgs()
 				"int, int, int, int,"
 				"float, float, float, float"
 			")",
-			
+
 			asMETHOD(TestClass,cfunction)
 			, asCALL_THISCALL); assert(r >= 0);
 	}
 	r = engine->RegisterGlobalProperty("TestClass test", &test);
 
-	ExecuteString(engine, 
+	ExecuteString(engine,
 		"test.cfunction("
 			" 1,  2,  3,  4,"
 			" 5.0f,  6.0f,  7.0f,  8.0f,"

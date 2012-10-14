@@ -107,6 +107,7 @@ add_executable(
         ../../source/test_structintf.cpp
         ../../source/test_suspend.cpp
         ../../source/test_template.cpp
+        ../../source/test_thiscall_class.cpp
         ../../source/test_typedef.cpp
         ../../source/test_unsaferef.cpp
         ../../source/test_vartype.cpp
