@@ -3413,11 +3413,11 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 			struct
 			{
 				asFUNCTION_t func;
-				asDWORD baseOffset;
+				asPWORD baseOffset;
 			} f;
 		} p;
 		p.f.func = (void (*)())(i->func);
-		p.f.baseOffset = i->baseOffset;
+		p.f.baseOffset = asPWORD(i->baseOffset);
 		bool (asCSimpleDummy::*f)() = (bool (asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
 	}
@@ -3480,11 +3480,11 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 			struct
 			{
 				asFUNCTION_t func;
-				asDWORD baseOffset;
+				asPWORD baseOffset;
 			} f;
 		} p;
 		p.f.func = (void (*)())(i->func);
-		p.f.baseOffset = i->baseOffset;
+		p.f.baseOffset = asPWORD(i->baseOffset);
 		int (asCSimpleDummy::*f)() = (int (asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
 	}
