@@ -1377,11 +1377,17 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 		bytePos -= 1;
 	}
 
+	// For nested calls it is possible that func is null
+	if( func == 0 )
+	{
+		if( column ) *column = 0;
+		if( sectionName ) *sectionName = 0;
+		return 0;
+	}
+
 	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()));
 	if( column ) *column = (line >> 20);
-
 	if( sectionName ) *sectionName = func->GetScriptSectionName();
-
 	return (line & 0xFFFFF);
 }
 
