@@ -7983,8 +7983,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		}
 
 		// If it is not a class method or member function pointer, 
-		// then look for global functions or global function pointers
-		if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() == 0 )
+		// then look for global functions or global function pointers, 
+		// unless this is an expression post op, incase only member 
+		// functions are expected
+		if( objectType == 0 && funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() == 0 )
 		{
 			// The scope is used to define the namespace
 			asSNameSpace *ns = DetermineNameSpace(scope);

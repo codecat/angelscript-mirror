@@ -212,6 +212,40 @@ bool Test()
 	asIScriptModule *mod;
 
 	// Problem reported by FDsagizi
+	// http://www.gamedev.net/topic/632813-compiller-bug/
+	{
+		const char *script = 
+			"Test @cur_test; \n"
+			"class Test { \n"
+			"  void Do() { \n"
+			"    cur_test.DoFail(); \n"
+			"  } \n"
+			"} \n"
+			"void DoFail() {} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 3) : Info    : Compiling void Test::Do()\n"
+		                   "test (4, 14) : Error   : No matching signatures to 'Test::DoFail()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Problem reported by FDsagizi
 	// http://www.gamedev.net/topic/632123-compiler-assertion/
 	{
 		const char *script =
