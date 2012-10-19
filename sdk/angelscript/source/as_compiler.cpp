@@ -8925,8 +8925,11 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	if( func->objectType )
 	{
 		// TODO: This is from CompileExpressionPostOp, can we unify the code?
+
+		// If the method returned a reference, then we can't release the original
+		// object yet, because the reference may be to a member of it
 		if( !objType.isTemporary ||
-			!ctx->type.dataType.IsReference() ||
+			!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
 			ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
 		{
 			// As the method didn't return a reference to a member

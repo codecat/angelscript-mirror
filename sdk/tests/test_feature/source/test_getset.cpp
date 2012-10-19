@@ -92,6 +92,29 @@ bool Test()
 	asIScriptModule *mod;
  	asIScriptEngine *engine;
 	
+	// Test problem reported by Eero Tanskanen
+	// getter returning reference
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		
+		r = engine->RegisterObjectType ("Container", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CDA) ; assert (r > 0) ;
+		r = engine->RegisterObjectType ("Container_Real", 0, asOBJ_REF | asOBJ_NOHANDLE) ; assert (r > 0) ;
+		r = engine->RegisterObjectBehaviour ("Container", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour ("Container", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod ("Container", "Container_Real& get_Payload()", asFUNCTION(0), asCALL_THISCALL) ; assert (r > 0) ;
+		r = engine->RegisterGlobalFunction ("Container Get_Container()", asFUNCTION(0), asCALL_CDECL) ; assert (r > 0) ;
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void Trip_Assert () { Get_Container().Payload; }" // This was causing an assert failure
+			"void Dont_Trip_Assert ()	{ Get_Container().get_Payload(); }"); // This should give the exact same bytecode as the above
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Test problem reported by virious
 	// virtual property access with index and var args must work together
