@@ -7650,6 +7650,11 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 
 				if( !o.type.dataType.IsPrimitive() ) o.bc.Instr(asBC_PopPtr);
 
+				// The assignment may itself have resulted in a new temporary variable, e.g. if 
+				// the opAssign returns a non-reference. We must release this temporary variable 
+				// since it won't be used
+				ReleaseTemporaryVariable(o.type, &o.bc);
+
 				MergeExprBytecode(ctx, &o);
 			}
 			else

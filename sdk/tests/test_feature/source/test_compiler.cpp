@@ -211,6 +211,44 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by _Engine_
+	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
+	{
+		const char *script = 
+			"class SBuilding \n"
+			"{ \n"
+			"	void ReleasePeople() \n"
+			"	{ \n"
+			"		SPoint cellij; \n"
+			"		if( GetRoadOrFreeCellInAround(cellij) ) {} \n"
+			"	} \n"
+			"	bool GetRoadOrFreeCellInAround(SPoint&out cellij) \n"
+			"	{ \n"
+			"		return false; \n"
+			"	} \n"
+			"} \n"
+			"shared class SPoint \n"
+			"{ \n"
+			"	SPoint@ opAssign(const SPoint&in assign) \n"
+			"	{ \n"
+			"		return this; \n"
+			"	}  \n"
+			"} \n";
+
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Problem reported by FDsagizi
 	// http://www.gamedev.net/topic/632813-compiller-bug/
 	{
