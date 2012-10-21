@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.1 WIP - 2012/10/20</h2>
+<h2>Version 2.25.1 WIP - 2012/10/21</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler when compiling property get expression that returned a reference to an object, but the reference wasn't used (Thanks Eero Tanskanen)
 <li>Fixed bug with virtual methods returning objects in memory on ARM platforms (Thanks Cordan)
 <li>Fixed compiler bug when compiling function that takes out reference of a type where opAssign returned a value (Thanks _Engine_)
+<li>Compiler wasn't showing error for virtual properties without any accessor (Thanks FDsagizi)
 </ul>
 <li>Library
 <ul>

@@ -90,8 +90,31 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
- 	asIScriptEngine *engine;
-	
+	asIScriptEngine *engine;
+
+	// Test problem reported by FDsagizi
+	// http://www.gamedev.net/topic/632813-compiller-bug/
+	// virtual property accessor without specifying getter nor setter
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"int some_val{ }");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test (1, 5) : Error   : Virtual property must have at least one get or set accessor\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test problem reported by Eero Tanskanen
 	// getter returning reference
 	{

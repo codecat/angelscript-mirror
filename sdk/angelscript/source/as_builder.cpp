@@ -3680,10 +3680,12 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 	emulatedType = CreateDataTypeFromNode(node, file, engine->nameSpaces[0]);
 	emulatedType = ModifyDataTypeFromNode(emulatedType, node->next, file, 0, 0);
 	node = node->next->next;
-
 	emulatedName.Assign(&file->code[node->tokenPos], node->tokenLength);
-	node = node->next;
 
+	if( node->next == 0 )
+		WriteError(TXT_PROPERTY_WITHOUT_ACCESSOR, file, node);
+
+	node = node->next;
 	while( node )
 	{
 		asCScriptNode *next           = node->next;
@@ -3732,7 +3734,10 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 
 			signature = asNEW(sExplicitSignature);
 			if( signature == 0 )
+			{
+				mainNode->Destroy(engine);
 				return asOUT_OF_MEMORY;
+			}
 
 			signature->returnType = emulatedType;
 
@@ -3767,7 +3772,10 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 
 			signature = asNEW(sExplicitSignature)(1);
 			if( signature == 0 )
+			{
+				mainNode->Destroy(engine);
 				return asOUT_OF_MEMORY;
+			}
 
 			signature->returnType = asCDataType::CreatePrimitive(ttVoid, false);
 

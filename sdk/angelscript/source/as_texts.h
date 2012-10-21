@@ -187,6 +187,7 @@
 #define TXT_PROPERTY_CANT_BE_CONST                "Class properties cannot be declared as const"
 #define TXT_PROPERTY_HAS_NO_GET_ACCESSOR          "The property has no get accessor"
 #define TXT_PROPERTY_HAS_NO_SET_ACCESSOR          "The property has no set accessor"
+#define TXT_PROPERTY_WITHOUT_ACCESSOR             "Virtual property must have at least one get or set accessor"
 
 #define TXT_REF_IS_READ_ONLY                    "Reference is read-only"
 #define TXT_REF_IS_TEMP                         "Reference is temporary"
