@@ -205,22 +205,46 @@ bool Test()
 	}
 
 	// Allow script declared interfaces to inherit from other interfaces
-/*	{
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
 		const char *script = 
 			"interface A { void a(); } \n"
 			"interface B : A { void b(); } \n"
 			"class C : B {} \n"; // Must implement both a() and b()
 
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		bout.buffer = "";
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
-		if( r < 0 ) TEST_FAILED;
+		if( r >= 0 ) TEST_FAILED;
+		if( bout.buffer != "TestInterface (3, 7) : Error   : Missing implementation of 'void B::b()'\n"
+		                   "TestInterface (3, 7) : Error   : Missing implementation of 'void A::a()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
-		engine->Release();			
+		// Don't allow shared interface to implement non-shared interface
+		script = 
+			"interface A {} \n"
+			"shared interface B : A {} \n";
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r >= 0 ) TEST_FAILED;
+		if( bout.buffer != "TestInterface (2, 22) : Error   : Shared type cannot implement non-shared interface 'A'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+
+		engine->Release();
 	}
-*/
+
 	// Success
 	return fail;
 }

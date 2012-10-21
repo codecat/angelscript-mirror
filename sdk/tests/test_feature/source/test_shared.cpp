@@ -83,7 +83,7 @@ bool Test()
 		if( r >= 0 ) 
 			TEST_FAILED;
 		if( bout.buffer != "a (32, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
-						   "a (3, 25) : Error   : Shared class cannot implement non-shared interface 'badIntf'\n"
+						   "a (3, 25) : Error   : Shared type cannot implement non-shared interface 'badIntf'\n"
 						   "a (35, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
 						   "a (5, 3) : Info    : Compiling void T::test()\n"
 						   "a (7, 5) : Error   : Shared code cannot access non-shared global variable 'var'\n"

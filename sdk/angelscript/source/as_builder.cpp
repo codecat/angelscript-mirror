@@ -233,6 +233,7 @@ int asCBuilder::Build()
 
 	ParseScripts();
 
+	CompileInterfaces();
 	CompileClasses();
 	CompileGlobalVariables();
 	CompileFunctions();
@@ -1960,6 +1961,186 @@ void asCBuilder::CompileGlobalVariables()
 	}
 }
 
+void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *errNode, asCObjectType *intfType)
+{
+	// If the interface is already in the class, then don't add it again
+	if( !decl->isExistingShared && decl->objType->Implements(intfType) )
+	{
+		int r, c;
+		decl->script->ConvertPosToRowCol(errNode->tokenPos, &r, &c);
+		asCString msg;
+		msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, intfType->GetName());
+		WriteWarning(decl->script->name.AddressOf(), msg.AddressOf(), r, c);
+		return;
+	}
+
+	// A shared type may only implement from shared interfaces
+	if( (decl->objType->IsShared()) && !(intfType->IsShared()) )
+	{
+		asCString msg;
+		msg.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, intfType->name.AddressOf());
+		WriteError(msg.AddressOf(), decl->script, errNode);
+		return;
+	}
+
+	// If the class is an existing shared class, then just check if the 
+	// interface exists in the original declaration too
+	if( decl->isExistingShared && !decl->objType->Implements(intfType) )
+	{
+		WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, decl->script, errNode);
+		return;
+	}
+	
+	// Add the interface to the class	
+	decl->objType->interfaces.PushLast(intfType);
+
+	// Find out if the interface has other included interfaces
+	for( asUINT n = 0; n < interfaceDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *intfDecl = interfaceDeclarations[n];
+		if( intfDecl && 
+			intfDecl->name == intfType->GetName() &&
+			intfDecl->objType->nameSpace == intfType->nameSpace )
+		{
+			asCScriptNode *node = intfDecl->node;
+			asASSERT(node && node->nodeType == snInterface);
+			node = node->firstChild;
+
+			// Skip the 'shared' keyword
+			if( intfType->IsShared() )
+				node = node->next;
+
+			// Skip the name
+			node = node->next;
+
+			// Add the inherited interfaces
+			while( node && node->nodeType == snIdentifier )
+			{
+				// Get the optional scope from the node
+				asCString scope = GetScopeFromNode(node->firstChild, intfDecl->script);
+				asSNameSpace *ns = 0;
+				if( scope == "" )
+					// No scope was informed, use the same namespace as the original interface
+					ns = intfType->nameSpace;
+				else if( scope == "::" )
+					// The global scope was informed
+					ns = engine->nameSpaces[0];
+				else
+				{
+					ns = engine->FindNameSpace(scope.AddressOf());
+					if( ns == 0 )
+					{
+						asCString msg;
+						msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+						WriteError(msg.AddressOf(), intfDecl->script, node->firstChild);
+
+						// Move to the next node
+						node = node->next;
+						continue;
+					}
+				}
+
+				// Get the interface name from the node
+				asCString name(&intfDecl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
+
+				// Find the object type for the interface
+				asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
+				asASSERT( objType && objType->size == 0 && (objType->flags & asOBJ_SCRIPT_OBJECT) );
+
+				AddInterfaceToClass(decl, errNode, objType);	
+
+				node = node->next;
+			}
+
+			break;
+		}
+	}
+}
+
+void asCBuilder::CompileInterfaces()
+{
+	for( asUINT n = 0; n < interfaceDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *intfDecl = interfaceDeclarations[n];
+		asCObjectType *intfType = intfDecl->objType;
+
+		asCScriptNode *node = intfDecl->node;
+		asASSERT(node && node->nodeType == snInterface);
+		node = node->firstChild;
+
+		// Skip the 'shared' keyword
+		if( intfType->IsShared() )
+			node = node->next;
+
+		// Skip the name
+		node = node->next;
+
+		// Verify the inherited interfaces
+		while( node && node->nodeType == snIdentifier )
+		{
+			// Get the optional scope from the node
+			asCString scope = GetScopeFromNode(node->firstChild, intfDecl->script);
+			asSNameSpace *ns = 0;
+			if( scope == "" )
+				// No scope was informed, use the same namespace as the original interface
+				ns = intfType->nameSpace;
+			else if( scope == "::" )
+				// The global scope was informed
+				ns = engine->nameSpaces[0];
+			else
+			{
+				ns = engine->FindNameSpace(scope.AddressOf());
+				if( ns == 0 )
+				{
+					asCString msg;
+					msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+					WriteError(msg.AddressOf(), intfDecl->script, node->firstChild);
+
+					// Move to the next node
+					node = node->next;
+					continue;
+				}
+			}
+
+			// Get the interface name from the node
+			asCString name(&intfDecl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
+
+			// Find the object type for the interface
+			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
+
+			// Check that the object type is an interface
+			bool ok = true;
+			if( objType && objType->size == 0 && (objType->flags & asOBJ_SCRIPT_OBJECT) )
+			{
+				// Check that the implemented interface is shared if the base interface is shared
+				if( intfType->IsShared() && !objType->IsShared() )
+				{
+					asCString str;
+					str.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->GetName());
+					WriteError(str.AddressOf(), intfDecl->script, node);
+					ok = false;
+				}
+			}
+			else
+			{
+				WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
+				ok = false;
+			}
+
+			if( ok )
+				node = node->next;
+			else
+			{
+				// Remove the bad inheritances so they don't cause problem later
+				asCScriptNode *badNode = node;
+				node = node->next;
+				badNode->DisconnectParent();
+				badNode->Destroy(engine);
+			}
+		}
+	}
+}
+
 void asCBuilder::CompileClasses()
 {
 	asUINT n;
@@ -2106,35 +2287,7 @@ void asCBuilder::CompileClasses()
 			else
 			{
 				// The class implements an interface
-				if( !decl->isExistingShared && decl->objType->Implements(objType) )
-				{
-					int r, c;
-					file->ConvertPosToRowCol(node->tokenPos, &r, &c);
-					asCString msg;
-					msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, objType->GetName());
-					WriteWarning(file->name.AddressOf(), msg.AddressOf(), r, c);
-				}
-				else
-				{
-					// A shared type may only implement from shared interfaces
-					if( (decl->objType->IsShared()) && !(objType->IsShared()) )
-					{
-						asCString msg;
-						msg.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->name.AddressOf());
-						WriteError(msg.AddressOf(), file, node);
-					}
-					else
-					{
-						if( decl->isExistingShared )
-						{
-							// Verify that the original implements the same interface
-							if( !decl->objType->Implements(objType) )
-								WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, node);
-						}
-						else
-							decl->objType->interfaces.PushLast(objType);
-					}
-				}
+				AddInterfaceToClass(decl, node, objType);
 			}
 
 			node = node->next;
