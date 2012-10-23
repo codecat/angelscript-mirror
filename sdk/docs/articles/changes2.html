@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.1 WIP - 2012/10/21</h2>
+<h2>Version 2.25.1 WIP - 2012/10/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,11 +31,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with virtual methods returning objects in memory on ARM platforms (Thanks Cordan)
 <li>Fixed compiler bug when compiling function that takes out reference of a type where opAssign returned a value (Thanks _Engine_)
 <li>Compiler wasn't showing error for virtual properties without any accessor (Thanks FDsagizi)
+<li>Shared enums in pre-compiled bytecode were not treated as shared when loading (Thanks _Engine_)
 </ul>
 <li>Library
 <ul>
 <li>Implemented an inline profiler to get better understanding of bottlenecks in the code
 <li>Added support for the new ABI in MinGW32 4.7 (Thanks Heuristics)
+<li>Improved error messages when loading bytecode with shared types that doesn't match existing shared types
 </ul>
 <li>Script language
 <ul>

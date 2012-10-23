@@ -1987,7 +1987,9 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 	// interface exists in the original declaration too
 	if( decl->isExistingShared && !decl->objType->Implements(intfType) )
 	{
-		WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, decl->script, errNode);
+		asCString str;
+		str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
+		WriteError(str.AddressOf(), decl->script, errNode);
 		return;
 	}
 	
@@ -2273,7 +2275,11 @@ void asCBuilder::CompileClasses()
 						{
 							// Verify that the base class is the same as the original shared type
 							if( decl->objType->derivedFrom != objType )
-								WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, node);
+							{
+								asCString str;
+								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
+								WriteError(str.AddressOf(), file, node);
+							}
 						}
 						else
 						{
@@ -3089,7 +3095,9 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 
 				if( !found )
 				{
-					WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, tmp);
+					asCString str;
+					str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, st->GetName());
+					WriteError(str.AddressOf(), file, tmp);
 					break;
 				}
 
@@ -3415,7 +3423,11 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		}
 
 		if( !found )
-			WriteError(TXT_SHARED_DOESNT_MATCH_ORIGINAL, file, node);
+		{
+			asCString str;
+			str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, objType->GetName());
+			WriteError(str.AddressOf(), file, node);
+		}
 
 		node->Destroy(engine);
 		return 0;

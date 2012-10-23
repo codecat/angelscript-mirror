@@ -331,6 +331,38 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 	
+	// Test multiple modules with shared enums and shared classes
+	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"shared enum ResourceType {} \n"
+			"shared class Resource \n"
+			"{ \n"
+			"	void getType(ResourceType) {} \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"shared");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
 	Test2();
 	TestAndrewPrice();
 

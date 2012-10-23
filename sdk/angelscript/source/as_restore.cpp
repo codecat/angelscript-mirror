@@ -127,7 +127,32 @@ int asCReader::ReadInner()
 			return asOUT_OF_MEMORY;
 
 		ReadObjectTypeDeclaration(ot, 1);
-		engine->classTypes.PushLast(ot);
+
+		// If the type is shared then we should use the original if it exists
+		bool sharedExists = false;
+		if( ot->IsShared() )
+		{
+			for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
+			{
+				asCObjectType *t = engine->classTypes[n];
+				if( t && 
+					t->IsShared() &&
+					t->name == ot->name &&
+					t->nameSpace == ot->nameSpace &&
+					(t->flags & asOBJ_ENUM) )
+				{
+					asDELETE(ot, asCObjectType);
+					ot = t;
+					sharedExists = true;
+					break;
+				}
+			}
+		}
+
+		if( sharedExists )
+			existingShared.Insert(ot, true);
+		else
+			engine->classTypes.PushLast(ot);
 		module->enumTypes.PushLast(ot);
 		ot->AddRef();
 		ReadObjectTypeDeclaration(ot, 2);
@@ -157,6 +182,7 @@ int asCReader::ReadInner()
 				if( t &&
 					t->IsShared() &&
 					t->name == ot->name &&
+					t->nameSpace == ot->nameSpace &&
 					t->IsInterface() == ot->IsInterface() )
 				{
 					asDELETE(ot, asCObjectType);
@@ -188,7 +214,8 @@ int asCReader::ReadInner()
 	module->funcDefs.Allocate(count, 0);
 	for( i = 0; i < count && !error; i++ )
 	{
-		asCScriptFunction *func = ReadFunction(false, true);
+		bool isNew;
+		asCScriptFunction *func = ReadFunction(isNew, false, true);
 		if( func )
 			module->funcDefs.PushLast(func);
 		else
@@ -254,7 +281,8 @@ int asCReader::ReadInner()
 	for( i = 0; i < count && !error; ++i ) 
 	{
 		size_t len = module->scriptFunctions.GetLength();
-		func = ReadFunction();
+		bool isNew;
+		func = ReadFunction(isNew);
 		if( func == 0 )
 		{
 			error = true;
@@ -296,7 +324,8 @@ int asCReader::ReadInner()
 	count = ReadEncodedUInt();
 	for( i = 0; i < count && !error; ++i )
 	{
-		func = ReadFunction(false, false);
+		bool isNew;
+		func = ReadFunction(isNew, false, false);
 		if( func )
 		{
 			module->globalFunctions.Put(func);
@@ -317,7 +346,8 @@ int asCReader::ReadInner()
 		if( info == 0 )
 			return asOUT_OF_MEMORY;
 
-		info->importedFunctionSignature = ReadFunction(false, false);
+		bool isNew;
+		info->importedFunctionSignature = ReadFunction(isNew, false, false);
 		if( info->importedFunctionSignature == 0 )
 		{
 			error = true;
@@ -568,8 +598,9 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	}
 }
 
-asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, bool addToGC) 
+asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool addToEngine, bool addToGC) 
 {
+	isNew = false;
 	if( error ) return 0;
 
 	char c;
@@ -595,6 +626,7 @@ asCScriptFunction *asCReader::ReadFunction(bool addToModule, bool addToEngine, b
 	}
 
 	// Load the new function
+	isNew = true;
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_DUMMY);
 	if( func == 0 )
 	{
@@ -746,19 +778,51 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 		if( ot->flags & asOBJ_ENUM )
 		{
 			int count = ReadEncodedUInt();
-			ot->enumValues.Allocate(count, 0);
-			for( int n = 0; n < count; n++ )
+			bool sharedExists = existingShared.MoveTo(0, ot);
+			if( !sharedExists )
 			{
-				asSEnumValue *e = asNEW(asSEnumValue);
-				if( e == 0 )
+				ot->enumValues.Allocate(count, 0);
+				for( int n = 0; n < count; n++ )
 				{
-					// Out of memory
-					error = true;
-					return;
+					asSEnumValue *e = asNEW(asSEnumValue);
+					if( e == 0 )
+					{
+						// Out of memory
+						error = true;
+						return;
+					}
+					ReadString(&e->name);
+					ReadData(&e->value, 4); // TODO: Should be encoded
+					ot->enumValues.PushLast(e);
 				}
-				ReadString(&e->name);
-				ReadData(&e->value, 4);
-				ot->enumValues.PushLast(e);
+			}
+			else
+			{
+				// Verify that the enum values exists in the original
+				asCString name;
+				int value;
+				for( int n = 0; n < count; n++ )
+				{
+					ReadString(&name);
+					ReadData(&value, 4); // TODO: Should be encoded
+					bool found = false;
+					for( asUINT e = 0; e < ot->enumValues.GetLength(); e++ )
+					{
+						if( ot->enumValues[e]->name == name &&
+							ot->enumValues[e]->value == value )
+						{
+							found = true;
+							break;
+						}
+					}
+					if( !found )
+					{
+						asCString str;
+						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+						engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+						error = true;
+					}
+				}
 			}
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
@@ -776,7 +840,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 				asCObjectType *dt = ReadObjectType();
 				if( ot->derivedFrom != dt )
 				{
-					// TODO: Write message
+					asCString str;
+					str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+					engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 					error = true;
 				}
 			}
@@ -796,7 +862,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					asCObjectType *intf = ReadObjectType();
 					if( !ot->Implements(intf) )
 					{
-						// TODO: Write message
+						asCString str;
+						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+						engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 						error = true;
 					}
 				}
@@ -814,7 +882,8 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			// behaviours
 			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
-				asCScriptFunction *func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
+				bool isNew;
+				asCScriptFunction *func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
 				if( sharedExists )
 				{
 					// Find the real function in the object, and update the savedFunctions array
@@ -827,15 +896,20 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					else
 					{
-						// TODO: Write message
+						asCString str;
+						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+						engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 						error = true;
 					}
-					// Destroy the function without releasing any references
 					if( func )
 					{
-						func->id = 0;
-						func->byteCode.SetLength(0);
-						func->Release();
+						if( isNew )
+						{
+							// Destroy the function without releasing any references
+							func->id = 0;
+							func->byteCode.SetLength(0);
+							func->Release();
+						}
 						module->scriptFunctions.PushLast(realFunc);
 						realFunc->AddRef();
 						dontTranslate.Insert(realFunc, true);
@@ -855,7 +929,8 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 				size = ReadEncodedUInt();
 				for( int n = 0; n < size; n++ )
 				{
-					asCScriptFunction *func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
+					bool isNew;
+					asCScriptFunction *func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
 					if( func )
 					{
 						if( sharedExists )
@@ -879,13 +954,18 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							}
 							if( !found )
 							{
-								// TODO: Write message
+								asCString str;
+								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+								engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 								error = true;
 							}
-							// Destroy the function without releasing any references
-							func->id = 0;
-							func->byteCode.SetLength(0);
-							func->Release();
+							if( isNew )
+							{
+								// Destroy the function without releasing any references
+								func->id = 0;
+								func->byteCode.SetLength(0);
+								func->Release();
+							}
 						}
 						else
 						{
@@ -902,7 +982,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						error = true;
 					}
 
-					func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
+					func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
 					if( func )
 					{
 						if( sharedExists )
@@ -926,13 +1006,18 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							}
 							if( !found )
 							{
-								// TODO: Write message
+								asCString str;
+								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+								engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 								error = true;
 							}
-							// Destroy the function without releasing any references
-							func->id = 0;
-							func->byteCode.SetLength(0);
-							func->Release();
+							if( isNew )
+							{
+								// Destroy the function without releasing any references
+								func->id = 0;
+								func->byteCode.SetLength(0);
+								func->Release();
+							}
 						}
 						else
 						{
@@ -956,7 +1041,8 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			int n;
 			for( n = 0; n < size; n++ ) 
 			{
-				asCScriptFunction *func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
+				bool isNew;
+				asCScriptFunction *func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
 				if( func )
 				{
 					if( sharedExists )
@@ -980,12 +1066,12 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						}
 						if( !found )
 						{
-							// TODO: Write message
+							asCString str;
+							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+							engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 							error = true;
 						}
-						// If the function received wasn't an already existing 
-						// function we must now destroy it
-						if( !savedFunctions.Exists(func) )
+						if( isNew )
 						{
 							// Destroy the function without releasing any references
 							func->id = 0;
@@ -1010,7 +1096,8 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			size = ReadEncodedUInt();
 			for( n = 0; n < size; n++ )
 			{
-				asCScriptFunction *func = ReadFunction(!sharedExists, !sharedExists, !sharedExists);
+				bool isNew;
+				asCScriptFunction *func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
 				if( func )
 				{
 					if( sharedExists )
@@ -1034,12 +1121,12 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						}
 						if( !found )
 						{
-							// TODO: Write message
+							asCString str;
+							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+							engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 							error = true;
 						}
-						// If the function received wasn't an already existing 
-						// function we must now destroy it
-						if( !savedFunctions.Exists(func) )
+						if( isNew )
 						{
 							// Destroy the function without releasing any references
 							func->id = 0;
@@ -1214,7 +1301,8 @@ void asCReader::ReadGlobalProperty()
 	ReadData(&f, 1);
 	if( f )
 	{
-		asCScriptFunction *func = ReadFunction(false, true);
+		bool isNew;
+		asCScriptFunction *func = ReadFunction(isNew, false, true);
 		if( func )
 		{
 			prop->SetInitFunc(func);

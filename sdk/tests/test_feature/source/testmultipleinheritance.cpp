@@ -86,6 +86,7 @@ bool TestMultipleInheritance()
 //-------------------------------------------------------------------------
 
 // http://www.gamedev.net/community/forums/topic.asp?topic_id=521199
+// http://www.gamedev.net/community/forums/topic.asp?topic_id=536299
 
 
 bool addOverlayCalled = false;

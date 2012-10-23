@@ -376,7 +376,7 @@ bool Test2()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "script (1, 53) : Error   : Shared type doesn't match the original declaration in other module\n" )
+		if( bout.buffer != "script (1, 53) : Error   : Shared type 'B' doesn't match the original declaration in other module\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
