@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.1 WIP - 2012/10/23</h2>
+<h2>Version 2.25.1 WIP - 2012/10/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compiler bug when compiling function that takes out reference of a type where opAssign returned a value (Thanks _Engine_)
 <li>Compiler wasn't showing error for virtual properties without any accessor (Thanks FDsagizi)
 <li>Shared enums in pre-compiled bytecode were not treated as shared when loading (Thanks _Engine_)
+<li>Shared classes will now validate that declared members exist in the original declaration during compilation (Thanks _Engine_)
 </ul>
 <li>Library
 <ul>

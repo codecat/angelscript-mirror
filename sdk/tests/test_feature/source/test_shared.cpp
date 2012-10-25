@@ -10,6 +10,50 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Compiling a script with a shared class that refers to other non declared entities must give
+	// error even if the shared class is already existing in a previous module
+	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
+	{
+		const char *script1 = 
+			"shared class A { \n"
+			"  B @b; \n"
+			"  void setB(B@) {} \n"
+			"  void func() {B@ l;} \n" // TODO: The method isn't compiled so this error isn't seen. Should it be?
+			"  string c; \n"
+			"} \n";
+
+		const char *script2 =
+			"shared class B {} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterStdString(engine);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", script1);
+		mod->AddScriptSection("B", script2);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("B", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", script1);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "A (3, 13) : Error   : Identifier 'B' is not a data type\n"
+		                   "A (3, 3) : Error   : Shared type 'A' doesn't match the original declaration in other module\n"
+		                   "A (2, 3) : Error   : Identifier 'B' is not a data type\n"
+		                   "A (2, 6) : Error   : Shared type 'A' doesn't match the original declaration in other module\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	{
 		int reg;
  		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

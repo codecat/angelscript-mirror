@@ -497,7 +497,6 @@ void asCBuilder::ParseScripts()
 		for( n = 0; n < classDeclarations.GetLength(); n++ )
 		{
 			sClassDeclaration *decl = classDeclarations[n];
-			if( decl->isExistingShared ) continue; // TODO: shared: Should really verify that the methods match the original
 
 			asCScriptNode *node = decl->node->firstChild->next;
 
@@ -511,12 +510,12 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType);
+					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, false, false, 0, decl->isExistingShared);
 				}
 				else if( node->nodeType == snVirtualProperty )
 				{
 					node->DisconnectParent();
-					RegisterVirtualProperty(node, decl->script, decl->objType, false, false);
+					RegisterVirtualProperty(node, decl->script, decl->objType, false, false, 0, decl->isExistingShared);
 				}
 
 				node = next;
@@ -2332,19 +2331,21 @@ void asCBuilder::CompileClasses()
 		sClassDeclaration *decl = classDeclarations[n];
 		if( decl->isExistingShared )
 		{
-			// TODO: shared: Should really validate against original
-
 			// Set the declaration as validated already, so that other
 			// types that contain this will accept this type
 			decl->validState = 1;
-			continue;
+
+			// We'll still validate the declaration to make sure nothing new is 
+			// added to the shared class that wasn't there in the previous 
+			// compilation. We do not care if something that is there in the previous
+			// declaration is not included in the new declaration though.
 		}
 
 		// Methods included from mixin classes should take precedence over inherited methods
 		IncludeMethodsFromMixins(decl);
 
 		// Add all properties and methods from the base class
-		if( decl->objType->derivedFrom )
+		if( !decl->isExistingShared && decl->objType->derivedFrom )
 		{
 			asCObjectType *baseType = decl->objType->derivedFrom;
 
@@ -2417,19 +2418,22 @@ void asCBuilder::CompileClasses()
 		}
 
 		// Move this class' methods into the virtual function table
-		for( asUINT m = 0; m < decl->objType->methods.GetLength(); m++ )
+		if( !decl->isExistingShared )
 		{
-			asCScriptFunction *func = GetFunctionDescription(decl->objType->methods[m]);
-			if( func->funcType != asFUNC_VIRTUAL )
+			for( asUINT m = 0; m < decl->objType->methods.GetLength(); m++ )
 			{
-				// Move the reference from the method list to the virtual function list
-				decl->objType->methods.RemoveIndex(m);
-				decl->objType->virtualFunctionTable.PushLast(func);
+				asCScriptFunction *func = GetFunctionDescription(decl->objType->methods[m]);
+				if( func->funcType != asFUNC_VIRTUAL )
+				{
+					// Move the reference from the method list to the virtual function list
+					decl->objType->methods.RemoveIndex(m);
+					decl->objType->virtualFunctionTable.PushLast(func);
 
-				// Substitute the function description in the method list for a virtual method
-				// Make sure the methods are in the same order as the virtual function table
-				decl->objType->methods.PushLast(CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1));
-				m--;
+					// Substitute the function description in the method list for a virtual method
+					// Make sure the methods are in the same order as the virtual function table
+					decl->objType->methods.PushLast(CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1));
+					m--;
+				}
 			}
 		}
 
@@ -2477,8 +2481,34 @@ void asCBuilder::CompileClasses()
 				while( n )
 				{
 					asCString name(&file->code[n->tokenPos], n->tokenLength);
-					CheckNameConflictMember(decl->objType, name.AddressOf(), n, file, true);
-					AddPropertyToClass(decl, name, dt, isPrivate, file, node);
+
+					if( !decl->isExistingShared )
+					{
+						CheckNameConflictMember(decl->objType, name.AddressOf(), n, file, true);
+						AddPropertyToClass(decl, name, dt, isPrivate, file, node);
+					}
+					else
+					{
+						// Verify that the property exists in the original declaration
+						bool found = false;
+						for( asUINT p = 0; p < decl->objType->properties.GetLength(); p++ )
+						{
+							asCObjectProperty *prop = decl->objType->properties[p];
+							if( prop->isPrivate == isPrivate &&
+								prop->name == name &&
+								prop->type.IsEqualExceptRef(dt) )
+							{
+								found = true;
+								break;
+							}
+						}
+						if( !found )
+						{
+							asCString str;
+							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
+							WriteError(str.AddressOf(), file, n);
+						}
+					}
 					n = n->next;
 				}
 			}
@@ -2491,7 +2521,8 @@ void asCBuilder::CompileClasses()
 		// Add properties from included mixin classes that don't conflict with existing properties
 		IncludePropertiesFromMixins(decl);
 
-		toValidate.PushLast(decl);
+		if( !decl->isExistingShared )
+			toValidate.PushLast(decl);
 	}
 
 	// TODO: Warn if a method overrides a base method without marking it as 'override'.
@@ -2713,7 +2744,7 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
 		if( mixin )
 		{
-			// Find properties from mixin declaration
+			// Find methods from mixin declaration
 			asCScriptNode *n = mixin->node->firstChild;
 
 			// Skip to the member declarations
@@ -2721,7 +2752,7 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 			while( n && n->nodeType == snIdentifier )
 				n = n->next;
 
-			// Add properties from the mixin that are not already existing in the class
+			// Add methods from the mixin that are not already existing in the class
 			while( n )
 			{
 				if( n->nodeType == snFunction )
@@ -2847,12 +2878,38 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 
 						if( !exists )
 						{
-							// It must not conflict with the name of methods
-							int r = CheckNameConflictMember(decl->objType, name.AddressOf(), n2, file, true);
-							if( r < 0 )
-								WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
+							if( !decl->isExistingShared )
+							{
+								// It must not conflict with the name of methods
+								int r = CheckNameConflictMember(decl->objType, name.AddressOf(), n2, file, true);
+								if( r < 0 )
+									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
 
-							AddPropertyToClass(decl, name, dt, isPrivate, file, n);
+								AddPropertyToClass(decl, name, dt, isPrivate, file, n);
+							}
+							else
+							{
+								// Verify that the property exists in the original declaration
+								bool found = false;
+								for( asUINT p = 0; p < decl->objType->properties.GetLength(); p++ )
+								{
+									asCObjectProperty *prop = decl->objType->properties[p];
+									if( prop->isPrivate == isPrivate &&
+										prop->name == name &&
+										prop->type == dt )
+									{
+										found = true;
+										break;
+									}
+								}
+								if( !found )
+								{
+									asCString str;
+									str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
+									WriteError(str.AddressOf(), decl->script, decl->node);
+									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, n);
+								}
+							}
 						}
 
 						n2 = n2->next;
