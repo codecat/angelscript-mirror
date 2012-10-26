@@ -408,7 +408,11 @@
 
 		// Marmalade doesn't use the Windows libraries
 		#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
-		#define AS_POSIX_THREADS
+		
+		// Marmalade doesn't seem to have proper support for 
+		// atomic instructions or read/write locks
+		//#define AS_POSIX_THREADS
+		#define AS_NO_THREADS
 		#define AS_NO_ATOMIC
 	#else
 		#if _MSC_VER < 1500  // MSVC++ 9 (aka MSVC++ .NET 2008)

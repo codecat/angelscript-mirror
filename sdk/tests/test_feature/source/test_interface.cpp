@@ -241,6 +241,40 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// Implicit casts to an inherited interface should work
+		script = 
+			"interface A {} \n"
+			"interface B : A {} \n"
+			"void func() \n"
+			"{ \n"
+			"  A@ a; B@ b; \n"
+			"  @a = b; \n"
+			"} \n";
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Don't allow circular inheritance
+		script = 
+			"interface A : C {} \n"
+			"interface B : A {} \n"
+			"interface C : B {} \n";
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r >= 0 ) TEST_FAILED;
+		if( bout.buffer != "TestInterface (3, 15) : Error   : Can't implement itself, or another interface that implements this interface\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

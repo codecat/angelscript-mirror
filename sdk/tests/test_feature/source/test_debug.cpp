@@ -114,6 +114,9 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel);
 
 void LineCallback(asIScriptContext *ctx, void *param)
 {
+	if( ctx->GetState() != asEXECUTION_ACTIVE )
+		return;
+
 	int col;
 	int line = ctx->GetLineNumber(0, &col);
 	int indent = ctx->GetCallstackSize();

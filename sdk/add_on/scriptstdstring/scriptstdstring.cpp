@@ -49,7 +49,7 @@ static const string &StringFactory(asUINT length, const char *s)
 		pool = reinterpret_cast< map<const char *, string>* >(engine->GetUserData(STRING_POOL));
 		if( !pool )
 		{
-			#if defined(AS_MARMALADE)
+			#if defined(AS_MARMALADE) || defined(MARMALADE)
 			pool = new map<const char *, string>;
 			#else
 			pool = new (nothrow) map<const char *, string>;
@@ -364,7 +364,8 @@ static string formatInt(asINT64 value, const string &options, asUINT width)
 
 	string buf;
 	buf.resize(width+20);
-#if _MSC_VER >= 1400 && !defined(AS_MARMALADE)// MSVC 8.0 / 2005
+#if _MSC_VER >= 1400 && !defined(AS_MARMALADE) && !defined(MARMALADE)
+	// MSVC 8.0 / 2005 or newer
 	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, value);
 #else
 	sprintf(&buf[0], fmt.c_str(), width, value);
@@ -399,7 +400,8 @@ static string formatFloat(double value, const string &options, asUINT width, asU
 
 	string buf;
 	buf.resize(width+precision+50);
-#if _MSC_VER >= 1400 && !defined(AS_MARMALADE)// MSVC 8.0 / 2005
+#if _MSC_VER >= 1400 && !defined(AS_MARMALADE) && !defined(MARMALADE)
+	// MSVC 8.0 / 2005 or newer
 	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, precision, value);
 #else
 	sprintf(&buf[0], fmt.c_str(), width, precision, value);

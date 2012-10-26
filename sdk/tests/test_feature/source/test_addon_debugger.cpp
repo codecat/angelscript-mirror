@@ -23,11 +23,14 @@ public:
 
 	void LineCallback(asIScriptContext *ctx)
 	{
-		// Call the command for listing local variables
-		InterpretCommand("l v", ctx);
+		if( ctx->GetState() == asEXECUTION_ACTIVE )
+		{
+			// Call the command for listing local variables
+			InterpretCommand("l v", ctx);
 
-		// Invoke the original line callback
-		CDebugger::LineCallback(ctx);
+			// Invoke the original line callback
+			CDebugger::LineCallback(ctx);
+		}
 	}
 
 	std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine)

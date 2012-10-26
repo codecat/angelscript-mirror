@@ -1152,6 +1152,13 @@ int asCContext::Execute()
 	while( m_status == asEXECUTION_ACTIVE )
 		ExecuteNext();
 
+	if( m_lineCallback )
+	{
+		// Call the line callback one last time before leaving 
+		// so anyone listening can catch the state change
+		CallLineCallback();
+	}
+
 	if( m_engine->ep.autoGarbageCollect )
 	{
 		asUINT gcPosObjects = 0;

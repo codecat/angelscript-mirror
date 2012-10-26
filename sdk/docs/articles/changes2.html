@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.1 WIP - 2012/10/24</h2>
+<h2>Version 2.25.1 WIP - 2012/10/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented an inline profiler to get better understanding of bottlenecks in the code
 <li>Added support for the new ABI in MinGW32 4.7 (Thanks Heuristics)
 <li>Improved error messages when loading bytecode with shared types that doesn't match existing shared types
+<li>The context's line callback is now invoked one extra time just before leaving the Execute() method to allow listeners to catch state changes (Thanks saejox)
+<li>Made some improvements towards compatibility with Marmalade
 </ul>
 <li>Script language
 <ul>

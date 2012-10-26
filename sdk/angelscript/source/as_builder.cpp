@@ -1974,7 +1974,7 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 	}
 
 	// A shared type may only implement from shared interfaces
-	if( (decl->objType->IsShared()) && !(intfType->IsShared()) )
+	if( decl->objType->IsShared() && !intfType->IsShared() )
 	{
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, intfType->name.AddressOf());
@@ -1995,72 +1995,19 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 	// Add the interface to the class	
 	decl->objType->interfaces.PushLast(intfType);
 
-	// Find out if the interface has other included interfaces
-	for( asUINT n = 0; n < interfaceDeclarations.GetLength(); n++ )
+	// Add the inherited interfaces too
+	// For interfaces this will be done outside to handle out-of-order declarations
+	if( !decl->objType->IsInterface() )
 	{
-		sClassDeclaration *intfDecl = interfaceDeclarations[n];
-		if( intfDecl && 
-			intfDecl->name == intfType->GetName() &&
-			intfDecl->objType->nameSpace == intfType->nameSpace )
-		{
-			asCScriptNode *node = intfDecl->node;
-			asASSERT(node && node->nodeType == snInterface);
-			node = node->firstChild;
-
-			// Skip the 'shared' keyword
-			if( intfType->IsShared() )
-				node = node->next;
-
-			// Skip the name
-			node = node->next;
-
-			// Add the inherited interfaces
-			while( node && node->nodeType == snIdentifier )
-			{
-				// Get the optional scope from the node
-				asCString scope = GetScopeFromNode(node->firstChild, intfDecl->script);
-				asSNameSpace *ns = 0;
-				if( scope == "" )
-					// No scope was informed, use the same namespace as the original interface
-					ns = intfType->nameSpace;
-				else if( scope == "::" )
-					// The global scope was informed
-					ns = engine->nameSpaces[0];
-				else
-				{
-					ns = engine->FindNameSpace(scope.AddressOf());
-					if( ns == 0 )
-					{
-						asCString msg;
-						msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-						WriteError(msg.AddressOf(), intfDecl->script, node->firstChild);
-
-						// Move to the next node
-						node = node->next;
-						continue;
-					}
-				}
-
-				// Get the interface name from the node
-				asCString name(&intfDecl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
-
-				// Find the object type for the interface
-				asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
-				asASSERT( objType && objType->size == 0 && (objType->flags & asOBJ_SCRIPT_OBJECT) );
-
-				AddInterfaceToClass(decl, errNode, objType);	
-
-				node = node->next;
-			}
-
-			break;
-		}
+		for( asUINT n = 0; n < intfType->interfaces.GetLength(); n++ )
+			AddInterfaceToClass(decl, errNode, intfType->interfaces[n]);
 	}
 }
 
 void asCBuilder::CompileInterfaces()
 {
-	for( asUINT n = 0; n < interfaceDeclarations.GetLength(); n++ )
+	asUINT n;
+	for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
 	{
 		sClassDeclaration *intfDecl = interfaceDeclarations[n];
 		asCObjectType *intfType = intfDecl->objType;
@@ -2127,17 +2074,76 @@ void asCBuilder::CompileInterfaces()
 				WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
 				ok = false;
 			}
+	
+			if( ok )
+			{
+				// Make sure none of the implemented interfaces implement from this one
+				asCObjectType *base = objType;
+				while( base != 0 )
+				{
+					if( base == intfType )
+					{
+						WriteError(TXT_CANNOT_IMPLEMENT_SELF, intfDecl->script, node);
+						ok = false;
+						break;
+					}
+
+					// At this point there is at most one implemented interface
+					if( base->interfaces.GetLength() )
+						base = base->interfaces[0];
+					else
+						break;
+				}
+			}
 
 			if( ok )
-				node = node->next;
-			else
+				AddInterfaceToClass(intfDecl, node, objType);
+
+			// Remove the nodes so they aren't parsed again
+			asCScriptNode *delNode = node;
+			node = node->next;
+			delNode->DisconnectParent();
+			delNode->Destroy(engine);
+		}
+	}
+
+	// Order the interfaces with inheritances so that the inherited 
+	// of inherited interfaces can be added properly
+	for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *intfDecl = interfaceDeclarations[n];
+		asCObjectType *intfType = intfDecl->objType;
+
+		if( intfType->interfaces.GetLength() == 0 ) continue;
+
+		// If any of the derived interfaces are found after this interface, then move this to the end of the list
+		for( asUINT m = n+1; m < interfaceDeclarations.GetLength(); m++ )
+		{
+			if( intfType->Implements(interfaceDeclarations[m]->objType) )
 			{
-				// Remove the bad inheritances so they don't cause problem later
-				asCScriptNode *badNode = node;
-				node = node->next;
-				badNode->DisconnectParent();
-				badNode->Destroy(engine);
+				interfaceDeclarations.RemoveIndex(n);
+				interfaceDeclarations.PushLast(intfDecl);
+
+				// Decrease index so that we don't skip an entry
+				n--;
+				break;
 			}
+		}
+	}
+
+	// Now recursively add the additional inherited interfaces
+	for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *intfDecl = interfaceDeclarations[n];
+		asCObjectType *intfType = intfDecl->objType;
+
+		// As new interfaces will be added to the end of the list, all 
+		// interfaces will be traversed the same as recursively
+		for( asUINT m = 0; m < intfType->interfaces.GetLength(); m++ )
+		{
+			asCObjectType *base = intfType->interfaces[m];
+			for( asUINT l = 0; l < base->interfaces.GetLength(); l++ )
+				AddInterfaceToClass(intfDecl, intfDecl->node, base->interfaces[l]);
 		}
 	}
 }
