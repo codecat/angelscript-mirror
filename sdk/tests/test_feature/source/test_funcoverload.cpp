@@ -40,8 +40,8 @@ bool TestFuncOverload()
 		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
 		return false;
 	}
-	// TODO: Add Test2 again
-	bool fail = false; //Test2();
+
+	bool fail = Test2();
 	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -92,10 +92,6 @@ bool TestFuncOverload()
 	return fail;
 }
 
-// TODO: Implement this support
-// (It currently doesn't work because the first argument gives an exact match for another function.
-// I need to weigh this limitation against the possibility of increasing multiple matches)
-//
 // This test verifies that it is possible to find a best match even if the first argument
 // may give a better match for another function. Also the order of the function declarations
 // should not affect the result.
@@ -107,16 +103,19 @@ bool Test2()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	const char *script1 =
 		"class A{}  \n"
 		"class B{}  \n"
-		"void func(A&in, A&in) {} \n"
-		"void func(const A&in, const B&in) {} \n"
+		"int choice; \n"
+		"void func(A&in, A&in) { choice = 1; } \n"
+		"void func(const A&in, const B&in) { choice = 2; } \n"
 		"void test()  \n"
 		"{ \n"
 		"  A a; B b; \n"
 		"  func(a,b); \n"
+		"  assert( choice == 2 ); \n"
 		"}\n";
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -124,22 +123,92 @@ bool Test2()
 	r = mod->Build();
 	if( r < 0 )
 		TEST_FAILED;
+	r = ExecuteString(engine, "test()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	const char *script2 =
 		"class A{}  \n"
 		"class B{}  \n"
-		"void func(const A&in, const B&in) {} \n"
-		"void func(A&in, A&in) {} \n"
+		"int choice; \n"
+		"void func(const A&in, const B&in) { choice = 1; } \n"
+		"void func(A&in, A&in) { choice = 2; } \n"
 		"void test()  \n"
 		"{ \n"
 		"  A a; B b; \n"
 		"  func(a,b); \n"
+		"  assert( choice == 1 ); \n"
 		"}\n";
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	r = mod->AddScriptSection("test", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "test()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	const char *script3 =
+		"int choice = 0; \n"
+		"void func(int, float, double) { choice = 1; } \n"
+		"void func(float, int, double) { choice = 2; } \n"
+		"void func(double, float, int) { choice = 3; } \n"
+		"void main() \n"
+		"{ \n"
+		"  func(1, 1.0f, 1.0); assert( choice == 1 ); \n" // perfect match
+		"  func(1.0f, 1, 1.0); assert( choice == 2 ); \n" // perfect match
+		"  func(1.0, 1.0f, 1); assert( choice == 3 ); \n" // perfect match
+		"  func(1.0, 1, 1); assert( choice == 3 ); \n" // second arg converted
+		"  func(1.0f, 1.0, 1.0); assert( choice == 2 ); \n" // second arg converted
+		"  func(1.0f, 1.0f, 1); assert( choice == 3 ); \n" // first arg converted
+		"} \n";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("test", script3);
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	const char *script4 =
+		"class A { \n"
+		"  void func(int) { choice = 1; } \n"
+		"  void func(int) const { choice = 2; } \n"
+		"} \n"
+		"int choice; \n"
+		"void main() \n"
+		"{ \n"
+		"  A@ a = A(); \n"
+		"  const A@ b = A(); \n"
+		"  a.func(1); assert( choice == 1 ); \n"
+		"  b.func(1); assert( choice == 2 ); \n"
+		"} \n";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("test", script4);
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	const char *script5 =
+		"void func(int8, double a = 1.0) { choice = 1; } \n"
+		"void func(float) { choice = 2; } \n"
+		"int choice; \n"
+		"void main() \n"
+		"{ \n"
+		"  func(1); assert( choice == 1 ); \n"
+		"} \n";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	r = mod->AddScriptSection("test", script5);
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "main()", mod);
+	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
 	engine->Release();

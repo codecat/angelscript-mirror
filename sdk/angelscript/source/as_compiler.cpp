@@ -1831,10 +1831,9 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
 	asCArray<int> origFuncs = funcs; // Keep the original list for error message
-
 	asUINT cost = 0;
-
 	asUINT n;
+
 	if( funcs.GetLength() > 0 )
 	{
 		// Check the number of parameters in the found functions
@@ -1870,12 +1869,18 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 		}
 
 		// Match functions with the parameters, and discard those that do not match
-		asCArray<int> matchingFuncs = funcs;
+		asCArray<asSOverloadCandidate> matchingFuncs;
+		matchingFuncs.SetLengthNoConstruct( funcs.GetLength() );
+		for ( n = 0; n < funcs.GetLength(); ++n )
+		{
+			matchingFuncs[n].funcId = funcs[n];
+			matchingFuncs[n].cost = 0;
+		}
 
 		for( n = 0; n < args.GetLength(); ++n )
 		{
-			asCArray<int> tempFuncs;
-			cost += MatchArgument(funcs, tempFuncs, &args[n]->type, n, allowObjectConstruct);
+			asCArray<asSOverloadCandidate> tempFuncs;
+			MatchArgument(funcs, tempFuncs, &args[n]->type, n, allowObjectConstruct);
 
 			// Intersect the found functions with the list of matching functions
 			for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
@@ -1883,8 +1888,13 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 				asUINT c;
 				for( c = 0; c < tempFuncs.GetLength(); c++ )
 				{
-					if( matchingFuncs[f] == tempFuncs[c] )
+					if( matchingFuncs[f].funcId == tempFuncs[c].funcId )
+					{
+						// Sum argument cost
+						matchingFuncs[f].cost += tempFuncs[c].cost;
 						break;
+
+					} // End if match
 				}
 
 				// Was the function a match?
@@ -1900,7 +1910,23 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 			}
 		}
 
-		funcs = matchingFuncs;
+		// Select the overload(s) with the lowest overall cost
+		funcs.SetLength(0);
+		asUINT bestCost = asUINT(-1);
+		for( n = 0; n < matchingFuncs.GetLength(); ++n )
+		{
+			cost = matchingFuncs[n].cost;
+			if( cost < bestCost )
+			{
+				funcs.SetLength(0);
+				bestCost = cost;
+			}
+			if( cost == bestCost )
+				funcs.PushLast( matchingFuncs[n].funcId );
+		}
+
+		// Cost returned is equivalent to the best cost discovered
+		cost = bestCost;
 	}
 
 	if( !isConstMethod )
@@ -9468,9 +9494,8 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 	return 0;
 }
 
-asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct)
+asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCandidate> &matches, const asCTypeInfo *argType, int paramNum, bool allowObjectConstruct)
 {
-	asUINT bestCost = asUINT(-1);
 	matches.SetLength(0);
 
 	for( asUINT n = 0; n < funcs.GetLength(); n++ )
@@ -9532,19 +9557,10 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<int> &matches, 
 
 		// How well does the argument match the function parameter?
 		if( desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType) )
-		{
-			if( cost < bestCost )
-			{
-				matches.SetLength(0);
-				bestCost = cost;
-			}
-
-			if( cost == bestCost )
-				matches.PushLast(funcs[n]);
-		}
+			matches.PushLast(asSOverloadCandidate(funcs[n], cost));
 	}
 
-	return bestCost;
+	return (asUINT)matches.GetLength();
 }
 
 void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)
@@ -9797,8 +9813,23 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		}
 
 		// Which is the best matching function?
+		asCArray<asSOverloadCandidate> tempFuncs;
+		MatchArgument(funcs, tempFuncs, &rctx->type, 0);
+
+		// Find the lowest cost operator(s)
 		asCArray<int> ops;
-		MatchArgument(funcs, ops, &rctx->type, 0);
+		asUINT bestCost = asUINT(-1);
+		for( asUINT n = 0; n < tempFuncs.GetLength(); ++n )
+		{
+			asUINT cost = tempFuncs[n].cost;
+			if( cost < bestCost )
+			{
+				ops.SetLength(0);
+				bestCost = cost;
+			}
+			if( cost == bestCost )
+				ops.PushLast(tempFuncs[n].funcId);
+		}
 
 		// If the object is not const, then we need to prioritize non-const methods
 		if( !isConst )

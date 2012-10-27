@@ -102,15 +102,17 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "script (29, 1) : Info    : Compiling void main()\n"
+		                   "script (39, 16) : Warning : Implicit conversion of value is not exact\n" )
 		{
+			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
-		{
 			TEST_FAILED;
-		}
 
 		// Test const correctness. opEquals(int) isn't const so it must not be allowed
 		bout.buffer = "";
