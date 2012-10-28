@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.25.0
-#define ANGELSCRIPT_VERSION        22500
-#define ANGELSCRIPT_VERSION_STRING "2.25.0"
+//! \details Version 2.25.1
+#define ANGELSCRIPT_VERSION        22501
+#define ANGELSCRIPT_VERSION_STRING "2.25.1"
 
 // Data types
 
