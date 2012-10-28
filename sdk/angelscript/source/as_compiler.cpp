@@ -291,25 +291,18 @@ void asCCompiler::FinalizeFunction()
 	outFunc->lineNumbers = byteCode.lineNumbers;
 }
 
-// Entry
-int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
+// internal
+int asCCompiler::SetupParametersAndReturnVariable(sExplicitSignature *signature, asCScriptNode *func)
 {
-	TimeIt("asCCompiler::CompileFunction");
-
 	// TODO: The compiler should take the return type and parameter types from the 
 	//       outFunc, instead of interpreting the script nodes again. The builder
 	//       must pass the list of parameter names. Making this change we can
 	//       eliminate large parts of this function and the sExplicitSignature structure
 
-	Reset(builder, script, outFunc);
-	int buildErrors = builder->numErrors;
-
 	int stackPos = 0;
+
 	if( outFunc->objectType )
 		stackPos = -AS_PTR_SIZE; // The first parameter is the pointer to the object
-
-	// Reserve a label for the cleanup code
-	nextLabel++;
 
 	// Add the first variable scope, which the parameters and
 	// variables declared in the outermost statement block is
@@ -443,7 +436,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 	}
 	else
 	{
-		
 		asCArray<asCDataType> &args = signature->argTypes;
 		asCArray<asETypeModifiers> &inoutFlags = signature->argModifiers;
 		asCArray<asCString> &argNames = signature->argNames;
@@ -496,11 +488,23 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	variables->DeclareVariable("return", returnType, stackPos, true);
 
+	return stackPos;
+}
+
+// Entry
+int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sExplicitSignature *signature, asCScriptNode *func, asCScriptFunction *outFunc)
+{
+	TimeIt("asCCompiler::CompileFunction");
+
+	Reset(builder, script, outFunc);
+	int buildErrors = builder->numErrors;
+
+	int stackPos = SetupParametersAndReturnVariable(signature, func);
+
 	//--------------------------------------------
 	// Compile the statement block
 
 	// We need to parse the statement block now
-
 	asCScriptNode *blockBegin;
 
 	if( !signature )
@@ -515,6 +519,9 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 	if( r < 0 ) return -1;
 	asCScriptNode *block = parser.GetScriptNode();
 
+	// Reserve a label for the cleanup code
+	nextLabel++;
+
 	bool hasReturn;
 	asCByteCode bc(engine);
 	LineInstr(&bc, blockBegin->tokenPos);
@@ -522,7 +529,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 	LineInstr(&bc, blockBegin->tokenPos + blockBegin->tokenLength);
 
 	// Make sure there is a return in all paths (if not return type is void)
-	if( returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+	if( outFunc->returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 	{
 		if( hasReturn == false )
 			Error(TXT_NOT_ALL_PATHS_RETURN, blockBegin);
@@ -573,6 +580,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 	byteCode.AddCode(&bc);
 
 	// Deallocate all local variables
+	int n;
 	for( n = (int)variables->variables.GetLength() - 1; n >= 0; n-- )
 	{
 		sVariable *v = variables->variables[n];
@@ -621,12 +629,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 
 	// Remove the variable scope
 	RemoveVariableScope();
-
-	// This POP is not necessary as the return will clean up the stack frame anyway.
-	// The bytecode optimizer would remove this POP, however by not including it here
-	// it is guaranteed it doesn't have to be adjusted by the asCRestore class when
-	// a types are of a different size than originally compiled for.
-	// byteCode.Pop(varSize);
 
 	byteCode.Ret(-stackPos);
 

@@ -2384,8 +2384,23 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	r = bld.CheckNameConflictMember(objectType, func->name.AddressOf(), 0, 0, false);
 	if( r < 0 )
 	{
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+	}
+
+	// Check against duplicate methods
+	asUINT n;
+	for( n = 0; n < func->objectType->methods.GetLength(); n++ )
+	{
+		asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];
+		if( f->name == func->name &&
+			f->IsSignatureExceptNameAndReturnTypeEqual(func) )
+		{
+			func->funcType = asFUNC_DUMMY;
+			asDELETE(func,asCScriptFunction);
+			return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+		}
 	}
 
 	func->id = GetNextScriptFunctionId();
@@ -2400,7 +2415,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
-	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
 		if( func->parameterTypes[n].GetObjectType() )
 		{
@@ -2503,6 +2518,21 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 		return ConfigError(asNAME_TAKEN, "RegisterGlobalFunction", declaration, 0);
 	}
 
+	// Make sure the function is not identical to a previously registered function
+	asUINT n;
+	for( n = 0; n < registeredGlobalFuncs.GetLength(); n++ )
+	{
+		asCScriptFunction *f = registeredGlobalFuncs[n];
+		if( f->name == func->name &&
+			f->nameSpace == func->nameSpace &&
+			f->IsSignatureExceptNameAndReturnTypeEqual(func) )
+		{
+			func->funcType = asFUNC_DUMMY;
+			asDELETE(func,asCScriptFunction);
+			return ConfigError(asALREADY_REGISTERED, "RegisterGlobalFunction", declaration, 0);
+		}
+	}
+
 	func->id = GetNextScriptFunctionId();
 	SetScriptFunction(func);
 
@@ -2516,7 +2546,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
 		currentGroup->RefConfigGroup(group);
 	}
-	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
 		if( func->parameterTypes[n].GetObjectType() )
 		{

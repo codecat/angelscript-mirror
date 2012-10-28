@@ -943,6 +943,7 @@ public:
 	//! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
 	//! \retval asINVALID_DECLARATION The function declaration is invalid.
 	//! \retval asNAME_TAKEN The function name is already used elsewhere.
+	//! \retval asALREADY_REGISTERED The function has already been registered with the same parameter list.
 	//!
 	//! This method registers system functions that the scripts may use to communicate with the host application.
 	//!
@@ -1070,6 +1071,7 @@ public:
 	//! \retval asINVALID_DECLARATION The \a declaration is invalid.
 	//! \retval asNAME_TAKEN The name conflicts with other members.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention isn't compatible with \a callConv.
+	//! \retval asALREADY_REGISTERED The method has already been registered with the same parameter list.
 	//!
 	//! Use this method to register a member method for the type. The method
 	//! that is registered may be an actual class method, or a global function
