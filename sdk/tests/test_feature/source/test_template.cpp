@@ -153,6 +153,7 @@ bool Test()
 		
 		r = engine->RegisterObjectType("myObj", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
 		r = engine->RegisterObjectType("x<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("x<T>", asBEHAVE_FACTORY, "x<T>@ f(int &in, int)", asFUNCTION(0), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("x<T>", asBEHAVE_FACTORY, "x<T>@ f(int&in)", asFUNCTION(0), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("x<T>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("x<T>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_THISCALL); assert( r >= 0 );

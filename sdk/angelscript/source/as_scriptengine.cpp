@@ -3061,6 +3061,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 		scriptFunctions[ot->beh.constructors[n]]->AddRef();
 
+	ot->beh.factory = 0;
+
 	// Generate factory stubs for each of the factories
 	for( n = 0; n < templateType->beh.factories.GetLength(); n++ )
 	{
@@ -3068,12 +3070,11 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 		// The function's refCount was already initialized to 1
 		ot->beh.factories.PushLast(func->id);
+
+		// Set the default factory as well
+		if( templateType->beh.factories[n] == templateType->beh.factory )
+			ot->beh.factory = func->id;
 	}
-	// If the template has a default factory, then set keep the id
-	if( ot->beh.factories.GetLength() && scriptFunctions[ot->beh.factories[0]]->parameterTypes.GetLength() == 0 )
-		ot->beh.factory = ot->beh.factories[0];
-	else
-		ot->beh.factory = 0;
 
 	// Generate stub for the list factory as well
 	if( templateType->beh.listFactory )

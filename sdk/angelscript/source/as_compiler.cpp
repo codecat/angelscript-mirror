@@ -9789,6 +9789,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		(!lctx->type.isExplicitHandle ||
 		 lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 	{
+		asUINT n;
+
 		// Is the left value a const?
 		bool isConst = false;
 		if( lctx->type.dataType.IsObjectHandle() )
@@ -9798,7 +9800,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 
 		asCArray<int> funcs;
 		asCObjectType *ot = lctx->type.dataType.GetObjectType();
-		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+		for( n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
 			if( func->name == methodName &&
@@ -9821,7 +9823,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		// Find the lowest cost operator(s)
 		asCArray<int> ops;
 		asUINT bestCost = asUINT(-1);
-		for( asUINT n = 0; n < tempFuncs.GetLength(); ++n )
+		for( n = 0; n < tempFuncs.GetLength(); ++n )
 		{
 			asUINT cost = tempFuncs[n].cost;
 			if( cost < bestCost )
