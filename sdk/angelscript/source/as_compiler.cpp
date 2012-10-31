@@ -243,15 +243,8 @@ void asCCompiler::FinalizeFunction()
 
 	asUINT n;
 
-	// Tell the bytecode which variables are temporary
-	for( n = 0; n < variableIsTemporary.GetLength(); n++ )
-	{
-		if( variableIsTemporary[n] )
-			byteCode.DefineTemporaryVariable(GetVariableOffset(n));
-	}
-
 	// Finalize the bytecode
-	byteCode.Finalize();
+	byteCode.Finalize(tempVariableOffsets);
 
 	byteCode.ExtractObjectVariableInfo(outFunc);
 
@@ -552,9 +545,12 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 		{
 			if( outFunc->objectType->derivedFrom->beh.construct )
 			{
-				byteCode.InstrSHORT(asBC_PSF, 0);
-				byteCode.Instr(asBC_RDSPtr);
-				byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+				asCByteCode tmpBC(engine);
+				tmpBC.InstrSHORT(asBC_PSF, 0);
+				tmpBC.Instr(asBC_RDSPtr);
+				tmpBC.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+				tmpBC.OptimizeLocally(tempVariableOffsets);
+				byteCode.AddCode(&tmpBC);
 			}
 			else
 			{
@@ -570,9 +566,12 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, sEx
 			//                         to set a flag so the exception handler doesn't try to release the handle.
 			// It is not necessary to do this for constructors, as they have no outside references that can be released anyway
 			// It is not necessary to do this for methods that return references, as the caller is guaranteed to hold a reference to the object
-			byteCode.InstrSHORT(asBC_PSF, 0);
-			byteCode.Instr(asBC_RDSPtr);
-			byteCode.Call(asBC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
+			asCByteCode tmpBC(engine);
+			tmpBC.InstrSHORT(asBC_PSF, 0);
+			tmpBC.Instr(asBC_RDSPtr);
+			tmpBC.Call(asBC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
+			tmpBC.OptimizeLocally(tempVariableOffsets);
+			byteCode.AddCode(&tmpBC);
 		}
 	}
 
@@ -872,9 +871,10 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 				if( type.GetBehaviour()->destruct )
 				{
 					// Call the destructor as a regular function
-					bc->InstrSHORT(asBC_PSF, (short)offset);
 					asSExprContext ctx(engine);
+					ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
 					PerformFunctionCall(type.GetBehaviour()->destruct, &ctx);
+					ctx.bc.OptimizeLocally(tempVariableOffsets);
 					bc->AddCode(&ctx.bc);
 				}
 
@@ -1192,6 +1192,8 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// Reserve space for all local variables
 	outFunc->variableSpace = varSize;
+
+	ctx.bc.OptimizeLocally(tempVariableOffsets);
 
 	byteCode.AddCode(&ctx.bc);
 
@@ -2275,6 +2277,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), bc, varNode);
 		}
 	}
+
+	bc->OptimizeLocally(tempVariableOffsets);
 }
 
 void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc)
@@ -2717,6 +2721,9 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	// Release the temporary variable previously stored
 	ReleaseTemporaryVariable(expr.type, &expr.bc);
 
+	// TODO: optimize: Should optimize each piece individually
+	expr.bc.OptimizeLocally(tempVariableOffsets);
+
 	//----------------------------------
     // Output case implementations
 	//----------------------------------
@@ -2820,20 +2827,20 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 		ConvertToVariable(&expr);
 
-		// Add byte code from the expression
-		bc->AddCode(&expr.bc);
-
 		// Add a test
-		bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
 		if( expr.type.isTemporary )
 		{
 			// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
 			// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-			bc->DiscardVar(expr.type.stackOffset);
+			expr.bc.DiscardVar(expr.type.stackOffset);
 		}
-		bc->Instr(asBC_ClrHi);
-		bc->InstrDWORD(asBC_JZ, afterLabel);
-		ReleaseTemporaryVariable(expr.type, bc);
+		expr.bc.Instr(asBC_ClrHi);
+		expr.bc.InstrDWORD(asBC_JZ, afterLabel);
+		ReleaseTemporaryVariable(expr.type, &expr.bc);
+
+		expr.bc.OptimizeLocally(tempVariableOffsets);
+		bc->AddCode(&expr.bc);
 	}
 	else if( expr.type.dwordValue == 0 )
 	{
@@ -2980,6 +2987,8 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				expr.bc.Instr(asBC_ClrHi);
 				expr.bc.InstrDWORD(asBC_JNZ, insideLabel);
 				ReleaseTemporaryVariable(expr.type, &expr.bc);
+
+				expr.bc.OptimizeLocally(tempVariableOffsets);
 			}
 		}
 	}
@@ -3072,19 +3081,21 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 		// Add byte code for the expression
 		ConvertToVariable(&expr);
-		bc->AddCode(&expr.bc);
 
 		// Jump to end of statement if expression is false
-		bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
 		if( expr.type.isTemporary )
 		{
 			// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
 			// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-			bc->DiscardVar(expr.type.stackOffset);
+			expr.bc.DiscardVar(expr.type.stackOffset);
 		}
-		bc->Instr(asBC_ClrHi);
-		bc->InstrDWORD(asBC_JZ, afterLabel);
-		ReleaseTemporaryVariable(expr.type, bc);
+		expr.bc.Instr(asBC_ClrHi);
+		expr.bc.InstrDWORD(asBC_JZ, afterLabel);
+		ReleaseTemporaryVariable(expr.type, &expr.bc);
+
+		expr.bc.OptimizeLocally(tempVariableOffsets);
+		bc->AddCode(&expr.bc);
 	}
 
 	// Add a suspend bytecode inside the loop to guarantee
@@ -3163,19 +3174,21 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 		// Add byte code for the expression
 		ConvertToVariable(&expr);
-		bc->AddCode(&expr.bc);
 
 		// Jump to next iteration if expression is true
-		bc->InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
 		if( expr.type.isTemporary )
 		{
 			// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
 			// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-			bc->DiscardVar(expr.type.stackOffset);
+			expr.bc.DiscardVar(expr.type.stackOffset);
 		}
-		bc->Instr(asBC_ClrHi);
-		bc->InstrDWORD(asBC_JNZ, beforeLabel);
-		ReleaseTemporaryVariable(expr.type, bc);
+		expr.bc.Instr(asBC_ClrHi);
+		expr.bc.InstrDWORD(asBC_JNZ, beforeLabel);
+		ReleaseTemporaryVariable(expr.type, &expr.bc);
+
+		expr.bc.OptimizeLocally(tempVariableOffsets);
+		bc->AddCode(&expr.bc);
 	}
 
 	// Add label after the statement
@@ -3258,6 +3271,7 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 
 		ProcessDeferredParams(&expr);
 
+		expr.bc.OptimizeLocally(tempVariableOffsets);
 		bc->AddCode(&expr.bc);
 	}
 }
@@ -3588,6 +3602,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			}
 		}
 
+		expr.bc.OptimizeLocally(tempVariableOffsets);
 		bc->AddCode(&expr.bc);
 	}
 	else
@@ -3758,7 +3773,13 @@ int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, boo
 	int offset = GetVariableOffset((int)variableAllocations.GetLength()-1);
 
 	if( isTemporary )
+	{
+		// Add offset to the currently allocated temporary variables
 		tempVariables.PushLast(offset);
+
+		// Add offset to all known offsets to temporary variables, whether allocated or not
+		tempVariableOffsets.PushLast(offset);
+	}
 
 	return offset;
 }

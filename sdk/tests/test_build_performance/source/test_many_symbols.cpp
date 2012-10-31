@@ -18,11 +18,8 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.25.0 WIP 1: 10.86 secs\n");
-	printf("AngelScript 2.25.0 WIP 3: 10.55 secs (rewind optimization in parser)\n");
-	printf("AngelScript 2.25.0 WIP 4:  5.72 secs (1st gen symbol table for global props in builder)\n");
-	printf("AngelScript 2.25.0 WIP 5:  0.96 secs (1st gen symbol table for global props in module)\n");
-	printf("AngelScript 2.25.0 WIP 6:  0.75 secs (map glob var addr to property)\n");
+	printf("AngelScript 2.25.1 WIP 0: 0.34 secs\n");
+	printf("AngelScript 2.25.1 WIP 1: 0.33 secs (local bytecode optimizations)\n");
 
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

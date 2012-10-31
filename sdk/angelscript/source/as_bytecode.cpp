@@ -55,6 +55,7 @@ asCByteCode::asCByteCode(asCScriptEngine *engine)
 	first = 0;
 	last  = 0;
 	largestStackUsed = -1;
+	temporaryVariables = 0;
 
 	this->engine = engine;
 }
@@ -64,14 +65,15 @@ asCByteCode::~asCByteCode()
 	ClearAll();
 }
 
-void asCByteCode::Finalize()
+void asCByteCode::Finalize(const asCArray<int> &tempVariableOffsets)
 {
+	temporaryVariables = &tempVariableOffsets;
+
 	// verify the bytecode
 	PostProcess();
 
-	// Optimize the code (optionally)
-	if( engine->ep.optimizeByteCode )
-		Optimize();
+	// Optimize the code
+	Optimize();
 
 	// Resolve jumps
 	ResolveJumpAddresses();
@@ -97,8 +99,6 @@ void asCByteCode::ClearAll()
 	lineNumbers.SetLength(0);
 
 	largestStackUsed = -1;
-
-	temporaryVariables.SetLength(0);
 }
 
 void asCByteCode::InsertIfNotExists(asCArray<int> &vars, int var)
@@ -512,7 +512,7 @@ bool asCByteCode::RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction
 		}
 	}
 
-	// The values is immediately moved to another variable and then not used again
+	// The value is immediately moved to another variable and then not used again
 	if( (asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG || 
 		 asBCInfo[curr->op].type == asBCTYPE_wW_rW_DW_ARG) && 
 		curr->next && curr->next->op == asBC_CpyVtoV4 &&
@@ -569,29 +569,24 @@ bool asCByteCode::RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction
 	return false;
 }
 
-bool asCByteCode::IsTemporary(short offset)
+bool asCByteCode::IsTemporary(int offset)
 {
 	TimeIt("asCByteCode::IsTemporary");
 
-	for( asUINT n = 0; n < temporaryVariables.GetLength(); n++ )
-		if( temporaryVariables[n] == offset )
-			return true;
+	asASSERT(temporaryVariables);
 
-	return false;
+	return temporaryVariables->Exists(offset);
 }
 
-int asCByteCode::Optimize()
+void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 {
-	TimeIt("asCByteCode::Optimize");
+	// This function performs the optimizations that doesn't require global knowledge of the 
+	// entire function, e.g. replacement of sequences of bytecodes for specialized instructions. 
 
-	// TODO: runtime optimize: The optimizer should be able to inline function calls.
-	//                         If the called function has only a few instructions, the function call should be inlined.
-	//                         This is especially useful with the factory stubs used for template types and script classes.
+	if( !engine->ep.optimizeByteCode )
+		return;
 
-	// TODO: runtime optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
-	
-	// TODO: runtime optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
-	//                         loops a lot. How often do these loops really occur?
+	temporaryVariables = &tempVariableOffsets;
 
 	// TODO: runtime optimize: VAR + GET... should be optimized if the only instructions between them are trivial, i.e. no 
 	//                         function calls that can suspend the execution.
@@ -600,6 +595,10 @@ int asCByteCode::Optimize()
 
 	// TODO: optimize: Reorganize checks to avoid checking the same instructions multiple times
 
+	// TODO: runtime optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
+	//                         loops a lot. How often do these loops really occur?
+
+	// TODO: runtime optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
 
 	asCByteInstruction *instr = first;
 	while( instr )
@@ -609,7 +608,7 @@ int asCByteCode::Optimize()
 
 		// Remove or combine instructions 
 		if( RemoveUnusedValue(curr, &instr) ) continue;
-
+	
 		// Postpone initializations so that they may be combined in the second pass
 		if( PostponeInitOfTemp(curr, &instr) ) continue;
 
@@ -628,15 +627,7 @@ int asCByteCode::Optimize()
 			continue;
 		}
 
-
 		const asEBCInstr currOp = curr->op;
-
-		// Delete JitEntry if the JIT instructions are not supposed to be included
-		if( currOp == asBC_JitEntry && !engine->ep.includeJitInstructions )
-		{
-			instr = GoBack(DeleteInstruction(curr));
-			continue;
-		}
 
 		if( instr ) 
 		{
@@ -846,39 +837,6 @@ int asCByteCode::Optimize()
 				DeleteInstruction(instr);
 				instr = GoBack(curr);
 			}
-			// PopPtr, RET b -> RET b
-			else if( currOp == asBC_PopPtr && instrOp == asBC_RET )
-			{
-				// We don't combine the PopPtr+RET because RET first restores
-				// the previous stack pointer and then pops the arguments
-
-				// Delete PopPtr
-				instr = GoBack(DeleteInstruction(curr));
-			}
-			// SUSPEND, JitEntry, SUSPEND -> SUSPEND
-			// LINE, JitEntry, LINE -> LINE
-			else if( (currOp == asBC_SUSPEND && instrOp == asBC_JitEntry && instr->next && instr->next->op == asBC_SUSPEND) || 
-					 (currOp == asBC_LINE && instrOp == asBC_JitEntry && instr->next && instr->next->op == asBC_LINE) )
-			{
-				// Delete the two first instructions
-				DeleteInstruction(instr);
-				instr = GoBack(DeleteInstruction(curr));
-			}
-			// SUSPEND, SUSPEND -> SUSPEND
-			// LINE, LINE -> LINE
-			else if( (currOp == asBC_SUSPEND && instrOp == asBC_SUSPEND) || 
-					 (currOp == asBC_LINE && instrOp == asBC_LINE) ) 
-			{
-				// Delete the first instruction
-				instr = GoBack(DeleteInstruction(curr));
-			}
-			// SUSPEND, Block, SUSPEND -> Block, SUSPEND
-			else if( (currOp == asBC_SUSPEND && instrOp == asBC_Block && instr->next && instr->next->op == asBC_SUSPEND) || 
-					 (currOp == asBC_LINE && instrOp == asBC_Block && instr->next && instr->next->op == asBC_LINE) )
-			{
-				// Delete the first instruction
-				instr = GoBack(DeleteInstruction(curr));
-			}
 			// VAR a, GETREF 0 -> PSF a
 			else if( currOp == asBC_VAR && instrOp == asBC_GETREF && instr->wArg[0] == 0 )
 			{
@@ -953,9 +911,6 @@ int asCByteCode::Optimize()
 					 (currOp == asBC_TP && instrOp == asBC_JNZ) )
 				instr = GoBack(DeleteFirstChangeNext(curr, asBC_JP));
 	// End PATTERN
-			// JMP +0 -> remove
-			else if( currOp == asBC_JMP && instrOp == asBC_LABEL && *(int*)&curr->arg == instr->wArg[0] )
-				instr = GoBack(DeleteInstruction(curr));
 			// PSF, RDSPtr -> PshVPtr
 			else if( currOp == asBC_PSF && instrOp == asBC_RDSPtr )
 			{
@@ -1002,8 +957,98 @@ int asCByteCode::Optimize()
 			}
 		}
 	}
+}
 
-	return 0;
+void asCByteCode::Optimize()
+{
+	// This function performs the optimizations that require global knowledge of the entire function
+
+	TimeIt("asCByteCode::Optimize");
+
+	if( !engine->ep.optimizeByteCode )
+		return;
+
+	// TODO: runtime optimize: The optimizer should be able to inline function calls.
+	//                         If the called function has only a few instructions, the function call should be inlined.
+	//                         This is especially useful with the factory stubs used for template types and script classes.
+
+	asCByteInstruction *instr = first;
+	while( instr )
+	{
+		asCByteInstruction *curr = instr;
+		instr = instr->next;
+
+		const asEBCInstr currOp = curr->op;
+
+		// Delete JitEntry if the JIT instructions are not supposed to be included
+		if( currOp == asBC_JitEntry && !engine->ep.includeJitInstructions )
+		{
+			instr = GoBack(DeleteInstruction(curr));
+			continue;
+		}
+
+		if( instr ) 
+		{
+			const asEBCInstr instrOp = instr->op;
+
+			// PopPtr, RET b -> RET b
+			if( currOp == asBC_PopPtr && instrOp == asBC_RET )
+			{
+				// We don't combine the PopPtr+RET because RET first restores
+				// the previous stack pointer and then pops the arguments
+
+				// Delete PopPtr
+				instr = GoBack(DeleteInstruction(curr));
+			}
+			else if( currOp == asBC_SUSPEND )
+			{
+				// SUSPEND, JitEntry, SUSPEND -> SUSPEND
+				if( instrOp == asBC_JitEntry && instr->next && instr->next->op == asBC_SUSPEND )
+				{
+					// Delete the two first instructions
+					DeleteInstruction(instr);
+					instr = GoBack(DeleteInstruction(curr));
+				}
+				// SUSPEND, SUSPEND -> SUSPEND
+				else if( instrOp == asBC_SUSPEND ) 
+				{
+					// Delete the first instruction
+					instr = GoBack(DeleteInstruction(curr));
+				}
+				// SUSPEND, Block, SUSPEND -> Block, SUSPEND
+				else if( instrOp == asBC_Block && instr->next && instr->next->op == asBC_SUSPEND )
+				{
+					// Delete the first instruction
+					instr = GoBack(DeleteInstruction(curr));
+				}
+			}
+			else if( currOp == asBC_LINE )
+			{
+				// LINE, JitEntry, LINE -> LINE
+				if( instrOp == asBC_JitEntry && instr->next && instr->next->op == asBC_LINE )
+				{
+					// Delete the two first instructions
+					DeleteInstruction(instr);
+					instr = GoBack(DeleteInstruction(curr));
+				}
+				// LINE, LINE -> LINE
+				else if( instrOp == asBC_LINE ) 
+				{
+					// Delete the first instruction
+					instr = GoBack(DeleteInstruction(curr));
+				}
+				// LINE, Block, LINE -> Block, LINE
+				else if( instrOp == asBC_Block && instr->next && instr->next->op == asBC_LINE )
+				{
+					// Delete the first instruction
+					instr = GoBack(DeleteInstruction(curr));
+				}
+			}
+			// JMP +0 -> remove
+			else if( currOp == asBC_JMP && instrOp == asBC_LABEL && *(int*)&curr->arg == instr->wArg[0] )
+				instr = GoBack(DeleteInstruction(curr));
+		}
+	}
 }
 
 bool asCByteCode::IsTempVarReadByInstr(asCByteInstruction *curr, int offset)
@@ -1098,10 +1143,13 @@ bool asCByteCode::IsTempVarRead(asCByteInstruction *curr, int offset)
 			// In case of jumps, we must follow the each of the paths
 			if( curr->op == asBC_JMP )
 			{
-				int label = *((int*)ARG_DW(curr->arg));
-				int r = FindLabel(label, curr, &curr, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
+				// Find the destination. If it cannot be found it is because we're doing a localized 
+				// optimization and the label hasn't been added to the final bytecode yet
 
-				if( !closedPaths.Exists(curr) &&
+				int label = *((int*)ARG_DW(curr->arg));
+				int r = FindLabel(label, curr, &curr, 0);
+				if( r >= 0 &&
+					!closedPaths.Exists(curr) &&
 					!openPaths.Exists(curr) )
 					openPaths.PushLast(curr);
 
@@ -1112,11 +1160,14 @@ bool asCByteCode::IsTempVarRead(asCByteInstruction *curr, int offset)
 					 curr->op == asBC_JP    || curr->op == asBC_JNP    ||
 					 curr->op == asBC_JLowZ || curr->op == asBC_JLowNZ )
 			{
+				// Find the destination. If it cannot be found it is because we're doing a localized 
+				// optimization and the label hasn't been added to the final bytecode yet
+
 				asCByteInstruction *dest = 0;
 				int label = *((int*)ARG_DW(curr->arg));
-				int r = FindLabel(label, curr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
-
-				if( !closedPaths.Exists(dest) &&
+				int r = FindLabel(label, curr, &dest, 0); 
+				if( r >= 0 &&
+					!closedPaths.Exists(dest) &&
 					!openPaths.Exists(dest) )
 					openPaths.PushLast(dest);
 			}
@@ -1128,11 +1179,14 @@ bool asCByteCode::IsTempVarRead(asCByteInstruction *curr, int offset)
 				curr = curr->next;
 				while( curr->op == asBC_JMP )
 				{
+					// Find the destination. If it cannot be found it is because we're doing a localized 
+					// optimization and the label hasn't been added to the final bytecode yet
+				
 					asCByteInstruction *dest = 0;
 					int label = *((int*)ARG_DW(curr->arg));
-					int r = FindLabel(label, curr, &dest, 0); asASSERT( r == 0 ); UNUSED_VAR(r);
-
-					if( !closedPaths.Exists(dest) &&
+					int r = FindLabel(label, curr, &dest, 0);
+					if( r >= 0 &&
+						!closedPaths.Exists(dest) &&
 						!openPaths.Exists(dest) )
 						openPaths.PushLast(dest);
 
@@ -1881,10 +1935,10 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	fprintf(file, "%s\n\n", func->GetDeclaration());
 
 	fprintf(file, "Temps: ");
-	for( n = 0; n < temporaryVariables.GetLength(); n++ )
+	for( n = 0; n < temporaryVariables->GetLength(); n++ )
 	{
-		fprintf(file, "%d", temporaryVariables[n]);
-		if( n < temporaryVariables.GetLength()-1 )
+		fprintf(file, "%d", (*temporaryVariables)[n]);
+		if( n < temporaryVariables->GetLength()-1 )
 			fprintf(file, ", ");
 	}
 	fprintf(file, "\n\n");
@@ -2555,11 +2609,6 @@ asDWORD asCByteCode::GetLastInstrValueDW()
 	if( last == 0 ) return 0;
 
 	return *ARG_DW(last->arg);
-}
-
-void asCByteCode::DefineTemporaryVariable(int varOffset)
-{
-	temporaryVariables.PushLast(varOffset);
 }
 
 //===================================================================

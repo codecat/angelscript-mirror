@@ -31,8 +31,8 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.25.0 WIP 6: 11.11 secs\n");
-	printf("AngelScript 2.25.0 WIP 7: 0.83 secs (global funcs stored in map)\n");
+	printf("AngelScript 2.25.1 WIP 0: 0.28 secs\n");
+	printf("AngelScript 2.25.1 WIP 1: 0.28 secs (local bytecode optimizations)\n");
 
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

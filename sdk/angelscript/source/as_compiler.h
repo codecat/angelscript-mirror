@@ -293,11 +293,25 @@ protected:
 	void ReleaseTemporaryVariable(int offset, asCByteCode *bc);
 	bool IsVariableOnHeap(int offset);
 
+	// This ordered array indicates the type of each variable
 	asCArray<asCDataType> variableAllocations;
+
+	// This ordered array indicates which variables are temporaries or not
 	asCArray<bool>        variableIsTemporary;
+
+	// This unordered array gives the offsets of all temporary variables, whether currently allocated or not
+	asCArray<int>         tempVariableOffsets;
+
+	// This ordered array indicated if the variable is on the heap or not
 	asCArray<bool>        variableIsOnHeap;
+
+	// This unordered array gives the indexes of the currently unused variables
 	asCArray<int>         freeVariables;
-	asCArray<int>         tempVariables;
+
+	// This array holds the offsets of the currently allocated temporary variables
+	asCArray<int>         tempVariables; 
+
+	// This array holds the indices of variables that must not be used in an allocation
 	asCArray<int>         reservedVariables;
 
 	bool isCompilingDefaultArg;

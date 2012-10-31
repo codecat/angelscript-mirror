@@ -23,9 +23,8 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.25.0 WIP 1: 4.04 secs\n");
-	printf("AngelScript 2.25.0 WIP 2: 2.37 secs (list separator optimization in tokenizer)\n");
-	printf("AngelScript 2.25.0 WIP 9: 1.97 secs (improved bytecode optimization)\n");
+	printf("AngelScript 2.25.1 WIP 0: 1.59 secs\n");
+	printf("AngelScript 2.25.1 WIP 1: 1.66 secs (local bytecode optimizations)\n");
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 

@@ -66,9 +66,10 @@ public:
 
 	int GetSize();
 
-	void Finalize();
+	void Finalize(const asCArray<int> &tempVariableOffsets);
 
-	int  Optimize();
+	void Optimize();
+	void OptimizeLocally(const asCArray<int> &tempVariableOffsets);
 	void ExtractLineNumbers();
 	void ExtractObjectVariableInfo(asCScriptFunction *outFunc);
 	int  ResolveJumpAddresses();
@@ -132,9 +133,10 @@ public:
 	asCArray<int> lineNumbers;
 	int largestStackUsed;
 
-	void DefineTemporaryVariable(int varOffset);
-
 protected:
+	// Assignments are not allowed
+	void operator=(const asCByteCode &) {}
+
 	// Helpers for Optimize
 	bool CanBeSwapped(asCByteInstruction *curr);
 	asCByteInstruction *ChangeFirstDeleteNext(asCByteInstruction *curr, asEBCInstr bc);
@@ -144,7 +146,7 @@ protected:
 	asCByteInstruction *GoBack(asCByteInstruction *curr);
 	void InsertBefore(asCByteInstruction *before, asCByteInstruction *instr);
 	bool RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction **next);
-	bool IsTemporary(short offset);
+	bool IsTemporary(int offset);
 	bool IsTempRegUsed(asCByteInstruction *curr);
 	bool IsTempVarRead(asCByteInstruction *curr, int offset);
 	bool PostponeInitOfTemp(asCByteInstruction *curr, asCByteInstruction **next);
@@ -158,7 +160,7 @@ protected:
 	asCByteInstruction *first;
 	asCByteInstruction *last;
 
-	asCArray<int> temporaryVariables;
+	const asCArray<int> *temporaryVariables;
 
 	asCScriptEngine *engine;
 };
