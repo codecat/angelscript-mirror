@@ -152,6 +152,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// Pop the object pointer from the stack
 	byteCode.Ret(AS_PTR_SIZE);
 
+	byteCode.OptimizeLocally(tempVariableOffsets);
 	FinalizeFunction();
 
 #ifdef AS_DEBUG
@@ -2829,12 +2830,6 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 		// Add a test
 		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-		if( expr.type.isTemporary )
-		{
-			// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-			// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-			expr.bc.DiscardVar(expr.type.stackOffset);
-		}
 		expr.bc.Instr(asBC_ClrHi);
 		expr.bc.InstrDWORD(asBC_JZ, afterLabel);
 		ReleaseTemporaryVariable(expr.type, &expr.bc);
@@ -2978,12 +2973,6 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				// If expression is false exit the loop
 				ConvertToVariable(&expr);
 				expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-				if( expr.type.isTemporary )
-				{
-					// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-					// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-					expr.bc.DiscardVar(expr.type.stackOffset);
-				}
 				expr.bc.Instr(asBC_ClrHi);
 				expr.bc.InstrDWORD(asBC_JNZ, insideLabel);
 				ReleaseTemporaryVariable(expr.type, &expr.bc);
@@ -3084,12 +3073,6 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 		// Jump to end of statement if expression is false
 		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-		if( expr.type.isTemporary )
-		{
-			// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-			// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-			expr.bc.DiscardVar(expr.type.stackOffset);
-		}
 		expr.bc.Instr(asBC_ClrHi);
 		expr.bc.InstrDWORD(asBC_JZ, afterLabel);
 		ReleaseTemporaryVariable(expr.type, &expr.bc);
@@ -3177,12 +3160,6 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 		// Jump to next iteration if expression is true
 		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-		if( expr.type.isTemporary )
-		{
-			// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-			// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-			expr.bc.DiscardVar(expr.type.stackOffset);
-		}
 		expr.bc.Instr(asBC_ClrHi);
 		expr.bc.InstrDWORD(asBC_JNZ, beforeLabel);
 		ReleaseTemporaryVariable(expr.type, &expr.bc);
@@ -6341,12 +6318,6 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ctx->type = e.type;
 				ConvertToVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
-				if( ctx->type.isTemporary )
-				{
-					// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-					// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-					ctx->bc.DiscardVar(ctx->type.stackOffset);
-				}
 				ctx->bc.Instr(asBC_ClrHi);
 				ctx->bc.InstrDWORD(asBC_JZ, elseLabel);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -6389,12 +6360,6 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ctx->type = e.type;
 				ConvertToVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
-				if( ctx->type.isTemporary )
-				{
-					// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-					// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-					ctx->bc.DiscardVar(ctx->type.stackOffset);
-				}
 				ctx->bc.Instr(asBC_ClrHi);
 				ctx->bc.InstrDWORD(asBC_JZ, elseLabel);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -11213,12 +11178,6 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 			int label2 = nextLabel++;
 
 			ctx->bc.InstrSHORT(asBC_CpyVtoR4, lctx->type.stackOffset);
-			if( lctx->type.isTemporary )
-			{
-				// Add a hint for the bytecode optimizer to let it know that the variable won't be used after this.
-				// Without this, the bytecode optimizer may have to search all following instructions with a chance that the variable is never used again.
-				ctx->bc.DiscardVar(lctx->type.stackOffset);
-			}			
 			ctx->bc.Instr(asBC_ClrHi);
 			if( op == ttAnd )
 			{

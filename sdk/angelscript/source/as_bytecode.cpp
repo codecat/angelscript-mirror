@@ -633,22 +633,8 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 		{
 			const asEBCInstr instrOp = instr->op;
 
-			// T??, DiscardVar -> DiscardVar, T??
-			if( instrOp == asBC_DiscardVar &&
-				(currOp == asBC_TZ  ||
-				 currOp == asBC_TNZ ||
-				 currOp == asBC_TS  ||
-				 currOp == asBC_TNS ||
-				 currOp == asBC_TP  ||
-				 currOp == asBC_TNP ) )
-			{
-				// Swap instructions
-				RemoveInstruction(instr);
-				InsertBefore(curr, instr);
-				instr = GoBack(instr);
-			}
 			// T??, ClrHi -> T??
-			else if( instrOp == asBC_ClrHi &&
+			if( instrOp == asBC_ClrHi &&
 				     (currOp == asBC_TZ  ||
 				      currOp == asBC_TNZ ||
 				      currOp == asBC_TS  ||
@@ -1109,8 +1095,6 @@ bool asCByteCode::IsTempVarOverwrittenByInstr(asCByteInstruction *curr, int offs
 			  asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG    ||
 			  asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG) &&
 			 int(curr->wArg[0]) == offset )
-		return true;
-	else if( curr->op == asBC_DiscardVar && int(curr->wArg[0]) == offset )
 		return true;
 
 	return false;
@@ -1621,18 +1605,6 @@ void asCByteCode::VarDecl(int varDeclIdx)
 	last->stackInc = 0;
 	last->wArg[0]  = asWORD(varDeclIdx);
 }
-
-void asCByteCode::DiscardVar(int varIdx)
-{
-	if( AddInstruction() < 0 )
-		return;
-
-	last->op       = asBC_DiscardVar;
-	last->size     = 0;
-	last->stackInc = 0;
-	last->wArg[0]  = asWORD(varIdx);
-}
-
 
 int asCByteCode::FindLabel(int label, asCByteInstruction *from, asCByteInstruction **dest, int *positionDelta)
 {
