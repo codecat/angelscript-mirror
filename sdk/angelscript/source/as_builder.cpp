@@ -1068,20 +1068,9 @@ int asCBuilder::ParseVariableDeclaration(const char *decl, asSNameSpace *implici
 
 	// Determine the scope from declaration
 	asCScriptNode *n = node->firstChild->next;
-	asCString scope = GetScopeFromNode(n, &source, &n);
-	if( scope == "" )
-		outNamespace = implicitNamespace;
-	else if( scope == "::" )
-		outNamespace = engine->nameSpaces[0];
-	else
-	{
-		outNamespace = engine->FindNameSpace(scope.AddressOf());
-		if( outNamespace == 0 )
-		{
-			// Namespace doesn't exist
-			return asINVALID_DECLARATION;
-		}
-	}
+	outNamespace = GetNameSpaceFromNode(n, &source, implicitNamespace, &n);
+	if( outNamespace == 0 )
+		return asINVALID_DECLARATION;
 
 	// Find name
 	outName.Assign(&source.code[n->tokenPos], n->tokenLength);
@@ -1441,24 +1430,6 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 	// Clean up memory
 	cl->DisconnectParent();
 	node->Destroy(engine);
-
-	// Do a quick check on the declaration to report error only once and remove unwanted stuff
-	n = cl->firstChild->next;
-	if( n && n->nodeType == snIdentifier )
-	{
-		// TODO: mixin: Inheritance should be allowed
-		WriteError(TXT_MIXIN_CLASS_CANNOT_INHERIT, file, n);
-
-		// Remove the invalid nodes, so compilation can continue as if they weren't there
-		do
-		{
-			asCScriptNode *tmp = n;
-			n = n->next;
-
-			tmp->DisconnectParent();
-			tmp->Destroy(engine);
-		} while( n && n->tokenType == ttIdentifier );
-	}
 
 	return 0;
 }
@@ -1960,6 +1931,73 @@ void asCBuilder::CompileGlobalVariables()
 	}
 }
 
+int asCBuilder::GetNamespaceAndNameFromNode(asCScriptNode *n, asCScriptCode *script, asSNameSpace *implicitNs, asSNameSpace *&outNs, asCString &outName)
+{
+	asASSERT( n->nodeType == snIdentifier );
+
+	// Get the optional scope from the node
+	asSNameSpace *ns = GetNameSpaceFromNode(n->firstChild, script, implicitNs, 0);
+	if( ns == 0 )
+		return -1;
+
+	// Get the name
+	asCString name(&script->code[n->lastChild->tokenPos], n->lastChild->tokenLength);
+
+	outNs = ns;
+	outName = name;
+
+	return 0;
+}
+
+void asCBuilder::AddInterfaceFromMixinToClass(sClassDeclaration *decl, asCScriptNode *errNode, sMixinClass *mixin)
+{
+	// Determine what interfaces that the mixin implements
+	asCScriptNode *node = mixin->node;
+	asASSERT(node->nodeType == snClass);
+
+	// Skip the name of the mixin
+	node = node->firstChild->next;
+
+
+	while( node && node->nodeType == snIdentifier )
+	{
+		bool ok = true;
+		asSNameSpace *ns;
+		asCString name;
+		if( GetNamespaceAndNameFromNode(node, mixin->script, mixin->ns, ns, name) < 0 )
+			ok = false;
+		else
+		{
+			// Find the object type for the interface
+			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
+
+			// Check that the object type is an interface
+			if( objType && objType->size == 0 && (objType->flags & asOBJ_SCRIPT_OBJECT) )
+			{
+				// Only add the interface if the class doesn't already implement it
+				if( !decl->objType->Implements(objType) )
+					AddInterfaceToClass(decl, errNode, objType);
+			}
+			else
+			{
+				WriteError(TXT_MIXIN_CLASS_CANNOT_INHERIT, mixin->script, node);
+				ok = false;
+			}
+		}
+
+		if( !ok )
+		{
+			// Remove this node so the error isn't reported again
+			asCScriptNode *delNode = node;
+			node = node->prev;
+			delNode->DisconnectParent();
+			delNode->Destroy(engine);
+		}
+
+		node = node->next;
+	}
+}
+
 void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *errNode, asCObjectType *intfType)
 {
 	// If the interface is already in the class, then don't add it again
@@ -2026,32 +2064,13 @@ void asCBuilder::CompileInterfaces()
 		// Verify the inherited interfaces
 		while( node && node->nodeType == snIdentifier )
 		{
-			// Get the optional scope from the node
-			asCString scope = GetScopeFromNode(node->firstChild, intfDecl->script);
-			asSNameSpace *ns = 0;
-			if( scope == "" )
-				// No scope was informed, use the same namespace as the original interface
-				ns = intfType->nameSpace;
-			else if( scope == "::" )
-				// The global scope was informed
-				ns = engine->nameSpaces[0];
-			else
+			asSNameSpace *ns;
+			asCString name;
+			if( GetNamespaceAndNameFromNode(node, intfDecl->script, intfType->nameSpace, ns, name) < 0 )
 			{
-				ns = engine->FindNameSpace(scope.AddressOf());
-				if( ns == 0 )
-				{
-					asCString msg;
-					msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-					WriteError(msg.AddressOf(), intfDecl->script, node->firstChild);
-
-					// Move to the next node
-					node = node->next;
-					continue;
-				}
+				node = node->next;
+				continue;
 			}
-
-			// Get the interface name from the node
-			asCString name(&intfDecl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 			// Find the object type for the interface
 			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
@@ -2182,48 +2201,29 @@ void asCBuilder::CompileClasses()
 
 		while( node && node->nodeType == snIdentifier )
 		{
-			// Get the optional scope from the node
-			asCString scope = GetScopeFromNode(node->firstChild, file);
-			asSNameSpace *ns = 0;
-			if( scope == "" )
-				// No scope was informed, use the same namespace as the class itself
-				ns = decl->objType->nameSpace;
-			else if( scope == "::" )
-				// The global scope was informed
-				ns = engine->nameSpaces[0];
-			else
+			asSNameSpace *ns;
+			asCString name;
+			if( GetNamespaceAndNameFromNode(node, file, decl->objType->nameSpace, ns, name) < 0 )
 			{
-				ns = engine->FindNameSpace(scope.AddressOf());
-				if( ns == 0 )
-				{
-					asCString msg;
-					msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-					WriteError(msg.AddressOf(), file, node->firstChild);
-
-					// Move to the next node
-					node = node->next;
-					continue;
-				}
+				node = node->next;
+				continue;
 			}
-
-			// Get the interface name from the node
-			asCString name(&file->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 			// Find the object type for the interface
 			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
 
 			if( objType == 0 )
 			{
-				// TODO: mixin: When the mixin classes can implement interfaces or inherit classes themselves,
-				//              it will no longer be possible to simply skip them in this loop.
-
 				// Check if the name is a mixin class
-				if( !GetMixinClass(name.AddressOf(), ns) )
+				sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
+				if( !mixin )
 				{
 					asCString str;
 					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
 					WriteError(str.AddressOf(), file, node);
 				}
+				else
+					AddInterfaceFromMixinToClass(decl, node, mixin);
 			}
 			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) ||
 					 objType->flags & asOBJ_NOINHERIT )
@@ -2719,33 +2719,13 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 	// Find the included mixin classes
 	while( node && node->nodeType == snIdentifier )
 	{
-		// TODO: clean-up: implement a function to retrieve namespace and name from node and reuse it here and in CompileClasses
-		// Get the optional scope from the node
-		asCString scope = GetScopeFromNode(node->firstChild, decl->script);
-		asSNameSpace *ns = 0;
-		if( scope == "" )
-			// No scope was informed, use the same namespace as the class itself
-			ns = decl->objType->nameSpace;
-		else if( scope == "::" )
-			// The global scope was informed
-			ns = engine->nameSpaces[0];
-		else
+		asSNameSpace *ns;
+		asCString name;
+		if( GetNamespaceAndNameFromNode(node, decl->script, decl->objType->nameSpace, ns, name) < 0 )
 		{
-			ns = engine->FindNameSpace(scope.AddressOf());
-			if( ns == 0 )
-			{
-				asCString msg;
-				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-				WriteError(msg.AddressOf(), decl->script, node->firstChild);
-
-				// Move to the next node
-				node = node->next;
-				continue;
-			}
+			node = node->next;
+			continue;
 		}
-
-		// Get the interface name from the node
-		asCString name(&decl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
 		if( mixin )
@@ -2801,33 +2781,13 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 	// Find the included mixin classes
 	while( node && node->nodeType == snIdentifier )
 	{
-		// TODO: clean-up: implement a function to retrieve namespace and name from node and reuse it here and in CompileClasses
-		// Get the optional scope from the node
-		asCString scope = GetScopeFromNode(node->firstChild, decl->script);
-		asSNameSpace *ns = 0;
-		if( scope == "" )
-			// No scope was informed, use the same namespace as the class itself
-			ns = decl->objType->nameSpace;
-		else if( scope == "::" )
-			// The global scope was informed
-			ns = engine->nameSpaces[0];
-		else
+		asSNameSpace *ns;
+		asCString name;
+		if( GetNamespaceAndNameFromNode(node, decl->script, decl->objType->nameSpace, ns, name) < 0 )
 		{
-			ns = engine->FindNameSpace(scope.AddressOf());
-			if( ns == 0 )
-			{
-				asCString msg;
-				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-				WriteError(msg.AddressOf(), decl->script, node->firstChild);
-
-				// Move to the next node
-				node = node->next;
-				continue;
-			}
+			node = node->next;
+			continue;
 		}
-
-		// Get the interface name from the node
-		asCString name(&decl->script->code[node->lastChild->tokenPos], node->lastChild->tokenLength);
 
 		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
 		if( mixin )
@@ -4315,6 +4275,26 @@ asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *scrip
 	return scope;
 }
 
+asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCode *script, asSNameSpace *implicitNs, asCScriptNode **next)
+{
+	asCString scope = GetScopeFromNode(node, script, next);
+	asSNameSpace *ns = implicitNs;
+	if( scope == "::" )
+		ns = engine->nameSpaces[0];
+	else if( scope != "" )
+	{
+		ns = engine->FindNameSpace(scope.AddressOf());
+		if( ns == 0 )
+		{
+			asCString msg;
+			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
+			WriteError(msg.AddressOf(), script, node);
+		}
+	}
+
+	return ns;
+}
+
 asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType)
 {
 	asASSERT(node->nodeType == snDataType);
@@ -4332,22 +4312,12 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	}
 
 	// Determine namespace
-	asCString scope = GetScopeFromNode(n, file, &n);
-	asSNameSpace *ns = implicitNamespace;
-	if( scope == "::" )
-		ns = engine->nameSpaces[0];
-	else if( scope != "" )
+	asSNameSpace *ns = GetNameSpaceFromNode(n, file, implicitNamespace, &n);
+	if( ns == 0 )
 	{
-		ns = engine->FindNameSpace(scope.AddressOf());
-		if( ns == 0 )
-		{
-			asCString msg;
-			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-			WriteError(msg.AddressOf(), file, n);
-
-			dt = asCDataType::CreatePrimitive(ttInt, false);
-			return dt;
-		}
+		// The namespace doesn't exist. Return a dummy type instead.
+		dt = asCDataType::CreatePrimitive(ttInt, false);
+		return dt;
 	}
 
 	if( n->tokenType == ttIdentifier )

@@ -82,6 +82,31 @@ bool Test()
 			}
 		}
 
+		// mixin classes can implement interfaces
+		{
+			script = 
+				"interface Intf {} \n"
+				"interface Intf2 {} \n"
+				"mixin class Mix : Intf, Intf2 {} \n"
+				"class Clss : Mix {} \n"
+				"void func() { \n"
+				"  Clss c; \n"
+				"  Intf @i = c; \n"
+				"  Intf2 @i2 = c; \n"
+				"} \n";
+			mod->AddScriptSection("", script);
+
+			bout.buffer = "";
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+		}
+
 		// mixin classes cannot inherit from other classes
 		// TODO: should be allowed to implement interfaces, and possibly inherit from classes
 		//       when that is possible, the inheritance is simply transfered to the class that inherits the mixin class
@@ -89,14 +114,15 @@ bool Test()
 			script =
 				"interface Intf {} \n"
 				"class Clss {} \n"
-				"mixin class Test : Intf, Clss {} \n";
+				"mixin class Test : Intf, Clss {} \n"
+				"class Clss2 : Test {} \n";
 			mod->AddScriptSection("", script);
 
 			bout.buffer = "";
 			r = mod->Build();
 			if( r >= 0 )
 				TEST_FAILED;
-			if( bout.buffer != " (3, 20) : Error   : Mixin class cannot inherit from classes or implement interfaces\n" )
+			if( bout.buffer != " (3, 26) : Error   : Mixin class cannot inherit from classes\n" )
 			{
 				printf("%s", bout.buffer.c_str());
 				TEST_FAILED;
@@ -108,14 +134,15 @@ bool Test()
 		{
 			script = 
 				"mixin class Mixin1 { int a; }; \n"
-				"mixin class Mixin2 : Mixin1 { }; \n";
+				"mixin class Mixin2 : Mixin1 { }; \n"
+				"class Clss : Mixin2 {} \n";
 			mod->AddScriptSection("", script);
 
 			bout.buffer = "";
 			r = mod->Build();
 			if( r >= 0 )
 				TEST_FAILED;
-			if( bout.buffer != " (2, 22) : Error   : Mixin class cannot inherit from classes or implement interfaces\n" )
+			if( bout.buffer != " (2, 22) : Error   : Mixin class cannot inherit from classes\n" )
 			{
 				printf("%s", bout.buffer.c_str());
 				TEST_FAILED;
