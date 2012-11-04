@@ -397,6 +397,11 @@ bool asCByteCode::RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction
 
 	// TODO: runtime optimize: Should work for 64bit types as well
 
+	// TODO: runtime optimize: Need a asBCTYPE_rwW_ARG to cover the instructions that read 
+	//                         and write to the same variable. Currently they are considered
+	//                         as readers only, so they are not optimized away. This includes
+	//                         NOT, BNOT, IncV, DecV, NEG, iTOf (and all other type casts)
+
 	// The value isn't used for anything
 	if( curr->op != asBC_FREE && // Can't remove the FREE instruction
 		(asBCInfo[curr->op].type == asBCTYPE_wW_rW_rW_ARG ||

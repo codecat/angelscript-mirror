@@ -917,6 +917,97 @@ bool TestOptimize()
 	r = ExecuteString(engine, "int64 result = int64(0x8000000000000000)%5; \n assert( result == int64(0xFFFFFFFFFFFFFFFD) );");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
+	// Validate the bytecode sequence for a for-loop and switch case
+	{
+		const char *script = 
+			"void add(int) {}                \n"
+			"void func()                     \n" 
+			"{                               \n" 
+			"  for( int n = -1; n < 2; ++n ) \n" 
+			"    switch( n )                 \n" 
+			"    {                           \n" 
+			"    case 0:                     \n" 
+			"      add(0);                   \n" 
+			"      break;                    \n" 
+			"    case -1:                    \n" 
+			"      add(-1);                  \n" 
+			"      break;                    \n" 
+			"    default:                    \n" 
+			"      add(255);                 \n" 
+			"      break;                    \n" 
+			"    }                           \n" 
+			"}                               \n";
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asUINT len;
+		asDWORD *bc = func->GetByteCode(&len);
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_SetV4,asBC_JMP,asBC_SUSPEND,
+				asBC_SUSPEND,asBC_CMPIi,asBC_JP,asBC_CMPIi,asBC_JZ,asBC_CMPIi,asBC_JZ,asBC_JMP,
+				asBC_SUSPEND,asBC_PshC4,asBC_CALL,
+				asBC_SUSPEND,asBC_JMP,
+				asBC_SUSPEND,asBC_PshC4,asBC_CALL,
+				asBC_SUSPEND,asBC_JMP,
+				asBC_SUSPEND,asBC_PshC4,asBC_CALL,
+				asBC_SUSPEND,asBC_IncVi,asBC_CMPIi,asBC_JS,
+				asBC_SUSPEND,asBC_RET
+			};
+		for( asUINT n = 0, i = 0; n < len; )
+		{
+			asBYTE c = asBYTE(bc[n]);
+			if( c != expect[i] )
+			{
+				TEST_FAILED;
+				break;
+			}
+			n += asBCTypeSize[asBCInfo[c].type];
+			if( ++i > sizeof(expect) )
+				TEST_FAILED;
+		}
+	}
+
+	// Validate bytecode sequence for a class constructor that sets a member
+	{
+		const char *script = 
+			"class C {int val; C() {val = 0;}} \n";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = mod->GetObjectTypeByName("C");
+		asEBehaviours beh;
+		asIScriptFunction *func = type->GetBehaviourByIndex(7, &beh);
+		if( beh != asBEHAVE_CONSTRUCT )
+			TEST_FAILED;
+		asUINT len;
+		asDWORD *bc = func->GetByteCode(&len);
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_SetV4,asBC_LoadThisR,asBC_WRTV4,asBC_SUSPEND,asBC_RET
+			};
+		for( asUINT n = 0, i = 0; n < len; )
+		{
+			asBYTE c = asBYTE(bc[n]);
+			if( c != expect[i] )
+			{
+				TEST_FAILED;
+				break;
+			}
+			n += asBCTypeSize[asBCInfo[c].type];
+			if( ++i > sizeof(expect) )
+				TEST_FAILED;
+		}
+	}
+
 	engine->Release();
 
 	// Success
