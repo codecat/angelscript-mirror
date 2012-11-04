@@ -47,23 +47,23 @@ double testTimesOrig[18] =
 // Times for 2.25.1 WIP 1 (localized optimizations)
 double testTimesOrig2[18] = 
 {
-1.279,  // Basic
+1.217,  // Basic
 0.265,  // Basic2
-2.933,  // Call
-3.354,  // Call2
-2.215,  // Fib
-0.265,  // Int
-1.966,  // Intf
-1.747,  // Mthd
-1.888,  // String
-0.920,  // String2
-1.326,  // StringPooled
-1.108,  // ThisProp
-0.421,  // Vector3
-0.390,  // Assign.1
-0.577,  // Assign.2
-0.562,  // Assign.3
-0.577,  // Assign.4
+2.855,  // Call
+3.292,  // Call2
+2.059,  // Fib
+0.281,  // Int
+1.997,  // Intf
+1.903,  // Mthd
+1.919,  // String
+0.842,  // String2
+1.154,  // StringPooled
+1.170,  // ThisProp
+0.390,  // Vector3
+0.421,  // Assign.1
+0.593,  // Assign.2
+0.359,  // Assign.3
+0.608,  // Assign.4
 0.577   // Assign.5
 };
 

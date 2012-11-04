@@ -143,6 +143,7 @@ protected:
 	asCByteInstruction *DeleteInstruction(asCByteInstruction *instr);
 	void RemoveInstruction(asCByteInstruction *instr);
 	asCByteInstruction *GoBack(asCByteInstruction *curr);
+	asCByteInstruction *GoForward(asCByteInstruction *curr);
 	void InsertBefore(asCByteInstruction *before, asCByteInstruction *instr);
 	bool RemoveUnusedValue(asCByteInstruction *curr, asCByteInstruction **next);
 	bool IsTemporary(int offset);
