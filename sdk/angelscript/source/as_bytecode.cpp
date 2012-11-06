@@ -301,7 +301,8 @@ void asCByteCode::RemoveInstruction(asCByteInstruction *instr)
 
 bool asCByteCode::CanBeSwapped(asCByteInstruction *curr)
 {
-	if( curr->op != asBC_SwapPtr ) return false;
+	asASSERT( curr->op == asBC_SwapPtr );
+
 	if( !curr->prev || !curr->prev->prev ) return false;
 
 	asCByteInstruction *b = curr->prev;
@@ -606,12 +607,16 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 
 	// TODO: runtime optimize: Remove temporary copies of handles, when the temp is just copied to yet another location
 
-	// TODO: optimize: Reorganize checks to avoid checking the same instructions multiple times
-
 	// TODO: runtime optimize: A single bytecode for incrementing a variable, comparing, and jumping can probably improve 
 	//                         loops a lot. How often do these loops really occur?
 
 	// TODO: runtime optimize: Need a bytecode BC_AddRef so that BC_CALLSYS doesn't have to be used for this trivial call
+
+	// TODO: optimize: Should possibly do two loops. Some of the checks are best doing by iterating from 
+	//                 the end to beginning, e.g. the removal of unused values. Other checks are best
+	//                 doing by iterating from the beginning to end, e.g. replacement of sequences with 
+	//                 shorter ones. By doing this, we should be able to avoid backtracking with every 
+	//                 change thus avoid unnecessary duplicate checks.
 
 	// Iterate through the bytecode instructions in the reverse order. 
 	// An optimization in an instruction may mean that another instruction before that 
@@ -634,34 +639,36 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 		// from where the value was used, so instr will be updated to point to that.
 		if( PostponeInitOfTemp(curr, &instr) ) continue;
 
-		// XXX x, YYY y, SwapPtr -> YYY y, XXX x
-		if( CanBeSwapped(curr) )
-		{
-			// Delete the SwapPtr
-			DeleteInstruction(curr);
-
-			// Swap instructions
-			asCByteInstruction *a = instr->prev;
-			RemoveInstruction(instr);
-			InsertBefore(a, instr);
-
-			// Continue the optimization from the second instruction
-			instr = GoForward(a);
-			continue;
-		}
-
+		// Look for sequences that can be replaced with shorter ones
 		const asEBCInstr currOp = curr->op;
+		if( currOp == asBC_SwapPtr )
+		{
+			// XXX x, YYY y, SwapPtr -> YYY y, XXX x
+			if( CanBeSwapped(curr) )
+			{
+				// Delete the SwapPtr
+				DeleteInstruction(curr);
 
-		if( currOp == asBC_ClrHi )
+				// Swap instructions
+				asCByteInstruction *a = instr->prev;
+				RemoveInstruction(instr);
+				InsertBefore(a, instr);
+
+				// Continue the optimization from the second instruction
+				instr = GoForward(a);
+				continue;
+			}
+		}
+		else if( currOp == asBC_ClrHi )
 		{
 			// T??, ClrHi -> T??
 			if( instr &&
-				instr->op == asBC_TZ  ||
-			    instr->op == asBC_TNZ ||
-			    instr->op == asBC_TS  ||
-			    instr->op == asBC_TNS ||
-			    instr->op == asBC_TP  ||
-		 	    instr->op == asBC_TNP ) 
+				(instr->op == asBC_TZ  ||
+			     instr->op == asBC_TNZ ||
+			     instr->op == asBC_TS  ||
+			     instr->op == asBC_TNS ||
+			     instr->op == asBC_TP  ||
+		 	     instr->op == asBC_TNP) ) 
 			{
 				// Remove the ClrHi instruction since the test  
 				// instructions always clear the top bytes anyway
@@ -965,6 +972,64 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 			{
 				ChangeFirstDeleteNext(curr, asBC_PSF);
 				instr = GoForward(curr);
+			}
+		}
+	}
+
+	// Optimize unnecessary refcpy for return handle. This scenario only happens for return statements
+	// and LOADOBJ can only be the last instruction before the RET, so doing this check after the rest of
+	// the optimizations have taken place saves us time.
+	if( last && last->op == asBC_LOADOBJ && IsTemporary(last->wArg[0]) )
+	{
+		// A temporary handle is being loaded into the object register. 
+		// Let's look for a trivial RefCpyV to that temporary variable, and a Free of the original
+		// variable. If this is found, then we can simply load the original value into the register
+		// and avoid both the RefCpy and the Free.
+		short tempVar = last->wArg[0];
+		asCArray<short> freedVars;
+
+		asCByteInstruction *instr = last->prev;
+		asASSERT( instr && instr->op == asBC_Block );
+		instr = instr->prev;
+		while( instr && instr->op == asBC_FREE )
+		{
+			freedVars.PushLast(instr->wArg[0]);
+			instr = instr->prev;
+		}
+
+		// If there is any non-trivial cleanups, e.g. call to destructors, then we skip this optimizations
+		// TODO: runtime optimize: Do we need to skip it? Is there really a chance the local variable 
+		//                         will be invalidated while the destructor, or any other function for  
+		//                         that matter, is being called?
+		if( instr && instr->op == asBC_Block )
+		{
+			// We expect a sequence PshVPtr, RefCpyV, PopPtr just before the clean up block
+			instr = instr->prev;
+			if( instr && instr->op == asBC_PopPtr ) instr = instr->prev;
+			if( instr && instr->op == asBC_RefCpyV && instr->wArg[0] == tempVar ) instr = instr->prev;
+			if( instr && instr->op == asBC_PshVPtr && freedVars.Exists(instr->wArg[0]) )
+			{
+				// Update the LOADOBJ to load the local variable directly
+				tempVar = instr->wArg[0];
+				last->wArg[0] = tempVar;
+
+				// Remove the copy of the local variable into the temp
+				DeleteInstruction(instr->next); // deletes RefCpyV
+				DeleteInstruction(instr->next); // deletes PopPtr
+				DeleteInstruction(instr);       // deletes PshVPtr
+
+				// Find and remove the FREE instruction for the local variable too
+				instr = last->prev->prev;
+				while( instr )
+				{
+					asASSERT( instr->op == asBC_FREE );
+					if( instr->wArg[0] == tempVar )
+					{
+						DeleteInstruction(instr);
+						break;
+					}
+					instr = instr->prev;
+				}
 			}
 		}
 	}

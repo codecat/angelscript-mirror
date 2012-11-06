@@ -29,6 +29,7 @@ void Test(double *testTime)
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
 	mod->Build();
 
+#ifndef _DEBUG
 	asIScriptContext *ctx = engine->CreateContext();
 	asIScriptFunction *func_A = mod->GetFunctionByDecl("void TestCall2_A()");
 	asIScriptFunction *func_B = mod->GetFunctionByDecl("void TestCall2_B()");
@@ -64,6 +65,7 @@ void Test(double *testTime)
 		*testTime = time;
 
 	ctx->Release();
+#endif
 	engine->Release();
 }
 

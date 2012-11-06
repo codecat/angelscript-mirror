@@ -41,8 +41,10 @@ void Test(double *testTime)
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
+	// TODO: optimize: BuildString2(a,b,c) is making unnecessary refcpy of local variables
 	mod->Build();
 
+#ifndef _DEBUG
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(mod->GetFunctionByDecl("void TestString2()"));
 
@@ -68,6 +70,7 @@ void Test(double *testTime)
 		*testTime = time;
 
 	ctx->Release();
+#endif
 	engine->Release();
 }
 

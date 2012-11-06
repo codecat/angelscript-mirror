@@ -205,6 +205,7 @@ void Test(double *testTime)
 	int r = mod->Build();
 	if( r >= 0 )
 	{
+#ifndef _DEBUG
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(mod->GetFunctionByDecl("void TestStringP()"));
 
@@ -230,6 +231,7 @@ void Test(double *testTime)
 			*testTime = time;
 
 		ctx->Release();
+#endif
 	}
 	else
 		printf("Build failed\n");

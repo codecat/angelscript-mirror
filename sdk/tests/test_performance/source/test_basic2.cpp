@@ -36,6 +36,7 @@ void Test(double *testTime)
 	engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, true);
 	mod->Build();
 
+#ifndef _DEBUG
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(mod->GetFunctionByDecl("void TestBasic2()"));
 
@@ -61,6 +62,7 @@ void Test(double *testTime)
 		*testTime = time;
 
 	ctx->Release();
+#endif
 	engine->Release();
 }
 

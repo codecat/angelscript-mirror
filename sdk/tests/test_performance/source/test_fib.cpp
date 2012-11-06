@@ -43,6 +43,7 @@ void Test(double *testTime)
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
 	mod->Build();
 
+#ifndef _DEBUG
 	asIScriptContext *ctx = engine->CreateContext();
 
 	asIScriptFunction *fibI = mod->GetFunctionByDecl("int fibI(int)");
@@ -78,6 +79,7 @@ void Test(double *testTime)
 		printf("Didn't get the expected fibonacci value, got %d\n", fib);
 
 	ctx->Release();
+#endif
 	engine->Release();
 }
 

@@ -95,6 +95,7 @@ void Test(double *testTimes)
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
 	mod->Build();
 
+#ifndef _DEBUG 
 	double time;
 	asIScriptContext *ctx = engine->CreateContext();
 
@@ -145,6 +146,7 @@ void Test(double *testTimes)
 	}
 
 	ctx->Release();
+#endif
 	engine->Release();
 }
 

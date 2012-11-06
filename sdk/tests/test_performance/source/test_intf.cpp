@@ -66,8 +66,10 @@ void Test(double *testTime)
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script, strlen(script), 0);
+	// TODO: optimize: intf @i = obj is doing an unnecessary refcpy
 	mod->Build();
 
+#ifndef _DEBUG
 	asIScriptContext *ctx = engine->CreateContext();
 	ctx->Prepare(mod->GetFunctionByDecl("void TestIntf()"));
 
@@ -93,6 +95,7 @@ void Test(double *testTime)
 		*testTime = time;
 
 	ctx->Release();
+#endif
 	engine->Release();
 }
 
