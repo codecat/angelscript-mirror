@@ -1044,6 +1044,42 @@ bool TestOptimize()
 		}
 	}
 
+	// Validate bytecode sequence for a function returning a handle
+	{
+		const char *script = 
+			"class C {} \n"
+			"void func() { C c; C @h = c; @h = c; } \n";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asUINT len;
+		asDWORD *bc = func->GetByteCode(&len);
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_CALL,asBC_STOREOBJ,
+				asBC_SUSPEND,asBC_PshVPtr,asBC_RefCpyV,asBC_PopPtr,
+				asBC_SUSPEND,asBC_PshVPtr,asBC_RefCpyV,asBC_PopPtr,
+				asBC_SUSPEND,asBC_FREE,asBC_FREE,asBC_RET
+			};
+		for( asUINT n = 0, i = 0; n < len; )
+		{
+			asBYTE c = asBYTE(bc[n]);
+			if( c != expect[i] )
+			{
+				TEST_FAILED;
+				break;
+			}
+			n += asBCTypeSize[asBCInfo[c].type];
+			if( ++i > sizeof(expect) )
+				TEST_FAILED;
+		}
+	}
+
 	engine->Release();
 
 	// Success

@@ -1534,7 +1534,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 			if( dt.IsObjectHandle() )
 				ctx->type.isExplicitHandle = true;
-
+			
 			if( dt.IsObject() )
 			{
 				if( !dt.IsReference() )
@@ -1544,7 +1544,11 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// The object must also be allocated on the heap, as the memory will
 					// be deleted by in as_callfunc_xxx.
 					// TODO: value on stack: How can we avoid this unnecessary allocation?
-					PrepareTemporaryObject(node, ctx, true);
+
+					// Local variables doesn't need to be copied into 
+					// a temp if we're already compiling an assignment
+					if( !isMakingCopy || !ctx->type.dataType.IsObjectHandle() || !ctx->type.isVariable )
+						PrepareTemporaryObject(node, ctx, true);
 
 					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
@@ -5119,25 +5123,49 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 
 				if( generateCode )
 				{
-					// TODO: runtime optimize: This copy is not always necessary. 
-					//                         How to determine when not to do it?
-					int offset = AllocateVariable(dt, true);
+					// If the expression is already a local variable, then it is not 
+					// necessary to do a ref copy, as the ref objects on the stack are
+					// really handles, only the handles cannot be modified.
+					if( ctx->type.isVariable )
+					{
+						bool isHandleToConst = ctx->type.dataType.IsReadOnly();
+						ctx->type.dataType.MakeReadOnly(false);
+						ctx->type.dataType.MakeHandle(true);
+						ctx->type.dataType.MakeReadOnly(true);
+						ctx->type.dataType.MakeHandleToConst(isHandleToConst);
 
-					if( ctx->type.dataType.IsReference() )
-						ctx->bc.Instr(asBC_RDSPtr);
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					ctx->bc.InstrPTR(asBC_REFCPY, dt.GetObjectType());
-					ctx->bc.Instr(asBC_PopPtr);
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-					if( to.IsReference() )
-						dt.MakeReference(true);
+						if( to.IsReference() && !ctx->type.dataType.IsReference() )
+						{
+							ctx->bc.Instr(asBC_PopPtr);
+							ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+							ctx->type.dataType.MakeReference(true);
+						}
+						else if( ctx->type.dataType.IsReference() )
+						{
+							ctx->bc.Instr(asBC_RDSPtr);
+							ctx->type.dataType.MakeReference(false);
+						}
+					}
 					else
-						ctx->bc.Instr(asBC_RDSPtr);
+					{
+						int offset = AllocateVariable(dt, true);
 
-					ctx->type.SetVariable(dt, offset, true);
+						if( ctx->type.dataType.IsReference() )
+							ctx->bc.Instr(asBC_RDSPtr);
+						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+						ctx->bc.InstrPTR(asBC_REFCPY, dt.GetObjectType());
+						ctx->bc.Instr(asBC_PopPtr);
+						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+
+						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+						if( to.IsReference() )
+							dt.MakeReference(true);
+						else
+							ctx->bc.Instr(asBC_RDSPtr);
+
+						ctx->type.SetVariable(dt, offset, true);
+					}
 				}
 				else
 					ctx->type.dataType = dt;
@@ -5145,14 +5173,9 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				// When this conversion is done the expression is no longer an lvalue
 				ctx->type.isLValue = false;
 			}
-
-			if( ctx->type.dataType.IsObjectHandle() )
-				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
-
-			if( to.IsHandleToConst() && ctx->type.dataType.IsObjectHandle() )
-				ctx->type.dataType.MakeHandleToConst(true);
 		}
-		else
+
+		if( ctx->type.dataType.IsObjectHandle() )
 		{
 			// A handle to non-const can be converted to a
 			// handle to const, but not the other way
@@ -6092,7 +6115,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(false);
 
-			PrepareArgument(&dt, rctx, rexpr, true, asTM_INREF);
+			PrepareArgument(&dt, rctx, rexpr, true, asTM_INREF , true);
 			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
 			{
 				asCString str;
