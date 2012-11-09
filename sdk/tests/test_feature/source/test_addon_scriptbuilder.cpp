@@ -56,6 +56,11 @@ const char *script =
 "/* \n"
 "#include \"dont_include\" \n"
 "*/ \n"
+// namespaces can also contain entities with metadata
+"namespace NS { \n"
+" [func] void func() {} \n"
+" [class] class Class {} \n"
+"} \n"
 ;
 
 using namespace std;
@@ -102,9 +107,21 @@ bool Test()
 	if( metadata != " test['hello'] " )
 		TEST_FAILED;
 
+	engine->GetModule(0)->SetDefaultNamespace("NS");
+	func = engine->GetModule(0)->GetFunctionByName("func");
+	metadata = builder.GetMetadataStringForFunc(func);
+	if( metadata != "func" )
+		TEST_FAILED;
+	engine->GetModule(0)->SetDefaultNamespace("");
+
 	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
 	metadata = builder.GetMetadataStringForType(typeId);
 	if( metadata != " myclass " )
+		TEST_FAILED;
+
+	typeId = engine->GetModule(0)->GetTypeIdByDecl("NS::Class");
+	metadata = builder.GetMetadataStringForType(typeId);
+	if( metadata != "class" )
 		TEST_FAILED;
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass2");
@@ -119,13 +136,17 @@ bool Test()
 		TEST_FAILED;
 
 	asIObjectType *type = engine->GetObjectTypeById(typeId);
-	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("get_prop"));
-	if( metadata != " prop " )
+	if( type == 0 )
 		TEST_FAILED;
-	metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("set_prop"));
-	if( metadata != " prop " )
-		TEST_FAILED;
-
+	else
+	{
+		metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("get_prop"));
+		if( metadata != " prop " )
+			TEST_FAILED;
+		metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("set_prop"));
+		if( metadata != " prop " )
+			TEST_FAILED;
+	}
 
 	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	metadata = builder.GetMetadataStringForType(typeId);

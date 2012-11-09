@@ -100,6 +100,7 @@ void CScriptBuilder::ClearAll()
 
 #if AS_PROCESS_METADATA == 1
 	currentClass = "";
+	currentNamespace = "";
 
 	foundDeclarations.clear();
 	typeMetadataMap.clear();
@@ -309,6 +310,55 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			continue;
 		}
 
+		// Check if namespace
+		if( modifiedScript.substr(pos,len) == "namespace" )
+		{
+			// Get the identifier after "namespace"
+			do 
+			{
+				pos += len;
+				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			} while(t == asTC_COMMENT || t == asTC_WHITESPACE);
+			
+			if( currentNamespace != "" )
+				currentNamespace += "::";
+			currentNamespace += modifiedScript.substr(pos,len);
+			
+			// Search until first { is encountered
+			while( pos < modifiedScript.length() )
+			{
+				engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			
+				// If start of namespace section encountered stop
+				if( modifiedScript[pos] == '{' ) 
+				{
+					pos += len;
+					break;
+				}
+
+				// Check next symbol
+				pos += len;
+			}
+
+			continue;
+		}
+
+		// Check if end of namespace
+		if( currentNamespace != "" && modifiedScript[pos] == '}' )
+		{
+			size_t found = currentNamespace.rfind( "::" );
+			if( found != string::npos )
+			{
+				currentNamespace.erase( found );
+			}
+			else
+			{
+				currentNamespace = "";
+			}
+			pos += len;
+			continue;
+		}
+
 		// Is this the start of metadata?
 		if( modifiedScript[pos] == '[' )
 		{
@@ -322,7 +372,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, const char *section
 			// Store away the declaration in a map for lookup after the build has completed
 			if( type > 0 )
 			{
-				SMetadataDecl decl(metadata, declaration, type, currentClass);
+				SMetadataDecl decl(metadata, declaration, type, currentClass, currentNamespace);
 				foundDeclarations.push_back(decl);
 			}
 		}
@@ -432,6 +482,7 @@ int CScriptBuilder::Build()
 	for( int n = 0; n < (int)foundDeclarations.size(); n++ )
 	{
 		SMetadataDecl *decl = &foundDeclarations[n];
+		module->SetDefaultNamespace(decl->nameSpace.c_str());
 		if( decl->type == 1 )
 		{
 			// Find the type id
@@ -540,6 +591,7 @@ int CScriptBuilder::Build()
 			}
 		}
 	}
+	module->SetDefaultNamespace("");
 #endif
 
 	return 0;
@@ -786,9 +838,12 @@ const char *CScriptBuilder::GetMetadataStringForType(int typeId)
 
 const char *CScriptBuilder::GetMetadataStringForFunc(asIScriptFunction *func)
 {
-	map<int,string>::iterator it = funcMetadataMap.find(func->GetId());
-	if( it != funcMetadataMap.end() )
-		return it->second.c_str();
+	if( func )
+	{
+		map<int,string>::iterator it = funcMetadataMap.find(func->GetId());
+		if( it != funcMetadataMap.end() )
+			return it->second.c_str();
+	}
 
 	return "";
 }
@@ -815,13 +870,18 @@ const char *CScriptBuilder::GetMetadataStringForTypeProperty(int typeId, int var
 
 const char *CScriptBuilder::GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method)
 {
-	map<int, SClassMetadata>::iterator typeIt = classMetadataMap.find(typeId);
-	if(typeIt == classMetadataMap.end()) return "";
+	if( method )
+	{
+		map<int, SClassMetadata>::iterator typeIt = classMetadataMap.find(typeId);
+		if(typeIt == classMetadataMap.end()) return "";
 
-	map<int, string>::iterator methodIt = typeIt->second.funcMetadataMap.find(method->GetId());
-	if(methodIt == typeIt->second.funcMetadataMap.end()) return "";
-	
-	return methodIt->second.c_str();
+		map<int, string>::iterator methodIt = typeIt->second.funcMetadataMap.find(method->GetId());
+		if(methodIt == typeIt->second.funcMetadataMap.end()) return "";
+		
+		return methodIt->second.c_str();
+	}
+
+	return "";
 }
 #endif
 

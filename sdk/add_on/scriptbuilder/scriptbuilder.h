@@ -118,14 +118,16 @@ protected:
 	// Temporary structure for storing metadata and declaration
 	struct SMetadataDecl
 	{
-		SMetadataDecl(std::string m, std::string d, int t, std::string c) : metadata(m), declaration(d), type(t), parentClass(c) {}
+		SMetadataDecl(std::string m, std::string d, int t, std::string c, std::string ns) : metadata(m), declaration(d), type(t), parentClass(c), nameSpace(ns) {}
 		std::string metadata;
 		std::string declaration;
 		int         type;
 		std::string parentClass;
+		std::string nameSpace;
 	};
 	std::vector<SMetadataDecl> foundDeclarations;
 	std::string currentClass;
+	std::string currentNamespace;
 
 	// Storage of metadata for global declarations
 	std::map<int, std::string> typeMetadataMap;
