@@ -236,6 +236,46 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test import with default arguments
+	// http://www.gamedev.net/topic/634184-crash-on-import-default-argument/
+	{
+		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("t", 
+			"import void crashMyAS( int x = 0 ) from 'other_module';\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		mod = engine->GetModule("other_module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("t",
+			"void crashMyAS(int) {}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = mod->BindAllImportedFunctions();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

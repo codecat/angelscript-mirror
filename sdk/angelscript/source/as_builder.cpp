@@ -3557,26 +3557,23 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		GetObjectMethodDescriptions(name.AddressOf(), objType, funcs, false);
 	else
 		GetFunctionDescriptions(name.AddressOf(), funcs, ns);
-	if( funcs.GetLength() )
+	for( asUINT n = 0; n < funcs.GetLength(); ++n )
 	{
-		for( asUINT n = 0; n < funcs.GetLength(); ++n )
+		asCScriptFunction *func = GetFunctionDescription(funcs[n]);
+		if( func->IsSignatureExceptNameAndReturnTypeEqual(parameterTypes, inOutFlags, objType, isConstMethod) )
 		{
-			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
-			if( func->IsSignatureExceptNameAndReturnTypeEqual(parameterTypes, inOutFlags, objType, isConstMethod) )
+			if( isMixin )
 			{
-				if( isMixin )
-				{
-					// Clean up the memory, as the function will not be registered
-					if( node )
-						node->Destroy(engine);
-					sFunctionDescription *func = functions.PopLast();
-					asDELETE(func, sFunctionDescription);
-					return 0;
-				}
-
-				WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
-				break;
+				// Clean up the memory, as the function will not be registered
+				if( node )
+					node->Destroy(engine);
+				sFunctionDescription *func = functions.PopLast();
+				asDELETE(func, sFunctionDescription);
+				return 0;
 			}
+
+			WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
+			break;
 		}
 	}
 
@@ -3991,99 +3988,42 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 
 int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
-	// Find name
-	asCScriptNode *f = node->firstChild;
-	asCScriptNode *n = f->firstChild->next->next;
+	asCString                  name;
+	asCDataType                returnType;
+	asCArray<asCDataType>      parameterTypes;
+	asCArray<asETypeModifiers> inOutFlags;
+	asCArray<asCString *>      defaultArgs;
+	bool isConstMethod, isOverride, isFinal, isConstructor, isDestructor, isPrivate, isShared;
 
-	// Check for name conflicts
-	asCString name(&file->code[n->tokenPos], n->tokenLength);
-	CheckNameConflict(name.AddressOf(), n, file, ns);
+	if( ns == 0 )
+		ns = engine->nameSpaces[0];
 
-	// Initialize a script function object for registration
-	asCDataType returnType;
-	// TODO: namespace: Use correct implicit namespace
-	returnType = CreateDataTypeFromNode(f->firstChild, file, engine->nameSpaces[0]);
-	returnType = ModifyDataTypeFromNode(returnType, f->firstChild->next, file, 0, 0);
-
-	// Count the parameters
-	int count = 0;
-	asCScriptNode *c = n->next->firstChild;
-	while( c )
-	{
-		count++;
-		c = c->next->next;
-		if( c && c->nodeType == snIdentifier )
-			c = c->next;
-	}
-
-	asCArray<asCDataType> parameterTypes(count);
-	asCArray<asETypeModifiers> inOutFlags(count);
-	n = n->next->firstChild;
-	while( n )
-	{
-		asETypeModifiers inOutFlag;
-		// TODO: namespace: Use correct implicit namespace
-		asCDataType type = CreateDataTypeFromNode(n, file, engine->nameSpaces[0]);
-		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
-
-		// Store the parameter type
-		parameterTypes.PushLast(type);
-		inOutFlags.PushLast(inOutFlag);
-
-		if( type.GetTokenType() == ttVoid )
-		{
-			asCString str;
-			str.Format(TXT_PARAMETER_CANT_BE_s, type.Format().AddressOf());
-			WriteError(str.AddressOf(), file, n);
-			break;
-		}
-
-		// Move to next parameter
-		n = n->next->next;
-		if( n && n->nodeType == snIdentifier )
-			n = n->next;
-	}
-
-	// Check that the same function hasn't been registered already
+	GetParsedFunctionDetails(node->firstChild, file, 0, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+	CheckNameConflict(name.AddressOf(), node, file, ns);
+	
+	// Check that the same function hasn't been registered already in the namespace
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
-	if( funcs.GetLength() )
+	for( asUINT n = 0; n < funcs.GetLength(); ++n )
 	{
-		for( asUINT n = 0; n < funcs.GetLength(); ++n )
+		asCScriptFunction *func = GetFunctionDescription(funcs[n]);
+		if( func->IsSignatureExceptNameAndReturnTypeEqual(parameterTypes, inOutFlags, 0, false) )
 		{
-			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
-
-			if( parameterTypes.GetLength() == func->parameterTypes.GetLength() )
-			{
-				bool match = true;
-				for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
-				{
-					if( parameterTypes[p] != func->parameterTypes[p] )
-					{
-						match = false;
-						break;
-					}
-				}
-
-				if( match )
-				{
-					WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
-					break;
-				}
-			}
+			WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
+			break;
 		}
 	}
 
 	// Read the module name as well
-	n = node->firstChild->next;
+	asCScriptNode *n = node->lastChild;
+	asASSERT( n->nodeType == snConstant && n->tokenType == ttStringConstant );
 	asCString moduleName;
 	moduleName.Assign(&file->code[n->tokenPos+1], n->tokenLength-2);
 
 	node->Destroy(engine);
 
 	// Register the function
-	// TODO: namespace: Store namespace
-	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), (asUINT)parameterTypes.GetLength(), moduleName);
+	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), ns, moduleName);
 
 	return 0;
 }

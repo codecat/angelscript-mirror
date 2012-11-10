@@ -940,7 +940,7 @@ int asCModule::AddScriptFunction(asCScriptFunction *func)
 }
 
 // internal
-int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, int paramCount, const asCString &moduleName)
+int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &returnType, asCDataType *params, asETypeModifiers *inOutFlags, asCString **defaultArgs, int paramCount, asSNameSpace *ns, const asCString &moduleName)
 {
 	asASSERT(id >= 0);
 
@@ -952,10 +952,12 @@ int asCModule::AddImportedFunction(int id, const char *name, const asCDataType &
 	func->name       = name;
 	func->id         = id;
 	func->returnType = returnType;
+	func->nameSpace  = ns;
 	for( int n = 0; n < paramCount; n++ )
 	{
 		func->parameterTypes.PushLast(params[n]);
 		func->inOutFlags.PushLast(inOutFlags[n]);
+		func->defaultArgs.PushLast(defaultArgs[n]);
 	}
 	func->objectType = 0;
 
