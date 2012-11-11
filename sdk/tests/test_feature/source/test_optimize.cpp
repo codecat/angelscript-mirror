@@ -1053,6 +1053,7 @@ bool TestOptimize()
 
 		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
+//		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -1062,8 +1063,7 @@ bool TestOptimize()
 		asDWORD *bc = func->GetByteCode(&len);
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_CALL,asBC_STOREOBJ,asBC_PshVPtr,asBC_RefCpyV,asBC_FREE,asBC_PopPtr,
-				// TODO: asBC_SUSPEND,asBC_CALL,asBC_FREE,asBC_STOREOBJ,
+				asBC_SUSPEND,asBC_CALL,asBC_FREE,asBC_STOREOBJ,
 				asBC_SUSPEND,asBC_FREE,asBC_RET
 			};
 		for( asUINT n = 0, i = 0; n < len; )

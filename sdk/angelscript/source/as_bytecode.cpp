@@ -822,6 +822,45 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 				DeleteInstruction(curr);
 				instr = GoForward(instr);
 			}
+			// STOREOBJ y, PSF y, RDSPtr, PSF x, REFCPY, FREE y, PopPtr -> FREE x, STOREOBJ x
+			else if( instr && instr->op == asBC_FREE )
+			{
+				asCByteInstruction *i = instr->prev;
+				if( !i || i->op != asBC_REFCPY ) continue; 
+				i = i->prev;
+				if( !i || i->op != asBC_PSF ) continue;
+				short x = i->wArg[0];
+				i = i->prev;
+				if( !i || i->op != asBC_RDSPtr ) continue;
+				i = i->prev;
+				if( !i || i->op != asBC_PSF ) continue;
+				short y = i->wArg[0];
+				i = i->prev;
+				if( !i || i->op != asBC_STOREOBJ || i->wArg[0] != y ) continue;
+
+				// Don't do the substitution if the var y is not a temporary, or if it is used after PopPtr
+				if( !IsTemporary(y) || IsTempVarRead(curr, y) ) continue;
+
+				// Transform the PopPtr into STOREOBJ
+				curr->op = asBC_STOREOBJ;
+				curr->stackInc = 0;
+				curr->wArg[0] = x;
+				curr->size = i->size;
+
+				// Change arg of the FREE to x
+				// TODO: runtime optikmize: The FREE instruction shouldn't be necessary. STOREOBJ should free the previous value by itself
+				instr->wArg[0] = x;
+
+				// Delete all other instructions
+				DeleteInstruction(instr->prev); // REFCPY
+				DeleteInstruction(instr->prev); // PSF
+				DeleteInstruction(instr->prev); // RDSTR
+				DeleteInstruction(instr->prev); // PSF
+				DeleteInstruction(instr->prev); // STOREOBJ
+	
+				instr = GoForward(curr);
+			}
+
 		}
 		else if( currOp == asBC_RDSPtr )
 		{
