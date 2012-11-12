@@ -6,10 +6,12 @@ namespace TestGarbageCollect
 {
 
 int called = 0;
+std::string buf;
 void PrintString_Generic(asIScriptGeneric *gen)
 {
 	std::string *str = (std::string*)gen->GetArgAddress(0);
 	UNUSED_VAR(str);
+	buf += *str;
 //	printf("%s",str->c_str());
 	called++;
 }
@@ -104,7 +106,7 @@ bool Test()
             asUINT totalDestroyed = asUINT();
             asUINT totalDetected = asUINT();
             engine->GetGCStatistics(&currentSize , &totalDestroyed , &totalDetected );
-			if( currentSize    != 8 ||
+			if( currentSize    != 2 ||
 				totalDestroyed != n+1 ||
 				totalDetected  != 0 )
 				TEST_FAILED;
@@ -246,9 +248,10 @@ bool Test()
 			"    Log('SomeClass instance being destroyed\\n'); \n" // This won't be called
 			"  } \n"
 			"} \n"
+			"SomeClass @something; \n" 
 			"void test_main() \n"
 			"{ \n"
-			"  SomeClass @something = @SomeClass(); \n" // Instanciate the object. It will only be destroyed by the GC
+			"  @something = @SomeClass(); \n" // Instanciate the object. It will only be destroyed by the GC
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
@@ -261,9 +264,16 @@ bool Test()
 		// The global variables in the module will be destroyed first. The objects in the GC that 
 		// tries to access them should throw exception, but should not cause the application to crash
 		called = 0;
+		buf = "";
 		engine->Release();
-		if( called != 1 )
+		if( called != 2 )
 			TEST_FAILED;
+		if( buf != "Big instance being destroyed\n"
+		           "Before attempting access to global var\n" )
+		{
+			printf("%s", buf.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	{

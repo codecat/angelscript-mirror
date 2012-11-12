@@ -23,7 +23,7 @@ static CScriptHandle GetFunc1()
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptFunction *func = ctx->GetFunction();
 	asIScriptEngine *engine = ctx->GetEngine();
-	asIScriptModule *mod = engine->GetModule(func->GetModuleName());
+	asIScriptModule *mod = engine->GetModule("test");
 
 	asIScriptFunction *func1 = mod->GetFunctionByName("func1");
 

@@ -148,7 +148,7 @@ bool Test()
 			TEST_FAILED;
 		}
 		engine->DiscardModule("");
-
+	
 		const char *validCode =
 			"shared interface I {} \n"
 			"shared class T : I \n"

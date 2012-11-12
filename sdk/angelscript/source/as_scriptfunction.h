@@ -152,6 +152,7 @@ public:
 	~asCScriptFunction();
 
 	void      DestroyInternal();
+	void      Orphan(asIScriptModule *mod);
 
 	void      AddVariable(asCString &name, asCDataType &type, int stackOffset);
 

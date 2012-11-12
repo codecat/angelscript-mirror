@@ -163,7 +163,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	//                         the owner, then the script function would simply call Release 
 	//                         as normal.
 	// Notify the GC of script functions
-	if( funcType == asFUNC_SCRIPT )
+	if( funcType == asFUNC_SCRIPT && mod == 0 )
 		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
 }
 
@@ -244,6 +244,19 @@ int asCScriptFunction::Release() const
 		asDELETE(const_cast<asCScriptFunction*>(this),asCScriptFunction);
 
 	return r;
+}
+
+// internal
+void asCScriptFunction::Orphan(asIScriptModule *mod)
+{
+	if( mod && module == mod && funcType == asFUNC_SCRIPT && refCount.get() > 1 )
+	{
+		// This function is being orphaned, so notify the GC so it can check for circular references
+		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
+		module = 0;
+	}
+
+	Release();
 }
 
 // interface

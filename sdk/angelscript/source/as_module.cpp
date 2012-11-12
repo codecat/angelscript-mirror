@@ -407,8 +407,7 @@ void asCModule::InternalReset()
 		if( scriptFunctions[n] )
 		{
 			// Remove the module reference in the functions
-			scriptFunctions[n]->module = 0;
-			scriptFunctions[n]->Release();
+			scriptFunctions[n]->Orphan(this);
 		}
 	}
 	scriptFunctions.SetLength(0);
@@ -1336,7 +1335,7 @@ int asCModule::RemoveFunction(asIScriptFunction *func)
 		globalFunctions.Erase(idx);
 		f->Release();
 		scriptFunctions.RemoveValue(f);
-		f->Release();
+		f->Orphan(this);
 		return 0;
 	}
 

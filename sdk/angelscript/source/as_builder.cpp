@@ -355,7 +355,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 
 	// Create the function
 	bool isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared;
-	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_SCRIPT);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, compileFlags & asCOMP_ADD_TO_MODULE ? module : 0, asFUNC_SCRIPT);
 	if( func == 0 )
 		return asOUT_OF_MEMORY;
 
@@ -378,7 +378,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		int r = CheckNameConflict(func->name.AddressOf(), node, scripts[0], module->defaultNamespace);
 		if( r < 0 )
 		{
-			func->Release();
+			func->Orphan(module);
 			return asERROR;
 		}
 
@@ -419,7 +419,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 			module->globalFunctions.Erase(module->globalFunctions.GetIndex(func));
 			module->scriptFunctions.RemoveValue(func);
 			func->Release();
-			func->Release();
+			func->Orphan(module);
 		}
 
 		func->Release();
