@@ -848,7 +848,7 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 				curr->size = i->size;
 
 				// Change arg of the FREE to x
-				// TODO: runtime optikmize: The FREE instruction shouldn't be necessary. STOREOBJ should free the previous value by itself
+				// TODO: runtime optimize: The FREE instruction shouldn't be necessary. STOREOBJ should free the previous value by itself
 				instr->wArg[0] = x;
 
 				// Delete all other instructions
