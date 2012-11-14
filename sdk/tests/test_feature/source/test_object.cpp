@@ -311,9 +311,7 @@ bool Test2()
 	{
 		TEST_FAILED;
 	}
-	if( bout.buffer != "script (1, 17) : Error   : Object handle is not supported for this type\n"
-	                   "script (1, 1) : Info    : Compiling void Test(Creep)\n"
-	                   "script (1, 17) : Error   : Object handle is not supported for this type\n" )
+	if( bout.buffer != "script (1, 17) : Error   : Object handle is not supported for this type\n" )
 	{
 		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());

@@ -53,41 +53,43 @@ BEGIN_AS_NAMESPACE
 
 #ifndef AS_NO_COMPILER
 
+// TODO: sig: Remove this as it is not needed anymore
 struct sExplicitSignature
 {
 	sExplicitSignature(int argCount = 0) : argTypes(argCount), argModifiers(argCount), argNames(argCount), defaultArgs(argCount) {}
 
-	asCDataType returnType;
-	asCArray<asCDataType> argTypes;
+	asCDataType                returnType;
+	asCArray<asCDataType>      argTypes;
 	asCArray<asETypeModifiers> argModifiers;
-	asCArray<asCString> argNames;
-	asCArray<asCString *> defaultArgs;
+	asCArray<asCString>        argNames;
+	asCArray<asCString *>      defaultArgs;
 };
 
 struct sFunctionDescription
 {
-	asCScriptCode *script;
-	asCScriptNode *node;
-	asCString name;
-	asCObjectType *objType;
-	sExplicitSignature *explicitSignature;
-	int funcId;
-	bool isExistingShared;
+	asCScriptCode       *script;
+	asCScriptNode       *node;
+	asCString            name;
+	asCObjectType       *objType;
+	sExplicitSignature  *explicitSignature;
+	asCArray<asCString>  paramNames;
+	int                  funcId;
+	bool                 isExistingShared;
 };
 
 struct sGlobalVariableDescription
 {
-	asCScriptCode *script;
-	asCScriptNode *idNode;
-	asCScriptNode *nextNode;
-	asCString name;
+	asCScriptCode     *script;
+	asCScriptNode     *idNode;
+	asCScriptNode     *nextNode;
+	asCString          name;
 	asCGlobalProperty *property;
-	asCDataType datatype;
-	int index;
-	bool isCompiled;
-	bool isPureConstant;
-	bool isEnumValue;
-	asQWORD constantValue;
+	asCDataType        datatype;
+	int                index;
+	bool               isCompiled;
+	bool               isPureConstant;
+	bool               isEnumValue;
+	asQWORD            constantValue;
 };
 
 // asCSymbolTable template specializations for sGlobalVariableDescription entries
@@ -100,27 +102,27 @@ struct sClassDeclaration
 
 	asCScriptCode *script;
 	asCScriptNode *node;
-	asCString name;
-	int validState;
+	asCString      name;
+	int            validState;
 	asCObjectType *objType;
-	bool isExistingShared;
-	bool isFinal;
+	bool           isExistingShared;
+	bool           isFinal;
 };
 
 struct sFuncDef
 {
 	asCScriptCode *script;
 	asCScriptNode *node;
-	asCString name;
-	int idx;
+	asCString      name;
+	int            idx;
 };
 
 struct sMixinClass
 {
 	asCScriptCode *script;
 	asCScriptNode *node;
-	asCString name;
-	asSNameSpace *ns;
+	asCString      name;
+	asSNameSpace  *ns;
 };
 
 #endif // AS_NO_COMPILER
@@ -220,7 +222,7 @@ protected:
 	void               CompleteFuncDef(sFuncDef *funcDef);
 	void               CompileInterfaces();
 	void               CompileClasses();
-	void               GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared);
+	void               GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared);
 	bool               DoesMethodExist(asCObjectType *objType, int methodId, asUINT *methodIndex = 0);
 	void               AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
 	asCObjectProperty *AddPropertyToClass(sClassDeclaration *c, const asCString &name, const asCDataType &type, bool isPrivate, asCScriptCode *file = 0, asCScriptNode *node = 0);

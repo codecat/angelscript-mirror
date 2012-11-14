@@ -697,12 +697,9 @@ bool Test()
 			"} \n"
 			"int main() \n"
 			"{ \n"
-			"	if (!TestSort()) \n"
-			"		return 0; \n"
-			"	if (!TestReverse()) \n"
-			"		return 0; \n"
-			"	if (!TestFind()) \n"
-			"		return 0; \n"
+			"	assert( TestSort() ); \n"
+			"	assert( TestReverse() ); \n"
+			"	assert( TestFind() ); \n"
 			"	return 789; \n"
 			"} \n";
 

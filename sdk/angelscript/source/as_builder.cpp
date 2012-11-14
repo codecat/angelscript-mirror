@@ -359,7 +359,8 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	if( func == 0 )
 		return asOUT_OF_MEMORY;
 
-	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared);
+	asCArray<asCString> parameterNames;
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 	func->nameSpace        = module->defaultNamespace;
@@ -403,10 +404,11 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->node              = node;
 	funcDesc->name              = func->name;
 	funcDesc->funcId            = func->id;
+	funcDesc->paramNames        = parameterNames;
 	funcDesc->explicitSignature = 0;
 
 	asCCompiler compiler(engine);
-	if( compiler.CompileFunction(this, functions[0]->script, 0, functions[0]->node, func) >= 0 )
+	if( compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func) >= 0 )
 	{
 		// Return the function
 		*outFunc = func;
@@ -690,7 +692,7 @@ void asCBuilder::CompileFunctions()
 			str.Format(TXT_COMPILING_s, str.AddressOf());
 			WriteInfo(current->script->name.AddressOf(), str.AddressOf(), r, c, true);
 
-			compiler.CompileFunction(this, current->script, current->explicitSignature, current->node, func);
+			compiler.CompileFunction(this, current->script, current->paramNames, current->node, func);
 
 			preMessage.isSet = false;
 		}
@@ -1284,6 +1286,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 {
 	asCDataType                returnType;
+	asCArray<asCString>        parameterNames;
 	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
 	asCArray<asCString *>      defaultArgs;
@@ -1295,7 +1298,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	bool                       isFinal;
 	bool                       isShared;
 
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
 	if( func )
@@ -3248,7 +3251,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 	return r;
 }
 
-void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared)
+void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared)
 {
 	node = node->firstChild;
 
@@ -3340,6 +3343,7 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	}
 
 	// Get the parameter types
+	parameterNames.Allocate(count, false);
 	parameterTypes.Allocate(count, false);
 	inOutFlags.Allocate(count, false);
 	defaultArgs.Allocate(count, false);
@@ -3358,7 +3362,17 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 		// Move to next parameter
 		n = n->next->next;
 		if( n && n->nodeType == snIdentifier )
+		{
+			asCString name;
+			name.Assign(&file->code[n->tokenPos], n->tokenLength);
+			parameterNames.PushLast(name);
 			n = n->next;
+		}
+		else
+		{
+			// No name was given for the parameter
+			parameterNames.PushLast(asCString());
+		}
 
 		if( n && n->nodeType == snExpression )
 		{
@@ -3404,6 +3418,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 {
 	asCString                  name;
 	asCDataType                returnType;
+	asCArray<asCString>        parameterNames;
 	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
 	asCArray<asCString *>      defaultArgs;
@@ -3418,7 +3433,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	if( ns == 0 )
 		ns = engine->nameSpaces[0];
 
-	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 
 	if( isExistingShared )
 	{
@@ -3503,6 +3518,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		func->funcId            = funcId;
 		func->explicitSignature = 0;
 		func->isExistingShared  = false;
+		func->paramNames        = parameterNames;
 
 		if( isShared )
 		{
@@ -3650,6 +3666,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	return 0;
 }
 
+// TODO: sig: Merge this with RegisterScriptFunction
 int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *objType, bool isInterface, bool isGlobalFunction, bool isPrivate, bool isConst, bool isFinal, bool isOverride, bool treatAsProperty, asSNameSpace *ns)
 {
 	bool isConstructor = false;
@@ -3697,6 +3714,7 @@ int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *n
 		func->objType           = objType;
 		func->funcId            = funcId;
 		func->explicitSignature = signature;
+		func->paramNames        = signature->argNames;
 	}
 
 	// Destructors may not have any parameters
@@ -3990,6 +4008,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 {
 	asCString                  name;
 	asCDataType                returnType;
+	asCArray<asCString>        parameterNames;
 	asCArray<asCDataType>      parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
 	asCArray<asCString *>      defaultArgs;
@@ -3998,7 +4017,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	if( ns == 0 )
 		ns = engine->nameSpaces[0];
 
-	GetParsedFunctionDetails(node->firstChild, file, 0, name, returnType, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+	GetParsedFunctionDetails(node->firstChild, file, 0, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 	CheckNameConflict(name.AddressOf(), node, file, ns);
 	
 	// Check that the same function hasn't been registered already in the namespace
