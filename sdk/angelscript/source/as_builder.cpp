@@ -304,7 +304,7 @@ int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, 
 		{
 			asCString str;
 			str.Format(TXT_DEF_ARG_MISSING_IN_FUNC_s, func->GetDeclaration());
-			WriteError(str.AddressOf(), script, node);
+			WriteError(str, script, node);
 			return asINVALID_DECLARATION;
 		}
 	}
@@ -656,7 +656,7 @@ void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *
 				int r, c;
 				script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-				WriteWarning(script->name.AddressOf(), TXT_UNUSED_SCRIPT_NODE, r, c);
+				WriteWarning(script->name, TXT_UNUSED_SCRIPT_NODE, r, c);
 
 				node->Destroy(engine);
 			}
@@ -684,7 +684,7 @@ void asCBuilder::CompileFunctions()
 
 			asCString str = func->GetDeclarationStr();
 			str.Format(TXT_COMPILING_s, str.AddressOf());
-			WriteInfo(current->script->name.AddressOf(), str.AddressOf(), r, c, true);
+			WriteInfo(current->script->name, str, r, c, true);
 
 			compiler.CompileFunction(this, current->script, current->paramNames, current->node, func);
 
@@ -708,7 +708,7 @@ void asCBuilder::CompileFunctions()
 
 			asCString str = func->GetDeclarationStr();
 			str.Format(TXT_COMPILING_s, str.AddressOf());
-			WriteInfo(current->script->name.AddressOf(), str.AddressOf(), r, c, true);
+			WriteInfo(current->script->name, str, r, c, true);
 
 			// This is the default constructor, that is generated
 			// automatically if not implemented by the user.
@@ -1089,7 +1089,7 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 			{
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_OBJ_PROPERTY, name);
-				WriteError(str.AddressOf(), code, node);
+				WriteError(str, code, node);
 			}
 
 			return -1;
@@ -1108,7 +1108,7 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 				{
 					asCString str;
 					str.Format(TXT_NAME_CONFLICT_s_METHOD, name);
-					WriteError(str.AddressOf(), code, node);
+					WriteError(str, code, node);
 				}
 
 				return -1;
@@ -1128,7 +1128,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_EXTENDED_TYPE, name);
-			WriteError(str.AddressOf(), code, node);
+			WriteError(str, code, node);
 		}
 
 		return -1;
@@ -1143,7 +1143,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY, name);
-			WriteError(str.AddressOf(), code, node);
+			WriteError(str, code, node);
 		}
 
 		return -1;
@@ -1163,7 +1163,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			{
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_STRUCT, name);
-				WriteError(str.AddressOf(), code, node);
+				WriteError(str, code, node);
 			}
 
 			return -1;
@@ -1180,7 +1180,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			{
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_IS_NAMED_TYPE, name);
-				WriteError(str.AddressOf(), code, node);
+				WriteError(str, code, node);
 			}
 
 			return -1;
@@ -1197,7 +1197,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 			{
 				asCString str;
 				str.Format(TXT_NAME_CONFLICT_s_IS_FUNCDEF, name);
-				WriteError(str.AddressOf(), code, node);
+				WriteError(str, code, node);
 			}
 
 			return -1;
@@ -1211,7 +1211,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		{
 			asCString str;
 			str.Format(TXT_NAME_CONFLICT_s_IS_MIXIN, name);
-			WriteError(str.AddressOf(), code, node);
+			WriteError(str, code, node);
 		}
 
 		return -1;
@@ -1265,7 +1265,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 	fd->name   = name;
 	fd->node   = node;
 	fd->script = file;
-	fd->idx    = module->AddFuncDef(name.AddressOf(), ns);
+	fd->idx    = module->AddFuncDef(name, ns);
 
 	funcDefs.PushLast(fd);
 
@@ -1322,7 +1322,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 		int r, c;
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-		WriteError(str.AddressOf(), file, node);
+		WriteError(str, file, node);
 	}
 
 	asCScriptNode *n = node->firstChild->next;
@@ -1389,7 +1389,7 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 		// Report error, because mixin class cannot be final or shared
 		asCString msg;
 		msg.Format(TXT_MIXIN_CANNOT_BE_DECLARED_AS_s, asCString(&file->code[n->tokenPos], n->tokenLength).AddressOf());
-		WriteError(msg.AddressOf(), file, n);
+		WriteError(msg, file, n);
 
 		asCScriptNode *tmp = n;
 		n = n->next;
@@ -1689,7 +1689,7 @@ void asCBuilder::CompileGlobalVariables()
 				asCString str = gvar->datatype.Format();
 				str += " " + gvar->name;
 				str.Format(TXT_COMPILING_s, str.AddressOf());
-				WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), r, c, true);
+				WriteInfo(gvar->script->name, str, r, c, true);
 			}
 
 			if( gvar->isEnumValue )
@@ -1735,10 +1735,10 @@ void asCBuilder::CompileGlobalVariables()
 								asCString str = gvar->datatype.Format();
 								str += " " + gvar->name;
 								str.Format(TXT_COMPILING_s, str.AddressOf());
-								WriteInfo(gvar->script->name.AddressOf(), str.AddressOf(), row, col, true);
+								WriteInfo(gvar->script->name, str, row, col, true);
 
 								str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, gvar2->name.AddressOf());
-								WriteError(gvar->script->name.AddressOf(), str.AddressOf(), row, col);
+								WriteError(gvar->script->name, str, row, col);
 								r = -1;
 							}
 						}
@@ -1999,7 +1999,7 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 		decl->script->ConvertPosToRowCol(errNode->tokenPos, &r, &c);
 		asCString msg;
 		msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, intfType->GetName());
-		WriteWarning(decl->script->name.AddressOf(), msg.AddressOf(), r, c);
+		WriteWarning(decl->script->name, msg, r, c);
 		return;
 	}
 
@@ -2008,7 +2008,7 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 	{
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, intfType->name.AddressOf());
-		WriteError(msg.AddressOf(), decl->script, errNode);
+		WriteError(msg, decl->script, errNode);
 		return;
 	}
 
@@ -2018,7 +2018,7 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 	{
 		asCString str;
 		str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
-		WriteError(str.AddressOf(), decl->script, errNode);
+		WriteError(str, decl->script, errNode);
 		return;
 	}
 	
@@ -2076,7 +2076,7 @@ void asCBuilder::CompileInterfaces()
 				{
 					asCString str;
 					str.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->GetName());
-					WriteError(str.AddressOf(), intfDecl->script, node);
+					WriteError(str, intfDecl->script, node);
 					ok = false;
 				}
 			}
@@ -2212,7 +2212,7 @@ void asCBuilder::CompileClasses()
 				{
 					asCString str;
 					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
-					WriteError(str.AddressOf(), file, node);
+					WriteError(str, file, node);
 				}
 				else
 					AddInterfaceFromMixinToClass(decl, node, mixin);
@@ -2224,7 +2224,7 @@ void asCBuilder::CompileClasses()
 				// or the class has been declared as 'final'
 				asCString str;
 				str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
-				WriteError(str.AddressOf(), file, node);
+				WriteError(str, file, node);
 			}
 			else if( objType->size != 0 )
 			{
@@ -2261,7 +2261,7 @@ void asCBuilder::CompileClasses()
 						{
 							asCString msg;
 							msg.Format(TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s, objType->name.AddressOf());
-							WriteError(msg.AddressOf(), file, node);
+							WriteError(msg, file, node);
 							error = true;
 						}
 					}
@@ -2275,7 +2275,7 @@ void asCBuilder::CompileClasses()
 							{
 								asCString str;
 								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
-								WriteError(str.AddressOf(), file, node);
+								WriteError(str, file, node);
 							}
 						}
 						else
@@ -2361,7 +2361,7 @@ void asCBuilder::CompileClasses()
 					decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
 					asCString msg;
 					msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, baseType->interfaces[n]->GetName());
-					WriteWarning(decl->script->name.AddressOf(), msg.AddressOf(), r, c);
+					WriteWarning(decl->script->name, msg, r, c);
 				}
 			}
 
@@ -2392,7 +2392,7 @@ void asCBuilder::CompileClasses()
 						{
 							asCString msg;
 							msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
-							WriteError(msg.AddressOf(), decl->script, decl->node);
+							WriteError(msg, decl->script, decl->node);
 						}
 
 						// Move the function from the methods array to the virtualFunctionTable
@@ -2468,7 +2468,7 @@ void asCBuilder::CompileClasses()
 				{
 					asCString msg;
 					msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
-					WriteError(msg.AddressOf(), file, node);
+					WriteError(msg, file, node);
 				}
 
 				if( dt.IsReadOnly() )
@@ -2504,7 +2504,7 @@ void asCBuilder::CompileClasses()
 						{
 							asCString str;
 							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
-							WriteError(str.AddressOf(), file, n);
+							WriteError(str, file, n);
 						}
 					}
 					n = n->next;
@@ -2554,7 +2554,7 @@ void asCBuilder::CompileClasses()
 					asCString str;
 					str.Format(TXT_MISSING_IMPLEMENTATION_OF_s,
 						engine->GetFunctionDeclaration(objType->methods[i]).AddressOf());
-					WriteError(str.AddressOf(), decl->script, decl->node);
+					WriteError(str, decl->script, decl->node);
 				}
 				else
 					overrideValidations[overrideIndex] = true;
@@ -2569,7 +2569,7 @@ void asCBuilder::CompileClasses()
 			{
 				asCString msg;
 				msg.Format(TXT_METHOD_s_DOES_NOT_OVERRIDE, decl->objType->GetMethodByIndex(j, false)->GetDeclaration());
-				WriteError(msg.AddressOf(), decl->script, decl->node);
+				WriteError(msg, decl->script, decl->node);
 			}
 		}
 	}
@@ -2813,7 +2813,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 					{
 						asCString msg;
 						msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
-						WriteError(msg.AddressOf(), file, n);
+						WriteError(msg, file, n);
 						WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
 					}
 
@@ -2864,7 +2864,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 								{
 									asCString str;
 									str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
-									WriteError(str.AddressOf(), decl->script, decl->node);
+									WriteError(str, decl->script, decl->node);
 									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, n);
 								}
 							}
@@ -2924,7 +2924,7 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 		{
 			asCString str;
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-			WriteError(str.AddressOf(), file, node);
+			WriteError(str, file, node);
 		}
 		return 0;
 	}
@@ -2965,7 +2965,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	asCArray<asCString *> defaultArgs;
 
 	// Add the script function
-	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false, objType);
+	module->AddScriptFunction(file->idx, funcId, objType->name, returnType, parameterTypes, inOutFlags, defaultArgs, false, objType);
 
 	// Set it as default constructor
 	if( objType->beh.construct )
@@ -2998,7 +2998,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	objType->beh.factory = funcId;
 	objType->beh.factories[0] = funcId;
 	returnType = asCDataType::CreateObjectHandle(objType, false);
-	module->AddScriptFunction(file->idx, funcId, objType->name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+	module->AddScriptFunction(file->idx, funcId, objType->name, returnType, parameterTypes, inOutFlags, defaultArgs, false);
 	functions.PushLast(0);
 	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
@@ -3111,7 +3111,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				{
 					asCString str;
 					str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, st->GetName());
-					WriteError(str.AddressOf(), file, tmp);
+					WriteError(str, file, tmp);
 					break;
 				}
 
@@ -3127,7 +3127,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				{
 					asCString str;
 					str.Format(TXT_NAME_CONFLICT_s_ALREADY_USED, name.AddressOf());
-					WriteError(str.AddressOf(), file, tmp);
+					WriteError(str, file, tmp);
 
 					tmp = tmp->next;
 					if( tmp && tmp->nodeType == snAssignment )
@@ -3457,7 +3457,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		{
 			asCString str;
 			str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, objType->GetName());
-			WriteError(str.AddressOf(), file, node);
+			WriteError(str, file, node);
 		}
 
 		node->Destroy(engine);
@@ -3544,7 +3544,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		{
 			asCString msg;
 			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-			WriteError(msg.AddressOf(), file, node);
+			WriteError(msg, file, node);
 		}
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
@@ -3554,7 +3554,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 			{
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-				WriteError(msg.AddressOf(), file, node);
+				WriteError(msg, file, node);
 			}
 		}
 	}
@@ -3594,7 +3594,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		f->AddRef();
 	}
 	else
-		module->AddScriptFunction(file->idx, funcId, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared, ns);
+		module->AddScriptFunction(file->idx, funcId, name, returnType, parameterTypes, inOutFlags, defaultArgs, isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared, ns);
 
 	// Make sure the default args are declared correctly
 	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);
@@ -3631,7 +3631,7 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 					defaultArgs[n] = asNEW(asCString)(*defaultArgs[n]);
 
 			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
+			module->AddScriptFunction(file->idx, factoryId, name, dt, parameterTypes, inOutFlags, defaultArgs, false);
 
 			// If the object is shared, then the factory must also be marked as shared
 			if( objType->flags & asOBJ_SHARED )
@@ -3841,7 +3841,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	node->Destroy(engine);
 
 	// Register the function
-	module->AddImportedFunction(importID, name.AddressOf(), returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), ns, moduleName);
+	module->AddImportedFunction(importID, name, returnType, parameterTypes, inOutFlags, defaultArgs, ns, moduleName);
 
 	return 0;
 }
@@ -3949,7 +3949,7 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 	}
 }
 
-void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, int c, bool pre)
+void asCBuilder::WriteInfo(const asCString &scriptname, const asCString &message, int r, int c, bool pre)
 {
 	// Need to store the pre message in a structure
 	if( pre )
@@ -3963,48 +3963,48 @@ void asCBuilder::WriteInfo(const char *scriptname, const char *message, int r, i
 	else
 	{
 		preMessage.isSet = false;
-		engine->WriteMessage(scriptname, r, c, asMSGTYPE_INFORMATION, message);
+		engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_INFORMATION, message.AddressOf());
 	}
 }
 
-void asCBuilder::WriteInfo(const char *message, asCScriptCode *file, asCScriptNode *node)
+void asCBuilder::WriteInfo(const asCString &message, asCScriptCode *file, asCScriptNode *node)
 {
 	int r = 0, c = 0;
 	if( node )
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	WriteInfo(file->name.AddressOf(), message, r, c, false);
+	WriteInfo(file->name, message, r, c, false);
 }
 
-void asCBuilder::WriteError(const char *message, asCScriptCode *file, asCScriptNode *node)
+void asCBuilder::WriteError(const asCString &message, asCScriptCode *file, asCScriptNode *node)
 {
 	int r = 0, c = 0;
 	if( node )
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	WriteError(file->name.AddressOf(), message, r, c);
+	WriteError(file->name, message, r, c);
 }
 
-void asCBuilder::WriteError(const char *scriptname, const char *message, int r, int c)
+void asCBuilder::WriteError(const asCString &scriptname, const asCString &message, int r, int c)
 {
 	numErrors++;
 
 	// Need to pass the preMessage first
 	if( preMessage.isSet )
-		WriteInfo(preMessage.scriptname.AddressOf(), preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
+		WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
 
-	engine->WriteMessage(scriptname, r, c, asMSGTYPE_ERROR, message);
+	engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_ERROR, message.AddressOf());
 }
 
-void asCBuilder::WriteWarning(const char *scriptname, const char *message, int r, int c)
+void asCBuilder::WriteWarning(const asCString &scriptname, const asCString &message, int r, int c)
 {
 	numWarnings++;
 
 	// Need to pass the preMessage first
 	if( preMessage.isSet )
-		WriteInfo(scriptname, preMessage.message.AddressOf(), preMessage.r, preMessage.c, false);
+		WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
 
-	engine->WriteMessage(scriptname, r, c, asMSGTYPE_WARNING, message);
+	engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_WARNING, message.AddressOf());
 }
 
 asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *script, asCScriptNode **next)
@@ -4046,7 +4046,7 @@ asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCod
 		{
 			asCString msg;
 			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-			WriteError(msg.AddressOf(), script, node);
+			WriteError(msg, script, node);
 		}
 	}
 
@@ -4134,7 +4134,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							{
 								asCString msg;
 								msg.Format(TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subType.Format().AddressOf());
-								WriteError(msg.AddressOf(), file, n);
+								WriteError(msg, file, n);
 							}
 
 							ot = otInstance;
@@ -4152,7 +4152,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				asCString msg;
 				msg.Format(TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE, (const char *)str.AddressOf());
-				WriteError(msg.AddressOf(), file, n);
+				WriteError(msg, file, n);
 
 				dt.SetTokenType(ttInt);
 			}
@@ -4170,7 +4170,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				asCString msg;
 				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, (const char *)str.AddressOf());
-				WriteError(msg.AddressOf(), file, n);
+				WriteError(msg, file, n);
 
 				dt = asCDataType::CreatePrimitive(ttInt, isConst);
 				return dt;
@@ -4195,7 +4195,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				asCString str;
 				// TODO: Change to "Array sub type cannot be 'type'"
 				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-				WriteError(str.AddressOf(), file, n);
+				WriteError(str, file, n);
 			}
 
 			// Make the type an array (or multidimensional array)

@@ -143,11 +143,11 @@ protected:
 
 	void               Reset();
 
-	void               WriteInfo(const char *scriptname, const char *msg, int r, int c, bool preMessage);
-	void               WriteInfo(const char *msg, asCScriptCode *file, asCScriptNode *node);
-	void               WriteError(const char *scriptname, const char *msg, int r, int c);
-	void               WriteError(const char *msg, asCScriptCode *file, asCScriptNode *node);
-	void               WriteWarning(const char *scriptname, const char *msg, int r, int c);
+	void               WriteInfo(const asCString &scriptname, const asCString &msg, int r, int c, bool preMessage);
+	void               WriteInfo(const asCString &msg, asCScriptCode *file, asCScriptNode *node);
+	void               WriteError(const asCString &scriptname, const asCString &msg, int r, int c);
+	void               WriteError(const asCString &msg, asCScriptCode *file, asCScriptNode *node);
+	void               WriteWarning(const asCString &scriptname, const asCString &msg, int r, int c);
 
 	asCObjectProperty *GetObjectProperty(asCDataType &obj, const char *prop);
 	asCGlobalProperty *GetGlobalProperty(const char *prop, asSNameSpace *ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp);
