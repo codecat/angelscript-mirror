@@ -102,11 +102,6 @@ asCBuilder::~asCBuilder()
 				functions[n]->node->Destroy(engine);
 			}
 
-			if( functions[n]->explicitSignature )
-			{
-				asDELETE(functions[n]->explicitSignature,sExplicitSignature);
-			}
-
 			asDELETE(functions[n],sFunctionDescription);
 		}
 
@@ -405,7 +400,6 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->name              = func->name;
 	funcDesc->funcId            = func->id;
 	funcDesc->paramNames        = parameterNames;
-	funcDesc->explicitSignature = 0;
 
 	asCCompiler compiler(engine);
 	if( compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func) >= 0 )
@@ -483,7 +477,7 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, true, false, 0, decl->isExistingShared);
+					RegisterScriptFunctionFromNode(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, true, false, 0, decl->isExistingShared);
 				}
 				else if( node->nodeType == snVirtualProperty )
 				{
@@ -512,7 +506,7 @@ void asCBuilder::ParseScripts()
 				if( node->nodeType == snFunction )
 				{
 					node->DisconnectParent();
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, false, false, 0, decl->isExistingShared);
+					RegisterScriptFunctionFromNode(engine->GetNextScriptFunctionId(), node, decl->script, decl->objType, false, false, 0, decl->isExistingShared);
 				}
 				else if( node->nodeType == snVirtualProperty )
 				{
@@ -649,7 +643,7 @@ void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *
 		{
 			node->DisconnectParent();
 			if( node->nodeType == snFunction )
-				RegisterScriptFunction(engine->GetNextScriptFunctionId(), node, script, 0, false, true, ns);
+				RegisterScriptFunctionFromNode(engine->GetNextScriptFunctionId(), node, script, 0, false, true, ns);
 			else if( node->nodeType == snGlobalVar )
 				RegisterGlobalVar(node, script, ns);
 			else if( node->nodeType == snVirtualProperty )
@@ -721,11 +715,6 @@ void asCBuilder::CompileFunctions()
 			compiler.CompileDefaultConstructor(this, current->script, node, func);
 
 			preMessage.isSet = false;
-		}
-		else
-		{
-			// This is a property accessor, but no implementation was provided for it
-			asASSERT( current->explicitSignature );
 		}
 	}
 }
@@ -2751,7 +2740,7 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 					asCScriptNode *copy = n->CreateCopy(engine);
 
 					// Register the method, but only if it doesn't already exist in the class
-					RegisterScriptFunction(engine->GetNextScriptFunctionId(), copy, mixin->script, decl->objType, false, false, 0, false, true);
+					RegisterScriptFunctionFromNode(engine->GetNextScriptFunctionId(), copy, mixin->script, decl->objType, false, false, 0, false, true);
 				}
 				else if( n->nodeType == snVirtualProperty )
 				{
@@ -3001,7 +2990,6 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	func->name              = objType->name;
 	func->objType           = objType;
 	func->funcId            = funcId;
-	func->explicitSignature = 0;
 
 	// Add a default factory as well
 	funcId = engine->GetNextScriptFunctionId();
@@ -3414,7 +3402,7 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 }
 
 #ifndef AS_NO_COMPILER
-int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin)
+int asCBuilder::RegisterScriptFunctionFromNode(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin)
 {
 	asCString                  name;
 	asCDataType                returnType;
@@ -3430,10 +3418,15 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	bool                       isPrivate;
 	bool                       isShared;
 
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+
+	return RegisterScriptFunction(funcId, node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+}
+
+int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool isConstMethod, bool isConstructor, bool isDestructor, bool isPrivate, bool isOverride, bool isFinal, bool isShared)
+{
 	if( ns == 0 )
 		ns = engine->nameSpaces[0];
-
-	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 
 	if( isExistingShared )
 	{
@@ -3516,7 +3509,6 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		func->name              = name;
 		func->objType           = objType;
 		func->funcId            = funcId;
-		func->explicitSignature = 0;
 		func->isExistingShared  = false;
 		func->paramNames        = parameterNames;
 
@@ -3666,187 +3658,6 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 	return 0;
 }
 
-// TODO: sig: Merge this with RegisterScriptFunction
-int asCBuilder::RegisterScriptFunctionWithSignature(int funcId, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *objType, bool isInterface, bool isGlobalFunction, bool isPrivate, bool isConst, bool isFinal, bool isOverride, bool treatAsProperty, asSNameSpace *ns)
-{
-	bool isConstructor = false;
-	bool isDestructor = false;
-	asCArray<asCDataType> &parameterTypes = signature->argTypes;
-	asCArray<asETypeModifiers> &inOutFlags = signature->argModifiers;
-	asCArray<asCString *> defaultArgs = signature->defaultArgs;
-
-	if( ns == 0 )
-		ns = engine->nameSpaces[0];
-
-	if( objType && asCDataType::CreatePrimitive(ttVoid, false) == signature->returnType )
-	{
-		if( 0 == name.Compare( objType->name ) )
-			isConstructor = true;
-		else if( 0 == name.Compare( "~" + objType->name ) )
-			isDestructor = true;
-	}
-
-	// Check for name conflicts
-	if( !isConstructor && !isDestructor )
-	{
-		if( objType )
-			CheckNameConflictMember(objType, name.AddressOf(), node, file, treatAsProperty);
-		else
-			CheckNameConflict(name.AddressOf(), node, file, ns);
-	}
-
-	if( isInterface )
-	{
-		asASSERT(!isFinal);
-		asASSERT(!isOverride);
-	}
-	else
-	{
-		sFunctionDescription *func = asNEW(sFunctionDescription);
-		if( func == 0 )
-			return asOUT_OF_MEMORY;
-
-		functions.PushLast(func);
-
-		func->script            = file;
-		func->node              = node;
-		func->name              = name;
-		func->objType           = objType;
-		func->funcId            = funcId;
-		func->explicitSignature = signature;
-		func->paramNames        = signature->argNames;
-	}
-
-	// Destructors may not have any parameters
-	if( isDestructor && parameterTypes.GetLength() > 0 )
-		WriteError(TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM, file, node);
-
-	// If class or interface is shared, then only shared types may be used in the method signature
-	if( objType && (objType->flags & asOBJ_SHARED) )
-	{
-		asCObjectType *ot = signature->returnType.GetObjectType();
-		if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
-		{
-			asCString msg;
-			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-			WriteError(msg.AddressOf(), file, node);
-		}
-
-		for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
-		{
-			asCObjectType *ot = parameterTypes[p].GetObjectType();
-			if( ot && (ot->flags & asOBJ_SCRIPT_OBJECT) && !(ot->flags & asOBJ_SHARED) )
-			{
-				asCString msg;
-				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-				WriteError(msg.AddressOf(), file, node);
-			}
-		}
-	}
-
-	// TODO: Much of this can probably be reduced by using the IsSignatureEqual method
-	// Check that the same function hasn't been registered already
-	asCArray<int> funcs;
-	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
-	if( funcs.GetLength() )
-	{
-		for( asUINT n = 0; n < funcs.GetLength(); ++n )
-		{
-			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
-
-			if( parameterTypes.GetLength() == func->parameterTypes.GetLength() )
-			{
-				bool match = true;
-				if( func->objectType != objType )
-				{
-					match = false;
-					break;
-				}
-
-				for( asUINT p = 0; p < parameterTypes.GetLength(); ++p )
-				{
-					if( parameterTypes[p] != func->parameterTypes[p] )
-					{
-						match = false;
-						break;
-					}
-				}
-
-				if( match )
-				{
-					WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
-					break;
-				}
-			}
-		}
-	}
-
-	// Register the function
-	module->AddScriptFunction(file->idx, funcId, name.AddressOf(), signature->returnType, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), isInterface, objType, isConst, isGlobalFunction, isPrivate, isFinal, isOverride);
-
-	// Make sure the default args are declared correctly
-	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);
-
-	if( objType )
-	{
-		engine->scriptFunctions[funcId]->AddRef();
-		if( isConstructor )
-		{
-			int factoryId = engine->GetNextScriptFunctionId();
-			if( parameterTypes.GetLength() == 0 )
-			{
-				// Overload the default constructor
-				engine->scriptFunctions[objType->beh.construct]->Release();
-				objType->beh.construct = funcId;
-				objType->beh.constructors[0] = funcId;
-
-				// Register the default factory as well
-				engine->scriptFunctions[objType->beh.factory]->Release();
-				objType->beh.factory = factoryId;
-				objType->beh.factories[0] = factoryId;
-			}
-			else
-			{
-				objType->beh.constructors.PushLast(funcId);
-
-				// Register the factory as well
-				objType->beh.factories.PushLast(factoryId);
-			}
-
-			// We must copy the default arg strings to avoid deleting the same object multiple times
-			for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
-				if( defaultArgs[n] )
-					defaultArgs[n] = asNEW(asCString)(*defaultArgs[n]);
-
-			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-			module->AddScriptFunction(file->idx, factoryId, name.AddressOf(), dt, parameterTypes.AddressOf(), inOutFlags.AddressOf(), defaultArgs.AddressOf(), (asUINT)parameterTypes.GetLength(), false);
-
-			// Add a dummy function to the builder so that it doesn't mix up the fund Ids
-			functions.PushLast(0);
-
-			// Compile the factory immediately
-			asCCompiler compiler(engine);
-			compiler.CompileFactory(this, file, engine->scriptFunctions[factoryId]);
-			engine->scriptFunctions[factoryId]->AddRef();
-		}
-		else if( isDestructor )
-			objType->beh.destruct = funcId;
-		else
-			objType->methods.PushLast(funcId);
-	}
-
-	// We need to free some memory that isn't used later when registering interfaces
-	if( isInterface )
-	{
-		if( node )
-			node->Destroy(engine);
-		if( signature )
-			asDELETE(signature, sExplicitSignature);
-	}
-
-	return 0;
-}
-
 int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared)
 {
 	if( isExistingShared )
@@ -3891,15 +3702,18 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 	node = node->next;
 	while( node )
 	{
-		asCScriptNode *next           = node->next;
-		asCScriptNode *funcNode       = 0;
-		sExplicitSignature *signature = 0;
-		bool success                  = false;
-		bool isConst                  = false;
-		bool isFinal                  = false;
-		bool isOverride               = false;
-
-		asCString name;
+		asCScriptNode             *next        = node->next;
+		asCScriptNode             *funcNode    = 0;
+		bool                       success     = false;
+		bool                       isConst     = false;
+		bool                       isFinal     = false;
+		bool                       isOverride  = false;
+		asCDataType                returnType;
+		asCArray<asCString>        paramNames;
+		asCArray<asCDataType>      paramTypes;
+		asCArray<asETypeModifiers> paramModifiers;
+		asCArray<asCString*>       defaultArgs;
+		asCString                  name;
 
 		// TODO: getset: Allow private for individual property accessors
 		// TODO: getset: If the accessor uses its own name, then the property should be automatically declared
@@ -3935,17 +3749,10 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				WriteError(TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, file, node);
 			}
 
-			signature = asNEW(sExplicitSignature);
-			if( signature == 0 )
-			{
-				mainNode->Destroy(engine);
-				return asOUT_OF_MEMORY;
-			}
-
-			signature->returnType = emulatedType;
-
-			name    = "get_" + emulatedName;
-			success = true;
+			// Setup the signature for the get accessor method
+			returnType = emulatedType;
+			name       = "get_" + emulatedName;
+			success    = true;
 		}
 		else if( node->firstChild->nodeType == snIdentifier && file->TokenEquals(node->firstChild->tokenPos, node->firstChild->tokenLength, SET_TOKEN) )
 		{
@@ -3973,28 +3780,20 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 			if( funcNode == 0 && (objType == 0 || !objType->IsInterface()) )
 				WriteError(TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, file, node);
 
-			signature = asNEW(sExplicitSignature)(1);
-			if( signature == 0 )
-			{
-				mainNode->Destroy(engine);
-				return asOUT_OF_MEMORY;
-			}
-
-			signature->returnType = asCDataType::CreatePrimitive(ttVoid, false);
-
-			signature->argModifiers.PushLast(asTM_NONE);
-			signature->argNames.PushLast("value");
-			signature->argTypes.PushLast(emulatedType);
-			signature->defaultArgs.PushLast(0);
-
-			name    = "set_" + emulatedName;
+			// Setup the signature for the set accessor method
+			returnType = asCDataType::CreatePrimitive(ttVoid, false);
+			paramModifiers.PushLast(asTM_NONE);
+			paramNames.PushLast("value");
+			paramTypes.PushLast(emulatedType);
+			defaultArgs.PushLast(0);
+			name = "set_" + emulatedName;
 			success = true;
 		}
 		else
 			WriteError(TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE, file, node);
 
 		if( success )
-			RegisterScriptFunctionWithSignature(engine->GetNextScriptFunctionId(), funcNode, file, name, signature, objType, isInterface, isGlobalFunction, isPrivate, isConst, isFinal, isOverride, true, ns);
+			RegisterScriptFunction(engine->GetNextScriptFunctionId(), funcNode, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, isConst, false, false, isPrivate, isOverride, isFinal, false);
 
 		node = next;
 	};

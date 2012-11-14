@@ -53,25 +53,12 @@ BEGIN_AS_NAMESPACE
 
 #ifndef AS_NO_COMPILER
 
-// TODO: sig: Remove this as it is not needed anymore
-struct sExplicitSignature
-{
-	sExplicitSignature(int argCount = 0) : argTypes(argCount), argModifiers(argCount), argNames(argCount), defaultArgs(argCount) {}
-
-	asCDataType                returnType;
-	asCArray<asCDataType>      argTypes;
-	asCArray<asETypeModifiers> argModifiers;
-	asCArray<asCString>        argNames;
-	asCArray<asCString *>      defaultArgs;
-};
-
 struct sFunctionDescription
 {
 	asCScriptCode       *script;
 	asCScriptNode       *node;
 	asCString            name;
 	asCObjectType       *objType;
-	sExplicitSignature  *explicitSignature;
 	asCArray<asCString>  paramNames;
 	int                  funcId;
 	bool                 isExistingShared;
@@ -209,8 +196,8 @@ protected:
 	void               AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *errNode, asCObjectType *intf);
 	void               AddInterfaceFromMixinToClass(sClassDeclaration *decl, asCScriptNode *errNode, sMixinClass *mixin);
 
-	int                RegisterScriptFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false, bool isMixin = false);
-	int                RegisterScriptFunctionWithSignature(int funcID, asCScriptNode *node, asCScriptCode *file, asCString &name, sExplicitSignature *signature, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, bool isPrivate = false, bool isConst = false, bool isFinal = false, bool isOverride = false, bool treatAsProperty = false, asSNameSpace *ns = 0);
+	int                RegisterScriptFunctionFromNode(int funcID, asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false, bool isMixin = false);
+	int                RegisterScriptFunction(int funcId, asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool isConstMethod, bool isConstructor, bool isDestructor, bool isPrivate, bool isOverride, bool isFinal, bool isShared);
 	int                RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *object = 0, bool isInterface = false, bool isGlobalFunction = false, asSNameSpace *ns = 0, bool isExistingShared = false);
 	int                RegisterImportedFunction(int funcID, asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
