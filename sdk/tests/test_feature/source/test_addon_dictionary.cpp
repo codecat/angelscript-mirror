@@ -105,7 +105,7 @@ bool Test()
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( gcCurrentSize != 4 || gcTotalDestroyed != 2 || gcTotalDetected != 1 )
+	if( gcCurrentSize != 0 || gcTotalDestroyed != 2 || gcTotalDetected != 1 )
 		TEST_FAILED;
 
 	// Test circular references including a script class and the dictionary
@@ -122,7 +122,7 @@ bool Test()
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( gcCurrentSize != 4 || gcTotalDestroyed != 5 || gcTotalDetected != 3  )
+	if( gcCurrentSize != 0 || gcTotalDestroyed != 5 || gcTotalDetected != 3  )
 		TEST_FAILED;
 
 	// Test invalid ref cast together with the variable argument

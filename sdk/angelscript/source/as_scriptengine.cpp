@@ -3154,13 +3154,18 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 {
 	asCScriptFunction *factory = scriptFunctions[factoryId];
 
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SCRIPT);
+	// By first instantiating the function as a dummy and then changing it to be a script function
+	// I avoid having it added to the garbage collector. As it is known that this object will stay
+	// alive until the template instance is no longer used there is no need to have the GC check
+	// this function all the time.
+	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_DUMMY);
 	if( func == 0 )
 	{
 		// Out of memory
 		return 0;
 	}
 
+	func->funcType         = asFUNC_SCRIPT;
 	func->name             = "factstub";
 	func->id               = GetNextScriptFunctionId();
 	func->returnType       = asCDataType::CreateObjectHandle(ot, false);
