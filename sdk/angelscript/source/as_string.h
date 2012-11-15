@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <string.h>
 
+// TODO: optimize: On compilers with C++11 support the string class should take advantage of the move operator &&
+
 class asCString
 {
 public:

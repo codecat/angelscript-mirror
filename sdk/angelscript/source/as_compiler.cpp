@@ -136,7 +136,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 				str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
 			else
 				str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 	}
 
@@ -320,7 +320,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 		// TODO: Hasn't this been validated by the builder already?
 		asCString str;
 		str.Format(TXT_RETURN_CANT_BE_s, returnType.Format().AddressOf());
-		Error(str.AddressOf(), func);
+		Error(str, func);
 	}
 
 	// If the return type is a value type returned by value the address of the
@@ -352,7 +352,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 
 			asCString str;
 			str.Format(TXT_PARAMETER_CANT_BE_s, parm.AddressOf());
-			Error(str.AddressOf(), func);
+			Error(str, func);
 		}
 
 		// If the parameter has a name then declare it as variable
@@ -650,7 +650,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	// Class has no copy constructor/factory.
 	asCString str;
 	str.Format(TXT_NO_COPY_CONSTRUCTOR_FOR_s, type.GetObjectType()->GetName());
-	Error(str.AddressOf(), node);
+	Error(str, node);
 
 	return -1;
 }
@@ -749,7 +749,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 		str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetFuncDef()->GetName());
 	else
 		str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetObjectType()->GetName());
-	Error(str.AddressOf(), node);
+	Error(str, node);
 
 	return -1;
 }
@@ -1198,7 +1198,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					{
 						asCString str;
 						str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), param.Format().AddressOf());
-						Error(str.AddressOf(), node);
+						Error(str, node);
 
 						ctx->type.Set(param);
 					}
@@ -1428,7 +1428,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			{
 				asCString str;
 				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), dt.Format().AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 
 				ctx->type.Set(dt);
 			}
@@ -1673,7 +1673,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		{ 
 			asCString msg;
 			msg.Format(TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s, n, func->GetDeclaration());
-			Error(msg.AddressOf(), node);
+			Error(msg, node);
 			anyErrors = true; 
 			continue; 
 		}
@@ -1697,7 +1697,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		{
 			asCString msg;
 			msg.Format(TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s, n, func->GetDeclaration());
-			Error(msg.AddressOf(), node);
+			Error(msg, node);
 			anyErrors = true;
 			continue;
 		}
@@ -1870,7 +1870,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 		if( funcs.GetLength() == 0 )
 		{
 			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			// Print the list of candidates
 			if( origFuncs.GetLength() > 0 )
@@ -1885,7 +1885,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 		else
 		{
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			PrintMatchingFuncs(funcs, node);
 		}
@@ -1910,7 +1910,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			asCString str;
 			// TODO: Change to "'type' cannot be declared as variable"
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			// Use int instead to avoid further problems
 			type = asCDataType::CreatePrimitive(ttInt, false);
@@ -1924,7 +1924,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			{
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, ot->name.AddressOf());
-				Error(msg.AddressOf(), decl);
+				Error(msg, decl);
 			}
 		}
 
@@ -1936,7 +1936,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_VARIABLE_NAME_s, name.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 
 		int offset = AllocateVariable(type, false);
@@ -1946,7 +1946,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 			asCString str;
 			str.Format(TXT_s_ALREADY_DECLARED, name.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			// Don't continue after this error, as it will just
 			// lead to more errors that are likely false
@@ -2196,7 +2196,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	{
 		asCString str;
 		str.Format(TXT_INIT_LIST_CANNOT_BE_USED_WITH_s, var->dataType.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 		return;
 	}
 
@@ -3312,7 +3312,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				ProcessDeferredParams(&expr);
 				asCString str;
 				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
-				Error(str.AddressOf(), rnode);
+				Error(str, rnode);
 				return;
 			}
 
@@ -3388,7 +3388,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				{
 					asCString str;
 					str.Format(TXT_NO_CONVERSION_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
-					Error(str.AddressOf(), rnode);
+					Error(str, rnode);
 					return;
 				}
 				else
@@ -3424,7 +3424,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 						{
 							asCString str;
 							str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, expr.type.dataType.Format().AddressOf(), v->type.Format().AddressOf());
-							Error(str.AddressOf(), rnode->firstChild);
+							Error(str, rnode->firstChild);
 							return;
 						}
 					}
@@ -3537,7 +3537,7 @@ void asCCompiler::RemoveVariableScope()
 	}
 }
 
-void asCCompiler::Error(const char *msg, asCScriptNode *node)
+void asCCompiler::Error(const asCString &msg, asCScriptNode *node)
 {
 	asCString str;
 
@@ -3545,12 +3545,12 @@ void asCCompiler::Error(const char *msg, asCScriptNode *node)
 	asASSERT( node );
 	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	builder->WriteError(script->name.AddressOf(), msg, r, c);
+	builder->WriteError(script->name, msg, r, c);
 
 	hasCompileErrors = true;
 }
 
-void asCCompiler::Warning(const char *msg, asCScriptNode *node)
+void asCCompiler::Warning(const asCString &msg, asCScriptNode *node)
 {
 	asCString str;
 
@@ -3558,10 +3558,10 @@ void asCCompiler::Warning(const char *msg, asCScriptNode *node)
 	asASSERT( node );
 	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	builder->WriteWarning(script->name.AddressOf(), msg, r, c);
+	builder->WriteWarning(script->name, msg, r, c);
 }
 
-void asCCompiler::Information(const char *msg, asCScriptNode *node)
+void asCCompiler::Information(const asCString &msg, asCScriptNode *node)
 {
 	asCString str;
 
@@ -3569,7 +3569,7 @@ void asCCompiler::Information(const char *msg, asCScriptNode *node)
 	asASSERT( node );
 	if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	builder->WriteInfo(script->name.AddressOf(), msg, r, c, false);
+	builder->WriteInfo(script->name, msg, r, c, false);
 }
 
 void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
@@ -3582,7 +3582,7 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 	{
 		asIScriptFunction *func = builder->GetFunctionDescription(funcs[n]);
 
-		builder->WriteInfo(script->name.AddressOf(), func->GetDeclaration(true), r, c, false);
+		builder->WriteInfo(script->name, func->GetDeclaration(true), r, c, false);
 	}
 }
 
@@ -3826,7 +3826,7 @@ bool asCCompiler::IsVariableInitialized(asCTypeInfo *type, asCScriptNode *node)
 	// Write warning
 	asCString str;
 	str.Format(TXT_s_NOT_INITIALIZED, (const char *)v->name.AddressOf());
-	Warning(str.AddressOf(), node);
+	Warning(str, node);
 
 	return false;
 }
@@ -3875,7 +3875,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		{
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lvalue->Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			rctx->type.SetDummy();
 		}
@@ -3911,7 +3911,7 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asSExprContext *rctx
 		{
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lvalue->Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 		else
 		{
@@ -3999,7 +3999,7 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 			{
 				asCString msg;
 				msg.Format(TXT_NO_DEFAULT_COPY_OP_FOR_s, lvalue->dataType.GetObjectType()->name.AddressOf());
-				Error(msg.AddressOf(), node);
+				Error(msg, node);
 				return -1;
 			}
 
@@ -4631,7 +4631,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 		{
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 		return asCC_NO_CONV;
 	}
@@ -4742,7 +4742,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 		{
 			asCString str;
 			str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 	}
 
@@ -5008,7 +5008,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				asASSERT(node);
 				asCString str;
 				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 			}
 		}
 
@@ -5677,7 +5677,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 //			{
 //				asCString str;
 //				str.Format(TXT_POSSIBLE_LOSS_OF_PRECISION);
-//				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str.AddressOf(), node);
+//				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str, node);
 //			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
@@ -5975,7 +5975,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), lexpr);
+			Error(str, lexpr);
 			return -1;
 		}
 
@@ -5996,7 +5996,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 				{
 					asCString str;
 					str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
-					Error(str.AddressOf(), rexpr);
+					Error(str, rexpr);
 					return -1;
 				}
 			}
@@ -6021,7 +6021,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			{
 				asCString str;
 				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
-				Error(str.AddressOf(), rexpr);
+				Error(str, rexpr);
 				return -1;
 			}
 
@@ -6045,7 +6045,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), lexpr);
+			Error(str, lexpr);
 			return -1;
 		}
 
@@ -6077,7 +6077,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), lexpr);
+			Error(str, lexpr);
 			return -1;
 		}
 
@@ -6108,7 +6108,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			{
 				asCString str;
 				str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
-				Error(str.AddressOf(), rexpr);
+				Error(str, rexpr);
 				return -1;
 			}
 		}
@@ -6722,7 +6722,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 							{
 								asCString str;
 								str.Format(TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s, prop->name.AddressOf());
-								Error(str.AddressOf(), errNode);
+								Error(str, errNode);
 
 								// Allow the compilation to continue to catch other problems
 							}
@@ -6757,7 +6757,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				{
 					asCString str;
 					str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
-					Error(str.AddressOf(), errNode);
+					Error(str, errNode);
 					return -1;
 				}
 			}
@@ -6783,7 +6783,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			//                - passing the function pointer to a function as parameter
 			asCString str;
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, name.AddressOf());
-			Error(str.AddressOf(), errNode);
+			Error(str, errNode);
 			return -1;
 		}
 		else if( funcs.GetLength() == 1 )
@@ -6796,7 +6796,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			{
 				asCString msg;
 				msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, builder->GetFunctionDescription(funcs[0])->GetDeclaration());
-				Error(msg.AddressOf(), errNode);
+				Error(msg, errNode);
 				return -1;
 			}
 
@@ -6880,7 +6880,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 			asCString str;
 			str.Format(TXT_s_NOT_DECLARED, ename.AddressOf());
-			Error(str.AddressOf(), errNode);
+			Error(str, errNode);
 
 			// Declare the variable now so that it will not be reported again
 			variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF, true);
@@ -7214,7 +7214,7 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 					// TODO: Need code position for warning
 					asCString msg;
 					msg.Format(TXT_INVALID_UNICODE_FORMAT_EXPECTED_d, expect2 ? 4 : 8);
-					Warning(msg.AddressOf(), node);
+					Warning(msg, node);
 					continue;
 				}
 			}
@@ -7416,7 +7416,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	{
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, to.GetObjectType()->name.AddressOf());
-		Error(msg.AddressOf(), node);
+		Error(msg, node);
 		anyErrors = true;
 	}
 
@@ -7493,7 +7493,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	asCString msg;
 	msg.Format(TXT_NO_CONVERSION_s_TO_s, strFrom.AddressOf(), strTo.AddressOf());
 
-	Error(msg.AddressOf(), node);
+	Error(msg, node);
 }
 
 void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args, asSExprContext *ctx, bool deferAll)
@@ -7662,7 +7662,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	{
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
-		Error(msg.AddressOf(), node);
+		Error(msg, node);
 	}
 
 	// Compile the arguments
@@ -7851,7 +7851,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// The variable is not a function
 			asCString msg;
 			msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
-			Error(msg.AddressOf(), node);
+			Error(msg, node);
 			return -1;
 		}
 	}
@@ -7904,7 +7904,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 					// The variable is not a function
 					asCString msg;
 					msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
-					Error(msg.AddressOf(), node);
+					Error(msg, node);
 					return -1;
 				}
 			}
@@ -7944,7 +7944,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 						// The variable is not a function
 						asCString msg;
 						msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
-						Error(msg.AddressOf(), node);
+						Error(msg, node);
 						return -1;
 					}
 				}
@@ -7953,7 +7953,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			{
 				asCString msg;
 				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-				Error(msg.AddressOf(), node);
+				Error(msg, node);
 				return -1;
 			}
 		}
@@ -8174,7 +8174,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 				if( isConst )
 					str += " const";
 				str.Format(TXT_FUNCTION_s_NOT_FOUND, str.AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 				ctx->type.SetDummy();
 				return -1;
 			}
@@ -8576,7 +8576,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		{
 			asCString str;
 			str.Format(TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s, name.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			PrintMatchingFuncs(multipleGetFuncs, node);
 
@@ -8598,7 +8598,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		{
 			asCString str;
 			str.Format(TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s, name.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			PrintMatchingFuncs(multipleSetFuncs, node);
 
@@ -8625,7 +8625,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		{
 			asCString str;
 			str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			asCArray<int> funcs;
 			funcs.PushLast(getId);
@@ -8950,7 +8950,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				if( isConst )
 					str += " const";
 				str.Format(TXT_FUNCTION_s_NOT_FOUND, str.AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 				ctx->type.SetDummy();
 				return -1;
 			}
@@ -9093,7 +9093,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					{
 						asCString msg;
 						msg.Format(TXT_PRIVATE_PROP_ACCESS_s, name.AddressOf());
-						Error(msg.AddressOf(), node);
+						Error(msg, node);
 					}
 
 					// Put the offset on the stack
@@ -9139,7 +9139,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				{
 					asCString str;
 					str.Format(TXT_s_NOT_MEMBER_OF_s, name.AddressOf(), ctx->type.dataType.Format().AddressOf());
-					Error(str.AddressOf(), node);
+					Error(str, node);
 					return -1;
 				}
 			}
@@ -9147,7 +9147,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			{
 				asCString str;
 				str.Format(TXT_s_NOT_MEMBER_OF_s, name.AddressOf(), ctx->type.dataType.Format().AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 				return -1;
 			}
 		}
@@ -9158,7 +9158,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			{
 				asCString str;
 				str.Format(TXT_ILLEGAL_OPERATION_ON_s, ctx->type.dataType.Format().AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 				return -1;
 			}
 
@@ -9236,7 +9236,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			{
 				asCString str;
 				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 				return -1;
 			}
 
@@ -9263,7 +9263,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			{
 				asCString str;
 				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
-				Error(str.AddressOf(), node);
+				Error(str, node);
 				return -1;
 			}
 			else if( r < 0 )
@@ -9890,7 +9890,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		{
 			asCString str;
 			str.Format(TXT_NO_MATCHING_OP_FOUND_FOR_TYPES_s_AND_s, lctx->type.dataType.Format().AddressOf(), rctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 			ctx->type.SetDummy();
 			return -1;
 		}
@@ -10127,7 +10127,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_MATH_TYPE, lctx->type.dataType.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 
 		ctx->type.SetDummy();
 		return;
@@ -10140,7 +10140,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_MATH_TYPE, rctx->type.dataType.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 
 		ctx->type.SetDummy();
 		return;
@@ -10438,7 +10438,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 
 		// Convert right hand operand to same type as left hand operand
@@ -10450,7 +10450,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 
 		bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
@@ -10543,7 +10543,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 
 			// Set an integer value and allow the compiler to continue
 			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
@@ -10577,7 +10577,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 
 		// Right operand must be 32bit uint
@@ -10589,7 +10589,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), "uint");
-			Error(str.AddressOf(), node);
+			Error(str, node);
 		}
 
 		bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
@@ -10763,7 +10763,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 		ok = false;
 	}
 
@@ -10771,7 +10771,7 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 		ok = false;
 	}
 
@@ -11013,7 +11013,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), "bool");
-		Error(str.AddressOf(), node);
+		Error(str, node);
 		// Force the conversion to allow compilation to proceed
 		lctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 	}
@@ -11022,7 +11022,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), "bool");
-		Error(str.AddressOf(), node);
+		Error(str, node);
 		// Force the conversion to allow compilation to proceed
 		rctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
 	}
@@ -11256,14 +11256,14 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 	}
 
 	if( !rctx->type.dataType.IsEqualExceptConst(to) )
 	{
 		asCString str;
 		str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
-		Error(str.AddressOf(), node);
+		Error(str, node);
 	}
 
 	// Make sure it really is handles that are being compared
@@ -11326,7 +11326,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s, descr->GetDeclarationStr().AddressOf());
-		Error(msg.AddressOf(), ctx->exprNode);
+		Error(msg, ctx->exprNode);
 	}
 
 	// Check if the function is private
@@ -11334,7 +11334,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		asCString msg;
 		msg.Format(TXT_PRIVATE_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
-		Error(msg.AddressOf(), ctx->exprNode);
+		Error(msg, ctx->exprNode);
 	}
 
 	int argSize = descr->GetSpaceNeededForArguments();

@@ -258,9 +258,9 @@ protected:
 	asUINT ProcessStringConstant(asCString &str, asCScriptNode *node, bool processEscapeSequences = true);
 	void ProcessHeredocStringConstant(asCString &str, asCScriptNode *node);
 	int  GetPrecedence(asCScriptNode *op);
-	void Error(const char *msg, asCScriptNode *node);
-	void Warning(const char *msg, asCScriptNode *node);
-	void Information(const char *msg, asCScriptNode *node);
+	void Error(const asCString &msg, asCScriptNode *node);
+	void Warning(const asCString &msg, asCScriptNode *node);
+	void Information(const asCString &msg, asCScriptNode *node);
 	void PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node);
 	void AddVariableScope(bool isBreakScope = false, bool isContinueScope = false);
 	void RemoveVariableScope();

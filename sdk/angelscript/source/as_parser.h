@@ -75,8 +75,8 @@ protected:
 	void GetToken(sToken *token);
 	void RewindTo(const sToken *token);
 	void SetPos(size_t pos);
-	void Error(const char *text, sToken *token);
-	void Info(const char *text, sToken *token);
+	void Error(const asCString &text, sToken *token);
+	void Info(const asCString &text, sToken *token);
 
 	asCScriptNode *CreateNode(eScriptNode type);
 
