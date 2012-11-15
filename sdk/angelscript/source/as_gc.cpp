@@ -57,6 +57,13 @@ asCGarbageCollector::asCGarbageCollector()
 	isProcessing    = false;
 }
 
+asCGarbageCollector::~asCGarbageCollector()
+{
+	for( asUINT n = 0; n < freeNodes.GetLength(); n++ )
+		asDELETE(freeNodes[n], asSMapNode_t);
+	freeNodes.SetLength(0);
+}
+
 void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 {
 	if( obj == 0 || objType == 0 )
@@ -541,7 +548,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 
 				engine->CallObjectMethod(obj, it.type->beh.release);
 
-				gcMap.Erase(cursor);
+				ReturnNode(gcMap.Remove(cursor));
 
 				return 1;
 			}
@@ -581,8 +588,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				{
 					asSIntTypePair it = {refCount-1, gcObj.type};
 
-					// TODO: runtime optimize: Should keep a memory pool for the map nodes so they are not allocated and deallocated all the time inside the gc
-					gcMap.Insert(gcObj.obj, it);
+					gcMap.Insert(GetNode(gcObj.obj, it));
 
 					// Increment the object's reference counter when putting it in the map
 					engine->CallObjectMethod(gcObj.obj, gcObj.type->beh.addref);
@@ -697,7 +703,7 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				if( gcMap.MoveTo(&cursor, gcObj) )
 				{
 					type = gcMap.GetValue(cursor).type;
-					gcMap.Erase(cursor);
+					ReturnNode(gcMap.Remove(cursor));
 
 					// We need to decrease the reference count again as we remove the object from the map
 					engine->CallObjectMethod(gcObj, type->beh.release);
@@ -800,6 +806,24 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 
 	// Shouldn't reach this point
 	UNREACHABLE_RETURN;
+}
+
+asCGarbageCollector::asSMapNode_t *asCGarbageCollector::GetNode(void *obj, asSIntTypePair it)
+{
+	asSMapNode_t *node;
+	if( freeNodes.GetLength() )
+		node = freeNodes.PopLast();
+	else
+		node = asNEW(asSMapNode_t);
+
+	node->Init(obj, it);
+	return node;
+}
+
+void asCGarbageCollector::ReturnNode(asSMapNode_t *node)
+{
+	if( node )
+		freeNodes.PushLast(node);
 }
 
 void asCGarbageCollector::GCEnumCallback(void *reference)

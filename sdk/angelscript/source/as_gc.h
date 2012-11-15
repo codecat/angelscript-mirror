@@ -54,6 +54,7 @@ class asCGarbageCollector
 {
 public:
 	asCGarbageCollector();
+	~asCGarbageCollector();
 
 	int  GarbageCollect(asDWORD flags);
 	void GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
@@ -67,6 +68,7 @@ public:
 protected:
 	struct asSObjTypePair {void *obj; asCObjectType *type; int count;};
 	struct asSIntTypePair {int i; asCObjectType *type;};
+	typedef asSMapNode<void*, asSIntTypePair> asSMapNode_t;
 
 	enum egcDestroyState
 	{
@@ -124,8 +126,13 @@ protected:
 	egcDetectState                     detectState;
 	asUINT                             detectIdx;
 	asUINT                             numDetected;
-	asSMapNode<void*, asSIntTypePair> *gcMapCursor;
+	asSMapNode_t                      *gcMapCursor;
 	bool                               isProcessing;
+
+	// We'll keep a pool of nodes to avoid allocating memory all the time
+	asSMapNode_t            *GetNode(void *obj, asSIntTypePair it);
+	void                     ReturnNode(asSMapNode_t *node);
+	asCArray<asSMapNode_t*>  freeNodes;
 
 	// Critical section for multithreaded access
 	DECLARECRITICALSECTION(gcCritical)   // Used for adding/removing objects
