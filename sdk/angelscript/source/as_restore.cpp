@@ -1302,7 +1302,9 @@ void asCReader::ReadGlobalProperty()
 	if( f )
 	{
 		bool isNew;
-		asCScriptFunction *func = ReadFunction(isNew, false, true);
+		// Do not add the function to the GC at this time. It will 
+		// only be added to the GC when the module releases the property
+		asCScriptFunction *func = ReadFunction(isNew, false, true, false);
 		if( func )
 		{
 			prop->SetInitFunc(func);

@@ -238,11 +238,14 @@ int asCScriptFunction::Release() const
 // internal
 void asCScriptFunction::Orphan(asIScriptModule *mod)
 {
-	if( mod && module == mod && funcType == asFUNC_SCRIPT && refCount.get() > 1 )
+	if( mod && module == mod )
 	{
-		// This function is being orphaned, so notify the GC so it can check for circular references
-		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
 		module = 0;
+		if( funcType == asFUNC_SCRIPT && refCount.get() > 1 )
+		{
+			// This function is being orphaned, so notify the GC so it can check for circular references
+			engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
+		}
 	}
 
 	Release();

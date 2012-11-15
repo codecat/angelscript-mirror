@@ -1810,9 +1810,6 @@ void asCBuilder::CompileGlobalVariables()
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
 					initFunc->scriptSectionIdx = engine->GetScriptSectionNameIndex(gvar->script->name.AddressOf());
 
-					// Notify the GC of the new script function
-					engine->gc.AddScriptObjectToGC(initFunc, &engine->functionBehaviours);
-
 					gvar->property->SetInitFunc(initFunc);
 
 					initFunc->Release();

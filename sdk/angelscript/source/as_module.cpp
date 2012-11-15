@@ -416,7 +416,7 @@ void asCModule::InternalReset()
 	asCSymbolTableIterator<asCGlobalProperty> globIt = scriptGlobals.List();
 	while( globIt )
 	{
-		(*globIt)->Release();
+		(*globIt)->Orphan(this);
 		globIt++;
 	}
 	scriptGlobals.Clear();
@@ -677,7 +677,7 @@ int asCModule::RemoveGlobalVar(asUINT index)
 	asCGlobalProperty *prop = scriptGlobals.Get(index);
 	if( !prop )
 		return asINVALID_ARG;
-	prop->Release();
+	prop->Orphan(this);
 	scriptGlobals.Erase(index);
 
 	return 0;

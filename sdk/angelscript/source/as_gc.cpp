@@ -580,6 +580,8 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				if( refCount > 1 )
 				{
 					asSIntTypePair it = {refCount-1, gcObj.type};
+
+					// TODO: runtime optimize: Should keep a memory pool for the map nodes so they are not allocated and deallocated all the time inside the gc
 					gcMap.Insert(gcObj.obj, it);
 
 					// Increment the object's reference counter when putting it in the map
