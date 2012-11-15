@@ -200,6 +200,7 @@ public:
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
 
+	void Orphan(asCModule *module);
 	int  GetRefCount();
 	void SetGCFlag();
 	bool GetGCFlag();
@@ -234,6 +235,7 @@ public:
 	bool           acceptRefSubType;
 
 	asCScriptEngine  *engine;
+	asCModule        *module;
 	asCArray<asPWORD> userData;
 
 protected:

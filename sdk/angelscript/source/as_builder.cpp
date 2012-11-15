@@ -1513,14 +1513,11 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	st->size      = sizeof(asCScriptObject);
 	st->name      = name;
 	st->nameSpace = ns;
+	st->module    = module;
 	module->classTypes.PushLast(st);
 	engine->classTypes.PushLast(st);
 	st->AddRef();
 	decl->objType = st;
-
-	// Add script classes to the GC
-	// TODO: runtime optimize: Only add the class to the GC when the module won't use the type anymore
-	engine->gc.AddScriptObjectToGC(st, &engine->objectTypeBehaviours);
 
 	// Use the default script class behaviours
 	st->beh = engine->scriptTypeBehaviours.beh;

@@ -106,7 +106,7 @@ bool Test()
             asUINT totalDestroyed = asUINT();
             asUINT totalDetected = asUINT();
             engine->GetGCStatistics(&currentSize , &totalDestroyed , &totalDetected );
-			if( currentSize    != 2 ||
+			if( currentSize    != 0 ||
 				totalDestroyed != n+1 ||
 				totalDetected  != 0 )
 				TEST_FAILED;

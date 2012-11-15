@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.2 WIP - 2012/11/14</h2>
+<h2>Version 2.25.2 WIP - 2012/11/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script functions are now only added to the GC when the owning module releases them
 <li>Some more unused methods in the code are excluded when compiling with AS_NO_COMPILER
 <li>Global properties are also only added to the GC when the owning module releases them
+<li>Object types are no longer added to the GC while the module still references them
 </ul>
 <li>Script language
 <ul>

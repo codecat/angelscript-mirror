@@ -199,9 +199,8 @@ int asCReader::ReadInner()
 		{
 			engine->classTypes.PushLast(ot);
 
-			// Add script classes to the GC
-			if( (ot->GetFlags() & asOBJ_SCRIPT_OBJECT) && !ot->IsInterface() )
-				engine->gc.AddScriptObjectToGC(ot, &engine->objectTypeBehaviours);
+			// Set this module as the owner
+			ot->module = module;
 		}
 		module->classTypes.PushLast(ot);
 		ot->AddRef();

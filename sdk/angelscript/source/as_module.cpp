@@ -403,13 +403,8 @@ void asCModule::InternalReset()
 
 	// First release all compiled functions
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
-	{
 		if( scriptFunctions[n] )
-		{
-			// Remove the module reference in the functions
 			scriptFunctions[n]->Orphan(this);
-		}
-	}
 	scriptFunctions.SetLength(0);
 
 	// Release the global properties declared in the module
@@ -440,7 +435,7 @@ void asCModule::InternalReset()
 
 	// Free declared types, including classes, typedefs, and enums
 	for( n = 0; n < classTypes.GetLength(); n++ )
-		classTypes[n]->Release();
+		classTypes[n]->Orphan(this);
 	classTypes.SetLength(0);
 	for( n = 0; n < enumTypes.GetLength(); n++ )
 		enumTypes[n]->Release();

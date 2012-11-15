@@ -164,6 +164,11 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		int t1 = mod->GetTypeIdByDecl("T");
 		if( t1 < 0 )

@@ -122,7 +122,7 @@ bool Test()
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-	if( gcCurrentSize != 5 || gcTotalDestroyed != 5 || gcTotalDetected != 3  )
+	if( gcCurrentSize != 4 || gcTotalDestroyed != 5 || gcTotalDetected != 3  )
 		TEST_FAILED;
 
 	// Test invalid ref cast together with the variable argument
