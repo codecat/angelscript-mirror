@@ -3827,10 +3827,10 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	}
 
 	// Read the module name as well
-	asCScriptNode *n = node->lastChild;
-	asASSERT( n->nodeType == snConstant && n->tokenType == ttStringConstant );
+	asCScriptNode *nd = node->lastChild;
+	asASSERT( nd->nodeType == snConstant && nd->tokenType == ttStringConstant );
 	asCString moduleName;
-	moduleName.Assign(&file->code[n->tokenPos+1], n->tokenLength-2);
+	moduleName.Assign(&file->code[nd->tokenPos+1], nd->tokenLength-2);
 
 	node->Destroy(engine);
 

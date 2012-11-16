@@ -512,7 +512,7 @@ bool Test()
 			"}\n"
 			"void main()\n"
 			"{\n"
-			"  test[] list(1000000000);\n"
+			"  test[] list(2000000000);\n"
 			"}\n");
 
 		r = mod->Build();
@@ -521,7 +521,10 @@ bool Test()
 
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_EXCEPTION )
+		{
+			printf("Return code is %d\n", r);
 			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

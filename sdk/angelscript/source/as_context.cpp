@@ -202,7 +202,9 @@ bool asCContext::IsNested(asUINT *nestCount) const
 		return false;
 
 	// Search for a marker on the call stack
-	for( asUINT n = 1; n <= c; n++ )
+	// This loop starts at 2 because the 0th entry is not stored in m_callStack, 
+	// and then we need to subtract one more to get the base of each frame
+	for( asUINT n = 2; n <= c; n++ )
 	{
 		const asPWORD *s = m_callStack.AddressOf() + (c - n)*CALLSTACK_FRAME_SIZE;
 		if( s && s[0] == 0 )

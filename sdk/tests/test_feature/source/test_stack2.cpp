@@ -258,10 +258,14 @@ bool Test()
 			TEST_FAILED;
 		if( string(ctx->GetExceptionString()) != "Stack overflow" )
 			TEST_FAILED;
-		// On 32bit targets the exception happens in testclass, but on 64bit targets the exception happens in myCompare
+		// The exception can occur in different functions depending on 32bit and 64bit targets
+		// but with the current code, it happens in the testclass function for both
 		if( sizeof(void*) == 4 && string(ctx->GetExceptionFunction()->GetName()) != "testclass" ||
-			sizeof(void*) == 8 && string(ctx->GetExceptionFunction()->GetName()) != "myCompare" )
+			sizeof(void*) == 8 && string(ctx->GetExceptionFunction()->GetName()) != "testclass" )
+		{
+			PrintException(ctx, true);
 			TEST_FAILED;
+		}
 		ctx->Release();
 		
 		engine->Release();

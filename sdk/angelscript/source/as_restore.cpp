@@ -314,6 +314,7 @@ int asCReader::ReadInner()
 					func->id = 0;
 					func->byteCode.SetLength(0);
 					func->Release();
+					break;
 				}
 			}
 		}

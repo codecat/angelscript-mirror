@@ -138,6 +138,7 @@ asCObjectType::asCObjectType()
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
 {
 	this->engine = engine; 
+	module = 0;
 	refCount.set(0); 
 	derivedFrom  = 0;
 

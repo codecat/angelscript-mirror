@@ -59,8 +59,11 @@ asCGarbageCollector::asCGarbageCollector()
 
 asCGarbageCollector::~asCGarbageCollector()
 {
+	// This local typedef is done to workaround a compiler error on
+	// MSVC6 when using the typedef declared in the class definition
+	typedef asSMapNode_t node_t;
 	for( asUINT n = 0; n < freeNodes.GetLength(); n++ )
-		asDELETE(freeNodes[n], asSMapNode_t);
+		asDELETE(freeNodes[n], node_t);
 	freeNodes.SetLength(0);
 }
 
