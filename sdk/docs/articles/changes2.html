@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.25.2 WIP - 2012/11/16</h2>
+<h2>Version 2.25.2 WIP - 2012/11/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Some more unused methods in the code are excluded when compiling with AS_NO_COMPILER
 <li>Global properties are also only added to the GC when the owning module releases them
 <li>Object types are no longer added to the GC while the module still references them
+<li>Changed style of comments in as_callfunc_arm_gcc.S to avoid compiler errors with Marmalade (Thanks Papirosnik)
 </ul>
 <li>Script language
 <ul>
@@ -41,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Fixed some compiler errors with gnuc in the sample projects (Thanks Aapo Rantalainen)
 <li>ScriptBuilder now supports metadata for entities in namespaces (Thanks Chase W)
+<li>Changed the code in the string factory to avoid confusing the Marmalade memory leak detector (Thanks Papirosnik)
 </ul>
 </ul>
 
