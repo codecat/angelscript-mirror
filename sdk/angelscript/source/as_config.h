@@ -566,7 +566,11 @@
 			// From now on we'll use the below define
 			#define AS_MARMALADE
 		#endif
-		
+
+		// STDCALL is not available on Marmalade when compiled for iOS or Android
+		#undef STDCALL
+		#define STDCALL
+
 		// Marmalade doesn't seem to have proper support for 
 		// atomic instructions or read/write locks
 		#define AS_NO_THREADS
