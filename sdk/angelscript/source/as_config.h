@@ -560,6 +560,19 @@
 	#define STDCALL __attribute__((stdcall))
 	#define ASM_AT_N_T
 
+	// Marmalade is a cross platform SDK. It uses G++ to compile for iOS and Android
+	#if defined(AS_MARMALADE) || defined (MARMALADE)
+		#ifndef AS_MARMALADE
+			// From now on we'll use the below define
+			#define AS_MARMALADE
+		#endif
+		
+		// Marmalade doesn't seem to have proper support for 
+		// atomic instructions or read/write locks
+		#define AS_NO_THREADS
+		#define AS_NO_ATOMIC
+	#endif
+
 	// MacOSX and IPhone
 	#ifdef __APPLE__
 

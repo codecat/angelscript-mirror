@@ -194,6 +194,10 @@ Unfortunately Marmalade doesn't provide a specific pre-processor define that can
 the library is being compiled for use with Marmalade. So in this case it is necessary to manually define the word 
 MARMALADE in the project settings or makefile to allow AngelScript to detect this.
 
+When compiling AngelScript with Marmalade for iOS and Android scons must be used in order to properly 
+compile the native ARM assembler routines. For Windows Phone you should be able to use MSVC normally.
+
+
 
 
 
