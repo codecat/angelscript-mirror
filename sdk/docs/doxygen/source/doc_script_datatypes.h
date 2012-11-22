@@ -396,37 +396,37 @@ Examples:
 
 
 
-\page doc_datatypes_funcptr Function pointers
+\page doc_datatypes_funcptr Function handles
 
-A function pointer is a data type that can be dynamically set to point to a global function that has
-a matching function signature as that defined by the variable declaration. Function pointers are commonly
+A function handle is a data type that can be dynamically set to point to a global function that has
+a matching function signature as that defined by the variable declaration. Function handles are commonly
 used for callbacks, i.e. where a piece of code must be able to call back to some code based on some 
 conditions, but the code that needs to be called is not known at compile time.
 
-To use function pointers it is first necessary to \ref doc_global_funcdef "define the function signature" 
+To use function handles it is first necessary to \ref doc_global_funcdef "define the function signature" 
 that will be used at the global scope. Once that is done the variables can be declared using that definition.
 
-Here's an example that shows the syntax for using function pointes:
+Here's an example that shows the syntax for using function handles
 
 <pre>
-  // Define a function signature for the function pointer
+  // Define a function signature for the function handle
   funcdef bool CALLBACK(int, int);
 
   // An example function that shows how to use this
   void main()
   {
-    // Declare a function pointer, and set it 
+    // Declare a function handle, and set it 
     // to point to the myCompare function.
     CALLBACK \@func = \@myCompare;
 
-    // The function pointer can be compared with the 'is' operator
+    // The function handle can be compared with the 'is' operator
     if( func is null )
     {
-      print("The function pointer is null\n");
+      print("The function handle is null\n");
       return;
     }
 
-    // Call the function through the pointer, just as if it was a normal function
+    // Call the function through the handle, just as if it was a normal function
     if( func(1, 2) )
     {
       print("The function returned true\n");

@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.25.1
-#define ANGELSCRIPT_VERSION        22501
-#define ANGELSCRIPT_VERSION_STRING "2.25.1"
+//! \details Version 2.25.2
+#define ANGELSCRIPT_VERSION        22502
+#define ANGELSCRIPT_VERSION_STRING "2.25.2"
 
 // Data types
 
@@ -540,7 +540,7 @@ enum asEFuncType
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
-#if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC6 
+#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(AS_MARMALADE) || defined(MARMALADE)
 	// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
 	// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
 	// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
@@ -4181,7 +4181,7 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(GETOBJREF,	W_ARG,			0),
 	asBCINFO(GETREF,	W_ARG,			0),
 	asBCINFO(PshNull,	NO_ARG,			AS_PTR_SIZE),
-	asBCINFO(ClrVPtr,	rW_ARG,			0),
+	asBCINFO(ClrVPtr,	wW_ARG,			0),
 	asBCINFO(OBJTYPE,	PTR_ARG,		AS_PTR_SIZE),
 	asBCINFO(TYPEID,	DW_ARG,			1),
 	asBCINFO(SetV4,		wW_DW_ARG,		0),
@@ -4358,8 +4358,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(247),
 	asBCINFO_DUMMY(248),
 	asBCINFO_DUMMY(249),
+	asBCINFO_DUMMY(250),
 
-	asBCINFO(DiscardVar,	W_ARG,			0),
 	asBCINFO(VarDecl,		W_ARG,			0),
 	asBCINFO(Block,			INFO,			0),
 	asBCINFO(ObjInfo,		rW_DW_ARG,		0),
