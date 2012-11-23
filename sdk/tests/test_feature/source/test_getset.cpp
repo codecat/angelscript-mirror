@@ -1735,6 +1735,28 @@ bool Test2()
 		printf("%s", bout.buffer.c_str());
 	}
 
+	// Test disabling property accessors in script
+	bout.buffer = "";
+	engine->SetEngineProperty(asEP_PROPERTY_ACCESSOR_MODE, 1);
+	mod->AddScriptSection("test",
+		"class CTest { \n"
+		"  void get_prop() {} \n"
+		"  void set_prop(int v) { prop = v; } \n"
+		"  int prop; \n"
+		"} \n"
+		"void func() \n"
+		"{ \n"
+		"  CTest t; t.prop = 1; \n"
+		"} \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
 	engine->Release();
 
 	return fail;

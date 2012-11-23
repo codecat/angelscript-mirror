@@ -8480,35 +8480,41 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 	if( ctx->type.dataType.IsObject() )
 	{
-		// Check if the object has any methods with the corresponding accessor name(s)
-		asCObjectType *ot = ctx->type.dataType.GetObjectType();
-		for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+		// Don't look for property accessors in script classes if the script 
+		// property accessors have been disabled by the application
+		if( !(ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) ||
+			engine->ep.propertyAccessorMode == 2 )
 		{
-			asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
-			// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
-			if( f->name == getName && (int)f->parameterTypes.GetLength() == (arg?1:0) )
+			// Check if the object has any methods with the corresponding accessor name(s)
+			asCObjectType *ot = ctx->type.dataType.GetObjectType();
+			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
 			{
-				if( getId == 0 )
-					getId = ot->methods[n];
-				else
+				asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+				// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
+				if( f->name == getName && (int)f->parameterTypes.GetLength() == (arg?1:0) )
 				{
-					if( multipleGetFuncs.GetLength() == 0 )
-						multipleGetFuncs.PushLast(getId);
+					if( getId == 0 )
+						getId = ot->methods[n];
+					else
+					{
+						if( multipleGetFuncs.GetLength() == 0 )
+							multipleGetFuncs.PushLast(getId);
 
-					multipleGetFuncs.PushLast(ot->methods[n]);
+						multipleGetFuncs.PushLast(ot->methods[n]);
+					}
 				}
-			}
-			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
-			if( f->name == setName && (int)f->parameterTypes.GetLength() == (arg?2:1) )
-			{
-				if( setId == 0 )
-					setId = ot->methods[n];
-				else
+				// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
+				if( f->name == setName && (int)f->parameterTypes.GetLength() == (arg?2:1) )
 				{
-					if( multipleSetFuncs.GetLength() == 0 )
-						multipleSetFuncs.PushLast(setId);
+					if( setId == 0 )
+						setId = ot->methods[n];
+					else
+					{
+						if( multipleSetFuncs.GetLength() == 0 )
+							multipleSetFuncs.PushLast(setId);
 
-					multipleSetFuncs.PushLast(ot->methods[n]);
+						multipleSetFuncs.PushLast(ot->methods[n]);
+					}
 				}
 			}
 		}
