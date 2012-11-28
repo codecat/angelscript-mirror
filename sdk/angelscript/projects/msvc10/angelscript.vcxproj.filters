@@ -111,6 +111,9 @@
     <ClCompile Include="..\..\source\as_callfunc_x64_msvc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\as_callfunc_arm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\angelscript.h">

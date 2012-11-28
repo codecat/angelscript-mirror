@@ -115,9 +115,8 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <PreprocessorDefinitions>ANGELSCRIPT_EXPORT;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
-      <ExceptionHandling>
-      </ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <WarningLevel>Level3</WarningLevel>
@@ -157,6 +156,7 @@
     <ClCompile Include="..\..\source\as_builder.cpp" />
     <ClCompile Include="..\..\source\as_bytecode.cpp" />
     <ClCompile Include="..\..\source\as_callfunc.cpp" />
+    <ClCompile Include="..\..\source\as_callfunc_arm.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_mips.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_sh4.cpp" />
     <ClCompile Include="..\..\source\as_callfunc_x64_msvc.cpp" />

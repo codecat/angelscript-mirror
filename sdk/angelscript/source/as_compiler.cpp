@@ -424,7 +424,8 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	LineInstr(&bc, blockBegin->tokenPos + blockBegin->tokenLength);
 
 	// Make sure there is a return in all paths (if not return type is void)
-	if( outFunc->returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+	// Don't bother with this check if there are compiler errors, e.g. Unreachable code
+	if( !hasCompileErrors && outFunc->returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 	{
 		if( hasReturn == false )
 			Error(TXT_NOT_ALL_PATHS_RETURN, blockBegin);
@@ -799,7 +800,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 {
 	*hasReturn = false;
 	bool isFinished = false;
-	bool hasWarned = false;
+	bool hasUnreachableCode = false;
 
 	if( ownVariableScope )
 	{
@@ -810,10 +811,10 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	asCScriptNode *node = block->firstChild;
 	while( node )
 	{
-		if( !hasWarned && (*hasReturn || isFinished) )
+		if( !hasUnreachableCode && (*hasReturn || isFinished) )
 		{
-			hasWarned = true;
-			Warning(TXT_UNREACHABLE_CODE, node);
+			hasUnreachableCode = true;
+			Error(TXT_UNREACHABLE_CODE, node);
 		}
 
 		if( node->nodeType == snBreak || node->nodeType == snContinue )
@@ -2677,11 +2678,13 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 {
 	bool isFinished = false;
 	bool hasReturn = false;
+	bool hasUnreachableCode = false;
 	while( node )
 	{
-		if( hasReturn || isFinished )
+		if( !hasUnreachableCode && (hasReturn || isFinished) )
 		{
-			Warning(TXT_UNREACHABLE_CODE, node);
+			hasUnreachableCode = true;
+			Error(TXT_UNREACHABLE_CODE, node);
 			break;
 		}
 

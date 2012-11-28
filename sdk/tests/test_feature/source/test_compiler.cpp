@@ -211,6 +211,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Problem reported by zerochen
+	// http://www.gamedev.net/topic/634768-after-unreachable-code-wrong-error-msg/
+	{
+		const char *script = 
+			"void dum() {} \n"
+			"int dummy() \n"
+			"{ \n"
+			"  return 0; \n"
+			"  dum(); \n"
+			"  //return 1; \n"  // Compiler shouldn't complain about paths that don't return
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test (2, 1) : Info    : Compiling int dummy()\n"
+		                   "test (5, 3) : Error   : Unreachable code\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Problem reported by _Engine_
 	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
 	{
