@@ -434,6 +434,7 @@ void asCModule::InternalReset()
 	bindInformations.SetLength(0);
 
 	// Free declared types, including classes, typedefs, and enums
+	// TODO: optimize: Check if it is possible to destroy the object directly without notifying the GC
 	for( n = 0; n < classTypes.GetLength(); n++ )
 		classTypes[n]->Orphan(this);
 	classTypes.SetLength(0);

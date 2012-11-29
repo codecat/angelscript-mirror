@@ -1024,39 +1024,34 @@ void asCScriptEngine::ClearUnusedTypes()
 
 		for( n = 0; n < types.GetLength(); n++ )
 		{
-			// Template types and script classes will have two references for each factory stub
 			int refCount = 0;
-			if( (types[n]->flags & asOBJ_TEMPLATE) || (types[n]->flags & asOBJ_SCRIPT_OBJECT) )
+			asCObjectType *type = types[n];
+
+			// Template types and script classes will have two references for each factory stub
+			if( (type->flags & asOBJ_TEMPLATE) )
 			{
-				refCount = 2*(int)types[n]->beh.factories.GetLength();
-				if( types[n]->beh.listFactory )
+				refCount = 2*(int)type->beh.factories.GetLength();
+				if( type->beh.listFactory )
 					refCount += 2;
 			}
 
-			if( types[n]->GetRefCount() == refCount )
+			if( type->GetRefCount() == refCount )
 			{
-				if( types[n]->flags & asOBJ_TEMPLATE )
+				if( type->flags & asOBJ_TEMPLATE )
 				{
 					didClearTemplateInstanceType = true;
-					RemoveTemplateInstanceType(types[n]);
+					RemoveTemplateInstanceType(type);
 				}
 				else
 				{
-					RemoveFromTypeIdMap(types[n]);
-					asDELETE(types[n],asCObjectType);
+					RemoveFromTypeIdMap(type);
+					asDELETE(type,asCObjectType);
 
-					int i = classTypes.IndexOf(types[n]);
-					if( i == (signed)classTypes.GetLength() - 1 )
-						classTypes.PopLast();
-					else
-						classTypes[i] = classTypes.PopLast();
+					classTypes.RemoveIndexUnordered(classTypes.IndexOf(type));
 				}
 
 				// Remove the type from the array
-				if( n < types.GetLength() - 1 )
-					types[n] = types.PopLast();
-				else
-					types.PopLast();
+				types.RemoveIndexUnordered(n);
 				n--;
 			}
 		}
@@ -1073,10 +1068,7 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 	int i = types.IndexOf(ot);
 	if( i == -1 ) return;
 
-	if( i == (signed)types.GetLength() - 1 )
-		types.PopLast();
-	else
-		types[i] = types.PopLast();
+	types.RemoveIndexUnordered(i);
 
 	// If the type is an template type, then remove all sub types as well
 	if( ot->templateSubType.GetObjectType() )

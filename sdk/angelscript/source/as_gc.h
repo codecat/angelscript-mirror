@@ -60,6 +60,7 @@ public:
 	void GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
 	void GCEnumCallback(void *reference);
 	void AddScriptObjectToGC(void *obj, asCObjectType *objType);
+	bool IsObjectInGC(void *obj);
 
 	int ReportAndReleaseUndestroyedObjects();
 

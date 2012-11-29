@@ -67,6 +67,19 @@ asCGarbageCollector::~asCGarbageCollector()
 	freeNodes.SetLength(0);
 }
 
+bool asCGarbageCollector::IsObjectInGC(void *obj)
+{
+	asUINT n;
+	for( n = 0; n < gcNewObjects.GetLength(); n++ )
+		if( gcNewObjects[n].obj == obj )
+			return true;
+	for( n = 0; n < gcOldObjects.GetLength(); n++ )
+		if( gcOldObjects[n].obj == obj )
+			return true;
+
+	return false;
+}
+
 void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 {
 	if( obj == 0 || objType == 0 )

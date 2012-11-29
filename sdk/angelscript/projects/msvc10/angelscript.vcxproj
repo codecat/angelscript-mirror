@@ -198,6 +198,7 @@
     <ClInclude Include="..\..\source\as_context.h" />
     <ClInclude Include="..\..\source\as_datatype.h" />
     <ClInclude Include="..\..\source\as_debug.h" />
+    <ClInclude Include="..\..\source\as_gc.h" />
     <ClInclude Include="..\..\source\as_generic.h" />
     <ClInclude Include="..\..\source\as_map.h" />
     <ClInclude Include="..\..\source\as_module.h" />
