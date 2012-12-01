@@ -49,8 +49,15 @@ public:
 	CDerivedVirtual() : CVBase1(), CVBase2() {}
 };
 
+// This one is registered without the forward declaration, which means MSVC will choose the 
+// method pointer that doesn't include all the information needed. Still AngelScript should
+// be able to tell that it is for a class with virtual inheritance and return an error
+class CDerivedVirtual2 : virtual public CVBase1, virtual public CVBase2
+{
+public:
+	CDerivedVirtual2() : CVBase1(), CVBase2() {}
+};
 
-static CDerivedVirtual d;
 
 bool TestVirtualInheritance()
 {
@@ -64,7 +71,7 @@ bool TestVirtualInheritance()
 	
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	// Register the CDerived class
+	// Register the derived class that has been forward declared
 	r = engine->RegisterObjectType("class1", 0, asOBJ_REF);
 	r = engine->RegisterObjectMethod("class1", "void CallMe1()", asMETHOD(CDerivedVirtual, CallMe1), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
@@ -80,19 +87,24 @@ bool TestVirtualInheritance()
 		TEST_FAILED;
 	}
 
-/*
-	// Register the global CDerived object
-	r = engine->RegisterGlobalProperty("class1 d", &d);
-
-	COutStream out;
-	engine->ExecuteString(0, "d.CallMe1(); d.CallMe2();", &out);
-	
-	if( output2 != "CVBase1: CVBase1::CallMe1()\nCVBase2: CVBase2::CallMe2()\n" )
+	// Register the derived class that has not been forward declared
+	r = engine->RegisterObjectType("class2", 0, asOBJ_REF);
+	r = engine->RegisterObjectMethod("class2", "void CallMe1()", asMETHOD(CDerivedVirtual2, CallMe1), asCALL_THISCALL);
+	if( r != asNOT_SUPPORTED )
 	{
-		printf("%s: Method calls failed.\n%s", TESTNAME, output2.c_str());
+		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		TEST_FAILED;
 	}
-*/
+
+	r = engine->RegisterObjectMethod("class2", "void CallMe2()", asMETHOD(CDerivedVirtual2, CallMe2), asCALL_THISCALL);
+	if( r != asNOT_SUPPORTED )
+	{
+		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
+		TEST_FAILED;
+	}
+
+
+	// Calling methods for classes with virtual inheritance is not supported so we don't try it
 	
 	engine->Release();
 
