@@ -71,25 +71,33 @@ AS_API void asUnprepareMultithread()
 AS_API void asAcquireExclusiveLock()
 {
 	if( threadManager )
+	{
 		ACQUIREEXCLUSIVE(threadManager->appRWLock);
+	}
 }
 
 AS_API void asReleaseExclusiveLock()
 {
 	if( threadManager )
+	{
 		RELEASEEXCLUSIVE(threadManager->appRWLock);
+	}
 }
 
 AS_API void asAcquireSharedLock()
 {
 	if( threadManager )
+	{
 		ACQUIRESHARED(threadManager->appRWLock);
+	}
 }
 
 AS_API void asReleaseSharedLock()
 {
 	if( threadManager )
+	{
 		RELEASESHARED(threadManager->appRWLock);
+	}
 }
 
 }
