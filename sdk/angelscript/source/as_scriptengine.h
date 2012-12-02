@@ -93,7 +93,7 @@ public:
     virtual asIJITCompiler *GetJITCompiler() const;
 
 	// Global functions
-	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
 	virtual asUINT             GetGlobalFunctionCount() const;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-20

@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22502
-#define ANGELSCRIPT_VERSION_STRING "2.25.2"
+#define ANGELSCRIPT_VERSION        22600
+#define ANGELSCRIPT_VERSION_STRING "2.26.0 WIP"
 
 // Data types
 
@@ -101,12 +101,13 @@ enum asEEngineProp
 // Calling conventions
 enum asECallConvTypes
 {
-	asCALL_CDECL            = 0,
-	asCALL_STDCALL          = 1,
-	asCALL_THISCALL         = 2,
-	asCALL_CDECL_OBJLAST    = 3,
-	asCALL_CDECL_OBJFIRST   = 4,
-	asCALL_GENERIC          = 5
+	asCALL_CDECL             = 0,
+	asCALL_STDCALL           = 1,
+	asCALL_THISCALL_ASGLOBAL = 2,
+	asCALL_THISCALL          = 3,
+	asCALL_CDECL_OBJLAST     = 4,
+	asCALL_CDECL_OBJFIRST    = 5,
+	asCALL_GENERIC           = 6
 };
 
 // Object type flags
@@ -529,7 +530,7 @@ public:
 	virtual asIJITCompiler *GetJITCompiler() const = 0;
 
 	// Global functions
-	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
 	virtual asUINT             GetGlobalFunctionCount() const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.24.0 - 2012-05-20

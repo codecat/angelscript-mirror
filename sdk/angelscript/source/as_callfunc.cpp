@@ -44,20 +44,21 @@
 
 BEGIN_AS_NAMESPACE
 
-int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, asSSystemFunctionInterface *internal)
+int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, void *objForThiscall, asSSystemFunctionInterface *internal)
 {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func = ptr.ptr.f.func;
+	internal->func           = ptr.ptr.f.func;
+	internal->objForThiscall = 0;
 
 	// Was a compatible calling convention specified?
 	if( internal->func )
 	{
 		if( ptr.flag == 1 && callConv != asCALL_GENERIC )
 			return asWRONG_CALLING_CONV;
-		else if( ptr.flag == 2 && (callConv == asCALL_GENERIC || callConv == asCALL_THISCALL) )
+		else if( ptr.flag == 2 && (callConv == asCALL_GENERIC || callConv == asCALL_THISCALL || callConv == asCALL_THISCALL_ASGLOBAL) )
 			return asWRONG_CALLING_CONV;
-		else if( ptr.flag == 3 && callConv != asCALL_THISCALL )
+		else if( ptr.flag == 3 && !(callConv == asCALL_THISCALL || callConv == asCALL_THISCALL_ASGLOBAL) )
 			return asWRONG_CALLING_CONV;
 	}
 
@@ -68,6 +69,13 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 			internal->callConv = ICC_CDECL;
 		else if( base == asCALL_STDCALL )
 			internal->callConv = ICC_STDCALL;
+		else if( base == asCALL_THISCALL_ASGLOBAL )
+		{
+			if( objForThiscall == 0 )
+				return asINVALID_ARG;
+			internal->objForThiscall = objForThiscall;
+			internal->callConv       = ICC_THISCALL;
+		}
 		else if( base == asCALL_GENERIC )
 			internal->callConv = ICC_GENERIC_FUNC;
 		else
@@ -409,7 +417,13 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	if( callConv >= ICC_THISCALL )
 	{
-		if( objectPointer )
+		if( sysFunc->objForThiscall )
+		{
+			// This class method is being called as if it is a global function
+			obj = sysFunc->objForThiscall;
+			asASSERT( objectPointer == 0 );
+		}
+		else if( objectPointer )
 		{
 			obj = objectPointer;
 		}

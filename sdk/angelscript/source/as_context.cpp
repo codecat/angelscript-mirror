@@ -4290,7 +4290,7 @@ int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 		}
 	}
 
-	int r = DetectCallingConvention(isObj, callback, callConv, &m_lineCallbackFunc);
+	int r = DetectCallingConvention(isObj, callback, callConv, 0, &m_lineCallbackFunc);
 	if( r < 0 ) m_lineCallback = false;
 
 	m_regs.doProcessSuspend = m_doSuspend || m_lineCallback;
@@ -4323,7 +4323,7 @@ int asCContext::SetExceptionCallback(asSFuncPtr callback, void *obj, int callCon
 			return asINVALID_ARG;
 		}
 	}
-	int r = DetectCallingConvention(isObj, callback, callConv, &m_exceptionCallbackFunc);
+	int r = DetectCallingConvention(isObj, callback, callConv, 0, &m_exceptionCallbackFunc);
 	if( r < 0 ) m_exceptionCallback = false;
 	return r;
 }

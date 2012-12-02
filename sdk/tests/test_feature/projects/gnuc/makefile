@@ -105,6 +105,7 @@ SRCNAMES = \
   test_stream.cpp \
   test_structintf.cpp \
   test_template.cpp \
+  test_thiscall_asglobal.cpp \
   test_thiscall_class.cpp \
   test_typedef.cpp \
   test_unsaferef.cpp \

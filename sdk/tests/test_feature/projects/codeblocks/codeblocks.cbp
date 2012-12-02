@@ -178,6 +178,7 @@
 		<Unit filename="..\..\source\test_structintf.cpp" />
 		<Unit filename="..\..\source\test_suspend.cpp" />
 		<Unit filename="..\..\source\test_template.cpp" />
+		<Unit filename="..\..\source\test_thiscall_asglobal.cpp" />
 		<Unit filename="..\..\source\test_thiscall_class.cpp" />
 		<Unit filename="..\..\source\test_typedef.cpp" />
 		<Unit filename="..\..\source\test_unsaferef.cpp" />

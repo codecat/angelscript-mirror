@@ -852,7 +852,7 @@ int asCScriptEngine::SetMessageCallback(const asSFuncPtr &callback, void *obj, a
 			return asINVALID_ARG;
 		}
 	}
-	int r = DetectCallingConvention(isObj, callback, callConv, &msgCallbackFunc);
+	int r = DetectCallingConvention(isObj, callback, callConv, 0, &msgCallbackFunc);
 	if( r < 0 ) msgCallback = false;
 	return r;
 }
@@ -1678,7 +1678,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( callConv != asCALL_GENERIC )
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 #endif
-		int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
+		int r = DetectCallingConvention(false, funcPointer, callConv, 0, &internal);
 		if( r < 0 )
 			return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 	}
@@ -1695,7 +1695,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 #endif
 
-		int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
+		int r = DetectCallingConvention(true, funcPointer, callConv, 0, &internal);
 		if( r < 0 )
 			return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 	}
@@ -2098,22 +2098,9 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 
 	int id = GetNextScriptFunctionId();
 
-	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface);
+	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
 	if( newInterface == 0 )
 		return asOUT_OF_MEMORY;
-
-	newInterface->func               = internal.func;
-	newInterface->baseOffset         = internal.baseOffset;
-	newInterface->callConv           = internal.callConv;
-	newInterface->scriptReturnSize   = internal.scriptReturnSize;
-	newInterface->hostReturnInMemory = internal.hostReturnInMemory;
-	newInterface->hostReturnFloat    = internal.hostReturnFloat;
-	newInterface->hostReturnSize     = internal.hostReturnSize;
-	newInterface->paramSize          = internal.paramSize;
-	newInterface->takesObjByVal      = internal.takesObjByVal;
-	newInterface->paramAutoHandles   = internal.paramAutoHandles;
-	newInterface->returnAutoHandle   = internal.returnAutoHandle;
-	newInterface->hasAutoHandles     = internal.hasAutoHandles;
 
 	asCScriptFunction *f = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
 	if( f == 0 )
@@ -2329,7 +2316,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(true, funcPointer, callConv, &internal);
+	int r = DetectCallingConvention(true, funcPointer, callConv, 0, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 
@@ -2454,10 +2441,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 }
 
 // interface
-int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
 {
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
+	int r = DetectCallingConvention(false, funcPointer, callConv, objForThiscall, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterGlobalFunction", declaration, 0);
 
@@ -2467,6 +2454,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 #else
 	if( callConv != asCALL_CDECL &&
 		callConv != asCALL_STDCALL &&
+		callConv != asCALL_THISCALL_ASGLOBAL &&
 		callConv != asCALL_GENERIC )
 		return ConfigError(asNOT_SUPPORTED, "RegisterGlobalFunction", declaration, 0);
 #endif
@@ -2780,7 +2768,7 @@ int asCScriptEngine::GetDefaultArrayTypeId() const
 int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv)
 {
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(false, funcPointer, callConv, &internal);
+	int r = DetectCallingConvention(false, funcPointer, callConv, 0, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterStringFactory", datatype, 0);
 

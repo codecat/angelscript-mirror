@@ -149,6 +149,7 @@ namespace TestShared            { bool Test(); }
 namespace TestNamespace         { bool Test(); }
 namespace TestCDeclObjLast      { bool Test(); }
 namespace TestMixin             { bool Test(); }
+namespace TestThiscallAsGlobal  { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -348,6 +349,9 @@ int main(int argc, char **argv)
 		if( TestVirtualMethod()           ) goto failed; else printf("-- TestVirtualMethod passed\n");
 		if( TestMultipleInheritance()     ) goto failed; else printf("-- TestMultipleInheritance passed\n");
 		if( TestVirtualInheritance()      ) goto failed; else printf("-- TestVirtualInheritance passed\n");
+
+		// thiscall_asglobal
+		if( TestThiscallAsGlobal::Test()  ) goto failed; else printf("-- TestThiscallAsGlobal passed\n");
 
 		// stdcall
 		if( TestStdcall4Args()            ) goto failed; else printf("-- TestStdcall4Args passed\n");

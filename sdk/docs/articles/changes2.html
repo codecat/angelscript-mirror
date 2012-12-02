@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.0 WIP - 2012/12/01</h2>
+<h2>Version 2.26.0 WIP - 2012/12/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed rare crash after an object type had been deleted prematurely by the engine
 <li>Fixed incorrect static_cast on MSVC when attempting to register method for class with virtual inheritance (Thanks David Rosen)
 <li>Fixed compiler warnings when compiling with AS_NO_THREADS (Thanks Papirosnik)
+</ul>
+<li>Library interface
+<ul>
+<li>Added asCALL_THISCALL_ASGLOBAL for registering a class method as a global function
+<li>RegisterGlobalFunction() now takes an optional object pointer to be used with THISCALL_ASGLOBAL (Thanks zerochen)
 </ul>
 <li>Library
 <ul>

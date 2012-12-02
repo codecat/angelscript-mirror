@@ -498,6 +498,9 @@
     <ClCompile Include="..\..\..\..\add_on\serializer\serializer.cpp">
       <Filter>add_on</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\test_thiscall_asglobal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h">

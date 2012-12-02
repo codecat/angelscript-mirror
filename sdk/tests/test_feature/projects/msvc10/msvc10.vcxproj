@@ -210,6 +210,7 @@
     <ClCompile Include="..\..\source\test_structintf.cpp" />
     <ClCompile Include="..\..\source\test_suspend.cpp" />
     <ClCompile Include="..\..\source\test_template.cpp" />
+    <ClCompile Include="..\..\source\test_thiscall_asglobal.cpp" />
     <ClCompile Include="..\..\source\test_thiscall_class.cpp" />
     <ClCompile Include="..\..\source\test_typedef.cpp" />
     <ClCompile Include="..\..\source\test_unsaferef.cpp" />

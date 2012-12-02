@@ -758,6 +758,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\test_thiscall_asglobal.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\test_thiscall_class.cpp"
 				>
 			</File>
