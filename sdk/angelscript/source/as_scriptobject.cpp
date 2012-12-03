@@ -237,6 +237,9 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 		objType->engine->gc.AddScriptObjectToGC(this, objType);
 
 	// Construct all properties
+	// TODO: decl: The initialization of the members will be done by the constructor now.
+	//             Here we should just do the minimal work, e.g. clear handles, allocate memory
+	//             Need to take care when the object is not supposed to be initialized, the logic will be different then
 	asCScriptEngine *engine = objType->engine;
 	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 	{

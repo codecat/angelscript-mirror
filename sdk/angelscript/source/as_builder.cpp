@@ -686,6 +686,7 @@ void asCBuilder::CompileFunctions()
 			str.Format(TXT_COMPILING_s, str.AddressOf());
 			WriteInfo(current->script->name, str, r, c, true);
 
+			// TODO: decl: When compiling a constructor, need to pass the list of member initializations
 			compiler.CompileFunction(this, current->script, current->paramNames, current->node, func);
 
 			preMessage.isSet = false;
@@ -712,6 +713,7 @@ void asCBuilder::CompileFunctions()
 
 			// This is the default constructor, that is generated
 			// automatically if not implemented by the user.
+			// TODO: decl: Need to pass the list of member initializations so these can be compiled in the constructor
 			compiler.CompileDefaultConstructor(this, current->script, node, func);
 
 			preMessage.isSet = false;
@@ -2472,6 +2474,9 @@ void asCBuilder::CompileClasses()
 				n = n->next;
 				while( n )
 				{
+					// TODO: decl: Store the initialization nodes in the builder's classDeclaration
+					//             so these can be compiled when compiling the constructor. Keep file pointer
+					//             with each node, as mixin's can be included from a different file
 					asCString name(&file->code[n->tokenPos], n->tokenLength);
 
 					if( !decl->isExistingShared )
@@ -2791,6 +2796,10 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 			{
 				if( n->nodeType == snDeclaration )
 				{
+					// TODO: decl: Store the initialization node for each property in the builder's  
+					//             classDeclaration so these can be compiled in the constructors. The
+					//             mixin class' members are added to the end of the class so the 
+					//             initialization of these will be done last.
 					asCScriptNode *n2 = n->firstChild;
 					bool isPrivate = false;
 					if( n2 && n2->tokenType == ttPrivate )

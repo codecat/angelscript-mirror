@@ -3158,6 +3158,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp)
 		if( isSyntaxError ) return node;
 
 		// If next token is assignment, parse expression
+		// TODO: decl: Allow initialization of class members in syntax
 		if( !isClassProp )
 		{
 			GetToken(&t);

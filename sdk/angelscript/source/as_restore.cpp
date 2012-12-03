@@ -685,6 +685,8 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			func->lineNumbers.SetLength(length);
 			for( i = 0; i < length; ++i )
 				func->lineNumbers[i] = ReadEncodedUInt();
+
+			// TODO: decl: Read the array of script sections 
 		}
 
 		ReadData(&func->isShared, 1);
@@ -2920,6 +2922,8 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				else
 					WriteEncodedInt64(func->lineNumbers[i]);
 			}
+
+			// TODO: decl: Write the array of script sections
 		}
 
 		WriteData(&func->isShared, 1);

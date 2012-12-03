@@ -228,6 +228,18 @@ bool Test()
 	bool fail = Test2();
 	int r;
 
+	// TODO: decl: Test initialization of members directly in declaration
+	//             class T { int a = 42; }                                          // Success
+	//             class T { array<int> @a = {1,2,3} }                              // Success
+	//             class T { int a = 42, b = a/2; }                                 // Success
+	//             class T { int a = b/2, b = 42; }                                 // Compiler error, or undefined value as members are initialized in the order they are declared
+	//             class T { int a = obj.Func(); Obj obj; }                         // Compiler error, or null pointer exception as members are initialized in the order they are declared
+	//             class T : B { T() { obj.Func(); super(); } Obj obj; }            // Compiler error, or null pointer exception as members are only initialized after base class
+	//             class T : Mixin { int a = 42; } mixin class Mixin { int b = a; } // Success. mixin class members initialized after ordinary class members
+	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
+	// TODO: decl: test saving/loading bytecode with mixin class from different file
+	// TODO: decl: test creating script class instance without initialization (for serialization)
+
 	asIScriptModule *mod = 0;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

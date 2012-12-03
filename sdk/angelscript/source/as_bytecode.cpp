@@ -1438,6 +1438,13 @@ void asCByteCode::ExtractLineNumbers()
 {
 	TimeIt("asCByteCode::ExtractLineNumbers");
 
+	// TODO: decl: Must extract script sections too, as a single function can be composed from multiple different files
+	//             This is not very common though (only happens for mixins) so the array where section is kept should be separate
+	//             Most of the time the section will be the same for the entire function, so the array will only have one entry.
+	//             The asCScriptFunction::scriptSectionIdx member can probably be replaced with the array of scriptSection's used by 
+	//             different parts of the code. Or, the array of script sections can be kept empty if all code is from the same
+	//             section where the function was declared.
+
 	int lastLinePos = -1;
 	int pos = 0;
 	asCByteInstruction *instr = first;
@@ -1684,6 +1691,8 @@ void asCByteCode::Line(int line, int column)
 {
 	if( AddInstruction() < 0 )
 		return;
+
+	// TODO: decl: Store pointer to script section too
 
 	last->op       = asBC_LINE;
 	// If the build is without line cues these instructions will be removed

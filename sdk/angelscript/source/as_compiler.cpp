@@ -123,7 +123,18 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
 
+	// If the class is derived from another, then the base class' default constructor must be called
+	if( outFunc->objectType->derivedFrom )
+	{
+		// Call the base class' default constructor
+		byteCode.InstrSHORT(asBC_PSF, 0);
+		byteCode.Instr(asBC_RDSPtr);
+		byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+	}
+
 	// Make sure all the class members can be initialized with default constructors
+	// TODO: decl: Build bytecode with the initialization for each member that has a specific initialization defined.
+	//             Those that do not have a specific initialization should be initialized with the default constructor (or give an error if no default constructor is available)
 	for( asUINT n = 0; n < outFunc->objectType->properties.GetLength(); n++ )
 	{
 		asCDataType &dt = outFunc->objectType->properties[n]->type;
@@ -138,15 +149,6 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 				str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
 			Error(str, node);
 		}
-	}
-
-	// If the class is derived from another, then the base class' default constructor must be called
-	if( outFunc->objectType->derivedFrom )
-	{
-		// Call the base class' default constructor
-		byteCode.InstrSHORT(asBC_PSF, 0);
-		byteCode.Instr(asBC_RDSPtr);
-		byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 	}
 
 	// Pop the object pointer from the stack
@@ -478,6 +480,11 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 		}
 	}
 
+	// TODO: decl: Compile the initialization for class members in the constructor
+	//             This should be done after super() so the base class' members are 
+	//             initialized. The compilation of the initialization must be implemented
+	//             in a common method of the compiler as it will be called from multiple places
+
 	// Add the code for the statement block
 	byteCode.AddCode(&bc);
 
@@ -791,6 +798,9 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 
 void asCCompiler::LineInstr(asCByteCode *bc, size_t pos)
 {
+	// TODO: decl: Must store the file as well as token position, as with mixin classes, class declarations
+	//             may include initialization of members from multiple different files. 
+
 	int r, c;
 	script->ConvertPosToRowCol(pos, &r, &c);
 	bc->Line(r, c);
@@ -7891,6 +7901,13 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 					Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, node);
 				}
 				m_isConstructorCalled = true;
+
+				// TODO: decl: Do local jump to where the class members are initialized. 
+				//             That code will then return to this spot after the initialization with a local return. 
+				//             This jumping is necessary to avoid multiplying code for initializing the members all over. 
+				//             As this will require new bytecode instructions (LJMP label & LRET) we can initially duplicate
+				//             the initialization code. It shouldn't be that often that the call to 
+				//             base class constructor is done explicitly anyway.
 			}
 			else
 			{
