@@ -2474,15 +2474,26 @@ void asCBuilder::CompileClasses()
 				n = n->next;
 				while( n )
 				{
-					// TODO: decl: Store the initialization nodes in the builder's classDeclaration
-					//             so these can be compiled when compiling the constructor. Keep file pointer
-					//             with each node, as mixin's can be included from a different file
 					asCString name(&file->code[n->tokenPos], n->tokenLength);
 
 					if( !decl->isExistingShared )
 					{
 						CheckNameConflictMember(decl->objType, name.AddressOf(), n, file, true);
 						AddPropertyToClass(decl, name, dt, isPrivate, file, node);
+
+						// Register the initialization expression (if any) to be compiled later
+						if( n->next && n->next->nodeType != snIdentifier )
+						{
+							n = n->next;
+							asASSERT( n->nodeType == snArgList ||
+								      n->nodeType == snInitList ||
+									  n->nodeType == snAssignment );
+
+							// TODO: decl: Store the initialization nodes in the builder's classDeclaration
+							//             so these can be compiled when compiling the constructor. Keep file pointer
+							//             with each node, as mixin's can be included from a different file
+							WriteError("Initialization of class member in declaration is not yet supported", file, n);
+						}
 					}
 					else
 					{
@@ -2505,6 +2516,10 @@ void asCBuilder::CompileClasses()
 							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
 							WriteError(str, file, n);
 						}
+
+						// Skip the initialization expression
+						if( n->next && n->next->nodeType != snIdentifier )
+							n = n->next;
 					}
 					n = n->next;
 				}
@@ -2796,10 +2811,6 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 			{
 				if( n->nodeType == snDeclaration )
 				{
-					// TODO: decl: Store the initialization node for each property in the builder's  
-					//             classDeclaration so these can be compiled in the constructors. The
-					//             mixin class' members are added to the end of the class so the 
-					//             initialization of these will be done last.
 					asCScriptNode *n2 = n->firstChild;
 					bool isPrivate = false;
 					if( n2 && n2->tokenType == ttPrivate )
@@ -2817,7 +2828,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 						asCString msg;
 						msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
 						WriteError(msg, file, n);
-						WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
+						WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
 					}
 
 					if( dt.IsReadOnly() )
@@ -2844,9 +2855,20 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 								// It must not conflict with the name of methods
 								int r = CheckNameConflictMember(decl->objType, name.AddressOf(), n2, file, true);
 								if( r < 0 )
-									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, node);
+									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
 
 								AddPropertyToClass(decl, name, dt, isPrivate, file, n);
+
+								// Register the initialization expression
+								if( n2->next && n2->next->nodeType != snIdentifier )
+								{
+									// TODO: decl: Store the initialization node for each property in the builder's  
+									//             classDeclaration so these can be compiled in the constructors. The
+									//             mixin class' members are added to the end of the class so the 
+									//             initialization of these will be done last.
+									WriteError("Initialization of class members in declaration is not yet supported for mixin classes", decl->script, n2);
+									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
+								}
 							}
 							else
 							{
@@ -2868,8 +2890,12 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 									asCString str;
 									str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
 									WriteError(str, decl->script, decl->node);
-									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, file, n);
+									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
 								}
+
+								// Skip the initialization expression
+								if( n2->next && n2->next->nodeType != snIdentifier )
+									n2 = n2->next;
 							}
 						}
 

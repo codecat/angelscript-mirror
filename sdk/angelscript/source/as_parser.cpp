@@ -3158,34 +3158,30 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp)
 		if( isSyntaxError ) return node;
 
 		// If next token is assignment, parse expression
-		// TODO: decl: Allow initialization of class members in syntax
-		if( !isClassProp )
+		GetToken(&t);
+		if( t.type == ttOpenParanthesis )
+		{
+			RewindTo(&t);
+			node->AddChildLast(ParseArgList());
+			if( isSyntaxError ) return node;
+		}
+		else if( t.type == ttAssignment )
 		{
 			GetToken(&t);
-			if( t.type == ttOpenParanthesis )
+			RewindTo(&t);
+			if( t.type == ttStartStatementBlock )
 			{
-				RewindTo(&t);
-				node->AddChildLast(ParseArgList());
+				node->AddChildLast(ParseInitList());
 				if( isSyntaxError ) return node;
 			}
-			else if( t.type == ttAssignment )
-			{
-				GetToken(&t);
-				RewindTo(&t);
-				if( t.type == ttStartStatementBlock )
-				{
-					node->AddChildLast(ParseInitList());
-					if( isSyntaxError ) return node;
-				}
-				else
-				{
-					node->AddChildLast(ParseAssignment());
-					if( isSyntaxError ) return node;
-				}
-			}
 			else
-				RewindTo(&t);
+			{
+				node->AddChildLast(ParseAssignment());
+				if( isSyntaxError ) return node;
+			}
 		}
+		else
+			RewindTo(&t);
 
 		// continue if list separator, else terminate with end statement
 		GetToken(&t);

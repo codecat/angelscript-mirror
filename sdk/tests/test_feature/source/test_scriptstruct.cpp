@@ -227,9 +227,13 @@ bool Test()
 {
 	bool fail = Test2();
 	int r;
+	asIScriptModule *mod;
+	asIScriptEngine *engine;
+	COutStream out;
+	CBufferedOutStream bout;
 
+	// http://www.gamedev.net/community/forums/topic.asp?topic_id=463305
 	// TODO: decl: Test initialization of members directly in declaration
-	//             class T { int a = 42; }                                          // Success
 	//             class T { array<int> @a = {1,2,3} }                              // Success
 	//             class T { int a = 42, b = a/2; }                                 // Success
 	//             class T { int a = b/2, b = 42; }                                 // Compiler error, or undefined value as members are initialized in the order they are declared
@@ -239,172 +243,195 @@ bool Test()
 	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
 	// TODO: decl: test saving/loading bytecode with mixin class from different file
 	// TODO: decl: test creating script class instance without initialization (for serialization)
-
-	asIScriptModule *mod = 0;
-
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptArray(engine, true);
-	RegisterScriptString(engine);
-
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
-	COutStream out;
-	CBufferedOutStream bout;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
-	// Test declaring multiple properties in same declaration separated by ,
+	// TODO: decl: the initialization expression is evaluated in the context of the constructor, 
+	//             so if the expression refers to an identifier it will first attempt to evaluate to 
+	//             local variable, then parameter, then class member, then global variable
 	{
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(TESTNAME, 
-			"class A { \n"
-			"  int a, b, c; \n"
-			"  void f() { a = b = c; } \n"
-			"} \n");
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { int a = 42; }");
+		r = mod->Build();
+		if( r > 0 )
+			TEST_FAILED;
+/*
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else if( *reinterpret_cast<int*>(obj->GetAddressOfProperty(0)) != 42 )
+			TEST_FAILED;
+
+		if( obj )
+			obj->Release();
+*/
+		engine->Release();
+	}
+
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, true);
+		RegisterScriptString(engine);
+
+		engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		// Test declaring multiple properties in same declaration separated by ,
+		{
+			mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			mod->AddScriptSection(TESTNAME, 
+				"class A { \n"
+				"  int a, b, c; \n"
+				"  void f() { a = b = c; } \n"
+				"} \n");
+
+			r = mod->Build();
+			if( r < 0 ) TEST_FAILED;
+		}
+
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script1);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
-	}
 
+		// Verify that GetObjectTypeByIndex recognizes the script class
+		if( mod->GetObjectTypeCount() != 1 )
+			TEST_FAILED;
+		asIObjectType *type = mod->GetObjectTypeByIndex(0);
+		if( strcmp(type->GetName(), "Test") != 0 )
+			TEST_FAILED;
 
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script1);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-
-	// Verify that GetObjectTypeByIndex recognizes the script class
-	if( mod->GetObjectTypeCount() != 1 )
-		TEST_FAILED;
-	asIObjectType *type = mod->GetObjectTypeByIndex(0);
-	if( strcmp(type->GetName(), "Test") != 0 )
-		TEST_FAILED;
-
-	asIScriptContext *ctx = engine->CreateContext();
-	r = ExecuteString(engine, "TestStruct()", mod, ctx);
-	if( r != asEXECUTION_FINISHED ) 
-	{
-		if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
-		TEST_FAILED;
-	}
-	if( ctx ) ctx->Release();
-
-	bout.buffer = "";
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script2);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = mod->Build();
-	if( r >= 0 || bout.buffer != "TestScriptStruct (3, 4) : Error   : Class properties cannot be declared as const\n" ) TEST_FAILED;
-
-	mod->AddScriptSection(TESTNAME, script3);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestArrayInStruct()", mod);
-	if( r != 0 ) TEST_FAILED;
-
-	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "Test()", mod);
-	if( r != 0 ) TEST_FAILED;
-
-	bout.buffer = "";
-	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = mod->Build();
-	if( r >= 0 || bout.buffer != 
-		"TestScriptStruct (2, 7) : Error   : Name conflict. 'A' is a class.\n"
-		"TestScriptStruct (6, 9) : Error   : Name conflict. 'a' is an object property.\n" ) TEST_FAILED;
-
-	bout.buffer = "";
-	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
-	r = mod->Build();
-	if( r >= 0 || bout.buffer !=
-		"TestScriptStruct (1, 7) : Error   : Illegal member type\n"
-		"TestScriptStruct (5, 7) : Error   : Illegal member type\n" ) TEST_FAILED;
-
-	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "TestHandleInStruct()", mod, ctx);
-	if( r != 0 )
-	{
-		if( r == asEXECUTION_EXCEPTION )
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestStruct()", mod, ctx);
+		if( r != asEXECUTION_FINISHED ) 
 		{
-			printf("%s\n", ctx->GetExceptionString());
+			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
+			TEST_FAILED;
 		}
-		TEST_FAILED;
+		if( ctx ) ctx->Release();
+
+		bout.buffer = "";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script2);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		r = mod->Build();
+		if( r >= 0 || bout.buffer != "TestScriptStruct (3, 4) : Error   : Class properties cannot be declared as const\n" ) TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME, script3);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "TestArrayInStruct()", mod);
+		if( r != 0 ) TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "Test()", mod);
+		if( r != 0 ) TEST_FAILED;
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		r = mod->Build();
+		if( r >= 0 || bout.buffer != 
+			"TestScriptStruct (2, 7) : Error   : Name conflict. 'A' is a class.\n"
+			"TestScriptStruct (6, 9) : Error   : Name conflict. 'a' is an object property.\n" ) TEST_FAILED;
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
+		r = mod->Build();
+		if( r >= 0 || bout.buffer !=
+			"TestScriptStruct (1, 7) : Error   : Illegal member type\n"
+			"TestScriptStruct (5, 7) : Error   : Illegal member type\n" ) TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestHandleInStruct()", mod, ctx);
+		if( r != 0 )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+			{
+				printf("%s\n", ctx->GetExceptionString());
+			}
+			TEST_FAILED;
+		}
+		if( ctx ) ctx->Release();
+
+		mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "TestHandleInStruct2()", mod);
+		if( r != 0 ) TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "Test()", mod);
+		if( r != 0 ) TEST_FAILED;
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script10, strlen(script10), 0);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		r = mod->Build();
+		if( r >= 0 ) TEST_FAILED;
+		if( bout.buffer != "TestScriptStruct (1, 7) : Error   : Illegal member type\n" ) TEST_FAILED;
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script11, strlen(script11), 0);
+		r = mod->Build();
+		if( r >= 0 ) TEST_FAILED;
+		if( bout.buffer != "TestScriptStruct (5, 1) : Info    : Compiling void Test()\nTestScriptStruct (9, 11) : Error   : Reference is read-only\n" ) TEST_FAILED;
+
+		mod->AddScriptSection(TESTNAME, script12, strlen(script12), 0);
+		mod->AddScriptSection(TESTNAME, script13, strlen(script13), 0);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+
+		// The garbage collection doesn't have to be invoked immediately. Modules
+		// can even be discarded before calling the garbage collector.
+		engine->GarbageCollect();
+		
+		// Make sure it is possible to copy a script class that contains an object handle
+		mod->AddScriptSection(TESTNAME, script14, strlen(script14), 0);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "A a; B b; @a.b = @b; b.val = 1; A a2; a2 = a; Assert(a2.b.val == 1);", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Make sure it is possible to copy a script class that contains an array
+		const char *script15 = 
+			"class Some \n"
+			"{ \n"
+			"    int[] i; // need be array \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"    Some e; \n"
+			"    e=some(e); // crash \n"
+			"} \n"
+			"Some@ some(Some@ e) \n"
+			"{ \n"
+			"    return e; \n"
+			"} \n";
+
+		mod->AddScriptSection(TESTNAME, script15);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
 	}
-	if( ctx ) ctx->Release();
-
-	mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "TestHandleInStruct2()", mod);
-	if( r != 0 ) TEST_FAILED;
-
-	mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "Test()", mod);
-	if( r != 0 ) TEST_FAILED;
-
-	bout.buffer = "";
-	mod->AddScriptSection(TESTNAME, script10, strlen(script10), 0);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = mod->Build();
-	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "TestScriptStruct (1, 7) : Error   : Illegal member type\n" ) TEST_FAILED;
-
-	bout.buffer = "";
-	mod->AddScriptSection(TESTNAME, script11, strlen(script11), 0);
-	r = mod->Build();
-	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "TestScriptStruct (5, 1) : Info    : Compiling void Test()\nTestScriptStruct (9, 11) : Error   : Reference is read-only\n" ) TEST_FAILED;
-
-	mod->AddScriptSection(TESTNAME, script12, strlen(script12), 0);
-	mod->AddScriptSection(TESTNAME, script13, strlen(script13), 0);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-
-	// The garbage collection doesn't have to be invoked immediately. Modules
-	// can even be discarded before calling the garbage collector.
-	engine->GarbageCollect();
-	
-	// Make sure it is possible to copy a script class that contains an object handle
-	mod->AddScriptSection(TESTNAME, script14, strlen(script14), 0);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "A a; B b; @a.b = @b; b.val = 1; A a2; a2 = a; Assert(a2.b.val == 1);", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	// Make sure it is possible to copy a script class that contains an array
-	const char *script15 = 
-		"class Some \n"
-        "{ \n"
-        "    int[] i; // need be array \n"
-        "} \n"
-        "void main() \n"
-        "{ \n"
-        "    Some e; \n"
-        "    e=some(e); // crash \n"
-        "} \n"
-        "Some@ some(Some@ e) \n"
-        "{ \n"
-        "    return e; \n"
-        "} \n";
-
-	mod->AddScriptSection(TESTNAME, script15);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "main()", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	engine->Release();
 
 	// A script class must be able to have a registered ref type as a local member
 	{
