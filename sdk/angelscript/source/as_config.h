@@ -165,15 +165,6 @@
 // CPU differences
 //---------------------------------------
 
-// AS_ALIGN
-// Some CPUs require that data words are aligned in some way. This macro
-// should be defined if the words should be aligned to boundaries of the same
-// size as the word, i.e.
-//  1 byte  on 1 byte boundaries
-//  2 bytes on 2 byte boundaries
-//  4 bytes on 4 byte boundaries
-//  8 bytes on 4 byte boundaries (no it's not a typo)
-
 // AS_USE_DOUBLE_AS_FLOAT
 // If there is no 64 bit floating point type, then this constant can be defined
 // to treat double like normal floats.
@@ -397,10 +388,8 @@
 	#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 	#define THISCALL_PASS_OBJECT_POINTER_IN_ECX
 
-	// There doesn't seem to be a standard define to identify Marmalade, so we'll
-	// look for one of these defines that have to be given by the project settings
 	// http://www.madewithmarmalade.com/
-	#if defined(AS_MARMALADE) || defined (MARMALADE)
+	#if defined(__S3E__)
 		#ifndef AS_MARMALADE
 			// From now on we'll use the below define
 			#define AS_MARMALADE
@@ -410,10 +399,18 @@
 		#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
 		
 		// Marmalade doesn't seem to have proper support for 
-		// atomic instructions or read/write locks
+		// atomic instructions or read/write locks, so we turn off 
+		// multithread support
 		//#define AS_POSIX_THREADS
 		#define AS_NO_THREADS
 		#define AS_NO_ATOMIC
+
+		// Marmalade has it's own way of identifying the CPU target
+		// Note, when building for ARM, the gnuc compiler will always  
+		// be used so we don't need to check for it here
+		#if defined(I3D_ARCH_X86)
+			#define AS_X86
+		#endif
 	#else
 		#if _MSC_VER < 1500  // MSVC++ 9 (aka MSVC++ .NET 2008)
 			#define asVSNPRINTF(a, b, c, d) _vsnprintf(a, b, c, d)
@@ -454,7 +451,6 @@
 	#endif
 
 	#ifdef _ARM_
-		#define AS_ALIGN
 		#define AS_ARM
 		#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
@@ -560,8 +556,8 @@
 	#define STDCALL __attribute__((stdcall))
 	#define ASM_AT_N_T
 
-	// Marmalade is a cross platform SDK. It uses G++ to compile for iOS and Android
-	#if defined(AS_MARMALADE) || defined (MARMALADE)
+	// Marmalade is a cross platform SDK. It uses g++ to compile for iOS and Android
+	#if defined(__S3E__)
 		#ifndef AS_MARMALADE
 			// From now on we'll use the below define
 			#define AS_MARMALADE
@@ -575,10 +571,39 @@
 		// atomic instructions or read/write locks
 		#define AS_NO_THREADS
 		#define AS_NO_ATOMIC
-	#endif
+
+		// Identify for which CPU the library is being built
+		#if defined(I3D_ARCH_X86)
+			#define AS_X86
+		#elif defined(I3D_ARCH_ARM)
+			#define AS_ARM
+		
+			// Marmalade appear to use the same ABI as Android when built for ARM
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
+			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
+			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
+			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
+			#undef GNU_STYLE_VIRTUAL_METHOD
+
+			#undef COMPLEX_MASK
+			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+			#undef COMPLEX_RETURN_MASK
+			#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+
+			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
+		#endif
 
 	// MacOSX and IPhone
-	#ifdef __APPLE__
+	#elif defined(__APPLE__)
 
 		#include <TargetConditionals.h>
 
@@ -638,7 +663,6 @@
 			// The IPhone use an ARM processor
 			#define AS_ARM
 			#define AS_IPHONE
-			#define AS_ALIGN
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
@@ -736,7 +760,6 @@
 			#define STDCALL
 		#elif defined(__ARMEL__) || defined(__arm__)
 			#define AS_ARM
-			#define AS_ALIGN
 			#define AS_NO_ATOMIC
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 
@@ -861,7 +884,6 @@
 
 			#define AS_ARM
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
-			#define AS_ALIGN
 		#endif
 
 	// Haiku OS
@@ -930,7 +952,6 @@
 
 // MIPS architecture (generally PS2 and PSP consoles, potentially supports N64 as well)
 #if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
-	#define AS_ALIGN				// align datastructures
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
@@ -940,26 +961,12 @@
 
 	// Gamecube
 	#if defined(_GC)
-		#define AS_ALIGN
 		#define AS_USE_DOUBLE_AS_FLOAT
-	#endif
-	// XBox 360
-	#if (_XBOX_VER >= 200)
-		#define AS_ALIGN
-	#endif
-	// PS3
-	#if defined(__PPU__)
-		#define AS_ALIGN
-	#endif
-	// Wii
-	#if defined(EPPC)
-		#define AS_ALIGN
 	#endif
 #endif
 
 // Dreamcast console
 #ifdef __SH4_SINGLE_ONLY__
-	#define AS_ALIGN				// align datastructures
 	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
@@ -1004,12 +1011,6 @@
 //
 // Internal defines (do not change these)
 //----------------------------------------------------------------
-
-#ifdef AS_ALIGN
-	#define	ALIGN(b) (((b)+3)&(~3))
-#else
-	#define	ALIGN(b) (b)
-#endif
 
 #define ARG_W(b)     ((asWORD*)&b)
 #define ARG_DW(b)    ((asDWORD*)&b)

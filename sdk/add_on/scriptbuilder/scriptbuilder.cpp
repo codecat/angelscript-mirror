@@ -3,14 +3,14 @@
 using namespace std;
 
 #include <stdio.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined( AS_MARMALADE ) && !defined(MARMALADE)
+#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(__S3E__)
 #include <direct.h>
 #endif
 #ifdef _WIN32_WCE
 #include <windows.h> // For GetModuleFileName()
 #endif
 
-#if defined(AS_MARMALADE) || defined(MARMALADE) || defined(__APPLE__)
+#if defined(__S3E__) || defined(__APPLE__)
 #include <unistd.h> // For getcwd()
 #endif
 
@@ -128,7 +128,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 {
 	// Open the script file
 	string scriptFile = filename;
-#if _MSC_VER >= 1500 && !defined(AS_MARMALADE) && !defined(MARMALADE)
+#if _MSC_VER >= 1500 && !defined(__S3E__)
 	FILE *f = 0;
 	fopen_s(&f, scriptFile.c_str(), "rb");
 #else
@@ -919,7 +919,7 @@ static const char *GetCurrentDir(char *buf, size_t size)
 #endif
 
     return buf;
-#elif defined(AS_MARMALADE) || defined(MARMALADE)
+#elif defined(__S3E__)
 	// Marmalade uses its own portable C library
 	return getcwd(buf, (int)size);
 #elif _XBOX_VER >= 200

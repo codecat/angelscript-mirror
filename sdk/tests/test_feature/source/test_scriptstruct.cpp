@@ -232,7 +232,6 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
-	// http://www.gamedev.net/community/forums/topic.asp?topic_id=463305
 	// TODO: decl: Test initialization of members directly in declaration
 	//             class T { array<int> @a = {1,2,3} }                              // Success
 	//             class T { int a = 42, b = a/2; }                                 // Success

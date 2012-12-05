@@ -156,6 +156,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_ILLUMOS
 		"AS_ILLUMOS "
 #endif
+#ifdef AS_MARMALADE
+		"AS_MARMALADE "
+#endif
 
 
 	// CPU family

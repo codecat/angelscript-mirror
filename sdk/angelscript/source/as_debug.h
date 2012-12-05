@@ -164,7 +164,7 @@ protected:
 		// Write the analyzed info into a file for inspection
 		_mkdir("AS_DEBUG");
 		FILE *fp;
-		#if _MSC_VER >= 1500 
+		#if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 			fopen_s(&fp, "AS_DEBUG/profiling_summary.txt", "wt");
 		#else
 			fp = fopen("AS_DEBUG/profiling_summary.txt", "wt");
