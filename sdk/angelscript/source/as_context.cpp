@@ -80,7 +80,7 @@ public:
 		// It's useful for determining what needs to be optimized.
 
 		_mkdir("AS_DEBUG");
-		#if _MSC_VER >= 1500 
+		#if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 			FILE *f;
 			fopen_s(&f, "AS_DEBUG/stats.txt", "wt");
 		#else

@@ -2026,7 +2026,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	asCString str = "AS_DEBUG/";
 	str += name;
 
-#if _MSC_VER >= 1500 
+#if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 	FILE *file;
 	fopen_s(&file, str.AddressOf(), "w");
 #else
@@ -2111,7 +2111,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 		fprintf(file, "%5d ", pos);
 		pos += instr->GetSize();
 
-		fprintf(file, "%3d %c ", instr->stackSize + func->variableSpace, instr->marked ? '*' : ' ');
+		fprintf(file, "%3d %c ", int(instr->stackSize + func->variableSpace), instr->marked ? '*' : ' ');
 
 		switch( asBCInfo[instr->op].type )
 		{

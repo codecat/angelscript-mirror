@@ -248,7 +248,7 @@ asBSTR asBStrFormat(double number)
 asBSTR asBStrFormatBits(asDWORD bits)
 {
 	char str[50];
-	sprintf(str, "%X", (unsigned int)bits);
+	sprintf(str, "%X", (unsigned int)(bits));
 	int len = (int)strlen(str);
 
 	// We must allocate a new bstr that the script engine will free afterwards
