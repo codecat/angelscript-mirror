@@ -402,7 +402,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->paramNames        = parameterNames;
 
 	asCCompiler compiler(engine);
-	if( compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func) >= 0 )
+	if( compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func, 0) >= 0 )
 	{
 		// Return the function
 		*outFunc = func;
@@ -677,6 +677,20 @@ void asCBuilder::CompileFunctions()
 		asCCompiler compiler(engine);
 		asCScriptFunction *func = engine->scriptFunctions[current->funcId];
 
+		// Find the class declaration for constructors
+		sClassDeclaration *classDecl = 0;
+		if( current->objType && current->name == current->objType->name )
+		{
+			for( asUINT n = 0; n < classDeclarations.GetLength(); n++ )
+			{
+				if( classDeclarations[n]->name == current->name )
+				{
+					classDecl = classDeclarations[n];
+					break;
+				}
+			}
+		}
+
 		if( current->node )
 		{
 			int r, c;
@@ -686,23 +700,15 @@ void asCBuilder::CompileFunctions()
 			str.Format(TXT_COMPILING_s, str.AddressOf());
 			WriteInfo(current->script->name, str, r, c, true);
 
-			// TODO: decl: When compiling a constructor, need to pass the list of member initializations
-			compiler.CompileFunction(this, current->script, current->paramNames, current->node, func);
+			// When compiling a constructor need to pass the class declaration for member initializations
+			compiler.CompileFunction(this, current->script, current->paramNames, current->node, func, classDecl);
 
 			preMessage.isSet = false;
 		}
 		else if( current->name == current->objType->name )
 		{
-			asCScriptNode *node = 0;
-			for( asUINT n = 0; n < classDeclarations.GetLength(); n++ )
-			{
-				if( classDeclarations[n]->name == current->name )
-				{
-					node = classDeclarations[n]->node;
-					break;
-				}
-			}
-
+			asCScriptNode *node = classDecl->node;
+			
 			int r = 0, c = 0;
 			if( node )
 				current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
@@ -711,10 +717,9 @@ void asCBuilder::CompileFunctions()
 			str.Format(TXT_COMPILING_s, str.AddressOf());
 			WriteInfo(current->script->name, str, r, c, true);
 
-			// This is the default constructor, that is generated
+			// This is the default constructor that is generated
 			// automatically if not implemented by the user.
-			// TODO: decl: Need to pass the list of member initializations so these can be compiled in the constructor
-			compiler.CompileDefaultConstructor(this, current->script, node, func);
+			compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
 
 			preMessage.isSet = false;
 		}
@@ -2489,10 +2494,9 @@ void asCBuilder::CompileClasses()
 								      n->nodeType == snInitList ||
 									  n->nodeType == snAssignment );
 
-							// TODO: decl: Store the initialization nodes in the builder's classDeclaration
-							//             so these can be compiled when compiling the constructor. Keep file pointer
-							//             with each node, as mixin's can be included from a different file
-							WriteError("Initialization of class member in declaration is not yet supported", file, n);
+							// Store the initialization node
+							sPropertyInitializer p = {name, n, file};
+							decl->propInits.PushLast(p);
 						}
 					}
 					else

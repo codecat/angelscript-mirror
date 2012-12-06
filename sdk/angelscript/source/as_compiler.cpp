@@ -116,9 +116,13 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	byteCode.ClearAll();
 }
 
-int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, asCScriptFunction *outFunc)
+int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, asCScriptFunction *outFunc, sClassDeclaration *classDecl)
 {
 	Reset(builder, script, outFunc);
+
+	// TODO: decl: 
+	if( classDecl->propInits.GetLength() > 0 )
+		Error("Initialization of class member in declaration is not yet supported", node);
 	
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
@@ -387,7 +391,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 }
 
 // Entry
-int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asCArray<asCString> &parameterNames, asCScriptNode *func, asCScriptFunction *outFunc)
+int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asCArray<asCString> &parameterNames, asCScriptNode *func, asCScriptFunction *outFunc, sClassDeclaration *classDecl)
 {
 	TimeIt("asCCompiler::CompileFunction");
 
@@ -399,6 +403,10 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	//--------------------------------------------
 	// Compile the statement block
 
+	// TODO: decl:
+	if( m_isConstructor && classDecl->propInits.GetLength() > 0 )
+		Error("Initialization of class member in declaration is not yet supported", func);
+	
 	// We need to parse the statement block now
 	asCScriptNode *blockBegin;
 

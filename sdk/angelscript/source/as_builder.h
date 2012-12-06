@@ -83,6 +83,13 @@ struct sGlobalVariableDescription
 template<>
 void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const;
 
+struct sPropertyInitializer
+{
+	asCString      name;
+	asCScriptNode *node;
+	asCScriptCode *file;
+};
+
 struct sClassDeclaration
 {
 	sClassDeclaration() {script = 0; node = 0; validState = 0; objType = 0; isExistingShared = false; isFinal = false;}
@@ -94,6 +101,8 @@ struct sClassDeclaration
 	asCObjectType *objType;
 	bool           isExistingShared;
 	bool           isFinal;
+
+	asCArray<sPropertyInitializer> propInits;
 };
 
 struct sFuncDef
