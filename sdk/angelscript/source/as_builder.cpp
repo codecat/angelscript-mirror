@@ -2495,7 +2495,7 @@ void asCBuilder::CompileClasses()
 									  n->nodeType == snAssignment );
 
 							// Store the initialization node
-							sPropertyInitializer p = {name, n, file};
+							sPropertyInitializer p(name, n, file);
 							decl->propInits.PushLast(p);
 						}
 					}

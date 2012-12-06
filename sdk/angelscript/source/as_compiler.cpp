@@ -6600,12 +6600,12 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			{
 				// This is an index access, check if there is a property accessor that takes an index arg
 				asSExprContext dummyArg(engine);
-				r = FindPropertyAccessor(name, &access, &dummyArg, errNode, true);
+				r = FindPropertyAccessor(name, &access, &dummyArg, errNode, 0, true);
 			}
 			if( r == 0 )
 			{
 				// Normal property access
-				r = FindPropertyAccessor(name, &access, errNode, true);
+				r = FindPropertyAccessor(name, &access, errNode, 0, true);
 			}
 			if( r < 0 ) return -1;
 			if( access.property_get || access.property_set )
@@ -6679,107 +6679,107 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	// Is it a global property?
 	if( !found && !objType && !noGlobal )
 	{
-		// See if there are any matching global property accessors
-		// TODO: namespace: Support namespaces for global property accessors too
-		asSExprContext access(engine);
-		int r = 0;
-		if( errNode->next && errNode->next->tokenType == ttOpenBracket )
+		asSNameSpace *ns = DetermineNameSpace(scope);
+		if( ns )
 		{
-			// This is an index access, check if there is a property accessor that takes an index arg
-			asSExprContext dummyArg(engine);
-			r = FindPropertyAccessor(name, &access, &dummyArg, errNode);
-		}
-		if( r == 0 )
-		{
-			// Normal property access
-			r = FindPropertyAccessor(name, &access, errNode);
-		}
-		if( r < 0 ) return -1;
-		if( access.property_get || access.property_set )
-		{
-			// Prepare the bytecode for the function call
-			MergeExprBytecodeAndType(ctx, &access);
-
-			found = true;
-		}
-
-		// See if there is any matching global property
-		if( !found )
-		{
-			bool isCompiled = true;
-			bool isPureConstant = false;
-			bool isAppProp = false;
-			asQWORD constantValue = 0;
-			asCGlobalProperty *prop = 0;
-			asSNameSpace *ns = DetermineNameSpace(scope);
-			if( ns )
-				prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
-			if( prop )
+			// See if there are any matching global property accessors
+			asSExprContext access(engine);
+			int r = 0;
+			if( errNode->next && errNode->next->tokenType == ttOpenBracket )
 			{
+				// This is an index access, check if there is a property accessor that takes an index arg
+				asSExprContext dummyArg(engine);
+				r = FindPropertyAccessor(name, &access, &dummyArg, errNode, ns);
+			}
+			if( r == 0 )
+			{
+				// Normal property access
+				r = FindPropertyAccessor(name, &access, errNode, ns);
+			}
+			if( r < 0 ) return -1;
+			if( access.property_get || access.property_set )
+			{
+				// Prepare the bytecode for the function call
+				MergeExprBytecodeAndType(ctx, &access);
+
 				found = true;
+			}
 
-				// Verify that the global property has been compiled already
-				if( isCompiled )
+			// See if there is any matching global property
+			if( !found )
+			{
+				bool isCompiled = true;
+				bool isPureConstant = false;
+				bool isAppProp = false;
+				asQWORD constantValue = 0;
+				asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
+				if( prop )
 				{
-					if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
-					{
-						ctx->type.dataType.MakeHandle(true);
-						ctx->type.isExplicitHandle = true;
-					}
+					found = true;
 
-					// If the global property is a pure constant
-					// we can allow the compiler to optimize it. Pure
-					// constants are global constant variables that were
-					// initialized by literal constants.
-					if( isPureConstant )
-						ctx->type.SetConstantQW(prop->type, constantValue);
-					else
+					// Verify that the global property has been compiled already
+					if( isCompiled )
 					{
-						// A shared type must not access global vars, unless they  
-						// too are shared, e.g. application registered vars
-						if( outFunc->IsShared() )
+						if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
 						{
-							if( !isAppProp )
-							{
-								asCString str;
-								str.Format(TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s, prop->name.AddressOf());
-								Error(str, errNode);
-
-								// Allow the compilation to continue to catch other problems
-							}
+							ctx->type.dataType.MakeHandle(true);
+							ctx->type.isExplicitHandle = true;
 						}
 
-						ctx->type.Set(prop->type);
-						ctx->type.dataType.MakeReference(true);
-						ctx->type.isLValue = true;
-
-						if( ctx->type.dataType.IsPrimitive() )
-						{
-							// Load the address of the variable into the register
-							ctx->bc.InstrPTR(asBC_LDG, prop->GetAddressOfValue());
-						}
+						// If the global property is a pure constant
+						// we can allow the compiler to optimize it. Pure
+						// constants are global constant variables that were
+						// initialized by literal constants.
+						if( isPureConstant )
+							ctx->type.SetConstantQW(prop->type, constantValue);
 						else
 						{
-							// Push the address of the variable on the stack
-							ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
-
-							// If the object is a value type, then we must validate the existance,
-							// as it could potentially be accessed before it is initialized.
-							if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
-								!ctx->type.dataType.IsObjectHandle() )
+							// A shared type must not access global vars, unless they  
+							// too are shared, e.g. application registered vars
+							if( outFunc->IsShared() )
 							{
-								// TODO: runtime optimize: This is not necessary for application registered properties
-								ctx->bc.Instr(asBC_ChkRefS);
+								if( !isAppProp )
+								{
+									asCString str;
+									str.Format(TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s, prop->name.AddressOf());
+									Error(str, errNode);
+
+									// Allow the compilation to continue to catch other problems
+								}
+							}
+
+							ctx->type.Set(prop->type);
+							ctx->type.dataType.MakeReference(true);
+							ctx->type.isLValue = true;
+
+							if( ctx->type.dataType.IsPrimitive() )
+							{
+								// Load the address of the variable into the register
+								ctx->bc.InstrPTR(asBC_LDG, prop->GetAddressOfValue());
+							}
+							else
+							{
+								// Push the address of the variable on the stack
+								ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
+
+								// If the object is a value type, then we must validate the existance,
+								// as it could potentially be accessed before it is initialized.
+								if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
+									!ctx->type.dataType.IsObjectHandle() )
+								{
+									// TODO: runtime optimize: This is not necessary for application registered properties
+									ctx->bc.Instr(asBC_ChkRefS);
+								}
 							}
 						}
 					}
-				}
-				else
-				{
-					asCString str;
-					str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
-					Error(str, errNode);
-					return -1;
+					else
+					{
+						asCString str;
+						str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
+						Error(str, errNode);
+						return -1;
+					}
 				}
 			}
 		}
@@ -8488,12 +8488,12 @@ void asCCompiler::ConvertToReference(asSExprContext *ctx)
 	}
 }
 
-int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node, bool isThisAccess)
+int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asCScriptNode *node, asSNameSpace *ns, bool isThisAccess)
 {
-	return FindPropertyAccessor(name, ctx, 0, node, isThisAccess);
+	return FindPropertyAccessor(name, ctx, 0, node, ns, isThisAccess);
 }
 
-int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node, bool isThisAccess)
+int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node, asSNameSpace *ns, bool isThisAccess)
 {
 	if( engine->ep.propertyAccessorMode == 0 )
 	{
@@ -8508,6 +8508,8 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 
 	if( ctx->type.dataType.IsObject() )
 	{
+		asASSERT( ns == 0 );
+
 		// Don't look for property accessors in script classes if the script 
 		// property accessors have been disabled by the application
 		if( !(ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) ||
@@ -8549,11 +8551,12 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 	}
 	else
 	{
+		asASSERT( ns != 0 );
+
 		// Look for appropriate global functions.
 		asCArray<int> funcs;
 		asUINT n;
-		// TODO: namespace: use the proper namespace
-		builder->GetFunctionDescriptions(getName.AddressOf(), funcs, engine->nameSpaces[0]);
+		builder->GetFunctionDescriptions(getName.AddressOf(), funcs, ns);
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
@@ -8573,8 +8576,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		}
 
 		funcs.SetLength(0);
-		// TODO: namespace: use the proper namespace
-		builder->GetFunctionDescriptions(setName.AddressOf(), funcs, engine->nameSpaces[0]);
+		builder->GetFunctionDescriptions(setName.AddressOf(), funcs, ns);
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
@@ -9084,39 +9086,38 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Get the property name
 			asCString name(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
 
-			// We need to look for get/set property accessors.
-			// If found, the context stores information on the get/set accessors
-			// until it is known which is to be used.
-			int r = 0;
-			if( node->next && node->next->tokenType == ttOpenBracket )
-			{
-				// The property accessor should take an index arg
-				asSExprContext dummyArg(engine);
-				r = FindPropertyAccessor(name, ctx, &dummyArg, node);
-			}
-			if( r == 0 )
-				r = FindPropertyAccessor(name, ctx, node);
-			if( r != 0 )
-				return r;
-
-			if( !ctx->type.dataType.IsPrimitive() )
-				Dereference(ctx, true);
-
-			if( ctx->type.dataType.IsObjectHandle() )
-			{
-				// Convert the handle to a normal object
-				asCDataType dt = ctx->type.dataType;
-				dt.MakeHandle(false);
-
-				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
-
-				// The handle may not have been an lvalue, but the dereferenced object is
-				ctx->type.isLValue = true;
-			}
-
-			// Find the property offset and type
 			if( ctx->type.dataType.IsObject() )
 			{
+				// We need to look for get/set property accessors.
+				// If found, the context stores information on the get/set accessors
+				// until it is known which is to be used.
+				int r = 0;
+				if( node->next && node->next->tokenType == ttOpenBracket )
+				{
+					// The property accessor should take an index arg
+					asSExprContext dummyArg(engine);
+					r = FindPropertyAccessor(name, ctx, &dummyArg, node, 0);
+				}
+				if( r == 0 )
+					r = FindPropertyAccessor(name, ctx, node, 0);
+				if( r != 0 )
+					return r;
+
+				if( !ctx->type.dataType.IsPrimitive() )
+					Dereference(ctx, true);
+
+				if( ctx->type.dataType.IsObjectHandle() )
+				{
+					// Convert the handle to a normal object
+					asCDataType dt = ctx->type.dataType;
+					dt.MakeHandle(false);
+
+					ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV);
+
+					// The handle may not have been an lvalue, but the dereferenced object is
+					ctx->type.isLValue = true;
+				}
+
 				bool isConst = ctx->type.dataType.IsReadOnly();
 
 				asCObjectProperty *prop = builder->GetObjectProperty(ctx->type.dataType, name.AddressOf());
@@ -9232,6 +9233,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		// evaluated, then we should process the property accessor as a get access now as the new
 		// index operator is on the result of that accessor.
 		asCString propertyName;
+		asSNameSpace *ns = 0;
 		if( ((ctx->property_get && builder->GetFunctionDescription(ctx->property_get)->GetParamCount() == 1) ||
 			 (ctx->property_set && builder->GetFunctionDescription(ctx->property_set)->GetParamCount() == 2)) &&
 			(ctx->property_arg && ctx->property_arg->type.dataType.GetTokenType() == ttUnrecognizedToken) )
@@ -9254,7 +9256,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 			else
 			{
+				// Store the namespace where the function is declared 
+				// so the same function can be found later
 				ctx->type.SetDummy();
+				ns = func->nameSpace;
 			}
 
 			ctx->property_get = ctx->property_set = 0;
@@ -9292,7 +9297,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		if( r == 0 )
 		{
 			// Check for accessors methods for the opIndex
-			r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, &expr, node);
+			r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, &expr, node, ns);
 			if( r == 0 )
 			{
 				asCString str;

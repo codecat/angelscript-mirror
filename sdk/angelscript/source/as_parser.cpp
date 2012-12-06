@@ -1731,12 +1731,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 			else if( t1.type == ttNamespace )
 				node->AddChildLast(ParseNamespace());
 			else if( t1.type == ttEnd )
-			{
-				if( inBlock )
-					Error(ExpectedToken(asCTokenizer::GetDefinition(ttEndStatementBlock)), &t1);
-
 				return node;
-			}
 			else if( inBlock && t1.type == ttEndStatementBlock )
 				return node;
 			else
@@ -1799,7 +1794,12 @@ asCScriptNode *asCParser::ParseNamespace()
 	if( t1.type == ttStartStatementBlock )
 		node->UpdateSourcePos(t1.pos, t1.length);
 	else
+	{
 		Error(ExpectedToken(asCTokenizer::GetDefinition(ttStartStatementBlock)), &t1);
+		return node;
+	}
+
+	sToken start = t1;
 
 	node->AddChildLast(ParseScript(true));
 
@@ -1809,7 +1809,14 @@ asCScriptNode *asCParser::ParseNamespace()
 		if( t1.type == ttEndStatementBlock )
 			node->UpdateSourcePos(t1.pos, t1.length);
 		else
-			Error(ExpectedToken(asCTokenizer::GetDefinition(ttEndStatementBlock)), &t1);
+		{
+			if( t1.type == ttEnd )
+				Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
+			else
+				Error(ExpectedToken(asCTokenizer::GetDefinition(ttEndStatementBlock)), &t1);
+			Info(TXT_WHILE_PARSING_NAMESPACE, &start);
+			return node;
+		}
 	}
 
 	return node;

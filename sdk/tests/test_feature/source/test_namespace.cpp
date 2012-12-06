@@ -548,6 +548,93 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test property accessors with namespaces
+	// http://www.gamedev.net/topic/635042-indexed-property-accessors-and-namespaces/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"int get_foo() { return 42; } \n"
+			"namespace nm { int get_foo2() { return 42; } } \n"
+			"void test() { \n"
+			"  assert( foo == 42 ); \n"      // ok
+			"  assert( ::foo == 42 ); \n"    // ok
+			"  assert( nm::foo == 42 ); \n"  // should fail to compile
+			"  assert( nm::foo2 == 42 ); \n" // ok
+			"  assert( foo2 == 42 ); \n"     // should fail to compile
+			"} \n"
+			"namespace nm { \n"
+			"void test2() { \n"
+			"  ::assert( foo == 42 ); \n"      // should fail to compile
+			"  ::assert( ::foo == 42 ); \n"    // ok
+			"  ::assert( nm::foo == 42 ); \n"  // should fail to compile
+			"  ::assert( nm::foo2 == 42 ); \n" // ok
+			"  ::assert( foo2 == 42 ); \n"     // ok
+			"} \n"
+			"} \n";
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
+						   "test (6, 11) : Error   : 'nm::foo' is not declared\n"
+						   "test (8, 11) : Error   : 'foo2' is not declared\n"
+						   "test (11, 1) : Info    : Compiling void test2()\n"
+						   "test (12, 13) : Error   : 'foo' is not declared\n"
+						   "test (14, 13) : Error   : 'nm::foo' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Indexed property accessors
+		script = 
+			"int get_foo(uint) { return 42; } \n"
+			"namespace nm { int get_foo2(uint) { return 42; } } \n"
+			"void test() { \n"
+			"  assert( foo[0] == 42 ); \n"      // ok
+			"  assert( ::foo[0] == 42 ); \n"    // ok
+			"  assert( nm::foo[0] == 42 ); \n"  // should fail to compile
+			"  assert( nm::foo2[0] == 42 ); \n" // ok
+			"  assert( foo2[0] == 42 ); \n"     // should fail to compile
+			"} \n"
+			"namespace nm { \n"
+			"void test2() { \n"
+			"  ::assert( foo[0] == 42 ); \n"      // should fail to compile
+			"  ::assert( ::foo[0] == 42 ); \n"    // ok
+			"  ::assert( nm::foo[0] == 42 ); \n"  // should fail to compile
+			"  ::assert( nm::foo2[0] == 42 ); \n" // ok
+			"  ::assert( foo2[0] == 42 ); \n"     // ok
+			"} \n"
+			"} \n";
+
+		bout.buffer = "";
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
+						   "test (6, 11) : Error   : 'nm::foo' is not declared\n"
+						   "test (8, 11) : Error   : 'foo2' is not declared\n"
+						   "test (11, 1) : Info    : Compiling void test2()\n"
+						   "test (12, 13) : Error   : 'foo' is not declared\n"
+						   "test (14, 13) : Error   : 'nm::foo' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
