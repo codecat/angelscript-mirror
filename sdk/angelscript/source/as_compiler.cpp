@@ -106,8 +106,9 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 
 	hasCompileErrors = false;
 
-	m_isConstructor = false;
+	m_isConstructor       = false;
 	m_isConstructorCalled = false;
+	m_classDecl           = 0;
 
 	nextLabel = 0;
 	breakLabels.SetLength(0);
@@ -120,10 +121,8 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 {
 	Reset(builder, script, outFunc);
 
-	// TODO: decl: 
-	if( classDecl->propInits.GetLength() > 0 )
-		Error("Initialization of class member in declaration is not yet supported", node);
-	
+	m_classDecl = classDecl;
+
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
 
@@ -136,24 +135,8 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 		byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 	}
 
-	// Make sure all the class members can be initialized with default constructors
-	// TODO: decl: Build bytecode with the initialization for each member that has a specific initialization defined.
-	//             Those that do not have a specific initialization should be initialized with the default constructor (or give an error if no default constructor is available)
-	for( asUINT n = 0; n < outFunc->objectType->properties.GetLength(); n++ )
-	{
-		asCDataType &dt = outFunc->objectType->properties[n]->type;
-		if( dt.IsObject() && !dt.IsObjectHandle() &&
-			(((dt.GetObjectType()->flags & asOBJ_REF) && dt.GetObjectType()->beh.factory == 0) ||
-			 ((dt.GetObjectType()->flags & asOBJ_VALUE) && !(dt.GetObjectType()->flags & asOBJ_POD) && dt.GetObjectType()->beh.construct == 0)) )
-		{
-			asCString str;
-			if( dt.GetFuncDef() )
-				str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
-			else
-				str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
-			Error(str, node);
-		}
-	}
+	// Initialize the class members
+	CompileMemberInitialization();
 
 	// Pop the object pointer from the stack
 	byteCode.Ret(AS_PTR_SIZE);
@@ -390,6 +373,50 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	return stackPos;
 }
 
+void asCCompiler::CompileMemberInitialization()
+{
+	asASSERT( m_classDecl );
+
+	// Initialize each member in the order they were declared
+	for( asUINT n = 0; n < outFunc->objectType->properties.GetLength(); n++ )
+	{
+		asCObjectProperty *prop = outFunc->objectType->properties[n];
+
+		// Check if the property has an initialization expression
+		bool found = false;
+		for( asUINT m = 0; m < m_classDecl->propInits.GetLength(); m++ )
+		{
+			if( m_classDecl->propInits[m].name == prop->name )
+			{
+				// TODO: decl: Compile the initialization of the member
+				Error("Initialization of class member in declaration is not yet supported", m_classDecl->propInits[m].node);
+				found = true;
+				break;
+			}
+		}
+
+		if( !found )
+		{
+			// TODO: decl: Compile the initialization of the member with the default constructor
+			//             This is currently done directly in asCScriptObject construct, but will now be done in the bytecode
+
+			// Make sure all the class members can be initialized with default constructors
+			asCDataType &dt = outFunc->objectType->properties[n]->type;
+			if( dt.IsObject() && !dt.IsObjectHandle() &&
+				(((dt.GetObjectType()->flags & asOBJ_REF) && dt.GetObjectType()->beh.factory == 0) ||
+				 ((dt.GetObjectType()->flags & asOBJ_VALUE) && !(dt.GetObjectType()->flags & asOBJ_POD) && dt.GetObjectType()->beh.construct == 0)) )
+			{
+				asCString str;
+				if( dt.GetFuncDef() )
+					str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
+				else
+					str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
+				Error(str, m_classDecl->node);
+			}
+		}
+	}
+}
+
 // Entry
 int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asCArray<asCString> &parameterNames, asCScriptNode *func, asCScriptFunction *outFunc, sClassDeclaration *classDecl)
 {
@@ -403,10 +430,9 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	//--------------------------------------------
 	// Compile the statement block
 
-	// TODO: decl:
-	if( m_isConstructor && classDecl->propInits.GetLength() > 0 )
-		Error("Initialization of class member in declaration is not yet supported", func);
-	
+	if( m_isConstructor )
+		m_classDecl = classDecl;
+
 	// We need to parse the statement block now
 	asCScriptNode *blockBegin;
 
@@ -453,21 +479,39 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	if( outFunc->objectType )
 	{
-		// Call the base class' default constructor unless called manually in the code
-		if( m_isConstructor && !m_isConstructorCalled && outFunc->objectType->derivedFrom )
+		if( m_isConstructor )
 		{
-			if( outFunc->objectType->derivedFrom->beh.construct )
+			if( outFunc->objectType->derivedFrom )
 			{
-				asCByteCode tmpBC(engine);
-				tmpBC.InstrSHORT(asBC_PSF, 0);
-				tmpBC.Instr(asBC_RDSPtr);
-				tmpBC.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
-				tmpBC.OptimizeLocally(tempVariableOffsets);
-				byteCode.AddCode(&tmpBC);
+				// Call the base class' default constructor unless called manually in the code
+				if( !m_isConstructorCalled )
+				{
+					if( outFunc->objectType->derivedFrom->beh.construct )
+					{
+						asCByteCode tmpBC(engine);
+						tmpBC.InstrSHORT(asBC_PSF, 0);
+						tmpBC.Instr(asBC_RDSPtr);
+						tmpBC.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+						tmpBC.OptimizeLocally(tempVariableOffsets);
+						byteCode.AddCode(&tmpBC);
+
+						// Add the initialization of the members
+						CompileMemberInitialization();
+					}
+					else
+						Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
+				}
+				else
+				{
+					// TODO: decl: The member initialization should be done right after calling the base class' constructor
+					if( m_classDecl->propInits.GetLength() > 0 )
+						Error("Member initialization in declaration is not yet supported when base class' constructor is called manually", blockBegin);
+				}
 			}
 			else
 			{
-				Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
+				// Add the initialization of the members
+				CompileMemberInitialization();
 			}
 		}
 
@@ -487,11 +531,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			byteCode.AddCode(&tmpBC);
 		}
 	}
-
-	// TODO: decl: Compile the initialization for class members in the constructor
-	//             This should be done after super() so the base class' members are 
-	//             initialized. The compilation of the initialization must be implemented
-	//             in a common method of the compiler as it will be called from multiple places
 
 	// Add the code for the statement block
 	byteCode.AddCode(&bc);
