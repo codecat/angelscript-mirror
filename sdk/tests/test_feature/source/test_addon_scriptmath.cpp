@@ -30,7 +30,10 @@ bool Test()
 	bool fail = false;
 
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("Skipped due to max portability\n");
 		return fail;
+	}
 
 	COutStream out;
 	CBufferedOutStream bout;

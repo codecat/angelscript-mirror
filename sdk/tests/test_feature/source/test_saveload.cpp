@@ -1533,7 +1533,7 @@ bool TestAndrewPrice()
 			TEST_FAILED;
 
 		CScriptArray *arr = reinterpret_cast<CScriptArray*>(mod->GetAddressOfGlobalVar(0));
-		if( arr->GetSize() != 2 || strcmp(*reinterpret_cast<const char**>(arr->At(1)), "Storage[1]") != 0 )
+		if( arr == 0 || arr->GetSize() != 2 || strcmp(*reinterpret_cast<const char**>(arr->At(1)), "Storage[1]") != 0 )
 			TEST_FAILED;
 
 		engine->Release();

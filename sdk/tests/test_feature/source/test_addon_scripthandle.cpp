@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scripthandle/scripthandle.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 namespace Test_Addon_ScriptHandle
 {
@@ -66,10 +67,17 @@ bool Test()
 		RegisterScriptHandle(engine);
 		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterGlobalFunction("void ReceiveRefByVal(ref@)", asFUNCTION(ReceiveRefByValue), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void ReceiveRefByRef(ref&in)", asFUNCTION(ReceiveRefByRef), asCALL_CDECL);
 		engine->RegisterGlobalFunction("ref @ReturnRef()", asFUNCTION(ReturnRef), asCALL_CDECL);
 		engine->RegisterGlobalFunction("ref @GetFunc1()", asFUNCTION(GetFunc1), asCALL_CDECL);
+#else
+		engine->RegisterGlobalFunction("void ReceiveRefByVal(ref@)", WRAP_FN(ReceiveRefByValue), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void ReceiveRefByRef(ref&in)", WRAP_FN(ReceiveRefByRef), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("ref @ReturnRef()", WRAP_FN(ReturnRef), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("ref @GetFunc1()", WRAP_FN(GetFunc1), asCALL_GENERIC);
+#endif
 
 		// TODO: optimize: assert( ha !is null ); is producing code that unecessarily calls ClrVPtr and FREE for the null handle
 		const char *script = 

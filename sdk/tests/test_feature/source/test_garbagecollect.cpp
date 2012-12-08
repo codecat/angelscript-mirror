@@ -1,4 +1,4 @@
-
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 #include "utils.h"
 
@@ -317,9 +317,14 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		RegisterStdString(engine);
-		engine->RegisterGlobalFunction("void yield()", asFUNCTION(Yield), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC);
+#ifndef AS_MAX_PORTABILITY
+		engine->RegisterGlobalFunction("void yield()", asFUNCTION(Yield), asCALL_CDECL);
 		engine->RegisterGlobalFunction("void exit()", asFUNCTION(Exit), asCALL_CDECL);
+#else
+		engine->RegisterGlobalFunction("void yield()", WRAP_FN(Yield), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void exit()", WRAP_FN(Exit), asCALL_GENERIC);
+#endif
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
