@@ -80,7 +80,10 @@ bool Test()
 	RegisterScriptArray(engine, true);
 
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	RegisterScriptMathComplex(engine);
+	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		RegisterScriptMathComplex(engine);
+	else
+		engine->RegisterObjectType("complex", 4, asOBJ_VALUE | asOBJ_POD);
 
 	// Test the parse token method
 	asETokenClass t = engine->ParseToken("!is");

@@ -28,6 +28,10 @@ static const char *script =
 bool Test()
 {
 	bool fail = false;
+
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		return fail;
+
 	COutStream out;
 	CBufferedOutStream bout;
 	int r;
