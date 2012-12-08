@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptany/scriptany.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 namespace TestDynamicConfig
 {
@@ -119,8 +120,13 @@ bool Test()
 
 		engine->BeginConfigGroup("gr");
 		engine->RegisterObjectType("type", 0, asOBJ_REF);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterObjectBehaviour("type", asBEHAVE_ADDREF, "void f()", asMETHOD(Type,AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("type", asBEHAVE_RELEASE, "void f()", asMETHOD(Type,Release), asCALL_THISCALL);
+#else
+		engine->RegisterObjectBehaviour("type", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Type,AddRef), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Type,Release), asCALL_GENERIC);
+#endif
 		engine->RegisterFuncdef("void fun(type @)");
 		engine->RegisterObjectProperty("type", "fun @callback", asOFFSET(Type,callback));
 		engine->EndConfigGroup();
@@ -670,7 +676,7 @@ bool Test()
 	RegisterStdString(engine);
 
 	engine->BeginConfigGroup("g");
-	r = engine->RegisterGlobalFunction("void SaveLesson(const string &in)", asFUNCTION(0), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void SaveLesson(const string &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 	engine->EndConfigGroup();
 
 	engine->Release();

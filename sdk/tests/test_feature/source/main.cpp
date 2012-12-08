@@ -198,6 +198,14 @@ int main(int argc, char **argv)
 	printf("AngelScript version: %s\n", asGetLibraryVersion());
 	printf("AngelScript options: %s\n", asGetLibraryOptions());
 
+#ifndef AS_MAX_PORTABILITY
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	{
+		printf("Compile the tests with AS_MAX_PORTABILITY defined\n");
+		goto failed;
+	}
+#endif
+
 #ifdef __dreamcast__
 	fs_chdir(asTestDir);
 #endif

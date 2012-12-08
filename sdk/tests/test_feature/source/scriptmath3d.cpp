@@ -469,6 +469,7 @@ void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("vector3", "float length() const", asFUNCTION(Vector3Length_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register the swizzle operators
+/*
 	r = engine->RegisterObjectMethod("vector3", "vector3 get_xyz() const", asFUNCTION(Vector3_get_xyz_Generic), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("vector3", "vector3 get_yzx() const", asFUNCTION(Vector3_get_yzx_Generic), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("vector3", "vector3 get_zxy() const", asFUNCTION(Vector3_get_zxy_Generic), asCALL_THISCALL); assert( r >= 0 );
@@ -481,6 +482,7 @@ void RegisterScriptMath3D_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("vector3", "void set_zyx(const vector3 &in)", asFUNCTION(Vector3_set_zyx_Generic), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("vector3", "void set_yxz(const vector3 &in)", asFUNCTION(Vector3_set_yxz_Generic), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("vector3", "void set_xzy(const vector3 &in)", asFUNCTION(Vector3_set_xzy_Generic), asCALL_THISCALL); assert( r >= 0 );
+*/
 }
 
 void RegisterScriptMath3D(asIScriptEngine *engine)

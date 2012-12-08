@@ -111,7 +111,11 @@ bool TestNested()
 		RegisterStdString(engine);
 		RegisterScriptHandle(engine);
 
+#ifndef AS_MAX_PORTABILITY
 		int r = engine->RegisterGlobalFunction("ref@ CreateObject(const string& in)", asFUNCTIONPR(CreateObject, (const std::string&), CScriptHandle), asCALL_CDECL); assert( r >= 0 );
+#else
+		int r = engine->RegisterGlobalFunction("ref@ CreateObject(const string& in)", WRAP_FN_PR(CreateObject, (const std::string&), CScriptHandle), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

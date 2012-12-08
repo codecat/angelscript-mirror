@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <sstream>
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 #include <iostream>
 
 using namespace std;
@@ -419,7 +420,11 @@ bool Test()
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);
 
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+#else
+		engine->RegisterGlobalFunction("void print(const string &in)", WRAP_FN(Print), asCALL_GENERIC);
+#endif
 
 		bout.buffer = "";
 
@@ -792,7 +797,11 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(StringEquals, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+#else
+		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", WRAP_OBJ_FIRST_PR(StringEquals, (const string &, const string &), bool), asCALL_GENERIC); assert( r >= 0 );
+#endif
 		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 		// Condition was failing due to the string factory returning a const reference
@@ -2251,11 +2260,19 @@ bool Test()
 		RegisterStdString(engine);
 
 		engine->RegisterObjectType("sound", 0, asOBJ_REF);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTIONPR(CSound::CSound_fact, (), CSound *), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHODPR(CSound, AddRef, (), void), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHODPR(CSound, Release, (), void), asCALL_THISCALL);
 		engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHODPR(CSound, get_pan, () const, double), asCALL_THISCALL);
 		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", asMETHODPR(CSound, set_pan, (double &), void), asCALL_THISCALL);
+#else
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", WRAP_FN_PR(CSound::CSound_fact, (), CSound *), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", WRAP_MFN_PR(CSound, AddRef, (), void), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", WRAP_MFN_PR(CSound, Release, (), void), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "double get_pan() const", WRAP_MFN_PR(CSound, get_pan, () const, double), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", WRAP_MFN_PR(CSound, set_pan, (double &), void), asCALL_GENERIC);
+#endif
 
 		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 
@@ -2373,7 +2390,11 @@ bool Test()
 
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+#else
+		engine->RegisterGlobalFunction("void print(const string &in)", WRAP_FN(Print), asCALL_GENERIC);
+#endif
 
 		const char *script =
 			"double round(double d, int i) {return double(int64(d*1000+0.5))/1000;}\n"
@@ -3144,6 +3165,9 @@ bool TestRetRef()
 	RegisterStdString(engine);
 
 	engine->RegisterObjectType("Variant", sizeof(Variant), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+	engine->RegisterObjectType("VariantMap", sizeof(VariantMap), asOBJ_VALUE | asOBJ_APP_CLASS_CD);
+	engine->RegisterObjectType("Node", 0, asOBJ_REF);
+#ifndef AS_MAX_PORTABILITY
 	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructVariant), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", asFUNCTION(ConstructVariantCopy), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructVariant), asCALL_CDECL_OBJLAST);
@@ -3151,19 +3175,37 @@ bool TestRetRef()
 	engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", asMETHODPR(Variant, operator =, (const Variant&), Variant&), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Variant", "Variant& opAssign(int)", asMETHODPR(Variant, operator =, (int), Variant&), asCALL_THISCALL);
 
-	engine->RegisterObjectType("VariantMap", sizeof(VariantMap), asOBJ_VALUE | asOBJ_APP_CLASS_CD);
 	engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructVariantMap), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructVariantMap), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("VariantMap", "Variant &opIndex(const string &in)", asMETHODPR(VariantMap, opIndex, (const string &), Variant&), asCALL_THISCALL);
 
-	engine->RegisterObjectType("Node", 0, asOBJ_REF);
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_FACTORY, "Node @f()", asFUNCTION(NodeFactory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_ADDREF, "void f()", asMETHOD(Node, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", asMETHOD(Node, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", asMETHODPR(Node, GetAttribute, (), Variant), asCALL_THISCALL);
-	engine->RegisterObjectProperty("Node", "VariantMap vars", asOFFSET(Node, vars));
 
 	engine->RegisterGlobalFunction("Node@+ get_node()", asFUNCTION(GetGlobalNode), asCALL_CDECL);
+#else
+	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST(ConstructVariant), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", WRAP_OBJ_LAST(ConstructVariantCopy), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_LAST(DestructVariant), asCALL_GENERIC);
+	engine->RegisterObjectMethod("Variant", "const string& GetString() const", WRAP_MFN(Variant, GetString), asCALL_GENERIC);
+	engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", WRAP_MFN_PR(Variant, operator =, (const Variant&), Variant&), asCALL_GENERIC);
+	engine->RegisterObjectMethod("Variant", "Variant& opAssign(int)", WRAP_MFN_PR(Variant, operator =, (int), Variant&), asCALL_GENERIC);
+
+	engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST(ConstructVariantMap), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_LAST(DestructVariantMap), asCALL_GENERIC);
+	engine->RegisterObjectMethod("VariantMap", "Variant &opIndex(const string &in)", WRAP_MFN_PR(VariantMap, opIndex, (const string &), Variant&), asCALL_GENERIC);
+
+	engine->RegisterObjectBehaviour("Node", asBEHAVE_FACTORY, "Node @f()", WRAP_FN(NodeFactory), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Node", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Node, AddRef), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Node, Release), asCALL_GENERIC);
+	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", WRAP_MFN_PR(Node, GetAttribute, (), Variant), asCALL_GENERIC);
+
+	engine->RegisterGlobalFunction("Node@+ get_node()", WRAP_FN(GetGlobalNode), asCALL_GENERIC);
+#endif
+	engine->RegisterObjectProperty("Node", "VariantMap vars", asOFFSET(Node, vars));
+
 	g_node = NodeFactory();
 
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -3209,7 +3251,10 @@ bool TestRetRef()
 	}
 
 	engine->Release();
+#ifndef AS_MAX_PORTABILITY
+	// When using the generic calling convention, the returned handle is not incremented
 	g_node->Release();
+#endif
 
 	return fail;
 }

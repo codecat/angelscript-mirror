@@ -8,6 +8,7 @@
 #include <vector>
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 
 namespace TestSaveLoad
@@ -546,18 +547,26 @@ bool Test()
 
 	//-----------------------------------
 	// save/load with overloaded array types should work as well
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterScriptArray(engine, true);
 		int r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert(r >= 0);
+#ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructFloatArray, (vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructFloatArray, (int, vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructFloatArray), asCALL_CDECL_OBJLAST); assert(r >= 0);
 		r = engine->RegisterObjectMethod("float[]", "float[] &opAssign(float[]&in)", asMETHODPR(vector<float>, operator=, (const std::vector<float> &), vector<float>&), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("float[]", "float &opIndex(int)", asMETHODPR(vector<float>, operator[], (vector<float>::size_type), float &), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("float[]", "int length()", asMETHOD(vector<float>, size), asCALL_THISCALL); assert(r >= 0);
-		
+#else
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST_PR(ConstructFloatArray, (vector<float> *), void), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", WRAP_OBJ_LAST_PR(ConstructFloatArray, (int, vector<float> *), void), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_LAST(DestructFloatArray), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("float[]", "float[] &opAssign(float[]&in)", WRAP_MFN_PR(vector<float>, operator=, (const std::vector<float> &), vector<float>&), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("float[]", "float &opIndex(int)", WRAP_MFN_PR(vector<float>, operator[], (vector<float>::size_type), float &), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("float[]", "int length()", WRAP_MFN(vector<float>, size), asCALL_GENERIC); assert(r >= 0);
+#endif
+
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script3", script3, strlen(script3));
 		mod->Build();
@@ -1231,9 +1240,15 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
+#else
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", WRAP_FN_PR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Tmpl,AddRef), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Tmpl,Release), asCALL_GENERIC); assert( r >= 0 );
+#endif
 		//r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
 
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
@@ -1250,10 +1265,17 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
+#else
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", WRAP_FN_PR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Tmpl,AddRef), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Tmpl,Release), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", WRAP_FN(Tmpl::TmplCallback), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		bout.buffer = "";
@@ -1335,8 +1357,13 @@ bool Test()
 		asIScriptContext* ctx;
 		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterStdString(engine);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterGlobalFunction("void print(const string& in)", asFUNCTION(print), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int getInt()", asFUNCTION(getInt), asCALL_CDECL);
+#else
+		engine->RegisterGlobalFunction("void print(const string& in)", WRAP_FN(print), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("int getInt()", WRAP_FN(getInt), asCALL_GENERIC);
+#endif
 		
 		ctx = engine->CreateContext();
 		
@@ -1509,8 +1536,13 @@ bool TestAndrewPrice()
 
 		// This POD type doesn't have an opAssign, so the bytecode will have asBC_COPY 
 		engine->RegisterObjectType("char_ptr", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+#ifndef AS_MAX_PORTABILITY
 		engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(APStringConstruct), asCALL_CDECL_OBJLAST);
 		engine->RegisterStringFactory("char_ptr", asFUNCTION(APStringFactory), asCALL_CDECL);
+#else
+		engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST(APStringConstruct), asCALL_GENERIC);
+		engine->RegisterStringFactory("char_ptr", WRAP_FN(APStringFactory), asCALL_GENERIC);
+#endif
 			
 		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		char Data2[] = 

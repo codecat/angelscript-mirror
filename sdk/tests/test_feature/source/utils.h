@@ -16,6 +16,7 @@
 #include "scriptstring.h"
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 #ifdef __BORLANDC__
 // C++Builder doesn't define most of the non-standard float-specific math functions with

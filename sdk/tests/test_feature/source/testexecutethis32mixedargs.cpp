@@ -171,8 +171,13 @@ bool TestExecuteThis32MixedArgs()
 	int r;
 
     r = engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS); assert( r >= 0 );
-    r = engine->RegisterObjectMethod("class1", "void cfunction(float, float, double, float)", asMETHOD(Class1, cfunc), asCALL_THISCALL); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
+	r = engine->RegisterObjectMethod("class1", "void cfunction(float, float, double, float)", asMETHOD(Class1, cfunc), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("class1", "void cfunction2(double, double, double, double)", asMETHOD(Class1, cfunc2), asCALL_THISCALL); assert( r >= 0 );
+#else
+	r = engine->RegisterObjectMethod("class1", "void cfunction(float, float, double, float)", WRAP_MFN(Class1, cfunc), asCALL_GENERIC); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("class1", "void cfunction2(double, double, double, double)", WRAP_MFN(Class1, cfunc2), asCALL_GENERIC); assert( r >= 0 );
+#endif
     r = engine->RegisterGlobalProperty("class1 c1", &c1); assert( r >= 0 );
 
 	c1.a = 0xDEADC0DE;

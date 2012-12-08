@@ -1,3 +1,4 @@
+#include "../../add_on/autowrapper/aswrappedcall.h"
 #include "utils.h"
 
 namespace TestRegisterType
@@ -37,7 +38,11 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType( "Widget", 0,  asOBJ_REF | asOBJ_NOCOUNT ); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterGlobalFunction("Widget @CreateWidget()", asFUNCTION(CreateWidget), asCALL_CDECL); assert( r >= 0 );
+#else
+		r = engine->RegisterGlobalFunction("Widget @CreateWidget()", WRAP_FN(CreateWidget), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 		const char *script = 
 			"class NoRef\n"
@@ -445,9 +450,9 @@ bool Test()
 		bout.buffer = "";
 		r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE | asOBJ_POD);
 		if( r < 0 ) TEST_FAILED;
-		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_CDECL);
+		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 ) TEST_FAILED;
-		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_CDECL);
+		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "test1 t");
 		if( r >= 0 ) TEST_FAILED;
@@ -580,11 +585,19 @@ bool TestRefScoped()
 	RegisterStdString(engine);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("scoped", 0, asOBJ_REF | asOBJ_SCOPED); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("scoped", "scoped @opNeg()", asFUNCTION(Scoped_Negate), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("scoped", "scoped &opAssign(const scoped &in)", asFUNCTION(Scoped_Assignment), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("scoped", "scoped @opAdd(int)", asFUNCTION(Scoped_Add), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+#else
+	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", WRAP_FN(Scoped_Factory), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", WRAP_OBJ_LAST(Scoped_Release), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("scoped", "scoped @opNeg()", WRAP_OBJ_LAST(Scoped_Negate), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("scoped", "scoped &opAssign(const scoped &in)", WRAP_OBJ_LAST(Scoped_Assignment), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("scoped", "scoped @opAdd(int)", WRAP_OBJ_FIRST(Scoped_Add), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 	// Enumerate the objects behaviours
 	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));
@@ -642,8 +655,13 @@ bool TestRefScoped()
 	const char *script =
 		"SetObjectPosition( GetWorldPositionByName() ); \n";
 
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterGlobalFunction("const scoped @GetWorldPositionByName()", asFUNCTION(Scoped_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void SetObjectPosition(scoped &in)", asFUNCTION(Scoped_InRef), asCALL_CDECL); assert( r >= 0 );
+#else
+	r = engine->RegisterGlobalFunction("const scoped @GetWorldPositionByName()", WRAP_FN(Scoped_Factory), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void SetObjectPosition(scoped &in)", WRAP_FN(Scoped_InRef), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 	r = ExecuteString(engine, script);
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
@@ -1037,6 +1055,39 @@ public:
 	asIScriptEngine *m_engine;
 };
 
+void CHandleType_ConstructVar_Generic(asIScriptGeneric *gen)
+{
+	void *ref = gen->GetArgAddress(0);
+	int typeId = gen->GetArgTypeId(0);
+	CHandleType *self = reinterpret_cast<CHandleType*>(gen->GetObject());
+	CHandleType::Construct(self, ref, typeId);
+}
+
+void CHandleType_AssignVar_Generic(asIScriptGeneric *gen)
+{
+	void *ref = gen->GetArgAddress(0);
+	int typeId = gen->GetArgTypeId(0);
+	CHandleType *self = reinterpret_cast<CHandleType*>(gen->GetObject());
+	self->opAssign(ref, typeId);
+	gen->SetReturnAddress(self);
+}
+
+void CHandleType_EqualsVar_Generic(asIScriptGeneric *gen)
+{
+	void *ref = gen->GetArgAddress(0);
+	int typeId = gen->GetArgTypeId(0);
+	CHandleType *self = reinterpret_cast<CHandleType*>(gen->GetObject());
+	gen->SetReturnByte(self->opEquals(ref, typeId));
+}
+
+void CHandleType_Cast_Generic(asIScriptGeneric *gen)
+{
+	void **ref = reinterpret_cast<void**>(gen->GetArgAddress(0));
+	int typeId = gen->GetArgTypeId(0);
+	CHandleType *self = reinterpret_cast<CHandleType*>(gen->GetObject());
+	self->opCast(ref, typeId);
+}
+
 bool TestHandleType()
 {
 	bool fail = false;
@@ -1049,6 +1100,7 @@ bool TestHandleType()
 
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectType("ref", sizeof(CHandleType), asOBJ_VALUE | asOBJ_ASHANDLE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(CHandleType::Construct, (CHandleType *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ? &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, void *, int), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
@@ -1058,6 +1110,17 @@ bool TestHandleType()
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
+#else
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_FIRST_PR(CHandleType::Construct, (CHandleType *), void), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", WRAP_OBJ_FIRST_PR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ? &in)", asFUNCTION(CHandleType_ConstructVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_FIRST_PR(CHandleType::Destruct, (CHandleType *), void), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", WRAP_MFN(CHandleType, operator=), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asFUNCTION(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", WRAP_MFN_PR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asFUNCTION(CHandleType_EqualsVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asFUNCTION(CHandleType_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 	// It must be possible to use the is and !is operators on the handle type
 	// It must be possible to use handle assignment on the handle type
@@ -1263,15 +1326,24 @@ bool TestIrrTypes()
 	// despite it having an assignment and copy constructor. It must also 
 	// be registered with asOBJ_APP_CLASS_FLOATS to work on Linux 64bit
 	r = engine->RegisterObjectType("dim2f", sizeof(dimension2df), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f()", asFUNCTIONPR(Construct_dim2f, (dimension2df*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(const dim2f &in)", asFUNCTIONPR(Construct_dim2f, (const dimension2df &, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(float x, float y)", asFUNCTIONPR(Construct_dim2f, (float x, float y, dimension2df*), void),asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dim2f", "dim2f &opAssign(const dim2f &in)",     asMETHODPR(dimension2df, operator =, (const dimension2df&), dimension2df&),      asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("dim2f", "dim2f opAdd(const dim2f &in) const",   asMETHODPR(dimension2df, operator+,  (const dimension2df&) const, dimension2df), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void ByValue(dim2f)", asFUNCTION(ByValue), asCALL_CDECL); assert( r >= 0 );
+#else
+	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f()", WRAP_OBJ_LAST_PR(Construct_dim2f, (dimension2df*), void), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(const dim2f &in)", WRAP_OBJ_LAST_PR(Construct_dim2f, (const dimension2df &, dimension2df*), void),asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dim2f",asBEHAVE_CONSTRUCT,"void f(float x, float y)", WRAP_OBJ_LAST_PR(Construct_dim2f, (float x, float y, dimension2df*), void),asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dim2f", "dim2f &opAssign(const dim2f &in)",     WRAP_MFN_PR(dimension2df, operator =, (const dimension2df&), dimension2df&),      asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("dim2f", "dim2f opAdd(const dim2f &in) const",   WRAP_MFN_PR(dimension2df, operator+,  (const dimension2df&) const, dimension2df), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("void ByValue(dim2f)", WRAP_FN(ByValue), asCALL_GENERIC); assert( r >= 0 );
+#endif
 	r = engine->RegisterObjectProperty("dim2f", "float x", asOFFSET(dimension2df, Width)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("dim2f", "float y", asOFFSET(dimension2df, Height)); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void ByValue(dim2f)", asFUNCTION(ByValue), asCALL_CDECL); assert( r >= 0 );
 
 	r = ExecuteString(engine, "dim2f video_res(800,600);\n"
 		                      "dim2f total_res;\n"
