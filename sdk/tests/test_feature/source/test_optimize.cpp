@@ -1116,6 +1116,40 @@ bool TestOptimize()
 		}
 	}
 
+	// Validate byte sequence for multiply with constant
+	// TODO: optimize: currently divisions are not optimized as there is no DIVIi instruction
+	{
+		const char *script = 
+			"void func() { int a = 42, b = a*2; } \n";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asUINT len;
+		asDWORD *bc = func->GetByteCode(&len);
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_SetV4,asBC_MULIi,
+				asBC_SUSPEND,asBC_RET
+			};
+		for( asUINT n = 0, i = 0; n < len; )
+		{
+			asBYTE c = asBYTE(bc[n]);
+			if( c != expect[i] )
+			{
+				TEST_FAILED;
+				break;
+			}
+			n += asBCTypeSize[asBCInfo[c].type];
+			if( ++i > sizeof(expect) )
+				TEST_FAILED;
+		}
+	}
+
 	engine->Release();
 
 	// Success
