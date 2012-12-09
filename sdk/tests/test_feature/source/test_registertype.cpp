@@ -450,9 +450,9 @@ bool Test()
 		bout.buffer = "";
 		r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE | asOBJ_POD);
 		if( r < 0 ) TEST_FAILED;
-		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("test1 f()", asFUNCTION(0), asCALL_CDECL);
 		if( r < 0 ) TEST_FAILED;
-		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("void f(test1)", asFUNCTION(0), asCALL_CDECL);
 		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "test1 t");
 		if( r >= 0 ) TEST_FAILED;
