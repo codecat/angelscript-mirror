@@ -136,7 +136,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	}
 
 	// Initialize the class members
-	CompileMemberInitialization();
+	CompileMemberInitialization(&byteCode);
 
 	// Pop the object pointer from the stack
 	byteCode.Ret(AS_PTR_SIZE);
@@ -146,7 +146,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
-	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__dc.txt").AddressOf(), engine, outFunc);
+	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__defconstr.txt").AddressOf(), engine, outFunc);
 #endif
 
 	return 0;
@@ -373,7 +373,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	return stackPos;
 }
 
-void asCCompiler::CompileMemberInitialization()
+void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 {
 	asASSERT( m_classDecl );
 
@@ -389,17 +389,28 @@ void asCCompiler::CompileMemberInitialization()
 		{
 			if( m_classDecl->propInits[m].name == prop->name )
 			{
-				// TODO: decl: Compile the initialization of the member
-				Error("Initialization of class member in declaration is not yet supported", m_classDecl->propInits[m].node);
-				found = true;
-				initNode = m_classDecl->propInits[m].node;
+				// TODO: decl: Allow all types to be initialized
+				if( !prop->type.IsPrimitive() )
+				{
+					Error("Initialization of non-primitive class member in declaration is not yet supported", m_classDecl->propInits[m].node);
+				}
+				else
+				{
+					found = true;
+					initNode = m_classDecl->propInits[m].node;
+				}
 				break;
 			}
 		}
 
 		if( found && initNode )
 		{
-			
+			// TODO: decl: This should be done even if the property doesn't have an initialization expression
+			asQWORD constantValue;
+			asCByteCode bc(engine);
+			CompileInitialization(initNode, &bc, prop->type, initNode, prop->byteOffset, &constantValue, 2);
+			LineInstr(byteCode, initNode->tokenPos);
+			byteCode->AddCode(&bc);
 		}
 		else
 		{
@@ -502,7 +513,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 						byteCode.AddCode(&tmpBC);
 
 						// Add the initialization of the members
-						CompileMemberInitialization();
+						CompileMemberInitialization(&byteCode);
 					}
 					else
 						Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
@@ -517,7 +528,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 			else
 			{
 				// Add the initialization of the members
-				CompileMemberInitialization();
+				CompileMemberInitialization(&byteCode);
 			}
 		}
 
@@ -718,6 +729,8 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar, bool deferDest)
 {
+	// TODO: decl: This method should be able to call default constructor for class members during initialization too
+
 	if( !type.IsObject() || type.IsObjectHandle() )
 		return 0;
 
@@ -2002,7 +2015,10 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
 		else
+		{
+			// TODO: decl: Need to work with class members too
 			CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, true);
+		}
 
 		// Compile the expression
 		asSExprContext expr(engine);
@@ -2023,7 +2039,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				asSExprContext lctx(engine);
 				if( isVarGlobOrMem == 0 )
 					lctx.type.SetVariable(type, offset, false);
-				else
+				else if( isVarGlobOrMem == 1 )
 				{
 					lctx.type.Set(type);
 					lctx.type.dataType.MakeReference(true);
@@ -2032,6 +2048,18 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					// as the bytecode won't be used anyway, only the constant value
 					if( asUINT(offset) < engine->globalProperties.GetLength() )
 						lctx.bc.InstrPTR(asBC_LDG, engine->globalProperties[offset]->GetAddressOfValue());
+				}
+				else
+				{
+					asASSERT( isVarGlobOrMem == 2 );
+					lctx.type.Set(type);
+					lctx.type.dataType.MakeReference(true);
+
+					// Load the reference of the primitive member into the register
+					lctx.bc.InstrSHORT(asBC_PSF, 0);
+					lctx.bc.Instr(asBC_RDSPtr);
+					lctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+					lctx.bc.Instr(asBC_PopRPtr);
 				}
 				lctx.type.dataType.MakeReadOnly(false);
 				lctx.type.isLValue = true;
@@ -3761,6 +3789,9 @@ void asCCompiler::Dereference(asSExprContext *ctx, bool generateCode)
 
 bool asCCompiler::IsVariableInitialized(asCTypeInfo *type, asCScriptNode *node)
 {
+	// No need to check if there is no variable scope
+	if( variables == 0 ) return true;
+
 	// Temporary variables are assumed to be initialized
 	if( type->isTemporary ) return true;
 
@@ -6467,7 +6498,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	// It is a local variable or parameter?
 	// This is not accessible by default arg expressions
 	sVariable *v = 0;
-	if( !isCompilingDefaultArg && scope == "" && !objType )
+	if( !isCompilingDefaultArg && scope == "" && !objType && variables )
 		v = variables->GetVariable(name.AddressOf());
 	if( v )
 	{

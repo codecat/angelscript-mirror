@@ -3033,7 +3033,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		scriptFunctions[ot->beh.templateCallback]->AddRef();
 	}
 
-	ot->methods   = templateType->methods;
+	ot->methods = templateType->methods;
 	for( n = 0; n < ot->methods.GetLength(); n++ )
 		scriptFunctions[ot->methods[n]]->AddRef();
 

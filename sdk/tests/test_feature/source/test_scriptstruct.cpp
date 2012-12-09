@@ -234,7 +234,6 @@ bool Test()
 
 	// TODO: decl: Test initialization of members directly in declaration
 	//             class T { array<int> @a = {1,2,3} }                              // Success
-	//             class T { int a = 42, b = a/2; }                                 // Success
 	//             class T { int a = b/2, b = 42; }                                 // Compiler error, or undefined value as members are initialized in the order they are declared
 	//             class T { int a = obj.Func(); Obj obj; }                         // Compiler error, or null pointer exception as members are initialized in the order they are declared
 	//             class T : B { T() { obj.Func(); super(); } Obj obj; }            // Compiler error, or null pointer exception as members are only initialized after base class
@@ -249,22 +248,46 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
+		// Default initialization of a primitive members
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
-			"class T { int a = 42; }");
+			"class T { int a = 42, b = a/2; }");
 		r = mod->Build();
-		if( r > 0 )
+		if( r < 0 )
 			TEST_FAILED;
-/*
+
 		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
 		if( obj == 0 )
 			TEST_FAILED;
-		else if( *reinterpret_cast<int*>(obj->GetAddressOfProperty(0)) != 42 )
-			TEST_FAILED;
+		else
+		{
+			if( *reinterpret_cast<int*>(obj->GetAddressOfProperty(0)) != 42 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(obj->GetAddressOfProperty(1)) != 21 )
+				TEST_FAILED;
+		}
 
 		if( obj )
 			obj->Release();
-*/
+
+		// Errors must be reported on the correct line
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"class T { \n"
+			"  int a = 0/0; \n"
+			"  T() {} \n"
+			"}");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test (3, 3) : Info    : Compiling T::T()\n"
+		                   "test (2, 12) : Error   : Divide by zero\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 
