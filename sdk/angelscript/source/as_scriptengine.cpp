@@ -3692,7 +3692,12 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 	}
 	else
 	{
-		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
+		// We must guarantee the order of the arguments which is why we copy them to this
+		// array. Otherwise the compiler may put them anywhere it likes, or even keep them 
+		// in the registers which causes problem.
+		void *params[2] = {param1, param2};
+
+		asCGeneric gen(this, s, 0, (asDWORD*)&params);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -3714,7 +3719,12 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 	{
 		// TODO: When simulating a 64bit environment by defining AS_64BIT_PTR on a 32bit platform this code
 		//       fails, because the stack given to asCGeneric is not prepared with two 64bit arguments.
-		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
+
+		// We must guarantee the order of the arguments which is why we copy them to this
+		// array. Otherwise the compiler may put them anywhere it likes, or even keep them 
+		// in the registers which causes problem.
+		void *params[2] = {param1, param2};
+		asCGeneric gen(this, s, 0, (asDWORD*)params);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(bool*)gen.GetReturnPointer();

@@ -1,6 +1,5 @@
 #include "utils.h"
 #include "../../../add_on/scriptany/scriptany.h"
-#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 namespace TestDynamicConfig
 {

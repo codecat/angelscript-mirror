@@ -8,7 +8,6 @@
 #include <vector>
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
-#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 
 namespace TestSaveLoad

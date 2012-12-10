@@ -172,7 +172,6 @@ bool Test()
 #if !defined(_MSC_VER) || (_MSC_VER > 1200 && _MSC_VER != 1400) 
 
 }
-#include "../../../add_on/autowrapper/aswrappedcall.h"
 namespace TestGeneric
 {
 

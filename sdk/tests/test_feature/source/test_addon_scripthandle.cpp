@@ -1,7 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scripthandle/scripthandle.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
-#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 namespace Test_Addon_ScriptHandle
 {

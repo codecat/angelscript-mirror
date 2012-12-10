@@ -1,4 +1,3 @@
-#include "../../add_on/autowrapper/aswrappedcall.h"
 #include "utils.h"
 
 namespace TestRegisterType
