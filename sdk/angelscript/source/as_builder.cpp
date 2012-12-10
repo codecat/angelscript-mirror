@@ -2490,9 +2490,7 @@ void asCBuilder::CompileClasses()
 						if( n->next && n->next->nodeType != snIdentifier )
 						{
 							n = n->next;
-							asASSERT( n->nodeType == snArgList ||
-								      n->nodeType == snInitList ||
-									  n->nodeType == snAssignment );
+							asASSERT( n->nodeType == snAssignment );
 
 							// Store the initialization node
 							sPropertyInitializer p(name, n, file);

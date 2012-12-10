@@ -2734,6 +2734,8 @@ asCScriptNode *asCParser::ParseClass()
 	return node;
 }
 
+// TODO: clean-up: This can probably be merged with ParseDeclaration() used for class members and local variables. 
+//                 The syntax for all three is almost identical and should be parsed equally.
 asCScriptNode *asCParser::ParseGlobalVar()
 {
 	asCScriptNode *node = CreateNode(snGlobalVar);
@@ -3164,31 +3166,46 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp)
 		node->AddChildLast(ParseIdentifier());
 		if( isSyntaxError ) return node;
 
-		// If next token is assignment, parse expression
-		GetToken(&t);
-		if( t.type == ttOpenParanthesis )
+		if( isClassProp )
 		{
-			RewindTo(&t);
-			node->AddChildLast(ParseArgList());
-			if( isSyntaxError ) return node;
-		}
-		else if( t.type == ttAssignment )
-		{
+			// Only superficially parse the initialization info for the class property
 			GetToken(&t);
 			RewindTo(&t);
-			if( t.type == ttStartStatementBlock )
+			if( t.type == ttAssignment || t.type == ttOpenParanthesis )
 			{
-				node->AddChildLast(ParseInitList());
-				if( isSyntaxError ) return node;
-			}
-			else
-			{
-				node->AddChildLast(ParseAssignment());
+				// TODO: decl: Change the name of the method as we're now using it for more than global vars
+				node->AddChildLast(SuperficiallyParseGlobalVarInit());
 				if( isSyntaxError ) return node;
 			}
 		}
 		else
-			RewindTo(&t);
+		{
+			// If next token is assignment, parse expression
+			GetToken(&t);
+			if( t.type == ttOpenParanthesis )
+			{
+				RewindTo(&t);
+				node->AddChildLast(ParseArgList());
+				if( isSyntaxError ) return node;
+			}
+			else if( t.type == ttAssignment )
+			{
+				GetToken(&t);
+				RewindTo(&t);
+				if( t.type == ttStartStatementBlock )
+				{
+					node->AddChildLast(ParseInitList());
+					if( isSyntaxError ) return node;
+				}
+				else
+				{
+					node->AddChildLast(ParseAssignment());
+					if( isSyntaxError ) return node;
+				}
+			}
+			else
+				RewindTo(&t);
+		}
 
 		// continue if list separator, else terminate with end statement
 		GetToken(&t);

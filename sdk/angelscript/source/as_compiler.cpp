@@ -385,19 +385,21 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 		// Check if the property has an initialization expression
 		bool found = false;
 		asCScriptNode *initNode = 0;
+		asCScriptCode *initScript = 0;
 		for( asUINT m = 0; m < m_classDecl->propInits.GetLength(); m++ )
 		{
 			if( m_classDecl->propInits[m].name == prop->name )
 			{
 				// TODO: decl: Allow all types to be initialized
-				if( !prop->type.IsPrimitive() )
+				if( !prop->type.IsPrimitive() && !prop->type.IsObjectHandle() )
 				{
-					Error("Initialization of non-primitive class member in declaration is not yet supported", m_classDecl->propInits[m].node);
+					Error("Initialization of class member objects in declaration is not yet supported", m_classDecl->propInits[m].node);
 				}
 				else
 				{
 					found = true;
 					initNode = m_classDecl->propInits[m].node;
+					initScript = m_classDecl->propInits[m].file;
 				}
 				break;
 			}
@@ -405,6 +407,15 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 
 		if( found && initNode )
 		{
+			// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
+			asCParser parser(builder);
+			// TODO: decl: Change the name of the method as we're now using it for more than global variables
+			int r = parser.ParseGlobalVarInit(initScript, initNode);
+			if( r < 0 )
+				continue;
+
+			initNode = parser.GetScriptNode();
+
 			// TODO: decl: This should be done even if the property doesn't have an initialization expression
 			asQWORD constantValue;
 			asCByteCode bc(engine);
@@ -2002,7 +2013,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		ti.stackOffset = (short)offset;
 		ti.isLValue = true;
 
-		CompileInitList(&ti, node, bc);
+		CompileInitList(&ti, node, bc, isVarGlobOrMem);
 	}
 	else if( node && node->nodeType == snAssignment )
 	{
@@ -2091,9 +2102,15 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					lexpr.type.stackOffset = (short)offset;
 					lexpr.type.isVariable = true;
 				}
-				else
+				else if( isVarGlobOrMem == 1 )
 				{
 					lexpr.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				}
+				else
+				{
+					lexpr.bc.InstrSHORT(asBC_PSF, 0);
+					lexpr.bc.Instr(asBC_RDSPtr);
+					lexpr.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 					lexpr.type.stackOffset = -1;
 				}
 				lexpr.type.isLValue = true;
@@ -2171,7 +2188,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 	return isConstantExpression;
 }
 
-void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc)
+void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc, int isVarGlobOrMem)
 {
 	// Check if the type supports initialization lists
 	if( var->dataType.GetObjectType() == 0 ||
@@ -2214,6 +2231,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 	if( var->isVariable )
 	{
+		asASSERT( isVarGlobOrMem == 0 );
+
 		// Call factory and store the handle in the given variable
 		PerformFunctionCall(funcId, &ctx, false, &args, 0, true, var->stackOffset);
 		ctx.bc.Instr(asBC_PopPtr);
@@ -2222,13 +2241,26 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	{
 		PerformFunctionCall(funcId, &ctx, false, &args);
 
-		// Store the returned handle in the global variable
 		ctx.bc.Instr(asBC_RDSPtr);
-		ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+		if( isVarGlobOrMem == 1 )
+		{
+			// Store the returned handle in the global variable
+			ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+		}
+		else
+		{
+			// Store the returned handle in the member
+			ctx.bc.InstrSHORT(asBC_PSF, 0);
+			ctx.bc.Instr(asBC_RDSPtr);
+			ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+			
+			// TODO: decl: For non-handles we need more
+		}
 		ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
 		ctx.bc.Instr(asBC_PopPtr);
 		ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 	}
+
 
 	bc->AddCode(&ctx.bc);
 
@@ -2288,7 +2320,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				rctx.type.isTemporary = true;
 				rctx.type.stackOffset = (short)offset;
 
-				CompileInitList(&rctx.type, el, &rctx.bc);
+				CompileInitList(&rctx.type, el, &rctx.bc, 0);
 
 				// Put the object on the stack
 				rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
@@ -2302,7 +2334,18 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			if( var->isVariable )
 				lctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
 			else
-				lctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+			{
+				// TODO: runtime optimize: should copy a handle to a local variable to avoid
+				//                         accessing the global variable or class member for each element
+				if( isVarGlobOrMem == 1 )
+					lctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+				else
+				{
+					ctx.bc.InstrSHORT(asBC_PSF, 0);
+					ctx.bc.Instr(asBC_RDSPtr);
+					ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+				}
+			}
 			lctx.bc.Instr(asBC_RDSPtr);
 			lctx.bc.Call(asBC_CALLSYS, funcId, 1+AS_PTR_SIZE);
 
@@ -7878,12 +7921,12 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				}
 				m_isConstructorCalled = true;
 
-				// TODO: decl: Do local jump to where the class members are initialized. 
-				//             That code will then return to this spot after the initialization with a local return. 
-				//             This jumping is necessary to avoid multiplying code for initializing the members all over. 
-				//             As this will require new bytecode instructions (LJMP label & LRET) we can initially duplicate
-				//             the initialization code. It shouldn't be that often that the call to 
-				//             base class constructor is done explicitly anyway.
+				// TODO: decl: Need to initialize members here, as they may use the properties of the base class
+				//             If there are multiple paths that call super(), then there will also be multiple 
+				//             locations with initializations of the members. It is not possible to consolidate
+				//             these in one place, as the expressions for the initialization is evaluated where 
+				//             it is compiled, which means that they may access different variables depending on the
+				//             scope where super() is called.
 			}
 			else
 			{

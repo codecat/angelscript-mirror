@@ -233,7 +233,7 @@ bool Test()
 	CBufferedOutStream bout;
 
 	// TODO: decl: Test initialization of members directly in declaration
-	//             class T { array<int> @a = {1,2,3} }                              // Success
+	//             class T { array<int> a = {1,2,3} }                               // Success
 	//             class T { int a = b/2, b = 42; }                                 // undefined value as members are initialized in the order they are declared
 	//             class T { int a = obj.Func(); Obj obj; }                         // null pointer exception as members are initialized in the order they are declared
 	//             class T : B { T() { obj.Func(); super(); } Obj obj; }            // null pointer exception as members are only initialized after base class
@@ -245,9 +245,14 @@ bool Test()
 	//             so if the expression refers to an identifier it will first attempt to evaluate to 
 	//             local variable, then parameter, then class member, then global variable
 	// TODO: decl: Test exception in the middle of the initialization
+	// TODO: decl: Expressions are evaluated in the scope where they will be executed
+	//             class Base { Base(int _a) { a = _a; } } 
+	//             class T : Base { T(int _a) { if( _a == 0 ) Base(42); else Base(24); } int b = a; }
+	//             void test() { T a(0); assert( a.b == 42 ); T b(1); assert( a.b == 24 ); }
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
 
 		// Default initialization of a primitive members
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -288,6 +293,40 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		// Initialization of handle members
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { \n"
+			" array<int> @a = newArray(); \n"
+			" array<int> @b = a; \n"
+			// TODO: the init list should work for handles too
+			" array<int> @newArray() { array<int> a = {1,2,3}; return a; } \n"
+			"}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else
+		{
+			CScriptArray *arr = *reinterpret_cast<CScriptArray**>(obj->GetAddressOfProperty(0));
+			if( arr->GetSize() != 3 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(arr->At(0)) != 1 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(arr->At(1)) != 2 )
+				TEST_FAILED;
+			CScriptArray *arrB = *reinterpret_cast<CScriptArray**>(obj->GetAddressOfProperty(1));
+			if( arr != arrB )
+				TEST_FAILED;
+		}
+
+		if( obj )
+			obj->Release();
 
 		engine->Release();
 	}
