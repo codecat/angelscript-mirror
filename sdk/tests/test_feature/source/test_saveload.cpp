@@ -362,6 +362,56 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem reported by Andre Santee
+	// http://www.gamedev.net/topic/635623-assertion-failed-while-using-function-handles/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo \n"
+			"{ \n"
+			"    int a = 42; \n"
+			"} \n"
+			"class Bar \n"
+			"{ \n"
+			"    float b = 3.14f; \n"
+			"} \n"
+			"funcdef void TEST_FUNC_HANDLE(Foo, Bar); \n"
+			"void testFunction(TEST_FUNC_HANDLE@ func) \n"
+			"{ \n"
+			"    func(Foo(), Bar()); \n"
+			"} \n"
+			"void callback(Foo f, Bar b) \n"
+			"{ \n"
+			"  assert( f.a == 42 && b.b == 3.14f ); \n"
+			"  called = true; \n"
+			"} \n"
+			"bool called = false;\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"shared");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "testFunction(callback); assert( called );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 
 	Test2();
 	TestAndrewPrice();

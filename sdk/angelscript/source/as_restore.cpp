@@ -2494,11 +2494,26 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 	}
 	else if( bc == asBC_CallPtr )
 	{
-		// Find the funcdef from the local variable
+		asUINT v;
 		int var = asBC_SWORDARG0(&func->byteCode[programPos]);
-		for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
+
+		// Find the funcdef from the local variable
+		for( v = 0; v < func->objVariablePos.GetLength(); v++ )
 			if( func->objVariablePos[v] == var )
 				return func->funcVariableTypes[v];
+
+		// Look in parameters
+		int paramPos = 0;
+		if( func->objectType )
+			paramPos -= AS_PTR_SIZE;
+		if( func->DoesReturnOnStack() )
+			paramPos -= AS_PTR_SIZE;
+		for( v = 0; v < func->parameterTypes.GetLength(); v++ )
+		{
+			if( var == paramPos )
+				return func->parameterTypes[v].GetFuncDef();
+			paramPos -= func->parameterTypes[v].GetSizeOnStackDWords();
+		}
 	}
 
 	return 0;
@@ -3447,14 +3462,35 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		}
 		else if( bc == asBC_CallPtr )
 		{
-			// Find the funcdef from the local variable
 			int var = asBC_SWORDARG0(&func->byteCode[n]);
-			for( asUINT v = 0; v < func->objVariablePos.GetLength(); v++ )
+			asUINT v;
+			// Find the funcdef from the local variable
+			for( v = 0; v < func->objVariablePos.GetLength(); v++ )
+			{
 				if( func->objVariablePos[v] == var )
 				{
 					calledFunc = func->funcVariableTypes[v];
 					break;
 				}
+			}
+			if( !calledFunc )
+			{
+				// Look in parameters
+				int paramPos = 0;
+				if( func->objectType )
+					paramPos -= AS_PTR_SIZE;
+				if( func->DoesReturnOnStack() )
+					paramPos -= AS_PTR_SIZE;
+				for( v = 0; v < func->parameterTypes.GetLength(); v++ )
+				{
+					if( var == paramPos )
+					{
+						calledFunc = func->parameterTypes[v].GetFuncDef();
+						break;
+					}
+					paramPos -= func->parameterTypes[v].GetSizeOnStackDWords();
+				}
+			}
 			break;
 		}
 		else if( bc == asBC_REFCPY ||

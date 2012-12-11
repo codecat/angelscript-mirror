@@ -607,8 +607,8 @@
 
 		#include <TargetConditionals.h>
 
-		// Is this a Mac or an IPhone?
-		#ifdef TARGET_OS_IPHONE
+		// Is this a Mac or an IPhone (or other iOS device)?
+		#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE == 1
 			#define AS_IPHONE
 		#else
 			#define AS_MAC
@@ -662,7 +662,6 @@
 		#elif (defined(_ARM_) || defined(__arm__))
 			// The IPhone use an ARM processor
 			#define AS_ARM
-			#define AS_IPHONE
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
