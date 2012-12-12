@@ -390,12 +390,14 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 		{
 			if( m_classDecl->propInits[m].name == prop->name )
 			{
+#ifndef AS_NEW
 				// TODO: decl: Allow all types to be initialized
 				if( !prop->type.IsPrimitive() && !prop->type.IsObjectHandle() )
 				{
 					Error("Initialization of class member objects in declaration is not yet supported", m_classDecl->propInits[m].node);
 				}
 				else
+#endif
 				{
 					found = true;
 					initNode = m_classDecl->propInits[m].node;
@@ -405,24 +407,32 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 			}
 		}
 
+#ifndef AS_NEW
 		if( found && initNode )
+#endif
 		{
-			// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
-			asCParser parser(builder);
-			// TODO: decl: Change the name of the method as we're now using it for more than global variables
-			int r = parser.ParseGlobalVarInit(initScript, initNode);
-			if( r < 0 )
-				continue;
+			if( initNode )
+			{
+				// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
+				asCParser parser(builder);
+				// TODO: decl: Change the name of the method as we're now using it for more than global variables
+				int r = parser.ParseGlobalVarInit(initScript, initNode);
+				if( r < 0 )
+					continue;
 
-			initNode = parser.GetScriptNode();
+				initNode = parser.GetScriptNode();
+			}
 
-			// TODO: decl: This should be done even if the property doesn't have an initialization expression
 			asQWORD constantValue;
 			asCByteCode bc(engine);
-			CompileInitialization(initNode, &bc, prop->type, initNode, prop->byteOffset, &constantValue, 2);
-			LineInstr(byteCode, initNode->tokenPos);
+			CompileInitialization(initNode, &bc, prop->type, initNode ? initNode : m_classDecl->node, prop->byteOffset, &constantValue, 2);
+	
+			// TODO: decl: Need to know where the property has been declared even if not explicitly initialized
+			if( initNode )
+				LineInstr(byteCode, initNode->tokenPos);
 			byteCode->AddCode(&bc);
 		}
+#ifndef AS_NEW
 		else
 		{
 			// TODO: decl: Compile the initialization of the member with the default constructor
@@ -442,6 +452,7 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 				Error(str, m_classDecl->node);
 			}
 		}
+#endif
 	}
 }
 
@@ -738,7 +749,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	return -1;
 }
 
-int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, bool isGlobalVar, bool deferDest)
+int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem, bool deferDest)
 {
 	// TODO: decl: This method should be able to call default constructor for class members during initialization too
 
@@ -756,7 +767,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 		if( func > 0 )
 		{
-			if( !isGlobalVar )
+			if( isVarGlobOrMem == 0 )
 			{
 				// Call factory and store the handle in the given variable
 				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType(), true, offset);
@@ -769,9 +780,19 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				// Call factory
 				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 
-				// Store the returned handle in the global variable
 				ctx.bc.Instr(asBC_RDSPtr);
-				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				if( isVarGlobOrMem == 1 )
+				{
+					// Store the returned handle in the global variable
+					ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				}
+				else
+				{
+					// Store the return handle in the class member
+					ctx.bc.InstrSHORT(asBC_PSF, 0);
+					ctx.bc.Instr(asBC_RDSPtr);
+					ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+				}
 				ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 				ctx.bc.Instr(asBC_PopPtr);
 				ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
@@ -794,7 +815,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 		{
 			if( !isObjectOnHeap )
 			{
-				asASSERT( !isGlobalVar );
+				asASSERT( isVarGlobOrMem == 0 );
 
 				// There is nothing to do if there is no function,
 				// as the memory is already allocated on the stack
@@ -815,10 +836,16 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			}
 			else
 			{
-				if( isGlobalVar )
-					bc->InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-				else
+				if( isVarGlobOrMem == 0 )
 					bc->InstrSHORT(asBC_PSF, (short)offset);
+				else if( isVarGlobOrMem == 1 )
+					bc->InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+				else 
+				{
+					bc->InstrSHORT(asBC_PSF, 0);
+					bc->Instr(asBC_RDSPtr);
+					bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+				}
 
 				bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
 			}
@@ -2018,6 +2045,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 	else if( node && node->nodeType == snAssignment )
 	{
 		asSExprContext ctx(engine);
+
 		// TODO: copy: Here we should look for the best matching constructor, instead of
 		//             just the copy constructor. Only if no appropriate constructor is
 		//             available should the assignment operator be used.
@@ -2026,10 +2054,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
 		else
-		{
-			// TODO: decl: Need to work with class members too
-			CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, true);
-		}
+			CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, isVarGlobOrMem);
 
 		// Compile the expression
 		asSExprContext expr(engine);
@@ -2180,7 +2205,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), bc, errNode);
 		else
-			CallDefaultConstructor(type, offset, true, bc, errNode, true);
+			CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
 	}
 
 	bc->OptimizeLocally(tempVariableOffsets);
@@ -3467,7 +3492,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					else
 					{
 						// If the copy constructor doesn't exist, then a manual assignment needs to be done instead. 
-						CallDefaultConstructor(v->type, offset, false, &expr.bc, rnode->firstChild, false, true);
+						CallDefaultConstructor(v->type, offset, false, &expr.bc, rnode->firstChild, 0, true);
 						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
 						expr.bc.InstrSHORT(asBC_PSF, (short)offset);
 						expr.bc.Instr(asBC_RDSPtr);

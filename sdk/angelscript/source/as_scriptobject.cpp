@@ -236,6 +236,40 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 	if( objType->flags & asOBJ_GC )
 		objType->engine->gc.AddScriptObjectToGC(this, objType);
 
+#ifdef AS_NEW
+	if( doInitialize )
+	{
+		// The actual initialization will be done by the bytecode, so here we should just clear the
+		// memory to guarantee that no pointers with have scratch values in case of an exception
+		// TODO: runtime optimize: Is it quicker to just do a memset on the entire object? 
+		for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
+		{
+			asCObjectProperty *prop = objType->properties[n];
+			if( prop->type.IsObject() )
+			{
+				asPWORD *ptr = reinterpret_cast<asPWORD*>(reinterpret_cast<asBYTE*>(this) + prop->byteOffset);
+				*ptr = 0;
+			}
+		}
+	}
+	else
+	{
+		// When the object is created without initialization, all non-handle members must be allocated, but not initialized
+		asCScriptEngine *engine = objType->engine;
+		for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
+		{
+			asCObjectProperty *prop = objType->properties[n];
+			if( prop->type.IsObject() )
+			{
+				asPWORD *ptr = reinterpret_cast<asPWORD*>(reinterpret_cast<asBYTE*>(this) + prop->byteOffset);
+				if( prop->type.IsObjectHandle() )
+					*ptr = 0;
+				else
+					*ptr = (asPWORD)AllocateObject(prop->type.GetObjectType(), engine, false);
+			}
+		}
+	}
+#else
 	// Construct all properties
 	// TODO: decl: When creating an initialized object this routine should just clear the memory. All allocation and initialization will be done by the bytecode for the constructor
 	//             When creating an uninitialized object this routine should allocate the objects that are not handles without calling their constructors as is done now
@@ -256,6 +290,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 			}
 		}
 	}
+#endif
 }
 
 void asCScriptObject::Destruct()

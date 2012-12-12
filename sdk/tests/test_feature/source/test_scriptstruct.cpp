@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../add_on/scripthandle/scripthandle.h"
 
 namespace TestScriptStruct
 {
@@ -225,7 +226,7 @@ bool Test2();
 
 bool Test()
 {
-	bool fail = Test2();
+	bool fail = false;
 	int r;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
@@ -253,16 +254,46 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+		RegisterScriptHandle(engine);
 
-		// Default initialization of a primitive members
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		// Default initialization of object members without initialization expression
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { \n"
+			"  string a; \n"
+			"  array<int> b; \n"
+			"  ref c; \n"
+			"}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else
+		{
+			if( *reinterpret_cast<std::string*>(obj->GetAddressOfProperty(0)) != "" )
+				TEST_FAILED;
+			if( reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(1))->GetElementTypeId() != asTYPEID_INT32 )
+				TEST_FAILED;
+			if( !reinterpret_cast<CScriptHandle*>(obj->GetAddressOfProperty(2))->Equals(0,0) )
+				TEST_FAILED;
+		}
+
+		if( obj )
+			obj->Release();
+
+		// Default initialization of primitive members
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class T { int a = 42, b = a/2; }");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -709,6 +740,8 @@ bool Test()
  
 		engine->Release();
 	}
+
+	fail = Test2() || fail;
 
 	// Success
 	return fail;
