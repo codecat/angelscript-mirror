@@ -529,11 +529,17 @@ bool Test()
 
 int *Scoped_Factory()
 {
-	return new int(42);
+	int *p = new int(42);
+
+//	printf("new %p\n", p);
+
+	return p;
 }
 
 void Scoped_Release(int *p)
 {
+//	printf("del %p\n", p);
+
 	if( p ) delete p;
 }
 
@@ -546,6 +552,8 @@ int *Scoped_Negate(int *p)
 
 int &Scoped_Assignment(int &a, int *p)
 {
+//	printf("assign %p = %p\n", p, &a);
+
 	*p = a;
 	return *p;
 }
@@ -673,7 +681,7 @@ bool TestRefScoped()
 	// It must be possible to include the scoped type as member in script class
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("test", "class A { scoped s; }");
+	mod->AddScriptSection("test", "scoped g; class A { scoped s; }");
 	r = mod->Build();
 	if( r < 0 )
 		TEST_FAILED;

@@ -137,11 +137,15 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 
 	// Initialize the class members
 	CompileMemberInitialization(&byteCode);
+	byteCode.OptimizeLocally(tempVariableOffsets);
 
 	// Pop the object pointer from the stack
 	byteCode.Ret(AS_PTR_SIZE);
 
-	byteCode.OptimizeLocally(tempVariableOffsets);
+	// Count total variable size
+	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
+	outFunc->variableSpace = varSize;
+
 	FinalizeFunction();
 
 #ifdef AS_DEBUG
@@ -780,7 +784,16 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				// Call factory
 				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
 
-				ctx.bc.Instr(asBC_RDSPtr);
+				// TODO: runtime optimize: Should have a way of storing the object pointer directly to the destination
+				//                         instead of first storing it in a local variable and then copying it to the 
+				//                         destination.
+
+				if( !(type.GetObjectType()->flags & asOBJ_SCOPED) )
+				{
+					// Only dereference the variable if not a scoped type
+					ctx.bc.Instr(asBC_RDSPtr);
+				}
+
 				if( isVarGlobOrMem == 1 )
 				{
 					// Store the returned handle in the global variable
@@ -788,12 +801,26 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				}
 				else
 				{
-					// Store the return handle in the class member
+					// Store the returned handle in the class member
 					ctx.bc.InstrSHORT(asBC_PSF, 0);
 					ctx.bc.Instr(asBC_RDSPtr);
 					ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 				}
-				ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
+	
+				if( type.GetObjectType()->flags & asOBJ_SCOPED )
+				{
+					// For scoped typed we must move the reference from the local  
+					// variable rather than copy it as there is no AddRef behaviour
+					// TODO: decl: Make sure the bytecode serialization properly adjust this pointer
+					ctx.bc.InstrSHORT_DW(asBC_COPY, AS_PTR_SIZE, asTYPEID_OBJHANDLE | engine->GetTypeIdFromDataType(type));
+
+					// Clear the local variable so the reference isn't released
+					ctx.bc.InstrSHORT(asBC_ClrVPtr, ctx.type.stackOffset);
+				}
+				else
+				{
+					ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
+				}
 				ctx.bc.Instr(asBC_PopPtr);
 				ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 			}
