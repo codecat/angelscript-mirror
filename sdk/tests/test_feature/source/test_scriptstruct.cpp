@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../add_on/scripthandle/scripthandle.h"
+#include "../../add_on/scriptmath/scriptmathcomplex.h"
 
 namespace TestScriptStruct
 {
@@ -234,7 +235,6 @@ bool Test()
 	CBufferedOutStream bout;
 
 	// TODO: decl: Test initialization of members directly in declaration
-	//             class T { array<int> a = {1,2,3} }                               // Success
 	//             class T { int a = b/2, b = 42; }                                 // undefined value as members are initialized in the order they are declared
 	//             class T { int a = obj.Func(); Obj obj; }                         // null pointer exception as members are initialized in the order they are declared
 	//             class T : B { T() { obj.Func(); super(); } Obj obj; }            // null pointer exception as members are only initialized after base class
@@ -256,6 +256,7 @@ bool Test()
 		RegisterScriptArray(engine, false);
 		RegisterStdString(engine);
 		RegisterScriptHandle(engine);
+		RegisterScriptMathComplex(engine);
 
 		// Default initialization of object members without initialization expression
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -284,7 +285,46 @@ bool Test()
 
 		if( obj )
 			obj->Release();
+/*
+		TODO: decl:
+		// Explicit initialization of object members
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { \n"
+			"  string a = 'hello'; \n"
+			"  array<int> b = {1,2,3}; \n"
+			"  ref @c = @b; \n"
+			"  complex d(1,2); \n"
+			"}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else
+		{
+			if( *reinterpret_cast<std::string*>(obj->GetAddressOfProperty(0)) != "hello" )
+				TEST_FAILED;
+			CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(1));
+			if( arr->GetElementTypeId() != asTYPEID_INT32 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(arr->At(0)) != 1 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(arr->At(1)) != 2 )
+				TEST_FAILED;
+			CScriptHandle *ref = reinterpret_cast<CScriptHandle*>(obj->GetAddressOfProperty(2));
+			if( !ref->Equals(&arr, engine->GetTypeIdByDecl("array<int> @")) )
+				TEST_FAILED;
+			Complex *cmplx = reinterpret_cast<Complex*>(obj->GetAddressOfProperty(3));
+			if( cmplx->r != 1 || cmplx->i != 2 )
+				TEST_FAILED;
+		}
+
+		if( obj )
+			obj->Release();
+*/
 		// Default initialization of primitive members
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

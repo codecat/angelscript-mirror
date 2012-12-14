@@ -544,12 +544,14 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 					else
 						Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
 				}
+#ifndef AS_NEW
 				else
 				{
 					// TODO: decl: The member initialization should be done right after calling the base class' constructor
 					if( m_classDecl->propInits.GetLength() > 0 )
 						Error("Member initialization in declaration is not yet supported when base class' constructor is called manually", blockBegin);
 				}
+#endif
 			}
 			else
 			{
@@ -755,8 +757,6 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 
 int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem, bool deferDest)
 {
-	// TODO: decl: This method should be able to call default constructor for class members during initialization too
-
 	if( !type.IsObject() || type.IsObjectHandle() )
 		return 0;
 
@@ -1992,10 +1992,20 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 							else
 							{
 								MakeFunctionCall(&ctx, funcs[0], 0, args, node);
-
-								// Store the returned handle in the global variable
 								ctx.bc.Instr(asBC_RDSPtr);
-								ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+								if( isVarGlobOrMem == 1 )
+								{
+									// Store the returned handle in the global variable
+									ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+								}
+								else
+								{
+									// Store the returned handle in the member
+									ctx.bc.InstrSHORT(asBC_PSF, 0);
+									ctx.bc.Instr(asBC_RDSPtr);
+									ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+									ctx.bc.Instr(asBC_PopRPtr);
+								}
 								ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 								ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 							}
@@ -2026,7 +2036,14 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 								//       be difficult to serialize as the context doesn't know that the value represents a
 								//       pointer.
 								onHeap = true;
-								ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+								if( isVarGlobOrMem == 1 )
+									ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+								else
+								{
+									ctx.bc.InstrSHORT(asBC_PSF, 0);
+									ctx.bc.Instr(asBC_RDSPtr);
+									ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+								}
 							}
 
 							PrepareFunctionCall(funcs[0], &ctx.bc, args);
@@ -2393,9 +2410,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 					lctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
 				else
 				{
-					ctx.bc.InstrSHORT(asBC_PSF, 0);
-					ctx.bc.Instr(asBC_RDSPtr);
-					ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+					lctx.bc.InstrSHORT(asBC_PSF, 0);
+					lctx.bc.Instr(asBC_RDSPtr);
+					lctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 				}
 			}
 			lctx.bc.Instr(asBC_RDSPtr);
@@ -7919,6 +7936,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	asCTypeInfo tempObj;
 	asCArray<int> funcs;
 	int localVar = -1;
+	bool initializeMembers = false;
 
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
@@ -7973,12 +7991,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				}
 				m_isConstructorCalled = true;
 
-				// TODO: decl: Need to initialize members here, as they may use the properties of the base class
-				//             If there are multiple paths that call super(), then there will also be multiple 
-				//             locations with initializations of the members. It is not possible to consolidate
-				//             these in one place, as the expressions for the initialization is evaluated where 
-				//             it is compiled, which means that they may access different variables depending on the
-				//             scope where super() is called.
+#ifdef AS_NEW
+				// We need to initialize the class members, but only after all the deferred arguments have been completed
+				initializeMembers = true;
+#endif
 			}
 			else
 			{
@@ -8135,6 +8151,19 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		{
 			asDELETE(args[n],asSExprContext);
 		}
+
+	if( initializeMembers )
+	{
+		asASSERT( m_isConstructor );
+
+		// Need to initialize members here, as they may use the properties of the base class
+		// If there are multiple paths that call super(), then there will also be multiple 
+		// locations with initializations of the members. It is not possible to consolidate
+		// these in one place, as the expressions for the initialization are evaluated where 
+		// they are compiled, which means that they may access different variables depending
+		// on the scope where super() is called.
+		CompileMemberInitialization(&ctx->bc);
+	}
 
 	return 0;
 }
