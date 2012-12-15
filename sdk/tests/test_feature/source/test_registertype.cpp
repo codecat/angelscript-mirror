@@ -681,7 +681,7 @@ bool TestRefScoped()
 	// It must be possible to include the scoped type as member in script class
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("test", "scoped g; class A { scoped s; }");
+	mod->AddScriptSection("test", "class A { scoped s; }");
 	r = mod->Build();
 	if( r < 0 )
 		TEST_FAILED;
@@ -695,6 +695,27 @@ bool TestRefScoped()
 	{
 		TEST_FAILED;
 	}
+
+	// Test saving/loading bytecode with a global scoped variable
+	bout.buffer = "";
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", "scoped g;");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	if( bout.buffer != "" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+	CBytecodeStream stream("test");
+	r = mod->SaveByteCode(&stream);
+	if( r < 0 )
+		TEST_FAILED;
+	mod = engine->GetModule("b", asGM_ALWAYS_CREATE);
+	r = mod->LoadByteCode(&stream);
+	if( r < 0 )
+		TEST_FAILED;
 
 	// Don't permit functions to be registered with handle for parameters
 	bout.buffer = "";

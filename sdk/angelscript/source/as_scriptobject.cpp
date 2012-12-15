@@ -264,7 +264,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 				if( prop->type.IsObjectHandle() )
 					*ptr = 0;
 				else
-					*ptr = (asPWORD)AllocateObject(prop->type.GetObjectType(), engine, false);
+					*ptr = (asPWORD)AllocateUninitializedObject(prop->type.GetObjectType(), engine);
 			}
 		}
 	}
@@ -578,20 +578,14 @@ int asCScriptObject::CopyFrom(asIScriptObject *other)
 	return 0;
 }
 
-// TODO: decl: This method shouldn't be called unless an uninitialized object is being created. Remove logic where doInitialize is true
-void *asCScriptObject::AllocateObject(asCObjectType *objType, asCScriptEngine *engine, bool doInitialize)
+void *asCScriptObject::AllocateUninitializedObject(asCObjectType *objType, asCScriptEngine *engine)
 {
 	void *ptr = 0;
 
 	if( objType->flags & asOBJ_SCRIPT_OBJECT )
 	{
-		if( doInitialize )
-			ptr = ScriptObjectFactory(objType, engine);
-		else
-		{
-			ptr = engine->CallAlloc(objType);
-			ScriptObject_ConstructUnitialized(objType, reinterpret_cast<asCScriptObject*>(ptr));
-		}
+		ptr = engine->CallAlloc(objType);
+		ScriptObject_ConstructUnitialized(objType, reinterpret_cast<asCScriptObject*>(ptr));
 	}
 	else if( objType->flags & asOBJ_TEMPLATE )
 	{

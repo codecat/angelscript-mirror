@@ -241,18 +241,14 @@ bool Test()
 	//             class T : Mixin { int a = 42; } mixin class Mixin { int b = a; } // Success. mixin class members initialized after ordinary class members
 	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
 	// TODO: decl: test saving/loading bytecode with mixin class from different file
-	// TODO: decl: test creating script class instance without initialization (for serialization)
 	// TODO: decl: the initialization expression is evaluated in the context of the constructor, 
 	//             so if the expression refers to an identifier it will first attempt to evaluate to 
 	//             local variable, then parameter, then class member, then global variable
 	// TODO: decl: Test exception in the middle of the initialization
-	// TODO: decl: Expressions are evaluated in the scope where they will be executed
-	//             class Base { Base(int _a) { a = _a; } } 
-	//             class T : Base { T(int _a) { if( _a == 0 ) Base(42); else Base(24); } int b = a; }
-	//             void test() { T a(0); assert( a.b == 42 ); T b(1); assert( a.b == 24 ); }
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterScriptArray(engine, false);
 		RegisterStdString(engine);
 		RegisterScriptHandle(engine);
@@ -321,6 +317,29 @@ bool Test()
 				TEST_FAILED;
 		}
 
+		if( obj )
+			obj->Release();
+
+		// Test creating script class instance without initialization (for serialization)
+		obj = (asIScriptObject*)engine->CreateUninitializedScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else
+		{
+			if( *reinterpret_cast<std::string*>(obj->GetAddressOfProperty(0)) != "" )
+				TEST_FAILED;
+			CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(1));
+			if( arr->GetElementTypeId() != asTYPEID_INT32 )
+				TEST_FAILED;
+			if( arr->GetSize() != 0 )
+				TEST_FAILED;
+			CScriptHandle *ref = reinterpret_cast<CScriptHandle*>(obj->GetAddressOfProperty(2));
+			if( !ref->Equals(0, 0) )
+				TEST_FAILED;
+			Complex *cmplx = reinterpret_cast<Complex*>(obj->GetAddressOfProperty(3));
+			if( cmplx->r != 0 || cmplx->i != 0 )
+				TEST_FAILED;
+		}
 		if( obj )
 			obj->Release();
 
@@ -397,6 +416,26 @@ bool Test()
 
 		if( obj )
 			obj->Release();
+
+		// Expressions are evaluated in the scope where they will be executed
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Base { Base(int _a) {} int a = _a; } \n"
+			"class T : Base { T(int _a) { if( _a == 0 ) super(42); else super(24); } int b = a; } \n"
+			"void test() { \n"
+			"  T a(0); \n"
+			"  assert( a.b == 42 ); \n"
+			"  T b(1); \n"
+			"  assert( b.b == 24 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "test()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}

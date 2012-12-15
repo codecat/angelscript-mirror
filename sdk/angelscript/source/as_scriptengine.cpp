@@ -3852,7 +3852,7 @@ asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 	{
 		asCDataType dt(*mapTypeIdToDataType.GetValue(cursor));
 		if( typeId & asTYPEID_OBJHANDLE )
-			dt.MakeHandle(true);
+			dt.MakeHandle(true, true);
 		if( typeId & asTYPEID_HANDLETOCONST )
 			dt.MakeHandleToConst(true);
 		return dt;

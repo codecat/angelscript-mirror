@@ -785,7 +785,6 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 				{
 					// For scoped typed we must move the reference from the local  
 					// variable rather than copy it as there is no AddRef behaviour
-					// TODO: decl: Make sure the bytecode serialization properly adjust this pointer
 					ctx.bc.InstrSHORT_DW(asBC_COPY, AS_PTR_SIZE, asTYPEID_OBJHANDLE | engine->GetTypeIdFromDataType(type));
 
 					// Clear the local variable so the reference isn't released
