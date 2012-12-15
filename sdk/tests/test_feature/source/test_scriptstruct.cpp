@@ -234,26 +234,51 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
-	// TODO: decl: Test initialization of members directly in declaration
-	//             class T { int a = b/2, b = 42; }                                 // undefined value as members are initialized in the order they are declared
-	//             class T { int a = obj.Func(); Obj obj; }                         // null pointer exception as members are initialized in the order they are declared
-	//             class T : B { T() { obj.Func(); super(); } Obj obj; }            // null pointer exception as members are only initialized after base class
-	//             class T : Mixin { int a = 42; } mixin class Mixin { int b = a; } // Success. mixin class members initialized after ordinary class members
 	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
 	// TODO: decl: test saving/loading bytecode with mixin class from different file
-	// TODO: decl: the initialization expression is evaluated in the context of the constructor, 
-	//             so if the expression refers to an identifier it will first attempt to evaluate to 
-	//             local variable, then parameter, then class member, then global variable
-	// TODO: decl: Test exception in the middle of the initialization
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-		RegisterScriptArray(engine, false);
+		RegisterScriptArray(engine, true);
 		RegisterStdString(engine);
 		RegisterScriptHandle(engine);
 		RegisterScriptMathComplex(engine);
 
+		// Null pointer exception when attempting to access an object before it has been initialized
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { \n"
+			"  string hello = 'hello'; \n"
+			"  int a = Func(); \n"
+			"  string str; \n"
+			"  int Func() { return str.length; } \n"
+			"}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj != 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "T t;", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
+		{
+			printf("%s\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+		if( std::string(ctx->GetExceptionFunction()->GetName()) != "Func" )
+			TEST_FAILED;
+		if( std::string(ctx->GetFunction(1)->GetName()) != "T" )
+			TEST_FAILED;
+		if( ctx->GetLineNumber(1) != 3 )
+			TEST_FAILED;
+		ctx->Release();
+		
 		// Default initialization of object members without initialization expression
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
@@ -266,7 +291,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -281,6 +306,135 @@ bool Test()
 
 		if( obj )
 			obj->Release();
+
+		// Initialize array of classes in shared class
+		const char *script = "shared class MyClass {} \n"
+			"shared class T { \n"
+			"  array<MyClass> a; \n"
+			"  MyClass[] b; \n"
+			"  array<MyClass> c = {MyClass()}; \n"
+			"  array<MyClass@> d = {MyClass()}; \n"
+			"} \n";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else
+		{
+			CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(0));
+			if( arr == 0 )
+				TEST_FAILED;
+			else
+			{
+				if( arr->GetElementTypeId() != mod->GetTypeIdByDecl("MyClass") )
+					TEST_FAILED;
+				arr->Resize(1);
+			}
+
+			arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(1));
+			if( arr == 0 )
+				TEST_FAILED;
+			else
+			{
+				if( arr->GetElementTypeId() != mod->GetTypeIdByDecl("MyClass") )
+					TEST_FAILED;
+				arr->Resize(1);
+			}
+
+			arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(2));
+			if( arr == 0 )
+				TEST_FAILED;
+			else
+			{
+				if( arr->GetElementTypeId() != mod->GetTypeIdByDecl("MyClass") )
+					TEST_FAILED;
+				if( arr->GetSize() != 1 )
+					TEST_FAILED;
+			}
+
+			arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(3));
+			if( arr == 0 )
+				TEST_FAILED;
+			else
+			{
+				if( arr->GetElementTypeId() != mod->GetTypeIdByDecl("MyClass@") )
+					TEST_FAILED;
+				if( arr->GetSize() != 1 )
+					TEST_FAILED;
+			}
+		}
+
+		if( obj )
+			obj->Release();
+
+		// Initialization from mixin classes (in same script)
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"mixin class M { \n"
+			"  array<int> a = {1,2,3}; \n"
+			"  int c = b*2; \n"
+			"} \n"
+			"class T : M { \n"
+			"  int b = 12; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		if( obj == 0 )
+			TEST_FAILED;
+		else
+		{
+			CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj->GetAddressOfProperty(1));
+			if( arr->GetElementTypeId() != asTYPEID_INT32 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(arr->At(0)) != 1 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(arr->At(1)) != 2 )
+				TEST_FAILED;
+			
+			if( *reinterpret_cast<int*>(obj->GetAddressOfProperty(0)) != 12 )
+				TEST_FAILED;
+			if( *reinterpret_cast<int*>(obj->GetAddressOfProperty(2)) != 24 )
+				TEST_FAILED;
+		}
+
+		if( obj )
+			obj->Release();
+
+		// Initialization from mixin classes (in other script)
+		// TODO: decl: This should also be supported
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"mixin class M { \n"
+			"  array<int> a = {1,2,3}; \n"
+			"} \n");
+		mod->AddScriptSection("test2",
+			"class T : M { \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test2 (1, 7) : Info    : Compiling T::T()\n"
+						   "test2 (3, 15) : Error   : Initialization of class member objects included from mixins in other files is not yet supported\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 		// Explicit initialization of object members
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
