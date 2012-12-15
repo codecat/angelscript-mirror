@@ -144,6 +144,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_WII
 		"AS_WII "
 #endif
+#ifdef AS_WIIU
+		"AS_WIIU "
+#endif
 #ifdef AS_IPHONE
 		"AS_IPHONE "
 #endif
@@ -3566,7 +3569,8 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 	}
 	else if( i->callConv == ICC_STDCALL )
 	{
-		void *(STDCALL *f)() = (void *(STDCALL *)())(i->func);
+		typedef void *(STDCALL *func_t)();
+		func_t f = (func_t)(i->func);
 		return f();
 	}
 	else
@@ -3587,7 +3591,8 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 	}
 	else if( i->callConv == ICC_STDCALL )
 	{
-		void *(STDCALL *f)(void *) = (void *(STDCALL *)(void *))(i->func);
+		typedef void *(STDCALL *func_t)(void *);
+		func_t f = (func_t)(i->func);
 		return f(param1);
 	}
 	else
@@ -3687,7 +3692,8 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 	}
 	else if( i->callConv == ICC_STDCALL )
 	{
-		void (STDCALL *f)(void *, void *) = (void (STDCALL *)(void *, void *))(i->func);
+		typedef void (STDCALL *func_t)(void *, void *);
+		func_t f = (func_t)(i->func);
 		f(param1, param2);
 	}
 	else
@@ -3712,7 +3718,8 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 	}
 	else if( i->callConv == ICC_STDCALL )
 	{
-		bool (STDCALL *f)(void *, void *) = (bool (STDCALL *)(void *, void *))(i->func);
+		typedef bool (STDCALL *func_t)(void *, void *);
+		func_t f = (func_t)(i->func);
 		return f(param1, param2);
 	}
 	else

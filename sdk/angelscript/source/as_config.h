@@ -224,6 +224,7 @@
 // AS_DC        - Sega Dreamcast
 // AS_GC        - Nintendo GameCube
 // AS_WII       - Nintendo Wii
+// AS_WIIU      - Nintendo Wii U
 // AS_IPHONE    - Apple IPhone
 // AS_ANDROID   - Android
 // AS_HAIKU     - Haiku
@@ -556,8 +557,15 @@
 	#define STDCALL __attribute__((stdcall))
 	#define ASM_AT_N_T
 
+	// WII U
+	#if defined(__ghs__)
+		#define AS_WIIU
+	
+		// Native calling conventions are not yet supported
+		#define AS_MAX_PORTABILITY
+
 	// Marmalade is a cross platform SDK. It uses g++ to compile for iOS and Android
-	#if defined(__S3E__)
+	#elif defined(__S3E__)
 		#ifndef AS_MARMALADE
 			// From now on we'll use the below define
 			#define AS_MARMALADE

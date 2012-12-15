@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed problem with saving/loading bytecode that passed function pointers in a function parameter (Thanks Andre Santee)
 <li>Fixed global variables of scoped reference types
 <li>Fixed bug in XBox 360 native calling convention code when returning simple objects by value (Thanks Jason Dorie)
+<li>Fixed compiler errors on Wii U (Thanks virious)
 </ul>
 <li>Library interface
 <ul>
@@ -45,6 +46,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented the generic calling convention wrappers for the missing methods in the script array add-on
 <li>Implemented the generic calling convention wrappers for the script handle add-on
 <li>Implemented the generic calling convention wrappers for the missing methods in the std::string add-on
+<li>Fixed bug in script array when comparing two arrays for equality and only opCmp had been implemented in the element type (Thanks virious)
 </ul>
 </ul>
 
