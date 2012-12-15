@@ -387,76 +387,58 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 		asCObjectProperty *prop = outFunc->objectType->properties[n];
 
 		// Check if the property has an initialization expression
-		bool found = false;
+		asCScriptNode *declNode = 0;
 		asCScriptNode *initNode = 0;
 		asCScriptCode *initScript = 0;
 		for( asUINT m = 0; m < m_classDecl->propInits.GetLength(); m++ )
 		{
 			if( m_classDecl->propInits[m].name == prop->name )
 			{
-#ifndef AS_NEW
-				// TODO: decl: Allow all types to be initialized
-				if( !prop->type.IsPrimitive() && !prop->type.IsObjectHandle() )
+				// TODO: decl: Support initializations from mixins included from other file too
+				if( m_classDecl->propInits[m].file != m_classDecl->script )
 				{
-					Error("Initialization of class member objects in declaration is not yet supported", m_classDecl->propInits[m].node);
+					if( m_classDecl->propInits[m].initNode )
+						Error("Initialization of class member objects included from mixins in other files is not yet supported", m_classDecl->propInits[m].initNode);
+
+					// For now we'll compile the initialization without informing where it is declared
+					initNode = 0;
+					declNode = m_classDecl->node;
+					initScript = 0;
 				}
 				else
-#endif
 				{
-					found = true;
-					initNode = m_classDecl->propInits[m].node;
+					declNode = m_classDecl->propInits[m].declNode;
+					initNode = m_classDecl->propInits[m].initNode;
 					initScript = m_classDecl->propInits[m].file;
 				}
 				break;
 			}
 		}
 
-#ifndef AS_NEW
-		if( found && initNode )
-#endif
+		// If declNode is null, the property was inherited in which case
+		// it was already initialized by the base class' constructor
+		if( declNode )
 		{
 			if( initNode )
 			{
 				// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
 				asCParser parser(builder);
-				// TODO: decl: Change the name of the method as we're now using it for more than global variables
-				int r = parser.ParseGlobalVarInit(initScript, initNode);
+				int r = parser.ParseVarInit(initScript, initNode);
 				if( r < 0 )
 					continue;
 
 				initNode = parser.GetScriptNode();
 			}
 
+			// Add a line instruction with the position of the declaration
+			LineInstr(byteCode, declNode->tokenPos);
+
+			// Compile the initialization
 			asQWORD constantValue;
 			asCByteCode bc(engine);
-			CompileInitialization(initNode, &bc, prop->type, initNode ? initNode : m_classDecl->node, prop->byteOffset, &constantValue, 2);
-	
-			// TODO: decl: Need to know where the property has been declared even if not explicitly initialized
-			if( initNode )
-				LineInstr(byteCode, initNode->tokenPos);
+			CompileInitialization(initNode, &bc, prop->type, declNode, prop->byteOffset, &constantValue, 2);
 			byteCode->AddCode(&bc);
 		}
-#ifndef AS_NEW
-		else
-		{
-			// TODO: decl: Compile the initialization of the member with the default constructor
-			//             This is currently done directly in asCScriptObject construct, but will now be done in the bytecode
-
-			// Make sure all the class members can be initialized with default constructors
-			asCDataType &dt = outFunc->objectType->properties[n]->type;
-			if( dt.IsObject() && !dt.IsObjectHandle() &&
-				(((dt.GetObjectType()->flags & asOBJ_REF) && dt.GetObjectType()->beh.factory == 0) ||
-				 ((dt.GetObjectType()->flags & asOBJ_VALUE) && !(dt.GetObjectType()->flags & asOBJ_POD) && dt.GetObjectType()->beh.construct == 0)) )
-			{
-				asCString str;
-				if( dt.GetFuncDef() )
-					str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
-				else
-					str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
-				Error(str, m_classDecl->node);
-			}
-		}
-#endif
 	}
 }
 
@@ -544,14 +526,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 					else
 						Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
 				}
-#ifndef AS_NEW
-				else
-				{
-					// TODO: decl: The member initialization should be done right after calling the base class' constructor
-					if( m_classDecl->propInits.GetLength() > 0 )
-						Error("Member initialization in declaration is not yet supported when base class' constructor is called manually", blockBegin);
-				}
-#endif
 			}
 			else
 			{
@@ -1016,7 +990,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	asCParser parser(builder);
 	if( node )
 	{
-		int r = parser.ParseGlobalVarInit(script, node);
+		int r = parser.ParseVarInit(script, node);
 		if( r < 0 )
 			return r;
 
@@ -2322,8 +2296,6 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			ctx.bc.InstrSHORT(asBC_PSF, 0);
 			ctx.bc.Instr(asBC_RDSPtr);
 			ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
-			
-			// TODO: decl: For non-handles we need more
 		}
 		ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
 		ctx.bc.Instr(asBC_PopPtr);
@@ -7991,10 +7963,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				}
 				m_isConstructorCalled = true;
 
-#ifdef AS_NEW
 				// We need to initialize the class members, but only after all the deferred arguments have been completed
 				initializeMembers = true;
-#endif
 			}
 			else
 			{

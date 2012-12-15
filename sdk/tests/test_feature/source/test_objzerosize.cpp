@@ -161,9 +161,11 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	bout.buffer = "";
 	r = mod->Build();
-	if( r >= 0 || bout.buffer != "script (4, 5) : Error   : Data type can't be 'Object'\n" )
+	if( r >= 0 )
+		TEST_FAILED;
+	if( bout.buffer != "script (4, 12) : Error   : Data type can't be 'Object'\n" )
 	{
-		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

@@ -2489,18 +2489,7 @@ void asCBuilder::CompileClasses()
 					if( !decl->isExistingShared )
 					{
 						CheckNameConflictMember(decl->objType, name.AddressOf(), n, file, true);
-						AddPropertyToClass(decl, name, dt, isPrivate, file, node);
-
-						// Register the initialization expression (if any) to be compiled later
-						if( n->next && n->next->nodeType != snIdentifier )
-						{
-							n = n->next;
-							asASSERT( n->nodeType == snAssignment );
-
-							// Store the initialization node
-							sPropertyInitializer p(name, n, file);
-							decl->propInits.PushLast(p);
-						}
+						AddPropertyToClass(decl, name, dt, isPrivate, file, n);
 					}
 					else
 					{
@@ -2523,11 +2512,12 @@ void asCBuilder::CompileClasses()
 							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
 							WriteError(str, file, n);
 						}
-
-						// Skip the initialization expression
-						if( n->next && n->next->nodeType != snIdentifier )
-							n = n->next;
 					}
+
+					// Skip the initialization node
+					if( n->next && n->next->nodeType != snIdentifier )
+						n = n->next;
+
 					n = n->next;
 				}
 			}
@@ -2864,18 +2854,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 								if( r < 0 )
 									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
 
-								AddPropertyToClass(decl, name, dt, isPrivate, file, n);
-
-								// Register the initialization expression
-								if( n2->next && n2->next->nodeType != snIdentifier )
-								{
-									// TODO: decl: Store the initialization node for each property in the builder's  
-									//             classDeclaration so these can be compiled in the constructors. The
-									//             mixin class' members are added to the end of the class so the 
-									//             initialization of these will be done last.
-									WriteError("Initialization of class members in declaration is not yet supported for mixin classes", decl->script, n2);
-									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
-								}
+								AddPropertyToClass(decl, name, dt, isPrivate, file, n2);
 							}
 							else
 							{
@@ -2899,12 +2878,12 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 									WriteError(str, decl->script, decl->node);
 									WriteInfo(TXT_WHILE_INCLUDING_MIXIN, decl->script, node);
 								}
-
-								// Skip the initialization expression
-								if( n2->next && n2->next->nodeType != snIdentifier )
-									n2 = n2->next;
 							}
 						}
+
+						// Skip the initialization expression
+						if( n2->next && n2->next->nodeType != snIdentifier )
+							n2 = n2->next;
 
 						n2 = n2->next;
 					}
@@ -2954,17 +2933,36 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 
 asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const asCString &name, const asCDataType &dt, bool isPrivate, asCScriptCode *file, asCScriptNode *node)
 {
-	if( !dt.CanBeInstanciated() )
+	// If the declaration node is not given, then
+	// this property is inherited from a base class
+	if( node )
 	{
-		if( file && node )
+		// Check if the property is allowed
+		if( !dt.CanBeInstanciated() )
 		{
-			asCString str;
-			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
-			WriteError(str, file, node);
+			if( file && node )
+			{
+				asCString str;
+				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+				WriteError(str, file, node);
+			}
+			return 0;
 		}
-		return 0;
+
+		// Register the initialization expression (if any) to be compiled later
+		asCScriptNode *declNode = node;
+		asCScriptNode *initNode = 0;
+		if( node->next && node->next->nodeType != snIdentifier )
+		{
+			asASSERT( node->next->nodeType == snAssignment );
+			initNode = node->next;
+		}
+
+		sPropertyInitializer p(name, declNode, initNode, file);
+		decl->propInits.PushLast(p);
 	}
 
+	// Add the property to the object type
 	return decl->objType->AddPropertyToClass(name, dt, isPrivate);
 }
 

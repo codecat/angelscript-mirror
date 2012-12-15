@@ -440,10 +440,10 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "mod (1, 7) : Info    : Compiling T::T()\n"
-		                   "mod (1, 7) : Error   : No default constructor for object of type 'MyTmpl'.\n"
+		                   "mod (1, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n"
 						   "mod (2, 26) : Info    : Compiling S::S()\n"
 		                   "mod (2, 34) : Error   : There is no copy operator for the type 'MyTmpl' available.\n"
-						   "mod (2, 7) : Error   : No default constructor for object of type 'MyTmpl'.\n" )
+						   "mod (2, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

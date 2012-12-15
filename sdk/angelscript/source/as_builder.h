@@ -85,12 +85,13 @@ void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDes
 
 struct sPropertyInitializer
 {
-	sPropertyInitializer() : node(0), file(0) {}
-	sPropertyInitializer(const asCString &nm, asCScriptNode *nd, asCScriptCode *f) : name(nm), node(nd), file(f) {}
-	sPropertyInitializer &operator=(const sPropertyInitializer &o) {name = o.name; node = o.node; file = o.file; return *this;}
+	sPropertyInitializer() : declNode(0), initNode(0), file(0) {}
+	sPropertyInitializer(const asCString &nm, asCScriptNode *decl, asCScriptNode *init, asCScriptCode *f) : name(nm), declNode(decl), initNode(init), file(f) {}
+	sPropertyInitializer &operator=(const sPropertyInitializer &o) {name = o.name; declNode = o.declNode; initNode = o.initNode; file = o.file; return *this;}
 
 	asCString      name;
-	asCScriptNode *node;
+	asCScriptNode *declNode;
+	asCScriptNode *initNode;
 	asCScriptCode *file;
 };
 

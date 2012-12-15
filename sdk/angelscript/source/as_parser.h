@@ -63,7 +63,7 @@ public:
 
 	// Called from compiler
 	int ParseStatementBlock(asCScriptCode *script, asCScriptNode *block);
-	int ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init);
+	int ParseVarInit(asCScriptCode *script, asCScriptNode *init);
 	int ParseExpression(asCScriptCode *script);
 #endif
 	
@@ -96,7 +96,7 @@ protected:
 #ifndef AS_NO_COMPILER
 	// Statements
 	asCScriptNode *SuperficiallyParseStatementBlock();
-	asCScriptNode *SuperficiallyParseGlobalVarInit();
+	asCScriptNode *SuperficiallyParseVarInit();
 	asCScriptNode *ParseStatementBlock();
 	asCScriptNode *ParseStatement();
 	asCScriptNode *ParseExpressionStatement();

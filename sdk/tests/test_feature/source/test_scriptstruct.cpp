@@ -285,8 +285,7 @@ bool Test()
 
 		if( obj )
 			obj->Release();
-/*
-		TODO: decl:
+
 		// Explicit initialization of object members
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
@@ -324,7 +323,7 @@ bool Test()
 
 		if( obj )
 			obj->Release();
-*/
+
 		// Default initialization of primitive members
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

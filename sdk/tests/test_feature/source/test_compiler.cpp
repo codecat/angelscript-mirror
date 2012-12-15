@@ -1790,7 +1790,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "test (2, 14) : Error   : Data type can't be 'ITest'\n" )
+		if( bout.buffer != "test (2, 20) : Error   : Data type can't be 'ITest'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

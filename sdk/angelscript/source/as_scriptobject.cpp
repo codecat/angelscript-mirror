@@ -236,7 +236,6 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 	if( objType->flags & asOBJ_GC )
 		objType->engine->gc.AddScriptObjectToGC(this, objType);
 
-#ifdef AS_NEW
 	if( doInitialize )
 	{
 		// The actual initialization will be done by the bytecode, so here we should just clear the
@@ -269,28 +268,6 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 			}
 		}
 	}
-#else
-	// Construct all properties
-	// TODO: decl: When creating an initialized object this routine should just clear the memory. All allocation and initialization will be done by the bytecode for the constructor
-	//             When creating an uninitialized object this routine should allocate the objects that are not handles without calling their constructors as is done now
-	asCScriptEngine *engine = objType->engine;
-	for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
-	{
-		asCObjectProperty *prop = objType->properties[n];
-		if( prop->type.IsObject() )
-		{
-			asPWORD *ptr = (asPWORD*)(((char*)this) + prop->byteOffset);
-
-			if( prop->type.IsObjectHandle() )
-				*ptr = 0;
-			else
-			{
-				// Allocate the object and call it's constructor
-				*ptr = (asPWORD)AllocateObject(prop->type.GetObjectType(), engine, doInitialize);
-			}
-		}
-	}
-#endif
 }
 
 void asCScriptObject::Destruct()

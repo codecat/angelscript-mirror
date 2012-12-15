@@ -1934,7 +1934,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 
 			RewindTo(&token);
 
-			tmp = SuperficiallyParseGlobalVarInit();
+			tmp = SuperficiallyParseVarInit();
 
 			node->AddChildLast(tmp);
 			if( isSyntaxError ) return node;
@@ -2758,7 +2758,7 @@ asCScriptNode *asCParser::ParseGlobalVar()
 		RewindTo(&t);
 		if( t.type == ttAssignment || t.type == ttOpenParanthesis )
 		{
-			node->AddChildLast(SuperficiallyParseGlobalVarInit());
+			node->AddChildLast(SuperficiallyParseVarInit());
 			if( isSyntaxError ) return node;
 		}
 
@@ -2781,7 +2781,7 @@ asCScriptNode *asCParser::ParseGlobalVar()
 	UNREACHABLE_RETURN;
 }
 
-int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
+int asCParser::ParseVarInit(asCScriptCode *script, asCScriptNode *init)
 {
 	Reset();
 
@@ -2829,7 +2829,7 @@ int asCParser::ParseGlobalVarInit(asCScriptCode *script, asCScriptNode *init)
 	return 0;
 }
 
-asCScriptNode *asCParser::SuperficiallyParseGlobalVarInit()
+asCScriptNode *asCParser::SuperficiallyParseVarInit()
 {
 	asCScriptNode *node = CreateNode(snAssignment);
 	if( node == 0 ) return 0;
@@ -3173,8 +3173,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp)
 			RewindTo(&t);
 			if( t.type == ttAssignment || t.type == ttOpenParanthesis )
 			{
-				// TODO: decl: Change the name of the method as we're now using it for more than global vars
-				node->AddChildLast(SuperficiallyParseGlobalVarInit());
+				node->AddChildLast(SuperficiallyParseVarInit());
 				if( isSyntaxError ) return node;
 			}
 		}
