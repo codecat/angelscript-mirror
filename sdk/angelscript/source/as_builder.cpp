@@ -1993,17 +1993,6 @@ void asCBuilder::AddInterfaceFromMixinToClass(sClassDeclaration *decl, asCScript
 
 void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *errNode, asCObjectType *intfType)
 {
-	// If the interface is already in the class, then don't add it again
-	if( !decl->isExistingShared && decl->objType->Implements(intfType) )
-	{
-		int r, c;
-		decl->script->ConvertPosToRowCol(errNode->tokenPos, &r, &c);
-		asCString msg;
-		msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, intfType->GetName());
-		WriteWarning(decl->script->name, msg, r, c);
-		return;
-	}
-
 	// A shared type may only implement from shared interfaces
 	if( decl->objType->IsShared() && !intfType->IsShared() )
 	{
@@ -2013,25 +2002,41 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 		return;
 	}
 
-	// If the class is an existing shared class, then just check if the 
-	// interface exists in the original declaration too
-	if( decl->isExistingShared && !decl->objType->Implements(intfType) )
+	if( decl->isExistingShared )
 	{
-		asCString str;
-		str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
-		WriteError(str, decl->script, errNode);
-		return;
+		// If the class is an existing shared class, then just check if the 
+		// interface exists in the original declaration too
+		if( !decl->objType->Implements(intfType) )
+		{
+			asCString str;
+			str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
+			WriteError(str, decl->script, errNode);
+			return;
+		}
 	}
-	
-	// Add the interface to the class	
-	decl->objType->interfaces.PushLast(intfType);
-
-	// Add the inherited interfaces too
-	// For interfaces this will be done outside to handle out-of-order declarations
-	if( !decl->objType->IsInterface() )
+	else
 	{
-		for( asUINT n = 0; n < intfType->interfaces.GetLength(); n++ )
-			AddInterfaceToClass(decl, errNode, intfType->interfaces[n]);
+		// If the interface is already in the class, then don't add it again
+		if( decl->objType->Implements(intfType) )
+		{
+			int r, c;
+			decl->script->ConvertPosToRowCol(errNode->tokenPos, &r, &c);
+			asCString msg;
+			msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, intfType->GetName());
+			WriteWarning(decl->script->name, msg, r, c);
+			return;
+		}
+
+		// Add the interface to the class	
+		decl->objType->interfaces.PushLast(intfType);
+
+		// Add the inherited interfaces too
+		// For interfaces this will be done outside to handle out-of-order declarations
+		if( !decl->objType->IsInterface() )
+		{
+			for( asUINT n = 0; n < intfType->interfaces.GetLength(); n++ )
+				AddInterfaceToClass(decl, errNode, intfType->interfaces[n]);
+		}
 	}
 }
 

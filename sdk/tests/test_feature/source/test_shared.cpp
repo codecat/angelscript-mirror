@@ -10,6 +10,42 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Test problem reported by Andrew Ackermann
+	{
+		const char *script =
+			"shared interface I {} \n"
+			"shared class C : I {} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("B", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Make sure the shared type didn't get the interface duplicated
+		asIObjectType *type = mod->GetObjectTypeByName("C");
+		if( type->GetInterfaceCount() != 1 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Compiling a script with a shared class that refers to other non declared entities must give
 	// error even if the shared class is already existing in a previous module
 	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
