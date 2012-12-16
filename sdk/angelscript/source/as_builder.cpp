@@ -268,7 +268,7 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 	if( node == 0 ||
 		node->firstChild == 0 ||
 		node->firstChild != node->lastChild ||
-		node->firstChild->nodeType != snGlobalVar )
+		node->firstChild->nodeType != snDeclaration )
 	{
 		WriteError(TXT_ONLY_ONE_VARIABLE_ALLOWED, script, 0);
 		return asERROR;
@@ -644,7 +644,7 @@ void asCBuilder::RegisterNonTypesFromScript(asCScriptNode *node, asCScriptCode *
 			node->DisconnectParent();
 			if( node->nodeType == snFunction )
 				RegisterScriptFunctionFromNode(engine->GetNextScriptFunctionId(), node, script, 0, false, true, ns);
-			else if( node->nodeType == snGlobalVar )
+			else if( node->nodeType == snDeclaration )
 				RegisterGlobalVar(node, script, ns);
 			else if( node->nodeType == snVirtualProperty )
 				RegisterVirtualProperty(node, script, 0, false, true, ns);

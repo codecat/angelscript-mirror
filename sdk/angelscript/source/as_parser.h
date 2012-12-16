@@ -111,13 +111,12 @@ protected:
 	asCScriptNode *ParseContinue();
 
 	// Declarations
-	asCScriptNode *ParseDeclaration(bool isClassProp = false);
+	asCScriptNode *ParseDeclaration(bool isClassProp = false, bool isGlobalVar = false);
 	asCScriptNode *ParseImport();
 	asCScriptNode *ParseScript(bool inBlock);
 	asCScriptNode *ParseNamespace();
 	asCScriptNode *ParseFunction(bool isMethod = false);
 	asCScriptNode *ParseFuncDef();
-	asCScriptNode *ParseGlobalVar();
 	asCScriptNode *ParseClass();
 	asCScriptNode *ParseMixin();
 	asCScriptNode *ParseInitList();

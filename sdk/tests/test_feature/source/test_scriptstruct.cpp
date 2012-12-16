@@ -314,6 +314,7 @@ bool Test()
 			"  MyClass[] b; \n"
 			"  array<MyClass> c = {MyClass()}; \n"
 			"  array<MyClass@> d = {MyClass()}; \n"
+			"  array<array<MyClass>> e = {{MyClass()}, {MyClass()}}; \n"
 			"} \n";
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
