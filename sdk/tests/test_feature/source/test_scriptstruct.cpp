@@ -265,6 +265,47 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test a problem reported by Andrew Ackermann
+	// Before the change to support initialization directly in member declaration, all members were guaranteed
+	// to be initialized before the code in the constructor begun. The solution to the below was to initialize
+	// members that had no initialization expression in the beginning of the constructor even if the base class
+	// constructor is explicitly called.
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script =
+			"class Base { \n"
+			"  Base() { SetMember(); } \n"
+			"  void SetMember() {} \n"
+			"}; \n"
+			"class Derived : Base { \n"
+			"   string member; \n"
+			"	Derived() { \n"
+			"     super(); \n" // Explicitly call base class' constructor, which makes members be initialized after
+			"	} \n"
+			// Override base class SetMember method
+			"   void SetMember() { \n"
+			"     member = 'hello'; \n"
+			"   } \n"
+			"}; \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Derived d; assert( d.member == 'hello' );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// TODO: decl: test with enums and funcdefs too
 	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
 	// TODO: decl: test saving/loading bytecode with mixin class from different file
@@ -283,7 +324,7 @@ bool Test()
 			"class T { \n"
 			"  string hello = 'hello'; \n"
 			"  int a = Func(); \n"
-			"  string str; \n"
+			"  string str = 'again'; \n"
 			"  int Func() { return str.length; } \n"
 			"}");
 		r = mod->Build();
@@ -462,6 +503,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "test2 (1, 7) : Info    : Compiling T::T()\n"
+						   "test2 (3, 15) : Error   : Initialization of class member objects included from mixins in other files is not yet supported\n"
 						   "test2 (3, 15) : Error   : Initialization of class member objects included from mixins in other files is not yet supported\n" )
 		{
 			printf("%s", bout.buffer.c_str());

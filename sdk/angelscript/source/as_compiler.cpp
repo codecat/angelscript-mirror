@@ -136,7 +136,8 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	}
 
 	// Initialize the class members
-	CompileMemberInitialization(&byteCode);
+	CompileMemberInitialization(&byteCode, true);
+	CompileMemberInitialization(&byteCode, false);
 	byteCode.OptimizeLocally(tempVariableOffsets);
 
 	// Pop the object pointer from the stack
@@ -377,7 +378,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	return stackPos;
 }
 
-void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
+void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDefaults)
 {
 	asASSERT( m_classDecl );
 
@@ -421,6 +422,9 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 		{
 			if( initNode )
 			{
+				if( onlyDefaults )
+					continue;
+
 				// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
 				asCParser parser(builder);
 				int r = parser.ParseVarInit(initScript, initNode);
@@ -428,6 +432,11 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode)
 					continue;
 
 				initNode = parser.GetScriptNode();
+			}
+			else
+			{
+				if( !onlyDefaults )
+					continue;
 			}
 
 			// Add a line instruction with the position of the declaration
@@ -517,16 +526,24 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 						byteCode.AddCode(&tmpBC);
 
 						// Add the initialization of the members
-						CompileMemberInitialization(&byteCode);
+						CompileMemberInitialization(&byteCode, true);
+						CompileMemberInitialization(&byteCode, false);
 					}
 					else
 						Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, blockBegin);
+				}
+				else
+				{
+					// Only initialize members that don't have an explicit expression
+					// The members that are explicitly initialized will be initialized after the call to base class' constructor
+					CompileMemberInitialization(&byteCode, true);
 				}
 			}
 			else
 			{
 				// Add the initialization of the members
-				CompileMemberInitialization(&byteCode);
+				CompileMemberInitialization(&byteCode, true);
+				CompileMemberInitialization(&byteCode, false);
 			}
 		}
 
@@ -8131,7 +8148,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		// these in one place, as the expressions for the initialization are evaluated where 
 		// they are compiled, which means that they may access different variables depending
 		// on the scope where super() is called.
-		CompileMemberInitialization(&ctx->bc);
+		// Members that don't have an explicit initialization expression will be initialized
+		// beginning of the constructor as they are guaranteed not to use at the any 
+		// members of the base class.
+		CompileMemberInitialization(&ctx->bc, false);
 	}
 
 	return 0;
