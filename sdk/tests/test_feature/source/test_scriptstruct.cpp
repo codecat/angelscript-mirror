@@ -234,6 +234,38 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test a problem reported by Andrew Ackermann
+	// The compiler didn't set the correct stack size for the constructor so it ended up corrupting the memory
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		const char *script =
+			"shared class PowerTargeting { \n"
+			"}; \n"
+			"shared class EnergyPower { \n"
+			"	PowerTargeting targeting; \n"
+			"	PowerTargeting[] objectEffects; \n"
+			"	EnergyPower() { \n"
+			"	} \n"
+			"}; \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "EnergyPower e;", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// TODO: decl: test with enums and funcdefs too
 	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
 	// TODO: decl: test saving/loading bytecode with mixin class from different file
 	{

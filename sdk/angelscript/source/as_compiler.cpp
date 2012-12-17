@@ -498,10 +498,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
 
-	// Count total variable size
-	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
-	outFunc->variableSpace = varSize;
-
 	if( outFunc->objectType )
 	{
 		if( m_isConstructor )
@@ -553,6 +549,10 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	// Add the code for the statement block
 	byteCode.AddCode(&bc);
+
+	// Count total variable size
+	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
+	outFunc->variableSpace = varSize;
 
 	// Deallocate all local variables
 	int n;
