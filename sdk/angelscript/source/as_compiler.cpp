@@ -126,6 +126,11 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
 
+	// Initialize the class members that have no explicit expression first. This will allow the
+	// base class' constructor to access these members without worry they will be uninitialized.
+	// This can happen if the base class' constructor calls a method that is overridden by the derived class
+	CompileMemberInitialization(&byteCode, true);
+
 	// If the class is derived from another, then the base class' default constructor must be called
 	if( outFunc->objectType->derivedFrom )
 	{
@@ -135,8 +140,8 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 		byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
 	}
 
-	// Initialize the class members
-	CompileMemberInitialization(&byteCode, true);
+	// Initialize the class members that explicit expressions afterwards. This allow the expressions 
+	// to access the base class members without worry they will be uninitialized
 	CompileMemberInitialization(&byteCode, false);
 	byteCode.OptimizeLocally(tempVariableOffsets);
 
@@ -518,6 +523,10 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 				{
 					if( outFunc->objectType->derivedFrom->beh.construct )
 					{
+						// Initialize members without explicit expression first
+						CompileMemberInitialization(&byteCode, true);
+
+						// Call base class' constructor
 						asCByteCode tmpBC(engine);
 						tmpBC.InstrSHORT(asBC_PSF, 0);
 						tmpBC.Instr(asBC_RDSPtr);
@@ -525,8 +534,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 						tmpBC.OptimizeLocally(tempVariableOffsets);
 						byteCode.AddCode(&tmpBC);
 
-						// Add the initialization of the members
-						CompileMemberInitialization(&byteCode, true);
+						// Add the initialization of the members with explicit expressions
 						CompileMemberInitialization(&byteCode, false);
 					}
 					else
