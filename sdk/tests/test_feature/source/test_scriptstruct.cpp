@@ -306,7 +306,8 @@ bool Test()
 		engine->Release();
 	}
 
-	// TODO: decl: test with enums and funcdefs too
+	// TODO: decl: The compiler can remember the first access to any member variable while compiling the constructor. If the call to super() is made explicitly it can then check if any member has been accessed before that and give an error.
+	// TODO: decl: It might be possible to do a static code analysis if any function calls are made before the call to super() and then check if those functions access the members. This is quite complex and won't be implemented now.
 	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
 	// TODO: decl: test saving/loading bytecode with mixin class from different file
 	{
@@ -359,7 +360,11 @@ bool Test()
 			"  string a; \n"
 			"  array<int> b; \n"
 			"  ref c; \n"
-			"}");
+			"  E e; \n"
+			"  FUNC @f; \n"
+			"} \n"
+			"enum E { EVAL } \n"
+			"funcdef void FUNC(); \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -519,7 +524,12 @@ bool Test()
 			"  array<int> b = {1,2,3}; \n"
 			"  ref @c = @b; \n"
 			"  complex d(1,2); \n"
-			"}");
+			"  E e = EVAL; \n"
+			"  FUNC @f = func; \n"
+			"} \n"
+			"enum E { EVAL = 42 }\n"
+			"funcdef void FUNC(); \n"
+			"void func() {} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -543,6 +553,12 @@ bool Test()
 				TEST_FAILED;
 			Complex *cmplx = reinterpret_cast<Complex*>(obj->GetAddressOfProperty(3));
 			if( cmplx->r != 1 || cmplx->i != 2 )
+				TEST_FAILED;
+			asUINT e = *reinterpret_cast<asUINT*>(obj->GetAddressOfProperty(4));
+			if( e != 42 )
+				TEST_FAILED;
+			asIScriptFunction *func = *reinterpret_cast<asIScriptFunction**>(obj->GetAddressOfProperty(5));
+			if( std::string(func->GetName()) != "func" )
 				TEST_FAILED;
 		}
 
