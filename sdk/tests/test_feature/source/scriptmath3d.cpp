@@ -394,7 +394,7 @@ void RegisterScriptMath3D_Native(asIScriptEngine *engine)
 	int r;
 
 	// Register the type
-	r = engine->RegisterObjectType("vector3", sizeof(Vector3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); assert( r >= 0 );
+	r = engine->RegisterObjectType("vector3", sizeof(Vector3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK | asOBJ_APP_CLASS_ALLFLOATS); assert( r >= 0 );
 
 	// Register the object properties
 	r = engine->RegisterObjectProperty("vector3", "float x", asOFFSET(Vector3, x)); assert( r >= 0 );

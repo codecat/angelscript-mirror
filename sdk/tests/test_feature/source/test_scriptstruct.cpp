@@ -225,6 +225,14 @@ static const char *script14 =
 
 bool Test2();
 
+void TraceExec(asIScriptContext *ctx, void *)
+{
+//	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
+//		printf(" ");
+//	printf("%s", ctx->GetFunction()->GetDeclaration());
+//	printf("    Line: %d\n", ctx->GetLineNumber());
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -233,6 +241,66 @@ bool Test()
 	asIScriptEngine *engine;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test a problem reported by Andrew Ackermann
+	// Null pointer access exception in constructor due to access of members before they have been initialized
+	// TODO: decl: This is not an error, but it does break backwards compatibility because in earlier version
+	//             all members were initialized with default values before the constructor was called.
+	// TODO: decl: Provide a compile time directive that will disable member initialization and provide backwards compatiblity for this case
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		const char *script =
+			"interface IGuiElement { \n"
+			"  void addChild(IGuiElement @e); \n"
+			"} \n"
+			"class BaseGuiElement : IGuiElement { \n"
+			"  BaseGuiElement(IGuiElement @e) { \n"
+			"    _BaseGuiElement(e); \n"
+			"  } \n"
+			"  void _BaseGuiElement(IGuiElement @e) { \n"
+			"    @parent = e; \n"
+			"  } \n"
+			"  void set_parent(IGuiElement @e) { \n"
+			"    if( e !is null ) \n"
+			"      e.addChild(this); \n"
+			"  } \n"
+			"  void addChild(IGuiElement @e) { \n"
+			"    Children.insertLast(e); \n"
+			"  } \n"
+			"  IGuiElement@[] Children; \n"
+			"} \n"
+			"class GuiButton : BaseGuiElement { \n"
+			"  GuiButton(IGuiElement @e) { \n"
+			"    super(e); \n"
+			"  } \n"
+			"} \n"
+			"class GuiScrollBar : BaseGuiElement { \n"
+			"  GuiButton @button; \n"
+			"  GuiScrollBar(IGuiElement @e) { \n"
+			"    @button = GuiButton(this); \n" // The construction of the GuiButton tries to access members that are only initialized with super(e)
+			"    super(e); \n"                  // Changing the code to call super(e) first resolves the exception, but this wasn't necessary in version 2.25.2
+			"  } \n"
+			"} \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->SetLineCallback(asFUNCTION(TraceExec), 0, asCALL_CDECL);
+		r = ExecuteString(engine, "BaseGuiElement base(null); GuiScrollBar scroll(base);", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
 
 	// Test a problem reported by Andrew Ackermann
 	// The compiler didn't set the correct stack size for the constructor so it ended up corrupting the memory
@@ -340,7 +408,7 @@ bool Test()
 		r = ExecuteString(engine, "T t;", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
-		if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
+		if( r == asEXECUTION_EXCEPTION && std::string(ctx->GetExceptionString()) != "Null pointer access" )
 		{
 			printf("%s\n", ctx->GetExceptionString());
 			TEST_FAILED;

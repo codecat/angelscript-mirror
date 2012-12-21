@@ -214,68 +214,71 @@ bool Test()
 		if( f1 == 0 )
 			TEST_FAILED;
 
-		asIScriptFunction *fact1 = engine->GetObjectTypeById(t1)->GetFactoryByIndex(0);
-		if( fact1 < 0 )
-			TEST_FAILED;
-
-		asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
-		mod2->AddScriptSection("b", validCode);
-		r = mod2->Build();
-		if( r < 0 )
-			TEST_FAILED;
-
-		if( bout.buffer != "" )
+		if( t1 >= 0 )
 		{
-			printf("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
+			asIScriptFunction *fact1 = engine->GetObjectTypeById(t1)->GetFactoryByIndex(0);
+			if( fact1 < 0 )
+				TEST_FAILED;
+		
+			asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
+			mod2->AddScriptSection("b", validCode);
+			r = mod2->Build();
+			if( r < 0 )
+				TEST_FAILED;
 
-		int t2 = mod2->GetTypeIdByDecl("T");
-		if( t1 != t2 )
-			TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
 
-		asIScriptFunction *f2 = mod2->GetFunctionByDecl("void func()");
-		if( f1 != f2 )
-			TEST_FAILED;
+			int t2 = mod2->GetTypeIdByDecl("T");
+			if( t1 != t2 )
+				TEST_FAILED;
 
-		asIScriptFunction *fact2 = engine->GetObjectTypeById(t2)->GetFactoryByIndex(0);
-		if( fact1 != fact2 )
-			TEST_FAILED;
+			asIScriptFunction *f2 = mod2->GetFunctionByDecl("void func()");
+			if( f1 != f2 )
+				TEST_FAILED;
 
-		CBytecodeStream stream(__FILE__"1");
-		mod->SaveByteCode(&stream);
+			asIScriptFunction *fact2 = engine->GetObjectTypeById(t2)->GetFactoryByIndex(0);
+			if( fact1 != fact2 )
+				TEST_FAILED;
 
-		bout.buffer = "";
-		asIScriptModule *mod3 = engine->GetModule("3", asGM_ALWAYS_CREATE);
-		r = mod3->LoadByteCode(&stream);
-		if( r < 0 )
-			TEST_FAILED;
+			CBytecodeStream stream(__FILE__"1");
+			mod->SaveByteCode(&stream);
 
-		int t3 = mod3->GetTypeIdByDecl("T");
-		if( t1 != t3 )
-			TEST_FAILED;
-		if( bout.buffer != "" )
-		{
-			printf("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
+			bout.buffer = "";
+			asIScriptModule *mod3 = engine->GetModule("3", asGM_ALWAYS_CREATE);
+			r = mod3->LoadByteCode(&stream);
+			if( r < 0 )
+				TEST_FAILED;
 
-		asIScriptFunction *f3 = mod3->GetFunctionByDecl("void func()");
-		if( f1 != f3 )
-			TEST_FAILED;
+			int t3 = mod3->GetTypeIdByDecl("T");
+			if( t1 != t3 )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
 
-		asIScriptFunction *fact3 = engine->GetObjectTypeById(t3)->GetFactoryByIndex(0);
-		if( fact1 != fact3 )
-			TEST_FAILED;
+			asIScriptFunction *f3 = mod3->GetFunctionByDecl("void func()");
+			if( f1 != f3 )
+				TEST_FAILED;
 
-		bout.buffer = "";
-		r = ExecuteString(engine, "T t; t.func(); func();", mod3);
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
-		if( bout.buffer != "" )
-		{
-			printf("%s", bout.buffer.c_str());
-			TEST_FAILED;
+			asIScriptFunction *fact3 = engine->GetObjectTypeById(t3)->GetFactoryByIndex(0);
+			if( fact1 != fact3 )
+				TEST_FAILED;
+
+			bout.buffer = "";
+			r = ExecuteString(engine, "T t; t.func(); func();", mod3);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
 		}
 
 		engine->Release();

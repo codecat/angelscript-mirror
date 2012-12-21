@@ -165,7 +165,9 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	int c, n;
 
 	FILE *f = 0;
-#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+#if _MSC_VER >= 1400 && !defined(__S3E__) 
+	// MSVC 8.0 / 2005 introduced new functions 
+	// Marmalade doesn't use these, even though it uses the MSVC compiler
 	fopen_s(&f, filename, "wt");
 #else
 	f = fopen(filename, "wt");

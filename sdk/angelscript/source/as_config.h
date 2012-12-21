@@ -781,6 +781,13 @@
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+		#elif defined(__mips__)
+			#define AS_MIPS
+			#define AS_BIG_ENDIAN
+			#define AS_USE_DOUBLE_AS_FLOAT
+
+			// Native calling conventions for Linux/Mips do not work yet.
+			#define AS_MAX_PORTABILITY
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
