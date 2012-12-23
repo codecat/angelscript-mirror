@@ -686,7 +686,11 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			for( i = 0; i < length; ++i )
 				func->lineNumbers[i] = ReadEncodedUInt();
 
-			// TODO: decl: Read the array of script sections 
+			// Read the array of script sections 
+			length = ReadEncodedUInt();
+			func->sectionIdxs.SetLength(length);
+			for( i = 0; i < length; ++i )
+				func->sectionIdxs[i] = ReadEncodedUInt();
 		}
 
 		ReadData(&func->isShared, 1);
@@ -2218,9 +2222,9 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	// The program position (every even number) needs to be adjusted
 	// for the line numbers to be in number of dwords instead of number of instructions 
 	for( n = 0; n < func->lineNumbers.GetLength(); n += 2 )
-	{
 		func->lineNumbers[n] = instructionNbrToPos[func->lineNumbers[n]];
-	}
+	for( n = 0; n < func->sectionIdxs.GetLength(); n += 2 )
+		func->sectionIdxs[n] = instructionNbrToPos[func->sectionIdxs[n]];
 
 	CalculateStackNeeded(func);
 }
@@ -2950,7 +2954,16 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 					WriteEncodedInt64(func->lineNumbers[i]);
 			}
 
-			// TODO: decl: Write the array of script sections
+			// Write the array of script sections
+			length = (asUINT)func->sectionIdxs.GetLength();
+			WriteEncodedInt64(length);
+			for( i = 0; i < length; ++i )
+			{
+				if( (i & 1) == 0 )
+					WriteEncodedInt64(bytecodeNbrByPos[func->sectionIdxs[i]]);
+				else
+					WriteEncodedInt64(func->sectionIdxs[i]);
+			}
 		}
 
 		WriteData(&func->isShared, 1);

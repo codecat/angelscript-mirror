@@ -282,6 +282,18 @@ void asCCompiler::FinalizeFunction()
 	outFunc->AddReferences();
 	outFunc->stackNeeded = byteCode.largestStackUsed + outFunc->variableSpace;
 	outFunc->lineNumbers = byteCode.lineNumbers;
+
+	// Extract the script section indexes too if there are any entries that are different from the function's script section
+	int lastIdx = outFunc->scriptSectionIdx;
+	for( n = 0; n < byteCode.sectionIdxs.GetLength(); n++ )
+	{
+		if( byteCode.sectionIdxs[n] != lastIdx )
+		{
+			lastIdx = byteCode.sectionIdxs[n];
+			outFunc->sectionIdxs.PushLast(byteCode.lineNumbers[n*2]);
+			outFunc->sectionIdxs.PushLast(lastIdx);
+		}
+	}
 }
 
 // internal
@@ -400,23 +412,9 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 		{
 			if( m_classDecl->propInits[m].name == prop->name )
 			{
-				// TODO: decl: Support initializations from mixins included from other file too
-				if( m_classDecl->propInits[m].file != m_classDecl->script )
-				{
-					if( m_classDecl->propInits[m].initNode )
-						Error("Initialization of class member objects included from mixins in other files is not yet supported", m_classDecl->propInits[m].initNode);
-
-					// For now we'll compile the initialization without informing where it is declared
-					initNode = 0;
-					declNode = m_classDecl->node;
-					initScript = 0;
-				}
-				else
-				{
-					declNode = m_classDecl->propInits[m].declNode;
-					initNode = m_classDecl->propInits[m].initNode;
-					initScript = m_classDecl->propInits[m].file;
-				}
+				declNode   = m_classDecl->propInits[m].declNode;
+				initNode   = m_classDecl->propInits[m].initNode;
+				initScript = m_classDecl->propInits[m].file;
 				break;
 			}
 		}
@@ -444,6 +442,11 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 					continue;
 			}
 
+			// Temporarily set the script that is being compiled to where the member initialization is declared.
+			// The script can be different when including mixin classes from a different script section
+			asCScriptCode *origScript = script;
+			script = initScript;
+
 			// Add a line instruction with the position of the declaration
 			LineInstr(byteCode, declNode->tokenPos);
 
@@ -452,6 +455,8 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 			asCByteCode bc(engine);
 			CompileInitialization(initNode, &bc, prop->type, declNode, prop->byteOffset, &constantValue, 2);
 			byteCode->AddCode(&bc);
+
+			script = origScript;
 		}
 	}
 }
@@ -927,12 +932,9 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 
 void asCCompiler::LineInstr(asCByteCode *bc, size_t pos)
 {
-	// TODO: decl: Must store the file as well as token position, as with mixin classes, class declarations
-	//             may include initialization of members from multiple different files. 
-
 	int r, c;
 	script->ConvertPosToRowCol(pos, &r, &c);
-	bc->Line(r, c);
+	bc->Line(r, c, script->idx);
 }
 
 void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableScope, bool *hasReturn, asCByteCode *bc)

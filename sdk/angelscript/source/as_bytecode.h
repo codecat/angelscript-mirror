@@ -97,7 +97,7 @@ public:
 	bool IsSimpleExpression();
 
 	void Label(short label);
-	void Line(int line, int column);
+	void Line(int line, int column, int scriptIdx);
 	void ObjInfo(int offset, int info);
 	void Block(bool start);
 	void VarDecl(int varDeclIdx);
@@ -130,6 +130,7 @@ public:
 	int InstrW_W(asEBCInstr bc, int w, int b);
 
 	asCArray<int> lineNumbers;
+	asCArray<int> sectionIdxs;
 	int largestStackUsed;
 
 protected:

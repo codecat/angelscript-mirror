@@ -82,6 +82,25 @@ public:
 	operator const char * ( ) const { return 0; }
 };
 
+class EventSource
+{
+public:
+	EventSource() {refCount = 1; value = 42;};
+	virtual ~EventSource() {}
+	virtual void AddRef() {refCount++;}
+	virtual void Release() {if( --refCount == 0 ) delete this;}
+	int refCount;
+
+	int value;
+};
+
+class ASConsole : public EventSource
+{
+public:
+	static ASConsole *factory() { return new ASConsole(); }
+	EventSource *opCast() { return this; }
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -90,6 +109,56 @@ bool Test()
 
 	CBufferedOutStream bout;
 	COutStream out;
+
+	// http://www.gamedev.net/topic/636163-segfault-when-casting-directly/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		engine->RegisterObjectType("EventSource", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("EventSource", asBEHAVE_ADDREF, "void f()", asMETHOD(EventSource, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("EventSource", asBEHAVE_RELEASE, "void f()", asMETHOD(EventSource, Release), asCALL_THISCALL);
+		engine->RegisterObjectProperty("EventSource", "int value", asOFFSET(EventSource, value));
+
+		engine->RegisterObjectType("ASConsole", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_FACTORY, "ASConsole @f()", asFUNCTION(ASConsole::factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_ADDREF, "void f()", asMETHOD(ASConsole, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_RELEASE, "void f()", asMETHOD(ASConsole, Release), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_REF_CAST, "EventSource@+ f()", asMETHOD(ASConsole, opCast), asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum E { ET_READLINE = 24 } \n"
+			"class Module { \n"
+			"  void addListener(EventSource @s, E type, string line) {\n"
+			"    assert(line == 'test'); \n"
+			"    assert(type == ET_READLINE); \n"
+			"    assert(s.value == 42); \n"
+			"    EventSource @c = cast<EventSource>(console); \n"
+			"    assert(c is s); \n"
+			"  } \n"
+			"} \n"
+			"Module module; \n"
+			"string onLine = 'test'; \n"
+			"ASConsole @console = ASConsole(); \n"
+			"void main() \n"
+			"{ \n"
+			"  module.addListener(cast<EventSource>(console), ET_READLINE, onLine); \n"
+			"  EventSource @s = cast<EventSource>(console); \n"
+			"  module.addListener(s, ET_READLINE, onLine); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
   	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

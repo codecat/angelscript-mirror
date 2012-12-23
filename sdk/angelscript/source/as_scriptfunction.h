@@ -154,7 +154,7 @@ public:
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();
 	asCString GetDeclarationStr(bool includeObjectName = true, bool includeNamespace = false) const;
-	int       GetLineNumber(int programPosition);
+	int       GetLineNumber(int programPosition, int *sectionIdx);
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;
 	bool      IsSignatureExceptNameEqual(const asCScriptFunction *func) const;
@@ -234,6 +234,7 @@ public:
 	int                             stackNeeded;
 	asCArray<int>                   lineNumbers;      // debug info
 	int                             scriptSectionIdx; // debug info
+	asCArray<int>                   sectionIdxs;      // debug info. Store position/index pairs if the bytecode is compiled from multiple script sections
 	bool                            dontCleanUpOnException;   // Stub functions don't own the object and parameters
 
 	// Used by asFUNC_VIRTUAL

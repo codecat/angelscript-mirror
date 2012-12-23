@@ -1436,14 +1436,10 @@ bool asCByteCode::IsSimpleExpression()
 
 void asCByteCode::ExtractLineNumbers()
 {
-	TimeIt("asCByteCode::ExtractLineNumbers");
+	// This function will extract the line number and source file for each statement by looking for LINE instructions.
+	// The LINE instructions will be converted to SUSPEND instructions, or removed depending on the configuration.
 
-	// TODO: decl: Must extract script sections too, as a single function can be composed from multiple different files
-	//             This is not very common though (only happens for mixins) so the array where section is kept should be separate
-	//             Most of the time the section will be the same for the entire function, so the array will only have one entry.
-	//             The asCScriptFunction::scriptSectionIdx member can probably be replaced with the array of scriptSection's used by 
-	//             different parts of the code. Or, the array of script sections can be kept empty if all code is from the same
-	//             section where the function was declared.
+	TimeIt("asCByteCode::ExtractLineNumbers");
 
 	int lastLinePos = -1;
 	int pos = 0;
@@ -1457,13 +1453,15 @@ void asCByteCode::ExtractLineNumbers()
 		{
 			if( lastLinePos == pos )
 			{
-				lineNumbers.PopLast();
-				lineNumbers.PopLast();
+				lineNumbers.PopLast(); // pop position
+				lineNumbers.PopLast(); // pop line number 
+				sectionIdxs.PopLast(); // pop section index
 			}
 
 			lastLinePos = pos;
 			lineNumbers.PushLast(pos);
 			lineNumbers.PushLast(*(int*)ARG_DW(curr->arg));
+			sectionIdxs.PushLast(*((int*)ARG_DW(curr->arg)+1));
 
 			if( !engine->ep.buildWithoutLineCues )
 			{
@@ -1687,12 +1685,10 @@ void asCByteCode::Label(short label)
 	last->wArg[0]  = label;
 }
 
-void asCByteCode::Line(int line, int column)
+void asCByteCode::Line(int line, int column, int scriptIdx)
 {
 	if( AddInstruction() < 0 )
 		return;
-
-	// TODO: decl: Store pointer to script section too
 
 	last->op       = asBC_LINE;
 	// If the build is without line cues these instructions will be removed
@@ -1703,6 +1699,7 @@ void asCByteCode::Line(int line, int column)
 		last->size = asBCTypeSize[asBCInfo[asBC_SUSPEND].type];
 	last->stackInc = 0;
 	*((int*)ARG_DW(last->arg)) = (line & 0xFFFFF)|((column & 0xFFF)<<20);
+	*((int*)ARG_DW(last->arg)+1) = scriptIdx;
 
     // Add a JitEntry after the line instruction to allow the JIT function to resume after a suspend
     InstrPTR(asBC_JitEntry, 0);

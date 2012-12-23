@@ -326,6 +326,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 
 	script->SetCode(sectionName, code, true);
 	script->lineOffset = lineOffset;
+	script->idx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 	scripts.PushLast(script);
 
 	// Parse the string

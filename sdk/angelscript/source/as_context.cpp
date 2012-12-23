@@ -1394,9 +1394,10 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 		return 0;
 	}
 
-	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()));
+	int sectionIdx;
+	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()), &sectionIdx);
 	if( column ) *column = (line >> 20);
-	if( sectionName ) *sectionName = func->GetScriptSectionName();
+	if( sectionName ) *sectionName = m_engine->scriptSectionNames[sectionIdx]->AddressOf();
 	return (line & 0xFFFFF);
 }
 
@@ -3878,7 +3879,7 @@ void asCContext::SetInternalException(const char *descr)
 
 	m_exceptionString       = descr;
 	m_exceptionFunction     = m_currentFunction->id;
-	m_exceptionLine         = m_currentFunction->GetLineNumber(int(m_regs.programPointer - m_currentFunction->byteCode.AddressOf()));
+	m_exceptionLine         = m_currentFunction->GetLineNumber(int(m_regs.programPointer - m_currentFunction->byteCode.AddressOf()), &m_exceptionSectionIdx);
 	m_exceptionColumn       = m_exceptionLine >> 20;
 	m_exceptionLine        &= 0xFFFFF;
 
@@ -4239,7 +4240,7 @@ int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 
 	if( column ) *column = m_exceptionColumn;
 
-	if( sectionName ) *sectionName = m_engine->scriptFunctions[m_exceptionFunction]->GetScriptSectionName();
+	if( sectionName ) *sectionName = m_engine->scriptSectionNames[m_exceptionSectionIdx]->AddressOf();
 
 	return m_exceptionLine;
 }

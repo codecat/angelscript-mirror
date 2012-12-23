@@ -462,9 +462,21 @@ int asCScriptFunction::FindNextLineWithCode(int line) const
 }
 
 // internal
-int asCScriptFunction::GetLineNumber(int programPosition)
+int asCScriptFunction::GetLineNumber(int programPosition, int *sectionIdx)
 {
+	if( sectionIdx ) *sectionIdx = scriptSectionIdx;
 	if( lineNumbers.GetLength() == 0 ) return 0;
+
+	if( sectionIdx )
+	{
+		// Find the correct section index if the function is compiled from multiple sections
+		// This array will be empty most of the time so we don't need a sofisticated algorithm to search it
+		for( asUINT n = 0; n < sectionIdxs.GetLength(); n += 2 )
+		{
+			if( sectionIdxs[n] <= programPosition )
+				*sectionIdx = sectionIdxs[n+1];
+		}
+	}
 
 	// Do a binary search in the buffer
 	int max = (int)lineNumbers.GetLength()/2 - 1;

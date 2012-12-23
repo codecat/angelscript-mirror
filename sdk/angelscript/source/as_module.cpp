@@ -309,8 +309,8 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 					asCScriptFunction *func = desc->GetInitFunc();
 
 					engine->WriteMessage(func->scriptSectionIdx >= 0 ? engine->scriptSectionNames[func->scriptSectionIdx]->AddressOf() : "",
-										 func->GetLineNumber(0) & 0xFFFFF, 
-										 func->GetLineNumber(0) >> 20,
+										 func->GetLineNumber(0, 0) & 0xFFFFF, 
+										 func->GetLineNumber(0, 0) >> 20,
 										 asMSGTYPE_ERROR,
 										 msg.AddressOf());
 										 

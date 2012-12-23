@@ -376,8 +376,7 @@ bool Test()
 
 	// TODO: decl: The compiler can remember the first access to any member variable while compiling the constructor. If the call to super() is made explicitly it can then check if any member has been accessed before that and give an error.
 	// TODO: decl: It might be possible to do a static code analysis if any function calls are made before the call to super() and then check if those functions access the members. This is quite complex and won't be implemented now.
-	// TODO: decl: test compiler errors and runtime debug line numbers when including mixin class from different file
-	// TODO: decl: test saving/loading bytecode with mixin class from different file
+
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -561,13 +560,58 @@ bool Test()
 			obj->Release();
 
 		// Initialization from mixin classes (in other script)
-		// TODO: decl: This should also be supported
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"mixin class M { \n"
-			"  array<int> a = {1,2,3}; \n"
+			"  array<int> a = {1,2,b.length()}; \n" // provoke exception by accessing b before it is initialized
+			"  string b = 'hello'; \n"
+			"} \n");
+		mod->AddScriptSection("test2",
+			"class T : M { \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// test saving/loading bytecode with mixin class from different file
+		CBytecodeStream stream("test");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 ) 
+			TEST_FAILED;
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "T t;", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		const char *section = 0;
+		int line = ctx->GetExceptionLineNumber(0, &section);
+		if( line != 2 || std::string(section) != "test" )
+			TEST_FAILED;
+		ctx->Release();
+
+
+		// Test compiler error when including mixin from other script
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"mixin class M { \n"
+			"  int a = func(); \n"
 			"} \n");
 		mod->AddScriptSection("test2",
 			"class T : M { \n"
@@ -576,8 +620,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "test2 (1, 7) : Info    : Compiling T::T()\n"
-						   "test2 (3, 15) : Error   : Initialization of class member objects included from mixins in other files is not yet supported\n"
-						   "test2 (3, 15) : Error   : Initialization of class member objects included from mixins in other files is not yet supported\n" )
+		                   "test (2, 11) : Error   : No matching signatures to 'func()'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
