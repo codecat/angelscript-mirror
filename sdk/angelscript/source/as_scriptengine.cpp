@@ -106,6 +106,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_COMPILER
 		"AS_NO_COMPILER "
 #endif
+#ifdef AS_NO_MEMBER_INIT
+		"AS_NO_MEMBER_INIT "
+#endif
 
 	// Target system
 #ifdef AS_WIN

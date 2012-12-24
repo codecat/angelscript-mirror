@@ -295,8 +295,16 @@ bool Test()
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->SetLineCallback(asFUNCTION(TraceExec), 0, asCALL_CDECL);
 		r = ExecuteString(engine, "BaseGuiElement base(null); GuiScrollBar scroll(base);", mod, ctx);
-		if( r != asEXECUTION_EXCEPTION )
-			TEST_FAILED;
+		if( strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
+		{
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
+		else
+		{
+			if( r != asEXECUTION_EXCEPTION )
+				TEST_FAILED;
+		}
 		ctx->Release();
 
 		engine->Release();
@@ -377,6 +385,7 @@ bool Test()
 	// TODO: decl: The compiler can remember the first access to any member variable while compiling the constructor. If the call to super() is made explicitly it can then check if any member has been accessed before that and give an error.
 	// TODO: decl: It might be possible to do a static code analysis if any function calls are made before the call to super() and then check if those functions access the members. This is quite complex and won't be implemented now.
 
+	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

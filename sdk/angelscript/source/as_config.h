@@ -94,6 +94,12 @@
 // AS_NO_EXCEPTIONS
 // Define this if exception handling is turned off or not available on the target platform.
 
+// AS_NO_MEMBER_INIT
+// Disable the support for initialization of class members directly in the declaration.
+// This was as a form to maintain backwards compatibility with versions before 2.26.0
+// if the new order of the member initialization caused null pointer exceptions in older
+// scripts (e.g. if a base class accessed members of a derived class through a virtual method).
+
 
 //
 // Library usage

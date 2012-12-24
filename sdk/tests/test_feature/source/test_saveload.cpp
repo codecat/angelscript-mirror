@@ -366,6 +366,7 @@ bool Test()
 
 	// Test problem reported by Andre Santee
 	// http://www.gamedev.net/topic/635623-assertion-failed-while-using-function-handles/
+	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -450,6 +451,7 @@ bool Test()
 		engine->Release();
 	}
 
+	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
 		engine = ConfigureEngine(0);
 

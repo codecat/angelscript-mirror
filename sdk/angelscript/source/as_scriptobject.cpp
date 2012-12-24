@@ -238,6 +238,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 
 	if( doInitialize )
 	{
+#ifndef AS_NO_MEMBER_INIT
 		// The actual initialization will be done by the bytecode, so here we should just clear the
 		// memory to guarantee that no pointers with have scratch values in case of an exception
 		// TODO: runtime optimize: Is it quicker to just do a memset on the entire object? 
@@ -250,6 +251,27 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 				*ptr = 0;
 			}
 		}
+#else
+		// When member initialization is disabled the constructor must make sure
+		// to allocate and initialize all members with the default constructor
+		for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
+		{
+			asCObjectProperty *prop = objType->properties[n];
+			if( prop->type.IsObject() )
+			{
+				asPWORD *ptr = reinterpret_cast<asPWORD*>(reinterpret_cast<asBYTE*>(this) + prop->byteOffset);
+				if( prop->type.IsObjectHandle() )
+					*ptr = 0;
+				else
+				{
+					if( prop->type.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT )
+						*ptr = (asPWORD)ScriptObjectFactory(prop->type.GetObjectType(), ot->engine);
+					else
+						*ptr = (asPWORD)AllocateUninitializedObject(prop->type.GetObjectType(), ot->engine);
+				}
+			}
+		}
+#endif
 	}
 	else
 	{

@@ -428,6 +428,17 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 				if( onlyDefaults )
 					continue;
 
+#ifdef AS_NO_MEMBER_INIT
+				// Give an error as the initialization in the declaration has been disabled
+				asCScriptCode *origScript = script;
+				script = initScript;
+				Error("Initialization of members in declaration is not supported", initNode);
+				script = origScript;
+
+				// Clear the initialization node
+				initNode = 0;
+				initScript = script;
+#else
 				// Re-parse the initialization expression as the parser now knows the types, which it didn't earlier
 				asCParser parser(builder);
 				int r = parser.ParseVarInit(initScript, initNode);
@@ -435,6 +446,7 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 					continue;
 
 				initNode = parser.GetScriptNode();
+#endif
 			}
 			else
 			{
@@ -442,6 +454,27 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 					continue;
 			}
 
+#ifdef AS_NO_MEMBER_INIT
+			// The initialization will be done in the asCScriptObject constructor, so  
+			// here we should just validate that the member has a default constructor
+			if( prop->type.IsObject() && 
+				!prop->type.IsObjectHandle() &&
+				(((prop->type.GetObjectType()->flags & asOBJ_REF) &&
+				  prop->type.GetBehaviour()->factory == 0) ||
+				 ((prop->type.GetObjectType()->flags & asOBJ_VALUE) &&
+				  prop->type.GetBehaviour()->construct == 0 &&
+				  !(prop->type.GetObjectType()->flags & asOBJ_POD))) )
+			{
+				// Class has no default factory/constructor.
+				asCString str;
+				// TODO: funcdef: asCDataType should have a GetTypeName()
+				if( prop->type.GetFuncDef() )
+					str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, prop->type.GetFuncDef()->GetName());
+				else
+					str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, prop->type.GetObjectType()->GetName());
+				Error(str, declNode);
+			}
+#else
 			// Temporarily set the script that is being compiled to where the member initialization is declared.
 			// The script can be different when including mixin classes from a different script section
 			asCScriptCode *origScript = script;
@@ -457,6 +490,7 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 			byteCode->AddCode(&bc);
 
 			script = origScript;
+#endif
 		}
 	}
 }
