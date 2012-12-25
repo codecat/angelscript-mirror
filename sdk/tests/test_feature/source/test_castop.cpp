@@ -98,8 +98,37 @@ class ASConsole : public EventSource
 {
 public:
 	static ASConsole *factory() { return new ASConsole(); }
-	EventSource *opCast() { return this; }
+//	EventSource *opCast() { return this; }
 };
+
+ASConsole* c= 0;
+bool g_fail = false;
+template<class A, class B> B* ASRefCast(A* a)
+{
+	if( a != c )
+		g_fail = true;
+		
+	// If the handle already is a null handle, then just return the null handle
+	if (a==NULL) return NULL;
+	// Now try to dynamically cast the pointer to the wanted type
+	B* b = dynamic_cast<B*>(a);
+	if (b!=NULL) {
+			// Since the cast was made, we need to increase the ref counter for the returned handle
+			b->AddRef();
+	}
+//	printf("ASRefCast: returning %p\n", b);
+	return b;
+}
+
+void addListener(EventSource* source, int mask) 
+{
+	if( source != c )
+		g_fail = true;
+
+//    printf("addListener: source = %p\n", source);
+//    printf("addListener: source.value = %d\n", (int)source->value);
+//	printf("\n");
+}
 
 bool Test()
 {
@@ -112,6 +141,8 @@ bool Test()
 
 	// http://www.gamedev.net/topic/636163-segfault-when-casting-directly/
 	{
+		c = new ASConsole();
+
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -126,35 +157,32 @@ bool Test()
 		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_FACTORY, "ASConsole @f()", asFUNCTION(ASConsole::factory), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_ADDREF, "void f()", asMETHOD(ASConsole, AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_RELEASE, "void f()", asMETHOD(ASConsole, Release), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_REF_CAST, "EventSource@+ f()", asMETHOD(ASConsole, opCast), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_IMPLICIT_REF_CAST, "EventSource@ f()", asFUNCTION((ASRefCast<ASConsole, EventSource>)), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterGlobalFunction("void addListener(EventSource &inout, const int &in)", asFUNCTION(addListener), asCALL_CDECL);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"enum E { ET_READLINE = 24 } \n"
-			"class Module { \n"
-			"  void addListener(EventSource @s, E type, string line) {\n"
-			"    assert(line == 'test'); \n"
-			"    assert(type == ET_READLINE); \n"
-			"    assert(s.value == 42); \n"
-			"    EventSource @c = cast<EventSource>(console); \n"
-			"    assert(c is s); \n"
-			"  } \n"
-			"} \n"
-			"Module module; \n"
-			"string onLine = 'test'; \n"
-			"ASConsole @console = ASConsole(); \n"
+			"ASConsole @console; \n"
 			"void main() \n"
 			"{ \n"
-			"  module.addListener(cast<EventSource>(console), ET_READLINE, onLine); \n"
+			"  addListener(cast<EventSource>(console), ET_READLINE); \n"
 			"  EventSource @s = cast<EventSource>(console); \n"
-			"  module.addListener(s, ET_READLINE, onLine); \n"
+			"  addListener(s, ET_READLINE); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
+		void** consoleVarAddr = (void**)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("console"));
+        *consoleVarAddr = c;
+
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( g_fail )
 			TEST_FAILED;
 
 		engine->Release();

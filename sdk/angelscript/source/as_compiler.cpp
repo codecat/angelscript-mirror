@@ -1375,11 +1375,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			else if( ctx->type.dataType.IsPrimitive() )
 				ctx->bc.Instr(asBC_PshRPtr);
 			else if( ctx->type.dataType.IsObjectHandle() && !ctx->type.dataType.IsReference() )
-			{
-				asCDataType dt = ctx->type.dataType;
-				dt.MakeReference(true);
-				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, false);
-			}
+				ImplicitConversion(ctx, param, node, asIC_IMPLICIT_CONV, true, false);
 		}
 	}
 	else
@@ -5256,7 +5252,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 			Dereference(ctx, generateCode);
 		}
 	}
-	else
+	else // if( !to.IsObjectHandle() )
 	{
 		if( !to.IsReference() )
 		{
@@ -5324,7 +5320,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 				ctx->type.dataType.MakeReadOnly(true);
 			}
 		}
-		else
+		else // if( to.IsReference() )
 		{
 			// reference to handle -> reference
 			// handle              -> reference
@@ -5368,50 +5364,61 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 					cost += asCC_TO_OBJECT_CONV;
 				}
 			}
-			else
+			else // if( !ctx->type.dataType.IsReference() )
 			{
-				// A value type allocated on the stack is differentiated
-				// by it not being a reference. But it can be handled as
-				// reference by pushing the pointer on the stack
-				if( (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) &&
-					(ctx->type.isVariable || ctx->type.isTemporary) &&
-					!IsVariableOnHeap(ctx->type.stackOffset) )
-				{
-					// Actually the pointer is already pushed on the stack in
-					// CompileVariableAccess, so we don't need to do anything else
-				}
-				else if( generateCode )
-				{
-					// A non-reference can be converted to a reference,
-					// by putting the value in a temporary variable
-
-					// If the input type is read-only we'll need to temporarily
-					// remove this constness, otherwise the assignment will fail
-					bool typeIsReadOnly = ctx->type.dataType.IsReadOnly();
-					ctx->type.dataType.MakeReadOnly(false);
-
-					// If the object already is a temporary variable, then the copy
-					// doesn't have to be made as it is already a unique object
-					PrepareTemporaryObject(node, ctx);
-
-					ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
-
-					// Add the cost for the copy
-					cost += asCC_TO_OBJECT_CONV;
-				}
-
-				// A handle can be converted to a reference, by checking for a null pointer
+				// A non-reference handle can be converted to a non-handle reference by checking against null handle
 				if( ctx->type.dataType.IsObjectHandle() )
 				{
+					bool readOnly = false;
+					if( ctx->type.dataType.IsHandleToConst() )
+						readOnly = true;
+
 					if( generateCode )
-						ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
+					{
+						if( ctx->type.isVariable )
+							ctx->bc.InstrSHORT(asBC_ChkNullV, ctx->type.stackOffset);
+						else
+							ctx->bc.Instr(asBC_CHKREF);
+					}
 					ctx->type.dataType.MakeHandle(false);
 					ctx->type.dataType.MakeReference(true);
 
-					// TODO: Make sure a handle to const isn't converted to non-const reference
+					// Make sure a handle to const isn't converted to non-const reference
+					if( readOnly )
+						ctx->type.dataType.MakeReadOnly(true);
 				}
-				else
+				else 
 				{
+					// A value type allocated on the stack is differentiated
+					// by it not being a reference. But it can be handled as
+					// reference by pushing the pointer on the stack
+					if( (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) &&
+						(ctx->type.isVariable || ctx->type.isTemporary) &&
+						!IsVariableOnHeap(ctx->type.stackOffset) )
+					{
+						// Actually the pointer is already pushed on the stack in
+						// CompileVariableAccess, so we don't need to do anything else
+					}
+					else if( generateCode )
+					{
+						// A non-reference can be converted to a reference,
+						// by putting the value in a temporary variable
+
+						// If the input type is read-only we'll need to temporarily
+						// remove this constness, otherwise the assignment will fail
+						bool typeIsReadOnly = ctx->type.dataType.IsReadOnly();
+						ctx->type.dataType.MakeReadOnly(false);
+
+						// If the object already is a temporary variable, then the copy
+						// doesn't have to be made as it is already a unique object
+						PrepareTemporaryObject(node, ctx);
+
+						ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
+
+						// Add the cost for the copy
+						cost += asCC_TO_OBJECT_CONV;
+					}
+
 					// This may look strange as the conversion was to make the expression a reference
 					// but a value type allocated on the stack is a reference even without the type
 					// being marked as such.
