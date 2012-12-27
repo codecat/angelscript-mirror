@@ -244,9 +244,12 @@ bool Test()
 
 	// Test a problem reported by Andrew Ackermann
 	// Null pointer access exception in constructor due to access of members before they have been initialized
-	// TODO: decl: This is not an error, but it does break backwards compatibility because in earlier version
-	//             all members were initialized with default values before the constructor was called.
-	// TODO: decl: Provide a compile time directive that will disable member initialization and provide backwards compatiblity for this case
+	// TODO: decl: Members that are initialized with trivial expressions, i.e. don't call members 
+	//             of the class, should be initialized before the base class. This will make it even
+	//             less likely for a base class to access uninitialized members in a derived class
+	// TODO: decl: It might be possible to do a static code analysis if any function calls are made 
+	//             before the call to super() and then check if those functions access the members. 
+	//             This is quite complex and won't be implemented now.
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -381,9 +384,6 @@ bool Test()
 
 		engine->Release();
 	}
-
-	// TODO: decl: The compiler can remember the first access to any member variable while compiling the constructor. If the call to super() is made explicitly it can then check if any member has been accessed before that and give an error.
-	// TODO: decl: It might be possible to do a static code analysis if any function calls are made before the call to super() and then check if those functions access the members. This is quite complex and won't be implemented now.
 
 	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{

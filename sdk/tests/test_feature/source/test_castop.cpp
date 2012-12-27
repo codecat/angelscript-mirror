@@ -143,6 +143,13 @@ bool Test()
 	{
 		c = new ASConsole();
 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+		// MSVC6 was complaining about not finding this symbol because 
+		// it didn't see the function being called anywhere
+		ASRefCast<ASConsole, EventSource>(c);
+		c->Release();
+#endif
+
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);

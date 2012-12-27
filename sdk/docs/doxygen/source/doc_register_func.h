@@ -62,6 +62,23 @@ r = engine->RegisterObjectMethod("object", "void method2(int, int &out)", asMETH
 r = engine->RegisterObjectMethod("object", "int getAttr(int) const", asMETHODPR(Object, getAttr, (int) const, int), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
+It is possible to register a class method to be called from the script as if it was a global function. This is commonly done when exposing a singleton 
+to the script interface, as the singleton's methods then look like ordinary global functions. When this is done the application must have a reference to
+the object at the time of the registration and the application must guarantee that the object is alive until it is no longer possible for the scripts
+to call the method.
+
+\code
+class MySingleton
+{
+  // Class method to be called from script as if a global function
+  void MyGlobalFunc(int arg1, int arg2);
+};
+
+MySingleton single;
+
+// Registering the singleton's method as if a global function
+r = engine->RegisterGlobalFunction("void MyGlobalFunc(int, int)", asMETHOD(MySingleton, MyGlobalFunc), asCALL_THISCALL_ASGLOBAL, &single); assert( r >= 0 );
+\endcode
 
 
 
@@ -73,7 +90,8 @@ generic calling convention that can be used for example when native calling conv
 All functions and behaviours must be registered with the \ref asCALL_CDECL, \ref asCALL_STDCALL, \ref asCALL_THISCALL, or 
 \ref asCALL_GENERIC flags to tell AngelScript which calling convention the application function uses. The special conventions 
 \ref asCALL_CDECL_OBJLAST and \ref asCALL_CDECL_OBJFIRST can also be used wherever asCALL_THISCALL is accepted, in order to 
-simulate a class method through a global function. 
+simulate a class method through a global function. The convention \ref asCALL_THISCALL_ASGLOBAL can be used to register a class 
+method as if it was a global function. 
 
 If the incorrect calling convention is given on the registration you'll very likely see the application crash with 
 a stack corruption whenever the script engine calls the function. cdecl is the default calling convention for all global 
@@ -83,7 +101,11 @@ convention.
 
 For class methods there is only the thiscall convention, except when the method is static, as those methods are in truth global
 functions in the class namespace. Normal methods, virtual methods, and methods for classes with multiple inheritance are all
-registered the same way, with asCALL_THISCALL. Classes with \ref doc_register_func_4 "virtual inheritance are not supported natively".
+registered the same way, with asCALL_THISCALL. 
+
+Classes with \ref doc_register_func_4 "virtual inheritance are not supported natively", and for these it will be necessary
+to create wrapper functions. These wrapper functions can either be implemented manually, or the template based automatic 
+wrappers from the \ref doc_addon_autowrap "add-on" can be used.
 
 \see \ref doc_generic
 

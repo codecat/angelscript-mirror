@@ -29,6 +29,20 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Problem reported by Paril101
+	// http://www.gamedev.net/topic/636336-member-function-chaining/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		// This should fail, because asOBJ_NOHANDLE is exclusive for asOBJ_REF
+		r = engine->RegisterObjectType("Box", sizeof(4), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK | asOBJ_NOHANDLE);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
 	// Problem reported by FDsagizi
 	// http://www.gamedev.net/topic/632067-asassert-call-release-method-from-object-with-out-ref-counting/
 	{

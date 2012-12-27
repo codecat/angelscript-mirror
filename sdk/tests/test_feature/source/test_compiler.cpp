@@ -191,6 +191,29 @@ void Print(const string &s)
 	g_printbuf += s;
 }
 
+// For the test with chained method calls
+class ChainMe
+{
+public:
+	int X;
+ 
+	ChainMe() :
+		X(0)
+	{
+	}
+ 
+	ChainMe &Increase(const int &v)
+	{
+		X += v;
+		return *this;
+	}
+
+	static void Construct(void *p)
+	{
+		new(p) ChainMe();
+	}
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -210,6 +233,46 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Problem reported by Paril101
+	// http://www.gamedev.net/topic/636336-member-function-chaining/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterObjectType("ChainMe", sizeof(ChainMe), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C);
+		engine->RegisterObjectBehaviour("ChainMe", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ChainMe::Construct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("ChainMe", "ChainMe &Increase(const int &in)", asMETHOD(ChainMe, Increase), asCALL_THISCALL);
+		engine->RegisterObjectProperty("ChainMe", "int x", asOFFSET(ChainMe, X));
+
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void func() { \n"
+			"  func2(ChainMe().Increase(5).Increase(15).Increase(25)); \n"
+			"} \n"
+			"void func2(const ChainMe &in a) { \n"
+			"  assert( a.x == 45 ); \n"
+			"} \n");
+
+		
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Problem reported by zerochen
 	// http://www.gamedev.net/topic/634768-after-unreachable-code-wrong-error-msg/

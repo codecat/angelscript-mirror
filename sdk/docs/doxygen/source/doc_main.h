@@ -177,6 +177,7 @@ for classes is similar to C++ and Java.
  - \subpage doc_script_class_private
  - \subpage doc_script_class_ops
  - \subpage doc_script_class_prop
+ - \subpage doc_script_class_memberinit
 
 
 

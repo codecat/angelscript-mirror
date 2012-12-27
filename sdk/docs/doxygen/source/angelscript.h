@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.25.2
-#define ANGELSCRIPT_VERSION        22502
-#define ANGELSCRIPT_VERSION_STRING "2.25.2"
+//! \details Version 2.26.0
+#define ANGELSCRIPT_VERSION        22600
+#define ANGELSCRIPT_VERSION_STRING "2.26.0"
 
 // Data types
 
@@ -128,17 +128,19 @@ enum asEEngineProp
 enum asECallConvTypes
 {
 	//! A cdecl function.
-	asCALL_CDECL            = 0,
+	asCALL_CDECL             = 0,
 	//! A stdcall function.
-	asCALL_STDCALL          = 1,
+	asCALL_STDCALL           = 1,
+	//! A thiscall class method registered as a global function.
+	asCALL_THISCALL_ASGLOBAL = 2,
 	//! A thiscall class method.
-	asCALL_THISCALL         = 2,
+	asCALL_THISCALL          = 3,
 	//! A cdecl function that takes the object pointer as the last parameter.
-	asCALL_CDECL_OBJLAST    = 3,
+	asCALL_CDECL_OBJLAST     = 4,
 	//! A cdecl function that takes the object pointer as the first parameter.
-	asCALL_CDECL_OBJFIRST   = 4,
+	asCALL_CDECL_OBJFIRST    = 5,
 	//! A function using the generic calling convention.
-	asCALL_GENERIC          = 5
+	asCALL_GENERIC           = 6
 };
 
 // Object type flags
@@ -938,6 +940,7 @@ public:
 	//! \param[in] declaration The declaration of the global function in script syntax.
 	//! \param[in] funcPointer The function pointer.
 	//! \param[in] callConv The calling convention for the function.
+	//! \param[in] objForThiscall An object pointer for use with asCALL_THISCALL_ASGLOBAL.
 	//! \return A negative value on error, or the function id if successful.
 	//! \retval asNOT_SUPPORTED The calling convention is not supported.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
@@ -948,7 +951,7 @@ public:
 	//! This method registers system functions that the scripts may use to communicate with the host application.
 	//!
 	//! \see \ref doc_register_func
-	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
 	//! \brief Returns the number of registered functions.
 	//! \return The number of registered functions.
 	virtual asUINT             GetGlobalFunctionCount() const = 0;
@@ -3475,7 +3478,7 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 			// Copy the virtual table index to the 4th dword so that AngelScript
 			// can properly detect and deny the use of methods with virtual inheritance.
-			*(static_cast<asDWORD*>(&p)+3) = *(static_cast<asDWORD*>(&p)+2);
+			*(reinterpret_cast<asDWORD*>(&p)+3) = *(reinterpret_cast<asDWORD*>(&p)+2);
 #endif
 
 		return p;
