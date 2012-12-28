@@ -1670,7 +1670,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		script = &code;
 
 		// Don't allow the expression to access local variables
-		// TODO: namespace: The default arg should see the symbols declared in the same scope as the function
+		// TODO: namespace: The default arg should see the symbols declared in the same scope as the function that is called
 		isCompilingDefaultArg = true;
 		asSExprContext expr(engine);
 		r = CompileExpression(arg, &expr);
@@ -1882,8 +1882,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
 	// Get the data type
-	// TODO: namespace: Use correct implicit namespace from function
-	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, engine->nameSpaces[0]);
+	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, outFunc->nameSpace);
 
 	// Declare all variables in this declaration
 	asCScriptNode *node = decl->firstChild->next;
@@ -7518,8 +7517,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		}
 
 		// Determine the requested type
-		// TODO: namespace: Use correct implicit namespace from function
-		to = builder->CreateDataTypeFromNode(node->firstChild, script, engine->nameSpaces[0]);
+		to = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace);
 		to.MakeReadOnly(true); // Default to const
 		asASSERT(to.IsPrimitive());
 	}
@@ -7533,8 +7531,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 			anyErrors = true;
 
 		// Determine the requested type
-		// TODO: namespace: Use correct implicit namespace from function
-		to = builder->CreateDataTypeFromNode(node->firstChild, script, engine->nameSpaces[0]);
+		to = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace);
 		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
 
 		// If the type support object handles, then use it
@@ -7787,8 +7784,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 	// It is possible that the name is really a constructor
 	asCDataType dt;
-	// TODO: namespace: Use correct implicit namespace from function
-	dt = builder->CreateDataTypeFromNode(node->firstChild, script, engine->nameSpaces[0]);
+	dt = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace);
 	if( dt.IsPrimitive() )
 	{
 		// This is a cast to a primitive type

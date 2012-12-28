@@ -635,6 +635,39 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test types in namespace
+	// http://www.gamedev.net/topic/636336-member-function-chaining/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"namespace Default { \n"
+			"  void func(ButtonRenderer @) {} \n"
+			"  void Init() \n"
+			"  { \n"
+			"    func(ButtonRenderer()); \n"
+			"  } \n"
+			"  class ButtonRenderer {} \n"
+			"} \n";
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

@@ -356,7 +356,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		return asOUT_OF_MEMORY;
 
 	asCArray<asCString> parameterNames;
-	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared);
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared, module->defaultNamespace);
 	func->id               = engine->GetNextScriptFunctionId();
 	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 	func->nameSpace        = module->defaultNamespace;
@@ -1261,7 +1261,8 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 	// can use the asIScriptFunction interface to enumerate the return type and parameters
 
 	// The return type and parameter types aren't determined in this function. A second pass is
-	// necessary after all type declarations have been identified.
+	// necessary after all type declarations have been identified. The second pass is implemented
+	// in CompleteFuncDef().
 
 	sFuncDef *fd = asNEW(sFuncDef);
 	if( fd == 0 )
@@ -1295,9 +1296,11 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	bool                       isFinal;
 	bool                       isShared;
 
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
-
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
+	asASSERT( func );
+
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, func->nameSpace);
+
 	if( func )
 	{
 		func->returnType = returnType;
@@ -1318,8 +1321,7 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 		WriteError(TXT_GLOBAL_VARS_NOT_ALLOWED, file, node);
 
 	// What data type is it?
-	// TODO: namespace: Use correct implicit namespace
-	asCDataType type = CreateDataTypeFromNode(node->firstChild, file, engine->nameSpaces[0]);
+	asCDataType type = CreateDataTypeFromNode(node->firstChild, file, ns);
 
 	if( !type.CanBeInstanciated() )
 	{
@@ -2469,8 +2471,7 @@ void asCBuilder::CompileClasses()
 
 				// Determine the type of the property
 				asCScriptCode *file = decl->script;
-				// TODO: namespace: Use correct implicit namespace
-				asCDataType dt = CreateDataTypeFromNode(n, file, engine->nameSpaces[0]);
+				asCDataType dt = CreateDataTypeFromNode(n, file, decl->objType->nameSpace);
 				if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 				{
 					asCString msg;
@@ -2818,8 +2819,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 					}
 
 					asCScriptCode *file = mixin->script;
-					// TODO: namespace: Use correct implicit namespace from mixin
-					asCDataType dt = CreateDataTypeFromNode(n2, file, engine->nameSpaces[0]);
+					asCDataType dt = CreateDataTypeFromNode(n2, file, mixin->ns);
 
 					if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 					{
@@ -3274,7 +3274,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 	return r;
 }
 
-void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared)
+void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared, asSNameSpace *implicitNamespace)
 {
 	node = node->firstChild;
 
@@ -3319,8 +3319,7 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	// Initialize a script function object for registration
 	if( !isConstructor && !isDestructor )
 	{
-		// TODO: namespace: Use correct implicit namespace
-		returnType = CreateDataTypeFromNode(node, file, engine->nameSpaces[0]);
+		returnType = CreateDataTypeFromNode(node, file, implicitNamespace);
 		returnType = ModifyDataTypeFromNode(returnType, node->next, file, 0, 0);
 	}
 	else
@@ -3374,8 +3373,7 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	while( n )
 	{
 		asETypeModifiers inOutFlag;
-		// TODO: namespace: Use correct implicit namespace
-		asCDataType type = CreateDataTypeFromNode(n, file, engine->nameSpaces[0]);
+		asCDataType type = CreateDataTypeFromNode(n, file, implicitNamespace);
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
 
 		// Store the parameter type
@@ -3453,7 +3451,10 @@ int asCBuilder::RegisterScriptFunctionFromNode(int funcId, asCScriptNode *node, 
 	bool                       isPrivate;
 	bool                       isShared;
 
-	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+	if( ns == 0 )
+		ns = engine->nameSpaces[0];
+
+	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, ns);
 
 	return RegisterScriptFunction(funcId, node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
 }
@@ -3725,8 +3726,7 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		node = node->next;
 	}
 
-	// TODO: namespace: Use correct implicit namespace
-	emulatedType = CreateDataTypeFromNode(node, file, engine->nameSpaces[0]);
+	emulatedType = CreateDataTypeFromNode(node, file, ns);
 	emulatedType = ModifyDataTypeFromNode(emulatedType, node->next, file, 0, 0);
 	node = node->next->next;
 	emulatedName.Assign(&file->code[node->tokenPos], node->tokenLength);
@@ -3851,7 +3851,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	if( ns == 0 )
 		ns = engine->nameSpaces[0];
 
-	GetParsedFunctionDetails(node->firstChild, file, 0, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared);
+	GetParsedFunctionDetails(node->firstChild, file, 0, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, ns);
 	CheckNameConflict(name.AddressOf(), node, file, ns);
 	
 	// Check that the same function hasn't been registered already in the namespace

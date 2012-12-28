@@ -680,6 +680,33 @@ bool Test()
 
 	engine->Release();
 
+	//-------------------------
+	// Test registering object members in a group
+	// http://www.gamedev.net/topic/636396-config-groups-and-object-property-accessors/
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine->RegisterObjectType("type", 0, asOBJ_REF | asOBJ_NOCOUNT);
+
+	// TODO: It should be possible to register methods and properties in different groups from where the type itself was registered
+	engine->BeginConfigGroup("g");
+	engine->RegisterObjectMethod("type", "void func()", asFUNCTION(0), asCALL_GENERIC);
+	engine->EndConfigGroup();
+
+	asIObjectType *type = engine->GetObjectTypeByName("type");
+	if( type->GetMethodCount() != 1 )
+		TEST_FAILED;
+
+	r = engine->RemoveConfigGroup("g");
+	if( r < 0 )
+		TEST_FAILED;
+
+	// TODO: Currently the method is not removed as the method will be placed in the same group as the type. When this changes, the method should be removed
+	if( type->GetMethodCount() != 1 )
+		TEST_FAILED;
+
+	engine->Release();
+
+
 	// Success
 	return fail;
 }
