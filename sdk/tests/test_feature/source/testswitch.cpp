@@ -160,6 +160,40 @@ bool TestSwitch()
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Empty switch statement\n" )
 		TEST_FAILED;
 
+	// Default case in the middle
+	{
+		bout.buffer = "";
+		const char *script =
+			"int func(int d) { \n"
+			"  switch (d) \n"
+			"  { \n"
+			"	case 0: \n"
+			"	default: \n"
+			"		return (4 * 16); \n"
+			"	case 1: \n"
+			"		return (4 * 16); \n"
+			"	case 2: \n"
+			"		return (5 * 16); \n"
+			"	case 3: \n"
+			"		return (9 * 16); \n"
+			"  } \n"
+			"  return 0; \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("name", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "name (1, 1) : Info    : Compiling int func(int)\n"
+		                   "name (5, 2) : Error   : The default case must be the last one\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// A switch case must not have duplicate cases
 	{
 		bout.buffer = "";

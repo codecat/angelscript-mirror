@@ -1001,11 +1001,18 @@ public:
   int StartNewModule(asIScriptEngine *engine, const char *moduleName);
 
   // Load a script section from a file on disk
+  // Returns  1 if the file was included
+  //          0 if the file had already been included before
+  //         <0 on error
   int AddSectionFromFile(const char *filename);
 
   // Load a script section from memory
-  int AddSectionFromMemory(const char *scriptCode, 
-                           const char *sectionName = "");
+  // Returns  1 if the section was included
+  //          0 if a section with the same name had already been included before
+  //         <0 on error
+  int AddSectionFromMemory(const char *sectionName,
+                           const char *scriptCode, 
+                           unsigned int scriptLength = 0);
 
   // Build the added script sections
   int BuildModule();

@@ -63,18 +63,22 @@ int CScriptBuilder::AddSectionFromFile(const char *filename)
 		int r = LoadScriptSection(filename);
 		if( r < 0 )
 			return r;
+		else
+			return 1;
 	}
 
 	return 0;
 }
 
-int CScriptBuilder::AddSectionFromMemory(const char *scriptCode, const char *sectionName)
+int CScriptBuilder::AddSectionFromMemory(const char *sectionName, const char *scriptCode, unsigned int scriptLength)
 {
 	if( IncludeIfNotAlreadyIncluded(sectionName) )
 	{
-		int r = ProcessScriptSection(scriptCode, sectionName);
+		int r = ProcessScriptSection(scriptCode, scriptLength, sectionName);
 		if( r < 0 )
 			return r;
+		else
+			return 1;
 	}
 
 	return 0;
@@ -170,15 +174,18 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 		return -1;
 	}
 
-	return ProcessScriptSection(code.c_str(), filename);
+	return ProcessScriptSection(code.c_str(), code.length(), filename);
 }
 
-int CScriptBuilder::ProcessScriptSection(const char *script, const char *sectionname)
+int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length, const char *sectionname)
 {
 	vector<string> includes;
 
 	// Perform a superficial parsing of the script first to store the metadata
-	modifiedScript = script;
+	if( length )
+		modifiedScript.assign(script, length);
+	else
+		modifiedScript = script;
 
 	// First perform the checks for #if directives to exclude code that shouldn't be compiled
 	unsigned int pos = 0;

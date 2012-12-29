@@ -3281,29 +3281,20 @@ asCScriptNode *asCParser::ParseSwitch()
 	{
 		GetToken(&t);
 		
-		if( t.type == ttEndStatementBlock || t.type == ttDefault )
+		if( t.type == ttEndStatementBlock )
 			break;
 
 		RewindTo(&t);
 
-		if( t.type != ttCase )
+		if( t.type != ttCase && t.type != ttDefault )
 		{
-			Error(ExpectedToken("case"), &t);
+			const char *tokens[] = {"case", "default"};
+			Error(ExpectedOneOf(tokens, 2), &t);
 			return node;
 		}
 
 		node->AddChildLast(ParseCase());
 		if( isSyntaxError ) return node;
-	}
-
-	if( t.type == ttDefault)
-	{
-		RewindTo(&t);
-
-		node->AddChildLast(ParseCase());
-		if( isSyntaxError ) return node;
-
-		GetToken(&t);
 	}
 
 	if( t.type != ttEndStatementBlock )

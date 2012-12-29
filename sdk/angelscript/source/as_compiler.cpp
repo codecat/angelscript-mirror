@@ -134,6 +134,10 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// If the class is derived from another, then the base class' default constructor must be called
 	if( outFunc->objectType->derivedFrom )
 	{
+		// Make sure the base class really has a default constructor
+		if( outFunc->objectType->derivedFrom->beh.construct == 0 )
+			Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, node);
+
 		// Call the base class' default constructor
 		byteCode.InstrSHORT(asBC_PSF, 0);
 		byteCode.Instr(asBC_RDSPtr);
@@ -144,6 +148,10 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// to access the base class members without worry they will be uninitialized
 	CompileMemberInitialization(&byteCode, false);
 	byteCode.OptimizeLocally(tempVariableOffsets);
+
+	// If there are compile errors, there is no reason to build the final code
+	if( hasCompileErrors )
+		return -1;
 
 	// Pop the object pointer from the stack
 	byteCode.Ret(AS_PTR_SIZE);
@@ -2604,6 +2612,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		}
 		else
 		{
+			// TODO: It shouldn't be necessary for the default case to be the last one.
 			// Is default the last case?
 			if( cnode->next )
 			{

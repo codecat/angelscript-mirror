@@ -385,6 +385,53 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test a problem reported by Andre Santee
+	// Inheriting from a base class without default constructor and no explicit call to super should give compiler error
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		const char *script =
+			"class Foo \n"
+			"{ \n"
+			"  Foo(int a) \n"
+			"  { \n"
+			"  } \n"
+			"} \n"
+			"class Bar : Foo \n"
+			"{ \n"
+			"  void func() \n"
+			"  { \n"
+			"  } \n"
+			"} \n"
+			"class Bar2 : Foo \n"
+			"{ \n"
+			"  Bar2() { } \n"
+			"} \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+ 		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (7, 7) : Info    : Compiling Bar::Bar()\n"
+						   "test (7, 7) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n"
+						   "test (15, 3) : Info    : Compiling Bar2::Bar2()\n"
+						   "test (15, 10) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

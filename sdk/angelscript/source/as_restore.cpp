@@ -264,7 +264,7 @@ int asCReader::ReadInner()
 
 	// scriptGlobals[]
 	count = ReadEncodedUInt();
-	if( engine->ep.disallowGlobalVars )
+	if( count && engine->ep.disallowGlobalVars )
 	{
 		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_GLOBAL_VARS_NOT_ALLOWED);
 		error = true;

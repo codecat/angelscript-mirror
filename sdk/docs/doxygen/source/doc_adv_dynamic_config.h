@@ -8,7 +8,9 @@ group for that plug-in can also be removed from the AngelScript interface withou
 
 To register part of the interface in a configuration group, the registration should be done between calls to 
 \ref asIScriptEngine::BeginConfigGroup "BeginConfigGroup" and \ref asIScriptEngine::EndConfigGroup "EndConfigGroup". 
-This can be done as many times as desired, but groups cannot be nested.
+This can be done as many times as desired, but groups cannot be nested. Observe that object methods, behaviours, and 
+properties will always be placed in the same group where the object type was placed even if another group has been 
+specified between the calls.
 
 To remove a configuration group the method \ref asIScriptEngine::RemoveConfigGroup "RemoveConfigGroup" should be called with the name given to the 
 BeginConfigGroup. It is only possible to remove a config group that is not currently in use. Possible causes that 

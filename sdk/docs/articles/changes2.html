@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.0 WIP - 2012/12/27</h2>
+<h2>Version 2.26.0 WIP - 2012/12/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler with passing temp handle to function taking inout ref to object (Thanks kozec)
 <li>RegisterObjectType no longer accepts combination of asOBJ_VALUE and asOBJ_NOHANDLE (Thanks Paril101)
 <li>Compiler wasn't considering the correct implicit namespace when looking up datatypes (Thanks Paril101)
+<li>Loading bytecode always failed if global variables had been disabled, even if the saved bytecode didn't have any global variables (Thanks Paril101)
 </ul>
 <li>Library interface
 <ul>
@@ -58,6 +59,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented the generic calling convention wrappers for the missing methods in the std::string add-on
 <li>Fixed bug in script array when comparing two arrays for equality and only opCmp had been implemented in the element type (Thanks virious)
 <li>Fixed fopen_s compiler error on Marmalade in the scriptfile and scripthelper add-ons (Thanks Braden MacDonald)
+<li>CScriptBuilder::AddSectionFromMemory() now requires a name and an optional length for the buffer in case it is not null terminated (Thanks Paril101)
 </ul>
 </ul>
 

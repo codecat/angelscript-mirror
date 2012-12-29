@@ -94,7 +94,7 @@ bool Test()
 	CScriptBuilder builder;
 	builder.DefineWord("COMPILE");
 	r = builder.StartNewModule(engine, 0);
-	r = builder.AddSectionFromMemory(script);
+	r = builder.AddSectionFromMemory("", script);
 	r = builder.BuildModule();
 #if AS_PROCESS_METADATA == 1
 	if( r < 0 )
@@ -172,7 +172,7 @@ bool Test()
 		bout.buffer = "";
 		CScriptBuilder builder;
 		builder.StartNewModule(engine, "mod");
-		builder.AddSectionFromMemory("#");
+		builder.AddSectionFromMemory("", "#");
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		r = builder.BuildModule();
 		if( r >= 0 )
@@ -184,12 +184,23 @@ bool Test()
 		}
 	}
 
+	// Add a script section from memory with length
+	{
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &bout, asCALL_THISCALL);
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("", "void func() {} $#", 14);
+		r = builder.BuildModule();
+		if( r < 0 )
+			TEST_FAILED;
+	}
+
 	// http://www.gamedev.net/topic/631848-cscriptbuilder-bug/
 	{
 		bout.buffer = "";
 		CScriptBuilder builder;
 		builder.StartNewModule(engine, "mod");
-		builder.AddSectionFromMemory("class ");
+		builder.AddSectionFromMemory("", "class ");
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		r = builder.BuildModule();
 		if( r >= 0 )
