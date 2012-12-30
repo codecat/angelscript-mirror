@@ -774,7 +774,6 @@
 		#elif defined(__ARMEL__) || defined(__arm__)
 			#define AS_ARM
 			#define AS_NO_ATOMIC
-			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
