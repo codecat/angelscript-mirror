@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.0 WIP - 2012/12/29</h2>
+<h2>Version 2.26.0 WIP - 2012/12/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -48,6 +48,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Marmalade is now identified as an OS with its own ABI (Thanks Braden MacDonald)
 <li>Added configuration for compiling the library with gnuc on Linux with mips. Though only with AS_MAX_PORTABILITY (Thanks Andris Jaunzeikars)
 <li>Added compile time option AS_NO_MEMBER_INIT to disable member initialization for backwards compatibility (Thanks Andrew Ackermann)
+<li>Reduced size of executable by avoiding code inlining in templated functions for taking function pointers (Thanks AgentC)
 </ul>
 <li>Script language
 <ul>

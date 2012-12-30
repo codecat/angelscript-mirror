@@ -397,6 +397,19 @@ typedef void (asCUnknownClass::*asMETHOD_t)();
 
 struct asSFuncPtr
 {
+	asSFuncPtr(asBYTE f)
+	{
+		for( size_t n = 0; n < sizeof(ptr.dummy); n++ )
+			ptr.dummy[n] = 0;
+		flag = f;
+	}
+
+	void CopyMethodPtr(const void *mthdPtr, size_t size)
+	{
+		for( size_t n = 0; n < size; n++ )
+			ptr.dummy[n] = reinterpret_cast<const char *>(mthdPtr)[n];
+	}
+
 	union
 	{
 		// The largest known method point is 20 bytes (MSVC 64bit),
@@ -435,6 +448,13 @@ template <typename T>
 
 struct asSFuncPtr
 {
+	asSFuncPtr(asBYTE f)
+	{
+		for( int n = 0; n < sizeof(ptr.dummy); n++ )
+			ptr.dummy[n] = 0;
+		flag = f;
+	}
+
 	union
 	{
 		char dummy[25]; // largest known class method pointer
@@ -1004,31 +1024,13 @@ public:
 //-----------------------------------------------------------------
 // Function pointers
 
-// Use our own memset() and memcpy() implementations for better portability
-inline void asMemClear(void *_p, size_t size)
-{
-	char *p = reinterpret_cast<char *>(_p);
-	const char *e = p + size;
-	for( ; p < e; p++ )
-		*p = 0;
-}
-
-inline void asMemCopy(void *_d, const void *_s, size_t size)
-{
-	char *d = reinterpret_cast<char *>(_d);
-	const char *s = reinterpret_cast<const char *>(_s);
-	const char *e = s + size;
-	for( ; s < e; d++, s++ )
-		*d = *s;
-}
-
 // Template function to capture all global functions,
 // except the ones using the generic calling convention
 template <class T>
 inline asSFuncPtr asFunctionPtr(T func)
 {
-	asSFuncPtr p;
-	asMemClear(&p, sizeof(p));
+	// Mark this as a global function
+	asSFuncPtr p(2);
 
 #ifdef AS_64BIT_PTR
 	// The size_t cast is to avoid a compiler warning with asFUNCTION(0) 
@@ -1040,9 +1042,6 @@ inline asSFuncPtr asFunctionPtr(T func)
 	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
 #endif
 
-	// Mark this as a global function
-	p.flag = 2;
-
 	return p;
 }
 
@@ -1050,13 +1049,9 @@ inline asSFuncPtr asFunctionPtr(T func)
 template<>
 inline asSFuncPtr asFunctionPtr<asGENFUNC_t>(asGENFUNC_t func)
 {
-	asSFuncPtr p;
-	asMemClear(&p, sizeof(p));
-	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
-
 	// Mark this as a generic function
-	p.flag = 1;
-
+	asSFuncPtr p(1);
+	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(func);
 	return p;
 }
 
@@ -1081,7 +1076,7 @@ struct asSMethodPtr
 
 		int ERROR_UnsupportedMethodPtr[N-100];
 
-		asSFuncPtr p;
+		asSFuncPtr p(0);
 		return p;
 	}
 };
@@ -1093,14 +1088,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE>
 	template<class M>
 	static asSFuncPtr Convert(M Mthd)
 	{
-		asSFuncPtr p;
-		asMemClear(&p, sizeof(p));
-
-		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE);
-
 		// Mark this as a class method
-		p.flag = 3;
-
+		asSFuncPtr p(3);
+		p.CopyMethodPtr(&Mthd, SINGLE_PTR_SIZE);
 		return p;
 	}
 };
@@ -1114,14 +1104,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+1*sizeof(int)>
 	template <class M>
 	static asSFuncPtr Convert(M Mthd)
 	{
-		asSFuncPtr p;
-		asMemClear(&p, sizeof(p));
-
-		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+sizeof(int));
-
 		// Mark this as a class method
-		p.flag = 3;
-
+		asSFuncPtr p(3);
+		p.CopyMethodPtr(&Mthd, SINGLE_PTR_SIZE+sizeof(int));
 		return p;
 	}
 };
@@ -1135,13 +1120,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 		// On 32bit platforms with is where a class with virtual inheritance falls.
 		// On 64bit platforms we can also fall here if 8byte data alignments is used.
 
-		asSFuncPtr p;
-		asMemClear(&p, sizeof(p));
-
-		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+2*sizeof(int));
-
 		// Mark this as a class method
-		p.flag = 3;
+		asSFuncPtr p(3);
+		p.CopyMethodPtr(&Mthd, SINGLE_PTR_SIZE+2*sizeof(int));
 
 		// Microsoft has a terrible optimization on class methods with virtual inheritance.
 		// They are hardcoding an important offset, which is not coming in the method pointer.
@@ -1177,14 +1158,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+3*sizeof(int)>
 	template <class M>
 	static asSFuncPtr Convert(M Mthd)
 	{
-		asSFuncPtr p;
-		asMemClear(&p, sizeof(p));
-
-		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+3*sizeof(int));
-
 		// Mark this as a class method
-		p.flag = 3;
-
+		asSFuncPtr p(3);
+		p.CopyMethodPtr(&Mthd, SINGLE_PTR_SIZE+3*sizeof(int));
 		return p;
 	}
 };
@@ -1198,14 +1174,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+4*sizeof(int)>
 		// On 64bit platforms with 8byte data alignment
 		// the unknown class method pointers will come here.
 
-		asSFuncPtr p;
-		asMemClear(&p, sizeof(p));
-
-		asMemCopy(&p, &Mthd, SINGLE_PTR_SIZE+4*sizeof(int));
-
 		// Mark this as a class method
-		p.flag = 3;
-
+		asSFuncPtr p(3);
+		p.CopyMethodPtr(&Mthd, SINGLE_PTR_SIZE+4*sizeof(int));
 		return p;
 	}
 };

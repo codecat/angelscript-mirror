@@ -183,6 +183,42 @@ bool TestException()
 		engine->Release();
 	}
 
+	// Test exception within default constructor
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("test",
+			"class Test { \n"
+			"  string mem = 'hello'; \n"
+			"  int a = 0; \n"
+			"  int b = 10/a; \n"
+			"}\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Test t;", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( string(ctx->GetExceptionString()) != "Divide by zero" )
+		{
+			printf("%s\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+		if( string(ctx->GetExceptionFunction()->GetName()) != "Test" )
+			TEST_FAILED;
+
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
