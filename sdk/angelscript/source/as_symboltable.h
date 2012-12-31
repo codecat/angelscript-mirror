@@ -398,7 +398,7 @@ bool asCSymbolTable<T>::Erase(unsigned idx)
 template<class T>
 int asCSymbolTable<T>::Put(T *entry)
 {
-	unsigned int idx = m_entries.GetLength();
+	unsigned int idx = (unsigned int)(m_entries.GetLength());
 	asCString key;
 	GetKey(entry, key);
 
@@ -464,7 +464,7 @@ bool asCSymbolTable<T>::CheckIdx(unsigned int idx) const
 template<class T>
 int asCSymbolTable<T>::GetLastIndex() const
 {
-    unsigned int idx = m_entries.GetLength() - 1;
+    unsigned int idx = (unsigned int)(m_entries.GetLength()) - 1;
 	asASSERT( idx == asUINT(-1) || m_entries[idx] );
     return int(idx);
 }
@@ -495,7 +495,7 @@ typename asCSymbolTable<T>::const_iterator asCSymbolTable<T>::List() const
 template<class T, class T2>
 asCSymbolTableIterator<T, T2>::asCSymbolTableIterator(asCSymbolTable<T> *table) : m_table(table), m_idx(0)
 {
-    unsigned int sz = m_table->m_entries.GetLength();
+    unsigned int sz = (unsigned int)(m_table->m_entries.GetLength());
     while( m_idx < sz && m_table->m_entries[m_idx] == 0 )
         m_idx++;
 }
@@ -543,7 +543,7 @@ asCSymbolTableIterator<T, T2>::operator bool() const
 template<class T, class T2>
 void asCSymbolTableIterator<T, T2>::Next()
 {
-    unsigned int sz = m_table->m_entries.GetLength();
+    unsigned int sz = (unsigned int)(m_table->m_entries.GetLength());
     m_idx++;
     while( m_idx < sz && m_table->m_entries[m_idx] == 0 )
         m_idx++;
@@ -555,7 +555,7 @@ template<class T, class T2>
 void asCSymbolTableIterator<T, T2>::Previous()
 {
     // overflow on stepping over first element
-    unsigned int sz = m_table->m_entries.GetLength();
+    unsigned int sz = (unsigned int)(m_table->m_entries.GetLength());
     m_idx--;
     while( m_idx < sz && m_table->m_entries[m_idx] == 0 )
         m_idx--;

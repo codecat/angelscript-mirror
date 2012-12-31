@@ -395,7 +395,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 		stackPos -= type.GetSizeOnStackDWords();
 	}
 
-	for( n = vs.variables.GetLength(); n-- > 0; )
+	for( n = asUINT(vs.variables.GetLength()); n-- > 0; )
 		variables->DeclareVariable(vs.variables[n]->name.AddressOf(), vs.variables[n]->type, vs.variables[n]->stackOffset, vs.variables[n]->onHeap);
 
 	variables->DeclareVariable("return", returnType, stackPos, true);

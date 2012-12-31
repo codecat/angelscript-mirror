@@ -174,7 +174,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 		return -1;
 	}
 
-	return ProcessScriptSection(code.c_str(), code.length(), filename);
+	return ProcessScriptSection(code.c_str(), (unsigned int)(code.length()), filename);
 }
 
 int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length, const char *sectionname)

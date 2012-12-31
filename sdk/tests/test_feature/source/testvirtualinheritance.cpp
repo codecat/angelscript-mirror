@@ -87,6 +87,13 @@ bool TestVirtualInheritance()
 		TEST_FAILED;
 	}
 
+#if defined(_MSC_VER) && defined(AS_64BIT_PTR)
+	// It's not possible to know whether the method pointer is for a class with virtual inheritance or
+	// just with ordinary multiple inheritance, because even though the pointer for a class with multiple
+	// inheritance is just 12 bytes, it will be padded to 16 bytes which is the same as the pointer for
+	// a class with virtual inheritance.
+	printf("%s: MSVC 64bit: AngelScript cannot detect virtual inheritance thus this test doesn't apply\n", TESTNAME);
+#else
 	// Register the derived class that has not been forward declared
 	r = engine->RegisterObjectType("class2", 0, asOBJ_REF);
 	r = engine->RegisterObjectMethod("class2", "void CallMe1()", asMETHOD(CDerivedVirtual2, CallMe1), asCALL_THISCALL);
@@ -102,7 +109,7 @@ bool TestVirtualInheritance()
 		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		TEST_FAILED;
 	}
-
+#endif
 
 	// Calling methods for classes with virtual inheritance is not supported so we don't try it
 	
