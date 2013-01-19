@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../add_on/scriptmath/scriptmathcomplex.h"
 
 using namespace std;
 
@@ -290,6 +291,34 @@ bool Test()
 						   "default arg (1, 16) : Error   : Expected expression value\n"
 						   "default arg (1, 17) : Error   : Expected ']'\n"
 						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int arg1 = my_array [ i [ ])'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Test use of class constructor in default argument
+	// Reported by Thomas Grip
+	{
+		const char *script = 
+			"void MyFunc(const complex &in avX = complex(1,1)){}";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptMathComplex(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

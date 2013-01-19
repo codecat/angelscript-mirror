@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -2041,9 +2041,22 @@ bool asCParser::IsVarDecl()
 	if( t2.type == ttOpenParanthesis ) 
 	{	
 		// If the closing paranthesis is followed by a statement 
-		// block or end-of-file, then treat it as a function. 
-		while( t2.type != ttCloseParanthesis && t2.type != ttEnd )
+		// block or end-of-file, then treat it as a function. A
+		// function decl may have nested paranthesis so we need to
+		// check for this too.
+		int nest = 0;
+		while( t2.type != ttEnd )
+		{
+			if( t2.type == ttOpenParanthesis )
+				nest++;
+			else if( t2.type == ttCloseParanthesis )
+			{
+				nest--;
+				if( nest == 0 )
+					break;
+			}
 			GetToken(&t2);
+		}
 
 		if( t2.type == ttEnd ) 
 			return false;
