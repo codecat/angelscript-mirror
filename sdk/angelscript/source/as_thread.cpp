@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -58,9 +58,14 @@ AS_API int asThreadCleanup()
 	return asCThreadManager::CleanupLocalData();
 }
 
-AS_API void asPrepareMultithread()
+AS_API asIThreadManager *asGetThreadManager()
 {
-	asCThreadManager::Prepare();
+	return threadManager;
+}
+
+AS_API int asPrepareMultithread(asIThreadManager *externalThreadMgr)
+{
+	return asCThreadManager::Prepare(externalThreadMgr);
 }
 
 AS_API void asUnprepareMultithread()
@@ -114,8 +119,13 @@ asCThreadManager::asCThreadManager()
 	refCount = 1;
 }
 
-void asCThreadManager::Prepare()
+int asCThreadManager::Prepare(asIThreadManager *externalThreadMgr)
 {
+	// Don't allow an external thread manager if there 
+	// is already a thread manager defined
+	if( externalThreadMgr && threadManager )
+		return asINVALID_ARG;
+
 	// The critical section cannot be declared globally, as there is no
 	// guarantee for the order in which global variables are initialized
 	// or uninitialized.
@@ -126,14 +136,24 @@ void asCThreadManager::Prepare()
 	// To avoid the race condition when the thread manager is first created, 
 	// the application must make sure to call the global asPrepareForMultiThread()
 	// in the main thread before any other thread creates a script engine. 
-	if( threadManager == 0 )
+	if( threadManager == 0 && externalThreadMgr == 0 )
 		threadManager = asNEW(asCThreadManager);
 	else
 	{
+		// If an application uses different dlls each dll will get it's own memory
+		// space for global variables. If multiple dlls then uses AngelScript's 
+		// global thread support functions it is then best to share the thread
+		// manager to make sure all dlls use the same critical section.
+		if( externalThreadMgr )
+			threadManager = reinterpret_cast<asCThreadManager*>(externalThreadMgr);
+
 		ENTERCRITICALSECTION(threadManager->criticalSection);
 		threadManager->refCount++;
 		LEAVECRITICALSECTION(threadManager->criticalSection);
 	}
+
+	// Success
+	return 0;
 }
 
 void asCThreadManager::Unprepare()

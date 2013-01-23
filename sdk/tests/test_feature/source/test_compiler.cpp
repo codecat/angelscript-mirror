@@ -234,6 +234,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test compiling an empty script
+	// Reported by Damien French
+	{
+		asResetGlobalMemoryFunctions();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("test", "");
+		if( r < 0 )
+			TEST_FAILED;
+		r = mod->AddScriptSection("test2", 0);
+		if( r != asINVALID_ARG )
+			TEST_FAILED;
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->Release();
+
+		InstallMemoryManager();
+	}
+
 	// Problem reported by Paril101
 	// http://www.gamedev.net/topic/636336-member-function-chaining/
 	{

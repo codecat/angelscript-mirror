@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -72,6 +72,7 @@ class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
+class asIThreadManager;
 
 // Enumerations and constants
 
@@ -505,21 +506,22 @@ struct asSMessageInfo
 extern "C"
 {
 	// Engine
-	AS_API asIScriptEngine * asCreateScriptEngine(asDWORD version);
-	AS_API const char * asGetLibraryVersion();
-	AS_API const char * asGetLibraryOptions();
+	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version);
+	AS_API const char      *asGetLibraryVersion();
+	AS_API const char      *asGetLibraryOptions();
 
 	// Context
-	AS_API asIScriptContext * asGetActiveContext();
+	AS_API asIScriptContext *asGetActiveContext();
 
 	// Thread support
-	AS_API void asPrepareMultithread();
-	AS_API void asUnprepareMultithread();
-	AS_API void asAcquireExclusiveLock();
-	AS_API void asReleaseExclusiveLock();
-	AS_API void asAcquireSharedLock();
-	AS_API void asReleaseSharedLock();
-	AS_API int  asThreadCleanup();
+	AS_API int               asPrepareMultithread(asIThreadManager *externalMgr = 0);
+	AS_API void              asUnprepareMultithread();
+	AS_API asIThreadManager *asGetThreadManager();
+	AS_API void              asAcquireExclusiveLock();
+	AS_API void              asReleaseExclusiveLock();
+	AS_API void              asAcquireSharedLock();
+	AS_API void              asReleaseSharedLock();
+	AS_API int               asThreadCleanup();
 
 	// Memory management
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
@@ -659,6 +661,12 @@ public:
 
 protected:
 	virtual ~asIScriptEngine() {}
+};
+
+class asIThreadManager
+{
+protected:
+	virtual ~asIThreadManager() {}
 };
 
 class asIScriptModule
