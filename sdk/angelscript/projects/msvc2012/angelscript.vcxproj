@@ -223,6 +223,7 @@
     <ClInclude Include="..\..\source\as_scriptobject.h" />
     <ClInclude Include="..\..\source\as_string.h" />
     <ClInclude Include="..\..\source\as_string_util.h" />
+    <ClInclude Include="..\..\source\as_symboltable.h" />
     <ClInclude Include="..\..\source\as_texts.h" />
     <ClInclude Include="..\..\source\as_thread.h" />
     <ClInclude Include="..\..\source\as_tokendef.h" />

@@ -378,6 +378,7 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 #if defined AS_POSIX_THREADS
 	int r = pthread_rwlock_init(&lock, 0);
 	asASSERT( r == 0 );
+	UNUSED_VAR(r);
 #elif defined AS_WINDOWS_THREADS
 	// Create a semaphore to allow up to maxReaders simultaneous readers
 	readLocks = CreateSemaphore(NULL, maxReaders, maxReaders, 0);
