@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -437,8 +437,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			if( obj == 0 )
 			{
 				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
-				if( retPointer )
-					engine->CallFree(retPointer);
 				return 0;
 			}
 
@@ -562,6 +560,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 		else
 		{
+			asASSERT( retPointer );
+
 			if( !sysFunc->hostReturnInMemory )
 			{
 				// Copy the returned value to the pointer sent by the script engine
@@ -589,23 +589,14 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				}
 			}
 
-			// Store the object in the register
-			context->m_regs.objectRegister = retPointer;
-
-			// If the value is returned on the stack we shouldn't update the object register
-			if( descr->DoesReturnOnStack() )
+			if( context->m_status == asEXECUTION_EXCEPTION )
 			{
-				context->m_regs.objectRegister = 0;
-
-				if( context->m_status == asEXECUTION_EXCEPTION )
-				{
-					// If the function raised a script exception it really shouldn't have 
-					// initialized the object. However, as it is a soft exception there is 
-					// no way for the application to not return a value, so instead we simply
-					// destroy it here, to pretend it was never created.
-					if( descr->returnType.GetObjectType()->beh.destruct )
-						engine->CallObjectMethod(retPointer, descr->returnType.GetObjectType()->beh.destruct);
-				}
+				// If the function raised a script exception it really shouldn't have 
+				// initialized the object. However, as it is a soft exception there is 
+				// no way for the application to not return a value, so instead we simply
+				// destroy it here, to pretend it was never created.
+				if( descr->returnType.GetObjectType()->beh.destruct )
+					engine->CallObjectMethod(retPointer, descr->returnType.GetObjectType()->beh.destruct);
 			}
 		}
 	}
