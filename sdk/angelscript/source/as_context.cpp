@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1397,7 +1397,8 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 	int sectionIdx;
 	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()), &sectionIdx);
 	if( column ) *column = (line >> 20);
-	if( sectionName ) *sectionName = m_engine->scriptSectionNames[sectionIdx]->AddressOf();
+	if( sectionName ) 
+		*sectionName = sectionIdx >= 0 ? m_engine->scriptSectionNames[sectionIdx]->AddressOf() : 0;
 	return (line & 0xFFFFF);
 }
 

@@ -157,7 +157,7 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	int lineNbr = ctx->GetLineNumber(0, 0, &tmp);
 
 	// Consider just filename, not the full path
-	string file = tmp;
+	string file = tmp ? tmp : "";
 	size_t r = file.find_last_of("\\/");
 	if( r != string::npos )
 		file = file.substr(r+1);

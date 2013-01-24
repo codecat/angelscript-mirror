@@ -36,6 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Loading bytecode always failed if global variables had been disabled, even if the saved bytecode didn't have any global variables (Thanks Paril101)
 <li>Constructor with const &amp;inout is now recognized as copy constructor with asEP_ALLOW_UNSAFE_REFERENCES (Thanks FDsagizi)
 <li>Fixed parser error when function declaration had default argument that used paranthesis (Thanks Thomas Grip)
+<li>Fixed null pointer access in GetLineNumber() if called on function without debug info (Thanks ketmar)
 </ul>
 <li>Library interface
 <ul>
@@ -65,6 +66,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in script array when comparing two arrays for equality and only opCmp had been implemented in the element type (Thanks virious)
 <li>Fixed fopen_s compiler error on Marmalade in the scriptfile and scripthelper add-ons (Thanks Braden MacDonald)
 <li>CScriptBuilder::AddSectionFromMemory() now requires a name and an optional length for the buffer in case it is not null terminated (Thanks Paril101)
+<li>Fixed null pointer access in CDebugger when stepping over a function without debug info (Thanks ketmar)
 </ul>
 </ul>
 

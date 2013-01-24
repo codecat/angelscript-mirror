@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2568,6 +2568,7 @@ public:
 	//! and the name of the script section where the program is current at. 
 	//!
 	//! The sectionName pointer will point to an internal buffer, so do not deallocate it.
+	//! If the function doesn't have any debug info sectionName will be set to null.
 	virtual int                GetLineNumber(asUINT stackLevel = 0, int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Returns the number of local variables at the specified callstack level.
 	//! \param[in] stackLevel The index on the call stack.
