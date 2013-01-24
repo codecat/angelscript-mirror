@@ -756,6 +756,12 @@ asSNameSpace *asCScriptEngine::FindNameSpace(const char *name)
 }
 
 // interface
+const char *asCScriptEngine::GetDefaultNamespace() const
+{
+	return defaultNamespace->name.AddressOf();
+}
+
+// interface
 int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
 {
 	if( nameSpace == 0 )

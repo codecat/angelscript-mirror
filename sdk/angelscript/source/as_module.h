@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -102,12 +102,13 @@ public:
 	// TODO: interface: Should have a method Discard(); which will replace the engine's DiscardModule() method
 
 	// Compilation
-	virtual int     AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
-	virtual int     Build();
-	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD reserved, asIScriptFunction **outFunc);
-	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
-	virtual asDWORD SetAccessMask(asDWORD accessMask);
-	virtual int     SetDefaultNamespace(const char *nameSpace);
+	virtual int         AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);
+	virtual int         Build();
+	virtual int         CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD reserved, asIScriptFunction **outFunc);
+	virtual int         CompileGlobalVar(const char *sectionName, const char *code, int lineOffset);
+	virtual asDWORD     SetAccessMask(asDWORD accessMask);
+	virtual int         SetDefaultNamespace(const char *nameSpace);
+	virtual const char *GetDefaultNamespace() const;
 
 	// Script functions
 	virtual asUINT             GetFunctionCount() const;

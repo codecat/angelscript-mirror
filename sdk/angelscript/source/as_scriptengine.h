@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -148,11 +148,12 @@ public:
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace, const char **configGroup = 0, asDWORD *accessMask = 0) const;
 
 	// Configuration groups
-	virtual int     BeginConfigGroup(const char *groupName);
-	virtual int     EndConfigGroup();
-	virtual int     RemoveConfigGroup(const char *groupName);
-	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask);
-	virtual int     SetDefaultNamespace(const char *nameSpace);
+	virtual int         BeginConfigGroup(const char *groupName);
+	virtual int         EndConfigGroup();
+	virtual int         RemoveConfigGroup(const char *groupName);
+	virtual asDWORD     SetDefaultAccessMask(asDWORD defaultMask);
+	virtual int         SetDefaultNamespace(const char *nameSpace);
+	virtual const char *GetDefaultNamespace() const;
 
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag);

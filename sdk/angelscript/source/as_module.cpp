@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -115,6 +115,12 @@ void asCModule::SetName(const char *name)
 const char *asCModule::GetName() const
 {
 	return name.AddressOf();
+}
+
+// interface
+const char *asCModule::GetDefaultNamespace() const
+{
+	return defaultNamespace->name.AddressOf();
 }
 
 // interface
