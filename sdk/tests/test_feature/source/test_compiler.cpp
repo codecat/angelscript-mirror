@@ -234,6 +234,29 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test compile error
+	// http://www.gamedev.net/topic/637772-small-compiller-bug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("test", "int f() {return 0;;}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->Release();
+	}
+
 	// Test compiling an empty script
 	// Reported by Damien French
 	{

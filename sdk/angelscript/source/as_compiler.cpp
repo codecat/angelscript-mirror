@@ -996,8 +996,12 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	{
 		if( !hasUnreachableCode && (*hasReturn || isFinished) )
 		{
-			hasUnreachableCode = true;
-			Error(TXT_UNREACHABLE_CODE, node);
+			// Empty statements don't count
+			if( node->nodeType != snExpressionStatement || node->firstChild )
+			{
+				hasUnreachableCode = true;
+				Error(TXT_UNREACHABLE_CODE, node);
+			}
 		}
 
 		if( node->nodeType == snBreak || node->nodeType == snContinue )
@@ -2488,7 +2492,10 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, asCByteCode *bc)
 {
-	*hasReturn = false;
+	// Don't clear the hasReturn flag if this is an empty statement
+	// to avoid false errors of 'not all paths return'
+	if( statement->nodeType != snExpressionStatement || statement->firstChild )
+		*hasReturn = false;
 
 	if( statement->nodeType == snStatementBlock )
 		CompileStatementBlock(statement, true, hasReturn, bc);
