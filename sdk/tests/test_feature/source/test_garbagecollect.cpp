@@ -352,6 +352,64 @@ bool Test()
 		engine->Release();
 	}
 
+	// This test is to validate that object types are not destroyed while there are live
+	// objects in the garbage collector, even if the module has been destroyed.
+	{
+		COutStream out;
+		int r;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum TEST { ETEST } \n"
+			"class A { TEST e; A @a; } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		int enumTypeId = mod->GetTypeIdByDecl("TEST");
+		if( enumTypeId < 0 )
+			TEST_FAILED;
+		int count = engine->GetEnumValueCount(enumTypeId);
+		if( count != 1 )
+			TEST_FAILED;
+
+		int typeId = mod->GetTypeIdByDecl("A");
+		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(typeId));
+
+		engine->DiscardModule("test");
+		engine->GarbageCollect();
+
+		// The object is still alive so the enumType should still be valid
+		count = engine->GetEnumValueCount(enumTypeId);
+		if( count != 1 )
+			TEST_FAILED;
+
+		obj->Release();
+		
+		engine->Release();
+	}
+
+	// Test circular reference between script object and template instance type
+	{
+		COutStream out;
+		int r;
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { array<array<A@>> a; } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 /*
 	{
 		// This test forces a memory leak due to not registering the GC behaviours for the CFoo class

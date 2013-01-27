@@ -252,7 +252,7 @@ public:
 
 	void ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type);
 
-	void ClearUnusedTypes();
+	int  ClearUnusedTypes();
 	void RemoveTemplateInstanceType(asCObjectType *t);
 	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
 
@@ -298,6 +298,7 @@ public:
 	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCDataType &subType);
 	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCDataType &subType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
+	void               OrphanTemplateInstances(asCObjectType *subType);
 
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked

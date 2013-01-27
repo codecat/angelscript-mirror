@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.0 WIP - 2013/01/24</h2>
+<h2>Version 2.26.0 WIP - 2013/01/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Constructor with const &amp;inout is now recognized as copy constructor with asEP_ALLOW_UNSAFE_REFERENCES (Thanks FDsagizi)
 <li>Fixed parser error when function declaration had default argument that used paranthesis (Thanks Thomas Grip)
 <li>Fixed null pointer access in GetLineNumber() if called on function without debug info (Thanks ketmar)
+<li>Fixed crash that could happen discarding a module and the garbage collector held a reference to an object declared in the module (Thanks Thomas Grip)
 </ul>
 <li>Library interface
 <ul>

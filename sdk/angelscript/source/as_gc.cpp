@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -186,11 +186,13 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 				if( count != (unsigned int)(gcNewObjects.GetLength() + gcOldObjects.GetLength()) )
 					count = (unsigned int)(gcNewObjects.GetLength() + gcOldObjects.GetLength());
 				else
-					break;
+				{
+					// Let the engine destroy the types that reached refCount 0
+					// If none were destroyed, then leave the GC
+					if( engine->ClearUnusedTypes() == 0 )
+						break;
+				}
 			}
-
-			// Take the opportunity to clear unused types as well
-			engine->ClearUnusedTypes();
 
 			isProcessing = false;
 			LEAVECRITICALSECTION(gcCollecting);

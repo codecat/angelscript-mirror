@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -170,6 +170,11 @@ void asCObjectType::Orphan(asCModule *mod)
 		{
 			// Tell the GC that this type exists so it can resolve potential circular references
 			engine->gc.AddScriptObjectToGC(this, &engine->objectTypeBehaviours);
+
+			// It's necessary to orphan the template instance types that refer to this object type,
+			// otherwise the garbage collector cannot identify the circular references that involve 
+			// the type and the template type
+			engine->OrphanTemplateInstances(this);
 		}
 	}
 
@@ -251,20 +256,8 @@ asCObjectType::~asCObjectType()
 		derivedFrom->Release();
 
 	asUINT n;
-	for( n = 0; n < properties.GetLength(); n++ )
-		if( properties[n] ) 
-		{
-			if( flags & asOBJ_SCRIPT_OBJECT )
-			{
-				// Release the config group for script classes that are being destroyed
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(properties[n]->type.GetObjectType());
-				if( group != 0 ) group->Release();
-			}
 
-			asDELETE(properties[n],asCObjectProperty);
-		}
-
-	properties.SetLength(0);
+	ReleaseAllProperties();
 
 	ReleaseAllFunctions();
 
@@ -794,6 +787,7 @@ asDWORD asCObjectType::GetAccessMask() const
 // internal
 asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate)
 {
+	asASSERT( flags & asOBJ_SCRIPT_OBJECT );
 	asASSERT( dt.CanBeInstanciated() );
 	asASSERT( !IsInterface() );
 
@@ -832,13 +826,45 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, cons
 	asCConfigGroup *group = engine->FindConfigGroupForObjectType(prop->type.GetObjectType());
 	if( group != 0 ) group->AddRef();
 
+	// Add reference to object types
+	asCObjectType *type = prop->type.GetObjectType();
+	if( type )
+		type->AddRef();
+
 	return prop;
+}
+
+// internal
+void asCObjectType::ReleaseAllProperties()
+{
+	for( asUINT n = 0; n < properties.GetLength(); n++ )
+	{
+		if( properties[n] ) 
+		{
+			if( flags & asOBJ_SCRIPT_OBJECT )
+			{
+				// Release the config group for script classes that are being destroyed
+				asCConfigGroup *group = engine->FindConfigGroupForObjectType(properties[n]->type.GetObjectType());
+				if( group != 0 ) group->Release();
+
+				// Release references to objects types
+				asCObjectType *type = properties[n]->type.GetObjectType();
+				if( type )
+					type->Release();
+			}
+
+			asDELETE(properties[n],asCObjectProperty);
+		}
+	}
+
+	properties.SetLength(0);
 }
 
 // internal
 void asCObjectType::ReleaseAllHandles(asIScriptEngine *)
 {
 	ReleaseAllFunctions();
+	ReleaseAllProperties();
 }
 
 // internal
@@ -984,6 +1010,16 @@ void asCObjectType::EnumReferences(asIScriptEngine *)
 	for( asUINT d = 0; d < virtualFunctionTable.GetLength(); d++ )
 		if( virtualFunctionTable[d] )
 			engine->GCEnumCallback(virtualFunctionTable[d]);
+
+	for( asUINT p = 0; p < properties.GetLength(); p++ )
+	{
+		asCObjectType *type = properties[p]->type.GetObjectType();
+		if( type )
+			engine->GCEnumCallback(type);
+	}
+
+	if( templateSubType.GetObjectType() )
+		engine->GCEnumCallback(templateSubType.GetObjectType());
 }
 
 END_AS_NAMESPACE
