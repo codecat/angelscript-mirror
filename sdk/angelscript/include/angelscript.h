@@ -921,8 +921,9 @@ public:
 	virtual asDWORD          GetFlags() const = 0;
 	virtual asUINT           GetSize() const = 0;
 	virtual int              GetTypeId() const = 0;
-	virtual int              GetSubTypeId() const = 0;
-	virtual asIObjectType   *GetSubType() const = 0;
+	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
+	virtual asIObjectType   *GetSubType(asUINT subTypeIndex = 0) const = 0;
+	virtual asUINT			 GetSubTypeCount() const = 0;
 
 	// Interfaces
 	virtual asUINT           GetInterfaceCount() const = 0;

@@ -150,8 +150,9 @@ public:
 	asDWORD          GetFlags() const;
 	asUINT           GetSize() const;
 	int              GetTypeId() const;
-	int              GetSubTypeId() const;
-	asIObjectType   *GetSubType() const;
+	int              GetSubTypeId(asUINT subtypeIndex = 0) const;
+	asIObjectType   *GetSubType(asUINT subtypeIndex = 0) const;
+	asUINT			 GetSubTypeCount() const;
 
 	// Interfaces
 	asUINT           GetInterfaceCount() const;

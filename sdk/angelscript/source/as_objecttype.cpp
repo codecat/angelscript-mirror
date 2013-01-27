@@ -356,9 +356,11 @@ int asCObjectType::GetTypeId() const
 }
 
 // interface
-int asCObjectType::GetSubTypeId() const
+int asCObjectType::GetSubTypeId(asUINT subTypeIndex) const
 {
 	// TODO: template: This method should allow indexing multiple template subtypes
+	if( subTypeIndex != 0 )
+		return asINVALID_ARG;
 
 	if( flags & asOBJ_TEMPLATE )
 	{
@@ -370,15 +372,23 @@ int asCObjectType::GetSubTypeId() const
 }
 
 // interface
-asIObjectType *asCObjectType::GetSubType() const
+asIObjectType *asCObjectType::GetSubType(asUINT subTypeIndex) const
 {
 	// TODO: template: This method should allow indexing multiple template subtypes
+	if( subTypeIndex != 0 )
+		return 0;
+
 	if( flags & asOBJ_TEMPLATE )
 	{
 		return templateSubType.GetObjectType();
 	}
 
 	return 0;
+}
+
+asUINT asCObjectType::GetSubTypeCount() const
+{
+	return 1;
 }
 
 asUINT asCObjectType::GetInterfaceCount() const
