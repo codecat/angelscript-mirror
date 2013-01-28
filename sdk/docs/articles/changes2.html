@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.0 WIP - 2013/01/27</h2>
+<h2>Version 2.26.0 WIP - 2013/01/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -57,6 +57,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added compile time option AS_NO_MEMBER_INIT to disable member initialization for backwards compatibility (Thanks Andrew Ackermann)
 <li>Reduced size of executable by avoiding code inlining in templated functions for taking function pointers (Thanks AgentC)
 <li>Slight reduction on overhead of calling system functions (Thanks Andrew Ackermann)
+<li>Improved algorithm in compiler for determining if objects needs to be garbage collected or not by taking advantage of the 'final' flag (Thanks Andrew Ackermann)
 </ul>
 <li>Script language
 <ul>

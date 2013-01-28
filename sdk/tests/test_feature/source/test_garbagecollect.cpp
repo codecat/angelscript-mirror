@@ -117,6 +117,60 @@ bool Test()
     ctx->Release();
     engine->Release();
 
+	// Test GC flag for classes marked as final
+	{
+		COutStream out;
+		int r;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"final class F { F @f; } \n"
+			"final class D { int a; } \n"
+			"final class E { D @d; } \n"
+			"class C { int b; } \n"
+			"final class B { C @c; } \n"
+			"final class A { E @e; } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// F can obviously create circular references and must be garbage collected
+		asIObjectType *type = mod->GetObjectTypeByName("F");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+
+		// D can't create circular references and thus doesn't need to be garbage collected
+		type = mod->GetObjectTypeByName("D");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) != 0 )
+			TEST_FAILED;
+
+		// E can't create circular references, because it is known that D cannot be inherited from and D can't create circular references
+		type = mod->GetObjectTypeByName("E");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) != 0 )
+			TEST_FAILED;
+
+		// C can't create circular references
+		type = mod->GetObjectTypeByName("C");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) != 0 )
+			TEST_FAILED;
+
+		// B can potentially create circular references though, as a class that derives from C can refer to B
+		// TODO: runtime optimize: The compiler could check for the existance of classes that derives from C, and thus see that B really can't form circular references
+		type = mod->GetObjectTypeByName("B");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+
+		// A can't really create circular references, but at the moment the compiler doesn't know how to detect that
+		// TODO: runtime optimize: The algorithm can be improved to allow the compiler to properly detect this case too
+		type = mod->GetObjectTypeByName("A");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Test problem reported by Polyák István
 	{	
 		COutStream out;
