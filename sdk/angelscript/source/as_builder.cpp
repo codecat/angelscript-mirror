@@ -1510,7 +1510,14 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	if( st == 0 )
 		return asOUT_OF_MEMORY;
 
-	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT;
+	// By default all script classes are marked as garbage collected. 
+	// Only after the complete structure and relationship between classes
+	// is known, can the flag be cleared for those objects that truly cannot 
+	// form circular references. This is important because a template 
+	// callback may be called with a script class before the compilation 
+	// complete, and until it is known, the callback must assume the class 
+	// is garbage collected.
+	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
 
 	if( isShared )
 		st->flags |= asOBJ_SHARED;
@@ -2672,7 +2679,8 @@ void asCBuilder::CompileClasses()
 
 	if( numErrors > 0 ) return;
 
-	// Verify potential circular references and mark the classes that can form circles as garbage collected
+	// Verify which script classes can really form circular references, and mark only those as garbage collected.
+
 	// TODO: runtime optimize: This algorithm can be further improved by checking the types that inherits from
 	//                         a base class. If the base class is not shared all the classes that derive from it
 	//                         are known at compile time, and can thus be checked for potential circular references too.
@@ -2680,6 +2688,16 @@ void asCBuilder::CompileClasses()
 	//                         allow incremental builds, i.e. allow application to add or replace classes in an
 	//                         existing module. However, the applications that want to use that should use a special
 	//                         build flag to not finalize the module.
+
+	// Previously the classes had been marked as garbage collected, assuming the worst case. Clear that flag and 
+	// then reevaluate if the flag should truly be set or not.
+	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	{
+		sClassDeclaration *decl = classDeclarations[n];
+		if( decl->isExistingShared ) continue;
+
+		decl->objType->flags &= ~asOBJ_GC;
+	}
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
 		sClassDeclaration *decl = classDeclarations[n];

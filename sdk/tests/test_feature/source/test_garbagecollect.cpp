@@ -117,7 +117,32 @@ bool Test()
     ctx->Release();
     engine->Release();
 
-	// Test GC flag for classes marked as final
+	// Test GC flag for array
+	{
+		COutStream out;
+		int r;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"class F { F @f; } \n"
+			"array<F> arr; \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// As the subtype holds handles and can form circular references it is possible for the array to form circular references too
+		asIObjectType *type = engine->GetObjectTypeById(mod->GetTypeIdByDecl("array<F>"));
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
+	// Test GC flag for classes with different relationships
 	{
 		COutStream out;
 		int r;

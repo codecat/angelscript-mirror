@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed parser error when function declaration had default argument that used paranthesis (Thanks Thomas Grip)
 <li>Fixed null pointer access in GetLineNumber() if called on function without debug info (Thanks ketmar)
 <li>Fixed crash that could happen discarding a module and the garbage collector held a reference to an object declared in the module (Thanks Thomas Grip)
+<li>Script arrays could be falsely marked as non-garbage collected as the asOBJ_GC flag wasn't set when the template callback was invoked
 </ul>
 <li>Library interface
 <ul>
