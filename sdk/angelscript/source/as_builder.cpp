@@ -2684,20 +2684,12 @@ void asCBuilder::CompileClasses()
 	// TODO: runtime optimize: This algorithm can be further improved by checking the types that inherits from
 	//                         a base class. If the base class is not shared all the classes that derive from it
 	//                         are known at compile time, and can thus be checked for potential circular references too.
+	//                         
 	//                         Observe, that doing this would conflict with another potential future feature, which is to
 	//                         allow incremental builds, i.e. allow application to add or replace classes in an
 	//                         existing module. However, the applications that want to use that should use a special
 	//                         build flag to not finalize the module.
 
-	// Previously the classes had been marked as garbage collected, assuming the worst case. Clear that flag and 
-	// then reevaluate if the flag should truly be set or not.
-	for( n = 0; n < classDeclarations.GetLength(); n++ )
-	{
-		sClassDeclaration *decl = classDeclarations[n];
-		if( decl->isExistingShared ) continue;
-
-		decl->objType->flags &= ~asOBJ_GC;
-	}
 	for( n = 0; n < classDeclarations.GetLength(); n++ )
 	{
 		sClassDeclaration *decl = classDeclarations[n];
@@ -2708,75 +2700,82 @@ void asCBuilder::CompileClasses()
 		asCObjectType *ot = decl->objType;
 		
 		// Is there some path in which this structure is involved in circular references?
+		bool gc = false;
 		for( asUINT p = 0; p < ot->properties.GetLength(); p++ )
 		{
 			asCDataType dt = ot->properties[p]->type;
-			if( dt.IsObject() )
+			if( !dt.IsObject() ) 
+				continue;
+
+			if( dt.IsObjectHandle() )
 			{
-				if( dt.IsObjectHandle() )
+				// If it is known that the handle can't be involved in a circular reference
+				// then this object doesn't need to be marked as garbage collected.
+				asCObjectType *prop = dt.GetObjectType();
+
+				if( prop->flags & asOBJ_SCRIPT_OBJECT )
 				{
-					// If it is known that the handle can't be involved in a circular reference
-					// then this object doesn't need to be marked as garbage collected.
-					asCObjectType *prop = dt.GetObjectType();
-
-					if( prop->flags & asOBJ_SCRIPT_OBJECT )
+					// For script objects, treat non-final classes as if they can contain references 
+					// as it is not known what derived classes might do. For final types, check all 
+					// properties to determine if any of those can cause a circular reference.
+					if( prop->flags & asOBJ_NOINHERIT )
 					{
-						// For script objects, treat non-final classes as if they can contain references 
-						// as it is not known what derived classes might do. For final types, check all 
-						// properties to determine if any of those can cause a circular reference.
-						if( prop->flags & asOBJ_NOINHERIT )
+						for( asUINT sp = 0; sp < prop->properties.GetLength(); sp++ )
 						{
-							for( asUINT sp = 0; sp < prop->properties.GetLength(); sp++ )
-							{
-								asCDataType sdt = prop->properties[sp]->type;
+							asCDataType sdt = prop->properties[sp]->type;
 
-								if( sdt.IsObject() )
+							if( sdt.IsObject() )
+							{
+								if( sdt.IsObjectHandle() )
 								{
-									if( sdt.IsObjectHandle() )
+									// TODO: runtime optimize: If the handle is again to a final class, then we can recursively check if the circular reference can occur
+									if( sdt.GetObjectType()->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_GC) )
 									{
-										// TODO: runtime optimize: If the handle is again to a final class, then we can recursively check if the circular reference can occur
-										if( sdt.GetObjectType()->flags & (asOBJ_SCRIPT_OBJECT | asOBJ_GC) )
-										{
-											ot->flags |= asOBJ_GC;
-											break;
-										}
-									}
-									else if( sdt.GetObjectType()->flags & asOBJ_GC )
-									{
-										// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
-										//                         Only if the object is of a type that can reference this type, either directly or indirectly
-										ot->flags |= asOBJ_GC;
+										gc = true;
 										break;
 									}
 								}
+								else if( sdt.GetObjectType()->flags & asOBJ_GC )
+								{
+									// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
+									//                         Only if the object is of a type that can reference this type, either directly or indirectly
+									gc = true;
+									break;
+								}
 							}
+						}
 
-							if( ot->flags & asOBJ_GC )
-								break;
-						}
-						else
-						{
-							// Assume it is garbage collected as it is not known at compile time what might inherit from this type
-							ot->flags |= asOBJ_GC;
+						if( gc )
 							break;
-						}
 					}
-					else if( prop->flags & asOBJ_GC ) 
+					else
 					{
-						// If a type is not a script object, adopt its GC flag
-						ot->flags |= asOBJ_GC;
+						// Assume it is garbage collected as it is not known at compile time what might inherit from this type
+						gc = true;
 						break;
 					}
 				}
-				else if( dt.GetObjectType()->flags & asOBJ_GC )
+				else if( prop->flags & asOBJ_GC ) 
 				{
-					// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
-					//                         Only if the object is of a type that can reference this type, either directly or indirectly
-					ot->flags |= asOBJ_GC;
+					// If a type is not a script object, adopt its GC flag
+					gc = true;
 					break;
 				}
 			}
+			else if( dt.GetObjectType()->flags & asOBJ_GC )
+			{
+				// TODO: runtime optimize: Just because the member type is a potential circle doesn't mean that this one is.
+				//                         Only if the object is of a type that can reference this type, either directly or indirectly
+				gc = true;
+				break;
+			}
 		}
+
+		// Update the flag in the object type
+		if( gc )
+			ot->flags |= asOBJ_GC;
+		else
+			ot->flags &= ~asOBJ_GC;
 	}
 }
 

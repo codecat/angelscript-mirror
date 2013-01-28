@@ -193,6 +193,28 @@ bool Test()
 		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
 			TEST_FAILED;
 		
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"class C { A a; } \n"
+			"class A { A @a; } \n"
+			"class B { A a; } \n"
+			"class D : A { C @c; } \n"
+			"class E : A { B @b; } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// All must be marked as garbage collected
+		type = mod->GetObjectTypeByName("A");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+		type = mod->GetObjectTypeByName("B");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+		type = mod->GetObjectTypeByName("C");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
