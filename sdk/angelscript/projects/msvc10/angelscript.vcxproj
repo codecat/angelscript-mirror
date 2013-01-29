@@ -194,6 +194,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\angelscript.h" />
     <ClInclude Include="..\..\source\as_array.h" />
+    <ClInclude Include="..\..\source\as_atomic.h" />
     <ClInclude Include="..\..\source\as_builder.h" />
     <ClInclude Include="..\..\source\as_bytecode.h" />
     <ClInclude Include="..\..\source\as_callfunc.h" />

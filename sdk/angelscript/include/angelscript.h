@@ -521,6 +521,8 @@ extern "C"
 	AS_API void              asReleaseExclusiveLock();
 	AS_API void              asAcquireSharedLock();
 	AS_API void              asReleaseSharedLock();
+	AS_API int               asAtomicInc(int &value);
+	AS_API int               asAtomicDec(int &value);
 	AS_API int               asThreadCleanup();
 
 	// Memory management

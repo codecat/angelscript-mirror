@@ -1303,15 +1303,17 @@ void CScriptArray::AddRef() const
 {
 	// Clear the GC flag then increase the counter
 	gcFlag = false;
-	refCount++;
+	asAtomicInc(refCount);
 }
 
 void CScriptArray::Release() const
 {
-	// Now do the actual releasing (clearing the flag set by GC)
+	// Clearing the GC flag then descrease the counter
 	gcFlag = false;
-	if( --refCount == 0 )
+	if( asAtomicDec(refCount) == 0 )
 	{
+		// When reaching 0 no more references to this instance 
+		// exists and the object should be destroyed
 		delete this;
 	}
 }

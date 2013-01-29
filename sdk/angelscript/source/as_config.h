@@ -997,6 +997,12 @@
 	#endif
 #endif
 
+// If the platform doesn't support atomic instructions we can't allow 
+// multithreading as the reference counters won't be threadsafe
+#if defined(AS_NO_ATOMIC) && !defined(AS_NO_THREADS)
+	#define AS_NO_THREADS
+#endif
+
 // If the form of threads to use hasn't been chosen
 // then the library will be compiled without support
 // for multithreading

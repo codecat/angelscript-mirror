@@ -49,6 +49,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asGetThreadManager and asIThreadManager for retrieving an existing thread manager (Thanks Damien French)
 <li>Added GetDefaultNamespace to engine and module (Thanks dkrusu)
 <li>Prepared asIObjectType for future implementation of templates with multiple subtypes
+<li>Added asAtomicInc and asAtomicDec as global functions to aid in development of portable and threadsafe add-ons
 </ul>
 <li>Library
 <ul>
@@ -74,6 +75,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed fopen_s compiler error on Marmalade in the scriptfile and scripthelper add-ons (Thanks Braden MacDonald)
 <li>CScriptBuilder::AddSectionFromMemory() now requires a name and an optional length for the buffer in case it is not null terminated (Thanks Paril101)
 <li>Fixed null pointer access in CDebugger when stepping over a function without debug info (Thanks ketmar)
+<li>Script array's reference counter is now threadsafe by using the global functions asAtomicInc and asAtomicDec
 </ul>
 </ul>
 
