@@ -59,7 +59,7 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 #define ANGELSCRIPT_VERSION        22600
-#define ANGELSCRIPT_VERSION_STRING "2.26.0 WIP"
+#define ANGELSCRIPT_VERSION_STRING "2.26.0"
 
 // Data types
 
@@ -925,7 +925,7 @@ public:
 	virtual int              GetTypeId() const = 0;
 	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
 	virtual asIObjectType   *GetSubType(asUINT subTypeIndex = 0) const = 0;
-	virtual asUINT			 GetSubTypeCount() const = 0;
+	virtual asUINT           GetSubTypeCount() const = 0;
 
 	// Interfaces
 	virtual asUINT           GetInterfaceCount() const = 0;

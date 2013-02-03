@@ -236,6 +236,9 @@
     <ClInclude Include="..\..\source\as_symboltable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\as_atomic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\source\as_callfunc_x64_msvc_asm.asm">

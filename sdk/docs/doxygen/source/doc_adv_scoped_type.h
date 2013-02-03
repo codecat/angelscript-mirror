@@ -40,6 +40,32 @@ r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_FACTORY, "scoped @f()", a
 r = engine->RegisterObjectBehaviour("scoped", asBEHAVE_RELEASE, "void f()", asFUNCTION(Scoped_Release), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
+Unfortunately any function that either takes or returns the type by value in C++
+must be wrapped in order to permit AngelScript to manage the life time of the values.
+
+Here's an example of a function that takes a value and returns another 
+and the corresponding wrapper.
+
+\code
+scoped Foo(scoped a)
+{
+  scoped b;
+  return b;
+}
+
+scoped *Foo_wrapper(const scoped &a)
+{
+  return new scoped(Foo(a));
+}
+
+// Registering the function
+r = engine->RegisterGlobalFunction("scoped @Foo(const scoped &in)", asFUNCTION(Foo_wrapper), asCALL_CDECL); assert( r >= 0 );
+\endcode
+
+Observe how the function is registered to return the scoped value by handle
+even though the scoped types really don't support handles. This is done because
+AngelScript will call Release on the returned instance after it is done with the 
+value it received.
 
 \see \ref doc_reg_basicref
 

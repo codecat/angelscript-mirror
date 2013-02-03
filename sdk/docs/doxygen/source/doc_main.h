@@ -4,7 +4,7 @@
 
 \image html aslogo.png 
 
-<center>\copydetails ANGELSCRIPT_VERSION</center>
+<center>Version 2.26.0</center>
 
 \ref doc_overview "AngelScript" is a \ref doc_license "free, open source", flexible, and cross-platform scripting library meant to be
 embedded in applications. The purpose is to provide an easy to use library that is powerful, but that isn't weighed 

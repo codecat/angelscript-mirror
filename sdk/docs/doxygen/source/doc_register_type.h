@@ -97,6 +97,11 @@ r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asMETHOD
 r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asMETHOD(CRef,Release), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
+If the instances of this object will be shared between multiple threads, remember
+to guarantee that the reference counter is thread safe by making the increments
+and decrements with atomic instructions. 
+
+\see \ref doc_adv_multithread
 
 \section doc_reg_nocount Reference types without reference counting
 
@@ -202,7 +207,12 @@ r = engine->RegisterObjectBehaviour("val", asBEHAVE_CONSTRUCT, "void f()", asFUN
 r = engine->RegisterObjectBehaviour("val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
-Note that you may need to include the &lt;new&gt; header to declare the placement new operator that is used to initialize a preallocated memory block.
+Remember to use unique names or namespaces for the wrapper functions, even if you create templated
+implementations. Otherwise the linker may end up taking the address of the wrong function when registering 
+the wrapper with AngelScript, which is sure to result in unexpected behaviours.
+
+Note that you may need to include the &lt;new&gt; header to declare the placement new operator that is used 
+to initialize a preallocated memory block.
 
 
 

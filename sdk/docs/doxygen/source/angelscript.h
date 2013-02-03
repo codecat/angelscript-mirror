@@ -63,7 +63,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! \details Version 2.26.0
+//! Version 2.26.0
 #define ANGELSCRIPT_VERSION        22600
 #define ANGELSCRIPT_VERSION_STRING "2.26.0"
 
@@ -78,6 +78,7 @@ class asIObjectType;
 class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
+class asIThreadManager;
 
 // Enumerations and constants
 
@@ -747,12 +748,12 @@ extern "C"
 	//! Call this function to create a new script engine. When you're done with the
 	//! script engine, i.e. after you've executed all your scripts, you should call
 	//! \ref asIScriptEngine::Release "Release" on the pointer to free the engine object.
-	AS_API asIScriptEngine * asCreateScriptEngine(asDWORD version);
+	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version);
 	//! \brief Returns the version of the compiled library.
 	//! \return A null terminated string with the library version.
 	//!
 	//! The returned string can be used for presenting the library version in a log file, or in the GUI.
-	AS_API const char * asGetLibraryVersion();
+	AS_API const char      *asGetLibraryVersion();
 	//! \brief Returns the options used to compile the library.
 	//! \return A null terminated string with indicators that identify the options
 	//!         used to compile the script library.
@@ -760,7 +761,7 @@ extern "C"
 	//! This can be used to identify at run-time different ways to configure the engine.
 	//! For example, if the returned string contain the identifier AS_MAX_PORTABILITY then
 	//! functions and methods must be registered with the \ref asCALL_GENERIC calling convention.
-	AS_API const char * asGetLibraryOptions();
+	AS_API const char      *asGetLibraryOptions();
 
 	// Context
 	//! \brief Returns the currently active context.
@@ -775,41 +776,63 @@ extern "C"
 	//! work even if there are multiple threads executing scripts at the same time.
 	//!
 	//! This function does not increase the reference count of the context.
-	AS_API asIScriptContext * asGetActiveContext();
+	AS_API asIScriptContext *asGetActiveContext();
 
 	// Thread support
 	//! \brief Sets up the internally shared resources for multithreading
+	//! \param[in] externalMgr Pre-existent thread manager (optional)
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG externalMgr informed even though local manager already exists
 	//!
 	//! Call this function from the main thread to set up shared resources 
 	//! for multithreading if engines are to be created in multiple threads.
 	//!
+	//! If multiple modules (dlls) are used it may be necessary to call this
+	//! with the thread manager retrieved from \ref asGetThreadManager() in the main
+	//! module in order for all modules to share the same thread manager.
+	//!
 	//! \see \ref doc_adv_multithread
-	AS_API void asPrepareMultithread();
+	AS_API int               asPrepareMultithread(asIThreadManager *externalMgr = 0);
 	//! \brief Frees resources prepared for multithreading
 	//!
 	//! If \ref asPrepareMultithread() has been called, then this function
 	//! should be called after the last engine has been released to free the
 	//! resources prepared for multithreading.
-	AS_API void asUnprepareMultithread();
+	AS_API void              asUnprepareMultithread();
+	//! \brief Get the thread manager used by the application
+	//! \return The thread manager prepared with \ref asPrepareMultithread()
+	AS_API asIThreadManager *asGetThreadManager();
 	//! \brief Acquire an exclusive lock.
 	//!
 	//! This function will block the calling thread until there are no 
 	//! other threads that hold shared or exclusive locks.
-	AS_API void asAcquireExclusiveLock();
+	AS_API void              asAcquireExclusiveLock();
 	//! \brief Release an exclusive lock.
 	//!
 	//! Releases the previously acquired exclusive lock.
-	AS_API void asReleaseExclusiveLock();
+	AS_API void              asReleaseExclusiveLock();
 	//! \brief Acquire a shared lock.
 	//!
 	//! This function will block the calling thread until there are no 
 	//! other threads that hold exclusive locks. Other threads may hold
 	//! shared locks.
-	AS_API void asAcquireSharedLock();
+	AS_API void              asAcquireSharedLock();
 	//! \brief Release a shared lock.
 	//!
 	//! Releases the previously acquired shared lock.
-	AS_API void asReleaseSharedLock();
+	AS_API void              asReleaseSharedLock();
+	//! \brief Increments the value by one and returns the result as a single atomic instruction
+	//! \param[in] value A reference to the value that should be incremented
+	//! \return The incremented value
+	//!
+	//! This function is especially useful for implementing thread safe reference counters.
+	AS_API int               asAtomicInc(int &value);
+	//! \brief Decrements the value by one and returns the result as a single atomic instruction
+	//! \param[in] value A reference to the value that should be decremented
+	//! \return The decremented value
+	//!
+	//! This function is especially useful for implementing thread safe reference counters.
+	AS_API int               asAtomicDec(int &value);
 	//! \brief Cleans up memory allocated for the current thread.
 	//! \return A negative value on error.
 	//! \retval asCONTEXT_ACTIVE A context is still active.
@@ -818,7 +841,7 @@ extern "C"
 	//! accessed the engine to clean up memory allocated for that thread.
 	//!
 	//! It's not necessary to call this if only a single thread accesses the engine.
-	AS_API int  asThreadCleanup();
+	AS_API int               asThreadCleanup();
 
 	// Memory management
 	//! \brief Set the memory management functions that AngelScript should use.
@@ -1336,7 +1359,7 @@ public:
 	//! visible to specific modules, and it can also be removed when it is no longer used.
 	//!
 	//! \see \ref doc_adv_dynamic_config
-	virtual int     BeginConfigGroup(const char *groupName) = 0;
+	virtual int         BeginConfigGroup(const char *groupName) = 0;
 	//! \brief Ends the configuration group.
 	//! \return A negative value on error
 	//! \retval asERROR Can't end a group that hasn't been begun.
@@ -1345,7 +1368,7 @@ public:
 	//! but it can be removed when it is no longer used.
 	//!
 	//! \see \ref doc_adv_dynamic_config
-	virtual int     EndConfigGroup() = 0;
+	virtual int         EndConfigGroup() = 0;
 	//! \brief Removes a previously registered configuration group.
 	//! \param[in] groupName The name of the configuration group
 	//! \return A negative value on error
@@ -1357,13 +1380,13 @@ public:
 	//! in the group.
 	//!
 	//! \see \ref doc_adv_dynamic_config
-	virtual int     RemoveConfigGroup(const char *groupName) = 0;
+	virtual int         RemoveConfigGroup(const char *groupName) = 0;
 	//! \brief Sets the access mask that should be used for subsequent registered entities.
 	//! \param[in] defaultMask The default access bit mask.
 	//! \return The previous default mask.
 	//!
 	//! \see \ref doc_adv_access_mask
-	virtual asDWORD SetDefaultAccessMask(asDWORD defaultMask) = 0;
+	virtual asDWORD     SetDefaultAccessMask(asDWORD defaultMask) = 0;
 	//! \brief Sets the current default namespace for registrations and searches.
 	//! \param[in] nameSpace The namespace that should be used.
 	//! \return A negative value on error
@@ -1374,7 +1397,10 @@ public:
 	//! also to the functions that searches for registered entities.
 	//!
 	//! Nested namespaces can be informed by separating them with the scope token, i.e. ::
-	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
+	virtual int         SetDefaultNamespace(const char *nameSpace) = 0;
+	//! \brief Returns the current default namespace
+	//! \return The current default namespace
+	virtual const char *GetDefaultNamespace() const = 0;
 	//! \}
 
 	// Script modules
@@ -1709,6 +1735,20 @@ protected:
 	virtual ~asIScriptEngine() {}
 };
 
+//! \brief The interface for the thread manager
+//!
+//! This interface is used to represent the internal thread manager
+//! prepared with \ref asPrepareMultithread() and returned by 
+//! \ref asGetThreadManager(). The application shouldn't do anything
+//! with this except pass it to another call to \ref asPrepareMultithread()
+//! in case there is a need to share a common thread manager across multiple
+//! application modules (dlls).
+class asIThreadManager
+{
+protected:
+	virtual ~asIThreadManager() {}
+};
+
 //! \brief The interface to the script modules
 //!
 //! A script module can be thought of a library of script functions, classes, and global variables. 
@@ -1738,8 +1778,8 @@ public:
 	//! \}
 
 	// Compilation
-    //! \name Compilation
-    //! \{
+	//! \name Compilation
+	//! \{
 
 	//! \brief Add a script section for the next build.
 	//! \param[in] name The name of the script section
@@ -1757,7 +1797,7 @@ public:
 	//! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
 	//! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
 	//! with \ref asIScriptEngine::SetEngineProperty.
-	virtual int     AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
+	virtual int         AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;
 	//! \brief Build the previously added script sections.
 	//! \return A negative value on error
 	//! \retval asINVALID_CONFIGURATION The engine configuration is invalid.
@@ -1777,7 +1817,7 @@ public:
 	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set. If you get the error
 	//! asINIT_GLOBAL_VARS_FAILED, then it is probable that one of the global variables during the initialization 
 	//! is trying to access another global variable before it has been initialized. 
-	virtual int     Build() = 0;
+	virtual int         Build() = 0;
 	//! \brief Compile a single function.
 	//! \param[in] sectionName The name of the script section
 	//! \param[in] code The script code buffer
@@ -1796,7 +1836,7 @@ public:
 	//! output parameter, which will allow the application to execute it, and then discard it when it is no longer needed.
 	//!
 	//! If the output function parameter is set, remember to release the function object when you're done with it.
-	virtual int     CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
+	virtual int         CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
 	//! \brief Compile a single global variable and add it to the scope of the module
 	//!
 	//! \param[in] sectionName The name of the script section
@@ -1814,7 +1854,7 @@ public:
 	//!
 	//! The script code may contain an initialization expression, which will be executed by the
 	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set.
-	virtual int     CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
+	virtual int         CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
 	//! \brief Sets the access mask that should be used during the compilation.
 	//! \param[in] accessMask The access bit mask
 	//! \return The previous access mask.
@@ -1827,7 +1867,7 @@ public:
 	//! in the application. 
 	//!
 	//! \see \ref doc_adv_access_mask
-	virtual asDWORD SetAccessMask(asDWORD accessMask) = 0;
+	virtual asDWORD     SetAccessMask(asDWORD accessMask) = 0;
 	//! \brief Sets the default namespace that should be used in the following calls.
 	//! \param[in] nameSpace The namespace that should be used.
 	//! \return A negative value on error.
@@ -1837,7 +1877,10 @@ public:
 	//! Set the default namespace that should be used in the following 
 	//! calls for searching for declared entities, or when compiling new
 	//! individual entities.
-	virtual int     SetDefaultNamespace(const char *nameSpace) = 0;
+	virtual int         SetDefaultNamespace(const char *nameSpace) = 0;
+	//! \brief Returns the current default namespace
+	//! \return The current default namespace
+	virtual const char *GetDefaultNamespace() const = 0;
 	//! \}
 
 	// Functions
@@ -2976,12 +3019,17 @@ public:
 	//! \return The type id for the object type.
 	virtual int              GetTypeId() const = 0;
 	//! \brief Returns the type id of the template sub type.
+	//! \param[in] subTypeIndex The zero based index of the template sub type.
 	//! \return The type id of the template sub type, or a negative value on error.
 	//! \retval asERROR The type is not a template type.
-	virtual int              GetSubTypeId() const = 0;
+	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
 	//! \brief Returns the template subtype, in case it is an object type.
+	//! \param[in] subTypeIndex The zero based index of the template sub type.
 	//! \return The object type of the template sub type, or null if the template subtype is not an object type.
-	virtual asIObjectType   *GetSubType() const = 0;
+	virtual asIObjectType   *GetSubType(asUINT subTypeIndex = 0) const = 0;
+	//! \brief Returns the number of template sub types.
+	//! \return The number of template sub types.
+	virtual asUINT           GetSubTypeCount() const = 0;
 	//! \}
 
 	// Interfaces
@@ -3957,7 +4005,6 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 189,
 
 	// Temporary tokens. Can't be output to the final program
-	asBC_DiscardVar		= 250,
 	asBC_VarDecl		= 251,
 	asBC_Block			= 252,
 	asBC_ObjInfo		= 253,
