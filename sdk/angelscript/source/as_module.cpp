@@ -693,7 +693,9 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 	asCString name;
 	asSNameSpace *nameSpace;
 	asCDataType dt;
-	bld.ParseVariableDeclaration(decl, defaultNamespace, name, nameSpace, dt);
+	int r = bld.ParseVariableDeclaration(decl, defaultNamespace, name, nameSpace, dt);
+	if( r < 0 )
+		return r;
 
 	// Search global variables for a match
 	int id = scriptGlobals.GetFirstIndex(nameSpace, name, asCCompGlobPropType(dt));

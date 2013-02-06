@@ -1059,6 +1059,7 @@ public:
 	//! \param[in] decl The declaration of the property to search for.
 	//! \return The index of the matching property or negative on error.
 	//! \retval asNO_GLOBAL_VAR No matching property was found.
+	//! \retval asINVALID_DECLARATION The given declaration is invalid.
 	virtual int    GetGlobalPropertyIndexByDecl(const char *decl) const = 0;
 	//! \}
 
@@ -1958,7 +1959,8 @@ public:
 	//! \param[in] decl The global variable declaration.
 	//! \return A negative value on error, or the global variable index.
 	//! \retval asERROR The module was not built successfully.
-	//! \retval asNO_GLOBAL_VAR The matching global variable was found.
+	//! \retval asNO_GLOBAL_VAR No matching global variable was found.
+	//! \retval asINVALID_DECLARATION The given declaration is invalid.
 	//!
 	//! This method should be used to retrieve the index of the script variable that you wish to access.
 	//!

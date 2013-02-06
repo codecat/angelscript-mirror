@@ -2305,7 +2305,9 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 	asCString name;
 	asSNameSpace *ns;
 	asCDataType dt;
-	bld.ParseVariableDeclaration(decl, defaultNamespace, name, ns, dt);
+	int r = bld.ParseVariableDeclaration(decl, defaultNamespace, name, ns, dt);
+	if( r < 0 )
+		return r;
 
 	// Search for a match
 	int id = registeredGlobalProps.GetFirstIndex(ns, name, asCCompGlobPropType(dt));
