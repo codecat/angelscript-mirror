@@ -242,6 +242,32 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// CreateScriptObject should give proper error when attempting call for class without default constructor
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "class A { A(int) {} }");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = mod->GetObjectTypeByName("A");
+		if( engine->CreateScriptObject(type->GetTypeId()) )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: -6)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test a problem reported by Andrew Ackermann
 	// Null pointer access exception in constructor due to access of members before they have been initialized
 	// TODO: decl: Members that are initialized with trivial expressions, i.e. don't call members 

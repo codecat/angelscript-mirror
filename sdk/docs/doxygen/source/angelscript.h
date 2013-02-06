@@ -1502,9 +1502,11 @@ public:
 	//! \return A pointer to the new object if successful, or null if not.
 	//!
 	//! This method is used to create a script object based on it's type id. The method will 
-	//! allocate the memory and call the object's default constructor. Reference counted
-	//! objects will have their reference counter set to 1 so the application needs to 
-	//! release the pointer when it will no longer use it.
+	//! call the object type's default factory. If the object type doesn't have a default 
+	//! factory the call will fail and no object will be created.
+	//!
+	//! Created objects will have their reference counter set to 1 so the application 
+	//! needs to release the pointer when it will no longer use it.
 	//!
 	//! This only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.

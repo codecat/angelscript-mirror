@@ -3983,6 +3983,15 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	asCObjectType *objType = dt.GetObjectType();
 	void *ptr = 0;
 
+	// Check that there is a default factory
+	if( objType->beh.factory == 0 && (objType->flags & asOBJ_REF) )
+	{
+		asCString str;
+		str.Format(TXT_FAILED_IN_FUNC_s_d, "CreateScriptObject", asNO_FUNCTION);
+		WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		return 0;
+	}
+
 	// Construct the object
 	if( objType->flags & asOBJ_SCRIPT_OBJECT )
 	{
@@ -4002,6 +4011,8 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	}
 	else
 	{
+		// TODO: Shouldn't support allocating object like this, because the
+		//       caller cannot be certain how the memory was allocated.
 		// Manually allocate the memory, then
 		// call the default constructor
 		ptr = CallAlloc(objType);
