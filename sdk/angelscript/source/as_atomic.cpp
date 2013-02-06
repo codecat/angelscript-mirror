@@ -146,7 +146,7 @@ int asAtomicInc(int &value)
 	return OSAtomicIncrement32((int32_t*)&value);
 }
 
-int asCAtomic::atomicDec(int &value)
+int asAtomicDec(int &value)
 {
 	return OSAtomicDecrement32((int32_t*)&value);
 }
