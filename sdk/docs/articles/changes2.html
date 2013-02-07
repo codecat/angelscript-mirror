@@ -15,13 +15,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.1 WIP - 2013/02/06</h2>
+<h2>Version 2.26.1 WIP - 2013/02/07</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed compiler error on Mac OS X in with the atomic functions (Thanks thd.MM)
 <li>Fixed segfault in GetGlobalVarIndexByDecl on passing invalid declaration (Thanks Nate Kent)
+<li>AssignScriptObject and CopyFrom wasn't using the script class' opAssign method (Thanks Polyák István)
 </ul>
 <li>Library
 <ul>

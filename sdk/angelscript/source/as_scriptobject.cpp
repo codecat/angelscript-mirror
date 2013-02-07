@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -561,27 +561,106 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 	{
 		asASSERT( other.objType->DerivesFrom(objType) );
 
+		// If the script class implements the opAssign method, it should be called
 		asCScriptEngine *engine = objType->engine;
-
-		// Copy all properties
-		for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
+		asCScriptFunction *func = engine->scriptFunctions[objType->beh.copy];
+		if( func->funcType == asFUNC_SYSTEM )
 		{
-			asCObjectProperty *prop = objType->properties[n];
-			if( prop->type.IsObject() )
+			// Copy all properties
+			for( asUINT n = 0; n < objType->properties.GetLength(); n++ )
 			{
-				void **dst = (void**)(((char*)this) + prop->byteOffset);
-				void **src = (void**)(((char*)&other) + prop->byteOffset);
-				if( !prop->type.IsObjectHandle() )
-					CopyObject(*src, *dst, prop->type.GetObjectType(), engine);
+				asCObjectProperty *prop = objType->properties[n];
+				if( prop->type.IsObject() )
+				{
+					void **dst = (void**)(((char*)this) + prop->byteOffset);
+					void **src = (void**)(((char*)&other) + prop->byteOffset);
+					if( !prop->type.IsObjectHandle() )
+						CopyObject(*src, *dst, prop->type.GetObjectType(), engine);
+					else
+						CopyHandle((asPWORD*)src, (asPWORD*)dst, prop->type.GetObjectType(), engine);
+				}
 				else
-					CopyHandle((asPWORD*)src, (asPWORD*)dst, prop->type.GetObjectType(), engine);
+				{
+					void *dst = ((char*)this) + prop->byteOffset;
+					void *src = ((char*)&other) + prop->byteOffset;
+					memcpy(dst, src, prop->type.GetSizeInMemoryBytes());
+				}
 			}
-			else
+		}
+		else
+		{
+			// Reuse the active context or create a new one to call the script class' opAssign method
+			asIScriptContext *ctx = 0;
+			int r = 0;
+			bool isNested = false;
+
+			ctx = asGetActiveContext();
+			if( ctx )
 			{
-				void *dst = ((char*)this) + prop->byteOffset;
-				void *src = ((char*)&other) + prop->byteOffset;
-				memcpy(dst, src, prop->type.GetSizeInMemoryBytes());
+				r = ctx->PushState();
+				if( r == asSUCCESS )
+					isNested = true;
+				else
+					ctx = 0;
 			}
+
+			if( ctx == 0 )
+			{
+				r = engine->CreateContext(&ctx, true);
+				if( r < 0 )
+					return *this;
+			}
+
+			r = ctx->Prepare(engine->scriptFunctions[objType->beh.copy]);
+			if( r < 0 )
+			{
+				if( isNested )
+					ctx->PopState();
+				else
+					ctx->Release();
+				return *this;
+			}
+
+			r = ctx->SetArgAddress(0, const_cast<asCScriptObject*>(&other));
+			asASSERT( r >= 0 );
+			r = ctx->SetObject(this);
+			asASSERT( r >= 0 );
+
+			for(;;)
+			{
+				r = ctx->Execute();
+
+				// We can't allow this execution to be suspended 
+				// so resume the execution immediately
+				if( r != asEXECUTION_SUSPENDED )
+					break;
+			}
+
+			if( r != asEXECUTION_FINISHED )
+			{
+				if( isNested )
+				{
+					ctx->PopState();
+
+					// If the execution was aborted or an exception occurred,
+					// then we should forward that to the outer execution.
+					if( r == asEXECUTION_EXCEPTION )
+					{
+						// TODO: How to improve this exception
+						ctx->SetException(TXT_EXCEPTION_IN_NESTED_CALL);
+					}
+					else if( r == asEXECUTION_ABORTED )
+						ctx->Abort();
+				}
+				else
+					ctx->Release();
+				return *this;
+			}
+
+			if( isNested )
+				ctx->PopState();
+			else
+				ctx->Release();
 		}
 	}
 
@@ -649,13 +728,20 @@ void asCScriptObject::FreeObject(void *ptr, asCObjectType *objType, asCScriptEng
 
 void asCScriptObject::CopyObject(void *src, void *dst, asCObjectType *objType, asCScriptEngine *engine)
 {
-	// TODO: If the object doesn't have the copy behaviour, and it is not a 
-	//       POD object then the copy must not be performed
 	int funcIndex = objType->beh.copy;
-
 	if( funcIndex )
-		engine->CallObjectMethod(dst, src, funcIndex);
-	else
+	{
+		asCScriptFunction *func = engine->scriptFunctions[objType->beh.copy];
+		if( func->funcType == asFUNC_SYSTEM )
+			engine->CallObjectMethod(dst, src, funcIndex);
+		else
+		{
+			// Call the script class' opAssign method
+			asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
+			reinterpret_cast<asCScriptObject*>(dst)->CopyFrom(reinterpret_cast<asCScriptObject*>(src));
+		}
+	}
+	else if( objType->size && (objType->flags & asOBJ_POD) )
 		memcpy(dst, src, objType->size);
 }
 

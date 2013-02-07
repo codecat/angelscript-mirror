@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1087,6 +1087,16 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					else
 					{
+						// If the method is the assignment operator we need to replace the default implementation
+						if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 &&
+							func->parameterTypes[0].GetObjectType() == func->objectType &&
+							(func->inOutFlags[0] & asTM_INREF) )
+						{
+							engine->scriptFunctions[ot->beh.copy]->Release();
+							ot->beh.copy = func->id;
+							func->AddRef();
+						}
+						
 						ot->methods.PushLast(func->id);
 						func->AddRef();
 					}

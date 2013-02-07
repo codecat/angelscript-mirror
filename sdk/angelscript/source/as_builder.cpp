@@ -3755,7 +3755,20 @@ int asCBuilder::RegisterScriptFunction(int funcId, asCScriptNode *node, asCScrip
 		else if( isDestructor )
 			objType->beh.destruct = funcId;
 		else
+		{
+			// If the method is the assignment operator we need to replace the default implementation
+			asCScriptFunction *f = engine->scriptFunctions[funcId];
+			if( f->name == "opAssign" && f->parameterTypes.GetLength() == 1 &&
+				f->parameterTypes[0].GetObjectType() == f->objectType &&
+				(f->inOutFlags[0] & asTM_INREF) )
+			{
+				engine->scriptFunctions[objType->beh.copy]->Release();
+				objType->beh.copy = funcId;
+				f->AddRef();
+			}
+
 			objType->methods.PushLast(funcId);
+		}
 	}
 
 	// We need to delete the node already if this is an interface method

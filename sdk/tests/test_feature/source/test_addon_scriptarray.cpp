@@ -555,6 +555,38 @@ bool Test()
 		engine->Release();
 	}
 
+	// Array should call subtypes' opAssign when it exists
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"int calls = 0; \n"
+			"class Value  \n"
+			"{  \n"
+			"  int val;  \n"
+			"  Value(int v) {val = v;} \n"
+			"  Value() {} \n"
+			"  Value &opAssign(const Value &in o) { calls++; return this; } \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		r = ExecuteString(engine, "array<Value> arr = {Value(2), Value(3), Value(0)}; \n"
+								  "assert( calls == 3 ); \n"
+								  "array<Value> arr2; \n"
+								  "arr2 = arr; \n"
+								  "assert( calls == 6 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// test sorting
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
