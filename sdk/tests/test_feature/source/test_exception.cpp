@@ -219,6 +219,49 @@ bool TestException()
 		engine->Release();
 	}
 
+	// Test exception in for-condition
+	// http://www.gamedev.net/topic/638128-bug-with-show-code-line-after-null-pointer-exception-and-for/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A\n"
+			"{\n"
+			"    int GetCount(){ return 10; }\n"
+			"}\n"
+			"void startGame()\n"
+			"{\n"
+			"    A @a = null;\n"
+			"    for( int i=0; i < a.GetCount(); i++ )\n"
+			"    {\n"
+			"        int some_val;\n"
+			"    }\n"
+			"}\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "startGame();", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( string(ctx->GetExceptionString()) != "Null pointer access" )
+		{
+			printf("%s\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+		if( string(ctx->GetExceptionFunction()->GetName()) != "startGame" )
+			TEST_FAILED;
+		if( ctx->GetExceptionLineNumber() != 8 )
+			TEST_FAILED;
+
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

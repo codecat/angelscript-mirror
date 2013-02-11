@@ -3002,6 +3002,7 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	//---------------------------------------
 	// Compile the initialization statement
 	asCByteCode initBC(engine);
+	LineInstr(&initBC, fnode->firstChild->tokenPos);
 	if( fnode->firstChild->nodeType == snDeclaration )
 		CompileDeclaration(fnode->firstChild, &initBC);
 	else
@@ -3033,6 +3034,12 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				ReleaseTemporaryVariable(expr.type, &expr.bc);
 
 				expr.bc.OptimizeLocally(tempVariableOffsets);
+
+				// Prepend the line instruction for the condition
+				asCByteCode tmp(engine);
+				LineInstr(&tmp, second->firstChild->tokenPos);
+				tmp.AddCode(&expr.bc);
+				expr.bc.AddCode(&tmp);
 			}
 		}
 	}
@@ -3042,7 +3049,10 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	asCByteCode nextBC(engine);
 	asCScriptNode *third = second->next;
 	if( third->nodeType == snExpressionStatement )
+	{
+		LineInstr(&nextBC, third->tokenPos);
 		CompileExpressionStatement(third, &nextBC);
+	}
 
 	//------------------------------
 	// Compile loop statement

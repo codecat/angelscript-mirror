@@ -955,7 +955,7 @@ bool TestOptimize()
 				asBC_SUSPEND,asBC_PshC4,asBC_CALL,
 				asBC_SUSPEND,asBC_JMP,
 				asBC_SUSPEND,asBC_PshC4,asBC_CALL,
-				asBC_SUSPEND,asBC_IncVi,asBC_CMPIi,asBC_JS,
+				asBC_SUSPEND,asBC_SUSPEND,asBC_IncVi,asBC_SUSPEND,asBC_CMPIi,asBC_JS,
 				asBC_SUSPEND,asBC_RET
 			};
 		for( asUINT n = 0, i = 0; n < len; )

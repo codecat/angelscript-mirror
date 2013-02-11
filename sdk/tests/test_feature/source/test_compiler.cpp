@@ -272,6 +272,39 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test compiler error
+	// http://www.gamedev.net/topic/638128-bug-with-show-code-line-after-null-pointer-exception-and-for/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("test", 
+			"void F()\n"
+			"{\n"
+			"    int a1;\n"
+			"    int a2;\n"
+			"    int a3;\n"
+			"    int a4;\n"
+			"    int a5;\n"
+			"    F()   '  ;\n"
+			"}\n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (10, 1) : Error   : Unexpected end of file\n"
+						   "test (2, 1) : Info    : While parsing statement block\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test compiling an empty script
 	// Reported by Damien French
 	{
