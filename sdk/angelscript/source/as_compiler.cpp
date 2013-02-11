@@ -1720,10 +1720,19 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 
 				asCDataType dt = args[n]->type.dataType;
 				dt.MakeReference(false);
-				int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(offset));
 
+				// Reserve all variables already used in the expression so none of them will be used
+				asCArray<int> used;
+				args[n]->bc.GetVarsUsed(used);
+				size_t prevReserved = reservedVariables.GetLength();
+				reservedVariables.Concatenate(used);
+
+				int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(offset));
 				asASSERT( IsVariableOnHeap(offset) == IsVariableOnHeap(newOffset) );
 
+				reservedVariables.SetLength(prevReserved);
+
+				// Replace the variable in the expression
 				args[n]->bc.ExchangeVar(offset, newOffset);
 				args[n]->type.stackOffset = (short)newOffset;
 				args[n]->type.isTemporary = true;

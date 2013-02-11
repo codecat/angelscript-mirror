@@ -15,6 +15,35 @@ bool Test()
 	asIScriptModule *mod;
  	asIScriptEngine *engine;
 	
+	// Test calling a function with default arg where the expression uses a global var
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"string g = 'global';\n"
+			"void func(string a, string b = 'pre' + g + 'pos') \n"
+			"{ \n"
+			"  array<string> items; \n"
+			"  assert(a == 'afirst'); \n"
+			"  assert(b == 'preglobalpos'); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "array<string> arr = {'first', 'second'}; func('a'+arr[0]);\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test calling a function with default argument
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
