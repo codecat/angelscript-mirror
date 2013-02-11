@@ -2624,14 +2624,13 @@ asCScriptNode *asCParser::ParseInterface()
 	while( t.type != ttEndStatementBlock && t.type != ttEnd )
 	{
 		if( IsVirtualPropertyDecl() )
-		{
 			node->AddChildLast(ParseVirtualPropertyDecl(true, true));
-		}
+		else if( t.type == ttEndStatement )
+			// Skip empty declarations
+			GetToken(&t);
 		else
-		{
 			// Parse the method signature
 			node->AddChildLast(ParseInterfaceMethod());
-		}
 
 		if( isSyntaxError ) return node;
 		
@@ -2757,7 +2756,10 @@ asCScriptNode *asCParser::ParseClass()
 			node->AddChildLast(ParseVirtualPropertyDecl(true, false));
 		else if( IsVarDecl() )
 			node->AddChildLast(ParseDeclaration(true));
-		else
+		else if( t.type == ttEndStatement )
+			// Skip empty declarations
+			GetToken(&t);
+		else 
 		{
 			Error(TXT_EXPECTED_METHOD_OR_PROPERTY, &t);
 			return node;
