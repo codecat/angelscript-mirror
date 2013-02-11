@@ -732,6 +732,12 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 			Error(str, &t);
 			return node;
 		}
+		else if( t.type == ttNonTerminatedStringConstant )
+		{
+			RewindTo(&t);
+			Error(TXT_NONTERMINATED_STRING, &t);
+			return node;
+		}
 		else if( t.type == ttEnd )
 		{
 			// Wrong syntax
@@ -2853,6 +2859,11 @@ asCScriptNode *asCParser::SuperficiallyParseVarInit()
 					indent++;
 				else if( t.type == ttEndStatementBlock )
 					indent--;
+				else if( t.type == ttNonTerminatedStringConstant )
+				{
+					Error(TXT_NONTERMINATED_STRING, &t);
+					break;
+				}
 				else if( t.type == ttEnd )
 				{
 					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
@@ -2873,6 +2884,11 @@ asCScriptNode *asCParser::SuperficiallyParseVarInit()
 					indent++;
 				else if( t.type == ttCloseParanthesis )
 					indent--;
+				else if( t.type == ttNonTerminatedStringConstant )
+				{
+					Error(TXT_NONTERMINATED_STRING, &t);
+					break;
+				}
 				else if( t.type == ttEnd )
 				{
 					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
@@ -2899,6 +2915,11 @@ asCScriptNode *asCParser::SuperficiallyParseVarInit()
 				indent++;
 			else if( t.type == ttCloseParanthesis )
 				indent--;
+			else if( t.type == ttNonTerminatedStringConstant )
+			{
+				Error(TXT_NONTERMINATED_STRING, &t);
+				break;
+			}
 			else if( t.type == ttEnd )
 			{
 				Error(TXT_UNEXPECTED_END_OF_FILE, &t);
@@ -2943,6 +2964,11 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 			level--;
 		else if( t1.type == ttStartStatementBlock )
 			level++;
+		else if( t1.type == ttNonTerminatedStringConstant )
+		{
+			Error(TXT_NONTERMINATED_STRING, &t1);
+			break;
+		}
 		else if( t1.type == ttEnd )
 		{
 			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);

@@ -295,8 +295,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "test (10, 1) : Error   : Unexpected end of file\n"
-						   "test (2, 1) : Info    : While parsing statement block\n" )
+		if( bout.buffer != "test (8, 11) : Error   : Non-terminated string literal\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
