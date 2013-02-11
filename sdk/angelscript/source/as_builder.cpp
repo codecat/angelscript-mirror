@@ -755,7 +755,7 @@ int asCBuilder::ParseDataType(const char *datatype, asCDataType *result, asSName
 	return asSUCCESS;
 }
 
-int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCString *subtypeName)
+int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCArray<asCString> &subtypeNames)
 {
 	Reset();
 
@@ -767,12 +767,16 @@ int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCString *
 	if( r < 0 )
 		return asINVALID_TYPE;
 
-	// Get the template name and subtype name
+	// Get the template name and subtype names
 	asCScriptNode *node = parser.GetScriptNode()->firstChild;
 
 	name->Assign(&decl[node->tokenPos], node->tokenLength);
-	node = node->next;
-	subtypeName->Assign(&decl[node->tokenPos], node->tokenLength);
+	while( (node = node->next) )
+	{
+		asCString subtypeName;
+		subtypeName.Assign(&decl[node->tokenPos], node->tokenLength);
+		subtypeNames.PushLast(subtypeName);
+	}
 
 	// TODO: template: check for name conflicts
 
@@ -3320,7 +3324,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 		st->size            = dataType.GetSizeInMemoryBytes();
 		st->name            = name;
 		st->nameSpace       = ns;
-		st->templateSubType = dataType;
+		st->templateSubTypes.PushLast(dataType);
 
 		st->AddRef();
 
@@ -4199,6 +4203,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 	if( n->tokenType == ttIdentifier )
 	{
+		asCScriptNode *nameToken = n;
 		asCString str;
 		str.Assign(&file->code[n->tokenPos], n->tokenLength);
 
@@ -4206,9 +4211,17 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 		// If this is for a template type, then we must first determine if the
 		// identifier matches any of the template subtypes
-		// TODO: template: it should be possible to have more than one subtypes
-		if( currentType && (currentType->flags & asOBJ_TEMPLATE) && str == currentType->templateSubType.GetObjectType()->name )
-			ot = currentType->templateSubType.GetObjectType();
+		if( currentType && (currentType->flags & asOBJ_TEMPLATE))
+		{
+			for( asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
+			{
+				if(str == currentType->templateSubTypes[subtypeIndex].GetObjectType()->name )
+				{
+					ot = currentType->templateSubTypes[subtypeIndex].GetObjectType();
+					break;
+				}
+			}
+		}
 
 		if( ot == 0 )
 			ot = GetObjectType(str.AddressOf(), ns);
@@ -4227,32 +4240,63 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				{
 					// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
 					// Create primitive data type based on object flags
-					dt = ot->templateSubType;
+					dt = ot->templateSubTypes[0];
 					dt.MakeReadOnly(isConst);
 				}
 				else
 				{
 					if( ot->flags & asOBJ_TEMPLATE )
 					{
-						n = n->next;
-
 						// Check if the subtype is a type or the template's subtype
 						// if it is the template's subtype then this is the actual template type,
 						// orderwise it is a template instance.
 						// Only do this for application registered interface, as the
 						// scripts cannot implement templates.
 						// TODO: namespace: Use correct implicit namespace
-						asCDataType subType = CreateDataTypeFromNode(n, file, engine->nameSpaces[0], false, module ? 0 : ot);
-						if( subType.GetObjectType() != ot->templateSubType.GetObjectType() )
+						asCArray<asCDataType> subTypes;
+						asUINT subtypeIndex;
+						while( n && n->next && n->next->nodeType == snDataType )
+						{
+							n = n->next;
+
+							asCDataType subType = CreateDataTypeFromNode(n, file, engine->nameSpaces[0], false, module ? 0 : ot);
+							subTypes.PushLast(subType);
+						}
+
+						if( subTypes.GetLength() != ot->templateSubTypes.GetLength() )
+						{
+							asCString msg;
+							msg.Format(TXT_TMPL_s_EXPECTS_d_SUBTYPES, ot->name.AddressOf(), int(ot->templateSubTypes.GetLength()));
+							WriteError(msg, file, nameToken);
+
+							// Return a dummy
+							return asCDataType::CreatePrimitive(ttInt, false);
+						}
+						
+						asASSERT( subTypes.GetLength() == ot->templateSubTypes.GetLength() );
+
+						// Check if any of the given subtypes are different from the template's declared subtypes
+						bool isDifferent = false;
+						for( subtypeIndex = 0; subtypeIndex < subTypes.GetLength(); subtypeIndex++ )
+						{
+							if( subTypes[subtypeIndex].GetObjectType() != ot->templateSubTypes[subtypeIndex].GetObjectType() )
+							{
+								isDifferent = true;
+								break;
+							}
+						}
+						
+						if( isDifferent )
 						{
 							// This is a template instance
 							// Need to find the correct object type
-							asCObjectType *otInstance = engine->GetTemplateInstanceType(ot, subType);
+							asCObjectType *otInstance = engine->GetTemplateInstanceType(ot, subTypes);
 
 							if( !otInstance )
 							{
 								asCString msg;
-								msg.Format(TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subType.Format().AddressOf());
+								// TODO: Should name all subtypes
+								msg.Format(TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subTypes[0].Format().AddressOf());
 								WriteError(msg, file, n);
 							}
 

@@ -857,7 +857,7 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId, const char *
 		return 0;
 
 	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(typeDefs[index]->templateSubType); 
+		*typeId = engine->GetTypeIdFromDataType(typeDefs[index]->templateSubTypes[0]); 
 
 	if( nameSpace )
 		*nameSpace = typeDefs[index]->nameSpace->name.AddressOf();

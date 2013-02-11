@@ -195,7 +195,21 @@ int asCParser::ParseTemplateDecl(asCScriptCode *script)
 	scriptNode->AddChildLast(ParseIdentifier());
 	if( isSyntaxError ) return -1;
 
+	// There can be multiple sub types
 	GetToken(&t);
+
+	// Parse template types by list separator
+	while(t.type == ttListSeparator)
+	{
+		GetToken(&t);
+		if( t.type != ttClass )
+			RewindTo(&t);
+		scriptNode->AddChildLast(ParseIdentifier());
+
+		if( isSyntaxError ) return -1;
+		GetToken(&t);
+	}
+
 	if( t.type != ttGreaterThan )
 	{
 		Error(ExpectedToken(asCTokenizer::GetDefinition(ttGreaterThan)), &t);
@@ -378,9 +392,19 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 		node->AddChildLast(ParseType(true, false));
 		if( isSyntaxError ) return node;
 
+		GetToken(&t);
+
+		// Parse template types by list separator
+		while(t.type == ttListSeparator)
+		{
+			node->AddChildLast(ParseType(true, false));
+
+			if( isSyntaxError ) return node;
+			GetToken(&t);
+		}
+
 		// Accept >> and >>> tokens too. But then force the tokenizer to move 
 		// only 1 character ahead (thus splitting the token in two).
-		GetToken(&t);
 		if( script->code[t.pos] != '>' )
 		{
 			Error(ExpectedToken(asCTokenizer::GetDefinition(ttGreaterThan)), &t);
@@ -919,45 +943,52 @@ bool asCParser::CheckTemplateType(sToken &t)
 		if( t.type != ttLessThan )
 			return false;
 
-		// There might optionally be a 'const'
-		GetToken(&t);
-		if( t.type == ttConst )
-			GetToken(&t);
-
-		// The type may be initiated with the scope operator
-		if( t.type == ttScope )
-			GetToken(&t);
-
-		// There may be multiple levels of scope operators
-		sToken t2;
-		GetToken(&t2);
-		while( t.type == ttIdentifier && t2.type == ttScope )
+		for(;;)
 		{
+			// There might optionally be a 'const'
 			GetToken(&t);
+			if( t.type == ttConst )
+				GetToken(&t);
+
+			// The type may be initiated with the scope operator
+			if( t.type == ttScope )
+				GetToken(&t);
+
+			// There may be multiple levels of scope operators
+			sToken t2;
 			GetToken(&t2);
-		}
-		RewindTo(&t2);
-
-		// Now there must be a data type
-		if( !IsDataType(t) )
-			return false;
-
-		if( !CheckTemplateType(t) )
-			return false;
-
-		GetToken(&t);
-
-		// Is it a handle or array?
-		while( t.type == ttHandle || t.type == ttOpenBracket )
-		{
-			if( t.type == ttOpenBracket )
+			while( t.type == ttIdentifier && t2.type == ttScope )
 			{
 				GetToken(&t);
-				if( t.type != ttCloseBracket )
-					return false;
+				GetToken(&t2);
 			}
+			RewindTo(&t2);
+
+			// Now there must be a data type
+			if( !IsDataType(t) )
+				return false;
+
+			if( !CheckTemplateType(t) )
+				return false;
 
 			GetToken(&t);
+
+			// Is it a handle or array?
+			while( t.type == ttHandle || t.type == ttOpenBracket )
+			{
+				if( t.type == ttOpenBracket )
+				{
+					GetToken(&t);
+					if( t.type != ttCloseBracket )
+						return false;
+				}
+
+				GetToken(&t);
+			}
+
+			// Was this the last template subtype?
+			if( t.type != ttListSeparator )
+				break;
 		}
 
 		// Accept >> and >>> tokens too. But then force the tokenizer to move 

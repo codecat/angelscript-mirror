@@ -145,6 +145,65 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// It should be possible to register a template type with multiple subtypes
+	// TODO: template: Support multiple template subtypes
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		r = engine->RegisterObjectType("tmpl<class A, class B, class C>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'tmpl<class A, class B, class C>' (Code: -7)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		r = engine->RegisterObjectType("tmpl<class A>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		r = engine->RegisterObjectMethod("tmpl<A,B,C>", "void func()", 0, asCALL_GENERIC);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (1, 8) : Error   : Identifier 'B' is not a data type\n"
+		                   " (1, 10) : Error   : Identifier 'C' is not a data type\n"
+						   " (1, 1) : Error   : Template 'tmpl' expects 1 sub type(s)\n"
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'tmpl<A,B,C>' and 'void func()' (Code: -12)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Attempt compiling a script function that returns a multi subtype template
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = engine->RegisterObjectType("tmpl<class A>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"tmpl<int,int> @func() { return a; } \n"
+			"tmpl<int,int> @a; \n");
+		bout.buffer = "";
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test (1, 1) : Error   : Template 'tmpl' expects 1 sub type(s)\n"
+		                   "test (2, 1) : Error   : Template 'tmpl' expects 1 sub type(s)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Reported by zeta945@gmail.com
 	// http://www.gamedev.net/topic/633458-cant-create-a-template-class-with-a-default-constructor/
 	{
