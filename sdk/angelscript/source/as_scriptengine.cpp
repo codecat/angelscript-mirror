@@ -4402,7 +4402,7 @@ asDWORD asCScriptEngine::SetDefaultAccessMask(asDWORD defaultMask)
 int asCScriptEngine::GetNextScriptFunctionId()
 {
 	if( freeScriptFunctionIds.GetLength() )
-		return freeScriptFunctionIds.PopLast();
+		return freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1];
 
 	int id = (int)scriptFunctions.GetLength();
 	scriptFunctions.PushLast(0);
@@ -4411,6 +4411,12 @@ int asCScriptEngine::GetNextScriptFunctionId()
 
 void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
 {
+	if( freeScriptFunctionIds.GetLength() && freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1] == func->id )
+		freeScriptFunctionIds.PopLast();
+
+	// The slot should be empty or already set with the function, which happens if an existing shared function is reused
+	asASSERT( scriptFunctions[func->id] == 0 || scriptFunctions[func->id] == func );
+
 	scriptFunctions[func->id] = func;
 }
 
