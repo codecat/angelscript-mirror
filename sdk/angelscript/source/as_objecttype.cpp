@@ -389,12 +389,12 @@ asIObjectType *asCObjectType::GetSubType(asUINT subtypeIndex) const
 
 asUINT asCObjectType::GetSubTypeCount() const
 {
-	return templateSubTypes.GetLength();
+	return asUINT(templateSubTypes.GetLength());
 }
 
 asUINT asCObjectType::GetInterfaceCount() const
 {
-	return (asUINT)interfaces.GetLength();
+	return asUINT(interfaces.GetLength());
 }
 
 asIObjectType *asCObjectType::GetInterface(asUINT index) const

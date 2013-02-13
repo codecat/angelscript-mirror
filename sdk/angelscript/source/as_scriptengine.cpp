@@ -4401,23 +4401,28 @@ asDWORD asCScriptEngine::SetDefaultAccessMask(asDWORD defaultMask)
 
 int asCScriptEngine::GetNextScriptFunctionId()
 {
+	// This function only returns the next function id that 
+	// should be used. It doesn't update the internal arrays.
 	if( freeScriptFunctionIds.GetLength() )
 		return freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1];
 
-	int id = (int)scriptFunctions.GetLength();
-	scriptFunctions.PushLast(0);
-	return id;
+	return (int)scriptFunctions.GetLength();
 }
 
 void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
 {
+	// Update the internal arrays with the function id that is now used
 	if( freeScriptFunctionIds.GetLength() && freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1] == func->id )
 		freeScriptFunctionIds.PopLast();
 
-	// The slot should be empty or already set with the function, which happens if an existing shared function is reused
-	asASSERT( scriptFunctions[func->id] == 0 || scriptFunctions[func->id] == func );
-
-	scriptFunctions[func->id] = func;
+	if( func->id == scriptFunctions.GetLength() )
+		scriptFunctions.PushLast(func);
+	else
+	{
+		// The slot should be empty or already set with the function, which happens if an existing shared function is reused
+		asASSERT( scriptFunctions[func->id] == 0 || scriptFunctions[func->id] == func );
+		scriptFunctions[func->id] = func;
+	}
 }
 
 void asCScriptEngine::FreeScriptFunctionId(int id)

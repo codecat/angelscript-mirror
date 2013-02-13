@@ -643,8 +643,6 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 
 	ReadFunctionSignature(func);
 
-	func->id = engine->GetNextScriptFunctionId();
-
 	if( func->funcType == asFUNC_SCRIPT )
 	{
 		if( addToGC && !addToModule )
@@ -740,7 +738,10 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		module->scriptFunctions.PushLast(func);
 	}
 	if( addToEngine )
+	{
+		func->id = engine->GetNextScriptFunctionId();
 		engine->SetScriptFunction(func);
+	}
 	if( func->objectType )
 		func->ComputeSignatureId();
 
