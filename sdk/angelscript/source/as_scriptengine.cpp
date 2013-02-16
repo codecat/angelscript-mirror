@@ -3205,6 +3205,51 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 }
 
 // internal
+asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot)
+{
+	asCDataType dt;
+	if( orig.GetObjectType() && (orig.GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
+	{
+		bool found = false;
+		for( asUINT n = 0; n < tmpl->templateSubTypes.GetLength(); n++ )
+		{
+			if( orig.GetObjectType() == tmpl->templateSubTypes[n].GetObjectType() )
+			{
+				found = true;
+				dt = ot->templateSubTypes[n];
+				if( orig.IsObjectHandle() && !ot->templateSubTypes[n].IsObjectHandle() )
+				{
+					dt.MakeHandle(true, true);
+					dt.MakeReference(orig.IsReference());
+					dt.MakeReadOnly(orig.IsReadOnly());
+				}
+				else
+				{
+					dt.MakeReference(orig.IsReference());
+					dt.MakeReadOnly(ot->templateSubTypes[n].IsReadOnly() || orig.IsReadOnly());
+				}
+				break;
+			}
+		}
+		asASSERT( found );
+	}
+	else if( orig.GetObjectType() == tmpl )
+	{
+		if( orig.IsObjectHandle() )
+			dt = asCDataType::CreateObjectHandle(ot, false);
+		else
+			dt = asCDataType::CreateObject(ot, false);
+
+		dt.MakeReference(orig.IsReference());
+		dt.MakeReadOnly(orig.IsReadOnly());
+	}
+	else
+		dt = orig;
+
+	return dt;
+}
+
+// internal
 asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *ot, int factoryId)
 {
 	asCScriptFunction *factory = scriptFunctions[factoryId];
@@ -3231,37 +3276,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->inOutFlags.SetLength(factory->inOutFlags.GetLength()-1);
 	for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
 	{
-		// TODO: clean up: This same condition is used twice in GenerateNewTemplateFunction too. It should be moved to a method so all can share the same code
-		if( factory->parameterTypes[p].GetObjectType() && (factory->parameterTypes[p].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
-		{
-			bool found = false;
-			for( asUINT n = 0; n < templateType->templateSubTypes.GetLength(); n++ )
-			{
-				if( factory->parameterTypes[p].GetObjectType() == templateType->templateSubTypes[n].GetObjectType() )
-				{
-					found = true;
-					func->parameterTypes[p-1] = ot->templateSubTypes[n];
-					if( factory->parameterTypes[p].IsObjectHandle() )
-						func->parameterTypes[p-1].MakeHandle(true);
-					func->parameterTypes[p-1].MakeReference(factory->parameterTypes[p].IsReference());
-					func->parameterTypes[p-1].MakeReadOnly(factory->parameterTypes[p].IsReference());
-					break;
-				}
-			}
-			asASSERT( found );
-		}
-		else if( factory->parameterTypes[p].GetObjectType() == templateType )
-		{
-			if( factory->parameterTypes[p].IsObjectHandle() )
-				func->parameterTypes[p-1] = asCDataType::CreateObjectHandle(ot, false);
-			else
-				func->parameterTypes[p-1] = asCDataType::CreateObject(ot, false);
-
-			func->parameterTypes[p-1].MakeReference(factory->parameterTypes[p].IsReference());
-			func->parameterTypes[p-1].MakeReadOnly(factory->parameterTypes[p].IsReadOnly());
-		}
-		else
-			func->parameterTypes[p-1] = factory->parameterTypes[p];
+		func->parameterTypes[p-1] = DetermineTypeForTemplate(factory->parameterTypes[p], templateType, ot);
 		func->inOutFlags[p-1] = factory->inOutFlags[p];
 	}
 	func->objVariablesOnHeap = 0;
@@ -3338,89 +3353,11 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	func2->name     = func->name;
 	func2->id       = GetNextScriptFunctionId();
 
-	if( func->returnType.GetObjectType() && (func->returnType.GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
-	{
-		bool found = false;
-		for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
-		{
-			if( func->returnType.GetObjectType() == templateType->templateSubTypes[n].GetObjectType() )
-			{
-				found = true;
-				func2->returnType = ot->templateSubTypes[n];
-				if( func->returnType.IsObjectHandle() && !ot->templateSubTypes[n].IsObjectHandle() )
-				{
-					// The return type is a handle to the subtype
-					func2->returnType.MakeHandle(true, true);
-					func2->returnType.MakeReference(func->returnType.IsReference());
-					func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
-				}
-				else
-				{
-					// The return type is the subtype directly
-					func2->returnType.MakeReference(func->returnType.IsReference());
-					func2->returnType.MakeReadOnly(ot->templateSubTypes[n].IsReadOnly() || func->returnType.IsReadOnly());
-				}
-				break;
-			}
-		}
-		asASSERT( found );
-	}
-	else if( func->returnType.GetObjectType() == templateType )
-	{
-		if( func2->returnType.IsObjectHandle() )
-			func2->returnType = asCDataType::CreateObjectHandle(ot, false);
-		else
-			func2->returnType = asCDataType::CreateObject(ot, false);
-
-		func2->returnType.MakeReference(func->returnType.IsReference());
-		func2->returnType.MakeReadOnly(func->returnType.IsReadOnly());
-	}
-	else
-		func2->returnType = func->returnType;
+	func2->returnType = DetermineTypeForTemplate(func->returnType, templateType, ot);
 
 	func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
 	for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
-	{
-		if( func->parameterTypes[p].GetObjectType() && (func->parameterTypes[p].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
-		{
-			bool found = false;
-			for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
-			{
-				if( func->parameterTypes[p].GetObjectType() == templateType->templateSubTypes[n].GetObjectType() )
-				{
-					found = true;
-					func2->parameterTypes[p] = ot->templateSubTypes[n];
-					if( func->parameterTypes[p].IsObjectHandle() )
-					{
-						// The parameter is a handle to the subtype
-						func2->parameterTypes[p].MakeHandle(true);
-						func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
-						func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReadOnly());
-					}
-					else
-					{
-						// The parameter is the subtype directly
-						func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
-						func2->parameterTypes[p].MakeReadOnly(ot->templateSubTypes[n].IsReadOnly() || func->parameterTypes[p].IsReference());
-					}
-					break;
-				}
-			}
-			asASSERT( found );
-		}
-		else if( func->parameterTypes[p].GetObjectType() == templateType )
-		{
-			if( func->parameterTypes[p].IsObjectHandle() )
-				func2->parameterTypes[p] = asCDataType::CreateObjectHandle(ot, false);
-			else
-				func2->parameterTypes[p] = asCDataType::CreateObject(ot, false);
-
-			func2->parameterTypes[p].MakeReference(func->parameterTypes[p].IsReference());
-			func2->parameterTypes[p].MakeReadOnly(func->parameterTypes[p].IsReadOnly());
-		}
-		else
-			func2->parameterTypes[p] = func->parameterTypes[p];
-	}
+		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType, ot);
 
 	// TODO: template: Must be careful when instanciating templates for garbage collected types
 	//                 If the template hasn't been registered with the behaviours, it shouldn't

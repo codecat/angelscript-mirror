@@ -402,19 +402,26 @@ int asCReader::ReadInner()
 		ReadUsedObjectProps();
 
 	// Validate the template types
-	// TODO: template: Support multiple subtypes
-	for( i = 0; i < usedTypes.GetLength() && !error; i++ )
+	if( !error )
 	{
-		if( (usedTypes[i]->flags & asOBJ_TEMPLATE) && 
-			usedTypes[i]->templateSubTypes[0].IsValid() &&
-			usedTypes[i]->beh.templateCallback )
+		for( i = 0; i < usedTypes.GetLength() && !error; i++ )
 		{
+			if( !(usedTypes[i]->flags & asOBJ_TEMPLATE) || 
+				!usedTypes[i]->beh.templateCallback )
+				continue;
+			
 			bool dontGarbageCollect = false;
 			asCScriptFunction *callback = engine->scriptFunctions[usedTypes[i]->beh.templateCallback];
 			if( !engine->CallGlobalFunctionRetBool(usedTypes[i], &dontGarbageCollect, callback->sysFuncIntf, callback) )
 			{
+				asCString sub = usedTypes[i]->templateSubTypes[0].Format();
+				for( asUINT n = 1; n < usedTypes[i]->templateSubTypes.GetLength(); n++ )
+				{
+					sub += ",";
+					sub += usedTypes[i]->templateSubTypes[n].Format();
+				}
 				asCString str;
-				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, usedTypes[i]->name.AddressOf(), usedTypes[i]->templateSubTypes[0].Format().AddressOf());
+				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, usedTypes[i]->name.AddressOf(), sub.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				error = true;
 			}
@@ -1455,49 +1462,48 @@ asCObjectType* asCReader::ReadObjectType()
 			return 0;
 		}
 
-		ReadData(&ch, 1);
-		if( ch == 's' )
+		asUINT numSubTypes = ReadEncodedUInt();
+		asCArray<asCDataType> subTypes;
+		for( asUINT n = 0; n < numSubTypes; n++ )
 		{
-			asCDataType dt;
-			ReadDataType(&dt);
-
-			// TODO: template: Support multiple subtypes
-			if( tmpl->templateSubTypes[0].GetObjectType() == dt.GetObjectType() )
-				ot = tmpl;
+			ReadData(&ch, 1);
+			if( ch == 's' )
+			{
+				asCDataType dt;
+				ReadDataType(&dt);
+				subTypes.PushLast(dt);
+			}
 			else
 			{
-				asCArray<asCDataType> subTypes;
+				eTokenType tokenType = (eTokenType)ReadEncodedUInt();
+				asCDataType dt = asCDataType::CreatePrimitive(tokenType, false);
 				subTypes.PushLast(dt);
-				ot = engine->GetTemplateInstanceType(tmpl, subTypes);
-			}
-			
-			if( ot == 0 )
-			{
-				asCString str;
-				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, typeName.AddressOf(), dt.Format().AddressOf());
-				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				error = true;
-				return 0;
 			}
 		}
+
+		// Return the actual template if the subtypes are the template's dummy types
+		if( tmpl->templateSubTypes == subTypes )
+			ot = tmpl;
 		else
 		{
-			eTokenType tokenType = (eTokenType)ReadEncodedUInt();
-			asCDataType dt = asCDataType::CreatePrimitive(tokenType, false);
-
-			// TODO: template: Support multiple subtypes
-			asCArray<asCDataType> subTypes;
-			subTypes.PushLast(dt);
+			// Get the template instance type based on the loaded subtypes
 			ot = engine->GetTemplateInstanceType(tmpl, subTypes);
-			
-			if( ot == 0 )
+		}
+
+		if( ot == 0 )
+		{
+			// Show all subtypes in error message
+			asCString sub = subTypes[0].Format();
+			for( asUINT n = 1; n < subTypes.GetLength(); n++ )
 			{
-				asCString str;
-				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, typeName.AddressOf(), dt.Format().AddressOf());
-				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				error = true;
-				return 0;
+				sub += ",";
+				sub += subTypes[n].Format();
 			}
+			asCString str;
+			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, typeName.AddressOf(), sub.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			error = true;
+			return 0;
 		}
 	}
 	else if( ch == 's' )
@@ -3305,25 +3311,28 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 	if( ot )
 	{
 		// Check for template instances/specializations
-		// TODO: template: Support multiple subtypes
 		if( ot->templateSubTypes.GetLength() )
 		{
 			ch = 'a';
 			WriteData(&ch, 1);
 			WriteString(&ot->name);
 
-			if( ot->templateSubTypes[0].IsObject() || ot->templateSubTypes[0].IsEnumType() )
+			WriteEncodedInt64(ot->templateSubTypes.GetLength());
+			for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
 			{
-				ch = 's';
-				WriteData(&ch, 1);
-				WriteDataType(&ot->templateSubTypes[0]);
-			}
-			else
-			{
-				ch = 't';
-				WriteData(&ch, 1);
-				eTokenType t = ot->templateSubTypes[0].GetTokenType();
-				WriteEncodedInt64(t);
+				if( ot->templateSubTypes[0].IsObject() || ot->templateSubTypes[0].IsEnumType() )
+				{
+					ch = 's';
+					WriteData(&ch, 1);
+					WriteDataType(&ot->templateSubTypes[0]);
+				}
+				else
+				{
+					ch = 't';
+					WriteData(&ch, 1);
+					eTokenType t = ot->templateSubTypes[0].GetTokenType();
+					WriteEncodedInt64(t);
+				}
 			}
 		}
 		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
