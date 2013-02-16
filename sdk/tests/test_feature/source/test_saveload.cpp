@@ -484,24 +484,25 @@ bool Test()
 		if( stream.buffer.size() != 2082 )
 			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
-		if( zeroes != 606 ) 
+		if( zeroes != 605 ) 
 		{
 			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
-		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], stream.buffer.size());
-		if( crc32 != 0xDE850FDE )
+		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
+		if( crc32 != 0xF113504D )
 			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
 		if( stream2.buffer.size() != 1745 )
 			printf("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
-		if( zeroes != 501 )
+		if( zeroes != 500 )
 			printf("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
-		mod->LoadByteCode(&stream);
+		if( mod->LoadByteCode(&stream) != 0 )
+			TEST_FAILED;
 
 		if( mod->GetFunctionCount() != 6 )
 			TEST_FAILED;
@@ -576,6 +577,63 @@ bool Test()
 			printf("\n");
 		}
 #endif
+	}
+
+	// Test saving/loading global variable of registered value type
+	// http://www.gamedev.net/topic/638529-wrong-function-called-on-bytecode-restoration/
+	{
+		struct A
+		{
+			static void Construct1(int *a) { *a = 1; }
+			static void Construct2(int *a) { *a = 2; }
+		};
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterObjectType("A", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectBehaviour("A", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(A::Construct1), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectProperty("A", "int val", 0);
+
+		engine->RegisterObjectType("B", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectBehaviour("B", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(A::Construct2), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectProperty("B", "int val", 0);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "A a; B b;");
+		r = mod->Build();
+		if( r != 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream2(__FILE__"2");
+		mod->SaveByteCode(&stream2);
+
+		engine->Release();
+
+		// Register the types in a different order this time
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("B", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectBehaviour("B", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(A::Construct2), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectProperty("B", "int val", 0);
+
+		engine->RegisterObjectType("A", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectBehaviour("A", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(A::Construct1), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectProperty("A", "int val", 0);
+
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream2);
+		if( r != 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( a.val == 1 ); \n"
+								  "assert( b.val == 2 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
 	}
 
 	//-----------------------------------------
