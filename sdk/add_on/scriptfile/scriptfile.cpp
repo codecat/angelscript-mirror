@@ -256,12 +256,12 @@ CScriptFile::~CScriptFile()
 
 void CScriptFile::AddRef() const
 {
-    ++refCount;
+	asAtomicInc(refCount);
 }
 
 void CScriptFile::Release() const
 {
-    if( --refCount == 0 )
+    if( asAtomicDec(refCount) == 0 )
         delete this;
 }
 
