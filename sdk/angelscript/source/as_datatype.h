@@ -97,7 +97,6 @@ public:
 	bool IsEqualExceptRef(const asCDataType &)             const;
 	bool IsEqualExceptRefAndConst(const asCDataType &)     const;
 	bool IsEqualExceptConst(const asCDataType &)           const;
-	bool IsEqualExceptInterfaceType(const asCDataType &dt) const;
 	bool IsNullHandle()                                    const;
 
 	bool SupportHandles() const;

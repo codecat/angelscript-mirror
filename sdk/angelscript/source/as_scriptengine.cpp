@@ -1091,19 +1091,14 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 
 	types.RemoveIndexUnordered(i);
 
-	// If the type is an template type, then remove all sub types as well
-	// TODO: template: Support multiple subtypes
-	if( ot->templateSubTypes.GetLength() && ot->templateSubTypes[0].GetObjectType() )
+	// If the type is an template type then remove all sub types as well
+	for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
 	{
-		while( ot->templateSubTypes.GetLength() && ot->templateSubTypes[0].GetObjectType() )
-		{
-			ot = ot->templateSubTypes[0].GetObjectType();
-			RemoveTypeAndRelatedFromList(types, ot);
-		}
-		return;
+		if( ot->templateSubTypes[n].GetObjectType() )
+			RemoveTypeAndRelatedFromList(types, ot->templateSubTypes[n].GetObjectType());
 	}
 
-	// If the type is a class, then remove all properties types as well
+	// If the type is a class then remove all properties types as well
 	if( ot->properties.GetLength() )
 	{
 		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
@@ -1491,10 +1486,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		if( r < 0 )
 			return ConfigError(r, "RegisterObjectType", name, 0);
 
-		// TODO: template: Support multiple subtypes
-		if( subtypeNames.GetLength() != 1 )
-			return ConfigError(asNOT_SUPPORTED, "RegisterObjectType", name, 0);
-
 		// Verify that the template name hasn't been registered as a type already
 		asUINT n;
 		for( n = 0; n < objectTypes.GetLength(); n++ )
@@ -1516,36 +1507,37 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		// Store it in the object types
 		objectTypes.PushLast(type);
-
-		// Define a template subtype
-		asCObjectType *subtype = 0;
-		for( n = 0; n < templateSubTypes.GetLength(); n++ )
+		currentGroup->objTypes.PushLast(type);
+		registeredObjTypes.PushLast(type);
+		
+		// Define the template subtypes
+		for( asUINT subTypeIdx = 0; subTypeIdx < subtypeNames.GetLength(); subTypeIdx++ )
 		{
-			if( templateSubTypes[n]->name == subtypeNames[0] )
+			asCObjectType *subtype = 0;
+			for( n = 0; n < templateSubTypes.GetLength(); n++ )
 			{
-				subtype = templateSubTypes[n];
-				break;
+				if( templateSubTypes[n]->name == subtypeNames[subTypeIdx] )
+				{
+					subtype = templateSubTypes[n];
+					break;
+				}
 			}
-		}
-		if( subtype == 0 )
-		{
-			// Create the new subtype if not already existing
-			subtype = asNEW(asCObjectType)(this);
 			if( subtype == 0 )
-				return ConfigError(asOUT_OF_MEMORY, "RegisterObjectType", name, 0);
+			{
+				// Create the new subtype if not already existing
+				subtype = asNEW(asCObjectType)(this);
+				if( subtype == 0 )
+					return ConfigError(asOUT_OF_MEMORY, "RegisterObjectType", name, 0);
 
-			subtype->name      = subtypeNames[0];
-			subtype->size      = 0;
-			subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
-			templateSubTypes.PushLast(subtype);
+				subtype->name      = subtypeNames[subTypeIdx];
+				subtype->size      = 0;
+				subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
+				templateSubTypes.PushLast(subtype);
+				subtype->AddRef();
+			}
+			type->templateSubTypes.PushLast(asCDataType::CreateObject(subtype, false));
 			subtype->AddRef();
 		}
-		type->templateSubTypes.PushLast(asCDataType::CreateObject(subtype, false));
-		subtype->AddRef();
-
-		currentGroup->objTypes.PushLast(type);
-
-		registeredObjTypes.PushLast(type);
 	}
 	else
 	{
@@ -1746,24 +1738,26 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	// Check if the method restricts that use of the template to value types or reference types
 	if( objectType->flags & asOBJ_TEMPLATE )
 	{
-		// TODO: template: Support multiple subtypes
-		if( func.returnType.GetObjectType() == objectType->templateSubTypes[0].GetObjectType() )
+		for( asUINT subTypeIdx = 0; subTypeIdx < objectType->templateSubTypes.GetLength(); subTypeIdx++ )
 		{
-			if( func.returnType.IsObjectHandle() )
-				objectType->acceptValueSubType = false;
-			else if( !func.returnType.IsReference() )
-				objectType->acceptRefSubType = false;
-		}
-
-		for( asUINT n = 0; n < func.parameterTypes.GetLength(); n++ )
-		{
-			if( func.parameterTypes[n].GetObjectType() == objectType->templateSubTypes[0].GetObjectType() )
+			if( func.returnType.GetObjectType() == objectType->templateSubTypes[subTypeIdx].GetObjectType() )
 			{
-				// TODO: If unsafe references are allowed, then inout references allow value types
-				if( func.parameterTypes[n].IsObjectHandle() || (func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF) )
+				if( func.returnType.IsObjectHandle() )
 					objectType->acceptValueSubType = false;
-				else if( !func.parameterTypes[n].IsReference() )
+				else if( !func.returnType.IsReference() )
 					objectType->acceptRefSubType = false;
+			}
+
+			for( asUINT n = 0; n < func.parameterTypes.GetLength(); n++ )
+			{
+				if( func.parameterTypes[n].GetObjectType() == objectType->templateSubTypes[subTypeIdx].GetObjectType() )
+				{
+					// TODO: If unsafe references are allowed, then inout references allow value types
+					if( func.parameterTypes[n].IsObjectHandle() || (func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF) )
+						objectType->acceptValueSubType = false;
+					else if( !func.parameterTypes[n].IsReference() )
+						objectType->acceptRefSubType = false;
+				}
 			}
 		}
 	}
@@ -2437,24 +2431,26 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	// Check if the method restricts that use of the template to value types or reference types
 	if( func->objectType->flags & asOBJ_TEMPLATE )
 	{
-		// TODO: template: Allow multiple template types
-		if( func->returnType.GetObjectType() == func->objectType->templateSubTypes[0].GetObjectType() )
+		for( asUINT subTypeIdx = 0; subTypeIdx < func->objectType->templateSubTypes.GetLength(); subTypeIdx++ )
 		{
-			if( func->returnType.IsObjectHandle() )
-				func->objectType->acceptValueSubType = false;
-			else if( !func->returnType.IsReference() )
-				func->objectType->acceptRefSubType = false;
-		}
-
-		for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
-		{
-			if( func->parameterTypes[n].GetObjectType() == func->objectType->templateSubTypes[0].GetObjectType() )
+			if( func->returnType.GetObjectType() == func->objectType->templateSubTypes[subTypeIdx].GetObjectType() )
 			{
-				// TODO: If unsafe references are allowed, then inout references allow value types
-				if( func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF) )
+				if( func->returnType.IsObjectHandle() )
 					func->objectType->acceptValueSubType = false;
-				else if( !func->parameterTypes[n].IsReference() )
+				else if( !func->returnType.IsReference() )
 					func->objectType->acceptRefSubType = false;
+			}
+
+			for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+			{
+				if( func->parameterTypes[n].GetObjectType() == func->objectType->templateSubTypes[subTypeIdx].GetObjectType() )
+				{
+					// TODO: If unsafe references are allowed, then inout references allow value types
+					if( func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF) )
+						func->objectType->acceptValueSubType = false;
+					else if( !func->parameterTypes[n].IsReference() )
+						func->objectType->acceptRefSubType = false;
+				}
 			}
 		}
 	}
@@ -3004,11 +3000,16 @@ void asCScriptEngine::OrphanTemplateInstances(asCObjectType *subType)
 {
 	for( asUINT n = 0; n < templateTypes.GetLength(); n++ )
 	{
-		// TODO: template: Check all subtypes
-		if( templateTypes[n] &&
-			templateTypes[n]->templateSubTypes[0].GetObjectType() == subType )
+		if( templateTypes[n] == 0 )
+			continue;
+
+		// If the template type isn't owned by any module it can't be orphaned
+		if( templateTypes[n]->module == 0 )
+			continue;
+		
+		for( asUINT subTypeIdx = 0; subTypeIdx < templateTypes[n]->templateSubTypes.GetLength(); subTypeIdx++ )
 		{
-			if( templateTypes[n]->module )
+			if( templateTypes[n]->templateSubTypes[subTypeIdx].GetObjectType() == subType )
 			{
 				// Tell the GC that the template type exists so it can resolve potential circular references
 				gc.AddScriptObjectToGC(templateTypes[n], &objectTypeBehaviours);

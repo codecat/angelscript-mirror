@@ -146,32 +146,64 @@ bool Test()
 	CBufferedOutStream bout;
 
 	// It should be possible to register a template type with multiple subtypes
-	// TODO: template: Support multiple template subtypes
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		bout.buffer = "";
 		r = engine->RegisterObjectType("tmpl<class A, class B, class C>", 0, asOBJ_REF | asOBJ_TEMPLATE);
-		if( r >= 0 )
+		if( r < 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'tmpl<class A, class B, class C>' (Code: -7)\n" )
+		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
+		// Register a method for the template type
 		bout.buffer = "";
+		r = engine->RegisterObjectMethod("tmpl<A,B,C>", "C &func(const B &in, const A &in)", 0, asCALL_GENERIC);
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Get the template instance
+		asIObjectType *type = engine->GetObjectTypeById(engine->GetTypeIdByDecl("tmpl<int, bool, float>"));
+		if( type->GetSubTypeCount() != 3 )
+			TEST_FAILED;
+		if( type->GetSubTypeId(0) != asTYPEID_INT32 ||
+			type->GetSubTypeId(1) != asTYPEID_BOOL ||
+			type->GetSubTypeId(2) != asTYPEID_FLOAT )
+			TEST_FAILED;
+
+		asIScriptFunction *func = type->GetMethodByName("func");
+		if( func->GetReturnTypeId() != asTYPEID_FLOAT )
+			TEST_FAILED;
+		if( func->GetParamTypeId(0) != asTYPEID_BOOL ||
+			func->GetParamTypeId(1) != asTYPEID_INT32 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Don't allow registering the same template name with different subtypes
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		r = engine->RegisterObjectType("tmpl<class A, class B, class C>", 0, asOBJ_REF | asOBJ_TEMPLATE);
 		r = engine->RegisterObjectType("tmpl<class A>", 0, asOBJ_REF | asOBJ_TEMPLATE);
-		r = engine->RegisterObjectMethod("tmpl<A,B,C>", "void func()", 0, asCALL_GENERIC);
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (1, 8) : Error   : Identifier 'B' is not a data type\n"
-		                   " (1, 10) : Error   : Identifier 'C' is not a data type\n"
-						   " (1, 1) : Error   : Template 'tmpl' expects 1 sub type(s)\n"
-		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'tmpl<A,B,C>' and 'void func()' (Code: -12)\n" )
+		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

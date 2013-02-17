@@ -439,32 +439,6 @@ bool asCDataType::IsEqualExceptConst(const asCDataType &dt) const
 	return true;
 }
 
-bool asCDataType::IsEqualExceptInterfaceType(const asCDataType &dt) const
-{
-	if( tokenType != dt.tokenType )           return false;
-	if( isReference != dt.isReference )       return false;
-	if( isObjectHandle != dt.isObjectHandle ) return false;
-	if( isReadOnly != dt.isReadOnly )         return false;
-	if( isConstHandle != dt.isConstHandle )   return false;
-
-	if( objectType != dt.objectType )
-	{
-		if( !objectType || !dt.objectType ) return false;
-
-		// If the types are not interfaces or templates with interfaces then the they are not equal
-		// TODO: template: Support multiple subtypes
-		if( !objectType->IsInterface() && !((objectType->flags & asOBJ_TEMPLATE) && objectType->templateSubTypes[0].GetObjectType() && objectType->templateSubTypes[0].GetObjectType()->IsInterface()) ) return false;
-		if( !dt.objectType->IsInterface() && !((dt.objectType->flags & asOBJ_TEMPLATE) && dt.objectType->templateSubTypes[0].GetObjectType() && dt.objectType->templateSubTypes[0].GetObjectType()->IsInterface()) ) return false;
-
-		// If one is interface and the other is not, then it is not equal
-		if( objectType->IsInterface() != dt.objectType->IsInterface() ) return false;
-	}
-
-	if( funcDef != dt.funcDef ) return false;
-
-	return true;
-}
-
 bool asCDataType::IsPrimitive() const
 {
 	//	Enumerations are primitives
