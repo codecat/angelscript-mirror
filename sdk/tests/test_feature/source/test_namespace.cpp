@@ -11,6 +11,44 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test multiple script sections
+	// http://www.gamedev.net/topic/638946-namespace-problems/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test1", 
+			"namespace nsTestTwo {\n"
+			"::array<int> arrgh; \n"
+			"shared interface nsIface\n"
+			"{\n"
+			"    nsIface@ parent { get; }\n"
+			"}\n"
+			"}\n");
+		mod->AddScriptSection("test2",
+			"namespace nsTestTwo {\n"
+			"class nsClass : nsIface\n"
+			"{\n"
+			"    nsIface@ mommy;\n"
+			"    nsClass( nsIface@ parent )\n"
+			"    {\n"
+			"        @this.mommy = parent;\n"
+			"    }\n"
+			"    nsIface@ get_parent()\n"
+			"    {\n"
+			"        return( @this.mommy );\n"
+			"    }\n"
+			"}\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

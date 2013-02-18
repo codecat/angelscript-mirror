@@ -3526,8 +3526,14 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 	bool                       isPrivate;
 	bool                       isShared;
 
+	asASSERT( (objType && ns == 0) || isGlobalFunction );
+
+	// Set the default namespace
 	if( ns == 0 )
-		ns = engine->nameSpaces[0];
+		if( objType )
+			ns = objType->nameSpace;
+		else
+			ns = engine->nameSpaces[0];
 
 	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, ns);
 
@@ -3536,8 +3542,12 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 
 int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool isConstMethod, bool isConstructor, bool isDestructor, bool isPrivate, bool isOverride, bool isFinal, bool isShared)
 {
+	// Determine default namespace if not specified
 	if( ns == 0 )
-		ns = engine->nameSpaces[0];
+		if( objType )
+			ns = objType->nameSpace;
+		else
+			ns = engine->nameSpaces[0];
 
 	if( isExistingShared )
 	{
@@ -3799,8 +3809,13 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		return 0;
 	}
 
+	asASSERT( (objType && ns == 0) || isGlobalFunction );
+
 	if( ns == 0 )
-		ns = engine->nameSpaces[0];
+		if( objType )
+			ns = objType->nameSpace;
+		else
+			ns = engine->nameSpaces[0];
 
 	bool isPrivate = false;
 	asCString emulatedName;
