@@ -2174,8 +2174,35 @@ void asCBuilder::CompileInterfaces()
 		for( asUINT m = 0; m < intfType->interfaces.GetLength(); m++ )
 		{
 			asCObjectType *base = intfType->interfaces[m];
+
+			// Add any interfaces not already implemented
 			for( asUINT l = 0; l < base->interfaces.GetLength(); l++ )
 				AddInterfaceToClass(intfDecl, intfDecl->node, base->interfaces[l]);
+
+			// Add the methods from the implemented interface
+			for( asUINT m = 0; m < base->methods.GetLength(); m++ )
+			{
+				// If the derived interface implements the same method, then don't add the base interface' method
+				asCScriptFunction *baseFunc = GetFunctionDescription(base->methods[m]);
+				asCScriptFunction *derivedFunc = 0;
+				bool found = false;
+				for( asUINT d = 0; d < intfType->methods.GetLength(); d++ )
+				{
+					derivedFunc = GetFunctionDescription(intfType->methods[d]);
+					if( derivedFunc->IsSignatureEqual(baseFunc) )
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if( !found )
+				{
+					// Add the method
+					intfType->methods.PushLast(baseFunc->id);
+					baseFunc->AddRef();
+				}
+			}
 		}
 	}
 }
@@ -2564,15 +2591,18 @@ void asCBuilder::CompileClasses()
 
 		asCArray<bool> overrideValidations(decl->objType->GetMethodCount());
 		for( asUINT k = 0; k < decl->objType->methods.GetLength(); k++ )
-		{
 			overrideValidations.PushLast( !static_cast<asCScriptFunction*>(decl->objType->GetMethodByIndex(k, false))->IsOverride() );
-		}
 
 		for( asUINT m = 0; m < decl->objType->interfaces.GetLength(); m++ )
 		{
 			asCObjectType *objType = decl->objType->interfaces[m];
 			for( asUINT i = 0; i < objType->methods.GetLength(); i++ )
 			{
+				// Only check the interface methods that was explicitly declared in this interface
+				// Methods that was inherited from other interfaces will be checked in those interfaces
+				if( objType != engine->scriptFunctions[objType->methods[i]]->objectType )
+					continue;
+
 				asUINT overrideIndex;
 				if( !DoesMethodExist(decl->objType, objType->methods[i], &overrideIndex) )
 				{

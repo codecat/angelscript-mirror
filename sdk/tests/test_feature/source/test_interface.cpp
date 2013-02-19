@@ -279,6 +279,55 @@ bool Test()
 		engine->Release();
 	}
 
+	// http://www.gamedev.net/topic/638959-interface-inheritance-issue/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"shared interface ielement \n"
+			"{ \n"
+			"    int func1(); \n"
+			"} \n"
+			"shared interface iscreen : ielement \n"
+			"{ \n"
+			"    int func2(); \n"
+			"} \n"
+			"mixin class celementbase \n"
+			"{ \n"
+			"    int func1() { return 1; } \n"
+			"} \n"
+			"class cscreen : celementbase, iscreen \n"
+			"{ \n"
+			"    int func2() { return 2; } \n"
+			"} \n"
+			"void stuff( iscreen@ scr ) \n"
+			"{ \n"
+			"    assert( scr.func1() == 1 ); \n"
+			"    assert( scr.func2() == 2 ); \n"
+			"} \n");
+
+		bout.buffer = "";
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "cscreen s; stuff(s);", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
