@@ -92,6 +92,47 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// http://www.gamedev.net/topic/639046-assert-in-as-compilercpp-temp-variables/
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+ 
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class RayQueryResult { \n"
+			"  Drawable @get_drawable() const { return Drawable(); } \n"
+			"} \n"
+			"class Drawable { \n"
+			"  const string &get_typename() const { return tn; } \n"
+			"  string tn = 'AnimatedModel'; \n"
+			"} \n"
+			"void func() \n"
+			"{ \n"
+			"   RayQueryResult res; \n"
+			"	assert( res.drawable.typename == 'AnimatedModel' ); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "func();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();	
+	}
+
 	// Test problem reported by FDsagizi
 	// http://www.gamedev.net/topic/632813-compiller-bug/
 	// virtual property accessor without specifying getter nor setter

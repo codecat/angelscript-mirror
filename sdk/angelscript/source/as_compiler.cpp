@@ -11542,7 +11542,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	int argSize = descr->GetSpaceNeededForArguments();
 
 	if( descr->objectType && descr->returnType.IsReference() &&
-		!ctx->type.isVariable && (ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
+		!(ctx->type.isVariable || ctx->type.isTemporary) && 
+		(ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_ASHANDLE) )
 	{
