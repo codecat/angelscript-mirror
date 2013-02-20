@@ -268,6 +268,41 @@ bool Test()
 		engine->Release();
 	}
 
+	// Properly report error when using member initialization expressions
+	// http://www.gamedev.net/topic/638613-asassert-in-file-as-compillercpp-line-675/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"enum SomeEnum \n"
+		    "{ \n"
+			"  en_A \n"
+			"} \n"
+			"int GetVal( SomeEnum some ){ \n"
+			"  return 0; \n"
+			"} \n"
+			"class B \n"
+			"{ \n"
+			"  int some_val = GetVal( en_B ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (8, 7) : Info    : Compiling B::B()\n"
+                           "test (10, 26) : Error   : 'en_B' is not declared\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test a problem reported by Andrew Ackermann
 	// Null pointer access exception in constructor due to access of members before they have been initialized
 	// TODO: decl: Members that are initialized with trivial expressions, i.e. don't call members 

@@ -126,6 +126,10 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
 
+	// Add a variable scope that might be needed to declare dummy variables
+	// in case the member initialization refers to undefined symbols.
+	AddVariableScope();
+
 	// Initialize the class members that have no explicit expression first. This will allow the
 	// base class' constructor to access these members without worry they will be uninitialized.
 	// This can happen if the base class' constructor calls a method that is overridden by the derived class
