@@ -241,6 +241,11 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)as_callfunc_x64_msvc_asm.obj;%(Outputs)</Outputs>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\source\as_callfunc_arm_gcc.S" />
+    <None Include="..\..\source\as_callfunc_arm_msvc.asm" />
+    <None Include="..\..\source\as_callfunc_arm_xcode.S" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
