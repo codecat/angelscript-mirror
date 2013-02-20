@@ -3386,12 +3386,12 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 			// Pop the original reference
 			ctx->bc.Instr(asBC_PopPtr);
 		}
-	}
 
-	// If the expression was holding off on releasing a
-	// previously used object, we need to release it now
-	if( ctx->type.isTemporary )
-		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+		// If the expression was holding off on releasing a
+		// previously used object, we need to release it now
+		if( ctx->type.isTemporary )
+			ReleaseTemporaryVariable(ctx->type, &ctx->bc);	
+	}
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);

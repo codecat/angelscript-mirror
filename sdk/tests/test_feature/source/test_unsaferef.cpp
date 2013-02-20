@@ -31,6 +31,23 @@ static const char *script1 =
 "   ref = \"ref\";                      \n"
 "}                                      \n";
 
+
+struct Str
+{
+public:
+	Str() {};
+	Str(const Str &o) {str = o.str;}
+
+	static void StringConstruct(Str *p) { new(p) Str(); }
+	static void StringCopyConstruct(const Str &o, Str *p) { new(p) Str(o); }
+	static void StringDestruct(Str *p) { p->~Str(); }
+	static Str StringFactory(unsigned int length, const char *s) { Str str; str.str = s; return str; }
+	bool opEquals(const Str &o) { return str == o.str; }
+	Str &opAssign(const Str &o) { str = o.str; return *this; }
+
+	std::string str;
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -297,6 +314,91 @@ bool Test()
 		}
 
 		engine->Release();		
+	}
+
+	// Test with copy constructor that takes unsafe reference
+	// http://www.gamedev.net/topic/638613-asassert-in-file-as-compillercpp-line-675/
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = engine->RegisterObjectType("string", sizeof(Str), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+		r = engine->RegisterStringFactory("string", asFUNCTION(Str::StringFactory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Str::StringConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		// Copy constructor takes an unsafe reference
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &)", asFUNCTION(Str::StringCopyConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Str::StringDestruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
+			"void startGame( ) \n"
+			"{ \n"
+			"   SetTexture('test'); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "startGame();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test with assignment operator that takes unsafe reference
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = engine->RegisterObjectType("string", sizeof(Str), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+		r = engine->RegisterStringFactory("string", asFUNCTION(Str::StringFactory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Str::StringConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Str::StringDestruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		// Assignment operator takes an unsafe reference
+		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &)", asMETHOD(Str, opAssign), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
+			"void startGame( ) \n"
+			"{ \n"
+			"   SetTexture('test'); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "startGame();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
 	}
 
 	// Success

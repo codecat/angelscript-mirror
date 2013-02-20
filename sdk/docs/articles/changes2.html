@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.1 WIP - 2013/02/18</h2>
+<h2>Version 2.26.1 WIP - 2013/02/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with loading bytecode that used registered value types that could cause unexpected behaviour (Thanks TheAtom)
 <li>The compiler wasn't considering the correct namespace when parsing methods of classes and interfaces within namespaces (Thanks Wipe)
 <li>Interfaces that inherited other interfaces didn't expose the inherited methods (Thanks Wipe)
+<li>Fixed assert failure in compiler with use of copy constructor for value type with unsafe reference (Thanks FDsagizi)
 </ul>
 <li>Library
 <ul>
