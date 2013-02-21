@@ -266,13 +266,13 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-/*
+
 		// Having an implicit constructor with an int param makes it possible to compare the type with int
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = ExecuteString(engine, "type t(5); assert( t == 5 );");
 		if( r < 0 )
 			TEST_FAILED;
-*/
+
 		engine->Release();
 	}
 
@@ -494,10 +494,10 @@ bool Test()
 		// TODO: This requires implicit value cast
 		// Test passing a value of B to a function expecting its base class
 		// the compiler will automatically create a copy
-/*		const char *script = 
+/*		script = 
 			"void func(A a) {assert(a.test() == 1);}\n";
-		r = mod->AddScriptSection(0, "script", script, strlen(script));
-		r = mod->Build(0);
+		r = mod->AddScriptSection("script", script);
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 		r = ExecuteString(engine, "B b; func(b)");
