@@ -5475,9 +5475,6 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 
 asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asCDataType &to, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool generateCode, bool /*allowObjectConstruct*/)
 {
-	// TODO: This function should call the constructor/factory that has been marked as available
-	//       for implicit conversions. The code will likely be similar to CallCopyConstructor()
-	
 	// Reference types currently don't allow implicit conversion from primitive to object
 	// TODO: Allow implicit conversion to scoped reference types as they are supposed to appear like ordinary value types
 	asCObjectType *objType = to.GetObjectType();

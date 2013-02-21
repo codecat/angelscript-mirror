@@ -135,6 +135,35 @@ static float  t2 = 0;
 static double t3 = 0;
 static float  t4 = 0;
 
+// This class is implemented to guarantee that it is treated as a complex type on all platforms
+class CComplex
+{
+public:
+	// The existance of constructor, copy constructor, destructor, and assignment operator should be enough
+	CComplex() { buf = new char[100]; }
+	~CComplex() { if( buf ) delete[] buf; }
+	CComplex(const CComplex &o) { buf = new char[100]; memcpy(buf, o.buf, 100); }
+	CComplex &operator=(const CComplex &o) { if( buf ) memcpy(buf, o.buf, 100); return *this; }
+
+	static void Construct(void *p) {new(p) CComplex();}
+	static void CopyConstruct(const CComplex &o, void *p) {new(p) CComplex(o);}
+	static void Destruct(CComplex *p) {p->~CComplex();}
+
+	static void Register(asIScriptEngine *engine)
+	{
+		engine->RegisterObjectType("CComplex", sizeof(CComplex), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+		engine->RegisterObjectBehaviour("CComplex", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("CComplex", asBEHAVE_CONSTRUCT, "void f(const CComplex &in)", asFUNCTION(CopyConstruct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("CComplex", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("CComplex", "CComplex &opAssign(const CComplex &in)", asMETHOD(CComplex, operator=), asCALL_THISCALL);
+	}
+
+private:
+	// But if it is not, the size of class should do it
+	char *buf;
+	double a, b, c, d;
+};
+
 class Class1
 {
 public:
@@ -159,6 +188,15 @@ public:
 		assert(f3 == 1339.0);
 		assert(f4 == 1340.0);
 	}
+
+	CComplex cfunction5(int f1, double f3, float f2, int f4)
+	{
+		called = true;
+
+		testVal = (f1 == 10) && (f2 == 1.92f) && (f3 == 3.88) && (f4 == 97);
+
+		return CComplex();
+	}
 };
 
 static Class1 c1;
@@ -179,6 +217,9 @@ bool TestExecuteThis32MixedArgs()
     r = engine->RegisterObjectMethod("class1", "void cfunction2(double, double, double, double)", WRAP_MFN(Class1, cfunc2), asCALL_GENERIC); assert( r >= 0 );
 #endif
     r = engine->RegisterGlobalProperty("class1 c1", &c1); assert( r >= 0 );
+
+	CComplex::Register(engine);
+	r = engine->RegisterObjectMethod("class1", "CComplex cfunction5(int, double, float, int)", asMETHOD(Class1, cfunction5), asCALL_THISCALL); assert( r >= 0 );
 
 	c1.a = 0xDEADC0DE;
 
@@ -205,6 +246,13 @@ bool TestExecuteThis32MixedArgs()
         TEST_FAILED;
     }
 
+    called = false;
+	testVal = false;
+	ExecuteString(engine, "c1.cfunction5(10, 3.88, 1.92f, 97)");
+	if( !called )
+		TEST_FAILED;
+	if( !testVal ) 
+		TEST_FAILED;
 
 	r = engine->RegisterObjectType("TestClass", 0/*sizeof(TestClass)*/, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )

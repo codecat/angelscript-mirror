@@ -11,11 +11,13 @@
  
  - \ref asPrepareMultithread
  - \ref asUnprepareMultithread
+ - \ref asThreadCleanup
  - \ref asAcquireExclusiveLock
  - \ref asReleaseExclusiveLock
  - \ref asAcquireSharedLock
  - \ref asReleaseSharedLock
- - \ref asThreadCleanup
+ - \ref asAtomicInc
+ - \ref asAtomicDec
  
 \section doc_api_funcs_3 Custom memory management
 
