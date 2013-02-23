@@ -150,6 +150,13 @@ bool Test()
 		TEST_FAILED;
 	}
 
+	// Test that implicit conversion to the complex type works
+	r = ExecuteString(engine, "complex v(1,1); v += 2; assert( v == complex(3,1) ); v = v - 3; assert( abs(v.r - 0) < 0.0001f );");
+	if( r != asEXECUTION_FINISHED )
+	{
+		TEST_FAILED;
+	}
+
 	// Test error message when constructor is not found
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -163,8 +170,8 @@ bool Test()
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(const complex&in)\n"
-					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(float, float arg1 = 0)\n"
-	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'complex'.\n" )
+					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(float)\n"
+					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(float, float)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

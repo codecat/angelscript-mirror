@@ -247,12 +247,12 @@ bool Test()
 
 		// explicit cast to int is allowed
 		r = ExecuteString(engine, "type t; t.v = 5; int a = int(t); assert(a == 5);"); 
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		// as cast to int is allowed, AngelScript also allows cast to float (using cast to int then implicit cast to int)
 		r = ExecuteString(engine, "type t; t.v = 5; float a = float(t); assert(a == 5.0f);");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		// implicit cast to int is not allowed
@@ -270,7 +270,24 @@ bool Test()
 		// Having an implicit constructor with an int param makes it possible to compare the type with int
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = ExecuteString(engine, "type t(5); assert( t == 5 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Implicit cast to value type works for function arguments too
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"bool funcCalled = false; \n"
+			"void func(const type &in a) \n"
+			"{ \n"
+			"  assert( a == 5 ); \n"
+			"  funcCalled = true; \n"
+			"} \n");
+		r = mod->Build();
 		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func(5); assert( funcCalled );", mod);
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		engine->Release();
