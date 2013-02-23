@@ -99,6 +99,17 @@ bool Test()
 	r = ExecuteString(engine, "uint8 b = 0xFF; b &= ~mask4; BitsTest(b);", mod);
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
+	// Test octals
+	r = ExecuteString(engine, "uint b = 0o777; Assert( b == 0x1FF );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
+	// Test binaries
+	r = ExecuteString(engine, "uint b = 0b10101010; Assert( b == 0xAA );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
+	// Test decimals
+	r = ExecuteString(engine, "uint b = 0d255; Assert( b == 0xFF );");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	engine->RegisterGlobalFunction("uint8 ReturnByte(uint8)", asFUNCTION(ReturnByte), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("uint16 ReturnWord(uint16)", asFUNCTION(ReturnWord), asCALL_GENERIC);

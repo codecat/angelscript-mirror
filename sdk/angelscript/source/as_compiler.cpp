@@ -7210,10 +7210,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		}
 		else if( vnode->tokenType == ttBitsConstant )
 		{
-			asCString value(&script->code[vnode->tokenPos+2], vnode->tokenLength-2);
+			asCString value(&script->code[vnode->tokenPos], vnode->tokenLength);
 
+			// Let the function determine the radix from the prefix 0x = 16, 0d = 10, 0o = 8, or 0b = 2
 			// TODO: Check for overflow
-			asQWORD val = asStringScanUInt64(value.AddressOf(), 16, 0);
+			asQWORD val = asStringScanUInt64(value.AddressOf(), 0, 0);
 
 			// Do we need 64 bits?
 			if( val>>32 )
