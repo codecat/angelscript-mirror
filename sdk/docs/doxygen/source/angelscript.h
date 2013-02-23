@@ -3139,8 +3139,8 @@ public:
 	//! \param[out] typeId The type of the property
 	//! \param[out] isPrivate Whether the property is private or not
 	//! \param[out] offset The offset into the object where the property is stored
-	//! \param[out] isReference True is the property is not stored inline
-	//! \param[out] accessMask The access mask of the property.
+	//! \param[out] isReference True if the property is not stored inline
+	//! \param[out] accessMask The access mask of the property
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG The \a index is out of bounds
 	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;

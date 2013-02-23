@@ -8273,7 +8273,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			int r = asSUCCESS;
 
 			// Add the default values for arguments not explicitly supplied
-			asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+			asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
 				r = CompileDefaultArgs(node, args, func);
 
@@ -8284,7 +8284,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// by first storing the function pointer in a local variable (if it isn't already in one)
 			if( r == asSUCCESS )
 			{
-				if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
+				if( func->funcType == asFUNC_FUNCDEF )
 				{
 					if( objectType )
 					{

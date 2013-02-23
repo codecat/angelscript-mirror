@@ -234,6 +234,58 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test crash in compiler
+	// http://www.gamedev.net/topic/639248-compilation-crash-possibly-on-error-output/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"import void g(bool dummy, int x = -1) from 'mod2'; \n"
+			"void f(bool dummy, int x) \n"
+			"{ \n"
+			"} \n"
+			"void run() \n"
+			"{ \n"
+			"    f(true, 0); \n"
+			"    f(true, 0); \n"
+			"    g(false); \n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"import void run() from 'mod1'; \n"
+			"void g(bool dummy, int x = -1) \n"
+			"{ \n"
+			"} \n"
+			"class T \n"
+			"{ \n"
+			"    T() \n"
+			"    { \n"
+			"        run(); \n"
+			"    } \n"
+			"}; \n"
+			"T Dummy; \n");
+		r = mod->Build();
+		if( r != asINIT_GLOBAL_VARS_FAILED )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (12, 3) : Error   : Failed to initialize global variable 'Dummy'\n"
+		                   "test (10, 0) : Info    : Exception 'Unbound function called' in 'T::T()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test compile error
 	// http://www.gamedev.net/topic/637772-small-compiller-bug/
 	{

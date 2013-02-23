@@ -276,6 +276,54 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test problem with default arg in imported function
+	// http://www.gamedev.net/topic/639247-import-function-with-default-argument/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"import void test2( int expect, int x = -1 ) from 'mod2'; \n"
+			"void test( int expect, int x = -1 ) \n"
+			"{ \n"
+			"	assert( expect == x  ); \n"
+			"} \n"
+			"void check() \n"
+			"{ \n"
+			"	test( -1 ); \n"
+			"	test( -2, -2 ); \n"
+			"	test( 2, 2 ); \n"
+			"	test2( -1 ); \n"
+			"	test2( -2, -2 ); \n"
+			"	test2( 2, 2 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void test2( int expect, int x = -1 ) \n"
+			"{ \n"
+			"	assert( expect == x ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("mod1");
+		mod->BindAllImportedFunctions();
+		r = ExecuteString(engine, "check()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
