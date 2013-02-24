@@ -216,7 +216,34 @@ int asCReader::ReadInner()
 		bool isNew;
 		asCScriptFunction *func = ReadFunction(isNew, false, true);
 		if( func )
+		{
 			module->funcDefs.PushLast(func);
+
+			// TODO: clean up: This is also done by the builder. It should probably be moved to a method in the module
+			// Check if there is another identical funcdef from another module and if so reuse that instead
+			for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
+			{
+				asCScriptFunction *f2 = engine->funcDefs[n];
+				if( f2 == 0 || func == f2 )
+					continue;
+
+				if( f2->name == func->name &&
+					f2->nameSpace == func->nameSpace &&
+					f2->IsSignatureExceptNameEqual(func) )
+				{
+					// Replace our funcdef for the existing one
+					module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
+					f2->AddRef();
+
+					engine->funcDefs.RemoveValue(func);
+
+					savedFunctions[savedFunctions.IndexOf(func)] = f2;
+
+					func->Release();
+					break;
+				}
+			}
+		}
 		else
 			error = true;
 	}

@@ -10,6 +10,110 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Test funcdefs in shared interfaces
+	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", 
+			"funcdef void Func();\n"
+			"shared interface ielement\n"
+			"{\n"
+			"    Func@ f { get; set; }\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("B", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("B", 
+			"funcdef void Func();\n"
+			"shared interface ielement\n"
+			"{\n"
+			"    Func@ f { get; set; }\n"
+			"}\n"
+			"class celement : ielement\n"
+			"{\n"
+			"    Func@ fdef;\n"
+			"    Func@ get_f()\n"
+			"    {\n"
+			"       return( this.fdef ); \n"
+			"    }\n"
+			"    void set_f( Func@  newF )\n"
+			"    {\n"
+			"       @this.fdef = newF;\n"
+			"    }\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		CBytecodeStream stream("B");
+		mod->SaveByteCode(&stream);
+
+		bout.buffer = "";
+		mod = engine->GetModule("C", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r != 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Test different types of virtual properties in shared interfaces
+	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", 
+			"shared interface ielement\n"
+			"{\n"
+			"    float f { get; set; }\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("B", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("B", 
+			"shared interface ielement\n"
+			"{\n"
+			"    int f { get; set; }\n"
+			"}\n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "B (3, 13) : Error   : Shared type 'ielement' doesn't match the original declaration in other module\n"
+                           "B (3, 18) : Error   : Shared type 'ielement' doesn't match the original declaration in other module\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test problem reported by Andrew Ackermann
 	{
 		const char *script =

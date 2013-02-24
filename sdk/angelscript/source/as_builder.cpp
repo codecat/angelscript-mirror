@@ -1316,6 +1316,30 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 
 			// Don't copy the default arg expression as it is not allowed for function definitions
 		}
+
+		// TODO: Should we force the use of 'shared' for this check to be done?
+		// Check if there is another identical funcdef from another module and if so reuse that instead
+		for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
+		{
+			asCScriptFunction *f2 = engine->funcDefs[n];
+			if( f2 == 0 || func == f2 )
+				continue;
+
+			if( f2->name == func->name &&
+				f2->nameSpace == func->nameSpace &&
+				f2->IsSignatureExceptNameEqual(func) )
+			{
+				// Replace our funcdef for the existing one
+				funcDef->idx = f2->id;
+				module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
+				f2->AddRef();
+
+				engine->funcDefs.RemoveValue(func);
+
+				func->Release();
+				break;
+			}
+		}
 	}
 }
 
@@ -2031,16 +2055,9 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 	}
 	else
 	{
-		// If the interface is already in the class, then don't add it again
+		// If the interface is already in the class then don't add it again
 		if( decl->objType->Implements(intfType) )
-		{
-			int r, c;
-			decl->script->ConvertPosToRowCol(errNode->tokenPos, &r, &c);
-			asCString msg;
-			msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, intfType->GetName());
-			WriteWarning(decl->script->name, msg, r, c);
 			return;
-		}
 
 		// Add the interface to the class	
 		decl->objType->interfaces.PushLast(intfType);
@@ -2399,18 +2416,7 @@ void asCBuilder::CompileClasses()
 			for( unsigned int n = 0; n < baseType->interfaces.GetLength(); n++ )
 			{
 				if( !decl->objType->Implements(baseType->interfaces[n]) )
-				{
 					decl->objType->interfaces.PushLast(baseType->interfaces[n]);
-				}
-				else
-				{
-					// Warn if derived class already implements the interface
-					int r, c;
-					decl->script->ConvertPosToRowCol(decl->node->tokenPos, &r, &c);
-					asCString msg;
-					msg.Format(TXT_INTERFACE_s_ALREADY_IMPLEMENTED, baseType->interfaces[n]->GetName());
-					WriteWarning(decl->script->name, msg, r, c);
-				}
 			}
 
 			// TODO: Need to check for name conflict with new class methods
@@ -3825,13 +3831,6 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared)
 {
-	if( isExistingShared )
-	{
-		// TODO: shared: Should validate that the function really exists in the class/interface
-		node->Destroy(engine);
-		return 0;
-	}
-
 	if( engine->ep.propertyAccessorMode != 2 )
 	{
 		WriteError(TXT_PROPERTY_ACCESSOR_DISABLED, file, node);
@@ -3962,7 +3961,32 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 			WriteError(TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE, file, node);
 
 		if( success )
-			RegisterScriptFunction(funcNode, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, isConst, false, false, isPrivate, isOverride, isFinal, false);
+		{
+			if( !isExistingShared )
+				RegisterScriptFunction(funcNode, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, isConst, false, false, isPrivate, isOverride, isFinal, false);
+			else
+			{
+				// Should validate that the function really exists in the class/interface
+				bool found = false;
+				for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+				{
+					asCScriptFunction *func = engine->scriptFunctions[objType->methods[n]];
+					if( func->name == name &&
+						func->IsSignatureExceptNameEqual(returnType, paramTypes, paramModifiers, objType, isConst) )
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if( !found )
+				{
+					asCString str;
+					str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, objType->GetName());
+					WriteError(str, file, node);
+				}
+			}
+		}
 
 		node = next;
 	};

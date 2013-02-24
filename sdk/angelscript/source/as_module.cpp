@@ -465,8 +465,9 @@ void asCModule::InternalReset()
 	// Free funcdefs
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 	{
-		// TODO: funcdefs: These may be shared between modules, so we can't just remove them
-		engine->funcDefs.RemoveValue(funcDefs[n]);
+		// Only remove the funcdef from the engine if it is not shared
+		if( funcDefs[n]->GetRefCount() == 1 )
+			engine->funcDefs.RemoveValue(funcDefs[n]);
 		funcDefs[n]->Release();
 	}
 	funcDefs.SetLength(0);

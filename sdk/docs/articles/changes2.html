@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure in compiler with nested access to virtual property accessors (Thanks AgentC)
 <li>Fixed null pointer access in compiler when compiling default constructor for a class with invalid member initialization expressions (Thanks FDsagizi)
 <li>Fixed crash in compiler when compiling call to imported function with default arguments (Thanks Wipe)
+<li>Compiler no longer emits warnings on implementing the same interface multiple times (Thanks Wipe)
 </ul>
 <li>Library
 <ul>
@@ -41,6 +42,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved error message when encountering non-terminated string literals (Thanks FDsagizi)
 <li>Templates now support multiple subtypes (Thanks Amer Koleci)
 <li>Added support for native calling conventions on Linux with ARM and gnuc compiler (Thanks Carlos Luna)
+<li>Compiler will report error if virtual property in shared interface doesn't match first declaration of the interface (Thanks Wipe)
+<li>Funcdefs are now automatically shared between modules if they are identical (Thanks Wipe)
 </ul>
 <li>Script language
 <ul>

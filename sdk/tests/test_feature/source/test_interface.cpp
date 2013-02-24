@@ -144,8 +144,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "TestInterface (5, 23) : Warning : The interface 'intf' is already implemented\n"
-					   "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"
+	if( bout.buffer != "TestInterface (5, 7) : Error   : Missing implementation of 'void intf::test()'\n"
 					   "TestInterface (9, 1) : Info    : Compiling void test(intf&inout)\n"
 					   "TestInterface (11, 9) : Error   : Data type can't be 'intf'\n"
 					   "TestInterface (13, 6) : Error   : There is no copy operator for the type 'intf' available.\n"
@@ -527,6 +526,49 @@ bool Test2()
 
 		// TODO: The interfaces should be equal if they use enums declared in the 
 		// scripts as well (we don't bother checking the enum values)
+
+		engine->Release();
+	}
+
+	// Test multiple indirect implementations of interfaces
+	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("A", 
+			"shared interface ielement\n"
+			"{\n"
+			"   void dummy1();\n"
+			"}\n"
+			"shared interface isprite : ielement\n"
+			"{\n"
+			"    void dummy2();\n"
+			"}\n"
+			"class celement : ielement\n"
+			"{\n"
+			"   void dummy1() {}\n"
+			"}\n"
+			"class csprite : celement, isprite\n"
+			"{\n"
+			"    csprite()\n"
+			"    {\n"
+			"        super();\n"
+			"    }\n"
+			"    void dummy2() {}\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

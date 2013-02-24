@@ -110,7 +110,6 @@
 #define TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST    "Illegal target type for reference cast"
 #define TXT_ILLEGAL_VARIABLE_NAME_s             "Illegal variable name '%s'."
 #define TXT_INIT_LIST_CANNOT_BE_USED_WITH_s     "Initialization lists cannot be used with '%s'"
-#define TXT_INTERFACE_s_ALREADY_IMPLEMENTED     "The interface '%s' is already implemented"
 #define TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE "Interfaces can only implement other interfaces"
 #define TXT_INVALID_BREAK                       "Invalid 'break'"
 #define TXT_INVALID_CHAR_LITERAL                "Invalid character literal"

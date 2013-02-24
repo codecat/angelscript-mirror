@@ -5482,11 +5482,6 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 	if( !objType || (objType->flags & asOBJ_REF) )
 		return asCC_NO_CONV;
 
-	// Don't accept the implicit conversion of a boolean type to the object type
-	// TODO: should be allowed with an engine property
-	if( ctx->type.dataType.GetTokenType() == ttBool )
-		return asCC_NO_CONV;
-
 	// For value types the object must have a constructor that takes a single primitive argument either by value or as input reference
 	asCArray<int> funcs;
 	for( asUINT n = 0; n < objType->beh.constructors.GetLength(); n++ )
