@@ -451,6 +451,69 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test shared interface with function pointers
+	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void fdef(); \n"
+			"shared interface iface \n"
+			"{ \n"
+			"	fdef@ dummy(); \n"
+			"} \n");
+
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+		
+		CBytecodeStream stream(__FILE__"1");
+		
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+
+		// Load the bytecode in two different modules
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		stream.Restart();
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		stream.Restart();
+		mod = engine->GetModule("B", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+
+		// Load the bytecode twice, replacing the module
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		stream.Restart();
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		stream.Restart();
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
 		engine = ConfigureEngine(0);

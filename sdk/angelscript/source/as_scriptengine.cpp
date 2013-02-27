@@ -674,6 +674,21 @@ asCScriptEngine::~asCScriptEngine()
 	objectTypeBehaviours.ReleaseAllFunctions();
 	globalPropertyBehaviours.ReleaseAllFunctions();
 
+	// Destroy the funcdefs
+	// As funcdefs are shared between modules it shouldn't be a problem to keep the objects until the engine is released
+	// TODO: refactor: This really should be done by ClearUnusedTypes() as soon as the funcdef is no longer is use.
+	//                 Perhaps to make it easier to manage the memory for funcdefs each function definition should
+	//                 have it's own object type. That would make the funcdef much more similar to the other types
+	//                 and could then be handled in much the same way. When this is done the funcdef should also be
+	//                 changed so that it doesn't take up a function id, i.e. don't keep a reference to it in scriptFunctions.
+	for( n = 0; n < funcDefs.GetLength(); n++ )
+		if( funcDefs[n] )
+		{
+			asASSERT( funcDefs[n]->GetRefCount() == 0 );
+			asDELETE(funcDefs[n], asCScriptFunction);
+		}
+	funcDefs.SetLength(0);
+
 	// Free string constants
 	for( n = 0; n < stringConstants.GetLength(); n++ )
 		asDELETE(stringConstants[n],asCString);
@@ -1010,6 +1025,10 @@ int asCScriptEngine::ClearUnusedTypes()
 		{
 			// Ignore factory stubs
 			if( func->name == "factstub" )
+				continue;
+
+			// Ignore funcdefs because these will only be destroyed when the engine is released
+			if( func->funcType == asFUNC_FUNCDEF )
 				continue;
 
 			asCObjectType *ot = func->returnType.GetObjectType();

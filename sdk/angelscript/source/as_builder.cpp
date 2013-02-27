@@ -1337,6 +1337,9 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 				engine->funcDefs.RemoveValue(func);
 
 				func->Release();
+
+				// funcdefs aren't destroyed when the refCount reaches zero so we need to manually delete them
+				asDELETE(func, asCScriptFunction);
 				break;
 			}
 		}

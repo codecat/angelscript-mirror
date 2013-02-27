@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -186,6 +186,10 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 
 		// Ignore factory, list factory, and members
 		if( func->name == "_beh_2_" || func->name == "_beh_3_" || func->objectType == type )
+			continue;
+
+		// Ignore function definitions too, as they aren't released until the engine is destroyed
+		if( func->funcType == asFUNC_FUNCDEF )
 			continue;
 
 		asASSERT( func->returnType.GetObjectType() != type );

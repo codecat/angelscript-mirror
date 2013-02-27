@@ -218,6 +218,7 @@ int asCReader::ReadInner()
 		if( func )
 		{
 			module->funcDefs.PushLast(func);
+			engine->funcDefs.PushLast(func);
 
 			// TODO: clean up: This is also done by the builder. It should probably be moved to a method in the module
 			// Check if there is another identical funcdef from another module and if so reuse that instead
@@ -240,6 +241,9 @@ int asCReader::ReadInner()
 					savedFunctions[savedFunctions.IndexOf(func)] = f2;
 
 					func->Release();
+
+					// Funcdefs aren't deleted when the ref count reaches zero so we must manually delete it here
+					asDELETE(func,asCScriptFunction);
 					break;
 				}
 			}
