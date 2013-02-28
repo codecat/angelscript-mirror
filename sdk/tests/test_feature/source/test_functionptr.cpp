@@ -298,6 +298,113 @@ bool Test()
 
 	engine->Release();
 
+	// Test shared interface with function pointers
+	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void funcdef1( ifuncdef1_1& i ); \n"
+			"shared interface ifuncdef1_1 \n"
+			"{ \n"
+			"    ifuncdef1_2@ events { get; set; } \n"
+			"    void crashme(); \n"
+			"} \n"
+			"shared interface ifuncdef1_2 \n"
+			"{ \n"
+			"    funcdef1@ f { get; set; } \n"
+			"} \n"
+			"class cfuncdef1_1 : ifuncdef1_1 \n"
+			"{ \n"
+			"    ifuncdef1_2@ _events_; \n"
+			"    cfuncdef1_1() { @this._events_ = cfuncdef1_2(); } \n"
+//			"	 cfuncdef1_1() { @this._events_ = null; } \n"  // TODO: Using this version causes a memory leak
+			"    ifuncdef1_2@ get_events() { return( this._events_ ); } \n"
+			"    void set_events( ifuncdef1_2@ events ) { @this._events_ = events; } \n"
+			"    void crashme() \n"
+			"    { \n"
+			"         if( @this._events_ != null && @this._events_.f != null ) \n"
+			"         { \n"
+			"            this.events.f( this ); \n"
+//			"            this.get_events().get_f()( this ); \n"
+			"         } \n"
+			"    } \n"
+			"} \n"
+			"class cfuncdef1_2 : ifuncdef1_2 \n"
+			"{ \n"
+			"    funcdef1@ ff; \n"
+			"    cfuncdef1_2() { @ff = null; } \n"
+			"    funcdef1@ get_f() { return( @this.ff ); } \n"
+			"    void set_f( funcdef1@ _f ) { @this.ff = _f; } \n"
+			"} \n"
+			"void start() \n"
+			"{ \n"
+			"    ifuncdef1_1@ i = cfuncdef1_1(); \n"
+			"    i.events.f = end; \n" // TODO: Shouldn't this give an error? It's attempting to do an value assignment to a function pointer
+			"    i.crashme(); \n"
+			"} \n"
+			"bool called = false; \n"
+			"void end( ifuncdef1_1& i  ) \n"
+			"{ \n"
+			"    called = true; \n"
+			"} \n");
+
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "start(); assert( called );", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx, true);
+		ctx->Release();
+
+		CBytecodeStream stream(__FILE__"1");
+		
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+
+		// Load the bytecode 
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		stream.Restart();
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "start(); assert( called );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		stream.Restart();
+		mod = engine->GetModule("B", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "start(); assert( called );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	// Test clean up with registered function definitions
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

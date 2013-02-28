@@ -8281,7 +8281,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			{
 				if( func->funcType == asFUNC_FUNCDEF )
 				{
-					if( objectType )
+					if( objectType && funcPtr.property_get <= 0 )
 					{
 						Dereference(ctx, true); // Dereference the object pointer to access the member
 
@@ -8289,11 +8289,25 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 						objectType = 0;
 					}
 
-					Dereference(&funcPtr, true);
-					ConvertToVariable(&funcPtr);
-					ctx->bc.AddCode(&funcPtr.bc);
-					if( !funcPtr.type.isTemporary )
-						ctx->bc.Instr(asBC_PopPtr);
+					if( funcPtr.property_get > 0 )
+					{
+						ProcessPropertyGetAccessor(&funcPtr, node);
+						Dereference(&funcPtr, true);
+
+						// The function call will be made directly from the local variable so the function pointer shouldn't be on the stack
+						funcPtr.bc.Instr(asBC_PopPtr);
+					}
+					else
+					{
+						Dereference(&funcPtr, true);
+						ConvertToVariable(&funcPtr);
+
+						// The function call will be made directly from the local variable so the function pointer shouldn't be on the stack
+						if( !funcPtr.type.isTemporary )
+							funcPtr.bc.Instr(asBC_PopPtr);
+					}
+
+					MergeExprBytecodeAndType(ctx, &funcPtr);
 				}
 
 				MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
@@ -11751,7 +11765,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 				// Allocate a temporary variable for the returned object
 				// The returned object will actually be allocated on the heap, so
 				// we must force the allocation of the variable to do the same
-				returnOffset = AllocateVariable(descr->returnType, true, true);
+				returnOffset = AllocateVariable(descr->returnType, true, !descr->returnType.IsObjectHandle());
 				ctx->type.SetVariable(descr->returnType, returnOffset, true);
 			}
 
