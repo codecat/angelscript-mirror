@@ -7597,12 +7597,16 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *no
 		}
 	}
 
-	// Remove last line break and the line after that if it only contains whitespaces
+	// Remove the line after the last line break if it only contains whitespaces
 	int end;
 	for( end = (int)str.GetLength() - 1; end >= 0; end-- )
 	{
 		if( str[end] == '\n' )
+		{
+			// Don't remove the last line break
+			end++;
 			break;
+		}
 
 		if( str[end] != ' '  &&
 			str[end] != '\t' &&

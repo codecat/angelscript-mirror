@@ -302,8 +302,7 @@ triple double-quotation marks (<code>"""</code>), and can span multiple lines
 of code. If the characters following the start of the string until the first
 linebreak only contains white space, it is automatically removed by the
 compiler. Likewise if the characters following the last line break until the
-end of the string only contains white space this is also remove, including the
-linebreak.
+end of the string only contains white space this is also removed.
 
 
 <pre>

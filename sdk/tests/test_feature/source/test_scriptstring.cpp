@@ -289,7 +289,7 @@ bool Test()
 	if( mod->Build() < 0 )
 		TEST_FAILED;
 	ExecuteString(engine, "test()", mod);
-	if( printOutput != "Heredoc\\x20test!" ) TEST_FAILED;
+	if( printOutput != "Heredoc\\x20test\n!" ) TEST_FAILED;
 
 	CScriptString *a = new CScriptString("a");
 	engine->RegisterGlobalProperty("string a", a);
@@ -503,6 +503,28 @@ bool Test()
 			TEST_FAILED;
 
 		engine->Release();
+	}
+
+	//---------------
+	// Concatenating heredoc strings
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "string A = \"\"\"   \n"
+			                      "AAA\n"
+								  "BBB\n"
+								  "      \"\"\"; \n"
+								  "A += \"\"\"     \n"
+								  "CCC\n"
+								  "      \"\"\"; \n"
+								  "assert( A == 'AAA\\nBBB\\nCCC\\n' ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();			
 	}
 
 	//--------------
