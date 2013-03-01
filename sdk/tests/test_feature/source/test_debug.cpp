@@ -193,11 +193,62 @@ void ExceptionCallback(asIScriptContext *ctx, void *param)
 	}
 }
 
+class TestLN
+{
+public:
+void *TestLineNumber()
+{
+    asIScriptContext *ctx = asGetActiveContext();
+    const char *script_section;
+    int line = ctx->GetLineNumber(0, 0, &script_section);
+	assert( std::string(script_section) == "a" );
+    return 0;
+}
+};
+
 bool Test2();
 
 bool Test()
 {
 	bool fail = Test2();
+
+    // Test crash in GetLineNumber
+    // http://www.gamedev.net/topic/638656-crash-in-ctx-getlinenumber/
+    {
+        asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+        engine->RegisterInterface("foo");
+        engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+        engine->RegisterObjectMethod("Test", "foo @TestLineNumber()", asMETHOD(TestLN, TestLineNumber), asCALL_THISCALL);
+ 
+        TestLN t;
+        engine->RegisterGlobalProperty("Test test", &t);
+ 
+        asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+        mod->AddScriptSection("b"," // nothing to compile");
+        mod->AddScriptSection("a","foo @f = test.TestLineNumber();");
+        int r = mod->Build();
+        if( r < 0 )
+            TEST_FAILED;
+
+		CBytecodeStream stream("test");
+		mod->SaveByteCode(&stream);
+
+        engine->Release();
+
+		// Load the bytecode
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+        engine->RegisterInterface("foo");
+        engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+        engine->RegisterObjectMethod("Test", "foo @TestLineNumber()", asMETHOD(TestLN, TestLineNumber), asCALL_THISCALL);
+        engine->RegisterGlobalProperty("Test test", &t);
+
+        mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+        engine->Release();
+    }
 
 	int number = 0;
 

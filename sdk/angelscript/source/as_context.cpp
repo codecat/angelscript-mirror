@@ -1398,7 +1398,13 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 	asDWORD line = func->GetLineNumber(int(bytePos - func->byteCode.AddressOf()), &sectionIdx);
 	if( column ) *column = (line >> 20);
 	if( sectionName ) 
-		*sectionName = sectionIdx >= 0 ? m_engine->scriptSectionNames[sectionIdx]->AddressOf() : 0;
+	{
+		asASSERT( sectionIdx < m_engine->scriptSectionNames.GetLength() );
+		if( sectionIdx >= 0 && sectionIdx < m_engine->scriptSectionNames.GetLength() )
+			*sectionName = m_engine->scriptSectionNames[sectionIdx]->AddressOf();
+		else
+			*sectionName = 0;
+	}
 	return (line & 0xFFFFF);
 }
 

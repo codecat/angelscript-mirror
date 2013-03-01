@@ -727,7 +727,16 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			length = ReadEncodedUInt();
 			func->sectionIdxs.SetLength(length);
 			for( i = 0; i < length; ++i )
-				func->sectionIdxs[i] = ReadEncodedUInt();
+			{
+				if( (i & 1) == 0 )
+					func->sectionIdxs[i] = ReadEncodedUInt();
+				else
+				{
+					asCString str;
+					ReadString(&str);
+					func->sectionIdxs[i] = engine->GetScriptSectionNameIndex(str.AddressOf());
+				}
+			}
 		}
 
 		ReadData(&func->isShared, 1);
@@ -3019,7 +3028,15 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				if( (i & 1) == 0 )
 					WriteEncodedInt64(bytecodeNbrByPos[func->sectionIdxs[i]]);
 				else
-					WriteEncodedInt64(func->sectionIdxs[i]);
+				{
+					if( func->sectionIdxs[i] >= 0 )
+						WriteString(engine->scriptSectionNames[func->sectionIdxs[i]]);
+					else
+					{
+						char c = 0;
+						WriteData(&c, 1);
+					}
+				}
 			}
 		}
 
