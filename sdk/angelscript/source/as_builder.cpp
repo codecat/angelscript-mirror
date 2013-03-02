@@ -710,7 +710,7 @@ void asCBuilder::CompileFunctions()
 		else if( current->name == current->objType->name )
 		{
 			asCScriptNode *node = classDecl->node;
-			
+
 			int r = 0, c = 0;
 			if( node )
 				current->script->ConvertPosToRowCol(node->tokenPos, &r, &c);
@@ -1541,12 +1541,12 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	if( st == 0 )
 		return asOUT_OF_MEMORY;
 
-	// By default all script classes are marked as garbage collected. 
+	// By default all script classes are marked as garbage collected.
 	// Only after the complete structure and relationship between classes
-	// is known, can the flag be cleared for those objects that truly cannot 
-	// form circular references. This is important because a template 
-	// callback may be called with a script class before the compilation 
-	// complete, and until it is known, the callback must assume the class 
+	// is known, can the flag be cleared for those objects that truly cannot
+	// form circular references. This is important because a template
+	// callback may be called with a script class before the compilation
+	// complete, and until it is known, the callback must assume the class
 	// is garbage collected.
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
 
@@ -2046,7 +2046,7 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 
 	if( decl->isExistingShared )
 	{
-		// If the class is an existing shared class, then just check if the 
+		// If the class is an existing shared class, then just check if the
 		// interface exists in the original declaration too
 		if( !decl->objType->Implements(intfType) )
 		{
@@ -2062,7 +2062,7 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 		if( decl->objType->Implements(intfType) )
 			return;
 
-		// Add the interface to the class	
+		// Add the interface to the class
 		decl->objType->interfaces.PushLast(intfType);
 
 		// Add the inherited interfaces too
@@ -2126,7 +2126,7 @@ void asCBuilder::CompileInterfaces()
 				WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
 				ok = false;
 			}
-	
+
 			if( ok )
 			{
 				// Make sure none of the implemented interfaces implement from this one
@@ -2159,7 +2159,7 @@ void asCBuilder::CompileInterfaces()
 		}
 	}
 
-	// Order the interfaces with inheritances so that the inherited 
+	// Order the interfaces with inheritances so that the inherited
 	// of inherited interfaces can be added properly
 	for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
 	{
@@ -2189,7 +2189,7 @@ void asCBuilder::CompileInterfaces()
 		sClassDeclaration *intfDecl = interfaceDeclarations[n];
 		asCObjectType *intfType = intfDecl->objType;
 
-		// As new interfaces will be added to the end of the list, all 
+		// As new interfaces will be added to the end of the list, all
 		// interfaces will be traversed the same as recursively
 		for( asUINT m = 0; m < intfType->interfaces.GetLength(); m++ )
 		{
@@ -2401,8 +2401,8 @@ void asCBuilder::CompileClasses()
 			// types that contain this will accept this type
 			decl->validState = 1;
 
-			// We'll still validate the declaration to make sure nothing new is 
-			// added to the shared class that wasn't there in the previous 
+			// We'll still validate the declaration to make sure nothing new is
+			// added to the shared class that wasn't there in the previous
 			// compilation. We do not care if something that is there in the previous
 			// declaration is not included in the new declaration though.
 		}
@@ -2727,7 +2727,7 @@ void asCBuilder::CompileClasses()
 	// TODO: runtime optimize: This algorithm can be further improved by checking the types that inherits from
 	//                         a base class. If the base class is not shared all the classes that derive from it
 	//                         are known at compile time, and can thus be checked for potential circular references too.
-	//                         
+	//
 	//                         Observe, that doing this would conflict with another potential future feature, which is to
 	//                         allow incremental builds, i.e. allow application to add or replace classes in an
 	//                         existing module. However, the applications that want to use that should use a special
@@ -2741,13 +2741,13 @@ void asCBuilder::CompileClasses()
 		if( decl->isExistingShared ) continue;
 
 		asCObjectType *ot = decl->objType;
-		
+
 		// Is there some path in which this structure is involved in circular references?
 		bool gc = false;
 		for( asUINT p = 0; p < ot->properties.GetLength(); p++ )
 		{
 			asCDataType dt = ot->properties[p]->type;
-			if( !dt.IsObject() ) 
+			if( !dt.IsObject() )
 				continue;
 
 			if( dt.IsObjectHandle() )
@@ -2758,8 +2758,8 @@ void asCBuilder::CompileClasses()
 
 				if( prop->flags & asOBJ_SCRIPT_OBJECT )
 				{
-					// For script objects, treat non-final classes as if they can contain references 
-					// as it is not known what derived classes might do. For final types, check all 
+					// For script objects, treat non-final classes as if they can contain references
+					// as it is not known what derived classes might do. For final types, check all
 					// properties to determine if any of those can cause a circular reference.
 					if( prop->flags & asOBJ_NOINHERIT )
 					{
@@ -2798,7 +2798,7 @@ void asCBuilder::CompileClasses()
 						break;
 					}
 				}
-				else if( prop->flags & asOBJ_GC ) 
+				else if( prop->flags & asOBJ_GC )
 				{
 					// If a type is not a script object, adopt its GC flag
 					gc = true;
@@ -3569,10 +3569,12 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 
 	// Set the default namespace
 	if( ns == 0 )
+    {
 		if( objType )
 			ns = objType->nameSpace;
 		else
 			ns = engine->nameSpaces[0];
+    }
 
 	GetParsedFunctionDetails(node, file, objType, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, ns);
 
@@ -3583,10 +3585,12 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 {
 	// Determine default namespace if not specified
 	if( ns == 0 )
+    {
 		if( objType )
 			ns = objType->nameSpace;
 		else
 			ns = engine->nameSpaces[0];
+    }
 
 	if( isExistingShared )
 	{
@@ -3844,10 +3848,12 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 	asASSERT( (objType && ns == 0) || isGlobalFunction );
 
 	if( ns == 0 )
+    {
 		if( objType )
 			ns = objType->nameSpace;
 		else
 			ns = engine->nameSpaces[0];
+    }
 
 	bool isPrivate = false;
 	asCString emulatedName;
@@ -4014,7 +4020,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 	GetParsedFunctionDetails(node->firstChild, file, 0, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, ns);
 	CheckNameConflict(name.AddressOf(), node, file, ns);
-	
+
 	// Check that the same function hasn't been registered already in the namespace
 	asCArray<int> funcs;
 	GetFunctionDescriptions(name.AddressOf(), funcs, ns);
@@ -4345,7 +4351,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							// Return a dummy
 							return asCDataType::CreatePrimitive(ttInt, false);
 						}
-						
+
 						asASSERT( subTypes.GetLength() == ot->templateSubTypes.GetLength() );
 
 						// Check if any of the given subtypes are different from the template's declared subtypes
@@ -4358,7 +4364,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 								break;
 							}
 						}
-						
+
 						if( isDifferent )
 						{
 							// This is a template instance

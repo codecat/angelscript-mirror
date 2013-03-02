@@ -1528,7 +1528,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		objectTypes.PushLast(type);
 		currentGroup->objTypes.PushLast(type);
 		registeredObjTypes.PushLast(type);
-		
+
 		// Define the template subtypes
 		for( asUINT subTypeIdx = 0; subTypeIdx < subtypeNames.GetLength(); subTypeIdx++ )
 		{
@@ -1828,7 +1828,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 				// If the parameter is object, and const reference for input or inout,
 				// and same type as this class, then this is a copy constructor.
-				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && 
+				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() &&
 					(func.inOutFlags[0] & asTM_INREF) && paramType.GetObjectType() == objectType )
 					beh->copyconstruct = func.id;
 			}
@@ -3025,7 +3025,7 @@ void asCScriptEngine::OrphanTemplateInstances(asCObjectType *subType)
 		// If the template type isn't owned by any module it can't be orphaned
 		if( templateTypes[n]->module == 0 )
 			continue;
-		
+
 		for( asUINT subTypeIdx = 0; subTypeIdx < templateTypes[n]->templateSubTypes.GetLength(); subTypeIdx++ )
 		{
 			if( templateTypes[n]->templateSubTypes[subTypeIdx].GetObjectType() == subType )
@@ -3212,7 +3212,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	// Increase ref counter for sub type if it is an object type
 	for( n = 0; n < ot->templateSubTypes.GetLength(); n++ )
-		if( ot->templateSubTypes[n].GetObjectType() ) 
+		if( ot->templateSubTypes[n].GetObjectType() )
 			ot->templateSubTypes[n].GetObjectType()->AddRef();
 
 	templateTypes.PushLast(ot);
@@ -3252,6 +3252,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 			}
 		}
 		asASSERT( found );
+		UNUSED_VAR( found );
 	}
 	else if( orig.GetObjectType() == tmpl )
 	{
@@ -3754,7 +3755,7 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 	else
 	{
 		// We must guarantee the order of the arguments which is why we copy them to this
-		// array. Otherwise the compiler may put them anywhere it likes, or even keep them 
+		// array. Otherwise the compiler may put them anywhere it likes, or even keep them
 		// in the registers which causes problem.
 		void *params[2] = {param1, param2};
 
@@ -3783,7 +3784,7 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 		//       fails, because the stack given to asCGeneric is not prepared with two 64bit arguments.
 
 		// We must guarantee the order of the arguments which is why we copy them to this
-		// array. Otherwise the compiler may put them anywhere it likes, or even keep them 
+		// array. Otherwise the compiler may put them anywhere it likes, or even keep them
 		// in the registers which causes problem.
 		void *params[2] = {param1, param2};
 		asCGeneric gen(this, s, 0, (asDWORD*)params);
@@ -4389,7 +4390,7 @@ asDWORD asCScriptEngine::SetDefaultAccessMask(asDWORD defaultMask)
 
 int asCScriptEngine::GetNextScriptFunctionId()
 {
-	// This function only returns the next function id that 
+	// This function only returns the next function id that
 	// should be used. It doesn't update the internal arrays.
 	if( freeScriptFunctionIds.GetLength() )
 		return freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1];
@@ -4403,7 +4404,7 @@ void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
 	if( freeScriptFunctionIds.GetLength() && freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1] == func->id )
 		freeScriptFunctionIds.PopLast();
 
-	if( func->id == scriptFunctions.GetLength() )
+	if( asUINT(func->id) == scriptFunctions.GetLength() )
 		scriptFunctions.PushLast(func);
 	else
 	{

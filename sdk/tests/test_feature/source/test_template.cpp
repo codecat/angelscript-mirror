@@ -145,6 +145,35 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test passing templates are arguments
+	// http://www.gamedev.net/topic/639597-how-to-pass-arraystring-to-a-function/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("blah");
+		RegisterScriptArray(engine, false);
+		engine->SetDefaultNamespace("");
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"bool stringInList( blah::array<string>& arg, string s ) \n"
+			"{ \n"
+			"	for( uint n = 0; n < arg.length(); n++ ) \n"
+			"	{ \n"
+			"		if( arg[n] == s ) \n"
+			"			return true; \n"
+			"	} \n"
+			"	return false; \n"
+			"}  \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// It should be possible to register a template type with multiple subtypes
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
