@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 
 namespace TestExceptionMemory
 {
@@ -525,6 +526,69 @@ bool Test()
 			printf("Return code is %d\n", r);
 			TEST_FAILED;
 		}
+
+		engine->Release();
+	}
+
+	// Test memory leak on exception
+	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void funcdef1( ); \n"
+			"void end( ) {} \n"
+			"interface ifuncdef1_2 \n"
+			"{ \n"
+			"    funcdef1@ f { get; set; } \n"
+			"} \n"
+			"void start() \n"
+			"{ \n"
+			"    ifuncdef1_2@ i; \n"
+			"    @i.f = end; \n" // exception while calling set_f, as i is null
+			"} \n");
+
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "start();", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
+	// Test memory leak on exception
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptMathComplex(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void func( complex ); \n"
+			"void start() \n"
+			"{ \n"
+			"    func @f; \n"
+			"    f( complex(1,1) ); \n" // exception because f is null
+			"} \n");
+
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "start();", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		ctx->Release();
 
 		engine->Release();
 	}

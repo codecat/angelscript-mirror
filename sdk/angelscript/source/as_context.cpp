@@ -174,6 +174,7 @@ asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
 	m_originalStackPointer      = 0;
 	m_inExceptionHandler        = false;
 	m_isStackMemoryNotAllocated = false;
+	m_needToCleanupArgs         = false;
 	m_currentFunction           = 0;
 	m_callingSystemFunction     = 0;
 	m_regs.objectRegister       = 0;
@@ -442,6 +443,8 @@ int asCContext::Unprepare()
 	if( m_status != asEXECUTION_UNINITIALIZED &&
 		m_status != asEXECUTION_FINISHED )
 		CleanStack();
+
+	asASSERT( m_needToCleanupArgs == false );
 
 	// Release the returned object (if any)
 	CleanReturnObject();
@@ -1541,6 +1544,8 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 	asCScriptObject *obj = *(asCScriptObject**)(asPWORD*)m_regs.stackPointer;
 	if( obj == 0 )
 	{
+		// Tell the exception handler to clean up the arguments to this method
+		m_needToCleanupArgs = true;
 		SetInternalException(TXT_NULL_POINTER_ACCESS);
 		return;
 	}
@@ -1575,6 +1580,8 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 
 		if( realFunc == 0 )
 		{
+			// Tell the exception handler to clean up the arguments to this method
+			m_needToCleanupArgs = true;
 			SetInternalException(TXT_NULL_POINTER_ACCESS);
 			return;
 		}
@@ -2344,6 +2351,8 @@ void asCContext::ExecuteNext()
 			int funcId = m_engine->importedFunctions[i&0xFFFF]->boundFunctionId;
 			if( funcId == -1 )
 			{
+				// Tell the exception handler to clean up the arguments to this function
+				m_needToCleanupArgs = true;
 				SetInternalException(TXT_UNBOUND_FUNCTION);
 				return;
 			}
@@ -3526,6 +3535,12 @@ void asCContext::ExecuteNext()
 
 			if( func == 0 )
 			{
+				// Need to update the program pointer anyway for the exception handler
+				m_regs.programPointer++;
+
+				// Tell the exception handler to clean up the arguments to this method
+				m_needToCleanupArgs = true;
+
 				// TODO: funcdef: Should we have a different exception string?
 				SetInternalException(TXT_UNBOUND_FUNCTION);
 				return;
@@ -4122,6 +4137,110 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 	}
 }
 
+void asCContext::CleanArgsOnStack()
+{
+	if( !m_needToCleanupArgs )
+		return;
+
+	// Find the instruction just before the current program pointer
+	asDWORD *instr = m_currentFunction->byteCode.AddressOf();
+	asDWORD *prevInstr = 0;
+	while( instr < m_regs.programPointer )
+	{
+		prevInstr = instr;
+		instr += asBCTypeSize[asBCInfo[*(asBYTE*)(instr)].type];
+	}
+
+	// Determine what function was being called
+	asCScriptFunction *func = 0;
+	asBYTE bc = *(asBYTE*)prevInstr;
+	if( bc == asBC_CALL || bc == asBC_CALLSYS || bc == asBC_CALLINTF )
+	{
+		int funcId = asBC_INTARG(prevInstr);
+		func = m_engine->scriptFunctions[funcId];
+	}
+	else if( bc == asBC_CALLBND )
+	{
+		int funcId = asBC_INTARG(prevInstr);
+		func = m_engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
+	}
+	else if( bc == asBC_CallPtr )
+	{
+		asUINT v;
+		int var = asBC_SWORDARG0(prevInstr);
+
+		// Find the funcdef from the local variable
+		for( v = 0; v < m_currentFunction->objVariablePos.GetLength(); v++ )
+			if( m_currentFunction->objVariablePos[v] == var )
+			{
+				func = m_currentFunction->funcVariableTypes[v];
+				break;
+			}
+
+		if( func == 0 )
+		{
+			// Look in parameters
+			int paramPos = 0;
+			if( m_currentFunction->objectType )
+				paramPos -= AS_PTR_SIZE;
+			if( m_currentFunction->DoesReturnOnStack() )
+				paramPos -= AS_PTR_SIZE;
+			for( v = 0; v < m_currentFunction->parameterTypes.GetLength(); v++ )
+			{
+				if( var == paramPos )
+				{
+					func = m_currentFunction->parameterTypes[v].GetFuncDef();
+					break;
+				}
+				paramPos -= m_currentFunction->parameterTypes[v].GetSizeOnStackDWords();
+			}
+		}
+	}
+	else
+		asASSERT( false );
+
+	asASSERT( func );
+
+	// Clean parameters
+	int offset = 0;
+	if( func->objectType )
+		offset += AS_PTR_SIZE;
+	if( func->DoesReturnOnStack() )
+		offset += AS_PTR_SIZE;
+	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsReference() )
+		{
+			if( *(asPWORD*)&m_regs.stackPointer[offset] )
+			{
+				// Call the object's destructor
+				asSTypeBehaviour *beh = func->parameterTypes[n].GetBehaviour();
+				if( func->parameterTypes[n].GetObjectType()->flags & asOBJ_REF )
+				{
+					asASSERT( (func->parameterTypes[n].GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
+
+					if( beh->release )
+						m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackPointer[offset], beh->release);
+					*(asPWORD*)&m_regs.stackPointer[offset] = 0;
+				}
+				else
+				{
+					if( beh->destruct )
+						m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackPointer[offset], beh->destruct);
+
+					// Free the memory
+					m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackPointer[offset]);
+					*(asPWORD*)&m_regs.stackPointer[offset] = 0;
+				}
+			}
+		}
+
+		offset += func->parameterTypes[n].GetSizeOnStackDWords();
+	}
+
+	m_needToCleanupArgs = false;
+}
+
 void asCContext::CleanStackFrame()
 {
 	// Clean object variables on the stack
@@ -4129,6 +4248,10 @@ void asCContext::CleanStackFrame()
 	// is not set, then there is nothing to clean up on the stack frame
 	if( !m_isStackMemoryNotAllocated && m_regs.programPointer )
 	{
+		// If the exception occurred while calling a function it is necessary 
+		// to clean up the arguments that were put on the stack.
+		CleanArgsOnStack();
+		
 		// Restore the stack pointer
 		m_regs.stackPointer += m_currentFunction->variableSpace;
 

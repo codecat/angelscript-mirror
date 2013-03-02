@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.1 WIP - 2013/03/01</h2>
+<h2>Version 2.26.1 WIP - 2013/03/02</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,6 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler no longer emits warnings on implementing the same interface multiple times (Thanks Wipe)
 <li>Compiler generated invalid bytecode when compiling expression that called function pointer returned from virtual property accessor (Thanks Wipe)
 <li>Fixed crash in GetLineNumber after loading module from bytecode (Thanks FDsagizi)
+<li>Fixed memory leak that could happen upon script exception (Thanks Wipe)
 </ul>
 <li>Library
 <ul>

@@ -151,14 +151,13 @@ bool Test()
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		engine->SetDefaultNamespace("blah");
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterScriptArray(engine, false);
-		engine->SetDefaultNamespace("");
 		RegisterStdString(engine);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
-			"bool stringInList( blah::array<string>& arg, string s ) \n"
+			"bool stringInList( array<string>& arg, string s ) \n"
 			"{ \n"
 			"	for( uint n = 0; n < arg.length(); n++ ) \n"
 			"	{ \n"
@@ -166,9 +165,29 @@ bool Test()
 			"			return true; \n"
 			"	} \n"
 			"	return false; \n"
-			"}  \n");
+			"}  \n"
+			"array<string> gEngineRPMUnits = { 'stall-rpm','start-rpm','idle-rpm','redline-rpm','max-rpm' }; \n"
+			"string VerifyEngineUnitSpec( string attribute, string unitSpec ) \n"
+			"{ \n"
+			"	// local \n"
+			"	// string result; \n"
+			"	// check for rpm \n"
+			"	if( stringInList(gEngineRPMUnits,attribute) ) \n"
+			"	{ \n"
+			"		// unit has to be rpm, rps, rad/s \n"
+			"		if( unitSpec!='revolution' ) \n"
+			"			return 'error'; \n"
+			"		else \n"
+			"			return unitSpec; \n"
+			"	} \n"
+			"   return '';\n"
+			"}\n");
 		r = mod->Build();
 		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( VerifyEngineUnitSpec('idle-rpm', 'revolution') == 'revolution' )", mod);
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		engine->Release();
