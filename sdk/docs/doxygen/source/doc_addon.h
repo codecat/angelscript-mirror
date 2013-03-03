@@ -935,7 +935,8 @@ represents a complex number, i.e. a number with real and imaginary parts.
     // Constructors
     complex();
     complex(const complex &in);
-    complex(float r, float i = 0);
+	complex(float r);
+    complex(float r, float i);
 
     // Equality operator
     bool opEquals(const complex &in) const;

@@ -50,6 +50,9 @@ same source file, but this is not a requirement.
 Currently only the \ref doc_script_class "class", \ref doc_global_interface "interface",
 \ref doc_script_func "function", and \ref doc_global_enums "enum" entities can be shared. 
 
+\ref doc_datatypes_funcptr "funcdefs" are automatically shared if return type and
+parameter types are shared, so these don't need to be explicitly declared as shared.
+
 Future versions may allow \ref doc_global_variable "global variables" to be shared too.
 
 */

@@ -147,6 +147,9 @@ Other than the above tokens there are also numerical, string, identifier, and co
 123.123e123
 123.123e123f
 0x1234FEDC
+0d123987
+0o1276
+0b1010
 'abc'
 "abc"
 """heredoc"""

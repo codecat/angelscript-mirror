@@ -20,7 +20,8 @@ support for all other types that cannot be pre-determined.
 
 The template registration is registered similarly to normal \ref doc_reg_basicref "reference types",
 with a few differences. The name of the type is formed by the name of the template type plus
-the name of the subtype with angle brackets. The type flag asOBJ_TEMPLATE must also be used.
+the name of the subtype with angle brackets. Multiple subtypes can be informed, separated by comma.
+The type flag asOBJ_TEMPLATE must used to tell AngelScript that it is a template type that is being registered.
 
 \code
 // Register the template type
@@ -78,10 +79,7 @@ The function should also take a second parameter with an output reference to a b
 should be set to true by the function if the template instance should not be garbage collected, which will
 make AngelScript clear the asOBJ_GC flag for the object type. If the template 
 instance cannot form any circular references, then it doesn't need to be garbage collected, which reduces
-the work that has to be done by the garbage collector. When the callback tells AngelScript that the template
-instance is not garbage collected, AngelScript will clear the asOBJ_GC flag for the object type. 
-
-
+the work that has to be done by the garbage collector. 
 
 \code
 // Register the template callback
@@ -135,12 +133,7 @@ r = engine->RegisterObjectBehaviour("myTemplate<float>", asBEHAVE_FACTORY, "myTe
 
 
 
-\section doc_adv_template_3 Current limitations
 
- - Template types are currently limited to reference types only, i.e. it must be registered
-   with a factory and addref and release behaviours.
-   
- - Only one template subtype can be used at the moment.
  
 
 
