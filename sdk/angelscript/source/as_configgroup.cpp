@@ -40,6 +40,7 @@
 #include "as_config.h"
 #include "as_configgroup.h"
 #include "as_scriptengine.h"
+#include "as_texts.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -192,12 +193,25 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 		if( func->funcType == asFUNC_FUNCDEF )
 			continue;
 
-		asASSERT( func->returnType.GetObjectType() != type );
-
-		for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+		if( func->returnType.GetObjectType() == type )
 		{
-			asASSERT(func->parameterTypes[p].GetObjectType() != type);
+			asCString msg;
+			msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetDeclaration());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 		}
+		else
+		{
+			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+			{
+				if( func->parameterTypes[p].GetObjectType() == type )
+				{
+					asCString msg;
+					msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetDeclaration());
+					engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
+					break;
+				}
+			}
+		}	
 	}
 
 	// TODO: Check also usage of the type in global variables 

@@ -7001,26 +7001,44 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 							}
 
 							ctx->type.Set(prop->type);
-							ctx->type.dataType.MakeReference(true);
 							ctx->type.isLValue = true;
 
 							if( ctx->type.dataType.IsPrimitive() )
 							{
 								// Load the address of the variable into the register
 								ctx->bc.InstrPTR(asBC_LDG, prop->GetAddressOfValue());
+
+								ctx->type.dataType.MakeReference(true);
 							}
 							else
 							{
 								// Push the address of the variable on the stack
 								ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
 
-								// If the object is a value type, then we must validate the existance,
-								// as it could potentially be accessed before it is initialized.
-								if( ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE ||
+								// If the object is a value type or a non-handle variable to a reference type, 
+								// then we must validate the existance as it could potentially be accessed 
+								// before it is initialized.
+								if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE) ||
 									!ctx->type.dataType.IsObjectHandle() )
 								{
 									// TODO: runtime optimize: This is not necessary for application registered properties
 									ctx->bc.Instr(asBC_ChkRefS);
+								}
+
+								// If the address pushed on the stack is to a value type or an object
+								// handle, then mark the expression as a reference. Addresses to a reference
+								// type aren't marked as references to get correct behaviour
+								if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE) ||
+									ctx->type.dataType.IsObjectHandle() )
+								{
+									ctx->type.dataType.MakeReference(true);
+								}
+								else
+								{
+									asASSERT( (ctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && !ctx->type.dataType.IsObjectHandle() );
+
+									// It's necessary to dereference the pointer so the pointer on the stack will point to the actual object
+									ctx->bc.Instr(asBC_RDSPtr);
 								}
 							}
 						}

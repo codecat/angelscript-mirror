@@ -87,6 +87,30 @@ protected:
 	~B() {}
 };
 
+template<class T>
+class Param {
+public:
+  Param(const T _value) : value_(_value), ref_count_(1) { };
+
+  T v() { return value_; } const
+
+  int add_ref() { return ++ref_count_; }
+  int release() { if( --ref_count_ == 0 ) { delete this; return 0; } return ref_count_;}
+
+private:
+  T value_;
+  int ref_count_;
+};
+
+template<class T>
+static Param<T> * Param_Factory(const double v) {
+  return new Param<T>(v);
+}
+
+double myFunction(const double d) {
+	return d;
+}
+
 static bool Test2();
 static bool Test3();
 static bool Test4();
@@ -523,6 +547,43 @@ bool Test()
 */
 		// TODO: A handle to A can not be implicitly cast to a handle to B since it was registered as explicit REF_CAST
 		// TODO: It shouldn't be possible to cast away constness
+
+		engine->Release();
+	}
+
+	// Test reported bug
+	// http://www.gamedev.net/topic/639743-crash-using-asbehave-implicit-value-cast/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = engine->RegisterObjectType("Pdouble", 0, asOBJ_REF); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_FACTORY, "Pdouble @f(double)", asFUNCTIONPR(Param_Factory<double>, (const double), Param<double> *), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_ADDREF,  "void f()", asMETHOD(Param<double>, add_ref), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_RELEASE, "void f()", asMETHOD(Param<double>, release), asCALL_THISCALL); assert( r >= 0 );
+
+		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_IMPLICIT_VALUE_CAST, "double f() const", asMETHOD(Param<double>, v), asCALL_THISCALL); assert( r >= 0 );
+
+		r = engine->RegisterGlobalFunction("double myFunction(const double)", asFUNCTIONPR(myFunction, (const double), double), asCALL_CDECL); assert( r >= 0 );
+
+		r = engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "Pdouble myValue( 0.3 ); \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "double temp = myValue; \n"
+							      "assert( myFunction( temp ) == 0.3 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( myFunction( myValue ) == 0.3 ); \n"
+								  "Pdouble local( 0.3 ); \n"
+								  "assert( myFunction( local ) == 0.3 );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}

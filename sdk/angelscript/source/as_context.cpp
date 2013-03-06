@@ -1402,7 +1402,7 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 	if( column ) *column = (line >> 20);
 	if( sectionName )
 	{
-		asASSERT( sectionIdx < m_engine->scriptSectionNames.GetLength() );
+		asASSERT( sectionIdx < int(m_engine->scriptSectionNames.GetLength()) );
 		if( sectionIdx >= 0 && asUINT(sectionIdx) < m_engine->scriptSectionNames.GetLength() )
 			*sectionName = m_engine->scriptSectionNames[sectionIdx]->AddressOf();
 		else
