@@ -21,6 +21,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Bug fixes
 <ul>
 <li>Fixed bug in compiler when compiling implicit cast of global variable of ref type to a primitive value (Thanks jrick)
+<li>Fixed crash that could happen on releasing the engine if some garbage collected object was still kept alive by application (Thanks thd.MM)
 </ul>
 <li>Library
 <ul>

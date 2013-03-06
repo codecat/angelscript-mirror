@@ -157,6 +157,8 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 #endif
 
 				engine->objectTypes.RemoveIndex(idx);
+				if( engine->defaultArrayObjectType == t )
+					engine->defaultArrayObjectType = 0;
 
 				if( t->flags & asOBJ_TYPEDEF )
 					engine->registeredTypeDefs.RemoveValue(t);
@@ -196,7 +198,8 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 		if( func->returnType.GetObjectType() == type )
 		{
 			asCString msg;
-			msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetDeclaration());
+			// We can only use the function name here, because the types used by the function may have been deleted already
+			msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetName());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 		}
 		else
@@ -206,7 +209,8 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 				if( func->parameterTypes[p].GetObjectType() == type )
 				{
 					asCString msg;
-					msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetDeclaration());
+					// We can only use the function name here, because the types used by the function may have been deleted already
+					msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetName());
 					engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 					break;
 				}
