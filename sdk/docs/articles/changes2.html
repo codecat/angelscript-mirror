@@ -15,13 +15,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.2 WIP - 2013/03/05</h2>
+<h2>Version 2.26.2 WIP - 2013/03/07</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed bug in compiler when compiling implicit cast of global variable of ref type to a primitive value (Thanks jrick)
 <li>Fixed crash that could happen on releasing the engine if some garbage collected object was still kept alive by application (Thanks thd.MM)
+<li>Fixed the native calling conventions on Android (Thanks Grimshaw)
 </ul>
 <li>Library
 <ul>

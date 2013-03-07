@@ -41,7 +41,7 @@
 
 #if defined(__arm__) || defined(__ARM__) || defined(I3D_ARCH_ARM)
 
-#if !defined(__linux__)
+#if !defined(__linux__) || defined(__ANDROID__) || defined(ANDROID)
 
 /* iOS, Android, and Marmalade goes here */
 

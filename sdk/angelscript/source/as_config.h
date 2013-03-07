@@ -744,7 +744,7 @@
 		#define AS_WINDOWS_THREADS
 
 	// Linux
-	#elif defined(__linux__) && !defined(ANDROID)
+	#elif defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
 
 		#undef COMPLEX_MASK
 		#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
@@ -870,7 +870,7 @@
 		#define STDCALL
 
 	// Android
-	#elif defined(ANDROID)
+	#elif defined(ANDROID) || defined(__ANDROID__)
 		#define AS_ANDROID
 		#define AS_NO_ATOMIC
 

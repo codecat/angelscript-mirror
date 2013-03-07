@@ -1,6 +1,7 @@
 
 #include <stdarg.h>
 #include "utils.h"
+#include <sstream>
 
 using std::string;
 
@@ -239,6 +240,51 @@ public:
 	virtual void c(float) const {assert(id == 2);}
 };
 
+// http://www.gamedev.net/topic/639902-premature-destruction-of-object-in-android/
+std::stringstream buf;
+
+class RefCountable
+{
+public:
+	RefCountable() { refCount = 1; buf << "init\n"; }
+	virtual ~RefCountable() { buf << "destroy\n"; }
+	void addReference() { refCount++; buf << "add (" << refCount << ")\n"; }
+	void removeReference() { buf << "rem (" << refCount-1 << ")\n"; if( --refCount == 0 ) delete this; }
+	int refCount;
+};
+
+class Animable
+{
+public:
+	Animable() {}
+};
+
+class Trackable
+{
+public:
+	Trackable() {}
+};
+
+class UIControl : public Animable, public Trackable, public RefCountable
+{
+public:
+	UIControl() : Animable(), Trackable(), RefCountable() { test = "hello"; }
+
+	string test;
+};
+
+class UIButton : public UIControl
+{
+public:
+	UIButton() : UIControl() {};
+};
+
+template<typename T>
+T* genericFactory()
+{
+	return new T();
+}
+
 bool Test2()
 {
 	bool fail = false;
@@ -328,6 +374,55 @@ bool Test2()
 	}
 
 	engine->Release();
+
+	// http://www.gamedev.net/topic/639902-premature-destruction-of-object-in-android/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		r = engine->RegisterObjectType("UIButton", 0, asOBJ_REF);
+		r = engine->RegisterObjectBehaviour("UIButton", asBEHAVE_FACTORY, "UIButton @f()", WRAP_FN(genericFactory<UIButton>), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("UIButton", asBEHAVE_ADDREF, "void f()", WRAP_MFN(UIButton, addReference), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("UIButton", asBEHAVE_RELEASE, "void f()", WRAP_MFN(UIButton, removeReference), asCALL_GENERIC); assert( r >= 0 );
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "UIButton button;");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		UIButton *but = reinterpret_cast<UIButton*>(mod->GetAddressOfGlobalVar(0));
+		if( but == 0 )
+			TEST_FAILED;
+
+		if( but->test != "hello" )
+			TEST_FAILED;
+
+		buf << "reset\n";
+		mod->ResetGlobalVars();
+
+		but = reinterpret_cast<UIButton*>(mod->GetAddressOfGlobalVar(0));
+		if( but == 0 )
+			TEST_FAILED;
+
+		if( but->test != "hello" )
+			TEST_FAILED;
+
+		if( buf.str() != "init\n"
+						 "add (2)\n"
+						 "rem (1)\n"
+						 "reset\n"
+						 "rem (0)\n"
+						 "destroy\n"
+						 "init\n"
+						 "add (2)\n"
+						 "rem (1)\n" )
+		{
+			printf("%s", buf.str().c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	return fail;
 }
