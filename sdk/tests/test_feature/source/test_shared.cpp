@@ -10,6 +10,49 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Test memory management with shared functions calling shared functions
+	// http://www.gamedev.net/topic/638334-assertion-failed-on-exit-with-shared-func/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		const char *script = 
+			"shared void func1() { func2(); }\n"
+			"shared void func2() { func1(); }\n";
+
+		const char *script2 =
+			"shared void func3() { func1(); } \n";
+
+		asIScriptModule *mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test", script);
+		r = mod1->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod1->GetFunctionByName("func1");
+		int refCount = func->AddRef() - 1; func->Release();
+		if( refCount != 3 ) // The module holds 2 references, func2 holds another
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test", script);
+		mod2->AddScriptSection("test2", script2);
+		r = mod2->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		refCount = func->AddRef() - 1; func->Release();
+		if( refCount != 6 ) // The modules holds an additional 2 references, func3 holds another
+			TEST_FAILED;
+
+		engine->DiscardModule("test1");
+
+		refCount = func->AddRef() - 1; func->Release();
+		if( refCount != 5 ) // The mod1 released it's two references, but the gc adds one reference
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Test funcdefs in shared interfaces
 	// http://www.gamedev.net/topic/639243-funcdef-inside-shared-interface-interface-already-implement-warning/
 	{

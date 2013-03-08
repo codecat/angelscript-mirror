@@ -289,6 +289,7 @@ void asCCompiler::FinalizeFunction()
 	}
 
 	// Copy byte code to the function
+	asASSERT( outFunc->byteCode.GetLength() == 0 );
 	outFunc->byteCode.SetLength(byteCode.GetSize());
 	byteCode.Output(outFunc->byteCode.AddressOf());
 	outFunc->AddReferences();

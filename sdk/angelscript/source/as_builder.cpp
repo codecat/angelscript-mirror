@@ -402,6 +402,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->name              = func->name;
 	funcDesc->funcId            = func->id;
 	funcDesc->paramNames        = parameterNames;
+	funcDesc->isExistingShared  = false;
 
 	asCCompiler compiler(engine);
 	if( compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func, 0) >= 0 )
@@ -675,6 +676,9 @@ void asCBuilder::CompileFunctions()
 	{
 		sFunctionDescription *current = functions[n];
 		if( current == 0 ) continue;
+
+		// Don't compile the function again if it was an existing shared function
+		if( current->isExistingShared ) continue;
 
 		asCCompiler compiler(engine);
 		asCScriptFunction *func = engine->scriptFunctions[current->funcId];
@@ -3139,6 +3143,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	func->name              = objType->name;
 	func->objType           = objType;
 	func->funcId            = funcId;
+	func->isExistingShared  = false;
 
 	// Add a default factory as well
 	funcId = engine->GetNextScriptFunctionId();
@@ -3687,6 +3692,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 					f->isShared &&
 					f->name == name &&
 					f->nameSpace == ns &&
+					f->objectType == objType &&
 					f->IsSignatureExceptNameEqual(returnType, parameterTypes, inOutFlags, 0, false) )
 				{
 					funcId = func->funcId = f->id;
@@ -3755,6 +3761,8 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 	{
 		asCScriptFunction *f = engine->scriptFunctions[funcId];
 		module->AddScriptFunction(f);
+
+		// TODO: clean up: This should be done by AddScriptFunction() itself
 		module->globalFunctions.Put(f);
 		f->AddRef();
 	}
@@ -3766,6 +3774,8 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 	if( objType )
 	{
+		asASSERT( !isExistingShared );
+
 		engine->scriptFunctions[funcId]->AddRef();
 		if( isConstructor )
 		{

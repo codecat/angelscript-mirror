@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler when compiling implicit cast of global variable of ref type to a primitive value (Thanks jrick)
 <li>Fixed crash that could happen on releasing the engine if some garbage collected object was still kept alive by application (Thanks thd.MM)
 <li>Fixed the native calling conventions on Android (Thanks Grimshaw)
+<li>Fixed problem with shared global functions being recompiled in all modules and thus causing memory leaks (Thanks thd.MM)
 </ul>
 <li>Library
 <ul>
