@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.2 WIP - 2013/03/07</h2>
+<h2>Version 2.26.2 WIP - 2013/03/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,10 +24,15 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash that could happen on releasing the engine if some garbage collected object was still kept alive by application (Thanks thd.MM)
 <li>Fixed the native calling conventions on Android (Thanks Grimshaw)
 <li>Fixed problem with shared global functions being recompiled in all modules and thus causing memory leaks (Thanks thd.MM)
+<li>Fixed crash with native calling conventions on Linux 64bit (Thanks darthvolvo)
 </ul>
 <li>Library
 <ul>
 <li>Improved garbage collector to give better error messages when it can't release all objects
+</ul>
+<li>Project
+<ul>
+<li>Updated the Android makefile to make sure the library is compiled with thumb mode turned off (Thanks quarnster)
 </ul>
 </ul>
 

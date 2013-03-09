@@ -4,4 +4,4 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES:= $(commonSources)
 LOCAL_MODULE:= libangelscript
 include $(BUILD_STATIC_LIBRARY)
-
+LOCAL_ARM_MODE:= arm
