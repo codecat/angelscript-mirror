@@ -15,6 +15,60 @@ bool Test()
 	asIScriptModule *mod;
  	asIScriptEngine *engine;
 	
+	// Test to make sure the default arg evaluates to a type that matches the function parameter
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class ud_bool \n"
+			"{ \n"
+			"  bool value; \n"
+			"  ud_bool() \n"
+			"  { \n"
+			"    value = false; \n"
+			"  } \n"
+			"  void  opAssign(bool data) \n"
+			"  { \n"
+			"    this.value = data; \n"
+			"  } \n"
+			"  bool opEquals(bool data) \n"
+			"  { \n"
+			"    if(this.value == data) \n"
+			"      return true; \n"
+			"    return false; \n"
+			"  } \n"
+			"} \n"
+			"ud_bool kill_object; \n"
+			"ud_bool@ kill=@kill_object; \n"
+			"void main() \n"
+			"{ \n"
+			"  kill_all(); \n"
+			"} \n"
+			"void kill_all(bool only_you=kill) \n"
+			"{ \n"
+			"}\n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (21, 1) : Info    : Compiling void main()\n"
+		                   "default arg (1, 1) : Error   : The type of the default argument expression doesn't match the function parameter type\n"
+		                   "test (23, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void kill_all(bool arg0 = kill)'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test calling a function with default arg where the expression uses a global var
 	// Reported by Philip Bennefall
 	{

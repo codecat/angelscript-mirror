@@ -1691,6 +1691,20 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		isCompilingDefaultArg = true;
 		asSExprContext expr(engine);
 		r = CompileExpression(arg, &expr);
+
+		// Make sure the expression can be implicitly converted to the parameter type
+		if( r >= 0 )
+		{
+			asCArray<int> funcs; 
+			funcs.PushLast(func->id);
+			asCArray<asSOverloadCandidate> matches;
+			if( MatchArgument(funcs, matches, &expr.type, n) == 0 )
+			{
+				Error(TXT_DEF_ARG_TYPE_DOESNT_MATCH, arg);
+				r = -1;
+			}
+		}
+
 		isCompilingDefaultArg = false;
 
 		script = origScript;
