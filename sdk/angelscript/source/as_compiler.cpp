@@ -2073,7 +2073,6 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 									ctx.bc.InstrSHORT(asBC_PSF, 0);
 									ctx.bc.Instr(asBC_RDSPtr);
 									ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
-									ctx.bc.Instr(asBC_PopRPtr);
 								}
 								ctx.bc.InstrPTR(asBC_REFCPY, type.GetObjectType());
 								ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);

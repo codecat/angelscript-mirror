@@ -242,6 +242,36 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test class containing array with default size
+	// http://www.gamedev.net/topic/640059-crash-class-and-array-with-initial-size/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "class A{ \n"
+									  "  A(){} \n"
+									  "  float[] cts(12); \n"
+									  "  float[] b; \n"
+									  "}; \n"
+									  "A a; \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// CreateScriptObject should give proper error when attempting call for class without default constructor
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

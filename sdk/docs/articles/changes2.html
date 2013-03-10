@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.2 WIP - 2013/03/09</h2>
+<h2>Version 2.26.2 WIP - 2013/03/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash with native calling conventions on Linux 64bit (Thanks darthvolvo)
 <li>The compiler wasn't giving error when default arg expression didn't match the parameter type (Thanks Philip Bennefall)
 <li>Evaluating -2147483648 / -1 is now treated properly with a script exception (Thanks TyRoXx) 
+<li>Initializing class member in declaration with a non-default constructor produced invalid bytecode (Thanks fanwars)
 </ul>
 <li>Library
 <ul>
