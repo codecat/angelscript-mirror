@@ -10644,7 +10644,8 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					v = lctx->type.intValue * rctx->type.intValue;
 				else if( op == ttSlash )
 				{
-					if( rctx->type.intValue == 0 )
+					// TODO: Should probably report an error, rather than silently convert the value to 0
+					if( rctx->type.intValue == 0 || (rctx->type.intValue == -1 && lctx->type.dwordValue == 0x80000000) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
@@ -10654,7 +10655,8 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				}
 				else if( op == ttPercent )
 				{
-					if( rctx->type.intValue == 0 )
+					// TODO: Should probably report an error, rather than silently convert the value to 0
+					if( rctx->type.intValue == 0 || (rctx->type.intValue == -1 && lctx->type.dwordValue == 0x80000000) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )

@@ -234,6 +234,77 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test check for division -2147483648 by -1
+	// http://www.gamedev.net/topic/639703-crash-in-divmod-implementations/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		r = ExecuteString(engine, "int int_min = -2147483648;\n"
+								  "int neg_one = -1;\n"
+								  "int never_computed = (int_min / neg_one);\n");
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int int_min = -2147483648;\n"
+								  "int neg_one = -1;\n"
+								  "int the_same_error = (int_min % neg_one);\n");
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int int_min = -2147483648;\n"
+								  "int neg_one = -1;\n"
+								  "uint the_same_error = (uint(int_min) / uint(neg_one));\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int never_computed = (-2147483648 / -1);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int never_computed = (-2147483648 % -1);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int64 int_min = -9223372036854775808;\n"
+								  "int64 neg_one = -1;\n"
+								  "int64 never_computed = (int_min / neg_one);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int64 int_min = -9223372036854775808;\n"
+								  "int64 neg_one = -1;\n"
+								  "int64 the_same_error = (int_min % neg_one);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int64 never_computed = (-9223372036854775808 / -1);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "int64 never_computed = (-9223372036854775808 % -1);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 15) : Warning : Implicit conversion changed sign of value\n"
+		                   "ExecuteString (1, 15) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 15) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 23) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 23) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n"
+						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test crash in compiler
 	// http://www.gamedev.net/topic/639248-compilation-crash-possibly-on-error-output/
 	{

@@ -277,6 +277,7 @@
 #define TXT_STACK_OVERFLOW                "Stack overflow"
 #define TXT_NULL_POINTER_ACCESS           "Null pointer access"
 #define TXT_DIVIDE_BY_ZERO                "Divide by zero"
+#define TXT_DIVIDE_OVERFLOW               "Overflow in integer division"
 #define TXT_UNRECOGNIZED_BYTE_CODE        "Unrecognized byte code"
 #define TXT_INVALID_CALLING_CONVENTION    "Invalid calling convention"
 #define TXT_UNBOUND_FUNCTION              "Unbound function called"

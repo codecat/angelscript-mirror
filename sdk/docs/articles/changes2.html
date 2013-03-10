@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed problem with shared global functions being recompiled in all modules and thus causing memory leaks (Thanks thd.MM)
 <li>Fixed crash with native calling conventions on Linux 64bit (Thanks darthvolvo)
 <li>The compiler wasn't giving error when default arg expression didn't match the parameter type (Thanks Philip Bennefall)
+<li>Evaluating -2147483648 / -1 is now treated properly with a script exception (Thanks TyRoXx) 
 </ul>
 <li>Library
 <ul>

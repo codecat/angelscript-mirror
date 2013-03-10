@@ -2935,6 +2935,22 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
+			else if( divider == -1 )
+			{
+				// Need to check if the value that is divided is 0x80000000 
+				// as dividing it with -1 will cause an overflow exception
+				if( *(int*)(l_fp - asBC_SWORDARG1(l_bc)) == 0x80000000 )
+				{
+					// Need to move the values back to the context
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
+					m_regs.stackFramePointer = l_fp;
+
+					// Raise exception
+					SetInternalException(TXT_DIVIDE_OVERFLOW);
+					return;
+				}
+			}
 			*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
 		l_bc += 2;
@@ -2953,6 +2969,22 @@ void asCContext::ExecuteNext()
 				// Raise exception
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
+			}
+			else if( divider == -1 )
+			{
+				// Need to check if the value that is divided is 0x80000000 
+				// as dividing it with -1 will cause an overflow exception
+				if( *(int*)(l_fp - asBC_SWORDARG1(l_bc)) == 0x80000000 )
+				{
+					// Need to move the values back to the context
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
+					m_regs.stackFramePointer = l_fp;
+
+					// Raise exception
+					SetInternalException(TXT_DIVIDE_OVERFLOW);
+					return;
+				}
 			}
 			*(int*)(l_fp - asBC_SWORDARG0(l_bc)) = *(int*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
 		}
