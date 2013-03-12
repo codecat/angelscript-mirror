@@ -196,12 +196,12 @@ class ChainMe
 {
 public:
 	int X;
- 
+
 	ChainMe() :
 		X(0)
 	{
 	}
- 
+
 	ChainMe &Increase(const int &v)
 	{
 		X += v;
@@ -271,13 +271,13 @@ bool Test()
 		r = ExecuteString(engine, "int64 int_min = -9223372036854775808;\n"
 								  "int64 neg_one = -1;\n"
 								  "int64 never_computed = (int_min / neg_one);\n");
-		if( r != asEXECUTION_FINISHED )
+		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "int64 int_min = -9223372036854775808;\n"
 								  "int64 neg_one = -1;\n"
 								  "int64 the_same_error = (int_min % neg_one);\n");
-		if( r != asEXECUTION_FINISHED )
+		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "int64 never_computed = (-9223372036854775808 / -1);\n");
@@ -314,7 +314,7 @@ bool Test()
 		bout.buffer = "";
 
 		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"import void g(bool dummy, int x = -1) from 'mod2'; \n"
 			"void f(bool dummy, int x) \n"
 			"{ \n"
@@ -404,7 +404,7 @@ bool Test()
 		bout.buffer = "";
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-		r = mod->AddScriptSection("test", 
+		r = mod->AddScriptSection("test",
 			"void F()\n"
 			"{\n"
 			"    int a1;\n"
@@ -453,7 +453,7 @@ bool Test()
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-		
+
 		engine->Release();
 
 		InstallMemoryManager();
@@ -473,7 +473,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"void func() { \n"
 			"  func2(ChainMe().Increase(5).Increase(15).Increase(25)); \n"
 			"} \n"
@@ -481,7 +481,7 @@ bool Test()
 			"  assert( a.x == 45 ); \n"
 			"} \n");
 
-		
+
 		bout.buffer = "";
 		r = mod->Build();
 		if( r < 0 )
@@ -502,7 +502,7 @@ bool Test()
 	// Problem reported by zerochen
 	// http://www.gamedev.net/topic/634768-after-unreachable-code-wrong-error-msg/
 	{
-		const char *script = 
+		const char *script =
 			"void dum() {} \n"
 			"int dummy() \n"
 			"{ \n"
@@ -534,7 +534,7 @@ bool Test()
 	// Problem reported by _Engine_
 	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
 	{
-		const char *script = 
+		const char *script =
 			"class SBuilding \n"
 			"{ \n"
 			"	void ReleasePeople() \n"
@@ -572,7 +572,7 @@ bool Test()
 	// Problem reported by FDsagizi
 	// http://www.gamedev.net/topic/632813-compiller-bug/
 	{
-		const char *script = 
+		const char *script =
 			"Test @cur_test; \n"
 			"class Test { \n"
 			"  void Do() { \n"

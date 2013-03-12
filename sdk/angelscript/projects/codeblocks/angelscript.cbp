@@ -17,8 +17,8 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-Wall" />
-					<Add option="-g" />
 					<Add option="-fno-strict-aliasing" />
+					<Add option="-m32" />
 					<Add option="-DANGELSCRIPT_EXPORT" />
 					<Add option="-DNDEBUG" />
 				</Compiler>
@@ -35,7 +35,8 @@
 					<Add option="-O2" />
 					<Add option="-Wall" />
 					<Add option="-g" />
-					<Add option="-fno-strict-aliasing -m64" />
+					<Add option="-fno-strict-aliasing" />
+					<Add option="-m64" />
 					<Add option="-DANGELSCRIPT_EXPORT" />
 					<Add option="-DNDEBUG" />
 				</Compiler>
@@ -44,10 +45,6 @@
 		<VirtualTargets>
 			<Add alias="All" targets="Release;" />
 		</VirtualTargets>
-		<Compiler>
-			<Add option="-fexpensive-optimizations" />
-			<Add option="-O3" />
-		</Compiler>
 		<Unit filename="../../include/angelscript.h" />
 		<Unit filename="../../source/as_array.h" />
 		<Unit filename="../../source/as_atomic.cpp" />

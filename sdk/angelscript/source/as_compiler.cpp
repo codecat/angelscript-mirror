@@ -1695,7 +1695,7 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		// Make sure the expression can be implicitly converted to the parameter type
 		if( r >= 0 )
 		{
-			asCArray<int> funcs; 
+			asCArray<int> funcs;
 			funcs.PushLast(func->id);
 			asCArray<asSOverloadCandidate> matches;
 			if( MatchArgument(funcs, matches, &expr.type, n) == 0 )
@@ -3408,7 +3408,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 		// If the expression was holding off on releasing a
 		// previously used object, we need to release it now
 		if( ctx->type.isTemporary )
-			ReleaseTemporaryVariable(ctx->type, &ctx->bc);	
+			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 	}
 
 	// Push the reference to the temporary variable on the stack
@@ -7029,8 +7029,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 								// Push the address of the variable on the stack
 								ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
 
-								// If the object is a value type or a non-handle variable to a reference type, 
-								// then we must validate the existance as it could potentially be accessed 
+								// If the object is a value type or a non-handle variable to a reference type,
+								// then we must validate the existance as it could potentially be accessed
 								// before it is initialized.
 								if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE) ||
 									!ctx->type.dataType.IsObjectHandle() )
@@ -10681,7 +10681,8 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					v = lctx->type.qwordValue * rctx->type.qwordValue;
 				else if( op == ttSlash )
 				{
-					if( rctx->type.qwordValue == 0 )
+					// TODO: Should probably report an error, rather than silently convert the value to 0
+					if( rctx->type.qwordValue == 0 || (rctx->type.qwordValue == asQWORD(-1) && lctx->type.qwordValue == (asQWORD(1)<<63)) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
@@ -10691,7 +10692,8 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				}
 				else if( op == ttPercent )
 				{
-					if( rctx->type.qwordValue == 0 )
+				    // TODO: Should probably report an error, rather than silently convert the value to 0
+					if( rctx->type.qwordValue == 0 || (rctx->type.qwordValue == asQWORD(-1) && lctx->type.qwordValue == (asQWORD(1)<<63)) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
@@ -11697,7 +11699,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	int argSize = descr->GetSpaceNeededForArguments();
 
 	if( descr->objectType && descr->returnType.IsReference() &&
-		!(ctx->type.isVariable || ctx->type.isTemporary) && 
+		!(ctx->type.isVariable || ctx->type.isTemporary) &&
 		(ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_ASHANDLE) )

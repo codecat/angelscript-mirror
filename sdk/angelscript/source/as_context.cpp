@@ -2937,9 +2937,9 @@ void asCContext::ExecuteNext()
 			}
 			else if( divider == -1 )
 			{
-				// Need to check if the value that is divided is 0x80000000 
+				// Need to check if the value that is divided is 0x80000000
 				// as dividing it with -1 will cause an overflow exception
-				if( *(int*)(l_fp - asBC_SWORDARG1(l_bc)) == 0x80000000 )
+				if( *(int*)(l_fp - asBC_SWORDARG1(l_bc)) == int(0x80000000) )
 				{
 					// Need to move the values back to the context
 					m_regs.programPointer    = l_bc;
@@ -2972,9 +2972,9 @@ void asCContext::ExecuteNext()
 			}
 			else if( divider == -1 )
 			{
-				// Need to check if the value that is divided is 0x80000000 
+				// Need to check if the value that is divided is 0x80000000
 				// as dividing it with -1 will cause an overflow exception
-				if( *(int*)(l_fp - asBC_SWORDARG1(l_bc)) == 0x80000000 )
+				if( *(int*)(l_fp - asBC_SWORDARG1(l_bc)) == int(0x80000000) )
 				{
 					// Need to move the values back to the context
 					m_regs.programPointer    = l_bc;
@@ -3410,6 +3410,23 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
+			else if( divider == -1 )
+            {
+				// Need to check if the value that is divided is 1<<63
+				// as dividing it with -1 will cause an overflow exception
+				if( *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) == (asINT64(1)<<63) )
+				{
+					// Need to move the values back to the context
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
+					m_regs.stackFramePointer = l_fp;
+
+					// Raise exception
+					SetInternalException(TXT_DIVIDE_OVERFLOW);
+					return;
+				}
+            }
+
 			*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
 		l_bc += 2;
@@ -3429,6 +3446,22 @@ void asCContext::ExecuteNext()
 				SetInternalException(TXT_DIVIDE_BY_ZERO);
 				return;
 			}
+			else if( divider == -1 )
+            {
+				// Need to check if the value that is divided is 1<<63
+				// as dividing it with -1 will cause an overflow exception
+				if( *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) == (asINT64(1)<<63) )
+				{
+					// Need to move the values back to the context
+					m_regs.programPointer    = l_bc;
+					m_regs.stackPointer      = l_sp;
+					m_regs.stackFramePointer = l_fp;
+
+					// Raise exception
+					SetInternalException(TXT_DIVIDE_OVERFLOW);
+					return;
+				}
+            }
 			*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) % divider;
 		}
 		l_bc += 2;
@@ -4280,10 +4313,10 @@ void asCContext::CleanStackFrame()
 	// is not set, then there is nothing to clean up on the stack frame
 	if( !m_isStackMemoryNotAllocated && m_regs.programPointer )
 	{
-		// If the exception occurred while calling a function it is necessary 
+		// If the exception occurred while calling a function it is necessary
 		// to clean up the arguments that were put on the stack.
 		CleanArgsOnStack();
-		
+
 		// Restore the stack pointer
 		m_regs.stackPointer += m_currentFunction->variableSpace;
 
