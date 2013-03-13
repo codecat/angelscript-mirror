@@ -102,9 +102,8 @@ private:
   int ref_count_;
 };
 
-template<class T>
-static Param<T> * Param_Factory(const double v) {
-  return new Param<T>(v);
+static Param<double> * Param_double_Factory(double v) {
+  return new Param<double>(v);
 }
 
 double myFunction(const double d) {
@@ -558,7 +557,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType("Pdouble", 0, asOBJ_REF); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_FACTORY, "Pdouble @f(double)", asFUNCTIONPR(Param_Factory<double>, (const double), Param<double> *), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_FACTORY, "Pdouble @f(double)", asFUNCTION(Param_double_Factory), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_ADDREF,  "void f()", asMETHOD(Param<double>, add_ref), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_RELEASE, "void f()", asMETHOD(Param<double>, release), asCALL_THISCALL); assert( r >= 0 );
 

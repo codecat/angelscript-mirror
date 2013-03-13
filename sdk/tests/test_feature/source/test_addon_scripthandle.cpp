@@ -79,7 +79,7 @@ bool Test()
 #endif
 
 		// TODO: optimize: assert( ha !is null ); is producing code that unecessarily calls ClrVPtr and FREE for the null handle
-		const char *script = 
+		const char *script =
 							 "class A {} \n"
 							 "class B {} \n"
 							 "void main() \n"
@@ -88,7 +88,7 @@ bool Test()
 							 "  A a; B b; \n"
 							 // Assignment of reference
 							 "  @ra = @a; \n"
-							 "  assert( ra is a ); \n" 
+							 "  assert( ra is a ); \n"
 							 "  @rb = @b; \n"
 							 // Casting to reference
 							 "  A@ ha = cast<A>(ra); \n"
@@ -112,7 +112,7 @@ bool Test()
 							 "  @rb = func(rb); \n"
 							 "  assert( rb is b ); \n"
 							 "  assert( func(rb) is b ); \n"
-							 // Arrays of handles 
+							 // Arrays of handles
 							 "  array<ref@> arr(2); \n"
 							 "  assert( arr[0] is null ); \n"
 							 "  @arr[0] = a; \n"
@@ -199,7 +199,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Test function handles in ref object
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"funcdef void FUNC1(); \n"
 			"funcdef void FUNC2(int); \n"
 			"void func1() {} \n"
