@@ -342,6 +342,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.alwaysImplDefaultConstruct = value ? true : false;
 		break;
 
+	case asEP_COMPILER_WARNINGS:
+		if( value <= 2 )
+			ep.compilerWarnings = (int)value;
+		else
+			return asINVALID_ARG;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -406,6 +413,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
 		return ep.alwaysImplDefaultConstruct;
+
+	case asEP_COMPILER_WARNINGS:
+		return ep.compilerWarnings;
 	}
 
 	return 0;
@@ -439,6 +449,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.autoGarbageCollect           = true;
 		ep.disallowGlobalVars           = false;
 		ep.alwaysImplDefaultConstruct   = false;
+		ep.compilerWarnings             = 1;         // 0 = no warnings, 1 = warning, 2 = treat as error
 	}
 
 	gc.engine = this;

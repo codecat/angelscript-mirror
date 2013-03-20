@@ -238,6 +238,9 @@ int asCBuilder::Build()
 	//       The builder needs to check for each of the global variable, what functions
 	//       that are accessed, and what global variables are access by these functions.
 
+	if( numWarnings > 0 && engine->ep.compilerWarnings == 2 )
+		WriteError(TXT_WARNINGS_TREATED_AS_ERROR, 0, 0);
+
 	if( numErrors > 0 )
 		return asERROR;
 
@@ -280,6 +283,9 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 	RegisterGlobalVar(node, script, module->defaultNamespace);
 
 	CompileGlobalVariables();
+
+	if( numWarnings > 0 && engine->ep.compilerWarnings == 2 )
+		WriteError(TXT_WARNINGS_TREATED_AS_ERROR, 0, 0);
 
 	if( numErrors > 0 )
 	{
@@ -405,12 +411,12 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->isExistingShared  = false;
 
 	asCCompiler compiler(engine);
-	if( compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func, 0) >= 0 )
-	{
-		// Return the function
-		*outFunc = func;
-	}
-	else
+	compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func, 0);
+
+	if( numWarnings > 0 && engine->ep.compilerWarnings == 2 )
+		WriteError(TXT_WARNINGS_TREATED_AS_ERROR, 0, 0);
+
+	if( numErrors > 0 )
 	{
 		// If the function was added to the module then remove it again
 		if( compileFlags & asCOMP_ADD_TO_MODULE )
@@ -425,6 +431,9 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 
 		return asERROR;
 	}
+
+	// Return the function
+	*outFunc = func;
 
 	return asSUCCESS;
 }
@@ -4191,10 +4200,10 @@ void asCBuilder::WriteInfo(const asCString &message, asCScriptCode *file, asCScr
 void asCBuilder::WriteError(const asCString &message, asCScriptCode *file, asCScriptNode *node)
 {
 	int r = 0, c = 0;
-	if( node )
+	if( node && file )
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	WriteError(file->name, message, r, c);
+	WriteError(file ? file->name : "", message, r, c);
 }
 
 void asCBuilder::WriteError(const asCString &scriptname, const asCString &message, int r, int c)
@@ -4210,13 +4219,16 @@ void asCBuilder::WriteError(const asCString &scriptname, const asCString &messag
 
 void asCBuilder::WriteWarning(const asCString &scriptname, const asCString &message, int r, int c)
 {
-	numWarnings++;
+	if( engine->ep.compilerWarnings )
+	{
+		numWarnings++;
 
-	// Need to pass the preMessage first
-	if( preMessage.isSet )
-		WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
+		// Need to pass the preMessage first
+		if( preMessage.isSet )
+			WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
 
-	engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_WARNING, message.AddressOf());
+		engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_WARNING, message.AddressOf());
+	}
 }
 
 asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *script, asCScriptNode **next)

@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22601
-#define ANGELSCRIPT_VERSION_STRING "2.26.1"
+#define ANGELSCRIPT_VERSION        22602
+#define ANGELSCRIPT_VERSION_STRING "2.26.2 WIP"
 
 // Data types
 
@@ -96,7 +96,8 @@ enum asEEngineProp
 	asEP_EXPAND_DEF_ARRAY_TO_TMPL      = 15,
 	asEP_AUTO_GARBAGE_COLLECT          = 16,
 	asEP_DISALLOW_GLOBAL_VARS          = 17,
-	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT = 18
+	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT = 18,
+	asEP_COMPILER_WARNINGS             = 19
 };
 
 // Calling conventions

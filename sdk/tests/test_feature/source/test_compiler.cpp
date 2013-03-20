@@ -234,6 +234,29 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test warnings as error
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_COMPILER_WARNINGS, 2);
+
+		bout.buffer = "";
+
+		r = ExecuteString(engine, "uint a; a = -12;");
+		if( r >= 0  )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 13) : Warning : Implicit conversion changed sign of value\n"
+		                   " (0, 0) : Error   : Warnings are treated as errors by the application\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test check for division -2147483648 by -1
 	// http://www.gamedev.net/topic/639703-crash-in-divmod-implementations/
 	{
@@ -284,6 +307,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		engine->SetEngineProperty(asEP_COMPILER_WARNINGS, 0);
 		r = ExecuteString(engine, "int64 never_computed = (-9223372036854775808 % -1);\n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -295,7 +319,6 @@ bool Test()
 						   "ExecuteString (1, 23) : Warning : Implicit conversion changed sign of value\n"
 						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
 						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n"
 						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
 		{
 			printf("%s", bout.buffer.c_str());
