@@ -36,6 +36,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_COMPILER_WARNINGS to allow applications to turn off warnings
 <li>Changed the code back to emit a warning instead of an error on unreachable code as it was often used by developers to temporarily skip parts of the code during testing
 </ul>
+<li>Add-ons
+<ul>
+<li>Implemented helper function asGetTypeTraits<T> to aid in the registration of value types. Relies on C++11 features (Thanks Heuristics)
+</ul>
 <li>Project
 <ul>
 <li>Updated the Android makefile to make sure the library is compiled with thumb mode turned off (Thanks quarnster)

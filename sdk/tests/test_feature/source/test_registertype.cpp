@@ -29,6 +29,25 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+#if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
+#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
+	// Test the automatic determination of flags for registering value types
+	if( asGetTypeTraits<std::string>() != asOBJ_APP_CLASS_CDAK )
+		TEST_FAILED;
+	if( asGetTypeTraits<void*>() != asOBJ_APP_PRIMITIVE )
+		TEST_FAILED;
+	if( asGetTypeTraits<float>() != asOBJ_APP_FLOAT )
+		TEST_FAILED;
+	if( asGetTypeTraits<double>() != asOBJ_APP_FLOAT )
+		TEST_FAILED;
+	if( asGetTypeTraits<bool>() != asOBJ_APP_PRIMITIVE )
+		TEST_FAILED;
+	struct T {bool a;};
+	if( asGetTypeTraits<T>() != asOBJ_APP_CLASS )
+		TEST_FAILED;
+#endif
+#endif
+
 	// Problem reported by Paril101
 	// http://www.gamedev.net/topic/636336-member-function-chaining/
 	{
