@@ -2572,7 +2572,7 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 	{
 		// Find the function from the engine's bind array
 		int funcId = asBC_INTARG(&func->byteCode[programPos]);
-		return engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
+		return engine->importedFunctions[funcId & ~FUNC_IMPORTED]->importedFunctionSignature;
 	}
 	else if( bc == asBC_CallPtr )
 	{
@@ -3560,7 +3560,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		{
 			// Find the function from the engine's bind array
 			int funcId = asBC_INTARG(&func->byteCode[n]);
-			calledFunc = engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
+			calledFunc = engine->importedFunctions[funcId & ~FUNC_IMPORTED]->importedFunctionSignature;
 			break;
 		}
 		else if( bc == asBC_CallPtr )

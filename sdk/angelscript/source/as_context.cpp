@@ -2348,7 +2348,7 @@ void asCContext::ExecuteNext()
 			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
-			int funcId = m_engine->importedFunctions[i&0xFFFF]->boundFunctionId;
+			int funcId = m_engine->importedFunctions[i & ~FUNC_IMPORTED]->boundFunctionId;
 			if( funcId == -1 )
 			{
 				// Tell the exception handler to clean up the arguments to this function
@@ -4227,7 +4227,7 @@ void asCContext::CleanArgsOnStack()
 	else if( bc == asBC_CALLBND )
 	{
 		int funcId = asBC_INTARG(prevInstr);
-		func = m_engine->importedFunctions[funcId&0xFFFF]->importedFunctionSignature;
+		func = m_engine->importedFunctions[funcId & ~FUNC_IMPORTED]->importedFunctionSignature;
 	}
 	else if( bc == asBC_CallPtr )
 	{

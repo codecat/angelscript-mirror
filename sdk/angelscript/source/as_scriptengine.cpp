@@ -4428,7 +4428,7 @@ void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
 void asCScriptEngine::FreeScriptFunctionId(int id)
 {
 	if( id < 0 ) return;
-	id &= 0xFFFF;
+	id &= ~FUNC_IMPORTED;
 	if( id >= (int)scriptFunctions.GetLength() ) return;
 
 	if( scriptFunctions[id] )

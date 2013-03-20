@@ -2055,7 +2055,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					int r = asSUCCESS;
 
 					// Add the default values for arguments not explicitly supplied
-					asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+					asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 					if( func && args.GetLength() < (asUINT)func->GetParamCount() )
 						r = CompileDefaultArgs(node, args, func);
 
@@ -8079,7 +8079,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			int r = asSUCCESS;
 
 			// Add the default values for arguments not explicitly supplied
-			asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+			asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
 				r = CompileDefaultArgs(node, args, func);
 
@@ -8358,7 +8358,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 				// If the function pointer was copied to a local variable for the call, then
 				// release it again (temporary local variable)
-				if( (funcs[0] & 0xFFFF0000) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
+				if( (funcs[0] & FUNC_IMPORTED) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
 				{
 					ReleaseTemporaryVariable(funcPtr.type, &ctx->bc);
 				}
@@ -9664,7 +9664,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				int r = asSUCCESS;
 
 				// Add the default values for arguments not explicitly supplied
-				asCScriptFunction *func = (funcs[0] & 0xFFFF0000) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
+				asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 				if( func && args.GetLength() < (asUINT)func->GetParamCount() )
 					r = CompileDefaultArgs(node, args, func);
 

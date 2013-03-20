@@ -4072,10 +4072,10 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 {
 	// TODO: import: This should be improved when the imported functions are removed
 	// Get the description from the engine
-	if( (id & 0xFFFF0000) == 0 )
+	if( (id & FUNC_IMPORTED) == 0 )
 		return engine->scriptFunctions[id];
 	else
-		return engine->importedFunctions[id & 0xFFFF]->importedFunctionSignature;
+		return engine->importedFunctions[id & ~FUNC_IMPORTED]->importedFunctionSignature;
 }
 
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs, asSNameSpace *ns)

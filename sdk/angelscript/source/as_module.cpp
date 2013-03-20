@@ -440,7 +440,7 @@ void asCModule::InternalReset()
 	{
 		if( bindInformations[n] )
 		{
-			asUINT id = bindInformations[n]->importedFunctionSignature->id & 0xFFFF;
+			asUINT id = bindInformations[n]->importedFunctionSignature->id & ~FUNC_IMPORTED;
 			engine->importedFunctions[id] = 0;
 			engine->freeImportedFunctionIdxs.PushLast(id);
 
