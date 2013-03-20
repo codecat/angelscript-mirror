@@ -542,10 +542,10 @@ bool Test()
 
 		bout.buffer = "";
 		r = mod->Build();
-		if( r >= 0 )
+		if( r < 0 )
 			TEST_FAILED;
 		if( bout.buffer != "test (2, 1) : Info    : Compiling int dummy()\n"
-		                   "test (5, 3) : Error   : Unreachable code\n" )
+		                   "test (5, 3) : Warning : Unreachable code\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

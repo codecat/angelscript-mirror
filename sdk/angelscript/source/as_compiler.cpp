@@ -989,6 +989,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	*hasReturn = false;
 	bool isFinished = false;
 	bool hasUnreachableCode = false;
+	bool hasReturnBefore = false;
 
 	if( ownVariableScope )
 	{
@@ -1005,8 +1006,11 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 			if( node->nodeType != snExpressionStatement || node->firstChild )
 			{
 				hasUnreachableCode = true;
-				Error(TXT_UNREACHABLE_CODE, node);
+				Warning(TXT_UNREACHABLE_CODE, node);
 			}
+
+			if( *hasReturn )
+				hasReturnBefore = true;
 		}
 
 		if( node->nodeType == snBreak || node->nodeType == snContinue )
@@ -1017,6 +1021,10 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 			CompileDeclaration(node, &statement);
 		else
 			CompileStatement(node, hasReturn, &statement);
+
+		// Ignore missing returns in unreachable code paths
+		if( !(*hasReturn) && hasReturnBefore )
+			*hasReturn = true;
 
 		LineInstr(bc, node->tokenPos);
 		bc->AddCode(&statement);
@@ -2849,7 +2857,7 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 		if( !hasUnreachableCode && (hasReturn || isFinished) )
 		{
 			hasUnreachableCode = true;
-			Error(TXT_UNREACHABLE_CODE, node);
+			Warning(TXT_UNREACHABLE_CODE, node);
 			break;
 		}
 
