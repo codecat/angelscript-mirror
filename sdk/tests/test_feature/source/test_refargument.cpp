@@ -251,7 +251,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		const char *script = 
-			"void f(uint & d) {d = 1;}";
+			"void f(int & d) {d = 1;}";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 

@@ -221,7 +221,7 @@ bool Test()
 	bout.buffer = "";
 	r = ExecuteString(engine, "c_obj.SetVal(1);");
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 7) : Error   : No matching signatures to 'obj::SetVal(const uint) const'\n" )
+	if( bout.buffer != "ExecuteString (1, 7) : Error   : No matching signatures to 'obj::SetVal(const int) const'\n" )
 		TEST_FAILED;
 
 	// Allow the script to call const methods on a const object
@@ -236,8 +236,8 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (10, 1) : Info    : Compiling void func()\n"
-		               "script (15, 13) : Error   : No matching signatures to 'CTest::SetInt(const uint) const'\n"
-					   "script (16, 7) : Error   : No matching signatures to 'CTest::SetInt(const uint) const'\n" )
+		               "script (15, 13) : Error   : No matching signatures to 'CTest::SetInt(const int) const'\n"
+					   "script (16, 7) : Error   : No matching signatures to 'CTest::SetInt(const int) const'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

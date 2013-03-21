@@ -166,7 +166,7 @@ bool Test()
 		TEST_FAILED;
 	}
 	// TODO: the function signature for the constructors/factories should carry the name of the object instead of _beh_0_
-	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'complex(const uint, const uint, const uint, const uint)'\n"
+	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'complex(const int, const int, const int, const int)'\n"
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(const complex&in)\n"

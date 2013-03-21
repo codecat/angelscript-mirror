@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.2 WIP - 2013/03/19</h2>
+<h2>Version 2.26.2 WIP - 2013/03/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,6 +36,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_COMPILER_WARNINGS to allow applications to turn off warnings
 <li>Changed the code back to emit a warning instead of an error on unreachable code as it was often used by developers to temporarily skip parts of the code during testing
 <li>Increased maximum limit of number of functions in the engine from 65535 to approximately 10^9 (Thanks TheAtom)
+</ul>
+<li>Script language
+<ul>
+<li>Integer constants are now considered signed by default (Thanks cellulose)
 </ul>
 <li>Add-ons
 <ul>

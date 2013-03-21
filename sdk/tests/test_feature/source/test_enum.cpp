@@ -202,7 +202,7 @@ static bool TestEnum()
 	r = ExecuteString(engine, "float f = 1.2f; TEST_ENUM val = f");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'uint' to 'TEST_ENUM'.\n"
+	if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'int' to 'TEST_ENUM'.\n"
                        "ExecuteString (1, 33) : Error   : Can't implicitly convert from 'float' to 'TEST_ENUM'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());

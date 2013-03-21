@@ -121,7 +121,7 @@ bool Test()
 		{
 			TEST_FAILED;
 		}
-		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'uint' available.\n" )
+		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'int' available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 		}
@@ -275,7 +275,7 @@ bool Test()
 		{
 			TEST_FAILED;
 		}
-		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'uint' available.\n" )
+		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'int' available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 		}

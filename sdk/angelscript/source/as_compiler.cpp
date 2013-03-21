@@ -2578,7 +2578,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	CompileAssignment(snode->firstChild, &expr);
 
 	// Verify that the expression is a primitive type
-	if( !expr.type.dataType.IsIntegerType() && !expr.type.dataType.IsUnsignedType() && !expr.type.dataType.IsEnumType() )
+	if( !expr.type.dataType.IsIntegerType() && !expr.type.dataType.IsUnsignedType() )
 	{
 		Error(TXT_SWITCH_MUST_BE_INTEGRAL, snode->firstChild);
 		return;
@@ -2589,7 +2589,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 	// TODO: Need to support 64bit integers
 	// Convert the expression to a 32bit variable
 	asCDataType to;
-	if( expr.type.dataType.IsIntegerType() || expr.type.dataType.IsEnumType() )
+	if( expr.type.dataType.IsIntegerType() )
 		to.SetTokenType(ttInt);
 	else if( expr.type.dataType.IsUnsignedType() )
 		to.SetTokenType(ttUInt);
@@ -2633,7 +2633,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 				Error(TXT_SWITCH_CASE_MUST_BE_CONSTANT, cnode->firstChild);
 
 			// Verify that the result is an integral number
-			if( !c.type.dataType.IsIntegerType() && !c.type.dataType.IsUnsignedType() && !c.type.dataType.IsEnumType() )
+			if( !c.type.dataType.IsIntegerType() && !c.type.dataType.IsUnsignedType() )
 				Error(TXT_SWITCH_MUST_BE_INTEGRAL, cnode->firstChild);
 
 			ImplicitConversion(&c, to, cnode->firstChild, asIC_IMPLICIT_CONV, true);
@@ -4453,11 +4453,11 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 	asUINT cost = asCC_NO_CONV;
 	if( (to.IsIntegerType() || to.IsUnsignedType()) && (ctx->type.dataType.IsFloatType() || ctx->type.dataType.IsDoubleType()) )
 		cost = asCC_INT_FLOAT_CONV;
-	else if( (to.IsFloatType() || to.IsDoubleType()) && (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsEnumType()) )
+	else if( (to.IsFloatType() || to.IsDoubleType()) && (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType()) )
 		cost = asCC_INT_FLOAT_CONV;
 	else if( to.IsUnsignedType() && ctx->type.dataType.IsIntegerType() )
 		cost = asCC_SIGNED_CONV;
-	else if( to.IsIntegerType() && (ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsEnumType()) )
+	else if( to.IsIntegerType() && ctx->type.dataType.IsUnsignedType() )
 		cost = asCC_SIGNED_CONV;
 	else if( to.GetSizeInMemoryBytes() || ctx->type.dataType.GetSizeInMemoryBytes() )
 		cost = asCC_PRIMITIVE_SIZE_CONV;
@@ -4498,12 +4498,11 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 			}
 		}
 
-		if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1) ||
+		if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType()) ||
 			(to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST) )
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
-				ctx->type.dataType.IsUnsignedType() ||
-				ctx->type.dataType.IsEnumType() )
+				ctx->type.dataType.IsUnsignedType() )
 			{
 				if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 				{
@@ -4549,8 +4548,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
-				ctx->type.dataType.IsUnsignedType() ||
-				ctx->type.dataType.IsEnumType() )
+				ctx->type.dataType.IsUnsignedType() )
 			{
 				if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 				{
@@ -4588,8 +4586,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1  )
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
-				ctx->type.dataType.IsUnsignedType() ||
-				ctx->type.dataType.IsEnumType() )
+				ctx->type.dataType.IsUnsignedType() )
 			{
 				if( ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 				{
@@ -4635,8 +4632,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
-				ctx->type.dataType.IsUnsignedType() ||
-				ctx->type.dataType.IsEnumType() )
+				ctx->type.dataType.IsUnsignedType() )
 			{
 				if( ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 				{
@@ -4673,7 +4669,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		}
 		else if( to.IsFloatType() )
 		{
-			if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+			if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
 				ConvertToTempVariable(ctx);
 				ctx->bc.InstrSHORT(asBC_iTOf, ctx->type.stackOffset);
@@ -4714,7 +4710,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		}
 		else if( to.IsDoubleType() )
 		{
-			if( (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType()) && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
+			if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
 				ConvertToTempVariable(ctx);
 				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
@@ -4756,12 +4752,11 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 	}
 	else
 	{
-		if( (to.IsIntegerType() || to.IsUnsignedType() ||
+		if( ((to.IsIntegerType() && !to.IsEnumType()) || to.IsUnsignedType() ||
 			 to.IsFloatType()   || to.IsDoubleType() ||
 			 (to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST)) &&
 			(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
-			 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType() ||
-			 ctx->type.dataType.IsEnumType()) )
+			 ctx->type.dataType.IsFloatType()   || ctx->type.dataType.IsDoubleType()) )
 		{
 			ctx->type.dataType.SetTokenType(to.GetTokenType());
 			ctx->type.dataType.SetObjectType(to.GetObjectType());
@@ -5611,14 +5606,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 	// References cannot be constants
 	if( from->type.dataType.IsReference() ) return;
 
-	if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1) ||
+	if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType()) ||
 		(to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST) )
 	{
 		if( from->type.dataType.IsFloatType() ||
 			from->type.dataType.IsDoubleType() ||
 			from->type.dataType.IsUnsignedType() ||
-			from->type.dataType.IsIntegerType() ||
-			from->type.dataType.IsEnumType() )
+			from->type.dataType.IsIntegerType() )
 		{
 			// Transform the value
 			// Float constants can be implicitly converted to int
@@ -5674,10 +5668,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 					from->type.intValue = (signed char)from->type.byteValue;
 				else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
 					from->type.intValue = (short)from->type.wordValue;
-			}
-			else if( from->type.dataType.IsEnumType() )
-			{
-				// Enum type is already an integer type
 			}
 
 			// Set the resulting type
@@ -5760,11 +5750,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
 		}
-		else if( from->type.dataType.IsEnumType() )
-		{
-			from->type.qwordValue = from->type.intValue;
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
-		}
 		else if( from->type.dataType.IsIntegerType() )
 		{
 			// Convert to 64bit
@@ -5812,13 +5797,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 			from->type.intValue = uic;
-
-			// Try once more, in case of a smaller type
-			ImplicitConversionConstant(from, to, node, convType);
-		}
-		else if( from->type.dataType.IsEnumType() )
-		{
-			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, convType);
@@ -5914,11 +5892,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
 			from->type.qwordValue = uic;
 		}
-		else if( from->type.dataType.IsEnumType() )
-		{
-			from->type.qwordValue = (asINT64)from->type.intValue;
-			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
-		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Convert to 64bit
@@ -5974,18 +5947,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 //				str.Format(TXT_POSSIBLE_LOSS_OF_PRECISION);
 //				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str, node);
 //			}
-
-			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.floatValue = fc;
-		}
-		else if( from->type.dataType.IsEnumType() )
-		{
-			float fc = float(from->type.intValue);
-
-			if( int(fc) != from->type.intValue )
-			{
-				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
-			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
@@ -6068,18 +6029,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		//		str.Format(TXT_NOT_EXACT_g_g_g, ic, fc, float(fc));
 		//		if( !isExplicit ) Warning(str, node);
 		//	}
-
-			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.doubleValue = fc;
-		}
-		else if( from->type.dataType.IsEnumType() )
-		{
-			double fc = double(from->type.intValue);
-
-			if( int(fc) != from->type.intValue )
-			{
-				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
-			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
@@ -7239,9 +7188,15 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 
 			// Do we need 64 bits?
 			if( val>>32 )
-				ctx->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), val);
+			{
+				// Only if the value uses the last bit of a 64bit word do we consider the number unsigned
+				if( val>>63 )
+					ctx->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), val);
+				else
+					ctx->type.SetConstantQW(asCDataType::CreatePrimitive(ttInt64, true), val);
+			}
 			else
-				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), asDWORD(val));
+				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), asDWORD(val));
 		}
 		else if( vnode->tokenType == ttBitsConstant )
 		{
@@ -8550,7 +8505,6 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		// Make sure the type is a math type
 		if( !(ctx->type.dataType.IsIntegerType()  ||
 			  ctx->type.dataType.IsUnsignedType() ||
-			  ctx->type.dataType.IsEnumType()     ||
 			  ctx->type.dataType.IsFloatType()    ||
 			  ctx->type.dataType.IsDoubleType()     ) )
 		{
@@ -8565,7 +8519,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 
 		// TODO: The case -2147483648 gives an unecessary warning of changed sign for implicit conversion
 
-		if( ctx->type.dataType.IsUnsignedType() || ctx->type.dataType.IsEnumType() )
+		if( ctx->type.dataType.IsUnsignedType() )
 		{
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
 				to = asCDataType::CreatePrimitive(ttInt8, false);
@@ -8660,7 +8614,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 
 		asCDataType to = ctx->type.dataType;
 
-		if( ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsEnumType() )
+		if( ctx->type.dataType.IsIntegerType() )
 		{
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
 				to = asCDataType::CreatePrimitive(ttUInt8, false);
@@ -10438,26 +10392,41 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
+	// TODO: clean up: This initial part is identical to CompileComparisonOperator. Make a common function out of it
+
 	// Implicitly convert the operands to a number type
 	asCDataType to;
-	if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
+
+	// If either operand is a non-primitive then use the primitive type
+	if( !lctx->type.dataType.IsPrimitive() )
+		to.SetTokenType(rctx->type.dataType.GetTokenType());
+	else if( !rctx->type.dataType.IsPrimitive() )
+			to.SetTokenType(lctx->type.dataType.GetTokenType());
+	else if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
 		to.SetTokenType(ttDouble);
 	else if( lctx->type.dataType.IsFloatType() || rctx->type.dataType.IsFloatType() )
 		to.SetTokenType(ttFloat);
 	else if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 || rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 	{
-		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() )
+		// Convert to int64 if both are signed or if one is non-constant and signed
+		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
+			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt64);
-		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
+		else
 			to.SetTokenType(ttUInt64);
 	}
 	else
 	{
-		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() ||
-			lctx->type.dataType.IsEnumType() || rctx->type.dataType.IsEnumType() )
+		// Convert to int32 if both are signed or if one is non-constant and signed
+		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
+			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt);
 		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt);
+		else if( lctx->type.dataType.IsBooleanType() || rctx->type.dataType.IsBooleanType() )
+			to.SetTokenType(ttBool);
 	}
 
 	// If doing an operation with double constant and float variable, the constant should be converted to float
@@ -11046,21 +11015,32 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 
 	// Implicitly convert the operands to a number type
 	asCDataType to;
-	if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
+
+	// If either operand is a non-primitive then use the primitive type
+	if( !lctx->type.dataType.IsPrimitive() )
+		to.SetTokenType(rctx->type.dataType.GetTokenType());
+	else if( !rctx->type.dataType.IsPrimitive() )
+			to.SetTokenType(lctx->type.dataType.GetTokenType());
+	else if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
 		to.SetTokenType(ttDouble);
 	else if( lctx->type.dataType.IsFloatType() || rctx->type.dataType.IsFloatType() )
 		to.SetTokenType(ttFloat);
 	else if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 || rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 	{
-		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() )
+		// Convert to int64 if both are signed or if one is non-constant and signed
+		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
+			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt64);
-		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
+		else
 			to.SetTokenType(ttUInt64);
 	}
 	else
 	{
-		if( lctx->type.dataType.IsIntegerType() || rctx->type.dataType.IsIntegerType() ||
-			lctx->type.dataType.IsEnumType() || rctx->type.dataType.IsEnumType() )
+		// Convert to int32 if both are signed or if one is non-constant and signed
+		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
+			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt);
 		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt);
@@ -11073,37 +11053,34 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 		(rctx->type.isConstant && rctx->type.dataType.IsDoubleType() && !lctx->type.isConstant && lctx->type.dataType.IsFloatType()) )
 		to.SetTokenType(ttFloat);
 
-	// Is it an operation on signed values?
+	asASSERT( to.GetTokenType() != ttUnrecognizedToken );
+
+	// Do we have a mismatch between the sign of the operand?
 	bool signMismatch = false;
-	if( !lctx->type.dataType.IsUnsignedType() || !rctx->type.dataType.IsUnsignedType() )
+	for( int n = 0; !signMismatch && n < 2; n++ )
 	{
-		if( lctx->type.dataType.GetTokenType() == ttUInt64 )
+		asSExprContext *op = n ? rctx : lctx;
+
+		if( op->type.dataType.IsUnsignedType() != to.IsUnsignedType() )
 		{
-			if( !lctx->type.isConstant )
-				signMismatch = true;
-			else if( lctx->type.qwordValue & (asQWORD(1)<<63) )
-				signMismatch = true;
-		}
-		if( lctx->type.dataType.GetTokenType() == ttUInt )
-		{
-			if( !lctx->type.isConstant )
-				signMismatch = true;
-			else if( lctx->type.dwordValue & (asDWORD(1)<<31) )
-				signMismatch = true;
-		}
-		if( rctx->type.dataType.GetTokenType() == ttUInt64 )
-		{
-			if( !rctx->type.isConstant )
-				signMismatch = true;
-			else if( rctx->type.qwordValue & (asQWORD(1)<<63) )
-				signMismatch = true;
-		}
-		if( rctx->type.dataType.GetTokenType() == ttUInt )
-		{
-			if( !rctx->type.isConstant )
-				signMismatch = true;
-			else if( rctx->type.dwordValue & (asDWORD(1)<<31) )
-				signMismatch = true;
+			// We have a mismatch, unless the value is a literal constant and the conversion won't affect its value
+			signMismatch = true;
+			if( op->type.isConstant )
+			{
+				if( op->type.dataType.GetTokenType() == ttUInt64 || op->type.dataType.GetTokenType() == ttInt64 )
+				{
+					if( !(op->type.qwordValue & (asQWORD(1)<<63)) )
+						signMismatch = false;
+				}
+				else
+				{
+					if( !(op->type.dwordValue & (1<<31)) )
+						signMismatch = false;
+				}
+
+				// It's not necessary to check for floats or double, because if
+				// it was then the types for the conversion will never be unsigned
+			}
 		}
 	}
 

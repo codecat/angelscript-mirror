@@ -628,7 +628,7 @@ bool Test2()
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::method()\n"
 					   "script (1, 27) : Error   : Namespace 'B' doesn't exist.\n"
-					   "script (1, 38) : Error   : No matching signatures to 'A::method(const uint)'\n"
+					   "script (1, 38) : Error   : No matching signatures to 'A::method(const int)'\n"
 					   "script (1, 38) : Info    : Candidates are:\n"
 					   "script (1, 38) : Info    : void A::method()\n"
 					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"

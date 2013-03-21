@@ -234,6 +234,31 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test that integer constants are signed by default
+	// http://www.gamedev.net/topic/625735-bizarre-errata-with-ternaries-and-integer-literals/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		g_printbuf = "";
+		r = ExecuteString(engine, "float a = ((false?1:0)-(true?1:0)); print('' + a); a += 1; assert( a < 0.005 && a > -0.005 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test warnings as error
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -312,12 +337,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (1, 15) : Warning : Implicit conversion changed sign of value\n"
-		                   "ExecuteString (1, 15) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 15) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 23) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 23) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
+		if( bout.buffer != "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
 						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
 						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
 		{
@@ -1367,9 +1387,12 @@ bool Test()
 
 	if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void CompilerAssert()\n"
 					   "TestCompiler (3, 13) : Error   : Can't implicitly convert from 'uint' to 'bool'.\n"
-					   "TestCompiler (4, 13) : Error   : Can't implicitly convert from 'uint' to 'bool'.\n"
+					   "TestCompiler (4, 13) : Error   : Can't implicitly convert from 'int' to 'bool'.\n"
 					   "TestCompiler (5, 5) : Error   : No conversion from 'bool' to math type available.\n" )
-	   TEST_FAILED;
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 
 	// test 3
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -1532,7 +1555,7 @@ bool Test()
 	r = ExecuteString(engine, "uint32[] a = 0;");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 14) : Error   : Can't implicitly convert from 'const uint' to 'uint[]&'.\n" )
+	if( bout.buffer != "ExecuteString (1, 14) : Error   : Can't implicitly convert from 'const int' to 'uint[]&'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -1741,7 +1764,7 @@ bool Test()
 		mod->AddScriptSection("test", "derp wtf = 32;");
 		r = mod->Build();
 		if( r >= 0 || bout.buffer != "test (1, 10) : Info    : Compiling derp wtf\n"
-		                             "test (1, 12) : Error   : Can't implicitly convert from 'const uint' to 'derp&'.\n"
+		                             "test (1, 12) : Error   : Can't implicitly convert from 'const int' to 'derp&'.\n"
 		                             "test (1, 12) : Error   : There is no copy operator for the type 'derp' available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());

@@ -147,7 +147,7 @@ bool TestVector3()
 		TEST_FAILED;
 	}
 	// TODO: the function signature for the constructors/factories should carry the name of the object instead of _beh_0_
-	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const uint, const uint, const uint, const uint)'\n"
+	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const int, const int, const int, const int)'\n"
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
