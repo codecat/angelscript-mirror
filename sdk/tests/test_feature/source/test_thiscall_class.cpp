@@ -65,6 +65,7 @@ class Class4
 {
 public:
 	asDWORD a;
+	std::string text;
 
 	Class1 class1()
 	{
@@ -116,6 +117,11 @@ public:
 		assert(a == 0x1337C0DE);
 		assert( c.a == 0xDEADC0DE && c.b == 0x01234567 && c.c == 0x89ABCDEF );
 	}
+
+	std::string GetText()
+	{
+		return text;
+	}
 };
 
 static Class1 c1;
@@ -136,6 +142,9 @@ bool TestThiscallClass()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
+	RegisterStdString(engine);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
 	// On 64bit Linux these types would be returned in RAX:RDX, and must be informed with asOBJ_APP_CLASS_ALLINTS
 	engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 	engine->RegisterObjectType("class2", sizeof(Class2), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
@@ -151,6 +160,7 @@ bool TestThiscallClass()
 	engine->RegisterObjectMethod("class4", "void class2ByVal(class2)", asMETHOD(Class4, class2ByVal), asCALL_THISCALL);
 	engine->RegisterObjectMethod("class4", "void class2_2ByVal(class2_2)", asMETHOD(Class4, class2_2ByVal), asCALL_THISCALL);
 	engine->RegisterObjectMethod("class4", "void class3ByVal(class3)", asMETHOD(Class4, class3ByVal), asCALL_THISCALL);
+	engine->RegisterObjectMethod("class4", "string GetText()", asMETHOD(Class4, GetText), asCALL_THISCALL);
 
 	engine->RegisterGlobalProperty("class1 c1", &c1);
 	engine->RegisterGlobalProperty("class2 c2", &c2);
@@ -159,6 +169,7 @@ bool TestThiscallClass()
 	engine->RegisterGlobalProperty("class4 c4", &c4);
 
 	c4.a = 0x1337C0DE;
+	c4.text = "hello";
 
 
 	COutStream out;
@@ -262,6 +273,12 @@ bool TestThiscallClass()
 	r = ExecuteString(engine, "class3 c = c4.class3(); c4.class3ByVal(c)");
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
+
+	// Test thiscall that returns a complex class
+	r = ExecuteString(engine, "assert( c4.GetText() == 'hello' );");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
 	engine->Release();
 
 	return fail;

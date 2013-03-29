@@ -34,7 +34,6 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-Wall" />
-					<Add option="-g" />
 					<Add option="-fno-strict-aliasing" />
 					<Add option="-m64" />
 					<Add option="-DANGELSCRIPT_EXPORT" />

@@ -86,6 +86,15 @@ bool Test8();
 bool Test9();
 bool TestRetRef();
 
+struct A {
+    A() { text = "hello"; }
+    static void Constructor(A *self) {new(self) A();}
+    static void Destructor(A *memory) {memory->~A();}
+    std::string getText() {return this->text;}
+    std::string text;
+    A getA() {return A();}
+};
+
 // For test Philip Bennefall
 class CSound
 {
@@ -234,6 +243,44 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test
+	// http://www.gamedev.net/topic/640966-returning-text-crashes-as-with-mingw-471-but-not-with-441/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
+#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
+        if( asGetTypeTraits<A>() != asOBJ_APP_CLASS_CDAK )
+            TEST_FAILED;
+#endif
+#endif
+
+		int r = engine->RegisterObjectType("A", sizeof(A), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("A", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(A::Constructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("A", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(A::Destructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("A", "string getText()", asMETHOD(A,getText), asCALL_THISCALL);assert( r >= 0 );
+		r = engine->RegisterObjectMethod("A", "A getA()", asMETHOD(A,getA), asCALL_THISCALL);assert( r >= 0 );
+
+		r = ExecuteString(engine, "A a; \n"
+			                      "string text = a.getA().getText(); \n"
+								  "assert( text == 'hello' ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test that integer constants are signed by default
 	// http://www.gamedev.net/topic/625735-bizarre-errata-with-ternaries-and-integer-literals/
 	{
@@ -249,7 +296,7 @@ bool Test()
 		r = ExecuteString(engine, "float a = ((false?1:0)-(true?1:0)); print('' + a); a += 1; assert( a < 0.005 && a > -0.005 );");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
-		
+
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
