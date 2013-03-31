@@ -12,8 +12,6 @@ cannot be passed by value to application registered functions, a value type
 doesn't support handles and can be passed by value to application registered
 functions.
 
-\todo Write guide on how to choose how to register a type
-
  - \subpage doc_reg_basicref
  - \subpage doc_register_val_type
  - \subpage doc_reg_opbeh
@@ -223,14 +221,14 @@ If the type will be passed to and from the application by value using native cal
 AngelScript of its real type in C++, otherwise AngelScript won't be able to determine exactly how C++ is treating the type in
 a parameter or return value. 
 
-There are a few different flags for this:
+There are a few different flags:
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td>\ref asOBJ_APP_CLASS                  &nbsp; </td><td>The C++ type is a class, struct, or union</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_CONSTRUCTOR      &nbsp; </td><td>The C++ type has a defined constructor</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_DESTRUCTOR       &nbsp; </td><td>The C++ type has a defined destructor</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_ASSIGNMENT       &nbsp; </td><td>The C++ type has a defined assignment operator</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_COPY_CONSTRUCTOR &nbsp; </td><td>The C++ type has a defined copy constructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_CONSTRUCTOR      &nbsp; </td><td>The C++ type has a default constructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_DESTRUCTOR       &nbsp; </td><td>The C++ type has a destructor</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ASSIGNMENT       &nbsp; </td><td>The C++ type has a copy assignment operator</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_COPY_CONSTRUCTOR &nbsp; </td><td>The C++ type has a copy constructor</td></tr>
 <tr><td>\ref asOBJ_APP_PRIMITIVE              &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
 <tr><td>\ref asOBJ_APP_FLOAT                  &nbsp; </td><td>The C++ type is a float or double</td></tr>
 </table>
@@ -240,6 +238,10 @@ application. So if you want to register a C++ class that you want to behave as a
 you should still use the flag \ref asOBJ_APP_CLASS. The same thing for the flags to identify that the class has a constructor, 
 destructor, assignment operator, or copy constructor. These flags tell AngelScript that the class has the respective function, 
 but not that the type in the script language should have these behaviours.
+
+Observe that the C++ compiler may provide these functions automatically if one of the members of the class is of a type that 
+requires it. So even if the type you want to register doesn't have a declared default constructor it may still be necessary to
+register the type with the flag asOBJ_APP_CLASS_CONSTRUCTOR. The same for the other functions.
 
 For class types there is also a shorter form of the flags for each combination of the 5 flags. They are of the form \ref asOBJ_APP_CLASS_CDAK, 
 where the existance of the last letters determine if the constructor, destructor, and/or assignment behaviour are available. For example
@@ -253,6 +255,14 @@ r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asOBJ_A
 Make sure you inform these flags correctly, because if you do not you may get various errors when executing the scripts. 
 Common problems are stack corruptions and invalid memory accesses. In some cases you may face more silent errors that
 may be difficult to detect, e.g. the function is not returning the expected values.
+
+If you use a compiler with support for the C++11 standard, then you can use the helper function \ref doc_addon_helpers "GetTypeTraits"
+to automatically determine the correct set of the above flags to use for a type.
+
+\code
+// With C++11 the type can be registered with GetTypeTraits
+r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | GetTypeTraits<complex>()); assert( r >= 0 );
+\endcode
 
 On some platforms the native calling convention may require further knowledge about the class members in order to work 
 properly; most notable are the Linux 64bit and Mac OSX 64bit systems with the GNUC compiler. On these systems small classes 
@@ -371,7 +381,9 @@ then there is no need to register the explicit value cast operator.
 
 \page doc_reg_objmeth Registering object methods
 
-Class methods are registered with the RegisterObjectMethod call.
+Class methods are registered with the RegisterObjectMethod call. Both non-virtual and virtual methods are registered the same way.
+
+Static class methods are in reality global functions so those should be \ref doc_register_func "registered as global functions" and not as object methods.
 
 \code
 // Register a class method
@@ -398,6 +410,16 @@ void MyClass_MethodWrapper(MyClass *obj)
 
 r = engine->RegisterObjectMethod("mytype", "void MethodWrapper()", asFUNCTION(MyClass_MethodWrapper), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
+
+\see \ref doc_register_func for more details on how the macros work.
+
+
+
+
+
+
+
+
 
 \page doc_reg_objprop Registering object properties
 

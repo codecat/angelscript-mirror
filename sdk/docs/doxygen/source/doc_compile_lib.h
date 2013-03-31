@@ -190,10 +190,6 @@ armasm -g $(InputPath)
 Marmalade is a cross platform SDK created with mobile devices in mind. It functions by abstracting the underlying OS
 with its own C runtime library even though it uses the common C++ compilers, e.g. MSVC on Windows, and GNUC on Linux and Mac.
 
-Unfortunately Marmalade doesn't provide a specific pre-processor define that can be used to automatically detect that 
-the library is being compiled for use with Marmalade. So in this case it is necessary to manually define the word 
-MARMALADE in the project settings or makefile to allow AngelScript to detect this.
-
 When compiling AngelScript with Marmalade for iOS and Android scons must be used in order to properly 
 compile the native ARM assembler routines. For Windows Phone you should be able to use MSVC normally.
 

@@ -210,7 +210,7 @@ must be used, even if the other namespace is a parent namespace or even the glob
 
         // To access variables in global scope the scoping 
         // operator without any name should be used
-        Parent::varInParentScope = ::&empty;varInGlobalScope;
+        Parent::varInParentScope = \::varInGlobalScope;
       }
     }
   }

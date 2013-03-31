@@ -36,7 +36,7 @@ END_AS_NAMESPACE
 BEGIN_AS_NAMESPACE
 
 template<typename T>
-asUINT asGetTypeTraits()
+asUINT GetTypeTraits()
 {
 	bool hasConstructor =  std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
 	bool hasDestructor = std::is_destructible<T>::value && !std::has_trivial_destructor<T>::value;

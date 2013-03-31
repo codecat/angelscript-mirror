@@ -255,7 +255,7 @@ bool Test()
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
-        if( asGetTypeTraits<A>() != asOBJ_APP_CLASS_CDAK )
+        if( GetTypeTraits<A>() != asOBJ_APP_CLASS_CDAK )
             TEST_FAILED;
 #endif
 #endif

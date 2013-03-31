@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.26.1
-#define ANGELSCRIPT_VERSION        22601
-#define ANGELSCRIPT_VERSION_STRING "2.26.1"
+//! Version 2.26.2
+#define ANGELSCRIPT_VERSION        22602
+#define ANGELSCRIPT_VERSION_STRING "2.26.2"
 
 // Data types
 
@@ -92,7 +92,7 @@ enum asEEngineProp
 	asEP_OPTIMIZE_BYTECODE             = 2,
 	//! Copy script section memory. Default: true.
 	asEP_COPY_SCRIPT_SECTIONS          = 3,
-	//! Maximum stack size for script contexts. Default: 0 (no limit).
+	//! Maximum stack size in bytes for script contexts. Default: 0 (no limit).
 	asEP_MAX_STACK_SIZE                = 4,
 	//! Interpret single quoted strings as character literals. Default: false.
 	asEP_USE_CHARACTER_LITERALS        = 5,
@@ -121,7 +121,9 @@ enum asEEngineProp
 	//! Disallow the use of global variables in the script. Default: false
 	asEP_DISALLOW_GLOBAL_VARS          = 17,
 	//! When true, the compiler will always provide a default constructor for script classes. Default: false
-	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT = 18
+	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT = 18,
+	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error
+	asEP_COMPILER_WARNINGS             = 19
 };
 
 // Calling conventions

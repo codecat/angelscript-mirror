@@ -99,11 +99,8 @@ per loop and every function call in the script to allow the application to inter
 infinite loops or infinitely recursive calls.
 
 \code
-engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES);
+engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, true);
 \endcode
-
-
-
 
 
 
@@ -116,6 +113,26 @@ may be worth it to compile the library without the thread safety to gain a
 little more performance.
 
 To do this, define the AS_NO_THREADS flag in the as_config.h header or in the 
-project settings.
+project settings when compiling the library.
+
+
+
+
+\section doc_finetuning_5 Turn off automatic garbage collection
+
+While garbage collection is important long running applications, it may be of interest to 
+turn off the automatic garbage collection and then run the garbage collector manually in a
+controlled manner. The garbage collector is incremental so you shouldn't see long stalls 
+while it is running, but it will consume CPU cycles that may be needed for other things.
+
+To turn off the automatic garbage collector set the engine property \ref asEP_AUTO_GARBAGE_COLLECT to false.
+
+\code
+engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, false);
+\endcode
+
+\see \ref doc_gc
+
+
 
 */

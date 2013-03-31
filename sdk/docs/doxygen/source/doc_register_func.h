@@ -9,8 +9,6 @@ learned here are used in several locations, such as \ref asIScriptEngine::Regist
 "RegisterGlobalFunction", \ref asIScriptEngine::RegisterObjectMethod "RegisterObjectMethod", \ref
 asIScriptEngine::RegisterObjectBehaviour "RegisterObjectBehaviour", etc.
 
-\todo Break this article in two, one for global functions and the other for class methods. The article on class methods should be placed under 'Registering an object type'
-
 \section doc_register_func_1 How to get the address of the application function or method
 
 The macros \ref asFUNCTION, \ref asFUNCTIONPR, \ref asMETHOD, and \ref asMETHODPR 
