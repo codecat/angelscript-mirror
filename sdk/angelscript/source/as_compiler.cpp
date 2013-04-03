@@ -1700,6 +1700,14 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 		asSExprContext expr(engine);
 		r = CompileExpression(arg, &expr);
 
+		// Don't allow address of class method
+		if( expr.methodName != "" )
+		{
+			// TODO: Improve error message
+			Error(TXT_DEF_ARG_TYPE_DOESNT_MATCH, arg);
+			r = -1;
+		}
+
 		// Make sure the expression can be implicitly converted to the parameter type
 		if( r >= 0 )
 		{
@@ -6102,6 +6110,13 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 
 int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode)
 {
+	// Don't allow any operators on expressions that take address of class method
+	if( lctx->methodName != "" || rctx->methodName != "" )
+	{
+		Error(TXT_INVALID_OP_ON_METHOD, opNode);
+		return -1;
+	}
+
 	// Implicit handle types should always be treated as handles in assignments
 	if (lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
 	{
@@ -6451,6 +6466,13 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 		if( lr >= 0 && rr >= 0 )
 		{
+			// Don't allow any operators on expressions that take address of class method
+			if( le.methodName != "" || re.methodName != "" )
+			{
+				Error(TXT_INVALID_OP_ON_METHOD, expr);
+				return -1;
+			}
+
 			ProcessPropertyGetAccessor(&le, cexpr->next);
 			ProcessPropertyGetAccessor(&re, cexpr->next->next);
 
@@ -7700,6 +7722,13 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 	ProcessPropertyGetAccessor(&expr, node);
 
+	// Don't allow any operators on expressions that take address of class method
+	if( expr.methodName != "" )
+	{
+		Error(TXT_INVALID_OP_ON_METHOD, node);
+		return;
+	}
+
 	// We don't want a reference
 	if( expr.type.dataType.IsReference() )
 	{
@@ -8018,6 +8047,36 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 				ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
 				return;
 			}
+		}
+
+		// Special case: If this is a construction of a delegate
+		if( dt.GetFuncDef() && args.GetLength() == 1 && args[0]->methodName != "" )
+		{
+			// TODO: delegate: If the object being constructed is a function pointer, then push
+			//                 the information about the function pointer on the stack so that the 
+			//                 argument can be evaluated accordingly. It needs to be a stack because
+			//                 it is possible that there is nested expressions with function pointer 
+			//                 constructors.
+			//                 Potentially a different function than CompileArgumentList should be used
+			//                 for function pointer constructors.
+			//                 Once the expression is evaluated it must be possible to extract two informations
+			//                 a handle to the object, which must be a reference type that supports handles, and
+			//                 the method id which will be bound to the delegate. The method id will be pushed on
+			//                 the stack directly as it is defined at compile time, but the object handle must be 
+			//                 evaluated at run time.
+			// TODO: delegate: It is possible that the argument returns a function pointer already, in which
+			//                 case no object delegate will be created, but instead a delegate for a function pointer
+			//                 In theory a simple cast would be good in this case, but this is a construct call so it 
+			//                 is expected that a new object is created.
+
+
+			Error("Delegates are not yet supported", node);
+
+			ctx->type.Set(dt);
+
+			// Clean-up arg
+			asDELETE(args[0],asSExprContext);
+			return;
 		}
 
 		MatchFunctions(funcs, args, node, name.AddressOf(), NULL, false);
@@ -8375,10 +8434,16 @@ asSNameSpace *asCCompiler::DetermineNameSpace(const asCString &scope)
 
 int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx)
 {
-	int op = node->tokenType;
+	// Don't allow any prefix operators on expressions that take address of class method
+	if( ctx->methodName != "" )
+	{
+		Error(TXT_INVALID_OP_ON_METHOD, node);
+		return -1;
+	}
 
 	IsVariableInitialized(&ctx->type, node);
 
+	int op = node->tokenType;
 	if( op == ttHandle )
 	{
 		// Verify that the type allow its handle to be taken
@@ -9203,11 +9268,17 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ctx)
 {
-	int op = node->tokenType;
+	// Don't allow any postfix operators on expressions that take address of class method
+	if( ctx->methodName != "" )
+	{
+		Error(TXT_INVALID_OP_ON_METHOD, node);
+		return -1;
+	}
 
 	// Check if the variable is initialized (if it indeed is a variable)
 	IsVariableInitialized(&ctx->type, node);
 
+	int op = node->tokenType;
 	if( (op == ttInc || op == ttDec) && ctx->type.dataType.IsObject() )
 	{
 		const char *opName = 0;
@@ -9447,10 +9518,33 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				}
 				else
 				{
-					asCString str;
-					str.Format(TXT_s_NOT_MEMBER_OF_s, name.AddressOf(), ctx->type.dataType.Format().AddressOf());
-					Error(str, node);
-					return -1;
+					// If the name is not a property, the compiler must check if the name matches
+					// a method, which can be used for constructing delegates
+					asIScriptFunction *func = 0;
+					asCObjectType *ot = ctx->type.dataType.GetObjectType();
+					for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+					{
+						if( engine->scriptFunctions[ot->methods[n]]->name == name )
+						{
+							func = engine->scriptFunctions[ot->methods[n]];
+							break;
+						}
+					}
+
+					if( func )
+					{
+						// An object method was found. Keep the name of the method in the expression, but
+						// don't actually modify the bytecode at this point since it is not yet known what 
+						// the method will be used for, or even what overloaded method should be used.
+						ctx->methodName = name;
+					}
+					else
+					{
+						asCString str;
+						str.Format(TXT_s_NOT_MEMBER_OF_s, name.AddressOf(), ctx->type.dataType.Format().AddressOf());
+						Error(str, node);
+						return -1;
+					}
 				}
 			}
 			else
@@ -10184,6 +10278,13 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 
 int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
+	// Don't allow any operators on expressions that take address of class method
+	if( lctx->methodName != "" || rctx->methodName != "" )
+	{
+		Error(TXT_INVALID_OP_ON_METHOD, node);
+		return -1;
+	}
+
 	IsVariableInitialized(&lctx->type, node);
 	IsVariableInitialized(&rctx->type, node);
 
@@ -11916,6 +12017,7 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 	before->property_ref    = after->property_ref;
 	before->property_arg    = after->property_arg;
 	before->exprNode        = after->exprNode;
+	before->methodName      = after->methodName;
 
 	after->property_arg = 0;
 

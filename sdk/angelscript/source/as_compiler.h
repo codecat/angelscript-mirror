@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -102,6 +102,7 @@ struct asSExprContext
 		property_const  = false;
 		property_handle = false;
 		property_ref    = false;
+		methodName      = "";
 	}
 
 	asCByteCode bc;
@@ -115,6 +116,7 @@ struct asSExprContext
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asSExprContext *origExpr;
+	asCString methodName;
 };
 
 struct asSOverloadCandidate
