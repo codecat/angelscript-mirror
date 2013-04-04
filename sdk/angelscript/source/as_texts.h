@@ -52,6 +52,7 @@
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS     "Can't call a constructor in loops"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH    "Can't call a constructor in switch"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE        "Can't call a constructor multiple times"
+#define TXT_CANNOT_CREATE_DELEGATE_FOR_NOREF_TYPES "Can't create delegate for types that do not support handles"
 #define TXT_CANNOT_IMPLEMENT_SELF                "Can't implement itself, or another interface that implements this interface"
 #define TXT_CANNOT_INHERIT_FROM_s_FINAL          "Can't inherit from class '%s' marked as final"
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES "Can't inherit from multiple classes"

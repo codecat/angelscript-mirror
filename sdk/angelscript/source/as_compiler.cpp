@@ -8049,28 +8049,60 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			}
 		}
 
-		// Special case: If this is a construction of a delegate
+		// Special case: If this is a construction of a delegate and the expression names an object method
 		if( dt.GetFuncDef() && args.GetLength() == 1 && args[0]->methodName != "" )
 		{
-			// TODO: delegate: If the object being constructed is a function pointer, then push
-			//                 the information about the function pointer on the stack so that the 
-			//                 argument can be evaluated accordingly. It needs to be a stack because
-			//                 it is possible that there is nested expressions with function pointer 
-			//                 constructors.
-			//                 Potentially a different function than CompileArgumentList should be used
-			//                 for function pointer constructors.
-			//                 Once the expression is evaluated it must be possible to extract two informations
-			//                 a handle to the object, which must be a reference type that supports handles, and
-			//                 the method id which will be bound to the delegate. The method id will be pushed on
-			//                 the stack directly as it is defined at compile time, but the object handle must be 
-			//                 evaluated at run time.
 			// TODO: delegate: It is possible that the argument returns a function pointer already, in which
 			//                 case no object delegate will be created, but instead a delegate for a function pointer
 			//                 In theory a simple cast would be good in this case, but this is a construct call so it 
 			//                 is expected that a new object is created.
 
+			// The delegate must be able to hold on to a reference to the object
+			if( !args[0]->type.dataType.SupportHandles() )
+				Error(TXT_CANNOT_CREATE_DELEGATE_FOR_NOREF_TYPES, node);
+			else
+			{
+				// Filter the available object methods to find the one that matches the func def
+				asCObjectType *type = args[0]->type.dataType.GetObjectType();
+				asCScriptFunction *bestMethod = 0;
+				for( asUINT n = 0; n < type->methods.GetLength(); n++ )
+				{
+					asCScriptFunction *func = engine->scriptFunctions[type->methods[n]];
+					
+					if( func->name != args[0]->methodName )
+						continue;
 
-			Error("Delegates are not yet supported", node);
+					// If the expression is for a const object, then only const methods should be accepted
+					if( args[0]->type.dataType.IsReadOnly() && !func->IsReadOnly() )
+						continue;
+
+					if( func->IsSignatureExceptNameAndObjectTypeEqual(dt.GetFuncDef()) )
+						bestMethod = func;
+
+					// If the expression is non-const the non-const overloaded method has priority
+					if( args[0]->type.dataType.IsReadOnly() == bestMethod->IsReadOnly() )
+						break;
+				}
+
+				if( bestMethod )
+				{
+					// The object pointer is already on the stack
+					MergeExprBytecode(ctx, args[0]);
+
+					// Push the function pointer as an additional argument
+					ctx->bc.InstrPTR(asBC_FuncPtr, bestMethod);
+
+					// TODO: delegate: Call the factory function for the delegate
+
+					Error("Delegates are not yet supported", node);
+				}
+				else
+				{
+					asCString msg;
+					msg.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, dt.GetFuncDef()->GetDeclaration());
+					Error(msg.AddressOf(), node);
+				}
+			}
 
 			ctx->type.Set(dt);
 

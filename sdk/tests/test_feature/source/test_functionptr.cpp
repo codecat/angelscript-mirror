@@ -39,6 +39,7 @@ bool Test()
 		bout.buffer = "";
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
@@ -67,6 +68,51 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 			*/
+
+		// TODO: Must be possible to save/load bytecode
+
+		// TODO: Must be possible to create delegate from within class method, i.e. implicit this.method
+
+		// Must not be possible to create delegate with const object and non-const method
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"funcdef void F(); \n"
+			"class Test { \n"
+			"  void f() {} \n"
+			"} \n"
+			"void main() { \n"
+			" const Test @t; \n"
+			" F @f = F(t.f); \n" // t is read-only, so this delegate must not be allowed
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		// TODO: Error message should be better, so it is understood that the error is because of const object
+		if( bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
+		                   "test (7, 9) : Error   : No matching signatures to 'void F()'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Must not be possible to create delegates for non-reference types
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"funcdef bool CB(); \n"
+			"string s; \n"
+			"CB @cb = CB(s.isEmpty); \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 8) : Info    : Compiling CB@ cb\n"
+		                   "test (3, 10) : Error   : Can't create delegate for types that do not support handles\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 
