@@ -248,6 +248,8 @@ public:
     asJITFunction                jitFunction;
 };
 
+asCScriptFunction *CreateDelegate(asCScriptFunction *func, void *obj);
+
 END_AS_NAMESPACE
 
 #endif

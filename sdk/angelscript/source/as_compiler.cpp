@@ -8058,6 +8058,9 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			//                 In theory a simple cast would be good in this case, but this is a construct call so it 
 			//                 is expected that a new object is created.
 
+			dt.MakeHandle(true);
+			ctx->type.Set(dt);
+
 			// The delegate must be able to hold on to a reference to the object
 			if( !args[0]->type.dataType.SupportHandles() )
 				Error(TXT_CANNOT_CREATE_DELEGATE_FOR_NOREF_TYPES, node);
@@ -8093,9 +8096,18 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 					// Push the function pointer as an additional argument
 					ctx->bc.InstrPTR(asBC_FuncPtr, bestMethod);
 
-					// TODO: delegate: Call the factory function for the delegate
+					// Call the factory function for the delegate
+					asCArray<int> funcs;
+					builder->GetFunctionDescriptions("_builtin_delegate_factory_", funcs, engine->nameSpaces[0]);
+					asASSERT( funcs.GetLength() == 1 );
+					ctx->bc.Call(asBC_CALLSYS , funcs[0], 2*AS_PTR_SIZE);
 
-					Error("Delegates are not yet supported", node);
+					// Store the returned delegate in a temporary variable
+					int returnOffset = AllocateVariable(dt, true, false);
+					dt.MakeReference(true);
+					ctx->type.SetVariable(dt, returnOffset, true);
+					ctx->bc.InstrSHORT(asBC_STOREOBJ, (short)returnOffset);
+					ctx->bc.InstrSHORT(asBC_PSF, (short)returnOffset);
 				}
 				else
 				{
@@ -8104,8 +8116,6 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 					Error(msg.AddressOf(), node);
 				}
 			}
-
-			ctx->type.Set(dt);
 
 			// Clean-up arg
 			asDELETE(args[0],asSExprContext);

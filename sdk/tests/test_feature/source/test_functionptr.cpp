@@ -55,19 +55,21 @@ bool Test()
 			"  assert( t.called ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r >= 0 )
+		if( r < 0 )
 			TEST_FAILED;
 
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
-//			TEST_FAILED;
-		}
-/*
-		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
-			*/
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+//		if( r != asEXECUTION_FINISHED )
+//			TEST_FAILED;
+
 
 		// TODO: Must be possible to save/load bytecode
 

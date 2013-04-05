@@ -93,6 +93,13 @@ static void ScriptFunction_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
 	self->ReleaseAllHandles(engine);
 }
 
+static void ScriptFunction_CreateDelegate_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *func = (asCScriptFunction*)gen->GetArgAddress(0);
+	void *obj = gen->GetArgAddress(1);
+	gen->SetReturnAddress(CreateDelegate(func, obj));
+}
+
 #endif
 
 
@@ -112,6 +119,9 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCScriptFunction,GetFlag), asCALL_THISCALL); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCScriptFunction,EnumReferences), asCALL_THISCALL); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCScriptFunction,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
+
+	// TODO: delegate: This global function shouldn't be visible to the application
+	r = engine->RegisterGlobalFunction("int &_builtin_delegate_factory_(int &in, int &in)", asFUNCTION(CreateDelegate), asCALL_CDECL); asASSERT( r >= 0 );
 #else
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFunction_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFunction_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
@@ -120,7 +130,19 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptFunction_GetFlag_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptFunction_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptFunction_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+
+	r = engine->RegisterGlobalFunction("int &_builtin_delegate_factory_(int &int, int &in)", asFUNCTION(ScriptFunction_CreateDelegate_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
+}
+
+asCScriptFunction *CreateDelegate(asCScriptFunction *func, void *obj)
+{
+	// TODO: delegate: Create an instance of a asCScriptFunction with the type asFUNC_DELEGATE
+	//                 Both the given func and obj should be members and have their refcount increased
+	//                 The delegate object shouldn't have a function id and is not added to the engine->scriptFunctions
+	//                 The gc should be notified of the delegate 
+
+	return 0;
 }
 
 // internal
