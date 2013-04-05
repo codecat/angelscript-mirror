@@ -629,12 +629,39 @@ bool Test()
 		r = ExecuteString(engine, scriptUnicode2);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
 			
 		// \xFF shall produce the actual value, even if it may not be a correctly encoded Unicode character
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
 		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); 
 		r = ExecuteString(engine, "assert('\\xFF'[0] == 255)");
 		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test compiler warnings
+	// http://www.gamedev.net/topic/641123-angelscript-2262/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptString(engine);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); 
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
+
+		char scriptLit[] = "uint8 c = '\xD0'; assert( c == 0xD0 );";
+		r = ExecuteString(engine, scriptLit);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

@@ -2282,7 +2282,8 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					if( assigned )
 					{
 						// Pop the resulting value
-						ctx.bc.Instr(asBC_PopPtr);
+						if( !ctx.type.dataType.IsPrimitive() )
+							ctx.bc.Instr(asBC_PopPtr);
 
 						// Release the argument
 						ProcessDeferredParams(&ctx);

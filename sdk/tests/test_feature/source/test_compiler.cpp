@@ -243,6 +243,55 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test opAssign that returns void
+	// It was poping a word too many. Reported by Andrew Ackermann
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { \n"
+			"  void opAssign(const T &in v) {} \n"
+			"} \n"
+			"void main() { \n"
+			"  T t = T(); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptFunction *func = mod->GetFunctionByName("main");
+		asUINT len;
+		asDWORD *bc = func->GetByteCode(&len);
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_CALL,asBC_STOREOBJ,asBC_ChkNullV,asBC_VAR,asBC_CALL,asBC_STOREOBJ,asBC_PshVPtr,asBC_GETOBJREF,asBC_CALLINTF,asBC_FREE,
+				asBC_SUSPEND,asBC_FREE,asBC_RET
+			};
+		for( asUINT n = 0, i = 0; n < len; )
+		{
+			asBYTE c = asBYTE(bc[n]);
+			if( c != expect[i] )
+			{
+				TEST_FAILED;
+				break;
+			}
+			n += asBCTypeSize[asBCInfo[c].type];
+			if( ++i > sizeof(expect) )
+				TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test
 	// http://www.gamedev.net/topic/640966-returning-text-crashes-as-with-mingw-471-but-not-with-441/
 	{
