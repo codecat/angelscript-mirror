@@ -15,12 +15,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.3 WIP - 2013/04/04</h2>
+<h2>Version 2.26.3 WIP - 2013/04/06</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Compiler was generating invalid bytecode when compiling var declaration with initialization using void opAssign (Thanks Andrew Ackermann)
+</ul>
+<li>Library interface
+<ul>
+<li>The new enum asFUNC_DELEGATE is used to identify function objects that are delegates
+</ul>
+<li>Script language
+<ul>
+<li>Delegates can now be instanciated with a construct call for a funcdef with the class method as argument
 </ul>
 </ul>
 

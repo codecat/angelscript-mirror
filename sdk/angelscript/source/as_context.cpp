@@ -3621,14 +3621,17 @@ void asCContext::ExecuteNext()
 				{
 					m_regs.programPointer++;
 
-					// TODO: delegate: Need to copy function arguments to new stack space
-					//                 Add the object pointer
-					//                 Add the return pointer for functions that return on the stack
-					//                 Call the delegated method
+					// Push the object pointer on the stack. There is always a reserved space for this so 
+					// we don't don't need to worry about overflowing the allocated memory buffer
+					asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
 
-					m_needToCleanupArgs = true;
-					SetInternalException("Delegates are not yet supported");
-					return;
+					m_regs.stackPointer -= AS_PTR_SIZE;
+					*(asPWORD*)m_regs.stackPointer = asPWORD(func->objForDelegate);
+
+					// TODO: delegate: Need to check if the function is a script or system function
+					// Call the delegated method
+					// TODO: run-time optimize: The true method could be figured out when creating the delegate
+					CallInterfaceMethod(func->funcForDelegate);
 				}
 				else
 				{

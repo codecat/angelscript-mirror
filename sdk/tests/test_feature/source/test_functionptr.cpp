@@ -65,15 +65,29 @@ bool Test()
 		}
 
 		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_EXCEPTION )
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
-//		if( r != asEXECUTION_FINISHED )
-//			TEST_FAILED;
 
+		// Must be possible to save/load bytecode
+		CBytecodeStream stream("test");
+		mod->SaveByteCode(&stream);
 
-		// TODO: Must be possible to save/load bytecode
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		// TODO: Must be possible to create delegate from within class method, i.e. implicit this.method
+
+		// TODO: A delegate to own method held as member of class must be properly resolved by gc
+
+		// TODO: Must be possible to create delegate for registered type too
+
+		// TODO: Must be possible to call delegate from application
 
 		// Must not be possible to create delegate with const object and non-const method
 		bout.buffer = "";
