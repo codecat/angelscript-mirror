@@ -3617,6 +3617,19 @@ void asCContext::ExecuteNext()
 					m_regs.programPointer++;
 					CallScriptFunction(func);
 				}
+				else if( func->funcType == asFUNC_DELEGATE )
+				{
+					m_regs.programPointer++;
+
+					// TODO: delegate: Need to copy function arguments to new stack space
+					//                 Add the object pointer
+					//                 Add the return pointer for functions that return on the stack
+					//                 Call the delegated method
+
+					m_needToCleanupArgs = true;
+					SetInternalException("Delegates are not yet supported");
+					return;
+				}
 				else
 				{
 					asASSERT( func->funcType == asFUNC_SYSTEM );

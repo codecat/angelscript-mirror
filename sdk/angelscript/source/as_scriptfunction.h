@@ -163,6 +163,8 @@ public:
 	bool      IsSignatureExceptNameAndReturnTypeEqual(const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &inOutFlags, const asCObjectType *type, bool isReadOnly) const;
 	bool      IsSignatureExceptNameAndObjectTypeEqual(const asCScriptFunction *func) const;
 
+	void      MakeDelegate(asCScriptFunction *func, void *obj);
+
 	bool      DoesReturnOnStack() const;
 
 	void      JITCompile();
@@ -211,6 +213,10 @@ public:
 	bool                         isShared;
 
 	asSNameSpace                *nameSpace;
+
+	// Used by asFUNC_DELEGATE
+	void              *objForDelegate;
+	asCScriptFunction *funcForDelegate;
 
 	// Used by asFUNC_SCRIPT
 	asCArray<asDWORD>               byteCode;

@@ -121,7 +121,10 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCScriptFunction,ReleaseAllHandles), asCALL_THISCALL); asASSERT( r >= 0 );
 
 	// TODO: delegate: This global function shouldn't be visible to the application
-	r = engine->RegisterGlobalFunction("int &_builtin_delegate_factory_(int &in, int &in)", asFUNCTION(CreateDelegate), asCALL_CDECL); asASSERT( r >= 0 );
+	// Register the builtin function for creating delegates
+	// This function returns a handle to the delegate, but since the type is not known at this time it is 
+	// registered to return a void then the return type is changed manually to the builtin function type
+	r = engine->RegisterGlobalFunction("void _builtin_delegate_factory_(int &in, int &in)", asFUNCTION(CreateDelegate), asCALL_CDECL); asASSERT( r >= 0 );
 #else
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFunction_AddRef_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFunction_Release_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
@@ -131,18 +134,50 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptFunction_EnumReferences_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptFunction_ReleaseAllHandles_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 
-	r = engine->RegisterGlobalFunction("int &_builtin_delegate_factory_(int &int, int &in)", asFUNCTION(ScriptFunction_CreateDelegate_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterGlobalFunction("void _builtin_delegate_factory_(int &int, int &in)", asFUNCTION(ScriptFunction_CreateDelegate_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
+
+	// Change the return type so the VM will know the function really returns a handle
+	engine->scriptFunctions[r]->returnType = asCDataType::CreateObject(&engine->functionBehaviours, false);
+	engine->scriptFunctions[r]->returnType.MakeHandle(true);
 }
 
 asCScriptFunction *CreateDelegate(asCScriptFunction *func, void *obj)
 {
-	// TODO: delegate: Create an instance of a asCScriptFunction with the type asFUNC_DELEGATE
-	//                 Both the given func and obj should be members and have their refcount increased
-	//                 The delegate object shouldn't have a function id and is not added to the engine->scriptFunctions
-	//                 The gc should be notified of the delegate 
+	if( func == 0 || obj == 0 )
+	{
+		// TODO: delegate: Should set script exception
+		return 0;
+	}
 
-	return 0;
+	// Create an instance of a asCScriptFunction with the type asFUNC_DELEGATE
+	// The delegate shouldn't have a function id and is not added to the engine->scriptFunctions
+	asCScriptFunction *delegate = asNEW(asCScriptFunction)(static_cast<asCScriptEngine*>(func->GetEngine()), 0, asFUNC_DELEGATE);
+	if( delegate )
+		delegate->MakeDelegate(func, obj);
+
+	return delegate;
+}
+
+// internal
+void asCScriptFunction::MakeDelegate(asCScriptFunction *func, void *obj)
+{
+	// Increase the reference of the function and object
+	func->AddRef();
+	funcForDelegate = func;
+
+	func->GetEngine()->AddRefScriptObject(obj, func->GetObjectType());
+	objForDelegate = obj;
+
+	// The return type and parameters are copied from the delegated method to this object
+	// TODO: optimize: Do we really need to copy? Whenever requested the delegate can simply return the delegated methods' info directly
+	parameterTypes = func->parameterTypes;
+	returnType     = func->returnType;
+	inOutFlags     = func->inOutFlags;
+	
+	// The delegate doesn't own the parameters as it will only forward them to the real method
+	// so the exception handler must not clean up the parameters for the delegate
+	dontCleanUpOnException = true;
 }
 
 // internal
@@ -172,9 +207,11 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	isShared               = false;
 	variableSpace          = 0;
 	nameSpace              = engine->nameSpaces[0];
+	objForDelegate         = 0;
+	funcForDelegate        = 0;
 
 	// Notify the GC of script functions
-	if( funcType == asFUNC_SCRIPT && mod == 0 )
+	if( (funcType == asFUNC_SCRIPT && mod == 0) || (funcType == asFUNC_DELEGATE) )
 		engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
 }
 
@@ -906,6 +943,14 @@ void asCScriptFunction::ReleaseReferences()
 	if( jitFunction )
 		engine->jitCompiler->ReleaseJITFunction(jitFunction);
 	jitFunction = 0;
+
+	// Delegate
+	if( objForDelegate )
+		engine->ReleaseScriptObject(objForDelegate, funcForDelegate->GetObjectType());
+	objForDelegate = 0;
+	if( funcForDelegate )
+		funcForDelegate->Release();
+	funcForDelegate = 0;
 }
 
 // interface
@@ -1135,6 +1180,12 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 			break;
 		}
 	}
+
+	// Delegate
+	if( objForDelegate )
+		engine->GCEnumCallback(objForDelegate);
+	if( funcForDelegate )
+		engine->GCEnumCallback(funcForDelegate);
 }
 
 // internal
@@ -1227,6 +1278,14 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 		// variable itself release the function to break the circle
 		}
 	}
+
+	// Delegate
+	if( objForDelegate )
+		engine->ReleaseScriptObject(objForDelegate, funcForDelegate->GetObjectType());
+	objForDelegate = 0;
+	if( funcForDelegate )
+		funcForDelegate->Release();
+	funcForDelegate = 0;
 }
 
 // internal

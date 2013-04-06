@@ -324,7 +324,8 @@ enum asEFuncType
 	asFUNC_INTERFACE = 2,
 	asFUNC_VIRTUAL   = 3,
 	asFUNC_FUNCDEF   = 4,
-	asFUNC_IMPORTED  = 5
+	asFUNC_IMPORTED  = 5,
+	asFUNC_DELEGATE  = 6
 };
 
 //

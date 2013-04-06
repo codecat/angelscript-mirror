@@ -8107,6 +8107,8 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 					dt.MakeReference(true);
 					ctx->type.SetVariable(dt, returnOffset, true);
 					ctx->bc.InstrSHORT(asBC_STOREOBJ, (short)returnOffset);
+
+					// Push a reference to the temporary variable on the stack
 					ctx->bc.InstrSHORT(asBC_PSF, (short)returnOffset);
 				}
 				else
