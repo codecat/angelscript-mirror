@@ -254,6 +254,7 @@ public:
     asJITFunction                jitFunction;
 };
 
+const char * const DELEGATE_FACTORY = "%delegate_factory";
 asCScriptFunction *CreateDelegate(asCScriptFunction *func, void *obj);
 
 END_AS_NAMESPACE

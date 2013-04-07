@@ -3619,19 +3619,28 @@ void asCContext::ExecuteNext()
 				}
 				else if( func->funcType == asFUNC_DELEGATE )
 				{
-					m_regs.programPointer++;
-
 					// Push the object pointer on the stack. There is always a reserved space for this so 
 					// we don't don't need to worry about overflowing the allocated memory buffer
 					asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
-
 					m_regs.stackPointer -= AS_PTR_SIZE;
 					*(asPWORD*)m_regs.stackPointer = asPWORD(func->objForDelegate);
 
-					// TODO: delegate: Need to check if the function is a script or system function
 					// Call the delegated method
-					// TODO: run-time optimize: The true method could be figured out when creating the delegate
-					CallInterfaceMethod(func->funcForDelegate);
+					if( func->funcForDelegate->funcType == asFUNC_SYSTEM )
+					{
+						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this, 0);
+
+						// Update program position after the call so the line number
+						// is correct in case the system function queries it
+						m_regs.programPointer++;
+					}
+					else
+					{
+						m_regs.programPointer++;
+
+						// TODO: run-time optimize: The true method could be figured out when creating the delegate
+						CallInterfaceMethod(func->funcForDelegate);
+					}
 				}
 				else
 				{

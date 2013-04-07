@@ -580,13 +580,13 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	int num;
 
 	ReadString(&func->name);
-	if( func->name == "_builtin_delegate_factory_" )
+	if( func->name == DELEGATE_FACTORY )
 	{
 		// It's not necessary to read anymore, everything is known 
 		for( asUINT n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = engine->registeredGlobalFuncs[n];
-			if( f->name == "_builtin_delegate_factory_" )
+			if( f->name == DELEGATE_FACTORY )
 			{
 				func->returnType     = f->returnType;
 				func->parameterTypes = f->parameterTypes;
@@ -2923,7 +2923,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	asUINT i, count;
 
 	WriteString(&func->name);
-	if( func->name == "_builtin_delegate_factory_" )
+	if( func->name == DELEGATE_FACTORY )
 	{
 		// It's not necessary to write anything else
 		return;

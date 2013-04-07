@@ -2600,7 +2600,8 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 // interface
 asUINT asCScriptEngine::GetGlobalFunctionCount() const
 {
-	return asUINT(registeredGlobalFuncs.GetLength());
+	// Don't count the builtin delegate factory
+	return asUINT(registeredGlobalFuncs.GetLength()-1);
 }
 
 #ifdef AS_DEPRECATED
@@ -2608,6 +2609,8 @@ asUINT asCScriptEngine::GetGlobalFunctionCount() const
 // interface
 int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index) const
 {
+	// Don't count the builtin delegate factory
+	index++;
 	if( index >= registeredGlobalFuncs.GetLength() )
 		return asINVALID_ARG;
 
@@ -2618,6 +2621,9 @@ int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index) const
 // interface
 asIScriptFunction *asCScriptEngine::GetGlobalFunctionByIndex(asUINT index) const
 {
+	// Don't count the builtin delegate factory
+	index++;
+
 	if( index >= registeredGlobalFuncs.GetLength() )
 		return 0;
 

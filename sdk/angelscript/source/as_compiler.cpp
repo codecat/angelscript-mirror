@@ -8098,7 +8098,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 					// Call the factory function for the delegate
 					asCArray<int> funcs;
-					builder->GetFunctionDescriptions("_builtin_delegate_factory_", funcs, engine->nameSpaces[0]);
+					builder->GetFunctionDescriptions(DELEGATE_FACTORY, funcs, engine->nameSpaces[0]);
 					asASSERT( funcs.GetLength() == 1 );
 					ctx->bc.Call(asBC_CALLSYS , funcs[0], 2*AS_PTR_SIZE);
 

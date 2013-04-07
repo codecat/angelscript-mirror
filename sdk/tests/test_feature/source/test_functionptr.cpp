@@ -38,6 +38,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
+		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterStdString(engine);
 
@@ -85,9 +86,25 @@ bool Test()
 
 		// TODO: A delegate to own method held as member of class must be properly resolved by gc
 
-		// TODO: Must be possible to create delegate for registered type too
-
 		// TODO: Must be possible to call delegate from application
+
+		// Must be possible to create delegate for registered type too
+		mod->AddScriptSection("test",
+			"funcdef bool EMPTY(); \n"
+			"void main() { \n"
+			"  array<int> a; \n"
+			"  EMPTY @empty = EMPTY(a.isEmpty); \n"
+			"  assert( empty() == true ); \n"
+			"  a.insertLast(42); \n"
+			"  assert( empty() == false ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		// Must not be possible to create delegate with const object and non-const method
 		bout.buffer = "";
