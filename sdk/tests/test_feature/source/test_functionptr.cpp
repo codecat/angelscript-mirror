@@ -82,7 +82,34 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		// TODO: Must be possible to create delegate from within class method, i.e. implicit this.method
+		// Must be possible to create delegate from within class method, i.e. implicit this.method
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"funcdef void CALL(); \n"
+			"class Test { \n"
+			"  bool called = false; \n"
+			"  void callMe() { called = true; } \n"
+			"  CALL @GetCallback() { return CALL(callMe); } \n"
+			"} \n"
+			"void main() { \n"
+			"  Test t; \n"
+			"  CALL @cb = t.GetCallback(); \n"
+			"  cb(); \n"
+			"  assert( t.called ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		// A delegate to own method held as member of class must be properly resolved by gc
 		mod->AddScriptSection("test",
@@ -348,7 +375,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "script (2, 3) : Info    : Compiling void t::func()\n"
-						   "script (2, 18) : Error   : 'func' is not declared\n" )
+						   "script (2, 17) : Error   : Invalid operation on method\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

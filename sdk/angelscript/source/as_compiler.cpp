@@ -6919,6 +6919,41 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 				found = true;
 			}
+			else if( outFunc->objectType )
+			{
+				// If it is not a property, it may still be the name of a method which can be used to create delegates
+				asCObjectType *ot = outFunc->objectType;
+				asCScriptFunction *func = 0;
+				for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+				{
+					if( engine->scriptFunctions[ot->methods[n]]->name == name )
+					{
+						func = engine->scriptFunctions[ot->methods[n]];
+						break;
+					}
+				}
+
+				if( func )
+				{
+					// An object method was found. Keep the name of the method in the expression, but
+					// don't actually modify the bytecode at this point since it is not yet known what 
+					// the method will be used for, or even what overloaded method should be used.
+					ctx->methodName = name;
+
+					// Place the object pointer on the stack, as if the expression was this.func
+					if( !objType )
+					{
+						// The object pointer is located at stack position 0
+						// This is only done when accessing through the implicit this pointer
+						ctx->bc.InstrSHORT(asBC_PSF, 0);
+						ctx->type.SetVariable(asCDataType::CreateObject(outFunc->objectType, false), 0, false);
+						ctx->type.dataType.MakeReference(true);
+						Dereference(ctx, true);
+					}
+
+					found = true;
+				}
+			}
 		}
 	}
 
@@ -8221,7 +8256,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	if( objectType == 0 )
 	{
 		localVar = CompileVariableAccess(name, scope, &funcPtr, node, true, true, true);
-		if( localVar >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+		if( localVar >= 0 && !funcPtr.type.dataType.GetFuncDef() && funcPtr.methodName == "" )
 		{
 			// The variable is not a function
 			asCString msg;
@@ -8229,6 +8264,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			Error(msg, node);
 			return -1;
 		}
+
+		// If the name matches a method name, then reset the indicator that nothing was found
+		if( funcPtr.methodName != "" )
+			localVar = -1;
 	}
 
 	if( localVar < 0 )
@@ -8277,7 +8316,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			if( funcs.GetLength() == 0 )
 			{
 				int r = CompileVariableAccess(name, scope, &funcPtr, node, true, true, true, objectType);
-				if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+				if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() && funcPtr.methodName == "" )
 				{
 					// The variable is not a function
 					asCString msg;
