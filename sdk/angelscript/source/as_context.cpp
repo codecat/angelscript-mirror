@@ -1073,6 +1073,18 @@ int asCContext::Execute()
 
 	if( m_regs.programPointer == 0 )
 	{
+		if( m_currentFunction->funcType == asFUNC_DELEGATE )
+		{
+			// Push the object pointer onto the stack
+			asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
+			m_regs.stackPointer -= AS_PTR_SIZE;
+			m_regs.stackFramePointer -= AS_PTR_SIZE;
+			*(asPWORD*)m_regs.stackPointer = asPWORD(m_currentFunction->objForDelegate);
+
+			// Make the call to the delegated object method
+			m_currentFunction = m_currentFunction->funcForDelegate;
+		}
+
 		if( m_currentFunction->funcType == asFUNC_VIRTUAL ||
 			m_currentFunction->funcType == asFUNC_INTERFACE )
 		{

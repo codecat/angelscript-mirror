@@ -84,9 +84,71 @@ bool Test()
 
 		// TODO: Must be possible to create delegate from within class method, i.e. implicit this.method
 
-		// TODO: A delegate to own method held as member of class must be properly resolved by gc
+		// A delegate to own method held as member of class must be properly resolved by gc
+		mod->AddScriptSection("test",
+			"funcdef void CALL(); \n"
+			"class Test { \n"
+			"  void call() {}; \n"
+			"  CALL @c; \n"
+			"} \n"
+			"void main() { \n"
+			"  Test t; \n"
+			"  t.c = CALL(t.call); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-		// TODO: Must be possible to call delegate from application
+		engine->GarbageCollect();
+
+		asUINT currSize, totalDestr, totalDetect;
+		engine->GetGCStatistics(&currSize, &totalDestr, &totalDetect);
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize2, totalDestr2, totalDetect2;
+		engine->GetGCStatistics(&currSize2, &totalDestr2, &totalDetect2);
+
+		if( totalDetect2 == totalDetect )
+			TEST_FAILED;
+
+		// Must be possible to call delegate from application
+		mod->AddScriptSection("test",
+			"funcdef void CALL(); \n"
+			"class Test { \n"
+			"  bool called = false; \n"
+			"  void call() { called = true; } \n"
+			"} \n"
+			"Test t; \n"
+			"CALL @callback = CALL(t.call); \n");
+		r = mod->Build();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		int idx = mod->GetGlobalVarIndexByDecl("CALL @callback");
+		if( idx < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *callback = *(asIScriptFunction**)mod->GetAddressOfGlobalVar(idx);
+		if( callback == 0 )
+			TEST_FAILED;
+		if( callback->GetFuncType() != asFUNC_DELEGATE )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		ctx->Prepare(callback);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		r = ExecuteString(engine, "assert( t.called );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		// Must be possible to create delegate for registered type too
 		mod->AddScriptSection("test",
