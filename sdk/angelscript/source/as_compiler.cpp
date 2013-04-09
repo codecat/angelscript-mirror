@@ -8116,11 +8116,13 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 						continue;
 
 					if( func->IsSignatureExceptNameAndObjectTypeEqual(dt.GetFuncDef()) )
+					{
 						bestMethod = func;
 
-					// If the expression is non-const the non-const overloaded method has priority
-					if( args[0]->type.dataType.IsReadOnly() == bestMethod->IsReadOnly() )
-						break;
+						// If the expression is non-const the non-const overloaded method has priority
+						if( args[0]->type.dataType.IsReadOnly() == func->IsReadOnly() )
+							break;
+					}
 				}
 
 				if( bestMethod )

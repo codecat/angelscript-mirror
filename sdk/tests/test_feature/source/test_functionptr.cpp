@@ -45,7 +45,9 @@ bool Test()
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class Test { \n"
-			"  void func() { called = true; } \n"
+			"  void method() {} \n"
+			"  int func(int) { return 0; } \n"
+			"  void func() { called = true; } \n" // The compiler should pick the right overload
 			"  bool called = false; \n"
 			"} \n"
 			"funcdef void CALLBACK(); \n"
