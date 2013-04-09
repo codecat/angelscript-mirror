@@ -48,6 +48,19 @@ bool Test()
 #endif
 #endif
 
+	// Don't accept registering object properties with offsets larger than signed 16 bit
+	// TODO: Support 32bit offsets, but that requires changes in VM, compiler, and bytecode serialization
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		r = engine->RegisterObjectType("Object", 1<<24, asOBJ_VALUE | asOBJ_POD);
+		r = engine->RegisterObjectProperty("Object", "int f", 1<<24);
+		if( r != asINVALID_ARG )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Problem reported by Paril101
 	// http://www.gamedev.net/topic/636336-member-function-chaining/
 	{

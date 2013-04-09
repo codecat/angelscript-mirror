@@ -1272,6 +1272,14 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	if( dt.GetObjectType() == 0 )
 		return ConfigError(asINVALID_OBJECT, "RegisterObjectProperty", obj, declaration);
 
+	// The VM currently only supports 16bit offsets
+	// TODO: The VM needs to have support for 32bit offsets. Probably with a second ADDSi instruction
+	//       However, when implementing this it is necessary for the bytecode serialization to support 
+	//       the switch between the instructions upon loading bytecode as the offset may not be the 
+	//       same on all platforms
+	if( byteOffset > 32767 || byteOffset < -32768 )
+		return ConfigError(asINVALID_ARG, "RegisterObjectProperty", obj, declaration);
+
 	asCObjectProperty *prop = asNEW(asCObjectProperty);
 	if( prop == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterObjectProperty", obj, declaration);
