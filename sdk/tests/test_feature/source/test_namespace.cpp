@@ -11,6 +11,48 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test different namespaces with declaration of classes of the same name
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"namespace net \n"
+			"{ \n"
+			"   namespace room \n"
+			"   { \n"
+			"        class kernel \n"
+			"        { \n"
+			"              kernel() \n"
+			"              { \n"
+			"              } \n"
+			"        } \n"
+			"   } \n"
+			"} \n"
+			"namespace net \n"
+			"{ \n"
+			"   namespace lobby \n"
+			"   { \n"
+			"        class kernel \n"
+			"        { \n"
+			"              private int[]            _Values; \n"
+			"              kernel() \n"
+			"              { \n"
+			"                    _Values.resize(10); \n"
+			"              } \n"
+			"        } \n"
+			"   } \n"
+			"} \n"
+			"net::lobby::kernel kernel;\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test multiple script sections
 	// http://www.gamedev.net/topic/638946-namespace-problems/
 	{

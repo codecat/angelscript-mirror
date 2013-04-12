@@ -698,7 +698,7 @@ void asCBuilder::CompileFunctions()
 		{
 			for( asUINT n = 0; n < classDeclarations.GetLength(); n++ )
 			{
-				if( classDeclarations[n]->name == current->name )
+				if( classDeclarations[n]->objType == current->objType )
 				{
 					classDecl = classDeclarations[n];
 					break;
