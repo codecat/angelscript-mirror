@@ -51,7 +51,7 @@ const char *script =
 "[ myintf ] interface MyIntf {} \n"
 // arrays must still work
 "int[] arr = {1, 2, 3}; \n"
-"int[] arrayfunc(int[] a) { a.resize(1); return a; } \n"
+"int[] @arrayfunc(int[] @a) { a.resize(1); return a; } \n"
 // directives in comments should be ignored
 "/* \n"
 "#include \"dont_include\" \n"

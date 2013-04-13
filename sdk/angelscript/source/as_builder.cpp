@@ -3449,6 +3449,16 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	{
 		returnType = CreateDataTypeFromNode(node, file, implicitNamespace);
 		returnType = ModifyDataTypeFromNode(returnType, node->next, file, 0, 0);
+
+		if( engine->ep.disallowValueAssignForRefType &&
+			returnType.GetObjectType() && 
+			(returnType.GetObjectType()->flags & asOBJ_REF) && 
+			!(returnType.GetObjectType()->flags & asOBJ_SCOPED) &&
+			!returnType.IsReference() && 
+			!returnType.IsObjectHandle() )
+		{
+			WriteError(TXT_REF_TYPE_CANT_BE_RETURNED_BY_VAL, file, node);
+		}
 	}
 	else
 		returnType = asCDataType::CreatePrimitive(ttVoid, false);
@@ -3503,6 +3513,16 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 		asETypeModifiers inOutFlag;
 		asCDataType type = CreateDataTypeFromNode(n, file, implicitNamespace);
 		type = ModifyDataTypeFromNode(type, n->next, file, &inOutFlag, 0);
+
+		if( engine->ep.disallowValueAssignForRefType &&
+			type.GetObjectType() && 
+			(type.GetObjectType()->flags & asOBJ_REF) && 
+			!(type.GetObjectType()->flags & asOBJ_SCOPED) &&
+			!type.IsReference() && 
+			!type.IsObjectHandle() )
+		{
+			WriteError(TXT_REF_TYPE_CANT_BE_PASSED_BY_VAL, file, node);
+		}
 
 		// Store the parameter type
 		parameterTypes.PushLast(type);

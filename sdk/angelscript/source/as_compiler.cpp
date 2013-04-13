@@ -10162,6 +10162,19 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 
 	if( op )
 	{
+		if( builder->engine->ep.disallowValueAssignForRefType && 
+			lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && !(lctx->type.dataType.GetObjectType()->flags & asOBJ_SCOPED) )
+		{
+			if( token == ttAssignment )
+				Error(TXT_DISALLOW_ASSIGN_ON_REF_TYPE, node);
+			else
+				Error(TXT_DISALLOW_COMPOUND_ASSIGN_ON_REF_TYPE, node);
+
+			// Set a dummy output
+			ctx->type.Set(lctx->type.dataType);
+			return true;
+		}
+
 		// TODO: Shouldn't accept const lvalue with the assignment operators
 
 		// Find the matching operator method

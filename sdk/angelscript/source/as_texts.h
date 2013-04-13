@@ -72,6 +72,8 @@
 #define TXT_DEF_ARG_MISSING_IN_FUNC_s     "All subsequent parameters after the first default value must have default values in function '%s'"
 #define TXT_DEF_ARG_TYPE_DOESNT_MATCH     "The type of the default argument expression doesn't match the function parameter type"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
+#define TXT_DISALLOW_ASSIGN_ON_REF_TYPE   "Value assignment on reference types is not allowed. Did you mean to do a handle assignment?"
+#define TXT_DISALLOW_COMPOUND_ASSIGN_ON_REF_TYPE "Compound assignment on reference types is not allowed"
 #define TXT_DUPLICATE_SWITCH_CASE         "Duplicate switch case"
 
 #define TXT_ELSE_WITH_EMPTY_STATEMENT     "Else with empty statement"
@@ -194,11 +196,13 @@
 #define TXT_PROPERTY_HAS_NO_SET_ACCESSOR          "The property has no set accessor"
 #define TXT_PROPERTY_WITHOUT_ACCESSOR             "Virtual property must have at least one get or set accessor"
 
-#define TXT_REF_IS_READ_ONLY                    "Reference is read-only"
-#define TXT_REF_IS_TEMP                         "Reference is temporary"
-#define TXT_RETURN_CANT_BE_s                    "Return type can't be '%s'"
 #define TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM "Resulting reference cannot be returned. There are deferred arguments that may invalidate it."
 #define TXT_REF_CANT_BE_RETURNED_LOCAL_VARS     "Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it."
+#define TXT_REF_IS_READ_ONLY                    "Reference is read-only"
+#define TXT_REF_IS_TEMP                         "Reference is temporary"
+#define TXT_REF_TYPE_CANT_BE_PASSED_BY_VAL      "Reference types cannot be passed by value in function parameters"
+#define TXT_REF_TYPE_CANT_BE_RETURNED_BY_VAL    "Reference types cannot be returned by value from functions"
+#define TXT_RETURN_CANT_BE_s                    "Return type can't be '%s'"
 
 #define TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s      "Shared code cannot access non-shared global variable '%s'"
 #define TXT_SHARED_CANNOT_CALL_NON_SHARED_FUNC_s       "Shared code cannot call non-shared function '%s'"

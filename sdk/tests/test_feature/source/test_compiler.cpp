@@ -243,8 +243,64 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, true);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		// It shall not be possible to do a value assign
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"class T { T() {} T &opAssign(const T &in) { return this; } T &opAddAssign(const T &in) { return this; } } \n"
+			"void main() { \n"
+			"  T t; \n"
+			"  t = T(); \n" // fail
+			"  t += T(); \n" // fail
+			"  @t = T(); \n" // fail (because the variable is not a handle)
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
+						   "test (4, 5) : Error   : Value assignment on reference types is not allowed. Did you mean to do a handle assignment?\n"
+						   "test (5, 5) : Error   : Compound assignment on reference types is not allowed\n"
+						   "test (6, 3) : Error   : Expression is not an l-value\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// It shall not be possible to declare function that take ref type by value
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"class T { T() {} T &opAssign(const T &in) { return this; } } \n"
+			"void func1(T t) {} \n" // fail
+			"T func2() { return T(); } \n" // fail
+			"void func3(T &t) {} \n" // ok
+			"T g; \n"
+			"T &func4() { return g; } \n" // ok
+			"void func5(T @t) {} \n" // ok
+			"T @func6() { return null; } \n" // ok
+			);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Error   : Reference types cannot be passed by value in function parameters\n"
+                           "test (3, 1) : Error   : Reference types cannot be returned by value from functions\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test opAssign that returns void
-	// It was poping a word too many. Reported by Andrew Ackermann
+	// It was popping a word too many. Reported by Andrew Ackermann
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

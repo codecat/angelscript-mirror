@@ -79,25 +79,26 @@ class asIThreadManager;
 // Engine properties
 enum asEEngineProp
 {
-	asEP_ALLOW_UNSAFE_REFERENCES       = 1,
-	asEP_OPTIMIZE_BYTECODE             = 2,
-	asEP_COPY_SCRIPT_SECTIONS          = 3,
-	asEP_MAX_STACK_SIZE                = 4,
-	asEP_USE_CHARACTER_LITERALS        = 5,
-	asEP_ALLOW_MULTILINE_STRINGS       = 6,
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES   = 7,
-	asEP_BUILD_WITHOUT_LINE_CUES       = 8,
-	asEP_INIT_GLOBAL_VARS_AFTER_BUILD  = 9,
-	asEP_REQUIRE_ENUM_SCOPE            = 10,
-	asEP_SCRIPT_SCANNER                = 11,
-	asEP_INCLUDE_JIT_INSTRUCTIONS      = 12,
-	asEP_STRING_ENCODING               = 13,
-	asEP_PROPERTY_ACCESSOR_MODE        = 14,
-	asEP_EXPAND_DEF_ARRAY_TO_TMPL      = 15,
-	asEP_AUTO_GARBAGE_COLLECT          = 16,
-	asEP_DISALLOW_GLOBAL_VARS          = 17,
-	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT = 18,
-	asEP_COMPILER_WARNINGS             = 19
+	asEP_ALLOW_UNSAFE_REFERENCES            = 1,
+	asEP_OPTIMIZE_BYTECODE                  = 2,
+	asEP_COPY_SCRIPT_SECTIONS               = 3,
+	asEP_MAX_STACK_SIZE                     = 4,
+	asEP_USE_CHARACTER_LITERALS             = 5,
+	asEP_ALLOW_MULTILINE_STRINGS            = 6,
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES        = 7,
+	asEP_BUILD_WITHOUT_LINE_CUES            = 8,
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD       = 9,
+	asEP_REQUIRE_ENUM_SCOPE                 = 10,
+	asEP_SCRIPT_SCANNER                     = 11,
+	asEP_INCLUDE_JIT_INSTRUCTIONS           = 12,
+	asEP_STRING_ENCODING                    = 13,
+	asEP_PROPERTY_ACCESSOR_MODE             = 14,
+	asEP_EXPAND_DEF_ARRAY_TO_TMPL           = 15,
+	asEP_AUTO_GARBAGE_COLLECT               = 16,
+	asEP_DISALLOW_GLOBAL_VARS               = 17,
+	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
+	asEP_COMPILER_WARNINGS                  = 19,
+	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20
 };
 
 // Calling conventions

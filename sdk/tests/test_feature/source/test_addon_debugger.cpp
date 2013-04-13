@@ -126,7 +126,7 @@ bool Test()
 		CMyDebugger debug;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		RegisterScriptString(engine);
+		RegisterStdString(engine);
 
 		const char *script = 
 			"void func(int a, const int &in b, string c, const string &in d, type @e, type &f, type @&in g) \n"
