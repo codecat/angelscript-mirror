@@ -1152,6 +1152,14 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		// Since the function is expecting a var type ?, then we don't want to convert the argument to anything else
 		param = ctx->type.dataType;
 		param.MakeHandle(ctx->type.isExplicitHandle);
+
+		// Reference types will always be passed as handles to ? parameters
+		if( builder->engine->ep.disallowValueAssignForRefType && 
+			ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_SCOPED) )
+		{
+			param.MakeHandle(true);
+		}
+
 		param.MakeReference(paramType->IsReference());
 		param.MakeReadOnly(paramType->IsReadOnly());
 	}

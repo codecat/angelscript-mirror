@@ -4137,6 +4137,10 @@ void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, int typeId)
 
 	asCObjectType *objType = dt.GetObjectType();
 
+	// If value assign for ref types has been disabled, then don't do anything if the type is a ref type
+	if( ep.disallowValueAssignForRefType && (objType->flags & asOBJ_REF) && !(objType->flags & asOBJ_SCOPED) )
+		return;
+
 	// Must not copy if the opAssign is not available and the object is not a POD object
 	if( objType->beh.copy )
 	{

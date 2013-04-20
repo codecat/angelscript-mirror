@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <sstream>
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/scriptany/scriptany.h"
 #include <iostream>
 
 using namespace std;
@@ -296,6 +297,61 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// The array add-on should only accept handles for the sub type. This should be controlled by the template callback
+		RegisterScriptArray(engine, false);
+		bout.buffer = "";
+		mod->AddScriptSection("Test",
+			"class C {} \n"
+			"array<C> arr1; \n" // fail
+			"array<C@> arr2; \n" // ok
+			);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "Test (2, 7) : Error   : Can't instanciate template 'array' with subtype 'C'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// When passing a ref type to a ? parameter, the compiler should assume it was meant to send the handle
+		RegisterScriptAny(engine);
+		bout.buffer = "";
+
+		CScriptAny *any = new CScriptAny(engine);
+		engine->RegisterGlobalProperty("any a", any);
+
+		mod->AddScriptSection("Test", "class C {} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		r = ExecuteString(engine, "a.store(C())", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( (any->GetTypeId() & asTYPEID_OBJHANDLE) == 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "a.store(@C())", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( (any->GetTypeId() & asTYPEID_OBJHANDLE) == 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "C c; a.store(c)", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( (any->GetTypeId() & asTYPEID_OBJHANDLE) == 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		any->Release();
 		engine->Release();
 	}
 

@@ -117,18 +117,24 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot, bool &dontGarbageColl
 		}
 		else if( (flags & asOBJ_REF) )
 		{
-			// Verify that there is a default factory
 			bool found = false;
-			for( asUINT n = 0; n < subtype->GetFactoryCount(); n++ )
+
+			// If value assignment for ref type has been disabled then the array 
+			// can be created if the type has a default factory function
+			if( !ot->GetEngine()->GetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE) )
 			{
-				asIScriptFunction *func = subtype->GetFactoryByIndex(n);
-				if( func->GetParamCount() == 0 )
+				// Verify that there is a default factory
+				for( asUINT n = 0; n < subtype->GetFactoryCount(); n++ )
 				{
-					// Found the default factory
-					found = true;
-					break;
+					asIScriptFunction *func = subtype->GetFactoryByIndex(n);
+					if( func->GetParamCount() == 0 )
+					{
+						// Found the default factory
+						found = true;
+						break;
+					}
 				}
-			}	
+			}
 
 			if( !found )
 			{
