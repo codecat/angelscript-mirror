@@ -36,6 +36,75 @@ bool Test()
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 
+	// Operator overloads
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class C\n"
+			"{\n"
+			"    C & opAssign (const C &in other)\n" 
+			"    {\n"
+			"        return this;\n"
+			"    }\n"
+			"    C & opAssign (const C @ other)\n" 
+			"    {\n"
+			"        return this;\n"
+			"    }\n"
+			"    int opCmp (const C &in other)\n" 
+			"    {\n"
+			"        return 0;\n"
+			"    }\n"
+			"    int opCmp (const C @ other)\n" 
+			"    {\n"
+			"        return 0;\n"
+			"    }\n"
+			"    void opAdd (const C &in other)\n" 
+			"    {\n"
+			"    }\n"
+			"    void opAdd (const C @ other)\n" 
+			"    {\n"
+			"    }\n"
+			"}\n"
+			"void main (void)\n"
+			"{\n"
+			"    array<C> a1;\n"
+			"    a1.insertLast(C());\n" // TODO: The compiler should ask the template if the function is OK
+			"    a1.insertLast(C());\n"
+			"    a1.sortAsc();\n"
+			"    a1[0] = C();\n"
+			"    C() + C();\n"
+			"    if( a1[0] < a1[1] ) {}\n"
+			"}\n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (26, 1) : Info    : Compiling void main()\n"
+		                   "test (32, 11) : Error   : Found more than one matching operator\n"
+		                   "test (32, 11) : Info    : C& C::opAssign(const C&in)\n"
+		                   "test (32, 11) : Info    : C& C::opAssign(const C@)\n"
+		                   "test (33, 9) : Error   : Found more than one matching operator\n"
+		                   "test (33, 9) : Info    : void C::opAdd(const C&in)\n"
+		                   "test (33, 9) : Info    : void C::opAdd(const C@)\n"
+		                   "test (34, 15) : Error   : Found more than one matching operator\n"
+		                   "test (34, 15) : Info    : int C::opCmp(const C&in)\n"
+		                   "test (34, 15) : Info    : int C::opCmp(const C@)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	//----------------------------------------------
 	// opEquals for script classes
 	//
@@ -100,6 +169,8 @@ bool Test()
 			"}                                  \n";
 
 		mod->AddScriptSection("script", script);
+
+		bout.buffer = "";
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;

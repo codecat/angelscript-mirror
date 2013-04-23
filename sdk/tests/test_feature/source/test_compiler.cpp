@@ -2479,7 +2479,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (11, 1) : Info    : Compiling void main()\n"
-		                   "script (14, 19) : Error   : No matching signatures to 'tone_synth::set_waveform_type(sine)'\n"
+			               "script (14, 19) : Error   : No matching signatures to 'tone_synth::set_waveform_type(::sine)'\n"
 		                   "script (14, 19) : Info    : Candidates are:\n"
 		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type)\n" )
 		{

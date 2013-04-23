@@ -318,7 +318,7 @@ bool Test()
 						   "a (11, 5) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (14, 5) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
 						   "a (15, 5) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
-						   "a (17, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
+						   "a (17, 11) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
 						   "a (18, 5) : Error   : Shared code cannot use non-shared type 'nonShared'\n"
 						   "a (18, 5) : Error   : Shared code cannot call non-shared function 'nonShared@ nonShared()'\n"
 						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"

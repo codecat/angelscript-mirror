@@ -53,6 +53,20 @@ asIScriptModule *CScriptBuilder::GetModule()
 	return module;
 }
 
+unsigned int CScriptBuilder::GetSectionCount() const
+{
+	return unsigned int(includedScripts.size());
+}
+
+string CScriptBuilder::GetSectionName(unsigned int idx) const
+{
+	if( idx >= includedScripts.size() ) return "";
+
+	set<string>::const_iterator it = includedScripts.cbegin();
+	while( idx-- > 0 ) it++;
+	return *it;
+}
+
 int CScriptBuilder::AddSectionFromFile(const char *filename)
 {
 	// TODO: The file name stored in the set should be the fully resolved name because

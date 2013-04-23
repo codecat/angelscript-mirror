@@ -367,17 +367,23 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// Must not be possible to take the address of class methods
+		// It is possible to take the address of class methods, but not to assign to funcdef variable
 		bout.buffer = "";
-		script = "class t { \n"
-			"  void func() { @func; } \n"
+		script = 
+			"funcdef void F(); \n"
+		    "class t { \n"
+			"  void func() { \n"
+			"    @func; \n" // TODO: Should warn about expression that doesn't do anything
+			"    F @f = @func; \n"
+            "    } \n"
 			"} \n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "script (2, 3) : Info    : Compiling void t::func()\n"
-						   "script (2, 17) : Error   : Invalid operation on method\n" )
+		// TODO: The error message should be better
+		if( bout.buffer != "script (3, 3) : Info    : Compiling void t::func()\n"
+		                   "script (5, 12) : Error   : Can't implicitly convert from 't' to 'F@&'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -465,6 +471,27 @@ bool Test()
 				TEST_FAILED;
 		}
 
+		// The compiler should be able to determine the right function overload
+		// by the destination of the function pointer
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+		         "funcdef void f(); \n"
+				 "f @fp = @func;  \n"
+				 "bool called = false; \n"
+				 "void func() { called = true; }    \n"
+				 "void func(int) {} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		r = ExecuteString(engine, "fp(); assert( called );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		//----------------------------------------------------------
 		// TODO: Future improvements below
 
@@ -480,12 +507,6 @@ bool Test()
 		script = "DYNFUNC@ funcPtr;        \n"
 				 "funcdef void DYNFUNC(); \n"
 				 "@funcPtr = @CompileDynFunc('void func() { @funcPtr = null; }'); \n";
-
-		// The compiler should be able to determine the right function overload by the destination of the function pointer
-		script = "funcdef void f(); \n"
-				 "f @fp = @func();  \n"
-				 "void func() {}    \n"
-				 "void func(int) {} \n";
 
 		// Test that it is possible to declare the function signatures out of order
 		// This also tests the circular reference between the function signatures
