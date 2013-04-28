@@ -1619,9 +1619,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		r = bld.ParseDataType(name, &dt, defaultNamespace);
 		msgCallback = oldMsgCallback;
 
-		// If the builder fails, then the type name
-		// is new and it should be registered
-		if( r < 0 )
+		// If the builder fails or the namespace is different than the default
+		// namespace, then the type name is new and it should be registered
+		if( r < 0 || dt.GetObjectType()->nameSpace != defaultNamespace )
 		{
 			// Make sure the name is not a reserved keyword
 			size_t tokenLen;

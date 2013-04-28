@@ -11,6 +11,26 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// The compiler should search parent namespaces for matching types
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {} \n"
+			"namespace B { \n"
+			"void main() { \n"
+			"  A a; \n"
+			"} \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test different namespaces with declaration of classes of the same name
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
