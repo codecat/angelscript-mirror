@@ -11,6 +11,26 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// The compiler should search parent namespaces for matching global functions
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() {}; \n"
+			"namespace B { \n"
+			"void main() { \n"
+			"  func(); \n"
+			"} \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// The compiler should search parent namespaces for matching variables
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

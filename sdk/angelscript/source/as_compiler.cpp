@@ -8499,18 +8499,24 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			asSNameSpace *ns = DetermineNameSpace(scope);
 			if( ns )
 			{
-				builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
-				if( funcs.GetLength() == 0 )
+				// Search recursively in parent namespaces
+				while( ns && funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() == 0 )
 				{
-					int r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
-					if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+					builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+					if( funcs.GetLength() == 0 )
 					{
-						// The variable is not a function
-						asCString msg;
-						msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
-						Error(msg, node);
-						return -1;
+						int r = CompileVariableAccess(name, scope, &funcPtr, node, true, true);
+						if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() )
+						{
+							// The variable is not a function
+							asCString msg;
+							msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+							Error(msg, node);
+							return -1;
+						}
 					}
+
+					ns = builder->GetParentNameSpace(ns);
 				}
 			}
 			else
