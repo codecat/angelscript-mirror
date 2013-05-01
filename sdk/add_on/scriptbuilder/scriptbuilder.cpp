@@ -62,7 +62,7 @@ string CScriptBuilder::GetSectionName(unsigned int idx) const
 {
 	if( idx >= includedScripts.size() ) return "";
 
-	set<string>::const_iterator it = includedScripts.cbegin();
+	set<string>::const_iterator it = includedScripts.begin();
 	while( idx-- > 0 ) it++;
 	return *it;
 }
