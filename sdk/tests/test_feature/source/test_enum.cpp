@@ -333,7 +333,7 @@ static bool TestEnum()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
-                       "error (1, 18) : Error   : 'UNKNOWN_ENUM::ENUM1' is not declared\n")
+                       "error (1, 18) : Error   : Unknown scope 'UNKNOWN_ENUM'\n")
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

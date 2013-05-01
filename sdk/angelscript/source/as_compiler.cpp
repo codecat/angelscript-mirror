@@ -7093,11 +7093,16 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		}
 	}
 
-	// Is it a global property?
-	if( !found && !objType && !noGlobal )
+	// Recursively search parent namespaces for global entities
+	asCString currScope = scope;
+	if( scope == "" )
+		currScope = outFunc->nameSpace->name;
+	while( !found && !noGlobal && !objType )
 	{
-		asSNameSpace *ns = DetermineNameSpace(scope);
-		if( ns )
+		asSNameSpace *ns = DetermineNameSpace(currScope);
+
+		// Is it a global property?
+		if( !found && ns )
 		{
 			// See if there are any matching global property accessors
 			asSExprContext access(engine);
@@ -7218,83 +7223,107 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				}
 			}
 		}
-	}
 
-	// Is it the name of a global function?
-	if( !noFunction && !found && !objType && !noGlobal )
-	{
-		asCArray<int> funcs;
+		// Is it the name of a global function?
+		if( !noFunction && !found && ns )
+		{
+			asCArray<int> funcs;
 
-		asSNameSpace *ns = DetermineNameSpace(scope);
-		if( ns )
 			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
 
-		if( funcs.GetLength() > 0 )
-		{
-			found = true;
-
-			// Defer the evaluation of which function until it is actually used
-			// Store the namespace and name of the function for later
-			ctx->type.SetNullConstant();
-			// Clear the explicit handle so that the script writer is allowed to explicitly set it
-			ctx->type.isExplicitHandle = false;
-			ctx->methodName = ns ? ns->name + "::" + name : name;
-		}
-	}
-
-	// Is it an enum value?
-	if( !found && !objType && !noGlobal )
-	{
-		// The enum type may be declared in a namespace too
-		asCObjectType *scopeType = 0;
-		if( scope != "" && scope != "::" )
-		{
-			// Use the last scope name as the enum type
-			asCString enumType = scope;
-			asCString nsScope;
-			int p = scope.FindLast("::");
-			if( p != -1 )
-			{
-				enumType = scope.SubString(p+2);
-				nsScope = scope.SubString(0, p);
-			}
-
-			asSNameSpace *ns = engine->FindNameSpace(nsScope.AddressOf());
-			if( ns )
-				scopeType = builder->GetObjectType(enumType.AddressOf(), ns);
-		}
-
-		asDWORD value = 0;
-		asCDataType dt;
-		if( scopeType && builder->GetEnumValueFromObjectType(scopeType, name.AddressOf(), dt, value) )
-		{
-			// scoped enum value found
-			found = true;
-		}
-		else if( !engine->ep.requireEnumScope )
-		{
-			// Look for the enum value without explicitly informing the enum type
-			asSNameSpace *ns = DetermineNameSpace(scope);
-			int e = 0;
-			if( ns )
-				e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
-			if( e )
+			if( funcs.GetLength() > 0 )
 			{
 				found = true;
-				if( e == 2 )
+
+				// Defer the evaluation of which function until it is actually used
+				// Store the namespace and name of the function for later
+				ctx->type.SetNullConstant();
+				// Clear the explicit handle so that the script writer is allowed to explicitly set it
+				ctx->type.isExplicitHandle = false;
+				ctx->methodName = ns ? ns->name + "::" + name : name;
+			}
+		}
+
+		// Is it an enum value?
+		if( !found )
+		{
+			// The enum type may be declared in a namespace too
+			asCObjectType *scopeType = 0;
+			if( currScope != "" && currScope != "::" )
+			{
+				// Use the last scope name as the enum type
+				asCString enumType = currScope;
+				asCString nsScope;
+				int p = currScope.FindLast("::");
+				if( p != -1 )
 				{
-					Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, errNode);
+					enumType = currScope.SubString(p+2);
+					nsScope = currScope.SubString(0, p);
+				}
+
+				asSNameSpace *ns = engine->FindNameSpace(nsScope.AddressOf());
+				if( ns )
+					scopeType = builder->GetObjectType(enumType.AddressOf(), ns);
+			}
+
+			asDWORD value = 0;
+			asCDataType dt;
+			if( scopeType && builder->GetEnumValueFromObjectType(scopeType, name.AddressOf(), dt, value) )
+			{
+				// scoped enum value found
+				found = true;
+			}
+			else if( !engine->ep.requireEnumScope )
+			{
+				// Look for the enum value without explicitly informing the enum type
+				asSNameSpace *ns = DetermineNameSpace(currScope);
+				int e = 0;
+				if( ns )
+					e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
+				if( e )
+				{
+					found = true;
+					if( e == 2 )
+					{
+						Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, errNode);
+					}
+				}
+			}
+
+			if( found )
+			{
+				// Even if the enum type is not shared, and we're compiling a shared object,
+				// the use of the values are still allowed, since they are treated as constants.
+
+				// an enum value was resolved
+				ctx->type.SetConstantDW(dt, value);
+			}
+			else
+			{
+				// If nothing was found because the scope doesn't match a namespace or an enum 
+				// then this should be reported as an error and the search interrupted
+				if( !ns && !scopeType )
+				{
+					ctx->type.SetDummy();
+					asCString str;
+					str.Format(TXT_UNKNOWN_SCOPE_s, currScope.AddressOf());
+					Error(str, errNode);
+					return -1;
 				}
 			}
 		}
 
-		if( found )
+		if( !found )
 		{
-			// Even if the enum type is not shared, and we're compiling a shared object,
-			// the use of the values are still allowed, since they are treated as constants.
+			if( currScope == "" || currScope == "::" )
+				break;
 
-			// an enum value was resolved
-			ctx->type.SetConstantDW(dt, value);
+			// Move up to parent namespace
+			int pos = currScope.FindLast("::");
+			if( pos >= 0 )
+				currScope = currScope.SubString(0, pos);
+			else
+				currScope = "::";
 		}
 	}
 

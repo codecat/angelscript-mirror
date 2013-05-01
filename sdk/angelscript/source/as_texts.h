@@ -222,6 +222,7 @@
 #define TXT_UNEXPECTED_END_OF_FILE        "Unexpected end of file"
 #define TXT_UNEXPECTED_TOKEN_s            "Unexpected token '%s'"
 #define TXT_UNINITIALIZED_GLOBAL_VAR_s    "Use of uninitialized global variable '%s'."
+#define TXT_UNKNOWN_SCOPE_s               "Unknown scope '%s'"
 #define TXT_UNREACHABLE_CODE              "Unreachable code"
 #define TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE "Virtual property contains unrecognized aspect"
 #define TXT_UNUSED_SCRIPT_NODE            "Unused script node"
