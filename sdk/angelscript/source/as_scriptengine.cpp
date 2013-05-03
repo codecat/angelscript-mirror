@@ -996,11 +996,11 @@ int asCScriptEngine::DiscardModule(const char *module)
 
 	asDELETE(mod, asCModule);
 
-	FreeUnusedGlobalProperties();
-	ClearUnusedTypes();
-
 	if( ep.autoGarbageCollect )
 		GarbageCollect();
+
+	FreeUnusedGlobalProperties();
+	ClearUnusedTypes();
 
 	return 0;
 }

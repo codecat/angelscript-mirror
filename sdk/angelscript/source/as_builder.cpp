@@ -3316,7 +3316,8 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				gvar->name			  = name;
 				gvar->datatype		  = type;
 				// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
-				gvar->index			  = 0;
+				// Set the index to a negative to allow compiler to diferentiate from ordinary global var when compiling the initialization
+				gvar->index			  = -1; 
 				gvar->isCompiled	  = false;
 				gvar->isPureConstant  = true;
 				gvar->isEnumValue     = true;

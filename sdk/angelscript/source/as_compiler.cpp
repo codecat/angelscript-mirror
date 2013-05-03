@@ -2287,9 +2287,9 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					lctx.type.Set(type);
 					lctx.type.dataType.MakeReference(true);
 
-					// If it is an enum value that is being compiled then we skip this
-					// as the bytecode won't be used anyway, only the constant value
-					if( asUINT(offset) < engine->globalProperties.GetLength() )
+					// If it is an enum value, i.e. offset is negative, that is being compiled then
+					// we skip this as the bytecode won't be used anyway, only the constant value
+					if( offset >= 0 )
 						lctx.bc.InstrPTR(asBC_LDG, engine->globalProperties[offset]->GetAddressOfValue());
 				}
 				else

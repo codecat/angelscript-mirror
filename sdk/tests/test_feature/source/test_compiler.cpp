@@ -244,6 +244,25 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test a null pointer exception reported by Robert Weitzel
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "int global = 1;");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		engine->DiscardModule("test");
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "enum A { a = 2 }");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
