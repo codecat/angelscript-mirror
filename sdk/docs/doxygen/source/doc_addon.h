@@ -1027,6 +1027,10 @@ public:
   // Add a pre-processor define for conditional compilation
   void DefineWord(const char *word);
 
+  // Enumerate included script sections
+  unsigned int GetSectionCount() const;
+  string       GetSectionName(unsigned int idx) const;
+  
   // Get metadata declared for class types and interfaces
   const char *GetMetadataStringForType(int typeId);
 
@@ -1067,6 +1071,9 @@ Example script with include directive:
     CommonFunc();
   }
 </pre>
+
+
+
 
 
 \section doc_addon_build_condition Conditional programming

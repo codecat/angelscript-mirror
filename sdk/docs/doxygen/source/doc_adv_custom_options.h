@@ -37,6 +37,13 @@ runtime choices about several different behaviours in the engine.
 
 The following modify the script language in one way or the other:
 
+\ref asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
+
+By turning on this the compiler will no longer allow the use of value assignment operators on reference types. 
+While it may seem drastic, it can help reduce risk for bugs in the scripts, as the script writer will no longer
+be able to do a value assignment by mistake when he meant to a handle assignment. Reference types should usually  
+not be copied, so the imposed restriction will likely not cause problems anyway.
+
 \ref asEP_ALLOW_UNSAFE_REFERENCES
  
 By turning on unsafe references you allow in-out references to be used for primitives and value types too. 

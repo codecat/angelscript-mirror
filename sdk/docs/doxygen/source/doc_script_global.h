@@ -192,25 +192,27 @@ for entities that may exist in a different part of the project under a different
 </pre>
 
 Observe that in order to refer to an entity from a different namespace the scoping operator
-must be used, even if the other namespace is a parent namespace or even the global scope.
+must be used, unless it is a parent namespace in which case it is only necessary if the child 
+namespace declare the same entity.
 
 <pre>
-  int varInGlobalScope;
+  int var;
   namespace Parent
   {
-    int varInParentScope;
+    int var;
     namespace Child
     {
-      int varInChildScope;
+      int var;
       void func()
       {
         // Accessing variable in parent namespace requires 
-        // specifying the scope
-        varInChildScope = Parent::varInParentScope;
+        // specifying the scope if an entity in a child namespace
+		// uses the same name
+        var = Parent::var;
 
         // To access variables in global scope the scoping 
         // operator without any name should be used
-        Parent::varInParentScope = \::varInGlobalScope;
+        Parent::var = ::var;
       }
     }
   }
@@ -219,7 +221,7 @@ must be used, even if the other namespace is a parent namespace or even the glob
   {
     // Access variable in a nested namespace requires 
     // fully qualified scope specifier
-    int var = Parent::Child::varInChildScope;
+    int var = Parent::Child::var;
   }
 </pre>
 

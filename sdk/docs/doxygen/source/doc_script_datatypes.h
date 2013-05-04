@@ -444,5 +444,41 @@ Here's an example that shows the syntax for using function handles
   }
 </pre>
 
+It is also possible to take function handles to class methods, but in this case the class method
+must be bound to the object instance that will be used for the call. To do this binding is called
+creating a delegate, and is done by performing a construct call for the declared function definition
+passing the class method as the argument.
+
+<pre>
+  class A
+  {
+    bool Cmp(int a, int b)
+	{
+	   count++;
+	   return a > b;
+	}
+	int count = 0;
+  }
+  
+  void main()
+  {
+    A a;
+	
+	// Create the delegate for the A::Cmp class method
+    CALLBACK \@func = CALLBACK(A::Cmp);
+	
+	// Call the delegate normally as if it was a global function
+	if( func(1,2) )
+	{
+      print('The function returned true\n');
+	}
+	else
+	{
+      print('The function returned false\n');
+	}
+	
+	printf('The number of comparisons performed is '+a.count+'\n');
+  }
+</pre>
 
 */

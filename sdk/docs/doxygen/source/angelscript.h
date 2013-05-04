@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.26.2
-#define ANGELSCRIPT_VERSION        22602
-#define ANGELSCRIPT_VERSION_STRING "2.26.2"
+//! Version 2.26.3
+#define ANGELSCRIPT_VERSION        22603
+#define ANGELSCRIPT_VERSION_STRING "2.26.3"
 
 // Data types
 
@@ -87,43 +87,45 @@ class asIThreadManager;
 enum asEEngineProp
 {
 	//! Allow unsafe references. Default: false.
-	asEP_ALLOW_UNSAFE_REFERENCES       = 1,
+	asEP_ALLOW_UNSAFE_REFERENCES            = 1,
 	//! Optimize byte code. Default: true.
-	asEP_OPTIMIZE_BYTECODE             = 2,
+	asEP_OPTIMIZE_BYTECODE                  = 2,
 	//! Copy script section memory. Default: true.
-	asEP_COPY_SCRIPT_SECTIONS          = 3,
+	asEP_COPY_SCRIPT_SECTIONS               = 3,
 	//! Maximum stack size in bytes for script contexts. Default: 0 (no limit).
-	asEP_MAX_STACK_SIZE                = 4,
+	asEP_MAX_STACK_SIZE                     = 4,
 	//! Interpret single quoted strings as character literals. Default: false.
-	asEP_USE_CHARACTER_LITERALS        = 5,
+	asEP_USE_CHARACTER_LITERALS             = 5,
 	//! Allow linebreaks in string constants. Default: false.
-	asEP_ALLOW_MULTILINE_STRINGS       = 6,
+	asEP_ALLOW_MULTILINE_STRINGS            = 6,
 	//! Allow script to declare implicit handle types. Default: false.
-	asEP_ALLOW_IMPLICIT_HANDLE_TYPES   = 7,
+	asEP_ALLOW_IMPLICIT_HANDLE_TYPES        = 7,
 	//! Remove SUSPEND instructions between each statement. Default: false.
-	asEP_BUILD_WITHOUT_LINE_CUES       = 8,
+	asEP_BUILD_WITHOUT_LINE_CUES            = 8,
 	//! Initialize global variables after a build. Default: true.
-	asEP_INIT_GLOBAL_VARS_AFTER_BUILD  = 9,
+	asEP_INIT_GLOBAL_VARS_AFTER_BUILD       = 9,
 	//! When set the enum values must be prefixed with the enum type. Default: false.
-	asEP_REQUIRE_ENUM_SCOPE            = 10,
+	asEP_REQUIRE_ENUM_SCOPE                 = 10,
 	//! Select scanning method: 0 - ASCII, 1 - UTF8. Default: 1 (UTF8).
-	asEP_SCRIPT_SCANNER                = 11,
+	asEP_SCRIPT_SCANNER                     = 11,
 	//! When set extra bytecode instructions needed for JIT compiled funcions will be included. Default: false.
-	asEP_INCLUDE_JIT_INSTRUCTIONS      = 12,
+	asEP_INCLUDE_JIT_INSTRUCTIONS           = 12,
 	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 0 (UTF8)
-	asEP_STRING_ENCODING               = 13,
+	asEP_STRING_ENCODING                    = 13,
 	//! Enable or disable property accessors: 0 - no accessors, 1 - app registered accessors, 2 - app and script created accessors
-	asEP_PROPERTY_ACCESSOR_MODE        = 14,
+	asEP_PROPERTY_ACCESSOR_MODE             = 14,
 	//! Format default array in template form in messages and declarations. Default: false
-	asEP_EXPAND_DEF_ARRAY_TO_TMPL      = 15,
+	asEP_EXPAND_DEF_ARRAY_TO_TMPL           = 15,
 	//! Enable or disable automatic garbage collection. Default: true
-	asEP_AUTO_GARBAGE_COLLECT          = 16,
+	asEP_AUTO_GARBAGE_COLLECT               = 16,
 	//! Disallow the use of global variables in the script. Default: false
-	asEP_DISALLOW_GLOBAL_VARS          = 17,
+	asEP_DISALLOW_GLOBAL_VARS               = 17,
 	//! When true, the compiler will always provide a default constructor for script classes. Default: false
-	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT = 18,
+	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
 	//! Set how warnings should be treated: 0 - dismiss, 1 - emit, 2 - treat as error
-	asEP_COMPILER_WARNINGS             = 19
+	asEP_COMPILER_WARNINGS                  = 19,
+	//! Disallow value assignment for reference types to avoid ambiguity. Default: false
+	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20
 };
 
 // Calling conventions
@@ -509,7 +511,9 @@ enum asEFuncType
 	//! \brief A function definition
 	asFUNC_FUNCDEF   = 4,
 	//! \brief An imported function
-	asFUNC_IMPORTED  = 5
+	asFUNC_IMPORTED  = 5,
+	//! \brief A function delegate
+	asFUNC_DELEGATE  = 6
 };
 
 
