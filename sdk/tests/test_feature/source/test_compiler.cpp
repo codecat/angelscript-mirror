@@ -229,20 +229,44 @@ bool Test()
 	bool fail = false;
 	int r;
 
-	fail = Test2() || fail;
-	fail = Test3() || fail;
-	fail = Test4() || fail;
-	fail = Test5() || fail;
-	fail = Test6() || fail;
-	fail = Test7() || fail;
-	fail = Test8() || fail;
-	fail = Test9() || fail;
-	fail = TestRetRef() || fail;
-
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Test that the object variable scopes in the function bytecode is correctly set
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"   bool TRUE = true, FALSE = false; \n"
+			"   if( FALSE ) \n"
+			"   { \n"
+			"	  string temp=''; \n"
+			"	  while( TRUE ) \n"
+			"	  { \n"
+			"		if( FALSE ) \n"
+			"		{ \n"
+			"			continue; \n"
+			"		} \n"
+			"  		break; \n"
+			"  	  } \n"
+			"   } \n"
+			"   int a = 0; a = a/a; \n" // provoke exception by dividing with 0
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "func()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		ctx->Release();
+		engine->Release();
+	}
 
 	// Test a null pointer exception reported by Robert Weitzel
 	{
@@ -3246,6 +3270,16 @@ bool Test()
 
 		engine->Release();
 	}
+
+	fail = Test2() || fail;
+	fail = Test3() || fail;
+	fail = Test4() || fail;
+	fail = Test5() || fail;
+	fail = Test6() || fail;
+	fail = Test7() || fail;
+	fail = Test8() || fail;
+	fail = Test9() || fail;
+	fail = TestRetRef() || fail;
 
 	// Success
  	return fail;

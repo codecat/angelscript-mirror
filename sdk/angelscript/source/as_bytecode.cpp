@@ -1485,6 +1485,7 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 {
 	int pos = 0;
 	asCByteInstruction *instr = first;
+	int blockLevel = 0;
 	while( instr )
 	{
 		if( instr->op == asBC_Block )
@@ -1493,7 +1494,21 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 			info.programPos     = pos;
 			info.variableOffset = 0;
 			info.option         = instr->wArg[0] ? asBLOCK_BEGIN : asBLOCK_END;
-			outFunc->objVariableInfo.PushLast(info);
+			if( info.option == asBLOCK_BEGIN ) 
+			{
+				blockLevel++; 
+				outFunc->objVariableInfo.PushLast(info);
+			}
+			else
+			{
+				blockLevel--;
+				asASSERT( blockLevel >= 0 );
+				if( outFunc->objVariableInfo[outFunc->objVariableInfo.GetLength()-1].option == asBLOCK_BEGIN &&
+					outFunc->objVariableInfo[outFunc->objVariableInfo.GetLength()-1].programPos == pos )
+					outFunc->objVariableInfo.PopLast();
+				else
+					outFunc->objVariableInfo.PushLast(info);
+			}
 		}
 		else if( instr->op == asBC_ObjInfo )
 		{
@@ -1512,6 +1527,7 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 
 		instr = instr->next;
 	}
+	asASSERT( blockLevel == 0 );
 }
 
 int asCByteCode::GetSize()
@@ -2001,10 +2017,9 @@ void asCByteCode::PostProcess()
 	instr = first;
 	while( instr )
 	{
-		if( instr->marked == false )
+		// Don't remove asBC_Block instructions as then the start and end of blocks may become mismatched
+		if( instr->marked == false && instr->op != asBC_Block )
 		{
-			// TODO: Give warning of unvisited code
-
 			// Remove it
 			asCByteInstruction *curr = instr;
 			instr = instr->next;

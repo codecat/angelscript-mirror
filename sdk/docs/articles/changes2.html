@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.26.3 WIP - 2013/05/02</h2>
+<h2>Version 2.26.3 WIP - 2013/05/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>RegisterObjectProperty() will now return an error if the offset is larger than a signed 16bit value which is what the VM supports (Thanks Adrian Bibby Walther)
 <li>Fixed bug in compiler where the class constructor could become invalid if two classes with the same name was declared in different namespaces (Thanks loverlin)
 <li>A null pointer access error could happen when compiling a script with enums after discarding a script with global variables (Thanks Robert Weitzel)
+<li>The context could in some situations attempt to destroy objects on the stack that had never been initialized upon cleanup (Thanks Philip Bennefall)
 </ul>
 <li>Library interface
 <ul>
