@@ -3071,6 +3071,10 @@ void asCScriptEngine::OrphanTemplateInstances(asCObjectType *subType)
 
 				// Do a recursive check for other template instances
 				OrphanTemplateInstances(templateTypes[n]);
+
+				// Break out so we don't add the same template to
+				// the gc again if another subtype matches this one
+				break;
 			}
 		}
 	}

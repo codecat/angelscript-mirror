@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler where the class constructor could become invalid if two classes with the same name was declared in different namespaces (Thanks loverlin)
 <li>A null pointer access error could happen when compiling a script with enums after discarding a script with global variables (Thanks Robert Weitzel)
 <li>The context could in some situations attempt to destroy objects on the stack that had never been initialized upon cleanup (Thanks Philip Bennefall)
+<li>Multi-template types where both subtypes are of the same script class no longer crash the GC (Thanks Polyák István)
 </ul>
 <li>Library interface
 <ul>

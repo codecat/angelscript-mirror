@@ -132,6 +132,38 @@ MyTmpl_float *MyTmpl_float_factory()
 	return new MyTmpl_float();
 }
 
+class MyDualTmpl
+{
+public:
+	MyDualTmpl(asIObjectType *t) 
+	{
+		refCount = 1;
+		type = t;
+
+		type->AddRef();
+	}
+	~MyDualTmpl()
+	{
+		if( type ) 
+			type->Release();
+	}
+	void AddRef()
+	{
+		refCount++;
+	}
+	void Release()
+	{
+		if( --refCount == 0 )
+			delete this;
+	}
+	asIObjectType *type;
+	int refCount;
+};
+MyDualTmpl *MyDualTmpl_factory(asIObjectType *type)
+{
+	return new MyDualTmpl(type);
+}
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -144,6 +176,36 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test instanciating a template with same subtype for both args
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("MyDualTmpl<class T1, class T2>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectBehaviour("MyDualTmpl<T1,T2>", asBEHAVE_FACTORY, "MyDualTmpl<T1,T2>@ f(int&in)", asFUNCTION(MyDualTmpl_factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("MyDualTmpl<T1,T2>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyDualTmpl,AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyDualTmpl<T1,T2>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyDualTmpl,Release), asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {} \n"
+			"void func() { \n"
+			"  MyDualTmpl<A,A> a; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		asUINT size, destr, detect;
+		engine->GetGCStatistics(&size, &destr, &detect);
+
+		engine->DiscardModule("test");
+
+		engine->GetGCStatistics(&size, &destr, &detect);
+
+		engine->Release();
+	}
 
 	// Test passing templates are arguments
 	// http://www.gamedev.net/topic/639597-how-to-pass-arraystring-to-a-function/
