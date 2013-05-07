@@ -5,12 +5,17 @@
 
 The are two principal paths to take when registering a new type, either the
 type is a reference type that is located in dynamic memory, or the type is a
-value type that is located on the stack. Complex types are usually registered
-as reference types, while simple types that are meant to be used as primitives
-are registered as value types. A reference type support object handles (unless restricted by application), but
+value type that is located on the stack or locally as members of other objects. 
+A reference type support object handles (unless restricted by application), but
 cannot be passed by value to application registered functions, a value type
 doesn't support handles and can be passed by value to application registered
 functions.
+
+There is no given rule when to use one or the other, but in general you'll use 
+reference types when the type must be able to outlive the scope in which it is 
+created, and value types when the type is normally used to perform quick 
+calculations after which the object can be discarded. If the type is large or 
+complex, then it is likely it should be a reference type.
 
  - \subpage doc_reg_basicref
  - \subpage doc_register_val_type

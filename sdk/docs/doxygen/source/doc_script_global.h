@@ -207,12 +207,12 @@ namespace declare the same entity.
       {
         // Accessing variable in parent namespace requires 
         // specifying the scope if an entity in a child namespace
-		// uses the same name
+        // uses the same name
         var = Parent::var;
 
         // To access variables in global scope the scoping 
         // operator without any name should be used
-        Parent::var = ::var;
+        Parent::var = \::var;
       }
     }
   }
