@@ -929,13 +929,19 @@ represents a complex number, i.e. a number with real and imaginary parts.
   // Returns the fraction
   float fraction(float val);
   
+  // Conversion between floating point and IEEE 754 representations
+  float  fpFromIEEE(uint raw); 
+  double fpFromIEEE(uint64 raw);
+  uint   fpToIEEE(float fp);
+  uint64 fpToIEEE(double fp);
+  
   // This type represents a complex number with real and imaginary parts
   class complex
   {
     // Constructors
     complex();
     complex(const complex &in);
-	complex(float r);
+    complex(float r);
     complex(float r, float i);
 
     // Equality operator

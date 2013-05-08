@@ -47,6 +47,13 @@ bool Test()
 	RegisterScriptMathComplex(engine);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
+	r = ExecuteString(engine, "float a = 1; uint b = fpToIEEE(a); assert( b == 0x3f800000 );");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	r = ExecuteString(engine, "uint64 a = 0x3ff0000000000000; double b = fpFromIEEE(a); assert( b == 1.0 );");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	
 	Complex v;
 	engine->RegisterGlobalProperty("complex v", &v);
 
