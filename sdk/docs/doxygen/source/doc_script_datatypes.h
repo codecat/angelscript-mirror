@@ -453,31 +453,31 @@ passing the class method as the argument.
   class A
   {
     bool Cmp(int a, int b)
-	{
-	   count++;
-	   return a > b;
-	}
-	int count = 0;
+    {
+       count++;
+       return a > b;
+    }
+    int count = 0;
   }
   
   void main()
   {
     A a;
-	
-	// Create the delegate for the A::Cmp class method
+    
+    // Create the delegate for the A::Cmp class method
     CALLBACK \@func = CALLBACK(A::Cmp);
-	
-	// Call the delegate normally as if it was a global function
-	if( func(1,2) )
-	{
-      print('The function returned true\n');
-	}
-	else
-	{
-      print('The function returned false\n');
-	}
-	
-	printf('The number of comparisons performed is '+a.count+'\n');
+    
+    // Call the delegate normally as if it was a global function
+    if( func(1,2) )
+    {
+      print("The function returned true\n");
+    }
+    else
+    {
+      print("The function returned false\n");
+    }
+    
+    printf("The number of comparisons performed is "+a.count+"\n");
   }
 </pre>
 
