@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.26.3
-#define ANGELSCRIPT_VERSION        22603
-#define ANGELSCRIPT_VERSION_STRING "2.26.3"
+//! Version 2.27.0
+#define ANGELSCRIPT_VERSION        22700
+#define ANGELSCRIPT_VERSION_STRING "2.27.0"
 
 // Data types
 
@@ -410,12 +410,6 @@ enum asETokenClass
 	//! White space token.
 	asTC_WHITESPACE = 5
 };
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-25
-// Prepare flags
-const int asPREPARE_PREVIOUS = -1;
-#endif
 
 // Type id flags
 //! \brief Type id flags
@@ -1004,11 +998,6 @@ public:
 	//! \brief Returns the number of registered functions.
 	//! \return The number of registered functions.
 	virtual asUINT             GetGlobalFunctionCount() const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-20
-	//! \deprecated Use \ref asIScriptEngine::GetGlobalFunctionByIndex instead
-	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const = 0;
-#endif
 	//! \brief Returns the registered function.
 	//! \param[in] index The index of the registered global function.
 	//! \return The function object, or null on error.
@@ -1543,11 +1532,6 @@ public:
 	//! This method is meant for objects that will be initialized manually 
 	//! by the application, e.g. when restoring a serialized object.
 	virtual void             *CreateUninitializedScriptObject(int typeId) = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-06-07
-	//! \deprecated Use \ref asIScriptEngine::AssignScriptObject instead
-	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-#endif
 	//! \brief Copy one script object to another.
 	//! \param[in] dstObj A pointer to the destination object.
 	//! \param[in] srcObj A pointer to the source object.
@@ -1901,15 +1885,6 @@ public:
 	//!
 	//! This method retrieves the number of compiled script functions.
 	virtual asUINT             GetFunctionCount() const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-20
-	//! \deprecated Use \ref asIScriptModule::GetFunctionByIndex instead
-	virtual int                GetFunctionIdByIndex(asUINT index) const = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionByName instead
-	virtual int                GetFunctionIdByName(const char *name) const = 0;
-	//! \deprecated Use \ref asIScriptModule::GetFunctionByDecl instead
-	virtual int                GetFunctionIdByDecl(const char *decl) const = 0;
-#endif
 	//! \brief Returns the function by index
 	//! \param[in] index The index of the function
 	//! \return The function or null in case of error.
@@ -1922,11 +1897,6 @@ public:
 	//! \param[in] name The function name
 	//! \return The function or null if not found or there are multiple matches.
 	virtual asIScriptFunction *GetFunctionByName(const char *name) const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-20
-	//! \deprecated Use \ref asIScriptModule::RemoveFunction(asIScriptFunction*) instead
-	virtual int                RemoveFunction(int funcId) = 0;
-#endif
 	//! \brief Remove a single function from the scope of the module
 	//! \param[in] func The pointer to the function that should be removed.
 	//! \return A negative value on error.
@@ -2276,11 +2246,6 @@ public:
 	//!
 	//! \see \ref doc_call_script_func
 	virtual int             Prepare(asIScriptFunction *func) = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-25
-	//! \deprecated Use \ref asIScriptContext::Prepare(asIScriptFunction *) instead
-	virtual int             Prepare(int funcId) = 0;
-#endif
 	//! \brief Frees resources held by the context.
 	//! \return A negative value on error.
 	//! \retval asCONTEXT_ACTIVE The context is still active or suspended.
@@ -2713,13 +2678,6 @@ public:
 	//! \brief Returns a pointer to the script engine.
 	//! \return A pointer to the engine.
 	virtual asIScriptEngine   *GetEngine() const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-25
-	//! \deprecated Use \ref asIScriptGeneric::GetFunction instead
-	virtual int                GetFunctionId() const = 0;
-	//! \deprecated Use \ref asIScriptFunction::GetUserData instead
-	virtual void              *GetFunctionUserData() const = 0;
-#endif
 	//! \brief Returns the function that is being called.
 	//! \return The function that is being called.
 	virtual asIScriptFunction *GetFunction() const = 0;
@@ -3066,13 +3024,6 @@ public:
 	//! \brief Returns the number of factory functions for the object type.
 	//! \return The number of factory functions for this object.
 	virtual asUINT             GetFactoryCount() const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-25
-	//! \deprecated Use \ref asIObjectType::GetFactoryByIndex instead
-	virtual int                GetFactoryIdByIndex(asUINT index) const = 0;
-	//! \deprecated Use \ref asIObjectType::GetFactoryByDecl instead
-	virtual int                GetFactoryIdByDecl(const char *decl) const = 0;
-#endif
 	//! \brief Returns the factory function by the index
 	//! \param[in] index The index of the factory function.
 	//! \return The factory function or null if the index is invalid.
@@ -3090,15 +3041,6 @@ public:
 	//! \brief Returns the number of methods for the object type.
 	//! \return The number of methods for this object.
 	virtual asUINT             GetMethodCount() const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-25
-	//! \deprecated Use \ref asIObjectType::GetMethodByIndex instead
-	virtual int                GetMethodIdByIndex(asUINT index, bool getVirtual = true) const = 0;
-	//! \deprecated Use \ref asIObjectType::GetMethodByName instead
-	virtual int                GetMethodIdByName(const char *name, bool getVirtual = true) const = 0;
-	//! \deprecated Use \ref asIObjectType::GetMethodByDecl instead
-	virtual int                GetMethodIdByDecl(const char *decl, bool getVirtual = true) const = 0;
-#endif
 	//! \brief Returns the method by index.
 	//! \param[in] index The index of the method.
 	//! \param[in] getVirtual Set to true if the virtual method or the real method should be retrieved.

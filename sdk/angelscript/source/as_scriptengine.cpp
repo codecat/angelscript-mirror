@@ -2619,20 +2619,6 @@ asUINT asCScriptEngine::GetGlobalFunctionCount() const
 	return asUINT(registeredGlobalFuncs.GetLength()-1);
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-20
-// interface
-int asCScriptEngine::GetGlobalFunctionIdByIndex(asUINT index) const
-{
-	// Don't count the builtin delegate factory
-	index++;
-	if( index >= registeredGlobalFuncs.GetLength() )
-		return asINVALID_ARG;
-
-	return registeredGlobalFuncs[index]->id;
-}
-#endif
-
 // interface
 asIScriptFunction *asCScriptEngine::GetGlobalFunctionByIndex(asUINT index) const
 {
@@ -4117,14 +4103,6 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 
 	AssignScriptObject(mem, obj, type->GetTypeId());
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-06-07
-void asCScriptEngine::CopyScriptObject(void *dstObj, void *srcObj, int typeId)
-{
-	AssignScriptObject(dstObj, srcObj, typeId);
-}
-#endif
 
 // interface
 void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, int typeId)

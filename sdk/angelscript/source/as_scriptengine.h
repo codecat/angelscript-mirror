@@ -95,10 +95,6 @@ public:
 	// Global functions
 	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
 	virtual asUINT             GetGlobalFunctionCount() const;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-20
-	virtual int                GetGlobalFunctionIdByIndex(asUINT index) const;
-#endif
 	virtual asIScriptFunction *GetGlobalFunctionByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetGlobalFunctionByDecl(const char *declaration) const;
 
@@ -176,10 +172,6 @@ public:
 	virtual void             *CreateScriptObjectCopy(void *obj, int typeId);
 	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
 	virtual void             *CreateUninitializedScriptObject(int typeId);
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-06-07
-	virtual void              CopyScriptObject(void *dstObj, void *srcObj, int typeId);
-#endif
 	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
 	virtual void              AssignScriptObject(void *dstObj, void *srcObj, int typeId);
 	// TODO: interface: Deprecate this

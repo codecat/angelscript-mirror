@@ -54,11 +54,6 @@ public:
 //------------------------------
 	// Miscellaneous
 	asIScriptEngine   *GetEngine() const;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.24.0 - 2012-05-25
-	int                GetFunctionId() const;
-	void              *GetFunctionUserData() const;
-#endif
 	asIScriptFunction *GetFunction() const;
 
 	// Object

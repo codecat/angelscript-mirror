@@ -422,18 +422,6 @@ asUINT asCObjectType::GetFactoryCount() const
 	return (asUINT)beh.factories.GetLength();
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-25
-// interface
-int asCObjectType::GetFactoryIdByIndex(asUINT index) const
-{
-	if( index >= beh.factories.GetLength() )
-		return asINVALID_ARG;
-
-	return beh.factories[index];
-}
-#endif
-
 // interface
 asIScriptFunction *asCObjectType::GetFactoryByIndex(asUINT index) const
 {
@@ -442,19 +430,6 @@ asIScriptFunction *asCObjectType::GetFactoryByIndex(asUINT index) const
 
 	return engine->GetFunctionById(beh.factories[index]);
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-25
-// interface
-int asCObjectType::GetFactoryIdByDecl(const char *decl) const
-{
-	if( beh.factories.GetLength() == 0 )
-		return asNO_FUNCTION;
-
-	// Let the engine parse the string and find the appropriate factory function
-	return engine->GetFactoryIdByDecl(this, decl);
-}
-#endif
 
 // interface
 asIScriptFunction *asCObjectType::GetFactoryByDecl(const char *decl) const
@@ -472,25 +447,6 @@ asUINT asCObjectType::GetMethodCount() const
 	return (asUINT)methods.GetLength();
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-25
-// interface
-int asCObjectType::GetMethodIdByIndex(asUINT index, bool getVirtual) const
-{
-	if( index >= methods.GetLength() )
-		return asINVALID_ARG;
-
-	if( !getVirtual )
-	{
-		asCScriptFunction *func = engine->scriptFunctions[methods[index]];
-		if( func && func->funcType == asFUNC_VIRTUAL )
-			return virtualFunctionTable[func->vfTableIdx]->id;
-	}
-
-	return methods[index];
-}
-#endif
-
 // interface
 asIScriptFunction *asCObjectType::GetMethodByIndex(asUINT index, bool getVirtual) const
 {
@@ -506,36 +462,6 @@ asIScriptFunction *asCObjectType::GetMethodByIndex(asUINT index, bool getVirtual
 
 	return func;
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-25
-// interface
-int asCObjectType::GetMethodIdByName(const char *name, bool getVirtual) const
-{
-	int id = -1;
-	for( size_t n = 0; n < methods.GetLength(); n++ )
-	{
-		if( engine->scriptFunctions[methods[n]]->name == name )
-		{
-			if( id == -1 )
-				id = methods[n];
-			else
-				return asMULTIPLE_FUNCTIONS;
-		}
-	}
-
-	if( id == -1 ) return asNO_FUNCTION;
-
-	if( !getVirtual )
-	{
-		asCScriptFunction *func = engine->scriptFunctions[id];
-		if( func && func->funcType == asFUNC_VIRTUAL )
-			return virtualFunctionTable[func->vfTableIdx]->id;
-	}
-
-	return id;
-}
-#endif
 
 // interface
 asIScriptFunction *asCObjectType::GetMethodByName(const char *name, bool getVirtual) const
@@ -563,33 +489,6 @@ asIScriptFunction *asCObjectType::GetMethodByName(const char *name, bool getVirt
 
 	return func;
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.24.0 - 2012-05-25
-// interface
-int asCObjectType::GetMethodIdByDecl(const char *decl, bool getVirtual) const
-{
-	if( methods.GetLength() == 0 )
-		return asNO_FUNCTION;
-
-	// Get the module from one of the methods, but it will only be
-	// used to allow the parsing of types not already known by the object.
-	// It is possible for object types to be orphaned, e.g. by discarding 
-	// the module that created it. In this case it is still possible to 
-	// find the methods, but any type not known by the object will result in
-	// an invalid declaration.
-	asCModule *mod = engine->scriptFunctions[methods[0]]->module;
-	int id = engine->GetMethodIdByDecl(this, decl, mod);
-	if( !getVirtual && id >= 0 )
-	{
-		asCScriptFunction *func = engine->scriptFunctions[id];
-		if( func && func->funcType == asFUNC_VIRTUAL )
-			return virtualFunctionTable[func->vfTableIdx]->id;
-	}
-
-	return id;
-}
-#endif
 
 // interface
 asIScriptFunction *asCObjectType::GetMethodByDecl(const char *decl, bool getVirtual) const
