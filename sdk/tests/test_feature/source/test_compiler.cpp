@@ -234,6 +234,42 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test assignment operator
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class C1\n"
+			"{\n"
+			"    C1 () {} \n"
+			"    C1 & opAssign (const C1 &in other)\n"
+			"    {\n"
+			"        value = other.value; \n"
+			"        return this; \n"
+			"    }\n"
+			"    int value = 0; \n"
+			"}\n"
+			"void main (void)\n"
+			"{\n"
+			"    array<C1> t; \n"
+			"    t.insertLast(C1()); \n"
+			"    t[0].value = 42; \n"
+			"    t.insertLast(t[0]); \n" // should make a copy
+			"    assert( t[0].value == t[1].value ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Test that the object variable scopes in the function bytecode is correctly set
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

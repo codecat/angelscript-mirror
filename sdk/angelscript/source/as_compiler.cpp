@@ -4265,7 +4265,17 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 		if( beh->copy )
 		{
 			// Call the copy operator
-			bc->Call(asBC_CALLSYS, (asDWORD)beh->copy, 2*AS_PTR_SIZE);
+			asCScriptFunction *descr = builder->GetFunctionDescription(beh->copy);
+			if( descr->funcType == asFUNC_VIRTUAL )
+				bc->Call(asBC_CALLINTF, beh->copy, 2*AS_PTR_SIZE);
+			else if( descr->funcType == asFUNC_SCRIPT )
+				bc->Call(asBC_CALL, beh->copy, 2*AS_PTR_SIZE);
+			else
+			{
+				asASSERT( descr->funcType == asFUNC_SYSTEM );
+				bc->Call(asBC_CALLSYS, beh->copy, 2*AS_PTR_SIZE);
+			}
+			asASSERT( descr->returnType.IsReference() );
 			bc->Instr(asBC_PshRPtr);
 		}
 		else
