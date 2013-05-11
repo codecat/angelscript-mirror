@@ -10881,13 +10881,17 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 			// Merge the operands in the different order so that they are evaluated correctly
 			MergeExprBytecode(ctx, rctx);
 			MergeExprBytecode(ctx, lctx);
+
+			// We must not process the deferred parameters yet, as
+			// it may overwrite the lvalue kept in the register
 		}
 		else
 		{
 			MergeExprBytecode(ctx, lctx);
 			MergeExprBytecode(ctx, rctx);
+
+			ProcessDeferredParams(ctx);
 		}
-		ProcessDeferredParams(ctx);
 
 		asEBCInstr instruction = asBC_ADDi;
 		if( lctx->type.dataType.IsIntegerType() ||

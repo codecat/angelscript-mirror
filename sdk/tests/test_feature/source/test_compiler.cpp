@@ -2,6 +2,7 @@
 #include <sstream>
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptany/scriptany.h"
+#include "../../../add_on/scriptmath/scriptmath.h"
 #include <iostream>
 
 using namespace std;
@@ -233,6 +234,49 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Test passing argument to function that returns object
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		RegisterScriptMath(engine);
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class C1 \n"
+			"{ \n"
+			"    C1 () \n"
+			"    { \n"
+			"        d_ = 0.0; \n"
+			"    } \n"
+			"    double d_; \n"
+			"} \n"
+			"C1 t1; \n"
+			"C1 & getC1 (const string &in s) \n"
+			"{ \n"
+			"    return t1; \n"
+			"} \n"
+			"void main () \n"
+			"{ \n"
+			"   for ( int i = 0; i < 3; ++i ) \n"
+			"   { \n"
+			"       string s;           \n" // case 1.
+			"       getC1(s).d_ += 10;  \n" // case 1.
+			"	    getC1(string()).d_ += 10; \n" // case 2.
+			"   } \n"
+			"	assert( abs(t1.d_ - 60.0) <= 0.0001 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+		engine->Release();
+	}
 
 	// Test assignment operator
 	{
