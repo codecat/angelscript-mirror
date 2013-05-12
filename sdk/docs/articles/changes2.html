@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler would call a script class' opAssign method as if it was a system function in a specific situation causing a crash (Thanks Polyák István)
 <li>A compound assignment to a class member could be compiled incorrectly if the lvalue had deferred parameters in expression (Thanks Polyák István)
 <li>GetExceptionLineNumber would crash if the exception had been raised in a generated function (Thanks Polyák István)
+<li>Fixed compiler error on FreeBSD (Thanks Veniamin Gvozdikov)
 </ul>
 <li>Library interface
 <ul>
