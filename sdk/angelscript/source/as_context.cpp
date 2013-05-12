@@ -4456,7 +4456,14 @@ int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 
 	if( column ) *column = m_exceptionColumn;
 
-	if( sectionName ) *sectionName = m_engine->scriptSectionNames[m_exceptionSectionIdx]->AddressOf();
+	if( sectionName ) 
+	{
+		// The section index can be -1 if the exception was raised in a generated function, e.g. factstub for templates
+		if( m_exceptionSectionIdx >= 0 )
+			*sectionName = m_engine->scriptSectionNames[m_exceptionSectionIdx]->AddressOf();
+		else
+			*sectionName = 0;
+	}
 
 	return m_exceptionLine;
 }

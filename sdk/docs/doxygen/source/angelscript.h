@@ -2490,6 +2490,9 @@ public:
 	//!
 	//! This method returns the line number where the exception ocurred. The line number 
 	//! is relative to the script section where the function was implemented.
+	//! 
+	//! Observe that the returned sectionName can be null, e.g. if the function in which
+	//! the exception occurred was a generated stub function.
 	virtual int                GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	//! \brief Returns the function where the exception occurred.
 	//! \return The function where the exception occurred.

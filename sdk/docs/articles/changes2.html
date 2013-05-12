@@ -15,13 +15,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/05/11</h2>
+<h2>Version 2.27.0 WIP - 2013/05/12</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Compiler would call a script class' opAssign method as if it was a system function in a specific situation causing a crash (Thanks Polyák István)
 <li>A compound assignment to a class member could be compiled incorrectly if the lvalue had deferred parameters in expression (Thanks Polyák István)
+<li>GetExceptionLineNumber would crash if the exception had been raised in a generated function (Thanks Polyák István)
 </ul>
 <li>Library interface
 <ul>
