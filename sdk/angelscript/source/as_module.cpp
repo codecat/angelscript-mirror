@@ -80,9 +80,17 @@ asCModule::~asCModule()
 		// Remove the module from the engine
 		if( engine->lastModule == this )
 			engine->lastModule = 0;
-
 		engine->scriptModules.RemoveValue(this);
+
+		// Allow the engine to clean up what is not used
+		engine->CleanupAfterDiscardModule();
 	}
+}
+
+// interface
+void asCModule::Discard()
+{
+	asDELETE(this,asCModule);
 }
 
 // interface

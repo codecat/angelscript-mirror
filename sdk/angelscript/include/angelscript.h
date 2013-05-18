@@ -667,6 +667,7 @@ public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual void             SetName(const char *name) = 0;
 	virtual const char      *GetName() const = 0;
+	virtual void             Discard() = 0;
 
 	// Compilation
 	virtual int         AddScriptSection(const char *name, const char *code, size_t codeLength = 0, int lineOffset = 0) = 0;

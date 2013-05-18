@@ -432,6 +432,8 @@ asCScriptEngine::asCScriptEngine()
 {
 	asCThreadManager::Prepare(0);
 
+	shuttingDown = false;
+
 	// Engine properties
 	{
 		ep.allowUnsafeReferences         = false;
@@ -526,6 +528,8 @@ asCScriptEngine::asCScriptEngine()
 
 asCScriptEngine::~asCScriptEngine()
 {
+	shuttingDown = true;
+
 	asASSERT(refCount.get() == 0);
 	asUINT n;
 
@@ -533,10 +537,10 @@ asCScriptEngine::~asCScriptEngine()
 	// object types from the config groups
 	for( n = (asUINT)scriptModules.GetLength(); n-- > 0; )
 		if( scriptModules[n] )
-			asDELETE(scriptModules[n],asCModule);
+			scriptModules[n]->Discard();
 	scriptModules.SetLength(0);
 
-	GarbageCollect(asGC_FULL_CYCLE);
+	GarbageCollect();
 
 	// Delete the functions for template types that may references object types
 	for( n = 0; n < templateTypes.GetLength(); n++ )
@@ -578,7 +582,7 @@ asCScriptEngine::~asCScriptEngine()
 	}
 
 	// Do one more garbage collect to free gc objects that were global variables
-	GarbageCollect(asGC_FULL_CYCLE);
+	GarbageCollect();
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
@@ -735,6 +739,19 @@ asCScriptEngine::~asCScriptEngine()
 	nameSpaces.SetLength(0);
 
 	asCThreadManager::Unprepare();
+}
+
+// internal
+void asCScriptEngine::CleanupAfterDiscardModule()
+{
+	// Skip this when shutting down as it will be done anyway by the engine destructor
+	if( shuttingDown ) return;
+
+	if( ep.autoGarbageCollect )
+		GarbageCollect();
+
+	FreeUnusedGlobalProperties();
+	ClearUnusedTypes();
 }
 
 // interface
@@ -974,16 +991,13 @@ asIScriptModule *asCScriptEngine::GetModule(const char *module, asEGMFlags flag)
 	if( flag == asGM_ALWAYS_CREATE )
 	{
 		if( mod != 0 )
-		{
-			asDELETE(mod, asCModule);
-		}
+			mod->Discard();
+
 		return GetModule(module, true);
 	}
 
 	if( mod == 0 && flag == asGM_CREATE_IF_NOT_EXISTS )
-	{
 		return GetModule(module, true);
-	}
 
 	return mod;
 }
@@ -994,13 +1008,7 @@ int asCScriptEngine::DiscardModule(const char *module)
 	asCModule *mod = GetModule(module, false);
 	if( mod == 0 ) return asNO_MODULE;
 
-	asDELETE(mod, asCModule);
-
-	if( ep.autoGarbageCollect )
-		GarbageCollect();
-
-	FreeUnusedGlobalProperties();
-	ClearUnusedTypes();
+	mod->Discard();
 
 	return 0;
 }

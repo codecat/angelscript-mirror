@@ -99,7 +99,7 @@ public:
 	virtual asIScriptEngine *GetEngine() const;
 	virtual void             SetName(const char *name);
 	virtual const char      *GetName() const;
-	// TODO: interface: Should have a method Discard(); which will replace the engine's DiscardModule() method
+	virtual void             Discard();
 
 	// Compilation
 	virtual int         AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset);

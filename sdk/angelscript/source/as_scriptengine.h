@@ -244,6 +244,8 @@ public:
 
 	void ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type);
 
+	void CleanupAfterDiscardModule();
+
 	int  ClearUnusedTypes();
 	void RemoveTemplateInstanceType(asCObjectType *t);
 	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
@@ -447,6 +449,9 @@ public:
 		int    compilerWarnings;
 		bool   disallowValueAssignForRefType;
 	} ep;
+
+	// This flag is to allow a quicker shutdown when releasing the engine
+	bool shuttingDown;
 };
 
 END_AS_NAMESPACE
