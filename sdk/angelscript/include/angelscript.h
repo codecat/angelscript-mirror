@@ -969,10 +969,15 @@ public:
 	virtual int              GetTypeId() const = 0;
 	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;
 
+	// Delegates
+	virtual void              *GetDelegateObject() const = 0;
+	virtual asIObjectType     *GetDelegateObjectType() const = 0;
+	virtual asIScriptFunction *GetDelegateFunction() const = 0;
+
 	// Debug information
 	virtual asUINT           GetVarCount() const = 0;
 	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
-	virtual const char *     GetVarDecl(asUINT index) const = 0;
+	virtual const char      *GetVarDecl(asUINT index) const = 0;
 	virtual int              FindNextLineWithCode(int line) const = 0;
 
 	// For JIT compilation

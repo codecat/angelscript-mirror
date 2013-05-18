@@ -167,6 +167,10 @@ bool Test()
 			TEST_FAILED;
 		if( callback->GetFuncType() != asFUNC_DELEGATE )
 			TEST_FAILED;
+		if( callback->GetDelegateObject() == 0 )
+			TEST_FAILED;
+		if( std::string(callback->GetDelegateFunction()->GetDeclaration()) != "void Test::call()" )
+			TEST_FAILED;
 
 		ctx = engine->CreateContext();
 		ctx->Prepare(callback);

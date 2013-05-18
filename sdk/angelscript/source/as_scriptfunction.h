@@ -128,6 +128,11 @@ public:
 	int                  GetTypeId() const;
 	bool                 IsCompatibleWithTypeId(int typeId) const;
 
+	// Delegates
+	void                *GetDelegateObject() const;
+	asIObjectType       *GetDelegateObjectType() const;
+	asIScriptFunction   *GetDelegateFunction() const;
+
 	// Debug information
 	asUINT               GetVarCount() const;
 	int                  GetVar(asUINT index, const char **name, int *typeId = 0) const;

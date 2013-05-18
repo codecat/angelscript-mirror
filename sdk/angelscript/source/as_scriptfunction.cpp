@@ -183,6 +183,27 @@ void asCScriptFunction::MakeDelegate(asCScriptFunction *func, void *obj)
 	dontCleanUpOnException = true;
 }
 
+// interface
+void *asCScriptFunction::GetDelegateObject() const
+{
+	return objForDelegate;
+}
+
+// interface
+asIObjectType *asCScriptFunction::GetDelegateObjectType() const
+{
+	if( objForDelegate == 0 || funcForDelegate == 0 )
+		return 0;
+
+	return funcForDelegate->objectType;
+}
+
+// interface
+asIScriptFunction *asCScriptFunction::GetDelegateFunction() const
+{
+	return funcForDelegate;
+}
+
 // internal
 asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType _funcType)
 {
