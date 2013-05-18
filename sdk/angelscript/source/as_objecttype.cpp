@@ -181,6 +181,12 @@ void asCObjectType::Orphan(asCModule *mod)
 	Release();
 }
 
+// interface
+asIScriptModule *asCObjectType::GetModule() const
+{
+	return module;
+}
+
 void *asCObjectType::SetUserData(void *data, asPWORD type)
 {
 	// As a thread might add a new new user data at the same time as another

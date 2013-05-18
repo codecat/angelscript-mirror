@@ -880,6 +880,7 @@ public:
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
+	virtual asIScriptModule *GetModule() const = 0;
 
 	// Memory management
 	virtual int AddRef() const = 0;
@@ -943,6 +944,7 @@ public:
 	virtual int              GetId() const = 0;
 	virtual asEFuncType      GetFuncType() const = 0;
 	virtual const char      *GetModuleName() const = 0;
+	virtual asIScriptModule *GetModule() const = 0;
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;

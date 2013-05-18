@@ -102,7 +102,9 @@ public:
 	// Miscellaneous
 	int                  GetId() const;
 	asEFuncType          GetFuncType() const;
+	// TODO: interface: Remove GetModuleName
 	const char          *GetModuleName() const;
+	asIScriptModule     *GetModule() const;
 	const char          *GetScriptSectionName() const;
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;

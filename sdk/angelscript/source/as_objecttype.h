@@ -137,6 +137,7 @@ public:
 	asIScriptEngine *GetEngine() const;
 	const char      *GetConfigGroup() const;
 	asDWORD          GetAccessMask() const;
+	asIScriptModule *GetModule() const;
 
 	// Memory management
 	int AddRef() const;

@@ -355,6 +355,12 @@ const char *asCScriptFunction::GetModuleName() const
 }
 
 // interface
+asIScriptModule *asCScriptFunction::GetModule() const
+{
+	return module;
+}
+
+// interface
 asIObjectType *asCScriptFunction::GetObjectType() const
 {
 	return objectType;
