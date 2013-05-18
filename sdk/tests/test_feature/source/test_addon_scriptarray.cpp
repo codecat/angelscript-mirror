@@ -179,8 +179,35 @@ bool Test()
 
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+	// Test sorting on array of handles
+	mod->AddScriptSection(TESTNAME, 
+		"class Test { \n"
+		"  Test(int v) {val = v;} \n"
+		"  int opCmp(const Test & o) const { return val - o.val; } \n"
+		"  int val; \n"
+		"} \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, 
+		"array<Test @> a = { Test(1), Test(4), Test(2), null, Test(3) }; \n"
+		"a.sortAsc(); \n"
+		"Assert( a[0] is null ); \n"
+		"Assert( a[1].val == 1 ); \n"
+		"Assert( a[2].val == 2 ); \n"
+		"Assert( a[3].val == 3 ); \n"
+		"Assert( a[4].val == 4 ); \n", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	if( r == asEXECUTION_EXCEPTION )
+		PrintException(ctx);
+	ctx->Release();	
+
+
+	// Multiple tests in one
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r < 0 )

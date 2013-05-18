@@ -716,7 +716,7 @@ void CScriptArray::Destruct(SArrayBuffer *buf, asUINT start, asUINT end)
 
 
 // internal
-bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext *ctx)
+bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext *ctx, SArrayCache *cache)
 {
 	if( !asc )
 	{
@@ -745,22 +745,34 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 			#undef COMPARE
 		}
 	}
-	else if( subTypeId & asTYPEID_OBJHANDLE )
-	{
-		return *((void**)a) < *((void**)b);
-	}
 	else
 	{
 		int r = 0;
 
+		if( subTypeId & asTYPEID_OBJHANDLE )
+		{
+			// Allow sort to work even if the array contains null handles
+			if( *(void**)a == 0 ) return true;
+			if( *(void**)b == 0 ) return false;
+		}
+
 		// Execute object opCmp
-		SArrayCache *cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
 		if( cache && cache->cmpFunc )
 		{
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->cmpFunc); assert(r >= 0);
-			r = ctx->SetObject((void*)a); assert(r >= 0);
-			r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+
+            if( subTypeId & asTYPEID_OBJHANDLE )
+            {
+			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+            }
+            else
+            {
+			    r = ctx->SetObject((void*)a); assert(r >= 0);
+			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+            }
+
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
@@ -801,7 +813,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 	asIScriptContext *cmpContext = 0;
 	bool isNested = false;
 
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
+	if( subTypeId & ~asTYPEID_MASK_SEQNBR )
 	{
 		// Try to reuse the active context
 		cmpContext = asGetActiveContext();
@@ -867,27 +879,39 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 			#undef COMPARE
 		}
 	}
-	else if( subTypeId & asTYPEID_OBJHANDLE )
-	{
-		return *((void**)a) == *((void**)b);
-	}
 	else
 	{
 		int r = 0;
+
+		if( subTypeId & asTYPEID_OBJHANDLE )
+		{
+			// Allow the find to work even if the array contains null handles
+			if( *(void**)a == *(void**)b ) return true;
+		}
 
 		// Execute object opEquals if available
 		if( cache && cache->eqFunc )
 		{
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->eqFunc); assert(r >= 0);
-			r = ctx->SetObject((void*)a); assert(r >= 0);
-			r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+
+            if( subTypeId & asTYPEID_OBJHANDLE )
+            {
+			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+            }
+            else
+            {
+			    r = ctx->SetObject((void*)a); assert(r >= 0);
+			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+            }
+
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
-			{
 				return ctx->GetReturnByte() != 0;
-			}
+
+            return false;
 		}
 
 		// Execute object opCmp if available
@@ -895,14 +919,24 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 		{
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->cmpFunc); assert(r >= 0);
-			r = ctx->SetObject((void*)a); assert(r >= 0);
-			r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+
+            if( subTypeId & asTYPEID_OBJHANDLE )
+            {
+			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+            }
+            else
+            {
+			    r = ctx->SetObject((void*)a); assert(r >= 0);
+			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+            }
+
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
-			{
 				return (int)ctx->GetReturnDWord() == 0;
-			}
+
+            return false;
 		}
 	}
 
@@ -919,7 +953,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 	// Check if the subtype really supports find()
 	// TODO: Can't this be done at compile time too by the template callback
 	SArrayCache *cache = 0;
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
+	if( subTypeId & ~asTYPEID_MASK_SEQNBR )
 	{
 		cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
 		if( !cache || (cache->cmpFunc == 0 && cache->eqFunc == 0) )
@@ -946,7 +980,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 	asIScriptContext *cmpContext = 0;
 	bool isNested = false;
 
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
+	if( subTypeId & ~asTYPEID_MASK_SEQNBR )
 	{
 		// Try to reuse the active context
 		cmpContext = asGetActiveContext();
@@ -1061,7 +1095,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 {
 	// Subtype isn't primitive and doesn't have opCmp
 	SArrayCache *cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
+	if( subTypeId & ~asTYPEID_MASK_SEQNBR )
 	{
 		if( !cache || cache->cmpFunc == 0 )
 		{
@@ -1111,7 +1145,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 	asIScriptContext *cmpContext = 0;
 	bool isNested = false;
 
-	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
+	if( subTypeId & ~asTYPEID_MASK_SEQNBR )
 	{
 		// Try to reuse the active context
 		cmpContext = asGetActiveContext();
@@ -1138,7 +1172,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 
 		int j = i - 1;
 
-		while( j >= start && Less(GetDataPointer(tmp), At(j), asc, cmpContext) )
+		while( j >= start && Less(GetDataPointer(tmp), At(j), asc, cmpContext, cache) )
 		{
 			Copy(GetArrayItemPointer(j + 1), GetArrayItemPointer(j));
 			j--;
@@ -1259,7 +1293,7 @@ void CScriptArray::Precache()
 				int paramTypeId = func->GetParamTypeId(0, &flags);
 
 				// The parameter must either be a reference to the subtype or a handle to the subtype			
-				if( ((flags & asTM_INREF) && paramTypeId == subTypeId) ||
+				if( ((flags & asTM_INREF) && paramTypeId == (subTypeId & ~(asTYPEID_OBJHANDLE|asTYPEID_HANDLETOCONST))) ||
 					(flags == 0 && 
 					 (paramTypeId & asTYPEID_OBJHANDLE) &&
 					 (paramTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == (subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST))) )
