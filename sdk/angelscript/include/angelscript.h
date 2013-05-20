@@ -622,16 +622,17 @@ public:
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
 
 	// Script execution
-	virtual asIScriptContext *CreateContext() = 0;
-	virtual void             *CreateScriptObject(int typeId) = 0;
-	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
-	virtual void             *CreateUninitializedScriptObject(int typeId) = 0;
-	virtual void              AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
-	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
-	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
-	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
-	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
+	virtual asIScriptContext  *CreateContext() = 0;
+	virtual void              *CreateScriptObject(int typeId) = 0;
+	virtual void              *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void              *CreateUninitializedScriptObject(int typeId) = 0;
+	virtual asIScriptFunction *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
+	virtual void               AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void               ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void               ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
+	virtual void               AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual void               AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
+	virtual bool               IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const = 0;

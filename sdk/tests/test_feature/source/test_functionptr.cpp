@@ -183,6 +183,14 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Must be possible to create the delegate from the application
+		asIScriptObject *obj = (asIScriptObject*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByDecl("Test t"));
+		asIScriptFunction *func = obj->GetObjectType()->GetMethodByName("call");
+		asIScriptFunction *delegate = engine->CreateDelegate(func, obj);
+		if( delegate == 0 )
+			TEST_FAILED;
+		delegate->Release();
+
 		// Must be possible to create delegate for registered type too
 		mod->AddScriptSection("test",
 			"funcdef bool EMPTY(); \n"

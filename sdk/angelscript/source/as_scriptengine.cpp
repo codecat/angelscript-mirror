@@ -241,6 +241,7 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 } // extern "C"
 
 
+// interface
 int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 {
 	switch( property )
@@ -360,6 +361,7 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 	return asSUCCESS;
 }
 
+// interface
 asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 {
 	switch( property )
@@ -426,6 +428,25 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	}
 
 	return 0;
+}
+
+// interface
+asIScriptFunction *asCScriptEngine::CreateDelegate(asIScriptFunction *func, void *obj)
+{
+	if( func == 0 || obj == 0 )
+		return 0;
+
+	// The function must be a class method
+	asIObjectType *type = func->GetObjectType();
+	if( type == 0 )
+		return 0;
+
+	// The object type must allow handles
+	if( (type->GetFlags() & asOBJ_REF) == 0 || (type->GetFlags() & (asOBJ_SCOPED | asOBJ_NOHANDLE)) )
+		return 0;
+
+	// Create the delegate the same way it would be created by the scripts
+	return ::CreateDelegate(reinterpret_cast<asCScriptFunction*>(func), obj);
 }
 
 asCScriptEngine::asCScriptEngine()
