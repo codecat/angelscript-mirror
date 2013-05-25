@@ -24,6 +24,8 @@ struct SArrayCache
 {
 	asIScriptFunction *cmpFunc;
 	asIScriptFunction *eqFunc;
+	int cmpFuncReturnCode; // To allow better error message in case of multiple matches
+    int eqFuncReturnCode;
 };
 
 // We just define a number here that we assume nobody else is using for 
@@ -965,10 +967,18 @@ int CScriptArray::Find(asUINT index, void *value) const
 			if( ctx )
 			{
 				char tmp[512];
+
+				if( cache && cache->eqFuncReturnCode == asMULTIPLE_FUNCTIONS )
 #if defined(_MSC_VER) && _MSC_VER >= 1500 && !defined(__S3E__)
-				sprintf_s(tmp, 512, "Type '%s' does not have opEquals / opCmp", subType->GetName());
+					sprintf_s(tmp, 512, "Type '%s' has multiple matching opEquals or opCmp methods", subType->GetName());
 #else
-				sprintf(tmp, "Type '%s' does not have opEquals / opCmp", subType->GetName());
+					sprintf(tmp, "Type '%s' has multiple matching opEquals or opCmp methods", subType->GetName());
+#endif
+				else
+#if defined(_MSC_VER) && _MSC_VER >= 1500 && !defined(__S3E__)
+					sprintf_s(tmp, 512, "Type '%s' does not have a matching opEquals or opCmp method", subType->GetName());
+#else
+					sprintf(tmp, "Type '%s' does not have a matching opEquals or opCmp method", subType->GetName());
 #endif
 				ctx->SetException(tmp);
 			}
@@ -1106,11 +1116,20 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 			if( ctx )
 			{
 				char tmp[512];
+
+				if( cache && cache->cmpFuncReturnCode == asMULTIPLE_FUNCTIONS )
 #if defined(_MSC_VER) && _MSC_VER >= 1500 && !defined(__S3E__)
-				sprintf_s(tmp, 512, "Type '%s' does not have opCmp", subType->GetName());
+					sprintf_s(tmp, 512, "Type '%s' has multiple matching opCmp methods", subType->GetName());
 #else
-				sprintf(tmp, "Type '%s' does not have opCmp", subType->GetName());
+					sprintf(tmp, "Type '%s' has multiple matching opCmp methods", subType->GetName());
 #endif
+				else
+#if defined(_MSC_VER) && _MSC_VER >= 1500 && !defined(__S3E__)
+					sprintf_s(tmp, 512, "Type '%s' does not have a matching opCmp method", subType->GetName());
+#else
+					sprintf(tmp, "Type '%s' does not have a matching opCmp method", subType->GetName());
+#endif
+
 				ctx->SetException(tmp);
 			}
 
@@ -1279,6 +1298,9 @@ void CScriptArray::Precache()
 	cache = new SArrayCache();
 	memset(cache, 0, sizeof(SArrayCache));
 
+	// If the sub type is a handle to const, then the methods must be const too
+	bool mustBeConst = (subTypeId & asTYPEID_HANDLETOCONST) ? true : false;
+
 	asIObjectType *subType = objType->GetEngine()->GetObjectTypeById(subTypeId);
 	if( subType )
 	{
@@ -1286,30 +1308,72 @@ void CScriptArray::Precache()
 		{
 			asIScriptFunction *func = subType->GetMethodByIndex(i);
 
-			if( func->GetParamCount() == 1 /* && func->IsReadOnly() */ )
+			if( func->GetParamCount() == 1 && (!mustBeConst || func->IsReadOnly()) )
 			{
 				asDWORD flags = 0;
-				int returnTypeId = func->GetReturnTypeId();
-				int paramTypeId = func->GetParamTypeId(0, &flags);
+				int returnTypeId = func->GetReturnTypeId(&flags);
+
+				// The method must not return a reference
+				if( flags != asTM_NONE )
+					continue;
+
+				// opCmp returns an int and opEquals returns a bool
+				bool isCmp = false, isEq = false;
+				if( returnTypeId == asTYPEID_INT32 && strcmp(func->GetName(), "opCmp") == 0 )
+					isCmp = true;
+				if( returnTypeId == asTYPEID_BOOL && strcmp(func->GetName(), "opEquals") == 0 )
+					isEq = true;
+
+				if( !isCmp && !isEq )
+					continue;
 
 				// The parameter must either be a reference to the subtype or a handle to the subtype			
-				if( ((flags & asTM_INREF) && paramTypeId == (subTypeId & ~(asTYPEID_OBJHANDLE|asTYPEID_HANDLETOCONST))) ||
-					(flags == 0 && 
-					 (paramTypeId & asTYPEID_OBJHANDLE) &&
-					 (paramTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == (subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST))) )
+				int paramTypeId = func->GetParamTypeId(0, &flags);
+
+				if( (paramTypeId & ~(asTYPEID_OBJHANDLE|asTYPEID_HANDLETOCONST)) != (subTypeId &  ~(asTYPEID_OBJHANDLE|asTYPEID_HANDLETOCONST)) )
+					continue;
+
+				if( (flags & asTM_INREF) )
 				{
-					if( returnTypeId == asTYPEID_INT32 && strcmp(func->GetName(), "opCmp") == 0 )
-						cache->cmpFunc = subType->GetMethodByIndex(i);
+					if( (paramTypeId & asTYPEID_OBJHANDLE) || mustBeConst && !(flags & asTM_CONST) )
+						continue;
+				}
+				else if( paramTypeId & asTYPEID_OBJHANDLE )
+				{
+					if( mustBeConst && !(paramTypeId & asTYPEID_HANDLETOCONST) )
+						continue;
+				}
+				else
+					continue;
 
-					if( returnTypeId == asTYPEID_BOOL && strcmp(func->GetName(), "opEquals") == 0 )
-						cache->eqFunc = subType->GetMethodByIndex(i);
-
-					if( cache->cmpFunc && cache->eqFunc )
-						break;
+				if( isCmp )
+				{
+					if( cache->cmpFunc || cache->cmpFuncReturnCode )
+					{
+						cache->cmpFunc = 0;
+						cache->cmpFuncReturnCode = asMULTIPLE_FUNCTIONS;
+					}
+					else
+						cache->cmpFunc = func;
+				}
+				else if( isEq )
+				{
+					if( cache->eqFunc || cache->eqFuncReturnCode )
+					{
+						cache->eqFunc = 0;
+						cache->eqFuncReturnCode = asMULTIPLE_FUNCTIONS;
+					}
+					else
+						cache->eqFunc = func;
 				}
 			}
 		}
 	}
+
+	if( cache->eqFunc == 0 && cache->eqFuncReturnCode == 0 )
+		cache->eqFuncReturnCode = asNO_FUNCTION;
+	if( cache->cmpFunc == 0 && cache->cmpFuncReturnCode == 0 )
+		cache->cmpFuncReturnCode = asNO_FUNCTION;
 
 	// Set the user data only at the end so others that retrieve it will know it is complete
 	objType->SetUserData(cache, ARRAY_CACHE);

@@ -206,6 +206,50 @@ bool Test()
 		PrintException(ctx);
 	ctx->Release();	
 
+	// Test different signatures on opCmp and opEquals
+	mod->AddScriptSection(TESTNAME,
+		"class C \n"
+		"{ \n"
+		"    C(int i) {i_ = i;} \n"
+//		"    bool opEquals (const C &in other) const\n"
+//		"    { \n"
+//		"        return i_ == other.i_; \n"
+//		"    } \n"
+//		"    int opCmp (const C &in other) const\n"
+//		"    { \n"
+//		"        return i_ - other.i_; \n"
+//		"    } \n"
+		"    bool opEquals (const C @ other) const\n"
+		"    { \n"
+		"        return i_ == other.i_; \n"
+		"    } \n"
+		"    int opCmp (const C @ other) const\n"
+		"    { \n"
+		"        return i_ - other.i_; \n"
+		"    } \n"
+		"    int i_; \n"
+		"} \n"
+		"void main (void) \n"
+		"{ \n"
+		"    array<const C @> a2; \n"
+		"    a2.insertLast(@C(2)); \n"
+		"    a2.insertLast(@C(1)); \n"
+		"    a2.sortAsc(); \n"
+		"    Assert( a2[0].i_ == 1 ); \n"
+		"    Assert( a2[1].i_ == 2 ); \n"
+		"    C f(2); \n"
+		"    Assert( a2.find(f) == 1 ); \n"
+		"} \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	ctx = engine->CreateContext();
+	r = ExecuteString(engine, "main()", mod, ctx);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	if( r == asEXECUTION_EXCEPTION )
+		PrintException(ctx);
+	ctx->Release();
 
 	// Multiple tests in one
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
