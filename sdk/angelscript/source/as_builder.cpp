@@ -910,7 +910,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 #ifndef AS_NO_COMPILER
 	// Check properties being compiled now
 	sGlobalVariableDescription* desc = globVariables.GetFirst(ns, prop);
-	if( desc )
+	if( desc && !desc->isEnumValue )
 	{
 		if( isCompiled )     *isCompiled     = desc->isCompiled;
 		if( isPureConstant ) *isPureConstant = desc->isPureConstant;

@@ -155,6 +155,24 @@ static bool TestEnum()
 	if( buffer != "-1\n" )
 		TEST_FAILED;
 
+	// Different enum types can declare the same enum value
+	mod->AddScriptSection(NULL, 
+		"enum ENUMA { VALUE = 1 } \n"
+		"enum ENUMB { VALUE = 2 } \n"
+		"int a = VALUE; \n" // fails with ambiguity
+		"int b = ENUMA::VALUE; \n" // ok
+		"int c = ENUMB::VALUE; \n"); // ok
+	bout.buffer = "";
+	r = mod->Build();
+	if( r >= 0 )
+		TEST_FAILED;
+	if( bout.buffer != " (3, 7) : Info    : Compiling int a\n"
+	                   " (3, 9) : Error   : Found multiple matching enum values\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
 	// enum values can't be declared with expressions including subsequent values
 	bout.buffer = "";
 	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -165,7 +183,7 @@ static bool TestEnum()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "error (1, 22) : Info    : Compiling TEST_ERR ERR1\n"
-					   "error (1, 24) : Error   : Use of uninitialized global variable 'ERR2'.\n"
+					   "error (1, 24) : Error   : 'ERR2' is not declared\n"
 					   "error (1, 1) : Info    : Compiling TEST_ERR ERR2\n"
                        "error (1, 1) : Error   : Use of uninitialized global variable 'ERR1'.\n" )
 	{

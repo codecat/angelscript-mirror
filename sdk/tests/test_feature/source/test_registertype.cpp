@@ -48,6 +48,21 @@ bool Test()
 #endif
 #endif
 
+	// It should be possible to use asCALL_THISCALL_ASGLOBAL for global obj behaviours and string factory
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		r = engine->RegisterObjectType("T", 0, asOBJ_REF);
+		r = engine->RegisterObjectBehaviour("T", asBEHAVE_FACTORY, "T @f()", asFUNCTION(0), asCALL_THISCALL_ASGLOBAL, (void*)1);
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterStringFactory("T@", asFUNCTION(0), asCALL_THISCALL_ASGLOBAL, (void*)1);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Don't accept registering object properties with offsets larger than signed 16 bit
 	// TODO: Support 32bit offsets, but that requires changes in VM, compiler, and bytecode serialization
 	{

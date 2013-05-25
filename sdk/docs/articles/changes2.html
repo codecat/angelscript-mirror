@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/05/20</h2>
+<h2>Version 2.27.0 WIP - 2013/05/24</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>A compound assignment to a class member could be compiled incorrectly if the lvalue had deferred parameters in expression (Thanks Polyák István)
 <li>GetExceptionLineNumber would crash if the exception had been raised in a generated function (Thanks Polyák István)
 <li>Fixed compiler error on FreeBSD (Thanks Veniamin Gvozdikov)
+<li>Compiler didn't detect ambigious enum values when compiling initialization of global variables
 </ul>
 <li>Library interface
 <ul>
@@ -32,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added Discard to the asIScriptModule interface, that does the same as asIScriptEngine::DiscardModule
 <li>Added GetDelegateObject and GetDelegateFunction to asIScriptFunction
 <li>Added CreateDelegate to asIScriptEngine
+<li>RegisterObjectBehaviour and RegisterStringFactory now accepts asCALL_THISCALL_ASGLOBAL
 </ul>
 <li>Add-ons
 <ul>
