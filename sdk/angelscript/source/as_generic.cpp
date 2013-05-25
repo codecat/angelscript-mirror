@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -293,10 +293,16 @@ void *asCGeneric::GetAddressOfArg(asUINT arg)
 }
 
 // interface
-int asCGeneric::GetArgTypeId(asUINT arg) const
+int asCGeneric::GetArgTypeId(asUINT arg, asDWORD *flags) const
 {
 	if( arg >= (unsigned)sysFunction->parameterTypes.GetLength() )
 		return 0;
+
+	if( flags )
+	{
+		*flags = sysFunction->inOutFlags[arg];
+		*flags |= sysFunction->parameterTypes[arg].IsReadOnly() ? asTM_CONST : 0;
+	}
 
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
 	if( dt->GetTokenType() != ttQuestion )
@@ -506,9 +512,9 @@ void *asCGeneric::GetAddressOfReturnLocation()
 }
 
 // interface
-int asCGeneric::GetReturnTypeId() const
+int asCGeneric::GetReturnTypeId(asDWORD *flags) const
 {
-	return sysFunction->GetReturnTypeId();
+	return sysFunction->GetReturnTypeId(flags);
 }
 
 END_AS_NAMESPACE

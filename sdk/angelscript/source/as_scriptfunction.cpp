@@ -984,8 +984,19 @@ void asCScriptFunction::ReleaseReferences()
 }
 
 // interface
-int asCScriptFunction::GetReturnTypeId() const
+int asCScriptFunction::GetReturnTypeId(asDWORD *flags) const
 {
+	if( flags )
+	{
+		if( returnType.IsReference() )
+		{
+			*flags = asTM_INOUTREF;
+			*flags |= returnType.IsReadOnly() ? asTM_CONST : 0;
+		}
+		else
+			*flags = asTM_NONE;
+	}
+
 	return engine->GetTypeIdFromDataType(returnType);
 }
 
@@ -1002,7 +1013,10 @@ int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
 		return asINVALID_ARG;
 
 	if( flags )
+	{
 		*flags = inOutFlags[index];
+		*flags |= parameterTypes[index].IsReadOnly() ? asTM_CONST : 0;
+	}
 
 	return engine->GetTypeIdFromDataType(parameterTypes[index]);
 }

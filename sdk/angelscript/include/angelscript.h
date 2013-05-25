@@ -293,7 +293,8 @@ enum asETypeModifiers
 	asTM_NONE     = 0,
 	asTM_INREF    = 1,
 	asTM_OUTREF   = 2,
-	asTM_INOUTREF = 3
+	asTM_INOUTREF = 3,
+	asTM_CONST    = 4
 };
 
 // GetModule flags
@@ -614,6 +615,7 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
+    virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const = 0;
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
@@ -825,7 +827,7 @@ public:
 
 	// Arguments
 	virtual int     GetArgCount() const = 0;
-	virtual int     GetArgTypeId(asUINT arg) const = 0;
+	virtual int     GetArgTypeId(asUINT arg, asDWORD *flags = 0) const = 0;
 	virtual asBYTE  GetArgByte(asUINT arg) = 0;
 	virtual asWORD  GetArgWord(asUINT arg) = 0;
 	virtual asDWORD GetArgDWord(asUINT arg) = 0;
@@ -837,7 +839,7 @@ public:
 	virtual void   *GetAddressOfArg(asUINT arg) = 0;
 
 	// Return value
-	virtual int     GetReturnTypeId() const = 0;
+	virtual int     GetReturnTypeId(asDWORD *flags = 0) const = 0;
 	virtual int     SetReturnByte(asBYTE val) = 0;
 	virtual int     SetReturnWord(asWORD val) = 0;
 	virtual int     SetReturnDWord(asDWORD val) = 0;
@@ -964,7 +966,7 @@ public:
 	virtual bool             IsShared() const = 0;
 	virtual asUINT           GetParamCount() const = 0;
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
-	virtual int              GetReturnTypeId() const = 0;
+	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 
 	// Type id for function pointers 
 	virtual int              GetTypeId() const = 0;

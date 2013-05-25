@@ -4897,6 +4897,12 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 	return GetScriptFunction(funcId);
 }
 
+// interface
+asIScriptFunction *asCScriptEngine::GetFuncDefFromTypeId(int typeId) const
+{
+	return GetDataTypeFromTypeId(typeId).GetFuncDef();
+}
+
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const
 {

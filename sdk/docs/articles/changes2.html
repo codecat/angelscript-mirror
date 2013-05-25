@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/05/24</h2>
+<h2>Version 2.27.0 WIP - 2013/05/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetDelegateObject and GetDelegateFunction to asIScriptFunction
 <li>Added CreateDelegate to asIScriptEngine
 <li>RegisterObjectBehaviour and RegisterStringFactory now accepts asCALL_THISCALL_ASGLOBAL
+<li>Added type modifier asTM_CONST to indicate parameters and return types that are const references (Thanks Polyák István)
+<li>GetArgTypeId and GetReturnTypeId now have optional parameter to retrieve the type modifier flags
+<li>Added GetFuncDefFromTypeId to allow getting the asIScriptFunction for a function definition (Thanks Polyák István)
 </ul>
 <li>Add-ons
 <ul>

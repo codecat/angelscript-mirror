@@ -23,15 +23,17 @@ int CompareRelation(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 		for( asUINT n = 0; n < ot->GetMethodCount(); n++ )
 		{
 			asIScriptFunction *f = ot->GetMethodByIndex(n);
+			asDWORD flags;
 			if( strcmp(f->GetName(), "opCmp") == 0 &&
-				f->GetReturnTypeId() == asTYPEID_INT32 &&
+				f->GetReturnTypeId(&flags) == asTYPEID_INT32 &&
+				flags == asTM_NONE &&
 				f->GetParamCount() == 1 )
 			{
-				asDWORD flags;
 				int paramTypeId = f->GetParamTypeId(0, &flags);
 				
 				// The parameter must be an input reference of the same type
-				if( flags != asTM_INREF || typeId != paramTypeId )
+				// If the reference is a inout reference, then it must also be read-only
+				if( !(flags & asTM_INREF) || typeId != paramTypeId || ((flags & asTM_OUTREF) && !(flags & asTM_CONST)) )
 					break;
 
 				// Found the method
@@ -77,15 +79,17 @@ int CompareEquality(asIScriptEngine *engine, void *lobj, void *robj, int typeId,
 		for( asUINT n = 0; n < ot->GetMethodCount(); n++ )
 		{
 			asIScriptFunction *f = ot->GetMethodByIndex(n);
+			asDWORD flags;
 			if( strcmp(f->GetName(), "opEquals") == 0 &&
-				f->GetReturnTypeId() == asTYPEID_BOOL &&
+				f->GetReturnTypeId(&flags) == asTYPEID_BOOL &&
+				flags == asTM_NONE &&
 				f->GetParamCount() == 1 )
 			{
-				asDWORD flags;
 				int paramTypeId = f->GetParamTypeId(0, &flags);
 				
 				// The parameter must be an input reference of the same type
-				if( flags != asTM_INREF || typeId != paramTypeId )
+				// If the reference is a inout reference, then it must also be read-only
+				if( !(flags & asTM_INREF) || typeId != paramTypeId || ((flags & asTM_OUTREF) && !(flags & asTM_CONST)) )
 					break;
 
 				// Found the method
