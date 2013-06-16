@@ -397,6 +397,7 @@ This function shows how a script array can be instanciated
 from the application and then passed to the script.
 
 \code
+// Registered with AngelScript as 'array<string> @CreateArrayOfString()'
 CScriptArray *CreateArrayOfStrings()
 {
   // If called from the script, there will always be an active 

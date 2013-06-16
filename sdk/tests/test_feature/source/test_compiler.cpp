@@ -235,6 +235,45 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class dummy \n"
+			"{ \n"
+			"  ~dummy() \n"
+			"  { \n"
+			"  } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  dummy temp; \n"
+			"  alert('Return', test(temp)); \n"
+			"} \n"
+			"bool test(dummy x) \n"
+			"{ \n"
+			"  return false; \n" // The return value is put in the register, then the dummy is destroyed
+			"} \n"
+			"void alert(string txt, bool b) \n"
+			"{ \n"
+			"  assert( b == false ); \n"
+			"  assert( txt == 'Return' ); \n"
+			"} \n");
+		r = mod->Build(); // TODO: optimize: The temp string 'Return' is copied twice when calling alert
+		if( r < 0 )
+			TEST_FAILED;
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Test passing argument to function that returns object
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

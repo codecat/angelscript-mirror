@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/05/25</h2>
+<h2>Version 2.27.0 WIP - 2013/06/16</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetExceptionLineNumber would crash if the exception had been raised in a generated function (Thanks Polyák István)
 <li>Fixed compiler error on FreeBSD (Thanks Veniamin Gvozdikov)
 <li>Compiler didn't detect ambigious enum values when compiling initialization of global variables
+<li>Nested calls in context could overwrite value in register (Thanks Philip Bennefall)
 </ul>
 <li>Library interface
 <ul>

@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 // We need at least 1 PTR reserved for calling system functions
 const int RESERVE_STACK = 2*AS_PTR_SIZE;
 
-// For each script function call we push 5 PTRs on the call stack
-const int CALLSTACK_FRAME_SIZE = 5;
+// For each script function call we push 9 PTRs on the call stack
+const int CALLSTACK_FRAME_SIZE = 9;
 
 
 #if defined(AS_DEBUG)
@@ -1236,6 +1236,12 @@ int asCContext::PushState()
 	tmp[3] = (asPWORD)m_originalStackPointer;
 	tmp[4] = (asPWORD)m_argumentsSize;
 
+	// Need to push the value of registers so they can be restored
+	tmp[5] = (asPWORD)asDWORD(m_regs.valueRegister);
+	tmp[6] = (asPWORD)asDWORD(m_regs.valueRegister>>32);
+	tmp[7] = (asPWORD)m_regs.objectRegister;
+	tmp[8] = (asPWORD)m_regs.objectType;
+
 	// Decrease stackpointer to prevent the top value from being overwritten
 	m_regs.stackPointer -= 2;
 
@@ -1245,7 +1251,8 @@ int asCContext::PushState()
 	// After this the state should appear as if uninitialized
 	m_callingSystemFunction = 0;
 
-	asASSERT(m_regs.objectRegister == 0);
+	m_regs.objectRegister = 0;
+	m_regs.objectType = 0;
 
 	// Set the status to uninitialized as application
 	// should call Prepare() after this to reuse the context
@@ -1274,6 +1281,11 @@ int asCContext::PopState()
 	m_initialFunction      = reinterpret_cast<asCScriptFunction*>(tmp[2]);
 	m_originalStackPointer = (asDWORD*)tmp[3];
 	m_argumentsSize        = (int)tmp[4];
+
+	m_regs.valueRegister   = asQWORD(asDWORD(tmp[5]));
+	m_regs.valueRegister  |= asQWORD(tmp[6])<<32;
+	m_regs.objectRegister  = (void*)tmp[7];
+	m_regs.objectType      = (asIObjectType*)tmp[8];
 
 	// Calculate the returnValueSize
 	if( m_initialFunction->DoesReturnOnStack() )
