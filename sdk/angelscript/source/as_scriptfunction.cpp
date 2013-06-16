@@ -136,7 +136,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterGlobalFunction("void f(int &in, int &in)", asFUNCTION(CreateDelegate), asCALL_CDECL); asASSERT( r >= 0 );
 #else
-	r = engine->RegisterGlobalFunction("void f(int &int, int &in)", asFUNCTION(ScriptFunction_CreateDelegate_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
+	r = engine->RegisterGlobalFunction("void f(int &in, int &in)", asFUNCTION(ScriptFunction_CreateDelegate_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
 
 	// Change the return type so the VM will know the function really returns a handle
