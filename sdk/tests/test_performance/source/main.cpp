@@ -22,49 +22,50 @@ namespace TestThisProp     { void Test(double *time); }
 namespace TestVector3      { void Test(double *time); }
 namespace TestAssign       { void Test(double *times); }
 
-// Times for 2.25.1 WIP 0
+// Times for 2.27.0 WIP 0
 double testTimesOrig[18] = 
-{1.279, // Basic
-0.265,  // Basic2
-2.886,  // Call
-3.385,  // Call2
-2.137,  // Fib
-0.296,  // Int
-1.888,  // Intf
-1.747,  // Mthd
-1.888,  // String
-0.889,  // String2
-1.232,  // StringPooled
-1.342,  // ThisProp
-0.437,  // Vector3
-0.421,  // Assign.1
-0.624,  // Assign.2
-0.390,  // Assign.3
-0.577,  // Assign.4
-0.546   // Assign.5
+{
+1.466, // Basic
+0.250,  // Basic2
+1.232,  // Call
+1.700,  // Call2
+2.621,  // Fib
+0.328,  // Int
+2.090,  // Intf
+1.841,  // Mthd
+2.059,  // String
+1.092,  // String2
+1.498,  // StringPooled
+0.889,  // ThisProp
+0.515,  // Vector3
+0.624,  // Assign.1
+0.811,  // Assign.2
+1.123,  // Assign.3
+1.622,  // Assign.4
+1.607   // Assign.5
 };
 
-// Times for 2.25.1 WIP 1 (localized optimizations)
+// Times for 2.27.0 WIP 1 (localized optimizations)
 double testTimesOrig2[18] = 
 {
-1.217,  // Basic
-0.265,  // Basic2
-2.855,  // Call
-3.292,  // Call2
-2.059,  // Fib
-0.281,  // Int
-1.997,  // Intf
-1.903,  // Mthd
-1.919,  // String
-0.842,  // String2
-1.154,  // StringPooled
-1.170,  // ThisProp
-0.390,  // Vector3
-0.421,  // Assign.1
-0.593,  // Assign.2
-0.359,  // Assign.3
-0.608,  // Assign.4
-0.577   // Assign.5
+1.466, // Basic
+0.250,  // Basic2
+1.232,  // Call
+1.700,  // Call2
+2.621,  // Fib
+0.328,  // Int
+2.090,  // Intf
+1.841,  // Mthd
+2.059,  // String
+1.092,  // String2
+1.498,  // StringPooled
+0.889,  // ThisProp
+0.515,  // Vector3
+0.624,  // Assign.1
+0.811,  // Assign.2
+1.123,  // Assign.3
+1.622,  // Assign.4
+1.607   // Assign.5
 };
 
 double testTimesBest[18];

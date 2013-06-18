@@ -917,6 +917,8 @@ bool TestOptimize()
 	r = ExecuteString(engine, "int64 result = int64(0x8000000000000000)%5; \n assert( result == int64(0xFFFFFFFFFFFFFFFD) );");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
+	// TODO: optimize: Converting an integer variable to double shouldn't require an intermediate copy of the integer variable
+
 	// Validate the bytecode sequence for a for-loop and switch case
 	{
 		const char *script = 
