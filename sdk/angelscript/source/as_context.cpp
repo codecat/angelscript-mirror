@@ -143,21 +143,11 @@ AS_API asIScriptContext *asGetActiveContext()
 	return tld->activeContexts[tld->activeContexts.GetLength()-1];
 }
 
-void asPushActiveContext(asIScriptContext *ctx)
+asCThreadLocalData *asPushActiveContext(asIScriptContext *ctx)
 {
 	asCThreadLocalData *tld = asCThreadManager::GetLocalData();
 	tld->activeContexts.PushLast(ctx);
-}
-
-void asPopActiveContext(asIScriptContext *ctx)
-{
-	asCThreadLocalData *tld = asCThreadManager::GetLocalData();
-
-	asASSERT(tld->activeContexts.GetLength() > 0);
-	asASSERT(tld->activeContexts[tld->activeContexts.GetLength()-1] == ctx);
-	UNUSED_VAR(ctx);
-
-	tld->activeContexts.PopLast();
+	return tld;
 }
 
 asCContext::asCContext(asCScriptEngine *engine, bool holdRef)
@@ -1053,7 +1043,7 @@ int asCContext::Execute()
 
 	m_status = asEXECUTION_ACTIVE;
 
-	asPushActiveContext((asIScriptContext *)this);
+	asCThreadLocalData *tld = asPushActiveContext((asIScriptContext *)this);
 
 	if( m_regs.programPointer == 0 )
 	{
@@ -1158,7 +1148,12 @@ int asCContext::Execute()
 		// Call the line callback one last time before leaving
 		// so anyone listening can catch the state change
 		CallLineCallback();
+		m_regs.doProcessSuspend = true;
 	}
+	else
+		m_regs.doProcessSuspend = false;
+
+	m_doSuspend = false;
 
 	if( m_engine->ep.autoGarbageCollect )
 	{
@@ -1177,10 +1172,9 @@ int asCContext::Execute()
 		}
 	}
 
-	m_doSuspend = false;
-	m_regs.doProcessSuspend = m_lineCallback;
-
-	asPopActiveContext((asIScriptContext *)this);
+	// Pop the active context
+	asASSERT(tld->activeContexts[tld->activeContexts.GetLength()-1] == this);
+	tld->activeContexts.PopLast();
 
 	if( m_status == asEXECUTION_FINISHED )
 	{

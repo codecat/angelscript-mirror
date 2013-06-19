@@ -25,7 +25,7 @@ namespace TestAssign       { void Test(double *times); }
 // Times for 2.27.0 WIP 0
 double testTimesOrig[18] = 
 {
-1.466, // Basic
+1.466,  // Basic
 0.250,  // Basic2
 1.232,  // Call
 1.700,  // Call2
@@ -48,24 +48,24 @@ double testTimesOrig[18] =
 // Times for 2.27.0 WIP 1 (localized optimizations)
 double testTimesOrig2[18] = 
 {
-1.466, // Basic
-0.250,  // Basic2
-1.232,  // Call
-1.700,  // Call2
-2.621,  // Fib
-0.328,  // Int
-2.090,  // Intf
-1.841,  // Mthd
-2.059,  // String
+1.388,  // Basic
+0.265,  // Basic2
+0.484,  // Call
+0.920,  // Call2
+2.590,  // Fib
+0.312,  // Int
+2.153,  // Intf
+1.872,  // Mthd
+2.012,  // String
 1.092,  // String2
-1.498,  // StringPooled
+1.466,  // StringPooled
 0.889,  // ThisProp
 0.515,  // Vector3
 0.624,  // Assign.1
-0.811,  // Assign.2
+0.795,  // Assign.2
 1.123,  // Assign.3
-1.622,  // Assign.4
-1.607   // Assign.5
+1.607,  // Assign.4
+1.622   // Assign.5
 };
 
 double testTimesBest[18];
