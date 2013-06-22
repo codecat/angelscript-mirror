@@ -54,6 +54,7 @@ asCGarbageCollector::asCGarbageCollector()
 	numDestroyed    = 0;
 	numNewDestroyed = 0;
 	numDetected     = 0;
+	numAdded        = 0;
 	isProcessing    = false;
 }
 
@@ -89,7 +90,7 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	}
 
 	engine->CallObjectMethod(obj, objType->beh.addref);
-	asSObjTypePair ot = {obj, objType, 0};
+	asSObjTypePair ot = {obj, objType, 0, 0};
 
 	// Invoke the garbage collector to destroy a little garbage as new comes in
 	// This will maintain the number of objects in the GC at a maintainable level without
@@ -131,6 +132,7 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	// Add the data to the gcObjects array in a critical section as
 	// another thread might be calling this method at the same time
 	ENTERCRITICALSECTION(gcCritical);
+	ot.seqNbr = numAdded++;
 	gcNewObjects.PushLast(ot);
 	LEAVECRITICALSECTION(gcCritical);
 }
@@ -235,6 +237,8 @@ void asCGarbageCollector::GetStatistics(asUINT *currentSize, asUINT *totalDestro
 
 	if( totalDestroyed )
 		*totalDestroyed = numDestroyed;
+
+	asASSERT( numAdded == gcNewObjects.GetLength() + gcOldObjects.GetLength() + numDestroyed );
 
 	if( totalDetected )
 		*totalDetected = numDetected;
@@ -377,6 +381,18 @@ int asCGarbageCollector::DestroyNewGarbage()
 
 					destroyNewState = destroyGarbage_haveMore;
 				}
+				// TODO: Instead of checking how many times the object has been verified, determine its age
+				//       by checking the difference between gcObj.age and numAdded. If the age is higher than
+				//       a configurable amount X, move it to the old generation. If no new objects are added,
+				//       the age will not increase, so we need to have a way of allowing the objects to age
+				//       even without new objects being added. Perhaps another count that says how many cycles
+				//       have been performed without new additions.
+				//
+				//       The amount X can be possibly be determined automatically by collecting the average 
+				//       age of objects when they are destroyed. 
+				//
+				//       Making this can eliminate the count all together and this remove the need for the 
+				//       critical section when calling IncreaseCounterForNewObject which should improve performance.
 				else if( gcObj.count == 3 )
 				{
 					// We've already verified this object multiple times. It is likely
@@ -432,7 +448,7 @@ int asCGarbageCollector::ReportAndReleaseUndestroyedObjects()
 
 		// Report the object as not being properly destroyed
 		asCString msg;
-		msg.Format(TXT_GC_CANNOT_FREE_OBJ_OF_TYPE_s_REF_COUNT_d, gcObj.type->name.AddressOf(), refCount - 1);
+		msg.Format(TXT_d_GC_CANNOT_FREE_OBJ_OF_TYPE_s_REF_COUNT_d, gcObj.seqNbr, gcObj.type->name.AddressOf(), refCount - 1);
 		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 
 		// Add additional info for builtin types
@@ -500,7 +516,7 @@ int asCGarbageCollector::DestroyOldGarbage()
 					// will be forced to skip the destruction of the objects, so as not to 
 					// crash the application.
 					asCString msg;
-					msg.Format(TXT_GC_CANNOT_FREE_OBJ_OF_TYPE_s, gcObj.type->name.AddressOf());
+					msg.Format(TXT_d_GC_CANNOT_FREE_OBJ_OF_TYPE_s, gcObj.seqNbr, gcObj.type->name.AddressOf());
 					engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 
 					// Just remove the object, as we will not bother to destroy it

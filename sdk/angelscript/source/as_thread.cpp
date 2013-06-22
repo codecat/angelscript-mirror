@@ -178,6 +178,9 @@ void asCThreadManager::Unprepare()
 	ENTERCRITICALSECTION(threadManager->criticalSection);
 	if( --threadManager->refCount == 0 )
 	{
+		// Make sure the local data is destroyed, at least for the current thread
+		CleanupLocalData();
+
 		// As the critical section will be destroyed together 
 		// with the thread manager we must first clear the global
 		// variable in case a new thread manager needs to be created;

@@ -160,7 +160,7 @@ bool Test()
 		t->Release();
 
 		// The engine will warn about the callback not being released before the engine
-		if( bout.buffer != " (0, 0) : Error   : GC cannot destroy an object of type '_builtin_function_' as it can't see all references. Current ref count is 1.\n"
+		if( bout.buffer != " (0, 0) : Error   : Object {0}. GC cannot destroy an object of type '_builtin_function_' as it can't see all references. Current ref count is 1.\n"
 		                   " (0, 0) : Info    : The builtin type in previous message is named 'func'\n" )
 		{
 			printf("%s", bout.buffer.c_str());

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -67,7 +67,7 @@ public:
 	asCScriptEngine *engine;
 
 protected:
-	struct asSObjTypePair {void *obj; asCObjectType *type; int count;};
+	struct asSObjTypePair {void *obj; asCObjectType *type; asUINT count; asUINT seqNbr;};
 	struct asSIntTypePair {int i; asCObjectType *type;};
 	typedef asSMapNode<void*, asSIntTypePair> asSMapNode_t;
 
@@ -127,6 +127,7 @@ protected:
 	egcDetectState                     detectState;
 	asUINT                             detectIdx;
 	asUINT                             numDetected;
+	asUINT                             numAdded;
 	asSMapNode_t                      *gcMapCursor;
 	bool                               isProcessing;
 
