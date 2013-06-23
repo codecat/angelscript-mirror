@@ -835,6 +835,14 @@ int asCGarbageCollector::IdentifyGarbageWithCyclicRefs()
 				numDetected++;
 				void *gcObj = gcMap.GetKey(gcMapCursor);
 				asCObjectType *type = gcMap.GetValue(gcMapCursor).type;
+				if( type->flags & asOBJ_SCRIPT_OBJECT )
+				{
+					// For script objects we must call the class destructor before
+					// releasing the references, otherwise the destructor may not
+					// be able to perform the necessary clean-up as the handles will 
+					// be null.
+					reinterpret_cast<asCScriptObject*>(gcObj)->CallDestructor();
+				}
 				engine->CallObjectMethod(gcObj, engine, type->beh.gcReleaseAllReferences);
 
 				gcMap.MoveNext(&gcMapCursor, gcMapCursor);

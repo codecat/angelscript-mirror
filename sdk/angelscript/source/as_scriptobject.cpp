@@ -363,6 +363,9 @@ int asCScriptObject::Release() const
 
 void asCScriptObject::CallDestructor()
 {
+	// Only allow the destructor to be called once
+	if( isDestructCalled ) return;
+
 	asIScriptContext *ctx = 0;
 	bool isNested = false;
 	bool doAbort = false;

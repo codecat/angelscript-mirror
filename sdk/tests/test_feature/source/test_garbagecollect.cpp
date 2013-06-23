@@ -56,6 +56,8 @@ void GCLineCallback(asIScriptContext *ctx)
 bool Test()
 {
 	bool fail = false;
+	COutStream out;
+	int r;
 
     // Create the script engine
     asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -117,10 +119,58 @@ bool Test()
     ctx->Release();
     engine->Release();
 
+	// Test that script class destructor is called before gc releases handles
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(0, 
+			"class Counter { int cnt = 0; } \n"
+			"Counter cnt; \n"
+			"class CircularRef { \n"
+			"  CircularRef() { \n"
+			"    @counter = cnt; \n"
+			"    counter.cnt++; \n"
+			"  } \n"
+			"  ~CircularRef() { \n"
+			"    if( counter !is null ) \n"
+			"      counter.cnt--; \n"
+			"    @counter = null; \n"
+			"  } \n"
+			"  Counter @counter; \n"
+			"  CircularRef @ref; \n"
+			"} \n"
+			"void main() { \n"
+			"  CircularRef @a = CircularRef(); \n"
+			"  CircularRef @b = CircularRef(); \n"
+			"  @a.ref = b; \n"
+			"  @b.ref = a; \n"
+			"  assert( cnt.cnt == 2 ); \n"
+			"} \n"
+			"void check() { \n"
+			"  assert( cnt.cnt == 0 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		r = ExecuteString(engine, "check()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test GC flag for array
 	{
-		COutStream out;
-		int r;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
