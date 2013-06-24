@@ -81,12 +81,12 @@ bool asCGarbageCollector::IsObjectInGC(void *obj)
 	return false;
 }
 
-void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
+int asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 {
 	if( obj == 0 || objType == 0 )
 	{
 		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_GC_RECEIVED_NULL_PTR);
-		return;
+		return asINVALID_ARG;
 	}
 
 	engine->CallObjectMethod(obj, objType->beh.addref);
@@ -135,6 +135,34 @@ void asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	ot.seqNbr = numAdded++;
 	gcNewObjects.PushLast(ot);
 	LEAVECRITICALSECTION(gcCritical);
+
+	return ot.seqNbr;
+}
+
+int asCGarbageCollector::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIObjectType **type)
+{
+	if( seqNbr ) *seqNbr = 0;
+	if( obj )    *obj    = 0;
+	if( type )   *type   = 0;
+
+	ENTERCRITICALSECTION(gcCritical);
+	asSObjTypePair *o = 0;
+	asUINT newObjs = gcNewObjects.GetLength();
+	if( idx < newObjs )
+		o = &gcNewObjects[idx];
+	else if( idx < gcOldObjects.GetLength() + newObjs )
+		o = &gcOldObjects[idx-newObjs];
+	else
+	{
+		LEAVECRITICALSECTION(gcCritical);
+		return asINVALID_ARG;
+	}
+	if( seqNbr ) *seqNbr = o->seqNbr;
+	if( obj )    *obj    = o->obj;
+	if( type )   *type   = o->type;
+	LEAVECRITICALSECTION(gcCritical);
+
+	return asSUCCESS;
 }
 
 int asCGarbageCollector::GarbageCollect(asDWORD flags)
@@ -386,7 +414,9 @@ int asCGarbageCollector::DestroyNewGarbage()
 				//       a configurable amount X, move it to the old generation. If no new objects are added,
 				//       the age will not increase, so we need to have a way of allowing the objects to age
 				//       even without new objects being added. Perhaps another count that says how many cycles
-				//       have been performed without new additions.
+				//       have been performed without new additions. This may not be a problem after all. In
+				//       the end the engine will invoke the full cycle, which always moves everything to the old
+				//       generation anyway.
 				//
 				//       The amount X can be possibly be determined automatically by collecting the average 
 				//       age of objects when they are destroyed. 

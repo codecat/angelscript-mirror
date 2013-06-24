@@ -56,13 +56,14 @@ public:
 	asCGarbageCollector();
 	~asCGarbageCollector();
 
-	int  GarbageCollect(asDWORD flags);
-	void GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
-	void GCEnumCallback(void *reference);
-	void AddScriptObjectToGC(void *obj, asCObjectType *objType);
-	bool IsObjectInGC(void *obj);
+	int    GarbageCollect(asDWORD flags);
+	void   GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
+	void   GCEnumCallback(void *reference);
+	int    AddScriptObjectToGC(void *obj, asCObjectType *objType);
+	int    GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIObjectType **type);
+	bool   IsObjectInGC(void *obj);
 
-	int ReportAndReleaseUndestroyedObjects();
+	int    ReportAndReleaseUndestroyedObjects();
 
 	asCScriptEngine *engine;
 

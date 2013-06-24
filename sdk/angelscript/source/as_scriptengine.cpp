@@ -446,7 +446,7 @@ asIScriptFunction *asCScriptEngine::CreateDelegate(asIScriptFunction *func, void
 		return 0;
 
 	// Create the delegate the same way it would be created by the scripts
-	return ::CreateDelegate(reinterpret_cast<asCScriptFunction*>(func), obj);
+	return AS_NAMESPACE_QUALIFIER CreateDelegate(reinterpret_cast<asCScriptFunction*>(func), obj);
 }
 
 asCScriptEngine::asCScriptEngine()
@@ -3863,9 +3863,15 @@ void asCScriptEngine::CallFree(void *obj) const
 }
 
 // interface
-void asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type)
+int asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type)
 {
-	gc.AddScriptObjectToGC(obj, static_cast<asCObjectType*>(type));
+	return gc.AddScriptObjectToGC(obj, static_cast<asCObjectType*>(type));
+}
+
+// interface
+int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIObjectType **type)
+{
+	return gc.GetObjectInGC(idx, seqNbr, obj, type);
 }
 
 // interface

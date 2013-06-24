@@ -39,6 +39,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added type modifier asTM_CONST to indicate parameters and return types that are const references (Thanks Polyák István)
 <li>GetArgTypeId and GetReturnTypeId now have optional parameter to retrieve the type modifier flags
 <li>Added GetFuncDefFromTypeId to allow getting the asIScriptFunction for a function definition (Thanks Polyák István)
+<li>NotifyGarbageCollectorOfNewObject will return the sequence number attributed to the object
+<li>Added GetObjectInGC to allow inspecting objects that are currently known by the GC
 </ul>
 <li>Library
 <ul>
