@@ -68,7 +68,7 @@ public:
 	asCScriptEngine *engine;
 
 protected:
-	struct asSObjTypePair {void *obj; asCObjectType *type; asUINT count; asUINT seqNbr;};
+	struct asSObjTypePair {void *obj; asCObjectType *type; asUINT seqNbr;};
 	struct asSIntTypePair {int i; asCObjectType *type;};
 	typedef asSMapNode<void*, asSIntTypePair> asSMapNode_t;
 
@@ -105,7 +105,6 @@ protected:
 	void           RemoveNewObjectAtIdx(int idx);
 	void           RemoveOldObjectAtIdx(int idx);
 	void           MoveObjectToOldList(int idx);
-	void           IncreaseCounterForNewObject(int idx);
 
 	// Holds all the objects known by the garbage collector
 	asCArray<asSObjTypePair>           gcNewObjects;
@@ -129,6 +128,7 @@ protected:
 	asUINT                             detectIdx;
 	asUINT                             numDetected;
 	asUINT                             numAdded;
+	asUINT                             seqAtSweepStart[3];
 	asSMapNode_t                      *gcMapCursor;
 	bool                               isProcessing;
 

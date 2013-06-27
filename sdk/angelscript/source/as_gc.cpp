@@ -56,6 +56,10 @@ asCGarbageCollector::asCGarbageCollector()
 	numDetected     = 0;
 	numAdded        = 0;
 	isProcessing    = false;
+
+	seqAtSweepStart[0] = 0;
+	seqAtSweepStart[1] = 0;
+	seqAtSweepStart[2] = 0;
 }
 
 asCGarbageCollector::~asCGarbageCollector()
@@ -90,7 +94,7 @@ int asCGarbageCollector::AddScriptObjectToGC(void *obj, asCObjectType *objType)
 	}
 
 	engine->CallObjectMethod(obj, objType->beh.addref);
-	asSObjTypePair ot = {obj, objType, 0, 0};
+	asSObjTypePair ot = {obj, objType, 0};
 
 	// Invoke the garbage collector to destroy a little garbage as new comes in
 	// This will maintain the number of objects in the GC at a maintainable level without
@@ -337,15 +341,6 @@ void asCGarbageCollector::MoveObjectToOldList(int idx)
 	LEAVECRITICALSECTION(gcCritical);
 }
 
-void asCGarbageCollector::IncreaseCounterForNewObject(int idx)
-{
-	// We need to protect this update with a critical section as
-	// another thread might be appending an object at the same time
-	ENTERCRITICALSECTION(gcCritical);
-	gcNewObjects[idx].count++;
-	LEAVECRITICALSECTION(gcCritical);
-}
-
 int asCGarbageCollector::DestroyNewGarbage()
 {
 	for(;;)
@@ -357,6 +352,12 @@ int asCGarbageCollector::DestroyNewGarbage()
 			// If there are no objects to be freed then don't start
 			if( gcNewObjects.GetLength() == 0 )
 				return 0;
+
+			// Update the seqAtSweepStart which is used to determine when 
+			// to move an object from the new set to the old set
+			seqAtSweepStart[0] = seqAtSweepStart[1];
+			seqAtSweepStart[1] = seqAtSweepStart[2];
+			seqAtSweepStart[2] = numAdded;
 
 			destroyNewIdx = (asUINT)-1;
 			destroyNewState = destroyGarbage_loop;
@@ -409,31 +410,15 @@ int asCGarbageCollector::DestroyNewGarbage()
 
 					destroyNewState = destroyGarbage_haveMore;
 				}
-				// TODO: Instead of checking how many times the object has been verified, determine its age
-				//       by checking the difference between gcObj.age and numAdded. If the age is higher than
-				//       a configurable amount X, move it to the old generation. If no new objects are added,
-				//       the age will not increase, so we need to have a way of allowing the objects to age
-				//       even without new objects being added. Perhaps another count that says how many cycles
-				//       have been performed without new additions. This may not be a problem after all. In
-				//       the end the engine will invoke the full cycle, which always moves everything to the old
-				//       generation anyway.
-				//
-				//       The amount X can be possibly be determined automatically by collecting the average 
-				//       age of objects when they are destroyed. 
-				//
-				//       Making this can eliminate the count all together and this remove the need for the 
-				//       critical section when calling IncreaseCounterForNewObject which should improve performance.
-				else if( gcObj.count == 3 )
+				// Check if this object has been inspected 3 times already, and if so move it to the 
+				// set of old objects that are less likely to become garbage in a short time
+				// TODO: Is 3 really a good value? Should the number of times be dynamic? 
+				else if( gcObj.seqNbr < seqAtSweepStart[0] )
 				{
 					// We've already verified this object multiple times. It is likely
 					// to live for quite a long time so we'll move it to the list if old objects
 					MoveObjectToOldList(destroyNewIdx);
 					destroyNewIdx--;
-				}
-				else
-				{
-					// Increase the counter for the number of times the object has been verified
-					IncreaseCounterForNewObject(destroyNewIdx);
 				}
 
 				// Allow the application to work a little
