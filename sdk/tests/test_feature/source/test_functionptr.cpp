@@ -32,6 +32,94 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test registering global property of funcdef type
+	// http://www.gamedev.net/topic/644586-application-function-returning-a-funcdef-handle-crashes-when-called-in-as/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptFunction *f = 0;
+		engine->RegisterFuncdef("void myfunc()");
+		r = engine->RegisterGlobalProperty("myfunc @f", &f);
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() {} \n");
+		mod->Build();
+
+		r = ExecuteString(engine, "@f = func; \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( f == 0 )
+			TEST_FAILED;
+		if( strcmp(f->GetName(), "func") != 0 )
+			TEST_FAILED;
+
+		f->Release();
+		f = 0;
+
+		engine->Release();
+	}
+
+	// Test casting with funcdefs
+	// http://www.gamedev.net/topic/644586-application-function-returning-a-funcdef-handle-crashes-when-called-in-as/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void myfunc1(); \n"
+			"funcdef void myfunc2(); \n"
+			"funcdef void myfunc3(); \n"
+			"bool called = false; \n"
+			"void func() { called = true; } \n"
+			"void main() \n"
+			"{ \n"
+			"  myfunc1 @f1 = func; \n"
+			"  myfunc2 @f2 = cast<myfunc2>(f1); \n" // explicit cast
+			"  myfunc3 @f3 = f2; \n"                // implicit cast
+			"  assert( f1 is f2 ); \n"
+			"  assert( f2 is f3 ); \n"
+			"  assert( f3 is func ); \n"
+			"  f3(); \n"
+			"  assert( called ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Don't allow application to register additional behaviours to funcdefs
+	// http://www.gamedev.net/topic/644586-application-function-returning-a-funcdef-handle-crashes-when-called-in-as/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("jjOBJ", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterFuncdef("void jjBEHAVIOR(jjOBJ@)");
+		engine->RegisterFuncdef("void DifferentFunctionPointer()");
+		r = engine->RegisterObjectBehaviour("jjBEHAVIOR", asBEHAVE_IMPLICIT_REF_CAST, "DifferentFunctionPointer@ a()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'jjBEHAVIOR' and 'DifferentFunctionPointer@ a()' (Code: -12)\n" )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test delegate function pointers for object methods
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

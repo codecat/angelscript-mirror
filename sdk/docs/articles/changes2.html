@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/06/23</h2>
+<h2>Version 2.27.0 WIP - 2013/06/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -47,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved performance of thread manager and with that reduced the overhead of script calls (Thanks Andrew Ackermann)
 <li>GC now gives an id for each object from a sequence and reports this when it cannot destroy an object
 <li>GC will call script class destructor before breaking circular references (Thanks hupsilardee)
+<li>Engine no longer silently accepts modifications to built-in types by the application (Thanks Violet CLM)
 </ul>
 <li>Add-ons
 <ul>

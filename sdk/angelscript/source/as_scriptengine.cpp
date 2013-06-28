@@ -1753,6 +1753,13 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( type.GetObjectType() == 0 )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
+	// Don't allow application to modify built-in types
+	if( type.GetObjectType() == &functionBehaviours ||
+		type.GetObjectType() == &objectTypeBehaviours ||
+		type.GetObjectType() == &globalPropertyBehaviours ||
+		type.GetObjectType() == &scriptTypeBehaviours )
+		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
+
 	if( type.IsReadOnly() || type.IsReference() )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
@@ -2406,6 +2413,13 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		return ConfigError(r, "RegisterObjectMethod", obj, declaration);
 
 	if( dt.GetObjectType() == 0 )
+		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
+
+	// Don't allow application to modify built-in types
+	if( dt.GetObjectType() == &functionBehaviours ||
+		dt.GetObjectType() == &objectTypeBehaviours ||
+		dt.GetObjectType() == &globalPropertyBehaviours ||
+		dt.GetObjectType() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
 	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv);
