@@ -71,10 +71,16 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	int r = ExecuteString(engine, "float a = 1e5; float b = 1.0e5; assert( a == b ); \n");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script, strlen(script));
- 	int r = mod->Build();
+ 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
 
