@@ -4015,6 +4015,9 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				RegisterScriptFunction(funcNode, file, objType, isInterface, isGlobalFunction, ns, false, false, name, returnType, paramNames, paramTypes, paramModifiers, defaultArgs, isConst, false, false, isPrivate, isOverride, isFinal, false);
 			else
 			{
+				// Free the funcNode as it won't be used
+				if( funcNode ) funcNode->Destroy(engine);
+
 				// Should validate that the function really exists in the class/interface
 				bool found = false;
 				for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
