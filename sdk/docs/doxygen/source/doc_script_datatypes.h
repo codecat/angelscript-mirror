@@ -465,7 +465,7 @@ passing the class method as the argument.
     A a;
     
     // Create the delegate for the A::Cmp class method
-    CALLBACK \@func = CALLBACK(A::Cmp);
+    CALLBACK \@func = CALLBACK(a.Cmp);
     
     // Call the delegate normally as if it was a global function
     if( func(1,2) )

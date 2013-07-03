@@ -5108,6 +5108,9 @@ asUINT asCCompiler::ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType
 			if( pos >= 0 )
 			{
 				asCString nsName = ctx->methodName.SubString(0, pos+2);
+				// Trim off the last ::
+				if( nsName.GetLength() > 2 ) 
+					nsName.SetLength(nsName.GetLength()-2);
 				ns = DetermineNameSpace(nsName);
 				name = ctx->methodName.SubString(pos+2);
 			}

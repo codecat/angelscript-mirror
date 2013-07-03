@@ -32,6 +32,52 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test funcdefs and namespaces
+	// http://www.gamedev.net/topic/644586-application-function-returning-a-funcdef-handle-crashes-when-called-in-as/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"bool called = false; \n"
+			"funcdef void simpleFuncDef(); \n"
+			"namespace foo { \n"
+			"  void simpleFunction() { called = true; } \n"
+			"} \n"
+			"void takeSimpleFuncDef(simpleFuncDef@ f) { f(); } \n"
+			"void main() { \n"
+			"  takeSimpleFuncDef(foo::simpleFunction); \n"
+			"  assert( called ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		mod->AddScriptSection("test",
+			"bool called = false; \n"
+			"funcdef void simpleFuncDef();\n"
+			"namespace foo {\n"
+			"  void simpleFunction() { called = true; }\n"
+			"}\n"
+			"void main() {\n"
+			"  simpleFuncDef@ bar = foo::simpleFunction;\n"
+			"  bar(); \n"
+			"  assert( called ); \n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		engine->Release();
+	}
+
 	// Test registering global property of funcdef type
 	// http://www.gamedev.net/topic/644586-application-function-returning-a-funcdef-handle-crashes-when-called-in-as/
 	{
