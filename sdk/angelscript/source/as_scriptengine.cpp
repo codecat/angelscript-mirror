@@ -3864,10 +3864,16 @@ void *asCScriptEngine::CallAlloc(asCObjectType *type) const
 {
     // Allocate 4 bytes as the smallest size. Otherwise CallSystemFunction may try to
     // copy a DWORD onto a smaller memory block, in case the object type is return in registers.
+
+	// Pad to the next even 4 bytes to avoid asBC_CPY writing outside of allocated buffer for registered POD types
+	asUINT size = type->size;
+	if( size & 0x3 ) 
+		size += 4 - (size & 0x3);
+
 #if defined(AS_DEBUG)
-	return ((asALLOCFUNCDEBUG_t)(userAlloc))(type->size < 4 ? 4 : type->size, __FILE__, __LINE__);
+	return ((asALLOCFUNCDEBUG_t)(userAlloc))(size, __FILE__, __LINE__);
 #else
-	return userAlloc(type->size < 4 ? 4 : type->size);
+	return userAlloc(size);
 #endif
 }
 

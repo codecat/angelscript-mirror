@@ -177,6 +177,38 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// The sub type must not be const, except if it is a handle to const
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		
+		engine->RegisterObjectType("MyTmpl<class T1>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectBehaviour("MyTmpl<T1>", asBEHAVE_FACTORY, "MyTmpl<T1>@ f(int&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("MyTmpl<T1>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("MyTmpl<T1>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {} \n"
+			"void func() { \n"
+			"  MyTmpl<const A> a; \n" // not allowed
+			"  MyTmpl<const A@> b; \n" // allowed
+			"} \n");
+		r = mod->Build();
+		if( r > 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
+		                   "test (3, 10) : Error   : Template subtype must not be read-only\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test instanciating a template with same subtype for both args
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -404,7 +436,10 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
-					  	   "test (6, 8) : Error   : Reference is read-only\n"
+					  	   "test (4, 9) : Error   : Template subtype must not be read-only\n"
+						   "test (4, 21) : Error   : Only objects have constructors\n"
+						   "test (6, 4) : Warning : 'i' is not initialized.\n"
+						   "test (6, 4) : Error   : Type 'int' doesn't support the indexing operator\n"
 						   "test (8, 8) : Error   : Reference is read-only\n" )
 		{
 			printf("%s", bout.buffer.c_str());

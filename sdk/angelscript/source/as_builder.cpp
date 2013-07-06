@@ -4409,6 +4409,16 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 								asCDataType subType = CreateDataTypeFromNode(n, file, engine->nameSpaces[0], false, module ? 0 : ot);
 								subTypes.PushLast(subType);
+
+								if( subType.IsReadOnly() )
+								{
+									asCString msg;
+									msg.Format(TXT_TMPL_SUBTYPE_MUST_NOT_BE_READ_ONLY);
+									WriteError(msg, file, n);
+
+									// Return a dummy
+									return asCDataType::CreatePrimitive(ttInt, false);
+								}
 							}
 
 							if( subTypes.GetLength() != ot->templateSubTypes.GetLength() )

@@ -235,6 +235,60 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Reported by Hermann Noll
+	// POD types that were not of even 4 bytes wasn't allocated enough size on stack and heap
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		struct Bytes10
+		{
+			bool a0;
+			bool a1;
+			bool a2;
+			bool a3;
+			bool a4;
+			bool a5;
+			bool a6;
+			bool a7;
+			bool a8;
+			bool a9;
+		}; 
+
+		engine->RegisterObjectType ("Bytes10",sizeof(Bytes10),asOBJ_VALUE|asOBJ_POD);
+		engine->RegisterObjectProperty ("Bytes10","bool a0",asOFFSET(Bytes10,a0));
+		engine->RegisterObjectProperty ("Bytes10","bool a9",asOFFSET(Bytes10,a9));
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"uint before = 0; \n"
+			"Bytes10 bytes; \n"
+			"uint after = 0; \n"
+			"bytes.a0 = true; \n"
+			"bytes.a9 = true; \n"
+			"assert( after == before ); \n"
+			"assert( after == 0 ); \n"
+			"after = before = 0xFFFFFFFF; \n"
+			"Check(bytes); \n"
+			"} \n"
+			"void Check(Bytes10 a) { \n"
+			"  assert( a.a0 == true ); \n"
+			"  assert( a.a9 == true ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Reported by Philip Bennefall
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/07/02</h2>
+<h2>Version 2.27.0 WIP - 2013/07/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with max portability and delegates (Thanks Andris Jaunzeikars)
 <li>Fixed memory leak in compiler with shared classes and virtual properties (Thanks Xifos)
 <li>Function pointers for global functions in namespaces wasn't resolving properly (Thanks Violet CLM)
+<li>Registered value types that didn't have size evenly divisable of 4 weren't allocated with enough space (Thanks Hermann Noll)
 </ul>
 <li>Library interface
 <ul>
@@ -54,6 +55,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script language
 <ul>
 <li>Literal float and double constants accept the format 1e5 (Thanks Jason Goepel)
+<li>Template subtypes can no longer be declared as read-only
 </ul>
 <li>Add-ons
 <ul>
