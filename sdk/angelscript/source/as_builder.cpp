@@ -2456,8 +2456,16 @@ void asCBuilder::CompileClasses()
 				for( asUINT d = 0; d < decl->objType->methods.GetLength(); d++ )
 				{
 					derivedFunc = GetFunctionDescription(decl->objType->methods[d]);
-					if( derivedFunc->IsSignatureEqual(baseFunc) )
+					if( derivedFunc->name == baseFunc->name &&
+						derivedFunc->IsSignatureExceptNameAndReturnTypeEqual(baseFunc) )
 					{
+						if( baseFunc->returnType != derivedFunc->returnType )
+						{
+							asCString msg;
+							msg.Format(TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s, baseFunc->GetDeclaration());
+							WriteError(msg, decl->script, decl->node);
+						}
+
 						if( baseFunc->IsFinal() )
 						{
 							asCString msg;

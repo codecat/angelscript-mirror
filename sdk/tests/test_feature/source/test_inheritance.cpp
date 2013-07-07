@@ -26,153 +26,188 @@ bool Test()
 
 	asIScriptModule *mod = 0;
 	COutStream out;
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	RegisterStdString(engine);
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+	CBufferedOutStream bout;
+ 	asIScriptEngine *engine = 0;
 
-	const char *script =
-		"bool baseDestructorCalled = false;               \n"
-		"bool baseConstructorCalled = false;              \n"
-		"bool baseFloatConstructorCalled = false;         \n"
-		"class Base : Intf                                \n"
-		"{                                                \n"
-		"  int a;                                         \n"
-		"  void f1() { a = 1; }                           \n"
-		"  void f2() { a = 0; }                           \n"
-		"  void f3() { a = 3; }                           \n"
-		"  Base() { baseConstructorCalled = true; }       \n"
-		"  Base(float) { baseFloatConstructorCalled = true; } \n"
-		"  ~Base() { baseDestructorCalled = true; }       \n"
-		"}                                                \n"
-		"bool derivedDestructorCalled = false;            \n"
-		"bool derivedConstructorCalled = false;           \n"
-		"class Derived : Base                             \n"
-		"{                                                \n"
-		   // overload f2()
-		"  void f2() { a = 2; }                           \n"
-		   // overload f3()
-		"  void f3() { a = 2; }                           \n"
-		"  void func()                                    \n"
-		"  {                                              \n"
-		     // call Base::f1()
-		"    f1();                                        \n"
-		"    assert(a == 1);                              \n"
-		     // call Derived::f2()
-		"    f2();                                           \n"
-		"    assert(a == 2);                                 \n"
-		     // call Base::f3() 
-		"    Base::f3();                                     \n"
-		"    assert(a == 3);                                 \n"
-		"  }                                                 \n"
-		"  Derived() {} \n"
-		"  Derived(int) { derivedConstructorCalled = true; } \n"
-		"  ~Derived() { derivedDestructorCalled = true; }    \n"
-		"}                                                \n"
-		"void foo( Base &in a )                           \n"
-		"{                                                \n"
-		"  assert( cast<Derived>(a) is null );            \n"
-		"}                                                \n"
-		// Must be possible to call the default constructor, even if not declared
-		"class DerivedGC : BaseGC { DerivedGC() { super(); } }  \n"
-		"class BaseGC { BaseGC @b; }                      \n"
-		"class DerivedS : Base                            \n"
-		"{                                                \n"
-		"  DerivedS(float)                                \n"
-		"  {                                              \n"
-	  	     // Call Base::Base(float)
-		"    if( true )                                   \n"
-		"      super(1.4f);                               \n"
-		"    else                                         \n"
-		"      super();                                   \n"
-		"  }                                              \n"
-		"}                                                \n"
-		// Must handle inheritance where the classes have been declared out of order
-		"void func()                                      \n"
-		"{                                                \n"
-		"   Intf@ a = C();                                \n"
-		"}                                                \n"
-		"class C : B {}                                   \n"
-		"interface Intf {}                                \n"
-		"class B : Intf {}                                \n"
-		// Several levels of inheritance
-		"class C0                                         \n"
-		"{                                                \n"
-		"  void Dummy() {}                                \n"
-		"}                                                \n"
-		"class C1 : C0                                    \n"
-		"{                                                \n"
-		"  void Fun() { print('C1:Fun'); }                \n"
-		"}                                                \n"
-		"class C2 : C1                                    \n"
-		"{                                                \n"
-		"  void Fun() { print('C2:Fun'); }                \n"
-		"}                                                \n"
-		"class C3 : C2                                    \n"
-		"{                                                \n"
-		"  void Call() { Fun(); }                         \n"
-		"}                                                \n";
-
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script);
-	r = mod->Build();
-	if( r < 0 )
+	// A derived class must not be allowed to implement a function with the same 
+	// name and parameter list as parent class, but with a different return type.
+	// Reported by Philip Bennefall
 	{
-		TEST_FAILED;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class P { \n"
+			"  int MyFunc(float) { return 0; } \n"
+			"} \n"
+			"class D : P { \n"
+			"  float MyFunc(float) { return 0; } \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (4, 7) : Error   : The method in the derived class must have the same return type as in the base class: 'int P::MyFunc(float)'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
 	}
 
-	if( TestModule(0, engine) )
+	// Basic tests for inheritance
 	{
-		TEST_FAILED;
-	}
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
 
-	// Must make sure that the inheritance path is stored/restored with the saved byte code
-	{ 
-		CBytecodeStream stream(__FILE__"1");
-		r = mod->SaveByteCode(&stream);
+		const char *script =
+			"bool baseDestructorCalled = false;               \n"
+			"bool baseConstructorCalled = false;              \n"
+			"bool baseFloatConstructorCalled = false;         \n"
+			"class Base : Intf                                \n"
+			"{                                                \n"
+			"  int a;                                         \n"
+			"  void f1() { a = 1; }                           \n"
+			"  void f2() { a = 0; }                           \n"
+			"  void f3() { a = 3; }                           \n"
+			"  Base() { baseConstructorCalled = true; }       \n"
+			"  Base(float) { baseFloatConstructorCalled = true; } \n"
+			"  ~Base() { baseDestructorCalled = true; }       \n"
+			"}                                                \n"
+			"bool derivedDestructorCalled = false;            \n"
+			"bool derivedConstructorCalled = false;           \n"
+			"class Derived : Base                             \n"
+			"{                                                \n"
+			   // overload f2()
+			"  void f2() { a = 2; }                           \n"
+			   // overload f3()
+			"  void f3() { a = 2; }                           \n"
+			"  void func()                                    \n"
+			"  {                                              \n"
+				 // call Base::f1()
+			"    f1();                                        \n"
+			"    assert(a == 1);                              \n"
+				 // call Derived::f2()
+			"    f2();                                           \n"
+			"    assert(a == 2);                                 \n"
+				 // call Base::f3() 
+			"    Base::f3();                                     \n"
+			"    assert(a == 3);                                 \n"
+			"  }                                                 \n"
+			"  Derived() {} \n"
+			"  Derived(int) { derivedConstructorCalled = true; } \n"
+			"  ~Derived() { derivedDestructorCalled = true; }    \n"
+			"}                                                \n"
+			"void foo( Base &in a )                           \n"
+			"{                                                \n"
+			"  assert( cast<Derived>(a) is null );            \n"
+			"}                                                \n"
+			// Must be possible to call the default constructor, even if not declared
+			"class DerivedGC : BaseGC { DerivedGC() { super(); } }  \n"
+			"class BaseGC { BaseGC @b; }                      \n"
+			"class DerivedS : Base                            \n"
+			"{                                                \n"
+			"  DerivedS(float)                                \n"
+			"  {                                              \n"
+	  			 // Call Base::Base(float)
+			"    if( true )                                   \n"
+			"      super(1.4f);                               \n"
+			"    else                                         \n"
+			"      super();                                   \n"
+			"  }                                              \n"
+			"}                                                \n"
+			// Must handle inheritance where the classes have been declared out of order
+			"void func()                                      \n"
+			"{                                                \n"
+			"   Intf@ a = C();                                \n"
+			"}                                                \n"
+			"class C : B {}                                   \n"
+			"interface Intf {}                                \n"
+			"class B : Intf {}                                \n"
+			// Several levels of inheritance
+			"class C0                                         \n"
+			"{                                                \n"
+			"  void Dummy() {}                                \n"
+			"}                                                \n"
+			"class C1 : C0                                    \n"
+			"{                                                \n"
+			"  void Fun() { print('C1:Fun'); }                \n"
+			"}                                                \n"
+			"class C2 : C1                                    \n"
+			"{                                                \n"
+			"  void Fun() { print('C2:Fun'); }                \n"
+			"}                                                \n"
+			"class C3 : C2                                    \n"
+			"{                                                \n"
+			"  void Call() { Fun(); }                         \n"
+			"}                                                \n";
+
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
 		if( r < 0 )
 		{
 			TEST_FAILED;
 		}
 
-		asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
-		r = mod2->LoadByteCode(&stream);
-		if( r < 0 )
+		if( TestModule(0, engine) )
 		{
 			TEST_FAILED;
 		}
 
-		// Both modules should have the same number of functions
-		if( mod->GetFunctionCount() != mod2->GetFunctionCount() )
-		{
-			TEST_FAILED;
-
-			asUINT n;
-			printf("First module's functions\n");
-			for( n = 0; n < (asUINT)mod->GetFunctionCount(); n++ )
+		// Must make sure that the inheritance path is stored/restored with the saved byte code
+		{ 
+			CBytecodeStream stream(__FILE__"1");
+			r = mod->SaveByteCode(&stream);
+			if( r < 0 )
 			{
-				asIScriptFunction *f = mod->GetFunctionByIndex(n);
-				printf("%s\n", f->GetDeclaration());
+				TEST_FAILED;
 			}
-			printf("\nSecond module's functions\n");
-			for( n = 0; n < (asUINT)mod2->GetFunctionCount(); n++ )
+
+			asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
+			r = mod2->LoadByteCode(&stream);
+			if( r < 0 )
 			{
-				asIScriptFunction *f = mod2->GetFunctionByIndex(n);
-				printf("%s\n", f->GetDeclaration());
+				TEST_FAILED;
 			}
+
+			// Both modules should have the same number of functions
+			if( mod->GetFunctionCount() != mod2->GetFunctionCount() )
+			{
+				TEST_FAILED;
+
+				asUINT n;
+				printf("First module's functions\n");
+				for( n = 0; n < (asUINT)mod->GetFunctionCount(); n++ )
+				{
+					asIScriptFunction *f = mod->GetFunctionByIndex(n);
+					printf("%s\n", f->GetDeclaration());
+				}
+				printf("\nSecond module's functions\n");
+				for( n = 0; n < (asUINT)mod2->GetFunctionCount(); n++ )
+				{
+					asIScriptFunction *f = mod2->GetFunctionByIndex(n);
+					printf("%s\n", f->GetDeclaration());
+				}
+			}
+
+			if( TestModule("2", engine) )
+			{
+				TEST_FAILED;
+			}
+
+			engine->DiscardModule("2");
 		}
 
-		if( TestModule("2", engine) )
-		{
-			TEST_FAILED;
-		}
-
-		engine->DiscardModule("2");
+		engine->Release();
 	}
-
-	engine->Release();
 
 	// Test final and override
 	{
