@@ -15,6 +15,30 @@ bool Test()
 	asIScriptModule *mod;
  	asIScriptEngine *engine;
 	
+	// Test default args with expressions enclosed in parenthesis
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void func(int arg = (23+4)) {} \n"
+			"class myclass \n"
+			"{ \n"
+			"  void calculate_number(int hp_stat=(3+2)) {} \n"
+			"} \n"
+			"void main() { func(); \n"
+			"  myclass c; c.calculate_number(); \n"
+	        "} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test to make sure the default arg evaluates to a type that matches the function parameter
 	// Reported by Philip Bennefall
 	{

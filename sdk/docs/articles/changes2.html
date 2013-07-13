@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/07/10</h2>
+<h2>Version 2.27.0 WIP - 2013/07/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed memory leak in compiler with shared classes and virtual properties (Thanks Xifos)
 <li>Function pointers for global functions in namespaces wasn't resolving properly (Thanks Violet CLM)
 <li>Registered value types that didn't have size evenly divisable of 4 weren't allocated with enough space (Thanks Hermann Noll)
+<li>Class methods with default args using parenthesis failed to parse (Thanks Aaron Baker)
 </ul>
 <li>Library interface
 <ul>
