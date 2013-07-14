@@ -589,6 +589,7 @@ asUINT asCObjectType::GetBehaviourCount() const
 	if( beh.gcReleaseAllReferences ) count++; 
 	if( beh.templateCallback )       count++;
 	if( beh.listFactory )            count++;
+	if( beh.getWeakRefFlag )         count++;
 
 	// For reference types, the factories are also stored in the constructor
 	// list, so it is sufficient to enumerate only those
@@ -661,6 +662,12 @@ asIScriptFunction *asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviour
 	{
 		if( outBehaviour ) *outBehaviour = asBEHAVE_LIST_FACTORY;
 		return engine->scriptFunctions[beh.listFactory];
+	}
+
+	if( beh.getWeakRefFlag && count++ == index )
+	{
+		if( outBehaviour ) *outBehaviour = asBEHAVE_GET_WEAKREF_FLAG;
+		return engine->scriptFunctions[beh.getWeakRefFlag];
 	}
 
 	// For reference types, the factories are also stored in the constructor
@@ -869,6 +876,10 @@ void asCObjectType::ReleaseAllFunctions()
 	if( beh.gcSetFlag )
 		engine->scriptFunctions[beh.gcSetFlag]->Release();
 	beh.gcSetFlag = 0;
+
+	if ( beh.getWeakRefFlag )
+		engine->scriptFunctions[beh.getWeakRefFlag]->Release();
+	beh.getWeakRefFlag = 0;
 }
 
 // internal
@@ -937,6 +948,9 @@ void asCObjectType::EnumReferences(asIScriptEngine *)
 	for( asUINT t = 0; t < templateSubTypes.GetLength(); t++ )
 		if( templateSubTypes[t].GetObjectType() )
 			engine->GCEnumCallback(templateSubTypes[t].GetObjectType());
+
+	if( beh.getWeakRefFlag )
+		engine->GCEnumCallback(engine->scriptFunctions[beh.getWeakRefFlag]);
 }
 
 END_AS_NAMESPACE

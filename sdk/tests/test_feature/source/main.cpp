@@ -158,6 +158,7 @@ namespace Test_Addon_ScriptMath    { bool Test(); }
 namespace Test_Addon_ScriptBuilder { bool Test(); }
 namespace Test_Addon_Dictionary    { bool Test(); }
 namespace Test_Addon_Debugger      { bool Test(); }
+namespace Test_Addon_WeakRef       { bool Test(); }
 
 #include "utils.h"
 
@@ -212,6 +213,7 @@ int main(int argc, char **argv)
 
 	InstallMemoryManager();
 
+	if( Test_Addon_WeakRef::Test()       ) goto failed; else printf("-- Test_Addon_WeakRef passed\n");
 	if( Test_Addon_Debugger::Test()      ) goto failed; else printf("-- Test_Addon_Debugger passed\n");
 	if( Test_Addon_ScriptBuilder::Test() ) goto failed; else printf("-- Test_Addon_ScriptBuilder passed\n");
 	if( Test_Addon_ScriptMath::Test()    ) goto failed; else printf("-- Test_Addon_ScriptMath passed\n");

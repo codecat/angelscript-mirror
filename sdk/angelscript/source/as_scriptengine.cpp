@@ -2168,6 +2168,11 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		func.id = AddBehaviourFunction(func, internal);
 		beh->operators.PushLast(func.id);
 	}
+	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
+	{
+		// TODO: weak: Must be ref type
+		func.id = beh->getWeakRefFlag = AddBehaviourFunction(func, internal);
+	}
 	else
 	{
 		asASSERT(false);
@@ -3245,6 +3250,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	if( scriptFunctions[ot->beh.gcEnumReferences] ) scriptFunctions[ot->beh.gcEnumReferences]->AddRef();
 	ot->beh.gcReleaseAllReferences = templateType->beh.gcReleaseAllReferences;
 	if( scriptFunctions[ot->beh.gcReleaseAllReferences] ) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRef();
+	ot->beh.getWeakRefFlag = templateType->beh.getWeakRefFlag;
+	if( scriptFunctions[ot->beh.getWeakRefFlag] ) scriptFunctions[ot->beh.getWeakRefFlag]->AddRef();
 
 	// As the new template type is instanciated the engine should
 	// generate new functions to substitute the ones with the template subtype.
@@ -3288,6 +3295,22 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	templateInstanceTypes.PushLast(ot);
 
 	return ot;
+}
+
+// interface
+asISharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const
+{
+	// Make sure it is not a null pointer
+	if( obj == 0 || type == 0 ) return 0;
+
+	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
+	asISharedBool *dest = 0;
+	if( objType->beh.getWeakRefFlag )
+	{
+		// Call the getweakrefflag behaviour
+		dest = reinterpret_cast<asISharedBool*>(CallObjectMethodRetPtr(obj, objType->beh.getWeakRefFlag));
+	}
+	return dest;
 }
 
 // internal
@@ -3465,19 +3488,19 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	return true;
 }
 
-void asCScriptEngine::CallObjectMethod(void *obj, int func)
+void asCScriptEngine::CallObjectMethod(void *obj, int func) const
 {
 	asCScriptFunction *s = scriptFunctions[func];
 	asASSERT( s != 0 );
 	CallObjectMethod(obj, s->sysFuncIntf, s);
 }
 
-void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i, asCScriptFunction *s)
+void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
 #ifdef __GNUC__
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -3522,7 +3545,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 #endif
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -3534,7 +3557,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 #endif
 }
 
-bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
+bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func) const
 {
 	asCScriptFunction *s = scriptFunctions[func];
 	asASSERT( s != 0 );
@@ -3543,7 +3566,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 #ifdef __GNUC__
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(bool*)gen.GetReturnPointer();
@@ -3588,7 +3611,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 #endif
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(bool*)gen.GetReturnPointer();
@@ -3601,7 +3624,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func)
 #endif
 }
 
-int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
+int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func) const
 {
 	asCScriptFunction *s = scriptFunctions[func];
 	asASSERT( s != 0 );
@@ -3610,7 +3633,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 #ifdef __GNUC__
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(int*)gen.GetReturnPointer();
@@ -3655,7 +3678,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 #endif
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(int*)gen.GetReturnPointer();
@@ -3668,21 +3691,88 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func)
 #endif
 }
 
-void *asCScriptEngine::CallGlobalFunctionRetPtr(int func)
+void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
+{
+	asCScriptFunction *s = scriptFunctions[func];
+	asASSERT( s != 0 );
+	asSSystemFunctionInterface *i = s->sysFuncIntf;
+
+#ifdef __GNUC__
+	if( i->callConv == ICC_GENERIC_METHOD )
+	{
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(void**)gen.GetReturnPointer();
+	}
+	else if( i->callConv == ICC_THISCALL || i->callConv == ICC_VIRTUAL_THISCALL )
+	{
+		// For virtual thiscalls we must call the method as a true class method so that the compiler will lookup the function address in the vftable
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			struct
+			{
+				asFUNCTION_t func;
+				asPWORD baseOffset;
+			} f;
+		} p;
+		p.f.func = (void (*)())(i->func);
+		p.f.baseOffset = asPWORD(i->baseOffset);
+		void *(asCSimpleDummy::*f)() = (void *(asCSimpleDummy::*)())(p.mthd);
+		return (((asCSimpleDummy*)obj)->*f)();
+	}
+	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
+	{
+		void *(*f)(void *) = (void *(*)(void *))(i->func);
+		return f(obj);
+	}
+#else
+#ifndef AS_NO_CLASS_METHODS
+	if( i->callConv == ICC_THISCALL )
+	{
+		union
+		{
+			asSIMPLEMETHOD_t mthd;
+			asFUNCTION_t func;
+		} p;
+		p.func = (void (*)())(i->func);
+		void *(asCSimpleDummy::*f)() = (void *(asCSimpleDummy::*)())p.mthd;
+		obj = (void*)(asPWORD(obj) + i->baseOffset);
+		return (((asCSimpleDummy*)obj)->*f)();
+	}
+	else
+#endif
+	if( i->callConv == ICC_GENERIC_METHOD )
+	{
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
+		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
+		f(&gen);
+		return *(void **)gen.GetReturnPointer();
+	}
+	else /*if( i->callConv == ICC_CDECL_OBJLAST || i->callConv == ICC_CDECL_OBJFIRST )*/
+	{
+		void *(*f)(void *) = (void *(*)(void *))(i->func);
+		return f(obj);
+	}
+#endif
+}
+
+void *asCScriptEngine::CallGlobalFunctionRetPtr(int func) const
 {
 	asCScriptFunction *s = scriptFunctions[func];
 	asASSERT( s != 0 );
 	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s);
 }
 
-void *asCScriptEngine::CallGlobalFunctionRetPtr(int func, void *param1)
+void *asCScriptEngine::CallGlobalFunctionRetPtr(int func, void *param1) const
 {
 	asCScriptFunction *s = scriptFunctions[func];
 	asASSERT( s != 0 );
 	return CallGlobalFunctionRetPtr(s->sysFuncIntf, s, param1);
 }
 
-void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s)
+void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
 	if( i->callConv == ICC_CDECL )
 	{
@@ -3697,14 +3787,14 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 	}
 	else
 	{
-		asCGeneric gen(this, s, 0, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, 0, 0);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(void**)gen.GetReturnPointer();
 	}
 }
 
-void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s, void *param1)
+void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s, void *param1) const
 {
 	if( i->callConv == ICC_CDECL )
 	{
@@ -3719,21 +3809,21 @@ void *asCScriptEngine::CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, a
 	}
 	else
 	{
-		asCGeneric gen(this, s, 0, (asDWORD*)&param1);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, 0, (asDWORD*)&param1);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(void**)gen.GetReturnPointer();
 	}
 }
 
-void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func)
+void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func) const
 {
 	asCScriptFunction *s = scriptFunctions[func];
 	asASSERT( s != 0 );
 	CallObjectMethod(obj, param, s->sysFuncIntf, s);
 }
 
-void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *i, asCScriptFunction *s)
+void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
 #ifdef __GNUC__
 	if( i->callConv == ICC_CDECL_OBJLAST )
@@ -3743,7 +3833,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 	}
 	else if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, (asDWORD*)&param);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, (asDWORD*)&param);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -3793,7 +3883,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 	}
 	else if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asCGeneric gen(this, s, obj, (asDWORD*)&param);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, (asDWORD*)&param);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
@@ -3805,7 +3895,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 #endif
 }
 
-void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *i, asCScriptFunction *s)
+void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
 	if( i->callConv == ICC_CDECL )
 	{
@@ -3825,13 +3915,13 @@ void asCScriptEngine::CallGlobalFunction(void *param1, void *param2, asSSystemFu
 		// in the registers which causes problem.
 		void *params[2] = {param1, param2};
 
-		asCGeneric gen(this, s, 0, (asDWORD*)&params);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, 0, (asDWORD*)&params);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 	}
 }
 
-bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *i, asCScriptFunction *s)
+bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
 	if( i->callConv == ICC_CDECL )
 	{
@@ -3853,7 +3943,7 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 		// array. Otherwise the compiler may put them anywhere it likes, or even keep them
 		// in the registers which causes problem.
 		void *params[2] = {param1, param2};
-		asCGeneric gen(this, s, 0, (asDWORD*)params);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, 0, (asDWORD*)params);
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(bool*)gen.GetReturnPointer();

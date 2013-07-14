@@ -73,6 +73,7 @@ class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
 class asIThreadManager;
+class asISharedBool;
 
 // Enumerations and constants
 
@@ -169,6 +170,7 @@ enum asEBehaviours
 	asBEHAVE_LIST_FACTORY,
 	asBEHAVE_ADDREF,
 	asBEHAVE_RELEASE,
+	asBEHAVE_GET_WEAKREF_FLAG,
 
 	// Object operators
 	asBEHAVE_VALUE_CAST,
@@ -635,6 +637,7 @@ public:
 	virtual void               AddRefScriptObject(void *obj, int typeId) = 0;
 	virtual void               AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
 	virtual bool               IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
+	virtual asISharedBool     *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const = 0;
@@ -1003,6 +1006,21 @@ public:
 
 public:
 	virtual ~asIBinaryStream() {}
+};
+
+class asISharedBool
+{
+public:
+	// Memory management
+	virtual int AddRef() const = 0;
+	virtual int Release() const = 0;
+
+	// Value
+	virtual bool Get() const = 0;
+	virtual void Set(bool) = 0;
+
+protected:
+	virtual ~asISharedBool() {}
 };
 
 //-----------------------------------------------------------------

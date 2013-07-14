@@ -193,6 +193,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\add_on\weakref\weakref.cpp" />
     <ClCompile Include="..\..\source\bstr.cpp" />
     <ClCompile Include="..\..\source\main.cpp" />
     <ClCompile Include="..\..\source\scriptmath3d.cpp" />
@@ -207,6 +208,7 @@
     <ClCompile Include="..\..\source\test_addon_scripthandle.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptmath.cpp" />
     <ClCompile Include="..\..\source\test_addon_serializer.cpp" />
+    <ClCompile Include="..\..\source\test_addon_weakref.cpp" />
     <ClCompile Include="..\..\source\test_any.cpp" />
     <ClCompile Include="..\..\source\test_argref.cpp" />
     <ClCompile Include="..\..\source\test_array.cpp" />
@@ -356,6 +358,7 @@
     <ClCompile Include="..\..\..\..\add_on\serializer\serializer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\add_on\weakref\weakref.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
     <ClInclude Include="..\..\source\bstr.h" />
     <ClInclude Include="..\..\source\scriptmath3d.h" />

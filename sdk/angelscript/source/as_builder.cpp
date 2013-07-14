@@ -1595,6 +1595,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	engine->scriptFunctions[st->beh.copy]->AddRef();
 	engine->scriptFunctions[st->beh.factory]->AddRef();
 	engine->scriptFunctions[st->beh.construct]->AddRef();
+	// TODO: weak: Should only do this if the class has been declared with weak
+	engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRef();
 	for( asUINT i = 1; i < st->beh.operators.GetLength(); i += 2 )
 		engine->scriptFunctions[st->beh.operators[i]]->AddRef();
 

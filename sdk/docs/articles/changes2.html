@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/07/12</h2>
+<h2>Version 2.27.0 WIP - 2013/07/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -45,6 +45,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetFuncDefFromTypeId to allow getting the asIScriptFunction for a function definition (Thanks Polyák István)
 <li>NotifyGarbageCollectorOfNewObject will return the sequence number attributed to the object
 <li>Added GetObjectInGC to allow inspecting objects that are currently known by the GC
+<li>The new behaviour asBEHAVE_GET_WEAKREF_FLAG was added to support weak references (Thanks vroad)
 </ul>
 <li>Library
 <ul>
@@ -52,6 +53,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GC now gives an id for each object from a sequence and reports this when it cannot destroy an object
 <li>GC will call script class destructor before breaking circular references (Thanks hupsilardee)
 <li>Engine no longer silently accepts modifications to built-in types by the application (Thanks Violet CLM)
+<li>Added support for weak references (Thanks vroad)
 </ul>
 <li>Script language
 <ul>
@@ -64,6 +66,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script array add-on can now sort arrays of handles by calling the opCmp on the objects (Thanks Polyák István)
 <li>Script array does a better search for matching opCmp and opEquals (Thanks Polyák István)
 <li>Fixed compilation error with has_trivial_destructor on g++ 4.8 (Thanks Craig Soutar)
+<li>Added the weakref add-on (Thanks vroad)
 </ul>
 </ul>
 

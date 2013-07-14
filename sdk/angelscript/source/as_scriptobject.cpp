@@ -186,6 +186,9 @@ void RegisterScriptObject(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->scriptTypeBehaviours, asBEHAVE_RELEASE, "void f()", asMETHOD(asCScriptObject,Release), asCALL_THISCALL, 0); asASSERT( r >= 0 );
 	r = engine->RegisterMethodToObjectType(&engine->scriptTypeBehaviours, "int &opAssign(int &in)", asFUNCTION(ScriptObject_Assignment), asCALL_CDECL_OBJLAST); asASSERT( r >= 0 );
 
+	// Weakref behaviours
+	r = engine->RegisterBehaviourToObjectType(&engine->scriptTypeBehaviours, asBEHAVE_GET_WEAKREF_FLAG, "int &f()", asMETHOD(asCScriptObject,GetWeakRefFlag), asCALL_THISCALL, 0); asASSERT( r >= 0 );
+	
 	// Register GC behaviours
 	r = engine->RegisterBehaviourToObjectType(&engine->scriptTypeBehaviours, asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(asCScriptObject,GetRefCount), asCALL_THISCALL, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->scriptTypeBehaviours, asBEHAVE_SETGCFLAG, "void f()", asMETHOD(asCScriptObject,SetFlag), asCALL_THISCALL, 0); asASSERT( r >= 0 );
@@ -231,6 +234,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 	objType = ot;
 	objType->AddRef();
 	isDestructCalled = false;
+	weakRefFlag = 0;
 
 	// Notify the garbage collector of this object
 	if( objType->flags & asOBJ_GC )
@@ -303,6 +307,12 @@ void asCScriptObject::Destruct()
 
 asCScriptObject::~asCScriptObject()
 {
+	if( weakRefFlag )
+	{
+		weakRefFlag->Set(true);
+		weakRefFlag->Release();
+	}
+
 	// The engine pointer should be available from the objectType
 	asCScriptEngine *engine = objType->engine;
 
@@ -323,6 +333,15 @@ asCScriptObject::~asCScriptObject()
 	}
 
 	objType->Release();
+}
+
+asISharedBool *asCScriptObject::GetWeakRefFlag() const
+{
+	if( weakRefFlag )
+		return weakRefFlag;
+
+	weakRefFlag = asNEW(asCSharedBool);
+	return weakRefFlag;
 }
 
 asIScriptEngine *asCScriptObject::GetEngine() const
@@ -758,6 +777,35 @@ void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *objT
 	*dst = *src;
 	if( *dst && objType->beh.addref )
 		engine->CallObjectMethod(*(void**)dst, objType->beh.addref);
+}
+
+// TODO: weak: Should move to its own file
+asCSharedBool::asCSharedBool() : value(false) 
+{
+	refCount.set(1);
+}
+
+int asCSharedBool::AddRef() const
+{
+	return refCount.atomicInc();
+}
+
+int asCSharedBool::Release() const
+{
+	int r = refCount.atomicDec();
+	if( r == 0 )
+		asDELETE(const_cast<asCSharedBool*>(this), asCSharedBool);
+	return r;
+}
+
+bool asCSharedBool::Get() const
+{
+	return value;
+}
+
+void asCSharedBool::Set(bool v)
+{
+	value = v;
 }
 
 END_AS_NAMESPACE

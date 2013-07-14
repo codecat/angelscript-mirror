@@ -187,6 +187,7 @@ public:
 	//                  For application objects it should look for ref cast behaviours and call the matching one
 	//                  Once implemented the IsHandleCompatibleWithObject should be removed from the engine
 	virtual bool               IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
+	asISharedBool             *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const;
@@ -232,18 +233,19 @@ public:
 	void *CallAlloc(asCObjectType *objType) const;
 	void  CallFree(void *obj) const;
 
-	void *CallGlobalFunctionRetPtr(int func);
-	void *CallGlobalFunctionRetPtr(int func, void *param1);
-	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *func, asCScriptFunction *desc);
-	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s, void *param1);
-	void  CallObjectMethod(void *obj, int func);
-	void  CallObjectMethod(void *obj, void *param, int func);
-	void  CallObjectMethod(void *obj, asSSystemFunctionInterface *func, asCScriptFunction *desc);
-	void  CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *func, asCScriptFunction *desc);
-	bool  CallObjectMethodRetBool(void *obj, int func);
-	int   CallObjectMethodRetInt(void *obj, int func);
-	void  CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
-	bool  CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc);
+	void *CallGlobalFunctionRetPtr(int func) const;
+	void *CallGlobalFunctionRetPtr(int func, void *param1) const;
+	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *func, asCScriptFunction *desc) const;
+	void *CallGlobalFunctionRetPtr(asSSystemFunctionInterface *i, asCScriptFunction *s, void *param1) const;
+	void  CallObjectMethod(void *obj, int func) const;
+	void  CallObjectMethod(void *obj, void *param, int func) const;
+	void  CallObjectMethod(void *obj, asSSystemFunctionInterface *func, asCScriptFunction *desc) const;
+	void  CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *func, asCScriptFunction *desc) const;
+	bool  CallObjectMethodRetBool(void *obj, int func) const;
+	int   CallObjectMethodRetInt(void *obj, int func) const;
+	void *CallObjectMethodRetPtr(void *obj, int func) const;
+	void  CallGlobalFunction(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc) const;
+	bool  CallGlobalFunctionRetBool(void *param1, void *param2, asSSystemFunctionInterface *func, asCScriptFunction *desc) const;
 
 	void ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type);
 

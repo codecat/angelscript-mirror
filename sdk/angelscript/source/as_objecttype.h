@@ -92,6 +92,7 @@ struct asSTypeBehaviour
 		gcEnumReferences = 0; 
 		gcReleaseAllReferences = 0;
 		templateCallback = 0;
+		getWeakRefFlag = 0;
 	}
 
 	int factory;
@@ -104,14 +105,17 @@ struct asSTypeBehaviour
 	int addref;
 	int release;
 	int templateCallback;
-	
+
 	// GC behaviours
 	int gcGetRefCount;
 	int gcSetFlag;
 	int gcGetFlag;
 	int gcEnumReferences;
 	int gcReleaseAllReferences;
-	
+
+	// Weakref behaviours
+	int getWeakRefFlag;
+
 	asCArray<int> factories;
 	asCArray<int> constructors;
 	asCArray<int> operators;
