@@ -2170,7 +2170,31 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	}
 	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
 	{
-		// TODO: weak: Must be ref type
+		// This behaviour is only allowed for reference types
+		if( !(func.objectType->flags & asOBJ_REF) )
+		{
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
+		// Don't allow it if the type is registered with nohandle or scoped
+		if( func.objectType->flags & (asOBJ_NOHANDLE|asOBJ_SCOPED) )
+		{
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
+		// Verify that the return type is a reference since it needs to return a pointer to an asISharedBool
+		if( !func.returnType.IsReference() )
+			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+
+		// Verify that there are no parameters
+		if( func.parameterTypes.GetLength() != 0 )
+			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+
+		if( beh->getWeakRefFlag )
+			return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+
 		func.id = beh->getWeakRefFlag = AddBehaviourFunction(func, internal);
 	}
 	else

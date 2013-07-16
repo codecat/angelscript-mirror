@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/07/14</h2>
+<h2>Version 2.27.0 WIP - 2013/07/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -46,6 +46,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>NotifyGarbageCollectorOfNewObject will return the sequence number attributed to the object
 <li>Added GetObjectInGC to allow inspecting objects that are currently known by the GC
 <li>The new behaviour asBEHAVE_GET_WEAKREF_FLAG was added to support weak references (Thanks vroad)
+<li>Added the interface asISharedBool for the weak ref flag
+<li>Global asCreateSharedBool can be used by application classes to create instances of shared booleans
 </ul>
 <li>Library
 <ul>

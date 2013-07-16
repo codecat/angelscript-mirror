@@ -528,6 +528,9 @@ extern "C"
 	// Memory management
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 	AS_API int asResetGlobalMemoryFunctions();
+
+	// Auxiliary
+	AS_API asISharedBool *asCreateSharedBool();
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
 

@@ -88,6 +88,8 @@ bool Test()
 	// TODO: weak: Test registering app type with weak ref
 	// TODO: weak: It shouldn't be possible to register the behaviour to a type that don't support handles
 	// TODO: weak: The engine should have a global function for creating a shared boolean
+	// TODO: weak: weak references should only work for the script classes that are declared to support it
+	// TODO: weak: add engine property to automatically add support for weak references to all script classes
 
 	// Success
 	return fail;

@@ -808,5 +808,13 @@ void asCSharedBool::Set(bool v)
 	value = v;
 }
 
+// Interface
+// Auxiliary function to allow applications to create shared 
+// booleans without having to implement the logic for them
+AS_API asISharedBool *asCreateSharedBool()
+{
+	return asNEW(asCSharedBool);
+}
+
 END_AS_NAMESPACE
 
