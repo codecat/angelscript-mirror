@@ -4,6 +4,7 @@
 #include "weakref.h"
 #include <new>
 #include <assert.h>
+#include <string.h> // strstr()
 
 BEGIN_AS_NAMESPACE
 
@@ -81,6 +82,7 @@ CScriptWeakRef::CScriptWeakRef(void *ref, asIObjectType *type)
 	m_type->AddRef();
 
 	// Get the shared flag that will tell us when the object has been destroyed
+	// This is threadsafe as we hold a strong reference to the object 
 	m_weakRefFlag = m_type->GetEngine()->GetWeakRefFlagOfScriptObject(m_ref, m_type->GetSubType());
 	if( m_weakRefFlag )
 		m_weakRefFlag->AddRef();
@@ -161,14 +163,20 @@ bool CScriptWeakRef::operator!=(const CScriptWeakRef &o) const
 void *CScriptWeakRef::Get() const
 {
 	// If we hold a null handle, then just return null
-	if( m_ref == 0 )
+	if( m_ref == 0 || m_weakRefFlag == 0 )
 		return 0;
 	
-	if( m_weakRefFlag && !m_weakRefFlag->Get() )
+	// Lock on the shared bool, so we can be certain it won't be changed to true
+	// between the inspection of the flag and the increase of the ref count in the
+	// owning object.
+	m_weakRefFlag->Lock();
+	if( !m_weakRefFlag->Get() )
 	{
 		m_type->GetEngine()->AddRefScriptObject(m_ref, m_type->GetSubType());
+		m_weakRefFlag->Unlock();
 		return m_ref;
 	}
+	m_weakRefFlag->Unlock();
 
 	return 0;
 }

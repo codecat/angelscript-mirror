@@ -13,17 +13,44 @@ public:
 	~MyClass()
 	{
 		if( weakRefFlag )
-		{
-			weakRefFlag->Set(true);
 			weakRefFlag->Release();
-		}
 	}
 	void AddRef() { refCount++; }
-	void Release() { if( --refCount == 0 ) delete this; }
-	asISharedBool *GetWeakRefFlag()
+	void Release() 
+	{
+		// If the weak ref flag exists it is because someone held a weak ref
+		// and that someone may add a reference to the object at any time. It
+		// is ok to check the existance of the weakRefFlag without locking here
+		// because if the refCount is 1 then no other thread is currently 
+		// creating the weakRefFlag.
+		if( refCount == 1 && weakRefFlag )
+		{
+			// Set the flag to tell others that the object is no longer alive
+			// We must do this before decreasing the refCount to 0 so we don't
+			// end up with a race condition between this thread attempting to 
+			// destroy the object and the other that temporary added a strong
+			// ref from the weak ref.
+			weakRefFlag->Set(true);
+		}
+
+		if( --refCount == 0 ) 
+			delete this; 
+	}
+	asILockableSharedBool *GetWeakRefFlag()
 	{
 		if( !weakRefFlag )
-			weakRefFlag = asCreateSharedBool();
+		{
+			// Lock globally so no other thread can attempt
+			// to create a shared bool at the same time
+			asAcquireExclusiveLock();
+
+			// Make sure another thread didn't create the 
+			// flag while we waited for the lock
+			if( !weakRefFlag )
+				weakRefFlag = asCreateLockableSharedBool();
+
+			asReleaseExclusiveLock();
+		}
 
 		return weakRefFlag;
 	}
@@ -32,7 +59,7 @@ public:
 
 protected:
 	int refCount;
-	asISharedBool *weakRefFlag;
+	asILockableSharedBool *weakRefFlag;
 };
 
 bool Test()

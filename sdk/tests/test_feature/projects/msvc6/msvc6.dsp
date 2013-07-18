@@ -127,6 +127,10 @@ SOURCE=..\..\source\test_addon_serializer.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\source\test_addon_weakref.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\source\test_any.cpp
 # End Source File
 # Begin Source File
@@ -828,6 +832,14 @@ SOURCE=..\..\source\utils.cpp
 # Begin Source File
 
 SOURCE=..\..\source\utils.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\weakref\weakref.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\add_on\weakref\weakref.h
 # End Source File
 # End Group
 # End Target

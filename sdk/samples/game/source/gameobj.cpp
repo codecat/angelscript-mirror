@@ -31,10 +31,10 @@ CGameObj::~CGameObj()
 		controller->Release();
 }
 
-asISharedBool *CGameObj::GetWeakRefFlag()
+asILockableSharedBool *CGameObj::GetWeakRefFlag()
 {
 	if( !weakRefFlag )
-		weakRefFlag = asCreateSharedBool();
+		weakRefFlag = asCreateLockableSharedBool();
 
 	return weakRefFlag;
 }

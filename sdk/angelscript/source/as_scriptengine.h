@@ -187,7 +187,7 @@ public:
 	//                  For application objects it should look for ref cast behaviours and call the matching one
 	//                  Once implemented the IsHandleCompatibleWithObject should be removed from the engine
 	virtual bool               IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
-	asISharedBool             *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
+	asILockableSharedBool     *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const;

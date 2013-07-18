@@ -73,7 +73,7 @@ class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
 class asIThreadManager;
-class asISharedBool;
+class asILockableSharedBool;
 
 // Enumerations and constants
 
@@ -530,7 +530,7 @@ extern "C"
 	AS_API int asResetGlobalMemoryFunctions();
 
 	// Auxiliary
-	AS_API asISharedBool *asCreateSharedBool();
+	AS_API asILockableSharedBool *asCreateLockableSharedBool();
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
 
@@ -629,18 +629,18 @@ public:
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
 
 	// Script execution
-	virtual asIScriptContext  *CreateContext() = 0;
-	virtual void              *CreateScriptObject(int typeId) = 0;
-	virtual void              *CreateScriptObjectCopy(void *obj, int typeId) = 0;
-	virtual void              *CreateUninitializedScriptObject(int typeId) = 0;
-	virtual asIScriptFunction *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
-	virtual void               AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-	virtual void               ReleaseScriptObject(void *obj, int typeId) = 0;
-	virtual void               ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
-	virtual void               AddRefScriptObject(void *obj, int typeId) = 0;
-	virtual void               AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
-	virtual bool               IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
-	virtual asISharedBool     *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
+	virtual asIScriptContext      *CreateContext() = 0;
+	virtual void                  *CreateScriptObject(int typeId) = 0;
+	virtual void                  *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void                  *CreateUninitializedScriptObject(int typeId) = 0;
+	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
+	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void                   ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
+	virtual void                   AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
+	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
+	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const = 0;
@@ -1011,7 +1011,7 @@ public:
 	virtual ~asIBinaryStream() {}
 };
 
-class asISharedBool
+class asILockableSharedBool
 {
 public:
 	// Memory management
@@ -1021,9 +1021,13 @@ public:
 	// Value
 	virtual bool Get() const = 0;
 	virtual void Set(bool) = 0;
+	
+	// Thread management
+	virtual void Lock() const = 0;
+	virtual void Unlock() const = 0;
 
 protected:
-	virtual ~asISharedBool() {}
+	virtual ~asILockableSharedBool() {}
 };
 
 //-----------------------------------------------------------------

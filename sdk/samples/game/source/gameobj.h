@@ -11,7 +11,7 @@ public:
 	CGameObj(char dispChar, int x, int y);
 	int AddRef();
 	int Release();
-	asISharedBool *GetWeakRefFlag();
+	asILockableSharedBool *GetWeakRefFlag();
 
 	// This method is used by the application 
 	// when the object should be destroyed
@@ -37,8 +37,8 @@ public:
 
 protected:
 	~CGameObj();
-	int            refCount;
-	asISharedBool *weakRefFlag;
+	int                    refCount;
+	asILockableSharedBool *weakRefFlag;
 };
 
 #endif

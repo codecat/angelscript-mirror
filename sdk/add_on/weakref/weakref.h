@@ -42,10 +42,10 @@ protected:
 	// members in order to call them from the script engine
 	friend void RegisterScriptWeakRef_Native(asIScriptEngine *engine);
 
-	mutable int    refCount;
-	void          *m_ref;
-	asIObjectType *m_type;
-	asISharedBool *m_weakRefFlag;
+	mutable int            refCount;
+	void                  *m_ref;
+	asIObjectType         *m_type;
+	asILockableSharedBool *m_weakRefFlag;
 };
 
 void RegisterScriptWeakRef(asIScriptEngine *engine);

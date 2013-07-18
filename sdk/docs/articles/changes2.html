@@ -47,8 +47,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>NotifyGarbageCollectorOfNewObject will return the sequence number attributed to the object
 <li>Added GetObjectInGC to allow inspecting objects that are currently known by the GC
 <li>The new behaviour asBEHAVE_GET_WEAKREF_FLAG was added to support weak references (Thanks vroad)
-<li>Added the interface asISharedBool for the weak ref flag
-<li>Global asCreateSharedBool can be used by application classes to create instances of shared booleans
+<li>Added the interface asILockableSharedBool for the weak ref flag
+<li>Global asCreateLockableSharedBool can be used by application classes to create instances of shared booleans
 </ul>
 <li>Library
 <ul>
@@ -68,7 +68,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Script array add-on can now sort arrays of handles by calling the opCmp on the objects (Thanks Polyák István)
 <li>Script array does a better search for matching opCmp and opEquals (Thanks Polyák István)
-<li>Fixed compilation error with has_trivial_destructor on g++ 4.8 (Thanks Craig Soutar)
+<li>Fixed compilation error with has_trivial_destructor on g++ 4.8 in GetTypeTraits (Thanks Craig Soutar)
 <li>Added the weakref add-on (Thanks vroad)
 <li>The game sample uses the weakref add-on
 </ul>

@@ -3322,17 +3322,17 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 }
 
 // interface
-asISharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const
+asILockableSharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const
 {
 	// Make sure it is not a null pointer
 	if( obj == 0 || type == 0 ) return 0;
 
 	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
-	asISharedBool *dest = 0;
+	asILockableSharedBool *dest = 0;
 	if( objType->beh.getWeakRefFlag )
 	{
 		// Call the getweakrefflag behaviour
-		dest = reinterpret_cast<asISharedBool*>(CallObjectMethodRetPtr(obj, objType->beh.getWeakRefFlag));
+		dest = reinterpret_cast<asILockableSharedBool*>(CallObjectMethodRetPtr(obj, objType->beh.getWeakRefFlag));
 	}
 	return dest;
 }

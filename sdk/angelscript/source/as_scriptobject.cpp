@@ -308,10 +308,7 @@ void asCScriptObject::Destruct()
 asCScriptObject::~asCScriptObject()
 {
 	if( weakRefFlag )
-	{
-		weakRefFlag->Set(true);
 		weakRefFlag->Release();
-	}
 
 	// The engine pointer should be available from the objectType
 	asCScriptEngine *engine = objType->engine;
@@ -335,12 +332,25 @@ asCScriptObject::~asCScriptObject()
 	objType->Release();
 }
 
-asISharedBool *asCScriptObject::GetWeakRefFlag() const
+asILockableSharedBool *asCScriptObject::GetWeakRefFlag() const
 {
 	if( weakRefFlag )
 		return weakRefFlag;
 
-	weakRefFlag = asNEW(asCSharedBool);
+	// Lock globally so no other thread can attempt
+	// to create a shared bool at the same time.
+	// TODO: runtime optimize: Instead of locking globally, it would be possible to have 
+	//                         a critical section per object type. This would reduce the 
+	//                         chances of two threads lock on the same critical section.
+	asAcquireExclusiveLock();
+
+	// Make sure another thread didn't create the 
+	// flag while we waited for the lock
+	if( !weakRefFlag )
+		weakRefFlag = asNEW(asCLockableSharedBool);
+
+	asReleaseExclusiveLock();
+
 	return weakRefFlag;
 }
 
@@ -360,6 +370,21 @@ int asCScriptObject::Release() const
 {
 	// Clear the flag set by the GC
 	gcFlag = false;
+
+	// If the weak ref flag exists it is because someone held a weak ref
+	// and that someone may add a reference to the object at any time. It
+	// is ok to check the existance of the weakRefFlag without locking here
+	// because if the refCount is 1 then no other thread is currently 
+	// creating the weakRefFlag.
+	if( refCount.get() == 1 && weakRefFlag )
+	{
+		// Set the flag to tell others that the object is no longer alive
+		// We must do this before decreasing the refCount to 0 so we don't
+		// end up with a race condition between this thread attempting to 
+		// destroy the object and the other that temporary added a strong
+		// ref from the weak ref.
+		weakRefFlag->Set(true);
+	}
 
 	// Call the script destructor behaviour if the reference counter is 1.
 	if( refCount.get() == 1 && !isDestructCalled )
@@ -780,40 +805,54 @@ void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *objT
 }
 
 // TODO: weak: Should move to its own file
-asCSharedBool::asCSharedBool() : value(false) 
+asCLockableSharedBool::asCLockableSharedBool() : value(false) 
 {
 	refCount.set(1);
 }
 
-int asCSharedBool::AddRef() const
+int asCLockableSharedBool::AddRef() const
 {
 	return refCount.atomicInc();
 }
 
-int asCSharedBool::Release() const
+int asCLockableSharedBool::Release() const
 {
 	int r = refCount.atomicDec();
 	if( r == 0 )
-		asDELETE(const_cast<asCSharedBool*>(this), asCSharedBool);
+		asDELETE(const_cast<asCLockableSharedBool*>(this), asCLockableSharedBool);
 	return r;
 }
 
-bool asCSharedBool::Get() const
+bool asCLockableSharedBool::Get() const
 {
 	return value;
 }
 
-void asCSharedBool::Set(bool v)
+void asCLockableSharedBool::Set(bool v)
 {
+	// Make sure the value is not changed while another thread  
+	// is inspecting it and taking a decision on what to do.
+	Lock();
 	value = v;
+	Unlock();
+}
+
+void asCLockableSharedBool::Lock() const
+{
+	ENTERCRITICALSECTION(lock);
+}
+
+void asCLockableSharedBool::Unlock() const
+{
+	LEAVECRITICALSECTION(lock);
 }
 
 // Interface
 // Auxiliary function to allow applications to create shared 
 // booleans without having to implement the logic for them
-AS_API asISharedBool *asCreateSharedBool()
+AS_API asILockableSharedBool *asCreateLockableSharedBool()
 {
-	return asNEW(asCSharedBool);
+	return asNEW(asCLockableSharedBool);
 }
 
 END_AS_NAMESPACE
