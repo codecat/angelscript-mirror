@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.27.0 WIP - 2013/07/15</h2>
+<h2>Version 2.27.0 WIP - 2013/07/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Function pointers for global functions in namespaces wasn't resolving properly (Thanks Violet CLM)
 <li>Registered value types that didn't have size evenly divisable of 4 weren't allocated with enough space (Thanks Hermann Noll)
 <li>Class methods with default args using parenthesis failed to parse (Thanks Aaron Baker)
+<li>Template arguments declared as const T@ will keep the handle-to-const attribute in template instances
 </ul>
 <li>Library interface
 <ul>
@@ -63,12 +64,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Template subtypes can no longer be declared as read-only
 <li>Derived classes can no longer override base methods with different return types (Thanks Philip Bennefall)
 </ul>
-<li>Add-ons
+<li>Add-ons & samples
 <ul>
 <li>Script array add-on can now sort arrays of handles by calling the opCmp on the objects (Thanks Polyák István)
 <li>Script array does a better search for matching opCmp and opEquals (Thanks Polyák István)
 <li>Fixed compilation error with has_trivial_destructor on g++ 4.8 (Thanks Craig Soutar)
 <li>Added the weakref add-on (Thanks vroad)
+<li>The game sample uses the weakref add-on
 </ul>
 </ul>
 

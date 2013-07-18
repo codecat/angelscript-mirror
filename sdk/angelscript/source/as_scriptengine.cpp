@@ -3353,6 +3353,8 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 				if( orig.IsObjectHandle() && !ot->templateSubTypes[n].IsObjectHandle() )
 				{
 					dt.MakeHandle(true, true);
+					if( orig.IsHandleToConst() )
+						dt.MakeHandleToConst(true);
 					dt.MakeReference(orig.IsReference());
 					dt.MakeReadOnly(orig.IsReadOnly());
 				}
