@@ -6,6 +6,35 @@ namespace Test_Addon_WeakRef
 
 static const char *TESTNAME = "Test_Addon_WeakRef";
 
+class MyClass
+{
+public:
+	MyClass() { refCount = 1; weakRefFlag = 0; }
+	~MyClass()
+	{
+		if( weakRefFlag )
+		{
+			weakRefFlag->Set(true);
+			weakRefFlag->Release();
+		}
+	}
+	void AddRef() { refCount++; }
+	void Release() { if( --refCount == 0 ) delete this; }
+	asISharedBool *GetWeakRefFlag()
+	{
+		if( !weakRefFlag )
+			weakRefFlag = asCreateSharedBool();
+
+		return weakRefFlag;
+	}
+
+	static MyClass *Factory() { return new MyClass(); }
+
+protected:
+	int refCount;
+	asISharedBool *weakRefFlag;
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -85,11 +114,47 @@ bool Test()
 		engine->Release();
 	}
 
-	// TODO: weak: Test registering app type with weak ref
-	// TODO: weak: It shouldn't be possible to register the behaviour to a type that don't support handles
-	// TODO: weak: The engine should have a global function for creating a shared boolean
-	// TODO: weak: weak references should only work for the script classes that are declared to support it
-	// TODO: weak: add engine property to automatically add support for weak references to all script classes
+	// Test registering app type with weak ref
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("MyClass", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_FACTORY, "MyClass @f()", asFUNCTION(MyClass::Factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_ADDREF, "void f()", asMETHOD(MyClass, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_RELEASE, "void f()", asMETHOD(MyClass, Release), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_GET_WEAKREF_FLAG, "int &f()", asMETHOD(MyClass, GetWeakRefFlag), asCALL_THISCALL);
+
+		RegisterScriptWeakRef(engine);
+
+		const char *script =
+			"void main() { \n"
+			"  MyClass @t = MyClass(); \n"
+			"  weakref<MyClass> r(t); \n"
+			"  assert( r.get() !is null ); \n"
+			"  @t = null; \n"
+			"  assert( r.get() is null ); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: Failed to compile the script\n", TESTNAME);
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// TODO: weak: It should be possible to declare a script class to not allow weak references, and as such save the memory for the internal pointer
+	// TODO: weak: add engine property to turn off automatic support for weak references to all script classes
 
 	// Success
 	return fail;

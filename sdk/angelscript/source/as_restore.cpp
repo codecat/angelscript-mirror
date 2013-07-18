@@ -846,7 +846,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 		engine->scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRef();
 		engine->scriptFunctions[ot->beh.gcSetFlag]->AddRef();
 		engine->scriptFunctions[ot->beh.copy]->AddRef();
-		// TODO: weak: Should only do this if the class has been declared with 'weak'
+		// TODO: weak: Should not do this if the class has been declared with 'noweak'
 		engine->scriptFunctions[ot->beh.getWeakRefFlag]->AddRef();
 		for( asUINT i = 1; i < ot->beh.operators.GetLength(); i += 2 )
 			engine->scriptFunctions[ot->beh.operators[i]]->AddRef();
