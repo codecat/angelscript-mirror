@@ -126,6 +126,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\add_on\weakref\weakref.cpp" />
     <ClCompile Include="..\..\source\gamemgr.cpp" />
     <ClCompile Include="..\..\source\gameobj.cpp" />
     <ClCompile Include="..\..\source\main.cpp">
@@ -143,6 +144,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\add_on\weakref\weakref.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
     <ClInclude Include="..\..\source\gamemgr.h" />
     <ClInclude Include="..\..\source\gameobj.h" />

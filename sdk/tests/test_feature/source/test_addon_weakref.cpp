@@ -91,7 +91,7 @@ bool Test()
 			"void main() { \n"
 			"  weakref<int> a; \n"         // fail
 			"  weakref<string> b; \n"      // fail
-			"  weakref<Test@> c; \n"       // ok. The weak ref will hold a pointer to the object
+			"  weakref<Test@> c; \n"       // fail
 			"  weakref<array<Test>> d; \n" // fail
 			"} \n";
 
@@ -104,7 +104,7 @@ bool Test()
 		if( bout.buffer != "Test_Addon_WeakRef (2, 1) : Info    : Compiling void main()\n"
 						   "Test_Addon_WeakRef (3, 11) : Error   : Can't instanciate template 'weakref' with subtype 'int'\n"
 						   "Test_Addon_WeakRef (4, 11) : Error   : Can't instanciate template 'weakref' with subtype 'string'\n"
-						//   "Test_Addon_WeakRef (5, 11) : Error   : Can't instanciate template 'weakref' with subtype 'Test@'\n"
+						   "Test_Addon_WeakRef (5, 11) : Error   : Can't instanciate template 'weakref' with subtype 'Test@'\n"
 						   "Test_Addon_WeakRef (6, 11) : Error   : Can't instanciate template 'weakref' with subtype 'array<Test>'\n" )
 		{
 			printf("%s", bout.buffer.c_str());

@@ -14,12 +14,29 @@ CGameObj::CGameObj(char dispChar, int x, int y)
 	this->x          = x;
 	this->y          = y;
 	controller       = 0;
+
+	weakRefFlag      = 0;
 }
 
 CGameObj::~CGameObj()
 {
+	if( weakRefFlag )
+	{
+		// Tell the ones that hold weak references that the object is destroyed
+		weakRefFlag->Set(true);
+		weakRefFlag->Release();
+	}
+
 	if( controller )
 		controller->Release();
+}
+
+asISharedBool *CGameObj::GetWeakRefFlag()
+{
+	if( !weakRefFlag )
+		weakRefFlag = asCreateSharedBool();
+
+	return weakRefFlag;
 }
 
 int CGameObj::AddRef()
