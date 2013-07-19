@@ -98,7 +98,7 @@ int CSerializer::Restore(asIScriptModule *mod)
 					// Create a new script object, but don't call its constructor as we will initialize the members. 
 					// Calling the constructor may have unwanted side effects if for example the constructor changes
 					// any outside entities, such as setting global variables to point to new objects, etc.
-					void *newPtr = m_engine->CreateUninitializedScriptObject( type->GetTypeId() );
+					void *newPtr = m_engine->CreateUninitializedScriptObject( type );
 					m_root.m_children[i2]->Restore( newPtr, type->GetTypeId() ); 
 				}
 			}
@@ -363,8 +363,8 @@ void CSerializedValue::Restore(void *ref, int typeId)
 				// Create a new script object, but don't call its constructor as we will initialize the members. 
 				// Calling the constructor may have unwanted side effects if for example the constructor changes
 				// any outside entities, such as setting global variables to point to new objects, etc.
-				void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(type->GetTypeId());
-				m_children[0]->Restore(newObject, type->GetTypeId());	
+				void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(type);
+				m_children[0]->Restore(newObject, type->GetTypeId());
 			}
 		}
 	}

@@ -4223,6 +4223,8 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	return ptr;
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.27.0, 2013-07-18
 // interface
 void *asCScriptEngine::CreateUninitializedScriptObject(int typeId)
 {
@@ -4239,7 +4241,18 @@ void *asCScriptEngine::CreateUninitializedScriptObject(int typeId)
 
 	asCObjectType *objType = dt.GetObjectType();
 
-	asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
+	return CreateUninitializedScriptObject(objType);
+}
+#endif
+
+// interface
+void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type)
+{
+	// This function only works for script classes. Registered types cannot be created this way.
+	if( type == 0 || !(type->GetFlags() & asOBJ_SCRIPT_OBJECT) )
+		return 0;
+
+	asCObjectType *objType = const_cast<asCObjectType*>(reinterpret_cast<const asCObjectType*>(type));
 
 	// Construct the object, but do not call the actual constructor that initializes the members
 	// The initialization will be done by the application afterwards, e.g. through serialization.

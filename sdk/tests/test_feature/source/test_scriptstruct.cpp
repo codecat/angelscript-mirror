@@ -824,7 +824,7 @@ bool Test()
 			obj->Release();
 
 		// Test creating script class instance without initialization (for serialization)
-		obj = (asIScriptObject*)engine->CreateUninitializedScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateUninitializedScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
