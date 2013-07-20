@@ -172,8 +172,11 @@ public:
 	virtual void              *CreateScriptObject(int typeId);
 #endif
 	virtual void              *CreateScriptObject(const asIObjectType *type);
-	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.27.0, 2013-07-18
 	virtual void              *CreateScriptObjectCopy(void *obj, int typeId);
+#endif
+	virtual void              *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.27.0, 2013-07-18
 	virtual void              *CreateUninitializedScriptObject(int typeId);

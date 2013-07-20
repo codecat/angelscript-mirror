@@ -216,7 +216,7 @@ CScriptAny &CScriptAny::operator=(const CScriptAny &other)
 	else if( value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		value.valueObj = engine->CreateScriptObjectCopy(other.value.valueObj, value.typeId);
+		value.valueObj = engine->CreateScriptObjectCopy(other.value.valueObj, engine->GetObjectTypeById(value.typeId));
 	}
 	else
 	{
@@ -291,7 +291,7 @@ void CScriptAny::Store(void *ref, int refTypeId)
 	else if( value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		value.valueObj = engine->CreateScriptObjectCopy(ref, value.typeId);
+		value.valueObj = engine->CreateScriptObjectCopy(ref, engine->GetObjectTypeById(value.typeId));
 	}
 	else
 	{

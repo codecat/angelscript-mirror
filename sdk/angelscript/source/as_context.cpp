@@ -941,7 +941,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 		}
 		else
 		{
-			obj = m_engine->CreateScriptObjectCopy(obj, m_engine->GetTypeIdFromDataType(*dt));
+			obj = m_engine->CreateScriptObjectCopy(obj, dt->GetObjectType());
 		}
 	}
 

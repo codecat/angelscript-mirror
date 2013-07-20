@@ -113,7 +113,7 @@ void CScriptDictionary::Set(const string &key, void *value, int typeId)
 	else if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		valStruct.valueObj = engine->CreateScriptObjectCopy(value, typeId);
+		valStruct.valueObj = engine->CreateScriptObjectCopy(value, engine->GetObjectTypeById(typeId));
 	}
 	else
 	{

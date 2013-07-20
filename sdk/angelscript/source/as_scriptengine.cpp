@@ -4285,7 +4285,8 @@ void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type
 	return obj;
 }
 
-// TODO: interface: Should deprecate this. The application should be calling the factory directly
+#ifdef AS_DEPRECATED
+// Deprecated since 2.27.0, 2013-07-18
 void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
@@ -4296,6 +4297,19 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 	if( newObj == 0 ) return 0;
 
 	AssignScriptObject(newObj, origObj, typeId);
+
+	return newObj;
+}
+#endif
+
+// interface
+void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType *type)
+{
+	// TODO: Should use the copy constructor if available
+	void *newObj = CreateScriptObject(type);
+	if( newObj == 0 ) return 0;
+
+	AssignScriptObject(newObj, origObj, type->GetTypeId());
 
 	return newObj;
 }
