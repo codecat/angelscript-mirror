@@ -633,20 +633,15 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.27.0, 2013-07-18
 	virtual void                  *CreateScriptObject(int typeId) = 0;
+	virtual void                  *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void                  *CreateUninitializedScriptObject(int typeId) = 0;
+	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
 #endif
 	virtual void                  *CreateScriptObject(const asIObjectType *type) = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.27.0, 2013-07-18
-	virtual void                  *CreateScriptObjectCopy(void *obj, int typeId) = 0;
-#endif
 	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type) = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.27.0, 2013-07-18
-	virtual void                  *CreateUninitializedScriptObject(int typeId) = 0;
-#endif
 	virtual void                  *CreateUninitializedScriptObject(const asIObjectType *type) = 0;
 	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
-	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type) = 0;
 	virtual void                   ReleaseScriptObject(void *obj, int typeId) = 0;
 	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
 	virtual void                   AddRefScriptObject(void *obj, int typeId) = 0;

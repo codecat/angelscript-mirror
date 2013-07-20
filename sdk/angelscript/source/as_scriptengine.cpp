@@ -4309,7 +4309,7 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType
 	void *newObj = CreateScriptObject(type);
 	if( newObj == 0 ) return 0;
 
-	AssignScriptObject(newObj, origObj, type->GetTypeId());
+	AssignScriptObject(newObj, origObj, type);
 
 	return newObj;
 }
@@ -4325,10 +4325,11 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 	if( funcIndex )
 		CallObjectMethod(mem, funcIndex);
 
-	AssignScriptObject(mem, obj, type->GetTypeId());
+	AssignScriptObject(mem, obj, type);
 }
 
-// interface
+#ifdef AS_DEPRECATED
+// Deprecated since 2.27.0, 2013-07-18
 void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
@@ -4342,6 +4343,17 @@ void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, int typeId)
 	if( !dt.IsValid() ) return;
 
 	asCObjectType *objType = dt.GetObjectType();
+
+	AssignScriptObject(dstObj, srcObj, objType);
+}
+#endif
+
+// interface
+void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type)
+{
+	if( type == 0 ) return;
+
+	const asCObjectType *objType = reinterpret_cast<const asCObjectType*>(type);
 
 	// If value assign for ref types has been disabled, then don't do anything if the type is a ref type
 	if( ep.disallowValueAssignForRefType && (objType->flags & asOBJ_REF) && !(objType->flags & asOBJ_SCOPED) )

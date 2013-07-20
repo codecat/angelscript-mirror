@@ -188,7 +188,7 @@ bool CScriptDictionary::Get(const string &key, void *value, int typeId) const
 			// Copy the object into the given reference
 			if( isCompatible )
 			{
-				engine->AssignScriptObject(value, it->second.valueObj, typeId);
+				engine->AssignScriptObject(value, it->second.valueObj, engine->GetObjectTypeById(typeId));
 
 				return true;
 			}

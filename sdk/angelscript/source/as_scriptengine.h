@@ -170,21 +170,15 @@ public:
 #ifdef AS_DEPRECATED
 // Deprecated since 2.27.0, 2013-07-18
 	virtual void              *CreateScriptObject(int typeId);
+	virtual void              *CreateScriptObjectCopy(void *obj, int typeId);
+	virtual void              *CreateUninitializedScriptObject(int typeId);
+	virtual void               AssignScriptObject(void *dstObj, void *srcObj, int typeId);
 #endif
 	virtual void              *CreateScriptObject(const asIObjectType *type);
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.27.0, 2013-07-18
-	virtual void              *CreateScriptObjectCopy(void *obj, int typeId);
-#endif
 	virtual void              *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.27.0, 2013-07-18
-	virtual void              *CreateUninitializedScriptObject(int typeId);
-#endif
 	virtual void              *CreateUninitializedScriptObject(const asIObjectType *type);
 	virtual asIScriptFunction *CreateDelegate(asIScriptFunction *func, void *obj);
-	// TODO: interface: Deprecate this, add a method that takes the asIObjectType instead
-	virtual void               AssignScriptObject(void *dstObj, void *srcObj, int typeId);
+	virtual void               AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
 	// TODO: interface: Deprecate this
 	virtual void               ReleaseScriptObject(void *obj, int typeId);
 	virtual void               ReleaseScriptObject(void *obj, const asIObjectType *type);
