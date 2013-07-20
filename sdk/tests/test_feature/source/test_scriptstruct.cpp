@@ -286,7 +286,7 @@ bool Test()
 			TEST_FAILED;
 
 		asIObjectType *type = mod->GetObjectTypeByName("A");
-		if( engine->CreateScriptObject(type->GetTypeId()) )
+		if( engine->CreateScriptObject(type) )
 			TEST_FAILED;
 
 		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: -6)\n" )
@@ -546,7 +546,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj != 0 )
 			TEST_FAILED;
 
@@ -583,7 +583,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -619,7 +619,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -684,7 +684,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -792,7 +792,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -854,7 +854,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else
@@ -900,7 +900,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeIdByDecl("T"));
+		obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj == 0 )
 			TEST_FAILED;
 		else

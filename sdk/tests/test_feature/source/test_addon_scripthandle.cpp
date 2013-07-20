@@ -40,7 +40,7 @@ static CScriptHandle ReturnRef()
 	asIScriptModule *mod = engine->GetModule("test");
 	asIObjectType *type = mod->GetObjectTypeByName("CTest");
 
-	asIScriptObject *obj = reinterpret_cast<asIScriptObject *>(engine->CreateScriptObject(type->GetTypeId()));
+	asIScriptObject *obj = reinterpret_cast<asIScriptObject *>(engine->CreateScriptObject(type));
 
 	CScriptHandle ref;
 	ref.Set(obj, type);

@@ -534,8 +534,8 @@ bool Test()
 		if( count != 1 )
 			TEST_FAILED;
 
-		int typeId = mod->GetTypeIdByDecl("A");
-		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(typeId));
+		asIObjectType *type = mod->GetObjectTypeByName("A");
+		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(type));
 
 		engine->DiscardModule("test");
 		engine->GarbageCollect();

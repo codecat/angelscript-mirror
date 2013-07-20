@@ -692,9 +692,10 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 		void **d = (void**)(buf->data + start * sizeof(void*));
 
 		asIScriptEngine *engine = objType->GetEngine();
+		asIObjectType *subType = objType->GetSubType();
 
 		for( ; d < max; d++ )
-			*d = (void*)engine->CreateScriptObject(subTypeId);
+			*d = (void*)engine->CreateScriptObject(subType);
 	}
 }
 

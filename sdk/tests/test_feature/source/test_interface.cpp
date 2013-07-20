@@ -105,11 +105,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	// Test calling the interface method from the application
-	int typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
-	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(typeId);
+	asIObjectType *type = engine->GetModule(0)->GetObjectTypeByName("myclass");
+	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("myintf");
-	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);
+	type = engine->GetObjectTypeById(intfTypeId);
 	asIScriptFunction *func = type->GetMethodByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ctx->Prepare(func);

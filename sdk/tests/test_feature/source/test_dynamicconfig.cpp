@@ -345,7 +345,7 @@ bool Test()
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_GENERIC);
 	r = engine->RegisterObjectBehaviour("mytype", asBEHAVE_RELEASE, "void f()", asFUNCTION(Release), asCALL_GENERIC);
 
-	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl("any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetObjectTypeByName("any"));
 
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();
@@ -533,7 +533,7 @@ bool Test()
 	engine->BeginConfigGroup("group1");
 	r = engine->RegisterObjectType("mytype", sizeof(int), asOBJ_VALUE | asOBJ_POD);
 
-	any = (CScriptAny*)engine->CreateScriptObject(engine->GetTypeIdByDecl("any"));
+	any = (CScriptAny*)engine->CreateScriptObject(engine->GetObjectTypeByName("any"));
 
 	r = engine->RegisterGlobalProperty("any g_any", any);
 	engine->EndConfigGroup();

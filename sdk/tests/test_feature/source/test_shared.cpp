@@ -492,7 +492,7 @@ bool Test()
 		if( func == 0 )
 			TEST_FAILED;
 
-		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(id);
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
 		asIScriptContext *ctx = engine->CreateContext();
 
 		ctx->Prepare(func);
@@ -523,7 +523,7 @@ bool Test()
 		if( func == 0 )
 			TEST_FAILED;
 
-		obj = (asIScriptObject*)engine->CreateScriptObject(id);
+		obj = (asIScriptObject*)engine->CreateScriptObject(type);
 		ctx = engine->CreateContext();
 
 		ctx->Prepare(func);

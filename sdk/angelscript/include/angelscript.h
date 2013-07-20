@@ -630,7 +630,11 @@ public:
 
 	// Script execution
 	virtual asIScriptContext      *CreateContext() = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.27.0, 2013-07-18
 	virtual void                  *CreateScriptObject(int typeId) = 0;
+#endif
+	virtual void                  *CreateScriptObject(const asIObjectType *type) = 0;
 	virtual void                  *CreateScriptObjectCopy(void *obj, int typeId) = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.27.0, 2013-07-18

@@ -212,8 +212,8 @@ bool Test()
 		TEST_FAILED;
 	}
 
-	int typeId = engine->GetModule("test")->GetTypeIdByDecl("myclass");
-	asIScriptObject *s = (asIScriptObject*)engine->CreateScriptObject(typeId);
+	asIObjectType *type = engine->GetModule("test")->GetObjectTypeByName("myclass");
+	asIScriptObject *s = (asIScriptObject*)engine->CreateScriptObject(type);
 	if( s == 0 ) 
 		TEST_FAILED;
 	else
@@ -232,7 +232,6 @@ bool Test()
 		}
 
 		// Call the script class method
-		asIObjectType *type = engine->GetObjectTypeById(typeId);
 		if( type->GetMethodCount() != 2 ) 
 			TEST_FAILED;
 		asIScriptFunction *method = type->GetMethodByDecl("void method2()");
@@ -268,8 +267,8 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
-	typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
-	asIObjectType *type = engine->GetObjectTypeById(typeId);
+	int typeId = engine->GetModule(0)->GetTypeIdByDecl("myclass");
+	type = engine->GetObjectTypeById(typeId);
 	asIScriptFunction *mtd = type->GetMethodByDecl("void func()");
 	asIScriptObject *obj = (asIScriptObject *)engine->GetModule(0)->GetAddressOfGlobalVar(engine->GetModule(0)->GetGlobalVarIndexByName("c"));
 

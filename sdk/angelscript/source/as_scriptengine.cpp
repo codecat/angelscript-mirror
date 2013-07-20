@@ -4167,7 +4167,8 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 	return dt.GetSizeInMemoryBytes();
 }
 
-// TODO: interface: Should deprecate this. The application should be calling the factory directly
+#ifdef AS_DEPRECATED
+// Deprecated since 2.27.0, 2013-07-18
 void *asCScriptEngine::CreateScriptObject(int typeId)
 {
 	// Make sure the type id is for an object type, and not a primitive or a handle
@@ -4180,9 +4181,20 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	if( !dt.IsValid() ) return 0;
 
 	asCObjectType *objType = dt.GetObjectType();
+
+	return CreateScriptObject(objType);
+}
+#endif
+
+// interface
+void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
+{
+	if( type == 0 ) return 0;
+
+	asCObjectType *objType = const_cast<asCObjectType*>(reinterpret_cast<const asCObjectType *>(type));
 	void *ptr = 0;
 
-	// Check that there is a default factory
+	// Check that there is a default factory for ref types
 	if( objType->beh.factory == 0 && (objType->flags & asOBJ_REF) )
 	{
 		asCString str;
@@ -4212,8 +4224,17 @@ void *asCScriptEngine::CreateScriptObject(int typeId)
 	{
 		// TODO: Shouldn't support allocating object like this, because the
 		//       caller cannot be certain how the memory was allocated.
-		// Manually allocate the memory, then
-		// call the default constructor
+
+		// Make sure there is a default constructor or that it is a POD type
+		if( objType->beh.construct == 0 && !(objType->flags & asOBJ_POD) )
+		{
+			asCString str;
+			str.Format(TXT_FAILED_IN_FUNC_s_d, "CreateScriptObject", asNO_FUNCTION);
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			return 0;
+		}
+
+		// Manually allocate the memory, then call the default constructor
 		ptr = CallAlloc(objType);
 		int funcIndex = objType->beh.construct;
 		if( funcIndex )
@@ -4267,7 +4288,11 @@ void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type
 // TODO: interface: Should deprecate this. The application should be calling the factory directly
 void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
 {
-	void *newObj = CreateScriptObject(typeId);
+	asCDataType dt = GetDataTypeFromTypeId(typeId);
+	if( !dt.IsValid() ) return 0;
+	asCObjectType *objType = dt.GetObjectType();
+
+	void *newObj = CreateScriptObject(objType);
 	if( newObj == 0 ) return 0;
 
 	AssignScriptObject(newObj, origObj, typeId);

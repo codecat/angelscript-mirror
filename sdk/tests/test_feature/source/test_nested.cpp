@@ -35,7 +35,7 @@ static CScriptHandle CreateObject(const string &s)
 	asIObjectType *type = mod->GetObjectTypeByName(s.c_str());
 
 	// The object will start with ref count == 1
-	asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(type->GetTypeId()));
+	asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(type));
 
 	// Put the object in the generic handle container for return
 	CScriptHandle ref(obj, type);

@@ -188,7 +188,7 @@ asIScriptEngine *ConfigureEngine(int version)
 	RegisterScriptString(engine);
 
 	// Register a property with the built-in array type
-	GlobalCharArray = (CScriptArray*)engine->CreateScriptObject(engine->GetTypeIdByDecl("uint8[]"));
+	GlobalCharArray = (CScriptArray*)engine->CreateScriptObject(engine->GetObjectTypeById(engine->GetTypeIdByDecl("uint8[]")));
 	int r = engine->RegisterGlobalProperty("uint8[] GlobalCharArray", GlobalCharArray); assert( r >= 0 );
 
 	// Register function that use the built-in array type
@@ -237,11 +237,11 @@ void TestScripts(asIScriptEngine *engine)
 	}
 
 	// Call an interface method on a class that implements the interface
-	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
-	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(typeId);
+	asIObjectType *type = engine->GetModule(0)->GetObjectTypeByName("MyClass");
+	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
-	asIObjectType *type = engine->GetObjectTypeById(intfTypeId);
+	type = engine->GetObjectTypeById(intfTypeId);
 	func = type->GetMethodByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ctx->Prepare(func);
