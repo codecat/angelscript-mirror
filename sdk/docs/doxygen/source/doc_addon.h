@@ -94,7 +94,7 @@ void RecompileModule(asIScriptEngine *engine, asIScriptModule *mod)
   backup.AddUserType(new CArrayType(), "array");
 
   // Backup the values of the global variables
-  modStore.Store(mod);
+  backup.Store(mod);
   
   // Application can now recompile the module
   CompileModule(modName);

@@ -5683,7 +5683,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 		return cost;
 	}
 
-	// TODO: clean up: This part is similar to CompileCosntructCall(). It should be put in a common function
+	// TODO: clean up: This part is similar to CompileConstructCall(). It should be put in a common function
 
 	bool onHeap = true;
 

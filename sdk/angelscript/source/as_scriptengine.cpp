@@ -4378,7 +4378,8 @@ void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIOb
 	}
 }
 
-// interface
+#ifdef AS_DEPRECATED
+// Deprecated since 2.27.0, 2013-07-18
 void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer
@@ -4400,6 +4401,7 @@ void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 		CallObjectMethod(obj, objType->beh.addref);
 	}
 }
+#endif
 
 // interface
 void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
@@ -4415,7 +4417,8 @@ void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
 	}
 }
 
-// interface
+#ifdef AS_DEPRECATED
+// Deprecated since 2.27.0, 2013-07-18
 void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 {
 	// Make sure it is not a null pointer
@@ -4433,6 +4436,7 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 
 	ReleaseScriptObject(obj, objType);
 }
+#endif
 
 // interface
 void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)

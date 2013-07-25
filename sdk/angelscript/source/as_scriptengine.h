@@ -173,17 +173,15 @@ public:
 	virtual void              *CreateScriptObjectCopy(void *obj, int typeId);
 	virtual void              *CreateUninitializedScriptObject(int typeId);
 	virtual void               AssignScriptObject(void *dstObj, void *srcObj, int typeId);
+	virtual void               ReleaseScriptObject(void *obj, int typeId);
+	virtual void               AddRefScriptObject(void *obj, int typeId);
 #endif
 	virtual void              *CreateScriptObject(const asIObjectType *type);
 	virtual void              *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
 	virtual void              *CreateUninitializedScriptObject(const asIObjectType *type);
 	virtual asIScriptFunction *CreateDelegate(asIScriptFunction *func, void *obj);
 	virtual void               AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
-	// TODO: interface: Deprecate this
-	virtual void               ReleaseScriptObject(void *obj, int typeId);
 	virtual void               ReleaseScriptObject(void *obj, const asIObjectType *type);
-	// TODO: interface: Deprecate this
-	virtual void               AddRefScriptObject(void *obj, int typeId);
 	virtual void               AddRefScriptObject(void *obj, const asIObjectType *type);
 	// TODO: interface: Should have a method void *CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType); 
 	//                  For script objects it should simply check if the object implements or derives from the toType

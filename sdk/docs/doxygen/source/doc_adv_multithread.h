@@ -13,8 +13,8 @@ Even if you don't want or can't use multithreading, you can still write applicat
 \section doc_adv_multithread_1 Things to think about with a multithreaded environment
 
  - If you plan on creating engines in multiple threads, the application should call \ref asPrepareMultithread
-   from the main thread before the first engine is created, and \ref asUnprepareMultithread after the last engine
-   has been created. This is to avoid race conditions when the engine creates the internal shared thread manager.
+   before the first engine is created, and \ref asUnprepareMultithread after the last engine
+   has been released. This is to avoid race conditions when the engine creates the internal shared thread manager.
    If only one script engine is used, then it is not necessary to do go through these extra steps.
 
  - Always call \ref asThreadCleanup before terminating a thread that accesses the script engine. If this

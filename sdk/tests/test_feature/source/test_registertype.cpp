@@ -1119,7 +1119,7 @@ public:
 	{
 		if( m_ref )
 		{
-			m_engine->ReleaseScriptObject(m_ref, m_typeId);
+			m_engine->ReleaseScriptObject(m_ref, m_engine->GetObjectTypeById(m_typeId));
 
 			m_ref = 0;
 			m_typeId = 0;
@@ -1130,7 +1130,7 @@ public:
 	{
 		if( m_ref )
 		{
-			m_engine->AddRefScriptObject(m_ref, m_typeId);
+			m_engine->AddRefScriptObject(m_ref, m_engine->GetObjectTypeById(m_typeId));
 		}
 	}
 
