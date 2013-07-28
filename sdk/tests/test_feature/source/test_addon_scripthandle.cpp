@@ -77,6 +77,9 @@ bool Test()
 		engine->RegisterGlobalFunction("ref @ReturnRef()", WRAP_FN(ReturnRef), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("ref @GetFunc1()", WRAP_FN(GetFunc1), asCALL_GENERIC);
 #endif
+		CScriptHandle handle;
+		r = engine->RegisterGlobalProperty("ref @g_handle", &handle); assert( r >= 0 );
+
 
 		// TODO: optimize: assert( ha !is null ); is producing code that unecessarily calls ClrVPtr and FREE for the null handle
 		const char *script =

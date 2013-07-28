@@ -574,7 +574,7 @@ public:
 };
 \endcode
 
-\section doc_addon_handle_3 Example usage
+\section doc_addon_handle_3 Example usage in script
 
 In the scripts it can be used as follows:
 
@@ -597,8 +597,27 @@ In the scripts it can be used as follows:
   }
 </pre>
 
+\section doc_addon_handle_4 Example usage from C++
 
+Even though the CScriptHandle is a value type, when registering properties 
+of its type they should be registered as handles. The same goes for function 
+arguments and return types.
 
+\code
+CScriptHandle g_handle;
+
+void Function(CScriptHandle handle)
+{
+  ... use the methods of CScriptHandle to determine the true object held in it
+}
+
+void Register(asIScriptEngine *engine)
+{
+  int r;
+  r = engine->RegisterGlobalProperty("ref @g_handle", &g_handle); assert( r >= 0 );
+  r = engine->RegisterGlobalFunction("void Function(ref @)", asFUNCTION(Function), asCALL_CDECL); assert( r >= 0 );
+}
+\endcode
 
 
 
