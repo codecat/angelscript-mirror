@@ -91,7 +91,7 @@ ctx->Execute();
 
 In order for the application to register a function that receives a script class it must first know the type. Of course,
 since the class is declared in the script it isn't possible to know the type before the script is compiled. Instead the 
-application can register an interface with the engine. The function can then be registered to receive a handle to that interface.
+application can register an \ref doc_global_interface "interface" with the engine. The function can then be registered to receive a handle to that interface.
 
 \code
 // Register an interface
@@ -127,8 +127,42 @@ void ReceiveMyObj(asIScriptObject *obj)
 }
 \endcode
 
-If you don't want to use interfaces like this, then you may want to look into the \ref doc_adv_var_type "variable argument type" or the generic container \ref doc_addon_any "any add-on", which are ways that can be used to receive values and objects of which the type is not known beforehand.
+If you don't want to use interfaces like this, then you may want to look into the
+\ref doc_adv_var_type "variable argument type" or the generic \ref doc_addon_handle "script handle add-on", 
+which are ways that can be used to receive values and objects of which the type is not known beforehand.
 
 
+
+\section doc_use_script_class_4 Returning script classes
+
+Returning a script class from a registered function involves much of the same as 
+\ref doc_use_script_class_3 "receiving them". In order to register the function either an interface
+needs to be used, or the generic \ref doc_addon_handle "script handle add-on" can
+be used. 
+
+\code
+// The global variable is initialized elsewhere
+asIScriptObject *gObj;
+
+asIScriptObject *ReturnMyObj()
+{
+  if( gObj == 0 )
+    return 0;
+
+  // Increase the refcount to account for the returned handle
+  gObj->AddRef();
+  return gObj;
+}
+\endcode
+
+This function can be registered as following:
+
+\code
+// Register an interface
+engine->RegisterInterface("IMyObj");
+
+// Register a function that returns a handle to the interface
+engine->RegisterGlobalFunction("IMyObj @ReturnMyObj()", asFUNCTION(ReturnMyObj), asCALL_CDECL);
+\endcode
 
 */
