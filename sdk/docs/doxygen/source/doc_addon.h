@@ -22,6 +22,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_array
  - \subpage doc_addon_any
  - \subpage doc_addon_handle
+ - \subpage doc_addon_weakref
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
@@ -618,6 +619,86 @@ void Register(asIScriptEngine *engine)
   r = engine->RegisterGlobalFunction("void Function(ref @)", asFUNCTION(Function), asCALL_CDECL); assert( r >= 0 );
 }
 \endcode
+
+
+
+
+
+
+
+
+\page doc_addon_weakref weakref object
+
+<b>Path:</b> /sdk/add_on/weakref/
+
+The <code>weakref</code> type is a template type for holding weak references to 
+objects, i.e. the references that will not keep the referred object alive.
+
+The type is registered with <code>RegisterScriptWeakRef(asIScriptEngine*)</code>.
+
+\see \ref doc_adv_weakref
+
+\section doc_addon_weakref_1 Public C++ interface
+
+\code
+class CScriptWeakRef 
+{
+public:
+  // Constructors
+  CScriptWeakRef(asIObjectType *type);
+  CScriptWeakRef(const CScriptWeakRef &other);
+  CScriptWeakRef(void *ref, asIObjectType *type);
+
+  // Memory management
+  void AddRef() const;
+  void Release() const;
+
+  // Copy the stored value from another weakref object
+  CScriptWeakRef &operator=(const CScriptWeakRef &other);
+
+  // Compare equalness
+  bool operator==(const CScriptWeakRef &o) const;
+  bool operator!=(const CScriptWeakRef &o) const;
+
+  // Returns the object if it is still alive
+  void *Get() const;
+
+  // Returns the type of the reference held
+  asIObjectType *GetRefType() const;
+};
+\endcode
+
+\section doc_addon_weakref_2 Example usage in script
+
+In the scripts it can be used as follows:
+
+<pre>
+  class MyClass {}
+  MyClass \@obj1 = MyClass();
+  
+  // Keep a weakref to the object
+  weakref<MyClass> r1(obj1);
+  
+  // Keep a weakref to a readonly object
+  const_weakref<MyClass> r2(obj1);
+  
+  // As long as there is a strong reference to the object, 
+  // the weakref will be able to return a handle to the object
+  MyClass \@obj2 = r1.get();
+  assert( obj2 !is null );
+  
+  // After all strong references are removed the
+  // weakref will only return null
+  \@obj1 = null;
+  \@obj2 = null;
+  
+  const MyClass \@obj3 = r2.get();
+  assert( obj3 is null );
+</pre>
+  
+
+
+
 
 
 

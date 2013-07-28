@@ -18,7 +18,6 @@ public:
 	CScriptWeakRef(asIObjectType *type);
 	CScriptWeakRef(const CScriptWeakRef &other);
 	CScriptWeakRef(void *ref, asIObjectType *type);
-	~CScriptWeakRef();
 
 	// Memory management
 	void AddRef() const;
@@ -38,6 +37,8 @@ public:
 	asIObjectType *GetRefType() const;
 
 protected:
+	~CScriptWeakRef();
+
 	// These functions need to have access to protected
 	// members in order to call them from the script engine
 	friend void RegisterScriptWeakRef_Native(asIScriptEngine *engine);
