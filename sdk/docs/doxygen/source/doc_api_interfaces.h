@@ -19,6 +19,7 @@
 \section doc_api_intf_3 Auxiliary interfaces
  
  - \ref asIBinaryStream
+ - \ref asILockableSharedBool
 
 
 

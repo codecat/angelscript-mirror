@@ -21,6 +21,7 @@ SRCNAMES = \
   test_addon_serializer.cpp \
   test_addon_dictionary.cpp \
   test_addon_debugger.cpp \
+  test_addon_weakref.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
@@ -174,6 +175,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptbuilder.o \
   obj/serializer.o \
   obj/debugger.o \
+  obj/weakref.o \
 
 
 BIN = ../../bin/testgnuc
@@ -226,6 +228,9 @@ obj/serializer.o: ../../../../add_on/serializer/serializer.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/debugger.o: ../../../../add_on/debugger/debugger.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/weakref.o: ../../../../add_on/weakref/weakref.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

@@ -56,7 +56,7 @@
 #else
  #define BEGIN_AS_NAMESPACE
  #define END_AS_NAMESPACE
- #define AS_NAMESPACE_QUALIFIER
+ #define AS_NAMESPACE_QUALIFIER ::
 #endif
 
 BEGIN_AS_NAMESPACE
@@ -79,6 +79,7 @@ class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
 class asIThreadManager;
+class asILockableSharedBool;
 
 // Enumerations and constants
 
@@ -250,6 +251,8 @@ enum asEBehaviours
 	asBEHAVE_ADDREF,
 	//! \brief Release
 	asBEHAVE_RELEASE,
+	//! \brief Obtain weak ref flag
+	asBEHAVE_GET_WEAKREF_FLAG,
 
 	// Object operators
 	//! \brief Explicit value cast operator
@@ -466,7 +469,9 @@ enum asETypeModifiers
 	//! Output reference
 	asTM_OUTREF   = 2,
 	//! In/out reference
-	asTM_INOUTREF = 3
+	asTM_INOUTREF = 3,
+	//! Read only
+	asTM_CONST    = 4
 };
 
 // GetModule flags
@@ -856,12 +861,22 @@ extern "C"
 	//! If not called, AngelScript will use the malloc and free functions from the
 	//! standard C library.
 	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
-
 	//! \brief Remove previously registered memory management functions.
 	//! \return A negative value on error.
 	//!
 	//! Call this method to restore the default memory management functions.
 	AS_API int asResetGlobalMemoryFunctions();
+
+	// Auxiliary
+	//! \brief Create a lockable shared boolean
+	//! \return A new lockable shared boolean.
+	//!
+	//! The lockable shared boolean will be created with
+	//! an initial reference count of 1, and the boolean
+	//! value false.
+	//!
+	//! The object can be used for weak reference flags.
+	AS_API asILockableSharedBool *asCreateLockableSharedBool();
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
 
@@ -983,7 +998,7 @@ public:
 	//! \param[in] declaration The declaration of the global function in script syntax.
 	//! \param[in] funcPointer The function pointer.
 	//! \param[in] callConv The calling convention for the function.
-	//! \param[in] objForThiscall An object pointer for use with asCALL_THISCALL_ASGLOBAL.
+	//! \param[in] objForThiscall An object pointer for use with \ref asCALL_THISCALL_ASGLOBAL.
 	//! \return A negative value on error, or the function id if successful.
 	//! \retval asNOT_SUPPORTED The calling convention is not supported.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
@@ -1128,6 +1143,7 @@ public:
 	//! \param[in] declaration The declaration of the method in script syntax.
 	//! \param[in] funcPointer The method or function pointer.
 	//! \param[in] callConv The calling convention for the method or function.
+	//! \param[in] objForThiscall The object pointer used for \ref asCALL_THISCALL_ASGLOBAL.
 	//! \return A negative value on error, or the function id is successful.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asINVALID_ARG \a obj is not set, or a global behaviour is given in \a behaviour.
@@ -1143,7 +1159,7 @@ public:
 	//! math operations, comparisons, etc.
 	//!
 	//! \see \ref doc_register_func, \ref doc_reg_opbeh
-	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
 	//! \brief Registers an interface.
 	//! \param[in] name The name of the interface.
 	//! \return A negative value on error.
@@ -1188,6 +1204,7 @@ public:
 	//! \param[in] datatype The datatype that the string factory returns
 	//! \param[in] factoryFunc The pointer to the factory function
 	//! \param[in] callConv The calling convention of the factory function
+	//! \param[in] objForThiscall The object pointer used for \ref asCALL_THISCALL_ASGLOBAL.
 	//! \return A negative value on error, or the function id if successful.
 	//! \retval asNOT_SUPPORTED The calling convention is not supported.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
@@ -1211,7 +1228,7 @@ public:
 	//! \endcode
 	//!
 	//! The example assumes that the std::string type has been registered as the string type, with \ref RegisterObjectType.
-	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv) = 0;
+	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0) = 0;
 	//! \brief Returns the type id of the type that the string factory returns.
 	//! \return The type id of the type that the string type returns, or a negative value on error.
 	//! \retval asNO_FUNCTION The string factory has not been registered.
@@ -1436,6 +1453,12 @@ public:
 	//!
 	//! This does not increment the reference count of the returned function interface.
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
+	//! \brief Returns the function description for the funcdef.
+	//! \param[in] typeId The type id for the funcdef.
+	//! \return A pointer to the function description interface, or null if not found.
+	//!
+	//! This does not increment the reference count of the returned function interface.
+    virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const = 0;
 	//! \}
 
 	// Type identification
@@ -1491,9 +1514,24 @@ public:
 	//!
 	//! This method creates a context that will be used to execute the script functions. 
 	//! The context interface created will have its reference counter already increased.
-	virtual asIScriptContext *CreateContext() = 0;
+	virtual asIScriptContext      *CreateContext() = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.27.0, 2013-07-18
+	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::CreateScriptObject(const asIObjectType *) instead
+	virtual void                  *CreateScriptObject(int typeId) = 0;
+	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::CreateScriptObjectCopy(void *, const asIObjectType *) instead
+	virtual void                  *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::CreateUninitializedScriptObject(const asIObjectType *) instead
+	virtual void                  *CreateUninitializedScriptObject(int typeId) = 0;
+	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::AssignScriptObject(void *, void *, const asIObjectType *) instead
+	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::ReleaseScriptObject(void *, const asIObjectType *) instead
+	virtual void                   ReleaseScriptObject(void *obj, int typeId) = 0;
+	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::AddRefScriptObject(void *, const asIObjectType *) instead
+	virtual void                   AddRefScriptObject(void *obj, int typeId) = 0;
+#endif
 	//! \brief Creates a script object defined by its type id.
-	//! \param[in] typeId The type id of the object to create.
+	//! \param[in] type The type of the object to create.
 	//! \return A pointer to the new object if successful, or null if not.
 	//!
 	//! This method is used to create a script object based on it's type id. The method will 
@@ -1505,19 +1543,19 @@ public:
 	//!
 	//! This only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.
-	virtual void             *CreateScriptObject(int typeId) = 0;
+	virtual void                  *CreateScriptObject(const asIObjectType *type) = 0;
 	//! \brief Creates a copy of a script object.
 	//! \param[in] obj A pointer to the source object.
-	//! \param[in] typeId The type id of the object.
+	//! \param[in] type The type of the object.
 	//! \return A pointer to the new object if successful, or null if not.
 	//!
 	//! This method is used to create a copy of an existing object.
 	//!
 	//! This only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.
-	virtual void             *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type) = 0;
 	//! \brief Creates an uninitialized script object defined by its type id.
-	//! \param[in] typeId The type id of the object to create.
+	//! \param[in] type The type of the object to create.
 	//! \return A pointer to the new object if successful, or null if not.
 	//!
 	//! This method can only be used to create instances of script classes. 
@@ -1531,48 +1569,33 @@ public:
 	//!
 	//! This method is meant for objects that will be initialized manually 
 	//! by the application, e.g. when restoring a serialized object.
-	virtual void             *CreateUninitializedScriptObject(int typeId) = 0;
+	virtual void                  *CreateUninitializedScriptObject(const asIObjectType *type) = 0;
+	//! \brief Create a delegate for an object and method
+	//! \param[in] func The object method
+	//! \param[in] obj The object pointer
+	//! \return The new delegate instance
+	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
 	//! \brief Copy one script object to another.
 	//! \param[in] dstObj A pointer to the destination object.
 	//! \param[in] srcObj A pointer to the source object.
-	//! \param[in] typeId The type id of the objects.
+	//! \param[in] type The type of the objects.
 	//!
 	//! This calls the assignment operator to copy the object from one to the other.
 	//!
 	//! This only works for objects.
-	virtual void              AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-	//! \brief Release the script object pointer.
-	//! \param[in] obj A pointer to the object.
-	//! \param[in] typeId The type id of the object.
-	//!
-	//! This calls the release method of the object to release the reference.
-	//!
-	//! This only works for objects.
-	//!
-	//! This version is slightly slower than the \ref ReleaseScriptObject(void*, const asIObjectType *) variant.
-	virtual void              ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type) = 0;
 	//! \brief Release the script object pointer.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] type The type of the object.
 	//!
 	//! This calls the release method of the object to release the reference.
-	virtual void              ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
-	//! \brief Increase the reference counter for the script object.
-	//! \param[in] obj A pointer to the object.
-	//! \param[in] typeId The type id of the object.
-	//!
-	//! This calls the add ref method of the object to increase the reference count.
-	//!
-	//! This only works for objects.
-	//!
-	//! This version is slightly slower than the \ref AddRefScriptObject(void*, const asIObjectType *) variant.
-	virtual void              AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Increase the reference counter for the script object.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] type The type of the object.
 	//!
 	//! This calls the add ref method of the object to increase the reference count.
-	virtual void              AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
+	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Returns true if the object referenced by a handle compatible with the specified type.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] objTypeId The type id of the object.
@@ -1583,7 +1606,14 @@ public:
 	//! compatible with an object of another type. This is useful if you have a pointer 
 	//! to a object, but only knows that it implements a certain interface and now you 
 	//! want to determine if it implements another interface.
-	virtual bool              IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
+	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
+	//! \brief Returns the weak ref flag from the object.
+	//! \param[in] obj The object
+	//! \param[in] type The object type
+	//! \return The weak ref flag, if the object supports weak references.
+	//!
+	//! The method doesn't increase the reference to the returned shared boolean.
+	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
 	//! \}
 
 	// String interpretation
@@ -1639,13 +1669,23 @@ public:
 	//! \brief Notify the garbage collector of a new object that needs to be managed.
 	//! \param[in] obj A pointer to the newly created object.
 	//! \param[in] type The type of the object.
+	//! \return The sequence number of the added object, or a negative value on error.
+	//! \retval asINVALID_ARG Either the object or the type is null
 	//!
 	//! This method should be called when a new garbage collected object is created. 
 	//! The GC will then store a reference to the object so that it can automatically 
 	//! detect whether the object is involved in any circular references that should be released.
 	//!
 	//! \see \ref doc_gc_object
-	virtual void NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type) = 0;
+	virtual int  NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type) = 0;
+	//! \brief Gets an object in the garbage collector
+	//! \param[in] idx The index of the desired object
+	//! \param[out] seqNbr The sequence number of the obtained object
+	//! \param[out] obj The object pointer
+	//! \param[out] type The type of the obtained object
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG The index is not valid
+	virtual int  GetObjectInGC(asUINT idx, asUINT *seqNbr = 0, void **obj = 0, asIObjectType **type = 0) = 0;
 	//! \brief Used by the garbage collector to enumerate all references held by an object.
 	//! \param[in] reference A pointer to the referenced object.
 	//!
@@ -1768,6 +1808,13 @@ public:
 	//! \brief Gets the name of the module.
 	//! \return The name of the module.
 	virtual const char      *GetName() const = 0;
+	//! \brief Discards the module.
+	//!
+	//! This method is used to discard the module and any
+	//! compiled bytecode it has. After calling this method
+	//! the module pointer is no longer valid and shouldn't
+	//! be used by the application.
+	virtual void             Discard() = 0;
 	//! \}
 
 	// Compilation
@@ -2707,8 +2754,9 @@ public:
 	virtual int     GetArgCount() const = 0;
 	//! \brief Returns the type id of the argument.
 	//! \param[in] arg The argument index.
+	//! \param[out] flags A combination of \ref asETypeModifiers.
 	//! \return The type id of the argument.
-	virtual int     GetArgTypeId(asUINT arg) const = 0;
+	virtual int     GetArgTypeId(asUINT arg, asDWORD *flags = 0) const = 0;
 	//! \brief Returns the value of an 8-bit argument.
 	//! \param[in] arg The argument index.
 	//! \return The 1 byte argument value.
@@ -2758,8 +2806,9 @@ public:
 	//! \{
 
 	//! \brief Gets the type id of the return value.
+	//! \param[out] flags A combination of \ref asETypeModifiers.
 	//! \return The type id of the return value.
-	virtual int     GetReturnTypeId() const = 0;
+	virtual int     GetReturnTypeId(asDWORD *flags = 0) const = 0;
 	//! \brief Sets the 8-bit return value.
 	//! \param[in] val The return value.
 	//! \return A negative value on error.
@@ -2932,6 +2981,11 @@ public:
 	//! \brief Returns the access mask for this type.
 	//! \return The access mask for this type.
 	virtual asDWORD          GetAccessMask() const = 0;
+	//! \brief Returns the module where the type is declared.
+	//! \return The module where the type is declared.
+	//!
+	//! The returned value can be null if the module doesn't exist anymore.
+	virtual asIScriptModule *GetModule() const = 0;
 	//! \}
 
 	// Memory management
@@ -3175,6 +3229,11 @@ public:
 	//! \brief Returns the name of the module where the function was implemented
 	//! \return A null terminated string with the module name.
 	virtual const char      *GetModuleName() const = 0;
+	//! \brief Returns the module where the function is declared.
+	//! \return The module where the function is declared.
+	//!
+	//! The returned value can be null if the module doesn't exist anymore.
+	virtual asIScriptModule *GetModule() const = 0;
 	//! \brief Returns the name of the script section where the function was implemented.
 	//! \return A null terminated string with the script section name where the function was implemented.
 	//!
@@ -3238,8 +3297,9 @@ public:
 	//! \retval asINVALID_ARG The index is out of bounds.
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
 	//! \brief Returns the type id of the return type.
+	//! \param[out] flags A combination of \ref asETypeModifiers.
 	//! \return The type id of the return type.
-	virtual int              GetReturnTypeId() const = 0;
+	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 	//! \}
 
 	//! \name Type id for function pointers
@@ -3252,6 +3312,21 @@ public:
 	//! \brief Checks if the given type id can represent this function.
 	//! \return Returns true if the type id can represent this function.
 	virtual bool             IsCompatibleWithTypeId(int typeId) const = 0;
+	//! \}
+
+	//! \name Delegates
+	//! \{
+
+	// Delegates
+	//! \brief Returns the object for the delegate
+	//! \return A pointer to the delegated object
+	virtual void              *GetDelegateObject() const = 0;
+	//! \brief Returns the type of the delegated object
+	//! \return A pointer to the object type of the delegated object.
+	virtual asIObjectType     *GetDelegateObjectType() const = 0;
+	//! \brief Returns the function for the delegate
+	//! \return A pointer to the delegated function
+	virtual asIScriptFunction *GetDelegateFunction() const = 0;
 	//! \}
 
 	//! \name Debug information
@@ -3271,7 +3346,7 @@ public:
 	//! \brief Returns the declaration of a local variable
 	//! \param[in] index The zero based index of the local variable
 	//! \return The declaration string, or null on error
-	virtual const char *     GetVarDecl(asUINT index) const = 0;
+	virtual const char      *GetVarDecl(asUINT index) const = 0;
 	//! \brief Returns the next line number with code
 	//! \param[in] line A line number
 	//! \return The number of the next line with code, or a negative value if the line is outside the function.
@@ -3337,6 +3412,40 @@ public:
 
 public:
 	virtual ~asIBinaryStream() {}
+};
+
+//! \brief A lockable shared boolean.
+//!
+//! This interface represents a lockable shared boolean.
+class asILockableSharedBool
+{
+public:
+	// Memory management
+	//! \brief Adds a reference to the shared boolean
+	//! \return The new reference count
+	virtual int AddRef() const = 0;
+	//! \brief Releases a reference to the shared boolean
+	//! \return The new reference count
+	virtual int Release() const = 0;
+
+	// Value
+	//! \brief Get the value of the shared boolean
+	//! \return The value of the shared boolean
+	virtual bool Get() const = 0;
+	//! \brief Sets the value of the shared boolean
+	//! \param[in] val The new value
+	virtual void Set(bool val) = 0;
+	
+	// Thread management
+	//! \brief Locks the shared boolean
+	//! If the boolean is already locked, then this method 
+	//! will wait until it is unlocked before returning.
+	virtual void Lock() const = 0;
+	//! \brief Unlocks the shared boolean
+	virtual void Unlock() const = 0;
+
+protected:
+	virtual ~asILockableSharedBool() {}
 };
 
 //-----------------------------------------------------------------

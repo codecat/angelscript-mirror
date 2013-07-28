@@ -11,6 +11,7 @@
  
  - \ref asPrepareMultithread
  - \ref asUnprepareMultithread
+ - \ref asGetThreadManager
  - \ref asThreadCleanup
  - \ref asAcquireExclusiveLock
  - \ref asReleaseExclusiveLock
@@ -28,6 +29,7 @@
 
  - \ref asGetLibraryVersion
  - \ref asGetLibraryOptions
+ - \ref asCreateLockableSharedBool
 
 
 */

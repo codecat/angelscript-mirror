@@ -1027,7 +1027,7 @@ public:
 
 	// Value
 	virtual bool Get() const = 0;
-	virtual void Set(bool) = 0;
+	virtual void Set(bool val) = 0;
 	
 	// Thread management
 	virtual void Lock() const = 0;
