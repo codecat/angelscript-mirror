@@ -97,7 +97,7 @@
 #define TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s "Failed while compiling default arg for parameter %d in function '%s'"
 #define TXT_FAILED_TO_CREATE_TEMP_OBJ     "Previous error occurred while attempting to create a temporary copy of object"
 #define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
-#define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exist"
+#define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exists"
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
 
 #define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
