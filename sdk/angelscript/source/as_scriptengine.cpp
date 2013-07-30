@@ -1935,13 +1935,30 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		// TODO: Verify that the same factory function hasn't been registered already
 
+		// Template factories don't support autohandles as the real type is not known when calling the system function
+		if( objectType->flags & asOBJ_TEMPLATE )
+		{
+			bool hasAutoHandles = false;
+			if( internal.returnAutoHandle )
+				hasAutoHandles = true;
+
+			for( asUINT n = 0; !hasAutoHandles && n < internal.paramAutoHandles.GetLength(); n++ )
+				if( internal.paramAutoHandles[n] )
+					hasAutoHandles = true;
+
+			if( hasAutoHandles )
+			{
+				WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_AUTOHANDLE_IS_NOT_SUPPORTED_FOR_TEMPLATE_FACTORY);
+				return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+			}
+		}
+
 		// The templates take a hidden parameter with the object type
 		if( (objectType->flags & asOBJ_TEMPLATE) &&
 			(func.parameterTypes.GetLength() == 0 ||
 			 !func.parameterTypes[0].IsReference()) )
 		{
-			// TODO: Give proper error message that explain that the first parameter is expected to be a reference
-			//       The library should try to avoid having to read the manual as much as possible.
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_FIRST_PARAM_MUST_BE_REF_FOR_TEMPLATE_FACTORY);
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
