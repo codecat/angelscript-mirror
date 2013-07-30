@@ -364,9 +364,9 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 
 	asCArray<asCString> parameterNames;
 	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared, module->defaultNamespace);
-	func->id               = engine->GetNextScriptFunctionId();
-	func->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
-	func->nameSpace        = module->defaultNamespace;
+	func->id                           = engine->GetNextScriptFunctionId();
+	func->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
+	func->nameSpace                    = module->defaultNamespace;
 
 	// Make sure the default args are declared correctly
 	int r = ValidateDefaultArgs(script, node, func);
@@ -1759,7 +1759,7 @@ void asCBuilder::CompileGlobalVariables()
 				if( gvar->nextNode )
 				{
 					asCCompiler comp(engine);
-					asCScriptFunction func(engine, module, asFUNC_DUMMY);
+					asCScriptFunction func(engine, module, asFUNC_SCRIPT);
 
 					// Set the namespace that should be used during the compilation
 					func.nameSpace = gvar->datatype.GetObjectType()->nameSpace;
@@ -1770,6 +1770,9 @@ void asCBuilder::CompileGlobalVariables()
 					gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
 					r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, &func);
 					gvar->datatype = saveType;
+
+					// Make the function a dummy so it doesn't try to release objects while destroying the function
+					func.funcType = asFUNC_DUMMY;
 				}
 				else
 				{
@@ -1819,7 +1822,7 @@ void asCBuilder::CompileGlobalVariables()
 			else
 			{
 				// Compile the global variable
-				initFunc = asNEW(asCScriptFunction)(engine, module, asFUNC_DUMMY);
+				initFunc = asNEW(asCScriptFunction)(engine, module, asFUNC_SCRIPT);
 				if( initFunc == 0 )
 				{
 					// Out of memory
@@ -1840,6 +1843,7 @@ void asCBuilder::CompileGlobalVariables()
 				else
 				{
 					// Compilation failed
+					initFunc->funcType = asFUNC_DUMMY;
 					asDELETE(initFunc, asCScriptFunction);
 					initFunc = 0;
 				}
@@ -1860,16 +1864,15 @@ void asCBuilder::CompileGlobalVariables()
 					initOrder.Put(gvar->property);
 
 				// Does the function contain more than just a SUSPEND followed by a RET instruction?
-				if( initFunc && initFunc->byteCode.GetLength() > 2 )
+				if( initFunc && initFunc->scriptData->byteCode.GetLength() > 2 )
 				{
 					// Create the init function for this variable
 					initFunc->id = engine->GetNextScriptFunctionId();
 					engine->SetScriptFunction(initFunc);
 
 					// Finalize the init function for this variable
-					initFunc->funcType = asFUNC_SCRIPT;
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
-					initFunc->scriptSectionIdx = engine->GetScriptSectionNameIndex(gvar->script->name.AddressOf());
+					initFunc->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(gvar->script->name.AddressOf());
 
 					gvar->property->SetInitFunc(initFunc);
 
@@ -1879,6 +1882,7 @@ void asCBuilder::CompileGlobalVariables()
 				else if( initFunc )
 				{
 					// Destroy the function as it won't be used
+					initFunc->funcType = asFUNC_DUMMY;
 					asDELETE(initFunc, asCScriptFunction);
 					initFunc = 0;
 				}
@@ -3046,7 +3050,6 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->parameterTypes   = func->parameterTypes;
 	vf->inOutFlags       = func->inOutFlags;
 	vf->id               = engine->GetNextScriptFunctionId();
-	vf->scriptSectionIdx = func->scriptSectionIdx;
 	vf->isReadOnly       = func->isReadOnly;
 	vf->objectType       = func->objectType;
 	vf->signatureId      = func->signatureId;

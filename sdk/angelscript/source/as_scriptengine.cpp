@@ -3402,6 +3402,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	}
 
 	func->funcType         = asFUNC_SCRIPT;
+	func->AllocateScriptFunctionData();
 	func->name             = "factstub";
 	func->id               = GetNextScriptFunctionId();
 	func->returnType       = asCDataType::CreateObjectHandle(ot, false);
@@ -3415,7 +3416,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 		func->parameterTypes[p-1] = DetermineTypeForTemplate(factory->parameterTypes[p], templateType, ot);
 		func->inOutFlags[p-1] = factory->inOutFlags[p];
 	}
-	func->objVariablesOnHeap = 0;
+	func->scriptData->objVariablesOnHeap = 0;
 
 	SetScriptFunction(func);
 
@@ -3427,8 +3428,8 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	if( ep.includeJitInstructions )
 		bcLength += asBCTypeSize[asBCInfo[asBC_JitEntry].type];
 
-	func->byteCode.SetLength(bcLength);
-	asDWORD *bc = func->byteCode.AddressOf();
+	func->scriptData->byteCode.SetLength(bcLength);
+	asDWORD *bc = func->scriptData->byteCode.AddressOf();
 
 	if( ep.includeJitInstructions )
 	{
@@ -3447,7 +3448,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	*(((asWORD*)bc)+1) = (asWORD)func->GetSpaceNeededForArguments();
 
 	func->AddReferences();
-	func->stackNeeded = AS_PTR_SIZE;
+	func->scriptData->stackNeeded = AS_PTR_SIZE;
 
 	// Tell the virtual machine not to clean up the object on exception
 	func->dontCleanUpOnException = true;
@@ -3503,7 +3504,6 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	func2->inOutFlags = func->inOutFlags;
 	func2->isReadOnly = func->isReadOnly;
 	func2->objectType = ot;
-	func2->stackNeeded = func->stackNeeded;
 	func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
 
 	SetScriptFunction(func2);

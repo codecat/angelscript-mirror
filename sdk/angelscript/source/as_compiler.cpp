@@ -162,7 +162,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 
 	// Count total variable size
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
-	outFunc->variableSpace = varSize;
+	outFunc->scriptData->variableSpace = varSize;
 
 	FinalizeFunction();
 
@@ -196,7 +196,7 @@ int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCS
 	// Allocate the class and instanciate it with the constructor
 	int varOffset = AllocateVariable(dt, true);
 
-	outFunc->variableSpace = AS_PTR_SIZE;
+	outFunc->scriptData->variableSpace = AS_PTR_SIZE;
 	byteCode.InstrSHORT(asBC_PSF, (short)varOffset);
 
 	// Copy all arguments to the top of the stack
@@ -253,6 +253,7 @@ void asCCompiler::FinalizeFunction()
 {
 	TimeIt("asCCompiler::FinalizeFunction");
 
+	asASSERT( outFunc->scriptData );
 	asUINT n;
 
 	// Finalize the bytecode
@@ -268,43 +269,43 @@ void asCCompiler::FinalizeFunction()
 		{
 			if( variableIsOnHeap[n] )
 			{
-				outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
-				outFunc->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
-				outFunc->objVariablePos.PushLast(GetVariableOffset(n));
+				outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+				outFunc->scriptData->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
+				outFunc->scriptData->objVariablePos.PushLast(GetVariableOffset(n));
 			}
 		}
 	}
-	outFunc->objVariablesOnHeap = asUINT(outFunc->objVariablePos.GetLength());
+	outFunc->scriptData->objVariablesOnHeap = asUINT(outFunc->scriptData->objVariablePos.GetLength());
 	for( n = 0; n < variableAllocations.GetLength(); n++ )
 	{
 		if( variableAllocations[n].IsObject() && !variableAllocations[n].IsReference() )
 		{
 			if( !variableIsOnHeap[n] )
 			{
-				outFunc->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
-				outFunc->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
-				outFunc->objVariablePos.PushLast(GetVariableOffset(n));
+				outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetObjectType());
+				outFunc->scriptData->funcVariableTypes.PushLast(variableAllocations[n].GetFuncDef());
+				outFunc->scriptData->objVariablePos.PushLast(GetVariableOffset(n));
 			}
 		}
 	}
 
 	// Copy byte code to the function
-	asASSERT( outFunc->byteCode.GetLength() == 0 );
-	outFunc->byteCode.SetLength(byteCode.GetSize());
-	byteCode.Output(outFunc->byteCode.AddressOf());
+	asASSERT( outFunc->scriptData->byteCode.GetLength() == 0 );
+	outFunc->scriptData->byteCode.SetLength(byteCode.GetSize());
+	byteCode.Output(outFunc->scriptData->byteCode.AddressOf());
 	outFunc->AddReferences();
-	outFunc->stackNeeded = byteCode.largestStackUsed + outFunc->variableSpace;
-	outFunc->lineNumbers = byteCode.lineNumbers;
+	outFunc->scriptData->stackNeeded = byteCode.largestStackUsed + outFunc->scriptData->variableSpace;
+	outFunc->scriptData->lineNumbers = byteCode.lineNumbers;
 
 	// Extract the script section indexes too if there are any entries that are different from the function's script section
-	int lastIdx = outFunc->scriptSectionIdx;
+	int lastIdx = outFunc->scriptData->scriptSectionIdx;
 	for( n = 0; n < byteCode.sectionIdxs.GetLength(); n++ )
 	{
 		if( byteCode.sectionIdxs[n] != lastIdx )
 		{
 			lastIdx = byteCode.sectionIdxs[n];
-			outFunc->sectionIdxs.PushLast(byteCode.lineNumbers[n*2]);
-			outFunc->sectionIdxs.PushLast(lastIdx);
+			outFunc->scriptData->sectionIdxs.PushLast(byteCode.lineNumbers[n*2]);
+			outFunc->scriptData->sectionIdxs.PushLast(lastIdx);
 		}
 	}
 }
@@ -390,7 +391,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 			}
 
 			// Add marker for variable declaration
-			byteCode.VarDecl((int)outFunc->variables.GetLength());
+			byteCode.VarDecl((int)outFunc->scriptData->variables.GetLength());
 			outFunc->AddVariable(name, type, stackPos);
 		}
 		else
@@ -629,7 +630,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	// Count total variable size
 	int varSize = GetVariableOffset((int)variableAllocations.GetLength()) - 1;
-	outFunc->variableSpace = varSize;
+	outFunc->scriptData->variableSpace = varSize;
 
 	// Deallocate all local variables
 	int n;
@@ -1107,7 +1108,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	LineInstr(&byteCode, pos);
 
 	// Reserve space for all local variables
-	outFunc->variableSpace = varSize;
+	outFunc->scriptData->variableSpace = varSize;
 
 	ctx.bc.OptimizeLocally(tempVariableOffsets);
 
@@ -2073,7 +2074,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		}
 
 		// Add marker that the variable has been declared
-		bc->VarDecl((int)outFunc->variables.GetLength());
+		bc->VarDecl((int)outFunc->scriptData->variables.GetLength());
 		outFunc->AddVariable(name, type, offset);
 
 		// Keep the node for the variable decl

@@ -3342,6 +3342,7 @@ public:
 	//! \param[out] typeId Receives the typeId of the variable
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG The \a index is out of range
+	//! \retval asNOT_SUPPORTED The function is not a script function
 	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
 	//! \brief Returns the declaration of a local variable
 	//! \param[in] index The zero based index of the local variable

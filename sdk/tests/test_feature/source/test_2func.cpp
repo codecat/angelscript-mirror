@@ -32,7 +32,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	mod->Build();
 
-	if( out.buffer != "Test2Func (2, 1) : Error   : A function with the same name and parameters already exist\n" )
+	if( out.buffer != "Test2Func (2, 1) : Error   : A function with the same name and parameters already exists\n" )
 	{
 		TEST_FAILED;
 		printf("%s: Failed to identify the error with two equal functions\n", TESTNAME);

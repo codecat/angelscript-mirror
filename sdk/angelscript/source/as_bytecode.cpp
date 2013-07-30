@@ -1483,6 +1483,8 @@ void asCByteCode::ExtractLineNumbers()
 
 void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 {
+	asASSERT( outFunc->scriptData );
+
 	unsigned int pos = 0;
 	asCByteInstruction *instr = first;
 	int blockLevel = 0;
@@ -1497,17 +1499,17 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 			if( info.option == asBLOCK_BEGIN )
 			{
 				blockLevel++;
-				outFunc->objVariableInfo.PushLast(info);
+				outFunc->scriptData->objVariableInfo.PushLast(info);
 			}
 			else
 			{
 				blockLevel--;
 				asASSERT( blockLevel >= 0 );
-				if( outFunc->objVariableInfo[outFunc->objVariableInfo.GetLength()-1].option == asBLOCK_BEGIN &&
-					outFunc->objVariableInfo[outFunc->objVariableInfo.GetLength()-1].programPos == pos )
-					outFunc->objVariableInfo.PopLast();
+				if( outFunc->scriptData->objVariableInfo[outFunc->scriptData->objVariableInfo.GetLength()-1].option == asBLOCK_BEGIN &&
+					outFunc->scriptData->objVariableInfo[outFunc->scriptData->objVariableInfo.GetLength()-1].programPos == pos )
+					outFunc->scriptData->objVariableInfo.PopLast();
 				else
-					outFunc->objVariableInfo.PushLast(info);
+					outFunc->scriptData->objVariableInfo.PushLast(info);
 			}
 		}
 		else if( instr->op == asBC_ObjInfo )
@@ -1516,11 +1518,11 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 			info.programPos     = pos;
 			info.variableOffset = (short)instr->wArg[0];
 			info.option         = *(int*)ARG_DW(instr->arg);
-			outFunc->objVariableInfo.PushLast(info);
+			outFunc->scriptData->objVariableInfo.PushLast(info);
 		}
 		else if( instr->op == asBC_VarDecl )
 		{
-			outFunc->variables[instr->wArg[0]]->declaredAtProgramPos = pos;
+			outFunc->scriptData->variables[instr->wArg[0]]->declaredAtProgramPos = pos;
 		}
 		else
 			pos += instr->size;
@@ -2066,9 +2068,9 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	fprintf(file, "\n\n");
 
 	fprintf(file, "Variables: \n");
-	for( n = 0; n < func->variables.GetLength(); n++ )
+	for( n = 0; n < func->scriptData->variables.GetLength(); n++ )
 	{
-		fprintf(file, " %.3d: %s %s\n", func->variables[n]->stackOffset, func->variables[n]->type.Format().AddressOf(), func->variables[n]->name.AddressOf());
+		fprintf(file, " %.3d: %s %s\n", func->scriptData->variables[n]->stackOffset, func->scriptData->variables[n]->type.Format().AddressOf(), func->scriptData->variables[n]->name.AddressOf());
 	}
 	asUINT offset = 0;
 	if( func->objectType )
@@ -2079,9 +2081,9 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
 		bool found = false;
-		for( asUINT v = 0; v < func->variables.GetLength(); v++ )
+		for( asUINT v = 0; v < func->scriptData->variables.GetLength(); v++ )
 		{
-			if( func->variables[v]->stackOffset == (int)offset )
+			if( func->scriptData->variables[v]->stackOffset == (int)offset )
 			{
 				found = true;
 				break;
@@ -2092,19 +2094,19 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 
 		offset -= func->parameterTypes[n].GetSizeOnStackDWords();
 	}
-	for( n = 0; n < func->objVariablePos.GetLength(); n++ )
+	for( n = 0; n < func->scriptData->objVariablePos.GetLength(); n++ )
 	{
 		bool found = false;
-		for( asUINT v = 0; v < func->variables.GetLength(); v++ )
+		for( asUINT v = 0; v < func->scriptData->variables.GetLength(); v++ )
 		{
-			if( func->variables[v]->stackOffset == func->objVariablePos[n] )
+			if( func->scriptData->variables[v]->stackOffset == func->scriptData->objVariablePos[n] )
 			{
 				found = true;
 				break;
 			}
 		}
 		if( !found )
-			fprintf(file, " %.3d: %s {noname}\n", func->objVariablePos[n], func->objVariableTypes[n]->name.AddressOf());
+			fprintf(file, " %.3d: %s {noname}\n", func->scriptData->objVariablePos[n], func->scriptData->objVariableTypes[n]->name.AddressOf());
 	}
 	fprintf(file, "\n\n");
 
@@ -2123,7 +2125,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 		fprintf(file, "%5d ", pos);
 		pos += instr->GetSize();
 
-		fprintf(file, "%3d %c ", int(instr->stackSize + func->variableSpace), instr->marked ? '*' : ' ');
+		fprintf(file, "%3d %c ", int(instr->stackSize + func->scriptData->variableSpace), instr->marked ? '*' : ' ');
 
 		switch( asBCInfo[instr->op].type )
 		{

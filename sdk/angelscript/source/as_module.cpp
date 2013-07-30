@@ -321,7 +321,7 @@ int asCModule::CallInit(asIScriptContext *myCtx)
 					msg.Format(TXT_FAILED_TO_INITIALIZE_s, desc->name.AddressOf());
 					asCScriptFunction *func = desc->GetInitFunc();
 
-					engine->WriteMessage(func->scriptSectionIdx >= 0 ? engine->scriptSectionNames[func->scriptSectionIdx]->AddressOf() : "",
+					engine->WriteMessage(func->scriptData->scriptSectionIdx >= 0 ? engine->scriptSectionNames[func->scriptData->scriptSectionIdx]->AddressOf() : "",
 										 func->GetLineNumber(0, 0) & 0xFFFFF, 
 										 func->GetLineNumber(0, 0) >> 20,
 										 asMSGTYPE_ERROR,
@@ -827,7 +827,8 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const asCString &name, 
 	func->nameSpace        = ns;
 	func->id               = id;
 	func->returnType       = returnType;
-	func->scriptSectionIdx = sectionIdx;
+	if( func->funcType == asFUNC_SCRIPT )
+		func->scriptData->scriptSectionIdx = sectionIdx;
 	func->parameterTypes   = params;
 	func->inOutFlags       = inOutFlags;
 	func->defaultArgs      = defaultArgs;

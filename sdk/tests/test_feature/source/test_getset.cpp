@@ -481,7 +481,7 @@ bool Test()
 		TEST_FAILED;
 		printf("Failed to compile the script\n");
 	}
-	if( bout.buffer != "script (4, 3) : Error   : A function with the same name and parameters already exist\n"
+	if( bout.buffer != "script (4, 3) : Error   : A function with the same name and parameters already exists\n"
 			           "script (8, 1) : Info    : Compiling void main()\n"
 	                   "script (11, 4) : Error   : Found multiple get accessors for property 'p'\n"
 	                   "script (11, 4) : Info    : uint Test::get_p()\n"

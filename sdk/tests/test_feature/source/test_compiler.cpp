@@ -2235,7 +2235,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "s (2, 1) : Error   : A function with the same name and parameters already exist\n"
+		if( bout.buffer != "s (2, 1) : Error   : A function with the same name and parameters already exists\n"
 		                   "s (3, 1) : Info    : Compiling void main()\n"
 		                   "s (3, 15) : Error   : Multiple matching signatures to 'func()'\n"
 		                   "s (3, 15) : Info    : int func()\n"
