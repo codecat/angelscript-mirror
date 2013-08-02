@@ -5253,6 +5253,24 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 		{
 			if( generateCode )
 			{
+				// If the ASHANDLE receives a variable type parameter, then we need to 
+				// make sure the expression is treated as a handle and not as a value
+				asCScriptFunction *func = engine->scriptFunctions[funcs[0]];
+				if( func->parameterTypes[0].GetTokenType() == ttQuestion )
+				{
+					if( !ctx->type.isExplicitHandle )
+					{
+						asCDataType toHandle = ctx->type.dataType;
+						toHandle.MakeHandle(true);
+						toHandle.MakeReference(true);
+						toHandle.MakeHandleToConst(ctx->type.dataType.IsReadOnly());
+						ImplicitConversion(ctx, toHandle, node, asIC_IMPLICIT_CONV, true, false);
+
+						asASSERT( ctx->type.dataType.IsObjectHandle() );
+					}
+					ctx->type.isExplicitHandle = true;
+				}
+
 				// TODO: This should really reuse the code from CompileConstructCall
 
 				// Allocate the new object

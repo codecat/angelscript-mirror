@@ -165,7 +165,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		// This will cause an implicit cast to 'ref'. The object must be release properly afterwards
+		// This will cause an implicit cast to 'ref'. The object must be released properly afterwards
 		r = ExecuteString(engine, "ReceiveRefByRef(A());", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -231,6 +231,22 @@ bool Test()
 		r = ExecuteString(engine, "ref @r = GetFunc1(); \n"
 								  "assert( cast<FUNC1>(r) !is null ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// This will cause an implicit cast to 'ref'. The object must be released properly afterwards
+		mod->AddScriptSection("test", 
+			"class B { B(int) {} } \n"
+			"class A { \n"
+			"  B @a; \n"
+			"  void test() { \n"
+			"    ReceiveRefByVal(a); \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "A a; a.test();", mod);
+		if( r != asEXECUTION_FINISHED ) 
 			TEST_FAILED;
 
 		engine->Release();
