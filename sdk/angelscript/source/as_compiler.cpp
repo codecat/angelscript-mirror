@@ -4276,6 +4276,7 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 				asASSERT( descr->funcType == asFUNC_SYSTEM );
 				bc->Call(asBC_CALLSYS, beh->copy, 2*AS_PTR_SIZE);
 			}
+			// TODO: This assert is not valid for opAssign that returns a handle or non-reference
 			asASSERT( descr->returnType.IsReference() );
 			bc->Instr(asBC_PshRPtr);
 		}
