@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed 64bit bug in asBC_SwapPtr (Thanks Colin Didier)
 <li>Fixed bug in the compiler when dealing with opAssign that returns anything else than a reference (Thanks neorej16)
 <li>Compiler was incorrectly reusing temporary variables in some expressions with ternary condition operator (Thanks neorej16)
+<li>Compiler was incorrectly making a copy of the object in some cases for explicit ref casts
 </ul>
 <li>Library
 <ul>

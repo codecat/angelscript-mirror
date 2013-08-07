@@ -167,6 +167,7 @@ void InstallMemoryManager();
 void RemoveMemoryManager();
 int  GetNumAllocs();
 
+bool ValidateByteCode(asIScriptFunction *func, asBYTE *expectBC);
 
 #if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC++ 6
 	#define I64(x) x##l

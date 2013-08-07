@@ -7967,8 +7967,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		return;
 	}
 
-	// We don't want a reference
-	if( expr.type.dataType.IsReference() )
+	// We don't want a reference for conversion casts
+	if( convType == asIC_EXPLICIT_VAL_CAST && expr.type.dataType.IsReference() )
 	{
 		if( expr.type.dataType.IsObject() )
 			Dereference(&expr, true);

@@ -106,7 +106,7 @@ bool Test()
 			"}                                                \n"
 			"void foo( Base &in a )                           \n"
 			"{                                                \n"
-			"  assert( cast<Derived>(a) is null );            \n" // TODO: bug: This is making a copy of the object before the refcast
+			"  assert( cast<Derived>(a) is null );            \n"
 			"}                                                \n"
 			// Must be possible to call the default constructor, even if not declared
 			"class DerivedGC : BaseGC { DerivedGC() { super(); } }  \n"
@@ -156,6 +156,16 @@ bool Test()
 		{
 			TEST_FAILED;
 		}
+
+		// Make sure the bytecode for the ref cast is correct
+		asIScriptFunction *func = mod->GetFunctionByName("foo");
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_PSF,asBC_Cast,asBC_STOREOBJ,asBC_ClrVPtr,asBC_CmpPtr,asBC_TZ,asBC_CpyRtoV4,asBC_FREE,asBC_FREE,asBC_PshV4,asBC_CALLSYS,
+				asBC_SUSPEND,asBC_RET
+			};
+		if( !ValidateByteCode(func, expect) )
+			TEST_FAILED;
 
 		if( TestModule(0, engine) )
 		{
