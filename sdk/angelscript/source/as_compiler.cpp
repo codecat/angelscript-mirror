@@ -6718,8 +6718,16 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				temp = le.type;
 				temp.dataType.MakeReference(false);
 				temp.dataType.MakeReadOnly(false);
-				// Make sure the variable isn't used in the initial expression
-				int offset = AllocateVariableNotIn(temp.dataType, true, false, &e);
+				
+				// Make sure the variable isn't used in any of the expressions, 
+				// as it would be overwritten which may cause crashes or less visible bugs
+				int l = int(reservedVariables.GetLength());
+				e.bc.GetVarsUsed(reservedVariables);
+				le.bc.GetVarsUsed(reservedVariables);
+				re.bc.GetVarsUsed(reservedVariables);
+				int offset = AllocateVariable(temp.dataType, true, false);
+				reservedVariables.SetLength(l);
+				
 				temp.SetVariable(temp.dataType, offset, true);
 
 				// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()

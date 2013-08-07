@@ -353,6 +353,14 @@ bool TestStdString()
 			"  assert( '12345'.length == 5 ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+			
+		// Test problem with formatInt and condition expression
+		// Reported by neorej16
+		r = ExecuteString(engine,
+				"true ? formatInt(5, ' ', 4) : '';\n"
+				"formatInt(5, ' ', 4);\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}
