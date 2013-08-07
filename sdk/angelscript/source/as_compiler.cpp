@@ -1328,7 +1328,12 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
-					ctx->type = type;
+					ctx->type.Set(dt);
+					ctx->type.isTemporary = true;
+					ctx->type.stackOffset = offset;
+					if( dt.IsObjectHandle() )
+						ctx->type.isExplicitHandle = true;
+					ctx->type.dataType.MakeReference(false);
 
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 					if( dt.IsObject() && !dt.IsObjectHandle() )
@@ -3465,10 +3470,8 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 
 	asCTypeInfo lvalue;
 	lvalue.Set(dt);
-	lvalue.isTemporary = true;
-	lvalue.stackOffset = (short)offset;
-	lvalue.isVariable = true;
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
+	bool isExplicitHandle = ctx->type.isExplicitHandle;
 
 	if( !dt.IsObjectHandle() &&
 		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
@@ -3498,8 +3501,12 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 				Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
 			}
 
+			// Release any temp that may have been created as the result of opAssign
+			ReleaseTemporaryVariable(lvalue, &ctx->bc);
+
 			// Pop the original reference
-			ctx->bc.Instr(asBC_PopPtr);
+			if( !lvalue.dataType.IsPrimitive() )
+				ctx->bc.Instr(asBC_PopPtr);
 		}
 
 		// If the expression was holding off on releasing a
@@ -3510,9 +3517,13 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-	lvalue.dataType.MakeReference(IsVariableOnHeap(offset));
 
-	ctx->type = lvalue;
+	ctx->type.Set(dt);
+	ctx->type.isTemporary = true;
+	ctx->type.stackOffset = (short)offset;
+	ctx->type.isVariable = true;
+	ctx->type.isExplicitHandle = isExplicitHandle;
+	ctx->type.dataType.MakeReference(IsVariableOnHeap(offset));
 }
 
 void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
@@ -4263,21 +4274,23 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 		// TODO: Should find the opAssign method that implements the default copy behaviour.
 		//       The beh->copy member will be removed.
 		asSTypeBehaviour *beh = lvalue->dataType.GetBehaviour();
-		if( beh->copy )
+		if( beh->copy && beh->copy != engine->scriptTypeBehaviours.beh.copy )
 		{
-			// Call the copy operator
-			asCScriptFunction *descr = builder->GetFunctionDescription(beh->copy);
-			if( descr->funcType == asFUNC_VIRTUAL )
-				bc->Call(asBC_CALLINTF, beh->copy, 2*AS_PTR_SIZE);
-			else if( descr->funcType == asFUNC_SCRIPT )
-				bc->Call(asBC_CALL, beh->copy, 2*AS_PTR_SIZE);
-			else
-			{
-				asASSERT( descr->funcType == asFUNC_SYSTEM );
-				bc->Call(asBC_CALLSYS, beh->copy, 2*AS_PTR_SIZE);
-			}
-			// TODO: This assert is not valid for opAssign that returns a handle or non-reference
-			asASSERT( descr->returnType.IsReference() );
+			asSExprContext res(engine);
+			PerformFunctionCall(beh->copy, &res, false, 0, lvalue->dataType.GetObjectType());
+
+			bc->AddCode(&res.bc);
+			*lvalue = res.type;
+		}
+		else if( beh->copy == engine->scriptTypeBehaviours.beh.copy )
+		{
+			// Call the default copy operator for script classes
+			// This is done differently because the default copy operator
+			// is registered as returning int&, but in reality it returns
+			// a reference to the object. 
+			// TODO: Avoid this special case by implementing a copystub for
+			//       script classes that uses the default copy operator
+			bc->Call(asBC_CALLSYS, beh->copy, 2*AS_PTR_SIZE);
 			bc->Instr(asBC_PshRPtr);
 		}
 		else
@@ -6738,8 +6751,10 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 					rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
 				}
-				PerformAssignment(&rtemp, &le.type, &ctx->bc, cexpr->next);
-				if( !rtemp.dataType.IsPrimitive() )
+				asCTypeInfo result;
+				result = rtemp;
+				PerformAssignment(&result, &le.type, &ctx->bc, cexpr->next);
+				if( !result.dataType.IsPrimitive() )
 					ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
 
 				// Release the old temporary variable
@@ -6759,8 +6774,9 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 					rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
 				}
-				PerformAssignment(&rtemp, &re.type, &ctx->bc, cexpr->next);
-				if( !rtemp.dataType.IsPrimitive() )
+				result = rtemp;
+				PerformAssignment(&result, &re.type, &ctx->bc, cexpr->next);
+				if( !result.dataType.IsPrimitive() )
 					ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
 
 				// Release the old temporary variable

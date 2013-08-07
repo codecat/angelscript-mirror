@@ -106,7 +106,7 @@ bool Test()
 			"}                                                \n"
 			"void foo( Base &in a )                           \n"
 			"{                                                \n"
-			"  assert( cast<Derived>(a) is null );            \n"
+			"  assert( cast<Derived>(a) is null );            \n" // TODO: bug: This is making a copy of the object before the refcast
 			"}                                                \n"
 			// Must be possible to call the default constructor, even if not declared
 			"class DerivedGC : BaseGC { DerivedGC() { super(); } }  \n"

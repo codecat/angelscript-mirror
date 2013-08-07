@@ -235,6 +235,40 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Reported by neorej16
+	// Classes with both opAssign and opAddAssign wasn't compiled 
+	// properly when returning handle instead of reference
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class gameScript\n"
+			"{\n"
+			"	gameScript@ opAssign(const gameScript &in other)\n"
+			"	{\n"
+			"		return this;\n"
+			"	}\n"
+			"	gameScript@ opAddAssign(const gameScript &in other)\n"
+			"	{\n"
+			"		return this;\n"
+			"	}\n"
+			"}\n"
+			"gameScript buffer;\n"
+			"gameScript cmd;\n"
+			"void playerAdded()\n"
+			"{\n"
+			"	buffer += cmd;\n"
+			"}\n");
+			
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+			
+		engine->Release();
+	}
+	
 	// Reported by Hermann Noll
 	// POD types that were not of even 4 bytes wasn't allocated enough size on stack and heap
 	{
