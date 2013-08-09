@@ -235,6 +235,18 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// @null is a legal expression
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = ExecuteString(engine, "@null");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Reported by neorej16
 	// Classes with both opAssign and opAddAssign wasn't compiled 
 	// properly when returning handle instead of reference

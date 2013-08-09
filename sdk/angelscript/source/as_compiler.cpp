@@ -1212,7 +1212,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 		// Since the function is expecting a var type ?, then we don't want to convert the argument to anything else
 		param = ctx->type.dataType;
-		param.MakeHandle(ctx->type.isExplicitHandle);
+		param.MakeHandle(ctx->type.isExplicitHandle || ctx->type.IsNullConstant());
 
 		// Reference types will always be passed as handles to ? parameters
 		if( builder->engine->ep.disallowValueAssignForRefType && 
@@ -8752,41 +8752,51 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		}
 		else
 		{
-			// Verify that the type allow its handle to be taken
-			if( ctx->type.isExplicitHandle ||
-				!ctx->type.dataType.IsObject() ||
-				!(((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || (ctx->type.dataType.GetObjectType()->flags & asOBJ_NOCOUNT)) ||
-				  (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+			// Don't allow taking handle of a handle, i.e. @@
+			if( ctx->type.isExplicitHandle )
 			{
 				Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
 				return -1;
 			}
 
-			// Objects that are not local variables are not references
-			// Objects allocated on the stack are also not marked as references
-			if( !ctx->type.dataType.IsReference() &&
-				!(ctx->type.dataType.IsObject() && !ctx->type.isVariable) &&
-				!(ctx->type.isVariable && !IsVariableOnHeap(ctx->type.stackOffset)) )
+			// @null is allowed even though it is implicit
+			if( !ctx->type.IsNullConstant() )
 			{
-				Error(TXT_NOT_VALID_REFERENCE, node);
-				return -1;
-			}
+				// Verify that the type allow its handle to be taken
+				if( !ctx->type.dataType.IsObject() ||
+					!(((ctx->type.dataType.GetObjectType()->beh.addref && ctx->type.dataType.GetObjectType()->beh.release) || (ctx->type.dataType.GetObjectType()->flags & asOBJ_NOCOUNT)) ||
+					  (ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
+				{
+					Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
+					return -1;
+				}
 
-			// Convert the expression to a handle
-			if( !ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
-			{
-				asCDataType to = ctx->type.dataType;
-				to.MakeHandle(true);
-				to.MakeReference(true);
-				to.MakeHandleToConst(ctx->type.dataType.IsReadOnly());
-				ImplicitConversion(ctx, to, node, asIC_IMPLICIT_CONV, true, false);
+				// Objects that are not local variables are not references
+				// Objects allocated on the stack are also not marked as references
+				if( !ctx->type.dataType.IsReference() &&
+					!(ctx->type.dataType.IsObject() && !ctx->type.isVariable) &&
+					!(ctx->type.isVariable && !IsVariableOnHeap(ctx->type.stackOffset)) )
+				{
+					Error(TXT_NOT_VALID_REFERENCE, node);
+					return -1;
+				}
 
-				asASSERT( ctx->type.dataType.IsObjectHandle() );
-			}
-			else if( ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
-			{
-				// For the ASHANDLE type we'll simply set the expression as a handle
-				ctx->type.dataType.MakeHandle(true);
+				// Convert the expression to a handle
+				if( !ctx->type.dataType.IsObjectHandle() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+				{
+					asCDataType to = ctx->type.dataType;
+					to.MakeHandle(true);
+					to.MakeReference(true);
+					to.MakeHandleToConst(ctx->type.dataType.IsReadOnly());
+					ImplicitConversion(ctx, to, node, asIC_IMPLICIT_CONV, true, false);
+
+					asASSERT( ctx->type.dataType.IsObjectHandle() );
+				}
+				else if( ctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
+				{
+					// For the ASHANDLE type we'll simply set the expression as a handle
+					ctx->type.dataType.MakeHandle(true);
+				}
 			}
 		}
 
@@ -10613,6 +10623,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 	IsVariableInitialized(&rctx->type, node);
 
 	if( lctx->type.isExplicitHandle || rctx->type.isExplicitHandle ||
+		lctx->type.IsNullConstant() || rctx->type.IsNullConstant() ||
 		node->tokenType == ttIs || node->tokenType == ttNotIs )
 	{
 		CompileOperatorOnHandles(node, lctx, rctx, ctx);
@@ -11948,10 +11959,10 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		ReleaseTemporaryVariable(offset, 0);
 	}
 
-	// Warn if not both operands are explicit handles
+	// Warn if not both operands are explicit handles or null handles
 	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
-		((!lctx->type.isExplicitHandle && !(lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) ||
-		 (!rctx->type.isExplicitHandle && !(rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)))) )
+		((!(lctx->type.isExplicitHandle || lctx->type.IsNullConstant()) && !(lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) ||
+		 (!(rctx->type.isExplicitHandle || rctx->type.IsNullConstant()) && !(rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)))) )
 	{
 		Warning(TXT_HANDLE_COMPARISON, node);
 	}

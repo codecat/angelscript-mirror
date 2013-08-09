@@ -120,8 +120,9 @@ void asCTypeInfo::SetNullConstant()
 {
 	Set(asCDataType::CreateNullHandle());
 	isConstant       = true;
-	isExplicitHandle = true;
+	isExplicitHandle = false;
 	qwordValue       = 0;
+	isLValue         = false;
 }
 
 void asCTypeInfo::SetDummy()
