@@ -151,7 +151,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
 				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
-					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float arg1 = 0, float arg2 = 0)\n"
+					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float = 0, float = 0)\n"
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());

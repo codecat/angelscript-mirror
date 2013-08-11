@@ -13,8 +13,26 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
- 	asIScriptEngine *engine;
+	asIScriptEngine *engine;
 	
+	// Allow default args for anonymous parameters too
+	// http://www.gamedev.net/topic/645049-nameless-arguments-cannot-have-default-values/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void func(int = 42) {} \n"
+			"void main() { func(); } \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test default args with expressions enclosed in parenthesis
 	// Reported by Aaron Baker
 	{
@@ -84,7 +102,7 @@ bool Test()
 
 		if( bout.buffer != "test (21, 1) : Info    : Compiling void main()\n"
 		                   "default arg (1, 1) : Error   : The type of the default argument expression doesn't match the function parameter type\n"
-		                   "test (23, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void kill_all(bool arg0 = kill)'\n" )
+		                   "test (23, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void kill_all(bool = kill)'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -162,12 +180,12 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		r = engine->RegisterGlobalFunction("void defarg(bool, int a = 34 + /* comments will be removed *""/ 45, int b = 23)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("void defarg(bool, int = 34 + /* comments will be removed *""/ 45, int = 23)", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
 			TEST_FAILED;
 		asIScriptFunction *func = engine->GetFunctionById(r);
 		string decl = func->GetDeclaration();
-		if( decl != "void defarg(bool, int arg1 = 34 + 45, int arg2 = 23)" )
+		if( decl != "void defarg(bool, int = 34 + 45, int = 23)" )
 		{
 			printf("%s\n", decl.c_str());
 			TEST_FAILED;
@@ -183,7 +201,7 @@ bool Test()
 		r = engine->RegisterGlobalFunction("void defarg(bool, int a = 34+45, int)", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "System function (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void defarg(bool, int arg1 = 34 + 45, int)'\n"
+		if( bout.buffer != "System function (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void defarg(bool, int = 34 + 45, int)'\n"
 			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void defarg(bool, int a = 34+45, int)' (Code: -10)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
@@ -215,7 +233,7 @@ bool Test()
 
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
 		                   "default arg (1, 1) : Error   : 'n' is not declared\n"
-		                   "script (5, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void func(int arg0 = n)'\n" )
+		                   "script (5, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void func(int = n)'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -315,7 +333,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "script (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void myFunc(float, int arg1 = 0, int)'\n" )
+		if( bout.buffer != "script (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void myFunc(float, int = 0, int)'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -397,7 +415,7 @@ bool Test()
 		if( bout.buffer != "script (4, 1) : Info    : Compiling void main()\n"
 						   "default arg (1, 16) : Error   : Expected expression value\n"
 						   "default arg (1, 17) : Error   : Expected ']'\n"
-						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int arg1 = my_array [ i [ ])'\n" )
+						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int = my_array [ i [ ])'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

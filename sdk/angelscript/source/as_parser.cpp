@@ -610,7 +610,7 @@ asCScriptNode *asCParser::ParseParameterList()
 			node->AddChildLast(ParseTypeMod(true));
 			if( isSyntaxError ) return node;
 
-			// Parse identifier
+			// Parse optional identifier
 			GetToken(&t1);
 			if( t1.type == ttIdentifier )
 			{
@@ -620,17 +620,17 @@ asCScriptNode *asCParser::ParseParameterList()
 				if( isSyntaxError ) return node;
 
 				GetToken(&t1);
+			}
 
-				// Parse the expression for the default arg
-				if( t1.type == ttAssignment )
-				{
-					// Do a superficial parsing of the default argument
-					// The actual parsing will be done when the argument is compiled for a function call
-					node->AddChildLast(SuperficiallyParseExpression());
-					if( isSyntaxError ) return node;
+			// Parse optional expression for the default arg
+			if( t1.type == ttAssignment )
+			{
+				// Do a superficial parsing of the default argument
+				// The actual parsing will be done when the argument is compiled for a function call
+				node->AddChildLast(SuperficiallyParseExpression());
+				if( isSyntaxError ) return node;
 
-					GetToken(&t1);
-				}
+				GetToken(&t1);
 			}
 
 			// Check if list continues

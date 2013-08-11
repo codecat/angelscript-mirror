@@ -519,7 +519,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 			if( defaultArgs.GetLength() > n && defaultArgs[n] )
 			{
 				asCString tmp;
-				tmp.Format(" arg%d = %s", n, defaultArgs[n]->AddressOf());
+				tmp.Format(" = %s", defaultArgs[n]->AddressOf());
 				str += tmp;
 			}
 
@@ -538,7 +538,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		if( defaultArgs.GetLength() > n && defaultArgs[n] )
 		{
 			asCString tmp;
-			tmp.Format(" arg%d = %s", n, defaultArgs[n]->AddressOf());
+			tmp.Format(" = %s", defaultArgs[n]->AddressOf());
 			str += tmp;
 		}
 	}
