@@ -235,6 +235,47 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// void is a legal expression and can be used to ignore output parameters
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"void main() { \n"
+			"  func(void); \n"
+			"  void; \n"
+			"} \n"
+			"void func(int &out a, int &out b = void) { a = 42; b = 24; } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// void can't be used with operators
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod->AddScriptSection("Test",
+			"void main() { \n"
+			"  void + void; \n"
+			"  void == void; \n"
+			"  void = void; \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "Test (1, 1) : Info    : Compiling void main()\n"
+						   "Test (2, 8) : Error   : Void cannot be an operand in expressions\n"
+						   "Test (3, 8) : Error   : Void cannot be an operand in expressions\n"
+						   "Test (4, 3) : Error   : Expression is not an l-value\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// @null is a legal expression
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

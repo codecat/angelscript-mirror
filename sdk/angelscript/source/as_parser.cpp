@@ -1079,7 +1079,10 @@ asCScriptNode *asCParser::ParseExprValue()
 	GetToken(&t2);
 	RewindTo(&t1);
 
-	if( IsRealType(t1.type) )
+	// 'void' is a special expression that doesn't do anything (normally used for skipping output arguments)
+	if( t1.type == ttVoid )
+		node->AddChildLast(ParseToken(ttVoid));
+	else if( IsRealType(t1.type) )
 		node->AddChildLast(ParseConstructCall());
 	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{
@@ -1871,7 +1874,7 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 	this->script = script;
 	sourcePos = block->tokenPos;
 
-	scriptNode = ParseStatementBlock();	
+	scriptNode = ParseStatementBlock();
 
 	if( isSyntaxError || errorWhileParsing )
 		return -1;

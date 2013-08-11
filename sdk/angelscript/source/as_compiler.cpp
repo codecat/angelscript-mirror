@@ -7630,6 +7630,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// Implement the cast operator
 		CompileConversion(vnode, ctx);
 	}
+	else if( vnode->nodeType == snUndefined && vnode->tokenType == ttVoid )
+	{
+		// This is a void expression
+		ctx->type.SetVoidExpression();
+	}
 	else
 		asASSERT(false);
 
@@ -8137,11 +8142,11 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			{
 				// We must still evaluate the expression
 				MergeExprBytecode(ctx, expr);
-				if( !expr->type.isConstant || expr->type.IsNullConstant() )
+				if( !expr->type.IsVoidExpression() && (!expr->type.isConstant || expr->type.IsNullConstant()) )
 					ctx->bc.Instr(asBC_PopPtr);
 
-				// Give a warning, except if the argument is null or 0 which indicate the argument is really to be ignored
-				if( !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
+				// Give a warning, except if the argument is void, null or 0 which indicate the argument is really to be ignored
+				if( !expr->type.IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
 					Warning(TXT_ARG_NOT_LVALUE, outParam.argNode);
 
 				ReleaseTemporaryVariable(outParam.argType, &ctx->bc);
@@ -8597,8 +8602,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 	if( CompileArgumentList(node->lastChild, args) >= 0 )
 	{
-		// Special case: Allow calling func(void) with a void expression.
-		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
+		// Special case: Allow calling func(void) with an expression that evaluates to no datatype, but isn't exactly 'void' 
+		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) && !args[0]->type.IsVoidExpression() )
 		{
 			// Evaluate the expression before the function call
 			MergeExprBytecode(ctx, args[0]);
@@ -8734,6 +8739,13 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	if( ctx->methodName != "" && op != ttHandle )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
+		return -1;
+	}
+
+	// Don't allow any operators on void expressions
+	if( ctx->type.IsVoidExpression() )
+	{
+		Error(TXT_VOID_CANT_BE_OPERAND, node);
 		return -1;
 	}
 
@@ -9592,6 +9604,13 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		return -1;
 	}
 
+	// Don't allow any operators on void expressions
+	if( ctx->type.IsVoidExpression() )
+	{
+		Error(TXT_VOID_CANT_BE_OPERAND, node);
+		return -1;
+	}
+
 	// Check if the variable is initialized (if it indeed is a variable)
 	IsVariableInitialized(&ctx->type, node);
 
@@ -10143,6 +10162,14 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 		if( (int)desc->parameterTypes.GetLength() <= paramNum )
 			continue;
 
+		// void expressions can match any out parameter, but nothing else
+		if( argExpr->type.IsVoidExpression() )
+		{
+			if( desc->inOutFlags[paramNum] == asTM_OUTREF )
+				matches.PushLast(asSOverloadCandidate(funcs[n], 0));
+			continue;
+		}
+
 		// Can we make the match by implicit conversion?
 		asSExprContext ti(engine);
 		ti.type = argExpr->type;
@@ -10616,6 +10643,13 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 	if( (lctx->methodName != "" && lctx->type.dataType.GetObjectType()) || (rctx->methodName != "" && rctx->type.dataType.GetObjectType()) )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
+		return -1;
+	}
+
+	// Don't allow any operators on void expressions
+	if( lctx->type.IsVoidExpression() || rctx->type.IsVoidExpression() )
+	{
+		Error(TXT_VOID_CANT_BE_OPERAND, node);
 		return -1;
 	}
 

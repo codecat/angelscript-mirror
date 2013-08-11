@@ -52,6 +52,7 @@ asCTypeInfo::asCTypeInfo()
 	isExplicitHandle      = false;
 	qwordValue            = 0;
 	isLValue              = false;
+	isVoidExpression      = false;
 }
 
 void asCTypeInfo::Set(const asCDataType &dt)
@@ -65,6 +66,7 @@ void asCTypeInfo::Set(const asCDataType &dt)
 	isExplicitHandle = false;
 	qwordValue       = 0;
 	isLValue         = false;
+	isVoidExpression = false;
 }
 
 void asCTypeInfo::SetVariable(const asCDataType &dt, int stackOffset, bool isTemporary)
@@ -125,18 +127,32 @@ void asCTypeInfo::SetNullConstant()
 	isLValue         = false;
 }
 
-void asCTypeInfo::SetDummy()
-{
-	SetConstantQW(asCDataType::CreatePrimitive(ttInt, true), 0);
-}
-
-bool asCTypeInfo::IsNullConstant()
+bool asCTypeInfo::IsNullConstant() const
 {
 	if( isConstant && dataType.IsObjectHandle() )
 		return true;
 
 	return false;
 }
+
+void asCTypeInfo::SetVoidExpression()
+{
+	Set(asCDataType::CreatePrimitive(ttVoid, false));
+	isLValue = false;
+	isConstant = false;
+	isVoidExpression = true;
+}
+
+bool asCTypeInfo::IsVoidExpression() const
+{
+	return isVoidExpression;
+}
+
+void asCTypeInfo::SetDummy()
+{
+	SetConstantQW(asCDataType::CreatePrimitive(ttInt, true), 0);
+}
+
 
 END_AS_NAMESPACE
 
