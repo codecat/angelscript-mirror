@@ -6,6 +6,7 @@
 //
 
 #include "utils.h"
+#include <string>
 using namespace std;
 
 static const char * const TESTNAME = "TestStdString";
@@ -109,6 +110,7 @@ bool Get(const string & /*szURL*/, string &szHTML)
 };
 
 bool TestTwoStringTypes();
+bool TestStdWString();
 
 bool TestStdString()
 {
@@ -118,7 +120,8 @@ bool TestStdString()
 		return false;
 	}
 
-	bool fail = TestTwoStringTypes();
+	bool fail = TestStdWString();
+	fail |= TestTwoStringTypes();
 
 	COutStream out;
 
@@ -473,6 +476,86 @@ bool TestTwoStringTypes()
 	if( r < 0 )
 		TEST_FAILED;
 
+	engine->Release();
+
+	return fail;
+}
+
+
+//=================================================================================
+
+wstring WStringFactory(asUINT length, const wchar_t *ptr)
+{
+	return wstring(ptr, length/2);
+}
+
+void WStringConstruct(wstring *ptr)
+{
+	new(ptr) wstring();
+}
+
+void WStringCopyConstruct(const wstring &other, wstring *ptr)
+{
+	new(ptr) wstring(other);
+}
+
+void WStringDestruct(wstring *ptr)
+{
+	ptr->~wstring();
+}
+
+void WStringToString(const wstring &ws, string &s)
+{
+    s = string(ws.begin(), ws.end());
+}
+
+void SetQuestClassByRef(const wstring &moduleName)
+{
+	string modulenameAscii;
+	WStringToString(moduleName, modulenameAscii);
+	assert( modulenameAscii == "Tutorial" );
+}
+
+void SetQuestClassByVal(wstring moduleName)
+{
+	string modulenameAscii;
+	WStringToString(moduleName, modulenameAscii);
+	assert( modulenameAscii == "Tutorial" );
+}
+
+bool TestStdWString()
+{
+	bool fail = false;
+	COutStream out;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	engine->SetEngineProperty(asEP_STRING_ENCODING, 1);
+	
+	engine->RegisterObjectType("string", sizeof(wstring), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+	engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(WStringConstruct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(WStringCopyConstruct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(WStringDestruct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(wstring, operator=, (const wstring &), wstring &), asCALL_THISCALL);
+	engine->RegisterStringFactory("string", asFUNCTION(WStringFactory), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("void SetQuestClassByRef(const string &in mod)", asFUNCTION(SetQuestClassByRef), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void SetQuestClassByVal(string mod)", asFUNCTION(SetQuestClassByVal), asCALL_CDECL);
+
+	r = ExecuteString(engine, "SetQuestClassByRef('Tutorial');");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	// TODO: bug: This should also work. It doesn't though, because AngelScript moves the object to the 
+	//            stack, and this causes an internal pointer in the string object to point to the wrong
+	//            address (the original location). This problem seems to be unique to MSVC/x86 and debug mode.
+	// http://www.gamedev.net/topic/646508-weird-string-crash/
+/*
+	r = ExecuteString(engine, "SetQuestClassByVal('Tutorial');");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+*/
 	engine->Release();
 
 	return fail;

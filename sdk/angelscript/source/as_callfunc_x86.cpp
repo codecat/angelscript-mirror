@@ -115,6 +115,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 #endif
 				{
 					// Copy the object's memory to the buffer
+					// TODO: bug: Must call the object's copy constructor instead of doing a memcpy, as the object may hold a pointer to itself
 					memcpy(&paramBuffer[dpos], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
 
 					// Delete the original memory

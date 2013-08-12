@@ -493,11 +493,14 @@ void CScriptArray::Resize(int delta, asUINT at)
 		{
 			// Out of memory
 			asIScriptContext *ctx = asGetActiveContext();
-			if( ctx )	
+			if( ctx )
 				ctx->SetException("Out of memory");
 			return;
 		}
 
+		// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
+		//       This should really be using the objects copy constructor to copy each object
+		//       to the new location. It would most likely be a hit on the performance though.
 		memcpy(newBuffer->data, buffer->data, at*elementSize);
 		if( at < buffer->numElements )
 			memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);
@@ -513,11 +516,17 @@ void CScriptArray::Resize(int delta, asUINT at)
 	else if( delta < 0 )
 	{
 		Destruct(buffer, at, at-delta);
+		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
+		//       This should really be using the objects copy constructor to copy each object
+		//       to the new location. It would most likely be a hit on the performance though.
 		memmove(buffer->data + at*elementSize, buffer->data + (at-delta)*elementSize, (buffer->numElements - (at-delta))*elementSize);
 		buffer->numElements += delta;
 	}
 	else
 	{
+		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
+		//       This should really be using the objects copy constructor to copy each object
+		//       to the new location. It would most likely be a hit on the performance though.
 		memmove(buffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements - at)*elementSize);
 		Construct(buffer, at, at+delta);
 		buffer->numElements += delta;
