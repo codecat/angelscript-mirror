@@ -38,7 +38,7 @@ Parameter references are used mainly for two purposes; a means of providing addi
 way of passing values.
 
 In AngelScript it is necessary to specify the intention of the parameter reference, i.e. if it is meant as input, output, or both. 
-This is necessary in order for the compiler to prepare the reference in a way that it cannot be invalidated du to some action during
+This is necessary in order for the compiler to prepare the reference in a way that it cannot be invalidated due to some action during
 the processing of the function.
 
 Input references are written as &in. As the reference is meant as input only, the actual value it refers to normally is a copy of the 
@@ -233,6 +233,11 @@ local scope where the function is called and not in the scope where the function
   }
 </pre>
 
+The special 'void' expression can be used as default argument to make an optional output parameter.
+
+<pre>
+  void func(int &out output = void) { output = 42; }
+</pre>
 
 
 */
