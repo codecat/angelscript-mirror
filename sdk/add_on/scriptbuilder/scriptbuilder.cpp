@@ -174,12 +174,16 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 
 	// Read the entire file
 	string code;
-	code.resize(len);
-	size_t c = fread(&code[0], len, 1, f);
+	size_t c = 0;
+	if( len > 0 )
+	{
+		code.resize(len);
+		c = fread(&code[0], len, 1, f);
+	}
 
 	fclose(f);
 
-	if( c == 0 )
+	if( c == 0 && len > 0 )
 	{
 		// Write a message to the engine's message callback
 		char buf[256];
@@ -188,6 +192,7 @@ int CScriptBuilder::LoadScriptSection(const char *filename)
 		return -1;
 	}
 
+	// Process the script section even if it is zero length so that the name is registered
 	return ProcessScriptSection(code.c_str(), (unsigned int)(code.length()), filename);
 }
 
