@@ -1145,6 +1145,17 @@ int asCScriptEngine::ClearUnusedTypes()
 			break;
 	}
 
+	// Clear the list pattern types that are no longer used
+	for( n = 0; n < listPatternTypes.GetLength(); n++ )
+	{
+		if( listPatternTypes[n]->refCount.get() == 0 )
+		{
+			asDELETE(listPatternTypes[n], asCObjectType);
+			listPatternTypes.RemoveIndexUnordered(n);
+			n--;
+		}
+	}
+
 	return clearCount;
 }
 
@@ -1807,8 +1818,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	// Verify function declaration
 	asCScriptFunction func(this, 0, asFUNC_DUMMY);
 
+	asCScriptNode *listPattern = 0;
 	asCBuilder bld(this, 0);
-	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle);
+	// TODO: list: Expect a list pattern
+	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, 0, 0 /*behaviour == asBEHAVE_LIST_FACTORY ? &listPattern : 0*/);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 	func.name.Format("_beh_%d_", behaviour);
@@ -1978,7 +1991,28 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				 (func.parameterTypes.GetLength() == 2 && (objectType->flags & asOBJ_TEMPLATE)) )
 		{
 			if( behaviour == asBEHAVE_LIST_FACTORY )
+			{
 				beh->listFactory = func.id;
+
+				// Make sure the factory takes a reference as its last parameter
+				if( objectType->flags & asOBJ_TEMPLATE )
+				{
+					// TODO: list: Write proper error message
+					if( func.parameterTypes.GetLength() != 2 || !func.parameterTypes[1].IsReference() )
+						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+				}
+				else
+				{
+					// TODO: list: Write proper error message
+					if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
+						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+				}
+
+				// TODO: list: store the list pattern so the compiler will know how to compile the list
+				// TODO: list: it must also be possible for the application to retrieve the list pattern declaration for saving the configuration
+				if( listPattern )
+					listPattern->Destroy(this);
+			}
 			else
 			{
 				// Is this the copy factory?
@@ -5272,6 +5306,28 @@ void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC
 
 	RELEASEEXCLUSIVE(engineRWLock);
 }
+
+// internal
+asCObjectType *asCScriptEngine::GetListPatternType(int listPatternFuncId)
+{
+	asCObjectType *ot = scriptFunctions[listPatternFuncId]->returnType.GetObjectType();
+	asASSERT( ot );
+
+	for( asUINT n = 0; n < listPatternTypes.GetLength(); n++ )
+	{
+		if( listPatternTypes[n]->templateSubTypes[0].GetObjectType() == ot )
+			return listPatternTypes[n];
+	}
+
+	// Create a new list pattern type for the given object type
+	asCObjectType *lpt = asNEW(asCObjectType)(this);
+	lpt->templateSubTypes.PushLast(asCDataType::CreateObject(ot, false));
+	lpt->flags = asOBJ_LIST_PATTERN;
+	listPatternTypes.PushLast(lpt);
+
+	return lpt;
+}
+
 
 END_AS_NAMESPACE
 

@@ -79,12 +79,14 @@ int asCReader::Read(bool *wasDebugInfoStripped)
 		asUINT i;
 		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
 			if( !dontTranslate.MoveTo(0, module->scriptFunctions[i]) )
-				module->scriptFunctions[i]->scriptData->byteCode.SetLength(0);
+				if( module->scriptFunctions[i]->scriptData )
+					module->scriptFunctions[i]->scriptData->byteCode.SetLength(0);
 
 		asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
 		for( ; it; it++ )
 			if( (*it)->GetInitFunc() )
-				(*it)->GetInitFunc()->scriptData->byteCode.SetLength(0);
+				if( (*it)->GetInitFunc()->scriptData )
+					(*it)->GetInitFunc()->scriptData->byteCode.SetLength(0);
 
 		module->InternalReset();
 	}
@@ -1573,6 +1575,17 @@ asCObjectType* asCReader::ReadObjectType()
 			return 0;
 		}
 	}
+	else if( ch == 'l' )
+	{
+		asCObjectType *st = ReadObjectType();
+		if( st == 0 || st->beh.listFactory == 0 )
+		{
+			// TODO: Write approprate error
+			error = true;
+			return 0;
+		}
+		ot = engine->GetListPatternType(st->beh.listFactory);
+	}
 	else if( ch == 's' )
 	{
 		// Read the name of the template subtype
@@ -1606,7 +1619,6 @@ asCObjectType* asCReader::ReadObjectType()
 		ReadString(&typeName);
 		ReadString(&ns);
 		asSNameSpace *nameSpace = engine->AddNameSpace(ns.AddressOf());
-
 
 		if( typeName.GetLength() && typeName != "_builtin_object_" && typeName != "_builtin_function_" )
 		{
@@ -2043,8 +2055,16 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			int *tid = (int*)&bc[n+1];
 			*tid = FindTypeId(*tid);
 
-			// Translate the prop index into the property offset
-			*(((short*)&bc[n])+1) = FindObjectPropOffset(*(((short*)&bc[n])+1));
+			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*tid);
+			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
+			{
+				// TODO: list: List patterns have a different way of adjusting the offsets
+			}
+			else
+			{
+				// Translate the prop index into the property offset
+				*(((short*)&bc[n])+1) = FindObjectPropOffset(*(((short*)&bc[n])+1));
+			}
 		}
 		else if( c == asBC_LoadRObjR ||
 			     c == asBC_LoadVObjR )
@@ -2053,8 +2073,16 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			int *tid = (int*)&bc[n+2];
 			*tid = FindTypeId(*tid);
 
-			// Translate the prop index into the property offset
-			*(((short*)&bc[n])+2) = FindObjectPropOffset(*(((short*)&bc[n])+2));
+			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*tid);
+			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
+			{
+				// TODO: list: List patterns have a different way of adjusting the offsets
+			}
+			else
+			{
+				// Translate the prop index into the property offset
+				*(((short*)&bc[n])+2) = FindObjectPropOffset(*(((short*)&bc[n])+2));
+			}
 		}
 		else if( c == asBC_COPY )
 		{
@@ -3400,25 +3428,35 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 		// Check for template instances/specializations
 		if( ot->templateSubTypes.GetLength() )
 		{
-			ch = 'a';
-			WriteData(&ch, 1);
-			WriteString(&ot->name);
-
-			WriteEncodedInt64(ot->templateSubTypes.GetLength());
-			for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
+			// Check for list pattern type or template type
+			if( ot->flags & asOBJ_LIST_PATTERN )
 			{
-				if( ot->templateSubTypes[0].IsObject() || ot->templateSubTypes[0].IsEnumType() )
+				ch = 'l';
+				WriteData(&ch, 1);
+				WriteObjectType(ot->templateSubTypes[0].GetObjectType());
+			}
+			else
+			{
+				ch = 'a';
+				WriteData(&ch, 1);
+				WriteString(&ot->name);
+
+				WriteEncodedInt64(ot->templateSubTypes.GetLength());
+				for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
 				{
-					ch = 's';
-					WriteData(&ch, 1);
-					WriteDataType(&ot->templateSubTypes[0]);
-				}
-				else
-				{
-					ch = 't';
-					WriteData(&ch, 1);
-					eTokenType t = ot->templateSubTypes[0].GetTokenType();
-					WriteEncodedInt64(t);
+					if( ot->templateSubTypes[0].IsObject() || ot->templateSubTypes[0].IsEnumType() )
+					{
+						ch = 's';
+						WriteData(&ch, 1);
+						WriteDataType(&ot->templateSubTypes[0]);
+					}
+					else
+					{
+						ch = 't';
+						WriteData(&ch, 1);
+						eTokenType t = ot->templateSubTypes[0].GetTokenType();
+						WriteEncodedInt64(t);
+					}
 				}
 			}
 		}
@@ -3743,10 +3781,19 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
 		}
 		else if( c == asBC_ADDSi ||      // W_DW_ARG
-			     c == asBC_LoadThisR )   // W_DW_ARG	 
+			     c == asBC_LoadThisR )   // W_DW_ARG
 		{
-			// Translate property offsets into indices
-			*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
+			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*(int*)(tmp+1));
+			if( ot->flags & asOBJ_LIST_PATTERN )
+			{
+				// TODO: list: List patterns have a different way of translating the offsets
+			}
+			else
+			{
+				// Translate property offsets into indices
+				// TODO: optimize: Pass the object type directly to the method instead of the type id
+				*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
+			}
 
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
@@ -3754,8 +3801,17 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		else if( c == asBC_LoadRObjR ||    // rW_W_DW_ARG
 			     c == asBC_LoadVObjR )     // rW_W_DW_ARG
 		{
-			// Translate property offsets into indices
-			*(((short*)tmp)+2) = (short)FindObjectPropIndex(*(((short*)tmp)+2), *(int*)(tmp+2));
+			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*(int*)(tmp+2));
+			if( ot->flags & asOBJ_LIST_PATTERN )
+			{
+				// TODO: list: List patterns have a different way of translating the offsets
+			}
+			else
+			{
+				// Translate property offsets into indices
+				// TODO: optimize: Pass the object type directly to the method instead of the type id
+				*(((short*)tmp)+2) = (short)FindObjectPropIndex(*(((short*)tmp)+2), *(int*)(tmp+2));
+			}
 
 			// Translate type ids into indices
 			*(int*)(tmp+2) = FindTypeIdIdx(*(int*)(tmp+2));

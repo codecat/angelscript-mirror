@@ -3421,7 +3421,7 @@ void asCContext::ExecuteNext()
 				return;
 			}
 			else if( divider == -1 )
-            {
+			{
 				// Need to check if the value that is divided is 1<<63
 				// as dividing it with -1 will cause an overflow exception
 				if( *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) == (asINT64(1)<<63) )
@@ -3435,7 +3435,7 @@ void asCContext::ExecuteNext()
 					SetInternalException(TXT_DIVIDE_OVERFLOW);
 					return;
 				}
-            }
+			}
 
 			*(asINT64*)(l_fp - asBC_SWORDARG0(l_bc)) = *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) / divider;
 		}
@@ -3457,7 +3457,7 @@ void asCContext::ExecuteNext()
 				return;
 			}
 			else if( divider == -1 )
-            {
+			{
 				// Need to check if the value that is divided is 1<<63
 				// as dividing it with -1 will cause an overflow exception
 				if( *(asINT64*)(l_fp - asBC_SWORDARG1(l_bc)) == (asINT64(1)<<63) )
@@ -3881,10 +3881,24 @@ void asCContext::ExecuteNext()
 			l_bc += 2;
 		break;
 
+	case asBC_AllocMem:
+		// Allocate a buffer and store the pointer in the local variable
+		*(asBYTE**)(l_fp - asBC_SWORDARG0(l_bc)) = asNEWARRAY(asBYTE, asBC_DWORDARG(l_bc));
+		l_bc += 2;
+		break;
+
+	case asBC_FreeMem:
+		// Free the buffer stored in the local variable and clear the variable
+		{
+			void **var = (void**)(l_fp - asBC_SWORDARG0(l_bc));
+			asDELETEARRAY(*var);
+			*var = 0;
+		}
+		l_bc += 1;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 189: l_bc = (asDWORD*)189; break;
-	case 190: l_bc = (asDWORD*)190; break;
 	case 191: l_bc = (asDWORD*)191; break;
 	case 192: l_bc = (asDWORD*)192; break;
 	case 193: l_bc = (asDWORD*)193; break;

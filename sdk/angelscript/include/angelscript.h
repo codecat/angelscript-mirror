@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22701
-#define ANGELSCRIPT_VERSION_STRING "2.27.1"
+#define ANGELSCRIPT_VERSION        22800
+#define ANGELSCRIPT_VERSION_STRING "2.28.0 WIP"
 
 // Data types
 
@@ -1419,8 +1419,10 @@ enum asEBCInstr
 	asBC_RefCpyV		= 186,
 	asBC_JLowZ			= 187,
 	asBC_JLowNZ			= 188,
+	asBC_AllocMem		= 189,
+	asBC_FreeMem		= 190,
 
-	asBC_MAXBYTECODE	= 189,
+	asBC_MAXBYTECODE	= 191,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -1701,9 +1703,9 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(RefCpyV,	wW_PTR_ARG,		0),
 	asBCINFO(JLowZ,		DW_ARG,			0),
 	asBCINFO(JLowNZ,	DW_ARG,			0),
+	asBCINFO(AllocMem,	wW_DW_ARG,		0),
+	asBCINFO(FreeMem,	rW_ARG,			0),
 
-	asBCINFO_DUMMY(189),
-	asBCINFO_DUMMY(190),
 	asBCINFO_DUMMY(191),
 	asBCINFO_DUMMY(192),
 	asBCINFO_DUMMY(193),

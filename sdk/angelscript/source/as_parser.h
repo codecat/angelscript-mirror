@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2012 Andreas Jonsson
+   Copyright (c) 2003-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -53,7 +53,7 @@ public:
 	asCParser(asCBuilder *builder);
 	~asCParser();
 
-	int ParseFunctionDefinition(asCScriptCode *script);
+	int ParseFunctionDefinition(asCScriptCode *script, bool expectListPattern);
 	int ParsePropertyDeclaration(asCScriptCode *script);
 	int ParseDataType(asCScriptCode *script, bool isReturnType);
 	int ParseTemplateDecl(asCScriptCode *script);
@@ -89,6 +89,8 @@ protected:
 	asCScriptNode *ParseRealType();
 	asCScriptNode *ParseDataType(bool allowVariableType = false);
 	asCScriptNode *ParseIdentifier();
+
+	asCScriptNode *ParseListPattern();
 
 	bool IsRealType(int tokenType);
 	bool IsDataType(const sToken &token);

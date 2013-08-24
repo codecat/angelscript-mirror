@@ -340,7 +340,7 @@ void DumpModule(asIScriptModule *mod)
 		" beh(15) void _beh_15_(int&in)\n"
 		" beh(16) void _beh_16_(int&in)\n"
 		" beh(11) bool _beh_11_(int&in, bool&out)\n"
-		" beh(3) T[]@ _beh_3_(int&in, uint)\n"
+		" beh(3) T[]@ _beh_3_(int&in, int&in)\n"
 		" T& opIndex(uint)\n"
 		" const T& opIndex(uint) const\n"
 		" T[]& opAssign(const T[]&in)\n"

@@ -91,8 +91,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\add_on\scriptarray\scriptarray.cpp" />
     <ClCompile Include="..\..\source\main.cpp" />
     <ClCompile Include="..\..\source\scriptstring.cpp" />
+    <ClCompile Include="..\..\source\test_array.cpp" />
     <ClCompile Include="..\..\source\test_assign.cpp" />
     <ClCompile Include="..\..\source\test_basic.cpp" />
     <ClCompile Include="..\..\source\test_basic2.cpp" />
@@ -110,6 +112,7 @@
     <ClCompile Include="..\..\source\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\add_on\scriptarray\scriptarray.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
     <ClInclude Include="..\..\source\scriptstring.h" />
     <ClInclude Include="..\..\source\utils.h" />

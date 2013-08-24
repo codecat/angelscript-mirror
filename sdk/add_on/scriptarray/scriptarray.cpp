@@ -56,6 +56,22 @@ static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 	return a;
 }
 
+static CScriptArray* ScriptArrayListFactory(asIObjectType *ot, void *initList)
+{
+	CScriptArray *a = new CScriptArray(ot, initList);
+
+	// It's possible the constructor raised a script exception, in which case we 
+	// need to free the memory and return null instead, else we get a memory leak.
+	asIScriptContext *ctx = asGetActiveContext();
+	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
+	{
+		a->Release();
+		return 0;
+	}
+
+	return a;
+}
+
 static CScriptArray* ScriptArrayFactoryDefVal(asIObjectType *ot, asUINT length, void *defVal)
 {
 	CScriptArray *a = new CScriptArray(length, defVal, ot);
@@ -74,7 +90,7 @@ static CScriptArray* ScriptArrayFactoryDefVal(asIObjectType *ot, asUINT length, 
 
 static CScriptArray* ScriptArrayFactory(asIObjectType *ot)
 {
-	return ScriptArrayFactory2(ot, 0);
+	return ScriptArrayFactory2(ot, asUINT(0));
 }
 
 // This optional callback is called when the template type is first used by the compiler.
@@ -193,7 +209,7 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_FACTORY, "array<T>@ f(int&in, uint, const T &in)", asFUNCTIONPR(ScriptArrayFactoryDefVal, (asIObjectType*, asUINT, void *), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory that will be used for initialization lists
-	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_LIST_FACTORY, "array<T>@ f(int&in, uint)", asFUNCTIONPR(ScriptArrayFactory2, (asIObjectType*, asUINT), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_LIST_FACTORY, "array<T>@ f(int&in type, int&in list)", asFUNCTIONPR(ScriptArrayListFactory, (asIObjectType*, void*), CScriptArray*), asCALL_CDECL); assert( r >= 0 );
 
 	// The memory management methods
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptArray,AddRef), asCALL_THISCALL); assert( r >= 0 );
@@ -266,6 +282,46 @@ CScriptArray &CScriptArray::operator=(const CScriptArray &other)
 	}
 
 	return *this;
+}
+
+CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
+{
+	refCount = 1;
+	gcFlag = false;
+	objType = ot;
+	objType->AddRef();
+	buffer = 0;
+
+	Precache();
+
+	// Determine element size
+	if( subTypeId & asTYPEID_MASK_OBJECT )
+		elementSize = sizeof(asPWORD);
+	else
+		elementSize = objType->GetEngine()->GetSizeOfPrimitiveType(subTypeId);
+
+	// Determine the initial size from the buffer
+	asUINT length = *(asUINT*)buf;
+
+	// Make sure the array size isn't too large for us to handle
+	if( !CheckMaxSize(length) )
+	{
+		// Don't continue with the initialization
+		return;
+	}
+
+	CreateBuffer(&buffer, length);
+
+	// For primitives the element values are passed directly in the buffer
+	if( (ot->GetSubTypeId() & asTYPEID_MASK_OBJECT) == 0 )
+	{
+		// Copy the values into the internal buffer
+		memcpy(At(0), (((asUINT*)buf)+1), length * ot->GetEngine()->GetSizeOfPrimitiveType(ot->GetSubTypeId()));
+	}
+
+	// Notify the GC of the successful creation
+	if( objType->GetFlags() & asOBJ_GC )
+		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType);
 }
 
 CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)

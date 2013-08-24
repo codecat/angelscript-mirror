@@ -211,6 +211,7 @@
     <ClInclude Include="..\..\source\as_gc.h" />
     <ClInclude Include="..\..\source\as_generic.h" />
     <ClInclude Include="..\..\source\as_map.h" />
+    <ClInclude Include="..\..\source\as_memory.h" />
     <ClInclude Include="..\..\source\as_module.h" />
     <ClInclude Include="..\..\source\as_objecttype.h" />
     <ClInclude Include="..\..\source\as_outputbuffer.h" />

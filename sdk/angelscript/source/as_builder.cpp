@@ -928,7 +928,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 	return 0;
 }
 
-int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle, asSNameSpace *ns)
+int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle, asSNameSpace *ns, asCScriptNode **listPattern)
 {
 	asASSERT( objType || ns );
 
@@ -940,7 +940,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	source.SetCode(TXT_SYSTEM_FUNCTION, decl, true);
 
 	asCParser parser(this);
-	int r = parser.ParseFunctionDefinition(&source);
+	int r = parser.ParseFunctionDefinition(&source, listPattern != 0);
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
@@ -970,7 +970,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	if( isSystemFunction &&
 		(func->returnType.GetObjectType() &&
 		 (func->returnType.GetObjectType()->flags & asOBJ_REF)) &&
-        !(func->returnType.IsReference() ||
+		!(func->returnType.IsReference() ||
 		  func->returnType.IsObjectHandle()) )
 		return asINVALID_DECLARATION;
 
@@ -1005,7 +1005,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 		// Reference types cannot be passed by value to system functions
 		if( isSystemFunction &&
 			(type.GetObjectType() &&
-		     (type.GetObjectType()->flags & asOBJ_REF)) &&
+			 (type.GetObjectType()->flags & asOBJ_REF)) &&
 			!(type.IsReference() ||
 			  type.IsObjectHandle()) )
 			return asINVALID_DECLARATION;
@@ -1050,15 +1050,35 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	}
 
 	// Set the read-only flag if const is declared after parameter list
-	if( node->lastChild->nodeType == snUndefined && node->lastChild->tokenType == ttConst )
+	n = paramList->next;
+	if( n && n->nodeType == snUndefined && n->tokenType == ttConst )
 	{
 		if( objType == 0 )
 			return asINVALID_DECLARATION;
 		func->isReadOnly = true;
+
+		n = n->next;
 	}
 	else
 		func->isReadOnly = false;
 
+	// If the caller expects a list pattern, check for the existence, else report an error if not
+	if( listPattern )
+	{
+		if( n == 0 || n->nodeType != snListPattern ) 
+			return asINVALID_DECLARATION;
+		else
+		{
+			*listPattern = n;
+			n->DisconnectParent();
+		}
+	}
+	else
+	{
+		if( n )
+			return asINVALID_DECLARATION;
+	}
+	
 	// Make sure the default args are declared correctly
 	ValidateDefaultArgs(&source, node, func);
 

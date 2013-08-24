@@ -91,7 +91,7 @@ asCScriptNode *asCParser::GetScriptNode()
 	return scriptNode;
 }
 
-int asCParser::ParseFunctionDefinition(asCScriptCode *script)
+int asCParser::ParseFunctionDefinition(asCScriptCode *script, bool expectListPattern)
 {
 	Reset();
 
@@ -101,6 +101,9 @@ int asCParser::ParseFunctionDefinition(asCScriptCode *script)
 	this->script = script;
 
 	scriptNode = ParseFunctionDefinition();
+
+	if( expectListPattern )
+		scriptNode->AddChildLast(ParseListPattern());
 
 	// The declaration should end after the definition
 	if( !isSyntaxError )
@@ -2957,6 +2960,50 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 	if( node == 0 ) return 0;
 
 	// This function will only superficially parse the statement block in order to find the end of it
+	sToken t1;
+
+	GetToken(&t1);
+	if( t1.type != ttStartStatementBlock )
+	{
+		Error(ExpectedToken("{"), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	sToken start = t1;
+
+	int level = 1;
+	while( level > 0 && !isSyntaxError )
+	{
+		GetToken(&t1);
+		if( t1.type == ttEndStatementBlock )
+			level--;
+		else if( t1.type == ttStartStatementBlock )
+			level++;
+		else if( t1.type == ttNonTerminatedStringConstant )
+		{
+			Error(TXT_NONTERMINATED_STRING, &t1);
+			break;
+		}
+		else if( t1.type == ttEnd )
+		{
+			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
+			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
+			break;
+		}
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	return node;
+}
+
+asCScriptNode *asCParser::ParseListPattern()
+{
+	asCScriptNode *node = CreateNode(snListPattern);
+	if( node == 0 ) return 0;
+
 	sToken t1;
 
 	GetToken(&t1);

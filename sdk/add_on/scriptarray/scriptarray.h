@@ -25,6 +25,7 @@ struct SArrayCache;
 class CScriptArray
 {
 public:
+	CScriptArray(asIObjectType *ot, void *initBuf); // Called from script when initialized with list
 	CScriptArray(asUINT length, asIObjectType *ot);
 	CScriptArray(asUINT length, void *defVal, asIObjectType *ot);
 	CScriptArray(const CScriptArray &other);

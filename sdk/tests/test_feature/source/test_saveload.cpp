@@ -242,7 +242,10 @@ void TestScripts(asIScriptEngine *engine)
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
 	type = engine->GetObjectTypeById(intfTypeId);
-	func = type->GetMethodByDecl("void test()");
+	if( type == 0 )
+		TEST_FAILED;
+	else
+		func = type->GetMethodByDecl("void test()");
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ctx->Prepare(func);
 	if( r < 0 ) TEST_FAILED;
@@ -544,23 +547,23 @@ bool Test()
 		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-		if( stream.buffer.size() != 2106 )
+		if( stream.buffer.size() != 2118 )
 			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
-		if( zeroes != 602 )
+		if( zeroes != 589 )
 		{
 			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0xA88BDCFA )
+		if( crc32 != 0x33E1B5A5 )
 			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
-		if( stream2.buffer.size() != 1771 )
+		if( stream2.buffer.size() != 1783 )
 			printf("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
-		if( zeroes != 500 )
+		if( zeroes != 487 )
 			printf("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
@@ -569,8 +572,7 @@ bool Test()
 
 		if( mod->GetFunctionCount() != 6 )
 			TEST_FAILED;
-
-		if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
+		else if( string(mod->GetFunctionByIndex(0)->GetScriptSectionName()) != ":1" )
 			TEST_FAILED;
 
 		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
@@ -600,9 +602,10 @@ bool Test()
 		TestScripts(engine);
 		asUINT currentSize2, totalDestroyed2, totalDetected2;
 		engine->GetGCStatistics(&currentSize2, &totalDestroyed2, &totalDetected2);
-		assert( currentSize == currentSize2 &&
-				totalDestroyed == totalDestroyed2 &&
-				totalDetected == totalDetected2 );
+		if( currentSize != currentSize2 ||
+			totalDestroyed != totalDestroyed2 ||
+			totalDetected != totalDetected2 )
+			TEST_FAILED;
 
 		GlobalCharArray->Release();
 		GlobalCharArray = 0;

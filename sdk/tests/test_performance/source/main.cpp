@@ -21,38 +21,40 @@ namespace TestString2      { void Test(double *time); }
 namespace TestThisProp     { void Test(double *time); }
 namespace TestVector3      { void Test(double *time); }
 namespace TestAssign       { void Test(double *times); }
+namespace TestArray        { void Test(double *time); }
 
-// Times for 2.27.0 WIP 0
-double testTimesOrig[18] = 
+// Times for 2.27.1
+double testTimesOrig[19] = 
 {
-1.466,  // Basic
-0.250,  // Basic2
-1.232,  // Call
-1.700,  // Call2
-2.621,  // Fib
-0.328,  // Int
-2.090,  // Intf
-1.841,  // Mthd
-2.059,  // String
-1.092,  // String2
-1.498,  // StringPooled
-0.889,  // ThisProp
-0.515,  // Vector3
-0.624,  // Assign.1
+1.342,  // Basic
+0.281,  // Basic2
+0.484,  // Call
+0.952,  // Call2
+2.465,  // Fib
+0.296,  // Int
+2.106,  // Intf
+1.856,  // Mthd
+2.090,  // String
+1.061,  // String2
+1.529,  // StringPooled
+0.874,  // ThisProp
+0.499,  // Vector3
+0.905,  // Assign.1
 0.811,  // Assign.2
 1.123,  // Assign.3
-1.622,  // Assign.4
-1.607   // Assign.5
+1.607,  // Assign.4
+1.591,  // Assign.5
+1.154   // Array
 };
 
-// Times for 2.27.0 WIP 1 (localized optimizations)
-double testTimesOrig2[18] = 
+// Times for 2.28.0 WIP 1 (localized optimizations)
+double testTimesOrig2[19] = 
 {
 1.388,  // Basic
 0.265,  // Basic2
 0.484,  // Call
 0.920,  // Call2
-2.590,  // Fib
+2.371,  // Fib
 0.312,  // Int
 2.153,  // Intf
 1.872,  // Mthd
@@ -60,16 +62,17 @@ double testTimesOrig2[18] =
 1.092,  // String2
 1.466,  // StringPooled
 0.889,  // ThisProp
-0.515,  // Vector3
+0.499,  // Vector3
 0.624,  // Assign.1
 0.795,  // Assign.2
 1.123,  // Assign.3
 1.607,  // Assign.4
-1.622   // Assign.5
+1.622,  // Assign.5
+0.905   // Array
 };
 
-double testTimesBest[18];
-double testTimes[18];
+double testTimesBest[19];
+double testTimes[19];
 
 void DetectMemoryLeaks()
 {
@@ -92,7 +95,7 @@ int main(int argc, char **argv)
 	printf("AngelScript %s\n", asGetLibraryVersion()); 
 
 	int n;
-	for( n = 0; n < 18; n++ )
+	for( n = 0; n < 19; n++ )
 		testTimesBest[n] = 1000;
 
 	for( n = 0; n < 3; n++ )
@@ -111,8 +114,9 @@ int main(int argc, char **argv)
 		TestThisProp::Test(&testTimes[11]); printf("."); fflush(stdout);
 		TestVector3::Test(&testTimes[12]); printf("."); fflush(stdout);
 		TestAssign::Test(&testTimes[13]); printf("."); fflush(stdout);
+		TestArray::Test(&testTimes[18]); printf("."); fflush(stdout);
 
-		for( int t = 0; t < 18; t++ )
+		for( int t = 0; t < 19; t++ )
 		{
 			if( testTimesBest[t] > testTimes[t] )
 				testTimesBest[t] = testTimes[t];
@@ -139,6 +143,7 @@ int main(int argc, char **argv)
 	printf("Assign.3       %.3f    %.3f    %.3f%s\n", testTimesOrig[15], testTimesOrig2[15], testTimesBest[15], testTimesBest[15] < testTimesOrig2[15] ? " +" : " -"); 
 	printf("Assign.4       %.3f    %.3f    %.3f%s\n", testTimesOrig[16], testTimesOrig2[16], testTimesBest[16], testTimesBest[16] < testTimesOrig2[16] ? " +" : " -"); 
 	printf("Assign.5       %.3f    %.3f    %.3f%s\n", testTimesOrig[17], testTimesOrig2[17], testTimesBest[17], testTimesBest[17] < testTimesOrig2[17] ? " +" : " -"); 
+	printf("Array          %.3f    %.3f    %.3f%s\n", testTimesOrig[18], testTimesOrig2[18], testTimesBest[18], testTimesBest[18] < testTimesOrig2[18] ? " +" : " -"); 
 
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

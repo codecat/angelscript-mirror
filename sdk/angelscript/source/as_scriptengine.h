@@ -64,8 +64,6 @@ struct sBindInfo;
 
 // TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
 
-// TODO: Should have a CreateModule/GetModule instead of just GetModule with parameters.
-
 // TODO: Should allow enumerating modules, in case they have not been named.
 
 
@@ -271,6 +269,8 @@ public:
 
 	asCObjectType *GetObjectType(const char *type, asSNameSpace *ns);
 
+	asCObjectType *GetListPatternType(int listPatternFuncId);
+
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 
 	asCString GetFunctionDeclaration(int funcId);
@@ -345,6 +345,9 @@ public:
 
 	// Store information about template types
 	asCArray<asCObjectType *>      templateTypes;
+
+	// Store information about list patterns
+	asCArray<asCObjectType *>      listPatternTypes;
 
 	// Stores all global properties, both those registered by application, and those declared by scripts.
 	// The id of a global property is the index in this array.
@@ -421,7 +424,7 @@ public:
 	asCArray<asPWORD>       userData;
 
 	struct SEngineClean { asPWORD type; asCLEANENGINEFUNC_t cleanFunc; };
-	asCArray<SEngineClean> cleanEngineFuncs;
+	asCArray<SEngineClean>  cleanEngineFuncs;
 	asCLEANMODULEFUNC_t     cleanModuleFunc;
 	asCLEANCONTEXTFUNC_t    cleanContextFunc;
 	asCLEANFUNCTIONFUNC_t   cleanFunctionFunc;
