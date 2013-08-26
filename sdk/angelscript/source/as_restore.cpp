@@ -2032,8 +2032,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	for( n = 0; n < func->scriptData->byteCode.GetLength(); bcNum++ )
 	{
 		int c = *(asBYTE*)&bc[n];
-		if( c == asBC_FREE ||
-			c == asBC_REFCPY || 
+		if( c == asBC_REFCPY || 
 			c == asBC_RefCpyV ||
 			c == asBC_OBJTYPE )
 		{
@@ -2058,7 +2057,9 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*tid);
 			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
 			{
-				// TODO: list: List patterns have a different way of adjusting the offsets
+				// List patterns have a different way of adjusting the offsets
+				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+				*(((short*)&bc[n])+1) = (short)listAdj->AdjustOffset(*(((short*)&bc[n])+1), ot);
 			}
 			else
 			{
@@ -2076,7 +2077,9 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*tid);
 			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
 			{
-				// TODO: list: List patterns have a different way of adjusting the offsets
+				// List patterns have a different way of adjusting the offsets
+				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+				*(((short*)&bc[n])+2) = (short)listAdj->AdjustOffset(*(((short*)&bc[n])+2), ot);
 			}
 			else
 			{
@@ -2246,6 +2249,28 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			// The size is dword offset 
 			bc[n+1] = size;
 		}
+		else if( c == asBC_AllocMem )
+		{
+			// The size of the allocated memory is only known after all the elements has been seen.
+			// This helper class will collect this information and adjust the size when the 
+			// corresponding asBC_FREE is encountered
+			listAdjusters.PushLast(asNEW(SListAdjuster)(&bc[n]));
+		}
+		else if( c == asBC_FREE )
+		{
+			// Translate the index to the true object type
+			asPWORD *pot = (asPWORD*)&bc[n+1];
+			*(asCObjectType**)pot = FindObjectType(*(int*)pot);
+
+			asCObjectType *ot = *(asCObjectType**)pot;
+			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
+			{
+				// Finalize the adjustment of the list buffer that was initiated with asBC_AllocMem
+				SListAdjuster *list = listAdjusters.PopLast();
+				list->AdjustAllocMem();
+				asDELETE(list, SListAdjuster);
+			}
+		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
@@ -2352,6 +2377,44 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		func->scriptData->sectionIdxs[n] = instructionNbrToPos[func->scriptData->sectionIdxs[n]];
 
 	CalculateStackNeeded(func);
+}
+
+int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatternType)
+{
+	// TODO: list: When the list pattern can take any form it is not sufficient 
+	//             to just calculate the offset with a formula
+
+	if( offset > 0 )
+	{
+		asUINT size;
+		asCDataType dt = listPatternType->templateSubTypes[0].GetObjectType()->templateSubTypes[0];
+		if( dt.IsObjectHandle() )
+			size = AS_PTR_SIZE*4;
+		else
+			size = dt.GetSizeInMemoryBytes();
+
+		offset = 4 + size*(offset-1);
+
+		// Determine the size of the needed buffer
+		if( offset+size > maxOffset )
+			maxOffset = offset+size;
+
+		return offset;
+	}
+
+	return 0;
+}
+
+void asCReader::SListAdjuster::AdjustAllocMem()
+{
+	// TODO: list: When the list pattern can take any form it is not sufficient
+	//             to just calculate the size like this, as it is necessary to know 
+	//             the size of each element accessed
+
+	if( maxOffset == 0 )
+		allocMemBC[1] = 4;
+	else
+		allocMemBC[1] = maxOffset;
 }
 
 void asCReader::CalculateStackNeeded(asCScriptFunction *func)
@@ -3761,8 +3824,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				*(int*)&tmp[1+AS_PTR_SIZE] = 1+FindFunctionIndex(engine->scriptFunctions[*(int*)&tmp[1+AS_PTR_SIZE]]);
 			}
 		}
-		else if( c == asBC_FREE    || // wW_PTR_ARG
-			     c == asBC_REFCPY  || // PTR_ARG
+		else if( c == asBC_REFCPY  || // PTR_ARG
 				 c == asBC_RefCpyV || // wW_PTR_ARG
 				 c == asBC_OBJTYPE )  // PTR_ARG
 		{
@@ -3786,7 +3848,9 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*(int*)(tmp+1));
 			if( ot->flags & asOBJ_LIST_PATTERN )
 			{
-				// TODO: list: List patterns have a different way of translating the offsets
+				// List patterns have a different way of translating the offsets
+				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+				*(((short*)tmp)+1) = (short)listAdj->AdjustOffset(*(((short*)tmp)+1), ot);
 			}
 			else
 			{
@@ -3804,7 +3868,9 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*(int*)(tmp+2));
 			if( ot->flags & asOBJ_LIST_PATTERN )
 			{
-				// TODO: list: List patterns have a different way of translating the offsets
+				// List patterns have a different way of translating the offsets
+				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+				*(((short*)tmp)+2) = (short)listAdj->AdjustOffset(*(((short*)tmp)+2), ot);
 			}
 			else
 			{
@@ -3899,6 +3965,27 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		{
 			// Adjust the offset according to the function call that comes after
 			asBC_WORDARG0(tmp) = (asWORD)AdjustGetOffset(asBC_WORDARG0(tmp), func, asDWORD(bc - startBC));
+		}
+		else if( c == asBC_AllocMem )
+		{
+			// It's not necessary to store the size of the list buffer, as it will be recalculated in the reader
+			asBC_DWORDARG(tmp) = 0;
+
+			// Create this helper object to adjust the offset of the elements accessed in the buffer
+			listAdjusters.PushLast(asNEW(SListAdjuster));
+		}
+		else if( c == asBC_FREE ) // wW_PTR_ARG
+		{
+			// Translate object type pointers into indices
+			asCObjectType *ot = *(asCObjectType**)(tmp+1);
+			*(asPWORD*)(tmp+1) = FindObjectTypeIdx(ot);
+
+			// Pop and destroy the list adjuster helper that was created with asBC_AllocMem
+			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
+			{
+				SListAdjuster *list = listAdjusters.PopLast();
+				asDELETE(list, SListAdjuster);
+			}
 		}
 
 		// Adjust the variable offsets
@@ -4117,6 +4204,26 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		bc += asBCTypeSize[asBCInfo[c].type];
 		length -= asBCTypeSize[asBCInfo[c].type];
 	}
+}
+
+int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatternType)
+{
+	// TODO: list: When the list pattern can take any form it is not sufficient 
+	//             to just calculate the offset with a formula
+
+	if( offset > 0 )
+	{
+		asUINT size;
+		asCDataType dt = listPatternType->templateSubTypes[0].GetObjectType()->templateSubTypes[0];
+		if( dt.IsObjectHandle() )
+			size = AS_PTR_SIZE*4;
+		else
+			size = dt.GetSizeInMemoryBytes();
+
+		return (offset-4)/size + 1;
+	}
+
+	return 0;
 }
 
 void asCWriter::WriteUsedTypeIds()

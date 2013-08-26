@@ -2468,7 +2468,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	//             should I move ahead with other types.
 	//             To determine the type that the array expects the list pattern should be used
 	//             but at first we can use the array's subtype.
-	if( var->dataType.GetSubType().IsPrimitive() )
+	if( var->dataType.GetSubType().IsPrimitive() || 
+		var->dataType.GetSubType().IsObjectHandle() )
 	{
 		// Create a new special object type for the lists. Both asCRestore and the 
 		// context exception handler will need this to know how to parse the buffer.
@@ -2476,7 +2477,12 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 		// Allocate a temporary variable to hold the pointer to the buffer
 		int bufferVar = AllocateVariable(asCDataType::CreateObject(listPatternType, false), true);
-		bc->InstrSHORT_DW(asBC_AllocMem, bufferVar, 4 + countElements*var->dataType.GetSubType().GetSizeInMemoryBytes());
+		asUINT size;
+		if( var->dataType.GetSubType().IsPrimitive() ) 
+			size = var->dataType.GetSubType().GetSizeInMemoryBytes();
+		else
+			size = AS_PTR_SIZE*4;
+		bc->InstrSHORT_DW(asBC_AllocMem, bufferVar, 4 + countElements*size);
 
 		// The first dword in the buffer will hold the number of elements
 		bc->InstrSHORT(asBC_PSF, bufferVar);
@@ -2523,12 +2529,17 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				// Compile the lvalue
 				lctx.bc.InstrSHORT(asBC_PSF, bufferVar);
 				lctx.bc.Instr(asBC_RDSPtr);
-				lctx.bc.InstrSHORT_DW(asBC_ADDSi,4+index*var->dataType.GetSubType().GetSizeInMemoryBytes(), engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
+				lctx.bc.InstrSHORT_DW(asBC_ADDSi,4+index*size, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
 				lctx.type.Set(var->dataType.GetSubType());
 				lctx.type.isLValue = true;
 				if( var->dataType.GetSubType().IsPrimitive() )
 				{
 					lctx.bc.Instr(asBC_PopRPtr);
+					lctx.type.dataType.MakeReference(true);
+				}
+				if( var->dataType.GetSubType().IsObjectHandle() )
+				{
+					lctx.type.isExplicitHandle = true;
 					lctx.type.dataType.MakeReference(true);
 				}
 
@@ -2592,8 +2603,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 		bc->AddCode(&ctx.bc);
 
-		// Free the temporary buffer
-		bc->InstrSHORT(asBC_FreeMem, bufferVar);
+		// Free the temporary buffer. The FREE instruction will make sure to destroy
+		// each element in the buffer, so there is no need to do this manually
+		bc->InstrW_PTR(asBC_FREE, bufferVar, listPatternType);
 		ReleaseTemporaryVariable(bufferVar, bc);
 	}
 	else

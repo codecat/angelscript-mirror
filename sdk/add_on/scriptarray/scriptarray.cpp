@@ -318,6 +318,23 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		// Copy the values into the internal buffer
 		memcpy(At(0), (((asUINT*)buf)+1), length * ot->GetEngine()->GetSizeOfPrimitiveType(ot->GetSubTypeId()));
 	}
+	else if( (ot->GetSubTypeId() & asTYPEID_OBJHANDLE) )
+	{
+		// Copy the handles into the internal buffer
+		memcpy(At(0), (((asUINT*)buf)+1), length * sizeof(void*));
+
+		// TODO: list: runtime optimize: Instead of increasing the references, clear the  
+		//             handles in the incoming buffer so AngelScript won't release them
+
+		// Increase the reference for all the handles
+		asIScriptEngine *engine = ot->GetEngine();
+		for( asUINT n = 0; n < length; n++ )
+		{
+			void *obj = *(void**)At(n);
+			if( obj )
+				engine->AddRefScriptObject(obj, ot->GetSubType());
+		}
+	}
 
 	// Notify the GC of the successful creation
 	if( objType->GetFlags() & asOBJ_GC )
@@ -703,19 +720,19 @@ void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 {
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{
-	#if defined(__S3E__) // Marmalade doesn't understand (nothrow)
+		#if defined(__S3E__) // Marmalade doesn't understand (nothrow)
 		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
-	#else
+		#else
 		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
-	#endif
+		#endif
 	}
 	else
 	{
 		#if defined(__S3E__)
 		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-        #else
+		#else
 		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-        #endif
+		#endif
 	}
 
 	if( *buf )
@@ -830,16 +847,16 @@ bool CScriptArray::Less(const void *a, const void *b, bool asc, asIScriptContext
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->cmpFunc); assert(r >= 0);
 
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
-            }
-            else
-            {
-			    r = ctx->SetObject((void*)a); assert(r >= 0);
-			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
-            }
+			if( subTypeId & asTYPEID_OBJHANDLE )
+			{
+				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+			}
+			else
+			{
+				r = ctx->SetObject((void*)a); assert(r >= 0);
+				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+			}
 
 			r = ctx->Execute();
 
@@ -963,23 +980,23 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->eqFunc); assert(r >= 0);
 
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
-            }
-            else
-            {
-			    r = ctx->SetObject((void*)a); assert(r >= 0);
-			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
-            }
+			if( subTypeId & asTYPEID_OBJHANDLE )
+			{
+				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+			}
+			else
+			{
+				r = ctx->SetObject((void*)a); assert(r >= 0);
+				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+			}
 
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
 				return ctx->GetReturnByte() != 0;
 
-            return false;
+			return false;
 		}
 
 		// Execute object opCmp if available
@@ -988,23 +1005,23 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 			// TODO: Add proper error handling
 			r = ctx->Prepare(cache->cmpFunc); assert(r >= 0);
 
-            if( subTypeId & asTYPEID_OBJHANDLE )
-            {
-			    r = ctx->SetObject(*((void**)a)); assert(r >= 0);
-			    r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
-            }
-            else
-            {
-			    r = ctx->SetObject((void*)a); assert(r >= 0);
-			    r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
-            }
+			if( subTypeId & asTYPEID_OBJHANDLE )
+			{
+				r = ctx->SetObject(*((void**)a)); assert(r >= 0);
+				r = ctx->SetArgObject(0, *((void**)b)); assert(r >= 0);
+			}
+			else
+			{
+				r = ctx->SetObject((void*)a); assert(r >= 0);
+				r = ctx->SetArgObject(0, (void*)b); assert(r >= 0);
+			}
 
 			r = ctx->Execute();
 
 			if( r == asEXECUTION_FINISHED )
 				return (int)ctx->GetReturnDWord() == 0;
 
-            return false;
+			return false;
 		}
 	}
 

@@ -117,6 +117,17 @@ protected:
 
 	asCMap<void*,bool>              existingShared;
 	asCMap<asCScriptFunction*,bool> dontTranslate;
+
+	// Helper class for adjusting offsets within initialization list buffers
+	struct SListAdjuster
+	{
+		SListAdjuster(asDWORD *bc) : allocMemBC(bc), maxOffset(0) {}
+		void AdjustAllocMem();
+		int AdjustOffset(int offset, asCObjectType *listPatternType);
+		asDWORD *allocMemBC;
+		asUINT maxOffset;
+	};
+	asCArray<SListAdjuster*> listAdjusters;
 };
 
 #ifndef AS_NO_COMPILER
@@ -189,6 +200,14 @@ protected:
 		int            offset;
 	};
 	asCArray<SObjProp>           usedObjectProperties;
+
+	// Helper class for adjusting offsets within initialization list buffers
+	struct SListAdjuster
+	{
+		SListAdjuster() {}
+		int AdjustOffset(int offset, asCObjectType *listPatternType);
+	};
+	asCArray<SListAdjuster*> listAdjusters;
 };
 
 #endif

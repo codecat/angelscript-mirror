@@ -593,6 +593,34 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test to make sure the exception handlers knows to clean up the memory in the list buffers
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { T @t; } \n"
+			"void start() \n"
+			"{ \n"
+			"    T @nullVar; \n"
+			"    array<T@> t = {T(), T(), T(), T(), nullVar.t}; \n"
+			"} \n");
+
+		r = mod->Build(); 
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "start();", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

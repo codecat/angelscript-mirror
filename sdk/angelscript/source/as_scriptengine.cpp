@@ -5328,6 +5328,29 @@ asCObjectType *asCScriptEngine::GetListPatternType(int listPatternFuncId)
 	return lpt;
 }
 
+// internal
+void asCScriptEngine::DestroyList(asBYTE *buffer, asCObjectType *listPatternType)
+{
+	asASSERT( listPatternType && (listPatternType->flags & asOBJ_LIST_PATTERN) );
+
+	// TODO: list: The list pattern determines the content of the buffer
+
+	asCObjectType *ot = listPatternType->templateSubTypes[0].GetObjectType();
+	ot = ot->templateSubTypes[0].GetObjectType();
+	if( ot && (ot->flags & asOBJ_ENUM) == 0 )
+	{
+		asUINT length = *(asUINT*)buffer;
+
+		for( asUINT n = 0; n < length; n++ )
+		{
+			void *ptr = *(void**)(buffer + 4 + n*AS_PTR_SIZE*4);
+			if( ptr )
+			{
+				ReleaseScriptObject(ptr, ot);
+			}
+		}
+	}
+}
 
 END_AS_NAMESPACE
 

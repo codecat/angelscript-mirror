@@ -44,10 +44,11 @@ int16<br>
 int32<br>
 int64<br>
 is<br>
+mixin<br>
 namespace<br>
-not<br>
 </code></td>
 <td width=100 valign=top><code>
+not<br>
 null<br>
 or<br>
 out<br>
@@ -58,9 +59,9 @@ set*<br>
 shared*<br>
 super*<br>
 switch<br>
-this*<br>
 </code></td>
 <td width=100 valign=top><code>
+this*<br>
 true<br>
 typedef<br>
 uint<br>
