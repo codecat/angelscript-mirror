@@ -648,10 +648,10 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "array<Value> arr = {Value(2), Value(3), Value(0)}; \n"
-								  "assert( calls == 3 ); \n"
+								  "assert( calls == 0 ); \n"
 								  "array<Value> arr2; \n"
 								  "arr2 = arr; \n"
-								  "assert( calls == 6 ); \n", mod);
+								  "assert( calls == 3 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

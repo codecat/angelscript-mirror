@@ -294,11 +294,13 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 
 	Precache();
 
+	asIScriptEngine *engine = ot->GetEngine();
+
 	// Determine element size
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 		elementSize = sizeof(asPWORD);
 	else
-		elementSize = objType->GetEngine()->GetSizeOfPrimitiveType(subTypeId);
+		elementSize = engine->GetSizeOfPrimitiveType(subTypeId);
 
 	// Determine the initial size from the buffer
 	asUINT length = *(asUINT*)buf;
@@ -310,30 +312,57 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		return;
 	}
 
-	CreateBuffer(&buffer, length);
+	// For primitives and ref types the element values are passed directly in the buffer
 
-	// For primitives the element values are passed directly in the buffer
 	if( (ot->GetSubTypeId() & asTYPEID_MASK_OBJECT) == 0 )
 	{
+		CreateBuffer(&buffer, length);
+
 		// Copy the values into the internal buffer
-		memcpy(At(0), (((asUINT*)buf)+1), length * ot->GetEngine()->GetSizeOfPrimitiveType(ot->GetSubTypeId()));
+		memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
 	}
-	else if( (ot->GetSubTypeId() & asTYPEID_OBJHANDLE) )
+	else if( ot->GetSubTypeId() & asTYPEID_OBJHANDLE )
 	{
+		CreateBuffer(&buffer, length);
+
 		// Copy the handles into the internal buffer
-		memcpy(At(0), (((asUINT*)buf)+1), length * sizeof(void*));
+		memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
 
 		// TODO: list: runtime optimize: Instead of increasing the references, clear the  
 		//             handles in the incoming buffer so AngelScript won't release them
 
 		// Increase the reference for all the handles
-		asIScriptEngine *engine = ot->GetEngine();
 		for( asUINT n = 0; n < length; n++ )
 		{
 			void *obj = *(void**)At(n);
 			if( obj )
 				engine->AddRefScriptObject(obj, ot->GetSubType());
 		}
+	}
+	else if( ot->GetSubType()->GetFlags() & asOBJ_REF )
+	{
+		// Only allocate the buffer, but not the objects
+		subTypeId |= asTYPEID_OBJHANDLE;
+		CreateBuffer(&buffer, length);
+		subTypeId &= ~asTYPEID_OBJHANDLE;
+
+		// Copy the handles into the internal buffer
+		memcpy(buffer->data, (((asUINT*)buf)+1), length * elementSize);
+
+		// TODO: list: runtime optimize: Instead of increasing the references, clear the  
+		//             handles in the incoming buffer so AngelScript won't release them
+
+		// Increase the reference for all the handles
+		for( asUINT n = 0; n < length; n++ )
+		{
+			void *obj = At(n);
+			if( obj )
+				engine->AddRefScriptObject(obj, ot->GetSubType());
+		}
+	}
+	else
+	{
+		CreateBuffer(&buffer, length);
 	}
 
 	// Notify the GC of the successful creation

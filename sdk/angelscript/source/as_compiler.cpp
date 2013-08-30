@@ -2469,7 +2469,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	//             To determine the type that the array expects the list pattern should be used
 	//             but at first we can use the array's subtype.
 	if( var->dataType.GetSubType().IsPrimitive() || 
-		var->dataType.GetSubType().IsObjectHandle() )
+		var->dataType.GetSubType().IsObjectHandle() ||
+		(var->dataType.GetSubType().GetObjectType() && (var->dataType.GetSubType().GetObjectType()->flags & asOBJ_REF)) )
 	{
 		// Create a new special object type for the lists. Both asCRestore and the 
 		// context exception handler will need this to know how to parse the buffer.
@@ -2537,7 +2538,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 					lctx.bc.Instr(asBC_PopRPtr);
 					lctx.type.dataType.MakeReference(true);
 				}
-				if( var->dataType.GetSubType().IsObjectHandle() )
+				else if( var->dataType.GetSubType().IsObjectHandle() ||
+						 var->dataType.GetSubType().GetObjectType()->flags & asOBJ_REF )
 				{
 					lctx.type.isExplicitHandle = true;
 					lctx.type.dataType.MakeReference(true);
