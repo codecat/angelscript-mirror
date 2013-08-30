@@ -5341,12 +5341,25 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, asCObjectType *listPatternType
 	{
 		asUINT length = *(asUINT*)buffer;
 
-		for( asUINT n = 0; n < length; n++ )
+		if( ot->flags & asOBJ_VALUE )
 		{
-			void *ptr = *(void**)(buffer + 4 + n*AS_PTR_SIZE*4);
-			if( ptr )
+			if( ot->beh.destruct == 0 )
+				return;
+
+			for( asUINT n = 0; n < length; n++ )
 			{
-				ReleaseScriptObject(ptr, ot);
+				// TODO: list: Only call the destructor if the object has been created
+				void *ptr = (void*)(buffer + 4 + n*ot->GetSize());
+				CallObjectMethod(ptr, ot->beh.destruct);
+			}
+		}
+		else
+		{
+			for( asUINT n = 0; n < length; n++ )
+			{
+				void *ptr = *(void**)(buffer + 4 + n*AS_PTR_SIZE*4);
+				if( ptr )
+					ReleaseScriptObject(ptr, ot);
 			}
 		}
 	}

@@ -23,6 +23,7 @@ static const char *script1 =
 "import void Test() from 'DynamicModule';     \n"
 "OBJ g_obj;                                   \n"
 "array<A@> g_a = {A(),A()};                   \n"
+"array<string> g_s = {'a','b','c'};           \n"
 "A @gHandle;                                  \n"
 "funcdef void func_t(OBJ, float, A @);        \n"
 "void func(OBJ o, float f, A @a) {}           \n"
@@ -33,7 +34,7 @@ static const char *script1 =
 "  TestStruct();                              \n"
 "  TestArray();                               \n"
 "  GlobalCharArray.resize(1);                 \n"
-"  string @s = ARRAYTOHEX(GlobalCharArray);   \n"
+"  string s = ARRAYTOHEX(GlobalCharArray);    \n"
 "  func_t @f = func;                          \n"
 "  f(OBJ(), 1, A());                          \n"
 "}                                            \n"
@@ -58,7 +59,7 @@ static const char *script1 =
 "  int a;                                     \n"
 "  ETest e;                                   \n"
 "};                                           \n"
-"void TestHandle(string @str)                 \n"
+"void TestHandle(A @a)                        \n"
 "{                                            \n"
 "}                                            \n"
 "interface MyIntf                             \n"
@@ -179,6 +180,7 @@ int getInt()
 
 void ArrayToHexStr(asIScriptGeneric *gen)
 {
+	new(gen->GetAddressOfReturnLocation()) string();
 }
 
 asIScriptEngine *ConfigureEngine(int version)
@@ -186,14 +188,14 @@ asIScriptEngine *ConfigureEngine(int version)
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptArray(engine, true);
-	RegisterScriptString(engine);
+	RegisterStdString(engine);
 
 	// Register a property with the built-in array type
 	GlobalCharArray = (CScriptArray*)engine->CreateScriptObject(engine->GetObjectTypeById(engine->GetTypeIdByDecl("uint8[]")));
 	int r = engine->RegisterGlobalProperty("uint8[] GlobalCharArray", GlobalCharArray); assert( r >= 0 );
 
 	// Register function that use the built-in array type
-	r = engine->RegisterGlobalFunction("string@ ARRAYTOHEX(uint8[] &in)", asFUNCTION(ArrayToHexStr), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("string ARRAYTOHEX(uint8[] &in)", asFUNCTION(ArrayToHexStr), asCALL_GENERIC); assert( r >= 0 );
 
 
 	if( version == 1 )
@@ -222,7 +224,7 @@ void TestScripts(asIScriptEngine *engine)
 	r = mod->BindAllImportedFunctions(); assert( r >= 0 );
 
 	// Verify if handles are properly resolved
-	asIScriptFunction *func = mod->GetFunctionByDecl("void TestHandle(string @)");
+	asIScriptFunction *func = mod->GetFunctionByDecl("void TestHandle(A @)");
 	if( func == 0 ) 
 	{
 		printf("%s: Failed to identify function with handle\n", TESTNAME);
@@ -548,23 +550,23 @@ bool Test()
 		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-		if( stream.buffer.size() != 2330 )
+		if( stream.buffer.size() != 2671 )
 			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
-		if( zeroes != 640 )
+		if( zeroes != 718 )
 		{
 			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0x8F8D0847 )
+		if( crc32 != 0x754EB077 )
 			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
-		if( stream2.buffer.size() != 1982 )
+		if( stream2.buffer.size() != 2315 )
 			printf("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
-		if( zeroes != 534 )
+		if( zeroes != 608 )
 			printf("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first

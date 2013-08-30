@@ -312,13 +312,12 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		return;
 	}
 
-	// For primitives and ref types the element values are passed directly in the buffer
-
+	// Copy the values of the array elements from the buffer
 	if( (ot->GetSubTypeId() & asTYPEID_MASK_OBJECT) == 0 )
 	{
 		CreateBuffer(&buffer, length);
 
-		// Copy the values into the internal buffer
+		// Copy the values of the primitive type into the internal buffer
 		memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
 	}
 	else if( ot->GetSubTypeId() & asTYPEID_OBJHANDLE )
@@ -362,7 +361,18 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 	}
 	else
 	{
+		// TODO: Optimize by calling the copy constructor of the object instead of 
+		//       constructing with the default constructor and then assigning the value
 		CreateBuffer(&buffer, length);
+
+		// For value types we need to call the opAssign for each individual object
+		for( asUINT n = 0; n < length; n++ )
+		{
+			void *obj = At(n);
+			asBYTE *srcObj = (asBYTE*)buf;
+			srcObj += 4 + n*ot->GetSubType()->GetSize();
+			engine->AssignScriptObject(obj, srcObj, ot->GetSubType());
+		}
 	}
 
 	// Notify the GC of the successful creation
