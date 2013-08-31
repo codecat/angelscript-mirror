@@ -707,6 +707,7 @@ bool Test()
 		engine->Release();
 	}
 
+#ifndef AS_MAX_PORTABILITY
 	// Test
 	// http://www.gamedev.net/topic/640966-returning-text-crashes-as-with-mingw-471-but-not-with-441/
 	{
@@ -744,7 +745,9 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
+#ifndef AS_MAX_PORTABILITY
 	// Test that integer constants are signed by default
 	// http://www.gamedev.net/topic/625735-bizarre-errata-with-ternaries-and-integer-literals/
 	{
@@ -769,6 +772,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	// Test warnings as error
 	{
@@ -1013,6 +1017,7 @@ bool Test()
 		InstallMemoryManager();
 	}
 
+#ifndef AS_MAX_PORTABILITY
 	// Problem reported by Paril101
 	// http://www.gamedev.net/topic/636336-member-function-chaining/
 	{
@@ -1052,6 +1057,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	// Problem reported by zerochen
 	// http://www.gamedev.net/topic/634768-after-unreachable-code-wrong-error-msg/

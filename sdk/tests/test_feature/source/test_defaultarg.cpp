@@ -426,6 +426,7 @@ bool Test()
 
 	// Test use of class constructor in default argument
 	// Reported by Thomas Grip
+#ifndef AS_MAX_PORTABILITY
 	{
 		const char *script = 
 			"void MyFunc(const complex &in avX = complex(1,1)){}";
@@ -451,6 +452,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	// The test to make sure the saved bytecode keeps the default args is done in test_saveload.cpp
 	// A test to make sure script class methods with default args work is done in test_saveload.cpp

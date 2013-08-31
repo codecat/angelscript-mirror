@@ -1948,24 +1948,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		// TODO: Verify that the same factory function hasn't been registered already
 
-		// Template factories don't support autohandles as the real type is not known when calling the system function
-		if( objectType->flags & asOBJ_TEMPLATE )
-		{
-			bool hasAutoHandles = false;
-			if( internal.returnAutoHandle )
-				hasAutoHandles = true;
-
-			for( asUINT n = 0; !hasAutoHandles && n < internal.paramAutoHandles.GetLength(); n++ )
-				if( internal.paramAutoHandles[n] )
-					hasAutoHandles = true;
-
-			if( hasAutoHandles )
-			{
-				WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_AUTOHANDLE_IS_NOT_SUPPORTED_FOR_TEMPLATE_FACTORY);
-				return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-			}
-		}
-
 		// The templates take a hidden parameter with the object type
 		if( (objectType->flags & asOBJ_TEMPLATE) &&
 			(func.parameterTypes.GetLength() == 0 ||
@@ -3282,18 +3264,36 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 		scriptFunctions[ot->beh.constructors[n]]->AddRef();
 
+	// As the new template type is instanciated the engine should
+	// generate new functions to substitute the ones with the template subtype.
+	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+	{
+		int funcId = ot->beh.constructors[n];
+		asCScriptFunction *func = scriptFunctions[funcId];
+
+		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
+		{
+			// Release the old function, the new one already has its ref count set to 1
+			scriptFunctions[funcId]->Release();
+			ot->beh.constructors[n] = func->id;
+
+			if( ot->beh.construct == funcId )
+				ot->beh.construct = func->id;
+		}
+	}
+
 	ot->beh.factory = 0;
 
 	// Generate factory stubs for each of the factories
-	for( n = 0; n < templateType->beh.factories.GetLength(); n++ )
+	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 	{
-		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.factories[n]);
+		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
 
 		// The function's refCount was already initialized to 1
 		ot->beh.factories.PushLast(func->id);
 
 		// Set the default factory as well
-		if( templateType->beh.factories[n] == templateType->beh.factory )
+		if( ot->beh.constructors[n] == ot->beh.construct )
 			ot->beh.factory = func->id;
 	}
 

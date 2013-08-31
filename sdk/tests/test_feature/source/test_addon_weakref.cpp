@@ -142,6 +142,7 @@ bool Test()
 	}
 
 	// Test registering app type with weak ref
+#ifndef AS_MAX_PORTABILITY
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -179,6 +180,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	// TODO: weak: It should be possible to declare a script class to not allow weak references, and as such save the memory for the internal pointer
 	// TODO: weak: add engine property to turn off automatic support for weak references to all script classes

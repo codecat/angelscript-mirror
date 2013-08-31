@@ -15,17 +15,27 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/08/30</h2>
+<h2>Version 2.28.0 WIP - 2013/08/31</h2>
 
 <ul>
+<li>Bug fixes
+<ul>
+<li>The GET_WEAKREF_FLAG behaviour is now registered for the script types in AS_MAX_PORTABILITY too (Thanks orimoto)
+</ul>
 <li>Library
 <ul>
 <li>The list factory behaviour now receives a pointer to a buffer with all values instead of just the expected length
+<li>Engine now properly supports use of autohandles in template factories
 </ul>
 <li>Virtual machine
 <ul>
 <li>Implemented the bytecode asBC_AllocMem for handling buffers for initialization lists
 <li>asBC_FREE has been enhanced to allow it to destroy the content of an initialization list
+</ul>
+<li>Add-ons
+<ul>
+<li>The script array add-on uses the new form for the initialization list
+<li>The weakref add-on now works properly in AS_MAX_PORTABILITY too
 </ul>
 </ul>
 

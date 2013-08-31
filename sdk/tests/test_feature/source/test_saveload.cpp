@@ -648,6 +648,7 @@ bool Test()
 #endif
 	}
 
+#ifndef AS_MAX_PORTABILITY
 	// Test saving/loading global variable of registered value type
 	// http://www.gamedev.net/topic/638529-wrong-function-called-on-bytecode-restoration/
 	{
@@ -704,6 +705,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	//-----------------------------------------
 	// A different case

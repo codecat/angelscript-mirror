@@ -212,6 +212,7 @@ bool Test()
 {
 	bool fail = Test2();
 
+#ifndef AS_MAX_PORTABILITY
     // Test crash in GetLineNumber
     // http://www.gamedev.net/topic/638656-crash-in-ctx-getlinenumber/
     {
@@ -249,6 +250,7 @@ bool Test()
 
         engine->Release();
     }
+#endif
 
 	int number = 0;
 

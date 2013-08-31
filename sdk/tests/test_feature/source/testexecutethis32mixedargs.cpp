@@ -204,8 +204,10 @@ static Class1 c1;
 bool TestExecuteThis32MixedArgs()
 {
 	bool fail = false;
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	int r;
 
     r = engine->RegisterObjectType("class1", sizeof(Class1), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS); assert( r >= 0 );
@@ -218,13 +220,17 @@ bool TestExecuteThis32MixedArgs()
 #endif
     r = engine->RegisterGlobalProperty("class1 c1", &c1); assert( r >= 0 );
 
+#ifndef AS_MAX_PORTABILITY
 	CComplex::Register(engine);
 	r = engine->RegisterObjectMethod("class1", "CComplex cfunction5(int, double, float, int)", asMETHOD(Class1, cfunction5), asCALL_THISCALL); assert( r >= 0 );
+#endif
 
 	c1.a = 0xDEADC0DE;
 
     called = false;
-    ExecuteString(engine, "c1.cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
+    r = ExecuteString(engine, "c1.cfunction(9.2f, 13.3f, 18.8, 3.1415f)");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
     if( !called )
     {
         // failure
@@ -246,6 +252,7 @@ bool TestExecuteThis32MixedArgs()
         TEST_FAILED;
     }
 
+#ifndef AS_MAX_PORTABILITY
     called = false;
 	testVal = false;
 	ExecuteString(engine, "c1.cfunction5(10, 3.88, 1.92f, 97)");
@@ -253,6 +260,7 @@ bool TestExecuteThis32MixedArgs()
 		TEST_FAILED;
 	if( !testVal ) 
 		TEST_FAILED;
+#endif
 
 	r = engine->RegisterObjectType("TestClass", 0/*sizeof(TestClass)*/, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )

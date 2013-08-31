@@ -48,6 +48,7 @@ bool Test()
 #endif
 #endif
 
+#ifndef AS_MAX_PORTABILITY
 	// It should be possible to use asCALL_THISCALL_ASGLOBAL for global obj behaviours and string factory
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -62,6 +63,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	// Don't accept registering object properties with offsets larger than signed 16 bit
 	// TODO: Support 32bit offsets, but that requires changes in VM, compiler, and bytecode serialization

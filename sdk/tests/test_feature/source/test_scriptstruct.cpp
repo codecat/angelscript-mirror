@@ -523,6 +523,7 @@ bool Test()
 		engine->Release();
 	}
 
+#ifndef AS_MAX_PORTABILITY
 	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -942,6 +943,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

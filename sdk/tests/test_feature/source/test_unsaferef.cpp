@@ -316,6 +316,7 @@ bool Test()
 		engine->Release();		
 	}
 
+#ifndef AS_MAX_PORTABILITY
 	// Test with copy constructor that takes unsafe reference
 	// http://www.gamedev.net/topic/638613-asassert-in-file-as-compillercpp-line-675/
 	{
@@ -358,7 +359,9 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
+#ifndef AS_MAX_PORTABILITY
 	// Test with assignment operator that takes unsafe reference
 	{
 		bout.buffer = "";
@@ -400,6 +403,7 @@ bool Test()
 
 		engine->Release();
 	}
+#endif
 
 	// Success
 	return fail;

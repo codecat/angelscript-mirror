@@ -22,6 +22,7 @@
     <ProjectGuid>{D382A91E-AD6C-4689-894B-82DD0955015F}</ProjectGuid>
     <RootNamespace>msvc8</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <ProjectName>msvc test as</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
