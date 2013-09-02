@@ -38,7 +38,7 @@ much effort.
 asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 // Set the message callback to receive information on errors in human readable form.
-r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); assert( r >= 0 );
+int r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); assert( r >= 0 );
 
 // AngelScript doesn't have a built-in string type, as there is no definite standard 
 // string type for C++ applications. Every developer is free to register it's own string type.
@@ -72,7 +72,7 @@ handling \#include directives.
 // performs a pre-processing pass if necessary, and then tells
 // the engine to build a script module.
 CScriptBuilder builder;
-r = builder.StartNewModule(engine, "MyModule"); 
+int r = builder.StartNewModule(engine, "MyModule"); 
 if( r < 0 ) 
 {
   // If the code fails here it is usually because there
@@ -117,7 +117,7 @@ if( func == 0 )
 // Create our context, prepare it, and then execute
 asIScriptContext *ctx = engine->CreateContext();
 ctx->Prepare(func);
-r = ctx->Execute();
+int r = ctx->Execute();
 if( r != asEXECUTION_FINISHED )
 {
   // The execution didn't complete as expected. Determine what happened.

@@ -154,6 +154,7 @@ public:
 protected:
 	friend class asCModule;
 	friend class asCParser;
+	friend class asCScriptFunction;
 
 	void               Reset();
 

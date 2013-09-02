@@ -2383,6 +2383,9 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 {
 	// TODO: list: When the list pattern can take any form it is not sufficient 
 	//             to just calculate the offset with a formula
+	//             Should use a new bytecode instruction that sets the size. It should
+	//             take the offset into the array and the set the size. The list adjuster
+	//             will then be able to determine how many values comes after that
 
 	if( offset > 0 )
 	{

@@ -44,6 +44,9 @@
 #include "as_callfunc.h"
 #include "as_bytecode.h"
 #include "as_texts.h"
+#include "as_scriptnode.h"
+#include "as_builder.h"
+#include "as_scriptcode.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -205,6 +208,53 @@ asIScriptFunction *asCScriptFunction::GetDelegateFunction() const
 }
 
 // internal
+int asCScriptFunction::RegisterListPattern(const char *decl, asCScriptNode *listNodes)
+{
+	if( listNodes == 0 )
+		return asINVALID_ARG;
+
+	// Build the representation of the list pattern from the script nodes
+	asSListPatternNode *node;
+	listPattern = asNEW(asSListPatternNode)(asLPT_START);
+	node = listPattern;
+
+	listNodes = listNodes->firstChild;
+	while( listNodes )
+	{
+		if( listNodes->nodeType == snIdentifier )
+		{
+			asSListPatternNode *n = asNEW(asSListPatternNode)(asLPT_REPEAT);
+			node->next = n;
+			node = n;
+		}
+		else if( listNodes->nodeType == snDataType )
+		{
+			asCDataType dt;
+			asCBuilder builder(engine, 0);
+			asCScriptCode code;
+			code.SetCode("", decl, 0, false);
+			dt = builder.CreateDataTypeFromNode(listNodes, &code, engine->defaultNamespace, false, returnType.GetObjectType());
+
+			asSListPatternNode *n = asNEW(asSListPatternDataTypeNode)(dt);
+			node->next = n;
+			node = n;
+		}
+		else
+		{
+			// Unexpected token in the list
+			// TODO: list: Report error
+			return -1;
+		}
+
+		listNodes = listNodes->next;
+	}
+
+	node->next = asNEW(asSListPatternNode)(asLPT_END);
+
+	return 0;
+}
+
+// internal
 asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType _funcType)
 {
 	refCount.set(1);
@@ -230,6 +280,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	nameSpace              = engine->nameSpaces[0];
 	objForDelegate         = 0;
 	funcForDelegate        = 0;
+	listPattern            = 0;
 
 	if( funcType == asFUNC_SCRIPT )
 		AllocateScriptFunctionData();
@@ -311,6 +362,14 @@ void asCScriptFunction::DestroyInternal()
 	sysFuncIntf = 0;
 
 	DeallocateScriptFunctionData();
+
+	// Deallocate list pattern data
+	while( listPattern )
+	{
+		asSListPatternNode *n = listPattern->next;
+		asDELETE(listPattern, asSListPatternNode);
+		listPattern = n;
+	}
 }
 
 // interface
@@ -547,6 +606,33 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 
 	if( isReadOnly )
 		str += " const";
+
+	// Add the declaration of the list pattern
+	if( listPattern )
+	{
+		asSListPatternNode *n = listPattern;
+		while( n )
+		{
+			if( n->type == asLPT_START )
+				str += " {";
+			else if( n->type == asLPT_END )
+				str += " }";
+			else if( n->type == asLPT_REPEAT )
+				str += " repeat";
+			else if( n->type == asLPT_IDENTIFIER )
+			{
+				str += " ";
+				str += reinterpret_cast<asSListPatternIdentifierNode*>(n)->identifier;
+			}
+			else if( n->type == asLPT_TYPE )
+			{
+				str += " ";
+				str += reinterpret_cast<asSListPatternDataTypeNode*>(n)->dataType.Format();
+			}
+
+			n = n->next;
+		}
+	}
 
 	return str;
 }

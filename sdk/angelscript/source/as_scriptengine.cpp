@@ -1820,8 +1820,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 	asCScriptNode *listPattern = 0;
 	asCBuilder bld(this, 0);
-	// TODO: list: Expect a list pattern
-	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, 0, 0 /*behaviour == asBEHAVE_LIST_FACTORY ? &listPattern : 0*/);
+	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, 0, behaviour == asBEHAVE_LIST_FACTORY ? &listPattern : 0);
 	if( r < 0 )
 		return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 	func.name.Format("_beh_%d_", behaviour);
@@ -1990,8 +1989,11 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 				}
 
-				// TODO: list: store the list pattern so the compiler will know how to compile the list
-				// TODO: list: it must also be possible for the application to retrieve the list pattern declaration for saving the configuration
+				// Store the list pattern for this function
+				int r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
+				if( r < 0 )
+					return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+
 				if( listPattern )
 					listPattern->Destroy(this);
 			}

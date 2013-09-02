@@ -52,6 +52,7 @@ class asCScriptEngine;
 class asCModule;
 class asCConfigGroup;
 class asCGlobalProperty;
+class asCScriptNode;
 struct asSNameSpace;
 
 struct asSScriptVariable
@@ -60,6 +61,35 @@ struct asSScriptVariable
 	asCDataType type;
 	int         stackOffset;
 	asUINT      declaredAtProgramPos;
+};
+
+enum asEListPatternNodeType
+{
+	asLPT_REPEAT,
+	asLPT_START,
+	asLPT_END,
+	asLPT_TYPE,
+	asLPT_IDENTIFIER
+};
+
+struct asSListPatternNode
+{
+	asSListPatternNode(asEListPatternNodeType t) : type(t), next(0) {}
+	virtual ~asSListPatternNode() {};
+	asEListPatternNodeType  type;
+	asSListPatternNode     *next;
+};
+
+struct asSListPatternDataTypeNode : public asSListPatternNode
+{
+	asSListPatternDataTypeNode(const asCDataType &dt) : asSListPatternNode(asLPT_TYPE), dataType(dt) {}
+	asCDataType dataType;
+};
+
+struct asSListPatternIdentifierNode : public asSListPatternNode
+{
+	asSListPatternIdentifierNode(const asCString &i) : asSListPatternNode(asLPT_IDENTIFIER), identifier(i) {}
+	asCString identifier;
 };
 
 enum asEObjVarInfoOption
@@ -171,6 +201,8 @@ public:
 
 	void      MakeDelegate(asCScriptFunction *func, void *obj);
 
+	int       RegisterListPattern(const char *decl, asCScriptNode *listPattern);
+
 	bool      DoesReturnOnStack() const;
 
 	void      JITCompile();
@@ -225,6 +257,9 @@ public:
 	// Used by asFUNC_DELEGATE
 	void              *objForDelegate;
 	asCScriptFunction *funcForDelegate;
+
+	// Used by list factory behaviour
+	asSListPatternNode *listPattern;
 
 	// Used by asFUNC_SCRIPT
 	struct ScriptFunctionData

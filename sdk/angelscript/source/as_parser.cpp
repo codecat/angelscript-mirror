@@ -3017,24 +3017,31 @@ asCScriptNode *asCParser::ParseListPattern()
 
 	sToken start = t1;
 
-	int level = 1;
-	while( level > 0 && !isSyntaxError )
+	while( !isSyntaxError )
 	{
 		GetToken(&t1);
 		if( t1.type == ttEndStatementBlock )
-			level--;
-		else if( t1.type == ttStartStatementBlock )
-			level++;
-		else if( t1.type == ttNonTerminatedStringConstant )
-		{
-			Error(TXT_NONTERMINATED_STRING, &t1);
 			break;
+		else if( t1.type == ttStartStatementBlock )
+		{
+			RewindTo(&t1);
+			node->AddChildLast(ParseListPattern());
+		}
+		else if( t1.type == ttIdentifier && IdentifierIs(t1, "repeat") )
+		{
+			RewindTo(&t1);
+			node->AddChildLast(ParseIdentifier());
 		}
 		else if( t1.type == ttEnd )
 		{
 			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
 			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
 			break;
+		}
+		else
+		{
+			RewindTo(&t1);
+			node->AddChildLast(ParseType(true, true));
 		}
 	}
 
