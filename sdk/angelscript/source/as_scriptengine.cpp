@@ -3508,6 +3508,32 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 	func->JITCompile();
 
+	// Need to translate the list pattern too so the VM and compiler will know the correct type of the members
+	if( factory->listPattern )
+	{
+		// TODO: list: Implement this
+		asSListPatternNode *n = factory->listPattern;
+		asSListPatternNode *last = 0;
+		while( n )
+		{
+			asSListPatternNode *newNode = n->Duplicate();
+			if( newNode->type == asLPT_TYPE )
+			{
+				asSListPatternDataTypeNode *typeNode = reinterpret_cast<asSListPatternDataTypeNode*>(newNode);
+				typeNode->dataType = DetermineTypeForTemplate(typeNode->dataType, templateType, ot);
+			}
+
+			if( last )
+				last->next = newNode;
+			else
+				func->listPattern = newNode;
+
+			last = newNode;
+
+			n = n->next;
+		}
+	}
+
 	return func;
 }
 

@@ -76,6 +76,7 @@ struct asSListPatternNode
 {
 	asSListPatternNode(asEListPatternNodeType t) : type(t), next(0) {}
 	virtual ~asSListPatternNode() {};
+	virtual asSListPatternNode *Duplicate() { return asNEW(asSListPatternNode)(type); }
 	asEListPatternNodeType  type;
 	asSListPatternNode     *next;
 };
@@ -83,12 +84,14 @@ struct asSListPatternNode
 struct asSListPatternDataTypeNode : public asSListPatternNode
 {
 	asSListPatternDataTypeNode(const asCDataType &dt) : asSListPatternNode(asLPT_TYPE), dataType(dt) {}
+	asSListPatternNode *Duplicate() { return asNEW(asSListPatternDataTypeNode)(dataType); }
 	asCDataType dataType;
 };
 
 struct asSListPatternIdentifierNode : public asSListPatternNode
 {
 	asSListPatternIdentifierNode(const asCString &i) : asSListPatternNode(asLPT_IDENTIFIER), identifier(i) {}
+	asSListPatternNode *Duplicate() { return asNEW(asSListPatternIdentifierNode)(identifier); }
 	asCString identifier;
 };
 

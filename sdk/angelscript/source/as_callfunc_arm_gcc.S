@@ -265,22 +265,23 @@ nomoreargsarmFuncR0R1:
 .global armFuncR0R1
 .global armFuncObjLast
 .global armFuncR0ObjLast
-    
+
 armFunc:
-    stmfd   sp!, {r4-r8, r10, lr}
+    stmfd   sp!, {r4-r8, r10, r11, lr}	/* We´re storing r11 just to keep the stack aligned to an 8 byte boundary */
+
     mov     r6, r0  /* arg table */
     movs    r7, r1  /* arg size (also set the condition code flags so that we detect if there are no arguments) */
     mov     r4, r2  /* function address */
     mov     r8, #0
-    
+
     /* Load float and double args into d0-d7 and s0-s15 */
-    add		r10, r6, #272	/* r10 (r6 + 272) points to the first value for the VFP registers */
+    add     r10, r6, #272	/* r10 (r6 + 272) points to the first value for the VFP registers */
     fldmiad r10, {d0-d7}	/* Load contents starting at r10 into registers d0-d7 */
-    
-	/* If there are no arguments to set into r0-r3 */
-	/* go check if there are arguments for the stack */
+
+    /* If there are no arguments to set into r0-r3 */
+    /* go check if there are arguments for the stack */
     beq     stackargs
-        
+
     /* Load the first 4 arguments into r0-r3 */
     cmp     r7, #4
     ldrge   r0, [r6]
@@ -289,24 +290,24 @@ armFunc:
     cmp     r7, #12
     ldrge   r2, [r6, #8]
     cmp     r7, #16
-    ldrge   r3, [r6, #12]        
+    ldrge   r3, [r6, #12]
     
 stackargs:
-	ldr		r5, [r6, #268]	/* Load stack size into r5 */
-	movs	r7, r5			/* Load stack size into r7, checking for 0 args */
-	
-	/* If there are no args for the stack, branch */
-	beq		nomoreargs
+    ldr     r5, [r6, #268]	/* Load stack size into r5 */
+    movs    r7, r5			/* Load stack size into r7, checking for 0 args */
+
+    /* If there are no args for the stack, branch */
+    beq     nomoreargs
 
     /* Load the rest of the arguments onto the stack */
-	/* Ensure 8-byte stack alignment */
-	mov		r8, sp
-	sub		sp, sp, r7
-	sub		sp, sp, #8
+    /* Ensure 8-byte stack alignment */
+    mov     r8, sp
+    sub     sp, sp, r7
+    sub     sp, sp, #8
     bic     sp, sp, #7
     sub     r8, r8, sp
     mov     r12, sp				/* copy size != frame size, so store frame start sp	*/
-    add		r6, r6, #16			/* Set r6 to point to the first arg to be placed on the stack */
+    add     r6, r6, #16			/* Set r6 to point to the first arg to be placed on the stack */
 
 stackargsloop:
     ldr     r5, [r6], #4
@@ -317,10 +318,10 @@ stackargsloop:
 
 nomoreargs:
     blx     r4
-    fstmiad	r10, {d0-d7}		/* Copy contents of registers d0-d7 to the address stored in r10 */
+    fstmiad r10, {d0-d7}		/* Copy contents of registers d0-d7 to the address stored in r10 */
     add     sp, sp, r8
     
-    ldmfd   sp!, {r4-r8, r10, pc}
+    ldmfd   sp!, {r4-r8, r10, r11, pc}
     
 /* --------------------------------------------------------------------------------------------*/
 
@@ -394,7 +395,7 @@ nomoreargsarmFuncObjLast:
     fstmiad	r10, {d0-d7}	/* Copy contents of registers d0-d10 to the address stored in r10 */
     add     sp, sp, r8
     
-    ldmfd   sp!, {r4-r8, r10,r11, pc}
+    ldmfd   sp!, {r4-r8, r10, r11, pc}
     
 /* ------------------------------------------------------------------------------------------- */
 

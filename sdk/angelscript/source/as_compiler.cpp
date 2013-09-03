@@ -2458,6 +2458,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	// Find the list factory
 	// TODO: initlist: Add support for value types as well
 	int funcId = var->dataType.GetBehaviour()->listFactory;
+	asASSERT( engine->scriptFunctions[funcId]->listPattern );
 
 	// TODO: runtime optimize: A future optimization should be to use the stack space directly
 	//                         for small buffers so that the dynamic allocation is skipped
@@ -2471,7 +2472,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	// Allocate a temporary variable to hold the pointer to the buffer
 	int bufferVar = AllocateVariable(asCDataType::CreateObject(listPatternType, false), true);
 	asUINT size;
-	if( var->dataType.GetSubType().IsPrimitive() ) 
+	if( var->dataType.GetSubType().IsPrimitive() )
 		size = var->dataType.GetSubType().GetSizeInMemoryBytes();
 	else if( var->dataType.GetSubType().GetObjectType()->flags & asOBJ_VALUE )
 	{
