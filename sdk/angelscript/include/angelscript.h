@@ -1774,11 +1774,11 @@ const asSBCInfo asBCInfo[256] =
 };
 
 // Macros to access bytecode instruction arguments
-#define asBC_DWORDARG(x)  (asDWORD(*(x+1)))
-#define asBC_INTARG(x)    (int(*(x+1)))
-#define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
-#define asBC_FLOATARG(x)  (*(float*)(x+1))
-#define asBC_PTRARG(x)    (*(asPWORD*)(x+1))
+#define asBC_DWORDARG(x)  (*(((asDWORD*)x)+1))
+#define asBC_INTARG(x)    (*(int*)(((asDWORD*)x)+1))
+#define asBC_QWORDARG(x)  (*(asQWORD*)(((asDWORD*)x)+1))
+#define asBC_FLOATARG(x)  (*(float*)(((asDWORD*)x)+1))
+#define asBC_PTRARG(x)    (*(asPWORD*)(((asDWORD*)x)+1))
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
 #define asBC_WORDARG1(x)  (*(((asWORD*)x)+2))
 #define asBC_SWORDARG0(x) (*(((short*)x)+1))
