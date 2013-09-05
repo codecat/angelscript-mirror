@@ -1181,11 +1181,14 @@ asDWORD asCScriptFunction::GetAccessMask() const
 // internal
 void asCScriptFunction::JITCompile()
 {
-	asIJITCompiler *jit = engine->GetJITCompiler();
-	if( !jit )
+	if( funcType != asFUNC_SCRIPT )
 		return;
 
 	asASSERT( scriptData );
+
+	asIJITCompiler *jit = engine->GetJITCompiler();
+	if( !jit )
+		return;
 
 	// Release the previous function, if any
 	if( scriptData->jitFunction )

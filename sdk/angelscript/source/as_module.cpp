@@ -190,10 +190,12 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 // internal
 void asCModule::JITCompile()
 {
+	asIJITCompiler *jit = engine->GetJITCompiler();
+	if( !jit )
+		return;
+
 	for (unsigned int i = 0; i < scriptFunctions.GetLength(); i++)
-	{
 		scriptFunctions[i]->JITCompile();
-	}
 }
 
 // interface
@@ -240,9 +242,9 @@ int asCModule::Build()
 		return r;
 	}
 
-    JITCompile();
+	JITCompile();
 
- 	engine->PrepareEngine();
+	engine->PrepareEngine();
 
 #ifdef AS_DEBUG
 	// Verify that there are no unwanted gaps in the scriptFunctions array.
