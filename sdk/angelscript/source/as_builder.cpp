@@ -4394,9 +4394,10 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				for( asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
 				{
-					if(str == currentType->templateSubTypes[subtypeIndex].GetObjectType()->name )
+					asCObjectType *type = currentType->templateSubTypes[subtypeIndex].GetObjectType();
+					if( type && str == type->name )
 					{
-						ot = currentType->templateSubTypes[subtypeIndex].GetObjectType();
+						ot = type;
 						break;
 					}
 				}

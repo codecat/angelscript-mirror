@@ -233,11 +233,13 @@ bool Test()
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
 
 		engine->RegisterObjectType("MyDualTmpl<class T1, class T2>", 0, asOBJ_REF | asOBJ_TEMPLATE);
 		engine->RegisterObjectBehaviour("MyDualTmpl<T1,T2>", asBEHAVE_FACTORY, "MyDualTmpl<T1,T2>@ f(int&in)", asFUNCTION(MyDualTmpl_factory), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("MyDualTmpl<T1,T2>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyDualTmpl,AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("MyDualTmpl<T1,T2>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyDualTmpl,Release), asCALL_THISCALL);
+		engine->RegisterObjectMethod("MyDualTmpl<T1,T2>", "T1 &func(const T2 &in)", asFUNCTION(0), asCALL_THISCALL);
 
 		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -255,6 +257,14 @@ bool Test()
 		engine->DiscardModule("test");
 
 		engine->GetGCStatistics(&size, &destr, &detect);
+
+		// It must be possible to find method by declaration on the template instances
+		asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("MyDualTmpl<int, string>"));
+		if( ot == 0 )
+			TEST_FAILED;
+		asIScriptFunction *mthd = ot->GetMethodByDecl("int &func(const string &in)");
+		if( mthd == 0 )
+			TEST_FAILED;
 
 		engine->Release();
 	}
