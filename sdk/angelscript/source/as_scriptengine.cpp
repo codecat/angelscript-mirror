@@ -5361,35 +5361,88 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, asCObjectType *listPatternType
 {
 	asASSERT( listPatternType && (listPatternType->flags & asOBJ_LIST_PATTERN) );
 
-	// TODO: list: The list pattern determines the content of the buffer
-
+	// Get the list pattern from the listFactory function
+	// TODO: runtime optimize: Store the used list factory in the listPatternType itself
+	// TODO: runtime optimize: Keep a flag to indicate if there is really a need to free anything
 	asCObjectType *ot = listPatternType->templateSubTypes[0].GetObjectType();
-	ot = ot->templateSubTypes[0].GetObjectType();
-	if( ot && (ot->flags & asOBJ_ENUM) == 0 )
+	asCScriptFunction *listFactory = scriptFunctions[ot->beh.listFactory];
+	asASSERT( listFactory );
+
+	// We'll need a stack for the more complex patterns that uses nested groups of data
+	struct SInfo { asUINT length; asSListPatternNode *node; };
+	asCArray<SInfo> stack;
+
+	asUINT count = 0;
+
+	asSListPatternNode *node = listFactory->listPattern->next;
+	while( node )
 	{
-		asUINT length = *(asUINT*)buffer;
-
-		if( ot->flags & asOBJ_VALUE )
+		if( node->type == asLPT_REPEAT )
 		{
-			if( ot->beh.destruct == 0 )
+			if( count )
+			{
+				// Push the current info on the stack
+				SInfo info = {count, node};
+				stack.PushLast(info);
+			}
+
+			// Determine how many times the pattern repeat
+			count = *(asUINT*)buffer;
+			buffer += 4;
+		}
+		else if( node->type == asLPT_TYPE )
+		{
+			asCDataType &dt = reinterpret_cast<asSListPatternDataTypeNode*>(node)->dataType;
+
+			ot = dt.GetObjectType();
+			if( ot && (ot->flags & asOBJ_ENUM) == 0 )
+			{
+				// Free all instances of this type
+				if( ot->flags & asOBJ_VALUE )
+				{
+					if( ot->beh.destruct )
+					{
+						// Call the destructor for each of the objects
+						while( count-- )
+						{
+							// TODO: list: Only call the destructor if the object has been created
+							void *ptr = (void*)buffer;
+							CallObjectMethod(ptr, ot->beh.destruct);
+							buffer += ot->GetSize();
+						}
+					}
+					else
+					{
+						// Advance the pointer in the buffer
+						buffer += count*ot->GetSize();
+						count = 0;
+					}
+				}
+				else
+				{
+					// Call the release behaviour for each of the pointers
+					while( count-- )
+					{
+						void *ptr = *(void**)buffer;
+						if( ptr )
+							ReleaseScriptObject(ptr, ot);
+						buffer += AS_PTR_SIZE*4;
+					}
+				}
+			}
+			else
+			{
+				// Advance the buffer
+				buffer += count*dt.GetSizeInMemoryBytes();
+			}
+		}
+		else if( node->type == asLPT_END )
+		{
+			if( stack.GetLength() == 0 )
 				return;
+		}
 
-			for( asUINT n = 0; n < length; n++ )
-			{
-				// TODO: list: Only call the destructor if the object has been created
-				void *ptr = (void*)(buffer + 4 + n*ot->GetSize());
-				CallObjectMethod(ptr, ot->beh.destruct);
-			}
-		}
-		else
-		{
-			for( asUINT n = 0; n < length; n++ )
-			{
-				void *ptr = *(void**)(buffer + 4 + n*AS_PTR_SIZE*4);
-				if( ptr )
-					ReleaseScriptObject(ptr, ot);
-			}
-		}
+		node = node->next;
 	}
 }
 
