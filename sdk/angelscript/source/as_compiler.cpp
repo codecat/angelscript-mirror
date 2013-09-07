@@ -2444,7 +2444,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		return;
 	}
 
-	// Construct the array with the size elements
+	// Construct the buffer with the elements
 
 	// Find the list factory
 	// TODO: initlist: Add support for value types as well
@@ -2454,8 +2454,6 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	// TODO: runtime optimize: A future optimization should be to use the stack space directly
 	//                         for small buffers so that the dynamic allocation is skipped
 
-	// TODO: list: To determine the type that the array expects the list pattern should be used
-
 	// Create a new special object type for the lists. Both asCRestore and the 
 	// context exception handler will need this to know how to parse the buffer.
 	asCObjectType *listPatternType = engine->GetListPatternType(funcId);
@@ -2464,141 +2462,13 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	int bufferVar = AllocateVariable(asCDataType::CreateObject(listPatternType, false), true);
 	asUINT bufferSize = 0;
 
-	// The first dword will hold the number of elements in the list
-	bufferSize += 4;
-	asUINT countElements = 0;
-
-	// Determine the size of the element
-	asUINT size;
-	if( var->dataType.GetSubType().IsPrimitive() )
-		size = var->dataType.GetSubType().GetSizeInMemoryBytes();
-	else if( var->dataType.GetSubType().GetObjectType()->flags & asOBJ_VALUE )
-	{
-		size = var->dataType.GetSubType().GetSizeInMemoryBytes();
-		asASSERT( size <= 4 || (size & 0x3) == 0 );
-	}
-	else
-		size = AS_PTR_SIZE*4;
-
 	// Evaluate all elements of the list
 	asSExprContext valueExpr(engine);
 	asCScriptNode *el = node->firstChild;
-	while( el )
-	{
-		if( el->nodeType == snAssignment || el->nodeType == snInitList )
-		{
-			asSExprContext lctx(engine);
-			asSExprContext rctx(engine);
-
-			if( el->nodeType == snAssignment )
-			{
-				// Compile the assignment expression
-				CompileAssignment(el, &rctx);
-			}
-			else if( el->nodeType == snInitList )
-			{
-				int offset = AllocateVariable(var->dataType.GetSubType(), true);
-
-				rctx.type.Set(var->dataType.GetSubType());
-				rctx.type.isVariable = true;
-				rctx.type.isTemporary = true;
-				rctx.type.stackOffset = (short)offset;
-
-				CompileInitList(&rctx.type, el, &rctx.bc, 0);
-
-				// Put the object on the stack
-				rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
-
-				// It is a reference that we place on the stack
-				rctx.type.dataType.MakeReference(true);
-			}
-
-			// Compile the lvalue
-			lctx.bc.InstrSHORT(asBC_PSF, bufferVar);
-			lctx.bc.Instr(asBC_RDSPtr);
-			lctx.bc.InstrSHORT_DW(asBC_ADDSi, bufferSize, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
-			lctx.type.Set(var->dataType.GetSubType());
-			lctx.type.isLValue = true;
-			if( var->dataType.GetSubType().IsPrimitive() )
-			{
-				lctx.bc.Instr(asBC_PopRPtr);
-				lctx.type.dataType.MakeReference(true);
-			}
-			else if( var->dataType.GetSubType().IsObjectHandle() ||
-					 var->dataType.GetSubType().GetObjectType()->flags & asOBJ_REF )
-			{
-				lctx.type.isExplicitHandle = true;
-				lctx.type.dataType.MakeReference(true);
-			}
-			else
-			{
-				asASSERT( var->dataType.GetSubType().GetObjectType()->flags & asOBJ_VALUE );
-
-				// Make sure the object has been constructed before the assignment
-				// TODO: runtime optimize: Use copy constructor instead of assignment to initialize the objects
-				asCDataType type = var->dataType.GetSubType();
-				asSTypeBehaviour *beh = type.GetBehaviour();
-				int func = 0;
-				if( beh ) func = beh->construct;
-				if( func == 0 && (type.GetObjectType()->flags & asOBJ_POD) == 0 )
-				{
-					asCString str;
-					// TODO: funcdef: asCDataType should have a GetTypeName()
-					if( type.GetFuncDef() )
-						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetFuncDef()->GetName());
-					else
-						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, type.GetObjectType()->GetName());
-					Error(str, node);
-				}
-				else if( func )
-				{
-					// Call the constructor as a normal function
-					valueExpr.bc.InstrSHORT(asBC_PSF, bufferVar);
-					valueExpr.bc.Instr(asBC_RDSPtr);
-					valueExpr.bc.InstrSHORT_DW(asBC_ADDSi,bufferSize, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
-
-					asSExprContext ctx(engine);
-					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
-					valueExpr.bc.AddCode(&ctx.bc);
-				}
-			}
-
-			asSExprContext ctx(engine);
-			DoAssignment(&ctx, &lctx, &rctx, el, el, ttAssignment, el);
-
-			if( !lctx.type.dataType.IsPrimitive() )
-				ctx.bc.Instr(asBC_PopPtr);
-
-			// Release temporary variables used by expression
-			ReleaseTemporaryVariable(ctx.type, &ctx.bc);
-
-			ProcessDeferredParams(&ctx);
-
-			valueExpr.bc.AddCode(&ctx.bc);
-
-			bufferSize += size;
-		}
-		else
-		{
-			// There is no specific value so we need to fill it with a default value
-			// TODO: list: For value types with default constructor we need to call the constructor
-			// TOOD: list: It should probably not be allowed to skip any value
-			bufferSize += size;
-		}
-
-		countElements++;
-		el = el->next;
-	}
-
-	// The first dword in the buffer will hold the number of elements
-	asSExprContext repeatExpr(engine);
-	repeatExpr.bc.InstrSHORT(asBC_PSF, bufferVar);
-	repeatExpr.bc.Instr(asBC_RDSPtr);
-	repeatExpr.bc.Instr(asBC_PopRPtr);
-	int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
-	repeatExpr.bc.InstrSHORT_DW(asBC_SetV4, offset, countElements);
-	repeatExpr.bc.InstrSHORT(asBC_WRTV4, offset);
-	ReleaseTemporaryVariable(offset, &repeatExpr.bc);
+	asSListPatternNode *patternNode = engine->scriptFunctions[listPatternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
+	CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), bufferVar, bufferSize, valueExpr.bc);
+	asASSERT( patternNode == 0 );
+	asASSERT( el == 0 );
 
 	// After all values have been evaluated we know the final size of the buffer
 	asSExprContext allocExpr(engine);
@@ -2606,7 +2476,6 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 	// Merge the bytecode into the final sequence
 	bc->AddCode(&allocExpr.bc);
-	bc->AddCode(&repeatExpr.bc);
 	bc->AddCode(&valueExpr.bc);
 
 	// The object itself is the last to be created and will receive the pointer to the buffer
@@ -2655,6 +2524,180 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	// each element in the buffer so there is no need to do this manually
 	bc->InstrW_PTR(asBC_FREE, bufferVar, listPatternType);
 	ReleaseTemporaryVariable(bufferVar, bc);
+}
+
+int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScriptNode *&valueNode, int bufferTypeId, short bufferVar, asUINT &bufferSize, asCByteCode &byteCode)
+{
+	if( patternNode->type == asLPT_START )
+	{
+		// Compile all values until asLPT_END
+		patternNode = patternNode->next;
+		while( patternNode->type != asLPT_END )
+		{
+			int r = CompileInitListElement(patternNode, valueNode, bufferTypeId, bufferVar, bufferSize, byteCode);
+			if( r < 0 ) return r;
+			asASSERT( patternNode );
+		}
+		
+		// Move to the next node
+		patternNode = patternNode->next;
+	}
+	else if( patternNode->type == asLPT_REPEAT )
+	{
+		// The following values will be repeated N times
+		patternNode = patternNode->next;
+
+		// Keep track of the patternNode so it can be reset
+		asSListPatternNode *nextNode = patternNode;
+
+		// The first dword will hold the number of elements in the list
+		bufferSize += 4;
+		asUINT countElements = 0;
+
+		asSExprContext ctx(engine);
+		while( valueNode )
+		{
+			patternNode = nextNode;
+			int r = CompileInitListElement(patternNode, valueNode, bufferTypeId, bufferVar, bufferSize, ctx.bc);
+			if( r < 0 ) return r;
+
+			countElements++;
+		}
+
+		// The first dword in the buffer will hold the number of elements
+		asSExprContext repeatExpr(engine);
+		byteCode.InstrSHORT(asBC_PSF, bufferVar);
+		byteCode.Instr(asBC_RDSPtr);
+		byteCode.Instr(asBC_PopRPtr);
+		int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
+		byteCode.InstrSHORT_DW(asBC_SetV4, offset, countElements);
+		byteCode.InstrSHORT(asBC_WRTV4, offset);
+		ReleaseTemporaryVariable(offset, &byteCode);
+
+		// Add the values
+		byteCode.AddCode(&ctx.bc);
+	}
+	else if( patternNode->type == asLPT_TYPE )
+	{
+		// Determine the size of the element
+		asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
+		asUINT size;
+		if( dt.IsPrimitive() )
+			size = dt.GetSizeInMemoryBytes();
+		else if( dt.GetObjectType()->flags & asOBJ_VALUE )
+		{
+			size = dt.GetSizeInMemoryBytes();
+			asASSERT( size <= 4 || (size & 0x3) == 0 );
+		}
+		else
+			size = AS_PTR_SIZE*4;
+
+		if( valueNode->nodeType == snAssignment || valueNode->nodeType == snInitList )
+		{
+			asSExprContext lctx(engine);
+			asSExprContext rctx(engine);
+
+			if( valueNode->nodeType == snAssignment )
+			{
+				// Compile the assignment expression
+				CompileAssignment(valueNode, &rctx);
+			}
+			else if( valueNode->nodeType == snInitList )
+			{
+				int offset = AllocateVariable(dt, true);
+
+				rctx.type.Set(dt);
+				rctx.type.isVariable = true;
+				rctx.type.isTemporary = true;
+				rctx.type.stackOffset = (short)offset;
+
+				CompileInitList(&rctx.type, valueNode, &rctx.bc, 0);
+
+				// Put the object on the stack
+				rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
+
+				// It is a reference that we place on the stack
+				rctx.type.dataType.MakeReference(true);
+			}
+
+			// Compile the lvalue
+			lctx.bc.InstrSHORT(asBC_PSF, bufferVar);
+			lctx.bc.Instr(asBC_RDSPtr);
+			lctx.bc.InstrSHORT_DW(asBC_ADDSi, bufferSize, bufferTypeId);
+			lctx.type.Set(dt);
+			lctx.type.isLValue = true;
+			if( dt.IsPrimitive() )
+			{
+				lctx.bc.Instr(asBC_PopRPtr);
+				lctx.type.dataType.MakeReference(true);
+			}
+			else if( dt.IsObjectHandle() ||
+					 dt.GetObjectType()->flags & asOBJ_REF )
+			{
+				lctx.type.isExplicitHandle = true;
+				lctx.type.dataType.MakeReference(true);
+			}
+			else
+			{
+				asASSERT( dt.GetObjectType()->flags & asOBJ_VALUE );
+
+				// Make sure the object has been constructed before the assignment
+				// TODO: runtime optimize: Use copy constructor instead of assignment to initialize the objects
+				asSTypeBehaviour *beh = dt.GetBehaviour();
+				int func = 0;
+				if( beh ) func = beh->construct;
+				if( func == 0 && (dt.GetObjectType()->flags & asOBJ_POD) == 0 )
+				{
+					asCString str;
+					// TODO: funcdef: asCDataType should have a GetTypeName()
+					if( dt.GetFuncDef() )
+						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
+					else
+						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
+					Error(str, valueNode);
+				}
+				else if( func )
+				{
+					// Call the constructor as a normal function
+					byteCode.InstrSHORT(asBC_PSF, bufferVar);
+					byteCode.Instr(asBC_RDSPtr);
+					byteCode.InstrSHORT_DW(asBC_ADDSi,bufferSize, bufferTypeId);
+
+					asSExprContext ctx(engine);
+					PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());
+					byteCode.AddCode(&ctx.bc);
+				}
+			}
+
+			asSExprContext ctx(engine);
+			DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
+
+			if( !lctx.type.dataType.IsPrimitive() )
+				ctx.bc.Instr(asBC_PopPtr);
+
+			// Release temporary variables used by expression
+			ReleaseTemporaryVariable(ctx.type, &ctx.bc);
+
+			ProcessDeferredParams(&ctx);
+
+			byteCode.AddCode(&ctx.bc);
+		}
+		else
+		{
+			// There is no specific value so we need to fill it with a default value
+			// TODO: list: For value types with default constructor we need to call the constructor
+			// TOOD: list: It should probably not be allowed to skip any value
+		}
+
+		// Move to the next element
+		bufferSize += size;
+		patternNode = patternNode->next;
+		valueNode = valueNode->next;
+	}
+	else
+		asASSERT( false );
+
+	return 0;
 }
 
 void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, asCByteCode *bc)
