@@ -5441,6 +5441,11 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, asCObjectType *listPatternType
 			if( stack.GetLength() == 0 )
 				return;
 		}
+		else
+		{
+			// TODO: list: Implement support for nested groups
+			asASSERT( false );
+		}
 
 		node = node->next;
 	}

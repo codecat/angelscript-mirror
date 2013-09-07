@@ -2444,15 +2444,6 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		return;
 	}
 
-	// Count the number of elements and initialize the array with the correct size
-	int countElements = 0;
-	asCScriptNode *el = node->firstChild;
-	while( el )
-	{
-		countElements++;
-		el = el->next;
-	}
-
 	// Construct the array with the size elements
 
 	// Find the list factory
@@ -2471,6 +2462,13 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 	// Allocate a temporary variable to hold the pointer to the buffer
 	int bufferVar = AllocateVariable(asCDataType::CreateObject(listPatternType, false), true);
+	asUINT bufferSize = 0;
+
+	// The first dword will hold the number of elements in the list
+	bufferSize += 4;
+	asUINT countElements = 0;
+
+	// Determine the size of the element
 	asUINT size;
 	if( var->dataType.GetSubType().IsPrimitive() )
 		size = var->dataType.GetSubType().GetSizeInMemoryBytes();
@@ -2482,20 +2480,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	else
 		size = AS_PTR_SIZE*4;
 
-	bc->InstrSHORT_DW(asBC_AllocMem, bufferVar, 4 + countElements*size);
-
-	// The first dword in the buffer will hold the number of elements
-	bc->InstrSHORT(asBC_PSF, bufferVar);
-	bc->Instr(asBC_RDSPtr);
-	bc->Instr(asBC_PopRPtr);
-	int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
-	bc->InstrSHORT_DW(asBC_SetV4, offset, countElements);
-	bc->InstrSHORT(asBC_WRTV4, offset);
-	ReleaseTemporaryVariable(offset, bc);
-
 	// Evaluate all elements of the list
-	asUINT index = 0;
-	el = node->firstChild;
+	asSExprContext valueExpr(engine);
+	asCScriptNode *el = node->firstChild;
 	while( el )
 	{
 		if( el->nodeType == snAssignment || el->nodeType == snInitList )
@@ -2529,7 +2516,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 			// Compile the lvalue
 			lctx.bc.InstrSHORT(asBC_PSF, bufferVar);
 			lctx.bc.Instr(asBC_RDSPtr);
-			lctx.bc.InstrSHORT_DW(asBC_ADDSi,4+index*size, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
+			lctx.bc.InstrSHORT_DW(asBC_ADDSi, bufferSize, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
 			lctx.type.Set(var->dataType.GetSubType());
 			lctx.type.isLValue = true;
 			if( var->dataType.GetSubType().IsPrimitive() )
@@ -2538,7 +2525,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				lctx.type.dataType.MakeReference(true);
 			}
 			else if( var->dataType.GetSubType().IsObjectHandle() ||
-						var->dataType.GetSubType().GetObjectType()->flags & asOBJ_REF )
+					 var->dataType.GetSubType().GetObjectType()->flags & asOBJ_REF )
 			{
 				lctx.type.isExplicitHandle = true;
 				lctx.type.dataType.MakeReference(true);
@@ -2566,13 +2553,13 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 				else if( func )
 				{
 					// Call the constructor as a normal function
-					bc->InstrSHORT(asBC_PSF, bufferVar);
-					bc->Instr(asBC_RDSPtr);
-					bc->InstrSHORT_DW(asBC_ADDSi,4+index*size, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
+					valueExpr.bc.InstrSHORT(asBC_PSF, bufferVar);
+					valueExpr.bc.Instr(asBC_RDSPtr);
+					valueExpr.bc.InstrSHORT_DW(asBC_ADDSi,bufferSize, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)));
 
 					asSExprContext ctx(engine);
 					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
-					bc->AddCode(&ctx.bc);
+					valueExpr.bc.AddCode(&ctx.bc);
 				}
 			}
 
@@ -2587,12 +2574,40 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 			ProcessDeferredParams(&ctx);
 
-			bc->AddCode(&ctx.bc);
+			valueExpr.bc.AddCode(&ctx.bc);
+
+			bufferSize += size;
+		}
+		else
+		{
+			// There is no specific value so we need to fill it with a default value
+			// TODO: list: For value types with default constructor we need to call the constructor
+			// TOOD: list: It should probably not be allowed to skip any value
+			bufferSize += size;
 		}
 
+		countElements++;
 		el = el->next;
-		index++;
 	}
+
+	// The first dword in the buffer will hold the number of elements
+	asSExprContext repeatExpr(engine);
+	repeatExpr.bc.InstrSHORT(asBC_PSF, bufferVar);
+	repeatExpr.bc.Instr(asBC_RDSPtr);
+	repeatExpr.bc.Instr(asBC_PopRPtr);
+	int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
+	repeatExpr.bc.InstrSHORT_DW(asBC_SetV4, offset, countElements);
+	repeatExpr.bc.InstrSHORT(asBC_WRTV4, offset);
+	ReleaseTemporaryVariable(offset, &repeatExpr.bc);
+
+	// After all values have been evaluated we know the final size of the buffer
+	asSExprContext allocExpr(engine);
+	allocExpr.bc.InstrSHORT_DW(asBC_AllocMem, bufferVar, bufferSize);
+
+	// Merge the bytecode into the final sequence
+	bc->AddCode(&allocExpr.bc);
+	bc->AddCode(&repeatExpr.bc);
+	bc->AddCode(&valueExpr.bc);
 
 	// The object itself is the last to be created and will receive the pointer to the buffer
 	asCArray<asSExprContext *> args;
