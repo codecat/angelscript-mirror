@@ -2551,6 +2551,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		asSListPatternNode *nextNode = patternNode;
 
 		// The first dword will hold the number of elements in the list
+		asDWORD currSize = bufferSize;
 		bufferSize += 4;
 		asUINT countElements = 0;
 
@@ -2565,14 +2566,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		}
 
 		// The first dword in the buffer will hold the number of elements
-		asSExprContext repeatExpr(engine);
-		byteCode.InstrSHORT(asBC_PSF, bufferVar);
-		byteCode.Instr(asBC_RDSPtr);
-		byteCode.Instr(asBC_PopRPtr);
-		int offset = AllocateVariable(asCDataType::CreatePrimitive(ttUInt, false), true);
-		byteCode.InstrSHORT_DW(asBC_SetV4, offset, countElements);
-		byteCode.InstrSHORT(asBC_WRTV4, offset);
-		ReleaseTemporaryVariable(offset, &byteCode);
+		byteCode.InstrSHORT_DW_DW(asBC_SetListSize, bufferVar, currSize, countElements);
 
 		// Add the values
 		byteCode.AddCode(&ctx.bc);

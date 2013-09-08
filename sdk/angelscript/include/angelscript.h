@@ -1420,8 +1420,9 @@ enum asEBCInstr
 	asBC_JLowZ			= 187,
 	asBC_JLowNZ			= 188,
 	asBC_AllocMem		= 189,
+	asBC_SetListSize	= 190,
 
-	asBC_MAXBYTECODE	= 190,
+	asBC_MAXBYTECODE	= 191,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -1453,11 +1454,12 @@ enum asEBCType
 	asBCTYPE_QW_DW_ARG    = 16,
 	asBCTYPE_rW_QW_ARG    = 17,
 	asBCTYPE_W_DW_ARG     = 18,
-	asBCTYPE_rW_W_DW_ARG  = 19
+	asBCTYPE_rW_W_DW_ARG  = 19,
+	asBCTYPE_rW_DW_DW_ARG = 20
 };
 
 // Instruction type sizes
-const int asBCTypeSize[20] =
+const int asBCTypeSize[21] =
 {
 	0, // asBCTYPE_INFO
 	1, // asBCTYPE_NO_ARG
@@ -1478,7 +1480,8 @@ const int asBCTypeSize[20] =
 	4, // asBCTYPE_QW_DW_ARG
 	3, // asBCTYPE_rW_QW_ARG
 	2, // asBCTYPE_W_DW_ARG
-	3  // asBCTYPE_rW_W_DW_ARG
+	3, // asBCTYPE_rW_W_DW_ARG
+	3  // asBCTYPE_rW_DW_DW_ARG
 };
 
 // Instruction info
@@ -1703,8 +1706,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(JLowZ,		DW_ARG,			0),
 	asBCINFO(JLowNZ,	DW_ARG,			0),
 	asBCINFO(AllocMem,	wW_DW_ARG,		0),
+	asBCINFO(SetListSize, rW_DW_DW_ARG,	0),
 
-	asBCINFO_DUMMY(190),
 	asBCINFO_DUMMY(191),
 	asBCINFO_DUMMY(192),
 	asBCINFO_DUMMY(193),

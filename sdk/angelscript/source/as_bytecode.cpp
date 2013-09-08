@@ -126,7 +126,8 @@ void asCByteCode::GetVarsUsed(asCArray<int> &vars)
 			     asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 			     asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG ||
 			     asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG ||
-				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG )
+				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG ||
+				 asBCInfo[curr->op].type == asBCTYPE_rW_DW_DW_ARG )
 		{
 			InsertIfNotExists(vars, curr->wArg[0]);
 		}
@@ -165,7 +166,8 @@ bool asCByteCode::IsVarUsed(int offset)
 				 asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 				 asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG ||
 				 asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG ||
-				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG )
+				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG ||
+				 asBCInfo[curr->op].type == asBCTYPE_rW_DW_DW_ARG )
 		{
 			if( curr->wArg[0] == offset )
 				return true;
@@ -211,7 +213,9 @@ void asCByteCode::ExchangeVar(int oldOffset, int newOffset)
 				 asBCInfo[curr->op].type == asBCTYPE_wW_W_ARG  ||
 				 asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 				 asBCInfo[curr->op].type == asBCTYPE_wW_DW_ARG ||
-				 asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG )
+				 asBCInfo[curr->op].type == asBCTYPE_wW_QW_ARG ||
+				 asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG ||
+				 asBCInfo[curr->op].type == asBCTYPE_rW_DW_DW_ARG )
 		{
 			if( curr->wArg[0] == oldOffset )
 				curr->wArg[0] = (short)newOffset;
@@ -1176,6 +1180,7 @@ bool asCByteCode::IsTempVarReadByInstr(asCByteInstruction *curr, int offset)
 			  asBCInfo[curr->op].type == asBCTYPE_rW_DW_ARG ||
 			  asBCInfo[curr->op].type == asBCTYPE_rW_QW_ARG ||
 			  asBCInfo[curr->op].type == asBCTYPE_rW_W_DW_ARG ||
+			  asBCInfo[curr->op].type == asBCTYPE_rW_DW_DW_ARG ||
 			  curr->op == asBC_FREE) &&  // FREE both read and write to the variable
 			  int(curr->wArg[0]) == offset )
 		return true;
@@ -1913,6 +1918,10 @@ void asCByteCode::Output(asDWORD *array)
 				*(((asWORD*)ap)+1) = 0; // Clear upper bytes
 				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
 				break;
+			case asBCTYPE_rW_DW_DW_ARG:
+				*(((asWORD*)ap)+1) = instr->wArg[0];
+				memcpy(ap+1, &instr->arg, instr->GetSize()*4-4);
+				break;
 			default:
 				// How did we get here?
 				asASSERT(false);
@@ -2254,6 +2263,10 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 				fprintf(file, "   %-8s %u, %d\n", asBCInfo[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
 			break;
 
+		case asBCTYPE_rW_DW_DW_ARG:
+			fprintf(file, "   %-8s v%d, %u, %u\n", asBCInfo[instr->op].name, instr->wArg[0], *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1));
+			break;
+
 		case asBCTYPE_QW_DW_ARG:
 			if( instr->op == asBC_ALLOC )
 			{
@@ -2438,6 +2451,24 @@ int asCByteCode::InstrW_DW(asEBCInstr bc, asWORD a, asDWORD b)
 	last->op       = bc;
 	last->wArg[0]  = a;
 	*((int*) ARG_DW(last->arg)) = b;
+	last->size     = asBCTypeSize[asBCInfo[bc].type];
+	last->stackInc = asBCInfo[bc].stackInc;
+
+	return last->stackInc;
+}
+
+int asCByteCode::InstrSHORT_DW_DW(asEBCInstr bc, short a, asDWORD b, asDWORD c)
+{
+	asASSERT(asBCInfo[bc].type == asBCTYPE_rW_DW_DW_ARG);
+	asASSERT(asBCInfo[bc].stackInc == 0);
+
+	if( AddInstruction() < 0 )
+		return 0;
+
+	last->op       = bc;
+	last->wArg[0]  = a;
+	*(int*)ARG_DW(last->arg) = b;
+	*(int*)(ARG_DW(last->arg)+1) = c;
 	last->size     = asBCTypeSize[asBCInfo[bc].type];
 	last->stackInc = asBCInfo[bc].stackInc;
 

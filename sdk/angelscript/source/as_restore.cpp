@@ -1850,6 +1850,22 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 				bc += 2;
 			}
 			break;
+		case asBCTYPE_rW_DW_DW_ARG:
+			{
+				*(asBYTE*)(bc) = b;
+
+				// Read the 1st argument
+				asWORD w = ReadEncodedUInt16();
+				*(((asWORD*)bc)+1) = w;
+				bc++;
+
+				// Read the 2nd argument
+				*bc++ = ReadEncodedUInt();
+
+				// Read the 3rd argument
+				*bc++ = ReadEncodedUInt();
+			}
+			break;
 		default:
 			{
 				// This should never happen
@@ -4002,6 +4018,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		case asBCTYPE_wW_W_ARG:
 		case asBCTYPE_rW_QW_ARG:
 		case asBCTYPE_rW_W_DW_ARG:
+		case asBCTYPE_rW_DW_DW_ARG:
 			{
 				asBC_SWORDARG0(tmp) = (short)AdjustStackPosition(asBC_SWORDARG0(tmp));
 			}
@@ -4190,6 +4207,23 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Write the argument
 				asQWORD qw = *(asQWORD*)&tmp[1];
 				WriteEncodedInt64(qw);
+			}
+			break;
+		case asBCTYPE_rW_DW_DW_ARG:
+			{
+				// Write the instruction code
+				asBYTE b = (asBYTE)c;
+				WriteData(&b, 1);
+
+				// Write the short argument
+				short w = *(((short*)tmp)+1);
+				WriteEncodedInt64(w);
+
+				// Write the dword argument
+				WriteEncodedInt64((int)tmp[1]);
+
+				// Write the dword argument
+				WriteEncodedInt64((int)tmp[2]);
 			}
 			break;
 		default:
