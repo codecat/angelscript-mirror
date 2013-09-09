@@ -772,6 +772,20 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 }
 
 // internal
+asCObjectType *asCScriptFunction::GetObjectTypeOfLocalVar(short varOffset)
+{
+	asASSERT( scriptData );
+	
+	for( asUINT n = 0; n < scriptData->objVariablePos.GetLength(); n++ )
+	{
+		if( scriptData->objVariablePos[n] == varOffset )
+			return scriptData->objVariableTypes[n];
+	}
+
+	return 0;
+}
+
+// internal
 void asCScriptFunction::ComputeSignatureId()
 {
 	// This function will compute the signatureId based on the 

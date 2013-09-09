@@ -202,6 +202,8 @@ public:
 	bool      IsSignatureExceptNameAndReturnTypeEqual(const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &inOutFlags, const asCObjectType *type, bool isReadOnly) const;
 	bool      IsSignatureExceptNameAndObjectTypeEqual(const asCScriptFunction *func) const;
 
+	asCObjectType *GetObjectTypeOfLocalVar(short varOffset);
+
 	void      MakeDelegate(asCScriptFunction *func, void *obj);
 
 	int       RegisterListPattern(const char *decl, asCScriptNode *listPattern);

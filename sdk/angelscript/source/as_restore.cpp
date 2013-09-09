@@ -3990,8 +3990,12 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			// It's not necessary to store the size of the list buffer, as it will be recalculated in the reader
 			asBC_DWORDARG(tmp) = 0;
 
+			// Determine the type of the list pattern from the variable
+			short var = asBC_WORDARG0(tmp);
+			asCObjectType *ot = func->GetObjectTypeOfLocalVar(var);
+
 			// Create this helper object to adjust the offset of the elements accessed in the buffer
-			listAdjusters.PushLast(asNEW(SListAdjuster));
+			listAdjusters.PushLast(asNEW(SListAdjuster)(ot));
 		}
 		else if( c == asBC_FREE ) // wW_PTR_ARG
 		{
@@ -4005,6 +4009,15 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				SListAdjuster *list = listAdjusters.PopLast();
 				asDELETE(list, SListAdjuster);
 			}
+		}
+		else if( c == asBC_SetListSize )
+		{
+			// Adjust the offset in the initialization list
+			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+			tmp[1] = listAdj->AdjustOffset(tmp[1], listAdj->patternType);
+
+			// Tell the adjuster how many repeated values there are
+			listAdj->SetRepeatCount(tmp[2]);
 		}
 
 		// Adjust the variable offsets
@@ -4243,24 +4256,65 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 	}
 }
 
+asCWriter::SListAdjuster::SListAdjuster(asCObjectType *ot) : patternType(ot), repeatCount(0), entries(0), lastOffset(-1)
+{ 
+	asASSERT(ot); 
+
+	// Find the first expected value in the list
+	asSListPatternNode *node = ot->engine->scriptFunctions[patternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
+	asASSERT( node && node->type == asLPT_START );
+	patternNode = node->next;
+}
+
 int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatternType)
 {
-	// TODO: list: When the list pattern can take any form it is not sufficient 
-	//             to just calculate the offset with a formula
+	// TODO: cleanup: The listPatternType parameter is not needed
+	asASSERT( patternType == listPatternType );
+	UNUSED_VAR(listPatternType);
+	
+	asASSERT( offset >= lastOffset );
 
-	if( offset > 0 )
+	// If it is the same offset being accessed again, just return the same adjusted value
+	if( offset == lastOffset )
+		return entries-1;
+
+	lastOffset = offset;
+
+	// What is being expected at this position?
+	if( patternNode->type == asLPT_REPEAT )
 	{
-		asUINT size;
-		asCDataType dt = listPatternType->templateSubTypes[0].GetObjectType()->templateSubTypes[0];
-		if( dt.IsObjectHandle() )
-			size = AS_PTR_SIZE*4;
-		else
-			size = dt.GetSizeInMemoryBytes();
+		// Don't move the patternNode yet because the caller must make a call to SetRepeatCount too
+		return entries++;
+	}
+	else if( patternNode->type == asLPT_TYPE )
+	{
+		if( repeatCount > 0 )
+			repeatCount--;
 
-		return (offset-4)/size + 1;
+		// Only move the patternNode if we're not expecting any more repeated entries
+		if( repeatCount == 0 )
+			patternNode = patternNode->next;
+
+		return entries++;
+	}
+	else
+	{
+		// TODO: init: Add support for more complex patterns
+		asASSERT( false );
 	}
 
 	return 0;
+}
+
+void asCWriter::SListAdjuster::SetRepeatCount(asUINT rc)
+{
+	// Make sure the list is expecting a repeat at this location
+	asASSERT( patternNode->type == asLPT_REPEAT );
+
+	// Now move to the next patternNode
+	patternNode = patternNode->next;
+
+	repeatCount = rc;
 }
 
 void asCWriter::WriteUsedTypeIds()
