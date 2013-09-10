@@ -2270,7 +2270,10 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			// The size of the allocated memory is only known after all the elements has been seen.
 			// This helper class will collect this information and adjust the size when the 
 			// corresponding asBC_FREE is encountered
-			listAdjusters.PushLast(asNEW(SListAdjuster)(&bc[n]));
+
+			// The adjuster also needs to know the list type so it can know the type of the elements
+			asCObjectType *ot = func->GetObjectTypeOfLocalVar(asBC_SWORDARG0(&bc[n]));
+			listAdjusters.PushLast(asNEW(SListAdjuster)(&bc[n], ot));
 		}
 		else if( c == asBC_FREE )
 		{
@@ -2286,6 +2289,15 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				list->AdjustAllocMem();
 				asDELETE(list, SListAdjuster);
 			}
+		}
+		else if( c == asBC_SetListSize )
+		{
+			// Adjust the offset in the list where the size is informed
+			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
+
+			// Inform the list adjuster how many values will be repeated
+			listAdj->SetRepeatCount(bc[n+2]);
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
@@ -2395,45 +2407,82 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	CalculateStackNeeded(func);
 }
 
+asCReader::SListAdjuster::SListAdjuster(asDWORD *bc, asCObjectType *listType) : 
+	allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1)
+{
+	asASSERT( patternType && (patternType->flags & asOBJ_LIST_PATTERN) );
+
+	// Find the first expected value in the list
+	asSListPatternNode *node = patternType->engine->scriptFunctions[patternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
+	asASSERT( node && node->type == asLPT_START );
+	patternNode = node->next;
+}
+
 int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatternType)
 {
-	// TODO: list: When the list pattern can take any form it is not sufficient 
-	//             to just calculate the offset with a formula
-	//             Should use a new bytecode instruction that sets the size. It should
-	//             take the offset into the array and the set the size. The list adjuster
-	//             will then be able to determine how many values comes after that
+	// TODO: cleanup: The listPatternType parameter is not needed
+	asASSERT( listPatternType == patternType );
+	UNUSED_VAR( listPatternType );
 
-	if( offset > 0 )
+	asASSERT( offset >= lastOffset );
+
+	// If it is the same offset being accessed again, just return the same adjusted value
+	if( lastOffset == offset )
+		return lastAdjustedOffset;
+
+	lastOffset = offset;
+	lastAdjustedOffset = maxOffset;
+
+	// What is being expected at this position?
+	if( patternNode->type == asLPT_REPEAT )
 	{
+		// Don't move the patternNode yet because the caller must make a call to SetRepeatCount too
+		maxOffset += 4;
+		return lastAdjustedOffset;
+	}
+	else if( patternNode->type == asLPT_TYPE )
+	{
+		if( repeatCount > 0 )
+			repeatCount--;
+
+		// Determine the size of the element
 		asUINT size;
-		asCDataType dt = listPatternType->templateSubTypes[0].GetObjectType()->templateSubTypes[0];
+		asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
 		if( dt.IsObjectHandle() )
 			size = AS_PTR_SIZE*4;
 		else
 			size = dt.GetSizeInMemoryBytes();
+		maxOffset += size;
 
-		offset = 4 + size*(offset-1);
+		// Only move the patternNode if we're not expecting any more repeated entries
+		if( repeatCount == 0 )
+			patternNode = patternNode->next;
 
-		// Determine the size of the needed buffer
-		if( offset+size > maxOffset )
-			maxOffset = offset+size;
-
-		return offset;
+		return lastAdjustedOffset;
+	}
+	else
+	{
+		// TODO: list: Add support for more complex patterns
+		asASSERT( false );
 	}
 
 	return 0;
 }
 
+void asCReader::SListAdjuster::SetRepeatCount(asUINT rc)
+{
+	// Make sure the list is expecting a repeat at this location
+	asASSERT( patternNode->type == asLPT_REPEAT );
+
+	// Now move to the next patternNode
+	patternNode = patternNode->next;
+
+	repeatCount = rc;
+}
+
 void asCReader::SListAdjuster::AdjustAllocMem()
 {
-	// TODO: list: When the list pattern can take any form it is not sufficient
-	//             to just calculate the size like this, as it is necessary to know 
-	//             the size of each element accessed
-
-	if( maxOffset == 0 )
-		allocMemBC[1] = 4;
-	else
-		allocMemBC[1] = maxOffset;
+	allocMemBC[1] = maxOffset;
 }
 
 void asCReader::CalculateStackNeeded(asCScriptFunction *func)
@@ -4258,7 +4307,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 
 asCWriter::SListAdjuster::SListAdjuster(asCObjectType *ot) : patternType(ot), repeatCount(0), entries(0), lastOffset(-1)
 { 
-	asASSERT(ot); 
+	asASSERT( ot && (ot->flags & asOBJ_LIST_PATTERN) ); 
 
 	// Find the first expected value in the list
 	asSListPatternNode *node = ot->engine->scriptFunctions[patternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
@@ -4299,7 +4348,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	}
 	else
 	{
-		// TODO: init: Add support for more complex patterns
+		// TODO: list: Add support for more complex patterns
 		asASSERT( false );
 	}
 

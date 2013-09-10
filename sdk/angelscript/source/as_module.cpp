@@ -42,6 +42,7 @@
 #include "as_context.h"
 #include "as_texts.h"
 #include "as_debug.h"
+#include "as_restore.h"
 
 BEGIN_AS_NAMESPACE
 

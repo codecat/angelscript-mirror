@@ -3511,7 +3511,6 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	// Need to translate the list pattern too so the VM and compiler will know the correct type of the members
 	if( factory->listPattern )
 	{
-		// TODO: list: Implement this
 		asSListPatternNode *n = factory->listPattern;
 		asSListPatternNode *last = 0;
 		while( n )

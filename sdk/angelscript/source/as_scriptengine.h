@@ -47,7 +47,6 @@
 #include "as_datatype.h"
 #include "as_objecttype.h"
 #include "as_module.h"
-#include "as_restore.h"
 #include "as_callfunc.h"
 #include "as_configgroup.h"
 #include "as_memory.h"
