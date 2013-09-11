@@ -268,6 +268,8 @@
 #define TXT_OBJECT_TYPE_s_DOESNT_EXIST                "Object type '%s' doesn't exist"
 #define TXT_TEMPLATE_TYPE_s_DOESNT_EXIST              "Template type '%s' doesn't exist"
 #define TXT_TEMPLATE_SUBTYPE_s_DOESNT_EXIST           "Template subtype '%s' doesn't exist"
+#define TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS "Template list factory expects two reference parameters. The last is the pointer to the initialization buffer"
+#define TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM          "List factory expects only one reference parameter. The pointer to the initialization buffer will be passed in this parameter"
 #define TXT_FAILED_READ_SUBTYPE_OF_TEMPLATE_s         "Failed to read subtype of template type '%s'"
 #define TXT_INSTANCING_INVLD_TMPL_TYPE_s_s            "Attempting to instanciate invalid template type '%s<%s>'"
 #define TXT_FAILED_IN_FUNC_s_d                        "Failed in call to function '%s' (Code: %d)"

@@ -1978,15 +1978,19 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				// Make sure the factory takes a reference as its last parameter
 				if( objectType->flags & asOBJ_TEMPLATE )
 				{
-					// TODO: list: Write proper error message
 					if( func.parameterTypes.GetLength() != 2 || !func.parameterTypes[1].IsReference() )
+					{
+						WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS);
 						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+					}
 				}
 				else
 				{
-					// TODO: list: Write proper error message
 					if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
+					{
+						WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM);
 						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+					}
 				}
 
 				// Store the list pattern for this function
@@ -4534,11 +4538,15 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
 	}
 	else
 	{
-		// TODO: interface: shouldn't work on non reference types
+		// There is really only one reason why the application would want to 
+		// call this method for a value type, and that is if it is calling it
+		// as from a JIT compiled asBC_FREE instruction.
 
 		// Call the destructor
 		if( objType->beh.destruct )
 			CallObjectMethod(obj, objType->beh.destruct);
+		else if( objType->flags & asOBJ_LIST_PATTERN )
+			DestroyList((asBYTE*)obj, objType);
 
 		// Then free the memory
 		CallFree(obj);
@@ -5356,7 +5364,7 @@ asCObjectType *asCScriptEngine::GetListPatternType(int listPatternFuncId)
 }
 
 // internal
-void asCScriptEngine::DestroyList(asBYTE *buffer, asCObjectType *listPatternType)
+void asCScriptEngine::DestroyList(asBYTE *buffer, const asCObjectType *listPatternType)
 {
 	asASSERT( listPatternType && (listPatternType->flags & asOBJ_LIST_PATTERN) );
 
@@ -5404,10 +5412,25 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, asCObjectType *listPatternType
 						// Call the destructor for each of the objects
 						while( count-- )
 						{
-							// TODO: list: Only call the destructor if the object has been created
-							void *ptr = (void*)buffer;
-							CallObjectMethod(ptr, ot->beh.destruct);
-							buffer += ot->GetSize();
+							// Only call the destructor if the object has been created
+							// We'll assume the object has been created if any byte in
+							// the memory is different from 0.
+							// TODO: This is not really correct, as bytes may have been
+							//       modified by the constructor, but then an exception 
+							//       thrown aborting the initialization. The engine
+							//       really should be keeping track of which objects has
+							//       been successfully initialized.
+							asUINT size = ot->GetSize();
+							for( asUINT n = 0; n < size; n++ )
+							{
+								if( buffer[n] != 0 )
+								{
+									void *ptr = (void*)buffer;
+									CallObjectMethod(ptr, ot->beh.destruct);
+									break;
+								}
+							}
+							buffer += size;
 						}
 					}
 					else

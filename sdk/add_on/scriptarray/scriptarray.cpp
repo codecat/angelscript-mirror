@@ -327,16 +327,11 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		// Copy the handles into the internal buffer
 		memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
 
-		// TODO: list: runtime optimize: Instead of increasing the references, clear the  
-		//             handles in the incoming buffer so AngelScript won't release them
-
-		// Increase the reference for all the handles
-		for( asUINT n = 0; n < length; n++ )
-		{
-			void *obj = *(void**)At(n);
-			if( obj )
-				engine->AddRefScriptObject(obj, ot->GetSubType());
-		}
+		// With object handles it is safe to clear the memory in the received buffer
+		// instead of increasing the ref count. It will save time both by avoiding the
+		// call the increase ref, and also relieve the engine from having to release
+		// its references too
+		memset((((asUINT*)buf)+1), 0, length * elementSize);
 	}
 	else if( ot->GetSubType()->GetFlags() & asOBJ_REF )
 	{
@@ -348,21 +343,17 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		// Copy the handles into the internal buffer
 		memcpy(buffer->data, (((asUINT*)buf)+1), length * elementSize);
 
-		// TODO: list: runtime optimize: Instead of increasing the references, clear the  
-		//             handles in the incoming buffer so AngelScript won't release them
-
-		// Increase the reference for all the handles
-		for( asUINT n = 0; n < length; n++ )
-		{
-			void *obj = At(n);
-			if( obj )
-				engine->AddRefScriptObject(obj, ot->GetSubType());
-		}
+		// For ref types we can do the same as for handles, as they are 
+		// implicitly stored as handles.
+		memset((((asUINT*)buf)+1), 0, length * elementSize);
 	}
 	else
 	{
 		// TODO: Optimize by calling the copy constructor of the object instead of 
 		//       constructing with the default constructor and then assigning the value
+		// TODO: With C++11 ideally we should be calling the move constructor, instead
+		//       of the copy constructor as the engine will just discard the objects in the
+		//       buffer afterwards.
 		CreateBuffer(&buffer, length);
 
 		// For value types we need to call the opAssign for each individual object

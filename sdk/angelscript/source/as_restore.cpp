@@ -2321,6 +2321,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		case asBCTYPE_wW_W_ARG:
 		case asBCTYPE_rW_QW_ARG:
 		case asBCTYPE_rW_W_DW_ARG:
+		case asBCTYPE_rW_DW_DW_ARG:
 			{
 				asBC_SWORDARG0(&bc[n]) = (short)AdjustStackPosition(asBC_SWORDARG0(&bc[n]));
 			}
