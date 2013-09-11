@@ -15,6 +15,31 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 	
+	// Test memory leak with shared functions and default args
+	// http://www.gamedev.net/topic/646826-crash-on-exit-binding-wrong/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"shared void global(int a = 42, int b = 82) {} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"shared void global(int a = 42, int b = 82) {} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Allow default args for anonymous parameters too
 	// http://www.gamedev.net/topic/645049-nameless-arguments-cannot-have-default-values/
 	{

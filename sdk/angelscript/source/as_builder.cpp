@@ -1321,10 +1321,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 
 void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 {
-	asCDataType                returnType;
 	asCArray<asCString>        parameterNames;
-	asCArray<asCDataType>      parameterTypes;
-	asCArray<asETypeModifiers> inOutFlags;
 	asCArray<asCString *>      defaultArgs;
 	bool                       isConstMethod;
 	bool                       isConstructor;
@@ -1337,44 +1334,37 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
 	asASSERT( func );
 
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, func->nameSpace);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, func->nameSpace);
 
-	if( func )
+	// There should not be any defaultArgs, but if there are any we need to delete them to avoid leaks
+	for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+		if( defaultArgs[n] )
+			asDELETE(defaultArgs[n], asCString);
+
+	// TODO: Should we force the use of 'shared' for this check to be done?
+	// Check if there is another identical funcdef from another module and if so reuse that instead
+	for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
 	{
-		func->returnType = returnType;
-		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
+		asCScriptFunction *f2 = engine->funcDefs[n];
+		if( f2 == 0 || func == f2 )
+			continue;
+
+		if( f2->name == func->name &&
+			f2->nameSpace == func->nameSpace &&
+			f2->IsSignatureExceptNameEqual(func) )
 		{
-			func->parameterTypes.PushLast(parameterTypes[p]);
-			func->inOutFlags.PushLast(inOutFlags[p]);
+			// Replace our funcdef for the existing one
+			funcDef->idx = f2->id;
+			module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
+			f2->AddRef();
 
-			// Don't copy the default arg expression as it is not allowed for function definitions
-		}
+			engine->funcDefs.RemoveValue(func);
 
-		// TODO: Should we force the use of 'shared' for this check to be done?
-		// Check if there is another identical funcdef from another module and if so reuse that instead
-		for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
-		{
-			asCScriptFunction *f2 = engine->funcDefs[n];
-			if( f2 == 0 || func == f2 )
-				continue;
+			func->Release();
 
-			if( f2->name == func->name &&
-				f2->nameSpace == func->nameSpace &&
-				f2->IsSignatureExceptNameEqual(func) )
-			{
-				// Replace our funcdef for the existing one
-				funcDef->idx = f2->id;
-				module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
-				f2->AddRef();
-
-				engine->funcDefs.RemoveValue(func);
-
-				func->Release();
-
-				// funcdefs aren't destroyed when the refCount reaches zero so we need to manually delete them
-				asDELETE(func, asCScriptFunction);
-				break;
-			}
+			// funcdefs aren't destroyed when the refCount reaches zero so we need to manually delete them
+			asDELETE(func, asCScriptFunction);
+			break;
 		}
 	}
 }
@@ -3653,12 +3643,12 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 {
 	// Determine default namespace if not specified
 	if( ns == 0 )
-    {
+	{
 		if( objType )
 			ns = objType->nameSpace;
 		else
 			ns = engine->nameSpaces[0];
-    }
+	}
 
 	if( isExistingShared )
 	{
@@ -3692,6 +3682,11 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			WriteError(str, file, node);
 		}
 
+		// Free the default args
+		for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+			if( defaultArgs[n] )
+				asDELETE(defaultArgs[n], asCString);
+
 		node->Destroy(engine);
 		return 0;
 	}
@@ -3715,6 +3710,12 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 		{
 			// Mixins cannot implement constructors/destructors
 			WriteError(TXT_MIXIN_CANNOT_HAVE_CONSTRUCTOR, file, node);
+
+			// Free the default args
+			for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+				if( defaultArgs[n] )
+					asDELETE(defaultArgs[n], asCString);
+
 			node->Destroy(engine);
 			return 0;
 		}
@@ -3733,7 +3734,14 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 	{
 		sFunctionDescription *func = asNEW(sFunctionDescription);
 		if( func == 0 )
+		{
+			// Free the default args
+			for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+				if( defaultArgs[n] )
+					asDELETE(defaultArgs[n], asCString);
+
 			return asOUT_OF_MEMORY;
+		}
 
 		functions.PushLast(func);
 
@@ -3811,6 +3819,12 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 					node->Destroy(engine);
 				sFunctionDescription *func = functions.PopLast();
 				asDELETE(func, sFunctionDescription);
+
+				// Free the default args
+				for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+					if( defaultArgs[n] )
+						asDELETE(defaultArgs[n], asCString);
+
 				return 0;
 			}
 
@@ -3822,6 +3836,11 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 	// Register the function
 	if( isExistingShared )
 	{
+		// Delete the default args as they won't be used anymore
+		for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+			if( defaultArgs[n] )
+				asDELETE(defaultArgs[n], asCString);
+
 		asCScriptFunction *f = engine->scriptFunctions[funcId];
 		module->AddScriptFunction(f);
 

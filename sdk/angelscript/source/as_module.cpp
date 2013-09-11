@@ -817,7 +817,14 @@ int asCModule::AddScriptFunction(int sectionIdx, int id, const asCString &name, 
 	// Store the function information
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, isInterface ? asFUNC_INTERFACE : asFUNC_SCRIPT);
 	if( func == 0 )
+	{
+		// Free the default args
+		for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+			if( defaultArgs[n] )
+				asDELETE(defaultArgs[n], asCString);
+
 		return asOUT_OF_MEMORY;
+	}
 
 	if( ns == 0 )
 		ns = engine->nameSpaces[0];
@@ -884,7 +891,14 @@ int asCModule::AddImportedFunction(int id, const asCString &name, const asCDataT
 	// Store the function information
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, this, asFUNC_IMPORTED);
 	if( func == 0 )
+	{
+		// Free the default args
+		for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
+			if( defaultArgs[n] )
+				asDELETE(defaultArgs[n], asCString);
+
 		return asOUT_OF_MEMORY;
+	}
 
 	func->name           = name;
 	func->id             = id;
@@ -897,7 +911,10 @@ int asCModule::AddImportedFunction(int id, const asCString &name, const asCDataT
 
 	sBindInfo *info = asNEW(sBindInfo);
 	if( info == 0 )
+	{
+		asDELETE(func, asCScriptFunction);
 		return asOUT_OF_MEMORY;
+	}
 
 	info->importedFunctionSignature = func;
 	info->boundFunctionId           = -1;
