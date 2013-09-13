@@ -94,6 +94,7 @@ protected:
 
 	bool IsRealType(int tokenType);
 	bool IsDataType(const sToken &token);
+	bool IdentifierIs(const sToken &t, const char *str);
 
 #ifndef AS_NO_COMPILER
 	// Statements
@@ -157,7 +158,6 @@ protected:
 	bool IsAssignOperator(int tokenType);
 	bool IsFunctionCall();
 
-	bool IdentifierIs(const sToken &t, const char *str);
 	bool CheckTemplateType(sToken &t);
 #endif
 

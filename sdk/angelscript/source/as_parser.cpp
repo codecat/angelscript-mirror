@@ -931,7 +931,57 @@ asCString asCParser::ExpectedOneOf(const char **tokens, int count)
 	return str;
 }
 
-#ifndef AS_NO_COMPILER
+asCScriptNode *asCParser::ParseListPattern()
+{
+	asCScriptNode *node = CreateNode(snListPattern);
+	if( node == 0 ) return 0;
+
+	sToken t1;
+
+	GetToken(&t1);
+	if( t1.type != ttStartStatementBlock )
+	{
+		Error(ExpectedToken("{"), &t1);
+		return node;
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	sToken start = t1;
+
+	while( !isSyntaxError )
+	{
+		GetToken(&t1);
+		if( t1.type == ttEndStatementBlock )
+			break;
+		else if( t1.type == ttStartStatementBlock )
+		{
+			RewindTo(&t1);
+			node->AddChildLast(ParseListPattern());
+		}
+		else if( t1.type == ttIdentifier && IdentifierIs(t1, "repeat") )
+		{
+			RewindTo(&t1);
+			node->AddChildLast(ParseIdentifier());
+		}
+		else if( t1.type == ttEnd )
+		{
+			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
+			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
+			break;
+		}
+		else
+		{
+			RewindTo(&t1);
+			node->AddChildLast(ParseType(true, true));
+		}
+	}
+
+	node->UpdateSourcePos(t1.pos, t1.length);
+
+	return node;
+}
+
 bool asCParser::IdentifierIs(const sToken &t, const char *str)
 {
 	if( t.type != ttIdentifier ) 
@@ -940,6 +990,7 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 	return script->TokenEquals(t.pos, t.length, str);
 }
 
+#ifndef AS_NO_COMPILER
 bool asCParser::CheckTemplateType(sToken &t)
 {
 	// Is this a template type?
@@ -2991,57 +3042,6 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
 			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
 			break;
-		}
-	}
-
-	node->UpdateSourcePos(t1.pos, t1.length);
-
-	return node;
-}
-
-asCScriptNode *asCParser::ParseListPattern()
-{
-	asCScriptNode *node = CreateNode(snListPattern);
-	if( node == 0 ) return 0;
-
-	sToken t1;
-
-	GetToken(&t1);
-	if( t1.type != ttStartStatementBlock )
-	{
-		Error(ExpectedToken("{"), &t1);
-		return node;
-	}
-
-	node->UpdateSourcePos(t1.pos, t1.length);
-
-	sToken start = t1;
-
-	while( !isSyntaxError )
-	{
-		GetToken(&t1);
-		if( t1.type == ttEndStatementBlock )
-			break;
-		else if( t1.type == ttStartStatementBlock )
-		{
-			RewindTo(&t1);
-			node->AddChildLast(ParseListPattern());
-		}
-		else if( t1.type == ttIdentifier && IdentifierIs(t1, "repeat") )
-		{
-			RewindTo(&t1);
-			node->AddChildLast(ParseIdentifier());
-		}
-		else if( t1.type == ttEnd )
-		{
-			Error(TXT_UNEXPECTED_END_OF_FILE, &t1);
-			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
-			break;
-		}
-		else
-		{
-			RewindTo(&t1);
-			node->AddChildLast(ParseType(true, true));
 		}
 	}
 
