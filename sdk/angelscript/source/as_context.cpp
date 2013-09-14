@@ -3913,9 +3913,23 @@ void asCContext::ExecuteNext()
 		l_bc += 3;
 		break;
 
+	case asBC_PshListElmnt:
+		{
+			// Push the pointer to the list element on the stack
+			// In essence it does the same as PSF, RDSPtr, ADDSi
+			asBYTE *var = *(asBYTE**)(l_fp - asBC_SWORDARG0(l_bc));
+			asUINT off = asBC_DWORDARG(l_bc);
+
+			asASSERT( var );
+			
+			l_sp -= AS_PTR_SIZE;
+			*(asPWORD*)l_sp = asPWORD(var+off);
+		}
+		l_bc += 2;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 191: l_bc = (asDWORD*)191; break;
 	case 192: l_bc = (asDWORD*)192; break;
 	case 193: l_bc = (asDWORD*)193; break;
 	case 194: l_bc = (asDWORD*)194; break;

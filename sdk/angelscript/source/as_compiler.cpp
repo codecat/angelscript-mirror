@@ -2615,9 +2615,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 			}
 
 			// Compile the lvalue
-			lctx.bc.InstrSHORT(asBC_PSF, bufferVar);
-			lctx.bc.Instr(asBC_RDSPtr);
-			lctx.bc.InstrSHORT_DW(asBC_ADDSi, bufferSize, bufferTypeId);
+			lctx.bc.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
 			lctx.type.Set(dt);
 			lctx.type.isLValue = true;
 			if( dt.IsPrimitive() )
@@ -2653,9 +2651,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				else if( func )
 				{
 					// Call the constructor as a normal function
-					byteCode.InstrSHORT(asBC_PSF, bufferVar);
-					byteCode.Instr(asBC_RDSPtr);
-					byteCode.InstrSHORT_DW(asBC_ADDSi,bufferSize, bufferTypeId);
+					byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
 
 					asSExprContext ctx(engine);
 					PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());

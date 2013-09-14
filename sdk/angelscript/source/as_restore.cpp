@@ -2070,18 +2070,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			int *tid = (int*)&bc[n+1];
 			*tid = FindTypeId(*tid);
 
-			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*tid);
-			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
-			{
-				// List patterns have a different way of adjusting the offsets
-				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
-				*(((short*)&bc[n])+1) = (short)listAdj->AdjustOffset(*(((short*)&bc[n])+1), ot);
-			}
-			else
-			{
-				// Translate the prop index into the property offset
-				*(((short*)&bc[n])+1) = FindObjectPropOffset(*(((short*)&bc[n])+1));
-			}
+			// Translate the prop index into the property offset
+			*(((short*)&bc[n])+1) = FindObjectPropOffset(*(((short*)&bc[n])+1));
 		}
 		else if( c == asBC_LoadRObjR ||
 			     c == asBC_LoadVObjR )
@@ -2298,6 +2288,12 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 			// Inform the list adjuster how many values will be repeated
 			listAdj->SetRepeatCount(bc[n+2]);
+		}
+		else if( c == asBC_PshListElmnt )
+		{
+			// Adjust the offset in the list where the size is informed
+			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
@@ -3914,19 +3910,8 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		else if( c == asBC_ADDSi ||      // W_DW_ARG
 			     c == asBC_LoadThisR )   // W_DW_ARG
 		{
-			asCObjectType *ot = engine->GetObjectTypeFromTypeId(*(int*)(tmp+1));
-			if( ot->flags & asOBJ_LIST_PATTERN )
-			{
-				// List patterns have a different way of translating the offsets
-				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
-				*(((short*)tmp)+1) = (short)listAdj->AdjustOffset(*(((short*)tmp)+1), ot);
-			}
-			else
-			{
-				// Translate property offsets into indices
-				// TODO: optimize: Pass the object type directly to the method instead of the type id
-				*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
-			}
+			// Translate property offsets into indices
+			*(((short*)tmp)+1) = (short)FindObjectPropIndex(*(((short*)tmp)+1), *(int*)(tmp+1));
 
 			// Translate type ids into indices
 			*(int*)(tmp+1) = FindTypeIdIdx(*(int*)(tmp+1));
@@ -4068,6 +4053,12 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 
 			// Tell the adjuster how many repeated values there are
 			listAdj->SetRepeatCount(tmp[2]);
+		}
+		else if( c == asBC_PshListElmnt )   // W_DW_ARG
+		{
+			// Adjust the offset in the initialization list
+			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+			tmp[1] = listAdj->AdjustOffset(tmp[1], listAdj->patternType);
 		}
 
 		// Adjust the variable offsets
