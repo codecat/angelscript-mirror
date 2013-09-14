@@ -2141,9 +2141,9 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 		case asBCTYPE_W_ARG:
 			if( instr->op == asBC_STR )
 			{
-				int id = instr->wArg[0];
+				int id = asWORD(instr->wArg[0]);
 				const asCString &str = engine->GetConstantString(id);
-				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", asBCInfo[instr->op].name, instr->wArg[0], (long int)str.GetLength(), str.AddressOf());
+				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", asBCInfo[instr->op].name, asWORD(instr->wArg[0]), (long int)str.GetLength(), str.AddressOf());
 			}
 			else
 				fprintf(file, "   %-8s %d\n", asBCInfo[instr->op].name, instr->wArg[0]);

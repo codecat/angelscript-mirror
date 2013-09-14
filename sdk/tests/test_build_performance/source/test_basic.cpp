@@ -45,7 +45,11 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+#ifdef _DEBUG
+	const int numLines = 40;
+#else
 	const int numLines = 40000;
+#endif
 
 	string script;
 	script.reserve(strlen(scriptBegin) + numLines*(strlen(scriptMiddle)+5) + strlen(scriptEnd));

@@ -12,9 +12,15 @@ namespace TestComplex
 
 #define TESTNAME "TestComplex"
 
-const int numCases = 2; 
-const int numIfs = 5;       
+#ifdef _DEBUG
+const int numCases = 2;
+const int numIfs = 2;
+const int numLevels = 2;
+#else
+const int numCases = 2;
+const int numIfs = 5;
 const int numLevels = 4;
+#endif
 
 string buildSwitch(int levels)
 {

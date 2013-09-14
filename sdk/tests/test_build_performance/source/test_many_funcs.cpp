@@ -47,8 +47,13 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+#ifdef _DEBUG
+	const int numFuncs = 2;
+	const int numCalls = 20;
+#else
 	const int numFuncs = 2000;
 	const int numCalls = 20000;
+#endif
 
 	string script;
 	script.reserve(strlen(scriptBegin) + numFuncs*(strlen(scriptFuncDecl)+5) + numCalls*(strlen(scriptMiddle)+5) + strlen(scriptEnd));

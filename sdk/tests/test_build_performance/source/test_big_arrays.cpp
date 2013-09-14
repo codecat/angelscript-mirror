@@ -40,7 +40,11 @@ void Test()
 	printf("\nGenerating...\n");
 
 	const int numArrays = 2;
+#ifdef _DEBUG
+	const int numElements = 10;
+#else
 	const int numElements = 100000;
+#endif
 
 	string script;
     std::stringstream script_buffer;

@@ -34,7 +34,11 @@ void Test()
 	////////////////////////////////////////////
 	printf("\nGenerating...\n");
 
+#ifdef _DEBUG
+	const int numSymbols = 10;
+#else
 	const int numSymbols = 10000;
+#endif
 
 	string script;
 	script.reserve(numSymbols * 30);
