@@ -66,7 +66,7 @@ asCModule::~asCModule()
 {
 	InternalReset();
 
-	if( builder ) 
+	if( builder )
 	{
 		asDELETE(builder,asCBuilder);
 		builder = 0;

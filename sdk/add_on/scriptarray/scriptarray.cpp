@@ -516,6 +516,9 @@ void CScriptArray::Reserve(asUINT maxElements)
 	if( maxElements <= buffer->maxElements )
 		return;
 
+	if( !CheckMaxSize(maxElements) )
+		return;
+
 	// Allocate memory for the buffer
 	SArrayBuffer *newBuffer;
 	#if defined(__S3E__) // Marmalade doesn't understand (nothrow)
@@ -547,11 +550,8 @@ void CScriptArray::Reserve(asUINT maxElements)
 
 void CScriptArray::Resize(asUINT numElements)
 {
-	if( numElements & 0x80000000 )
-	{
-		CheckMaxSize(numElements);
+	if( !CheckMaxSize(numElements) )
 		return;
-	}
 
 	Resize((int)numElements - (int)buffer->numElements, (asUINT)-1);
 }

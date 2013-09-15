@@ -169,268 +169,271 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
-
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine;
 	
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
-	RegisterScriptString(engine);
-	RegisterScriptArray(engine, false);
-
-	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-
-	// Test sorting on array of handles
-	mod->AddScriptSection(TESTNAME, 
-		"class Test { \n"
-		"  Test(int v) {val = v;} \n"
-		"  int opCmp(const Test & o) const { return val - o.val; } \n"
-		"  int val; \n"
-		"} \n");
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, 
-		"array<Test @> a = { Test(1), Test(4), Test(2), null, Test(3) }; \n"
-		"a.sortAsc(); \n"
-		"Assert( a[0] is null ); \n"
-		"Assert( a[1].val == 1 ); \n"
-		"Assert( a[2].val == 2 ); \n"
-		"Assert( a[3].val == 3 ); \n"
-		"Assert( a[4].val == 4 ); \n", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( r == asEXECUTION_EXCEPTION )
-		PrintException(ctx);
-	ctx->Release();	
-
-	// Test different signatures on opCmp and opEquals
-	mod->AddScriptSection(TESTNAME,
-		"class C \n"
-		"{ \n"
-		"    C(int i) {i_ = i;} \n"
-//		"    bool opEquals (const C &in other) const\n"
-//		"    { \n"
-//		"        return i_ == other.i_; \n"
-//		"    } \n"
-//		"    int opCmp (const C &in other) const\n"
-//		"    { \n"
-//		"        return i_ - other.i_; \n"
-//		"    } \n"
-		"    bool opEquals (const C @ other) const\n"
-		"    { \n"
-		"        return i_ == other.i_; \n"
-		"    } \n"
-		"    int opCmp (const C @ other) const\n"
-		"    { \n"
-		"        return i_ - other.i_; \n"
-		"    } \n"
-		"    int i_; \n"
-		"} \n"
-		"void main (void) \n"
-		"{ \n"
-		"    array<const C @> a2; \n"
-		"    a2.insertLast(@C(2)); \n"
-		"    a2.insertLast(@C(1)); \n"
-		"    a2.sortAsc(); \n"
-		"    Assert( a2[0].i_ == 1 ); \n"
-		"    Assert( a2[1].i_ == 2 ); \n"
-		"    C f(2); \n"
-		"    Assert( a2.find(f) == 1 ); \n"
-		"} \n");
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "main()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( r == asEXECUTION_EXCEPTION )
-		PrintException(ctx);
-	ctx->Release();
-
-	// Multiple tests in one
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	r = mod->Build();
-	if( r < 0 )
 	{
-		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
-	}
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "TestArray()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
-	{
+		RegisterScriptString(engine);
+		RegisterScriptArray(engine, false);
+
+		engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		// Test sorting on array of handles
+		mod->AddScriptSection(TESTNAME, 
+			"class Test { \n"
+			"  Test(int v) {val = v;} \n"
+			"  int opCmp(const Test & o) const { return val - o.val; } \n"
+			"  int val; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, 
+			"array<Test @> a = { Test(1), Test(4), Test(2), null, Test(3) }; \n"
+			"a.sortAsc(); \n"
+			"Assert( a[0] is null ); \n"
+			"Assert( a[1].val == 1 ); \n"
+			"Assert( a[2].val == 2 ); \n"
+			"Assert( a[3].val == 3 ); \n"
+			"Assert( a[4].val == 4 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		ctx->Release();	
+
+		// Test different signatures on opCmp and opEquals
+		mod->AddScriptSection(TESTNAME,
+			"class C \n"
+			"{ \n"
+			"    C(int i) {i_ = i;} \n"
+	//		"    bool opEquals (const C &in other) const\n"
+	//		"    { \n"
+	//		"        return i_ == other.i_; \n"
+	//		"    } \n"
+	//		"    int opCmp (const C &in other) const\n"
+	//		"    { \n"
+	//		"        return i_ - other.i_; \n"
+	//		"    } \n"
+			"    bool opEquals (const C @ other) const\n"
+			"    { \n"
+			"        return i_ == other.i_; \n"
+			"    } \n"
+			"    int opCmp (const C @ other) const\n"
+			"    { \n"
+			"        return i_ - other.i_; \n"
+			"    } \n"
+			"    int i_; \n"
+			"} \n"
+			"void main (void) \n"
+			"{ \n"
+			"    array<const C @> a2; \n"
+			"    a2.insertLast(@C(2)); \n"
+			"    a2.insertLast(@C(1)); \n"
+			"    a2.sortAsc(); \n"
+			"    Assert( a2[0].i_ == 1 ); \n"
+			"    Assert( a2[1].i_ == 2 ); \n"
+			"    C f(2); \n"
+			"    Assert( a2.find(f) == 1 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+		ctx->Release();
+
+		// Multiple tests in one
+		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: Failed to compile the script\n", TESTNAME);
+		}
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestArray()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+
+			printf("%s: Failed to execute script\n", TESTNAME);
+			TEST_FAILED;
+		}
+		if( ctx ) ctx->Release();
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: Failed to compile the script\n", TESTNAME);
+		}
+
+		r = ExecuteString(engine, "TestArrayException()", mod);
+		if( r != asEXECUTION_EXCEPTION )
+		{
+			printf("%s: No exception\n", TESTNAME);
+			TEST_FAILED;
+		}
+
+		// Must be possible to declare array of arrays
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: Failed to compile the script\n", TESTNAME);
+		}
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestArrayMulti()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			printf("%s: Failure\n", TESTNAME);
+			TEST_FAILED;
+		}
+		if( r == asEXECUTION_EXCEPTION )
+		{
+			PrintException(ctx);
+		}
+		if( ctx ) ctx->Release();
+		ctx = 0;
+
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
+		r = mod->Build();
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: Failed to compile the script\n", TESTNAME);
+		}
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestArrayChar()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			printf("%s: Failure\n", TESTNAME);
+			TEST_FAILED;
+		}
+		if( r == asEXECUTION_EXCEPTION )
+		{
+			PrintException(ctx);
+		}
+
+		if( ctx ) ctx->Release();
+
+		// Initialization lists must work for array template
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
+		r = mod->Build();
+		if( r < 0 ) TEST_FAILED;
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "TestArrayInitList()", mod, ctx);
+		if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		printf("%s: Failed to execute script\n", TESTNAME);
-		TEST_FAILED;
-	}
-	if( ctx ) ctx->Release();
+		if( ctx ) ctx->Release();
 
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
-	r = mod->Build();
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
-	}
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
+		r = mod->Build();
+		if( r >= 0 ) TEST_FAILED;
+		if( bout.buffer != "Test_Addon_ScriptArray (1, 1) : Info    : Compiling void Test()\n"
+						   "Test_Addon_ScriptArray (3, 20) : Error   : Initialization lists cannot be used with 'array<int>@'\n"
+						   "Test_Addon_ScriptArray (4, 21) : Error   : Initialization lists cannot be used with 'int'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
-	r = ExecuteString(engine, "TestArrayException()", mod);
-	if( r != asEXECUTION_EXCEPTION )
-	{
-		printf("%s: No exception\n", TESTNAME);
-		TEST_FAILED;
-	}
-
-	// Must be possible to declare array of arrays
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
-	r = mod->Build();
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
-	}
-
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "TestArrayMulti()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
-	{
-		printf("%s: Failure\n", TESTNAME);
-		TEST_FAILED;
-	}
-	if( r == asEXECUTION_EXCEPTION )
-	{
-		PrintException(ctx);
-	}
-	if( ctx ) ctx->Release();
-	ctx = 0;
-
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
-	r = mod->Build();
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
-	}
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "TestArrayChar()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
-	{
-		printf("%s: Failure\n", TESTNAME);
-		TEST_FAILED;
-	}
-	if( r == asEXECUTION_EXCEPTION )
-	{
-		PrintException(ctx);
-	}
-
-	if( ctx ) ctx->Release();
-
-	// Initialization lists must work for array template
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "TestArrayInitList()", mod, ctx);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	if( r == asEXECUTION_EXCEPTION )
-		PrintException(ctx);
-
-	if( ctx ) ctx->Release();
-
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
-	r = mod->Build();
-	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "Test_Addon_ScriptArray (1, 1) : Info    : Compiling void Test()\n"
-	                   "Test_Addon_ScriptArray (3, 20) : Error   : Initialization lists cannot be used with 'array<int>@'\n"
-	                   "Test_Addon_ScriptArray (4, 21) : Error   : Initialization lists cannot be used with 'int'\n" )
-	{
-		printf("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// Array object must call default constructor of the script classes
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
-	r = mod->Build();
-	if( r < 0 ) 
-		TEST_FAILED;
-	r = ExecuteString(engine, "Test()", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-		
-	// Test bool[] on Mac OS X with PPC CPU
-	// Submitted by Edward Rudd
-	const char *script8 =
-	"array<bool> f(10);         \n"
-	"for (int i=0; i<10; i++) { \n"
-	"	f[i] = false;           \n"
-	"}                          \n"
-	"Assert(f[0] == false);     \n"
-	"Assert(f[1] == false);     \n"
-	"f[0] = true;               \n"
-	"Assert(f[0] == true);      \n"
-	"Assert(f[1] == false);     \n";
-	
-	r = ExecuteString(engine, script8, mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	// Test reserve()
-	{
-		const char *script = 
-			"array<int> f; \n"
-			"f.reserve(10); \n"
-			"for( uint n = 0; n < 10; n++ ) \n"
-			"  f.insertAt(n, n); \n"
-			"Assert( f.length() == 10 ); \n";
-		r = ExecuteString(engine, script, mod);
+		// Array object must call default constructor of the script classes
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+		r = ExecuteString(engine, "Test()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+		
+		// Test bool[] on Mac OS X with PPC CPU
+		// Submitted by Edward Rudd
+		const char *script8 =
+		"array<bool> f(10);         \n"
+		"for (int i=0; i<10; i++) { \n"
+		"	f[i] = false;           \n"
+		"}                          \n"
+		"Assert(f[0] == false);     \n"
+		"Assert(f[1] == false);     \n"
+		"f[0] = true;               \n"
+		"Assert(f[0] == true);      \n"
+		"Assert(f[1] == false);     \n";
+	
+		r = ExecuteString(engine, script8, mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test reserve()
+		{
+			const char *script = 
+				"array<int> f; \n"
+				"f.reserve(10); \n"
+				"for( uint n = 0; n < 10; n++ ) \n"
+				"  f.insertAt(n, n); \n"
+				"Assert( f.length() == 10 ); \n";
+			r = ExecuteString(engine, script, mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
+
+		// Make sure it is possible to do multiple assignments with the array type
+		r = ExecuteString(engine, "array<int> a, b, c; a = b = c;");
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
+		r = ExecuteString(engine, "array<array<int>> a(2); Assert( a.length() == 2 );");
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Must support arrays of handles
+		r = ExecuteString(engine, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Do not allow the instantiation of a template with a subtype that cannot be created
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterObjectType("single", 0, asOBJ_REF | asOBJ_NOHANDLE);
+		r = ExecuteString(engine, "array<single> a;");
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
 	}
-
-	// Make sure it is possible to do multiple assignments with the array type
-	r = ExecuteString(engine, "array<int> a, b, c; a = b = c;");
-	if( r < 0 )
-		TEST_FAILED;
-
-	// Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
-	r = ExecuteString(engine, "array<array<int>> a(2); Assert( a.length() == 2 );");
-	if( r < 0 )
-		TEST_FAILED;
-
-	// Must support arrays of handles
-	r = ExecuteString(engine, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
-	if( r < 0 )
-		TEST_FAILED;
-
-	// Do not allow the instantiation of a template with a subtype that cannot be created
-	bout.buffer = "";
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	engine->RegisterObjectType("single", 0, asOBJ_REF | asOBJ_NOHANDLE);
-	r = ExecuteString(engine, "array<single> a;");
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
-	{
-		printf("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	engine->Release();
 
 	// Test too large arrays
 	{
@@ -440,23 +443,23 @@ bool Test()
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "array<int> a; a.resize(0xFFFFFFFF);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
-		{
 			TEST_FAILED;
-		}
 		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
-		{
 			TEST_FAILED;
-		}
 
 		r = ExecuteString(engine, "array<int> a(0xFFFFFFFF);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
-		{
 			TEST_FAILED;
-		}
 		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
-		{
 			TEST_FAILED;
-		}
+
+		r = ExecuteString(engine, "array<int> list;\n"
+								  "list.resize(3);\n"
+								  "list.reserve(-1);\n", 0, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		else if( strcmp(ctx->GetExceptionString(), "Too large array size") != 0 )
+			TEST_FAILED;
 
 		ctx->Release();
 		engine->Release();
