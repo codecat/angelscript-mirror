@@ -65,6 +65,27 @@ bool Test()
 	}
 #endif
 
+	// Test registering a function with autohandles for a type that is not yet registered (must give proper error)
+	// http://www.gamedev.net/topic/647707-determining-autohandle-support/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		r = engine->RegisterGlobalFunction("void func(type @+)", asFUNCTION(0), asCALL_CDECL);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "System function (1, 11) : Error   : Identifier 'type' is not a data type\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(type @+)' (Code: -10)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Don't accept registering object properties with offsets larger than signed 16 bit
 	// TODO: Support 32bit offsets, but that requires changes in VM, compiler, and bytecode serialization
 	{

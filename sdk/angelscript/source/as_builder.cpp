@@ -4659,7 +4659,9 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 	if( n && n->tokenType == ttPlus )
 	{
 		// Autohandles are not supported for types with NOCOUNT
-		if( dt.GetObjectType()->flags & asOBJ_NOCOUNT )
+		// If the type is not a handle then there was an error with building the type, but 
+		// this error would already have been reported so no need to report another error here
+		if( dt.IsObjectHandle() && (dt.GetObjectType()->flags & asOBJ_NOCOUNT) )
 			WriteError(TXT_AUTOHANDLE_CANNOT_BE_USED_FOR_NOCOUNT, file, node->firstChild);
 
 		if( autoHandle ) *autoHandle = true;
