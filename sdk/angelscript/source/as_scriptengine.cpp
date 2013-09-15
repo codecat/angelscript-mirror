@@ -1042,7 +1042,7 @@ int asCScriptEngine::ClearUnusedTypes()
 	// Build a list of all types to check for
 	asCArray<asCObjectType*> types;
 	types = classTypes;
-	types.Concatenate(templateInstanceTypes);
+	types.Concatenate(generatedTemplateTypes);
 
 	// Go through all modules
 	asUINT n;
@@ -1648,10 +1648,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return asALREADY_REGISTERED;
 		}
 
-		// Verify the most recently created template instance type
+		// Keep the most recent template generated instance type, so we know what it was before parsing the datatype
 		asCObjectType *mostRecentTemplateInstanceType = 0;
-		if( templateInstanceTypes.GetLength() )
-			mostRecentTemplateInstanceType = templateInstanceTypes[templateInstanceTypes.GetLength()-1];
+		if( generatedTemplateTypes.GetLength() )
+			mostRecentTemplateInstanceType = generatedTemplateTypes[generatedTemplateTypes.GetLength()-1];
 
 		// Use builder to parse the datatype
 		asCDataType dt;
@@ -1708,10 +1708,16 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return ConfigError(asINVALID_TYPE, "RegisterObjectType", name, 0);
 
 			// Was the template instance type created before?
-			if( templateInstanceTypes[templateInstanceTypes.GetLength()-1] == mostRecentTemplateInstanceType ||
+			if( (generatedTemplateTypes.GetLength() &&
+				 generatedTemplateTypes[generatedTemplateTypes.GetLength()-1] == mostRecentTemplateInstanceType) ||
 				mostRecentTemplateInstanceType == dt.GetObjectType() )
 				// TODO: Should have a better error message
 				return ConfigError(asNOT_SUPPORTED, "RegisterObjectType", name, 0);
+
+			// If this is not a template instance type, then it means it is an  
+			// already registered template specialization
+			if( !generatedTemplateTypes.Exists(dt.GetObjectType()) )
+				return ConfigError(asALREADY_REGISTERED, "RegisterObjectType", name, 0);
 
 			// TODO: Add this again. The type is used by the factory stubs so we need to discount that
 			// Is the template instance type already being used?
@@ -3130,14 +3136,14 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 		}
 	}
 
-	for( n = (int)templateInstanceTypes.GetLength()-1; n >= 0; n-- )
+	for( n = (int)generatedTemplateTypes.GetLength()-1; n >= 0; n-- )
 	{
-		if( templateInstanceTypes[n] == t )
+		if( generatedTemplateTypes[n] == t )
 		{
-			if( n == (signed)templateInstanceTypes.GetLength()-1 )
-				templateInstanceTypes.PopLast();
+			if( n == (signed)generatedTemplateTypes.GetLength()-1 )
+				generatedTemplateTypes.PopLast();
 			else
-				templateInstanceTypes[n] = templateInstanceTypes.PopLast();
+				generatedTemplateTypes[n] = generatedTemplateTypes.PopLast();
 		}
 	}
 
@@ -3371,9 +3377,9 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	templateTypes.PushLast(ot);
 
-	// We need to store the object type somewhere for clean-up later
-	// TODO: Why do we need both templateTypes and templateInstanceTypes? It is possible to differ between template instance and template specialization by checking for the asOBJ_TEMPLATE flag
-	templateInstanceTypes.PushLast(ot);
+	// Store the template instance types that have been created automatically by the engine from a template type
+	// The object types in templateTypes that are not also in generatedTemplateTypes are registered template specializations
+	generatedTemplateTypes.PushLast(ot);
 
 	return ot;
 }

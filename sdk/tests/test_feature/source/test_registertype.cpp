@@ -65,6 +65,30 @@ bool Test()
 	}
 #endif
 
+	// Test registering a specialized template instance 
+	// http://www.gamedev.net/topic/647678-bug-multiple-registration-of-template-type/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+		r = engine->RegisterObjectType("array<int32>", 0, asOBJ_REF); assert( r >= 0 );
+		r = engine->RegisterObjectType("array<int>", 0, asOBJ_REF);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'array<int>' (Code: -13)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+
+	}
+
 	// Test registering a function with autohandles for a type that is not yet registered (must give proper error)
 	// http://www.gamedev.net/topic/647707-determining-autohandle-support/
 	{

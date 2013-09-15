@@ -344,6 +344,8 @@ public:
 	asCArray<asCObjectType *>      templateSubTypes;
 
 	// Store information about template types
+	// This list will contain all instances of templates, both registered specialized 
+	// types and those automacially instanciated from scripts
 	asCArray<asCObjectType *>      templateTypes;
 
 	// Store information about list patterns
@@ -380,8 +382,8 @@ public:
 
 	// Stores script declared object types
 	asCArray<asCObjectType *> classTypes;
-	// This array stores the template instances types, that have been generated from template types
-	asCArray<asCObjectType *> templateInstanceTypes;
+	// This array stores the template instances types that have been automatically generated from template types
+	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs
 	asCArray<asCScriptFunction *> funcDefs;
 
