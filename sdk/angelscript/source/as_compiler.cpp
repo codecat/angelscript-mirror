@@ -1218,7 +1218,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 		param = ctx->type.dataType;
 		param.MakeHandle(ctx->type.isExplicitHandle || ctx->type.IsNullConstant());
 
-		// Reference types will always be passed as handles to ? parameters
+		// If value assign is disabled for reference types, then make
+		// sure to always pass the handle to ? parameters
 		if( builder->engine->ep.disallowValueAssignForRefType && 
 			ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_SCOPED) )
 		{
@@ -1471,7 +1472,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			// Make sure the reference to the value is on the stack
 			// For objects, the reference needs to be dereferenced so the pointer on the stack is to the actual object
 			// For handles, the reference shouldn't be changed because the pointer on the stack should be to the handle
-			if( ctx->type.dataType.IsObject() && ctx->type.dataType.IsReference() && !paramType->IsObjectHandle() )
+			if( ctx->type.dataType.IsObject() && ctx->type.dataType.IsReference() && !param.IsObjectHandle() )
 				Dereference(ctx, true);
 			else if( ctx->type.isVariable && !ctx->type.dataType.IsObject() )
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);

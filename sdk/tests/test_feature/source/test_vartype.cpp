@@ -101,6 +101,82 @@ bool Test()
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
+	asIScriptContext *ctx = 0;
+
+	// Test behaviour of var type with unsafe references
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		static bool expectNullRef;
+		static bool expectHandleType;
+		struct Test {
+			static void Func(void *ref, int typeId) 
+			{
+				assert( (expectNullRef && ref == 0) || (!expectNullRef && ref != 0) );
+				assert( (expectHandleType && (typeId & asTYPEID_OBJHANDLE)) || (!expectHandleType && (typeId & asTYPEID_OBJHANDLE) == 0) );
+			}
+		};
+
+		engine->RegisterGlobalFunction("void funcO(?& out)", asFUNCTION(Test::Func), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void funcIO(?&)", asFUNCTION(Test::Func), asCALL_CDECL);
+
+		const char *script = "class ScriptClass { int a = 0; } \n";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+
+		expectNullRef = false;
+		expectHandleType = false;
+		r = ExecuteString(engine, "ScriptClass @t = ScriptClass(); funcO(t);", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		expectNullRef = true;
+		expectHandleType = false;
+		r = ExecuteString(engine, "ScriptClass @t; funcIO(t);", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		expectNullRef = false;
+		expectHandleType = true;
+		r = ExecuteString(engine, "ScriptClass @t; funcO(@t);", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		expectNullRef = false;
+		expectHandleType = true;
+		r = ExecuteString(engine, "ScriptClass @t; funcIO(@t);", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		// When disallowing value assignments, only the handle is passed to var args
+		engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, true);
+
+		expectNullRef = false;
+		expectHandleType = true;
+		r = ExecuteString(engine, "ScriptClass @t; funcO(t); funcO(@t); funcIO(t); funcIO(@t);", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		ctx->Release();
+		engine->Release();
+	}
 
 	// It must not be possible to declare global variables of the var type ?
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
