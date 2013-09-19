@@ -32,6 +32,36 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// opEquals with funcdef
+	// http://www.gamedev.net/topic/647797-difference-between-xopequalsy-and-xy-with-funcdefs/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void CALLBACK(); \n"
+			"class Test { \n"
+			"  bool opEquals(CALLBACK @f) { \n"
+			"    return f is func; \n"
+			"  } \n"
+			"  CALLBACK @func; \n"
+			"} \n"
+			"void func() {} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Test t; \n"
+			                      "@t.func = func; \n"
+								  "assert( t == func );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test funcdefs and namespaces
 	// http://www.gamedev.net/topic/644586-application-function-returning-a-funcdef-handle-crashes-when-called-in-as/
 	{

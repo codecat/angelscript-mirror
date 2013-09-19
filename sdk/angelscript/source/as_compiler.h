@@ -104,6 +104,20 @@ struct asSExprContext
 		property_ref    = false;
 		methodName      = "";
 	}
+	bool IsClassMethod()
+	{
+		if( type.dataType.GetObjectType() == 0 ) return false;
+		if( methodName == "" ) return false;
+		if( type.dataType.GetObjectType() == &type.dataType.GetObjectType()->engine->functionBehaviours ) return false;
+		return true;
+	}
+	bool IsGlobalFunc()
+	{
+		if( type.dataType.GetObjectType() == 0 ) return false;
+		if( methodName == "" ) return false;
+		if( type.dataType.GetObjectType() != &type.dataType.GetObjectType()->engine->functionBehaviours ) return false;
+		return true;
+	}
 
 	asCByteCode bc;
 	asCTypeInfo type;

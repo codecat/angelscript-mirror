@@ -1152,7 +1152,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 void asCCompiler::DetermineSingleFunc(asSExprContext *ctx, asCScriptNode *node)
 {
 	// Don't do anything if this is not a deferred global function
-	if( ctx->methodName == "" || ctx->type.dataType.GetObjectType() != 0 )
+	if( !ctx->IsGlobalFunc() )
 		return;
 
 	// Determine the namespace
@@ -6362,7 +6362,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 {
 	// Don't allow any operators on expressions that take address of class method
 	// If methodName is set but the type is not an object, then it is a global function
-	if( lctx->methodName != "" || (rctx->type.dataType.GetObjectType() && rctx->methodName != "") )
+	if( lctx->methodName != "" || rctx->IsClassMethod() )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, opNode);
 		return -1;
@@ -6722,7 +6722,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		if( lr >= 0 && rr >= 0 )
 		{
 			// Don't allow any operators on expressions that take address of class method
-			if( le.methodName != "" || re.methodName != "" )
+			if( le.IsClassMethod() || re.IsClassMethod() )
 			{
 				Error(TXT_INVALID_OP_ON_METHOD, expr);
 				return -1;
@@ -7366,9 +7366,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 				// Defer the evaluation of which function until it is actually used
 				// Store the namespace and name of the function for later
-				ctx->type.SetNullConstant();
-				// Clear the explicit handle so that the script writer is allowed to explicitly set it
-				ctx->type.isExplicitHandle = false;
+				ctx->type.SetUndefinedFuncHandle(engine);
 				ctx->methodName = ns ? ns->name + "::" + name : name;
 			}
 		}
@@ -8038,7 +8036,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	ProcessPropertyGetAccessor(&expr, node);
 
 	// Don't allow any operators on expressions that take address of class method
-	if( expr.methodName != "" )
+	if( expr.IsClassMethod() )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
 		return;
@@ -8808,7 +8806,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	int op = node->tokenType;
 
 	// Don't allow any prefix operators except handle on expressions that take address of class method
-	if( ctx->methodName != "" && op != ttHandle )
+	if( ctx->IsClassMethod() && op != ttHandle )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
 		return -1;
@@ -9670,7 +9668,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ctx)
 {
 	// Don't allow any postfix operators on expressions that take address of class method
-	if( ctx->methodName != "" )
+	if( ctx->IsClassMethod() )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
 		return -1;
@@ -10712,7 +10710,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
 {
 	// Don't allow any operators on expressions that take address of class method, but allow it on global functions
-	if( (lctx->methodName != "" && lctx->type.dataType.GetObjectType()) || (rctx->methodName != "" && rctx->type.dataType.GetObjectType()) )
+	if( (lctx->IsClassMethod()) || (rctx->IsClassMethod()) )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
 		return -1;
