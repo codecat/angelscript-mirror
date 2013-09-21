@@ -1828,7 +1828,11 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	asCBuilder bld(this, 0);
 	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, 0, behaviour == asBEHAVE_LIST_FACTORY ? &listPattern : 0);
 	if( r < 0 )
+	{
+		if( listPattern )
+			listPattern->Destroy(this);
 		return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+	}
 	func.name.Format("_beh_%d_", behaviour);
 
 	if( behaviour != asBEHAVE_FACTORY && behaviour != asBEHAVE_LIST_FACTORY )
@@ -1941,13 +1945,19 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		// Must be a ref type and must not have asOBJ_NOHANDLE
 		if( !(objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_NOHANDLE) )
 		{
+			if( listPattern )
+				listPattern->Destroy(this);
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
 		// Verify that the return type is a handle to the type
 		if( func.returnType != asCDataType::CreateObjectHandle(objectType, false) )
+		{
+			if( listPattern )
+				listPattern->Destroy(this);
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
 
 		// TODO: Add support for implicit factories
 
@@ -1958,6 +1968,9 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			(func.parameterTypes.GetLength() == 0 ||
 			 !func.parameterTypes[0].IsReference()) )
 		{
+			if( listPattern )
+				listPattern->Destroy(this);
+
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_FIRST_PARAM_MUST_BE_REF_FOR_TEMPLATE_FACTORY);
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
@@ -1986,6 +1999,9 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				{
 					if( func.parameterTypes.GetLength() != 2 || !func.parameterTypes[1].IsReference() )
 					{
+						if( listPattern )
+							listPattern->Destroy(this);
+
 						WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS);
 						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 					}
@@ -1994,6 +2010,9 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				{
 					if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
 					{
+						if( listPattern )
+							listPattern->Destroy(this);
+
 						WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM);
 						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 					}
@@ -2001,11 +2020,12 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 				// Store the list pattern for this function
 				int r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
-				if( r < 0 )
-					return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
 				if( listPattern )
 					listPattern->Destroy(this);
+
+				if( r < 0 )
+					return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 			}
 			else
 			{
@@ -5381,33 +5401,37 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, const asCObjectType *listPatte
 	asCScriptFunction *listFactory = scriptFunctions[ot->beh.listFactory];
 	asASSERT( listFactory );
 
-	// We'll need a stack for the more complex patterns that uses nested groups of data
-	struct SInfo { asUINT length; asSListPatternNode *node; };
-	asCArray<SInfo> stack;
+	asSListPatternNode *node = listFactory->listPattern;
+	DestroySubList(buffer, node);
+
+	asASSERT( node->type == asLPT_END );
+}
+
+// internal
+void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
+{
+	asASSERT( node->type == asLPT_START );
 
 	asUINT count = 0;
 
-	asSListPatternNode *node = listFactory->listPattern->next;
+	node = node->next;
 	while( node )
 	{
 		if( node->type == asLPT_REPEAT )
 		{
-			if( count )
-			{
-				// Push the current info on the stack
-				SInfo info = {count, node};
-				stack.PushLast(info);
-			}
-
 			// Determine how many times the pattern repeat
 			count = *(asUINT*)buffer;
 			buffer += 4;
 		}
 		else if( node->type == asLPT_TYPE )
 		{
+			// If we're not in a repeat iteration, then only 1 value should be destroyed
+			if( count == 0 )
+				count = 1;
+
 			asCDataType &dt = reinterpret_cast<asSListPatternDataTypeNode*>(node)->dataType;
 
-			ot = dt.GetObjectType();
+			asCObjectType *ot = dt.GetObjectType();
 			if( ot && (ot->flags & asOBJ_ENUM) == 0 )
 			{
 				// Free all instances of this type
@@ -5462,16 +5486,32 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, const asCObjectType *listPatte
 			{
 				// Advance the buffer
 				buffer += count*dt.GetSizeInMemoryBytes();
+				count = 0;
+			}
+		}
+		else if( node->type == asLPT_START )
+		{
+			// If we're not in a repeat iteration, then only 1 value should be destroyed
+			if( count == 0 )
+				count = 1;
+
+			while( count-- )
+			{
+				asSListPatternNode *subList = node;
+				DestroySubList(buffer, subList);
+
+				asASSERT( subList->type == asLPT_END );
+
+				if( count == 0 )
+					node = subList;
 			}
 		}
 		else if( node->type == asLPT_END )
 		{
-			if( stack.GetLength() == 0 )
-				return;
+			return;
 		}
 		else
 		{
-			// TODO: list: Implement support for nested groups
 			asASSERT( false );
 		}
 

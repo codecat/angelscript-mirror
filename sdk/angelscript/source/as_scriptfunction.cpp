@@ -218,14 +218,28 @@ int asCScriptFunction::RegisterListPattern(const char *decl, asCScriptNode *list
 	listPattern = asNEW(asSListPatternNode)(asLPT_START);
 	node = listPattern;
 
+	// Recursively parse the child
+	ParseListPattern(node, decl, listNodes);
+
+	node->next = asNEW(asSListPatternNode)(asLPT_END);
+
+	return 0;
+}
+
+// internal
+int asCScriptFunction::ParseListPattern(asSListPatternNode *&target, const char *decl, asCScriptNode *listNodes)
+{
+	asSListPatternNode *node = target;
+
 	listNodes = listNodes->firstChild;
 	while( listNodes )
 	{
 		if( listNodes->nodeType == snIdentifier )
 		{
-			asSListPatternNode *n = asNEW(asSListPatternNode)(asLPT_REPEAT);
-			node->next = n;
-			node = n;
+			// TODO: list: repeat should only be allowed as the first token after { (at least until anyone comes up with a need to allow it in the middle)
+			// TODO: list: after repeat there must be either a sub list { or a type
+			node->next = asNEW(asSListPatternNode)(asLPT_REPEAT);
+			node = node->next;
 		}
 		else if( listNodes->nodeType == snDataType )
 		{
@@ -235,9 +249,21 @@ int asCScriptFunction::RegisterListPattern(const char *decl, asCScriptNode *list
 			code.SetCode("", decl, 0, false);
 			dt = builder.CreateDataTypeFromNode(listNodes, &code, engine->defaultNamespace, false, returnType.GetObjectType());
 
-			asSListPatternNode *n = asNEW(asSListPatternDataTypeNode)(dt);
-			node->next = n;
-			node = n;
+			node->next = asNEW(asSListPatternDataTypeNode)(dt);
+			node = node->next;
+		}
+		else if( listNodes->nodeType == snListPattern )
+		{
+			node->next = asNEW(asSListPatternNode)(asLPT_START);
+			node = node->next;
+
+			// Recursively parse the child
+			int r = ParseListPattern(node, decl, listNodes);
+			if( r < 0 )
+				return r;
+
+			node->next = asNEW(asSListPatternNode)(asLPT_END);
+			node = node->next;
 		}
 		else
 		{
@@ -249,8 +275,7 @@ int asCScriptFunction::RegisterListPattern(const char *decl, asCScriptNode *list
 		listNodes = listNodes->next;
 	}
 
-	node->next = asNEW(asSListPatternNode)(asLPT_END);
-
+	target = node;
 	return 0;
 }
 

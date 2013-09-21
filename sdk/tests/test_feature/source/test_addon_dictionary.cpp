@@ -139,6 +139,41 @@ bool Test()
 
 	engine->Release();
 
+	// Test initializing the dictionary with the list factory
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"void main() { \n"
+			"  dictionary dict = {{'a'}, {'b'}, {'c'}}; \n"
+			"  assert( dict.getSize() == 3 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	//-------------------------
 	// Test the generic interface as well
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -270,6 +270,7 @@ public:
 
 	asCObjectType *GetListPatternType(int listPatternFuncId);
 	void DestroyList(asBYTE *buffer, const asCObjectType *listPatternType);
+	void DestroySubList(asBYTE *&buffer, asSListPatternNode *&patternNode);
 
 	int AddBehaviourFunction(asCScriptFunction &func, asSSystemFunctionInterface &internal);
 

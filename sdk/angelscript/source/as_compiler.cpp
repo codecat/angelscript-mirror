@@ -2465,11 +2465,11 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 	// Evaluate all elements of the list
 	asSExprContext valueExpr(engine);
-	asCScriptNode *el = node->firstChild;
+	asCScriptNode *el = node;
 	asSListPatternNode *patternNode = engine->scriptFunctions[listPatternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
-	CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), bufferVar, bufferSize, valueExpr.bc);
-	asASSERT( patternNode == 0 );
-	asASSERT( el == 0 );
+	int r = CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), bufferVar, bufferSize, valueExpr.bc);
+	asASSERT( r || patternNode == 0 );
+	UNUSED_VAR(r);
 
 	// After all values have been evaluated we know the final size of the buffer
 	asSExprContext allocExpr(engine);
@@ -2531,16 +2531,20 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 {
 	if( patternNode->type == asLPT_START )
 	{
+		asASSERT( valueNode->nodeType == snInitList );
+
 		// Compile all values until asLPT_END
 		patternNode = patternNode->next;
+		asCScriptNode *node = valueNode->firstChild;
 		while( patternNode->type != asLPT_END )
 		{
-			int r = CompileInitListElement(patternNode, valueNode, bufferTypeId, bufferVar, bufferSize, byteCode);
+			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, byteCode);
 			if( r < 0 ) return r;
 			asASSERT( patternNode );
 		}
 		
 		// Move to the next node
+		valueNode = valueNode->next;
 		patternNode = patternNode->next;
 	}
 	else if( patternNode->type == asLPT_REPEAT )

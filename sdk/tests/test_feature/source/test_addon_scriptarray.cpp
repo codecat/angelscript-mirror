@@ -171,6 +171,19 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 	
+	// Compile nested array init list
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		r = ExecuteString(engine, "array<array<int>> a = {{1,2},{3,4}};");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	

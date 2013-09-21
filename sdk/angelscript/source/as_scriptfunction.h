@@ -207,6 +207,7 @@ public:
 	void      MakeDelegate(asCScriptFunction *func, void *obj);
 
 	int       RegisterListPattern(const char *decl, asCScriptNode *listPattern);
+	int       ParseListPattern(asSListPatternNode *&target, const char *decl, asCScriptNode *listPattern);
 
 	bool      DoesReturnOnStack() const;
 
