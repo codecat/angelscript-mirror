@@ -126,6 +126,13 @@ protected:
 		int  AdjustOffset(int offset, asCObjectType *listPatternType);
 		void SetRepeatCount(asUINT rc);
 
+		struct SInfo
+		{
+			asUINT              repeatCount;
+			asSListPatternNode *startNode;
+		};
+		asCArray<SInfo> stack;
+
 		asDWORD            *allocMemBC;
 		asUINT              maxOffset;
 		asCObjectType      *patternType;
@@ -214,6 +221,13 @@ protected:
 		SListAdjuster(asCObjectType *ot);
 		int  AdjustOffset(int offset, asCObjectType *listPatternType);
 		void SetRepeatCount(asUINT rc);
+
+		struct SInfo
+		{
+			asUINT              repeatCount;
+			asSListPatternNode *startNode;
+		};
+		asCArray<SInfo> stack;
 
 		asCObjectType      *patternType;
 		asUINT              repeatCount;

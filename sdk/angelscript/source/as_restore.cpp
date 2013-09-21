@@ -2457,6 +2457,31 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 
 		return lastAdjustedOffset;
 	}
+	else if( patternNode->type == asLPT_START )
+	{
+		if( repeatCount > 0 )
+			repeatCount--;
+		SInfo info = {repeatCount, patternNode};
+		stack.PushLast(info);
+
+		repeatCount = 0;
+		patternNode = patternNode->next;
+
+		lastOffset--;
+		return AdjustOffset(offset, listPatternType);
+	}
+	else if( patternNode->type == asLPT_END )
+	{
+		SInfo info = stack.PopLast();
+		repeatCount = info.repeatCount;
+		if( repeatCount )
+			patternNode = info.startNode;
+		else
+			patternNode = patternNode->next;
+
+		lastOffset--;
+		return AdjustOffset(offset, listPatternType);
+	}
 	else
 	{
 		// TODO: list: Add support for more complex patterns
@@ -4337,6 +4362,31 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 			patternNode = patternNode->next;
 
 		return entries++;
+	}
+	else if( patternNode->type == asLPT_START )
+	{
+		if( repeatCount > 0 )
+			repeatCount--;
+		SInfo info = {repeatCount, patternNode};
+		stack.PushLast(info);
+
+		repeatCount = 0;
+		patternNode = patternNode->next;
+
+		lastOffset--;
+		return AdjustOffset(offset, listPatternType);
+	}
+	else if( patternNode->type == asLPT_END )
+	{
+		SInfo info = stack.PopLast();
+		repeatCount = info.repeatCount;
+		if( repeatCount )
+			patternNode = info.startNode;
+		else
+			patternNode = patternNode->next;
+
+		lastOffset--;
+		return AdjustOffset(offset, listPatternType);
 	}
 	else
 	{
