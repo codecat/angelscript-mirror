@@ -125,6 +125,7 @@ protected:
 		void AdjustAllocMem();
 		int  AdjustOffset(int offset, asCObjectType *listPatternType);
 		void SetRepeatCount(asUINT rc);
+		void SetNextType(int typeId);
 
 		struct SInfo
 		{
@@ -140,6 +141,7 @@ protected:
 		int                 lastOffset;
 		asUINT              lastAdjustedOffset;
 		asSListPatternNode *patternNode;
+		int                 nextTypeId;
 	};
 	asCArray<SListAdjuster*> listAdjusters;
 };
@@ -221,6 +223,7 @@ protected:
 		SListAdjuster(asCObjectType *ot);
 		int  AdjustOffset(int offset, asCObjectType *listPatternType);
 		void SetRepeatCount(asUINT rc);
+		void SetNextType(int typeId);
 
 		struct SInfo
 		{
@@ -234,6 +237,7 @@ protected:
 		asSListPatternNode *patternNode;
 		asUINT              entries;
 		int                 lastOffset;
+		int                 nextTypeId;
 	};
 	asCArray<SListAdjuster*> listAdjusters;
 };

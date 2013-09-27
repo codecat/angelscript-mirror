@@ -166,7 +166,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-/*
+
 		CBytecodeStream stream("test");
 		r = mod->SaveByteCode(&stream);
 		if( r < 0 )
@@ -176,7 +176,7 @@ bool Test()
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
 			TEST_FAILED;
-*/
+
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if( r != asEXECUTION_FINISHED )

@@ -2304,8 +2304,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			// Translate the type id
 			bc[n+2] = FindTypeId(bc[n+2]);
 
-			// TODO: list: Inform the list adjuster the type id of the next element
-			//listAdj->SetRepeatCount(bc[n+2]);
+			// Inform the list adjuster the type id of the next element
+			listAdj->SetNextType(bc[n+2]);
 		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
@@ -2417,7 +2417,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 }
 
 asCReader::SListAdjuster::SListAdjuster(asDWORD *bc, asCObjectType *listType) : 
-	allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1)
+	allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextTypeId(-1)
 {
 	asASSERT( patternType && (patternType->flags & asOBJ_LIST_PATTERN) );
 
@@ -2451,23 +2451,58 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
-		if( repeatCount > 0 )
-			repeatCount--;
+		const asCDataType &dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
+		if( dt.GetTokenType() == ttQuestion )
+		{
+			if( nextTypeId != -1 )
+			{
+				if( repeatCount > 0 )
+					repeatCount--;
 
-		// Determine the size of the element
-		asUINT size;
-		asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
-		if( dt.IsObjectHandle() )
-			size = AS_PTR_SIZE*4;
+				asCDataType dt = patternType->engine->GetDataTypeFromTypeId(nextTypeId);
+				asUINT size;
+				if( dt.IsObjectHandle() )
+					size = AS_PTR_SIZE*4;
+				else
+					size = dt.GetSizeInMemoryBytes();
+				maxOffset += size;
+			
+				// Only move the patternNode if we're not expecting any more repeated entries
+				if( repeatCount == 0 )
+					patternNode = patternNode->next;
+
+				nextTypeId = -1;
+
+				return lastAdjustedOffset;
+			}
+			else
+			{
+				// The first adjustment is for the typeId
+				maxOffset += 4;
+
+				return lastAdjustedOffset;
+			}
+		}
 		else
-			size = dt.GetSizeInMemoryBytes();
-		maxOffset += size;
+		{
+			if( repeatCount > 0 )
+				repeatCount--;
 
-		// Only move the patternNode if we're not expecting any more repeated entries
-		if( repeatCount == 0 )
-			patternNode = patternNode->next;
+			// Determine the size of the element
+			asUINT size;
+			asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
+			if( dt.IsObjectHandle() )
+				size = AS_PTR_SIZE*4;
+			else
+				size = dt.GetSizeInMemoryBytes();
+			maxOffset += size;
 
-		return lastAdjustedOffset;
+			// Only move the patternNode if we're not expecting any more repeated entries
+			if( repeatCount == 0 )
+				patternNode = patternNode->next;
+
+			return lastAdjustedOffset;
+		}
 	}
 	else if( patternNode->type == asLPT_START )
 	{
@@ -2517,6 +2552,13 @@ void asCReader::SListAdjuster::SetRepeatCount(asUINT rc)
 void asCReader::SListAdjuster::AdjustAllocMem()
 {
 	allocMemBC[1] = maxOffset;
+}
+
+void asCReader::SListAdjuster::SetNextType(int typeId)
+{
+	asASSERT( nextTypeId == -1 );
+
+	nextTypeId = typeId;
 }
 
 void asCReader::CalculateStackNeeded(asCScriptFunction *func)
@@ -4103,8 +4145,8 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
 			tmp[1] = listAdj->AdjustOffset(tmp[1], listAdj->patternType);
 
-			// TODO: list: Inform the adjuster of the type id of the next element
-			//listAdj->SetRepeatCount(tmp[2]);
+			// Inform the adjuster of the type id of the next element
+			listAdj->SetNextType(tmp[2]);
 
 			// Translate the type id
 			tmp[2] = FindTypeIdIdx(tmp[2]);
@@ -4345,7 +4387,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 	}
 }
 
-asCWriter::SListAdjuster::SListAdjuster(asCObjectType *ot) : patternType(ot), repeatCount(0), entries(0), lastOffset(-1)
+asCWriter::SListAdjuster::SListAdjuster(asCObjectType *ot) : patternType(ot), repeatCount(0), entries(0), lastOffset(-1), nextTypeId(-1)
 { 
 	asASSERT( ot && (ot->flags & asOBJ_LIST_PATTERN) ); 
 
@@ -4377,12 +4419,33 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
-		if( repeatCount > 0 )
-			repeatCount--;
+		const asCDataType &dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
+		if( dt.GetTokenType() == ttQuestion )
+		{
+			// The bytecode need to inform the type that will 
+			// come next and then adjust that position too before 
+			// we can move to the next node
+			if( nextTypeId != -1 )
+			{
+				if( repeatCount > 0 )
+					repeatCount--;
 
-		// Only move the patternNode if we're not expecting any more repeated entries
-		if( repeatCount == 0 )
-			patternNode = patternNode->next;
+				// Only move the patternNode if we're not expecting any more repeated entries
+				if( repeatCount == 0 )
+					patternNode = patternNode->next;
+
+				nextTypeId = -1;
+			}
+		}
+		else 
+		{
+			if( repeatCount > 0 )
+				repeatCount--;
+
+			// Only move the patternNode if we're not expecting any more repeated entries
+			if( repeatCount == 0 )
+				patternNode = patternNode->next;
+		}
 
 		return entries++;
 	}
@@ -4429,6 +4492,16 @@ void asCWriter::SListAdjuster::SetRepeatCount(asUINT rc)
 	patternNode = patternNode->next;
 
 	repeatCount = rc;
+}
+
+void asCWriter::SListAdjuster::SetNextType(int typeId)
+{
+	// Make sure the list is expecting a type at this location
+	asASSERT( patternNode->type == asLPT_TYPE && 
+	          reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType.GetTokenType() == ttQuestion );
+
+	// Inform the type id for the next adjustment 
+	nextTypeId = typeId;
 }
 
 void asCWriter::WriteUsedTypeIds()
