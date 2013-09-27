@@ -949,18 +949,37 @@ asCScriptNode *asCParser::ParseListPattern()
 
 	sToken start = t1;
 
+	bool isBeginning = true;
+	bool afterType = false;
 	while( !isSyntaxError )
 	{
 		GetToken(&t1);
 		if( t1.type == ttEndStatementBlock )
+		{
+			if( !afterType )
+				Error(TXT_EXPECTED_DATA_TYPE, &t1);
 			break;
+		}
 		else if( t1.type == ttStartStatementBlock )
 		{
+			if( afterType )
+			{
+				asCString msg;
+				msg.Format(TXT_EXPECTED_s_OR_s, ",", "}");
+				Error(msg.AddressOf(), &t1);
+			}
 			RewindTo(&t1);
 			node->AddChildLast(ParseListPattern());
+			afterType = true;
 		}
 		else if( t1.type == ttIdentifier && IdentifierIs(t1, "repeat") )
 		{
+			if( !isBeginning )
+			{
+				asCString msg;
+				msg.Format(TXT_UNEXPECTED_TOKEN_s, "repeat");
+				Error(msg.AddressOf(), &t1);
+			}
 			RewindTo(&t1);
 			node->AddChildLast(ParseIdentifier());
 		}
@@ -970,11 +989,26 @@ asCScriptNode *asCParser::ParseListPattern()
 			Info(TXT_WHILE_PARSING_STATEMENT_BLOCK, &start);
 			break;
 		}
+		else if( t1.type == ttListSeparator )
+		{
+			if( !afterType )
+				Error(TXT_EXPECTED_DATA_TYPE, &t1);
+			afterType = false;
+		}
 		else
 		{
+			if( afterType )
+			{
+				asCString msg;
+				msg.Format(TXT_EXPECTED_s_OR_s, ",", "}");
+				Error(msg.AddressOf(), &t1);
+			}
 			RewindTo(&t1);
 			node->AddChildLast(ParseType(true, true));
+			afterType = true;
 		}
+
+		isBeginning = false;
 	}
 
 	node->UpdateSourcePos(t1.pos, t1.length);

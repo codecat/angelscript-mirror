@@ -2295,6 +2295,18 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
 			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
 		}
+		else if( c == asBC_SetListType )
+		{
+			// Adjust the offset in the list where the typeid is informed
+			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
+
+			// Translate the type id
+			bc[n+2] = FindTypeId(bc[n+2]);
+
+			// TODO: list: Inform the list adjuster the type id of the next element
+			//listAdj->SetRepeatCount(bc[n+2]);
+		}
 
 		n += asBCTypeSize[asBCInfo[c].type];
 	}
@@ -4085,7 +4097,18 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
 			tmp[1] = listAdj->AdjustOffset(tmp[1], listAdj->patternType);
 		}
+		else if( c == asBC_SetListType )
+		{
+			// Adjust the offset in the initialization list
+			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
+			tmp[1] = listAdj->AdjustOffset(tmp[1], listAdj->patternType);
 
+			// TODO: list: Inform the adjuster of the type id of the next element
+			//listAdj->SetRepeatCount(tmp[2]);
+
+			// Translate the type id
+			tmp[2] = FindTypeIdIdx(tmp[2]);
+		}
 		// Adjust the variable offsets
 		switch( asBCInfo[c].type )
 		{

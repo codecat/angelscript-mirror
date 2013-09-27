@@ -1422,8 +1422,9 @@ enum asEBCInstr
 	asBC_AllocMem		= 189,
 	asBC_SetListSize	= 190,
 	asBC_PshListElmnt	= 191,
+	asBC_SetListType	= 192,
 
-	asBC_MAXBYTECODE	= 192,
+	asBC_MAXBYTECODE	= 193,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -1709,8 +1710,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(AllocMem,	wW_DW_ARG,		0),
 	asBCINFO(SetListSize, rW_DW_DW_ARG,	0),
 	asBCINFO(PshListElmnt, rW_DW_ARG,	AS_PTR_SIZE),
+	asBCINFO(SetListType, rW_DW_DW_ARG,	0),
 
-	asBCINFO_DUMMY(192),
 	asBCINFO_DUMMY(193),
 	asBCINFO_DUMMY(194),
 	asBCINFO_DUMMY(195),

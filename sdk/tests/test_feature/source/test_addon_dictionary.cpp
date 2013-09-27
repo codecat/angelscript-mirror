@@ -154,13 +154,19 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", 
 			"void main() { \n"
-			"  dictionary dict = {{'a'}, {'b'}, {'c'}}; \n"
+			"  dictionary dict = {{'a', 42}, {'b', 'test'}, {'c', }}; \n"
 			"  assert( dict.getSize() == 3 ); \n"
+			"  int a; \n"
+			"  dict.get('a', a); \n"
+			"  assert( a == 42 ); \n"
+			"  string b; \n"
+			"  dict.get('b', b); \n"
+			"  assert( b == 'test' ); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-
+/*
 		CBytecodeStream stream("test");
 		r = mod->SaveByteCode(&stream);
 		if( r < 0 )
@@ -170,7 +176,7 @@ bool Test()
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
 			TEST_FAILED;
-
+*/
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if( r != asEXECUTION_FINISHED )

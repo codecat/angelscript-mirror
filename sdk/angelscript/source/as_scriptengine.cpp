@@ -5412,7 +5412,7 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 {
 	asASSERT( node->type == asLPT_START );
 
-	asUINT count = 0;
+	int count = 0;
 
 	node = node->next;
 	while( node )
@@ -5426,21 +5426,28 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 		else if( node->type == asLPT_TYPE )
 		{
 			// If we're not in a repeat iteration, then only 1 value should be destroyed
-			if( count == 0 )
+			if( count <= 0 )
 				count = 1;
 
-			asCDataType &dt = reinterpret_cast<asSListPatternDataTypeNode*>(node)->dataType;
+			asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(node)->dataType;
+			bool isVarType = dt.GetTokenType() == ttQuestion;
 
-			asCObjectType *ot = dt.GetObjectType();
-			if( ot && (ot->flags & asOBJ_ENUM) == 0 )
+			while( count-- )
 			{
-				// Free all instances of this type
-				if( ot->flags & asOBJ_VALUE )
+				if( isVarType )
 				{
-					if( ot->beh.destruct )
+					int typeId = *(int*)buffer;
+					buffer += 4;
+					dt = GetDataTypeFromTypeId(typeId);
+				}
+
+				asCObjectType *ot = dt.GetObjectType();
+				if( ot && (ot->flags & asOBJ_ENUM) == 0 )
+				{
+					// Free all instances of this type
+					if( ot->flags & asOBJ_VALUE )
 					{
-						// Call the destructor for each of the objects
-						while( count-- )
+						if( ot->beh.destruct )
 						{
 							// Only call the destructor if the object has been created
 							// We'll assume the object has been created if any byte in
@@ -5462,37 +5469,32 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 							}
 							buffer += size;
 						}
+						else
+						{
+							// Advance the pointer in the buffer
+							buffer += ot->GetSize();
+						}
 					}
 					else
 					{
-						// Advance the pointer in the buffer
-						buffer += count*ot->GetSize();
-						count = 0;
-					}
-				}
-				else
-				{
-					// Call the release behaviour for each of the pointers
-					while( count-- )
-					{
+						// Call the release behaviour
 						void *ptr = *(void**)buffer;
 						if( ptr )
 							ReleaseScriptObject(ptr, ot);
 						buffer += AS_PTR_SIZE*4;
 					}
 				}
-			}
-			else
-			{
-				// Advance the buffer
-				buffer += count*dt.GetSizeInMemoryBytes();
-				count = 0;
+				else
+				{
+					// Advance the buffer
+					buffer += dt.GetSizeInMemoryBytes();
+				}
 			}
 		}
 		else if( node->type == asLPT_START )
 		{
 			// If we're not in a repeat iteration, then only 1 value should be destroyed
-			if( count == 0 )
+			if( count <= 0 )
 				count = 1;
 
 			while( count-- )

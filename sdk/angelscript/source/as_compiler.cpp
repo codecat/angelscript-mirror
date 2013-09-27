@@ -2531,16 +2531,32 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 {
 	if( patternNode->type == asLPT_START )
 	{
-		asASSERT( valueNode->nodeType == snInitList );
+		if( valueNode->nodeType != snInitList )
+		{
+			Error(TXT_EXPECTED_LIST, valueNode);
+			return -1;
+		}
 
 		// Compile all values until asLPT_END
 		patternNode = patternNode->next;
 		asCScriptNode *node = valueNode->firstChild;
 		while( patternNode->type != asLPT_END )
 		{
+			if( node == 0 )
+			{
+				Error(TXT_NOT_ENOUGH_VALUES_FOR_LIST, valueNode);
+				return -1;
+			}
+
 			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, byteCode);
 			if( r < 0 ) return r;
 			asASSERT( patternNode );
+		}
+
+		if( node )
+		{
+			Error(TXT_TOO_MANY_VALUES_FOR_LIST, valueNode);
+			return -1;
 		}
 		
 		// Move to the next node
@@ -2578,18 +2594,18 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
+		// TODO: list: If the type is ? then the type id should be placed in the buffer
+		//             before the actual value. This should be done with a specific bc
+		//             so that the asCWriter/Reader can easily determine the type to adjust
+		//             the offset of the value.
+
+		// TODO: list: Values on the list must be aligned to 32bit boundaries, except if the type
+		//             is smaller than 32bit.
+
 		// Determine the size of the element
+		asUINT size = 0;
+
 		asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
-		asUINT size;
-		if( dt.IsPrimitive() )
-			size = dt.GetSizeInMemoryBytes();
-		else if( dt.GetObjectType()->flags & asOBJ_VALUE )
-		{
-			size = dt.GetSizeInMemoryBytes();
-			asASSERT( size <= 4 || (size & 0x3) == 0 );
-		}
-		else
-			size = AS_PTR_SIZE*4;
 
 		if( valueNode->nodeType == snAssignment || valueNode->nodeType == snInitList )
 		{
@@ -2600,23 +2616,47 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 			{
 				// Compile the assignment expression
 				CompileAssignment(valueNode, &rctx);
+
+				if( dt.GetTokenType() == ttQuestion )
+				{
+					// We now know the type
+					dt = rctx.type.dataType;
+					dt.MakeReadOnly(false);
+
+					// Place the type id in the buffer
+					byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, engine->GetTypeIdFromDataType(dt));
+					bufferSize += 4;
+				}
 			}
 			else if( valueNode->nodeType == snInitList )
 			{
-				int offset = AllocateVariable(dt, true);
+				if( dt.GetTokenType() == ttQuestion )
+				{
+					// Can't use init lists with var type as it is not possible to determine what type should be allocated
+					asCString str; 
+					str.Format(TXT_INIT_LIST_CANNOT_BE_USED_WITH_s, "?");
+					Error(str.AddressOf(), valueNode);
+					rctx.type.SetDummy();
+					dt = rctx.type.dataType;
+				}
+				else
+				{
+					// Allocate a temporary variable that will be initialized with the list
+					int offset = AllocateVariable(dt, true);
 
-				rctx.type.Set(dt);
-				rctx.type.isVariable = true;
-				rctx.type.isTemporary = true;
-				rctx.type.stackOffset = (short)offset;
+					rctx.type.Set(dt);
+					rctx.type.isVariable = true;
+					rctx.type.isTemporary = true;
+					rctx.type.stackOffset = (short)offset;
 
-				CompileInitList(&rctx.type, valueNode, &rctx.bc, 0);
+					CompileInitList(&rctx.type, valueNode, &rctx.bc, 0);
 
-				// Put the object on the stack
-				rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
+					// Put the object on the stack
+					rctx.bc.InstrSHORT(asBC_PSF, rctx.type.stackOffset);
 
-				// It is a reference that we place on the stack
-				rctx.type.dataType.MakeReference(true);
+					// It is a reference that we place on the stack
+					rctx.type.dataType.MakeReference(true);
+				}
 			}
 
 			// Compile the lvalue
@@ -2682,8 +2722,26 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 			// There is no specific value so we need to fill it with a default value
 			// TODO: list: For value types with default constructor we need to call the constructor
 			// TOOD: list: It should probably not be allowed to skip any value
+
+			if( dt.GetTokenType() == ttQuestion )
+			{
+				// Place the type id for a null handle in the buffer
+				byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, 0);
+				bufferSize += 4;
+
+				dt = asCDataType::CreateNullHandle();
+
+				// No need to initialize the handle as the buffer is already initialized with zeroes
+			}
 		}
 
+		// Determine size of the element
+		if( dt.IsPrimitive() || (!dt.IsNullHandle() && (dt.GetObjectType()->flags & asOBJ_VALUE)) )
+			size = dt.GetSizeInMemoryBytes();
+		else
+			size = AS_PTR_SIZE*4;
+		asASSERT( size <= 4 || (size & 0x3) == 0 );
+		
 		// Move to the next element
 		bufferSize += size;
 		patternNode = patternNode->next;

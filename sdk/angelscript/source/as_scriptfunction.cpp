@@ -219,11 +219,11 @@ int asCScriptFunction::RegisterListPattern(const char *decl, asCScriptNode *list
 	node = listPattern;
 
 	// Recursively parse the child
-	ParseListPattern(node, decl, listNodes);
+	int r = ParseListPattern(node, decl, listNodes);
 
 	node->next = asNEW(asSListPatternNode)(asLPT_END);
 
-	return 0;
+	return r;
 }
 
 // internal

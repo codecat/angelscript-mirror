@@ -3928,9 +3928,22 @@ void asCContext::ExecuteNext()
 		l_bc += 2;
 		break;
 
+	case asBC_SetListType:
+		{
+			// Set the type id in the buffer 
+			asBYTE *var = *(asBYTE**)(l_fp - asBC_SWORDARG0(l_bc));
+			asUINT off  = asBC_DWORDARG(l_bc);
+			asUINT type = asBC_DWORDARG(l_bc+1);
+
+			asASSERT( var );
+
+			*(asUINT*)(var+off) = type;
+		}
+		l_bc += 3;
+		break;
+
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps
-	case 192: l_bc = (asDWORD*)192; break;
 	case 193: l_bc = (asDWORD*)193; break;
 	case 194: l_bc = (asDWORD*)194; break;
 	case 195: l_bc = (asDWORD*)195; break;

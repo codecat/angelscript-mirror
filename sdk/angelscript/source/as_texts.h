@@ -84,6 +84,7 @@
 #define TXT_EXPECTED_DATA_TYPE            "Expected data type"
 #define TXT_EXPECTED_EXPRESSION_VALUE     "Expected expression value"
 #define TXT_EXPECTED_IDENTIFIER           "Expected identifier"
+#define TXT_EXPECTED_LIST                 "Expected a list enclosed by { } to match pattern"
 #define TXT_EXPECTED_METHOD_OR_PROPERTY   "Expected method or property"
 #define TXT_EXPECTED_ONE_OF               "Expected one of: "
 #define TXT_EXPECTED_OPERATOR             "Expected operator"
@@ -169,6 +170,7 @@
 #define TXT_NONTERMINATED_STRING                   "Non-terminated string literal"
 #define TXT_NOT_A_FUNC_s_IS_VAR                    "Expression doesn't form a function call. '%s' is a variable of a non-function type"
 #define TXT_NOT_ALL_PATHS_RETURN                   "Not all paths return a value"
+#define TXT_NOT_ENOUGH_VALUES_FOR_LIST             "Not enough values to match pattern"
 #define TXT_s_NOT_DECLARED                         "'%s' is not declared"
 #define TXT_NOT_EXACT                              "Implicit conversion of value is not exact"
 #define TXT_s_NOT_INITIALIZED                      "'%s' is not initialized."
@@ -219,6 +221,7 @@
 #define TXT_TMPL_s_EXPECTS_d_SUBTYPES          "Template '%s' expects %d sub type(s)"
 #define TXT_TMPL_SUBTYPE_MUST_NOT_BE_READ_ONLY "Template subtype must not be read-only"
 #define TXT_TOO_MANY_JUMP_LABELS               "The function has too many jump labels to handle. Split the function into smaller ones."
+#define TXT_TOO_MANY_VALUES_FOR_LIST           "Too many values to match pattern"
 #define TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE    "Type '%s' is not available for this module"
 
 #define TXT_UNEXPECTED_END_OF_FILE        "Unexpected end of file"

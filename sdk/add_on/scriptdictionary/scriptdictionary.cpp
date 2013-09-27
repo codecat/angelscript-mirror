@@ -51,8 +51,68 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 		string name = *(string*)buffer;
 		buffer += sizeof(string);
 
-		asINT64 value = 0;
-		Set(name, value);
+		// Get the type id of the value
+		int typeId = *(int*)buffer;
+		buffer += sizeof(int);
+
+		// Depending on the type id, the value will inline in the buffer or a pointer
+		void *ref = (void*)buffer;
+
+		if( typeId >= asTYPEID_INT8 && typeId <= asTYPEID_DOUBLE )
+		{
+			// Convert primitive values to either int64 or double, so we can use the overloaded Set methods
+			asINT64 i64;
+			double d;
+			switch( typeId )
+			{
+			case asTYPEID_INT8: i64 = *(char*)ref; break;
+			case asTYPEID_INT16: i64 = *(short*)ref; break;
+			case asTYPEID_INT32: i64 = *(int*)ref; break;
+			case asTYPEID_INT64: i64 = *(asINT64*)ref; break;
+			case asTYPEID_UINT8: i64 = *(unsigned char*)ref; break;
+			case asTYPEID_UINT16: i64 = *(unsigned short*)ref; break;
+			case asTYPEID_UINT32: i64 = *(unsigned int*)ref; break;
+			case asTYPEID_UINT64: i64 = *(asINT64*)ref; break;
+			case asTYPEID_FLOAT: d = *(float*)ref; break;
+			case asTYPEID_DOUBLE: d = *(double*)ref; break;
+			}
+			
+			if( typeId >= asTYPEID_FLOAT )
+				Set(name, d);
+			else
+				Set(name, i64);
+		}
+		else
+		{
+			if( (typeId & asTYPEID_MASK_OBJECT) && 
+				!(typeId & asTYPEID_OBJHANDLE) && 
+				(engine->GetObjectTypeById(typeId)->GetFlags() & asOBJ_REF) )
+			{
+				// Dereference the pointer to get the reference to the actual object
+				ref = *(void**)ref;
+			}
+
+			Set(name, ref, typeId);
+		}
+
+		// Advance the buffer pointer with the size of the value
+		if( typeId & asTYPEID_MASK_OBJECT )
+		{
+			asIObjectType *ot = engine->GetObjectTypeById(typeId);
+			if( ot->GetFlags() & asOBJ_VALUE )
+				buffer += ot->GetSize();
+			else
+				buffer += sizeof(void*);
+		}
+		else if( typeId == 0 )
+		{
+			// null pointer
+			buffer += sizeof(void*);
+		}
+		else
+		{
+			buffer += engine->GetSizeOfPrimitiveType(typeId);
+		}
 	}
 }
 
@@ -504,7 +564,7 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	// Use the generic interface to construct the object since we need the engine pointer, we could also have retrieved the engine pointer from the active context
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string, ?}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptDictionary,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptDictionary,Release), asCALL_THISCALL); assert( r >= 0 );
 
@@ -552,7 +612,7 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r>= 0 );
-	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string, ?}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptDictionaryAddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptDictionaryRelease_Generic), asCALL_GENERIC); assert( r >= 0 );
 
