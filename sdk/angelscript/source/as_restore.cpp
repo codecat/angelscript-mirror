@@ -2531,7 +2531,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	}
 	else
 	{
-		// TODO: list: Add support for more complex patterns
+		// Something is wrong with the pattern list declaration
 		asASSERT( false );
 	}
 
@@ -4476,7 +4476,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	}
 	else
 	{
-		// TODO: list: Add support for more complex patterns
+		// Something is wrong with the pattern list declaration
 		asASSERT( false );
 	}
 

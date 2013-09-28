@@ -236,8 +236,6 @@ int asCScriptFunction::ParseListPattern(asSListPatternNode *&target, const char 
 	{
 		if( listNodes->nodeType == snIdentifier )
 		{
-			// TODO: list: repeat should only be allowed as the first token after { (at least until anyone comes up with a need to allow it in the middle)
-			// TODO: list: after repeat there must be either a sub list { or a type
 			node->next = asNEW(asSListPatternNode)(asLPT_REPEAT);
 			node = node->next;
 		}
@@ -267,8 +265,8 @@ int asCScriptFunction::ParseListPattern(asSListPatternNode *&target, const char 
 		}
 		else
 		{
-			// Unexpected token in the list
-			// TODO: list: Report error
+			// Unexpected token in the list, the parser shouldn't have allowed
+			asASSERT( false );
 			return -1;
 		}
 
@@ -644,11 +642,6 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				str += " }";
 			else if( n->type == asLPT_REPEAT )
 				str += " repeat";
-			else if( n->type == asLPT_IDENTIFIER )
-			{
-				str += " ";
-				str += reinterpret_cast<asSListPatternIdentifierNode*>(n)->identifier;
-			}
 			else if( n->type == asLPT_TYPE )
 			{
 				str += " ";

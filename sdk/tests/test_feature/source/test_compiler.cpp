@@ -235,6 +235,52 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test large integers
+	// http://www.gamedev.net/topic/648192-unsigned-int64-wokring-wrong/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+
+		// Don't complain about changing sign, and don't sign extend the value to 64bit
+		r = ExecuteString(engine, "uint64 ui64b = 4294967295; assert( (ui64b & 0xFFFFFFFF00000000) == 0 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "uint64 ui64b = 4294967296; assert( ui64b == 0x100000000 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Don't complain about changing signs or losing data
+		r = ExecuteString(engine, "uint32 ui32 = 4294967295; assert( ui32 == 0xFFFFFFFF ); ");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+
+		// Warn about losing data
+		r = ExecuteString(engine, "uint32 ui32b = 4294967296; assert( ui32b == 0 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 16) : Warning : Value is too large for data type\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// void is a legal expression and can be used to ignore output parameters
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

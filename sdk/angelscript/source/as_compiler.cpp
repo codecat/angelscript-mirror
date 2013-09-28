@@ -2594,11 +2594,6 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
-		// TODO: list: If the type is ? then the type id should be placed in the buffer
-		//             before the actual value. This should be done with a specific bc
-		//             so that the asCWriter/Reader can easily determine the type to adjust
-		//             the offset of the value.
-
 		// TODO: list: Values on the list must be aligned to 32bit boundaries, except if the type
 		//             is smaller than 32bit.
 
@@ -2721,7 +2716,6 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		{
 			// There is no specific value so we need to fill it with a default value
 			// TODO: list: For value types with default constructor we need to call the constructor
-			// TOOD: list: It should probably not be allowed to skip any value
 
 			if( dt.GetTokenType() == ttQuestion )
 			{
@@ -6124,9 +6118,16 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		else if( from->type.dataType.IsIntegerType() )
 		{
 			// Verify that it is possible to convert to unsigned without loosing negative
-			if( from->type.intValue < 0 )
+			if( (from->type.dataType.GetSizeInMemoryBytes() > 4 && asINT64(from->type.qwordValue) < 0) || 
+				(from->type.dataType.GetSizeInMemoryBytes() <= 4 && from->type.intValue < 0) )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
+			}
+
+			// Check if any data is lost
+			if( from->type.dataType.GetSizeInMemoryBytes() > 4 && (from->type.qwordValue >> 32) != 0 && (from->type.qwordValue >> 32) != 0xFFFFFFFF )
+			{
+				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 			}
 
 			// Convert to 32bit
@@ -7579,7 +7580,9 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 			asQWORD val = asStringScanUInt64(value.AddressOf(), 10, 0);
 
 			// Do we need 64 bits?
-			if( val>>32 )
+			// If the 31st bit is set we'll treat the value as a signed 64bit number to avoid
+			// incorrect warnings about changing signs if the value is assigned to a 64bit variable
+			if( val>>31 )
 			{
 				// Only if the value uses the last bit of a 64bit word do we consider the number unsigned
 				if( val>>63 )

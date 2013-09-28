@@ -68,8 +68,7 @@ enum asEListPatternNodeType
 	asLPT_REPEAT,
 	asLPT_START,
 	asLPT_END,
-	asLPT_TYPE,
-	asLPT_IDENTIFIER
+	asLPT_TYPE
 };
 
 struct asSListPatternNode
@@ -86,13 +85,6 @@ struct asSListPatternDataTypeNode : public asSListPatternNode
 	asSListPatternDataTypeNode(const asCDataType &dt) : asSListPatternNode(asLPT_TYPE), dataType(dt) {}
 	asSListPatternNode *Duplicate() { return asNEW(asSListPatternDataTypeNode)(dataType); }
 	asCDataType dataType;
-};
-
-struct asSListPatternIdentifierNode : public asSListPatternNode
-{
-	asSListPatternIdentifierNode(const asCString &i) : asSListPatternNode(asLPT_IDENTIFIER), identifier(i) {}
-	asSListPatternNode *Duplicate() { return asNEW(asSListPatternIdentifierNode)(identifier); }
-	asCString identifier;
 };
 
 enum asEObjVarInfoOption
