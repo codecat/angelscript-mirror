@@ -207,6 +207,9 @@ bool asCContext::IsNested(asUINT *nestCount) const
 		}
 	}
 
+	if( nestCount && *nestCount > 0 )
+		return true;
+
 	return false;
 }
 

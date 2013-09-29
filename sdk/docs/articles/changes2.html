@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/09/27</h2>
+<h2>Version 2.28.0 WIP - 2013/09/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with passing handle to ?& arg with unsafe references (Thanks FDsagizi)
 <li>opEquals with funcdef works again (Thanks Violet CLM)
 <li>Fixed bug with implicit casts of large integer constants and uint64 (Thanks Apmyp)
+<li>Fixed bug in IsNested when called with parameter (Thanks Jordi Oliveras Rovira)
 </ul>
 <li>Library
 <ul>
@@ -49,6 +50,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The script array add-on uses the new form for the initialization list
 <li>The weakref add-on now works properly in AS_MAX_PORTABILITY too
 <li>Fixed bug in script array resize() method that could cause a crash if reserving too much memory (Thanks Philip Bennefall)
+<li>Fixed compiler error in CDebugger add-on when using the AngelScript namespace (Thanks Jordi Oliveras Rovira)
 </ul>
 </ul>
 

@@ -5,6 +5,8 @@
 
 using namespace std;
 
+BEGIN_AS_NAMESPACE
+
 CDebugger::CDebugger()
 {
 	m_action = CONTINUE;
@@ -649,3 +651,5 @@ void CDebugger::Output(const string &str)
 	// By default we just output to stdout
 	cout << str;
 }
+
+END_AS_NAMESPACE
