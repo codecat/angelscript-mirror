@@ -154,8 +154,8 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", 
 			"void main() { \n"
-			"  dictionary dict = {{'a', 42}, {'b', 'test'}, {'c', }}; \n"
-			"  assert( dict.getSize() == 3 ); \n"
+			"  dictionary dict = {{'t', true}, {'a', 42}, {'b', 'test'}, {'c', }}; \n"
+			"  assert( dict.getSize() == 4 ); \n"
 			"  int a; \n"
 			"  dict.get('a', a); \n"
 			"  assert( a == 42 ); \n"

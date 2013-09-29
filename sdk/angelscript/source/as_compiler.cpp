@@ -2576,6 +2576,8 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		// Keep track of the patternNode so it can be reset
 		asSListPatternNode *nextNode = patternNode;
 
+		// TODO: list: Align the buffer size to 4 bytes in case previous value was smaller than 4 bytes
+
 		// The first dword will hold the number of elements in the list
 		asDWORD currSize = bufferSize;
 		bufferSize += 4;
@@ -2720,8 +2722,6 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		else
 		{
 			// There is no specific value so we need to fill it with a default value
-			// TODO: list: For value types with default constructor we need to call the constructor
-
 			if( dt.GetTokenType() == ttQuestion )
 			{
 				// Place the type id for a null handle in the buffer
@@ -2731,6 +2731,74 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				dt = asCDataType::CreateNullHandle();
 
 				// No need to initialize the handle as the buffer is already initialized with zeroes
+			}
+			else if( dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_VALUE )
+			{
+				// For value types with default constructor we need to call the constructor
+				asSTypeBehaviour *beh = dt.GetBehaviour();
+				int func = 0;
+				if( beh ) func = beh->construct;
+				if( func == 0 && (dt.GetObjectType()->flags & asOBJ_POD) == 0 )
+				{
+					asCString str;
+					// TODO: funcdef: asCDataType should have a GetTypeName()
+					if( dt.GetFuncDef() )
+						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
+					else
+						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
+					Error(str, valueNode);
+				}
+				else if( func )
+				{
+					// Call the constructor as a normal function
+					byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+
+					asSExprContext ctx(engine);
+					PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());
+					byteCode.AddCode(&ctx.bc);
+				}
+			}
+			else if( !dt.IsObjectHandle() && dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_REF )
+			{
+				// For ref types (not handles) we need to call the default factory
+				asSTypeBehaviour *beh = dt.GetBehaviour();
+				int func = 0;
+				if( beh ) func = beh->factory;
+				if( func == 0 )
+				{
+					asCString str;
+					// TODO: funcdef: asCDataType should have a GetTypeName()
+					if( dt.GetFuncDef() )
+						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
+					else
+						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
+					Error(str, valueNode);
+				}
+				else if( func )
+				{
+					asSExprContext rctx(engine);
+					PerformFunctionCall(func, &rctx, false, 0, dt.GetObjectType());
+
+					asSExprContext lctx(engine);
+					lctx.bc.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+					lctx.type.Set(dt);
+					lctx.type.isLValue = true;
+					lctx.type.isExplicitHandle = true;
+					lctx.type.dataType.MakeReference(true);
+
+					asSExprContext ctx(engine);
+					DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
+
+					if( !lctx.type.dataType.IsPrimitive() )
+						ctx.bc.Instr(asBC_PopPtr);
+
+					// Release temporary variables used by expression
+					ReleaseTemporaryVariable(ctx.type, &ctx.bc);
+
+					ProcessDeferredParams(&ctx);
+
+					byteCode.AddCode(&ctx.bc);
+				}
 			}
 		}
 
