@@ -1162,6 +1162,11 @@ void asCCompiler::DetermineSingleFunc(asSExprContext *ctx, asCScriptNode *node)
 	if( pos >= 0 )
 	{
 		asCString nsName = ctx->methodName.SubString(0, pos+2);
+		
+		// Cut off the :: 
+		if( nsName.GetLength() > 2 )
+			nsName.SetLength(nsName.GetLength()-2);
+
 		ns = DetermineNameSpace(nsName);
 		name = ctx->methodName.SubString(pos+2);
 	}

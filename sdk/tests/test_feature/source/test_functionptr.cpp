@@ -59,6 +59,28 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void CALLBACK(); \n"
+			"class Test { \n"
+			"  bool opEquals(CALLBACK @f) { \n"
+			"    return f is func; \n"
+			"  } \n"
+			"  CALLBACK @func; \n"
+			"} \n"
+			"namespace ns { \n"
+			"void func() {} \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Test t; \n"
+								  "@t.func = ns::func; \n"
+								  "assert( t == ns::func );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
