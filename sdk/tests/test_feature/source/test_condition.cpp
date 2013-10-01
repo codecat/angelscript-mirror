@@ -6,6 +6,7 @@
 
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
+#include "../../../add_on/scriptmath/scriptmath.h"
 
 static const char * const TESTNAME = "TestCondition";
 
@@ -66,101 +67,165 @@ bool TestCondition()
 {
 	bool fail = false;
 	int r;
-
-	a = new CScriptString();
-
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	RegisterScriptString_Generic(engine);
-	engine->RegisterGlobalProperty("string a", a);
-
-//	engine->RegisterObjectType("Data", 0, asOBJ_REF | asOBJ_NOHANDLE);
-
-	engine->RegisterGlobalFunction("string@ format(float)", asFUNCTION(formatf), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("string@ format(uint)", asFUNCTION(formatUI), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
 	COutStream out;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = ExecuteString(engine, "print(a == \"a\" ? \"t\" : \"f\")");
-	if( r < 0 )
+	CBufferedOutStream bout;
+	asIScriptEngine *engine;
+
+	// Test condition operator and implicit cast
+	// Observe that AngelScript does NOT follow the same rules as C++ for this operator
+	// http://www.gamedev.net/topic/648406-implicit-conversion-of-value-is-not-exact/
 	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptMath(engine);
+
+		bout.buffer = "";
+		r = ExecuteString(engine, "float ret = false ? 0 : 0.1; \n"       // 0 is implicitly converted to the other type
+			                      "assert( abs(ret - 0.1) < 0.0001 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		r = ExecuteString(engine, "float ret = false ? 1 : 0.1; \n"       // 1 is not implicitly converted
+			                      "assert( abs(ret - 0) < 0.0001 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 21) : Warning : Implicit conversion of value is not exact\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		r = ExecuteString(engine, "float f = 0.1;\n"
+								  "float ret = 0.2;\n"
+								  "ret += false ? 0 : f * 15;\n"           // 0 is implicitly converted to the other type
+								  "assert( abs(ret - 1.7) < 0.0001 );\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		r = ExecuteString(engine, "float f = 0.1;\n"
+								  "float ret = 0.2;\n"
+								  "ret += false ? 1 : f * 15;\n"           // 1 is not implicitly converted to the other type
+								  "assert( abs(ret - 1.2) < 0.0001 );\n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (3, 16) : Warning : Float value truncated in implicit conversion to integer\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
 	}
 
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	mod->Build();
-
-	r = ExecuteString(engine, "Test(\"t\", \"f\")", mod);
-	if( r < 0 )
 	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
+		a = new CScriptString();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		RegisterScriptString_Generic(engine);
+		engine->RegisterGlobalProperty("string a", a);
+
+	//	engine->RegisterObjectType("Data", 0, asOBJ_REF | asOBJ_NOHANDLE);
+
+		engine->RegisterGlobalFunction("string@ format(float)", asFUNCTION(formatf), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("string@ format(uint)", asFUNCTION(formatUI), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(string &in)", asFUNCTION(print), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		r = ExecuteString(engine, "print(a == \"a\" ? \"t\" : \"f\")");
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+		mod->Build();
+
+		r = ExecuteString(engine, "Test(\"t\", \"f\")", mod);
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+
+	/*	mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+		mod->Build(0);
+
+		r = ExecuteString(engine, "Test()");
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+	*/
+		mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
+		mod->Build();
+
+		r = ExecuteString(engine, "Test()", mod);
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+
+		r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+
+		r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+
+		r = ExecuteString(engine, "(true) ? print(\"true\") : print(\"false\")");
+		if( r < 0 )
+		{
+			TEST_FAILED;
+			printf("%s: ExecuteString() failed\n", TESTNAME);
+		}
+
+		const char *script = "double get_gameTime() { return 100; } \n"
+							 "void advance(bool full) { \n"
+							 "  nextThink = gameTime + ( 30.0 * (full ? 10.0 : 1.0) ); \n"
+							 "} \n"
+							 "double nextThink; \n";
+		mod->AddScriptSection("script", script);
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "nextThink = 0; advance(true); assert( nextThink == 100 + 300 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		r = ExecuteString(engine, "nextThink = 0; advance(false); assert( nextThink == 100 + 30 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+		a->Release();
 	}
-
-/*	mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
-	mod->Build(0);
-
-	r = ExecuteString(engine, "Test()");
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
-	}
-*/
-	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
-	mod->Build();
-
-	r = ExecuteString(engine, "Test()", mod);
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
-	}
-
-	r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
-	}
-
-	r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
-	}
-
-	r = ExecuteString(engine, "(true) ? print(\"true\") : print(\"false\")");
-	if( r < 0 )
-	{
-		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
-	}
-
-	const char *script = "double get_gameTime() { return 100; } \n"
-				         "void advance(bool full) { \n"
-                         "  nextThink = gameTime + ( 30.0 * (full ? 10.0 : 1.0) ); \n"
-						 "} \n"
-						 "double nextThink; \n";
-	mod->AddScriptSection("script", script);
-	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	r = ExecuteString(engine, "nextThink = 0; advance(true); assert( nextThink == 100 + 300 );", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	r = ExecuteString(engine, "nextThink = 0; advance(false); assert( nextThink == 100 + 30 );", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	engine->Release();
-	a->Release();
 
 	{
 		CBufferedOutStream bout;

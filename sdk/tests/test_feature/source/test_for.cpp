@@ -19,7 +19,7 @@ void Test()                                \n\
 {                                          \n\
   for (float k = 0; k< aSize; k++)         \n\
   {                                        \n\
-    myArray[MyFunction(k*aSize)] = k;      \n\
+    myArray[int(MyFunction(k*aSize))] = k; \n\
   }                                        \n\
                                            \n\
   for (int i = 0; i< aSize*aSize; i++)     \n\

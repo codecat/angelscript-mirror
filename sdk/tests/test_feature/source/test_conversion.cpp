@@ -365,7 +365,6 @@ bool Test()
 	ExecuteString(engine, "f = 12.3f;"); if( f  !=   12.3f ) TEST_FAILED; 
 	ExecuteString(engine, "f = 123;  "); if( f  !=  123.0f ) TEST_FAILED;
 	ExecuteString(engine, "f = -123; "); if( f  != -123.0f ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "i64 = int64(d);");      if( i64  !=   12 ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "i64 = int64(f);");      if( i64  != - 12 ) TEST_FAILED;
@@ -394,7 +393,6 @@ bool Test()
 	ExecuteString(engine, "i64 = -12.3f;"); if( i64  != - 12 ) TEST_FAILED;
 	ExecuteString(engine, "i64 = 123;   "); if( i64  !=  123 ) TEST_FAILED;
 	ExecuteString(engine, "i64 = -123;  "); if( i64  != -123 ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "i = int(d);");      if( i  !=   12 ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "i = int(f);");      if( i  != - 12 ) TEST_FAILED;
@@ -423,7 +421,6 @@ bool Test()
 	ExecuteString(engine, "i = -12.3f;"); if( i  != - 12 ) TEST_FAILED;
 	ExecuteString(engine, "i = 123;   "); if( i  !=  123 ) TEST_FAILED;
 	ExecuteString(engine, "i = -123;  "); if( i  != -123 ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "i8 = int8(d);");     if( i8 !=   12 ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "i8 = int8(f);");     if( i8 != - 12 ) TEST_FAILED;
@@ -452,7 +449,6 @@ bool Test()
 	ExecuteString(engine, "i8 = -12.3f;"); if( i8 != - 12 ) TEST_FAILED;
 	ExecuteString(engine, "i8 = 123;   "); if( i8 !=  123 ) TEST_FAILED;
 	ExecuteString(engine, "i8 = -123;  "); if( i8 != -123 ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "i16 = int16(d);");    if( i16 !=   12 ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "i16 = int16(f);");    if( i16 != - 12 ) TEST_FAILED;
@@ -481,7 +477,6 @@ bool Test()
 	ExecuteString(engine, "i16 = -12.3f;"); if( i16 != - 12 ) TEST_FAILED;
 	ExecuteString(engine, "i16 = 123;   "); if( i16 !=  123 ) TEST_FAILED;
 	ExecuteString(engine, "i16 = -123;  "); if( i16 != -123 ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "ui64 = uint64(d);");      if( ui64  !=   12 ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "ui64 = uint64(f);");      if( ui64  != - 12 ) TEST_FAILED;
@@ -510,7 +505,6 @@ bool Test()
 	ExecuteString(engine, "ui64 = -12.3f;"); if( ui64  != - 12 ) TEST_FAILED;
 	ExecuteString(engine, "ui64 = 123;   "); if( ui64  !=  123 ) TEST_FAILED;
 	ExecuteString(engine, "ui64 = -123;  "); if( ui64  != -123 ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "ui = uint(d);");    if( ui != 12           ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "ui = uint(f);");    if( ui != asUINT(-12)  ) TEST_FAILED;
@@ -539,7 +533,6 @@ bool Test()
 	ExecuteString(engine, "ui = -12.3f;"); if( ui != asUINT(-12)  ) TEST_FAILED;
 	ExecuteString(engine, "ui = 123;   "); if( ui !=  123         ) TEST_FAILED;
 	ExecuteString(engine, "ui = -123;  "); if( ui != asUINT(-123) ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "ui8 = uint8(d);");    if( ui8 != 12           ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "ui8 = uint8(f);");    if( ui8 != asBYTE(-12)  ) TEST_FAILED;
@@ -568,7 +561,6 @@ bool Test()
 	ExecuteString(engine, "ui8 = -12.3f;"); if( ui8 != asBYTE(-12)  ) TEST_FAILED; // asBYTE(-12.3f) doesn't seem to produce the same result on MSVC and GNUC
 	ExecuteString(engine, "ui8 = 123;   "); if( ui8 !=  123         ) TEST_FAILED;
 	ExecuteString(engine, "ui8 = -123;  "); if( ui8 != asBYTE(-123) ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	d    = 12.3;   ExecuteString(engine, "ui16 = uint16(d);");    if( ui16 != 12           ) TEST_FAILED; 
 	f    = -12.3f; ExecuteString(engine, "ui16 = uint16(f);");    if( ui16 != asWORD(-12)  ) TEST_FAILED;
@@ -597,7 +589,6 @@ bool Test()
 	ExecuteString(engine, "ui16 = -12.3f;"); if( ui16 != asWORD(-12)  ) TEST_FAILED; // asWORD(-12.3f) doesn't seem to produce the same result on MSVC and GNUC
 	ExecuteString(engine, "ui16 = 123;   "); if( ui16 !=  123         ) TEST_FAILED;
 	ExecuteString(engine, "ui16 = -123;  "); if( ui16 != asWORD(-123) ) TEST_FAILED;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	ExecuteString(engine, "TestDouble(d); TestFloat(d); TestInt(d); TestI16(d); TestI8(d); TestUInt(d); TestUI16(d); TestUI8(d);");
 	ExecuteString(engine, "TestDouble(f); TestFloat(f); TestInt(f); TestI16(f); TestI8(f); TestUInt(f); TestUI16(f); TestUI8(f);");

@@ -4838,6 +4838,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				ctx->bc.InstrSHORT(asBC_fTOi, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
@@ -4846,6 +4849,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_dTOi, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 
 			// Convert to smaller integer if necessary
@@ -4859,7 +4865,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 					ctx->bc.InstrSHORT(asBC_iTOw, ctx->type.stackOffset);
 			}
 		}
-		if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
+		else if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
 				ctx->type.dataType.IsUnsignedType() )
@@ -4888,6 +4894,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_fTOi64, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
@@ -4895,6 +4904,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				ctx->bc.InstrSHORT(asBC_dTOi64, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 		}
 		else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1  )
@@ -4922,6 +4934,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				ctx->bc.InstrSHORT(asBC_fTOu, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
@@ -4930,6 +4945,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_dTOu, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 
 			// Convert to smaller integer if necessary
@@ -4943,7 +4961,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 					ctx->bc.InstrSHORT(asBC_iTOw, ctx->type.stackOffset);
 			}
 		}
-		if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
+		else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
 				ctx->type.dataType.IsUnsignedType() )
@@ -4972,6 +4990,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				int offset = AllocateVariable(to, true);
 				ctx->bc.InstrW_W(asBC_fTOu64, offset, ctx->type.stackOffset);
 				ctx->type.SetVariable(to, offset, true);
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 			else if( ctx->type.dataType.IsDoubleType() )
 			{
@@ -4979,6 +5000,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				ctx->bc.InstrSHORT(asBC_dTOu64, ctx->type.stackOffset);
 				ctx->type.dataType.SetTokenType(to.GetTokenType());
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
+
+				if( convType != asIC_EXPLICIT_VAL_CAST )
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 		}
 		else if( to.IsFloatType() )
@@ -6334,14 +6358,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 			double ic = from->type.doubleValue;
 			float fc = float(ic);
 
-			// Don't bother warning about this
-//			if( double(fc) != ic )
-//			{
-//				asCString str;
-//				str.Format(TXT_POSSIBLE_LOSS_OF_PRECISION);
-//				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(str, node);
-//			}
-
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.floatValue = fc;
 		}
@@ -6415,14 +6431,6 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 		{
 			float ic = from->type.floatValue;
 			double fc = double(ic);
-
-			// Don't check for float->double
-		//	if( float(fc) != ic )
-		//	{
-		//		acCString str;
-		//		str.Format(TXT_NOT_EXACT_g_g_g, ic, fc, float(fc));
-		//		if( !isExplicit ) Warning(str, node);
-		//	}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 			from->type.doubleValue = fc;
@@ -6870,7 +6878,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 			bool isExplicitHandle = le.type.isExplicitHandle || re.type.isExplicitHandle;
 
 			// Allow a 0 or null in the first case to be implicitly converted to the second type
-			if( le.type.isConstant && le.type.intValue == 0 && le.type.dataType.IsUnsignedType() )
+			if( le.type.isConstant && le.type.intValue == 0 && le.type.dataType.IsIntegerType() )
 			{
 				asCDataType to = re.type.dataType;
 				to.MakeReference(false);

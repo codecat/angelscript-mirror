@@ -97,6 +97,7 @@
 
 #define TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s "Failed while compiling default arg for parameter %d in function '%s'"
 #define TXT_FAILED_TO_CREATE_TEMP_OBJ     "Previous error occurred while attempting to create a temporary copy of object"
+#define TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC "Float value truncated in implicit conversion to integer"
 #define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
 #define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exists"
 #define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
@@ -189,7 +190,6 @@
 
 #define TXT_PARAMETER_ALREADY_DECLARED            "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s                   "Parameter type can't be '%s', because the type cannot be instanciated."
-#define TXT_POSSIBLE_LOSS_OF_PRECISION            "Conversion from double to float, possible loss of precision"
 #define TXT_PRIVATE_METHOD_CALL_s                 "Illegal call to private method '%s'"
 #define TXT_PRIVATE_PROP_ACCESS_s                 "Illegal access to private property '%s'"
 #define TXT_PROPERTY_ACCESSOR_DISABLED            "Property accessors have been disabled by the application"

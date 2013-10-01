@@ -300,6 +300,13 @@ If the value of <code>choose</code> is <code>true</code> then the expression ret
 otherwise it will return <code>b</code>. Both <code>a</code> and <code>b</code> must be of the same 
 type.
 
+If they are not of the same type the compiler will attempt an implicit conversion using the following
+rules. If the <code>a</code> expression is 0 or null, then the compiler will attempt to convert it 
+to the type of <code>b</code>, otherwise it will attempt to convert <code>b</code> to the type of 
+<code>a</code>. 
+
+If the conversion doesn't work, then the compiler will give an error.
+
 
 
 
