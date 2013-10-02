@@ -5419,6 +5419,10 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 	{
 		if( node->type == asLPT_REPEAT )
 		{
+			// Align the offset to 4 bytes boundary
+			if( (asPWORD(buffer) & 0x3) )
+				buffer += 4 - (asPWORD(buffer) & 0x3);
+
 			// Determine how many times the pattern repeat
 			count = *(asUINT*)buffer;
 			buffer += 4;
@@ -5436,6 +5440,10 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 			{
 				if( isVarType )
 				{
+					// Align the offset to 4 bytes boundary
+					if( (asPWORD(buffer) & 0x3) )
+						buffer += 4 - (asPWORD(buffer) & 0x3);
+
 					int typeId = *(int*)buffer;
 					buffer += 4;
 					dt = GetDataTypeFromTypeId(typeId);
@@ -5447,6 +5455,12 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 					// Free all instances of this type
 					if( ot->flags & asOBJ_VALUE )
 					{
+						asUINT size = ot->GetSize();
+
+						// Align the offset to 4 bytes boundary
+						if( size >= 4 && (asPWORD(buffer) & 0x3) )
+							buffer += 4 - (asPWORD(buffer) & 0x3);
+
 						if( ot->beh.destruct )
 						{
 							// Only call the destructor if the object has been created
@@ -5457,7 +5471,7 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 							//       thrown aborting the initialization. The engine
 							//       really should be keeping track of which objects has
 							//       been successfully initialized.
-							asUINT size = ot->GetSize();
+						
 							for( asUINT n = 0; n < size; n++ )
 							{
 								if( buffer[n] != 0 )
@@ -5467,16 +5481,17 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 									break;
 								}
 							}
-							buffer += size;
 						}
-						else
-						{
-							// Advance the pointer in the buffer
-							buffer += ot->GetSize();
-						}
+
+						// Advance the pointer in the buffer
+						buffer += size;
 					}
 					else
 					{
+						// Align the offset to 4 bytes boundary
+						if( asPWORD(buffer) & 0x3 )
+							buffer += 4 - (asPWORD(buffer) & 0x3);
+						
 						// Call the release behaviour
 						void *ptr = *(void**)buffer;
 						if( ptr )
@@ -5486,8 +5501,14 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 				}
 				else
 				{
+					asUINT size = dt.GetSizeInMemoryBytes();
+
+					// Align the offset to 4 bytes boundary
+					if( size >= 4 && (asPWORD(buffer) & 0x3) )
+						buffer += 4 - (asPWORD(buffer) & 0x3);
+
 					// Advance the buffer
-					buffer += dt.GetSizeInMemoryBytes();
+					buffer += size;
 				}
 			}
 		}

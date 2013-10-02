@@ -47,8 +47,10 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 
 	while( length-- )
 	{
-		// TODO: list: Align the buffer pointer on a 4 byte boundary in 
-		//             case previous value was smaller than 4 bytes
+		// Align the buffer pointer on a 4 byte boundary in 
+		// case previous value was smaller than 4 bytes
+		if( asPWORD(buffer) & 0x3 )
+			buffer += 4 - (asPWORD(buffer) & 0x3);
 
 		// Get the name value pair from the buffer and insert it in the dictionary
 		string name = *(string*)buffer;

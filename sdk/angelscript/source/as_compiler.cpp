@@ -2576,7 +2576,9 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		// Keep track of the patternNode so it can be reset
 		asSListPatternNode *nextNode = patternNode;
 
-		// TODO: list: Align the buffer size to 4 bytes in case previous value was smaller than 4 bytes
+		// Align the buffer size to 4 bytes in case previous value was smaller than 4 bytes
+		if( bufferSize & 0x3 )
+			bufferSize += 4 - (bufferSize & 0x3);
 
 		// The first dword will hold the number of elements in the list
 		asDWORD currSize = bufferSize;
@@ -2601,9 +2603,6 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
-		// TODO: list: Values on the list must be aligned to 32bit boundaries, except if the type
-		//             is smaller than 32bit.
-
 		// Determine the size of the element
 		asUINT size = 0;
 
@@ -2624,6 +2623,10 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 					// We now know the type
 					dt = rctx.type.dataType;
 					dt.MakeReadOnly(false);
+
+					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+					if( bufferSize & 0x3 )
+						bufferSize += 4 - (bufferSize & 0x3);
 
 					// Place the type id in the buffer
 					byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, engine->GetTypeIdFromDataType(dt));
@@ -2660,6 +2663,16 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 					rctx.type.dataType.MakeReference(true);
 				}
 			}
+
+			// Determine size of the element
+			if( dt.IsPrimitive() || (!dt.IsNullHandle() && (dt.GetObjectType()->flags & asOBJ_VALUE)) )
+				size = dt.GetSizeInMemoryBytes();
+			else
+				size = AS_PTR_SIZE*4;
+
+			// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+			if( size >= 4 && (bufferSize & 0x3) )
+				bufferSize += 4 - (bufferSize & 0x3);
 
 			// Compile the lvalue
 			lctx.bc.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
@@ -2724,6 +2737,10 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 			// There is no specific value so we need to fill it with a default value
 			if( dt.GetTokenType() == ttQuestion )
 			{
+				// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+				if( bufferSize & 0x3 )
+					bufferSize += 4 - (bufferSize & 0x3);
+
 				// Place the type id for a null handle in the buffer
 				byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, 0);
 				bufferSize += 4;
@@ -2750,6 +2767,10 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				}
 				else if( func )
 				{
+					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+					if( bufferSize & 0x3 )
+						bufferSize += 4 - (bufferSize & 0x3);
+
 					// Call the constructor as a normal function
 					byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
 
@@ -2778,6 +2799,10 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				{
 					asSExprContext rctx(engine);
 					PerformFunctionCall(func, &rctx, false, 0, dt.GetObjectType());
+
+					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+					if( bufferSize & 0x3 )
+						bufferSize += 4 - (bufferSize & 0x3);
 
 					asSExprContext lctx(engine);
 					lctx.bc.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
