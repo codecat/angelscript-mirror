@@ -29,6 +29,18 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Test calling RegisterObjectMethod with incorrect object name
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		r = engine->RegisterObjectType("obj", 0, asOBJ_REF); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("obj@", "void func()", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
 	// Test the automatic determination of flags for registering value types

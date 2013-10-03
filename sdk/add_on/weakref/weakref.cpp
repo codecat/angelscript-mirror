@@ -81,6 +81,9 @@ CScriptWeakRef::CScriptWeakRef(void *ref, asIObjectType *type)
 	m_type = type;
 	m_type->AddRef();
 
+	// The given type should be the weakref template instance
+	assert( strcmp(type->GetName(), "weakref") == 0 );
+
 	// Get the shared flag that will tell us when the object has been destroyed
 	// This is threadsafe as we hold a strong reference to the object 
 	m_weakRefFlag = m_type->GetEngine()->GetWeakRefFlagOfScriptObject(m_ref, m_type->GetSubType());

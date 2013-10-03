@@ -525,6 +525,13 @@ void SetQuestClassByVal(wstring moduleName)
 
 bool TestStdWString()
 {
+	// wchar_t on Linux is 32bits in size. Thus this test fails on Linux. 
+	if( !strstr(asGetLibraryOptions(), "AS_WIN") )
+	{
+		printf("TestStdWString is skipped because wstring is platform dependent and this test only works on Windows\n");
+		return false;
+	}
+
 	bool fail = false;
 	COutStream out;
 	int r;

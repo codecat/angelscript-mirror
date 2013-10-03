@@ -1316,7 +1316,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 		return ConfigError(r, "RegisterObjectProperty", obj, declaration);
 
 	// Store the property info
-	if( dt.GetObjectType() == 0 )
+	if( dt.GetObjectType() == 0 || dt.IsObjectHandle() )
 		return ConfigError(asINVALID_OBJECT, "RegisterObjectProperty", obj, declaration);
 
 	// The VM currently only supports 16bit offsets
@@ -1767,7 +1767,7 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectBehaviour", datatype, decl);
 
-	if( type.GetObjectType() == 0 )
+	if( type.GetObjectType() == 0 || type.IsObjectHandle()  )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
 	// Don't allow application to modify built-in types
@@ -2506,7 +2506,7 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", obj, declaration);
 
-	if( dt.GetObjectType() == 0 )
+	if( dt.GetObjectType() == 0 || dt.IsObjectHandle() )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
 	// Don't allow application to modify built-in types
@@ -4515,7 +4515,7 @@ void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
 void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
 {
 	// Make sure it is not a null pointer
-	if( obj == 0 ) return;
+	if( obj == 0 || type == 0 ) return;
 
 	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
 	if( objType->beh.addref )
@@ -4550,7 +4550,7 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
 void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
 {
 	// Make sure it is not a null pointer
-	if( obj == 0 ) return;
+	if( obj == 0 || type == 0 ) return;
 
 	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
 	if( objType->flags & asOBJ_REF )
