@@ -82,9 +82,6 @@ asCModule::~asCModule()
 		if( engine->lastModule == this )
 			engine->lastModule = 0;
 		engine->scriptModules.RemoveValue(this);
-
-		// Allow the engine to clean up what is not used
-		engine->CleanupAfterDiscardModule();
 	}
 }
 
@@ -469,6 +466,9 @@ void asCModule::InternalReset()
 		funcDefs[n]->Release();
 	}
 	funcDefs.SetLength(0);
+
+	// Allow the engine to clean up what is not used
+	engine->CleanupAfterDiscardModule();
 }
 
 // interface

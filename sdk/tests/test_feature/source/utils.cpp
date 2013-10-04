@@ -240,6 +240,11 @@ int GetNumAllocs()
 	return numAllocs;
 }
 
+int GetAllocedMem()
+{
+	return currentMemAlloc;
+}
+
 
 asDWORD ComputeCRC32(const asBYTE *buf, asUINT length)
 {

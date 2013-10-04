@@ -166,6 +166,7 @@ void Assert(asIScriptGeneric *gen);
 void InstallMemoryManager();
 void RemoveMemoryManager();
 int  GetNumAllocs();
+int  GetAllocedMem();
 
 bool ValidateByteCode(asIScriptFunction *func, asBYTE *expectBC);
 

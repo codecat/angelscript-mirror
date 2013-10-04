@@ -182,6 +182,69 @@ bool Test()
 	}
 	engine->Release();
 
+	// Recompiling the same module over and over again without 
+	// discarding shouldn't increase memory consumption
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script =
+			"int global = 0; \n"
+			"void func() {} \n"
+			"class Cls { void mthd() {} } \n"
+			"shared class SCls { void mthd() {} } \n"
+			"interface Int { void mthd(); } \n";
+
+		const char *scriptWithError = 
+			"void func2() { rterte } \n";
+
+		int memSize[5] = {0};
+
+		for( int n = 0; n < 5; n++ )
+		{
+			// Try with a module that is reused without first discarding it
+			bout.buffer = "";
+			asIScriptModule *mod1 = engine->GetModule("script1", asGM_CREATE_IF_NOT_EXISTS);
+
+			r = mod1->AddScriptSection("name", script);
+			r = mod1->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			// Try with a module that is compiled with error 
+			bout.buffer = "";
+			asIScriptModule *mod2 = engine->GetModule("script2", asGM_CREATE_IF_NOT_EXISTS);
+			r = mod2->AddScriptSection("name", script);
+			r = mod2->AddScriptSection("error", scriptWithError);
+			r = mod2->Build();
+			if( r >= 0 )
+				TEST_FAILED;
+
+			if( bout.buffer != "error (1, 1) : Info    : Compiling void func2()\n"
+							   "error (1, 23) : Error   : Expected ';'\n" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			memSize[n] = GetAllocedMem();
+		}
+
+		engine->Release();
+
+		// The first iteration uses slightly less memory due to internal buffers
+		// holding larger capacity after the second build, but afterwards the 
+		// size should be constant
+		if( memSize[1] != memSize[3] || memSize[3] != memSize[4] )
+			TEST_FAILED;
+	}
+
 	// Success
 	return fail;
 }
