@@ -4681,7 +4681,7 @@ asCObjectType *asCBuilder::GetObjectType(const char *type, asSNameSpace *ns)
 
 // This function will return true if there are any types in the engine or module
 // with the given name. The namespace is ignored in this verification.
-bool asCBuilder::DoesTypeExist(const char *type)
+bool asCBuilder::DoesTypeExist(const asCString &type)
 {
 	asUINT n;
 

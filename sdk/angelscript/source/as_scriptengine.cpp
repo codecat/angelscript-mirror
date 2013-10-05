@@ -2814,7 +2814,7 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 }
 
 
-asCObjectType *asCScriptEngine::GetObjectType(const char *type, asSNameSpace *ns)
+asCObjectType *asCScriptEngine::GetObjectType(const char *type, asSNameSpace *ns) const
 {
 	// TODO: optimize: Improve linear search
 	for( asUINT n = 0; n < objectTypes.GetLength(); n++ )

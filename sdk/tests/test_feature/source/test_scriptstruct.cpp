@@ -242,6 +242,53 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test 
+	// Reported by Scott Bean
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		//engine->SetEngineProperty(asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, true);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		const char *script = 
+		"class ssNode \n"
+		"{ \n"
+		"    ssNode( string Node ) { m_Node = Node; } \n"
+		"    string      GetNode() { return m_Node; } \n"
+		"    string      m_Node; \n"
+		"}; \n"
+		"class ssNode_Float : ssNode \n"
+		"{  \n"
+		"    ssNode_Float( string Node ) { m_Node = Node; } \n"
+		"}  \n"
+		"ssNode ssCreateNode( string Node ) \n"
+		"{ \n"
+		"    ssNode_Float FloatNode( Node ); \n"
+		"    return FloatNode; \n"
+		"} \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (9, 5) : Info    : Compiling ssNode_Float::ssNode_Float(string)\n"
+						   "test (9, 33) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n"
+						   "test (11, 1) : Info    : Compiling ssNode ssCreateNode(string)\n"
+						   "test (14, 12) : Error   : No default constructor for object of type 'ssNode'.\n"
+						   "test (14, 12) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test class containing array with default size
 	// http://www.gamedev.net/topic/640059-crash-class-and-array-with-initial-size/
 	{

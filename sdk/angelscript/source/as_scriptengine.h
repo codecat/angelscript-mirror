@@ -266,7 +266,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const char *type, asSNameSpace *ns);
+	asCObjectType *GetObjectType(const char *type, asSNameSpace *ns) const;
 
 	asCObjectType *GetListPatternType(int listPatternFuncId);
 	void DestroyList(asBYTE *buffer, const asCObjectType *listPatternType);
