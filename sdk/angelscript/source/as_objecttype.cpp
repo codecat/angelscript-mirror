@@ -953,6 +953,9 @@ void asCObjectType::EnumReferences(asIScriptEngine *)
 
 	if( beh.getWeakRefFlag )
 		engine->GCEnumCallback(engine->scriptFunctions[beh.getWeakRefFlag]);
+
+	if( derivedFrom )
+		engine->GCEnumCallback(derivedFrom);
 }
 
 END_AS_NAMESPACE

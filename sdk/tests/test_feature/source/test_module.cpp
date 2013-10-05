@@ -245,6 +245,86 @@ bool Test()
 			TEST_FAILED;
 	}
 
+	// Recompiling the same module over and over again shouldn't increase memory consumption
+	// Another test, this time with derived classes
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		const char *script =
+			"class ssBlock \n"
+			"{ \n"
+			"    ssNode@    GetNode() { return ssCreateNode(); } \n"
+			"}; \n"
+			"class ssNode \n"
+			"{ \n"
+			"    ssBlock GetBlock() { return ssBlock(); } \n"
+			"}; \n"
+			"class ssNode_Float : ssNode \n"
+			"{ \n"
+			"} \n"
+			"ssNode@ ssCreateNode() \n"
+			"{ \n"
+			"    ssNode_Float FloatNode(); \n"
+			"    return FloatNode; \n"
+			"} \n"
+			;
+
+		int memSize[5] = {0};
+
+		for( int n = 0; n < 5; n++ )
+		{
+			// Try with a module that is reused without first discarding it
+			bout.buffer = "";
+			asIScriptModule *mod1 = engine->GetModule("script1", asGM_ALWAYS_CREATE);
+
+			// There shouldn't be anything left in the GC 
+			asUINT gcSize;
+			engine->GetGCStatistics(&gcSize);
+			if( gcSize != 0 )
+				TEST_FAILED;
+
+/*			for( asUINT i = 0; i < gcSize; i++ )
+			{
+				void *obj = 0;
+				asIObjectType *type = 0;
+				engine->GetObjectInGC(i, 0, &obj, &type);
+
+				if( strcmp(type->GetName(), "_builtin_function_") == 0 )
+				{
+					asIScriptFunction *func = (asIScriptFunction*)obj;
+					printf("func: %s\n", func->GetDeclaration());
+				}
+				else
+				{
+					asIObjectType *ot = (asIObjectType*)obj;
+					printf("type: %s\n", ot->GetName());
+				}
+			}*/
+
+			r = mod1->AddScriptSection("name", script);
+			r = mod1->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			if( bout.buffer != "" )
+			{
+				printf("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			memSize[n] = GetAllocedMem();
+		}
+
+		engine->Release();
+
+		// The first iteration uses slightly less memory due to internal buffers
+		// holding larger capacity after the second build, but afterwards the 
+		// size should be constant
+		if( memSize[1] != memSize[3] || memSize[3] != memSize[4] )
+			TEST_FAILED;
+	}
+
 	// Success
 	return fail;
 }

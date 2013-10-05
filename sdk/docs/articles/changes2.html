@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/10/03</h2>
+<h2>Version 2.28.0 WIP - 2013/10/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in compiler when resolving function pointers with namespace (Thanks Violet CLM)
 <li>Conditional operator ?: implicitly converts 0 to the type of the other expression again (Thanks FDsagizi)
 <li>Reusing existing module without discarding it no longer accumulates memory in engine (Thanks Scott Bean)
+<li>The object type for script classes that formed circular reference with base class wasn't resolved by gc (Thanks Scott Bean)
 </ul>
 <li>Library
 <ul>
