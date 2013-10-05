@@ -617,6 +617,8 @@ public:
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag = asGM_ONLY_IF_EXISTS) = 0;
 	virtual int              DiscardModule(const char *module) = 0;
+	virtual asUINT           GetModuleCount() const = 0;
+	virtual asIScriptModule *GetModuleByIndex(asUINT index) const = 0;
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;

@@ -151,6 +151,8 @@ public:
 	// Script modules
 	virtual asIScriptModule *GetModule(const char *module, asEGMFlags flag);
 	virtual int              DiscardModule(const char *module);
+	virtual asUINT           GetModuleCount() const;
+	virtual asIScriptModule *GetModuleByIndex(asUINT index) const;
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;

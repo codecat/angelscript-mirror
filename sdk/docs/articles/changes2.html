@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/10/04</h2>
+<h2>Version 2.28.0 WIP - 2013/10/05</h2>
 
 <ul>
 <li>Bug fixes
@@ -44,6 +44,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The engine uses the registered list pattern to dynamically determine the elements in the list buffer
 <li>Optimized tokenizer with the use of jump tables (Thanks GGLucas)
 <li>Added compiler warning on implicit conversion from float to integer (Thanks FDsagizi)
+</ul>
+<li>Library interface
+<ul>
+<li>Added GetModuleCount and GetModuleByIndex for enumerating existing modules (Thanks Vitaly Akimov)
+<li>asBEHAVE_LIST_FACTORY must declare the expected pattern for the initialization list
 </ul>
 <li>Virtual machine
 <ul>

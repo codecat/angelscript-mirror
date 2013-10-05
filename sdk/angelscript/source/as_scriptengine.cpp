@@ -1034,6 +1034,21 @@ int asCScriptEngine::DiscardModule(const char *module)
 	return 0;
 }
 
+// interface
+asUINT asCScriptEngine::GetModuleCount() const
+{
+	return asUINT(scriptModules.GetLength());
+}
+
+// interface
+asIScriptModule *asCScriptEngine::GetModuleByIndex(asUINT index) const
+{
+	if( index >= scriptModules.GetLength() )
+		return 0;
+
+	return scriptModules[index];
+}
+
 // internal
 int asCScriptEngine::ClearUnusedTypes()
 {

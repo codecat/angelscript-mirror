@@ -236,6 +236,9 @@ bool Test()
 			memSize[n] = GetAllocedMem();
 		}
 
+		if( engine->GetModuleCount() != 2 )
+			TEST_FAILED;
+
 		engine->Release();
 
 		// The first iteration uses slightly less memory due to internal buffers
