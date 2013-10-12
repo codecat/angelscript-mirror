@@ -662,16 +662,43 @@ int asCScriptFunction::FindNextLineWithCode(int line) const
 	if( scriptData == 0 ) return -1;
 	if( scriptData->lineNumbers.GetLength() == 0 ) return -1;
 
-	// Check if given line is outside function
-	if( line < (scriptData->declaredAt&0xFFFFF) ) return -1;
-	if( line > (scriptData->lineNumbers[scriptData->lineNumbers.GetLength()-1]&0xFFFFF) ) return -1;
-
-	// Find the line with code on or right after the input line
-	// TODO: optimize: Do binary search instead
-	for( asUINT n = 1; n < scriptData->lineNumbers.GetLength(); n += 2 )
+	// The line numbers for constructors are not in order due to the way
+	// class members can be initialized directly in the declaration
+	if( objectType && objectType->name == name )
 	{
-		if( line <= (scriptData->lineNumbers[n]&0xFFFFF) )
-			return (scriptData->lineNumbers[n]&0xFFFFF);
+		// Sort all line numbers before looking for the next
+		asCArray<int> lineNbrs;
+		for( asUINT n = 1; n < scriptData->lineNumbers.GetLength(); n += 2 )
+			lineNbrs.PushLast(scriptData->lineNumbers[n]&0xFFFFF);
+
+		struct C
+		{
+			static int cmp(const void *a, const void *b) { return *(int*)a - *(int*)b; }
+		};
+		qsort(&lineNbrs[0], lineNbrs.GetLength(), sizeof(int), C::cmp);
+
+		if( line < lineNbrs[0] && line < (scriptData->declaredAt&0xFFFFF)) return -1;
+		if( line > lineNbrs[lineNbrs.GetLength()-1] ) return -1;
+
+		// Find the line with code on or right after the input line
+		// TODO: optimize: Do binary search
+		for( asUINT n = 0; n < lineNbrs.GetLength(); n++ )
+			if( line <= lineNbrs[n] )
+				return lineNbrs[n];
+	}
+	else
+	{
+		// Check if given line is outside function
+		if( line < (scriptData->declaredAt&0xFFFFF) ) return -1;
+		if( line > (scriptData->lineNumbers[scriptData->lineNumbers.GetLength()-1]&0xFFFFF) ) return -1;
+
+		// Find the line with code on or right after the input line
+		// TODO: optimize: Do binary search instead
+		for( asUINT n = 1; n < scriptData->lineNumbers.GetLength(); n += 2 )
+		{
+			if( line <= (scriptData->lineNumbers[n]&0xFFFFF) )
+				return (scriptData->lineNumbers[n]&0xFFFFF);
+		}
 	}
 
 	return -1;

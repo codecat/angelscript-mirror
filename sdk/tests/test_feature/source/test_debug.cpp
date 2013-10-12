@@ -256,6 +256,8 @@ bool Test()
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
+		RegisterStdString(engine);
+
 		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class ssNode \n"
@@ -265,6 +267,7 @@ bool Test()
 			"        n = 42; \n"
 			"    } \n"
 			"    int n; \n"
+			"    string str; \n"
 			"} \n");
 		int r = mod->Build();
 		if( r < 0 )
@@ -281,7 +284,10 @@ bool Test()
 		int line = func->FindNextLineWithCode(5);
 		if( line != 5 )
 			TEST_FAILED;
-		
+		line = func->FindNextLineWithCode(8);
+		if( line != 8 )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
