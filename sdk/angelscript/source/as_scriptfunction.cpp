@@ -322,6 +322,7 @@ void asCScriptFunction::AllocateScriptFunctionData()
 	scriptData->stackNeeded      = 0;
 	scriptData->variableSpace    = 0;
 	scriptData->scriptSectionIdx = -1;
+	scriptData->declaredAt       = 0;
 	scriptData->jitFunction      = 0;
 }
 
@@ -662,14 +663,12 @@ int asCScriptFunction::FindNextLineWithCode(int line) const
 	if( scriptData->lineNumbers.GetLength() == 0 ) return -1;
 
 	// Check if given line is outside function
-	// TODO: should start at declaration instead of first line of code
-	if( line < (scriptData->lineNumbers[1]&0xFFFFF) ) return -1;
+	if( line < (scriptData->declaredAt&0xFFFFF) ) return -1;
 	if( line > (scriptData->lineNumbers[scriptData->lineNumbers.GetLength()-1]&0xFFFFF) ) return -1;
 
 	// Find the line with code on or right after the input line
 	// TODO: optimize: Do binary search instead
-	if( line == (scriptData->lineNumbers[1]&0xFFFFF) ) return line;
-	for( asUINT n = 3; n < scriptData->lineNumbers.GetLength(); n += 2 )
+	for( asUINT n = 1; n < scriptData->lineNumbers.GetLength(); n += 2 )
 	{
 		if( line <= (scriptData->lineNumbers[n]&0xFFFFF) )
 			return (scriptData->lineNumbers[n]&0xFFFFF);

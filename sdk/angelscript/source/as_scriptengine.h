@@ -61,11 +61,6 @@ class asCContext;
 // TODO: import: Remove this when import is removed
 struct sBindInfo;
 
-// TODO: DiscardModule should take an optional pointer to asIScriptModule instead of module name. If null, nothing is done.
-
-// TODO: Should allow enumerating modules, in case they have not been named.
-
-
 class asCScriptEngine : public asIScriptEngine
 {
 //=============================================================

@@ -212,6 +212,79 @@ bool Test()
 {
 	bool fail = Test2();
 
+	// Test FindNextLineWithCode
+	// Reported by Scott Bean
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"int Function() \n" // 1
+			"{ \n"              // 2
+			"    // comment \n" // 3
+			"    return 1; \n"  // 4
+			"} \n");            // 5
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("Function");
+		int line = func->FindNextLineWithCode(0);
+		if( line != -1 )
+			TEST_FAILED;
+		line = func->FindNextLineWithCode(1);
+		if( line != 4 )
+			TEST_FAILED;
+		line = func->FindNextLineWithCode(2);
+		if( line != 4 )
+			TEST_FAILED;
+		line = func->FindNextLineWithCode(3);
+		if( line != 4 )
+			TEST_FAILED;
+		line = func->FindNextLineWithCode(4);
+		if( line != 4 )
+			TEST_FAILED;
+		line = func->FindNextLineWithCode(5);
+		if( line != -1 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
+	// Test FindNextLineWithCode for class destructors
+	// Reported by Scott Bean
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class ssNode \n"
+			"{ \n"
+			"    ssNode()  \n"
+			"    { \n"
+			"        n = 42; \n"
+			"    } \n"
+			"    int n; \n"
+			"} \n");
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = mod->GetObjectTypeByName("ssNode");
+		asEBehaviours behave;
+		asUINT behaveCount = type->GetBehaviourCount();
+		if( behaveCount != 9 )
+			TEST_FAILED;
+		asIScriptFunction *func = type->GetBehaviourByIndex(8, &behave);
+		if( behave != asBEHAVE_CONSTRUCT )
+			TEST_FAILED;
+		int line = func->FindNextLineWithCode(5);
+		if( line != 5 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 #ifndef AS_MAX_PORTABILITY
     // Test crash in GetLineNumber
     // http://www.gamedev.net/topic/638656-crash-in-ctx-getlinenumber/

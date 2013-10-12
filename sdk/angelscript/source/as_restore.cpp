@@ -797,6 +797,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			asCString name;
 			ReadString(&name);
 			func->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
+			func->scriptData->declaredAt = ReadEncodedUInt();
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )
@@ -3372,6 +3373,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				char c = 0;
 				WriteData(&c, 1);
 			}
+			WriteEncodedInt64(func->scriptData->declaredAt);
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL )

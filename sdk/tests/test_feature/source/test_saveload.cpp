@@ -550,16 +550,16 @@ bool Test()
 		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-		if( stream.buffer.size() != 2604 )
+		if( stream.buffer.size() != 2645 )
 			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
-		if( zeroes != 710 )
+		if( zeroes != 724 )
 		{
 			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0x2342B4F6 )
+		if( crc32 != 0x57082DCE )
 			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
