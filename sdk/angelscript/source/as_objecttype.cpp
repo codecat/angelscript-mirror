@@ -662,7 +662,14 @@ asIScriptFunction *asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviour
 
 	if( beh.listFactory && count++ == index )
 	{
-		if( outBehaviour ) *outBehaviour = asBEHAVE_LIST_FACTORY;
+		if( outBehaviour ) 
+		{
+			if( flags & asOBJ_VALUE )
+				*outBehaviour = asBEHAVE_LIST_CONSTRUCT;
+			else
+				*outBehaviour = asBEHAVE_LIST_FACTORY;
+		}
+
 		return engine->scriptFunctions[beh.listFactory];
 	}
 

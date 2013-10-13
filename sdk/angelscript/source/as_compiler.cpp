@@ -2453,7 +2453,6 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	// Construct the buffer with the elements
 
 	// Find the list factory
-	// TODO: initlist: Add support for value types as well
 	int funcId = var->dataType.GetBehaviour()->listFactory;
 	asASSERT( engine->scriptFunctions[funcId]->listPattern );
 
@@ -2487,9 +2486,9 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	// The object itself is the last to be created and will receive the pointer to the buffer
 	asCArray<asSExprContext *> args;
 	asSExprContext arg1(engine);
-	bc->InstrSHORT(asBC_PshVPtr, bufferVar);
 	arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
 	arg1.type.dataType.MakeReference(true);
+	arg1.bc.InstrSHORT(asBC_PshVPtr, bufferVar);
 	args.PushLast(&arg1);
 
 	asSExprContext ctx(engine);
@@ -2498,12 +2497,43 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	{
 		asASSERT( isVarGlobOrMem == 0 );
 
-		// Call factory and store the handle in the given variable
-		PerformFunctionCall(funcId, &ctx, false, &args, 0, true, var->stackOffset);
-		ctx.bc.Instr(asBC_PopPtr);
+		if( var->dataType.GetObjectType()->GetFlags() & asOBJ_REF )
+		{
+			ctx.bc.AddCode(&arg1.bc);
+
+			// Call factory and store the handle in the given variable
+			PerformFunctionCall(funcId, &ctx, false, &args, 0, true, var->stackOffset);
+			ctx.bc.Instr(asBC_PopPtr);
+		}
+		else
+		{
+			// Call the constructor
+
+			// When the object is allocated on the heap, the address where the
+			// reference will be stored must be pushed on the stack before the
+			// arguments. This reference on the stack is safe, even if the script
+			// is suspended during the evaluation of the arguments.
+			bool onHeap = IsVariableOnHeap(var->stackOffset);
+			if( onHeap )
+				ctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
+
+			ctx.bc.AddCode(&arg1.bc);
+
+			// When the object is allocated on the stack, the address to the
+			// object is pushed on the stack after the arguments as the object pointer
+			if( !onHeap )
+				ctx.bc.InstrSHORT(asBC_PSF, var->stackOffset);
+
+			PerformFunctionCall(funcId, &ctx, onHeap, &args, var->dataType.GetObjectType());
+
+			// Mark the object in the local variable as initialized
+			ctx.bc.ObjInfo(var->stackOffset, asOBJ_INIT);
+		}
 	}
 	else
 	{
+		ctx.bc.AddCode(&arg1.bc);
+
 		PerformFunctionCall(funcId, &ctx, false, &args);
 
 		ctx.bc.Instr(asBC_RDSPtr);

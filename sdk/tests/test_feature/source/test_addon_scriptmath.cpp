@@ -53,6 +53,13 @@ bool Test()
 	r = ExecuteString(engine, "uint64 a = 0x3ff0000000000000; double b = fpFromIEEE(a); assert( b == 1.0 );");
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
+
+	r = ExecuteString(engine, 
+		"complex a = {1, 2}; \n"
+		"assert( a.r == 1 ); \n"
+		"assert( a.i == 2 ); \n");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 	
 	Complex v;
 	engine->RegisterGlobalProperty("complex v", &v);

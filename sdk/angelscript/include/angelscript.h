@@ -163,6 +163,7 @@ enum asEBehaviours
 {
 	// Value object memory management
 	asBEHAVE_CONSTRUCT,
+	asBEHAVE_LIST_CONSTRUCT,
 	asBEHAVE_DESTRUCT,
 
 	// Reference object memory management

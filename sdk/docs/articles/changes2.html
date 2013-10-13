@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/10/12</h2>
+<h2>Version 2.28.0 WIP - 2013/10/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -51,6 +51,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added GetModuleCount and GetModuleByIndex for enumerating existing modules (Thanks Vitaly Akimov)
 <li>asBEHAVE_LIST_FACTORY must declare the expected pattern for the initialization list
+<li>Added asBEHAVE_LIST_CONSTRUCT to allow value types to be initialized with lists too
 </ul>
 <li>Virtual machine
 <ul>
@@ -64,6 +65,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in script array resize() method that could cause a crash if reserving too much memory (Thanks Philip Bennefall)
 <li>Fixed compiler error in CDebugger add-on when using the AngelScript namespace (Thanks Jordi Oliveras Rovira)
 <li>The dictionary add-on now supports initialization lists
+<li>The Complex math add-on now supports initialization lists
 </ul>
 </ul>
 

@@ -1839,9 +1839,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	// Verify function declaration
 	asCScriptFunction func(this, 0, asFUNC_DUMMY);
 
+	bool expectListPattern = behaviour == asBEHAVE_LIST_FACTORY || behaviour == asBEHAVE_LIST_CONSTRUCT;
 	asCScriptNode *listPattern = 0;
 	asCBuilder bld(this, 0);
-	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, 0, behaviour == asBEHAVE_LIST_FACTORY ? &listPattern : 0);
+	int r = bld.ParseFunctionDeclaration(objectType, decl, &func, true, &internal.paramAutoHandles, &internal.returnAutoHandle, 0, expectListPattern ? &listPattern : 0);
 	if( r < 0 )
 	{
 		if( listPattern )
@@ -1882,8 +1883,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 	if( behaviour == asBEHAVE_CONSTRUCT )
 	{
-		// TODO: Add asBEHAVE_IMPLICIT_CONSTRUCT
-
 		// Verify that the return type is void
 		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
@@ -1908,8 +1907,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
 				return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 			}
-
-			// TODO: Add support for implicit constructors
 
 			// TODO: Verify that the same constructor hasn't been registered already
 
@@ -1955,6 +1952,52 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 		func.id = beh->destruct = AddBehaviourFunction(func, internal);
 	}
+	else if( behaviour == asBEHAVE_LIST_CONSTRUCT )
+	{
+		// Verify that the return type is void
+		if( func.returnType != asCDataType::CreatePrimitive(ttVoid, false) )
+		{
+			if( listPattern )
+				listPattern->Destroy(this);
+
+			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
+		// Verify that it is a value type
+		if( !(func.objectType->flags & asOBJ_VALUE) )
+		{
+			if( listPattern )
+				listPattern->Destroy(this);
+
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ILLEGAL_BEHAVIOUR_FOR_TYPE);
+			return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
+		// Verify the parameters
+		if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
+		{
+			if( listPattern )
+				listPattern->Destroy(this);
+
+			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM);
+			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
+		// Add the function
+		func.id = AddBehaviourFunction(func, internal);
+
+		// Re-use the listFactory member, as it is not possible to have both anyway
+		beh->listFactory = func.id;
+
+		// Store the list pattern for this function
+		int r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
+
+		if( listPattern )
+			listPattern->Destroy(this);
+
+		if( r < 0 )
+			return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+	}
 	else if( behaviour == asBEHAVE_FACTORY || behaviour == asBEHAVE_LIST_FACTORY )
 	{
 		// Must be a ref type and must not have asOBJ_NOHANDLE
@@ -1973,8 +2016,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				listPattern->Destroy(this);
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
-
-		// TODO: Add support for implicit factories
 
 		// TODO: Verify that the same factory function hasn't been registered already
 
@@ -5386,9 +5427,14 @@ void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC
 // internal
 asCObjectType *asCScriptEngine::GetListPatternType(int listPatternFuncId)
 {
-	asCObjectType *ot = scriptFunctions[listPatternFuncId]->returnType.GetObjectType();
+	// Get the object type either from the constructor's object for value types
+	// or from the factory's return type for reference types
+	asCObjectType *ot = scriptFunctions[listPatternFuncId]->objectType;
+	if( ot == 0 )
+		ot = scriptFunctions[listPatternFuncId]->returnType.GetObjectType();
 	asASSERT( ot );
 
+	// Check if this object type already has a list pattern type
 	for( asUINT n = 0; n < listPatternTypes.GetLength(); n++ )
 	{
 		if( listPatternTypes[n]->templateSubTypes[0].GetObjectType() == ot )
