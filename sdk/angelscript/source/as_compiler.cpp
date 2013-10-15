@@ -2210,10 +2210,6 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 							{
 								// Push the address of the location where the variable will be stored on the stack.
 								// This reference is safe, because the addresses of the global variables cannot change.
-								// TODO: When serialization of the context is implemented this will probably have to change,
-								//       because this pointer may be on the stack while the context is suspended, and may
-								//       be difficult to serialize as the context doesn't know that the value represents a
-								//       pointer.
 								onHeap = true;
 								if( isVarGlobOrMem == 1 )
 									ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
@@ -2532,26 +2528,47 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	}
 	else
 	{
-		ctx.bc.AddCode(&arg1.bc);
-
-		PerformFunctionCall(funcId, &ctx, false, &args);
-
-		ctx.bc.Instr(asBC_RDSPtr);
-		if( isVarGlobOrMem == 1 )
+		if( var->dataType.GetObjectType()->GetFlags() & asOBJ_REF )
 		{
-			// Store the returned handle in the global variable
-			ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+			ctx.bc.AddCode(&arg1.bc);
+
+			PerformFunctionCall(funcId, &ctx, false, &args);
+
+			ctx.bc.Instr(asBC_RDSPtr);
+			if( isVarGlobOrMem == 1 )
+			{
+				// Store the returned handle in the global variable
+				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+			}
+			else
+			{
+				// Store the returned handle in the member
+				ctx.bc.InstrSHORT(asBC_PSF, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+			}
+			ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
+			ctx.bc.Instr(asBC_PopPtr);
+			ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 		}
 		else
 		{
-			// Store the returned handle in the member
-			ctx.bc.InstrSHORT(asBC_PSF, 0);
-			ctx.bc.Instr(asBC_RDSPtr);
-			ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+			// Put the address where the object pointer will be placed on the stack
+			if( isVarGlobOrMem == 1 )
+				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
+			else
+			{
+				ctx.bc.InstrSHORT(asBC_PSF, 0);
+				ctx.bc.Instr(asBC_RDSPtr);
+				ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+			}
+
+			// Add the address of the list buffer as the argument
+			ctx.bc.AddCode(&arg1.bc);
+
+			// Call the ALLOC instruction to allocate memory and invoke constructor
+			PerformFunctionCall(funcId, &ctx, true, &args, var->dataType.GetObjectType());
 		}
-		ctx.bc.InstrPTR(asBC_REFCPY, var->dataType.GetObjectType());
-		ctx.bc.Instr(asBC_PopPtr);
-		ReleaseTemporaryVariable(ctx.type.stackOffset, &ctx.bc);
 	}
 
 	bc->AddCode(&ctx.bc);

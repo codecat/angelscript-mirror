@@ -54,17 +54,30 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
+	// Test initialization list for value type in local variable
 	r = ExecuteString(engine, 
 		"complex a = {1, 2}; \n"
 		"assert( a.r == 1 ); \n"
 		"assert( a.i == 2 ); \n");
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
+
+	// Test initialization list for value type in global variable
+	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME, 
+		"complex g = {1,2}; \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	Complex *g = (Complex*)mod->GetAddressOfGlobalVar(0);
+	if( g == 0 || g->r != 1 || g->i != 2 )
+		TEST_FAILED;
 	
+	// Test the complex math add-on
 	Complex v;
 	engine->RegisterGlobalProperty("complex v", &v);
 
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script);
 	r = mod->Build();
 	if( r < 0 )
