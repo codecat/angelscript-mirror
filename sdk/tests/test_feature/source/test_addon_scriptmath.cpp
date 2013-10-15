@@ -45,6 +45,7 @@ bool Test()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptMath(engine);
 	RegisterScriptMathComplex(engine);
+	RegisterScriptArray(engine, false);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	r = ExecuteString(engine, "float a = 1; uint b = fpToIEEE(a); assert( b == 0x3f800000 );");
@@ -71,6 +72,25 @@ bool Test()
 		TEST_FAILED;
 	Complex *g = (Complex*)mod->GetAddressOfGlobalVar(0);
 	if( g == 0 || g->r != 1 || g->i != 2 )
+		TEST_FAILED;
+
+	// Test initialization list for value type in class member
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection(TESTNAME,
+		"class T { complex m = {1,2}; } \n"
+		"T g; \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	Complex *m = (Complex*)((asIScriptObject*)mod->GetAddressOfGlobalVar(0))->GetAddressOfProperty(0);
+	if( m == 0 || m->r != 1 || m->i != 2 )
+		TEST_FAILED;
+
+	// Test initialization list for value type in initialization list
+	r = ExecuteString(engine, "array<complex> a = {{1,2}, {3,4}}; \n"
+							  "assert( a[0].r == 1 ); \n"
+							  "assert( a[1].r == 3 ); \n");
+	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 	
 	// Test the complex math add-on
