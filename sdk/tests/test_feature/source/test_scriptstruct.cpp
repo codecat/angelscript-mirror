@@ -1,6 +1,125 @@
 #include "utils.h"
 #include "../../add_on/scripthandle/scripthandle.h"
 #include "../../add_on/scriptmath/scriptmathcomplex.h"
+#include "../../../add_on/scriptbuilder/scriptbuilder.h"
+#include <iostream>
+
+using namespace std;
+
+namespace ProjectClover
+{
+
+// The destructor Foo, which is a member of the script class will 
+// use this global variable to attempt to access the script class
+// while the internal asCScriptObject is being destroyed.
+asIScriptObject* gBar     = NULL;
+asIObjectType*   gBarType = NULL;
+asIScriptEngine* gEngine  = NULL;
+ 
+// In place of the physics callback from the original code
+void callMethodOfBar();
+ 
+// In place physics object from the original code
+struct Foo 
+{
+        Foo(){ /*cout << "Foo::Foo()\n"; */}
+        ~Foo(){ /*cout << "Foo::~Foo()\n"; */ callMethodOfBar(); }
+};
+ 
+void createBar()
+{
+        asIScriptContext *ctx = gEngine->CreateContext();
+ 
+        asIScriptModule *module = gEngine->GetModule("script");
+        gBarType = gEngine->GetObjectTypeById(module->GetTypeIdByDecl("Bar"));
+        asIScriptFunction *factory = gBarType->GetFactoryByDecl("Bar @Bar()");
+        ctx->Prepare(factory);
+        ctx->Execute();
+        gBar = *(asIScriptObject**)ctx->GetAddressOfReturnValue();
+        gBar->AddRef();
+       
+        ctx->Release();
+}
+ 
+void callMethodOfBar(){
+        asIScriptContext* ctx = gEngine->CreateContext();
+ 
+        asIScriptFunction* func= gBarType->GetMethodByDecl("void method()");
+        ctx->Prepare(func);
+        ctx->SetObject(gBar);
+        ctx->Execute();
+       
+        ctx->Release();
+}
+
+template <typename T>
+void defaultConstruct(T* memory){
+        new (memory) T();
+}
+ 
+template <typename T>
+void destruct(T* memory){
+        memory->~T();
+}
+
+void PrintNumber(int x)
+{
+//        cout << x << "\n";
+}
+
+int init();
+
+bool Test_main()
+{
+	bool fail = false;
+	int r;
+	CBufferedOutStream bout;
+
+    gEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+ 
+    // The script compiler will send any compiler messages to the callback
+    gEngine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+ 
+    r = gEngine->RegisterGlobalFunction("void print(int)", asFUNCTION(PrintNumber), asCALL_CDECL); assert( r >= 0 );
+    r = gEngine->RegisterObjectType("Foo", sizeof(Foo), asOBJ_VALUE | asOBJ_APP_CLASS_CD);
+    r = gEngine->RegisterObjectBehaviour("Foo", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(defaultConstruct<Foo>), asCALL_CDECL_OBJLAST);
+    r = gEngine->RegisterObjectBehaviour("Foo", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(destruct<Foo>), asCALL_CDECL_OBJLAST);
+
+    // Compile the script code
+	const char* scriptStr=
+			"class Bar {"
+			"       private Foo foo;"
+			"       void method(){"
+			"               print(666);"
+			"       }"
+			"};";
+
+	asIScriptModule *mod = gEngine->GetModule("script", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test", scriptStr);
+	r = mod->Build();
+    if( r < 0 )
+		TEST_FAILED;
+
+	// Create the script object with the Foo member
+	createBar();
+
+	// Now release the created script object so that it is destroyed, which will
+	// trigger Foo to attempt to access the object from within the destructor
+	// of asCScriptObject
+	gBar->Release();
+
+	if( bout.buffer != " (0, 0) : Error   : The script object of type 'Bar' is being resurrected illegally during destruction\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
+	gEngine->Release();
+
+	return fail;
+}
+ 
+}
 
 namespace TestScriptStruct
 {
@@ -241,6 +360,10 @@ bool Test()
 	asIScriptEngine *engine;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// This test shows what happens if the application attempts to access the script
+	// object while the asCSriptObject destructor is cleaning up the members
+	fail = ProjectClover::Test_main();
 
 	// Test 
 	// Reported by Scott Bean

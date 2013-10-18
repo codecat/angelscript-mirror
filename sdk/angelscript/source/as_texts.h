@@ -282,6 +282,7 @@
 #define TXT_EXCEPTION_IN_NESTED_CALL                  "An exception occurred in a nested call"
 #define TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s            "Type '%s' is still used by function '%s'"
 #define TXT_PREV_TYPE_IS_NAMED_s                      "The builtin type in previous message is named '%s'"
+#define TXT_RESURRECTING_SCRIPTOBJECT_s               "The script object of type '%s' is being resurrected illegally during destruction"
 
 // Internal names
 
