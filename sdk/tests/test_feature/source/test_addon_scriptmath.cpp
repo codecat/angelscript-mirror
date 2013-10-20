@@ -215,10 +215,10 @@ bool Test()
 	// TODO: the function signature for the constructors/factories should carry the name of the object instead of _beh_0_
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'complex(const int, const int, const int, const int)'\n"
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
-					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_()\n"
-				   	   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(const complex&in)\n"
-					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(float)\n"
-					   "ExecuteString (1, 13) : Info    : void complex::_beh_0_(float, float)\n" )
+					   "ExecuteString (1, 13) : Info    : complex::complex()\n"
+				   	   "ExecuteString (1, 13) : Info    : complex::complex(const complex&in)\n"
+					   "ExecuteString (1, 13) : Info    : complex::complex(float)\n"
+					   "ExecuteString (1, 13) : Info    : complex::complex(float, float)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

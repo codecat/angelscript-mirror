@@ -149,9 +149,9 @@ bool TestVector3()
 	// TODO: the function signature for the constructors/factories should carry the name of the object instead of _beh_0_
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching signatures to 'vector3(const int, const int, const int, const int)'\n"
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
-					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_()\n"
-				   	   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(const vector3&in)\n"
-					   "ExecuteString (1, 13) : Info    : void vector3::_beh_0_(float, float = 0, float = 0)\n"
+					   "ExecuteString (1, 13) : Info    : vector3::vector3()\n"
+				   	   "ExecuteString (1, 13) : Info    : vector3::vector3(const vector3&in)\n"
+					   "ExecuteString (1, 13) : Info    : vector3::vector3(float, float = 0, float = 0)\n"
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());

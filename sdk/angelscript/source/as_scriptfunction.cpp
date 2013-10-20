@@ -562,7 +562,8 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	// Don't add the return type for constructors and destructors
 	if( !(returnType.GetTokenType() == ttVoid && 
 		  objectType && 
-		  (name == objectType->name || (name.GetLength() > 0 && name[0] == '~'))) ) 
+		  (name == objectType->name || (name.GetLength() > 0 && name[0] == '~') || 
+		   name == "_beh_0_" || name == "_beh_2_")) )
 	{
 		str = returnType.Format();
 		str += " ";
@@ -583,6 +584,17 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	}
 	if( name == "" )
 		str += "_unnamed_function_(";
+	else if( name.SubString(0,5) == "_beh_" && name.GetLength() == 7 )
+	{
+		if( name[5] == '0' + asBEHAVE_CONSTRUCT )
+			str += objectType->name + "(";
+		else if( name[5] == '0' + asBEHAVE_FACTORY )
+			str += returnType.GetObjectType()->name + "(";
+		else if( name[5] == '0' + asBEHAVE_DESTRUCT )
+			str += "~" + objectType->name + "(";
+		else
+			str += name + "(";
+	}
 	else
 		str += name + "(";
 
