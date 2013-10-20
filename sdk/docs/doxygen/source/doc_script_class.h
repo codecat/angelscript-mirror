@@ -294,9 +294,9 @@ forgotten.
 
 \page doc_script_class_private Private class members
 
-Class members can be declared as private if you wish do not intend for them to be accessed 
-from outside the public class methods. This can be useful in large programs where you to 
-avoid programmer errors where properties or methods are inappropriately used.
+Class members can be declared as private if you do not intend for them to be accessed 
+from outside the public class methods. This can be useful in large programs where you 
+wish to avoid programmer errors where properties or methods are inappropriately used.
 
 <pre>
   // A class with private members
