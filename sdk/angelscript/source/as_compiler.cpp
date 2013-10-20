@@ -6765,6 +6765,9 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			ReleaseTemporaryVariable(rctx->type, &ctx->bc);
 
 			ctx->type = lctx->type;
+
+			// After the handle assignment the original handle is left on the stack
+			ctx->type.dataType.MakeReference(false);
 		}
 	}
 	else // if( lctx->type.dataType.IsObject() )

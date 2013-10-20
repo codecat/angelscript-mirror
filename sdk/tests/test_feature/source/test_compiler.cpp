@@ -235,6 +235,42 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test chained assigned with handles
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"class TestClass{} \n"
+			"TestClass @t1; \n"
+			"TestClass @t2; \n"
+			"void startGame( ){ \n"
+			"    TestClass @t = TestClass(); \n"
+			"    @t1 = @t2 = t; \n"
+			"    assert( t1 is t && t2 is t ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "startGame()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test large integers
 	// http://www.gamedev.net/topic/648192-unsigned-int64-wokring-wrong/
 	{
