@@ -795,7 +795,7 @@ const char *asCScriptFunction::GetVarDecl(asUINT index) const
 	*tempString = scriptData->variables[index]->type.Format();
 	*tempString += " " + scriptData->variables[index]->name;
 
-	return tempString->AddressOf();	
+	return tempString->AddressOf();
 }
 
 // internal

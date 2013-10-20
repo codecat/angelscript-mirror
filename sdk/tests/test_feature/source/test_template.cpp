@@ -573,6 +573,11 @@ bool Test()
 		TEST_FAILED;
 	}
 
+	// The declaration for the template specialization must work
+	int typeId = engine->GetTypeIdByDecl("MyTmpl<float>");
+	string decl = engine->GetTypeDeclaration(typeId);
+	if( decl != "MyTmpl<float>" )
+		TEST_FAILED;
 	
 	// TODO: Test behaviours that take and return the template sub type
 	// TODO: Test behaviours that take and return the proper template instance type

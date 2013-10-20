@@ -259,6 +259,10 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		r = ExecuteString(engine, "uint64 ui64 = 9223372036854775808; assert( ui64 == 0x8000000000000000 ); ");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		if( bout.buffer != "" )
 		{
 			printf("%s", bout.buffer.c_str());
@@ -272,7 +276,13 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (1, 16) : Warning : Value is too large for data type\n" )
+		// Warn about change of sign
+		r = ExecuteString(engine, "int64 i64 = 9223372036854775808; assert( uint64(i64) == 0x8000000000000000 ); ");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 16) : Warning : Value is too large for data type\n"
+			               "ExecuteString (1, 13) : Warning : Implicit conversion changed sign of value\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
