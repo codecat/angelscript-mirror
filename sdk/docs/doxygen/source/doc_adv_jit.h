@@ -152,6 +152,7 @@ This page gives a brief description of each of the byte code instructions that t
  - \ref doc_adv_jit_1_7
  - \ref doc_adv_jit_1_8
  - \ref doc_adv_jit_1_9
+ - \ref doc_adv_jit_1_10
 
 
 
@@ -170,7 +171,7 @@ Allocate the memory for an object and setup the VM to execute the constructor
  
  - \ref asBC_ALLOC
  
-Release the memory of an object
+Release the memory of an object or list buffer
  
  - \ref asBC_FREE
  
@@ -569,4 +570,24 @@ Initialize the variable of a global variable with a constant.
  - \ref asBC_SetG4
 
 
+ 
+\section doc_adv_jit_1_10 Initialization list management
+ 
+Allocates the memory for the initialization list buffer
+ 
+- \ref asBC_AllocMem
+
+Sets the number of elements that will be repeated afterwards
+
+- \ref asBC_SetListSize
+
+Sets the type of the next element
+
+- \ref asBC_SetListType
+
+Pushes the address of the list element on the stack
+
+- \ref asBC_PshListElmnt
+ 
+ 
 */

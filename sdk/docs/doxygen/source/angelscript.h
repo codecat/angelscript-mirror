@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.27.1
-#define ANGELSCRIPT_VERSION        22701
-#define ANGELSCRIPT_VERSION_STRING "2.27.1"
+//! Version 2.27.8
+#define ANGELSCRIPT_VERSION        22800
+#define ANGELSCRIPT_VERSION_STRING "2.28.0"
 
 // Data types
 
@@ -239,6 +239,8 @@ enum asEBehaviours
 	// Value object memory management
 	//! \brief Constructor
 	asBEHAVE_CONSTRUCT,
+	//! \brief Constructor used exclusively for initialization lists
+	asBEHAVE_LIST_CONSTRUCT,
 	//! \brief Destructor
 	asBEHAVE_DESTRUCT,
 
@@ -1441,6 +1443,13 @@ public:
 	//! Discards a module and frees its memory. Any pointers that the application holds 
 	//! to this module will be invalid after this call.
 	virtual int              DiscardModule(const char *module) = 0;
+	//! \brief Get the number of modules.
+	//! \return The number of modules.
+	virtual asUINT           GetModuleCount() const = 0;
+	//! \brief Get a module by index.
+	//! \param[in] index The index of the module.
+	//! \return A pointer to the module or null on error.
+	virtual asIScriptModule *GetModuleByIndex(asUINT index) const = 0;
 	//! \}
 
 	// Script functions
@@ -2653,8 +2662,9 @@ public:
 	//! \brief Returns the declaration of a local variable at the specified callstack level.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
+	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
 	//! \return A null terminated string with the declaration of the variable.
-	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0, bool includeNamespace = false) = 0;
 	//! \brief Returns the type id of a local variable at the specified callstack level.
 	//! \param[in] varIndex The index of the variable.
 	//! \param[in] stackLevel The index on the call stack.
@@ -3151,8 +3161,9 @@ public:
 	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
 	//! \brief Returns the declaration of the property
 	//! \param[in] index The index of the property
+	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
 	//! \return The declaration of the property, or null on error.
-	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
+	virtual const char *GetPropertyDeclaration(asUINT index, bool includeNamespace = false) const = 0;
 	//! \}
 
 	// Behaviours
@@ -3346,8 +3357,9 @@ public:
 	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
 	//! \brief Returns the declaration of a local variable
 	//! \param[in] index The zero based index of the local variable
+	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
 	//! \return The declaration string, or null on error
-	virtual const char      *GetVarDecl(asUINT index) const = 0;
+	virtual const char      *GetVarDecl(asUINT index, bool includeNamespace = false) const = 0;
 	//! \brief Returns the next line number with code
 	//! \param[in] line A line number
 	//! \return The number of the next line with code, or a negative value if the line is outside the function.
@@ -4066,8 +4078,16 @@ enum asEBCInstr
 	asBC_JLowZ			= 187,
 	//! \brief Jump if low byte of value register is not 0
 	asBC_JLowNZ			= 188,
+	//! \brief Allocates memory for an initialization list buffer
+	asBC_AllocMem		= 189,
+	//! \brief Sets a repeat count in the list buffer
+	asBC_SetListSize	= 190,
+	//! \brief Pushes the address of an element in the list buffer on the stack
+	asBC_PshListElmnt	= 191,
+	//! \brief Sets the type of the next element in the list buffer
+	asBC_SetListType	= 192,
 
-	asBC_MAXBYTECODE	= 189,
+	asBC_MAXBYTECODE	= 193,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -4119,12 +4139,14 @@ enum asEBCType
 	//! \brief Instruction + WORD arg + DWORD arg
 	asBCTYPE_W_DW_ARG     = 18,
 	//! \brief Instruction + WORD arg(source var) + WORD arg + DWORD arg
-	asBCTYPE_rW_W_DW_ARG  = 19
+	asBCTYPE_rW_W_DW_ARG  = 19,
+	//! \brief Instruction + WORD arg(source var) + DWORD arg + DWORD arg
+	asBCTYPE_rW_DW_DW_ARG = 20
 };
 
 // Instruction type sizes
 //! \brief Lookup table for determining the size of each \ref asEBCType "type" of bytecode instruction.
-const int asBCTypeSize[20] =
+const int asBCTypeSize[21] =
 {
 	0, // asBCTYPE_INFO
 	1, // asBCTYPE_NO_ARG
@@ -4145,7 +4167,8 @@ const int asBCTypeSize[20] =
 	4, // asBCTYPE_QW_DW_ARG
 	3, // asBCTYPE_rW_QW_ARG
 	2, // asBCTYPE_W_DW_ARG
-	3  // asBCTYPE_rW_W_DW_ARG
+	3, // asBCTYPE_rW_W_DW_ARG
+	3  // asBCTYPE_rW_DW_DW_ARG
 };
 
 // Instruction info
@@ -4383,11 +4406,11 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(RefCpyV,	wW_PTR_ARG,		0),
 	asBCINFO(JLowZ,		DW_ARG,			0),
 	asBCINFO(JLowNZ,	DW_ARG,			0),
+	asBCINFO(AllocMem,	wW_DW_ARG,		0),
+	asBCINFO(SetListSize, rW_DW_DW_ARG,	0),
+	asBCINFO(PshListElmnt, rW_DW_ARG,	AS_PTR_SIZE),
+	asBCINFO(SetListType, rW_DW_DW_ARG,	0),
 
-	asBCINFO_DUMMY(189),
-	asBCINFO_DUMMY(190),
-	asBCINFO_DUMMY(191),
-	asBCINFO_DUMMY(192),
 	asBCINFO_DUMMY(193),
 	asBCINFO_DUMMY(194),
 	asBCINFO_DUMMY(195),
@@ -4456,15 +4479,15 @@ const asSBCInfo asBCInfo[256] =
 
 // Macros to access bytecode instruction arguments
 //! \brief Macro to access the first DWORD argument in the bytecode instruction
-#define asBC_DWORDARG(x)  (asDWORD(*(x+1)))
+#define asBC_DWORDARG(x)  (*(((asDWORD*)x)+1))
 //! \brief Macro to access the first 32bit integer argument in the bytecode instruction
-#define asBC_INTARG(x)    (int(*(x+1)))
+#define asBC_INTARG(x)    (*(int*)(((asDWORD*)x)+1))
 //! \brief Macro to access the first QWORD argument in the bytecode instruction
-#define asBC_QWORDARG(x)  (*(asQWORD*)(x+1))
+#define asBC_QWORDARG(x)  (*(asQWORD*)(((asDWORD*)x)+1))
 //! \brief Macro to access the first float argument in the bytecode instruction
-#define asBC_FLOATARG(x)  (*(float*)(x+1))
+#define asBC_FLOATARG(x)  (*(float*)(((asDWORD*)x)+1))
 //! \brief Macro to access the first pointer argument in the bytecode instruction
-#define asBC_PTRARG(x)    (*(asPWORD*)(x+1))
+#define asBC_PTRARG(x)    (*(asPWORD*)(((asDWORD*)x)+1))
 //! \brief Macro to access the first WORD argument in the bytecode instruction
 #define asBC_WORDARG0(x)  (*(((asWORD*)x)+1))
 //! \brief Macro to access the second WORD argument in the bytecode instruction
