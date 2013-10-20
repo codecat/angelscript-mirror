@@ -156,7 +156,7 @@ public:
 	// Debug information
 	asUINT               GetVarCount() const;
 	int                  GetVar(asUINT index, const char **name, int *typeId = 0) const;
-	const char *         GetVarDecl(asUINT index) const;
+	const char *         GetVarDecl(asUINT index, bool includeNamespace = false) const;
 	int                  FindNextLineWithCode(int line) const;
 
 	// For JIT compilation

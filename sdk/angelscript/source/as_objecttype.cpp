@@ -554,7 +554,7 @@ int asCObjectType::GetProperty(asUINT index, const char **name, int *typeId, boo
 }
 
 // interface
-const char *asCObjectType::GetPropertyDeclaration(asUINT index) const
+const char *asCObjectType::GetPropertyDeclaration(asUINT index, bool includeNamespace) const
 {
 	if( index >= properties.GetLength() )
 		return 0;
@@ -564,7 +564,7 @@ const char *asCObjectType::GetPropertyDeclaration(asUINT index) const
 		*tempString = "private ";
 	else
 		*tempString = "";
-	*tempString += properties[index]->type.Format();
+	*tempString += properties[index]->type.Format(includeNamespace);
 	*tempString += " ";
 	*tempString += properties[index]->name;
 

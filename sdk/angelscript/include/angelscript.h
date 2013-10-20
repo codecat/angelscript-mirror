@@ -815,7 +815,7 @@ public:
 	virtual int                GetLineNumber(asUINT stackLevel = 0, int *column = 0, const char **sectionName = 0) = 0;
 	virtual int                GetVarCount(asUINT stackLevel = 0) = 0;
 	virtual const char        *GetVarName(asUINT varIndex, asUINT stackLevel = 0) = 0;
-	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0) = 0;
+	virtual const char        *GetVarDeclaration(asUINT varIndex, asUINT stackLevel = 0, bool includeNamespace = false) = 0;
 	virtual int                GetVarTypeId(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	virtual void              *GetAddressOfVar(asUINT varIndex, asUINT stackLevel = 0) = 0;
 	virtual bool               IsVarInScope(asUINT varIndex, asUINT stackLevel = 0) = 0;
@@ -938,7 +938,7 @@ public:
 	// Properties
 	virtual asUINT      GetPropertyCount() const = 0;
 	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
-	virtual const char *GetPropertyDeclaration(asUINT index) const = 0;
+	virtual const char *GetPropertyDeclaration(asUINT index, bool includeNamespace = false) const = 0;
 
 	// Behaviours
 	virtual asUINT             GetBehaviourCount() const = 0;
@@ -997,7 +997,7 @@ public:
 	// Debug information
 	virtual asUINT           GetVarCount() const = 0;
 	virtual int              GetVar(asUINT index, const char **name, int *typeId = 0) const = 0;
-	virtual const char      *GetVarDecl(asUINT index) const = 0;
+	virtual const char      *GetVarDecl(asUINT index, bool includeNamespace = false) const = 0;
 	virtual int              FindNextLineWithCode(int line) const = 0;
 
 	// For JIT compilation

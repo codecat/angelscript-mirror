@@ -786,13 +786,13 @@ int asCScriptFunction::GetVar(asUINT index, const char **name, int *typeId) cons
 }
 
 // interface
-const char *asCScriptFunction::GetVarDecl(asUINT index) const
+const char *asCScriptFunction::GetVarDecl(asUINT index, bool includeNamespace) const
 {
 	if( scriptData == 0 || index >= scriptData->variables.GetLength() )
 		return 0;
 
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = scriptData->variables[index]->type.Format();
+	*tempString = scriptData->variables[index]->type.Format(includeNamespace);
 	*tempString += " " + scriptData->variables[index]->name;
 
 	return tempString->AddressOf();
