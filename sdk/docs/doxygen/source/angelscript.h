@@ -1159,6 +1159,10 @@ public:
 	//! Use this method to register behaviour functions that will be called by
 	//! the virtual machine to perform certain operations, such as memory management,
 	//! math operations, comparisons, etc.
+	//! 
+	//! The \a declaration must form a valid function signature, but the give function name will
+	//! not be used or stored in the application so there is no need to provide a meaningful function 
+	//! name.
 	//!
 	//! \see \ref doc_register_func, \ref doc_reg_opbeh
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;

@@ -1,6 +1,6 @@
 /**
 
-\page doc_obj_handle Object handles
+\page doc_obj_handle Object handles to the application
 
 
 In AngelScript an object handle is a reference counted pointer to an object. In the scripts 

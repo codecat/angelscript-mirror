@@ -12,6 +12,8 @@ data types, bool, int, float, etc, can have object handles. Object types
 registered by the application may or may not allow object handles, depending 
 on how they have been registered.
 
+\see \ref doc_obj_handle
+
 \section doc_script_handle_1 General usage
 
 An object handle is declared by appending the @ symbol to the data type.

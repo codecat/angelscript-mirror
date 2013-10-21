@@ -390,7 +390,7 @@ public:
 
 \section doc_addon_array_2 Public script interface
 
-\see \ref doc_datatypes_arrays_addon "Arrays in the script language"
+\see \ref doc_datatypes_arrays "Arrays in the script language"
 
 \section doc_addon_array_4 C++ example
 
@@ -738,7 +738,7 @@ Refer to the <code>std::string</code> implementation for your compiler.
 
 \section doc_addon_std_string_2 Public script interface
 
-\see \ref doc_datatypes_strings_addon "Strings in the script language"
+\see \ref doc_datatypes_strings "Strings in the script language"
 
 
 
@@ -833,22 +833,20 @@ public:
 \section doc_addon_dict_3 Script example
 
 <pre>
-  dictionary dict;
   obj object;
   obj \@handle;
+  dictionary dict = ({'one', 1}, {'object', object}, {'handle', \@handle}};
   
-  dict.set("one", 1);
-  dict.set("object", object);
-  dict.set("handle", \@handle);
-  
-  if( dict.exists("one") )
+  if( dict.exists('one') )
   {
-    bool found = dict.get("handle", \@handle);
+    bool found = dict.get('handle', \@handle);
     if( found )
     {
-      dict.delete("object");
+      dict.delete('object');
     }
   }
+  
+  dict.set('newvalue', 42);
   
   dict.deleteAll();
 </pre>

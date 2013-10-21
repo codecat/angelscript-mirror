@@ -79,6 +79,8 @@ The factory function must be registered as a global function, but can be
 implemented as a static class method, common global function, or a global
 function following the generic calling convention.
 
+See also \ref doc_reg_basicref_4.
+
 \section doc_reg_basicref_2 Addref and release behaviours
 
 \code
@@ -129,6 +131,51 @@ that can eventually store a reference to the object type. This can be done by
 \ref asIScriptModule::GetGlobalVarCount "enumerating the compiled global variables" after script has
 been built and giving an error to the user incase he includes a variable he shouldn't. 
 
+
+
+
+\section doc_reg_basicref_4 List factory function
+
+The list factory function is a special \ref doc_reg_basicref_1 "factory function" that 
+can be registered to allow a type to be created from an initialization list. The list factory
+function takes only a single pointer as argument. AngelScript will pass a pointer to the 
+initialization list buffer in that argument. The buffer will contain all the values necessary
+to create and initialize the object. 
+
+In order for the script engine to know what information must be placed in the buffer the
+application must provide the list pattern when registering the list factory. The list pattern
+is declared with a special syntax involving datatypes and the following tokens: {, }, ?, and repeat.
+
+The tokens { } are used to declare that the list pattern expects a list of values or a sublist of values. 
+The repeat token is used to signal that the next type or sub list can be repeated 0 or more times. Any
+data type can be used in the list pattern, as long as it can be passed by value. When a variable type
+is desired the token ? can be used.
+
+Here's a couple of examples for registering list factories with list patterns:
+
+\code
+// The array type can be initialized for example with: intarray a = {1,2,3};
+engine->RegisterObjectBehaviour("intarray", asBEHAVE_LIST_FACTORY, 
+  "intarray@ f(int &in) {repeat int}", ...);
+
+// The dictionary type can be initialized with: dictionary d = {{'a',1}, {'b',2}, {'c',3}};
+engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, 
+  "dictionary @f(int &in) {repeat {string, ?}}", ...);
+\endcode
+
+The list buffer passed to the factory function will be populated using the following rules:
+
+- Whenever the pattern expects a repeat, the buffer will contain a 32bit integer with the 
+  number of repeated values that will come afterwards
+- Whenever the pattern expects a ?, then the buffer will contain a 32bit integer representing 
+  the typeId of the value that comes after.
+- Whenever the pattern expects a reference type, the buffer will contain a pointer to the object
+- Whenever the pattern expects a value type, the buffer will contain the object itself
+- All values in the buffer will be aligned to a 32bit boundary, unless the size of the value placed
+  in the buffer is smaller than 32bits.
+
+\see \ref doc_addon_array and \ref doc_addon_dict for example implementations of list factories.
+  
 
 
 
@@ -217,6 +264,8 @@ the wrapper with AngelScript, which is sure to result in unexpected behaviours.
 Note that you may need to include the &lt;new&gt; header to declare the placement new operator that is used 
 to initialize a preallocated memory block.
 
+See also \ref doc_reg_val_3.
+
 
 
 
@@ -290,6 +339,21 @@ preferably with the \ref doc_addon_autowrap "auto wrappers".
 
 
 
+
+\section doc_reg_val_3 List constructor
+
+The list constructor is similar to \ref doc_reg_basicref_4 "the list factory function" for reference types. 
+The constructor will receive a pointer to the initialization list buffer in the exact same way, and the
+expected list pattern should be registered in the same way. The difference is that the list constructor 
+should be registered like a method, just as done for other \ref doc_reg_val_1 "constructors".
+
+Example registration of a list constructor:
+
+\code
+engine->RegisterObjectBehaviour("vector3", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) {float, float, float}", ...);
+\endcode
+
+\see \ref doc_addon_math "The complex math add-on" for an example value type with a list constructor.
 
 
 
