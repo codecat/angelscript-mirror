@@ -120,7 +120,7 @@ project settings when compiling the library.
 
 \section doc_finetuning_5 Turn off automatic garbage collection
 
-While garbage collection is important long running applications, it may be of interest to 
+While garbage collection is important in long running applications, it may be of interest to 
 turn off the automatic garbage collection and then run the garbage collector manually in a
 controlled manner. The garbage collector is incremental so you shouldn't see long stalls 
 while it is running, but it will consume CPU cycles that may be needed for other things.
