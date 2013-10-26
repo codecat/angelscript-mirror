@@ -79,10 +79,6 @@ struct sGlobalVariableDescription
 	asQWORD            constantValue;
 };
 
-// asCSymbolTable template specializations for sGlobalVariableDescription entries
-template<>
-void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const;
-
 struct sPropertyInitializer
 {
 	sPropertyInitializer() : declNode(0), initNode(0), file(0) {}

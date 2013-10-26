@@ -4295,7 +4295,7 @@ void asCBuilder::WriteError(const asCString &message, asCScriptCode *file, asCSc
 	if( node && file )
 		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
 
-	WriteError(file ? file->name : "", message, r, c);
+	WriteError(file ? file->name : asCString(""), message, r, c);
 }
 
 void asCBuilder::WriteError(const asCString &scriptname, const asCString &message, int r, int c)
