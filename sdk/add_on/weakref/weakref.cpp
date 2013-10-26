@@ -17,7 +17,7 @@ static CScriptWeakRef* ScriptWeakRefFactory2(asIObjectType *type, void *ref)
 {
 	CScriptWeakRef *wr = new CScriptWeakRef(ref, type);
 
-	// It's possible the constructor raised a script exception, in which case we 
+	// It's possible the constructor raised a script exception, in which case we
 	// need to free the memory and return null instead, else we get a memory leak.
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
@@ -36,7 +36,7 @@ static bool ScriptWeakRefTemplateCallback(asIObjectType *ot, bool &/*dontGarbage
 	// Weak references only work for reference types
 	if( subType == 0 ) return false;
 	if( !(subType->GetFlags() & asOBJ_REF) ) return false;
-	
+
 	// The subtype shouldn't be a handle
 	if( ot->GetSubTypeId() & asTYPEID_OBJHANDLE )
 		return false;
@@ -85,7 +85,7 @@ CScriptWeakRef::CScriptWeakRef(void *ref, asIObjectType *type)
 	assert( strcmp(type->GetName(), "weakref") == 0 );
 
 	// Get the shared flag that will tell us when the object has been destroyed
-	// This is threadsafe as we hold a strong reference to the object 
+	// This is threadsafe as we hold a strong reference to the object
 	m_weakRefFlag = m_type->GetEngine()->GetWeakRefFlagOfScriptObject(m_ref, m_type->GetSubType());
 	if( m_weakRefFlag )
 		m_weakRefFlag->AddRef();
@@ -108,7 +108,7 @@ void CScriptWeakRef::Release() const
 {
 	if( asAtomicDec(refCount) == 0 )
 	{
-		// When reaching 0 no more references to this instance 
+		// When reaching 0 no more references to this instance
 		// exists and the object should be destroyed
 		delete this;
 	}
@@ -165,7 +165,7 @@ void *CScriptWeakRef::Get() const
 	// If we hold a null handle, then just return null
 	if( m_ref == 0 || m_weakRefFlag == 0 )
 		return 0;
-	
+
 	// Lock on the shared bool, so we can be certain it won't be changed to true
 	// between the inspection of the flag and the increase of the ref count in the
 	// owning object.
@@ -245,7 +245,6 @@ static void ScriptWeakRefRelease_Generic(asIScriptGeneric *gen)
 
 void CScriptWeakRef_Get_Generic(asIScriptGeneric *gen)
 {
-	int typeId = gen->GetArgTypeId(0);
 	CScriptWeakRef *self = reinterpret_cast<CScriptWeakRef*>(gen->GetObject());
 	gen->SetReturnAddress(self->Get());
 }

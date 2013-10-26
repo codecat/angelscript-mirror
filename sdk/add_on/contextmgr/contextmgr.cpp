@@ -6,12 +6,12 @@
 using namespace std;
 
 // TODO: Should have a pool of free asIScriptContext so that new contexts
-//       won't be allocated every time. The application must not keep 
+//       won't be allocated every time. The application must not keep
 //       its own references, instead it must tell the context manager
 //       that it is using the context. Otherwise the context manager may
 //       think it can reuse the context too early.
 
-// TODO: Need to have a callback for when scripts finishes, so that the 
+// TODO: Need to have a callback for when scripts finishes, so that the
 //       application can receive return values.
 
 BEGIN_AS_NAMESPACE
@@ -30,7 +30,7 @@ static void ScriptSleep(asUINT milliSeconds)
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && g_ctxMgr )
 	{
-		// Suspend its execution. The VM will continue until the current 
+		// Suspend its execution. The VM will continue until the current
 		// statement is finished and then return from the Execute() method
 		ctx->Suspend();
 
@@ -48,7 +48,7 @@ static void ScriptYield()
 		// Let the context manager know that it should run the next co-routine
 		g_ctxMgr->NextCoRoutine();
 
-		// The current context must be suspended so that VM will return from 
+		// The current context must be suspended so that VM will return from
 		// the Execute() method where the context manager will continue.
 		ctx->Suspend();
 	}
@@ -60,11 +60,10 @@ void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && g_ctxMgr )
 	{
-		asIScriptEngine *engine = ctx->GetEngine();
 		asIScriptModule *mod = ctx->GetFunction()->GetModule();
 
 		// We need to find the function that will be created as the co-routine
-		string decl = "void " + func + "(any @)"; 
+		string decl = "void " + func + "(any @)";
 		asIScriptFunction *func = mod->GetFunctionByDecl(decl.c_str());
 		if( func == 0 )
 		{
@@ -123,13 +122,13 @@ CContextMgr::~CContextMgr()
 
 void CContextMgr::ExecuteScripts()
 {
-	g_ctxMgr = this; 
+	g_ctxMgr = this;
 
-	// TODO: Should have an optional time out for this function. If not all scripts executed before the 
+	// TODO: Should have an optional time out for this function. If not all scripts executed before the
 	//       time out, the next time the function is called the loop should continue
 	//       where it left off.
 
-	// TODO: There should be a time out per thread as well. If a thread executes for too 
+	// TODO: There should be a time out per thread as well. If a thread executes for too
 	//       long, it should be aborted. A group of co-routines count as a single thread.
 
 	// Check if the system time is higher than the time set for the contexts
@@ -212,7 +211,7 @@ void CContextMgr::NextCoRoutine()
 
 void CContextMgr::AbortAll()
 {
-	// Abort all contexts and release them. The script engine will make 
+	// Abort all contexts and release them. The script engine will make
 	// sure that all resources held by the scripts are properly released.
 
 	for( asUINT n = 0; n < m_threads.size(); n++ )
@@ -300,14 +299,14 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 		}
 	}
 
-	return coctx; 
+	return coctx;
 }
 
 void CContextMgr::SetSleeping(asIScriptContext *ctx, asUINT milliSeconds)
 {
     assert( m_getTimeFunc != 0 );
-    
-	// Find the context and update the timeStamp  
+
+	// Find the context and update the timeStamp
 	// for when the context is to be continued
 
 	// TODO: Start with the current thread
@@ -327,7 +326,7 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine)
 
     // Must set the get time callback function for this to work
     assert( m_getTimeFunc != 0 );
-    
+
     // Register the sleep function
     r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
 

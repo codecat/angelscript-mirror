@@ -2,23 +2,23 @@
    AngelCode Scripting Library
    Copyright (c) 2003-2013 Andreas Jonsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -47,6 +47,8 @@
 #include "as_scriptnode.h"
 #include "as_builder.h"
 #include "as_scriptcode.h"
+
+#include <cstdlib> // qsort
 
 BEGIN_AS_NAMESPACE
 
@@ -133,7 +135,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 #endif
 
 	// Register the builtin function for creating delegates
-	// This function returns a handle to the delegate, but since the type is not known at this time it is 
+	// This function returns a handle to the delegate, but since the type is not known at this time it is
 	// registered to return a void then the return type is changed manually to the builtin function type
 	// The name of the function is an invalid identifier so it cannot be invoked accidentally from the script
 #ifndef AS_MAX_PORTABILITY
@@ -180,7 +182,7 @@ void asCScriptFunction::MakeDelegate(asCScriptFunction *func, void *obj)
 	parameterTypes = func->parameterTypes;
 	returnType     = func->returnType;
 	inOutFlags     = func->inOutFlags;
-	
+
 	// The delegate doesn't own the parameters as it will only forward them to the real method
 	// so the exception handler must not clean up the parameters for the delegate
 	dontCleanUpOnException = true;
@@ -284,9 +286,9 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	this->engine           = engine;
 	this->scriptData       = 0;
 	funcType               = _funcType;
-	module                 = mod; 
-	objectType             = 0; 
-	name                   = ""; 
+	module                 = mod;
+	objectType             = 0;
+	name                   = "";
 	isReadOnly             = false;
 	isPrivate              = false;
 	isFinal                = false;
@@ -341,7 +343,7 @@ void asCScriptFunction::DeallocateScriptFunctionData()
 // internal
 asCScriptFunction::~asCScriptFunction()
 {
-	// Imported functions are not reference counted, nor are dummy 
+	// Imported functions are not reference counted, nor are dummy
 	// functions that are allocated on the stack
 	asASSERT( funcType == asFUNC_DUMMY    ||
 		      funcType == asFUNC_IMPORTED ||
@@ -416,7 +418,7 @@ int asCScriptFunction::Release() const
 	gcFlag = false;
 	asASSERT( funcType != asFUNC_IMPORTED );
 	int r = refCount.atomicDec();
-	if( r == 0 && 
+	if( r == 0 &&
 		funcType != asFUNC_FUNCDEF && // Funcdefs are treated as object types and will be deleted by ClearUnusedTypes()
 		funcType != asFUNC_DUMMY )    // Dummy functions are allocated on the stack and cannot be deleted
 		asDELETE(const_cast<asCScriptFunction*>(this),asCScriptFunction);
@@ -492,7 +494,7 @@ asIObjectType *asCScriptFunction::GetObjectType() const
 }
 
 // interface
-const char *asCScriptFunction::GetObjectName() const 
+const char *asCScriptFunction::GetObjectName() const
 {
 	if( objectType )
 		return objectType->GetName();
@@ -548,7 +550,7 @@ bool asCScriptFunction::DoesReturnOnStack() const
 		(returnType.GetObjectType()->flags & asOBJ_VALUE) &&
 		!returnType.IsReference() )
 		return true;
-		
+
 	return false;
 }
 
@@ -560,9 +562,9 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	// TODO: default arg: Make the declaration with the default args an option
 
 	// Don't add the return type for constructors and destructors
-	if( !(returnType.GetTokenType() == ttVoid && 
-		  objectType && 
-		  (name == objectType->name || (name.GetLength() > 0 && name[0] == '~') || 
+	if( !(returnType.GetTokenType() == ttVoid &&
+		  objectType &&
+		  (name == objectType->name || (name.GetLength() > 0 && name[0] == '~') ||
 		   name == "_beh_0_" || name == "_beh_2_")) )
 	{
 		str = returnType.Format();
@@ -572,7 +574,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	{
 		if( includeNamespace )
 			str += objectType->nameSpace->name + "::";
-			
+
 		if( objectType->name != "" )
 			str += objectType->name + "::";
 		else
@@ -749,7 +751,7 @@ int asCScriptFunction::GetLineNumber(int programPosition, int *sectionIdx)
 			if( scriptData->lineNumbers[i*2+2] > programPosition ) return scriptData->lineNumbers[i*2+1];
 
 			min = i + 1;
-			i = (max + min)/2; 
+			i = (max + min)/2;
 		}
 		else if( scriptData->lineNumbers[i*2] > programPosition )
 		{
@@ -831,7 +833,7 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 asCObjectType *asCScriptFunction::GetObjectTypeOfLocalVar(short varOffset)
 {
 	asASSERT( scriptData );
-	
+
 	for( asUINT n = 0; n < scriptData->objVariablePos.GetLength(); n++ )
 	{
 		if( scriptData->objVariablePos[n] == varOffset )
@@ -844,15 +846,15 @@ asCObjectType *asCScriptFunction::GetObjectTypeOfLocalVar(short varOffset)
 // internal
 void asCScriptFunction::ComputeSignatureId()
 {
-	// This function will compute the signatureId based on the 
-	// function name, return type, and parameter types. The object 
-	// type for methods is not used, so that class methods and  
+	// This function will compute the signatureId based on the
+	// function name, return type, and parameter types. The object
+	// type for methods is not used, so that class methods and
 	// interface methods match each other.
 	for( asUINT n = 0; n < engine->signatureIds.GetLength(); n++ )
 	{
 		if( !IsSignatureEqual(engine->signatureIds[n]) ) continue;
 
-		// We don't need to increment the reference counter here, because 
+		// We don't need to increment the reference counter here, because
 		// asCScriptEngine::FreeScriptFunctionId will maintain the signature
 		// id as the function is freed.
 		signatureId = engine->signatureIds[n]->signatureId;
@@ -867,7 +869,7 @@ void asCScriptFunction::ComputeSignatureId()
 bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 {
 	if( !IsSignatureExceptNameEqual(func) || name != func->name ) return false;
-	
+
 	return true;
 }
 
@@ -919,7 +921,7 @@ void asCScriptFunction::AddReferences()
 	asCArray<void*> ptrs;
 
 	// Only count references if there is any bytecode
-	if( scriptData && scriptData->byteCode.GetLength() ) 
+	if( scriptData && scriptData->byteCode.GetLength() )
 	{
 		if( returnType.IsObject() )
 			returnType.GetObjectType()->AddRef();
@@ -1052,7 +1054,7 @@ void asCScriptFunction::ReleaseReferences()
 			case asBC_RefCpyV:
 				{
 					asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&bc[n]);
-					if( objType ) 
+					if( objType )
 						objType->Release();
 				}
 				break;
@@ -1095,7 +1097,7 @@ void asCScriptFunction::ReleaseReferences()
 					if( !gvarPtr ) break;
 					asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
 					if( !prop ) break;
-				
+
 					// Only release the properties once
 					if( !ptrs.Exists(gvarPtr) )
 					{
@@ -1223,7 +1225,7 @@ const char *asCScriptFunction::GetScriptSectionName() const
 {
 	if( scriptData && scriptData->scriptSectionIdx >= 0 )
 		return engine->scriptSectionNames[scriptData->scriptSectionIdx]->AddressOf();
-	
+
 	return 0;
 }
 
@@ -1428,7 +1430,7 @@ void asCScriptFunction::EnumReferences(asIScriptEngine *)
 void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 {
 	// Release paramaters
-	if( scriptData && scriptData->byteCode.GetLength() ) 
+	if( scriptData && scriptData->byteCode.GetLength() )
 	{
 		if( returnType.IsObject() )
 		{
@@ -1510,7 +1512,7 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 				}
 				break;
 
-			// The global variables are not released here. It is enough that the global 
+			// The global variables are not released here. It is enough that the global
 			// variable itself release the function to break the circle
 			}
 		}

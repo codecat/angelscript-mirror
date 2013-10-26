@@ -72,6 +72,8 @@
 		<Unit filename="../../../../add_on/scriptstring/scriptstring.h" />
 		<Unit filename="../../../../add_on/serializer/serializer.cpp" />
 		<Unit filename="../../../../add_on/serializer/serializer.h" />
+		<Unit filename="../../../../add_on/weakref/weakref.cpp" />
+		<Unit filename="../../../../add_on/weakref/weakref.h" />
 		<Unit filename="../../../../angelscript/include/angelscript.h" />
 		<Unit filename="../../source/bstr.cpp" />
 		<Unit filename="../../source/bstr.h" />
@@ -92,6 +94,7 @@
 		<Unit filename="../../source/test_addon_scripthandle.cpp" />
 		<Unit filename="../../source/test_addon_scriptmath.cpp" />
 		<Unit filename="../../source/test_addon_serializer.cpp" />
+		<Unit filename="../../source/test_addon_weakref.cpp" />
 		<Unit filename="../../source/test_any.cpp" />
 		<Unit filename="../../source/test_argref.cpp" />
 		<Unit filename="../../source/test_array.cpp" />
