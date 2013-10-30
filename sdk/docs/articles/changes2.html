@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/10/20</h2>
+<h2>Version 2.28.0 WIP - 2013/10/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>FindNextLineWithCode() works properly for class constructors where class has non-primitive members too (Thanks Scott Bean)
 <li>GetTypeDeclaration now work correctly for registered template specializations (Thanks zexee)
 <li>Fixed crash with chained handle assignments (Thanks FDsagizi)
+<li>Fixed compiler errors with Borland (Thanks Viacheslav Polyakov)
 </ul>
 <li>Library
 <ul>
@@ -50,6 +51,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>FindNextLineWithCode() is able to find the first line with code from where the function has been declared
 <li>Added code to detect and warn instead of crashing if application attempts to resurrect script object during its destruction (Thanks Tuukka Pensala)
 <li>The function declaration for constructors and destructors now show the object type name instead of _beh_x_ (Thanks Jason Goepel)
+<li>Added support for atomics and posix threads with Android NDK 9+ (Thanks Jordi Oliveras Rovira)
 </ul>
 <li>Library interface
 <ul>

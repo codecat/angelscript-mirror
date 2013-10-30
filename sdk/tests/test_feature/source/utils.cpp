@@ -242,7 +242,7 @@ int GetNumAllocs()
 
 int GetAllocedMem()
 {
-	return currentMemAlloc;
+	return int(currentMemAlloc);
 }
 
 

@@ -871,7 +871,9 @@
 	// Android
 	#elif defined(ANDROID) || defined(__ANDROID__)
 		#define AS_ANDROID
-		#define AS_NO_ATOMIC
+
+		// Android NDK 9+ supports posix threads
+		#define AS_POSIX_THREADS
 
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY

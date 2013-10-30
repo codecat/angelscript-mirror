@@ -35,10 +35,10 @@ struct CArrayType : public CUserType
 	void Restore(CSerializedValue *val, void *ptr)
 	{
 		CScriptArray *arr = (CScriptArray*)ptr;
-		arr->Resize(val->m_children.size());
+		arr->Resize(asUINT(val->m_children.size()));
 
-		for( size_t i = 0; i < val->m_children.size(); ++i )	
-			val->m_children[i]->Restore(arr->At(i), arr->GetElementTypeId());
+		for( size_t i = 0; i < val->m_children.size(); ++i )
+			val->m_children[i]->Restore(arr->At(asUINT(i)), arr->GetElementTypeId());
 	}
 };
 
