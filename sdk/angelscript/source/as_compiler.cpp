@@ -6001,6 +6001,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 	// Check if it is possible to choose a best match
 	asSExprContext arg(engine);
 	arg.type = ctx->type;
+	arg.exprNode = ctx->exprNode; // Use the same node for compiler messages
 	asCArray<asSExprContext*> args;
 	args.PushLast(&arg);
 	asUINT cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, 0, 0, objType, false, true, false);

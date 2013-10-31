@@ -3,7 +3,9 @@
 \page doc_hello_world Your first script
 
 This tutorial will show you the basics on how to configure the engine, compile a script, and then
-execute it.
+execute it. The code in this article is not complete, it only contains the relevant parts to explain 
+the basic structure for using the script library. For complete source codes see the \ref doc_samples "samples"
+that come with the SDK.
 
 In this tutorial a couple of add-ons are used to make the code easier. You are not required to use
 these in your own application, but they will most likely let you get your project up and running 
@@ -152,7 +154,7 @@ void print(string &msg)
 }
 \endcode
 
-\see \ref doc_compile_script_msg, \ref doc_addon_build, and \ref doc_addon_std_string
+\see \ref doc_compile_script_msg, \ref doc_addon_build, \ref doc_addon_std_string, \ref doc_samples
 
 
 */

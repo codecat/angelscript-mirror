@@ -235,6 +235,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test warning in implicit constructor call
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterObjectType("vec2i", 4, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectBehaviour("vec2i", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("vec2i", asBEHAVE_CONSTRUCT, "void f(int,int)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("vec2i", "vec2i opSub(const vec2i &in) const", asFUNCTION(0), asCALL_GENERIC);
+		
+		bout.buffer = "";
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"vec2i f(){ \n"
+			"    double f = 3.14; \n"
+			"    return vec2i(1,2) - f; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		if( bout.buffer != "Test (1, 1) : Info    : Compiling vec2i f()\n"
+						   "Test (3, 25) : Warning : Float value truncated in implicit conversion to integer\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test chained assigned with handles
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
