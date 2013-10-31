@@ -1210,6 +1210,9 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 
 	asCBuilder bld(this, mod);
 
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+
 	asCScriptFunction func(this, mod, asFUNC_DUMMY);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 	if( r < 0 )
@@ -1237,6 +1240,9 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl, asCModule *mod)
 {
 	asCBuilder bld(this, mod);
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
 
 	asCScriptFunction func(this, mod, asFUNC_DUMMY);
 
@@ -2534,6 +2540,9 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 	// This const cast is OK. The builder won't modify the engine
 	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
 
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+
 	asCString name;
 	asSNameSpace *ns;
 	asCDataType dt;
@@ -2828,6 +2837,9 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByIndex(asUINT index) const
 asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) const
 {
 	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
 
 	asCScriptFunction func(const_cast<asCScriptEngine*>(this), 0, asFUNC_DUMMY);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
@@ -4304,6 +4316,10 @@ int asCScriptEngine::GetTypeIdByDecl(const char *decl) const
 	asCDataType dt;
 	// This cast is ok, because we are not changing anything in the engine
 	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+	
 	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
 	if( r < 0 )
 		return asINVALID_TYPE;

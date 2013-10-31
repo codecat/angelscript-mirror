@@ -493,6 +493,9 @@ int asCModule::GetImportedFunctionIndexByDecl(const char *decl) const
 {
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
 
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+
 	asCScriptFunction func(engine, const_cast<asCModule*>(this), asFUNC_DUMMY);
 	bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
 
@@ -540,6 +543,9 @@ asUINT asCModule::GetFunctionCount() const
 asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 {
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
 
 	asCScriptFunction func(engine, const_cast<asCModule*>(this), asFUNC_DUMMY);
 	int r = bld.ParseFunctionDeclaration(0, decl, &func, false, 0, 0, defaultNamespace);
@@ -621,6 +627,9 @@ int asCModule::RemoveGlobalVar(asUINT index)
 int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 {
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
 
 	asCString name;
 	asSNameSpace *nameSpace;
@@ -719,7 +728,13 @@ asIObjectType *asCModule::GetObjectTypeByName(const char *name) const
 int asCModule::GetTypeIdByDecl(const char *decl) const
 {
 	asCDataType dt;
+
+	// This const cast is safe since we know the engine won't be modified
 	asCBuilder bld(engine, const_cast<asCModule*>(this));
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+
 	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
 	if( r < 0 )
 		return asINVALID_TYPE;

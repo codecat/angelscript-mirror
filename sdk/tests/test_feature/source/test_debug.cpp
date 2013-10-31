@@ -212,6 +212,32 @@ bool Test()
 {
 	bool fail = Test2();
 
+	// GetTypeByDeclaration shouldn't write message on incorrect declaration
+	// http://www.gamedev.net/topic/649322-getting-rid-of-angelscript-prints/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		asIObjectType *t = engine->GetObjectTypeByName("wrong decl");
+		if( t != 0 ) TEST_FAILED;
+		int i = engine->GetTypeIdByDecl("wrong decl");
+		if( i >= 0 ) TEST_FAILED;
+		asIScriptFunction *func = engine->GetGlobalFunctionByDecl("wrong decl");
+		if( func != 0 ) TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test FindNextLineWithCode
 	// Reported by Scott Bean
 	{

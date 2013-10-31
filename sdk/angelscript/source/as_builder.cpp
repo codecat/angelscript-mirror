@@ -85,6 +85,7 @@ asCBuilder::asCBuilder(asCScriptEngine *engine, asCModule *module)
 {
 	this->engine = engine;
 	this->module = module;
+	silent = false;
 }
 
 asCBuilder::~asCBuilder()
@@ -4276,7 +4277,9 @@ void asCBuilder::WriteInfo(const asCString &scriptname, const asCString &message
 	else
 	{
 		preMessage.isSet = false;
-		engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_INFORMATION, message.AddressOf());
+
+		if( !silent )
+			engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_INFORMATION, message.AddressOf());
 	}
 }
 
@@ -4306,7 +4309,8 @@ void asCBuilder::WriteError(const asCString &scriptname, const asCString &messag
 	if( preMessage.isSet )
 		WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
 
-	engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_ERROR, message.AddressOf());
+	if( !silent )
+		engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_ERROR, message.AddressOf());
 }
 
 void asCBuilder::WriteWarning(const asCString &scriptname, const asCString &message, int r, int c)
@@ -4319,7 +4323,8 @@ void asCBuilder::WriteWarning(const asCString &scriptname, const asCString &mess
 		if( preMessage.isSet )
 			WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
 
-		engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_WARNING, message.AddressOf());
+		if( !silent )
+			engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_WARNING, message.AddressOf());
 	}
 }
 

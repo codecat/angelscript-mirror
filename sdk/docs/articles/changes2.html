@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.0 WIP - 2013/10/30</h2>
+<h2>Version 2.28.0 WIP - 2013/10/31</h2>
 
 <ul>
 <li>Bug fixes
@@ -52,6 +52,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added code to detect and warn instead of crashing if application attempts to resurrect script object during its destruction (Thanks Tuukka Pensala)
 <li>The function declaration for constructors and destructors now show the object type name instead of _beh_x_ (Thanks Jason Goepel)
 <li>Added support for atomics and posix threads with Android 2.3+ (Thanks Jordi Oliveras Rovira)
+<li>The engine no longer writes parser errors to message callback in the GetByDecl methods (Thanks kaveldun)
 </ul>
 <li>Library interface
 <ul>

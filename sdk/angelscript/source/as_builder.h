@@ -151,6 +151,7 @@ protected:
 	friend class asCModule;
 	friend class asCParser;
 	friend class asCScriptFunction;
+	friend class asCScriptEngine;
 
 	void               Reset();
 
@@ -192,6 +193,7 @@ protected:
 
 	int numErrors;
 	int numWarnings;
+	bool silent;
 
 	asCScriptEngine *engine;
 	asCModule       *module;
