@@ -235,6 +235,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test compiler error with explicit type cast
+	// http://www.gamedev.net/topic/649644-assert-when-casting-void-return-value-to-an-object-handle/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		
+		bout.buffer = "";
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"void main() { \n"
+			"	ParticleEmitter@ em = cast<ParticleEmitter>(CreateComponent('ParticleEmitter')); \n"
+			"} \n"
+			"class ParticleEmitter {} \n"
+			"void CreateComponent(const string&in componentName) {} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		
+		if( bout.buffer != "Test (1, 1) : Info    : Compiling void main()\n"
+						   "Test (2, 24) : Error   : No conversion from 'void' to 'ParticleEmitter@' available.\n"
+						   "Test (2, 24) : Error   : Can't implicitly convert from 'const int' to 'ParticleEmitter@&'.\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test warning in implicit constructor call
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -8298,7 +8298,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	// here we'll only treat those conversions that require an explicit cast.
 
 	bool conversionOK = false;
-	if( !expr.type.isConstant )
+	if( !expr.type.isConstant && expr.type.dataType != asCDataType::CreatePrimitive(ttVoid, false) )
 	{
 		if( !expr.type.dataType.IsObject() )
 			ConvertToTempVariable(&expr);
