@@ -29,6 +29,35 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Register circular reference between types
+	// http://www.gamedev.net/topic/649718-validatenousage/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		// Enums
+		engine->RegisterEnum("SortType");
+		engine->RegisterEnumValue("SortType", "cAsc", 0);
+
+		// Types
+		engine->RegisterObjectType("String", 1, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectType("Array<T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT);
+		engine->RegisterObjectType("Matrix", 0, asOBJ_REF | asOBJ_NOCOUNT);
+
+		// Type members
+		engine->RegisterObjectMethod("Array<T>", "void Sort(SortType = SortType :: cAsc)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Array<T>", "String TraceString() const", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Matrix", "Array<Array<double>>@ ToArray() const", asFUNCTION(0), asCALL_GENERIC);
+
+		engine->Release();
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test calling RegisterObjectMethod with incorrect object name
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -195,11 +195,15 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 		if( func->funcType == asFUNC_FUNCDEF )
 			continue;
 
+		// Ignore functions whose object type has already reached refCount 0 as they are to be removed
+		if( func->objectType && func->objectType->GetRefCount() == 0 )
+			continue;
+
 		if( func->returnType.GetObjectType() == type )
 		{
 			asCString msg;
 			// We can only use the function name here, because the types used by the function may have been deleted already
-			msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetName());
+			msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetDeclaration());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 		}
 		else
@@ -210,7 +214,7 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 				{
 					asCString msg;
 					// We can only use the function name here, because the types used by the function may have been deleted already
-					msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetName());
+					msg.Format(TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s, type->name.AddressOf(), func->GetDeclaration());
 					engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 					break;
 				}
