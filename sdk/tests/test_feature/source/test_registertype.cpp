@@ -29,11 +29,35 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Test registering opAssign twice
+	// http://www.gamedev.net/topic/649718-validatenousage/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("Test", "Test &opAssign(const Test &in)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("Test", "Test &opAssign(const Test &)", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		engine->Release();
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'Test' and 'Test &opAssign(const Test &)' (Code: -13)\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Register circular reference between types
 	// http://www.gamedev.net/topic/649718-validatenousage/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		// Enums
 		engine->RegisterEnum("SortType");

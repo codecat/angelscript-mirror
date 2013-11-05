@@ -2707,6 +2707,9 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 && func->isReadOnly == false &&
 		(objectType->flags & asOBJ_SCRIPT_OBJECT || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false))) )
 	{
+		if( func->objectType->beh.copy != 0 )
+			return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+
 		func->objectType->beh.copy = func->id;
 		func->AddRef();
 	}
