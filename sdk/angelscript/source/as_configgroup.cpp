@@ -143,6 +143,8 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 	}
 	funcDefs.SetLength(0);
 
+	engine->ClearUnusedTypes();
+
 	// Remove object types (skip this if it is possible other groups are still using the types)
 	if( !notUsed )
 	{
@@ -188,7 +190,7 @@ void asCConfigGroup::ValidateNoUsage(asCScriptEngine *engine, asCObjectType *typ
 		if( func == 0 ) continue;
 
 		// Ignore factory, list factory, and members
-		if( func->name == "_beh_2_" || func->name == "_beh_3_" || func->objectType == type )
+		if( func->name == "_beh_3_" || func->name == "_beh_4_" || func->objectType == type )
 			continue;
 
 		// Ignore function definitions too, as they aren't released until the engine is destroyed
