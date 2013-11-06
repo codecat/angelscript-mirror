@@ -99,7 +99,9 @@ enum asEEngineProp
 	asEP_DISALLOW_GLOBAL_VARS               = 17,
 	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
 	asEP_COMPILER_WARNINGS                  = 19,
-	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20
+	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
+
+	asEP_LAST_PROPERTY
 };
 
 // Calling conventions
