@@ -19,6 +19,24 @@ int *CreateWidget()
 	return &g_widget;
 }
 
+// Use asSFuncPtr in structure initialized with a list
+// http://www.gamedev.net/topic/649653-angelscript-2280-is-out/
+typedef struct asBehavior_s
+{
+	asEBehaviours behavior;
+	const char * declaration;
+	asSFuncPtr funcPointer;
+	asECallConvTypes callConv;
+} asBehavior_t;
+
+static const asBehavior_t astrace_ObjectBehaviors[] =
+{
+	{ asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(DummyFunc), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_CONSTRUCT, "void f(const cTrace &in)", asFUNCTION(DummyFunc), asCALL_CDECL_OBJLAST },
+
+	{ } // this was failing due to missing default constr in asSFuncPtr
+};
+
 bool Test()
 {
 	bool fail = TestHelper();

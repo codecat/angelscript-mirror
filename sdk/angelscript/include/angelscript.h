@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22800
-#define ANGELSCRIPT_VERSION_STRING "2.28.0"
+#define ANGELSCRIPT_VERSION        22801
+#define ANGELSCRIPT_VERSION_STRING "2.28.1 WIP"
 
 // Data types
 
@@ -401,7 +401,7 @@ typedef void (asCUnknownClass::*asMETHOD_t)();
 
 struct asSFuncPtr
 {
-	asSFuncPtr(asBYTE f)
+	asSFuncPtr(asBYTE f = 0)
 	{
 		for( size_t n = 0; n < sizeof(ptr.dummy); n++ )
 			ptr.dummy[n] = 0;
