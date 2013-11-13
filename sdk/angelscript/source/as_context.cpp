@@ -310,7 +310,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_d, "Prepare", asCONTEXT_ACTIVE);
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", func->GetDeclaration(true, true), asCONTEXT_ACTIVE);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_ACTIVE;
 	}
@@ -337,6 +337,15 @@ int asCContext::Prepare(asIScriptFunction *func)
 	else
 	{
 		asASSERT( m_engine );
+
+		// Make sure the function is from the same engine as the context to avoid mixups
+		if( m_engine != func->GetEngine() )
+		{
+			asCString str;
+			str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", func->GetDeclaration(true, true), asINVALID_ARG);
+			m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			return asINVALID_ARG;
+		}
 
 		if( m_initialFunction )
 		{

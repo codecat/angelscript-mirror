@@ -53,11 +53,9 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	ctx = asGetActiveContext();
 	if( ctx )
 	{
-		r = ctx->PushState();
-
 		// It may not always be possible to reuse the current context, 
 		// in which case we'll have to create a new one any way.
-		if( r == asSUCCESS )
+		if( ctx->GetEngine() == objType->GetEngine() && ctx->PushState() == asSUCCESS )
 			isNested = true;
 		else
 			ctx = 0;
@@ -481,8 +479,7 @@ void asCScriptObject::CallDestructor()
 				ctx = asGetActiveContext();
 				if( ctx )
 				{
-					int r = ctx->PushState();
-					if( r == asSUCCESS )
+					if( ctx->GetEngine() == objType->GetEngine() && ctx->PushState() == asSUCCESS )
 						isNested = true;
 					else
 						ctx = 0;
@@ -693,8 +690,7 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 			ctx = asGetActiveContext();
 			if( ctx )
 			{
-				r = ctx->PushState();
-				if( r == asSUCCESS )
+				if( ctx->GetEngine() == engine && ctx->PushState() == asSUCCESS )
 					isNested = true;
 				else
 					ctx = 0;

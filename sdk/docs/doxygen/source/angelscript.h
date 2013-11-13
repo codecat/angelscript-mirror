@@ -2299,6 +2299,9 @@ public:
 	//! \param[in] func The id of the function/method that will be executed.
 	//! \return A negative value on error.
 	//! \retval asCONTEXT_ACTIVE The context is still active or suspended.
+	//! \retval asNO_FUNCTION The function pointer is null.
+	//! \retval asINVALID_ARG The function is from a different engine than the context.
+	//! \retval asOUT_OF_MEMORY The context ran out of memory while allocating call stack.
 	//!
 	//! This method prepares the context for executeion of a script function. It allocates
 	//! the stack space required and reserves space for return value and parameters. The
