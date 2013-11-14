@@ -564,39 +564,40 @@ asCScriptEngine::~asCScriptEngine()
 	GarbageCollect();
 
 	// Delete the functions for template types that may references object types
-	for( n = 0; n < templateTypes.GetLength(); n++ )
+	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
-		if( templateTypes[n] )
+		if( templateInstanceTypes[n] )
 		{
 			asUINT f;
+			asCObjectType *templateType = templateInstanceTypes[n];
 
 			// Delete the factory stubs first
-			for( f = 0; f < templateTypes[n]->beh.factories.GetLength(); f++ )
-				scriptFunctions[templateTypes[n]->beh.factories[f]]->Release();
-			templateTypes[n]->beh.factories.Allocate(0, false);
+			for( f = 0; f < templateType->beh.factories.GetLength(); f++ )
+				scriptFunctions[templateType->beh.factories[f]]->Release();
+			templateType->beh.factories.Allocate(0, false);
 
 			// The list factory is not stored in the list with the rest of the factories
-			if( templateTypes[n]->beh.listFactory )
+			if( templateType->beh.listFactory )
 			{
-				scriptFunctions[templateTypes[n]->beh.listFactory]->Release();
-				templateTypes[n]->beh.listFactory = 0;
+				scriptFunctions[templateType->beh.listFactory]->Release();
+				templateType->beh.listFactory = 0;
 			}
 
 			// Delete the specialized functions
-			for( f = 1; f < templateTypes[n]->beh.operators.GetLength(); f += 2 )
+			for( f = 1; f < templateType->beh.operators.GetLength(); f += 2 )
 			{
-				if( scriptFunctions[templateTypes[n]->beh.operators[f]]->objectType == templateTypes[n] )
+				if( scriptFunctions[templateType->beh.operators[f]]->objectType == templateType )
 				{
-					scriptFunctions[templateTypes[n]->beh.operators[f]]->Release();
-					templateTypes[n]->beh.operators[f] = 0;
+					scriptFunctions[templateType->beh.operators[f]]->Release();
+					templateType->beh.operators[f] = 0;
 				}
 			}
-			for( f = 0; f < templateTypes[n]->methods.GetLength(); f++ )
+			for( f = 0; f < templateType->methods.GetLength(); f++ )
 			{
-				if( scriptFunctions[templateTypes[n]->methods[f]]->objectType == templateTypes[n] )
+				if( scriptFunctions[templateType->methods[f]]->objectType == templateType )
 				{
-					scriptFunctions[templateTypes[n]->methods[f]]->Release();
-					templateTypes[n]->methods[f] = 0;
+					scriptFunctions[templateType->methods[f]]->Release();
+					templateType->methods[f] = 0;
 				}
 			}
 		}
@@ -674,16 +675,16 @@ asCScriptEngine::~asCScriptEngine()
 	registeredGlobalProps.Clear();
 	FreeUnusedGlobalProperties();
 
-	for( n = 0; n < templateTypes.GetLength(); n++ )
+	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
-		if( templateTypes[n] )
+		if( templateInstanceTypes[n] )
 		{
 			// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
-			templateTypes[n]->templateSubTypes.SetLength(0);
-			asDELETE(templateTypes[n],asCObjectType);
+			templateInstanceTypes[n]->templateSubTypes.SetLength(0);
+			asDELETE(templateInstanceTypes[n],asCObjectType);
 		}
 	}
-	templateTypes.SetLength(0);
+	templateInstanceTypes.SetLength(0);
 
 	for( n = 0; n < objectTypes.GetLength(); n++ )
 	{
@@ -1660,11 +1661,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return asALREADY_REGISTERED;
 		}
 
-		for( n = 0; n < templateTypes.GetLength(); n++ )
+		for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 		{
-			if( templateTypes[n] &&
-				templateTypes[n]->name == typeName &&
-				templateTypes[n]->nameSpace == defaultNamespace )
+			if( templateInstanceTypes[n] &&
+				templateInstanceTypes[n]->name == typeName &&
+				templateInstanceTypes[n]->nameSpace == defaultNamespace )
 				// This is not an irrepairable error, as it may just be that the same type is registered twice
 				return asALREADY_REGISTERED;
 		}
@@ -1760,7 +1761,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			type->flags      = flags;
 			type->accessMask = defaultAccessMask;
 
-			templateTypes.PushLast(type);
+			templateInstanceTypes.PushLast(type);
 
 			currentGroup->objTypes.PushLast(type);
 
@@ -3216,14 +3217,14 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 
 	// Start searching from the end of the list, as most of
 	// the time it will be the last two types
-	for( n = (int)templateTypes.GetLength()-1; n >= 0; n-- )
+	for( n = (int)templateInstanceTypes.GetLength()-1; n >= 0; n-- )
 	{
-		if( templateTypes[n] == t )
+		if( templateInstanceTypes[n] == t )
 		{
-			if( n == (signed)templateTypes.GetLength()-1 )
-				templateTypes.PopLast();
+			if( n == (signed)templateInstanceTypes.GetLength()-1 )
+				templateInstanceTypes.PopLast();
 			else
-				templateTypes[n] = templateTypes.PopLast();
+				templateInstanceTypes[n] = templateInstanceTypes.PopLast();
 		}
 	}
 
@@ -3244,28 +3245,30 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 // internal
 void asCScriptEngine::OrphanTemplateInstances(asCObjectType *subType)
 {
-	for( asUINT n = 0; n < templateTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
-		if( templateTypes[n] == 0 )
+		asCObjectType *type = templateInstanceTypes[n];
+		
+		if( type == 0 )
 			continue;
-
+		
 		// If the template type isn't owned by any module it can't be orphaned
-		if( templateTypes[n]->module == 0 )
+		if( type->module == 0 )
 			continue;
 
-		for( asUINT subTypeIdx = 0; subTypeIdx < templateTypes[n]->templateSubTypes.GetLength(); subTypeIdx++ )
+		for( asUINT subTypeIdx = 0; subTypeIdx < type->templateSubTypes.GetLength(); subTypeIdx++ )
 		{
-			if( templateTypes[n]->templateSubTypes[subTypeIdx].GetObjectType() == subType )
+			if( type->templateSubTypes[subTypeIdx].GetObjectType() == subType )
 			{
 				// Tell the GC that the template type exists so it can resolve potential circular references
-				gc.AddScriptObjectToGC(templateTypes[n], &objectTypeBehaviours);
+				gc.AddScriptObjectToGC(type, &objectTypeBehaviours);
 
 				// Clear the module
-				templateTypes[n]->module = 0;
-				templateTypes[n]->Release();
+				type->module = 0;
+				type->Release();
 
 				// Do a recursive check for other template instances
-				OrphanTemplateInstances(templateTypes[n]);
+				OrphanTemplateInstances(type);
 
 				// Break out so we don't add the same template to
 				// the gc again if another subtype matches this one
@@ -3281,12 +3284,12 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	asUINT n;
 
 	// Is there any template instance type or template specialization already with this subtype?
-	for( n = 0; n < templateTypes.GetLength(); n++ )
+	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
-		if( templateTypes[n] &&
-			templateTypes[n]->name == templateType->name &&
-			templateTypes[n]->templateSubTypes == subTypes )
-			return templateTypes[n];
+		if( templateInstanceTypes[n] &&
+			templateInstanceTypes[n]->name == templateType->name &&
+			templateInstanceTypes[n]->templateSubTypes == subTypes )
+			return templateInstanceTypes[n];
 	}
 
 	// No previous template instance exists
@@ -3466,10 +3469,10 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		if( ot->templateSubTypes[n].GetObjectType() )
 			ot->templateSubTypes[n].GetObjectType()->AddRef();
 
-	templateTypes.PushLast(ot);
+	templateInstanceTypes.PushLast(ot);
 
 	// Store the template instance types that have been created automatically by the engine from a template type
-	// The object types in templateTypes that are not also in generatedTemplateTypes are registered template specializations
+	// The object types in templateInstanceTypes that are not also in generatedTemplateTypes are registered template specializations
 	generatedTemplateTypes.PushLast(ot);
 
 	return ot;
@@ -5303,13 +5306,13 @@ asIScriptFunction *asCScriptEngine::GetFuncDefFromTypeId(int typeId) const
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const
 {
-	// TODO: optimize (2.28.1): Improve linear search
-	//                 Only look in the list of template types (original, not template instances)
-	for( unsigned int n = 0; n < objectTypes.GetLength(); n++ )
+	// TODO: optimize (2.28.1): Reduce search set. Only look in the list of template types (not instance types)
+	for( unsigned int n = 0; n < registeredObjTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && objectTypes[n]->name == name )
+		asCObjectType *type = registeredObjTypes[n];
+		if( type && type->name == name )
 		{
-			return objectTypes[n]->flags & asOBJ_TEMPLATE ? true : false;
+			return type->flags & asOBJ_TEMPLATE ? true : false;
 		}
 	}
 

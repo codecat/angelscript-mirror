@@ -344,7 +344,7 @@ public:
 	// Store information about template types
 	// This list will contain all instances of templates, both registered specialized 
 	// types and those automacially instanciated from scripts
-	asCArray<asCObjectType *>      templateTypes;
+	asCArray<asCObjectType *>      templateInstanceTypes;
 
 	// Store information about list patterns
 	asCArray<asCObjectType *>      listPatternTypes;
