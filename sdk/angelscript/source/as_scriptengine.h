@@ -332,7 +332,7 @@ public:
 	asCArray<asCObjectType *>          registeredTypeDefs;
 	asCArray<asCObjectType *>          registeredEnums;
 	asCSymbolTable<asCGlobalProperty>  registeredGlobalProps;
-	asCArray<asCScriptFunction *>      registeredGlobalFuncs;
+	asCArray<asCScriptFunction *>      registeredGlobalFuncs; // TODO: optimize (2.28.1): Change this to symbol table
 	asCArray<asCScriptFunction *>      registeredFuncDefs;
 	asCScriptFunction                 *stringFactory;
 	bool configFailed;

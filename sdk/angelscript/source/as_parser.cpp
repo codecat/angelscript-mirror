@@ -865,6 +865,7 @@ bool asCParser::IsDataType(const sToken &token)
 {
 	if( token.type == ttIdentifier )
 	{
+#ifndef AS_NO_COMPILER
 		if( checkValidTypes )
 		{
 			// Check if this is an existing type, regardless of namespace
@@ -872,6 +873,7 @@ bool asCParser::IsDataType(const sToken &token)
 			if( !builder->DoesTypeExist(tempString.AddressOf()) )
 				return false;
 		}
+#endif
 		return true;
 	}
 

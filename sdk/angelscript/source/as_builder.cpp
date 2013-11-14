@@ -863,6 +863,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	return asSUCCESS;
 }
 
+#ifndef AS_NO_COMPILER
 asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *prop)
 {
 	asASSERT(obj.GetObjectType() != 0);
@@ -882,6 +883,7 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 
 	return 0;
 }
+#endif
 
 asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace *ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp)
 {
@@ -4159,7 +4161,6 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 
 	return 0;
 }
-#endif
 
 asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 {
@@ -4189,7 +4190,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 
-	// TODO: optimize: Linear search. The registered global functions should be stored in a symbol table too
+	// TODO: optimize (2.28.1): Linear search. The registered global functions should be stored in a symbol table too
 	for( n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
 	{
 		asCScriptFunction *f = engine->registeredGlobalFuncs[n];
@@ -4262,6 +4263,7 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		}
 	}
 }
+#endif
 
 void asCBuilder::WriteInfo(const asCString &scriptname, const asCString &message, int r, int c, bool pre)
 {
@@ -4700,13 +4702,19 @@ asCObjectType *asCBuilder::GetObjectType(const char *type, asSNameSpace *ns)
 	return ot;
 }
 
+#ifndef AS_NO_COMPILER
 // This function will return true if there are any types in the engine or module
 // with the given name. The namespace is ignored in this verification.
 bool asCBuilder::DoesTypeExist(const asCString &type)
 {
 	asUINT n;
 
-	// TODO: optimize: Improve linear searches
+	// TODO: optimize (2.28.1): Improve linear searches
+	//                 This function is only used when parsing expressions for building bytecode,
+	//                 and this is only done after all types are known. So the builder should 
+	//                 build a map of all known types the first time it enters this code, and then
+	//                 just do a lookup into that map. By doing it this way, the cache will only
+	//                 be kept in memory while compiling scripts, yet still gain the performance.
 
 	// Check if it is a registered type
 	for( n = 0; n < engine->objectTypes.GetLength(); n++ )
@@ -4733,13 +4741,14 @@ bool asCBuilder::DoesTypeExist(const asCString &type)
 			if( module->typeDefs[n]->name == type )
 				return true;
 
-		for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
+		for( n = 0; n < module->funcDefs.GetLength(); n++ )
 			if( module->funcDefs[n]->name == type )
 				return true;
 	}
 
 	return false;
 }
+#endif
 
 asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType)
 {

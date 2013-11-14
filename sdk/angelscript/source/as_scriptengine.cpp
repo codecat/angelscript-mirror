@@ -2849,7 +2849,7 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 	if( r < 0 )
 		return 0;
 
-	// TODO: optimize: Improve linear search
+	// TODO: optimize (2.28.1): Improve linear search. registeredGlobalFuncs should be a symbol table
 	// Search registered functions for matching interface
 	int id = -1;
 	for( size_t n = 0; n < registeredGlobalFuncs.GetLength(); ++n )
@@ -5303,7 +5303,8 @@ asIScriptFunction *asCScriptEngine::GetFuncDefFromTypeId(int typeId) const
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const
 {
-	// TODO: optimize: Improve linear search
+	// TODO: optimize (2.28.1): Improve linear search
+	//                 Only look in the list of template types (original, not template instances)
 	for( unsigned int n = 0; n < objectTypes.GetLength(); n++ )
 	{
 		if( objectTypes[n] && objectTypes[n]->name == name )
