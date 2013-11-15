@@ -263,7 +263,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const char *type, asSNameSpace *ns) const;
+	asCObjectType *GetObjectType(const asCString &name, asSNameSpace *ns) const;
 
 	asCObjectType *GetListPatternType(int listPatternFuncId);
 	void DestroyList(asBYTE *buffer, const asCObjectType *listPatternType);
@@ -338,8 +338,9 @@ public:
 	asCScriptFunction                 *stringFactory;
 	bool configFailed;
 
-	// Stores all known object types, both application registered, and script declared
-	asCArray<asCObjectType *>      objectTypes;
+	// Stores all registered types (except funcdefs)
+	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
+	asCArray<asCObjectType *>      allRegisteredTypes;
 	asCArray<asCObjectType *>      templateSubTypes;
 
 	// Store information about template types

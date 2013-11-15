@@ -151,14 +151,14 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 		for( n = 0; n < objTypes.GetLength(); n++ )
 		{
 			asCObjectType *t = objTypes[n];
-			int idx = engine->objectTypes.IndexOf(t);
+			int idx = engine->allRegisteredTypes.IndexOf(t);
 			if( idx >= 0 )
 			{
 #ifdef AS_DEBUG
 				ValidateNoUsage(engine, t);
 #endif
 
-				engine->objectTypes.RemoveIndex(idx);
+				engine->allRegisteredTypes.RemoveIndex(idx);
 				if( engine->defaultArrayObjectType == t )
 					engine->defaultArrayObjectType = 0;
 

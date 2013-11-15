@@ -1174,6 +1174,7 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScriptCode *code, asSNameSpace *ns)
 {
 	// Check against registered object types
+	// TODO: Must check against registered funcdefs too
 	if( engine->GetObjectType(name, ns) != 0 )
 	{
 		if( code )
@@ -4717,9 +4718,9 @@ bool asCBuilder::DoesTypeExist(const asCString &type)
 	//                 be kept in memory while compiling scripts, yet still gain the performance.
 
 	// Check if it is a registered type
-	for( n = 0; n < engine->objectTypes.GetLength(); n++ )
-		if( engine->objectTypes[n] &&
-			engine->objectTypes[n]->name == type ) // TODO: template: Should we check the subtype in case of template instances?
+	for( n = 0; n < engine->allRegisteredTypes.GetLength(); n++ )
+		if( engine->allRegisteredTypes[n] &&
+			engine->allRegisteredTypes[n]->name == type ) // TODO: template: Should we check the subtype in case of template instances?
 			return true;
 
 	for( n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
@@ -4821,10 +4822,14 @@ int asCBuilder::GetEnumValue(const char *name, asCDataType &outDt, asDWORD &outV
 
 	// Search all available enum types
 	asUINT t;
-	for( t = 0; t < engine->objectTypes.GetLength(); t++ )
+	for( t = 0; t < engine->registeredEnums.GetLength(); t++ )
 	{
-		asCObjectType *ot = engine->objectTypes[t];
+		asCObjectType *ot = engine->registeredEnums[t];
 		if( ns != ot->nameSpace ) continue;
+
+		// Don't bother with types the module doesn't have access to
+		if( (ot->accessMask & module->accessMask) == 0 )
+			continue;
 
 		if( GetEnumValueFromObjectType(ot, name, outDt, outValue) )
 		{

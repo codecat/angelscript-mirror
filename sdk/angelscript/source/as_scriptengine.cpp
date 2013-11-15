@@ -686,16 +686,16 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	templateInstanceTypes.SetLength(0);
 
-	for( n = 0; n < objectTypes.GetLength(); n++ )
+	for( n = 0; n < allRegisteredTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] )
+		if( allRegisteredTypes[n] )
 		{
 			// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
-			objectTypes[n]->templateSubTypes.SetLength(0);
-			asDELETE(objectTypes[n],asCObjectType);
+			allRegisteredTypes[n]->templateSubTypes.SetLength(0);
+			asDELETE(allRegisteredTypes[n],asCObjectType);
 		}
 	}
-	objectTypes.SetLength(0);
+	allRegisteredTypes.SetLength(0);
 	for( n = 0; n < templateSubTypes.GetLength(); n++ )
 	{
 		if( templateSubTypes[n] )
@@ -1372,12 +1372,8 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( name == 0 ) return ConfigError(asINVALID_NAME, "RegisterInterface", 0, 0);
 
 	// Verify if the name has been registered as a type already
-	asUINT n;
-	for( n = 0; n < objectTypes.GetLength(); n++ )
-	{
-		if( objectTypes[n] && objectTypes[n]->name == name && objectTypes[n]->nameSpace == defaultNamespace )
-			return asALREADY_REGISTERED;
-	}
+	if( GetObjectType(name, defaultNamespace) )
+		return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
 	asCDataType dt;
@@ -1418,7 +1414,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	scriptFunctions[st->beh.release]->AddRef();
 	st->beh.copy = 0;
 
-	objectTypes.PushLast(st);
+	allRegisteredTypes.PushLast(st);
 	registeredObjTypes.PushLast(st);
 
 	currentGroup->objTypes.PushLast(st);
@@ -1594,13 +1590,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			return ConfigError(r, "RegisterObjectType", name, 0);
 
 		// Verify that the template name hasn't been registered as a type already
-		asUINT n;
-		for( n = 0; n < objectTypes.GetLength(); n++ )
-		{
-			if( objectTypes[n] && objectTypes[n]->name == typeName && objectTypes[n]->nameSpace == defaultNamespace )
-				// This is not an irrepairable error, as it may just be that the same type is registered twice
-				return asALREADY_REGISTERED;
-		}
+		if( GetObjectType(typeName, defaultNamespace) )
+			// This is not an irrepairable error, as it may just be that the same type is registered twice
+			return asALREADY_REGISTERED;
 
 		asCObjectType *type = asNEW(asCObjectType)(this);
 		if( type == 0 )
@@ -1613,7 +1605,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		type->accessMask = defaultAccessMask;
 
 		// Store it in the object types
-		objectTypes.PushLast(type);
+		allRegisteredTypes.PushLast(type);
 		currentGroup->objTypes.PushLast(type);
 		registeredObjTypes.PushLast(type);
 		registeredTemplateTypes.PushLast(type);
@@ -1622,7 +1614,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		for( asUINT subTypeIdx = 0; subTypeIdx < subtypeNames.GetLength(); subTypeIdx++ )
 		{
 			asCObjectType *subtype = 0;
-			for( n = 0; n < templateSubTypes.GetLength(); n++ )
+			for( asUINT n = 0; n < templateSubTypes.GetLength(); n++ )
 			{
 				if( templateSubTypes[n]->name == subtypeNames[subTypeIdx] )
 				{
@@ -1652,18 +1644,12 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		typeName = name;
 
 		// Verify if the name has been registered as a type already
-		asUINT n;
-		for( n = 0; n < objectTypes.GetLength(); n++ )
-		{
-			if( objectTypes[n] &&
-				objectTypes[n]->name == typeName &&
-				objectTypes[n]->nameSpace == defaultNamespace )
-				// This is not an irrepairable error, as it may just be that the same type is registered twice
-				return asALREADY_REGISTERED;
-		}
+		if( GetObjectType(typeName, defaultNamespace) )
+			// This is not an irrepairable error, as it may just be that the same type is registered twice
+			return asALREADY_REGISTERED;
 
 		// TODO: clean up: Is it really necessary to check here?
-		for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
 		{
 			if( templateInstanceTypes[n] &&
 				templateInstanceTypes[n]->name == typeName &&
@@ -1711,7 +1697,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			type->flags      = flags;
 			type->accessMask = defaultAccessMask;
 
-			objectTypes.PushLast(type);
+			allRegisteredTypes.PushLast(type);
 			registeredObjTypes.PushLast(type);
 
 			currentGroup->objTypes.PushLast(type);
@@ -2888,14 +2874,14 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 }
 
 
-asCObjectType *asCScriptEngine::GetObjectType(const char *type, asSNameSpace *ns) const
+asCObjectType *asCScriptEngine::GetObjectType(const asCString &type, asSNameSpace *ns) const
 {
-	// TODO: optimize: Improve linear search
-	for( asUINT n = 0; n < objectTypes.GetLength(); n++ )
-		if( objectTypes[n] &&
-			objectTypes[n]->name == type &&
-			objectTypes[n]->nameSpace == ns ) // TODO: template: Should we check the subtype in case of template instances?
-			return objectTypes[n];
+	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
+	for( asUINT n = 0; n < allRegisteredTypes.GetLength(); n++ )
+		if( allRegisteredTypes[n] &&
+			allRegisteredTypes[n]->name == type &&
+			allRegisteredTypes[n]->nameSpace == ns )
+			return allRegisteredTypes[n];
 
 	return 0;
 }
@@ -2923,55 +2909,56 @@ void asCScriptEngine::PrepareEngine()
 	}
 
 	// Validate object type registrations
-	for( n = 0; n < objectTypes.GetLength(); n++ )
+	for( n = 0; n < registeredObjTypes.GetLength(); n++ )
 	{
-		if( objectTypes[n] && !(objectTypes[n]->flags & asOBJ_SCRIPT_OBJECT) )
+		asCObjectType *type = registeredObjTypes[n];
+		if( type && !(type->flags & asOBJ_SCRIPT_OBJECT) )
 		{
 			bool missingBehaviour = false;
 			const char *infoMsg = 0;
 
 			// Verify that GC types have all behaviours
-			if( objectTypes[n]->flags & asOBJ_GC )
+			if( type->flags & asOBJ_GC )
 			{
-				if( objectTypes[n]->beh.addref                 == 0 ||
-					objectTypes[n]->beh.release                == 0 ||
-					objectTypes[n]->beh.gcGetRefCount          == 0 ||
-					objectTypes[n]->beh.gcSetFlag              == 0 ||
-					objectTypes[n]->beh.gcGetFlag              == 0 ||
-					objectTypes[n]->beh.gcEnumReferences       == 0 ||
-					objectTypes[n]->beh.gcReleaseAllReferences == 0 )
+				if( type->beh.addref                 == 0 ||
+					type->beh.release                == 0 ||
+					type->beh.gcGetRefCount          == 0 ||
+					type->beh.gcSetFlag              == 0 ||
+					type->beh.gcGetFlag              == 0 ||
+					type->beh.gcEnumReferences       == 0 ||
+					type->beh.gcReleaseAllReferences == 0 )
 				{
 					infoMsg = TXT_GC_REQUIRE_ADD_REL_GC_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
 			// Verify that scoped ref types have the release behaviour
-			else if( objectTypes[n]->flags & asOBJ_SCOPED )
+			else if( type->flags & asOBJ_SCOPED )
 			{
-				if( objectTypes[n]->beh.release == 0 )
+				if( type->beh.release == 0 )
 				{
 					infoMsg = TXT_SCOPE_REQUIRE_REL_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
 			// Verify that ref types have add ref and release behaviours
-			else if( (objectTypes[n]->flags & asOBJ_REF) &&
-				     !(objectTypes[n]->flags & asOBJ_NOHANDLE) &&
-					 !(objectTypes[n]->flags & asOBJ_NOCOUNT) )
+			else if( (type->flags & asOBJ_REF) &&
+				     !(type->flags & asOBJ_NOHANDLE) &&
+					 !(type->flags & asOBJ_NOCOUNT) )
 			{
-				if( objectTypes[n]->beh.addref  == 0 ||
-					objectTypes[n]->beh.release == 0 )
+				if( type->beh.addref  == 0 ||
+					type->beh.release == 0 )
 				{
 					infoMsg = TXT_REF_REQUIRE_ADD_REL_BEHAVIOUR;
 					missingBehaviour = true;
 				}
 			}
 			// Verify that non-pod value types have the constructor and destructor registered
-			else if( (objectTypes[n]->flags & asOBJ_VALUE) &&
-				     !(objectTypes[n]->flags & asOBJ_POD) )
+			else if( (type->flags & asOBJ_VALUE) &&
+				     !(type->flags & asOBJ_POD) )
 			{
-				if( objectTypes[n]->beh.construct == 0 ||
-					objectTypes[n]->beh.destruct  == 0 )
+				if( type->beh.construct == 0 ||
+					type->beh.destruct  == 0 )
 				{
 					infoMsg = TXT_NON_POD_REQUIRE_CONSTR_DESTR_BEHAVIOUR;
 					missingBehaviour = true;
@@ -2981,7 +2968,7 @@ void asCScriptEngine::PrepareEngine()
 			if( missingBehaviour )
 			{
 				asCString str;
-				str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, objectTypes[n]->name.AddressOf());
+				str.Format(TXT_TYPE_s_IS_MISSING_BEHAVIOURS, type->name.AddressOf());
 				WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, infoMsg);
 				ConfigError(asINVALID_CONFIGURATION, 0, 0, 0);
@@ -4986,13 +4973,9 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	if( type == 0 ) return ConfigError(asINVALID_NAME, "RegisterTypedef", type, decl);
 
 	// Verify if the name has been registered as a type already
-	asUINT n;
-	for( n = 0; n < objectTypes.GetLength(); n++ )
-	{
-		if( objectTypes[n] && objectTypes[n]->name == type && objectTypes[n]->nameSpace == defaultNamespace )
-			// Let the application recover from this error, for example if the same typedef is registered twice
-			return asALREADY_REGISTERED;
-	}
+	if( GetObjectType(type, defaultNamespace) )
+		// Let the application recover from this error, for example if the same typedef is registered twice
+		return asALREADY_REGISTERED;
 
 	// Grab the data type
 	size_t tokenLen;
@@ -5050,7 +5033,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	object->nameSpace       = defaultNamespace;
 	object->templateSubTypes.PushLast(dataType);
 
-	objectTypes.PushLast(object);
+	allRegisteredTypes.PushLast(object);
 	registeredTypeDefs.PushLast(object);
 
 	currentGroup->objTypes.PushLast(object);
@@ -5099,10 +5082,8 @@ int asCScriptEngine::RegisterEnum(const char *name)
 		return ConfigError(asINVALID_NAME, "RegisterEnum", name, 0);
 
 	// Verify if the name has been registered as a type already
-	asUINT n;
-	for( n = 0; n < objectTypes.GetLength(); n++ )
-		if( objectTypes[n] && objectTypes[n]->name == name && objectTypes[n]->nameSpace == defaultNamespace )
-			return asALREADY_REGISTERED;
+	if( GetObjectType(name, defaultNamespace) )
+		return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
 	asCDataType dt;
@@ -5135,7 +5116,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	st->name = name;
 	st->nameSpace = defaultNamespace;
 
-	objectTypes.PushLast(st);
+	allRegisteredTypes.PushLast(st);
 	registeredEnums.PushLast(st);
 
 	currentGroup->objTypes.PushLast(st);

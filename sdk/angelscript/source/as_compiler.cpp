@@ -2067,6 +2067,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		asCString name(&script->code[node->tokenPos], node->tokenLength);
 
 		// Verify that the name isn't used by a dynamic data type
+		// TODO: Must check against registered funcdefs too
 		if( engine->GetObjectType(name.AddressOf(), outFunc->nameSpace) != 0 )
 		{
 			asCString str;
