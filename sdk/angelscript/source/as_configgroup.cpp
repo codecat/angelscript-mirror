@@ -166,6 +166,8 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 					engine->registeredTypeDefs.RemoveValue(t);
 				else if( t->flags & asOBJ_ENUM )
 					engine->registeredEnums.RemoveValue(t);
+				else if( t->flags & asOBJ_TEMPLATE )
+					engine->registeredTemplateTypes.RemoveValue(t);
 				else
 					engine->registeredObjTypes.RemoveValue(t);
 

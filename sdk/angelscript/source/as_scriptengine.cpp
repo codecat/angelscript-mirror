@@ -1616,6 +1616,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		objectTypes.PushLast(type);
 		currentGroup->objTypes.PushLast(type);
 		registeredObjTypes.PushLast(type);
+		registeredTemplateTypes.PushLast(type);
 
 		// Define the template subtypes
 		for( asUINT subTypeIdx = 0; subTypeIdx < subtypeNames.GetLength(); subTypeIdx++ )
@@ -1661,6 +1662,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return asALREADY_REGISTERED;
 		}
 
+		// TODO: clean up: Is it really necessary to check here?
 		for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 		{
 			if( templateInstanceTypes[n] &&
@@ -5306,14 +5308,12 @@ asIScriptFunction *asCScriptEngine::GetFuncDefFromTypeId(int typeId) const
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const
 {
-	// TODO: optimize (2.28.1): Reduce search set. Only look in the list of template types (not instance types)
-	for( unsigned int n = 0; n < registeredObjTypes.GetLength(); n++ )
+	// Only look in the list of template types (not instance types)
+	for( unsigned int n = 0; n < registeredTemplateTypes.GetLength(); n++ )
 	{
-		asCObjectType *type = registeredObjTypes[n];
+		asCObjectType *type = registeredTemplateTypes[n];
 		if( type && type->name == name )
-		{
-			return type->flags & asOBJ_TEMPLATE ? true : false;
-		}
+			return true;
 	}
 
 	return false;

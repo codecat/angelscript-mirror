@@ -334,6 +334,7 @@ public:
 	asCSymbolTable<asCGlobalProperty>  registeredGlobalProps;
 	asCArray<asCScriptFunction *>      registeredGlobalFuncs; // TODO: optimize (2.28.1): Change this to symbol table
 	asCArray<asCScriptFunction *>      registeredFuncDefs;
+	asCArray<asCObjectType *>          registeredTemplateTypes;
 	asCScriptFunction                 *stringFactory;
 	bool configFailed;
 
