@@ -1515,7 +1515,7 @@ asCObjectType* asCReader::ReadObjectType()
 		// Read the name of the template type
 		asCString typeName;
 		ReadString(&typeName);
-		asCObjectType *tmpl = engine->GetObjectType(typeName.AddressOf(), engine->nameSpaces[0]);
+		asCObjectType *tmpl = engine->GetRegisteredObjectType(typeName.AddressOf(), engine->nameSpaces[0]);
 		if( tmpl == 0 )
 		{
 			asCString str;
@@ -1619,7 +1619,7 @@ asCObjectType* asCReader::ReadObjectType()
 			// Find the object type
 			ot = module->GetObjectType(typeName.AddressOf(), nameSpace);
 			if( !ot )
-				ot = engine->GetObjectType(typeName.AddressOf(), nameSpace);
+				ot = engine->GetRegisteredObjectType(typeName.AddressOf(), nameSpace);
 			
 			if( ot == 0 )
 			{

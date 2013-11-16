@@ -53,12 +53,11 @@ BEGIN_AS_NAMESPACE
 
 // asCSymbolTable template specializations for sGlobalVariableDescription entries
 template<>
-void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asCString &key) const
+void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asSNameSpaceNamePair &key) const
 {
-	// TODO: optimize: The key should be a struct, composed of namespace pointer and the name string
 	asSNameSpace *ns = entry->property->nameSpace;
 	asCString name = entry->property->name;
-	key = ns->name + "::" + name;
+	key = asSNameSpaceNamePair(ns, name);
 }
 
 // Comparator for exact variable search
@@ -1175,7 +1174,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 {
 	// Check against registered object types
 	// TODO: Must check against registered funcdefs too
-	if( engine->GetObjectType(name, ns) != 0 )
+	if( engine->GetRegisteredObjectType(name, ns) != 0 )
 	{
 		if( code )
 		{
@@ -4694,7 +4693,7 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 
 asCObjectType *asCBuilder::GetObjectType(const char *type, asSNameSpace *ns)
 {
-	asCObjectType *ot = engine->GetObjectType(type, ns);
+	asCObjectType *ot = engine->GetRegisteredObjectType(type, ns);
 	if( !ot && module )
 		ot = module->GetObjectType(type, ns);
 

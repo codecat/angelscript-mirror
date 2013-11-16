@@ -1370,7 +1370,8 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( name == 0 ) return ConfigError(asINVALID_NAME, "RegisterInterface", 0, 0);
 
 	// Verify if the name has been registered as a type already
-	if( GetObjectType(name, defaultNamespace) )
+	// TODO: Must check against registered funcdefs too
+	if( GetRegisteredObjectType(name, defaultNamespace) )
 		return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
@@ -1488,7 +1489,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	isPrepared = false;
 
 	// Verify flags
-	//   Must have either asOBJ_REF or asOBJ_VALUE
+	// Must have either asOBJ_REF or asOBJ_VALUE
 	if( flags & asOBJ_REF )
 	{
 		// Can optionally have the asOBJ_GC, asOBJ_NOHANDLE, asOBJ_SCOPED, or asOBJ_TEMPLATE flag set, but nothing else
@@ -1588,7 +1589,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			return ConfigError(r, "RegisterObjectType", name, 0);
 
 		// Verify that the template name hasn't been registered as a type already
-		if( GetObjectType(typeName, defaultNamespace) )
+		// TODO: Must check against registered funcdefs too
+		if( GetRegisteredObjectType(typeName, defaultNamespace) )
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
 
@@ -1642,7 +1644,8 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		typeName = name;
 
 		// Verify if the name has been registered as a type already
-		if( GetObjectType(typeName, defaultNamespace) )
+		// TODO: Must check against registered funcdefs too
+		if( GetRegisteredObjectType(typeName, defaultNamespace) )
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
 
@@ -2871,7 +2874,7 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 }
 
 
-asCObjectType *asCScriptEngine::GetObjectType(const asCString &type, asSNameSpace *ns) const
+asCObjectType *asCScriptEngine::GetRegisteredObjectType(const asCString &type, asSNameSpace *ns) const
 {
 	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
 	for( asUINT n = 0; n < allRegisteredTypes.GetLength(); n++ )
@@ -4970,7 +4973,8 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	if( type == 0 ) return ConfigError(asINVALID_NAME, "RegisterTypedef", type, decl);
 
 	// Verify if the name has been registered as a type already
-	if( GetObjectType(type, defaultNamespace) )
+	// TODO: Must check against registered funcdefs too
+	if( GetRegisteredObjectType(type, defaultNamespace) )
 		// Let the application recover from this error, for example if the same typedef is registered twice
 		return asALREADY_REGISTERED;
 
@@ -5079,7 +5083,8 @@ int asCScriptEngine::RegisterEnum(const char *name)
 		return ConfigError(asINVALID_NAME, "RegisterEnum", name, 0);
 
 	// Verify if the name has been registered as a type already
-	if( GetObjectType(name, defaultNamespace) )
+	// TODO: Must check for registered funcdefs too
+	if( GetRegisteredObjectType(name, defaultNamespace) )
 		return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype

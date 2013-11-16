@@ -2068,7 +2068,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 
 		// Verify that the name isn't used by a dynamic data type
 		// TODO: Must check against registered funcdefs too
-		if( engine->GetObjectType(name.AddressOf(), outFunc->nameSpace) != 0 )
+		if( engine->GetRegisteredObjectType(name.AddressOf(), outFunc->nameSpace) != 0 )
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_VARIABLE_NAME_s, name.AddressOf());

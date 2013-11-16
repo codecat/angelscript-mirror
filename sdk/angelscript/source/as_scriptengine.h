@@ -263,7 +263,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const asCString &name, asSNameSpace *ns) const;
+	asCObjectType *GetRegisteredObjectType(const asCString &name, asSNameSpace *ns) const;
 
 	asCObjectType *GetListPatternType(int listPatternFuncId);
 	void DestroyList(asBYTE *buffer, const asCObjectType *listPatternType);
@@ -331,7 +331,7 @@ public:
 	asCArray<asCObjectType *>         registeredObjTypes;
 	asCArray<asCObjectType *>         registeredTypeDefs;
 	asCArray<asCObjectType *>         registeredEnums;
-	asCSymbolTable<asCGlobalProperty> registeredGlobalProps;
+	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
 	asCArray<asCScriptFunction *>     registeredFuncDefs;
 	asCArray<asCObjectType *>         registeredTemplateTypes;
@@ -340,7 +340,8 @@ public:
 
 	// Stores all registered types except funcdefs
 	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
-	asCArray<asCObjectType *>      allRegisteredTypes;
+	// TODO: memory savings: Since there can be only one type with the same name a simpler symbol table should be used. Perhaps this should only use the map, and not keep an indexable array
+	asCArray<asCObjectType*>       allRegisteredTypes;  
 
 	// Dummy types used to name the subtypes in the template objects 
 	asCArray<asCObjectType *>      templateSubTypes;

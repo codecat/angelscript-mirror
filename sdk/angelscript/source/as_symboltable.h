@@ -46,19 +46,11 @@
 #include "as_string.h"
 #include "as_map.h"
 #include "as_datatype.h"
+#include "as_namespace.h"
 
 
 BEGIN_AS_NAMESPACE
 
-// TODO: cleanup: This should be in its own header. It is only here because it is
-//                needed for the template and cannot be resolved with a forward declaration
-struct asSNameSpace
-{
-	asCString name;
-
-	// TODO: namespace: A namespace should have access masks. The application should be
-	//                  able to restrict specific namespaces from access to specific modules
-};
 
 
 
@@ -151,13 +143,12 @@ private:
 	friend class asCSymbolTableIterator<T, T>;
 	friend class asCSymbolTableIterator<T, const T>;
 
-	void GetKey(const T *entry, asCString &key) const;
-	void BuildKey(const asSNameSpace *ns, const asCString &name, asCString &key) const;
+	void GetKey(const T *entry, asSNameSpaceNamePair &key) const;
 	bool CheckIdx(unsigned idx) const;
 
-	asCMap<asCString, asCArray<unsigned int> > m_map;
-	asCArray<T*>                               m_entries;
-	unsigned int                               m_size;
+	asCMap<asSNameSpaceNamePair, asCArray<unsigned int> > m_map;
+	asCArray<T*>                                          m_entries;
+	unsigned int                                          m_size;
 };
 
 
@@ -193,10 +184,9 @@ int asCSymbolTable<T>::GetFirstIndex(
         const asCString &name,
         const asIFilter &filter) const
 {
-	asCString key;
-	BuildKey(ns, name, key);
+	asSNameSpaceNamePair key(ns, name);
 
-	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	asSMapNode<asSNameSpaceNamePair, asCArray<unsigned int> > *cursor;
 	if( m_map.MoveTo(&cursor, key) )
 	{
 		const asCArray<unsigned int> &arr = m_map.GetValue(cursor);
@@ -216,10 +206,9 @@ int asCSymbolTable<T>::GetFirstIndex(
 template<class T>
 const asCArray<unsigned int> &asCSymbolTable<T>::GetIndexes(const asSNameSpace *ns, const asCString &name) const
 {
-	asCString key;
-	BuildKey(ns, name, key);
+	asSNameSpaceNamePair key(ns, name);
 
-	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	asSMapNode<asSNameSpaceNamePair, asCArray<unsigned int> > *cursor;
 	if( m_map.MoveTo(&cursor, key) )
 		return m_map.GetValue(cursor);
 
@@ -244,10 +233,9 @@ T* asCSymbolTable<T>::GetFirst(const asSNameSpace *ns, const asCString &name, co
 template<class T>
 int asCSymbolTable<T>::GetFirstIndex(const asSNameSpace *ns, const asCString &name) const
 {
-	asCString key;
-	BuildKey(ns, name, key);
+	asSNameSpaceNamePair key(ns, name);
 
-	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	asSMapNode<asSNameSpaceNamePair, asCArray<unsigned int> > *cursor;
 	if( m_map.MoveTo(&cursor, key) )
 		return m_map.GetValue(cursor)[0];
 
@@ -378,10 +366,10 @@ bool asCSymbolTable<T>::Erase(unsigned idx)
 	}
 	m_size--;
 
-	asCString key;
+	asSNameSpaceNamePair key;
 	GetKey(entry, key);
 
-	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	asSMapNode<asSNameSpaceNamePair, asCArray<unsigned int> > *cursor;
 	if( m_map.MoveTo(&cursor, key) )
 	{
 		asCArray<unsigned int> &arr = m_map.GetValue(cursor);
@@ -402,10 +390,10 @@ template<class T>
 int asCSymbolTable<T>::Put(T *entry)
 {
 	unsigned int idx = (unsigned int)(m_entries.GetLength());
-	asCString key;
+	asSNameSpaceNamePair key;
 	GetKey(entry, key);
 
-	asSMapNode<asCString, asCArray<unsigned int> > *cursor;
+	asSMapNode<asSNameSpaceNamePair, asCArray<unsigned int> > *cursor;
 	if( m_map.MoveTo(&cursor, key) )
 		m_map.GetValue(cursor).PushLast(idx);
 	else
@@ -422,25 +410,12 @@ int asCSymbolTable<T>::Put(T *entry)
 
 
 
-template<class T>
-void asCSymbolTable<T>::BuildKey(const asSNameSpace *ns, const asCString &name, asCString &key) const
-{
-	// TODO: optimize: The key shouldn't be just an asCString. It should keep the
-	//                 namespace as a pointer, so it can be compared as pointer.
-	//                 Which should be compared first, the namespace or the name? There is likely
-	//                 going to be many symbols with the same namespace, so it is probably best to
-	//                 compare the name first
-	key = ns->name + "::" + name;
-}
-
-
-
 
 // Return key for specified symbol (namespace and name are used to generate the key)
 template<class T>
-void asCSymbolTable<T>::GetKey(const T *entry, asCString &key) const
+void asCSymbolTable<T>::GetKey(const T *entry, asSNameSpaceNamePair &key) const
 {
-	BuildKey(entry->nameSpace, entry->name, key);
+	key = asSNameSpaceNamePair(entry->nameSpace, entry->name);
 }
 
 
