@@ -4715,10 +4715,15 @@ bool asCBuilder::DoesTypeExist(const asCString &type)
 	//                 be kept in memory while compiling scripts, yet still gain the performance.
 
 	// Check if it is a registered type
-	for( n = 0; n < engine->allRegisteredTypes.GetLength(); n++ )
-		if( engine->allRegisteredTypes[n] &&
-			engine->allRegisteredTypes[n]->name == type ) // TODO: template: Should we check the subtype in case of template instances?
+	asSMapNode<asSNameSpaceNamePair, asCObjectType*> *cursor;
+	engine->allRegisteredTypes.MoveFirst(&cursor);
+	while( cursor )
+	{
+		if( cursor->value->name == type )
 			return true;
+
+		engine->allRegisteredTypes.MoveNext(&cursor, cursor);
+	}
 
 	for( n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 		if( engine->registeredFuncDefs[n]->name == type )

@@ -153,14 +153,15 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 		for( n = 0; n < objTypes.GetLength(); n++ )
 		{
 			asCObjectType *t = objTypes[n];
-			int idx = engine->allRegisteredTypes.IndexOf(t);
-			if( idx >= 0 )
+			asSMapNode<asSNameSpaceNamePair, asCObjectType*> *cursor;
+			if( engine->allRegisteredTypes.MoveTo(&cursor, asSNameSpaceNamePair(t->nameSpace, t->name)) &&
+				cursor->value == t )
 			{
 #ifdef AS_DEBUG
 				ValidateNoUsage(engine, t);
 #endif
 
-				engine->allRegisteredTypes.RemoveIndex(idx);
+				engine->allRegisteredTypes.Erase(cursor);
 				if( engine->defaultArrayObjectType == t )
 					engine->defaultArrayObjectType = 0;
 
@@ -174,6 +175,21 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 					engine->registeredObjTypes.RemoveValue(t);
 
 				asDELETE(t, asCObjectType);
+			}
+			else
+			{
+				int idx = engine->templateInstanceTypes.IndexOf(t);
+				if( idx >= 0 )
+				{
+#ifdef AS_DEBUG
+					ValidateNoUsage(engine, t);
+#endif
+
+					engine->templateInstanceTypes.RemoveIndexUnordered(idx);
+					t->templateSubTypes.SetLength(0);
+
+					asDELETE(t, asCObjectType);
+				}
 			}
 		}
 		objTypes.SetLength(0);

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2012 Andreas Jonsson
+   Copyright (c) 2012-2013 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -98,6 +98,8 @@ private:
 
 
 // Symbol table mapping namespace + name to symbols
+// The structure keeps the entries indexed in an array so the indices will not change
+// There is also a map for a quick lookup. The map supports multiple entries with the same name
 template<class T>
 class asCSymbolTable
 {

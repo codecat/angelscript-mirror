@@ -339,9 +339,7 @@ public:
 	bool configFailed;
 
 	// Stores all registered types except funcdefs
-	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
-	// TODO: memory savings: Since there can be only one type with the same name a simpler symbol table should be used. Perhaps this should only use the map, and not keep an indexable array
-	asCArray<asCObjectType*>       allRegisteredTypes;  
+	asCMap<asSNameSpaceNamePair, asCObjectType*> allRegisteredTypes;  
 
 	// Dummy types used to name the subtypes in the template objects 
 	asCArray<asCObjectType *>      templateSubTypes;

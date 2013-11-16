@@ -686,16 +686,17 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	templateInstanceTypes.SetLength(0);
 
-	for( n = 0; n < allRegisteredTypes.GetLength(); n++ )
+	asSMapNode<asSNameSpaceNamePair, asCObjectType *> *cursor2;
+	allRegisteredTypes.MoveFirst(&cursor2);
+	while( cursor2 )
 	{
-		if( allRegisteredTypes[n] )
-		{
-			// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
-			allRegisteredTypes[n]->templateSubTypes.SetLength(0);
-			asDELETE(allRegisteredTypes[n],asCObjectType);
-		}
+		// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
+		cursor2->value->templateSubTypes.SetLength(0);
+		asDELETE(cursor2->value, asCObjectType);
+
+		allRegisteredTypes.MoveNext(&cursor2, cursor2);
 	}
-	allRegisteredTypes.SetLength(0);
+	allRegisteredTypes.EraseAll();
 	for( n = 0; n < templateSubTypes.GetLength(); n++ )
 	{
 		if( templateSubTypes[n] )
@@ -1413,7 +1414,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	scriptFunctions[st->beh.release]->AddRef();
 	st->beh.copy = 0;
 
-	allRegisteredTypes.PushLast(st);
+	allRegisteredTypes.Insert(asSNameSpaceNamePair(st->nameSpace, st->name), st);
 	registeredObjTypes.PushLast(st);
 
 	currentGroup->objTypes.PushLast(st);
@@ -1605,7 +1606,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		type->accessMask = defaultAccessMask;
 
 		// Store it in the object types
-		allRegisteredTypes.PushLast(type);
+		allRegisteredTypes.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 		currentGroup->objTypes.PushLast(type);
 		registeredObjTypes.PushLast(type);
 		registeredTemplateTypes.PushLast(type);
@@ -1698,7 +1699,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			type->flags      = flags;
 			type->accessMask = defaultAccessMask;
 
-			allRegisteredTypes.PushLast(type);
+			allRegisteredTypes.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 			registeredObjTypes.PushLast(type);
 
 			currentGroup->objTypes.PushLast(type);
@@ -2876,12 +2877,9 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 
 asCObjectType *asCScriptEngine::GetRegisteredObjectType(const asCString &type, asSNameSpace *ns) const
 {
-	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
-	for( asUINT n = 0; n < allRegisteredTypes.GetLength(); n++ )
-		if( allRegisteredTypes[n] &&
-			allRegisteredTypes[n]->name == type &&
-			allRegisteredTypes[n]->nameSpace == ns )
-			return allRegisteredTypes[n];
+	asSMapNode<asSNameSpaceNamePair, asCObjectType *> *cursor;
+	if( allRegisteredTypes.MoveTo(&cursor, asSNameSpaceNamePair(ns, type)) )
+		return cursor->value;
 
 	return 0;
 }
@@ -5034,7 +5032,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	object->nameSpace       = defaultNamespace;
 	object->templateSubTypes.PushLast(dataType);
 
-	allRegisteredTypes.PushLast(object);
+	allRegisteredTypes.Insert(asSNameSpaceNamePair(object->nameSpace, object->name), object);
 	registeredTypeDefs.PushLast(object);
 
 	currentGroup->objTypes.PushLast(object);
@@ -5118,7 +5116,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	st->name = name;
 	st->nameSpace = defaultNamespace;
 
-	allRegisteredTypes.PushLast(st);
+	allRegisteredTypes.Insert(asSNameSpaceNamePair(st->nameSpace, st->name), st);
 	registeredEnums.PushLast(st);
 
 	currentGroup->objTypes.PushLast(st);
