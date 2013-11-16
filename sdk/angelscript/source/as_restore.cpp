@@ -585,21 +585,14 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( func->name == DELEGATE_FACTORY )
 	{
 		// It's not necessary to read anymore, everything is known 
-		for( asUINT n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
-		{
-			asCScriptFunction *f = engine->registeredGlobalFuncs[n];
-			if( f->name == DELEGATE_FACTORY )
-			{
-				func->returnType     = f->returnType;
-				func->parameterTypes = f->parameterTypes;
-				func->inOutFlags     = f->inOutFlags;
-				func->funcType       = f->funcType;
-				func->defaultArgs    = f->defaultArgs;
-				func->nameSpace      = f->nameSpace;
-				return;
-			}
-		}
-		asASSERT( false );
+		asCScriptFunction *f = engine->registeredGlobalFuncs.GetFirst(engine->nameSpaces[0], DELEGATE_FACTORY);
+		asASSERT( f );
+		func->returnType     = f->returnType;
+		func->parameterTypes = f->parameterTypes;
+		func->inOutFlags     = f->inOutFlags;
+		func->funcType       = f->funcType;
+		func->defaultArgs    = f->defaultArgs;
+		func->nameSpace      = f->nameSpace;
 		return;
 	}
 

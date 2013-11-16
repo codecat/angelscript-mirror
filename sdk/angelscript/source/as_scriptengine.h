@@ -328,19 +328,21 @@ public:
 	asCObjectType    globalPropertyBehaviours;
 
 	// Registered interface
-	asCArray<asCObjectType *>          registeredObjTypes;
-	asCArray<asCObjectType *>          registeredTypeDefs;
-	asCArray<asCObjectType *>          registeredEnums;
-	asCSymbolTable<asCGlobalProperty>  registeredGlobalProps;
-	asCArray<asCScriptFunction *>      registeredGlobalFuncs; // TODO: optimize (2.28.1): Change this to symbol table
-	asCArray<asCScriptFunction *>      registeredFuncDefs;
-	asCArray<asCObjectType *>          registeredTemplateTypes;
-	asCScriptFunction                 *stringFactory;
+	asCArray<asCObjectType *>         registeredObjTypes;
+	asCArray<asCObjectType *>         registeredTypeDefs;
+	asCArray<asCObjectType *>         registeredEnums;
+	asCSymbolTable<asCGlobalProperty> registeredGlobalProps;
+	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
+	asCArray<asCScriptFunction *>     registeredFuncDefs;
+	asCArray<asCObjectType *>         registeredTemplateTypes;
+	asCScriptFunction                *stringFactory;
 	bool configFailed;
 
-	// Stores all registered types (except funcdefs)
+	// Stores all registered types except funcdefs
 	// TODO: optimize (2.28.1): allRegisteredTypes should be a symbol table
 	asCArray<asCObjectType *>      allRegisteredTypes;
+
+	// Dummy types used to name the subtypes in the template objects 
 	asCArray<asCObjectType *>      templateSubTypes;
 
 	// Store information about template types

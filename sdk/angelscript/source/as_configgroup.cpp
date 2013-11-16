@@ -120,8 +120,10 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 	// Remove global functions
 	for( n = 0; n < scriptFunctions.GetLength(); n++ )
 	{
+		int index = engine->registeredGlobalFuncs.GetIndex(scriptFunctions[n]);
+		if( index >= 0 )
+			engine->registeredGlobalFuncs.Erase(index);
 		scriptFunctions[n]->Release();
-		engine->registeredGlobalFuncs.RemoveValue(scriptFunctions[n]);
 		if( engine->stringFactory == scriptFunctions[n] )
 			engine->stringFactory = 0;
 	}

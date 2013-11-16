@@ -372,7 +372,10 @@ bool asCSymbolTable<T>::Erase(unsigned idx)
 		// TODO: Should remove all trailing empty slots
 	}
 	else
+	{
+		// TODO: Must pack or reuse empty slots
 		m_entries[idx] = 0;
+	}
 	m_size--;
 
 	asCString key;

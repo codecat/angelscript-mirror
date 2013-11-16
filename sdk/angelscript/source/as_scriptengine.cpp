@@ -706,12 +706,10 @@ asCScriptEngine::~asCScriptEngine()
 	registeredEnums.SetLength(0);
 	registeredObjTypes.SetLength(0);
 
-	for( n = 0; n < registeredGlobalFuncs.GetLength(); n++ )
-	{
-		if( registeredGlobalFuncs[n] )
-			registeredGlobalFuncs[n]->Release();
-	}
-	registeredGlobalFuncs.SetLength(0);
+	asCSymbolTable<asCScriptFunction>::iterator funcIt = registeredGlobalFuncs.List();
+	for( ; funcIt; funcIt++ )
+		(*funcIt)->Release();
+	registeredGlobalFuncs.Clear();
 
 	scriptTypeBehaviours.ReleaseAllFunctions();
 	functionBehaviours.ReleaseAllFunctions();
@@ -2767,12 +2765,11 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 
 	// Make sure the function is not identical to a previously registered function
 	asUINT n;
-	for( n = 0; n < registeredGlobalFuncs.GetLength(); n++ )
+	const asCArray<unsigned int> &idxs = registeredGlobalFuncs.GetIndexes(func->nameSpace, func->name);
+	for( n = 0; n < idxs.GetLength(); n++ )
 	{
-		asCScriptFunction *f = registeredGlobalFuncs[n];
-		if( f->name == func->name &&
-			f->nameSpace == func->nameSpace &&
-			f->IsSignatureExceptNameAndReturnTypeEqual(func) )
+		asCScriptFunction *f = registeredGlobalFuncs.Get(idxs[n]);
+		if( f->IsSignatureExceptNameAndReturnTypeEqual(func) )
 		{
 			func->funcType = asFUNC_DUMMY;
 			asDELETE(func,asCScriptFunction);
@@ -2785,7 +2782,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 
 	currentGroup->scriptFunctions.PushLast(func);
 	func->accessMask = defaultAccessMask;
-	registeredGlobalFuncs.PushLast(func);
+	registeredGlobalFuncs.Put(func);
 
 	// If parameter type from other groups are used, add references
 	if( func->returnType.GetObjectType() )
@@ -2810,7 +2807,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 asUINT asCScriptEngine::GetGlobalFunctionCount() const
 {
 	// Don't count the builtin delegate factory
-	return asUINT(registeredGlobalFuncs.GetLength()-1);
+	return asUINT(registeredGlobalFuncs.GetSize()-1);
 }
 
 // interface
@@ -2819,10 +2816,10 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByIndex(asUINT index) const
 	// Don't count the builtin delegate factory
 	index++;
 
-	if( index >= registeredGlobalFuncs.GetLength() )
+	if( index >= registeredGlobalFuncs.GetSize() )
 		return 0;
 
-	return registeredGlobalFuncs[index];
+	return static_cast<asIScriptFunction*>(const_cast<asCScriptFunction*>(registeredGlobalFuncs.Get(index)));
 }
 
 // interface
@@ -2838,20 +2835,21 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 	if( r < 0 )
 		return 0;
 
-	// TODO: optimize (2.28.1): Improve linear search. registeredGlobalFuncs should be a symbol table
-	// Search registered functions for matching interface
-	int id = -1;
-	for( size_t n = 0; n < registeredGlobalFuncs.GetLength(); ++n )
+	// Search script functions for matching interface
+	asIScriptFunction *f = 0;
+	const asCArray<unsigned int> &idxs = registeredGlobalFuncs.GetIndexes(defaultNamespace, func.name);
+	for( unsigned int n = 0; n < idxs.GetLength(); n++ )
 	{
-		if( registeredGlobalFuncs[n]->objectType == 0 &&
-			func.name == registeredGlobalFuncs[n]->name &&
-			func.returnType == registeredGlobalFuncs[n]->returnType &&
-			func.parameterTypes.GetLength() == registeredGlobalFuncs[n]->parameterTypes.GetLength() )
+		const asCScriptFunction *funcPtr = registeredGlobalFuncs.Get(idxs[n]);
+		if( funcPtr->objectType == 0 &&
+			func.returnType                 == funcPtr->returnType &&
+			func.parameterTypes.GetLength() == funcPtr->parameterTypes.GetLength()
+			)
 		{
 			bool match = true;
 			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
-				if( func.parameterTypes[p] != registeredGlobalFuncs[n]->parameterTypes[p] )
+				if( func.parameterTypes[p] != funcPtr->parameterTypes[p] )
 				{
 					match = false;
 					break;
@@ -2860,17 +2858,16 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 
 			if( match )
 			{
-				if( id == -1 )
-					id = registeredGlobalFuncs[n]->id;
+				if( f == 0 )
+					f = const_cast<asCScriptFunction*>(funcPtr);
 				else
-					return 0; // Multiple matches
+					// Multiple functions
+					return 0;
 			}
 		}
 	}
 
-	if( id < 0 ) return 0; // No matches
-
-	return scriptFunctions[id];
+	return f;
 }
 
 

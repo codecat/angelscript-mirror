@@ -4176,6 +4176,8 @@ asCScriptFunction *asCBuilder::GetFunctionDescription(int id)
 void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs, asSNameSpace *ns)
 {
 	asUINT n;
+
+	// Get the script declared global functions
 	const asCArray<unsigned int> &idxs = module->globalFunctions.GetIndexes(ns, name);
 	for( n = 0; n < idxs.GetLength(); n++ )
 	{
@@ -4184,6 +4186,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 		funcs.PushLast(f->id);
 	}
 
+	// Add the imported functions
 	// TODO: optimize: Linear search: This is probably not that critial. Also bindInformation will probably be removed in near future
 	for( n = 0; n < module->bindInformations.GetLength(); n++ )
 	{
@@ -4191,21 +4194,16 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 
-	// TODO: optimize (2.28.1): Linear search. The registered global functions should be stored in a symbol table too
-	for( n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
+	// Add the registered global functions
+	const asCArray<unsigned int> &idxs2 = engine->registeredGlobalFuncs.GetIndexes(ns, name);
+	for( n = 0; n < idxs2.GetLength(); n++ )
 	{
-		asCScriptFunction *f = engine->registeredGlobalFuncs[n];
-		if( f &&
-			f->funcType == asFUNC_SYSTEM &&
-			f->objectType == 0 &&
-			f->nameSpace == ns &&
-			f->name == name )
+		asCScriptFunction *f = engine->registeredGlobalFuncs.Get(idxs2[n]);
+
+		// Verify if the module has access to the function
+		if( module->accessMask & f->accessMask )
 		{
-			// Verify if the module has access to the function
-			if( module->accessMask & f->accessMask )
-			{
-				funcs.PushLast(f->id);
-			}
+			funcs.PushLast(f->id);
 		}
 	}
 }
