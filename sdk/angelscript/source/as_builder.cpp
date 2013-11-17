@@ -205,6 +205,12 @@ void asCBuilder::Reset()
 	numErrors = 0;
 	numWarnings = 0;
 	preMessage.isSet = false;
+
+#ifndef AS_NO_COMPILER
+	// Clear the cache of known types
+	hasCachedKnownTypes = false;
+	knownTypes.EraseAll();
+#endif
 }
 
 #ifndef AS_NO_COMPILER
@@ -4707,49 +4713,57 @@ bool asCBuilder::DoesTypeExist(const asCString &type)
 {
 	asUINT n;
 
-	// TODO: optimize (2.28.1): Improve linear searches
-	//                 This function is only used when parsing expressions for building bytecode,
-	//                 and this is only done after all types are known. So the builder should 
-	//                 build a map of all known types the first time it enters this code, and then
-	//                 just do a lookup into that map. By doing it this way, the cache will only
-	//                 be kept in memory while compiling scripts, yet still gain the performance.
-
-	// Check if it is a registered type
-	asSMapNode<asSNameSpaceNamePair, asCObjectType*> *cursor;
-	engine->allRegisteredTypes.MoveFirst(&cursor);
-	while( cursor )
+	// This function is only used when parsing expressions for building bytecode
+	// and this is only done after all types are known. For this reason the types
+	// can be safely cached in a map for quick lookup. Once the builder is released
+	// the cache will also be destroyed thus avoiding unnecessary memory consumption.
+	if( !hasCachedKnownTypes )
 	{
-		if( cursor->value->name == type )
-			return true;
+		// Only do this once
+		hasCachedKnownTypes = true;
 
-		engine->allRegisteredTypes.MoveNext(&cursor, cursor);
+		// Add registered object types
+		asSMapNode<asSNameSpaceNamePair, asCObjectType*> *cursor;
+		engine->allRegisteredTypes.MoveFirst(&cursor);
+		while( cursor )
+		{
+			if( !knownTypes.MoveTo(0, cursor->key.name) )
+				knownTypes.Insert(cursor->key.name, true);
+
+			engine->allRegisteredTypes.MoveNext(&cursor, cursor);
+		}
+
+		// Add registered funcdefs
+		for( n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
+			if( !knownTypes.MoveTo(0, engine->registeredFuncDefs[n]->name) )
+				knownTypes.Insert(engine->registeredFuncDefs[n]->name, true);
+
+		if( module )
+		{
+			// Add script classes and interfaces
+			for( n = 0; n < module->classTypes.GetLength(); n++ )
+				if( !knownTypes.MoveTo(0, module->classTypes[n]->name) )
+					knownTypes.Insert(module->classTypes[n]->name, true);
+
+			// Add script enums
+			for( n = 0; n < module->enumTypes.GetLength(); n++ )
+				if( !knownTypes.MoveTo(0, module->enumTypes[n]->name) )
+					knownTypes.Insert(module->enumTypes[n]->name, true);
+
+			// Add script typedefs
+			for( n = 0; n < module->typeDefs.GetLength(); n++ )
+				if( !knownTypes.MoveTo(0, module->typeDefs[n]->name) )
+					knownTypes.Insert(module->typeDefs[n]->name, true);
+
+			// Add script funcdefs
+			for( n = 0; n < module->funcDefs.GetLength(); n++ )
+				if( !knownTypes.MoveTo(0, module->funcDefs[n]->name) )
+					knownTypes.Insert(module->funcDefs[n]->name, true);
+		}
 	}
 
-	for( n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
-		if( engine->registeredFuncDefs[n]->name == type )
-			return true;
-
-	// Check if it is a script type
-	if( module )
-	{
-		for( n = 0; n < module->classTypes.GetLength(); n++ )
-			if( module->classTypes[n]->name == type )
-				return true;
-
-		for( n = 0; n < module->enumTypes.GetLength(); n++ )
-			if( module->enumTypes[n]->name == type )
-				return true;
-
-		for( n = 0; n < module->typeDefs.GetLength(); n++ )
-			if( module->typeDefs[n]->name == type )
-				return true;
-
-		for( n = 0; n < module->funcDefs.GetLength(); n++ )
-			if( module->funcDefs[n]->name == type )
-				return true;
-	}
-
-	return false;
+	// Check if the type is known
+	return knownTypes.MoveTo(0, type);
 }
 #endif
 

@@ -242,6 +242,10 @@ protected:
 	asCArray<sClassDeclaration *>              namedTypeDeclarations;
 	asCArray<sFuncDef *>                       funcDefs;
 	asCArray<sMixinClass *>                    mixinClasses;
+
+	// For use with the DoesTypeExists() method
+	bool                    hasCachedKnownTypes;
+	asCMap<asCString, bool> knownTypes;
 #endif
 };
 
