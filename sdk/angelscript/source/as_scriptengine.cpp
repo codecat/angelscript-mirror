@@ -1980,6 +1980,15 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
+		// Don't accept duplicates
+		if( beh->listFactory )
+		{
+			if( listPattern )
+				listPattern->Destroy(this);
+
+			return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
 		// Add the function
 		func.id = AddBehaviourFunction(func, internal);
 
@@ -2014,8 +2023,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
-		// TODO: Verify that the same factory function hasn't been registered already
-
 		// The templates take a hidden parameter with the object type
 		if( (objectType->flags & asOBJ_TEMPLATE) &&
 			(func.parameterTypes.GetLength() == 0 ||
@@ -2026,6 +2033,17 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_FIRST_PARAM_MUST_BE_REF_FOR_TEMPLATE_FACTORY);
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+		}
+
+		// TODO: Verify that the same factory function hasn't been registered already
+
+		// Don't accept duplicates
+		if( behaviour == asBEHAVE_LIST_FACTORY && beh->listFactory )
+		{
+			if( listPattern )
+				listPattern->Destroy(this);
+
+			return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
 		// Store all factory functions in a list
