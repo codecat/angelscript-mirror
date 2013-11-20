@@ -252,6 +252,39 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test setting and getting a function pointer in the CScriptHandle from the application side
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		asIScriptFunction *func = engine->GetFunctionById(r);
+
+		CScriptHandle hndl;
+		
+		// Pass the function pointer to the script handle
+		hndl.Set(func, engine->GetObjectTypeById(func->GetTypeId()));
+
+		// Verify the type id
+		int typeId = hndl.GetTypeId();
+		if( (typeId & ~asTYPEID_OBJHANDLE) != func->GetTypeId() )
+			TEST_FAILED;
+
+		// Retrieve the function
+		if( hndl.GetType()->GetFlags() & asOBJ_SCRIPT_FUNCTION )
+		{
+			hndl.Cast((void**)&func, hndl.GetTypeId());
+
+			if( strcmp(func->GetName(), "assert") != 0 )
+				TEST_FAILED;
+
+			func->Release();
+		}
+
+		// Clear the handle to release the reference
+		hndl.Set(0,0);
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

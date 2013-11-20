@@ -560,7 +560,7 @@ public:
   CScriptHandle &operator=(const CScriptHandle &other);
   
   // Set the reference
-  void Set(void *ref, int typeId);
+  void Set(void *ref, asIObjectType *type);
 
   // Compare equalness
   bool operator==(const CScriptHandle &o) const;
@@ -571,7 +571,8 @@ public:
   void Cast(void **outRef, int typeId);
 
   // Returns the type of the reference held
-  asIObjectType *GetType();
+  asIObjectType *GetType() const;
+  int            GetTypeId() const;
 };
 \endcode
 
@@ -587,7 +588,7 @@ In the scripts it can be used as follows:
   \@unknown = \@obj;
 
   // Compare equalness
-  if( unknown != null ) 
+  if( unknown != null )
   {
     // Dynamically cast the handle to wanted type
     object \@obj2 = cast<object>(unknown);
@@ -619,6 +620,18 @@ void Register(asIScriptEngine *engine)
   r = engine->RegisterGlobalFunction("void Function(ref @)", asFUNCTION(Function), asCALL_CDECL); assert( r >= 0 );
 }
 \endcode
+
+To set an object pointer in the handle from the application, you'll use the 
+Set() method passing a pointer to the object and the type of the object.
+
+To retrieve an object pointer from the application you'll use the Cast() method
+passing in a pointer to the pointer and the wanted type id. If the type id given
+doesn't match the stored handle the returned pointer will be null.
+
+To retrieve an object of an unknown type use the GetType() or GetTypeId() to
+determine the type stored in the handle, then use the Cast() method.
+
+
 
 
 
