@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2013/11/17</h2>
+<h2>Version 2.28.1 WIP - 2013/11/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed improper warning of used types when releasing engine and having circular references between registered types (Thanks Jason Goepel)
 <li>Fixed memory leak on registering opAssign twice for the same object type (Thanks Jason Goepel)
 <li>Compiler will not used enum values from registered enum types if the module doesn't have access to it
+<li>Fixed assert failure in Execute when forgetting to set the object on a class method call (Thanks simps)
 </ul>
 <li>Library
 <ul>

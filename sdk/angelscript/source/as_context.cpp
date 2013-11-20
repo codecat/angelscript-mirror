@@ -1113,13 +1113,10 @@ int asCContext::Execute()
 					}
 				}
 
-				if( realFunc )
-				{
-					if( realFunc->signatureId != m_currentFunction->signatureId )
-						SetInternalException(TXT_NULL_POINTER_ACCESS);
-					else
-						m_currentFunction = realFunc;
-				}
+				if( realFunc && realFunc->signatureId == m_currentFunction->signatureId )
+					m_currentFunction = realFunc;
+				else
+					SetInternalException(TXT_NULL_POINTER_ACCESS);
 			}
 		}
 
@@ -1145,8 +1142,9 @@ int asCContext::Execute()
 		}
 		else
 		{
-			// This shouldn't happen
-			asASSERT(false);
+			// This shouldn't happen unless there was an error in which 
+			// case an exception should have been raised already
+			asASSERT( m_status == asEXECUTION_EXCEPTION );
 		}
 	}
 

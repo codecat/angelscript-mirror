@@ -414,6 +414,53 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test calling a virtual method on a class without setting the object
+	// http://www.gamedev.net/topic/650268-getting-assert-upon-calling-script-function/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script = 
+			"class A { \n"
+			"  void Test() {} \n"
+			"} \n";
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("A"));
+		if( obj == 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(obj->GetObjectType()->GetMethodByName("Test"));
+		// "Forget" to call SetObject
+		r = ctx->Execute();
+		if( r == asEXECUTION_EXCEPTION )
+		{
+			if( strcmp(ctx->GetExceptionString(), "Null pointer access") != 0 )
+			{
+				printf("%s", ctx->GetExceptionString());
+				TEST_FAILED;
+			}
+		}
+		else
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ctx->Release();
+		obj->Release();
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
