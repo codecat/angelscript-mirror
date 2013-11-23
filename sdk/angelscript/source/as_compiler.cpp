@@ -4836,6 +4836,32 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		return asCC_NO_CONV;
 	}
 
+	// Is the conversion an ambiguous enum value?
+	if( ctx->enumValue != "" )
+	{
+		if( to.IsEnumType() )
+		{
+			// Attempt to resolve an ambiguous enum value
+			asCDataType out;
+			asDWORD value;
+			if( builder->GetEnumValueFromObjectType(to.GetObjectType(), ctx->enumValue.AddressOf(), out, value) )
+			{
+				ctx->type.SetConstantDW(out, value);
+				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+
+				// It wasn't really a conversion. The compiler just resolved the ambiguity (or not)
+				return asCC_NO_CONV;
+			}
+		}
+
+		// The enum value is ambiguous
+		if( node && generateCode )
+			Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, node);
+
+		// Set a dummy to allow the compiler to try to continue the conversion
+		ctx->type.SetDummy();
+	}
+
 	// Determine the cost of this conversion
 	asUINT cost = asCC_NO_CONV;
 	if( (to.IsIntegerType() || to.IsUnsignedType()) && (ctx->type.dataType.IsFloatType() || ctx->type.dataType.IsDoubleType()) )
@@ -7633,7 +7659,15 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					found = true;
 					if( e == 2 )
 					{
-						Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, errNode);
+						// Ambiguous enum value: Save the name for resolution later.
+						// The ambiguity could be resolved now, but I hesitate
+						// to store too much information in the context.
+						ctx->enumValue = name.AddressOf();
+						
+						// We cannot set a dummy value because it will pass through
+						// cleanly as an integer.
+						ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttIdentifier, true), 0);
+						return 0;
 					}
 				}
 			}
@@ -10467,6 +10501,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 		asSExprContext ti(engine);
 		ti.type = argExpr->type;
 		ti.methodName = argExpr->methodName;
+		ti.enumValue = argExpr->enumValue;
 		if( argExpr->type.dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
 		asUINT cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
 
@@ -12687,6 +12722,7 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 	before->property_arg    = after->property_arg;
 	before->exprNode        = after->exprNode;
 	before->methodName      = after->methodName;
+	before->enumValue       = after->enumValue;
 
 	after->property_arg = 0;
 

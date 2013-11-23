@@ -609,6 +609,7 @@ bool Test()
 		}
 
 		// We can't release the function after the engine, because it will attempt to access the engine
+		// TODO: Can we use the custom memory manager to force the memory cleanup so we can enable this test?
 		//func->Release();
 	}
 */
@@ -616,6 +617,7 @@ bool Test()
 /*
 	{
 		// This test forces a memory leak due to not registering the GC behaviours for the CFoo class
+		// TODO: Can we use the custom memory manager to force the memory cleanup so we can enable this test?
 		COutStream out;
 		int r;
 

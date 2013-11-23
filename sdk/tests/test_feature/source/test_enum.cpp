@@ -159,15 +159,38 @@ static bool TestEnum()
 	mod->AddScriptSection(NULL, 
 		"enum ENUMA { VALUE = 1 } \n"
 		"enum ENUMB { VALUE = 2 } \n"
+		"enum ENUMC { VAL = 3 } \n"
 		"int a = VALUE; \n" // fails with ambiguity
 		"int b = ENUMA::VALUE; \n" // ok
-		"int c = ENUMB::VALUE; \n"); // ok
+		"int c = ENUMB::VALUE; \n" // ok
+		"ENUMC d = VALUE; \n"); // fails with ambiguity
 	bout.buffer = "";
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != " (3, 7) : Info    : Compiling int a\n"
-	                   " (3, 9) : Error   : Found multiple matching enum values\n" )
+	if( bout.buffer != " (4, 7) : Info    : Compiling int a\n"
+	                   " (4, 9) : Error   : Found multiple matching enum values\n"
+					   " (7, 9) : Info    : Compiling ENUMC d\n"
+					   " (7, 11) : Error   : Found multiple matching enum values\n"
+					   " (7, 11) : Error   : Can't implicitly convert from 'int' to 'ENUMC&'.\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
+	// Automatically resolving ambiguous enums if possible
+	bout.buffer = "";
+	mod->AddScriptSection(NULL, 
+		"enum ENUMA { VALUE = 1 } \n"
+		"enum ENUMB { VALUE = 2 } \n");
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+	r = ExecuteString(engine, "ENUMA a = VALUE; assert( a == 1 );\n"
+							  "ENUMB b = VALUE; assert( b == 2 );\n", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+	if( bout.buffer != "" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
