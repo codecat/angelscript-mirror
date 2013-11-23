@@ -137,11 +137,13 @@ to use handles to the array object when passing it around to avoid costly copies
   - void removeAt(uint index);
   - void removeLast();
   - void sortAsc();
-  - void sortAsc(uint index, uint count);
+  - void sortAsc(uint startAt, uint count);
   - void sortDesc();
-  - void sortDesc(uint index, uint count);
+  - void sortDesc(uint startAt, uint count);
   - int  find(const T& in);
-  - int  find(uint index, const T& in);
+  - int  find(uint startAt, const T& in);
+  - int  findByRef(const T& in);
+  - int  findByRef(uint startAt, const T& in);
 
 The T represents the type of the array elements.
   

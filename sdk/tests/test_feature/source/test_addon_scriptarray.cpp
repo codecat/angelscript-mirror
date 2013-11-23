@@ -1065,6 +1065,35 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test findByRef
+	{
+		const char *script =
+			"class Obj {} \n"
+			"array<int> ia = {1,2,3}; \n"
+			"array<Obj> oa = {Obj(), Obj()}; \n"
+			"array<Obj@> ha = {Obj(), Obj()}; \n";
+
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( ia.findByRef(ia[1]) == -1 ); \n"
+								  "Obj @obj = oa[1]; assert( oa.findByRef(obj) == 1 ); \n"
+								  "@obj = ha[1]; assert( ha.findByRef(obj) == 1 ); \n"
+								  "ha.insertLast(null); assert( ha.findByRef(null) == 2 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }

@@ -358,6 +358,8 @@ void DumpModule(asIScriptModule *mod)
 		" void reverse()\n"
 		" int find(const T&in) const\n"
 		" int find(uint, const T&in) const\n"
+		" int findByRef(const T&in) const\n"
+		" int findByRef(uint, const T&in) const\n"
 		" bool opEquals(const T[]&in) const\n"
 		" bool isEmpty() const\n"
 		" uint get_length() const\n"

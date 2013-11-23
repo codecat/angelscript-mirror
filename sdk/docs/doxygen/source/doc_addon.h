@@ -379,12 +379,14 @@ public:
   void InsertLast(void *value);
   void RemoveLast();
   void SortAsc();
-  void SortAsc(asUINT index, asUINT count);
+  void SortAsc(asUINT startAt, asUINT count);
   void SortDesc();
-  void SortDesc(asUINT index, asUINT count);
+  void SortDesc(asUINT startAt, asUINT count);
   void Reverse();
   int  Find(void *value) const;
-  int  Find(asUINT index, void *value) const;
+  int  Find(asUINT startAt, void *value) const;
+  int  FindByRef(void *ref) const;
+  int  FindByRef(asUINT startAt, void *ref) const;
 };
 \endcode
 
