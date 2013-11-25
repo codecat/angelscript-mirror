@@ -29,6 +29,7 @@
 */
 
 
+
 //
 // as_config.h
 //
@@ -798,6 +799,11 @@
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
+			#if defined(__FAST_MATH__) && __FAST_MATH__ == 1 && !defined(AS_MAX_PORTABILITY)
+				#error -ffast-math is not supported with native calling conventions
+			#endif
+
 		#elif defined(__mips__)
 			#define AS_MIPS
 			#define AS_BIG_ENDIAN
