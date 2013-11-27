@@ -1881,6 +1881,10 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 				bool noMatch = true;
 				if( args.GetLength() < desc->parameterTypes.GetLength() )
 				{
+					// For virtual functions, the default args are defined in the real function of the object
+					if( desc->funcType == asFUNC_VIRTUAL )
+						desc = objectType->virtualFunctionTable[desc->vfTableIdx];
+
 					// Count the number of default args
 					asUINT defaultArgs = 0;
 					for( asUINT d = 0; d < desc->defaultArgs.GetLength(); d++ )
@@ -8954,7 +8958,14 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// Add the default values for arguments not explicitly supplied
 			asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-				r = CompileDefaultArgs(node, args, func);
+			{
+				// Make sure to use the real function for virtual functions
+				asCScriptFunction *realFunc = func;
+				if( realFunc->funcType == asFUNC_VIRTUAL )
+					realFunc = objectType->virtualFunctionTable[realFunc->vfTableIdx];
+
+				r = CompileDefaultArgs(node, args, realFunc);
+			}
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 			//                is it enough to make sure it is in a local variable?

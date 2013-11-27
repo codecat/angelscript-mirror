@@ -15,6 +15,36 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 	
+	// Test default arg and derived classes
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(int a, int b) { \n"
+			"  assert( a == 56 ); \n"
+			"  assert( b == 78 ); \n"
+			"} \n"
+			"class Base { \n"
+			"  void method(int a = 12, int b = 34) { func(a,b); } \n"
+			"} \n"
+			"class Derived : Base { \n"
+			"  void method(int a = 56, int b = 78) { func(a,b); } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Derived d; d.method();", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test memory leak with shared functions and default args
 	// http://www.gamedev.net/topic/646826-crash-on-exit-binding-wrong/
 	{
