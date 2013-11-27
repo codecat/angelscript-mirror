@@ -3085,12 +3085,8 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->isFinal          = func->isFinal;
 	vf->isOverride       = func->isOverride;
 	vf->vfTableIdx       = idx;
-	vf->defaultArgs      = func->defaultArgs;
 
-	// Copy the default arg strings to avoid multiple deletes on the same object
-	for( asUINT n = 0; n < vf->defaultArgs.GetLength(); n++ )
-		if( vf->defaultArgs[n] )
-			vf->defaultArgs[n] = asNEW(asCString)(*vf->defaultArgs[n]);
+	// It is not necessary to copy the default args, as they have no meaning in the virtual function
 
 	module->AddScriptFunction(vf);
 
