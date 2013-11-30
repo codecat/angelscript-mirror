@@ -78,6 +78,7 @@ bool Test()
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r >= 0 || bout.buffer != "script (1, 1) : Error   : Data type can't be 'Object'\n"
+		                         "script (1, 8) : Info    : Compiling Object obj2\n"
 		  					     "script (1, 8) : Error   : No default constructor for object of type 'Object'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());

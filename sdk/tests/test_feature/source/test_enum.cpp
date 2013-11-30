@@ -168,9 +168,9 @@ static bool TestEnum()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != " (4, 7) : Info    : Compiling int a\n"
+	if( bout.buffer != " (4, 5) : Info    : Compiling int a\n"
 	                   " (4, 9) : Error   : Found multiple matching enum values\n"
-					   " (7, 9) : Info    : Compiling ENUMC d\n"
+					   " (7, 7) : Info    : Compiling ENUMC d\n"
 					   " (7, 11) : Error   : Found multiple matching enum values\n"
 					   " (7, 11) : Error   : Can't implicitly convert from 'int' to 'ENUMC&'.\n" )
 	{
@@ -205,10 +205,10 @@ static bool TestEnum()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "error (1, 22) : Info    : Compiling TEST_ERR ERR1\n"
+	if( bout.buffer != "error (1, 17) : Info    : Compiling TEST_ERR ERR1\n"
 					   "error (1, 24) : Error   : 'ERR2' is not declared\n"
-					   "error (1, 1) : Info    : Compiling TEST_ERR ERR2\n"
-                       "error (1, 1) : Error   : Use of uninitialized global variable 'ERR1'.\n" )
+					   "error (1, 30) : Info    : Compiling TEST_ERR ERR2\n"
+                       "error (1, 30) : Error   : Use of uninitialized global variable 'ERR1'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -574,7 +574,7 @@ static bool TestEnum()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "script (6, 13) : Info    : Compiling ENUM_1 g_e2\n"
+		if( bout.buffer != "script (6, 8) : Info    : Compiling ENUM_1 g_e2\n"
 		                   "script (6, 15) : Error   : 'E2_VAL1' is not declared\n" )
 		{
 			printf("%s", bout.buffer.c_str());
@@ -685,9 +685,9 @@ static bool TestEnum()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "script (3, 10) : Info    : Compiling E VALUE1\n"
+		if( bout.buffer != "script (3, 3) : Info    : Compiling E VALUE1\n"
 						   "script (3, 14) : Error   : Unexpected token '<identifier>'\n"
-						   "script (4, 10) : Info    : Compiling E VALUE2\n"
+						   "script (4, 3) : Info    : Compiling E VALUE2\n"
 						   "script (4, 14) : Error   : Unexpected token '<identifier>'\n" )
 		{
 			printf("%s", bout.buffer.c_str());

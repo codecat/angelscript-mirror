@@ -1090,7 +1090,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	// Compile the expression
 	asSExprContext ctx(engine);
 	asQWORD constantValue;
-	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->idNode, gvar->index, &constantValue, 1) )
+	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1) )
 	{
 		// Should the variable be marked as pure constant?
 		if( gvar->datatype.IsPrimitive() && gvar->datatype.IsReadOnly() )
@@ -1105,10 +1105,10 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// Add information on the line number for the global variable
 	size_t pos = 0;
-	if( gvar->idNode )
-		pos = gvar->idNode->tokenPos;
-	else if( gvar->nextNode )
-		pos = gvar->nextNode->tokenPos;
+	if( gvar->declaredAtNode )
+		pos = gvar->declaredAtNode->tokenPos;
+	else if( gvar->initializationNode )
+		pos = gvar->initializationNode->tokenPos;
 	LineInstr(&byteCode, pos);
 
 	// Reserve space for all local variables

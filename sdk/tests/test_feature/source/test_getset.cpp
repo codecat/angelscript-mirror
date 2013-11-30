@@ -1162,7 +1162,7 @@ bool Test()
 		if( r != asINIT_GLOBAL_VARS_FAILED )
 			TEST_FAILED;
 
-		if( bout.buffer != "script (1, 13) : Error   : Failed to initialize global variable '_s'\n"
+		if( bout.buffer != "script (1, 8) : Error   : Failed to initialize global variable '_s'\n"
 		                   "script (2, 0) : Info    : Exception 'Null pointer access' in 'string get_s()'\n" )
 		{
 			printf("%s", bout.buffer.c_str());

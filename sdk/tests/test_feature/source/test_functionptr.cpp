@@ -428,7 +428,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "test (3, 8) : Info    : Compiling CB@ cb\n"
+		if( bout.buffer != "test (3, 5) : Info    : Compiling CB@ cb\n"
 		                   "test (3, 10) : Error   : Can't create delegate for types that do not support handles\n" )
 		{
 			printf("%s", bout.buffer.c_str());
@@ -530,6 +530,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "script (2, 1) : Error   : Data type can't be 'functype'\n"
+						   "script (2, 10) : Info    : Compiling functype myFunc\n"
 						   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
 		{
 			printf("%s", bout.buffer.c_str());

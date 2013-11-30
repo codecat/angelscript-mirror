@@ -14,7 +14,32 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
-	
+
+	// Test default arg in constructors
+	// http://www.gamedev.net/topic/646936-default-constructors-vs-default-arguments/
+	{
+		// This works in C++, and should work in AngelScript too
+		const char *script = 
+			"class Foo { \n"
+			"  Foo(int arg = 23) {} \n"
+			"  Foo func() { Foo bar; return bar; } \n"
+			"} \n"
+			"Foo bar; \n"
+			"Foo bar2(2); \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+//		if( r < 0 )
+//			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test default arg and derived classes
 	// Reported by Aaron Baker
 	{

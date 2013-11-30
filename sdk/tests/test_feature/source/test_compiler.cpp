@@ -2436,9 +2436,9 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", "derp wtf = 32;");
 		r = mod->Build();
-		if( r >= 0 || bout.buffer != "test (1, 10) : Info    : Compiling derp wtf\n"
+		if( r >= 0 || bout.buffer != "test (1, 6) : Info    : Compiling derp wtf\n"
 		                             "test (1, 12) : Error   : Can't implicitly convert from 'const int' to 'derp&'.\n"
-		                             "test (1, 12) : Error   : There is no copy operator for the type 'derp' available.\n" )
+		                             "test (1, 6) : Error   : There is no copy operator for the type 'derp' available.\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3948,7 +3948,7 @@ bool Test6()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "script (4, 18) : Info    : Compiling const MyClass foo\n"
+	if( bout.buffer != "script (4, 15) : Info    : Compiling const MyClass foo\n"
 					   "script (4, 28) : Error   : 'bar' is not declared\n"
 					   "script (4, 24) : Error   : 'a' is not declared\n" )
 	{

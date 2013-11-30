@@ -112,8 +112,10 @@ asCBuilder::~asCBuilder()
 	asCSymbolTable<sGlobalVariableDescription>::iterator it = globVariables.List();
 	while( it )
 	{
-		if( (*it)->nextNode )
-			(*it)->nextNode->Destroy(engine);
+		if( (*it)->declaredAtNode )
+			(*it)->declaredAtNode->Destroy(engine);
+		if( (*it)->initializationNode )
+			(*it)->initializationNode->Destroy(engine);
 		asDELETE((*it),sGlobalVariableDescription);
 		it++;
 	}
@@ -1427,23 +1429,25 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 		// TODO: Give error message if wrong
 		asASSERT(!gvar->datatype.IsReference());
 
-		gvar->idNode = n;
-		gvar->nextNode = 0;
-		if( n->next &&
-			(n->next->nodeType == snAssignment ||
-			 n->next->nodeType == snArgList    ||
-			 n->next->nodeType == snInitList     ) )
-		{
-			gvar->nextNode = n->next;
-			n->next->DisconnectParent();
-		}
-
 		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype, ns);
 		gvar->index    = gvar->property->id;
 
 		globVariables.Put(gvar);
 
+
+		gvar->declaredAtNode = n;
 		n = n->next;
+		gvar->declaredAtNode->DisconnectParent();
+		gvar->initializationNode = 0;
+		if( n &&
+			( n->nodeType == snAssignment ||
+			  n->nodeType == snArgList    ||
+			  n->nodeType == snInitList     ) )
+		{
+			gvar->initializationNode = n;
+			n = n->next;
+			gvar->initializationNode->DisconnectParent();
+		}
 	}
 
 	node->Destroy(engine);
@@ -1765,10 +1769,10 @@ void asCBuilder::CompileGlobalVariables()
 			if( compilingPrimitives && !gvar->datatype.IsPrimitive() )
 				continue;
 
-			if( gvar->nextNode )
+			if( gvar->declaredAtNode )
 			{
 				int r, c;
-				gvar->script->ConvertPosToRowCol(gvar->nextNode->tokenPos, &r, &c);
+				gvar->script->ConvertPosToRowCol(gvar->declaredAtNode->tokenPos, &r, &c);
 				asCString str = gvar->datatype.Format();
 				str += " " + gvar->name;
 				str.Format(TXT_COMPILING_s, str.AddressOf());
@@ -1778,7 +1782,7 @@ void asCBuilder::CompileGlobalVariables()
 			if( gvar->isEnumValue )
 			{
 				int r;
-				if( gvar->nextNode )
+				if( gvar->initializationNode )
 				{
 					asCCompiler comp(engine);
 					asCScriptFunction func(engine, module, asFUNC_SCRIPT);
@@ -1790,7 +1794,7 @@ void asCBuilder::CompileGlobalVariables()
 					asCDataType saveType;
 					saveType = gvar->datatype;
 					gvar->datatype = asCDataType::CreatePrimitive(ttInt, true);
-					r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, &func);
+					r = comp.CompileGlobalVariable(this, gvar->script, gvar->initializationNode, gvar, &func);
 					gvar->datatype = saveType;
 
 					// Make the function a dummy so it doesn't try to release objects while destroying the function
@@ -1814,9 +1818,8 @@ void asCBuilder::CompileGlobalVariables()
 
 							if( !gvar2->isCompiled )
 							{
-								// TODO: Need to get the correct script position
 								int row, col;
-								gvar->script->ConvertPosToRowCol(0, &row, &col);
+								gvar->script->ConvertPosToRowCol(gvar->declaredAtNode->tokenPos, &row, &col);
 
 								asCString str = gvar->datatype.Format();
 								str += " " + gvar->name;
@@ -1855,7 +1858,7 @@ void asCBuilder::CompileGlobalVariables()
 				initFunc->nameSpace = gvar->property->nameSpace;
 
 				asCCompiler comp(engine);
-				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->nextNode, gvar, initFunc);
+				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->initializationNode, gvar, initFunc);
 				if( r >= 0 )
 				{
 					// Compilation succeeded
@@ -1895,10 +1898,10 @@ void asCBuilder::CompileGlobalVariables()
 					// Finalize the init function for this variable
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
 					initFunc->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(gvar->script->name.AddressOf());
-					if( gvar->nextNode )
+					if( gvar->declaredAtNode )
 					{
 						int row, col;
-						gvar->script->ConvertPosToRowCol(gvar->nextNode->tokenPos, &row, &col);
+						gvar->script->ConvertPosToRowCol(gvar->declaredAtNode->tokenPos, &row, &col);
 						initFunc->scriptData->declaredAt = (row & 0xFFFFF)|((col & 0xFFF)<<20);
 					}
 
@@ -1996,10 +1999,15 @@ void asCBuilder::CompileGlobalVariables()
 			globVariables.Erase(it.GetIndex());
 
 			// Destroy the gvar property
-			if( gvar->nextNode )
+			if( gvar->declaredAtNode )
 			{
-				gvar->nextNode->Destroy(engine);
-				gvar->nextNode = 0;
+				gvar->declaredAtNode->Destroy(engine);
+				gvar->declaredAtNode = 0;
+			}
+			if( gvar->initializationNode )
+			{
+				gvar->initializationNode->Destroy(engine);
+				gvar->initializationNode = 0;
 			}
 			if( gvar->property )
 			{
@@ -3349,22 +3357,24 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				if( gvar == 0 )
 					return asOUT_OF_MEMORY;
 
-				gvar->script		  = file;
-				gvar->idNode          = 0;
-				gvar->nextNode		  = asnNode;
-				gvar->name			  = name;
-				gvar->datatype		  = type;
+				gvar->script             = file;
+				gvar->declaredAtNode     = tmp;
+				tmp = tmp->next;
+				gvar->declaredAtNode->DisconnectParent();
+				gvar->initializationNode = asnNode;
+				gvar->name               = name;
+				gvar->datatype           = type;
 				// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
 				// Set the index to a negative to allow compiler to diferentiate from ordinary global var when compiling the initialization
-				gvar->index			  = -1; 
-				gvar->isCompiled	  = false;
-				gvar->isPureConstant  = true;
-				gvar->isEnumValue     = true;
-				gvar->constantValue   = 0xdeadbeef;
+				gvar->index              = -1; 
+				gvar->isCompiled         = false;
+				gvar->isPureConstant     = true;
+				gvar->isEnumValue        = true;
+				gvar->constantValue      = 0xdeadbeef;
 
 				// Allocate dummy property so we can compile the value.
 				// This will be removed later on so we don't add it to the engine.
-				gvar->property            = asNEW(asCGlobalProperty);
+				gvar->property = asNEW(asCGlobalProperty);
 				if( gvar->property == 0 )
 					return asOUT_OF_MEMORY;
 
@@ -3374,7 +3384,6 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				gvar->property->id        = 0;
 
 				globVariables.Put(gvar);
-				tmp = tmp->next;
 			}
 		}
 	}

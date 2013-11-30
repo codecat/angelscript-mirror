@@ -67,8 +67,8 @@ struct sFunctionDescription
 struct sGlobalVariableDescription
 {
 	asCScriptCode     *script;
-	asCScriptNode     *idNode;
-	asCScriptNode     *nextNode;
+	asCScriptNode     *declaredAtNode;
+	asCScriptNode     *initializationNode;
 	asCString          name;
 	asCGlobalProperty *property;
 	asCDataType        datatype;
