@@ -874,11 +874,9 @@ bool Test()
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-#if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
-#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
+#ifdef AS_CAN_USE_CPP11
         if( GetTypeTraits<A>() != asOBJ_APP_CLASS_CDAK )
             TEST_FAILED;
-#endif
 #endif
 
 		int r = engine->RegisterObjectType("A", sizeof(A), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );

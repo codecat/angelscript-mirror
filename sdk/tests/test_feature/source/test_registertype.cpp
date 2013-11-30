@@ -112,8 +112,7 @@ bool Test()
 		engine->Release();
 	}
 
-#if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
-#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
+#ifdef AS_CAN_USE_CPP11
 	// Test the automatic determination of flags for registering value types
 	if( GetTypeTraits<std::string>() != asOBJ_APP_CLASS_CDAK )
 		TEST_FAILED;
@@ -128,7 +127,6 @@ bool Test()
 	struct T {bool a;};
 	if( GetTypeTraits<T>() != asOBJ_APP_CLASS )
 		TEST_FAILED;
-#endif
 #endif
 
 #ifndef AS_MAX_PORTABILITY

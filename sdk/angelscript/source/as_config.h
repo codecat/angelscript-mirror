@@ -546,7 +546,7 @@
 #endif
 
 // GNU C (and MinGW or Cygwin on Windows)
-// Use the following command to determine predefined macros: echo . | mingw32-g++ -dM -E -
+// Use the following command to determine predefined macros: echo . | g++ -dM -E -
 #if (defined(__GNUC__) && !defined(__SNC__)) || defined(EPPC) || defined(__CYGWIN__) // JWC -- use this instead for Wii
 	#define GNU_STYLE_VIRTUAL_METHOD
 #if !defined( __amd64__ )
@@ -800,8 +800,14 @@
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
 
-			#if defined(__FAST_MATH__) && __FAST_MATH__ == 1 && !defined(AS_MAX_PORTABILITY)
+			#ifndef AS_MAX_PORTABILITY
+			// Make a few checks against incompatible ABI combinations
+			#if defined(__FAST_MATH__) && __FAST_MATH__ == 1
 				#error -ffast-math is not supported with native calling conventions
+			#endif
+			#if defined(__SOFTFP__) && __SOFTFP__ == 1
+				#error -ffloat-abi=soft is not supported with native calling conventions
+			#endif
 			#endif
 
 		#elif defined(__mips__)
