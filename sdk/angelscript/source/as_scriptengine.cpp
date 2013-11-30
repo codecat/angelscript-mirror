@@ -189,6 +189,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_ARM
 		"AS_ARM "
 #endif
+#ifdef AS_SOFTFP
+		"AS_SOFTFP "
+#endif
 #ifdef AS_X64_GCC
 		"AS_X64_GCC "
 #endif
@@ -425,6 +428,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 
 	case asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE:
 		return ep.disallowValueAssignForRefType;
+
+	default:
+		return 0;
 	}
 
 	return 0;
