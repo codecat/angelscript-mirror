@@ -819,14 +819,44 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 		int func = 0;
 		asSTypeBehaviour *beh = type.GetBehaviour();
-		if( beh ) func = beh->factory;
+		if( beh ) 
+		{
+			func = beh->factory;
+
+			// If no trivial default factory is found, look for a factory where all params have default args
+			if( func == 0 )
+			{
+				for( asUINT n = 0; n < beh->factories.GetLength(); n++ )
+				{
+					asCScriptFunction *f = engine->scriptFunctions[beh->factories[n]];
+					if( f->defaultArgs.GetLength() == f->parameterTypes.GetLength() &&
+						f->defaultArgs[0] != 0 )
+					{
+						func = beh->factories[n];
+						break;
+					}
+				}
+			}
+		}
 
 		if( func > 0 )
 		{
+			asCArray<asSExprContext *> args;
+			asCScriptFunction *f = engine->scriptFunctions[func];
+			if( f->parameterTypes.GetLength() )
+			{
+				// Add the default values for arguments not explicitly supplied
+				CompileDefaultArgs(node, args, f);
+
+				PrepareFunctionCall(func, &ctx.bc, args);
+
+				MoveArgsToStack(func, &ctx.bc, args, false);
+			}
+
 			if( isVarGlobOrMem == 0 )
 			{
 				// Call factory and store the handle in the given variable
-				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType(), true, offset);
+				PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType(), true, offset);
 
 				// Pop the reference left by the function call
 				ctx.bc.Instr(asBC_PopPtr);
@@ -834,7 +864,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			else
 			{
 				// Call factory
-				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+				PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType());
 
 				// TODO: runtime optimize: Should have a way of storing the object pointer directly to the destination
 				//                         instead of first storing it in a local variable and then copying it to the
@@ -878,19 +908,59 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 			bc->AddCode(&ctx.bc);
 
+			// Cleanup
+			for( asUINT n = 0; n < args.GetLength(); n++ )
+				if( args[n] )
+				{
+					asDELETE(args[n],asSExprContext);
+				}
+
 			return 0;
 		}
 	}
 	else
 	{
+		asSExprContext ctx(engine);
+		ctx.exprNode = node;
+
 		asSTypeBehaviour *beh = type.GetBehaviour();
 
 		int func = 0;
-		if( beh ) func = beh->construct;
+		if( beh ) 
+		{
+			func = beh->construct;
+
+			// If no trivial default constructor is found, look for a constructor where all params have default args
+			if( func == 0 )
+			{
+				for( asUINT n = 0; n < beh->constructors.GetLength(); n++ )
+				{
+					asCScriptFunction *f = engine->scriptFunctions[beh->constructors[n]];
+					if( f->defaultArgs.GetLength() == f->parameterTypes.GetLength() &&
+						f->defaultArgs[0] != 0 )
+					{
+						func = beh->constructors[n];
+						break;
+					}
+				}
+			}
+		}
 
 		// Allocate and initialize with the default constructor
 		if( func != 0 || (type.GetObjectType()->flags & asOBJ_POD) )
 		{
+			asCArray<asSExprContext *> args;
+			asCScriptFunction *f = engine->scriptFunctions[func];
+			if( f && f->parameterTypes.GetLength() )
+			{
+				// Add the default values for arguments not explicitly supplied
+				CompileDefaultArgs(node, args, f);
+
+				PrepareFunctionCall(func, &ctx.bc, args);
+
+				MoveArgsToStack(func, &ctx.bc, args, false);
+			}
+
 			if( !isObjectOnHeap )
 			{
 				asASSERT( isVarGlobOrMem == 0 );
@@ -903,8 +973,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 					bc->InstrSHORT(asBC_PSF, (short)offset);
 					if( derefDest )
 						bc->Instr(asBC_RDSPtr);
-					asSExprContext ctx(engine);
-					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+					PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType());
 					bc->AddCode(&ctx.bc);
 
 					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
@@ -927,6 +996,13 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 				bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
 			}
+
+			// Cleanup
+			for( asUINT n = 0; n < args.GetLength(); n++ )
+				if( args[n] )
+				{
+					asDELETE(args[n],asSExprContext);
+				}
 
 			return 0;
 		}
@@ -1304,6 +1380,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				// variable then it is not necessary to make a copy either
 				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) && !isMakingCopy )
 				{
+					// TODO: 2.28.1: Need to reserve variables, as the default constructor may need 
+					//               to allocate temporary variables to compute default args
 					// Make sure the variable is not used in the expression
 					offset = AllocateVariableNotIn(dt, true, false, ctx);
 
@@ -1387,6 +1465,9 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			}
 			else
 			{
+				// TODO: 2.28.1: Need to reserve variables, as the default constructor may need 
+				//               to allocate temporary variables to compute default args
+
 				// Allocate and construct the temporary object
 				asCByteCode tmpBC(engine);
 				CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
@@ -8712,6 +8793,8 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		{
 			int r = asSUCCESS;
 
+			// TODO: 2.28.1: Merge this with MakeFunctionCall
+
 			// Add the default values for arguments not explicitly supplied
 			asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
@@ -8929,7 +9012,6 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
-	asCArray<asCTypeInfo> temporaryVariables;
 
 	if( CompileArgumentList(node->lastChild, args) >= 0 )
 	{

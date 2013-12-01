@@ -562,7 +562,8 @@ void asCBuilder::ParseScripts()
 						decl->objType->beh.factory = 0;
 						decl->objType->beh.factories.RemoveIndex(0);
 					}
-					if( decl->objType->beh.copy )
+					// Only remove the opAssign method if the script hasn't provided one
+					if( decl->objType->beh.copy == engine->scriptTypeBehaviours.beh.copy )
 					{
 						engine->scriptFunctions[decl->objType->beh.copy]->Release();
 						decl->objType->beh.copy = 0;
