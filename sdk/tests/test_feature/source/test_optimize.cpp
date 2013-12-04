@@ -1082,6 +1082,48 @@ bool TestOptimize()
 
 	engine->Release();
 
+	// Avoid unnecessary copies of objects
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("bool GetInputDown(int, const string &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"	GetInputDown(1, 'ctrl'); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// TODO: When asEP_ALLOW_UNSAFE_REFERENCES is used, the copy shouldn't be needed
+		// TODO: The application needs to have some way to tell the engine that the returned reference
+		//       is safe to be passed around without copying the object even if sand-boxing is required.
+		//       Perhaps something like RegisterStringFactory("const string &safe", ...);
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,
+				// Call the stringfactory that returns the reference to the string
+				asBC_STR,asBC_CALLSYS,
+				// Make a copy of the returned string, since it is not known what the reference points to
+				asBC_PshRPtr,asBC_PSF,asBC_CALLSYS,
+				// Call the GetInputDown function passing in a reference to the string stored locally
+				asBC_VAR,asBC_PshC4,asBC_GETREF,asBC_CALLSYS,
+				// Free the local string
+				asBC_PSF,asBC_CALLSYS,
+				asBC_SUSPEND,asBC_RET
+			};
+		if( !ValidateByteCode(func, expect) )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
+
 	// Success
 	return fail;
 }

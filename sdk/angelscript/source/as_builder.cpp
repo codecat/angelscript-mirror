@@ -2162,7 +2162,14 @@ void asCBuilder::CompileInterfaces()
 			}
 
 			// Find the object type for the interface
-			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
+			asCObjectType *objType = 0;
+			while( ns )
+			{
+				objType = GetObjectType(name.AddressOf(), ns);
+				if( objType ) break;
+
+				ns = GetParentNameSpace(ns);
+			}
 
 			// Check that the object type is an interface
 			bool ok = true;
@@ -2326,20 +2333,29 @@ void asCBuilder::CompileClasses()
 			}
 
 			// Find the object type for the interface
-			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
-
-			if( objType == 0 )
+			asCObjectType *objType = 0;
+			sMixinClass *mixin = 0;
+			while( ns )
 			{
-				// Check if the name is a mixin class
-				sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
-				if( !mixin )
-				{
-					asCString str;
-					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
-					WriteError(str, file, node);
-				}
-				else
-					AddInterfaceFromMixinToClass(decl, node, mixin);
+				objType = GetObjectType(name.AddressOf(), ns);
+				if( objType == 0 )
+					mixin = GetMixinClass(name.AddressOf(), ns);
+
+				if( objType || mixin )
+					break;
+
+				ns = GetParentNameSpace(ns);
+			}
+
+			if( objType == 0 && mixin == 0 )
+			{
+				asCString str;
+				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
+				WriteError(str, file, node);
+			}
+			else if( mixin )
+			{
+				AddInterfaceFromMixinToClass(decl, node, mixin);
 			}
 			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) ||
 					 objType->flags & asOBJ_NOINHERIT )
