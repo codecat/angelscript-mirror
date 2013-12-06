@@ -31,9 +31,9 @@ bool Test()
 
 			mod->AddScriptSection("", script);
 			r = mod->Build();
-			if( r < 0 )
+			if( r >= 0 )
 				TEST_FAILED;
-			if( bout.buffer != "" )
+			if( bout.buffer != " (0, 0) : Error   : Nothing was built in the module\n" )
 			{
 				printf("%s", bout.buffer.c_str());
 				TEST_FAILED;

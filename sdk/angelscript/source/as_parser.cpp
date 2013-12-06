@@ -1728,6 +1728,13 @@ int asCParser::ParseScript(asCScriptCode *script)
 	if( errorWhileParsing )
 		return -1;
 
+	// Warn in case there isn't anything in the script
+	if( scriptNode->firstChild == 0 )
+	{
+		if( builder )
+			builder->WriteWarning(script->name, TXT_SECTION_IS_EMPTY, 1, 1);
+	}
+
 	return 0;
 }
 

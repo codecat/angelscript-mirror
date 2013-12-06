@@ -83,6 +83,68 @@ class asILockableSharedBool;
 
 // Enumerations and constants
 
+// Return codes
+//! Return codes
+enum asERetCodes
+{
+	//! Success
+	asSUCCESS                              =  0,
+	//! Failure
+	asERROR                                = -1,
+	//! The context is active
+	asCONTEXT_ACTIVE                       = -2,
+	//! The context is not finished
+	asCONTEXT_NOT_FINISHED                 = -3,
+	//! The context is not prepared
+	asCONTEXT_NOT_PREPARED                 = -4,
+	//! Invalid argument
+	asINVALID_ARG                          = -5,
+	//! The function was not found
+	asNO_FUNCTION                          = -6,
+	//! Not supported
+	asNOT_SUPPORTED                        = -7,
+	//! Invalid name
+	asINVALID_NAME                         = -8,
+	//! The name is already taken
+	asNAME_TAKEN                           = -9,
+	//! Invalid declaration
+	asINVALID_DECLARATION                  = -10,
+	//! Invalid object
+	asINVALID_OBJECT                       = -11,
+	//! Invalid type
+	asINVALID_TYPE                         = -12,
+	//! Already registered
+	asALREADY_REGISTERED                   = -13,
+	//! Multiple matching functions
+	asMULTIPLE_FUNCTIONS                   = -14,
+	//! The module was not found
+	asNO_MODULE                            = -15,
+	//! The global variable was not found
+	asNO_GLOBAL_VAR                        = -16,
+	//! Invalid configuration
+	asINVALID_CONFIGURATION                = -17,
+	//! Invalid interface
+	asINVALID_INTERFACE                    = -18,
+	//! All imported functions couldn't be bound
+	asCANT_BIND_ALL_FUNCTIONS              = -19,
+	//! The array sub type has not been registered yet
+	asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20,
+	//! Wrong configuration group
+	asWRONG_CONFIG_GROUP                   = -21,
+	//! The configuration group is in use
+	asCONFIG_GROUP_IS_IN_USE               = -22,
+	//! Illegal behaviour for the type
+	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
+	//! The specified calling convention doesn't match the function/method pointer
+	asWRONG_CALLING_CONV                   = -24,
+	//! A build is currently in progress
+	asBUILD_IN_PROGRESS                    = -25,
+	//! The initialization of global variables failed
+	asINIT_GLOBAL_VARS_FAILED              = -26,
+	//! It wasn't possible to allocate the needed memory
+	asOUT_OF_MEMORY                        = -27
+};
+
 // Engine properties
 //! Engine properties
 enum asEEngineProp
@@ -285,70 +347,7 @@ enum asEBehaviours
 	asBEHAVE_MAX
 };
 
-// Return codes
-//! Return codes
-enum asERetCodes
-{
-	//! Success
-	asSUCCESS                              =  0,
-	//! Failure
-	asERROR                                = -1,
-	//! The context is active
-	asCONTEXT_ACTIVE                       = -2,
-	//! The context is not finished
-	asCONTEXT_NOT_FINISHED                 = -3,
-	//! The context is not prepared
-	asCONTEXT_NOT_PREPARED                 = -4,
-	//! Invalid argument
-	asINVALID_ARG                          = -5,
-	//! The function was not found
-	asNO_FUNCTION                          = -6,
-	//! Not supported
-	asNOT_SUPPORTED                        = -7,
-	//! Invalid name
-	asINVALID_NAME                         = -8,
-	//! The name is already taken
-	asNAME_TAKEN                           = -9,
-	//! Invalid declaration
-	asINVALID_DECLARATION                  = -10,
-	//! Invalid object
-	asINVALID_OBJECT                       = -11,
-	//! Invalid type
-	asINVALID_TYPE                         = -12,
-	//! Already registered
-	asALREADY_REGISTERED                   = -13,
-	//! Multiple matching functions
-	asMULTIPLE_FUNCTIONS                   = -14,
-	//! The module was not found
-	asNO_MODULE                            = -15,
-	//! The global variable was not found
-	asNO_GLOBAL_VAR                        = -16,
-	//! Invalid configuration
-	asINVALID_CONFIGURATION                = -17,
-	//! Invalid interface
-	asINVALID_INTERFACE                    = -18,
-	//! All imported functions couldn't be bound
-	asCANT_BIND_ALL_FUNCTIONS              = -19,
-	//! The array sub type has not been registered yet
-	asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20,
-	//! Wrong configuration group
-	asWRONG_CONFIG_GROUP                   = -21,
-	//! The configuration group is in use
-	asCONFIG_GROUP_IS_IN_USE               = -22,
-	//! Illegal behaviour for the type
-	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
-	//! The specified calling convention doesn't match the function/method pointer
-	asWRONG_CALLING_CONV                   = -24,
-	//! A build is currently in progress
-	asBUILD_IN_PROGRESS                    = -25,
-	//! The initialization of global variables failed
-	asINIT_GLOBAL_VARS_FAILED              = -26,
-	//! It wasn't possible to allocate the needed memory
-	asOUT_OF_MEMORY                        = -27
-};
-
 // Context states
-
 //! \brief Context states.
 enum asEContextState
 {
@@ -371,7 +370,6 @@ enum asEContextState
 };
 
 // Message types
-
 //! \brief Compiler message types.
 enum asEMsgType
 {
@@ -1471,7 +1469,7 @@ public:
 	//! \return A pointer to the function description interface, or null if not found.
 	//!
 	//! This does not increment the reference count of the returned function interface.
-    virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const = 0;
+	virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const = 0;
 	//! \}
 
 	// Type identification
@@ -2197,6 +2195,7 @@ public:
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The stream object wasn't specified.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
+	//! \retval asERROR Nothing has been compiled in the module.
 	//!
 	//! This method is used to save pre-compiled byte code to disk or memory, for a later restoral.
 	//! The application must implement an object that inherits from \ref asIBinaryStream to provide

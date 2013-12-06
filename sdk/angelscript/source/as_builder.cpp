@@ -223,11 +223,17 @@ int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int 
 		return asOUT_OF_MEMORY;
 
 	int r = script->SetCode(name, code, codeLength, makeCopy);
+	if( r < 0 )
+	{
+		asDELETE(script, asCScriptCode);
+		return r;
+	}
+
 	script->lineOffset = lineOffset;
 	script->idx = sectionIdx;
 	scripts.PushLast(script);
 
-	return r;
+	return 0;
 }
 
 int asCBuilder::Build()
@@ -251,6 +257,13 @@ int asCBuilder::Build()
 
 	if( numErrors > 0 )
 		return asERROR;
+
+	// Make sure something was compiled, otherwise return an error
+	if( module->IsEmpty() )
+	{
+		WriteError(TXT_NOTHING_WAS_BUILT, 0, 0);
+		return asERROR;
+	}
 
 	return asSUCCESS;
 }

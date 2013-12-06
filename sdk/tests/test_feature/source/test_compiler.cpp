@@ -1157,10 +1157,11 @@ bool Test()
 		if( r != asINVALID_ARG )
 			TEST_FAILED;
 		r = mod->Build();
-		if( r < 0 )
+		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "" )
+		if( bout.buffer != "test (1, 1) : Warning : The script section is empty\n"
+						   " (0, 0) : Error   : Nothing was built in the module\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

@@ -708,21 +708,18 @@ bool Test()
 #endif
 
 	//-----------------------------------------
-	// A different case
+	// Saving bytecode for a module that failed to compile shouldn't be allowed
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script3", script3, strlen(script3));
-		mod->Build();
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
 		CBytecodeStream stream2(__FILE__"2");
-		mod->SaveByteCode(&stream2);
-
-		engine->Release();
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->LoadByteCode(&stream2);
-		ExecuteString(engine, "Test(3)", mod);
+		r = mod->SaveByteCode(&stream2);
+		if( r >= 0 )
+			TEST_FAILED;
 
 		engine->Release();
 	}

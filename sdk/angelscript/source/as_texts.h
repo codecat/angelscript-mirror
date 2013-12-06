@@ -179,6 +179,7 @@
 #define TXT_s_NOT_MEMBER_OF_s                      "'%s' is not a member of '%s'"
 #define TXT_NOT_VALID_REFERENCE                    "Not a valid reference"
 #define TXT_NOT_VALID_LVALUE                       "Not a valid lvalue"
+#define TXT_NOTHING_WAS_BUILT                      "Nothing was built in the module"
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
 #define TXT_OBJECT_HANDLE_NOT_SUPPORTED    "Object handle is not supported for this type"
@@ -213,6 +214,7 @@
 #define TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s    "Shared class cannot inherit from non-shared class '%s'"
 #define TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s        "Shared code cannot use non-shared type '%s'"
 #define TXT_SHARED_s_DOESNT_MATCH_ORIGINAL             "Shared type '%s' doesn't match the original declaration in other module"
+#define TXT_SECTION_IS_EMPTY                           "The script section is empty"
 #define TXT_SIGNED_UNSIGNED_MISMATCH                   "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED                     "Strings are not recognized by the application"
 #define TXT_SWITCH_CASE_MUST_BE_CONSTANT               "Case expressions must be constants"
