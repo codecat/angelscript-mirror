@@ -3377,6 +3377,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	}
 	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
 	{
+		// TODO: Do we really need to store this? It can probably be reconstructed by the reader
 		WriteEncodedInt64(func->vfTableIdx);
 	}
 }
@@ -3391,6 +3392,8 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		WriteData(&ot->flags, 4);
 
 		// size
+		// TODO: Do we really need to store this? The reader should be able to 
+		//       determine the correct size from the object type's flags
 		if( (ot->flags & asOBJ_SCRIPT_OBJECT) && ot->size > 0 )
 		{
 			// The size for script objects may vary from platform to platform so 
@@ -3431,6 +3434,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			WriteObjectType(ot->derivedFrom);
 
 			// interfaces[] / interfaceVFTOffsets[]
+			// TOOD: Is it really necessary to store the VFTOffsets? Can't the reader calculate those?
 			int size = (asUINT)ot->interfaces.GetLength();
 			WriteEncodedInt64(size);
 			asUINT n;
@@ -3441,6 +3445,8 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 
 			// behaviours
+			// TODO: Default behaviours should just be stored as a indicator  
+			//       to avoid storing the actual function object
 			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
 				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
@@ -3454,6 +3460,8 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 
 			// methods[]
+			// TODO: Avoid storing inherited methods in interfaces, as the reader
+			//       can add those directly from the base interface
 			size = (int)ot->methods.GetLength();
 			WriteEncodedInt64(size);
 			for( n = 0; n < ot->methods.GetLength(); n++ )
@@ -3462,6 +3470,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 
 			// virtualFunctionTable[]
+			// TODO: Is it really necessary to store this? Can't it be easily rebuilt by the reader
 			size = (int)ot->virtualFunctionTable.GetLength();
 			WriteEncodedInt64(size);
 			for( n = 0; n < (asUINT)size; n++ )

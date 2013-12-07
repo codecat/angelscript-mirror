@@ -1467,7 +1467,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	// The index into the interface's vftable chunk should be
 	// its index in the methods array.
-	func->vfTableIdx = func->objectType->methods.GetLength();
+	func->vfTableIdx = int(func->objectType->methods.GetLength());
 
 	func->objectType->methods.PushLast(func->id);
 

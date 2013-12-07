@@ -2601,7 +2601,7 @@ void asCBuilder::CompileClasses()
 				asCObjectType *intf = decl->objType->interfaces[n];
 
 				// Add all the interface's functions to the virtual function table
-				asUINT offset = decl->objType->virtualFunctionTable.GetLength();
+				asUINT offset = asUINT(decl->objType->virtualFunctionTable.GetLength());
 				decl->objType->interfaceVFTOffsets.PushLast(offset);
 
 				for( asUINT j = 0; j < intf->methods.GetLength(); j++ )

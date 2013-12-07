@@ -1583,7 +1583,7 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 
 		// TODO: runtime optimize: The list of interfaces should be ordered by the address
 		//                         Then a binary search pattern can be used. 
-		asUINT intfCount = objType->interfaces.GetLength();
+		asUINT intfCount = asUINT(objType->interfaces.GetLength());
 		for( asUINT n = 0; n < intfCount; n++ )
 		{
 			if( objType->interfaces[n] == findInterface )
