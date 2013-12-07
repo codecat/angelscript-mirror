@@ -166,8 +166,9 @@ user, but this can be easily overloaded by deriving from the <code>CDebugger</co
 the methods <code>TakeCommands</code> and <code>Output</code>. With this it is possible to implement a graphical 
 interface, or even remote debugging for an application.
 
-The application developer may also be interested in overriding the default <code>ToString</code> method
-to implement ways to visualize application registered types in an easier way.
+The application developer may also be interested in registering to-string callbacks for registered types
+with calls to <code>RegisterToStringCallback</code>. Optionally the <code>ToString</code> method in the 
+debugger can be overridden to implement custom to-string logic.
 
 \see The sample \ref doc_samples_asrun for a complete example of how to use the debugger
 
@@ -180,6 +181,10 @@ public:
   CDebugger();
   virtual ~CDebugger();
 
+  // Register callbacks to handle to-string conversions of application types
+  typedef std::string (*ToStringCallback)(void *obj);
+  virtual void RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback);
+  
   // User interaction
   virtual void TakeCommands(asIScriptContext *ctx);
   virtual void Output(const std::string &str);

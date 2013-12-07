@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/debugger/debugger.h"
+#include <sstream>
 
 namespace Test_Addon_Debugger
 {
@@ -35,12 +36,6 @@ public:
 
 	std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine)
 	{
-		// Interpret the string value
-		if( typeId == engine->GetTypeIdByDecl("string") )
-		{
-			return "\"" + *reinterpret_cast<std::string*>(value) + "\"";
-		}
-
 		// Let debugger do the rest
 		std::string str = CDebugger::ToString(value, typeId, expandMembers, engine);
 
@@ -112,6 +107,17 @@ public:
 	std::string output;
 };
 
+std::string StringToString(void *obj)
+{
+	std::string *val = reinterpret_cast<std::string*>(obj);
+	std::stringstream s;
+	s << "(" << val->length() << ") \"";
+	if( val->length() < 20 )
+		s << *val << "\"";
+	else
+		s << val->substr(0, 20) << "...";
+	return s.str();
+}
 
 bool Test()
 {
@@ -127,6 +133,8 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
+
+		debug.RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
 
 		const char *script = 
 			"void func(int a, const int &in b, string c, const string &in d, type @e, type &f, type @&in g) \n"
@@ -157,16 +165,16 @@ bool Test()
 							"ExecuteString:1; void ExecuteString()\n"
 							"int a = 1\n"
 							"const int& b = 2\n"
-							"string c = \"c\"\n"
-							"const string& d = \"d\"\n"
+							"string c = (1) \"c\"\n"
+							"const string& d = (1) \"d\"\n"
 							"type@ e = {XXXXXXXX}\n"
 							"type& f = {XXXXXXXX}\n"
 							"type@& g = {XXXXXXXX}\n"
 							"script:3; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
 							"int a = 1\n"
 							"const int& b = 2\n"
-							"string c = \"c\"\n"
-							"const string& d = \"d\"\n"
+							"string c = (1) \"c\"\n"
+							"const string& d = (1) \"d\"\n"
 							"type@ e = {XXXXXXXX}\n"
 							"type& f = {XXXXXXXX}\n"
 							"type@& g = {XXXXXXXX}\n"
