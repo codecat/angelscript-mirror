@@ -793,7 +793,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			func->scriptData->declaredAt = ReadEncodedUInt();
 		}
 	}
-	else if( func->funcType == asFUNC_VIRTUAL )
+	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
 	{
 		func->vfTableIdx = ReadEncodedUInt();
 	}
@@ -929,13 +929,15 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					ot->derivedFrom->AddRef();
 			}
 
-			// interfaces[]
+			// interfaces[] / interfaceVFTOffsets[]
 			int size = ReadEncodedUInt();
 			if( sharedExists )
 			{
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = ReadObjectType();
+					ReadEncodedUInt();
+
 					if( !ot->Implements(intf) )
 					{
 						asCString str;
@@ -948,10 +950,14 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			else
 			{
 				ot->interfaces.Allocate(size,0);
+				ot->interfaceVFTOffsets.Allocate(size,0);
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = ReadObjectType();
 					ot->interfaces.PushLast(intf);
+
+					asUINT offset = ReadEncodedUInt();
+					ot->interfaceVFTOffsets.PushLast(offset);
 				}
 			}
 
@@ -3369,7 +3375,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			WriteEncodedInt64(func->scriptData->declaredAt);
 		}
 	}
-	else if( func->funcType == asFUNC_VIRTUAL )
+	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
 	{
 		WriteEncodedInt64(func->vfTableIdx);
 	}
@@ -3424,13 +3430,14 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		{
 			WriteObjectType(ot->derivedFrom);
 
-			// interfaces[]
+			// interfaces[] / interfaceVFTOffsets[]
 			int size = (asUINT)ot->interfaces.GetLength();
 			WriteEncodedInt64(size);
 			asUINT n;
 			for( n = 0; n < ot->interfaces.GetLength(); n++ )
 			{
 				WriteObjectType(ot->interfaces[n]);
+				WriteEncodedInt64(ot->interfaceVFTOffsets[n]);
 			}
 
 			// behaviours

@@ -2265,6 +2265,17 @@ void asCBuilder::CompileInterfaces()
 		sClassDeclaration *intfDecl = interfaceDeclarations[n];
 		asCObjectType *intfType = intfDecl->objType;
 
+		// TODO: 2.28.1: Is this really at the correct place? Hasn't the vfTableIdx already been set here?
+		// Co-opt the vfTableIdx value in our own methods to indicate the
+		// index the function should have in the table chunk for this interface.
+		for( asUINT d = 0; d < intfType->methods.GetLength(); d++ )
+		{
+			asCScriptFunction *func = GetFunctionDescription(intfType->methods[d]);
+			func->vfTableIdx = d;
+
+			asASSERT(func->objectType == intfType);
+		}
+
 		// As new interfaces will be added to the end of the list, all
 		// interfaces will be traversed the same as recursively
 		for( asUINT m = 0; m < intfType->interfaces.GetLength(); m++ )
@@ -2565,9 +2576,9 @@ void asCBuilder::CompileClasses()
 			}
 		}
 
-		// Move this class' methods into the virtual function table
 		if( !decl->isExistingShared )
 		{
+			// Move this class' methods into the virtual function table
 			for( asUINT m = 0; m < decl->objType->methods.GetLength(); m++ )
 			{
 				asCScriptFunction *func = GetFunctionDescription(decl->objType->methods[m]);
@@ -2581,6 +2592,55 @@ void asCBuilder::CompileClasses()
 					// Make sure the methods are in the same order as the virtual function table
 					decl->objType->methods.PushLast(CreateVirtualFunction(func, (int)decl->objType->virtualFunctionTable.GetLength() - 1));
 					m--;
+				}
+			}
+
+			// Make virtual function table chunks for each implemented interface
+			for( asUINT n = 0; n < decl->objType->interfaces.GetLength(); n++ )
+			{
+				asCObjectType *intf = decl->objType->interfaces[n];
+
+				// Add all the interface's functions to the virtual function table
+				asUINT offset = decl->objType->virtualFunctionTable.GetLength();
+				decl->objType->interfaceVFTOffsets.PushLast(offset);
+
+				for( asUINT j = 0; j < intf->methods.GetLength(); j++ )
+				{
+					asCScriptFunction *intfFunc = GetFunctionDescription(intf->methods[j]);
+
+					// Only create the table for functions that are explicitly from this interface,
+					// inherited interface methods will be put in that interface's table.
+					if( intfFunc->objectType != intf )
+						continue;
+
+					asASSERT((asUINT)intfFunc->vfTableIdx == j);
+
+					//Find the interface function in the list of methods
+					asCScriptFunction *realFunc = 0;
+					for( asUINT p = 0; p < decl->objType->methods.GetLength(); p++ )
+					{
+						asCScriptFunction *func = GetFunctionDescription(decl->objType->methods[p]);
+
+						if( func->signatureId == intfFunc->signatureId )
+						{
+							if( func->funcType == asFUNC_VIRTUAL )
+							{
+								realFunc = decl->objType->virtualFunctionTable[func->vfTableIdx];
+							}
+							else
+							{
+								// This should not happen, all methods were moved into the virtual table
+								asASSERT(false);
+							}
+							break;
+						}
+					}
+
+					// If realFunc is still null, the interface was not
+					// implemented and we error out later in the checks.
+					decl->objType->virtualFunctionTable.PushLast(realFunc);
+					if( realFunc )
+						realFunc->AddRef();
 				}
 			}
 		}

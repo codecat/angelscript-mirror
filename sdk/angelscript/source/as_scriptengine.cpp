@@ -1464,8 +1464,12 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	func->id = GetNextScriptFunctionId();
 	SetScriptFunction(func);
+
+	// The index into the interface's vftable chunk should be
+	// its index in the methods array.
+	func->vfTableIdx = func->objectType->methods.GetLength();
+
 	func->objectType->methods.PushLast(func->id);
-	// The refCount was already set to 1
 
 	func->ComputeSignatureId();
 
