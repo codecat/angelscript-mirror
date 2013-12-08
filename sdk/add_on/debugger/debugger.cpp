@@ -102,21 +102,34 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 		if( type->GetFlags() & asOBJ_REF )
 			s << "{" << value << "}";
 
-		// Check if there is a registered to-string callback
-		map<const asIObjectType*, ToStringCallback>::iterator it = m_toStringCallbacks.find(type);
-		if( it != m_toStringCallbacks.end() )
+		if( value )
 		{
-			if( type->GetFlags() & asOBJ_REF )
-				s << endl;
+			// Check if there is a registered to-string callback
+			map<const asIObjectType*, ToStringCallback>::iterator it = m_toStringCallbacks.find(type);
+			if( it == m_toStringCallbacks.end() )
+			{
+				// If the type is a template instance, there might be a
+				// to-string callback for the generic template type
+				if( type->GetFlags() & asOBJ_TEMPLATE )
+				{
+					asIObjectType *tmplType = engine->GetObjectTypeByName(type->GetName());
+					it = m_toStringCallbacks.find(tmplType);
+				}
+			}
 
-			// Invoke the callback to get the string representation of this type
-			string str = it->second(value);
-			s << str;
-		}
-		else
-		{
-			// TODO: Value types can have their properties expanded by default
-		
+			if( it != m_toStringCallbacks.end() )
+			{
+				if( type->GetFlags() & asOBJ_REF )
+					s << endl;
+
+				// Invoke the callback to get the string representation of this type
+				string str = it->second(value, expandMembers, this);
+				s << str;
+			}
+			else
+			{
+				// TODO: Value types can have their properties expanded by default
+			}
 		}
 	}
 
@@ -169,7 +182,7 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 	stringstream s;
 	const char *file;
 	int lineNbr = ctx->GetLineNumber(0, 0, &file);
-	s << file << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
+	s << (file ? file : "{unnamed}") << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
 	Output(s.str());
 
 	TakeCommands(ctx);

@@ -44,13 +44,22 @@ public:
 		// test will be platform independent.
 		if( str.length() > 0 && str[0] == '{' )
 		{
-			if( lastAddress == "" )
+			size_t r = str.find('}', 1);
+			std::string addr = str.substr(0,r);
+			if( address1 == "" )
 			{
-				lastAddress = str;
-				return "{XXXXXXXX}";
+				address1 = addr;
+				return "{XXXXXXXX}" + str.substr(r+1);
 			}
-			else if( str == lastAddress )
-				return "{XXXXXXXX}";
+			else if( addr == address1 )
+				return "{XXXXXXXX}" + str.substr(r+1);
+			else if( address2 == "" )
+			{
+				address2 = addr;
+				return "{YYYYYYYY}" + str.substr(r+1);
+			}
+			else if( addr == address2 )
+				return "{YYYYYYYY}" + str.substr(r+1);
 			else
 				return str;
 		}
@@ -59,7 +68,8 @@ public:
 	}
 
 	std::string output;
-	std::string lastAddress;
+	std::string address1;
+	std::string address2;
 };
 
 class CMyDebugger2 : public CDebugger
@@ -107,15 +117,32 @@ public:
 	std::string output;
 };
 
-std::string StringToString(void *obj)
+std::string StringToString(void *obj, bool expandMembers, CDebugger *dbg)
 {
 	std::string *val = reinterpret_cast<std::string*>(obj);
 	std::stringstream s;
-	s << "(" << val->length() << ") \"";
+	s << "(len=" << val->length() << ") \"";
 	if( val->length() < 20 )
 		s << *val << "\"";
 	else
 		s << val->substr(0, 20) << "...";
+	return s.str();
+}
+
+std::string ArrayToString(void *obj, bool expandMembers, CDebugger *dbg)
+{
+	CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj);
+
+	std::stringstream s;
+	s << "(len=" << arr->GetSize() << ") [";
+	for( asUINT n = 0; n < arr->GetSize(); n++ )
+	{
+		s << dbg->ToString(arr->At(n), arr->GetElementTypeId(), false, arr->GetArrayObjectType()->GetEngine());
+		if( n < arr->GetSize()-1 )
+			s << ", ";
+	}
+	s << "]";
+
 	return s.str();
 }
 
@@ -133,12 +160,15 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
 
 		debug.RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
+		debug.RegisterToStringCallback(engine->GetObjectTypeByName("array"), ArrayToString);
 
 		const char *script = 
 			"void func(int a, const int &in b, string c, const string &in d, type @e, type &f, type @&in g) \n"
 			"{ \n"
+			"  array<int> arr = {1,2,3}; \n"
 			"} \n"
 			"class type {} \n";
 
@@ -165,20 +195,31 @@ bool Test()
 							"ExecuteString:1; void ExecuteString()\n"
 							"int a = 1\n"
 							"const int& b = 2\n"
-							"string c = (1) \"c\"\n"
-							"const string& d = (1) \"d\"\n"
+							"string c = (len=1) \"c\"\n"
+							"const string& d = (len=1) \"d\"\n"
 							"type@ e = {XXXXXXXX}\n"
 							"type& f = {XXXXXXXX}\n"
 							"type@& g = {XXXXXXXX}\n"
 							"script:3; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
 							"int a = 1\n"
 							"const int& b = 2\n"
-							"string c = (1) \"c\"\n"
-							"const string& d = (1) \"d\"\n"
+							"string c = (len=1) \"c\"\n"
+							"const string& d = (len=1) \"d\"\n"
 							"type@ e = {XXXXXXXX}\n"
 							"type& f = {XXXXXXXX}\n"
 							"type@& g = {XXXXXXXX}\n"
 							"script:3; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
+							"{unnamed}:0; int[]@ factstub(int&in) { repeat int }\n"
+							"int a = 1\n"
+							"const int& b = 2\n"
+							"string c = (len=1) \"c\"\n"
+							"const string& d = (len=1) \"d\"\n"
+							"type@ e = {XXXXXXXX}\n"
+							"type& f = {XXXXXXXX}\n"
+							"type@& g = {XXXXXXXX}\n"
+							"int[] arr = {YYYYYYYY}\n"
+							"(len=3) [1, 2, 3]\n"
+							"script:4; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
 							"type t = {XXXXXXXX}\n"
 							"ExecuteString:2; void ExecuteString()\n" )
 		{

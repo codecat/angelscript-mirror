@@ -182,7 +182,7 @@ public:
   virtual ~CDebugger();
 
   // Register callbacks to handle to-string conversions of application types
-  typedef std::string (*ToStringCallback)(void *obj);
+  typedef std::string (*ToStringCallback)(void *obj, bool expandMembers, CDebugger *dbg);
   virtual void RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback);
   
   // User interaction

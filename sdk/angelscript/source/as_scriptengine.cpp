@@ -5277,11 +5277,21 @@ asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 // interface
 asIObjectType *asCScriptEngine::GetObjectTypeByName(const char *name) const
 {
+	// Check the object types
 	for( asUINT n = 0; n < registeredObjTypes.GetLength(); n++ )
 	{
 		if( registeredObjTypes[n]->name == name &&
 			registeredObjTypes[n]->nameSpace == defaultNamespace )
 			return registeredObjTypes[n];
+	}
+
+	// Perhaps it is a template type? In this case
+	// the returned type will be the generic type
+	for( asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++ )
+	{
+		if( registeredTemplateTypes[n]->name == name &&
+			registeredTemplateTypes[n]->nameSpace == defaultNamespace )
+			return registeredTemplateTypes[n];
 	}
 
 	return 0;

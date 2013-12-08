@@ -120,12 +120,13 @@ int ConfigureEngine(asIScriptEngine *engine)
 }
 
 // This is the to-string callback for the string type
-std::string StringToString(void *obj)
+std::string StringToString(void *obj, bool expandMembers, CDebugger *dbg)
 {
 	// We know the received object is a string
 	std::string *val = reinterpret_cast<std::string*>(obj);
 
 	// Format the output string
+	// TODO: Should convert non-readable characters to escape sequences
 	std::stringstream s;
 	s << "(len=" << val->length() << ") \"";
 	if( val->length() < 20 )
@@ -136,10 +137,35 @@ std::string StringToString(void *obj)
 	return s.str();
 }
 
+// This is the to-string callback for the array type
+// This is generic and will take care of all template instances based on the array template
+std::string ArrayToString(void *obj, bool expandMembers, CDebugger *dbg)
+{
+	CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj);
+
+	std::stringstream s;
+	s << "(len=" << arr->GetSize() << ")";
+	
+	if( expandMembers )
+	{
+		s << " [";
+		for( asUINT n = 0; n < arr->GetSize(); n++ )
+		{
+			s << dbg->ToString(arr->At(n), arr->GetElementTypeId(), false, arr->GetArrayObjectType()->GetEngine());
+			if( n < arr->GetSize()-1 )
+				s << ", ";
+		}
+		s << "]";
+	}
+
+	return s.str();
+}
+
 // This function will register to-string callbacks in the debugger for the application registered types
 void RegisterToStringCallbacks(CDebugger *dbg, asIScriptEngine *engine)
 {
 	dbg->RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
+	dbg->RegisterToStringCallback(engine->GetObjectTypeByName("array"), ArrayToString);
 }
 
 // This is where the script is compiled into bytecode that can be executed
