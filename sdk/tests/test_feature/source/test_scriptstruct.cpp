@@ -719,23 +719,34 @@ bool Test()
 
 		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("T"));
 		if( obj != 0 )
+		{
 			TEST_FAILED;
+			obj->Release();
+		}
 
 		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "T t;", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
-		if( r == asEXECUTION_EXCEPTION && std::string(ctx->GetExceptionString()) != "Null pointer access" )
+		if( r == asEXECUTION_EXCEPTION ) 
 		{
-			printf("%s\n", ctx->GetExceptionString());
-			TEST_FAILED;
+			if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
+			{
+				printf("%s\n", ctx->GetExceptionString());
+				TEST_FAILED;
+			}
+			if( std::string(ctx->GetExceptionFunction()->GetName()) != "Func" )
+				TEST_FAILED;
 		}
-		if( std::string(ctx->GetExceptionFunction()->GetName()) != "Func" )
+		if( ctx->GetCallstackSize() == 3 )
 			TEST_FAILED;
-		if( std::string(ctx->GetFunction(1)->GetName()) != "T" )
-			TEST_FAILED;
-		if( ctx->GetLineNumber(1) != 3 )
-			TEST_FAILED;
+		else
+		{
+			if( std::string(ctx->GetFunction(1)->GetName()) != "T" )
+				TEST_FAILED;
+			if( ctx->GetLineNumber(1) != 3 )
+				TEST_FAILED;
+		}
 		ctx->Release();
 		
 		// Default initialization of object members without initialization expression

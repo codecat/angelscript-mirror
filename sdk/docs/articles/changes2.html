@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2013/12/07</h2>
+<h2>Version 2.28.1 WIP - 2013/12/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -43,6 +43,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Saving bytecode for an empty module will now return an error
 <li>The overhead for calling interface methods is reduced by adding the methods in the virtual function table (Thanks GGLucas)
 <li>asIScriptEngine::GetObjectTypeByName can now return template types too
+<li>POD value types are now allocated inline when members of script classes (Thanks GGLucas)
 </ul>
 <li>Add-ons & samples
 <ul>

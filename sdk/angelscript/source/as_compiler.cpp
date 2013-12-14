@@ -963,22 +963,46 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 			if( !isObjectOnHeap )
 			{
-				asASSERT( isVarGlobOrMem == 0 );
-
-				// There is nothing to do if there is no function,
-				// as the memory is already allocated on the stack
-				if( func )
+				if( isVarGlobOrMem == 0 )
 				{
-					// Call the constructor as a normal function
-					bc->InstrSHORT(asBC_PSF, (short)offset);
-					if( derefDest )
-						bc->Instr(asBC_RDSPtr);
-					PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType());
-					bc->AddCode(&ctx.bc);
+					// There is nothing to do if there is no function,
+					// as the memory is already allocated on the stack
+					if( func )
+					{
+						// Call the constructor as a normal function
+						bc->InstrSHORT(asBC_PSF, (short)offset);
+						if( derefDest )
+							bc->Instr(asBC_RDSPtr);
 
-					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
-					// Mark the object as initialized
-					bc->ObjInfo(offset, asOBJ_INIT);
+						asSExprContext ctx(engine);
+						PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+						bc->AddCode(&ctx.bc);
+
+						// TODO: value on stack: This probably needs to be done in PerformFunctionCall
+						// Mark the object as initialized
+						bc->ObjInfo(offset, asOBJ_INIT);
+					}
+				}
+				else if( isVarGlobOrMem == 2 )
+				{
+					// Only POD types can be allocated inline in script classes
+					asASSERT( type.GetObjectType()->flags & asOBJ_POD );
+
+					if( func )
+					{
+						// Call the constructor as a normal function
+						bc->InstrSHORT(asBC_PSF, 0);
+						bc->Instr(asBC_RDSPtr);
+						bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+
+						asSExprContext ctx(engine);
+						PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+						bc->AddCode(&ctx.bc);
+					}
+				}
+				else 
+				{
+					asASSERT( false );
 				}
 			}
 			else
@@ -2292,14 +2316,18 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 								if( onHeap )
 									ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
 							}
-							else
+							else if( isVarGlobOrMem == 1 )
 							{
 								// Push the address of the location where the variable will be stored on the stack.
 								// This reference is safe, because the addresses of the global variables cannot change.
 								onHeap = true;
-								if( isVarGlobOrMem == 1 )
-									ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-								else
+								ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+							}
+							else
+							{
+								// Value types may be allocated inline if they are POD types
+								onHeap = !type.IsObject() || type.IsReference() || (type.GetObjectType()->flags & asOBJ_REF);
+								if( onHeap )
 								{
 									ctx.bc.InstrSHORT(asBC_PSF, 0);
 									ctx.bc.Instr(asBC_RDSPtr);
@@ -2313,7 +2341,18 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 							// When the object is allocated on the stack, the address to the
 							// object is pushed on the stack after the arguments as the object pointer
 							if( !onHeap )
-								ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+							{
+								if( isVarGlobOrMem == 2 )
+								{
+									ctx.bc.InstrSHORT(asBC_PSF, 0);
+									ctx.bc.Instr(asBC_RDSPtr);
+									ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+								}
+								else
+								{
+									ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+								}
+							}
 
 							PerformFunctionCall(funcs[0], &ctx, onHeap, &args, type.GetObjectType());
 
@@ -2358,8 +2397,10 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		// Call the default constructor here
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
-		else
+		else if( isVarGlobOrMem == 1 )
 			CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, isVarGlobOrMem);
+		else if( isVarGlobOrMem == 2 )
+			CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
 
 		// Compile the expression
 		asSExprContext expr(engine);
@@ -2418,8 +2459,14 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				lexpr.type.Set(type);
 				if( isVarGlobOrMem == 0 )
 					lexpr.type.dataType.MakeReference(IsVariableOnHeap(offset));
-				else
+				else if( isVarGlobOrMem == 1 )
 					lexpr.type.dataType.MakeReference(true);
+				else if( isVarGlobOrMem == 2 )
+				{
+					if( !lexpr.type.dataType.IsObject() || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_REF) )
+						lexpr.type.dataType.MakeReference(true);
+				}
+
 				// Allow initialization of constant variables
 				lexpr.type.dataType.MakeReadOnly(false);
 
@@ -2510,8 +2557,15 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		// Call the default constructor here, as no explicit initialization is done
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), bc, errNode);
-		else
+		else if( isVarGlobOrMem == 1 )
 			CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
+		else if( isVarGlobOrMem == 2 )
+		{
+			if( !type.IsObject() || type.IsReference() || (type.GetObjectType()->flags & asOBJ_REF) )
+				CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
+			else
+				CallDefaultConstructor(type, offset, false, bc, errNode, isVarGlobOrMem);
+		}
 	}
 
 	bc->OptimizeLocally(tempVariableOffsets);
@@ -2639,21 +2693,34 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		}
 		else
 		{
+			bool onHeap = true;
+
 			// Put the address where the object pointer will be placed on the stack
 			if( isVarGlobOrMem == 1 )
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
 			else
+			{
+				onHeap = !var->dataType.IsObject() || var->dataType.IsReference() || (var->dataType.GetObjectType()->flags & asOBJ_REF);
+				if( onHeap )
+				{
+					ctx.bc.InstrSHORT(asBC_PSF, 0);
+					ctx.bc.Instr(asBC_RDSPtr);
+					ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+				}
+			}
+
+			// Add the address of the list buffer as the argument
+			ctx.bc.AddCode(&arg1.bc);
+
+			if( !onHeap )
 			{
 				ctx.bc.InstrSHORT(asBC_PSF, 0);
 				ctx.bc.Instr(asBC_RDSPtr);
 				ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 			}
 
-			// Add the address of the list buffer as the argument
-			ctx.bc.AddCode(&arg1.bc);
-
 			// Call the ALLOC instruction to allocate memory and invoke constructor
-			PerformFunctionCall(funcId, &ctx, true, &args, var->dataType.GetObjectType());
+			PerformFunctionCall(funcId, &ctx, onHeap, &args, var->dataType.GetObjectType());
 		}
 	}
 
