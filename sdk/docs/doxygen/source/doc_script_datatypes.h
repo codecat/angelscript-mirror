@@ -83,9 +83,11 @@ Example:
 
 <pre>
   array<int> a, b, c;
+  array<Foo\@> d;
 </pre>
 
-<code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers.
+<code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers, and <code>d</code>
+is and array of handles to objects of the Foo type.
 
 When declaring arrays it is possible to define the initial size of the array by passing the length as
 a parameter to the constructor. The elements can also be individually initialized by specifying an 
@@ -112,6 +114,16 @@ range of valid indices are from 0 to length - 1.
 
 <pre>
   a[0] = some_value;
+</pre>
+
+When the array stores \ref doc_script_handle "handles" the elements are assigned using the \ref handle "handle assignment".
+
+<pre>
+  // Declare an array with initial length 1
+  array<Foo\@> arr(1);
+  
+  // Set the first element to point to a new instance of Foo
+  \@arr[0] = Foo();
 </pre>
 
 \section doc_datatypes_arrays_addon Supporting array object and functions
