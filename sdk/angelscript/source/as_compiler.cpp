@@ -7147,6 +7147,13 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ImplicitConversion(&le, to, cexpr->next, asIC_IMPLICIT_CONV);
 			}
 
+			// Allow either case to be converted to const @ if the other is const @
+			if( le.type.dataType.IsHandleToConst() || re.type.dataType.IsHandleToConst() )
+			{
+				le.type.dataType.MakeHandleToConst(true);
+				re.type.dataType.MakeHandleToConst(true);
+			}
+
 			//---------------------------------
 			// Output the byte code
 			int afterLabel = nextLabel++;

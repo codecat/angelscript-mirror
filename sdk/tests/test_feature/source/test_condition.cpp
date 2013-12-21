@@ -71,6 +71,36 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test condition where the two operands different only in const
+	// http://www.gamedev.net/topic/651245-factory-for-const-string/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Test {} \n"
+			"void func() { \n"
+			"  const Test @ct; \n"
+			"  Test @t; \n"
+			"  const Test @a = true ? t : ct; \n"
+			"  const Test @b = true ? ct : t; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test condition operator and implicit cast
 	// Observe that AngelScript does NOT follow the same rules as C++ for this operator
 	// http://www.gamedev.net/topic/648406-implicit-conversion-of-value-is-not-exact/
