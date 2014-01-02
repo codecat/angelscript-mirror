@@ -4381,7 +4381,11 @@ int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, boo
 int asCCompiler::GetVariableOffset(int varIndex)
 {
 	// Return offset to the last dword on the stack
+
+	// Start at 1 as offset 0 is reserved for the this pointer (or first argument for global functions)
 	int varOffset = 1;
+
+	// Skip lower variables
 	for( int n = 0; n < varIndex; n++ )
 	{
 		if( !variableIsOnHeap[n] && variableAllocations[n].IsObject() )
@@ -4392,6 +4396,7 @@ int asCCompiler::GetVariableOffset(int varIndex)
 
 	if( varIndex < (int)variableAllocations.GetLength() )
 	{
+		// For variables larger than 1 dword the returned offset should be to the last dword
 		int size;
 		if( !variableIsOnHeap[varIndex] && variableAllocations[varIndex].IsObject() )
 			size = variableAllocations[varIndex].GetSizeInMemoryDWords();

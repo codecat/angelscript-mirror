@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -382,6 +382,7 @@
 #endif
 
 // Microsoft Visual C++
+// Ref: http://msdn.microsoft.com/en-us/library/b0084kay.aspx
 #if defined(_MSC_VER) && !defined(__MWERKS__)
 
 	#if _MSC_VER <= 1200 // MSVC6
@@ -462,7 +463,7 @@
 		#endif
 	#endif
 
-	#ifdef _ARM_
+	#if defined(_ARM_) || defined(_M_ARM)
 		#define AS_ARM
 		#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
@@ -471,6 +472,13 @@
 		#define COMPLEX_MASK asOBJ_APP_CLASS_ASSIGNMENT
 		#define COMPLEX_RETURN_MASK asOBJ_APP_CLASS_ASSIGNMENT
 		#define AS_SOFTFP
+
+		#if !defined(WINAPI_PARTITION_DESKTOP)
+			// TODO: Multithreading is supported on Windows Store Apps, but the code 
+			//       needs to be updated to use the available API functions, e.g.
+			//       CreateSemaphoreEx instead of CreateSemaphore, etc.
+			#define AS_NO_THREADS
+		#endif
 	#endif
 
 	#ifndef COMPLEX_MASK

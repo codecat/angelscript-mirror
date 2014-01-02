@@ -729,6 +729,8 @@ void asCBuilder::CompileFunctions()
 					break;
 				}
 			}
+
+			asASSERT( classDecl );
 		}
 
 		if( current->node )
@@ -745,7 +747,7 @@ void asCBuilder::CompileFunctions()
 
 			preMessage.isSet = false;
 		}
-		else if( current->name == current->objType->name )
+		else if( current->objType && current->name == current->objType->name )
 		{
 			asCScriptNode *node = classDecl->node;
 
@@ -762,6 +764,10 @@ void asCBuilder::CompileFunctions()
 			compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
 
 			preMessage.isSet = false;
+		}
+		else
+		{
+			asASSERT( false );
 		}
 	}
 }
