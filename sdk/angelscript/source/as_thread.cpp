@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -122,6 +122,9 @@ asCThreadManager::asCThreadManager()
 		pthread_key_create(&pKey, 0);
 		tlsKey = (asDWORD)pKey;
 	#elif defined AS_WINDOWS_THREADS
+		// TODO: On Windows Phone TlsAlloc isn't available. Instead the MSVC specific
+		//        __declspec(thread) attribute can be used. It's not recommended to use
+		//        this on when desktop though, as it can cause crashes if used in dlls.
 		tlsKey = (asDWORD)TlsAlloc();
 	#endif
 #endif
@@ -306,7 +309,7 @@ asCThreadCriticalSection::asCThreadCriticalSection()
 #if defined AS_POSIX_THREADS
 	pthread_mutex_init(&cs, 0);
 #elif defined AS_WINDOWS_THREADS
-	InitializeCriticalSection(&cs);
+	InitializeCriticalSectionEx(&cs, 4000, 0);
 #endif
 }
 
@@ -356,9 +359,9 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	UNUSED_VAR(r);
 #elif defined AS_WINDOWS_THREADS
 	// Create a semaphore to allow up to maxReaders simultaneous readers
-	readLocks = CreateSemaphore(NULL, maxReaders, maxReaders, 0);
+	readLocks = CreateSemaphoreExW(NULL, maxReaders, maxReaders, 0, 0, SYNCHRONIZE);
 	// Create a critical section to synchronize writers
-	InitializeCriticalSection(&writeLock);
+	InitializeCriticalSectionEx(&writeLock, 4000, 0);
 #endif
 }
 
@@ -385,7 +388,7 @@ void asCThreadReadWriteLock::AcquireExclusive()
 	// If we try to lock all at once it is quite possible the writer will
 	// never succeed.
 	for( asUINT n = 0; n < maxReaders; n++ )
-		WaitForSingleObject(readLocks, INFINITE);
+		WaitForSingleObjectEx(readLocks, INFINITE, FALSE);
 
 	// Allow another writer to lock. It will only be able to
 	// lock the readers when this writer releases them anyway.
@@ -409,7 +412,7 @@ void asCThreadReadWriteLock::AcquireShared()
 	pthread_rwlock_rdlock(&lock);
 #elif defined AS_WINDOWS_THREADS
 	// Lock a reader slot
-	WaitForSingleObject(readLocks, INFINITE);
+	WaitForSingleObjectEx(readLocks, INFINITE, FALSE);
 #endif
 }
 

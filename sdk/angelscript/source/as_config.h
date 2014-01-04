@@ -474,9 +474,7 @@
 		#define AS_SOFTFP
 
 		#if !defined(WINAPI_PARTITION_DESKTOP)
-			// TODO: Multithreading is supported on Windows Store Apps, but the code 
-			//       needs to be updated to use the available API functions, e.g.
-			//       CreateSemaphoreEx instead of CreateSemaphore, etc.
+			// TODO: Must replace TLS functions on Windows Phone before enabling this
 			#define AS_NO_THREADS
 		#endif
 	#endif
