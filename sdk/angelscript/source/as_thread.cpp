@@ -109,6 +109,10 @@ AS_API void asReleaseSharedLock()
 
 //======================================================================
 
+#if defined(AS_WINDOWS_THREADS) && !defined(WINAPI_PARTITION_DESKTOP)
+__declspec(thread) asCThreadLocalData *asCThreadManager::tld = 0;
+#endif
+
 asCThreadManager::asCThreadManager()
 {
 	// We're already in the critical section when this function is called
@@ -122,10 +126,11 @@ asCThreadManager::asCThreadManager()
 		pthread_key_create(&pKey, 0);
 		tlsKey = (asDWORD)pKey;
 	#elif defined AS_WINDOWS_THREADS
-		// TODO: On Windows Phone TlsAlloc isn't available. Instead the MSVC specific
-		//        __declspec(thread) attribute can be used. It's not recommended to use
-		//        this on when desktop though, as it can cause crashes if used in dlls.
-		tlsKey = (asDWORD)TlsAlloc();
+		#if !defined(WINAPI_PARTITION_DESKTOP)
+			tld = 0;
+		#else
+			tlsKey = (asDWORD)TlsAlloc();
+		#endif
 	#endif
 #endif
 	refCount = 1;
@@ -206,7 +211,11 @@ asCThreadManager::~asCThreadManager()
 	#if defined AS_POSIX_THREADS
 		pthread_key_delete((pthread_key_t)tlsKey);
 	#elif defined AS_WINDOWS_THREADS
-		TlsFree((DWORD)tlsKey);
+		#if !defined(WINAPI_PARTITION_DESKTOP)
+			tld = 0;
+		#else
+			TlsFree((DWORD)tlsKey);
+		#endif
 	#endif
 #else
 	if( tld ) 
@@ -226,7 +235,9 @@ int asCThreadManager::CleanupLocalData()
 #if defined AS_POSIX_THREADS
 	asCThreadLocalData *tld = (asCThreadLocalData*)pthread_getspecific((pthread_key_t)threadManager->tlsKey);
 #elif defined AS_WINDOWS_THREADS
-	asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
+	#if defined(WINAPI_PARTITION_DESKTOP)
+		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
+	#endif
 #endif
 
 	if( tld == 0 ) 
@@ -238,7 +249,11 @@ int asCThreadManager::CleanupLocalData()
 		#if defined AS_POSIX_THREADS
 			pthread_setspecific((pthread_key_t)threadManager->tlsKey, 0);
 		#elif defined AS_WINDOWS_THREADS
-			TlsSetValue((DWORD)threadManager->tlsKey, 0);
+			#if !defined(WINAPI_PARTITION_DESKTOP)
+				tld = 0;
+			#else
+				TlsSetValue((DWORD)threadManager->tlsKey, 0);
+			#endif
 		#endif
 		return 0;
 	}
@@ -274,12 +289,17 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 		pthread_setspecific((pthread_key_t)threadManager->tlsKey, tld);
 	}
 #elif defined AS_WINDOWS_THREADS
-	asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
-	if( tld == 0 ) 
-	{
- 		tld = asNEW(asCThreadLocalData)();
-		TlsSetValue((DWORD)threadManager->tlsKey, tld);
- 	}
+	#if !defined(WINAPI_PARTITION_DESKTOP)
+		if( tld == 0 )
+			tld = asNEW(asCThreadLocalData)();
+	#else
+		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
+		if( tld == 0 ) 
+		{
+ 			tld = asNEW(asCThreadLocalData)();
+			TlsSetValue((DWORD)threadManager->tlsKey, tld);
+ 		}
+	#endif
 #endif
 
 	return tld;
@@ -359,7 +379,7 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	UNUSED_VAR(r);
 #elif defined AS_WINDOWS_THREADS
 	// Create a semaphore to allow up to maxReaders simultaneous readers
-	readLocks = CreateSemaphoreExW(NULL, maxReaders, maxReaders, 0, 0, SYNCHRONIZE);
+	readLocks = CreateSemaphoreExW(NULL, maxReaders, maxReaders, 0, 0, 0);
 	// Create a critical section to synchronize writers
 	InitializeCriticalSectionEx(&writeLock, 4000, 0);
 #endif

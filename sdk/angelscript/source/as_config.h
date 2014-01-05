@@ -472,11 +472,6 @@
 		#define COMPLEX_MASK asOBJ_APP_CLASS_ASSIGNMENT
 		#define COMPLEX_RETURN_MASK asOBJ_APP_CLASS_ASSIGNMENT
 		#define AS_SOFTFP
-
-		#if !defined(WINAPI_PARTITION_DESKTOP)
-			// TODO: Must replace TLS functions on Windows Phone before enabling this
-			#define AS_NO_THREADS
-		#endif
 	#endif
 
 	#ifndef COMPLEX_MASK
