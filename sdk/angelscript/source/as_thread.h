@@ -70,7 +70,7 @@ protected:
 	int refCount;
 
 #ifndef AS_NO_THREADS
-#if defined(AS_WINDOWS_THREADS) && !defined(WINAPI_PARTITION_DESKTOP)
+#if defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 	// On Windows Store we must use MSVC specific thread variables for thread
 	// local storage, as the TLS API isn't available. On desktop we can't use
 	// this as it may cause problems if the library is used in a dll.

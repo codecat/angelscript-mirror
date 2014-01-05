@@ -109,7 +109,7 @@ AS_API void asReleaseSharedLock()
 
 //======================================================================
 
-#if defined(AS_WINDOWS_THREADS) && !defined(WINAPI_PARTITION_DESKTOP)
+#if defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 __declspec(thread) asCThreadLocalData *asCThreadManager::tld = 0;
 #endif
 
@@ -126,7 +126,7 @@ asCThreadManager::asCThreadManager()
 		pthread_key_create(&pKey, 0);
 		tlsKey = (asDWORD)pKey;
 	#elif defined AS_WINDOWS_THREADS
-		#if !defined(WINAPI_PARTITION_DESKTOP)
+		#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 			tld = 0;
 		#else
 			tlsKey = (asDWORD)TlsAlloc();
@@ -211,7 +211,7 @@ asCThreadManager::~asCThreadManager()
 	#if defined AS_POSIX_THREADS
 		pthread_key_delete((pthread_key_t)tlsKey);
 	#elif defined AS_WINDOWS_THREADS
-		#if !defined(WINAPI_PARTITION_DESKTOP)
+		#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 			tld = 0;
 		#else
 			TlsFree((DWORD)tlsKey);
@@ -235,7 +235,7 @@ int asCThreadManager::CleanupLocalData()
 #if defined AS_POSIX_THREADS
 	asCThreadLocalData *tld = (asCThreadLocalData*)pthread_getspecific((pthread_key_t)threadManager->tlsKey);
 #elif defined AS_WINDOWS_THREADS
-	#if defined(WINAPI_PARTITION_DESKTOP)
+	#if (WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
 	#endif
 #endif
@@ -249,7 +249,7 @@ int asCThreadManager::CleanupLocalData()
 		#if defined AS_POSIX_THREADS
 			pthread_setspecific((pthread_key_t)threadManager->tlsKey, 0);
 		#elif defined AS_WINDOWS_THREADS
-			#if !defined(WINAPI_PARTITION_DESKTOP)
+			#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 				tld = 0;
 			#else
 				TlsSetValue((DWORD)threadManager->tlsKey, 0);
@@ -289,7 +289,7 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 		pthread_setspecific((pthread_key_t)threadManager->tlsKey, tld);
 	}
 #elif defined AS_WINDOWS_THREADS
-	#if !defined(WINAPI_PARTITION_DESKTOP)
+	#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 		if( tld == 0 )
 			tld = asNEW(asCThreadLocalData)();
 	#else
