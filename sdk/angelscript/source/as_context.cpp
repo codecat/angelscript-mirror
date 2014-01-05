@@ -5360,7 +5360,7 @@ asINT64 as_powi64(asINT64 base, asINT64 exponent, bool& isOverflow)
 	{
 		const asDWORD max_base = pow_info[exponent].MaxBasei64;
 		const char high_bit = pow_info[exponent].HighBit;
-		if( max_base != 0 && max_base < abs(base) )
+		if( max_base != 0 && max_base < (base < 0 ? -base : base) )
 		{
 			isOverflow = true;
 			return 0;  // overflow
