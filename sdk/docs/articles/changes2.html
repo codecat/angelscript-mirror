@@ -48,6 +48,17 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Ternary condition operator now converts either case to const @ if the other is const @ (Thanks _Vicious_)
 <li>Multithreading is now supported on Windows Store Apps too
 </ul>
+<li>Script language
+<ul>
+<li>Added the operators ** and **= for exponent math operations (Thanks Jason Goepel)
+<li>The methods opPow and opPow_r can be used to overload the exponent math operator (Thanks Jason Goepel)
+</ul>
+<ul>
+<li>Virtual machine
+<ul>
+<li>Added the instructions POWi, POWu, POWf, POWd, POWdi, POWi64, POWu64 (Thanks Jason Goepel)
+</ul>
+</ul>
 <li>Add-ons & samples
 <ul>
 <li>WriteConfigToFile now writes the engine properties too

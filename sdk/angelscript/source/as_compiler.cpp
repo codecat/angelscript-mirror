@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -35,7 +35,7 @@
 // The class that does the actual compilation of the functions
 //
 
-#include <math.h> // fmodf()
+#include <math.h> // fmodf() pow()
 
 #include "as_config.h"
 
@@ -48,6 +48,7 @@
 #include "as_texts.h"
 #include "as_parser.h"
 #include "as_debug.h"
+#include "as_context.h"  // as_powi()
 
 BEGIN_AS_NAMESPACE
 
@@ -10590,6 +10591,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 int asCCompiler::GetPrecedence(asCScriptNode *op)
 {
+	// x ** y
 	// x * y, x / y, x % y
 	// x + y, x - y
 	// x <= y, x < y, x >= y, x > y
@@ -10608,40 +10610,43 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 
 	// Evaluate operators by token
 	int tokenType = op->tokenType;
-	if( tokenType == ttStar || tokenType == ttSlash || tokenType == ttPercent )
+	if( tokenType == ttStarStar )
 		return 0;
 
-	if( tokenType == ttPlus || tokenType == ttMinus )
+	if( tokenType == ttStar || tokenType == ttSlash || tokenType == ttPercent )
 		return -1;
+
+	if( tokenType == ttPlus || tokenType == ttMinus )
+		return -2;
 
 	if( tokenType == ttBitShiftLeft ||
 		tokenType == ttBitShiftRight ||
 		tokenType == ttBitShiftRightArith )
-		return -2;
-
-	if( tokenType == ttAmp )
 		return -3;
 
-	if( tokenType == ttBitXor )
+	if( tokenType == ttAmp )
 		return -4;
 
-	if( tokenType == ttBitOr )
+	if( tokenType == ttBitXor )
 		return -5;
+
+	if( tokenType == ttBitOr )
+		return -6;
 
 	if( tokenType == ttLessThanOrEqual ||
 		tokenType == ttLessThan ||
 		tokenType == ttGreaterThanOrEqual ||
 		tokenType == ttGreaterThan )
-		return -6;
-
-	if( tokenType == ttEqual || tokenType == ttNotEqual || tokenType == ttXor || tokenType == ttIs || tokenType == ttNotIs )
 		return -7;
 
-	if( tokenType == ttAnd )
+	if( tokenType == ttEqual || tokenType == ttNotEqual || tokenType == ttXor || tokenType == ttIs || tokenType == ttNotIs )
 		return -8;
 
-	if( tokenType == ttOr )
+	if( tokenType == ttAnd )
 		return -9;
+
+	if( tokenType == ttOr )
+		return -10;
 
 	// Unknown operator
 	asASSERT(false);
@@ -10870,6 +10875,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	case ttStar:               op = "opMul";  op_r = "opMul_r";  break;
 	case ttSlash:              op = "opDiv";  op_r = "opDiv_r";  break;
 	case ttPercent:            op = "opMod";  op_r = "opMod_r";  break;
+	case ttStarStar:           op = "opPow";  op_r = "opPow_r";  break;
 	case ttBitOr:              op = "opOr";   op_r = "opOr_r";   break;
 	case ttAmp:                op = "opAnd";  op_r = "opAnd_r";  break;
 	case ttBitXor:             op = "opXor";  op_r = "opXor_r";  break;
@@ -10914,6 +10920,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	case ttMulAssign:         op = "opMulAssign";  break;
 	case ttDivAssign:         op = "opDivAssign";  break;
 	case ttModAssign:         op = "opModAssign";  break;
+	case ttPowAssign:         op = "opPowAssign";  break;
 	case ttOrAssign:          op = "opOrAssign";   break;
 	case ttAndAssign:         op = "opAndAssign";  break;
 	case ttXorAssign:         op = "opXorAssign";  break;
@@ -11196,13 +11203,14 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		}
 
 		// Math operators
-		// + - * / % += -= *= /= %=
+		// + - * / % ** += -= *= /= %= **=
 		int op = node->tokenType;
-		if( op == ttPlus    || op == ttAddAssign ||
-			op == ttMinus   || op == ttSubAssign ||
-			op == ttStar    || op == ttMulAssign ||
-			op == ttSlash   || op == ttDivAssign ||
-			op == ttPercent || op == ttModAssign )
+		if( op == ttPlus     || op == ttAddAssign ||
+			op == ttMinus    || op == ttSubAssign ||
+			op == ttStar     || op == ttMulAssign ||
+			op == ttSlash    || op == ttDivAssign ||
+			op == ttPercent  || op == ttModAssign ||
+			op == ttStarStar || op == ttPowAssign )
 		{
 			CompileMathOperator(node, lctx, rctx, ctx);
 			return 0;
@@ -11414,10 +11422,25 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	if( rctx->type.dataType.IsReference() )
 		ConvertToVariable(rctx);
 
+	int op = node->tokenType;
 	if( to.IsPrimitive() )
 	{
-		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
-		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+		// ttStarStar allows an integer, right-hand operand and a double
+		// left-hand operand.
+		if( (op == ttStarStar || op == ttPowAssign) &&
+			lctx->type.dataType.IsDoubleType() &&
+			(rctx->type.dataType.IsIntegerType() ||
+			    rctx->type.dataType.IsUnsignedType()) )
+		{
+			to.SetTokenType(ttInt);
+			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+			to.SetTokenType(ttDouble);
+		}
+		else
+		{
+			ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
+			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+		}
 	}
 	reservedVariables.SetLength(l);
 
@@ -11451,7 +11474,6 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
 
 	// Verify if we are dividing with a constant zero
-	int op = node->tokenType;
 	if( rctx->type.isConstant && rctx->type.qwordValue == 0 &&
 		(op == ttSlash   || op == ttDivAssign ||
 		 op == ttPercent || op == ttModAssign) )
@@ -11468,7 +11490,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 
 		if( op == ttAddAssign || op == ttSubAssign ||
 			op == ttMulAssign || op == ttDivAssign ||
-			op == ttModAssign )
+			op == ttModAssign || op == ttPowAssign )
 		{
 			// Merge the operands in the different order so that they are evaluated correctly
 			MergeExprBytecode(ctx, rctx);
@@ -11511,6 +11533,13 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					else
 						instruction = asBC_MODu;
 				}
+				else if( op == ttStarStar || op == ttPowAssign )
+				{
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_POWi;
+					else
+						instruction = asBC_POWu;
+				}
 			}
 			else
 			{
@@ -11534,6 +11563,13 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					else
 						instruction = asBC_MODu64;
 				}
+				else if( op == ttStarStar || op == ttPowAssign )
+				{
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_POWi64;
+					else
+						instruction = asBC_POWu64;
+				}
 			}
 		}
 		else if( lctx->type.dataType.IsFloatType() )
@@ -11548,19 +11584,35 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				instruction = asBC_DIVf;
 			else if( op == ttPercent || op == ttModAssign )
 				instruction = asBC_MODf;
+			else if( op == ttStarStar || op == ttPowAssign )
+				instruction = asBC_POWf;
 		}
 		else if( lctx->type.dataType.IsDoubleType() )
 		{
-			if( op == ttPlus || op == ttAddAssign )
-				instruction = asBC_ADDd;
-			else if( op == ttMinus || op == ttSubAssign )
-				instruction = asBC_SUBd;
-			else if( op == ttStar || op == ttMulAssign )
-				instruction = asBC_MULd;
-			else if( op == ttSlash || op == ttDivAssign )
-				instruction = asBC_DIVd;
-			else if( op == ttPercent || op == ttModAssign )
-				instruction = asBC_MODd;
+			if( rctx->type.dataType.IsIntegerType() )
+			{
+				asASSERT(rctx->type.dataType.GetSizeInMemoryDWords() == 1);
+
+				if( op == ttStarStar || op == ttPowAssign )
+					instruction = asBC_POWdi;
+				else
+					asASSERT(false);  // Should not be possible
+			}
+			else
+			{
+				if( op == ttPlus || op == ttAddAssign )
+					instruction = asBC_ADDd;
+				else if( op == ttMinus || op == ttSubAssign )
+					instruction = asBC_SUBd;
+				else if( op == ttStar || op == ttMulAssign )
+					instruction = asBC_MULd;
+				else if( op == ttSlash || op == ttDivAssign )
+					instruction = asBC_DIVd;
+				else if( op == ttPercent || op == ttModAssign )
+					instruction = asBC_MODd;
+				else if( op == ttStarStar || op == ttPowAssign )
+					instruction = asBC_POWd;
+			}
 		}
 		else
 		{
@@ -11614,6 +11666,14 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						else
 							v = lctx->type.dwordValue % rctx->type.dwordValue;
 				}
+				else if( op == ttStarStar )
+				{
+					bool isOverflow;
+					if( lctx->type.dataType.IsIntegerType() )
+						v = as_powi(lctx->type.intValue, rctx->type.intValue, isOverflow);
+					else
+						v = as_powu(lctx->type.dwordValue, rctx->type.dwordValue, isOverflow);
+				}
 
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
 
@@ -11652,6 +11712,14 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						else
 							v = lctx->type.qwordValue % rctx->type.qwordValue;
 				}
+				else if( op == ttStarStar )
+				{
+					bool isOverflow;
+					if( lctx->type.dataType.IsIntegerType() )
+						v = as_powi64(asINT64(lctx->type.qwordValue), asINT64(rctx->type.qwordValue), isOverflow);
+					else
+						v = as_powu64(lctx->type.qwordValue, rctx->type.qwordValue, isOverflow);
+				}
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
 
@@ -11683,31 +11751,47 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else
 					v = fmodf(lctx->type.floatValue, rctx->type.floatValue);
 			}
+			else if( op == ttStarStar )
+				v = pow(lctx->type.floatValue, rctx->type.floatValue);
 
 			ctx->type.SetConstantF(lctx->type.dataType, v);
 		}
 		else if( lctx->type.dataType.IsDoubleType() )
 		{
 			double v = 0.0;
-			if( op == ttPlus )
-				v = lctx->type.doubleValue + rctx->type.doubleValue;
-			else if( op == ttMinus )
-				v = lctx->type.doubleValue - rctx->type.doubleValue;
-			else if( op == ttStar )
-				v = lctx->type.doubleValue * rctx->type.doubleValue;
-			else if( op == ttSlash )
+			if( rctx->type.dataType.IsIntegerType() )
 			{
-				if( rctx->type.doubleValue == 0 )
-					v = 0;
+				asASSERT(rctx->type.dataType.GetSizeInMemoryDWords() == 1);
+
+				if( op == ttStarStar || op == ttPowAssign )
+					v = pow(lctx->type.doubleValue, rctx->type.intValue);
 				else
-					v = lctx->type.doubleValue / rctx->type.doubleValue;
+					asASSERT(false);  // Should not be possible
 			}
-			else if( op == ttPercent )
+			else
 			{
-				if( rctx->type.doubleValue == 0 )
-					v = 0;
-				else
-					v = fmod(lctx->type.doubleValue, rctx->type.doubleValue);
+				if( op == ttPlus )
+					v = lctx->type.doubleValue + rctx->type.doubleValue;
+				else if( op == ttMinus )
+					v = lctx->type.doubleValue - rctx->type.doubleValue;
+				else if( op == ttStar )
+					v = lctx->type.doubleValue * rctx->type.doubleValue;
+				else if( op == ttSlash )
+				{
+					if( rctx->type.doubleValue == 0 )
+						v = 0;
+					else
+						v = lctx->type.doubleValue / rctx->type.doubleValue;
+				}
+				else if( op == ttPercent )
+				{
+					if( rctx->type.doubleValue == 0 )
+						v = 0;
+					else
+						v = fmod(lctx->type.doubleValue, rctx->type.doubleValue);
+				}
+				else if( op == ttStarStar )
+					v = pow(lctx->type.doubleValue, rctx->type.doubleValue);
 			}
 
 			ctx->type.SetConstantD(lctx->type.dataType, v);

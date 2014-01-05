@@ -44,7 +44,7 @@ A compound assignment is a combination of an operator followed by the assignment
 above means practically the same thing. Except that first one is more efficient in that the lvalue is
 only evaluated once, which can make a difference if the lvalue is complex expression in itself.
 
-Available operators: <code>+= -= *= /= %= &= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
+Available operators: <code>+= -= *= /= %= **= &= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
 
 
 
@@ -137,6 +137,7 @@ as the compiler is usually able to do an implicit cast to the correct type.
 <tr><td width=70 valign=top><code>*</code></td> <td width=100 valign=top>multiplication</td>    <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 <tr><td width=70 valign=top><code>/</code></td> <td width=100 valign=top>division</td>          <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 <tr><td width=70 valign=top><code>%</code></td> <td width=100 valign=top>modulos</td>           <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<td><td width=70 valign=top><code>**</code></td> <td width=100 valign=top>exponent</td>         <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 </table>
 
 Plus and minus can be used as unary operators as well. NUM can be exchanged 

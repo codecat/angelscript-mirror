@@ -72,6 +72,7 @@ for optimization reasons.
 <tr><td>*=</td>            <td>opMulAssign</td> </tr>
 <tr><td>/=</td>            <td>opDivAssign</td> </tr>
 <tr><td>\%=</td>           <td>opModAssign</td> </tr>
+<tr><td>**=</td>           <td>opPowAssign</td> </tr>
 <tr><td>&amp;=</td>        <td>opAndAssign</td> </tr>
 <tr><td>|=</td>            <td>opOrAssign</td>  </tr>
 <tr><td>^=</td>            <td>opXorAssign</td> </tr>
@@ -108,6 +109,7 @@ so if that is all you want to do, then there is no need to implement this method
 <tr><td>*</td>             <td>opMul</td>        <td>opMul_r</td></tr>
 <tr><td>/</td>             <td>opDiv</td>        <td>opDiv_r</td></tr>
 <tr><td>%</td>             <td>opMod</td>        <td>opMod_r</td></tr>
+<tr><td>**</td>            <td>opPow</td>        <td>opPow_r</td></tr>
 <tr><td>&amp;</td>         <td>opAnd</td>        <td>opAnd_r</td></tr>
 <tr><td>|</td>             <td>opOr</td>         <td>opOr_r</td></tr>
 <tr><td>^</td>             <td>opXor</td>        <td>opXor_r</td></tr>

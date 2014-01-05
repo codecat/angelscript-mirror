@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1635,6 +1635,7 @@ bool asCParser::IsOperator(int tokenType)
 		tokenType == ttStar ||
 		tokenType == ttSlash ||
 		tokenType == ttPercent ||
+		tokenType == ttStarStar ||
 		tokenType == ttAnd ||
 		tokenType == ttOr ||
 		tokenType == ttXor ||
@@ -1665,6 +1666,7 @@ bool asCParser::IsAssignOperator(int tokenType)
 		tokenType == ttMulAssign ||
 		tokenType == ttDivAssign ||
 		tokenType == ttModAssign ||
+		tokenType == ttPowAssign ||
 		tokenType == ttAndAssign ||
 		tokenType == ttOrAssign ||
 		tokenType == ttXorAssign ||

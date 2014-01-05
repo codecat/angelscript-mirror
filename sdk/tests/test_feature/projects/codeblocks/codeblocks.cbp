@@ -165,6 +165,7 @@
 		<Unit filename="../../source/test_parser.cpp" />
 		<Unit filename="../../source/test_pointer.cpp" />
 		<Unit filename="../../source/test_postprocess.cpp" />
+		<Unit filename="../../source/test_pow.cpp" />
 		<Unit filename="../../source/test_refargument.cpp" />
 		<Unit filename="../../source/test_refcast.cpp" />
 		<Unit filename="../../source/test_registertype.cpp" />

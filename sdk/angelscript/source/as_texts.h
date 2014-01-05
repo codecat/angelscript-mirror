@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -299,6 +299,7 @@
 #define TXT_NULL_POINTER_ACCESS           "Null pointer access"
 #define TXT_DIVIDE_BY_ZERO                "Divide by zero"
 #define TXT_DIVIDE_OVERFLOW               "Overflow in integer division"
+#define TXT_POW_OVERFLOW                  "Overflow in exponent operation"
 #define TXT_UNRECOGNIZED_BYTE_CODE        "Unrecognized byte code"
 #define TXT_INVALID_CALLING_CONVENTION    "Invalid calling convention"
 #define TXT_UNBOUND_FUNCTION              "Unbound function called"

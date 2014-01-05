@@ -56,8 +56,12 @@ This list shows the dual and ternary operator precedence in decreasing order.
 
 <table cellspacing=0 cellpadding=0 border=0>
 <tr><td width=180 valign=top>
-<code>* / %</code>
+<code>**</code>
 </td><td width=350 valign=top>
+exponent
+</td></tr><tr><td valign=top>
+<code>* / %</code>
+</td><td valign=top>
 multiply, divide, and modulo
 </td></tr><tr><td valign=top>
 <code>+ -</code>
@@ -100,7 +104,7 @@ logical or
 </td><td valign=top>
 condition
 </td></tr><tr><td valign=top>
-<code>= += -= *= /= %= &amp;=<br>
+<code>= += -= *= /= %= **= &amp;=<br>
 |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
 </td><td valign=top>
 assignment and compound assignments

@@ -87,6 +87,7 @@ SRCNAMES = \
   test_parser.cpp \
   test_pointer.cpp \
   test_postprocess.cpp \
+  test_pow.cpp \
   test_refargument.cpp \
   test_refcast.cpp \
   test_returnstring.cpp \

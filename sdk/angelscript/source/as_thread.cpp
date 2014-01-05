@@ -109,7 +109,7 @@ AS_API void asReleaseSharedLock()
 
 //======================================================================
 
-#if defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+#if !defined(AS_NO_THREADS) && defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 __declspec(thread) asCThreadLocalData *asCThreadManager::tld = 0;
 #endif
 

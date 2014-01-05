@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1428,8 +1428,15 @@ enum asEBCInstr
 	asBC_SetListSize	= 190,
 	asBC_PshListElmnt	= 191,
 	asBC_SetListType	= 192,
+	asBC_POWi			= 193,
+	asBC_POWu			= 194,
+	asBC_POWf			= 195,
+	asBC_POWd			= 196,
+	asBC_POWdi			= 197,
+	asBC_POWi64			= 198,
+	asBC_POWu64			= 199,
 
-	asBC_MAXBYTECODE	= 193,
+	asBC_MAXBYTECODE	= 200,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -1716,14 +1723,14 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(SetListSize, rW_DW_DW_ARG,	0),
 	asBCINFO(PshListElmnt, rW_DW_ARG,	AS_PTR_SIZE),
 	asBCINFO(SetListType, rW_DW_DW_ARG,	0),
+	asBCINFO(POWi,		wW_rW_rW_ARG,	0),
+	asBCINFO(POWu,		wW_rW_rW_ARG,	0),
+	asBCINFO(POWf,		wW_rW_rW_ARG,	0),
+	asBCINFO(POWd,		wW_rW_rW_ARG,	0),
+	asBCINFO(POWdi,		wW_rW_rW_ARG,	0),
+	asBCINFO(POWi64,	wW_rW_rW_ARG,	0),
+	asBCINFO(POWu64,	wW_rW_rW_ARG,	0),
 
-	asBCINFO_DUMMY(193),
-	asBCINFO_DUMMY(194),
-	asBCINFO_DUMMY(195),
-	asBCINFO_DUMMY(196),
-	asBCINFO_DUMMY(197),
-	asBCINFO_DUMMY(198),
-	asBCINFO_DUMMY(199),
 	asBCINFO_DUMMY(200),
 	asBCINFO_DUMMY(201),
 	asBCINFO_DUMMY(202),

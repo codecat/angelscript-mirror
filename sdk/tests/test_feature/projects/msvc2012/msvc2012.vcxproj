@@ -368,6 +368,7 @@
     <ClCompile Include="..\..\source\test_parser.cpp" />
     <ClCompile Include="..\..\source\test_pointer.cpp" />
     <ClCompile Include="..\..\source\test_postprocess.cpp" />
+    <ClCompile Include="..\..\source\test_pow.cpp" />
     <ClCompile Include="..\..\source\test_refargument.cpp" />
     <ClCompile Include="..\..\source\test_refcast.cpp" />
     <ClCompile Include="..\..\source\test_registertype.cpp" />
