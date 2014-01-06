@@ -18,6 +18,20 @@ public:
 	asDWORD a;
 };
 
+class Base
+{
+public:
+	virtual void Print() { str = "Called from Base"; }
+
+	std::string str;
+};
+
+class Derived : public Base
+{
+public:
+	virtual void Print() { str = "Called from Derived"; }
+};
+
 static Class1 c1;
 
 bool Test()
@@ -51,6 +65,20 @@ bool Test()
 		printf("Class member wasn't updated correctly\n");
 		TEST_FAILED;
 	}
+
+	// Register and call a derived method
+	Base *obj = new Derived();
+ 	engine->RegisterGlobalFunction("void Print()", asMETHOD(Base, Print), asCALL_THISCALL_ASGLOBAL, obj);
+
+	r = ExecuteString(engine, "Print()");
+	if( r < 0 )
+		TEST_FAILED;
+
+	if( obj->str != "Called from Derived" )
+		TEST_FAILED;
+
+	delete obj;
+
 
 	// It must not be possible to register without the object pointer
 	CBufferedOutStream bout;
