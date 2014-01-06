@@ -5222,7 +5222,7 @@ int as_powi(int base, int exponent, bool& isOverflow)
 	{
 		const asWORD max_base = pow_info[exponent].MaxBasei32;
 		const char high_bit = pow_info[exponent].HighBit;
-		if( max_base != 0 && max_base < abs(base) )
+		if( max_base != 0 && max_base < (base < 0 ? -base : base) )
 		{
 			isOverflow = true;
 			return 0;  // overflow
