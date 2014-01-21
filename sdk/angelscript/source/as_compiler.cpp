@@ -5486,7 +5486,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 			for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 			{
 				asCScriptFunction *descr = builder->GetFunctionDescription(funcs[n]);
-				if( descr->returnType.IsEqualExceptConst(target) )
+				if( descr->returnType.IsEqualExceptRefAndConst(target) )
 				{
 					funcId = funcs[n];
 					break;

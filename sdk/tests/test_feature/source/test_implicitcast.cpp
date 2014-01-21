@@ -587,6 +587,49 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test implicit cast while assigning to global var
+	// http://www.gamedev.net/topic/652108-implicit-value-cast-assigned-to-global-variable/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		struct Value
+		{
+			double castToDouble() { return dbl; }
+			double dbl;
+		};
+
+		engine->RegisterObjectType("type", sizeof(Value), asOBJ_VALUE|asOBJ_POD);
+		engine->RegisterObjectProperty("type", "double dbl", asOFFSET(Value, dbl));
+		engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "double f()", asMETHOD(Value, castToDouble), asCALL_THISCALL);
+		
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"double g_Value; \n"
+			"void main() \n"
+			"{ \n"
+			"    type x; \n"
+			"    x.dbl = 42.2; \n"
+			"    double Value; \n"
+			"    Value = x; \n"
+			"    g_Value = x; \n"
+			"    assert( g_Value == 42.2 ); \n"
+			"    assert( Value == 42.2 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED ) 
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

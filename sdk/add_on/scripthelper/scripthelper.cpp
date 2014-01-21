@@ -229,6 +229,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 
 	// Export the engine version, just for info
 	fprintf(f, "// AngelScript %s\n", asGetLibraryVersion());
+	fprintf(f, "// Lib options %s\n", asGetLibraryOptions());
 
 	// Export the relevant engine properties
 	fprintf(f, "\n// Engine properties\n");
