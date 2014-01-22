@@ -2824,6 +2824,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 					// We now know the type
 					dt = rctx.type.dataType;
 					dt.MakeReadOnly(false);
+					dt.MakeReference(false);
 
 					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
 					if( bufferSize & 0x3 )

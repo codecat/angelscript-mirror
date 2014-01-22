@@ -302,6 +302,48 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test initialization lists with global variables
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	
+		const char *script =
+			"string testGlobalStr = 'hello'; \n"
+			"void main() \n"
+			"{ \n"
+			"   dictionary dic = {{'test', testGlobalStr}}; \n"
+			"   string txt; \n"
+			"   dic.get('test', txt); \n"
+			"   assert( txt == 'hello' ); \n"
+			"} \n";
+
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	return fail;
 }
 
