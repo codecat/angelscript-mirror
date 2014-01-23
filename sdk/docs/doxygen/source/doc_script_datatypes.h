@@ -4,17 +4,32 @@
 
 Note that the host application may add types specific to that application, refer to the application's manual for more information.
 
+ - \subpage doc_builtin_types
+ - \subpage doc_addon_types
+
+
+
+\page doc_builtin_types Built-in types
+
  - \subpage doc_datatypes_primitives 
  - \subpage doc_datatypes_obj
- - \subpage doc_datatypes_arrays
- - \subpage doc_datatypes_strings
  - \subpage doc_datatypes_funcptr
 
+ 
+ 
+\page doc_addon_types Add-on types
+ 
+ - \subpage doc_datatypes_strings
+ - \subpage doc_datatypes_arrays
+
+ 
+ 
 \page doc_datatypes_primitives Primitives
 
 \section void void
 
 <code>void</code> is not really a data type, more like lack of data type. It can only be used to tell the compiler that a function doesn't return any data.
+
 
 
 \section bool bool

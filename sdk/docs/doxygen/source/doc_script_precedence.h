@@ -20,7 +20,7 @@ scope resolution operator
 </td><td valign=top>
 indexing operator
 </td></tr><tr><td width=150 valign=top>
-<code>++ --</code>
+<code>++ \--</code>
 </td><td valign=top>
 post increment and decrement
 </td></tr><tr><td width=150 valign=top>
@@ -28,7 +28,7 @@ post increment and decrement
 </td><td valign=top>
 member access
 </td></tr><tr><td width=150 valign=top>
-<code>++ --</code>
+<code>++ \--</code>
 </td><td valign=top>
 pre increment and decrement
 </td></tr><tr><td width=150 valign=top>
@@ -55,7 +55,7 @@ handle of
 This list shows the dual and ternary operator precedence in decreasing order.
 
 <table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=180 valign=top>
+<tr><td width=200 valign=top>
 <code>**</code>
 </td><td width=350 valign=top>
 exponent

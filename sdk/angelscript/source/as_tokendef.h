@@ -151,9 +151,9 @@ enum eTokenType
 	ttFalse,               // false
 	ttReturn,              // return
 	ttNot,                 // not
-	ttAnd,                 // and
-	ttOr,                  // or
-	ttXor,                 // xor
+	ttAnd,                 // and, &&
+	ttOr,                  // or, ||
+	ttXor,                 // xor, ^^
 	ttBreak,               // break
 	ttContinue,            // continue
 	ttConst,               // const

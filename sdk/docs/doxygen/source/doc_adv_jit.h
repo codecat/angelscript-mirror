@@ -236,24 +236,31 @@ Perform the operation with the value of two variables and store the result in a 
  - \ref asBC_MULi
  - \ref asBC_DIVi
  - \ref asBC_MODi
+ - \ref asBC_POWi
+ - \ref asBC_POWu
 
  - \ref asBC_ADDf
  - \ref asBC_SUBf
  - \ref asBC_MULf
  - \ref asBC_DIVf
  - \ref asBC_MODf
+ - \ref asBC_POWf
 
  - \ref asBC_ADDd
  - \ref asBC_SUBd
  - \ref asBC_MULd
  - \ref asBC_DIVd
  - \ref asBC_MODd
+ - \ref asBC_POWd
+ - \ref asBC_POWdi
 
  - \ref asBC_ADDi64
  - \ref asBC_SUBi64
  - \ref asBC_MULi64
  - \ref asBC_DIVi64
  - \ref asBC_MODi64
+ - \ref asBC_POWi64
+ - \ref asBC_POWu64
 
 Perform the operation with a constant value and the value of the variable. The original value is overwritten.
 
