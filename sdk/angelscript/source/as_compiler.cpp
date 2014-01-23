@@ -7155,7 +7155,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 			}
 
 			// Allow either case to be converted to const @ if the other is const @
-			if( le.type.dataType.IsHandleToConst() || re.type.dataType.IsHandleToConst() )
+			if( (le.type.dataType.IsHandleToConst() && !le.type.IsNullConstant()) || (re.type.dataType.IsHandleToConst() && !re.type.dataType.IsNullHandle()) )
 			{
 				le.type.dataType.MakeHandleToConst(true);
 				re.type.dataType.MakeHandleToConst(true);

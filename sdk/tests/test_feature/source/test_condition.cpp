@@ -71,6 +71,36 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test condition with null handle
+	// http://www.gamedev.net/topic/652528-cant-implicitly-convert-from-const-testclass-to-testclass/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterScriptArray(engine, true);
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class TestClass{} \n"
+			"void Test() { \n"
+			"   array<TestClass@> test; \n"
+			"   TestClass @s = test.length() > 0 ? test[0] : null; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test condition where the two operands different only in const
 	// http://www.gamedev.net/topic/651245-factory-for-const-string/
 	{
