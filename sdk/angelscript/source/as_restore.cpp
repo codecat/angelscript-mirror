@@ -47,6 +47,7 @@ asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngi
  : module(_module), stream(_stream), engine(_engine)
 {
 	error = false;
+	bytesRead = 0;
 }
 
 void asCReader::ReadData(void *data, asUINT size)
@@ -59,6 +60,7 @@ void asCReader::ReadData(void *data, asUINT size)
 	for( int n = size-1; n >= 0; n-- )
 		stream->Read(((asBYTE*)data)+n, 1);
 #endif
+	bytesRead += size;
 }
 
 int asCReader::Read(bool *wasDebugInfoStripped)
@@ -106,6 +108,20 @@ int asCReader::Read(bool *wasDebugInfoStripped)
 	return r;
 }
 
+int asCReader::Error(const char *msg)
+{
+	// Don't write if it has already been reported an error earlier
+	if( !error )
+	{
+		asCString str;
+		str.Format(msg, bytesRead);
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		error = true;
+	}
+
+	return -1;
+}
+
 int asCReader::ReadInner() 
 {
 	// This function will load each entity one by one from the stream.
@@ -126,7 +142,10 @@ int asCReader::ReadInner()
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
 		if( ot == 0 )
+		{
+			error = true;
 			return asOUT_OF_MEMORY;
+		}
 
 		ReadObjectTypeDeclaration(ot, 1);
 
@@ -170,7 +189,10 @@ int asCReader::ReadInner()
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
 		if( ot == 0 )
+		{
+			error = true;
 			return asOUT_OF_MEMORY;
+		}
 
 		ReadObjectTypeDeclaration(ot, 1);
 
@@ -251,7 +273,7 @@ int asCReader::ReadInner()
 			}
 		}
 		else
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 	}
 
 	// Read interface methods
@@ -284,7 +306,10 @@ int asCReader::ReadInner()
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
 		if( ot == 0 )
+		{
+			error = true;
 			return asOUT_OF_MEMORY;
+		}
 
 		ReadObjectTypeDeclaration(ot, 1);
 		engine->classTypes.PushLast(ot);
@@ -300,7 +325,7 @@ int asCReader::ReadInner()
 	if( count && engine->ep.disallowGlobalVars )
 	{
 		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_GLOBAL_VARS_NOT_ALLOWED);
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 	}
 	module->scriptGlobals.Allocate(count, false);
 	for( i = 0; i < count && !error; ++i ) 
@@ -317,7 +342,7 @@ int asCReader::ReadInner()
 		func = ReadFunction(isNew);
 		if( func == 0 )
 		{
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			break;
 		}
 		
@@ -365,7 +390,7 @@ int asCReader::ReadInner()
 			func->AddRef();
 		}
 		else
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 	}
 
 	if( error ) return asERROR;
@@ -377,13 +402,16 @@ int asCReader::ReadInner()
 	{
 		sBindInfo *info = asNEW(sBindInfo);
 		if( info == 0 )
+		{
+			error = true;
 			return asOUT_OF_MEMORY;
+		}
 
 		bool isNew;
 		info->importedFunctionSignature = ReadFunction(isNew, false, false);
 		if( info->importedFunctionSignature == 0 )
 		{
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			break;
 		}
 
@@ -456,7 +484,7 @@ int asCReader::ReadInner()
 				asCString str;
 				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, usedTypes[i]->name.AddressOf(), sub.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 			}
 		}
 	}
@@ -579,7 +607,7 @@ void asCReader::ReadUsedFunctions()
 
 			if( usedFunctions[n] == 0 )
 			{
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 				return;
 			}
 		}
@@ -588,7 +616,7 @@ void asCReader::ReadUsedFunctions()
 
 void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 {
-	int i, count;
+	asUINT i, count;
 	asCDataType dt;
 	int num;
 
@@ -613,7 +641,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( count > 256 )
 	{
 		// Too many arguments, must be something wrong in the file
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return;
 	}
 	func->parameterTypes.Allocate(count, false);
@@ -629,7 +657,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( count > func->parameterTypes.GetLength() )
 	{
 		// Cannot be more than the number of arguments
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return;
 	}
 	for( i = 0; i < count; ++i )
@@ -642,10 +670,10 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 
 	// Read the default args, from last to first
 	count = ReadEncodedUInt();
-	if( count > int(func->parameterTypes.GetLength()) )
+	if( count > func->parameterTypes.GetLength() )
 	{
 		// Cannot be more than the number of arguments
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return;
 	}
 	if( count )
@@ -705,7 +733,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			return savedFunctions[index];
 		else
 		{
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return 0;
 		}
 	}
@@ -932,7 +960,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						asCString str;
 						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 						engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-						error = true;
+						Error(TXT_INVALID_BYTECODE_d);
 					}
 				}
 			}
@@ -955,7 +983,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					asCString str;
 					str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 					engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-					error = true;
+					Error(TXT_INVALID_BYTECODE_d);
 				}
 			}
 			else
@@ -979,7 +1007,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						asCString str;
 						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 						engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-						error = true;
+						Error(TXT_INVALID_BYTECODE_d);
 					}
 				}
 			}
@@ -1017,7 +1045,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						asCString str;
 						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 						engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-						error = true;
+						Error(TXT_INVALID_BYTECODE_d);
 					}
 					if( func )
 					{
@@ -1075,7 +1103,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 								asCString str;
 								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 								engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-								error = true;
+								Error(TXT_INVALID_BYTECODE_d);
 							}
 							if( isNew )
 							{
@@ -1096,8 +1124,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					else
 					{
-						// TODO: Write message
-						error = true;
+						Error(TXT_INVALID_BYTECODE_d);
 					}
 
 					func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
@@ -1127,7 +1154,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 								asCString str;
 								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 								engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-								error = true;
+								Error(TXT_INVALID_BYTECODE_d);
 							}
 							if( isNew )
 							{
@@ -1148,8 +1175,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					else
 					{
-						// TODO: Write message
-						error = true;
+						Error(TXT_INVALID_BYTECODE_d);
 					}
 				}
 			}
@@ -1187,7 +1213,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							asCString str;
 							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 							engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-							error = true;
+							Error(TXT_INVALID_BYTECODE_d);
 						}
 						if( isNew )
 						{
@@ -1216,8 +1242,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 				}
 				else
 				{
-					// TODO: Write message
-					error = true;
+					Error(TXT_INVALID_BYTECODE_d);
 				}
 			}
 
@@ -1253,7 +1278,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 							asCString str;
 							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
 							engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-							error = true;
+							Error(TXT_INVALID_BYTECODE_d);
 						}
 						if( isNew )
 						{
@@ -1272,8 +1297,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 				}
 				else
 				{
-					// TODO: Write message
-					error = true;
+					Error(TXT_INVALID_BYTECODE_d);
 				}
 			}
 		}
@@ -1292,8 +1316,7 @@ asWORD asCReader::ReadEncodedUInt16()
 	asDWORD dw = ReadEncodedUInt();
 	if( (dw>>16) != 0 && (dw>>16) != 0xFFFF )
 	{
-		// TODO: Write message
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 	}
 
 	return asWORD(dw & 0xFFFF);
@@ -1304,8 +1327,7 @@ asUINT asCReader::ReadEncodedUInt()
 	asQWORD qw = ReadEncodedUInt64();
 	if( (qw>>32) != 0 && (qw>>32) != 0xFFFFFFFF )
 	{
-		// TODO: Write message
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 	}
 
 	return asUINT(qw & 0xFFFFFFFFu);
@@ -1407,7 +1429,7 @@ void asCReader::ReadString(asCString* str)
 		if( n < savedStrings.GetLength() )
 			*str = savedStrings[n];
 		else
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 	}
 }
 
@@ -1441,7 +1463,7 @@ void asCReader::ReadGlobalProperty()
 			func->Release();
 		}
 		else
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 	}
 }
 
@@ -1564,7 +1586,7 @@ asCObjectType* asCReader::ReadObjectType()
 			asCString str;
 			str.Format(TXT_TEMPLATE_TYPE_s_DOESNT_EXIST, typeName.AddressOf());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return 0;
 		}
 
@@ -1608,7 +1630,7 @@ asCObjectType* asCReader::ReadObjectType()
 			asCString str;
 			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, typeName.AddressOf(), sub.AddressOf());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return 0;
 		}
 	}
@@ -1617,8 +1639,7 @@ asCObjectType* asCReader::ReadObjectType()
 		asCObjectType *st = ReadObjectType();
 		if( st == 0 || st->beh.listFactory == 0 )
 		{
-			// TODO: Write approprate error
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return 0;
 		}
 		ot = engine->GetListPatternType(st->beh.listFactory);
@@ -1645,7 +1666,7 @@ asCObjectType* asCReader::ReadObjectType()
 			asCString str;
 			str.Format(TXT_TEMPLATE_SUBTYPE_s_DOESNT_EXIST, typeName.AddressOf());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return 0;
 		}
 	}
@@ -1669,7 +1690,7 @@ asCObjectType* asCReader::ReadObjectType()
 				asCString str;
 				str.Format(TXT_OBJECT_TYPE_s_DOESNT_EXIST, typeName.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 				return 0;
 			}
 		}
@@ -1984,8 +2005,7 @@ void asCReader::ReadUsedGlobalProps()
 
 		if( prop == 0 )
 		{
-			// TODO: Write error message to the callback
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 		}
 	}
 }
@@ -2000,8 +2020,7 @@ void asCReader::ReadUsedObjectProps()
 		asCObjectType *objType = ReadObjectType();
 		if( objType == 0 )
 		{
-			// TODO: Write error message to callback
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			break;
 		}
 
@@ -2023,8 +2042,7 @@ void asCReader::ReadUsedObjectProps()
 
 		if( !found )
 		{
-			// TODO: Write error message to callback
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return;
 		}
 	}
@@ -2034,9 +2052,7 @@ short asCReader::FindObjectPropOffset(asWORD index)
 {
 	if( index >= usedObjectProperties.GetLength() )
 	{
-		// TODO: Write to message callback
-		asASSERT(false);
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return 0;
 	}
 
@@ -2049,8 +2065,7 @@ asCScriptFunction *asCReader::FindFunction(int idx)
 		return usedFunctions[idx];
 	else
 	{
-		// TODO: Write to message callback
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return 0;
 	}
 }
@@ -2073,7 +2088,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		asUINT size = asBCTypeSize[asBCInfo[c].type];
 		if( size == 0 )
 		{
-			error = true;
+			Error(TXT_INVALID_BYTECODE_d);
 			return;
 		}
 		bcSizes.PushLast(size);
@@ -2149,8 +2164,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				asCDataType dt = engine->GetDataTypeFromTypeId(*tid);
 				if( !dt.IsValid() )
 				{
-					// TODO: Write error to message
-					error = true;
+					Error(TXT_INVALID_BYTECODE_d);
 				}
 				else
 					asBC_SWORDARG0(&bc[n]) = (short)dt.GetSizeInMemoryDWords();
@@ -2175,8 +2189,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				*fid = f->id;
 			else
 			{
-				// TODO: Write to message callback
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 				return;
 			}
 		}
@@ -2202,8 +2215,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 					*fid = f->id;
 				else
 				{
-					// TODO: Write to message callback
-					error = true;
+					Error(TXT_INVALID_BYTECODE_d);
 					return;
 				}
 			}
@@ -2217,8 +2229,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				*arg = (asWORD)usedStringConstants[*arg];
 			else
 			{
-				// TODO: Write to message callback
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 				return;
 			}
 		}
@@ -2233,15 +2244,13 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 					*fid = bi->importedFunctionSignature->id;
 				else
 				{
-					// TODO: Write to message callback
-					error = true;
+					Error(TXT_INVALID_BYTECODE_d);
 					return;
 				}
 			}
 			else
 			{
-				// TODO: Write to message callback
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 				return;
 			}
 		}
@@ -2260,8 +2269,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				*(void**)index = usedGlobalProperties[*(asUINT*)index];
 			else
 			{
-				// TODO: Write to message callback
-				error = true;
+				Error(TXT_INVALID_BYTECODE_d);
 				return;
 			}
 		}
@@ -2877,7 +2885,7 @@ int asCReader::AdjustStackPosition(int pos)
 	else if( pos >= 0 ) 
 		pos += (short)adjustByPos[pos];
 	else if( -pos >= (int)adjustNegativeStackByPos.GetLength() )
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 	else
 		pos += (short)adjustNegativeStackByPos[-pos];
 
@@ -2971,8 +2979,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 
 	if( calledFunc == 0 )
 	{
-		// TODO: Report error
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return offset;
 	}
 
@@ -3021,8 +3028,7 @@ int asCReader::FindTypeId(int idx)
 		return usedTypeIds[idx];
 	else
 	{
-		// TODO: Write to message callback
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return 0;
 	}
 }
@@ -3031,8 +3037,7 @@ asCObjectType *asCReader::FindObjectType(int idx)
 {
 	if( idx < 0 || idx >= (int)usedTypes.GetLength() )
 	{
-		// TODO: Write to message callback
-		error = true;
+		Error(TXT_INVALID_BYTECODE_d);
 		return 0;
 	}
 

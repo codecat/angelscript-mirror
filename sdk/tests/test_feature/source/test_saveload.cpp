@@ -1462,7 +1462,8 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n" )
+		if( bout.buffer != " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
+			               " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 126\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1760,7 +1761,8 @@ bool TestAndrewPrice()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Template type 'array' doesn't exist\n" )
+		if( bout.buffer != " (0, 0) : Error   : Template type 'array' doesn't exist\n"
+			               " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 13\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1773,7 +1775,8 @@ bool TestAndrewPrice()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Object type 'char_ptr' doesn't exist\n" )
+		if( bout.buffer != " (0, 0) : Error   : Object type 'char_ptr' doesn't exist\n"
+						   " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 20\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
