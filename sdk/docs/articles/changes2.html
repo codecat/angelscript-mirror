@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2014/01/24</h2>
+<h2>Version 2.28.1 WIP - 2014/01/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implicit cast didn't work in initialization of global vars (Thanks Jason Goepel)
 <li>Incorrect bytecode sequence when compiling initialization list for dictionary containing values from global string variables (Thanks Jordi Oliveras Rovira)
 <li>Compiler was incorrectly converting both results to const in ?: if one of the expressions was null (Thanks FDsagizi)
+<li>Fixed memory leak on iOS when passing complex object by value to registered function (Thanks FDsagizi)
 </ul>
 <li>Library
 <ul>
