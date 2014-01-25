@@ -104,6 +104,7 @@ public:
 			isReading = false;
 		} 
 		fwrite(ptr, size, 1, f); 
+		fflush(f);
 	}
 	void Read(void *ptr, asUINT size) 
 	{ 
@@ -117,7 +118,7 @@ public:
 		} 
 		fread(ptr, size, 1, f); 
 	}
-	void Restart() {if( f ) fseek(f, 0, SEEK_SET);}
+	void Restart() {if( f ) { fclose(f); f = 0; }}
 
 protected:
 	std::string name;

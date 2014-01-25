@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -121,7 +121,7 @@ int asCReader::ReadInner()
 
 	// Read enums
 	count = ReadEncodedUInt();
-	module->enumTypes.Allocate(count, 0);
+	module->enumTypes.Allocate(count, false);
 	for( i = 0; i < count && !error; i++ )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
@@ -165,7 +165,7 @@ int asCReader::ReadInner()
 	// classTypes[]
 	// First restore the structure names, then the properties
 	count = ReadEncodedUInt();
-	module->classTypes.Allocate(count, 0);
+	module->classTypes.Allocate(count, false);
 	for( i = 0; i < count && !error; ++i )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
@@ -212,7 +212,7 @@ int asCReader::ReadInner()
 
 	// Read func defs
 	count = ReadEncodedUInt();
-	module->funcDefs.Allocate(count, 0);
+	module->funcDefs.Allocate(count, false);
 	for( i = 0; i < count && !error; i++ )
 	{
 		bool isNew;
@@ -279,7 +279,7 @@ int asCReader::ReadInner()
 
 	// Read typedefs
 	count = ReadEncodedUInt();
-	module->typeDefs.Allocate(count, 0);
+	module->typeDefs.Allocate(count, false);
 	for( i = 0; i < count && !error; i++ )
 	{
 		asCObjectType *ot = asNEW(asCObjectType)(engine);
@@ -302,7 +302,7 @@ int asCReader::ReadInner()
 		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_GLOBAL_VARS_NOT_ALLOWED);
 		error = true;
 	}
-	module->scriptGlobals.Allocate(count, 0);
+	module->scriptGlobals.Allocate(count, false);
 	for( i = 0; i < count && !error; ++i ) 
 	{
 		ReadGlobalProperty();
@@ -372,7 +372,7 @@ int asCReader::ReadInner()
 
 	// bindInformations[]
 	count = ReadEncodedUInt();
-	module->bindInformations.Allocate(count, 0);
+	module->bindInformations.Allocate(count, false);
 	for( i = 0; i < count && !error; ++i )
 	{
 		sBindInfo *info = asNEW(sBindInfo);
@@ -407,7 +407,7 @@ int asCReader::ReadInner()
 
 	// usedTypes[]
 	count = ReadEncodedUInt();
-	usedTypes.Allocate(count, 0);
+	usedTypes.Allocate(count, false);
 	for( i = 0; i < count && !error; ++i )
 	{
 		asCObjectType *ot = ReadObjectType();
@@ -503,7 +503,7 @@ void asCReader::ReadUsedStringConstants()
 
 	asUINT count;
 	count = ReadEncodedUInt();
-	usedStringConstants.Allocate(count, 0);
+	usedStringConstants.Allocate(count, false);
 	for( asUINT i = 0; i < count; ++i ) 
 	{
 		ReadString(&str);
@@ -536,6 +536,11 @@ void asCReader::ReadUsedFunctions()
 		{
 			asCScriptFunction func(engine, c == 'm' ? module : 0, asFUNC_DUMMY);
 			ReadFunctionSignature(&func);
+			if( error )
+			{
+				func.funcType = asFUNC_DUMMY;
+				return;
+			}
 
 			// Find the correct function
 			if( c == 'm' )
@@ -571,6 +576,12 @@ void asCReader::ReadUsedFunctions()
 
 			// Set the type to dummy so it won't try to release the id
 			func.funcType = asFUNC_DUMMY;
+
+			if( usedFunctions[n] == 0 )
+			{
+				error = true;
+				return;
+			}
 		}
 	}
 }
@@ -599,29 +610,48 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	ReadDataType(&func->returnType);
 
 	count = ReadEncodedUInt();
-	func->parameterTypes.Allocate(count, 0);
+	if( count > 256 )
+	{
+		// Too many arguments, must be something wrong in the file
+		error = true;
+		return;
+	}
+	func->parameterTypes.Allocate(count, false);
 	for( i = 0; i < count; ++i ) 
 	{
 		ReadDataType(&dt);
 		func->parameterTypes.PushLast(dt);
 	}
 
+	func->inOutFlags.SetLength(func->parameterTypes.GetLength());
+	memset(func->inOutFlags.AddressOf(), 0, sizeof(asETypeModifiers)*func->inOutFlags.GetLength());
 	count = ReadEncodedUInt();
-	func->inOutFlags.Allocate(count, 0);
+	if( count > func->parameterTypes.GetLength() )
+	{
+		// Cannot be more than the number of arguments
+		error = true;
+		return;
+	}
 	for( i = 0; i < count; ++i )
 	{
 		num = ReadEncodedUInt();
-		func->inOutFlags.PushLast(static_cast<asETypeModifiers>(num));
+		func->inOutFlags[i] = static_cast<asETypeModifiers>(num);
 	}
 
 	func->funcType = (asEFuncType)ReadEncodedUInt();
 
 	// Read the default args, from last to first
 	count = ReadEncodedUInt();
+	if( count > int(func->parameterTypes.GetLength()) )
+	{
+		// Cannot be more than the number of arguments
+		error = true;
+		return;
+	}
 	if( count )
 	{
 		func->defaultArgs.SetLength(func->parameterTypes.GetLength());
-		memset(func->defaultArgs.AddressOf(), 0, sizeof(asCString*)*func->parameterTypes.GetLength());
+		memset(func->defaultArgs.AddressOf(), 0, sizeof(asCString*)*func->defaultArgs.GetLength());
 		for( i = 0; i < count; i++ )
 		{
 			asCString *str = asNEW(asCString);
@@ -696,6 +726,11 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	int num;
 
 	ReadFunctionSignature(func);
+	if( error )
+	{
+		asDELETE(func, asCScriptFunction);
+		return 0;
+	}
 
 	if( func->funcType == asFUNC_SCRIPT )
 	{
@@ -709,9 +744,9 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		func->scriptData->variableSpace = ReadEncodedUInt();
 
 		count = ReadEncodedUInt();
-		func->scriptData->objVariablePos.Allocate(count, 0);
-		func->scriptData->objVariableTypes.Allocate(count, 0);
-		func->scriptData->funcVariableTypes.Allocate(count, 0);
+		func->scriptData->objVariablePos.Allocate(count, false);
+		func->scriptData->objVariableTypes.Allocate(count, false);
+		func->scriptData->funcVariableTypes.Allocate(count, false);
 		for( i = 0; i < count; ++i )
 		{
 			func->scriptData->objVariableTypes.PushLast(ReadObjectType());
@@ -763,7 +798,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		if( !noDebugInfo )
 		{
 			length = ReadEncodedUInt();
-			func->scriptData->variables.Allocate(length, 0);
+			func->scriptData->variables.Allocate(length, false);
 			for( i = 0; i < length; i++ )
 			{
 				asSScriptVariable *var = asNEW(asSScriptVariable);
@@ -771,6 +806,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 				{
 					// Out of memory
 					error = true;
+					asDELETE(func, asCScriptFunction);
 					return 0;
 				}
 				func->scriptData->variables.PushLast(var);
@@ -857,7 +893,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			bool sharedExists = existingShared.MoveTo(0, ot);
 			if( !sharedExists )
 			{
-				ot->enumValues.Allocate(count, 0);
+				ot->enumValues.Allocate(count, false);
 				for( int n = 0; n < count; n++ )
 				{
 					asSEnumValue *e = asNEW(asSEnumValue);
@@ -949,8 +985,8 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 			else
 			{
-				ot->interfaces.Allocate(size,0);
-				ot->interfaceVFTOffsets.Allocate(size,0);
+				ot->interfaces.Allocate(size, false);
+				ot->interfaceVFTOffsets.Allocate(size, false);
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = ReadObjectType();
@@ -1462,6 +1498,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 	{
 		asCScriptFunction func(engine, module, asFUNC_DUMMY);
 		ReadFunctionSignature(&func);
+		if( error ) return;
 		for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 		{
 			// TODO: access: Only return the definitions that the module has access to
@@ -1904,7 +1941,7 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 void asCReader::ReadUsedTypeIds()
 {
 	asUINT count = ReadEncodedUInt();
-	usedTypeIds.Allocate(count, 0);
+	usedTypeIds.Allocate(count, false);
 	for( asUINT n = 0; n < count; n++ )
 	{
 		asCDataType dt;
@@ -1917,7 +1954,7 @@ void asCReader::ReadUsedGlobalProps()
 {
 	int c = ReadEncodedUInt();
 
-	usedGlobalProperties.Allocate(c, 0);
+	usedGlobalProperties.Allocate(c, false);
 
 	for( int n = 0; n < c; n++ )
 	{
@@ -3212,7 +3249,14 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	for( i = 0; i < count; ++i ) 
 		WriteDataType(&func->parameterTypes[i]);
 	
-	count = (asUINT)func->inOutFlags.GetLength();
+	// Only write the inout flags if any of them are set
+	count = 0;
+	for( i = func->inOutFlags.GetLength(); i > 0; i-- )
+		if( func->inOutFlags[i-1] != asTM_NONE )
+		{
+			count = i;
+			break;
+		}
 	WriteEncodedInt64(count);
 	for( i = 0; i < count; ++i )
 		WriteEncodedInt64(func->inOutFlags[i]);
