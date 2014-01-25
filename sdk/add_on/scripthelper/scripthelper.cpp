@@ -211,6 +211,30 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 {
+	// A helper function for escaping quotes in default arguments
+	struct Escape
+	{
+		static string Quotes(const char *decl)
+		{
+			string str = decl;
+			int pos = 0;
+			for(;;)
+			{
+				// Find " characters
+				pos = str.find("\"",pos);
+				if( pos == string::npos )
+					break;
+
+				// Add a \ to escape them
+				str.insert(pos, "\\");
+				pos += 2;
+			}
+			
+			return str;
+		}
+	};
+
+
 	int c, n;
 
 	FILE *f = 0;
@@ -348,6 +372,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	}
 
 	// Write the object types members
+	// TODO: All function declarations must use escape sequences for " so as not to cause the parsing of the file to fail
 	fprintf(f, "\n// Type members\n");
 
 	c = engine->GetObjectTypeCount();
@@ -372,7 +397,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 					fprintf(f, "access %X\n", (unsigned int)(accessMask));
 					currAccessMask = accessMask;
 				}
-				fprintf(f, "intfmthd %s \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
+				fprintf(f, "intfmthd %s \"%s\"\n", typeDecl.c_str(), Escape::Quotes(func->GetDeclaration(false)).c_str());
 			}
 		}
 		else
@@ -387,7 +412,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 					fprintf(f, "access %X\n", (unsigned int)(accessMask));
 					currAccessMask = accessMask;
 				}
-				fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), asBEHAVE_FACTORY, func->GetDeclaration(false));
+				fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), asBEHAVE_FACTORY, Escape::Quotes(func->GetDeclaration(false)).c_str());
 			}
 			for( m = 0; m < type->GetBehaviourCount(); m++ )
 			{
@@ -396,12 +421,12 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 
 				if( beh == asBEHAVE_CONSTRUCT )
 					// Prefix 'void'
-					fprintf(f, "objbeh \"%s\" %d \"void %s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false));
+					fprintf(f, "objbeh \"%s\" %d \"void %s\"\n", typeDecl.c_str(), beh, Escape::Quotes(func->GetDeclaration(false)).c_str());
 				else if( beh == asBEHAVE_DESTRUCT )
 					// Prefix 'void' and remove ~
-					fprintf(f, "objbeh \"%s\" %d \"void %s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false)+1);
+					fprintf(f, "objbeh \"%s\" %d \"void %s\"\n", typeDecl.c_str(), beh, Escape::Quotes(func->GetDeclaration(false)).c_str()+1);
 				else
-					fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false));
+					fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), beh, Escape::Quotes(func->GetDeclaration(false)).c_str());
 			}
 			for( m = 0; m < type->GetMethodCount(); m++ )
 			{
@@ -412,7 +437,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 					fprintf(f, "access %X\n", (unsigned int)(accessMask));
 					currAccessMask = accessMask;
 				}
-				fprintf(f, "objmthd \"%s\" \"%s\"\n", typeDecl.c_str(), func->GetDeclaration(false));
+				fprintf(f, "objmthd \"%s\" \"%s\"\n", typeDecl.c_str(), Escape::Quotes(func->GetDeclaration(false)).c_str());
 			}
 			for( m = 0; m < type->GetPropertyCount(); m++ )
 			{
@@ -447,7 +472,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			fprintf(f, "access %X\n", (unsigned int)(accessMask));
 			currAccessMask = accessMask;
 		}
-		fprintf(f, "func \"%s\"\n", func->GetDeclaration());
+		fprintf(f, "func \"%s\"\n", Escape::Quotes(func->GetDeclaration()).c_str());
 	}
 
 	// Write global properties
