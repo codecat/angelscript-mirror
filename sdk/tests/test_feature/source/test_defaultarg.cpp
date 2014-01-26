@@ -15,6 +15,75 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test that default arg uses global var instead of local
+	// TODO: Should the default arg access the local variable first?
+	{
+		const char *script = 
+			"int myvar = 42; \n"
+			"void Function(int a, int b = myvar) { assert( b == 42 ); } \n"
+			"void main() \n"
+			"{ \n"
+			"	int myvar = 1; \n"
+			"	Function(1); \n"   // This will use the global myvar and not the local myvar
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test default arg that references class member
+	// TODO: Should perhaps allow default args in class methods to access the class' members
+	{
+		const char *script = 
+			"class monster \n"
+			"{ \n"
+			" int level; \n"
+			" void calculate_necessary_experience(int level_to_check=this.level) \n"
+			" { \n"
+			"  level_to_check=1; \n"
+			" } \n"
+			" void act() \n"
+			" { \n"
+			"  calculate_necessary_experience(); \n"
+			" } \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
+		mod->AddScriptSection("test", script);
+		bout.buffer = "";
+		r = mod->Build();
+		if( r > 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (8, 2) : Info    : Compiling void monster::act()\n"
+						   "default arg (1, 1) : Error   : 'this' is not declared\n"
+						   "test (10, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void monster::calculate_necessary_experience(int = this . level)'\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test default arg in constructors
 	// http://www.gamedev.net/topic/646936-default-constructors-vs-default-arguments/
 	{
@@ -34,7 +103,7 @@ bool Test()
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )

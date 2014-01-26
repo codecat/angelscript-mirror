@@ -193,7 +193,7 @@ function.
 
 \page doc_script_func_defarg Default arguments
 
-Sometimes implementing different functions for each overload is unecessary when the difference can 
+Sometimes implementing different functions for each overload is unnecessary when the difference can 
 be provided with a default value to a parameter. This is where default arguments come in handy.
 
 By defining default arguments in the declaration of the function, the script doesn't have to provide
@@ -217,11 +217,10 @@ default arguments.
 </pre>
 
 When defining a default argument to one of the parameters, all subsequent parameters must have a 
-default argument too. 
+default argument too.
 
-The default argument expression will be evaluated in the context that the function is called, so
-if the expression contains any identifiers you need to remember that those will be resolved in the
-local scope where the function is called and not in the scope where the function in declared.
+The default argument expression can include references to variables or call functions, but only if
+the variables or functions are visible in the global scope.
 
 <pre>
   int myvar = 42;
@@ -229,7 +228,7 @@ local scope where the function is called and not in the scope where the function
   void main()
   {
     int myvar = 1;
-    Function(1);    // This will use the local myvar and not the global myvar
+    Function(1);    // This will use the global myvar and not the local myvar
   }
 </pre>
 
