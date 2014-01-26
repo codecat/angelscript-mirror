@@ -235,6 +235,41 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test handle assign on class member as array
+	// http://www.gamedev.net/topic/652656-problem-with-arrays-when-upgraded-to-228/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+
+		engine->RegisterObjectType("ScriptConsoleLine", sizeof(asDWORD), asOBJ_VALUE | asOBJ_APP_CLASS);
+		engine->RegisterObjectProperty("ScriptConsoleLine", "array<string>@ m_SA_Strings", 0);
+		engine->RegisterObjectMethod("ScriptConsoleLine", "ScriptConsoleLine &opAssign(const ScriptConsoleLine& in)", asFUNCTION(0), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("ScriptConsoleLine", asBEHAVE_CONSTRUCT, "void XEAS_ScriptConsoleLineConstructor()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("ScriptConsoleLine", asBEHAVE_DESTRUCT, "void XEAS_ScriptConsoleLineDestructor()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterGlobalProperty("array<ScriptConsoleLine> @m_ScriptConsoleLineArray", (void*)1);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"void main() { \n"
+			"  array<ScriptConsoleLine> crlArr; \n"
+			"  array<string> line; \n"
+			"  line.insertLast('blah'); \n"
+			"  ScriptConsoleLine crl; \n"
+			"  @crl.m_SA_Strings = line; \n"
+			"  crlArr.insertLast(crl); \n"
+			"  @m_ScriptConsoleLineArray = crlArr; \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test compiler error with explicit type cast
 	// http://www.gamedev.net/topic/649644-assert-when-casting-void-return-value-to-an-object-handle/
 	{

@@ -1366,6 +1366,16 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 
 	dt.GetObjectType()->properties.PushLast(prop);
 
+	// Add references to template instances so they are not released too early
+	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+	{
+		if( !currentGroup->objTypes.Exists(type.GetObjectType()) )
+		{
+			type.GetObjectType()->AddRef();
+			currentGroup->objTypes.PushLast(type.GetObjectType());
+		}
+	}
+
 	currentGroup->RefConfigGroup(FindConfigGroupForObjectType(type.GetObjectType()));
 
 	return asSUCCESS;
