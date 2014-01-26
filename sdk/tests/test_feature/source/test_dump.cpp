@@ -322,7 +322,7 @@ void DumpModule(asIScriptModule *mod)
 		"reg func: int64 parseInt(const string&in, uint = 10, uint&out = 0) group: <null>\n"
 		"reg func: double parseFloat(const string&in, uint&out = 0) group: <null>\n"
 		"reg func: void func(int&in) group: <null>\n"
-		"reg func: void func2(const string &in = \"\") group: test\n"
+		"reg func: void func2(const string&in = \"\") group: test\n"
 		"reg enum: myEnum\n"
 		" value1 = 1\n"
 		" value2 = 2\n"

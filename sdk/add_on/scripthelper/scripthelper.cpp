@@ -217,7 +217,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 		static string Quotes(const char *decl)
 		{
 			string str = decl;
-			int pos = 0;
+			size_t pos = 0;
 			for(;;)
 			{
 				// Find " characters

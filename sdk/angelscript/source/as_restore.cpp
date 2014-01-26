@@ -3256,7 +3256,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	
 	// Only write the inout flags if any of them are set
 	count = 0;
-	for( i = func->inOutFlags.GetLength(); i > 0; i-- )
+	for( i = asUINT(func->inOutFlags.GetLength()); i > 0; i-- )
 		if( func->inOutFlags[i-1] != asTM_NONE )
 		{
 			count = i;
