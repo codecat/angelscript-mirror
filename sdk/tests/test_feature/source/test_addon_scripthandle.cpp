@@ -60,6 +60,33 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test storing a script object in a handle, then release the engine
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		const char *script = 
+			"class Test { Test@ t; } \n"; // garbage collected class
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = mod->GetObjectTypeByName("Test");
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
+
+		// Store the object in the handle
+		CScriptHandle handle(obj, type);
+
+		obj->Release();
+
+		// Release engine. handle is still holding on to the object
+		engine->Release();
+
+		// The engine is really only destroyed after the handle has been destroyed
+	}
+
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
