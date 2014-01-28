@@ -235,6 +235,68 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test string with implicit cast to primitive and dictionary
+	// http://www.gamedev.net/topic/652681-bug-problem-with-dictionary-addonimplicit-casts/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		// Register additional behaviour to the CScriptString to allow it to be implicitly converted to/from double
+		struct helper
+		{
+			static CScriptString *objectString_FactoryFromDouble(double v) 
+			{ 
+				CScriptString *str = new CScriptString(); 
+				stringstream s; 
+				s << v; 
+				str->buffer = s.str(); 
+				return str; 
+			}
+			static double objectString_CastToDouble(CScriptString *str) 
+			{ 
+				stringstream s(str->buffer); 
+				double v; 
+				s >> v; 
+				return v; 
+			}
+		};
+		r = engine->RegisterObjectBehaviour( "string", asBEHAVE_FACTORY, "string @f(double)", asFUNCTION( helper::objectString_FactoryFromDouble ), asCALL_CDECL ); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour( "string", asBEHAVE_IMPLICIT_VALUE_CAST, "double f() const", asFUNCTION( helper::objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+
+		//r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const string &in)", asFUNCTION(0), asCALL_GENERIC);
+		//r = engine->RegisterObjectMethod("dictionary", "void get(const string &in, string &out)", asFUNCTION(0), asCALL_GENERIC);
+
+		const char *str = 
+			"string gs;                      \n"
+			"void Test()                     \n"
+			"{                               \n"
+			"  dictionary dict;              \n"
+			"  dict.set('a', '3.14');        \n" // calls dict.set(string, double &in) since the string has an implicit cast to double
+			"  string c;                     \n"
+			"  dict.get('a', c);             \n" // calls dict.get(string, double &out) since the string has implicit factory from double
+			"  assert(c == double('3.14'));  \n"
+			"  dict.get('a', gs);            \n" // calls dict.get(string, double &out) since the string has implicit factory from double
+			"  assert(gs == double('3.14')); \n"
+			"}                               \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", str);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Test()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test handle assign on class member as array
 	// http://www.gamedev.net/topic/652656-problem-with-arrays-when-upgraded-to-228/
 	{

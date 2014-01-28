@@ -51,11 +51,11 @@ public:
 	bool Get(const std::string &key, void *value, int typeId) const;
 
 	// Sets/Gets an integer number value for a key
-	void Set(const std::string &key, asINT64 &value);
+	void Set(const std::string &key, const asINT64 &value);
 	bool Get(const std::string &key, asINT64 &value) const;
 
 	// Sets/Gets a real number value for a key
-	void Set(const std::string &key, double &value);
+	void Set(const std::string &key, const double &value);
 	bool Get(const std::string &key, double &value) const;
 
 	// Returns true if the key is set
