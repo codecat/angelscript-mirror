@@ -306,5 +306,6 @@
 #define TXT_UNBOUND_FUNCTION              "Unbound function called"
 #define TXT_OUT_OF_BOUNDS                 "Out of range"
 #define TXT_EXCEPTION_CAUGHT              "Caught an exception from the application"
+#define TXT_MISMATCH_IN_VALUE_ASSIGN      "Mismatching types in value assignment"
 
 #endif

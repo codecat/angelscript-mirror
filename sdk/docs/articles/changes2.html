@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2014/01/26</h2>
+<h2>Version 2.28.1 WIP - 2014/01/27</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler was incorrectly converting both results to const in ?: if one of the expressions was null (Thanks FDsagizi)
 <li>Fixed memory leak on iOS when passing complex object by value to registered function (Thanks FDsagizi)
 <li>Fixed intermittent crash with registered object properties of template instance types (Thanks aliascc)
+<li>Fixed crash when attempting to assign a script object to another of another type (Thanks Philip Bennefall)
 </ul>
 <li>Library
 <ul>

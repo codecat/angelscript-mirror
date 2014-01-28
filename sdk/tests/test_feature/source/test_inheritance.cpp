@@ -29,6 +29,41 @@ bool Test()
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
 
+	// Value assignment on the base class where the operands are two different derived classes
+	// Reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Base {} \n"
+			"class Derived1 : Base { string a; } \n"
+			"class Derived2 : Base { double a; } \n"
+			"void main() \n"
+			"{ \n"
+			"  Derived1 d1; \n"
+			"  Derived2 d2; \n"
+			"  Base@ b1 = d1, b2 = d2; \n"
+			"  b1 = b2; \n" // must not crash application. should raise script exception
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( std::string(ctx->GetExceptionString()) != "Mismatching types in value assignment" )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	// A derived class must not be allowed to implement a function with the same 
 	// name and parameter list as parent class, but with a different return type.
 	// Reported by Philip Bennefall
