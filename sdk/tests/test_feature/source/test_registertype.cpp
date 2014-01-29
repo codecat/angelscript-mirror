@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../../add_on/scriptdictionary/scriptdictionary.h"
 
 namespace TestRegisterType
 {
@@ -44,8 +45,27 @@ bool Test()
 	fail = TestIrrTypes() || fail;
 	int r = 0;
 	CBufferedOutStream bout;
+	COutStream out;
  	asIScriptEngine *engine;
 	const char *script;
+
+	// Test registering a method that takes an array as argument
+	// http://www.gamedev.net/topic/652723-segfault-when-binding-function-which-takes-script-array-param/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		engine->SetDefaultNamespace("gfx");
+
+		engine->RegisterObjectType("GfxSprite", 0, 1);
+		engine->RegisterObjectMethod("GfxSprite", "array<GfxSprite@>@ GetChildren() const", asFUNCTION(0), asCALL_GENERIC);
+
+		r = engine->RegisterObjectMethod("GfxSprite", "void Foo(const array<float> &in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+
+		engine->Release();
+	}
 
 	// Test registering opAssign twice
 	// http://www.gamedev.net/topic/649718-validatenousage/

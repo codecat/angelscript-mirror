@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4581,14 +4581,13 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							// orderwise it is a template instance.
 							// Only do this for application registered interface, as the
 							// scripts cannot implement templates.
-							// TODO: namespace: Use correct implicit namespace
 							asCArray<asCDataType> subTypes;
 							asUINT subtypeIndex;
 							while( n && n->next && n->next->nodeType == snDataType )
 							{
 								n = n->next;
 
-								asCDataType subType = CreateDataTypeFromNode(n, file, engine->nameSpaces[0], false, module ? 0 : ot);
+								asCDataType subType = CreateDataTypeFromNode(n, file, implicitNamespace, false, module ? 0 : ot);
 								subTypes.PushLast(subType);
 
 								if( subType.IsReadOnly() )
@@ -4875,25 +4874,35 @@ asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type,
 
 	asUINT n;
 
-	for( n = 0; n < currentType->properties.GetLength(); n++ )
+	asCObjectType *found = 0;
+
+	for( n = 0; found == 0 && n < currentType->properties.GetLength(); n++ )
 		if( currentType->properties[n]->type.GetObjectType() &&
 			currentType->properties[n]->type.GetObjectType()->name == type )
-			return currentType->properties[n]->type.GetObjectType();
+			found = currentType->properties[n]->type.GetObjectType();
 
-	for( n = 0; n < currentType->methods.GetLength(); n++ )
+	for( n = 0; found == 0 && n < currentType->methods.GetLength(); n++ )
 	{
 		asCScriptFunction *func = engine->scriptFunctions[currentType->methods[n]];
 		if( func->returnType.GetObjectType() &&
 			func->returnType.GetObjectType()->name == type )
-			return func->returnType.GetObjectType();
-
-		for( asUINT f = 0; f < func->parameterTypes.GetLength(); f++ )
+			found = func->returnType.GetObjectType();
+		
+		for( asUINT f = 0; found == 0 && f < func->parameterTypes.GetLength(); f++ )
 			if( func->parameterTypes[f].GetObjectType() &&
 				func->parameterTypes[f].GetObjectType()->name == type )
-				return func->parameterTypes[f].GetObjectType();
+				found = func->parameterTypes[f].GetObjectType();
 	}
 
-	return 0;
+	if( found )
+	{
+		// In case we find a template instance it mustn't be returned
+		// because it is not known if the subtype is really matching
+		if( found->flags & asOBJ_TEMPLATE )
+			return 0;
+	}
+
+	return found;
 }
 
 asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
