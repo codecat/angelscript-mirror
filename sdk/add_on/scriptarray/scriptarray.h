@@ -49,6 +49,8 @@ public:
 	const void *At(asUINT index) const;
 
 	// Set value of an element
+	// Remember, if the array holds handles the value parameter should be the 
+	// address of the handle. The refCount of the object will also be incremented
 	void  SetValue(asUINT index, void *value);
 
 	CScriptArray &operator=(const CScriptArray&);

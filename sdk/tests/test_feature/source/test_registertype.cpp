@@ -49,6 +49,41 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Test registering a type that require a rectangular list factory
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		engine->RegisterObjectType("rect", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect @f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("rect", asBEHAVE_LIST_FACTORY, "rect @f(int&in) {repeat {repeat_same int}}", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void main() \n"
+			"{ \n"
+			"  rect r1 = {{1,2,3},{4,5,6}}; \n" // OK 2x3 rect
+			"  rect r2 = {{1,2},{3,4,5}}; \n" // Not OK. The second row is not the same length as the first
+			"  rect r3 = {{1,2,3},{4,5}}; \n" // Not OK. The second row is not the same length as the first
+			"} \n");
+
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (4, 21) : Error   : Too many values to match pattern\n"
+						   "test (5, 23) : Error   : Not enough values to match pattern\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test registering a method that takes an array as argument
 	// http://www.gamedev.net/topic/652723-segfault-when-binding-function-which-takes-script-array-param/
 	{

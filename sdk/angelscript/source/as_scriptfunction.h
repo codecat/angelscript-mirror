@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -66,6 +66,7 @@ struct asSScriptVariable
 enum asEListPatternNodeType
 {
 	asLPT_REPEAT,
+	asLPT_REPEAT_SAME,
 	asLPT_START,
 	asLPT_END,
 	asLPT_TYPE

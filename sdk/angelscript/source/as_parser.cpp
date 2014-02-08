@@ -972,12 +972,13 @@ asCScriptNode *asCParser::ParseListPattern()
 			node->AddChildLast(ParseListPattern());
 			afterType = true;
 		}
-		else if( t1.type == ttIdentifier && IdentifierIs(t1, "repeat") )
+		else if( t1.type == ttIdentifier && (IdentifierIs(t1, "repeat") || IdentifierIs(t1, "repeat_same")) )
 		{
 			if( !isBeginning )
 			{
 				asCString msg;
-				msg.Format(TXT_UNEXPECTED_TOKEN_s, "repeat");
+				asCString token(&script->code[t1.pos], t1.length);
+				msg.Format(TXT_UNEXPECTED_TOKEN_s, token.AddressOf());
 				Error(msg.AddressOf(), &t1);
 			}
 			RewindTo(&t1);

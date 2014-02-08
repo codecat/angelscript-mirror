@@ -2608,7 +2608,8 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	asSExprContext valueExpr(engine);
 	asCScriptNode *el = node;
 	asSListPatternNode *patternNode = engine->scriptFunctions[listPatternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
-	int r = CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), bufferVar, bufferSize, valueExpr.bc);
+	int elementsInSubList = -1;
+	int r = CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), bufferVar, bufferSize, valueExpr.bc, elementsInSubList);
 	asASSERT( r || patternNode == 0 );
 	UNUSED_VAR(r);
 
@@ -2733,7 +2734,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	ReleaseTemporaryVariable(bufferVar, bc);
 }
 
-int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScriptNode *&valueNode, int bufferTypeId, short bufferVar, asUINT &bufferSize, asCByteCode &byteCode)
+int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScriptNode *&valueNode, int bufferTypeId, short bufferVar, asUINT &bufferSize, asCByteCode &byteCode, int &elementsInSubList)
 {
 	if( patternNode->type == asLPT_START )
 	{
@@ -2754,7 +2755,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				return -1;
 			}
 
-			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, byteCode);
+			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, byteCode, elementsInSubList);
 			if( r < 0 ) return r;
 			asASSERT( patternNode );
 		}
@@ -2769,8 +2770,14 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		valueNode = valueNode->next;
 		patternNode = patternNode->next;
 	}
-	else if( patternNode->type == asLPT_REPEAT )
+	else if( patternNode->type == asLPT_REPEAT || patternNode->type == asLPT_REPEAT_SAME )
 	{
+		// TODO: list: repeat_inner should make sure the list has the same size as the inner list, i.e. square area
+		// TODO: list: repeat_prev should make sure the list is the same size as the previous
+
+		asEListPatternNodeType repeatType = patternNode->type;
+		asCScriptNode *firstValue = valueNode;
+
 		// The following values will be repeated N times
 		patternNode = patternNode->next;
 
@@ -2786,14 +2793,32 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		bufferSize += 4;
 		asUINT countElements = 0;
 
+		int elementsInSubSubList = -1;
+
 		asSExprContext ctx(engine);
 		while( valueNode )
 		{
 			patternNode = nextNode;
-			int r = CompileInitListElement(patternNode, valueNode, bufferTypeId, bufferVar, bufferSize, ctx.bc);
+			int r = CompileInitListElement(patternNode, valueNode, bufferTypeId, bufferVar, bufferSize, ctx.bc, elementsInSubSubList);
 			if( r < 0 ) return r;
 
 			countElements++;
+		}
+
+		// For repeat_same each repeated sublist must have the same size to form a rectangular array
+		if( repeatType == asLPT_REPEAT_SAME && elementsInSubList != -1 && elementsInSubList != countElements )
+		{
+			if( countElements < asUINT(elementsInSubList) )
+				Error(TXT_NOT_ENOUGH_VALUES_FOR_LIST, firstValue);
+			else
+				Error(TXT_TOO_MANY_VALUES_FOR_LIST, firstValue);
+
+			return -1;
+		}
+		else
+		{
+			// Return to caller the amount of elments in this sublist
+			elementsInSubList = countElements;
 		}
 
 		// The first dword in the buffer will hold the number of elements

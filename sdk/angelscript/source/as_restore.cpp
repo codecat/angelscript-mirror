@@ -2488,7 +2488,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	lastAdjustedOffset = maxOffset;
 
 	// What is being expected at this position?
-	if( patternNode->type == asLPT_REPEAT )
+	if( patternNode->type == asLPT_REPEAT || patternNode->type == asLPT_REPEAT_SAME )
 	{
 		// Align the offset to 4 bytes boundary
 		if( maxOffset & 0x3 )
@@ -2615,7 +2615,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 void asCReader::SListAdjuster::SetRepeatCount(asUINT rc)
 {
 	// Make sure the list is expecting a repeat at this location
-	asASSERT( patternNode->type == asLPT_REPEAT );
+	asASSERT( patternNode->type == asLPT_REPEAT || patternNode->type == asLPT_REPEAT_SAME );
 
 	// Now move to the next patternNode
 	patternNode = patternNode->next;
@@ -4501,7 +4501,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	lastOffset = offset;
 
 	// What is being expected at this position?
-	if( patternNode->type == asLPT_REPEAT )
+	if( patternNode->type == asLPT_REPEAT || patternNode->type == asLPT_REPEAT_SAME )
 	{
 		// Don't move the patternNode yet because the caller must make a call to SetRepeatCount too
 		return entries++;
@@ -4575,7 +4575,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 void asCWriter::SListAdjuster::SetRepeatCount(asUINT rc)
 {
 	// Make sure the list is expecting a repeat at this location
-	asASSERT( patternNode->type == asLPT_REPEAT );
+	asASSERT( patternNode->type == asLPT_REPEAT || patternNode->type == asLPT_REPEAT_SAME );
 
 	// Now move to the next patternNode
 	patternNode = patternNode->next;

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -243,8 +243,23 @@ int asCScriptFunction::ParseListPattern(asSListPatternNode *&target, const char 
 	{
 		if( listNodes->nodeType == snIdentifier )
 		{
-			node->next = asNEW(asSListPatternNode)(asLPT_REPEAT);
-			node = node->next;
+			asCString token(&decl[listNodes->tokenPos], listNodes->tokenLength);
+			if( token == "repeat" )
+			{
+				node->next = asNEW(asSListPatternNode)(asLPT_REPEAT);
+				node = node->next;
+			}
+			else if( token == "repeat_same" )
+			{
+				// TODO: list: Should make sure this is a sub-list
+				node->next = asNEW(asSListPatternNode)(asLPT_REPEAT_SAME);
+				node = node->next;
+			}
+			else
+			{
+				// Shouldn't happen as the parser already reported the error
+				asASSERT(false);
+			}
 		}
 		else if( listNodes->nodeType == snDataType )
 		{
@@ -662,6 +677,8 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				str += " }";
 			else if( n->type == asLPT_REPEAT )
 				str += " repeat";
+			else if( n->type == asLPT_REPEAT_SAME )
+				str += " repeat_same";
 			else if( n->type == asLPT_TYPE )
 			{
 				str += " ";
