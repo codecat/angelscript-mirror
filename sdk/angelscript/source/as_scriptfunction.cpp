@@ -1284,6 +1284,33 @@ void asCScriptFunction::JITCompile()
 	if( !jit )
 		return;
 
+	// Make sure the function has been compiled with JitEntry instructions
+	// For functions that has JitEntry this will be a quick test
+	asUINT length;
+	asDWORD *byteCode = GetByteCode(&length);
+	asDWORD *end = byteCode + length;
+	bool foundJitEntry = false;
+	while( byteCode < end )
+	{
+		// Determine the instruction
+		asEBCInstr op = asEBCInstr(*(asBYTE*)byteCode);
+		if( op == asBC_JitEntry )
+		{
+			foundJitEntry = true;
+			break;
+		}
+
+		// Move to next instruction
+		byteCode += asBCTypeSize[asBCInfo[op].type];
+	}
+
+	if( !foundJitEntry )
+	{
+		asCString msg;
+		msg.Format(TXT_NO_JIT_IN_FUNC_s, GetDeclaration());
+		engine->WriteMessage("", 0, 0, asMSGTYPE_WARNING, msg.AddressOf());
+	}
+
 	// Release the previous function, if any
 	if( scriptData->jitFunction )
 	{
@@ -1294,9 +1321,7 @@ void asCScriptFunction::JITCompile()
 	// Compile for native system
 	int r = jit->CompileFunction(this, &scriptData->jitFunction);
 	if( r < 0 )
-	{
 		asASSERT( scriptData->jitFunction == 0 );
-	}
 }
 
 // interface

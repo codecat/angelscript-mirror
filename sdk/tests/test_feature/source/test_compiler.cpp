@@ -235,6 +235,36 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test the logic for JIT compilation
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		class JitCompiler : public asIJITCompiler
+		{
+		public:
+			virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) { return 0; }
+			virtual void ReleaseJITFunction(asJITFunction func) { }
+		} jit;
+
+		engine->SetJITCompiler(&jit);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "void func() {}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Warning : Function 'void func()' appears to have been compiled without JIT entry points\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test string with implicit cast to primitive and dictionary
 	// http://www.gamedev.net/topic/652681-bug-problem-with-dictionary-addonimplicit-casts/
 	{
