@@ -2806,7 +2806,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		}
 
 		// For repeat_same each repeated sublist must have the same size to form a rectangular array
-		if( repeatType == asLPT_REPEAT_SAME && elementsInSubList != -1 && elementsInSubList != countElements )
+		if( repeatType == asLPT_REPEAT_SAME && elementsInSubList != -1 && asUINT(elementsInSubList) != countElements )
 		{
 			if( countElements < asUINT(elementsInSubList) )
 				Error(TXT_NOT_ENOUGH_VALUES_FOR_LIST, firstValue);

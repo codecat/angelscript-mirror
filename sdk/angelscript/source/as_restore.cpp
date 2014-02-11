@@ -2513,7 +2513,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 
 				asCDataType dt = patternType->engine->GetDataTypeFromTypeId(nextTypeId);
 				asUINT size;
-				if( dt.IsObjectHandle() )
+				if( dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_REF)) )
 					size = AS_PTR_SIZE*4;
 				else
 					size = dt.GetSizeInMemoryBytes();
@@ -2557,7 +2557,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 			// Determine the size of the element
 			asUINT size;
 			asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
-			if( dt.IsObjectHandle() )
+			if( dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_REF)) )
 				size = AS_PTR_SIZE*4;
 			else
 				size = dt.GetSizeInMemoryBytes();

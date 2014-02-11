@@ -88,7 +88,7 @@ bool Test()
 		engine->RegisterObjectType("gentity_t", sizeof(gentity_t), asOBJ_REF | asOBJ_NOCOUNT);
 
 		// TODO: The vec3_t is passed by reference implicitly as it is an array 
-		engine->RegisterGlobalFunction("bool CalcMuzzlePoint(gentity_t@ ent, const vec3_t &in fwd, const vec3_t &in right, const vec3_t &in up, const vec3_t &in muzzle, float lead_in)", asFUNCTION(helper::CalcMuzzlePoint), asCALL_CDECL);
+		engine->RegisterGlobalFunction("bool CalcMuzzlePoint(gentity_t@ ent, const vec3_t &in fwd, const vec3_t &in right, const vec3_t &in up, const vec3_t &in muzzle, float lead_in)", asFUNCTIONPR(helper::CalcMuzzlePoint, ( gentity_t *const , vec3_t , vec3_t , vec3_t , vec3_t , float ), bool), asCALL_CDECL);
 
 		vec3_t wpFwd = {1,2,3}, wpVright = {4,5,6}, wpUp = {7,8,9}, wpMuzzle = {0,1,2};
 		engine->RegisterGlobalProperty("vec3_t wpFwd", &wpFwd);

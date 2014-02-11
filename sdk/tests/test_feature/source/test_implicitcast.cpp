@@ -110,6 +110,12 @@ double myFunction(const double d) {
 	return d;
 }
 
+struct Value
+{
+	double castToDouble() { return dbl; }
+	double dbl;
+};
+
 static bool Test2();
 static bool Test3();
 static bool Test4();
@@ -593,12 +599,6 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-
-		struct Value
-		{
-			double castToDouble() { return dbl; }
-			double dbl;
-		};
 
 		engine->RegisterObjectType("type", sizeof(Value), asOBJ_VALUE|asOBJ_POD);
 		engine->RegisterObjectProperty("type", "double dbl", asOFFSET(Value, dbl));

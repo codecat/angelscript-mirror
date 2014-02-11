@@ -180,11 +180,31 @@ bool Test()
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		r = ExecuteString(engine, "string@[] a = {'a', , 'c', , 'e'}; assert( a[1] is null ); assert( a[2] == 'c' );");
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+		//	"  string@[] a = {'a', , 'c', , 'e'}; assert( a[1] is null ); assert( a[2] == 'c' ); \n"
+			"  string[] b = {'a', , 'c', , 'e'}; assert( b[1] == '' ); assert( b[2] == 'c' ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "string[] a = {'a', , 'c', , 'e'}; assert( a[1] == '' ); assert( a[2] == 'c' );");
+		CBytecodeStream stream("TestArray");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
