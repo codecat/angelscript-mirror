@@ -55,6 +55,13 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
+	// Test closeTo
+	r = ExecuteString(engine, "float a = 0; for( int i = 0; i < 100; i++ ) a += 3.14f; \n"
+		                      "assert( a != 314.0f ); \n"
+							  "assert( closeTo(a, 314.0f) );");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
 	// Test initialization list for value type in local variable
 	r = ExecuteString(engine, 
 		"complex a = {1, 2}; \n"

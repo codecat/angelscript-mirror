@@ -170,6 +170,26 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test initializing an array with string registered as reference type
+	// http://www.gamedev.net/topic/653233-array-with-object-reference/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine); // ref type
+		RegisterScriptArray(engine, true);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "string@[] a = {'a', , 'c', , 'e'}; assert( a[1] is null ); assert( a[2] == 'c' );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "string[] a = {'a', , 'c', , 'e'}; assert( a[1] == '' ); assert( a[2] == 'c' );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 	
 	// Compile array with default value in list
 	{

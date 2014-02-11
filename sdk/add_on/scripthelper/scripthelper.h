@@ -63,22 +63,30 @@ asUINT GetTypeTraits()
 	bool hasCopyConstructor = std::is_copy_constructible<T>::value && !std::has_trivial_copy_constructor<T>::value;
 	bool isFloat = std::is_floating_point<T>::value;
 	bool isPrimitive = std::is_integral<T>::value || std::is_pointer<T>::value || std::is_enum<T>::value;
+	bool isClass = std::is_class<T>::value;
+	bool isArray = std::is_array<T>::value;
 
 	if( isFloat )
 		return asOBJ_APP_FLOAT;
 	if( isPrimitive )
 		return asOBJ_APP_PRIMITIVE;
+	
+	if( isClass )
+	{
+		asDWORD flags = asOBJ_APP_CLASS;
+		if( hasConstructor )
+			flags |= asOBJ_APP_CLASS_CONSTRUCTOR;
+		if( hasDestructor )
+			flags |= asOBJ_APP_CLASS_DESTRUCTOR;
+		if( hasAssignmentOperator )
+			flags |= asOBJ_APP_CLASS_ASSIGNMENT;
+		if( hasCopyConstructor )
+			flags |= asOBJ_APP_CLASS_COPY_CONSTRUCTOR;
+		return flags;
+	}
 
-	asDWORD flags = asOBJ_APP_CLASS;
-	if( hasConstructor )
-		flags |= asOBJ_APP_CLASS_CONSTRUCTOR;
-	if( hasDestructor )
-		flags |= asOBJ_APP_CLASS_DESTRUCTOR;
-	if( hasAssignmentOperator )
-		flags |= asOBJ_APP_CLASS_ASSIGNMENT;
-	if( hasCopyConstructor )
-		flags |= asOBJ_APP_CLASS_COPY_CONSTRUCTOR;
-	return flags;
+	// Unknown type traits
+	return 0;
 }
 
 #endif // c++11

@@ -259,5 +259,68 @@ bool TestCDecl_Class()
 
 	engine->Release();
 
+	// Test registering a float[3] typedef
+	// http://www.gamedev.net/topic/653085-dont-think-im-handling-objects-properly/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		// This type is really an array, and not a structure
+		// On MSVC and most likely other compilers too it is always passed by reference
+		typedef float vec3_t[3];
+
+		struct helper
+		{
+			static bool TestArrayByVal( vec3_t a1, vec3_t a2 ) 
+			{
+				bool ok = true;
+				ok &= a1[0] == 1;
+				ok &= a1[1] == 2;
+				ok &= a1[2] == 3;
+				ok &= a2[0] == 4;
+				ok &= a2[1] == 5;
+				ok &= a2[2] == 6;
+				return ok;
+			}
+		};
+
+#ifdef AS_CAN_USE_CPP11
+		// TODO: Should return asOBJ_APP_ARRAY
+		asUINT appFlags = GetTypeTraits<vec3_t>();
+		if( appFlags != 0 )
+			TEST_FAILED;
+#endif
+
+		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | asOBJ_APP_CLASS | asOBJ_POD);
+		engine->RegisterObjectProperty("vec3_t", "float x", 0);
+		engine->RegisterObjectProperty("vec3_t", "float y", 4);
+		engine->RegisterObjectProperty("vec3_t", "float z", 8);
+
+		// TODO: The vec3_t is passed by reference implicitly as it is an array 
+		engine->RegisterGlobalFunction("bool TestArrayByVal(const vec3_t &in, const vec3_t &in)", asFUNCTION(helper::TestArrayByVal), asCALL_CDECL);
+
+		vec3_t a1 = {1,2,3}, a2 = {4,5,6};
+		engine->RegisterGlobalProperty("vec3_t a1", &a1);
+		engine->RegisterGlobalProperty("vec3_t a2", &a2);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void test() { assert( TestArrayByVal(a1, a2) ); } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("test"));
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	return fail;
 }

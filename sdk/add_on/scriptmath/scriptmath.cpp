@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <math.h>
+#include <float.h>
 #include <string.h>
 #include "scriptmath.h"
 
@@ -94,6 +95,33 @@ asQWORD fpToIEEE(double fp)
 	return *reinterpret_cast<asQWORD*>(&fp);
 }
 
+// TODO: Implement a faster closeTo function with integer operations
+// ref: http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+bool closeTo(float a, float b, float epsilon)
+{
+	// Equal numbers and infinity will return immediately
+	if( a == b ) return true;
+
+	float diff = fabs(a - b);
+	if( a == 0 || b == 0 || diff < FLT_MIN )
+		// When very close to 0, we can use the absolute comparison
+		return diff < (epsilon * FLT_MIN);
+	
+	// Otherwise we need to use relative comparison to account for precision
+	return diff / (fabs(a) + fabs(b)) < epsilon;
+}
+
+bool closeTo(double a, double b, double epsilon)
+{
+	if( a == b ) return true;
+
+	double diff = fabs(a - b);
+	if( a == 0 || b == 0 || diff < DBL_MIN )
+		return diff < (epsilon * DBL_MIN);
+	
+	return diff / (fabs(a) + fabs(b)) < epsilon;
+}
+
 void RegisterScriptMath_Native(asIScriptEngine *engine)
 {
 	int r;
@@ -103,6 +131,10 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("uint fpToIEEE(float)", asFUNCTIONPR(fpToIEEE, (float), asUINT), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double fpFromIEEE(uint64)", asFUNCTIONPR(fpFromIEEE, (asQWORD), double), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("uint64 fpToIEEE(double)", asFUNCTIONPR(fpToIEEE, (double), asQWORD), asCALL_CDECL); assert( r >= 0 );
+
+	// Close to comparison with epsilon 
+	r = engine->RegisterGlobalFunction("bool closeTo(float, float, float = 0.0001f)", asFUNCTIONPR(closeTo, (float, float, float), bool), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("bool closeTo(double, double, double = 0.0000000001f)", asFUNCTIONPR(closeTo, (double, double, double), bool), asCALL_CDECL); assert( r >= 0 );
 
 #if AS_USE_FLOAT
 	// Trigonometric functions

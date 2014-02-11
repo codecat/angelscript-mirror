@@ -49,6 +49,75 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Test registering a float[3] typedef
+	// TODO: This test needs to be part of the native calling convention tests
+	// http://www.gamedev.net/topic/653085-dont-think-im-handling-objects-properly/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		typedef float vec3_t[3];
+		struct gentity_t {
+		};
+
+		struct helper
+		{
+			static bool CalcMuzzlePoint( gentity_t *const ent, vec3_t wpFwd, vec3_t right, vec3_t wpUp, vec3_t muzzlePoint, float lead_in ) 
+			{
+				bool ok = true;
+				ok &= wpFwd[0] == 1;
+				ok &= right[0] == 4;
+				ok &= wpUp[1] == 8;
+				ok &= muzzlePoint[2] == 2;
+				ok &= lead_in == 0;
+				return ok;
+			}
+		};
+
+#ifdef AS_CAN_USE_CPP11
+		asUINT appFlags = GetTypeTraits<vec3_t>();
+#else
+		asUINT appFlags = asOBJ_APP_CLASS;
+#endif
+
+		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | asOBJ_APP_CLASS | asOBJ_POD);
+		engine->RegisterObjectProperty("vec3_t", "float x", 0);
+		engine->RegisterObjectProperty("vec3_t", "float y", 4);
+		engine->RegisterObjectProperty("vec3_t", "float z", 8);
+
+		engine->RegisterObjectType("gentity_t", sizeof(gentity_t), asOBJ_REF | asOBJ_NOCOUNT);
+
+		// TODO: The vec3_t is passed by reference implicitly as it is an array 
+		engine->RegisterGlobalFunction("bool CalcMuzzlePoint(gentity_t@ ent, const vec3_t &in fwd, const vec3_t &in right, const vec3_t &in up, const vec3_t &in muzzle, float lead_in)", asFUNCTION(helper::CalcMuzzlePoint), asCALL_CDECL);
+
+		vec3_t wpFwd = {1,2,3}, wpVright = {4,5,6}, wpUp = {7,8,9}, wpMuzzle = {0,1,2};
+		engine->RegisterGlobalProperty("vec3_t wpFwd", &wpFwd);
+		engine->RegisterGlobalProperty("vec3_t wpVright", &wpVright);
+		engine->RegisterGlobalProperty("vec3_t wpUp", &wpUp);
+		engine->RegisterGlobalProperty("vec3_t wpMuzzle", &wpMuzzle);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void test(gentity_t @ent) { assert( CalcMuzzlePoint(ent, wpFwd, wpVright, wpUp, wpMuzzle, 0) == true ); } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		gentity_t *ent = 0;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("test"));
+		ctx->SetArgAddress(0, &ent);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	// Test registering a type that require a rectangular list factory
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
