@@ -235,6 +235,33 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test compiler warning with implicit conversion of enums
+	// http://www.gamedev.net/topic/652867-implicit-conversion-changed-sign-of-value/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void main() { \n"
+			"  if( (func() & VAL) != 0 ) {} \n"
+			"} \n"
+			"int func() { return 1; } \n"
+			"enum E { VAL = -1 } \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test the logic for JIT compilation
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -156,20 +156,21 @@ negative which is not available for <code>uint</code>.
 </pre>
 
 <table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=70 valign=top><b>operator</b></td>          <td width=130 valign=top><b>description</b></td>    <td width=80 valign=top><b>left hand</b></td>                         <td width=80 valign=top><b>right hand</b></td>                        <td width=80 valign=top><b>result</b></td></tr>
-<tr><td width=70 valign=top><code>~</code></td>           <td width=130 valign=top>bitwise complement</td>    <td width=80 valign=top>&nbsp;</td>                                   <td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
-<tr><td width=70 valign=top><code>&</code></td>           <td width=130 valign=top>bitwise and</td>           <td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
-<tr><td width=70 valign=top><code>|</code></td>           <td width=130 valign=top>bitwise or</td>            <td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
-<tr><td width=70 valign=top><code>^</code></td>           <td width=130 valign=top>bitwise xor</td>           <td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
-<tr><td width=70 valign=top><code>&lt;&lt;</code></td>    <td width=130 valign=top>left shift</td>            <td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
-<tr><td width=70 valign=top><code>&gt;&gt;</code></td>    <td width=130 valign=top>right shift</td>           <td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
-<tr><td width=70 valign=top><code>&gt;&gt;&gt;</code></td><td width=130 valign=top>arithmetic right shift</td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td><td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><b>operator</b></td>          <td width=130 valign=top><b>description</b></td>    <td width=80 valign=top><b>left hand</b></td><td width=80 valign=top><b>right hand</b></td><td width=80 valign=top><b>result</b></td></tr>
+<tr><td width=70 valign=top><code>~</code></td>           <td width=130 valign=top>bitwise complement</td>    <td width=80 valign=top>&nbsp;</td>          <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>&</code></td>           <td width=130 valign=top>bitwise and</td>           <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>|</code></td>           <td width=130 valign=top>bitwise or</td>            <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>^</code></td>           <td width=130 valign=top>bitwise xor</td>           <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>&lt;&lt;</code></td>    <td width=130 valign=top>left shift</td>            <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>&gt;&gt;</code></td>    <td width=130 valign=top>right shift</td>           <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>&gt;&gt;&gt;</code></td><td width=130 valign=top>arithmetic right shift</td><td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 </table>
 
 
 All except <code>~</code> are dual operators.
 
-
+Both operands will be converted to integers while keeping the sign of the original
+type before the operation. The resulting type will be the same as the left hand operand.
 
 
 
@@ -183,8 +184,8 @@ All except <code>~</code> are dual operators.
 </pre>
 
 <table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=70 valign=top><b>operator</b></td>                         <td width=130 valign=top><b>description</b></td>  <td width=80 valign=top><b>left hand</b></td>                         <td width=80 valign=top><b>right hand</b></td>                        <td width=80 valign=top><b>result</b></td></tr>
-<tr><td width=70 valign=top><code>not</code></td><td width=130 valign=top>logical not</td>         <td width=80 valign=top>&nbsp;</td>                                   <td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td></tr>
+<tr><td width=70 valign=top><b>operator</b></td> <td width=130 valign=top><b>description</b></td>  <td width=80 valign=top><b>left hand</b></td> <td width=80 valign=top><b>right hand</b></td><td width=80 valign=top><b>result</b></td></tr>
+<tr><td width=70 valign=top><code>not</code></td><td width=130 valign=top>logical not</td>         <td width=80 valign=top>&nbsp;</td>           <td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td></tr>
 <tr><td width=70 valign=top><code>and</code></td><td width=130 valign=top>logical and</td>         <td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td></tr>
 <tr><td width=70 valign=top><code>or</code></td> <td width=130 valign=top>logical or</td>          <td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td></tr>
 <tr><td width=70 valign=top><code>xor</code></td><td width=130 valign=top>logical exclusive or</td><td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td><td width=80 valign=top><code>bool</code></td></tr>

@@ -11843,30 +11843,38 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		asCDataType to;
 		if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 ||
 			rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-			to.SetTokenType(ttUInt64);
+			to.SetTokenType(ttInt64);
 		else
-			to.SetTokenType(ttUInt);
+			to.SetTokenType(ttInt);
 
-		// Do the actual conversion
+		// Do the actual conversion (keep sign/unsigned if possible)
 		int l = int(reservedVariables.GetLength());
 		rctx->bc.GetVarsUsed(reservedVariables);
+		if( lctx->type.dataType.IsUnsignedType() ) 
+			to.SetTokenType( to.GetSizeOnStackDWords() == 1 ? ttUInt : ttUInt64 );
+		else
+			to.SetTokenType( to.GetSizeOnStackDWords() == 1 ? ttInt : ttInt64 );
 		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
 
 		// Verify that the conversion was successful
-		if( !lctx->type.dataType.IsUnsignedType() )
+		if( lctx->type.dataType != to )
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, lctx->type.dataType.Format().AddressOf(), to.Format().AddressOf());
 			Error(str, node);
 		}
 
-		// Convert right hand operand to same type as left hand operand
+		// Convert right hand operand to same size as left hand
 		l = int(reservedVariables.GetLength());
 		lctx->bc.GetVarsUsed(reservedVariables);
+		if( rctx->type.dataType.IsUnsignedType() ) 
+			to.SetTokenType( to.GetSizeOnStackDWords() == 1 ? ttUInt : ttUInt64 );
+		else
+			to.SetTokenType( to.GetSizeOnStackDWords() == 1 ? ttInt : ttInt64 );
 		ImplicitConversion(rctx, lctx->type.dataType, node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
-		if( !rctx->type.dataType.IsEqualExceptRef(lctx->type.dataType) )
+		if( rctx->type.dataType != to )
 		{
 			asCString str;
 			str.Format(TXT_NO_CONVERSION_s_TO_s, rctx->type.dataType.Format().AddressOf(), lctx->type.dataType.Format().AddressOf());
