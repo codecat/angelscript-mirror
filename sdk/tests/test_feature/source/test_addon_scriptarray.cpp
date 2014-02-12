@@ -171,7 +171,8 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
-	// Test initializing an array with string registered as reference type
+	// Test initializing an array with string registered as reference
+	// type, and skipping values in initialization list
 	// http://www.gamedev.net/topic/653233-array-with-object-reference/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -183,8 +184,9 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void main() { \n"
-		//	"  string@[] a = {'a', , 'c', , 'e'}; assert( a[1] is null ); assert( a[2] == 'c' ); \n"
+			"  string@[] a = {'a', , 'c', , 'e'}; assert( a[1] is null ); assert( a[2] == 'c' ); \n"
 			"  string[] b = {'a', , 'c', , 'e'}; assert( b[1] == '' ); assert( b[2] == 'c' ); \n"
+			"  int[] c = {1, , 3, , 5}; assert( c[1] == 0 ); assert( c[4] == 5 ); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
@@ -211,21 +213,6 @@ bool Test()
 		engine->Release();
 	}
 	
-	// Compile array with default value in list
-	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-		RegisterScriptString(engine); // ref type
-		RegisterScriptArray(engine, false);
-		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
-		r = ExecuteString(engine, "array<string> a = {'a', , 'c', , 'e'}; assert( a[1] == '' );");
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
-
-		engine->Release();
-	}
-
 	// Compile array with default value in list
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

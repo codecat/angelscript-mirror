@@ -2484,6 +2484,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	if( lastOffset == offset )
 		return lastAdjustedOffset;
 
+	int prevOffset = lastOffset;
 	lastOffset = offset;
 	lastAdjustedOffset = maxOffset;
 
@@ -2551,9 +2552,6 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 		}
 		else
 		{
-			if( repeatCount > 0 )
-				repeatCount--;
-
 			// Determine the size of the element
 			asUINT size;
 			asCDataType dt = reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType;
@@ -2562,14 +2560,19 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 			else
 				size = dt.GetSizeInMemoryBytes();
 
-			// Align the offset to 4 bytes boundary
-			if( size >= 4 && (maxOffset & 0x3) )
+			// If values are skipped, the offset needs to be incremented
+			while( prevOffset++ < offset )
 			{
-				maxOffset += 4 - (maxOffset & 0x3);
-				lastAdjustedOffset = maxOffset;
-			}
+				if( repeatCount > 0 )
+					repeatCount--;
 
-			maxOffset += size;
+				// Align the offset to 4 bytes boundary
+				if( size >= 4 && (maxOffset & 0x3) )
+					maxOffset += 4 - (maxOffset & 0x3);
+
+				lastAdjustedOffset = maxOffset;
+				maxOffset += size;
+			}
 
 			// Only move the patternNode if we're not expecting any more repeated entries
 			if( repeatCount == 0 )
@@ -4498,6 +4501,10 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	if( offset == lastOffset )
 		return entries-1;
 
+	// Store the last offset so we can check if the list is skipping some values
+	int prevOffset = lastOffset;
+
+	// Update last offset for next call
 	lastOffset = offset;
 
 	// What is being expected at this position?
@@ -4529,7 +4536,34 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 		else 
 		{
 			if( repeatCount > 0 )
+			{
+				// Was any value skipped?
+				asUINT size;
+				if( dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_REF)) )
+					size = AS_PTR_SIZE*4;
+				else
+					size = dt.GetSizeInMemoryBytes();
+
+				int count = 0;
+				while( prevOffset < offset )
+				{
+					count++;
+					prevOffset += size;
+
+					// Align the offset on 4 byte boundaries
+					if( size >= 4 && (prevOffset & 0x3) )
+						prevOffset += 4 - (prevOffset & 0x3);
+				}
+
+				if( --count > 0 )
+				{
+					// Skip these values
+					repeatCount -= count;
+					entries += count;
+				}
+
 				repeatCount--;
+			}
 
 			// Only move the patternNode if we're not expecting any more repeated entries
 			if( repeatCount == 0 )
