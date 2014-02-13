@@ -1514,7 +1514,10 @@ public:
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	//! \brief Returns the size of a primitive type.
 	//! \param[in] typeId The type id of the type.
-	//! \return The size of the type in bytes.
+	//! \return The size of the type in bytes, or zero if it is not a primitive type.
+	//!
+	//! This method can be used to return the size of any built-in primitive type,
+	//! and also for script declared or application registered enums.
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
 	//! \}
 

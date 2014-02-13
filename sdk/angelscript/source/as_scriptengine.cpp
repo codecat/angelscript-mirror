@@ -995,6 +995,7 @@ asIJITCompiler *asCScriptEngine::GetJITCompiler() const
 }
 
 // interface
+// TODO: interface: tokenLength should be asUINT
 asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLength, int *tokenLength) const
 {
 	if( stringLength == 0 )
@@ -4374,7 +4375,7 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, bool includeNamespac
 	return tempString->AddressOf();
 }
 
-// TODO: interface: Deprecate. This function is not necessary now that all primitive types have fixed typeIds
+// interface
 int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);

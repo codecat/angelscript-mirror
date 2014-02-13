@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2014/02/11</h2>
+<h2>Version 2.28.1 WIP - 2014/02/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The Library can now be compiled for WinXP with multithread support again (Thanks carnalis)
 <li>Fixed crash after loading bytecode with initialization lists holding ref types by value (Thanks loboWu)
 <li>Fixed bug with saved bytecode and initialization lists that skip values
+<li>Tokenizer was splitting identifiers that started with keywords that ended with numbers, e.g. int8 (Thanks loboWu)
 </ul>
 <li>Library
 <ul>

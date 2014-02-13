@@ -235,6 +235,27 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Make sure tokenizer doesn't split tokens whose initial characters match keyword
+	// http://www.gamedev.net/topic/653337-uint-token-parse-error/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		int len;
+		if( engine->ParseToken("uintHello", 0, &len) != asTC_IDENTIFIER || len != 9 )
+			TEST_FAILED;
+
+		if( engine->ParseToken("uint8Hello", 0, &len) != asTC_IDENTIFIER || len != 10 )
+			TEST_FAILED;
+
+		if( engine->ParseToken("int32Hello", 0, &len) != asTC_IDENTIFIER || len != 10 )
+			TEST_FAILED;
+
+		if( engine->ParseToken("uint32Hello", 0, &len) != asTC_IDENTIFIER || len != 11 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test compiler warning with implicit conversion of enums
 	// http://www.gamedev.net/topic/652867-implicit-conversion-changed-sign-of-value/
 	{
