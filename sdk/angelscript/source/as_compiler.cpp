@@ -7339,6 +7339,15 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 	// Check if this is an initialization of a temp object with an initialization list
 	if( expr->firstChild && expr->firstChild->nodeType == snDataType )
 	{
+		// TODO: It should be possible to infer the type of the object from where the 
+		//       expression will be used. The compilation of the initialization list
+		//       should be deferred until it is known for what it will be used. It will
+		//       then for example be possible to write expressions like:
+		//
+		//       @dict = {{'key', 'value'}};
+		//       funcTakingArrayOfInt({1,2,3,4});
+	
+		// Determine the type of the temporary object
 		asCDataType dt = builder->CreateDataTypeFromNode(expr->firstChild, script, outFunc->nameSpace);
 
 		// Do not allow constructing non-shared types in shared functions

@@ -820,8 +820,6 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			}
 		}
 
-		ReadData(&func->isShared, 1);
-
 		// Read the variable information
 		if( !noDebugInfo )
 		{
@@ -846,7 +844,10 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			}
 		}
 
-		ReadData(&func->dontCleanUpOnException, 1);
+		char bits;
+		ReadData(&bits, 1);
+		func->isShared               = bits & 1 ? true : false;
+		func->dontCleanUpOnException = bits & 2 ? true : false;
 
 		// Read script section name
 		if( !noDebugInfo )
@@ -1449,21 +1450,14 @@ void asCReader::ReadGlobalProperty()
 	asCGlobalProperty *prop = module->AllocateGlobalProperty(name.AddressOf(), type, nameSpace);
 
 	// Read the initialization function
-	bool f;
-	ReadData(&f, 1);
-	if( f )
+	bool isNew;
+	// Do not add the function to the GC at this time. It will 
+	// only be added to the GC when the module releases the property
+	asCScriptFunction *func = ReadFunction(isNew, false, true, false);
+	if( func )
 	{
-		bool isNew;
-		// Do not add the function to the GC at this time. It will 
-		// only be added to the GC when the module releases the property
-		asCScriptFunction *func = ReadFunction(isNew, false, true, false);
-		if( func )
-		{
-			prop->SetInitFunc(func);
-			func->Release();
-		}
-		else
-			Error(TXT_INVALID_BYTECODE_d);
+		prop->SetInitFunc(func);
+		func->Release();
 	}
 }
 
@@ -1484,16 +1478,17 @@ void asCReader::ReadObjectProperty(asCObjectType *ot)
 
 void asCReader::ReadDataType(asCDataType *dt) 
 {
-	eTokenType tokenType;
-
-	tokenType = (eTokenType)ReadEncodedUInt();
-	if( tokenType == 0 )
+	// Check if this is a previously used type
+	asUINT n = ReadEncodedUInt();
+	if( n != 0 )
 	{
 		// Get the datatype from the cache
-		asUINT n = ReadEncodedUInt();
-		*dt = savedDataTypes[n];
+		*dt = savedDataTypes[n-1];
 		return;
 	}
+
+	// Read the type definition
+	eTokenType tokenType = (eTokenType)ReadEncodedUInt();
 
 	// Reserve a spot in the savedDataTypes
 	size_t saveSlot = savedDataTypes.GetLength();
@@ -1501,19 +1496,18 @@ void asCReader::ReadDataType(asCDataType *dt)
 
 	// Read the datatype for the first time
 	asCObjectType *objType = 0;
-	bool isObjectHandle  = false;
-	bool isReadOnly      = false;
-	bool isHandleToConst = false;
-	bool isReference     = false;
-
 	if( tokenType == ttIdentifier )
-	{
 		objType = ReadObjectType();
-		ReadData(&isObjectHandle, 1);
-		ReadData(&isHandleToConst, 1);
-	}
-	ReadData(&isReference, 1);
-	ReadData(&isReadOnly, 1);
+
+	struct
+	{
+		char isObjectHandle :1;
+		char isHandleToConst:1;
+		char isReference    :1;
+		char isReadOnly     :1;
+	} bits = {0};
+	asASSERT( sizeof(bits) == 1 );
+	ReadData(&bits, 1);
 
 	asCScriptFunction *funcDef = 0;
 	if( tokenType == ttIdentifier && objType && objType->name == "_builtin_function_" )
@@ -1555,16 +1549,16 @@ void asCReader::ReadDataType(asCDataType *dt)
 		*dt = asCDataType::CreateObject(objType, false);
 	else
 		*dt = asCDataType::CreatePrimitive(tokenType, false);
-	if( isObjectHandle )
+	if( bits.isObjectHandle )
 	{
-		dt->MakeReadOnly(isHandleToConst);
+		dt->MakeReadOnly(bits.isHandleToConst ? true : false);
 		
 		// Here we must allow a scoped type to be a handle 
 		// e.g. if the datatype is for a system function
 		dt->MakeHandle(true, true);
 	}
-	dt->MakeReadOnly(isReadOnly);
-	dt->MakeReference(isReference);
+	dt->MakeReadOnly(bits.isReadOnly ? true : false);
+	dt->MakeReference(bits.isReference ? true : false);
 
 	// Update the previously saved slot
 	savedDataTypes[saveSlot] = *dt;
@@ -3395,8 +3389,6 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			}
 		}
 
-		WriteData(&func->isShared, 1);
-
 		// Write the variable information
 		if( !stripDebugInfo )
 		{
@@ -3412,7 +3404,10 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			}
 		}
 
-		WriteData(&func->dontCleanUpOnException, 1);
+		char bits = 0;
+		bits += func->isShared ? 1 : 0;
+		bits += func->dontCleanUpOnException ? 2 : 0;
+		WriteData(&bits,1);
 
 		// Store script section name
 		if( !stripDebugInfo )
@@ -3658,18 +3653,7 @@ void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop)
 	WriteDataType(&prop->type);
 
 	// Store the initialization function
-	if( prop->GetInitFunc() )
-	{
-		bool f = true;
-		WriteData(&f, 1);
-
-		WriteFunction(prop->GetInitFunc());
-	}
-	else
-	{
-		bool f = false;
-		WriteData(&f, 1);
-	}
+	WriteFunction(prop->GetInitFunc());
 }
 
 void asCWriter::WriteObjectProperty(asCObjectProperty* prop) 
@@ -3686,31 +3670,36 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	{
 		if( *dt == savedDataTypes[n] )
 		{
-			asUINT c = 0;
-			WriteEncodedInt64(c);
-			WriteEncodedInt64(n);
+			WriteEncodedInt64(n+1);
 			return;
 		}
 	}
 
+	// Indicate a new type with a null byte
+	asUINT c = 0;
+	WriteEncodedInt64(c);
+
 	// Save the new datatype
 	savedDataTypes.PushLast(*dt);
 
-	bool b;
 	int t = dt->GetTokenType();
 	WriteEncodedInt64(t);
 	if( t == ttIdentifier )
-	{
 		WriteObjectType(dt->GetObjectType());
-		b = dt->IsObjectHandle();
-		WriteData(&b, 1);
-		b = dt->IsHandleToConst();
-		WriteData(&b, 1);
-	}
-	b = dt->IsReference();
-	WriteData(&b, 1);
-	b = dt->IsReadOnly();
-	WriteData(&b, 1);
+
+	struct
+	{
+		char isObjectHandle :1;
+		char isHandleToConst:1;
+		char isReference    :1;
+		char isReadOnly     :1;
+	} bits = {0};
+
+	bits.isObjectHandle  = dt->IsObjectHandle();
+	bits.isHandleToConst = dt->IsHandleToConst();
+	bits.isReference     = dt->IsReference();
+	bits.isReadOnly      = dt->IsReadOnly();
+	WriteData(&bits, 1);
 
 	if( t == ttIdentifier && dt->GetObjectType()->name == "_builtin_function_" )
 	{
