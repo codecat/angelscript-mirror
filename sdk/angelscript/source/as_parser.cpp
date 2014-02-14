@@ -1026,6 +1026,10 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 }
 
 #ifndef AS_NO_COMPILER
+
+// This function will return true if the current token is not a template, or if it is and 
+// the following has a valid syntax for a template type. The source position will be left 
+// at the first token after the type in case of success
 bool asCParser::CheckTemplateType(sToken &t)
 {
 	// Is this a template type?
@@ -1466,6 +1470,29 @@ asCScriptNode *asCParser::ParseExpression()
 {
 	asCScriptNode *node = CreateNode(snExpression);
 	if( node == 0 ) return 0;
+
+	// Check if the expression is a initialization of a temp object with init list, i.e. type = {...}
+	sToken t;
+	GetToken(&t);
+	sToken t2 = t, t3;
+	if( IsDataType(t2) && CheckTemplateType(t2) )
+	{
+		// The next token must be a = followed by a {
+		GetToken(&t2);
+		GetToken(&t3);
+		if( t2.type == ttAssignment && t3.type == ttStartStatementBlock )
+		{
+			// It is an initialization, now parse it for real
+			RewindTo(&t);
+			node->AddChildLast(ParseType(false));
+			GetToken(&t2);
+			node->AddChildLast(ParseInitList());
+			return node;
+		}
+	}
+	
+	// It wasn't an initialization, so it must be an ordinary expression
+	RewindTo(&t);
 
 	node->AddChildLast(ParseExprTerm());
 	if( isSyntaxError ) return node;

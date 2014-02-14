@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 
 
 namespace Test_Addon_Dictionary
@@ -73,71 +74,113 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
+	asIScriptContext *ctx;
+	asIScriptModule *mod;
 
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-
-	RegisterStdString(engine);
-	RegisterScriptArray(engine, true);
-	RegisterScriptDictionary(engine);
-
-	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	asIScriptContext *ctx = engine->CreateContext();
-	r = ExecuteString(engine, "Test()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
+	// Test initialization list in expression
 	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+		RegisterScriptMathComplex(engine);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"void main() { \n"
+			"  dictionary @dict; \n"
+			"  @dict = dictionary = {{'hello', 'world'}, {'answer', 42}, {'complex', complex = {1,2}}}; \n"
+			"  assert( dict.getKeys().length() == 3 ); \n"
+			"  complex c; \n"
+			"  dict.get('complex', c); \n"
+			"  assert( c == complex(1,2) ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
-		TEST_FAILED;
+
+		ctx->Release();
+		engine->Release();
 	}
-	ctx->Release();
 
-	asUINT gcCurrentSize, gcTotalDestroyed, gcTotalDetected;
-	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
-	engine->GarbageCollect();
-	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
-
-	if( gcCurrentSize != 0 || gcTotalDestroyed != 2 || gcTotalDetected != 1 )
-		TEST_FAILED;
-
-	// Test circular references including a script class and the dictionary
-	mod->AddScriptSection("script", script2, strlen(script2));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	r = ExecuteString(engine, "f()", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
-	engine->GarbageCollect();
-	engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
-
-	if( gcCurrentSize != 0 || gcTotalDestroyed != 5 || gcTotalDetected != 3  )
-		TEST_FAILED;
-
-	// Test invalid ref cast together with the variable argument
-	bout.buffer = "";
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	r = ExecuteString(engine, "dictionary d; d.set('hello', cast<int>(4));");
-	if( r >= 0 ) 
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
+	// Basic tests for dictionary
 	{
-		TEST_FAILED;
-		printf("%s", bout.buffer.c_str());
-	}
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->Release();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Test()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		asUINT gcCurrentSize, gcTotalDestroyed, gcTotalDetected;
+		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
+		engine->GarbageCollect();
+		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
+
+		if( gcCurrentSize != 0 || gcTotalDestroyed != 2 || gcTotalDetected != 1 )
+			TEST_FAILED;
+
+		// Test circular references including a script class and the dictionary
+		mod->AddScriptSection("script", script2, strlen(script2));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "f()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
+		engine->GarbageCollect();
+		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
+
+		if( gcCurrentSize != 0 || gcTotalDestroyed != 5 || gcTotalDetected != 3  )
+			TEST_FAILED;
+
+		// Test invalid ref cast together with the variable argument
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = ExecuteString(engine, "dictionary d; d.set('hello', cast<int>(4));");
+		if( r >= 0 ) 
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
+		{
+			TEST_FAILED;
+			printf("%s", bout.buffer.c_str());
+		}
+
+		engine->Release();
+	}
 
 	// Test initializing the dictionary with the list factory
 	{

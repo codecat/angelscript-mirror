@@ -502,6 +502,7 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 			asQWORD constantValue;
 			asCByteCode bc(engine);
 			CompileInitialization(initNode, &bc, prop->type, declNode, prop->byteOffset, &constantValue, 2);
+			bc.OptimizeLocally(tempVariableOffsets);
 			byteCode->AddCode(&bc);
 
 			script = origScript;
@@ -2234,6 +2235,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 	bc->OptimizeLocally(tempVariableOffsets);
 }
 
+// Returns true if the initialization expression is a constant expression
 bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem)
 {
 	bool isConstantExpression = false;
@@ -2568,8 +2570,6 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				CallDefaultConstructor(type, offset, false, bc, errNode, isVarGlobOrMem);
 		}
 	}
-
-	bc->OptimizeLocally(tempVariableOffsets);
 
 	return isConstantExpression;
 }
@@ -7335,6 +7335,37 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 {
 	asASSERT(expr->nodeType == snExpression);
+
+	// Check if this is an initialization of a temp object with an initialization list
+	if( expr->firstChild && expr->firstChild->nodeType == snDataType )
+	{
+		asCDataType dt = builder->CreateDataTypeFromNode(expr->firstChild, script, outFunc->nameSpace);
+
+		// Do not allow constructing non-shared types in shared functions
+		if( outFunc->IsShared() &&
+			dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
+		{
+			asCString msg;
+			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
+			Error(msg, expr);
+		}
+
+		// Allocate and initialize the temporary object
+		int offset = AllocateVariable(dt, true);
+		CompileInitialization(expr->lastChild, &ctx->bc, dt, expr, offset, 0, 0);
+
+		// Push the reference to the object on the stack
+		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+		ctx->type.SetVariable(dt, offset, true);
+		ctx->type.isLValue = false;
+
+		// If the variable is allocated on the heap we have a reference,
+		// otherwise the actual object pointer is pushed on the stack.
+		if( IsVariableOnHeap(offset) ) 
+			ctx->type.dataType.MakeReference(true);
+
+		return 0;
+	}
 
 	// Convert to polish post fix, i.e: a+b => ab+
 
