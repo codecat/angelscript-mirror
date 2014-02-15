@@ -265,11 +265,12 @@ bool Test()
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
-			"void main() { \n"
+			"void main(uint flags) { \n"
 			"  if( (func() & VAL) != 0 ) {} \n"
+			"  if( (flags & VAL2) == VAL2 ) {} \n"
 			"} \n"
 			"int func() { return 1; } \n"
-			"enum E { VAL = -1 } \n");
+			"enum E { VAL = -1, VAL2 = 2 } \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
