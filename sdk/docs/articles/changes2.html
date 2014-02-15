@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2014/02/13</h2>
+<h2>Version 2.28.1 WIP - 2014/02/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The compiler will warn if JIT compiler is used and script is built without JIT entry points (Thanks gjl)
 <li>Compiler no longer warns on sign change for bitwise operator with negative enum value (Thanks _Vicious_)
 <li>Reduced size of saved bytecode
+<li>Changed GarbageCollect so that it can now be executed for a full cycle in a parallel thread
 </ul>
 <li>Script language
 <ul>

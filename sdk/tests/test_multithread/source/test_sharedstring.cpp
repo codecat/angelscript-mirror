@@ -22,7 +22,7 @@ static asIScriptEngine *engine = 0;
 void Thread(void *)
 {
 	asIScriptModule *mod = engine->GetModule(0);
-	asIScriptFunction *func = mod->GetFunctionDescriptorByIndex(1);
+	asIScriptFunction *func = mod->GetFunctionByIndex(1);
 	const char *str = func->GetDeclaration();
 
 	// Give AngelScript a chance to cleanup some memory 
@@ -43,7 +43,7 @@ bool Test()
 	mod->Build();
 
 	// Get a function declaration, this should be the same after the other thread terminates
-	asIScriptFunction *func = mod->GetFunctionDescriptorByIndex(0);
+	asIScriptFunction *func = mod->GetFunctionByIndex(0);
 	const char *str = func->GetDeclaration();
 
 	// Create the second thread that in turn will get the declaration of another function

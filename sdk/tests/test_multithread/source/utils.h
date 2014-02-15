@@ -2,7 +2,8 @@
 #define UTILS_H
 
 #include <angelscript.h>
-#include "../../add_on/scriptstring/scriptstring.h"
+#include "../../add_on/scriptstdstring/scriptstdstring.h"
+#include "../../add_on/scripthelper/scripthelper.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
@@ -22,8 +23,6 @@ public:
 		printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
 	}
 };
-
-void PrintException(asIScriptContext *ctx);
 
 #endif
 

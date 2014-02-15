@@ -6,6 +6,7 @@
 
 namespace TestSharedString { bool Test(); }
 namespace TestThreadMgr { bool Test(); }
+namespace TestGC { bool Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -22,17 +23,18 @@ int main(int argc, char **argv)
 
 	if( TestSharedString::Test()      ) goto failed; else printf("TestSharedString passed\n");
 	if( TestThreadMgr::Test()         ) goto failed; else printf("TestThreadMgr passed\n");
+	if( TestGC::Test()                ) goto failed; else printf("TestGC passed\n");
 
 	printf("--------------------------------------------\n");
 	printf("All of the tests passed with success.\n\n");
 	printf("Press any key to quit.\n");
-	while(!getch());
+	while(!_getch());
 	return 0;
 
 failed:
 	printf("--------------------------------------------\n");
 	printf("One of the tests failed, see details above.\n\n");
 	printf("Press any key to quit.\n");
-	while(!getch());
+	while(!_getch());
 	return 0;
 }
