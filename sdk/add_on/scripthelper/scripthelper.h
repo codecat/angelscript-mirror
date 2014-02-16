@@ -32,15 +32,6 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
 // Print details of the script exception to the standard output
 void PrintException(asIScriptContext *ctx, bool printStack = false);
 
-// Check if the compiler can use C++11 features
-#if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
-#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
-#if !(defined(__GNUC__) && defined(__cplusplus) && __cplusplus < 201103L) // g++ -std=c++11
-#define AS_CAN_USE_CPP11
-#endif
-#endif
-#endif
-
 // Determine traits of a type for registration of value types
 // Relies on C++11 features so it can not be used with non-compliant compilers
 #ifdef AS_CAN_USE_CPP11
