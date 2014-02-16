@@ -20,9 +20,28 @@ void Thread(void *modName)
 	{
 		ctx->Prepare(func);
 		ctx->Execute();
+
+		// Sleep a while if there are more than 1000 objects in the GC
+		asUINT gcSize;
+		engine->GetGCStatistics(&gcSize);
+		while( gcSize > 1000 )
+		{
+			Sleep(10);
+			engine->GetGCStatistics(&gcSize);
+		}
 	}
 
 	ctx->Release();
+
+	// Give AngelScript a chance to cleanup some memory 
+	asThreadCleanup();
+}
+
+void GCThread(void *)
+{
+	// Invoke the garbage collector until it is time to stop
+	while( !stop )
+		engine->GarbageCollect();
 
 	// Give AngelScript a chance to cleanup some memory 
 	asThreadCleanup();
@@ -34,7 +53,7 @@ bool Test()
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-//	engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, false);
+	engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, false);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback),&out,asCALL_THISCALL);
@@ -76,7 +95,7 @@ bool Test()
 		"void func() { \n"
 		"  Test3 @first = Test3(); \n"
 		"  Test3 @n = first; \n"
-		"  for( uint i = 0; i < 100; i++ ) { \n"
+		"  for( uint i = 0; i < 20; i++ ) { \n"
 		"    @n.next = Test3(); \n"
 		"    @n = n.next; \n"
 		"  } \n"
@@ -85,24 +104,23 @@ bool Test()
 	mod3->Build();
 
 	// Start multiple threads that will execute scripts in parallel
-	HANDLE threads[3];
+	HANDLE threads[4] = {0};
 	threads[0] = (HANDLE)_beginthread(Thread, 0, "1");
 	threads[1] = (HANDLE)_beginthread(Thread, 0, "2");
 	threads[2] = (HANDLE)_beginthread(Thread, 0, "3");
+	threads[3] = (HANDLE)_beginthread(GCThread, 0, 0);
 
-	for( int count = 0; count < 10; count++ )
+	for( int count = 0; count < 30; count++ )
 	{
 		Sleep(1000);
 		asUINT currSize, totDestroyed, totDetected;
 		engine->GetGCStatistics(&currSize, &totDestroyed, &totDetected);
 		printf("gc: %2d, %10d, %10d, %10d\n", count+1, currSize, totDestroyed, totDetected);
-
-//		engine->GarbageCollect();
 	}
 
 	// Tell the threads to stop execution
 	stop = true;
-	WaitForMultipleObjects(3, threads, TRUE, INFINITE);
+	WaitForMultipleObjects(4, threads, TRUE, INFINITE);
 
 	asUINT currSize, totDestroyed, totDetected;
 	engine->GetGCStatistics(&currSize, &totDestroyed, &totDetected);

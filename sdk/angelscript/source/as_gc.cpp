@@ -156,7 +156,7 @@ int asCGarbageCollector::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, a
 	return asSUCCESS;
 }
 
-int asCGarbageCollector::GarbageCollect(asDWORD flags)
+int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 {
 	// If the GC is already processing in another thread, then don't enter here again
 	if( TRYENTERCRITICALSECTION(gcCollecting) )
@@ -222,16 +222,19 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags)
 		}
 		else
 		{
-			// Destroy the garbage that we know of
-			if( doDestroy )
+			while( iterations-- > 0 )
 			{
-				DestroyNewGarbage();
-				DestroyOldGarbage();
-			}
+				// Destroy the garbage that we know of
+				if( doDestroy )
+				{
+					DestroyNewGarbage();
+					DestroyOldGarbage();
+				}
 
-			// Run another incremental step of the identification of cyclic references
-			if( doDetect )
-				IdentifyGarbageWithCyclicRefs();
+				// Run another incremental step of the identification of cyclic references
+				if( doDetect && gcOldObjects.GetLength() > 0 )
+					IdentifyGarbageWithCyclicRefs();
+			}
 		}
 
 		isProcessing = false;
@@ -329,8 +332,8 @@ void asCGarbageCollector::MoveAllObjectsToOldList()
 	// We need to protect this update with a critical section as
 	// another thread might be appending an object at the same time
 	ENTERCRITICALSECTION(gcCritical);
-	gcOldObjects.Concatenate(gcNewObjects);
-	gcNewObjects.SetLength(0);
+	if( gcOldObjects.Concatenate(gcNewObjects) )
+		gcNewObjects.SetLength(0);
 	LEAVECRITICALSECTION(gcCritical);
 }
 
@@ -906,8 +909,15 @@ asCGarbageCollector::asSMapNode_t *asCGarbageCollector::GetNode(void *obj, asSIn
 	if( freeNodes.GetLength() )
 		node = freeNodes.PopLast();
 	else
+	{
 		node = asNEW(asSMapNode_t);
-
+		if( !node )
+		{
+			// Out of memory
+			return 0;
+		}
+	}
+	
 	node->Init(obj, it);
 	return node;
 }

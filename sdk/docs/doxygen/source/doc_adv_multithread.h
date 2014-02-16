@@ -32,11 +32,7 @@ Even if you don't want or can't use multithreading, you can still write applicat
  - The engine will only allow one thread to build scripts at any one time, since this is something that 
    changes the internal state of the engine and cannot safely be done in multiple threads simultaneously.
    
- - Do not execute the \ref doc_gc "garbage collector" while other script threads are executed, as the 
-   garbage collector may be traversing the reference graph while the objects are modified by the 
-   other threads.
-   
- - Reference counters for objects that will be refered to by scripts in different threads must be thread safe
+ - Reference counters for objects that will be referred to by scripts in different threads must be thread safe
    in order to avoid race conditions as multiple threads attempt to update the same reference counter.
    The library provides a pair of functions to facilitate the implementation of thread safe reference counters.
    See \ref asAtomicInc and \ref asAtomicDec.

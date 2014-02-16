@@ -627,7 +627,7 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
-	GarbageCollect(asGC_FULL_CYCLE);
+	GarbageCollect();
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
@@ -637,7 +637,7 @@ asCScriptEngine::~asCScriptEngine()
 			scriptFunctions[n]->DestroyInternal();
 
 	// There may be instances where one more gc cycle must be run
-	GarbageCollect(asGC_FULL_CYCLE);
+	GarbageCollect();
 	ClearUnusedTypes();
 
 	// If the application hasn't registered GC behaviours for all types
@@ -4223,10 +4223,17 @@ int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIOb
 	return gc.GetObjectInGC(idx, seqNbr, obj, type);
 }
 
+// internal
+int asCScriptEngine::GarbageCollect(asDWORD flags, asUINT iterations)
+{
+	return gc.GarbageCollect(flags, iterations);
+}
+
 // interface
+// TODO: interface: Allow caller to inform number of iterations
 int asCScriptEngine::GarbageCollect(asDWORD flags)
 {
-	return gc.GarbageCollect(flags);
+	return gc.GarbageCollect(flags, 1);
 }
 
 // interface

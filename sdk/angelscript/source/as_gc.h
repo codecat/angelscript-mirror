@@ -56,7 +56,7 @@ public:
 	asCGarbageCollector();
 	~asCGarbageCollector();
 
-	int    GarbageCollect(asDWORD flags);
+	int    GarbageCollect(asDWORD flags, asUINT iterations);
 	void   GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
 	void   GCEnumCallback(void *reference);
 	int    AddScriptObjectToGC(void *obj, asCObjectType *objType);
