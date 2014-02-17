@@ -97,6 +97,7 @@ asQWORD fpToIEEE(double fp)
 
 // TODO: Implement a faster closeTo function with integer operations
 // ref: http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+// ref: http://www.gamedev.net/topic/653449-scriptmath-and-closeto/
 bool closeTo(float a, float b, float epsilon)
 {
 	// Equal numbers and infinity will return immediately

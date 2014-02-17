@@ -10557,7 +10557,19 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 		// Compile the expression
 		asSExprContext expr(engine);
-		CompileAssignment(node->firstChild, &expr);
+		asASSERT( node->firstChild->nodeType == snArgList );
+		if( node->firstChild->firstChild == 0 )
+		{
+			Error(TXT_INDEX_OP_REQUIRES_AT_LEAST_ONE_ARG, node);
+			return -1;
+		}
+		CompileAssignment(node->firstChild->firstChild, &expr);
+		if( node->firstChild->firstChild != node->firstChild->lastChild )
+		{
+			// TODO: opIndex: Implement this
+			Error("Index operator with multiple arguments is not yet supported", node);
+			return -1;
+		}
 
 		// Check for the existence of the opIndex method
 		asSExprContext lctx(engine);

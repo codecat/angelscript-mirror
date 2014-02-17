@@ -32,9 +32,33 @@ bool Test()
 {
 	bool fail = false;
 	CBufferedOutStream bout;
+	COutStream out;
 	int r;
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
+
+	// opIndex with multiple values
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"class C {\n"
+			"  int opIndex(int a, int b) { return a + b; } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "C c; assert( c[2,3] == 3 ); \n", mod);
+//		if( r != asEXECUTION_FINISHED )
+//			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Operator overloads
 	{
