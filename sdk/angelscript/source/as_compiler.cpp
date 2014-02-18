@@ -3440,37 +3440,39 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 
 	// Compile the expression
 	asSExprContext expr(engine);
-	CompileAssignment(inode->firstChild, &expr);
-	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+	int r = CompileAssignment(inode->firstChild, &expr);
+	if( r == 0 )
 	{
-		Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
-		expr.type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), 1);
-	}
+		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+			Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
+		else
+		{
+			if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+			ProcessDeferredParams(&expr);
 
-	if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-	ProcessDeferredParams(&expr);
+			if( !expr.type.isConstant )
+			{
+				ProcessPropertyGetAccessor(&expr, inode);
 
-	if( !expr.type.isConstant )
-	{
-		ProcessPropertyGetAccessor(&expr, inode);
+				ConvertToVariable(&expr);
 
-		ConvertToVariable(&expr);
+				// Add a test
+				expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+				expr.bc.Instr(asBC_ClrHi);
+				expr.bc.InstrDWORD(asBC_JZ, afterLabel);
+				ReleaseTemporaryVariable(expr.type, &expr.bc);
 
-		// Add a test
-		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-		expr.bc.Instr(asBC_ClrHi);
-		expr.bc.InstrDWORD(asBC_JZ, afterLabel);
-		ReleaseTemporaryVariable(expr.type, &expr.bc);
+				expr.bc.OptimizeLocally(tempVariableOffsets);
+				bc->AddCode(&expr.bc);
+			}
+			else if( expr.type.dwordValue == 0 )
+			{
+				// Jump to the else case
+				bc->InstrINT(asBC_JMP, afterLabel);
 
-		expr.bc.OptimizeLocally(tempVariableOffsets);
-		bc->AddCode(&expr.bc);
-	}
-	else if( expr.type.dwordValue == 0 )
-	{
-		// Jump to the else case
-		bc->InstrINT(asBC_JMP, afterLabel);
-
-		// TODO: Should we warn that the expression will always go to the else?
+				// TODO: Should we warn that the expression will always go to the else?
+			}
+		}
 	}
 
 	// Compile the if statement
@@ -3696,27 +3698,30 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 
 	// Compile expression
 	asSExprContext expr(engine);
-	CompileAssignment(wnode->firstChild, &expr);
-	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
-		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
-	else
+	int r = CompileAssignment(wnode->firstChild, &expr);
+	if( r == 0 )
 	{
-		if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-		ProcessDeferredParams(&expr);
+		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
+			Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
+		else
+		{
+			if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+			ProcessDeferredParams(&expr);
 
-		ProcessPropertyGetAccessor(&expr, wnode);
+			ProcessPropertyGetAccessor(&expr, wnode);
 
-		// Add byte code for the expression
-		ConvertToVariable(&expr);
+			// Add byte code for the expression
+			ConvertToVariable(&expr);
 
-		// Jump to end of statement if expression is false
-		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
-		expr.bc.Instr(asBC_ClrHi);
-		expr.bc.InstrDWORD(asBC_JZ, afterLabel);
-		ReleaseTemporaryVariable(expr.type, &expr.bc);
+			// Jump to end of statement if expression is false
+			expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
+			expr.bc.Instr(asBC_ClrHi);
+			expr.bc.InstrDWORD(asBC_JZ, afterLabel);
+			ReleaseTemporaryVariable(expr.type, &expr.bc);
 
-		expr.bc.OptimizeLocally(tempVariableOffsets);
-		bc->AddCode(&expr.bc);
+			expr.bc.OptimizeLocally(tempVariableOffsets);
+			bc->AddCode(&expr.bc);
+		}
 	}
 
 	// Add a suspend bytecode inside the loop to guarantee
@@ -10553,46 +10558,116 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			ProcessPropertyGetAccessor(ctx, node);
 		}
 
-		Dereference(ctx, true);
-
 		// Compile the expression
-		asSExprContext expr(engine);
+		bool isOK = true;
+		asCArray<asSExprContext *> args;
 		asASSERT( node->firstChild->nodeType == snArgList );
-		if( node->firstChild->firstChild == 0 )
+		if( CompileArgumentList(node->firstChild, args) >= 0 )
 		{
-			Error(TXT_INDEX_OP_REQUIRES_AT_LEAST_ONE_ARG, node);
-			return -1;
-		}
-		CompileAssignment(node->firstChild->firstChild, &expr);
-		if( node->firstChild->firstChild != node->firstChild->lastChild )
-		{
-			// TODO: opIndex: Implement this
-			Error("Index operator with multiple arguments is not yet supported", node);
-			return -1;
-		}
-
-		// Check for the existence of the opIndex method
-		asSExprContext lctx(engine);
-		MergeExprBytecodeAndType(&lctx, ctx);
-		int r = 0;
-		if( propertyName == "" )
-			r = CompileOverloadedDualOperator2(node, "opIndex", &lctx, &expr, ctx);
-		if( r == 0 )
-		{
-			// Check for accessors methods for the opIndex
-			r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, &expr, node, ns);
-			if( r == 0 )
+			// Check for the existence of the opIndex method
+			bool lookForProperty = true;
+			if( propertyName == "" )
 			{
-				asCString str;
-				str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
-				Error(str, node);
-				return -1;
-			}
-			else if( r < 0 )
-				return -1;
+				bool isConst = false;
+				if( ctx->type.dataType.IsObjectHandle() )
+					isConst = ctx->type.dataType.IsHandleToConst();
+				else
+					isConst = ctx->type.dataType.IsReadOnly();
 
-			MergeExprBytecodeAndType(ctx, &lctx);
+				asCObjectType *objectType = ctx->type.dataType.GetObjectType();
+
+				asCArray<int> funcs;
+				builder->GetObjectMethodDescriptions("opIndex", objectType, funcs, isConst);
+				if( funcs.GetLength() > 0 )
+				{
+					// Since there are opIndex methods, the compiler should not look for get/set_opIndex accessors
+					lookForProperty = false;
+
+					// Determine which of opIndex methods that match
+					MatchFunctions(funcs, args, node, "opIndex", objectType, isConst);
+					if( funcs.GetLength() != 1 )
+					{
+						// The error has already been reported by MatchFunctions
+						isOK = false;
+					}
+					else
+					{
+						// Add the default values for arguments not explicitly supplied
+						int r = 0;
+						asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
+						if( func && args.GetLength() < (asUINT)func->GetParamCount() )
+						{
+							// Make sure to use the real function for virtual functions
+							asCScriptFunction *realFunc = func;
+							if( realFunc->funcType == asFUNC_VIRTUAL )
+								realFunc = objectType->virtualFunctionTable[realFunc->vfTableIdx];
+
+							r = CompileDefaultArgs(node, args, realFunc);
+						}
+
+						if( r == 0 )
+						{
+							asCTypeInfo origExprType = ctx->type;
+
+							MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, ctx->type.stackOffset);
+							
+							// If the method returned a reference, then we can't release the original
+							// object yet, because the reference may be to a member of it
+							if( !origExprType.isTemporary ||
+								!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
+								ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
+							{
+								// As the method didn't return a reference to a member
+								// we can safely release the original object now
+								ReleaseTemporaryVariable(origExprType, &ctx->bc);
+							}
+						}
+						else
+							isOK = false;
+					}
+				}
+			}
+			if( lookForProperty && isOK )
+			{
+				if( args.GetLength() != 1 )
+				{
+					// TODO: opIndex: Implement this
+					Error("Property accessor with index only support 1 index argument for now", node);
+					isOK = false;
+				}
+
+				Dereference(ctx, true);
+				asSExprContext lctx(engine);
+				MergeExprBytecodeAndType(&lctx, ctx);
+
+				// Check for accessors methods for the opIndex, either as get/set_opIndex or as get/set with the property name
+				int r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, args[0], node, ns);
+				if( r == 0 )
+				{
+					asCString str;
+					str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format().AddressOf());
+					Error(str, node);
+					isOK = false;
+				}
+				else if( r < 0 )
+					isOK = false;
+
+				if( isOK )
+					MergeExprBytecodeAndType(ctx, &lctx);
+			}
 		}
+		else
+			isOK = false;
+
+		// Cleanup
+		for( asUINT n = 0; n < args.GetLength(); n++ )
+			if( args[n] )
+			{
+				asDELETE(args[n],asSExprContext);
+			}
+
+		if( !isOK )
+			return -1;
 	}
 	else if( op == ttOpenParanthesis )
 	{

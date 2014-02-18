@@ -116,7 +116,6 @@
 #define TXT_ILLEGAL_OPERATION_ON_s              "Illegal operation on '%s'"
 #define TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST    "Illegal target type for reference cast"
 #define TXT_ILLEGAL_VARIABLE_NAME_s             "Illegal variable name '%s'."
-#define TXT_INDEX_OP_REQUIRES_AT_LEAST_ONE_ARG  "Index operator requires at least one argument"
 #define TXT_INIT_LIST_CANNOT_BE_USED_WITH_s     "Initialization lists cannot be used with '%s'"
 #define TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE "Interfaces can only implement other interfaces"
 #define TXT_INVALID_BREAK                       "Invalid 'break'"

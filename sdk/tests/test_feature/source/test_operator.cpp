@@ -53,9 +53,13 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "C c; assert( c[2,3] == 3 ); \n", mod);
-//		if( r != asEXECUTION_FINISHED )
-//			TEST_FAILED;
+		r = ExecuteString(engine, "C c; assert( c[2,3] == 5 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// TODO: opIndex: Test with objects as arguments, and returning references too
+		// TODO: opIndex: Test with zero arguments
+		// TODO: opIndex: Test with default arguments
 
 		engine->Release();
 	}
