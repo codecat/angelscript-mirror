@@ -10592,6 +10592,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					}
 					else
 					{
+						// TODO: clean-up: CompileDefaultArgs should take the func index argument and determine by itself if it is necessary to compile the extra arguments
 						// Add the default values for arguments not explicitly supplied
 						int r = 0;
 						asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
@@ -10611,6 +10612,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 							MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, ctx->type.stackOffset);
 							
+							// TODO: Clean-up: The MakeFunctionCall should always add the release of the temporary variable as 
+							//                 deferred arg in the ctx that way it won't be necessary to have this code here
 							// If the method returned a reference, then we can't release the original
 							// object yet, because the reference may be to a member of it
 							if( !origExprType.isTemporary ||

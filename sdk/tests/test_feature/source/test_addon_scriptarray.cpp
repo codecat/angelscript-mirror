@@ -187,6 +187,7 @@ bool Test()
 			"  string@[] a = {'a', , 'c', , 'e'}; assert( a[1] is null ); assert( a[2] == 'c' ); \n"
 			"  string[] b = {'a', , 'c', , 'e'}; assert( b[1] == '' ); assert( b[2] == 'c' ); \n"
 			"  int[] c = {1, , 3, , 5}; assert( c[1] == 0 ); assert( c[4] == 5 ); \n"
+			"  const uint8[] d = {1,2,3,4,5}; assert( d[4] == 5 ); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
