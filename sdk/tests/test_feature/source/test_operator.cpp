@@ -43,23 +43,39 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("Test",
 			"class C {\n"
 			"  int opIndex(int a, int b) { return a + b; } \n"
+			"} \n"
+			"class D {\n"
+			"  string &opIndex(const string &in a, const string &in b, const string &in c = 'hello') { val = a + b + c; return val; } \n"
+			"  string val; \n"
+			"} \n"
+			"class E {\n"
+			"  int opIndex() { return 42; } \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
+		// Test opIndex with multiple args
 		r = ExecuteString(engine, "C c; assert( c[2,3] == 5 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		// TODO: opIndex: Test with objects as arguments, and returning references too
-		// TODO: opIndex: Test with zero arguments
-		// TODO: opIndex: Test with default arguments
+		// Test with objects as arguments, and returning references too
+		// Test with default arguments
+		r = ExecuteString(engine, "D d; assert( d['a', 'b'] == 'abhello' ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test with zero arguments
+		r = ExecuteString(engine, "E e; assert( e[] == 42 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
 		engine->Release();
 	}

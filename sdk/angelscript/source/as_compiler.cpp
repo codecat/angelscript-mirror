@@ -848,7 +848,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			if( f->parameterTypes.GetLength() )
 			{
 				// Add the default values for arguments not explicitly supplied
-				CompileDefaultArgs(node, args, f);
+				CompileDefaultArgs(node, args, func, type.GetObjectType());
 
 				PrepareFunctionCall(func, &ctx.bc, args);
 
@@ -956,7 +956,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			if( f && f->parameterTypes.GetLength() )
 			{
 				// Add the default values for arguments not explicitly supplied
-				CompileDefaultArgs(node, args, f);
+				CompileDefaultArgs(node, args, func, type.GetObjectType());
 
 				PrepareFunctionCall(func, &ctx.bc, args);
 
@@ -1848,8 +1848,20 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	return anyErrors ? -1 : 0;
 }
 
-int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func)
+int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, int funcId, asCObjectType *objectType)
 {
+	asCScriptFunction *func = builder->GetFunctionDescription(funcId);
+	if( func == 0 || args.GetLength() >= (asUINT)func->GetParamCount() )
+		return 0;
+
+	// Make sure to use the real function for virtual functions
+	if( func->funcType == asFUNC_VIRTUAL )
+	{
+		asASSERT( objectType );
+		func = objectType->virtualFunctionTable[func->vfTableIdx];
+	}
+
+	// Make sure none of the variables used in the previous arguments are reused in the default arguments
 	bool anyErrors = false;
 	asCArray<int> varsUsed;
 	int explicitArgs = (int)args.GetLength();
@@ -2268,12 +2280,8 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 
 				if( funcs.GetLength() == 1 )
 				{
-					int r = asSUCCESS;
-
 					// Add the default values for arguments not explicitly supplied
-					asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
-					if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-						r = CompileDefaultArgs(node, args, func);
+					int r = CompileDefaultArgs(node, args, funcs[0], type.GetObjectType());
 
 					if( r == asSUCCESS )
 					{
@@ -8942,14 +8950,10 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		}
 		else
 		{
-			int r = asSUCCESS;
-
-			// TODO: 2.28.1: Merge this with MakeFunctionCall
+			// TODO: Clean up: Merge this with MakeFunctionCall
 
 			// Add the default values for arguments not explicitly supplied
-			asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
-			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-				r = CompileDefaultArgs(node, args, func);
+			int r = CompileDefaultArgs(node, args, funcs[0], dt.GetObjectType());
 
 			if( r == asSUCCESS )
 			{
@@ -9186,19 +9190,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		}
 		else
 		{
-			int r = asSUCCESS;
-
 			// Add the default values for arguments not explicitly supplied
-			asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
-			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-			{
-				// Make sure to use the real function for virtual functions
-				asCScriptFunction *realFunc = func;
-				if( realFunc->funcType == asFUNC_VIRTUAL )
-					realFunc = objectType->virtualFunctionTable[realFunc->vfTableIdx];
-
-				r = CompileDefaultArgs(node, args, realFunc);
-			}
+			int r = CompileDefaultArgs(node, args, funcs[0], objectType);
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 			//                is it enough to make sure it is in a local variable?
@@ -9207,6 +9200,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// by first storing the function pointer in a local variable (if it isn't already in one)
 			if( r == asSUCCESS )
 			{
+				asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
 				if( func->funcType == asFUNC_FUNCDEF )
 				{
 					if( objectType && funcPtr.property_get <= 0 )
@@ -10592,19 +10586,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					}
 					else
 					{
-						// TODO: clean-up: CompileDefaultArgs should take the func index argument and determine by itself if it is necessary to compile the extra arguments
 						// Add the default values for arguments not explicitly supplied
-						int r = 0;
-						asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
-						if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-						{
-							// Make sure to use the real function for virtual functions
-							asCScriptFunction *realFunc = func;
-							if( realFunc->funcType == asFUNC_VIRTUAL )
-								realFunc = objectType->virtualFunctionTable[realFunc->vfTableIdx];
-
-							r = CompileDefaultArgs(node, args, realFunc);
-						}
+						int r = CompileDefaultArgs(node, args, funcs[0], objectType);
 
 						if( r == 0 )
 						{
@@ -10701,12 +10684,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 			else
 			{
-				int r = asSUCCESS;
-
 				// Add the default values for arguments not explicitly supplied
-				asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
-				if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-					r = CompileDefaultArgs(node, args, func);
+				int r = CompileDefaultArgs(node, args, funcs[0], 0);
 
 				// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 				//                is it enough to make sure it is in a local variable?

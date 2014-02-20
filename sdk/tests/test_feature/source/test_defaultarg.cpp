@@ -570,7 +570,6 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (4, 1) : Info    : Compiling void main()\n"
-						   "default arg (1, 16) : Error   : Expected expression value\n"
 						   "default arg (1, 17) : Error   : Expected ']'\n"
 						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int = my_array [ i [ ])'\n" )
 		{

@@ -1343,10 +1343,20 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 	}
 
 	GetToken(&t1);
-	if( t1.type == ttCloseParanthesis )
+	if( t1.type == ttCloseParanthesis || t1.type == ttCloseBracket )
 	{
 		if( withParenthesis )
-			node->UpdateSourcePos(t1.pos, t1.length);
+		{
+			if( t1.type == ttCloseParanthesis )
+				node->UpdateSourcePos(t1.pos, t1.length);
+			else
+			{
+				asCString str;
+				str.Format(TXT_UNEXPECTED_TOKEN_s, asCTokenizer::GetDefinition(ttCloseBracket));
+
+				Error(str.AddressOf(), &t1);
+			}
+		}
 		else
 			RewindTo(&t1);
 
