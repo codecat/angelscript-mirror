@@ -4922,9 +4922,8 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				ctx->bc.Instr(asBC_RDSPtr);
 				ctx->type.dataType.MakeReference(false);
 
-				asCTypeInfo objType = ctx->type;
 				asCArray<asSExprContext *> args;
-				MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
+				MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
 
 				ctx->bc.Instr(asBC_PopPtr);
 
@@ -4936,9 +4935,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				// Make a NULL pointer
 				ctx->bc.InstrSHORT(asBC_ClrVPtr, ctx->type.stackOffset);
 				ctx->bc.Label((short)endLabel);
-
-				// Since we're receiving a handle, we can release the original variable
-				ReleaseTemporaryVariable(objType, &ctx->bc);
 
 				// Push the reference to the handle on the stack
 				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
@@ -4994,13 +4990,8 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 					arg.type.isExplicitHandle = true;
 					args.PushLast(&arg);
 
-					asCTypeInfo prev = ctx->type;
-
 					// Call the behaviour method
 					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
-
-					// Release previous temporary variable
-					ReleaseTemporaryVariable(prev, &ctx->bc);
 
 					// Use the reference to the variable as the result of the expression
 					// Now we can mark the variable as temporary
@@ -5540,13 +5531,8 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 		asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
 		if( generateCode )
 		{
-			asCTypeInfo objType = ctx->type;
-
 			Dereference(ctx, true);
-
 			PerformFunctionCall(funcId, ctx);
-
-			ReleaseTemporaryVariable(objType, &ctx->bc);
 		}
 		else
 			ctx->type.Set(descr->returnType);
@@ -5734,7 +5720,6 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[0]);
 			if( generateCode )
 			{
-				asCTypeInfo objType = ctx->type;
 				Dereference(ctx, true);
 
 				bool useVariable = false;
@@ -5754,7 +5739,6 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 				}
 
 				PerformFunctionCall(funcs[0], ctx, false, 0, 0, useVariable, stackOffset);
-				ReleaseTemporaryVariable(objType, &ctx->bc);
 			}
 			else
 				ctx->type.Set(f->returnType);
@@ -9229,17 +9213,12 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 							funcPtr.bc.Instr(asBC_PopPtr);
 					}
 
+					asCTypeInfo tmp = ctx->type;
 					MergeExprBytecodeAndType(ctx, &funcPtr);
+					ReleaseTemporaryVariable(tmp, &ctx->bc);
 				}
 
 				MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
-
-				// If the function pointer was copied to a local variable for the call, then
-				// release it again (temporary local variable)
-				if( (funcs[0] & FUNC_IMPORTED) == 0 && engine->scriptFunctions[funcs[0]]->funcType == asFUNC_FUNCDEF )
-				{
-					ReleaseTemporaryVariable(funcPtr.type, &ctx->bc);
-				}
 			}
 		}
 	}
@@ -9424,10 +9403,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			// Did we find the method?
 			if( funcs.GetLength() == 1 )
 			{
-				asCTypeInfo objType = ctx->type;
 				asCArray<asSExprContext *> args;
-				MakeFunctionCall(ctx, funcs[0], objType.dataType.GetObjectType(), args, node);
-				ReleaseTemporaryVariable(objType, &ctx->bc);
+				MakeFunctionCall(ctx, funcs[0], ctx->type.dataType.GetObjectType(), args, node);
 				return 0;
 			}
 			else if( funcs.GetLength() == 0 )
@@ -10013,7 +9990,6 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 		return -1;
 	}
 
-	asCTypeInfo objType = ctx->type;
 	asCScriptFunction *func = builder->GetFunctionDescription(ctx->property_set);
 
 	// Make sure the arg match the property
@@ -10054,19 +10030,6 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 
 	// Call the accessor
 	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args, node);
-
-	if( func->objectType )
-	{
-		// TODO: This is from CompileExpressionPostOp, can we unify the code?
-		if( !objType.isTemporary ||
-			!ctx->type.dataType.IsReference() ||
-			ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-		{
-			// As the method didn't return a reference to a member
-			// we can safely release the original object now
-			ReleaseTemporaryVariable(objType, &ctx->bc);
-		}
-	}
 
 	ctx->property_get = 0;
 	ctx->property_set = 0;
@@ -10134,22 +10097,6 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 
 	// Call the accessor
 	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
-
-	if( func->objectType )
-	{
-		// TODO: This is from CompileExpressionPostOp, can we unify the code?
-
-		// If the method returned a reference, then we can't release the original
-		// object yet, because the reference may be to a member of it
-		if( !objType.isTemporary ||
-			!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
-			ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-		{
-			// As the method didn't return a reference to a member
-			// we can safely release the original object now
-			ReleaseTemporaryVariable(objType, &ctx->bc);
-		}
-	}
 
 	ctx->property_get = 0;
 	ctx->property_set = 0;
@@ -10220,10 +10167,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Did we find the method?
 			if( funcs.GetLength() == 1 )
 			{
-				asCTypeInfo objType = ctx->type;
 				asCArray<asSExprContext *> args;
-				MakeFunctionCall(ctx, funcs[0], objType.dataType.GetObjectType(), args, node);
-				ReleaseTemporaryVariable(objType, &ctx->bc);
+				MakeFunctionCall(ctx, funcs[0], ctx->type.dataType.GetObjectType(), args, node);
 				return 0;
 			}
 			else if( funcs.GetLength() == 0 )
@@ -10478,22 +10423,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 			asCObjectType *trueObj = ctx->type.dataType.GetObjectType();
 
-			asCTypeInfo objType = ctx->type;
-
 			// Compile function call
 			int r = CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
 			if( r < 0 ) return r;
-
-			// If the method returned a reference, then we can't release the original
-			// object yet, because the reference may be to a member of it
-			if( !objType.isTemporary ||
-				!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
-				ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-			{
-				// As the method didn't return a reference to a member
-				// we can safely release the original object now
-				ReleaseTemporaryVariable(objType, &ctx->bc);
-			}
 		}
 	}
 	else if( op == ttOpenBracket )
@@ -10590,24 +10522,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 						int r = CompileDefaultArgs(node, args, funcs[0], objectType);
 
 						if( r == 0 )
-						{
-							asCTypeInfo origExprType = ctx->type;
-
 							MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, ctx->type.stackOffset);
-							
-							// TODO: Clean-up: The MakeFunctionCall should always add the release of the temporary variable as 
-							//                 deferred arg in the ctx that way it won't be necessary to have this code here
-							// If the method returned a reference, then we can't release the original
-							// object yet, because the reference may be to a member of it
-							if( !origExprType.isTemporary ||
-								!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
-								ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not a member
-							{
-								// As the method didn't return a reference to a member
-								// we can safely release the original object now
-								ReleaseTemporaryVariable(origExprType, &ctx->bc);
-							}
-						}
 						else
 							isOK = false;
 					}
@@ -10702,11 +10617,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 						// Remove the reference from the stack as the asBC_CALLPTR instruction takes the variable as argument
 						ctx->bc.Instr(asBC_PopPtr);
 					}
-					asCTypeInfo t = ctx->type;
 
 					MakeFunctionCall(ctx, funcs[0], 0, args, node, false, 0, ctx->type.stackOffset);
-
-					ReleaseTemporaryVariable(t, &ctx->bc);
 				}
 			}
 		}
@@ -11167,23 +11079,11 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			ProcessPropertyGetAccessor(lctx, node);
 
 			// Merge the bytecode so that it forms lvalue.methodName(rvalue)
-			asCTypeInfo objType = lctx->type;
 			asCArray<asSExprContext *> args;
 			args.PushLast(rctx);
 			MergeExprBytecode(ctx, lctx);
 			ctx->type = lctx->type;
-			MakeFunctionCall(ctx, ops[0], objType.dataType.GetObjectType(), args, node);
-
-			// If the method returned a reference, then we can't release the original
-			// object yet, because the reference may be to a member of it
-			if( !objType.isTemporary ||
-				!(ctx->type.dataType.IsReference() || (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())) ||
-				ctx->type.isVariable ) // If the resulting type is a variable, then the reference is not to a member
-			{
-				// As the index operator didn't return a reference to a
-				// member we can release the original object now
-				ReleaseTemporaryVariable(objType, &ctx->bc);
-			}
+			MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
 
 			// Found matching operator
 			return 1;
@@ -12970,6 +12870,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		int returnOffset = 0;
 
+		asCTypeInfo tmpExpr = ctx->type;
+
 		if( descr->DoesReturnOnStack() )
 		{
 			asASSERT( useVariable );
@@ -13001,6 +12903,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			// Move the pointer from the object register to the temporary variable
 			ctx->bc.InstrSHORT(asBC_STOREOBJ, (short)returnOffset);
 		}
+
+		ReleaseTemporaryVariable(tmpExpr, &ctx->bc);
 
 		ctx->type.dataType.MakeReference(IsVariableOnHeap(returnOffset));
 		ctx->type.isLValue = false; // It is a reference, but not an lvalue
@@ -13058,6 +12962,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 	{
 		asASSERT(useVariable == false);
 
+		asCTypeInfo tmpExpr = ctx->type;
+
 		if( descr->returnType.GetSizeInMemoryBytes() )
 		{
 			// Allocate a temporary variable to hold the value, but make sure
@@ -13082,6 +12988,8 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		}
 		else
 			ctx->type.Set(descr->returnType);
+
+		ReleaseTemporaryVariable(tmpExpr, &ctx->bc);
 
 		ctx->type.isLValue = false;
 
