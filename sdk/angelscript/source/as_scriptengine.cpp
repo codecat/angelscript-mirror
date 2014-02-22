@@ -1138,9 +1138,23 @@ int asCScriptEngine::ClearUnusedTypes()
 				refCount = 2*(int)type->beh.factories.GetLength();
 				if( type->beh.listFactory )
 					refCount += 2;
+
+				// If it is an orphaned script type, then the gc holds 1 reference too
+				bool isScriptTemplate = false;
+				for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
+				{
+					if( type->templateSubTypes[s].GetObjectType() && (type->templateSubTypes[s].GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
+					{
+						isScriptTemplate = true;
+						break;
+					}
+				}
+				
+				if( isScriptTemplate && type->module == 0 )
+					refCount++;
 			}
 
-			if( type->GetRefCount() == refCount )
+			if( type->GetRefCount() == refCount || type->GetRefCount() == 0 )
 			{
 				if( type->flags & asOBJ_TEMPLATE )
 				{
@@ -3219,6 +3233,8 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 {
 	int n;
 
+	RemoveFromTypeIdMap(t);
+
 	// Destroy the factory stubs
 	for( n = 0; n < (int)t->beh.factories.GetLength(); n++ )
 	{
@@ -3259,18 +3275,22 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 		}
 	}
 
-	for( n = (int)generatedTemplateTypes.GetLength()-1; n >= 0; n-- )
+	// Only delete it if the refCount is 0
+	if( t->refCount.get() == 0 )
 	{
-		if( generatedTemplateTypes[n] == t )
+		for( n = (int)generatedTemplateTypes.GetLength()-1; n >= 0; n-- )
 		{
-			if( n == (signed)generatedTemplateTypes.GetLength()-1 )
-				generatedTemplateTypes.PopLast();
-			else
-				generatedTemplateTypes[n] = generatedTemplateTypes.PopLast();
+			if( generatedTemplateTypes[n] == t )
+			{
+				if( n == (signed)generatedTemplateTypes.GetLength()-1 )
+					generatedTemplateTypes.PopLast();
+				else
+					generatedTemplateTypes[n] = generatedTemplateTypes.PopLast();
+			}
 		}
-	}
 
-	asDELETE(t,asCObjectType);
+		asDELETE(t,asCObjectType);
+	}
 }
 
 // internal

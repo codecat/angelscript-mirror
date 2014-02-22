@@ -8,6 +8,7 @@ bool Test()
 	bool fail = false;
 	int r;
 	CBufferedOutStream bout;
+	COutStream out;
 	asIScriptContext *ctx;
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -182,6 +183,37 @@ bool Test()
 		TEST_FAILED;
 	}
 	engine->Release();
+
+	// GetObjectTypeById must not crash even though the object type has already been removed
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "class A {}");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		int typeId = mod->GetTypeIdByDecl("array<A@>");
+		if( typeId < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = engine->GetObjectTypeById(typeId);
+		if( type == 0 || std::string(type->GetName()) != "array" )
+			TEST_FAILED;
+
+		mod->Discard();
+		engine->GarbageCollect();
+
+		type = engine->GetObjectTypeById(typeId);
+		if( type != 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Recompiling the same module over and over again without 
 	// discarding shouldn't increase memory consumption

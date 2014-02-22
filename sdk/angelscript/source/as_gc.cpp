@@ -200,8 +200,8 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 					while( DestroyOldGarbage() == 1 ) {}
 
 				// Run another iteration if any garbage was destroyed
-				if( count != (unsigned int)(gcNewObjects.GetLength() + gcOldObjects.GetLength()) )
-					count = (unsigned int)(gcNewObjects.GetLength() + gcOldObjects.GetLength());
+				if( count != (unsigned int)(gcOldObjects.GetLength()) )
+					count = (unsigned int)(gcOldObjects.GetLength());
 				else
 				{
 					// Let the engine destroy the types that reached refCount 0

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.2 WIP - 2014/02/17</h2>
+<h2>Version 2.28.2 WIP - 2014/02/21</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash after loading bytecode with initialization lists holding ref types by value (Thanks loboWu)
 <li>Fixed bug with saved bytecode and initialization lists that skip values
 <li>Tokenizer was splitting identifiers that started with keywords that ended with numbers, e.g. int8 (Thanks loboWu)
+<li>GetObjectTypeById crashed if the typeId represented a template instance type that had already been released (Thanks iraxef)
 </ul>
 <li>Library
 <ul>
