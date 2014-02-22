@@ -2493,9 +2493,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script20 (2, 1) : Info    : Compiling void test()\n"
-	                   "script20 (3, 22) : Error   : No matching signatures to 'A::GetClient()'\n"
-	                   "script20 (3, 17) : Warning : The operand is implicitly converted to handle in order to compare them\n"
-	                   "script20 (3, 17) : Error   : No conversion from 'const int' to 'A@' available.\n" )
+	                   "script20 (3, 22) : Error   : No matching signatures to 'A::GetClient()'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -2517,8 +2515,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script21 (2, 1) : Info    : Compiling void main()\n"
-					   "script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n"
-					   "script21 (4, 11) : Error   : No conversion from 'int' to 'bool' available.\n" )
+					   "script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -2583,10 +2580,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "26 (1, 1) : Info    : Compiling void main()\n"
-	                   "26 (1, 20) : Error   : 'anyWord' is not declared\n"
-	                   "26 (1, 29) : Error   : No matching signatures to 'main(int)'\n"
-					   "26 (1, 29) : Info    : Candidates are:\n"
-					   "26 (1, 29) : Info    : void main()\n" )
+	                   "26 (1, 20) : Error   : 'anyWord' is not declared\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

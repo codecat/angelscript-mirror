@@ -9152,6 +9152,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
 
+	bool isOK = true;
 	if( CompileArgumentList(node->lastChild, args) >= 0 )
 	{
 		// Special case: Allow calling func(void) with an expression that evaluates to no datatype, but isn't exactly 'void' 
@@ -9171,6 +9172,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 			// Dummy value
 			ctx->type.SetDummy();
+			isOK = false;
 		}
 		else
 		{
@@ -9220,12 +9222,15 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 				MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcPtr.type.stackOffset);
 			}
+			else
+				isOK = false;
 		}
 	}
 	else
 	{
 		// Failed to compile the argument list, set the dummy type and continue compilation
 		ctx->type.SetDummy();
+		isOK = false;
 	}
 
 	// Cleanup
@@ -9251,7 +9256,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		CompileMemberInitialization(&ctx->bc, false);
 	}
 
-	return 0;
+	return isOK ? 0 : -1;
 }
 
 asSNameSpace *asCCompiler::DetermineNameSpace(const asCString &scope)
@@ -12671,8 +12676,14 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		to = lctx->type.dataType;
 	else
 	{
-		// TODO: Use the common base type
-		to = lctx->type.dataType;
+		// Find a common base type
+		asSExprContext tmp(engine);
+		tmp.type = rctx->type;
+		ImplicitConversion(&tmp, lctx->type.dataType, 0, asIC_IMPLICIT_CONV, false);
+		if( tmp.type.dataType.GetObjectType() == lctx->type.dataType.GetObjectType() )
+			to = lctx->type.dataType;
+		else
+			to = rctx->type.dataType;
 	}
 
 	// Need to pop the value if it is a null constant

@@ -399,6 +399,29 @@ bool Test()
 	//-----------------------------------------------------------------
 	// REFERENCE_CAST
 
+	// Test comparison of objects at different hierarchy levels
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class P {} \n"
+			"class C : P {} \n"
+			"void main() { \n"
+			"  P @p; \n"
+			"  C @c; \n"
+			"  if( p is c ) {} \n"
+			"  if( c is p ) {} \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// TODO: This should work for MAX_PORTABILITY as well
 	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 	{
