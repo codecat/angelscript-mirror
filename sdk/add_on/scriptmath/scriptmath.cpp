@@ -95,7 +95,14 @@ asQWORD fpToIEEE(double fp)
 	return *reinterpret_cast<asQWORD*>(&fp);
 }
 
-// TODO: Implement a faster closeTo function with integer operations
+// closeTo() is used to determine if the binary representation of two numbers are 
+// relatively close to each other. Numerical errors due to rounding errors build
+// up over many operations, so it is almost impossible to get exact numbers and
+// this is where closeTo() comes in.
+//
+// It shouldn't be used to determine if two numbers are mathematically close to 
+// each other.
+//
 // ref: http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
 // ref: http://www.gamedev.net/topic/653449-scriptmath-and-closeto/
 bool closeTo(float a, float b, float epsilon)
@@ -134,7 +141,7 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("uint64 fpToIEEE(double)", asFUNCTIONPR(fpToIEEE, (double), asQWORD), asCALL_CDECL); assert( r >= 0 );
 
 	// Close to comparison with epsilon 
-	r = engine->RegisterGlobalFunction("bool closeTo(float, float, float = 0.0001f)", asFUNCTIONPR(closeTo, (float, float, float), bool), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("bool closeTo(float, float, float = 0.00001f)", asFUNCTIONPR(closeTo, (float, float, float), bool), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("bool closeTo(double, double, double = 0.0000000001f)", asFUNCTIONPR(closeTo, (double, double, double), bool), asCALL_CDECL); assert( r >= 0 );
 
 #if AS_USE_FLOAT

@@ -37,6 +37,73 @@ bool Test()
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 
+	// opCall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Test",
+			"class C {\n"
+			"  int opCall(int a, int b) { return a + b; } \n"
+			"  int test() { return this(2,3); } \n"
+			"} \n"
+			"class D {\n"
+			"  string &opCall(const string &in a, const string &in b, const string &in c = 'hello') { val = a + b + c; return val; } \n"
+			"  string val; \n"
+			"} \n"
+			"class E {\n"
+			"  int opCall() { return 42; } \n"
+			"} \n"
+			"class F { \n"
+			"  C c; \n"
+			"  int func() { return c(2,3); } \n"
+			"  C @getFunctor() { return c; } \n"
+			"} \n");
+		
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Test opIndex with multiple args
+		r = ExecuteString(engine, "C c; assert( c(2,3) == 5 ); assert( c.opCall(2,3) == 5 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test with objects as arguments, and returning references too
+		// Test with default arguments
+		r = ExecuteString(engine, "D d; assert( d('a', 'b') == 'abhello' ); assert( d.opCall('a', 'b') == 'abhello' ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test calling as member method, i.e. assert( f.c(2,3) == 5 );
+		r = ExecuteString(engine, "F f; assert( f.c(2,3) == 5 ); assert( f.c.opCall(2,3) == 5 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test calling as member from within class method, i.e. f::func() { return c(2,3); }
+		r = ExecuteString(engine, "F f; assert( f.func() == 5 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test calling it as post op, i.e. assert( getFunctor()(2,3) == 5 ); 
+		r = ExecuteString(engine, "F f; \n"
+			                      "assert( f.getFunctor()(2,3) == 5 ); \n"
+								  "assert( f.getFunctor().opCall(2,3) == 5 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test calling the opCall with this()
+		r = ExecuteString(engine, "C c; assert( c.test() == 5 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// opIndex with multiple values
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

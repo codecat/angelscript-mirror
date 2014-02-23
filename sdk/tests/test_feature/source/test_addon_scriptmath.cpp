@@ -62,6 +62,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
+	r = ExecuteString(engine, "assert( closeTo(67329.242f, 67329.234f) ); \n"
+	                          "assert( !closeTo(67329.f, 67331.f) ); \n");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
 	// Test initialization list for value type in local variable
 	r = ExecuteString(engine, 
 		"complex a = {1, 2}; \n"

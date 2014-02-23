@@ -9011,16 +9011,18 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	asCScriptNode *nm = node->lastChild->prev;
 	name.Assign(&script->code[nm->tokenPos], nm->tokenLength);
 
-	// First check for a local variable of a function type as it would take precedence
+	// First check for a local variable as it would take precedence
 	// Must not allow function names, nor global variables to be returned in this instance
 	// If objectType is set then this is a post op expression and we shouldn't look for local variables
 	asSExprContext funcPtr(engine);
 	if( objectType == 0 )
 	{
 		localVar = CompileVariableAccess(name, scope, &funcPtr, node, true, true, true);
-		if( localVar >= 0 && !funcPtr.type.dataType.GetFuncDef() && funcPtr.methodName == "" )
+		if( localVar >= 0 && 
+			!(funcPtr.type.dataType.GetFuncDef() || funcPtr.type.dataType.IsObject()) && 
+			funcPtr.methodName == "" )
 		{
-			// The variable is not a function
+			// The variable is not a function or object with opCall
 			asCString msg;
 			msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
 			Error(msg, node);
@@ -9074,11 +9076,13 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType ? objectType : outFunc->objectType, funcs, objIsConst, scope);
 			}
 
-			// It is still possible that there is a class member of a function type
+			// It is still possible that there is a class member of a function type or a type with opCall methods
 			if( funcs.GetLength() == 0 )
 			{
 				int r = CompileVariableAccess(name, scope, &funcPtr, node, true, true, true, objectType);
-				if( r >= 0 && !funcPtr.type.dataType.GetFuncDef() && funcPtr.methodName == "" )
+				if( r >= 0 && 
+					!(funcPtr.type.dataType.GetFuncDef() || funcPtr.type.dataType.IsObject()) && 
+					funcPtr.methodName == "" )
 				{
 					// The variable is not a function
 					asCString msg;
@@ -9108,7 +9112,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		// then look for global functions or global function pointers,
 		// unless this is an expression post op, incase only member
 		// functions are expected
-		if( objectType == 0 && funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() == 0 )
+		if( objectType == 0 && funcs.GetLength() == 0 && (funcPtr.type.dataType.GetFuncDef() == 0 || funcPtr.type.dataType.IsObject()) )
 		{
 			// The scope is used to define the namespace
 			asSNameSpace *ns = DetermineNameSpace(scope);
@@ -9144,9 +9148,43 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		}
 	}
 
-	if( funcs.GetLength() == 0 && funcPtr.type.dataType.GetFuncDef() )
+	if( funcs.GetLength() == 0 )
 	{
-		funcs.PushLast(funcPtr.type.dataType.GetFuncDef()->id);
+		if( funcPtr.type.dataType.GetFuncDef() )
+		{
+			funcs.PushLast(funcPtr.type.dataType.GetFuncDef()->id);
+		}
+		else if( funcPtr.type.dataType.IsObject() )
+		{
+			// Keep information about temporary variables as deferred expression so it can be properly cleaned up after the call
+			if( ctx->type.isTemporary )
+			{
+				asASSERT( objectType );
+
+				asSDeferredParam deferred;
+				deferred.origExpr = 0;
+				deferred.argInOutFlags = asTM_INREF;
+				deferred.argNode = 0;
+				deferred.argType.SetVariable(ctx->type.dataType, ctx->type.stackOffset, true);
+
+				ctx->deferredParams.PushLast(deferred);
+			}
+			Dereference(ctx, true);
+
+			// Add the bytecode for accessing the object on which opCall will be called
+			MergeExprBytecodeAndType(ctx, &funcPtr);
+			Dereference(ctx, true);
+
+			objectType = funcPtr.type.dataType.GetObjectType();
+
+			// Get the opCall methods from the object type
+			if( funcPtr.type.dataType.IsObjectHandle() )
+				objIsConst = funcPtr.type.dataType.IsHandleToConst();
+			else
+				objIsConst = funcPtr.type.dataType.IsReadOnly();
+
+			builder->GetObjectMethodDescriptions("opCall", funcPtr.type.dataType.GetObjectType(), funcs, objIsConst);
+		}
 	}
 
 	// Compile the arguments
@@ -10579,8 +10617,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	{
 		// TODO: Most of this is already done by CompileFunctionCall(). Can we share the code?
 
-		// Make sure the expression is a funcdef
-		if( !ctx->type.dataType.GetFuncDef() )
+		// Make sure the expression is a funcdef or an object that may have opCall methods
+		if( !ctx->type.dataType.GetFuncDef() && !ctx->type.dataType.IsObject() )
 		{
 			Error(TXT_EXPR_DOESNT_EVAL_TO_FUNC, node);
 			return -1;
@@ -10592,8 +10630,22 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 		{
 			// Match arguments with the funcdef
 			asCArray<int> funcs;
-			funcs.PushLast(ctx->type.dataType.GetFuncDef()->id);
-			MatchFunctions(funcs, args, node, ctx->type.dataType.GetFuncDef()->name.AddressOf());
+			if( ctx->type.dataType.GetFuncDef() )
+			{
+				funcs.PushLast(ctx->type.dataType.GetFuncDef()->id);
+				MatchFunctions(funcs, args, node, ctx->type.dataType.GetFuncDef()->name.AddressOf());
+			}
+			else
+			{
+				bool isConst = false;
+				if( ctx->type.dataType.IsObjectHandle() )
+					isConst = ctx->type.dataType.IsHandleToConst();
+				else
+					isConst = ctx->type.dataType.IsReadOnly();
+
+				builder->GetObjectMethodDescriptions("opCall", ctx->type.dataType.GetObjectType(), funcs, isConst);
+				MatchFunctions(funcs, args, node, "opCall", ctx->type.dataType.GetObjectType(), isConst);
+			}
 
 			if( funcs.GetLength() != 1 )
 			{
@@ -10605,7 +10657,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			else
 			{
 				// Add the default values for arguments not explicitly supplied
-				int r = CompileDefaultArgs(node, args, funcs[0], 0);
+				int r = CompileDefaultArgs(node, args, funcs[0], ctx->type.dataType.GetObjectType());
 
 				// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 				//                is it enough to make sure it is in a local variable?
@@ -10615,12 +10667,15 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				if( r == asSUCCESS )
 				{
 					Dereference(ctx, true);
-					if( !ctx->type.isVariable )
-						ConvertToVariable(ctx);
-					else
+					if(  ctx->type.dataType.GetFuncDef() )
 					{
-						// Remove the reference from the stack as the asBC_CALLPTR instruction takes the variable as argument
-						ctx->bc.Instr(asBC_PopPtr);
+						if( !ctx->type.isVariable )
+							ConvertToVariable(ctx);
+						else
+						{
+							// Remove the reference from the stack as the asBC_CALLPTR instruction takes the variable as argument
+							ctx->bc.Instr(asBC_PopPtr);
+						}
 					}
 
 					MakeFunctionCall(ctx, funcs[0], 0, args, node, false, 0, ctx->type.stackOffset);
