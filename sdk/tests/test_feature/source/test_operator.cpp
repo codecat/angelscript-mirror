@@ -61,7 +61,7 @@ bool Test()
 			"class F { \n"
 			"  C c; \n"
 			"  int func() { return c(2,3); } \n"
-			"  C @getFunctor() { return c; } \n"
+			"  C @get_Functor() { return c; } \n"
 			"} \n");
 		
 		r = mod->Build();
@@ -91,8 +91,9 @@ bool Test()
 
 		// Test calling it as post op, i.e. assert( getFunctor()(2,3) == 5 ); 
 		r = ExecuteString(engine, "F f; \n"
-			                      "assert( f.getFunctor()(2,3) == 5 ); \n"
-								  "assert( f.getFunctor().opCall(2,3) == 5 ); \n", mod);
+								  "assert( f.Functor(2,3) == 5 ); \n"
+			                      "assert( f.get_Functor()(2,3) == 5 ); \n"
+								  "assert( f.get_Functor().opCall(2,3) == 5 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
