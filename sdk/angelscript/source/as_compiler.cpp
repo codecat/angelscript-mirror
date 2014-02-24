@@ -5588,10 +5588,7 @@ asUINT asCCompiler::ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType
 		else if( ctx->type.dataType.GetObjectType() != to.GetObjectType() )
 		{
 			// A ref cast must not remove the constness
-			bool isConst = false;
-			if( (ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst()) ||
-				(!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly()) )
-				isConst = true;
+			bool isConst = ctx->type.dataType.IsObjectConst();
 
 			// We may still be able to find an implicit ref cast behaviour
 			CompileRefCast(ctx, to, convType == asIC_EXPLICIT_REF_CAST, node, generateCode);
@@ -9421,16 +9418,10 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 			// TODO: Should convert this to something similar to CompileOverloadedDualOperator2
 			ProcessPropertyGetAccessor(ctx, node);
 
-			// Is it a const value?
-			bool isConst = false;
-			if( ctx->type.dataType.IsObjectHandle() )
-				isConst = ctx->type.dataType.IsHandleToConst();
-			else
-				isConst = ctx->type.dataType.IsReadOnly();
-
 			// TODO: If the value isn't const, then first try to find the non const method, and if not found try to find the const method
 
 			// Find the correct method
+			bool isConst = ctx->type.dataType.IsObjectConst();
 			asCArray<int> funcs;
 			asCObjectType *ot = ctx->type.dataType.GetObjectType();
 			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
@@ -9496,8 +9487,6 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		ProcessPropertyGetAccessor(ctx, node);
 
 		asCDataType to = ctx->type.dataType;
-
-		// TODO: The case -2147483648 gives an unecessary warning of changed sign for implicit conversion
 
 		if( ctx->type.dataType.IsUnsignedType() )
 		{
@@ -9851,11 +9840,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asSExprContext *ctx
 		}
 	}
 
-	bool isConst = false;
-	if( ctx->type.dataType.IsObjectHandle() )
-		isConst = ctx->type.dataType.IsHandleToConst();
-	else
-		isConst = ctx->type.dataType.IsReadOnly();
+	bool isConst = ctx->type.dataType.IsObjectConst();
 
 	// Check for multiple matches
 	if( multipleGetFuncs.GetLength() > 0 )
@@ -10185,16 +10170,10 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// TODO: Should convert this to something similar to CompileOverloadedDualOperator2
 			ProcessPropertyGetAccessor(ctx, node);
 
-			// Is it a const value?
-			bool isConst = false;
-			if( ctx->type.dataType.IsObjectHandle() )
-				isConst = ctx->type.dataType.IsHandleToConst();
-			else
-				isConst = ctx->type.dataType.IsReadOnly();
-
 			// TODO: If the value isn't const, then first try to find the non const method, and if not found try to find the const method
 
 			// Find the correct method
+			bool isConst = ctx->type.dataType.IsObjectConst();
 			asCArray<int> funcs;
 			asCObjectType *ot = ctx->type.dataType.GetObjectType();
 			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
@@ -10354,7 +10333,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					ctx->type.isLValue = true;
 				}
 
-				bool isConst = ctx->type.dataType.IsReadOnly();
+				bool isConst = ctx->type.dataType.IsObjectConst();
 
 				asCObjectProperty *prop = builder->GetObjectProperty(ctx->type.dataType, name.AddressOf());
 				if( prop )
@@ -10459,16 +10438,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			// Process the get property accessor
 			ProcessPropertyGetAccessor(ctx, node);
 
-			bool isConst = false;
-			if( ctx->type.dataType.IsObjectHandle() )
-				isConst = ctx->type.dataType.IsHandleToConst();
-			else
-				isConst = ctx->type.dataType.IsReadOnly();
-
-			asCObjectType *trueObj = ctx->type.dataType.GetObjectType();
-
 			// Compile function call
-			int r = CompileFunctionCall(node->firstChild, ctx, trueObj, isConst);
+			int r = CompileFunctionCall(node->firstChild, ctx, ctx->type.dataType.GetObjectType(), ctx->type.dataType.IsObjectConst());
 			if( r < 0 ) return r;
 		}
 	}
@@ -10538,12 +10509,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			bool lookForProperty = true;
 			if( propertyName == "" )
 			{
-				bool isConst = false;
-				if( ctx->type.dataType.IsObjectHandle() )
-					isConst = ctx->type.dataType.IsHandleToConst();
-				else
-					isConst = ctx->type.dataType.IsReadOnly();
-
+				bool isConst = ctx->type.dataType.IsObjectConst();
 				asCObjectType *objectType = ctx->type.dataType.GetObjectType();
 
 				asCArray<int> funcs;
@@ -10638,11 +10604,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			}
 			else
 			{
-				bool isConst = false;
-				if( ctx->type.dataType.IsObjectHandle() )
-					isConst = ctx->type.dataType.IsHandleToConst();
-				else
-					isConst = ctx->type.dataType.IsReadOnly();
+				bool isConst = ctx->type.dataType.IsObjectConst();
 
 				builder->GetObjectMethodDescriptions("opCall", ctx->type.dataType.GetObjectType(), funcs, isConst);
 				MatchFunctions(funcs, args, node, "opCall", ctx->type.dataType.GetObjectType(), isConst);
@@ -11086,11 +11048,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		asUINT n;
 
 		// Is the left value a const?
-		bool isConst = false;
-		if( lctx->type.dataType.IsObjectHandle() )
-			isConst = lctx->type.dataType.IsHandleToConst();
-		else
-			isConst = lctx->type.dataType.IsReadOnly();
+		bool isConst = lctx->type.dataType.IsObjectConst();
 
 		asCArray<int> funcs;
 		asCObjectType *ot = lctx->type.dataType.GetObjectType();
