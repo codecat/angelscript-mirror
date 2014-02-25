@@ -10,6 +10,17 @@ using namespace std;
 
 BEGIN_AS_NAMESPACE
 
+// Set the default memory routines
+static asALLOCFUNC_t userAlloc = ::malloc;
+static asFREEFUNC_t  userFree  = ::free;
+
+// Allows the application to set which memory routines should be used by the array object
+void CScriptArray::SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc)
+{
+	userAlloc = allocFunc;
+	userFree = freeFunc;
+}
+
 static void RegisterScriptArray_Native(asIScriptEngine *engine);
 static void RegisterScriptArray_Generic(asIScriptEngine *engine);
 
@@ -25,7 +36,7 @@ struct SArrayCache
 	asIScriptFunction *cmpFunc;
 	asIScriptFunction *eqFunc;
 	int cmpFuncReturnCode; // To allow better error message in case of multiple matches
-    int eqFuncReturnCode;
+	int eqFuncReturnCode;
 };
 
 // We just define a number here that we assume nobody else is using for
@@ -37,16 +48,31 @@ static void CleanupObjectTypeArrayCache(asIObjectType *type)
 {
 	SArrayCache *cache = reinterpret_cast<SArrayCache*>(type->GetUserData(ARRAY_CACHE));
 	if( cache )
-		delete cache;
+	{
+		cache->~SArrayCache();
+		userFree(cache);
+	}
 }
 
 static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 {
-	CScriptArray *a = new CScriptArray(length, ot);
+	asIScriptContext *ctx = asGetActiveContext();
+
+	// Allocate the memory
+	void *mem = userAlloc(sizeof(CScriptArray));
+	if( mem == 0 )
+	{
+		if( ctx )
+			ctx->SetException("Out of memory");
+
+		return 0;
+	}
+
+	// Initialize the object
+	CScriptArray *a = new(mem) CScriptArray(length, ot);
 
 	// It's possible the constructor raised a script exception, in which case we
 	// need to free the memory and return null instead, else we get a memory leak.
-	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
 	{
 		a->Release();
@@ -58,11 +84,23 @@ static CScriptArray* ScriptArrayFactory2(asIObjectType *ot, asUINT length)
 
 static CScriptArray* ScriptArrayListFactory(asIObjectType *ot, void *initList)
 {
-	CScriptArray *a = new CScriptArray(ot, initList);
+	asIScriptContext *ctx = asGetActiveContext();
+
+	// Allocate the memory
+	void *mem = userAlloc(sizeof(CScriptArray));
+	if( mem == 0 )
+	{
+		if( ctx )
+			ctx->SetException("Out of memory");
+
+		return 0;
+	}
+
+	// Initialize the object
+	CScriptArray *a = new(mem) CScriptArray(ot, initList);
 
 	// It's possible the constructor raised a script exception, in which case we
 	// need to free the memory and return null instead, else we get a memory leak.
-	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
 	{
 		a->Release();
@@ -74,11 +112,23 @@ static CScriptArray* ScriptArrayListFactory(asIObjectType *ot, void *initList)
 
 static CScriptArray* ScriptArrayFactoryDefVal(asIObjectType *ot, asUINT length, void *defVal)
 {
-	CScriptArray *a = new CScriptArray(length, defVal, ot);
+	asIScriptContext *ctx = asGetActiveContext();
+
+	// Allocate the memory
+	void *mem = userAlloc(sizeof(CScriptArray));
+	if( mem == 0 )
+	{
+		if( ctx )
+			ctx->SetException("Out of memory");
+
+		return 0;
+	}
+
+	// Initialize the object
+	CScriptArray *a = new(mem) CScriptArray(length, defVal, ot);
 
 	// It's possible the constructor raised a script exception, in which case we
 	// need to free the memory and return null instead, else we get a memory leak.
-	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && ctx->GetState() == asEXECUTION_EXCEPTION )
 	{
 		a->Release();
@@ -522,12 +572,7 @@ void CScriptArray::Reserve(asUINT maxElements)
 		return;
 
 	// Allocate memory for the buffer
-	SArrayBuffer *newBuffer;
-	#if defined(__S3E__) // Marmalade doesn't understand (nothrow)
-	newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*maxElements];
-	#else
-	newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*maxElements];
-	#endif
+	SArrayBuffer *newBuffer = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1 + elementSize*maxElements));
 	if( newBuffer )
 	{
 		newBuffer->numElements = buffer->numElements;
@@ -542,10 +587,13 @@ void CScriptArray::Reserve(asUINT maxElements)
 		return;
 	}
 
+	// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
+	//       This should really be using the objects copy constructor to copy each object
+	//       to the new location. It would most likely be a hit on the performance though.
 	memcpy(newBuffer->data, buffer->data, buffer->numElements*elementSize);
 
 	// Release the old buffer
-	delete[] (asBYTE*)buffer;
+	userFree(buffer);
 
 	buffer = newBuffer;
 }
@@ -583,12 +631,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 	if( buffer->maxElements < buffer->numElements + delta )
 	{
 		// Allocate memory for the buffer
-		SArrayBuffer *newBuffer;
-		#if defined(__S3E__) // Marmalade doesn't understand (nothrow)
-		newBuffer = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
-		#else
-		newBuffer = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)];
-		#endif
+		SArrayBuffer *newBuffer = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1 + elementSize*(buffer->numElements + delta)));
 		if( newBuffer )
 		{
 			newBuffer->numElements = buffer->numElements + delta;
@@ -614,7 +657,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 			Construct(newBuffer, at, at+delta);
 
 		// Release the old buffer
-		delete[] (asBYTE*)buffer;
+		userFree(buffer);
 
 		buffer = newBuffer;
 	}
@@ -654,10 +697,7 @@ bool CScriptArray::CheckMaxSize(asUINT numElements)
 	{
 		asIScriptContext *ctx = asGetActiveContext();
 		if( ctx )
-		{
-			// Set a script exception
 			ctx->SetException("Too large array size");
-		}
 
 		return false;
 	}
@@ -751,21 +791,9 @@ void *CScriptArray::At(asUINT index)
 void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 {
 	if( subTypeId & asTYPEID_MASK_OBJECT )
-	{
-		#if defined(__S3E__) // Marmalade doesn't understand (nothrow)
-		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
-		#else
-		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+sizeof(void*)*numElements];
-		#endif
-	}
+		*buf = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1+sizeof(void*)*numElements));
 	else
-	{
-		#if defined(__S3E__)
-		*buf = (SArrayBuffer*)new asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-		#else
-		*buf = (SArrayBuffer*)new (nothrow) asBYTE[sizeof(SArrayBuffer)-1+elementSize*numElements];
-		#endif
-	}
+		*buf = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1+elementSize*numElements));
 
 	if( *buf )
 	{
@@ -788,7 +816,7 @@ void CScriptArray::DeleteBuffer(SArrayBuffer *buf)
 	Destruct(buf, 0, buf->numElements);
 
 	// Free the buffer
-	delete[] (asBYTE*)buf;
+	userFree(buf);
 }
 
 // internal
@@ -1430,7 +1458,7 @@ void CScriptArray::Precache()
 
 	// First check if a cache already exists for this array type
 	SArrayCache *cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
-	if( cache )	return;
+	if( cache ) return;
 
 	// We need to make sure the cache is created only once, even
 	// if multiple threads reach the same point at the same time
@@ -1446,7 +1474,7 @@ void CScriptArray::Precache()
 	}
 
 	// Create the cache
-	cache = new SArrayCache();
+	cache = reinterpret_cast<SArrayCache*>(userAlloc(sizeof(SArrayCache)));
 	memset(cache, 0, sizeof(SArrayCache));
 
 	// If the sub type is a handle to const, then the methods must be const too
@@ -1569,7 +1597,8 @@ void CScriptArray::Release() const
 	{
 		// When reaching 0 no more references to this instance
 		// exists and the object should be destroyed
-		delete this;
+		this->~CScriptArray();
+		userFree(const_cast<CScriptArray*>(this));
 	}
 }
 

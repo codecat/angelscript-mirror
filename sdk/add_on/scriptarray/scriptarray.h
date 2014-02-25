@@ -25,6 +25,10 @@ struct SArrayCache;
 class CScriptArray
 {
 public:
+	// Set the memory functions that should be used by all CScriptArrays
+	static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+
+	// Constructors
 	CScriptArray(asIObjectType *ot, void *initBuf); // Called from script when initialized with list
 	CScriptArray(asUINT length, asIObjectType *ot);
 	CScriptArray(asUINT length, void *defVal, asIObjectType *ot);
