@@ -433,7 +433,7 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 		return 0;
 	}
 
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 // interface

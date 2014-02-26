@@ -825,7 +825,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		{
 			length = ReadEncodedUInt();
 			func->scriptData->lineNumbers.SetLength(length);
-			if( func->scriptData->lineNumbers.GetLength() != length )
+			if( int(func->scriptData->lineNumbers.GetLength()) != length )
 			{
 				// Out of memory
 				error = true;
@@ -837,7 +837,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			// Read the array of script sections 
 			length = ReadEncodedUInt();
 			func->scriptData->sectionIdxs.SetLength(length);
-			if( func->scriptData->sectionIdxs.GetLength() != length )
+			if( int(func->scriptData->sectionIdxs.GetLength()) != length )
 			{
 				// Out of memory
 				error = true;
@@ -2658,7 +2658,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 		return 0;
 	}
 
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 void asCReader::SListAdjuster::SetRepeatCount(asUINT rc)

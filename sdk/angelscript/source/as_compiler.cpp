@@ -1444,7 +1444,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					ctx->type.Set(dt);
 					ctx->type.isTemporary = true;
-					ctx->type.stackOffset = offset;
+					ctx->type.stackOffset = short(offset);
 					if( dt.IsObjectHandle() )
 						ctx->type.isExplicitHandle = true;
 					ctx->type.dataType.MakeReference(false);
@@ -2617,13 +2617,13 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	asCScriptNode *el = node;
 	asSListPatternNode *patternNode = engine->scriptFunctions[listPatternType->templateSubTypes[0].GetBehaviour()->listFactory]->listPattern;
 	int elementsInSubList = -1;
-	int r = CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), bufferVar, bufferSize, valueExpr.bc, elementsInSubList);
+	int r = CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateObject(listPatternType, false)), short(bufferVar), bufferSize, valueExpr.bc, elementsInSubList);
 	asASSERT( r || patternNode == 0 );
 	UNUSED_VAR(r);
 
 	// After all values have been evaluated we know the final size of the buffer
 	asSExprContext allocExpr(engine);
-	allocExpr.bc.InstrSHORT_DW(asBC_AllocMem, bufferVar, bufferSize);
+	allocExpr.bc.InstrSHORT_DW(asBC_AllocMem, short(bufferVar), bufferSize);
 
 	// Merge the bytecode into the final sequence
 	bc->AddCode(&allocExpr.bc);
@@ -2634,7 +2634,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	asSExprContext arg1(engine);
 	arg1.type.Set(asCDataType::CreatePrimitive(ttUInt, false));
 	arg1.type.dataType.MakeReference(true);
-	arg1.bc.InstrSHORT(asBC_PshVPtr, bufferVar);
+	arg1.bc.InstrSHORT(asBC_PshVPtr, short(bufferVar));
 	args.PushLast(&arg1);
 
 	asSExprContext ctx(engine);
@@ -2738,7 +2738,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 
 	// Free the temporary buffer. The FREE instruction will make sure to destroy
 	// each element in the buffer so there is no need to do this manually
-	bc->InstrW_PTR(asBC_FREE, bufferVar, listPatternType);
+	bc->InstrW_PTR(asBC_FREE, short(bufferVar), listPatternType);
 	ReleaseTemporaryVariable(bufferVar, bc);
 }
 
