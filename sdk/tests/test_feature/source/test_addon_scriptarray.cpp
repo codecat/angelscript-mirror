@@ -150,7 +150,7 @@ CScriptArray *CreateArrayOfStrings()
 	{
 		asIScriptEngine* engine = ctx->GetEngine();
 		asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
-		CScriptArray* arr = new CScriptArray(3, t);
+		CScriptArray* arr = CScriptArray::Create(t, 3);
 		for( asUINT i = 0; i < arr->GetSize(); i++ )
 		{
 			CScriptString** p = static_cast<CScriptString**>(arr->At(i));

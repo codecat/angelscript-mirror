@@ -396,7 +396,7 @@ CScriptArray* CScriptDictionary::GetKeys() const
 	asIObjectType *ot = engine->GetObjectTypeById(stringArrayType);
 
 	// Create the array object
-	CScriptArray *array = new CScriptArray(asUINT(dict.size()), ot);
+	CScriptArray *array = CScriptArray::Create(ot, asUINT(dict.size()));
 	long current = -1;
 	std::map<string, valueStruct>::const_iterator it;
 	for( it = dict.begin(); it != dict.end(); it++ )
