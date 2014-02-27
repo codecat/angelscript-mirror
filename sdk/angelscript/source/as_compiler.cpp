@@ -1378,6 +1378,10 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				if( !(param.IsReadOnly() && ctx->type.isVariable) )
 					ConvertToTempVariable(ctx);
 
+				if( !dt.IsPrimitive() )
+					// Remove the reference that was pushed on the stack as it will not be used
+					ctx->bc.Instr(asBC_PopPtr);
+
 				PushVariableOnStack(ctx, true);
 				ctx->type.dataType.MakeReadOnly(param.IsReadOnly());
 			}
@@ -4350,6 +4354,7 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap)
 {
 	asCDataType t(type);
+	t.MakeReference(false);
 
 	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 1 )
 		t.SetTokenType(ttInt);
@@ -4899,13 +4904,14 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				// because that will raise a null pointer exception due to the cast behaviour
 				// being a class method, and the this pointer cannot be null.
 
-				if( ctx->type.isVariable )
-					ctx->bc.Instr(asBC_PopPtr);
-				else
+				if( !ctx->type.isVariable )
 				{
 					Dereference(ctx, true);
 					ConvertToVariable(ctx);
 				}
+
+				// The reference on the stack will not be used
+				ctx->bc.Instr(asBC_PopPtr);
 
 				// TODO: runtime optimize: should have immediate comparison for null pointer
 				int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
@@ -9237,19 +9243,15 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 					{
 						ProcessPropertyGetAccessor(&funcExpr, node);
 						Dereference(&funcExpr, true);
-
-						// The function call will be made directly from the local variable so the function pointer shouldn't be on the stack
-						funcExpr.bc.Instr(asBC_PopPtr);
 					}
 					else
 					{
 						Dereference(&funcExpr, true);
 						ConvertToVariable(&funcExpr);
-
-						// The function call will be made directly from the local variable so the function pointer shouldn't be on the stack
-						if( !funcExpr.type.isTemporary )
-							funcExpr.bc.Instr(asBC_PopPtr);
 					}
+
+					// The function call will be made directly from the local variable so the function pointer shouldn't be on the stack
+					funcExpr.bc.Instr(asBC_PopPtr);
 
 					asCTypeInfo tmp = ctx->type;
 					MergeExprBytecodeAndType(ctx, &funcExpr);
@@ -10634,11 +10636,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 					{
 						if( !ctx->type.isVariable )
 							ConvertToVariable(ctx);
-						else
-						{
-							// Remove the reference from the stack as the asBC_CALLPTR instruction takes the variable as argument
-							ctx->bc.Instr(asBC_PopPtr);
-						}
+
+						// Remove the reference from the stack as the asBC_CALLPTR instruction takes the variable as argument
+						ctx->bc.Instr(asBC_PopPtr);
 					}
 
 					MakeFunctionCall(ctx, funcs[0], 0, args, node, false, 0, ctx->type.stackOffset);
@@ -11359,15 +11359,21 @@ void asCCompiler::ConvertToVariable(asSExprContext *ctx)
 		}
 		else
 		{
+			Dereference(ctx, true);
+
 			// Copy the object handle to a variable
 			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 			ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
 			ctx->bc.Instr(asBC_PopPtr);
 		}
 
+		// As this is an object the reference must be placed on the stack
+		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+
 		ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 		ctx->type.SetVariable(ctx->type.dataType, offset, true);
 		ctx->type.dataType.MakeHandle(true);
+		ctx->type.dataType.MakeReference(true);
 	}
 	else if( (!ctx->type.isVariable || ctx->type.dataType.IsReference()) &&
 		     ctx->type.dataType.IsPrimitive() )
@@ -12750,15 +12756,13 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	int op = node->tokenType;
 	if( op == ttEqual || op == ttNotEqual || op == ttIs || op == ttNotIs )
 	{
-		// If the object handle already is in a variable we must manually pop it from the stack
-		if( lctx->type.isVariable )
-			lctx->bc.Instr(asBC_PopPtr);
-		if( rctx->type.isVariable )
-			rctx->bc.Instr(asBC_PopPtr);
-
 		// TODO: runtime optimize: don't do REFCPY
 		ConvertToVariableNotIn(lctx, rctx);
 		ConvertToVariable(rctx);
+
+		// Pop the pointers from the stack as they will not be used
+		lctx->bc.Instr(asBC_PopPtr);
+		rctx->bc.Instr(asBC_PopPtr);
 
 		MergeExprBytecode(ctx, lctx);
 		MergeExprBytecode(ctx, rctx);

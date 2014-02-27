@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Tokenizer was splitting identifiers that started with keywords that ended with numbers, e.g. int8 (Thanks loboWu)
 <li>GetObjectTypeById crashed if the typeId represented a template instance type that had already been released (Thanks iraxef)
 <li>Corrected some compiler warnings (Thanks arpeggiodragon)
+<li>Fixed crash when returning primitive value implicitly cast from global handle (Thanks Jason Goepel)
 </ul>
 <li>Library
 <ul>

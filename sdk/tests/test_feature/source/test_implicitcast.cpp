@@ -613,6 +613,27 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Test crash while returning from global handle
+		// http://www.gamedev.net/topic/653857-implicit-value-cast-from-global-handle/
+		mod->AddScriptSection("test",
+			"Pdouble @dbl; \n"
+			"double func1() { \n"
+			"  @dbl = Pdouble(3.14); \n"
+			"  return dbl; \n"
+			"} \n"
+			"double func2() { \n"
+			"  Pdouble d(3.14); \n"
+			"  return d; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( func1() == 3.14 ); \n"
+								  "assert( func2() == 3.14 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
