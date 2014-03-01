@@ -1415,7 +1415,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// Make sure the variable is not used in the expression
 					offset = AllocateVariableNotIn(dt, true, false, ctx);
 
-					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
+					// TODO: runtime optimize: Use copy constructor if available. See PrepareTemporaryObject()
 
 					// Allocate and construct the temporary object
 					asCByteCode tmpBC(engine);
@@ -1442,8 +1442,16 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 
 					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
 
-					ctx->bc.Instr(asBC_PopPtr);
+					// Pop the reference that was pushed on the stack if the result is an object
+					if( type.dataType.IsObject() )
+						ctx->bc.Instr(asBC_PopPtr);
+					
+					// If the assignment operator returned an object by value it will
+					// be in a temporary variable which we need to destroy now
+					if( type.isTemporary && type.stackOffset != (short)offset )
+						ReleaseTemporaryVariable(type.stackOffset, &ctx->bc);
 
+					// Release the original value too in case it is a temporary
 					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
 
 					ctx->type.Set(dt);
@@ -4527,6 +4535,8 @@ void asCCompiler::ReleaseTemporaryVariable(asCTypeInfo &t, asCByteCode *bc)
 
 void asCCompiler::ReleaseTemporaryVariable(int offset, asCByteCode *bc)
 {
+	asASSERT( tempVariables.Exists(offset) );
+
 	if( bc )
 	{
 		// We need to call the destructor on the true variable type
@@ -4747,8 +4757,6 @@ int asCCompiler::PerformAssignment(asCTypeInfo *lvalue, asCTypeInfo *rvalue, asC
 		*lvalue = ctx.type;
 		bc->AddCode(&ctx.bc);
 
-		// TODO: Should find the opAssign method that implements the default copy behaviour.
-		//       The beh->copy member will be removed.
 		asSTypeBehaviour *beh = lvalue->dataType.GetBehaviour();
 		if( beh->copy && beh->copy != engine->scriptTypeBehaviours.beh.copy )
 		{
@@ -12842,6 +12850,23 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		ctx->type.SetDummy();
 	}
 
+	// Check if there is a need to add a hidden pointer for when the function returns an object by value
+	if( descr->DoesReturnOnStack() && !useVariable )
+	{
+		useVariable = true;
+		varOffset = AllocateVariable(descr->returnType, true);
+
+		// Push the pointer to the pre-allocated space for the return value
+		ctx->bc.InstrSHORT(asBC_PSF, short(varOffset));
+
+		if( descr->objectType )
+		{
+			// The object pointer is already on the stack, but should be the top
+			// one, so we need to swap the pointers in order to get the correct
+			ctx->bc.Instr(asBC_SwapPtr);
+		}
+	}
+
 	if( isConstructor )
 	{
 		// Sometimes the value types are allocated on the heap,
@@ -12871,9 +12896,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		// If the function returns an object by value the address of the location
 		// where the value should be stored is passed as an argument too
 		if( descr->DoesReturnOnStack() )
-		{
 			argSize += AS_PTR_SIZE;
-		}
 
 		// TODO: runtime optimize: If it is known that a class method cannot be overridden the call
 		//                         should be made with asBC_CALL as it is faster. Examples where this

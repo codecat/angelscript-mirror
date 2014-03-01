@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.2 WIP - 2014/02/26</h2>
+<h2>Version 2.28.2 WIP - 2014/02/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetObjectTypeById crashed if the typeId represented a template instance type that had already been released (Thanks iraxef)
 <li>Corrected some compiler warnings (Thanks arpeggiodragon)
 <li>Fixed crash when returning primitive value implicitly cast from global handle (Thanks Jason Goepel)
+<li>Fixed assert failure in compiler when using opAssign that returns a value instead of a reference (Thanks simong)
 </ul>
 <li>Library
 <ul>

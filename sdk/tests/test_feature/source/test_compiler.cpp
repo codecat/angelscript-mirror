@@ -235,6 +235,46 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test crash with global variables of non-pod types and reference arguments
+	// http://www.gamedev.net/topic/653919-global-variables-and-const-argument-by-reference/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+		r = engine->RegisterObjectType("Value", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS );
+
+		r = engine->RegisterObjectType("Vec2f", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDAK );
+		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		// There is no copy constructor so the compiler must use the opAssign
+		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		// The opAssign is registered to return a value type by value
+		r = engine->RegisterObjectMethod("Vec2f", "Value opAssign(const Vec2f &in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+
+
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"Vec2f t; \n"
+			"void main(){ \n"
+			"    test( t ); \n"
+			"} \n"
+			"void test( const Vec2f &in v ){}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Make sure tokenizer doesn't split tokens whose initial characters match keyword
 	// http://www.gamedev.net/topic/653337-uint-token-parse-error/
 	{
