@@ -369,7 +369,7 @@ int main(int argc, char **argv)
 		if( TestStdcall4Args()            ) goto failed; else printf("-- TestStdcall4Args passed\n");
 		if( TestNotComplexStdcall()       ) goto failed; else printf("-- TestNotComplexStdcall passed\n");
 	}
-
+	
 	// This test uses ATL::CString thus it is turned off by default
 //	if( TestCString::Test()           ) goto failed; else printf("-- TestCString passed\n");
 	// Pointers are not supported by AngelScript at the moment, but they may be in the future

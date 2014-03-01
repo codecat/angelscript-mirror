@@ -49,8 +49,32 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Test potential memory leak with template types
+	// http://www.gamedev.net/topic/653872-memory-leak-when-registering-implicit-reference-cast-for-template/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		engine->RegisterObjectType("String", 1, asOBJ_VALUE|asOBJ_POD);
+		engine->RegisterInterface("IArchive");
+		engine->RegisterObjectType("Array<T>", 1, asOBJ_REF|asOBJ_TEMPLATE|asOBJ_NOCOUNT);
+
+		r = engine->RegisterObjectBehaviour("Array<T>", asBEHAVE_IMPLICIT_REF_CAST, "IArchive@ _beh_11_()", asFUNCTION(0), asCALL_GENERIC);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = engine->GetObjectTypeById(engine->GetTypeIdByDecl("Array<String>"));
+		if( type == 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
+
 	// Test registering a float[3] typedef
-	// TODO: This test needs to be part of the native calling convention tests
 	// http://www.gamedev.net/topic/653085-dont-think-im-handling-objects-properly/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
