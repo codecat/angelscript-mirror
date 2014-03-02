@@ -1550,7 +1550,15 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			// Literal constants cannot be passed to inout ref arguments
 			if( !ctx->type.isVariable && ctx->type.isConstant )
 			{
-				Error(TXT_NOT_VALID_REFERENCE, node);
+				// Unless unsafe references are turned on and the reference is const
+				if( param.IsReadOnly() && engine->ep.allowUnsafeReferences )
+				{
+					// Since the parameter is a const & make a copy.
+					ConvertToTempVariable(ctx);
+					ctx->type.dataType.MakeReadOnly(true);
+				}
+				else
+					Error(TXT_NOT_VALID_REFERENCE, node);
 			}
 
 			// Only objects that support object handles

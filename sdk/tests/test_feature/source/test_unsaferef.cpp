@@ -316,6 +316,37 @@ bool Test()
 		engine->Release();		
 	}
 
+	// Test passing literal constant to parameter reference
+	// http://www.gamedev.net/topic/653394-global-references/
+	{
+		bout.buffer = "";
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterGlobalFunction("void func(const int &)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, 
+			"const int value = 42; \n"
+			"void main() { \n"
+			"    func(value); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 #ifndef AS_MAX_PORTABILITY
 	// Test with copy constructor that takes unsafe reference
 	// http://www.gamedev.net/topic/638613-asassert-in-file-as-compillercpp-line-675/
