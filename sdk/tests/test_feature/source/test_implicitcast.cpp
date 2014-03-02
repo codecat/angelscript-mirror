@@ -113,6 +113,7 @@ double myFunction(const double d) {
 struct Value
 {
 	double castToDouble() { return dbl; }
+	int castToInt() { return int(dbl); }
 	double dbl;
 };
 
@@ -662,6 +663,40 @@ bool Test()
 			"    g_Value = x; \n"
 			"    assert( g_Value == 42.2 ); \n"
 			"    assert( Value == 42.2 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED ) 
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// Test math operator with primitive and object type with implicit cast to primitive
+	// http://www.gamedev.net/topic/653484-compile-math-operator-first-attempts-casting/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("type", sizeof(Value), asOBJ_VALUE|asOBJ_POD);
+		engine->RegisterObjectProperty("type", "double dbl", asOFFSET(Value, dbl));
+		engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asMETHOD(Value, castToInt), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "double f()", asMETHOD(Value, castToDouble), asCALL_THISCALL);
+		
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"  type x; \n"
+			"  x.dbl = 3.5; \n"
+			"  double y = x * 2; \n" // the implicit cast should choose double, since it has better precision
+			"  assert( y == 7 ); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )

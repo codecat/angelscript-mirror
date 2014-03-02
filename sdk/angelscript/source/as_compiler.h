@@ -275,6 +275,7 @@ protected:
 	asUINT ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode);
 	asUINT ImplicitConvObjectValue(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode);
 	void   ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType);
+	void   ImplicitConvObjectToBestMathType(asSExprContext *ctx, asCScriptNode *node);
 
 	void LineInstr(asCByteCode *bc, size_t pos);
 

@@ -11441,6 +11441,66 @@ void asCCompiler::ConvertToVariableNotIn(asSExprContext *ctx, asSExprContext *ex
 	reservedVariables.SetLength(l);
 }
 
+void asCCompiler::ImplicitConvObjectToBestMathType(asSExprContext *ctx, asCScriptNode *node)
+{
+	asCArray<int> funcs;
+	asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
+	if( beh )
+	{
+		for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
+		{
+			// Consider only implicit casts
+			if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
+				builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
+				funcs.PushLast(beh->operators[n+1]);
+		}
+
+		// Use the one with the highest precision
+		const eTokenType match[10] = {ttDouble, ttFloat, ttInt64, ttUInt64, ttInt, ttUInt, ttInt16, ttUInt16, ttInt8, ttUInt8};
+		while( funcs.GetLength() > 1 )
+		{
+			eTokenType returnType = builder->GetFunctionDescription(funcs[0])->returnType.GetTokenType();
+			int value1, value2;
+			for( asUINT i = 0; i < 10; i++ )
+			{
+				if( returnType == match[i] )
+				{
+					value1 = i;
+					break;
+				}
+			}
+
+			for( asUINT n = 1; n < funcs.GetLength(); n++ )
+			{
+				returnType = builder->GetFunctionDescription(funcs[n])->returnType.GetTokenType();
+				for( asUINT i = 0; i < 10; i++ )
+				{
+					if( returnType == match[i] )
+					{
+						value2 = i;
+						break;
+					}
+				}
+				
+				if( value2 >= value1 )
+				{
+					// Remove this and continue searching
+					funcs.RemoveIndexUnordered(n--);
+				}
+				else
+				{
+					// Remove the first, and start over
+					funcs.RemoveIndexUnordered(0);
+					break;
+				}
+			}
+		}
+
+		// Do the conversion
+		if( funcs.GetLength() )
+			ImplicitConvObjectToPrimitive(ctx, builder->GetFunctionDescription(funcs[0])->returnType, node, asIC_IMPLICIT_CONV);
+	}
+}
 
 void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext  *rctx, asSExprContext *ctx)
 {
@@ -11448,39 +11508,39 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 
 	// TODO: clean up: This initial part is identical to CompileComparisonOperator. Make a common function out of it
 
-	// Implicitly convert the operands to a number type
-	asCDataType to;
-
 	// If either operand is a non-primitive then use the primitive type
 	if( !lctx->type.dataType.IsPrimitive() )
-		to.SetTokenType(rctx->type.dataType.GetTokenType());
-	else if( !rctx->type.dataType.IsPrimitive() )
-			to.SetTokenType(lctx->type.dataType.GetTokenType());
-	else if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
+		ImplicitConvObjectToBestMathType(lctx, node);
+	if( !rctx->type.dataType.IsPrimitive() )
+		ImplicitConvObjectToBestMathType(rctx, node);
+
+	// Both types must now be primitives. Implicitly convert them so they match
+	asCDataType to;
+	if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
 		to.SetTokenType(ttDouble);
 	else if( lctx->type.dataType.IsFloatType() || rctx->type.dataType.IsFloatType() )
 		to.SetTokenType(ttFloat);
 	else if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 || rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 	{
 		// Convert to int64 if both are signed or if one is non-constant and signed
-		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
-			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+		if( (lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
 			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt64);
-		else
+		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt64);
+		else
+			to.SetTokenType(ttInt64);
 	}
 	else
 	{
 		// Convert to int32 if both are signed or if one is non-constant and signed
-		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
-			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+		if( (lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
 			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt);
 		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt);
-		else if( lctx->type.dataType.IsBooleanType() || rctx->type.dataType.IsBooleanType() )
-			to.SetTokenType(ttBool);
+		else
+			to.SetTokenType(ttInt);
 	}
 
 	// If doing an operation with double constant and float variable, the constant should be converted to float
@@ -12155,39 +12215,41 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 {
 	// Both operands must be of the same type
 
-	// Implicitly convert the operands to a number type
-	asCDataType to;
-
-	// If either operand is a non-primitive then use the primitive type
+	// If either operand is a non-primitive then first convert them to the best number type
 	if( !lctx->type.dataType.IsPrimitive() )
-		to.SetTokenType(rctx->type.dataType.GetTokenType());
-	else if( !rctx->type.dataType.IsPrimitive() )
-			to.SetTokenType(lctx->type.dataType.GetTokenType());
-	else if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
+		ImplicitConvObjectToBestMathType(lctx, node);
+	if( !rctx->type.dataType.IsPrimitive() )
+		ImplicitConvObjectToBestMathType(rctx, node);
+
+	// Implicitly convert the operands to matching types
+	asCDataType to;
+	if( lctx->type.dataType.IsDoubleType() || rctx->type.dataType.IsDoubleType() )
 		to.SetTokenType(ttDouble);
 	else if( lctx->type.dataType.IsFloatType() || rctx->type.dataType.IsFloatType() )
 		to.SetTokenType(ttFloat);
 	else if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 || rctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 	{
 		// Convert to int64 if both are signed or if one is non-constant and signed
-		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
-			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+		if( (lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
 			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt64);
-		else
+		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt64);
+		else
+			to.SetTokenType(ttInt64);
 	}
 	else
 	{
 		// Convert to int32 if both are signed or if one is non-constant and signed
-		if( (lctx->type.dataType.IsIntegerType() && rctx->type.dataType.IsIntegerType()) ||
-			(lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
+		if( (lctx->type.dataType.IsIntegerType() && !lctx->type.isConstant) || 
 			(rctx->type.dataType.IsIntegerType() && !rctx->type.isConstant) )
 			to.SetTokenType(ttInt);
 		else if( lctx->type.dataType.IsUnsignedType() || rctx->type.dataType.IsUnsignedType() )
 			to.SetTokenType(ttUInt);
 		else if( lctx->type.dataType.IsBooleanType() || rctx->type.dataType.IsBooleanType() )
 			to.SetTokenType(ttBool);
+		else
+			to.SetTokenType(ttInt);
 	}
 
 	// If doing an operation with double constant and float variable, the constant should be converted to float
