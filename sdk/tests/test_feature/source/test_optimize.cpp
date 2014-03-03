@@ -451,7 +451,7 @@ bool TestOptimize()
 	engine->RegisterGlobalProperty("uint64 g_b64_5", &g_b64[5]);
 
 
-	COutStream out;	
+	COutStream out;
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
@@ -1081,6 +1081,38 @@ bool TestOptimize()
 	}
 
 	engine->Release();
+
+	// Validate sequence for passing object to const ref arg
+	// Should use the copy constructor when creating the temporary value
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		const char *script =
+			"string text = 'hello'; \n"
+			"void main() { \n"
+			"  func(text); \n"
+			"} \n"
+			"void func(const string &in) {} \n";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("main");
+		asBYTE expect[] = 
+			{	
+				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_PSF,asBC_CALLSYS,asBC_PSF,asBC_CALL,asBC_PSF,asBC_CALLSYS,
+				asBC_SUSPEND,asBC_RET
+			};
+		if( !ValidateByteCode(func, expect) )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Avoid unnecessary copies of objects
 	{

@@ -1415,44 +1415,53 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					// Make sure the variable is not used in the expression
 					offset = AllocateVariableNotIn(dt, true, false, ctx);
 
-					// TODO: runtime optimize: Use copy constructor if available. See PrepareTemporaryObject()
+					// TODO: clean-up: This is similar to PrepareTemporaryObject and CompileReturnStatement
+					//                 Should make a common function for it
+					// Use copy constructor if available. 
+					if( dt.GetObjectType()->beh.copyconstruct )
+					{
+						PrepareForAssignment(&dt, ctx, node, true);
+						CallCopyConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, ctx, node);
+					}
+					else
+					{
+						// Allocate and construct the temporary object
+						asCByteCode tmpBC(engine);
 
-					// Allocate and construct the temporary object
-					asCByteCode tmpBC(engine);
+						CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
 
-					CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
+						// Insert the code before the expression code
+						tmpBC.AddCode(&ctx->bc);
+						ctx->bc.AddCode(&tmpBC);
 
-					// Insert the code before the expression code
-					tmpBC.AddCode(&ctx->bc);
-					ctx->bc.AddCode(&tmpBC);
+						// Assign the evaluated expression to the temporary variable
+						PrepareForAssignment(&dt, ctx, node, true);
 
-					// Assign the evaluated expression to the temporary variable
-					PrepareForAssignment(&dt, ctx, node, true);
+						dt.MakeReference(IsVariableOnHeap(offset));
+						asCTypeInfo type;
+						type.Set(dt);
+						type.isTemporary = true;
+						type.stackOffset = (short)offset;
 
-					dt.MakeReference(IsVariableOnHeap(offset));
-					asCTypeInfo type;
-					type.Set(dt);
-					type.isTemporary = true;
-					type.stackOffset = (short)offset;
+						if( dt.IsObjectHandle() )
+							type.isExplicitHandle = true;
 
-					if( dt.IsObjectHandle() )
-						type.isExplicitHandle = true;
+						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+						PerformAssignment(&type, &ctx->type, &ctx->bc, node);
 
-					PerformAssignment(&type, &ctx->type, &ctx->bc, node);
-
-					// Pop the reference that was pushed on the stack if the result is an object
-					if( type.dataType.IsObject() )
-						ctx->bc.Instr(asBC_PopPtr);
+						// Pop the reference that was pushed on the stack if the result is an object
+						if( type.dataType.IsObject() )
+							ctx->bc.Instr(asBC_PopPtr);
 					
-					// If the assignment operator returned an object by value it will
-					// be in a temporary variable which we need to destroy now
-					if( type.isTemporary && type.stackOffset != (short)offset )
-						ReleaseTemporaryVariable(type.stackOffset, &ctx->bc);
+						// If the assignment operator returned an object by value it will
+						// be in a temporary variable which we need to destroy now
+						if( type.isTemporary && type.stackOffset != (short)offset )
+							ReleaseTemporaryVariable(type.stackOffset, &ctx->bc);
 
-					// Release the original value too in case it is a temporary
-					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+						// Release the original value too in case it is a temporary
+						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+					}
 
 					ctx->type.Set(dt);
 					ctx->type.isTemporary = true;
@@ -1461,6 +1470,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 						ctx->type.isExplicitHandle = true;
 					ctx->type.dataType.MakeReference(false);
 
+					// Push the object pointer on the stack
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 					if( dt.IsObject() && !dt.IsObjectHandle() )
 						ctx->bc.Instr(asBC_RDSPtr);
@@ -3959,6 +3969,8 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
 	bool isExplicitHandle = ctx->type.isExplicitHandle;
 
+	// TODO: clean-up: This is close to what is in PrepareArgument and CompileReturnStatement
+	//                 Should make a common function for it
 	if( !dt.IsObjectHandle() &&
 		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
 	{
@@ -4202,6 +4214,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					}
 
 					int offset = outFunc->objectType ? -AS_PTR_SIZE : 0;
+					// TODO: clean-up: This code is very similar to what is in PrepareArgument when creating a temporary copy of the object
+					//                 Should create a common function for this
 					if( v->type.GetObjectType()->beh.copyconstruct )
 					{
 						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
@@ -4219,9 +4233,16 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 						lexpr.type.Set(v->type);
 						lexpr.type.isLValue = true;
 						PerformAssignment(&lexpr.type, &expr.type, &expr.bc, rnode->firstChild);
-						expr.bc.Instr(asBC_PopPtr);
 
-						// Release any temporary variable
+						// Pop the reference, if the assignment operator returns an object or handle
+						if( lexpr.type.dataType.IsObject() )
+							expr.bc.Instr(asBC_PopPtr);
+
+						// If the assignment operator return an object by value the temporary variable needs to be destroyed
+						if( lexpr.type.isTemporary && lexpr.type.stackOffset != offset )
+							ReleaseTemporaryVariable(lexpr.type.stackOffset, &expr.bc);
+
+						// Release any temporary variable in the original expression
 						ReleaseTemporaryVariable(expr.type, &expr.bc);
 					}
 

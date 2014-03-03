@@ -677,8 +677,9 @@ CScriptDictionary::CIterator CScriptDictionary::end() const
 	return CIterator(*this, dict.end());
 }
 
-CScriptDictionary::CIterator::CIterator(const CScriptDictionary &dict, 
-							 std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it)
+CScriptDictionary::CIterator::CIterator(
+		const CScriptDictionary &dict, 
+		std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it)
 	: m_dict(dict), m_it(it)
 {}
 
@@ -689,7 +690,10 @@ void CScriptDictionary::CIterator::operator++()
 
 void CScriptDictionary::CIterator::operator++(int) 
 { 
-	m_it++; 
+	++m_it;
+
+	// Normally the post increment would return a copy of the object with the original state,
+	// but it is rarely used so we skip this extra copy to avoid unnecessary overhead
 }
 
 CScriptDictionary::CIterator &CScriptDictionary::CIterator::operator*()

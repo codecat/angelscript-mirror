@@ -92,8 +92,8 @@ public:
 		CIterator(const CScriptDictionary &dict,
 			      std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it);
 
-		void operator++();
-		void operator++(int);
+		void operator++();    // Pre-increment
+		void operator++(int); // Post-increment
 
 		// This is needed to support C++11 range-for
 		CIterator &operator*();
@@ -101,6 +101,7 @@ public:
 		bool operator==(const CIterator &other) const;
 		bool operator!=(const CIterator &other) const;
 
+		// Accessors
 		const std::string &GetKey() const;
 		int                GetTypeId() const;
 		bool               GetValue(asINT64 &value) const;
