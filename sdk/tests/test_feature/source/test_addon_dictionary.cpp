@@ -77,6 +77,34 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test the STL iterator
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		CScriptDictionary *dict = new CScriptDictionary(engine);
+		dict->Set("a", asINT64(1));
+		dict->Set("b", asINT64(2));
+
+		std::string keys; 
+		asINT64 values = 0;
+#ifdef AS_CAN_USE_CPP11
+		for( auto it : *dict )
+#else
+		for( CScriptDictionary::CIterator it = dict->begin(); it != dict->end(); it++ )
+#endif
+		{
+			keys += it.GetKey();
+			asINT64 val;
+			it.GetValue(val);
+			values += val;
+		}
+
+		if( keys != "ab" || values != 3 )
+			TEST_FAILED;
+
+		dict->Release();
+		engine->Release();
+	}
+
 	// Test initialization list in expression
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

@@ -252,70 +252,88 @@ void CScriptDictionary::Set(const string &key, const double &value)
 	Set(key, const_cast<double*>(&value), asTYPEID_DOUBLE);
 }
 
+// Internal. Shared with both dictionary and iterator
+bool CScriptDictionary::GetValue(const valueStruct &vs, void *value, int typeId) const
+{
+	// Return the value
+	if( typeId & asTYPEID_OBJHANDLE )
+	{
+		// A handle can be retrieved if the stored type is a handle of same or compatible type
+		// or if the stored type is an object that implements the interface that the handle refer to.
+		if( (vs.typeId & asTYPEID_MASK_OBJECT) && 
+			engine->IsHandleCompatibleWithObject(vs.valueObj, vs.typeId, typeId) )
+		{
+			engine->AddRefScriptObject(vs.valueObj, engine->GetObjectTypeById(vs.typeId));
+			*(void**)value = vs.valueObj;
+
+			return true;
+		}
+	}
+	else if( typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Verify that the copy can be made
+		bool isCompatible = false;
+		if( vs.typeId == typeId )
+			isCompatible = true;
+
+		// Copy the object into the given reference
+		if( isCompatible )
+		{
+			engine->AssignScriptObject(value, vs.valueObj, engine->GetObjectTypeById(typeId));
+
+			return true;
+		}
+	}
+	else
+	{
+		if( vs.typeId == typeId )
+		{
+			int size = engine->GetSizeOfPrimitiveType(typeId);
+			memcpy(value, &vs.valueInt, size);
+			return true;
+		}
+
+		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
+		if( vs.typeId == asTYPEID_INT64 && typeId == asTYPEID_DOUBLE )
+		{
+			*(double*)value = double(vs.valueInt);
+			return true;
+		}
+		else if( vs.typeId == asTYPEID_DOUBLE && typeId == asTYPEID_INT64 )
+		{
+			*(asINT64*)value = asINT64(vs.valueFlt);
+			return true;
+		}
+	}
+
+	// It was not possible to retrieve the value using the desired typeId
+	return false;
+}
+
 // Returns true if the value was successfully retrieved
 bool CScriptDictionary::Get(const string &key, void *value, int typeId) const
 {
 	map<string, valueStruct>::const_iterator it;
 	it = dict.find(key);
 	if( it != dict.end() )
-	{
-		// Return the value
-		if( typeId & asTYPEID_OBJHANDLE )
-		{
-			// A handle can be retrieved if the stored type is a handle of same or compatible type
-			// or if the stored type is an object that implements the interface that the handle refer to.
-			if( (it->second.typeId & asTYPEID_MASK_OBJECT) && 
-				engine->IsHandleCompatibleWithObject(it->second.valueObj, it->second.typeId, typeId) )
-			{
-				engine->AddRefScriptObject(it->second.valueObj, engine->GetObjectTypeById(it->second.typeId));
-				*(void**)value = it->second.valueObj;
-
-				return true;
-			}
-		}
-		else if( typeId & asTYPEID_MASK_OBJECT )
-		{
-			// Verify that the copy can be made
-			bool isCompatible = false;
-			if( it->second.typeId == typeId )
-				isCompatible = true;
-
-			// Copy the object into the given reference
-			if( isCompatible )
-			{
-				engine->AssignScriptObject(value, it->second.valueObj, engine->GetObjectTypeById(typeId));
-
-				return true;
-			}
-		}
-		else
-		{
-			if( it->second.typeId == typeId )
-			{
-				int size = engine->GetSizeOfPrimitiveType(typeId);
-				memcpy(value, &it->second.valueInt, size);
-				return true;
-			}
-
-			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-			if( it->second.typeId == asTYPEID_INT64 && typeId == asTYPEID_DOUBLE )
-			{
-				*(double*)value = double(it->second.valueInt);
-				return true;
-			}
-			else if( it->second.typeId == asTYPEID_DOUBLE && typeId == asTYPEID_INT64 )
-			{
-				*(asINT64*)value = asINT64(it->second.valueFlt);
-				return true;
-			}
-		}
-	}
+		return GetValue(it->second, value, typeId);
 
 	// AngelScript has already initialized the value with a default value,
 	// so we don't have to do anything if we don't find the element, or if 
 	// the element is incompatible with the requested type.
 
 	return false;
+}
+
+// Returns the type id of the stored value
+int CScriptDictionary::GetTypeId(const string &key) const
+{
+	map<string, valueStruct>::const_iterator it;
+	it = dict.find(key);
+	if( it != dict.end() )
+		return it->second.typeId;
+
+	return -1;
 }
 
 bool CScriptDictionary::Get(const string &key, asINT64 &value) const
@@ -644,6 +662,74 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptDictionaryGetGCFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryEnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryReleaseAllReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+}
+
+//------------------------------------------------------------------
+// Iterator implementation
+
+CScriptDictionary::CIterator CScriptDictionary::begin() const
+{
+	return CIterator(*this, dict.begin());
+}
+
+CScriptDictionary::CIterator CScriptDictionary::end() const
+{
+	return CIterator(*this, dict.end());
+}
+
+CScriptDictionary::CIterator::CIterator(const CScriptDictionary &dict, 
+							 std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it)
+	: m_dict(dict), m_it(it)
+{}
+
+void CScriptDictionary::CIterator::operator++() 
+{ 
+	++m_it; 
+}
+
+void CScriptDictionary::CIterator::operator++(int) 
+{ 
+	m_it++; 
+}
+
+CScriptDictionary::CIterator &CScriptDictionary::CIterator::operator*()
+{
+	return *this;
+}
+
+bool CScriptDictionary::CIterator::operator==(const CIterator &other) const 
+{ 
+	return m_it == other.m_it;
+}
+
+bool CScriptDictionary::CIterator::operator!=(const CIterator &other) const 
+{ 
+	return m_it != other.m_it; 
+}
+
+const std::string &CScriptDictionary::CIterator::GetKey() const 
+{ 
+	return m_it->first; 
+}
+
+int CScriptDictionary::CIterator::GetTypeId() const
+{ 
+	return m_it->second.typeId; 
+}
+
+bool CScriptDictionary::CIterator::GetValue(asINT64 &value) const
+{ 
+	return m_dict.GetValue(m_it->second, &value, asTYPEID_INT64); 
+}
+
+bool CScriptDictionary::CIterator::GetValue(double &value) const
+{ 
+	return m_dict.GetValue(m_it->second, &value, asTYPEID_DOUBLE); 
+}
+
+bool CScriptDictionary::CIterator::GetValue(void *value, int typeId) const
+{ 
+	return m_dict.GetValue(m_it->second, value, typeId); 
 }
 
 END_AS_NAMESPACE
