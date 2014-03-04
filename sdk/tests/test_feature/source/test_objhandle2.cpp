@@ -172,9 +172,7 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "refclass @a; a = @a;");
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from 'refclass@const&' to 'const refclass&'.\n"
-							     // TODO: This second error message doesn't make sense. Why is the compiler trying to instanciate a new refclass?
-		                         "ExecuteString (1, 18) : Error   : No default constructor for object of type 'refclass'.\n" ) 
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from 'refclass@const&' to 'const refclass&'.\n" ) 
 	{
 		TEST_FAILED;
 		printf("%s", bout.buffer.c_str());

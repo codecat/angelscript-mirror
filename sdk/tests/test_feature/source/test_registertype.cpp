@@ -717,9 +717,7 @@ bool Test()
 					   "script (1, 1) : Error   : Parameter type can't be 'ref', because the type cannot be instanciated.\n"
 					   "script (1, 23) : Error   : Data type can't be 'ref'\n"
 					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n"
-					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n"
-					   "script (1, 34) : Error   : No default constructor for object of type 'ref'.\n"
-					   "script (1, 34) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
+					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

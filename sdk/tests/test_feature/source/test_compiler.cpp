@@ -2970,9 +2970,9 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 						   "script (4, 14) : Error   : No default constructor for object of type 'Entity'.\n"
-						   "script (4, 14) : Error   : There is no copy operator for the type 'Entity' available.\n"
+						   "script (4, 14) : Error   : Previous error occurred while attempting to create a temporary copy of object\n"
 						   "script (5, 14) : Error   : No default constructor for object of type 'Entity'.\n"
-						   "script (5, 14) : Error   : There is no copy operator for the type 'Entity' available.\n" )
+						   "script (5, 14) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

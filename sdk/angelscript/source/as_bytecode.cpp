@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1552,6 +1552,7 @@ int asCByteCode::GetSize()
 
 void asCByteCode::AddCode(asCByteCode *bc)
 {
+	if( bc == this ) return;
 	if( bc->first )
 	{
 		if( first == 0 )

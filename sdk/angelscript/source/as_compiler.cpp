@@ -1313,7 +1313,79 @@ void asCCompiler::DetermineSingleFunc(asSExprContext *ctx, asCScriptNode *node)
 	ctx->methodName = "";
 }
 
-void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, bool isMakingCopy)
+void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool derefDestination)
+{
+	asASSERT( dt.GetObjectType() );
+
+	bool isObjectOnHeap = derefDestination ? false : IsVariableOnHeap(offset);
+
+	// Use copy constructor if available.
+	if( dt.GetObjectType()->beh.copyconstruct )
+	{
+		PrepareForAssignment(&dt, arg, node, true);
+		int r = CallCopyConstructor(dt, offset, isObjectOnHeap, bc, arg, node, 0, derefDestination);
+		if( r < 0 && tempVariables.Exists(offset) )
+			Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
+	}
+	else
+	{
+		// TODO: 2.28.1: Need to reserve variables, as the default constructor may need 
+		//               to allocate temporary variables to compute default args
+
+		// Allocate and construct the temporary object before whatever is already in the bytecode
+		asCByteCode tmpBC(engine);
+		int r = CallDefaultConstructor(dt, offset, isObjectOnHeap, &tmpBC, node, 0, derefDestination);
+		if( r < 0 )
+		{
+			if( tempVariables.Exists(offset) )
+				Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
+			return;
+		}
+
+		tmpBC.AddCode(bc);
+		bc->AddCode(&tmpBC);
+
+		// Assign the evaluated expression to the temporary variable
+		PrepareForAssignment(&dt, arg, node, true);
+		bc->AddCode(&arg->bc);
+
+		// Call the opAssign method to assign the value to the temporary object
+		dt.MakeReference(isObjectOnHeap);
+		asCTypeInfo type;
+		type.Set(dt);
+		type.isTemporary = true;
+		type.stackOffset = (short)offset;
+
+		if( dt.IsObjectHandle() )
+			type.isExplicitHandle = true;
+
+		bc->InstrSHORT(asBC_PSF, (short)offset);
+		if( derefDestination )
+			bc->Instr(asBC_RDSPtr);
+
+		r = PerformAssignment(&type, &arg->type, bc, node);
+		if( r < 0 )
+		{
+			if( tempVariables.Exists(offset) )
+				Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
+			return;
+		}
+
+		// Pop the reference that was pushed on the stack if the result is an object
+		if( type.dataType.IsObject() )
+			bc->Instr(asBC_PopPtr);
+
+		// If the assignment operator returned an object by value it will
+		// be in a temporary variable which we need to destroy now
+		if( type.isTemporary && type.stackOffset != (short)offset )
+			ReleaseTemporaryVariable(type.stackOffset, bc);
+
+		// Release the original value too in case it is a temporary
+		ReleaseTemporaryVariable(arg->type, bc);
+	}
+}
+
+int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, asCScriptNode *node, bool isFunction, int refType, bool isMakingCopy)
 {
 	asCDataType param = *paramType;
 	if( paramType->GetTokenType() == ttQuestion )
@@ -1400,6 +1472,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 						Error(str, node);
 
 						ctx->type.Set(param);
+						return -1;
 					}
 				}
 
@@ -1410,71 +1483,22 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				// variable then it is not necessary to make a copy either
 				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) && !isMakingCopy )
 				{
-					// TODO: 2.28.1: Need to reserve variables, as the default constructor may need 
-					//               to allocate temporary variables to compute default args
-					// Make sure the variable is not used in the expression
+					// Allocate and initialize a temporary local object
 					offset = AllocateVariableNotIn(dt, true, false, ctx);
-
-					// TODO: clean-up: This is similar to PrepareTemporaryObject and CompileReturnStatement
-					//                 Should make a common function for it
-					// Use copy constructor if available. 
-					if( dt.GetObjectType()->beh.copyconstruct )
-					{
-						PrepareForAssignment(&dt, ctx, node, true);
-						CallCopyConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, ctx, node);
-					}
-					else
-					{
-						// Allocate and construct the temporary object
-						asCByteCode tmpBC(engine);
-
-						CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
-
-						// Insert the code before the expression code
-						tmpBC.AddCode(&ctx->bc);
-						ctx->bc.AddCode(&tmpBC);
-
-						// Assign the evaluated expression to the temporary variable
-						PrepareForAssignment(&dt, ctx, node, true);
-
-						dt.MakeReference(IsVariableOnHeap(offset));
-						asCTypeInfo type;
-						type.Set(dt);
-						type.isTemporary = true;
-						type.stackOffset = (short)offset;
-
-						if( dt.IsObjectHandle() )
-							type.isExplicitHandle = true;
-
-						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-
-						PerformAssignment(&type, &ctx->type, &ctx->bc, node);
-
-						// Pop the reference that was pushed on the stack if the result is an object
-						if( type.dataType.IsObject() )
-							ctx->bc.Instr(asBC_PopPtr);
-					
-						// If the assignment operator returned an object by value it will
-						// be in a temporary variable which we need to destroy now
-						if( type.isTemporary && type.stackOffset != (short)offset )
-							ReleaseTemporaryVariable(type.stackOffset, &ctx->bc);
-
-						// Release the original value too in case it is a temporary
-						ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-					}
-
-					ctx->type.Set(dt);
-					ctx->type.isTemporary = true;
-					ctx->type.stackOffset = short(offset);
-					if( dt.IsObjectHandle() )
-						ctx->type.isExplicitHandle = true;
-					ctx->type.dataType.MakeReference(false);
+					CompileInitAsCopy(dt, offset, &ctx->bc, ctx, node, false);
 
 					// Push the object pointer on the stack
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 					if( dt.IsObject() && !dt.IsObjectHandle() )
 						ctx->bc.Instr(asBC_RDSPtr);
 
+					// Set the resulting type
+					ctx->type.Set(dt);
+					ctx->type.isTemporary = true;
+					ctx->type.stackOffset = short(offset);
+					if( dt.IsObjectHandle() )
+						ctx->type.isExplicitHandle = true;
+					ctx->type.dataType.MakeReference(false);
 					if( paramType->IsReadOnly() )
 						ctx->type.dataType.MakeReadOnly(true);
 				}
@@ -1568,7 +1592,10 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 					ctx->type.dataType.MakeReadOnly(true);
 				}
 				else
+				{
 					Error(TXT_NOT_VALID_REFERENCE, node);
+					return -1;
+				}
 			}
 
 			// Only objects that support object handles
@@ -1662,6 +1689,7 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				Error(str, node);
 
 				ctx->type.Set(dt);
+				return -1;
 			}
 
 			if( dt.IsObjectHandle() )
@@ -1714,6 +1742,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			}
 		}
 	}
+
+	return 0;
 }
 
 void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSExprContext *> &args)
@@ -3969,49 +3999,7 @@ void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asSExprContext *ct
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
 	bool isExplicitHandle = ctx->type.isExplicitHandle;
 
-	// TODO: clean-up: This is close to what is in PrepareArgument and CompileReturnStatement
-	//                 Should make a common function for it
-	if( !dt.IsObjectHandle() &&
-		dt.GetObjectType() && (dt.GetBehaviour()->copyconstruct || dt.GetBehaviour()->copyfactory) )
-	{
-		PrepareForAssignment(&lvalue.dataType, ctx, node, true);
-
-		// Use the copy constructor/factory when available
-		CallCopyConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, ctx, node);
-	}
-	else
-	{
-		// Allocate and construct the temporary object
-		int r = CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &ctx->bc, node);
-		if( r < 0 )
-		{
-			Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
-		}
-		else
-		{
-			// Assign the object to the temporary variable
-			PrepareForAssignment(&lvalue.dataType, ctx, node, true);
-
-			ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-			r = PerformAssignment(&lvalue, &ctx->type, &ctx->bc, node);
-			if( r < 0 )
-			{
-				Error(TXT_FAILED_TO_CREATE_TEMP_OBJ, node);
-			}
-
-			// Release any temp that may have been created as the result of opAssign
-			ReleaseTemporaryVariable(lvalue, &ctx->bc);
-
-			// Pop the original reference
-			if( !lvalue.dataType.IsPrimitive() )
-				ctx->bc.Instr(asBC_PopPtr);
-		}
-
-		// If the expression was holding off on releasing a
-		// previously used object, we need to release it now
-		if( ctx->type.isTemporary )
-			ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-	}
+	CompileInitAsCopy(dt, offset, &ctx->bc, ctx, node, false);
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
@@ -4214,37 +4202,7 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 					}
 
 					int offset = outFunc->objectType ? -AS_PTR_SIZE : 0;
-					// TODO: clean-up: This code is very similar to what is in PrepareArgument when creating a temporary copy of the object
-					//                 Should create a common function for this
-					if( v->type.GetObjectType()->beh.copyconstruct )
-					{
-						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
-						CallCopyConstructor(v->type, offset, false, &expr.bc, &expr, rnode->firstChild, false, true);
-					}
-					else
-					{
-						// If the copy constructor doesn't exist, then a manual assignment needs to be done instead.
-						CallDefaultConstructor(v->type, offset, false, &expr.bc, rnode->firstChild, 0, true);
-						PrepareForAssignment(&v->type, &expr, rnode->firstChild, false);
-						expr.bc.InstrSHORT(asBC_PSF, (short)offset);
-						expr.bc.Instr(asBC_RDSPtr);
-
-						asSExprContext lexpr(engine);
-						lexpr.type.Set(v->type);
-						lexpr.type.isLValue = true;
-						PerformAssignment(&lexpr.type, &expr.type, &expr.bc, rnode->firstChild);
-
-						// Pop the reference, if the assignment operator returns an object or handle
-						if( lexpr.type.dataType.IsObject() )
-							expr.bc.Instr(asBC_PopPtr);
-
-						// If the assignment operator return an object by value the temporary variable needs to be destroyed
-						if( lexpr.type.isTemporary && lexpr.type.stackOffset != offset )
-							ReleaseTemporaryVariable(lexpr.type.stackOffset, &expr.bc);
-
-						// Release any temporary variable in the original expression
-						ReleaseTemporaryVariable(expr.type, &expr.bc);
-					}
+					CompileInitAsCopy(v->type, offset, &expr.bc, &expr, rnode->firstChild, true);
 
 					// Clean up the local variables and process deferred parameters
 					DestroyVariables(&expr.bc);
@@ -7085,7 +7043,9 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(true);
 			dt.MakeReadOnly(true);
-			PrepareArgument(&dt, rctx, rexpr, true, 1, !needConversion);
+			int r = PrepareArgument(&dt, rctx, rexpr, true, 1, !needConversion);
+			if( r < 0 )
+				return -1;
 			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
 			{
 				asCString str;
