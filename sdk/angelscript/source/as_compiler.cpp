@@ -1438,10 +1438,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				ctx->bc.AddCode(&tmpBC);
 			}
 
-			// If the reference is const, then it is not necessary to make a copy if the value already is a variable
-			// Even if the same variable is passed in another argument as non-const then there is no problem
-			if( dt.IsPrimitive() || dt.IsNullHandle() )
+			if( dt.IsPrimitive() )
 			{
+				// If the reference is const, then it is not necessary to make a copy if the value already is a variable
+				// Even if the same variable is passed in another argument as non-const then there is no problem
 				IsVariableInitialized(&ctx->type, node);
 
 				if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
@@ -1457,15 +1457,32 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				PushVariableOnStack(ctx, true);
 				ctx->type.dataType.MakeReadOnly(param.IsReadOnly());
 			}
+			else if( ctx->type.dataType.IsNullHandle() )
+			{
+				// Need to initialize a local temporary variable to 
+				// represent the null handle when passed as reference
+				asASSERT( ctx->bc.GetLastInstr() == asBC_PshNull );
+				ctx->bc.Instr(asBC_PopPtr);
+
+				dt.MakeHandle(true);
+				offset = AllocateVariableNotIn(dt, true, false, ctx);
+
+				// Push the reference to the variable on the stack
+				ctx->bc.InstrWORD(asBC_PSF, (short)offset);
+
+				ctx->type.SetVariable(dt, offset, true);
+			}
 			else
 			{
 				IsVariableInitialized(&ctx->type, node);
 
 				if( !isMakingCopy )
 				{
-					ImplicitConversion(ctx, param, node, asIC_IMPLICIT_CONV, true);
-
-					if( !ctx->type.dataType.IsEqualExceptRef(param) )
+					// Even though the parameter expects a reference, it is only meant to be 
+					// used as input value and doesn't have to refer to the actual object, so it 
+					// is OK to do an implicit conversion.
+					ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true);
+					if( !ctx->type.dataType.IsEqualExceptRefAndConst(param) )
 					{
 						asCString str;
 						str.Format(TXT_CANT_IMPLICITLY_CONVERT_s_TO_s, ctx->type.dataType.Format().AddressOf(), param.Format().AddressOf());
@@ -1474,35 +1491,62 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 						ctx->type.Set(param);
 						return -1;
 					}
+
+					// The compiler must guarantee that the object stays alive during the execution 
+					// of the function, and it must also guarantee that the value isn't modified by
+					// the function.
+
+					// If the argument is a temporary local variable then it is safe to be passed to
+					// the function as it is, since the local variable will stay alive, and since it
+					// is temporary there is no side effect if the function modifies it.
+
+					// If the parameter is read-only and therefor guaranteed not to be modified by the
+					// function, then it is enough that the variable is local to guarantee the lifetime.
+					if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
+					{
+						if( ctx->type.dataType.GetObjectType()->flags & asOBJ_REF && param.IsReadOnly() )
+						{
+							// If the object is a reference type, and the parameter is a const reference,
+							// then it is not necessary to make a copy of the object. The compiler just needs
+							// to hold a handle to guarantee the lifetime.
+
+							// Allocate a handle variable
+							dt.MakeHandle(true);
+							offset = AllocateVariableNotIn(dt, true, false, ctx);
+
+							// Copy the handle
+							Dereference(ctx, true);
+							ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
+							ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
+							ctx->bc.Instr(asBC_PopPtr);
+							ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
+
+							ctx->type.SetVariable(dt, offset, true);
+						}
+						else
+						{
+							// Allocate and initialize a temporary local object
+							offset = AllocateVariableNotIn(dt, true, false, ctx);
+							CompileInitAsCopy(dt, offset, &ctx->bc, ctx, node, false);
+
+							// Push the object pointer on the stack
+							ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+							if( dt.IsObject() && !dt.IsObjectHandle() )
+								ctx->bc.Instr(asBC_RDSPtr);
+
+							// Set the resulting type
+							ctx->type.Set(dt);
+							ctx->type.isTemporary = true;
+							ctx->type.stackOffset = short(offset);
+							if( dt.IsObjectHandle() )
+								ctx->type.isExplicitHandle = true;
+							ctx->type.dataType.MakeReference(false);
+							if( paramType->IsReadOnly() )
+								ctx->type.dataType.MakeReadOnly(true);
+						}
+					}
 				}
-
-				// If the argument already is a temporary
-				// variable we don't need to allocate another
-
-				// If the parameter is read-only and the object already is a local
-				// variable then it is not necessary to make a copy either
-				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) && !isMakingCopy )
-				{
-					// Allocate and initialize a temporary local object
-					offset = AllocateVariableNotIn(dt, true, false, ctx);
-					CompileInitAsCopy(dt, offset, &ctx->bc, ctx, node, false);
-
-					// Push the object pointer on the stack
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					if( dt.IsObject() && !dt.IsObjectHandle() )
-						ctx->bc.Instr(asBC_RDSPtr);
-
-					// Set the resulting type
-					ctx->type.Set(dt);
-					ctx->type.isTemporary = true;
-					ctx->type.stackOffset = short(offset);
-					if( dt.IsObjectHandle() )
-						ctx->type.isExplicitHandle = true;
-					ctx->type.dataType.MakeReference(false);
-					if( paramType->IsReadOnly() )
-						ctx->type.dataType.MakeReadOnly(true);
-				}
-				else if( isMakingCopy )
+				else
 				{
 					// We must guarantee that the address to the value is on the stack
 					if( ctx->type.dataType.IsObject() &&
@@ -1631,9 +1675,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 
 				// Release previous temporary variable stored in the context (if any)
 				if( ctx->type.isTemporary )
-				{
 					ReleaseTemporaryVariable(ctx->type.stackOffset, &ctx->bc);
-				}
 
 				ctx->type.SetVariable(dt, offset, true);
 			}

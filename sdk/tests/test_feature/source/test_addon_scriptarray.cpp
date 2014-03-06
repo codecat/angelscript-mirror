@@ -1112,12 +1112,20 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
+		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "assert( ia.findByRef(ia[1]) == -1 ); \n"
-								  "Obj @obj = oa[1]; assert( oa.findByRef(obj) == 1 ); \n"
-								  "@obj = ha[1]; assert( ha.findByRef(obj) == 1 ); \n"
-								  "ha.insertLast(null); assert( ha.findByRef(null) == 2 ); \n", mod);
+								  "Obj @obj = oa[1]; \n"
+								  "assert( oa.findByRef(obj) == 1 ); \n"
+								  "@obj = ha[1]; \n"
+								  "assert( ha.findByRef(obj) == 1 ); \n"
+								  "ha.insertLast(null); \n"
+								  "assert( ha.findByRef(null) == 2 ); \n", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+		if( r == asEXECUTION_EXCEPTION )
+			PrintException(ctx);
+
+		ctx->Release();
 		
 		engine->Release();
 	}

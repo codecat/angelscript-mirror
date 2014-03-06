@@ -1114,6 +1114,43 @@ bool TestOptimize()
 		engine->Release();
 	}
 
+	// Passing a reference type to a function taking const type &in
+	// shouldn't copy the object, only hold a handle for safe keeping
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		const char *script =
+			"void main() { \n"
+			"  func(glob); \n"
+			"} \n"
+			"C glob; \n"
+			"class C {} \n"
+			"void func(const C &in) {} \n";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("main");
+		asBYTE expect[] = 
+			{
+				// TODO: runtime optimize: This bytecode sequence can be improved. VAR+GETOBJREF => PshVPtr, CHKREF can be removed since the code already checks for the null pointer later
+				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_VAR,asBC_GETOBJREF,asBC_ChkNullS,asBC_CALL,asBC_FREE,
+				asBC_SUSPEND,asBC_RET
+			};
+		if( !ValidateByteCode(func, expect) )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Avoid unnecessary copies of objects
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
