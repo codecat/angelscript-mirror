@@ -688,9 +688,7 @@ bool CScriptArray::CheckMaxSize(asUINT numElements)
 	// for the array doesn't overflow and becomes smaller than requested
 
 	asUINT maxSize = 0xFFFFFFFFul - sizeof(SArrayBuffer) + 1;
-	if( subTypeId & asTYPEID_MASK_OBJECT )
-		maxSize /= sizeof(void*);
-	else if( elementSize > 0 )
+	if( elementSize > 0 )
 		maxSize /= elementSize;
 
 	if( numElements > maxSize )
@@ -790,10 +788,7 @@ void *CScriptArray::At(asUINT index)
 // internal
 void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
 {
-	if( subTypeId & asTYPEID_MASK_OBJECT )
-		*buf = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1+sizeof(void*)*numElements));
-	else
-		*buf = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1+elementSize*numElements));
+	*buf = reinterpret_cast<SArrayBuffer*>(userAlloc(sizeof(SArrayBuffer)-1+elementSize*numElements));
 
 	if( *buf )
 	{
