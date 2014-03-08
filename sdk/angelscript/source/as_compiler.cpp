@@ -1642,6 +1642,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				}
 			}
 
+			// Perform implicit ref cast if necessary, but don't allow the implicit conversion to create new objects
+			if( ctx->type.dataType.IsObject() && ctx->type.dataType.GetObjectType() != dt.GetObjectType() )
+				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, false);
+			
 			// Only objects that support object handles
 			// can be guaranteed to be safe. Local variables are
 			// already safe, so there is no need to add an extra

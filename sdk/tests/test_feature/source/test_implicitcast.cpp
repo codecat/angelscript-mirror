@@ -120,6 +120,7 @@ struct Value
 static bool Test2();
 static bool Test3();
 static bool Test4();
+static bool Test5();
 
 bool Test()
 {
@@ -133,6 +134,8 @@ bool Test()
 	bool fail = Test2();
 	fail = Test3() || fail;
 	fail = Test4() || fail;
+	fail = Test5() || fail;
+
 	int r;
 	asIScriptEngine *engine;
 
@@ -975,6 +978,111 @@ static bool Test4()
 
 	return fail;
 }
+
+//----------------------------------------------------------------------------------
+// http://www.gamedev.net/topic/654193-implicit-reference-cast-in-function-argument/
+
+class RefTest5
+{
+public:
+	RefTest5() : Refs(1) {}
+	virtual ~RefTest5() {}
+	virtual void AddRef() const
+	{
+		++Refs;
+	}
+	virtual void Release() const
+	{
+		if (--Refs == 0) delete this;
+	}
+
+	mutable int Refs;
+};
+
+class ATest5
+{
+public:
+	virtual int GetValue() const=0;
+};
+
+class BTest5 : public RefTest5, public ATest5
+{
+public:
+	static BTest5* Factory() { return new BTest5; }
+
+	virtual int GetValue() const override
+	{
+		return 7;
+	}
+
+	ATest5* RefCastA() { return static_cast<ATest5*>(this); }
+};
+
+class CTest5
+{
+public:
+	CTest5& opShl(const ATest5& x)
+	{
+		Value = x.GetValue();
+		return *this;
+	}
+
+	int Value;
+};
+
+static const char* script =
+"void main()                      \n"
+"{                                \n"
+"    B x;                         \n"
+"    C y;                         \n"
+"    y << x;                      \n"
+"    assert( y.Value == 7 );      \n"
+"}                                \n";
+
+
+bool Test5()
+{
+	bool fail = false;
+	int r;
+	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	COutStream out;
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+	engine->RegisterObjectType("A", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	
+	engine->RegisterObjectType("B", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("B", asBEHAVE_FACTORY,
+	"B@ f()", asFUNCTION(BTest5::Factory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("B", asBEHAVE_ADDREF,
+	"void AddRef() const", asMETHODPR(BTest5, AddRef, () const, void), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("B", asBEHAVE_RELEASE,
+	"void Release() const", asMETHODPR(BTest5, Release, () const, void), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST,
+	"A@ f()", asMETHOD(BTest5, RefCastA), asCALL_THISCALL);
+
+	engine->RegisterObjectType("C", sizeof(CTest5), asOBJ_VALUE | asOBJ_POD);
+	engine->RegisterObjectMethod("C", "C& opShl(const A&)",
+	asMETHOD(CTest5, opShl), asCALL_THISCALL);
+	engine->RegisterObjectProperty("C", "int Value", offsetof(CTest5, Value));
+
+	asIScriptModule* mod = engine->GetModule(nullptr, asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("Script", script);
+
+	//engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+	mod->Build();
+
+	asIScriptContext* ctx = engine->CreateContext();
+	r = ExecuteString(engine, "main()", mod, ctx);
+	if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+	ctx->Release();
+	engine->Release();
+
+	return fail;
+}
+
 
 } // namespace
 
