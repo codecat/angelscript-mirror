@@ -260,7 +260,8 @@ bool Test()
 				TEST_FAILED;
 
 			if( bout.buffer != "error (1, 1) : Info    : Compiling void func2()\n"
-							   "error (1, 23) : Error   : Expected ';'\n" )
+							   "error (1, 23) : Error   : Expected ';'\n"
+							   "error (1, 23) : Error   : Instead found '}'\n" )
 			{
 				printf("%s", bout.buffer.c_str());
 				TEST_FAILED;

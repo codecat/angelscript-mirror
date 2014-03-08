@@ -40,10 +40,11 @@ bool Test()
 
 	if( out.buffer != "TestOutput (1, 1) : Info    : Compiling void test()\n"
 		              "TestOutput (4, 7) : Error   : 'a' is not declared\n"
-		              "TestOutput (2, 3) : Error   : Expected identifier\n" )
+		              "TestOutput (2, 3) : Error   : Expected identifier\n"
+					  "TestOutput (2, 3) : Error   : Instead found '='\n" )
 	{
+		printf("%s", out.buffer.c_str());
 		TEST_FAILED;
-		printf("%s: Output is not what was expected, got:\n%s\n", TESTNAME, out.buffer.c_str());
 	}
 
 	engine->Release();

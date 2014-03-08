@@ -775,7 +775,7 @@ const void *CScriptArray::At(asUINT index) const
 	}
 
 	if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
-		return (void*)((size_t*)buffer->data)[index];
+		return *(void**)(buffer->data + elementSize*index);
 	else
 		return buffer->data + elementSize*index;
 }

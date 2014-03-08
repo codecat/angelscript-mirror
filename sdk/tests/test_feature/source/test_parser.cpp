@@ -32,8 +32,12 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "TestParser (3, 1) : Error   : Expected '}'\n" )
+	if( bout.buffer != "TestParser (3, 1) : Error   : Expected '}'\n"
+		               "TestParser (3, 1) : Error   : Instead found '<end of file>'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
+	}
 
 	bout.buffer = "";
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
@@ -41,7 +45,9 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "TestParser (3, 17) : Error   : Expected ')' or ','\n"
+		               "TestParser (3, 17) : Error   : Instead found 'int'\n"
 					   "TestParser (3, 20) : Error   : Expected method or property\n"
+					   "TestParser (3, 20) : Error   : Instead found '&'\n"
 					   "TestParser (4, 1) : Error   : Unexpected token '}'\n" )
 	{
 		printf("%s", bout.buffer.c_str());

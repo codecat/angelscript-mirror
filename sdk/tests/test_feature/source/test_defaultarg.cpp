@@ -571,6 +571,7 @@ bool Test()
 
 		if( bout.buffer != "script (4, 1) : Info    : Compiling void main()\n"
 						   "default arg (1, 17) : Error   : Expected ']'\n"
+						   "default arg (1, 17) : Error   : Instead found '<end of file>'\n"
 						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int = my_array [ i [ ])'\n" )
 		{
 			printf("%s", bout.buffer.c_str());

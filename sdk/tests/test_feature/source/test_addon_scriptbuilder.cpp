@@ -206,7 +206,9 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != " (1, 7) : Error   : Expected identifier\n"
-		                   " (1, 7) : Error   : Expected '{'\n" )
+		                   " (1, 7) : Error   : Instead found '<end of file>'\n"
+						   " (1, 7) : Error   : Expected '{'\n"
+						   " (1, 7) : Error   : Instead found '<end of file>'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

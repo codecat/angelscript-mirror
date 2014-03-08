@@ -195,7 +195,8 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
-                       "script (1, 14) : Error   : Expected expression value\n" )
+                       "script (1, 14) : Error   : Expected expression value\n"
+					   "script (1, 14) : Error   : Instead found '?'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -206,6 +207,7 @@ bool Test()
 	r = engine->RegisterGlobalProperty("? prop", (void*)1);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
+		               "Property (1, 1) : Error   : Instead found '?'\n"
 	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with '? prop' (Code: -10)\n" ) 
 	{
 		printf("%s", bout.buffer.c_str());
@@ -221,6 +223,7 @@ bool Test()
 	r = engine->RegisterObjectProperty("test", "? prop", 0);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "Property (1, 1) : Error   : Expected data type\n"
+		               "Property (1, 1) : Error   : Instead found '?'\n"
 		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'test' and '? prop' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
@@ -238,6 +241,7 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 10) : Error   : Expected method or property\n"
+		               "script (1, 10) : Error   : Instead found '?'\n"
 		               "script (1, 19) : Error   : Unexpected token '}'\n" )
 	{
 		printf("%s", bout.buffer.c_str());
@@ -250,7 +254,8 @@ bool Test()
 	mod->AddScriptSection("script", script4);
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "script (1, 11) : Error   : Expected data type\n" )
+	if( bout.buffer != "script (1, 11) : Error   : Expected data type\n"
+		               "script (1, 11) : Error   : Instead found '?'\n")
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -271,8 +276,14 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 22) : Error   : Expected data type\n" 
+		               "script (1, 22) : Error   : Instead found '?'\n"
 		               "script (1, 22) : Error   : Expected method or property\n" 
-					   "script (1, 33) : Error   : Unexpected token '}'\n" ) TEST_FAILED;
+					   "script (1, 22) : Error   : Instead found '?'\n"
+					   "script (1, 33) : Error   : Unexpected token '}'\n" ) 
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 
 	// It must not be possible to declare script class methods that return the var type ?
@@ -281,7 +292,12 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 10) : Error   : Expected method or property\n"
-		               "script (1, 23) : Error   : Unexpected token '}'\n" ) TEST_FAILED;
+		               "script (1, 10) : Error   : Instead found '?'\n"
+		               "script (1, 23) : Error   : Unexpected token '}'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 
 	// It must not be possible to declare arrays of the var type ?
@@ -290,7 +306,12 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
-		               "script (1, 15) : Error   : Expected expression value\n" ) TEST_FAILED;
+		               "script (1, 15) : Error   : Expected expression value\n"
+					   "script (1, 15) : Error   : Instead found '?'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 
 	// It must not be possible to declare handles of the var type ?
@@ -299,13 +320,19 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
-		               "script (1, 15) : Error   : Expected expression value\n" ) TEST_FAILED;
+		               "script (1, 15) : Error   : Expected expression value\n"
+					   "script (1, 15) : Error   : Instead found '?'\n" )
+	{
+		printf("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 	bout.buffer = "";
 
 	// It must not be possible to register functions that return the var type ?
 	r = engine->RegisterGlobalFunction("? testFunc()", asFUNCTION(testFuncI), asCALL_GENERIC);
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "System function (1, 1) : Error   : Expected data type\n"
+					   "System function (1, 1) : Error   : Instead found '?'\n"
 		               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with '? testFunc()' (Code: -10)\n" )
 	{
 		printf("%s", bout.buffer.c_str());

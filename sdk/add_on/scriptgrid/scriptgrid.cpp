@@ -219,7 +219,7 @@ static void RegisterScriptGrid_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_FACTORY, "grid<T>@ f(int&in, uint, uint, const T &in)", asFUNCTIONPR(CScriptGrid::Create, (asIObjectType*, asUINT, asUINT, void *), CScriptGrid*), asCALL_CDECL); assert( r >= 0 );
 
 	// Register the factory that will be used for initialization lists
-	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_LIST_FACTORY, "grid<T>@ f(int&in type, int&in list) {repeat T}", asFUNCTIONPR(CScriptGrid::Create, (asIObjectType*, void*), CScriptGrid*), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_LIST_FACTORY, "grid<T>@ f(int&in type, int&in list) {repeat {repeat_same T}}", asFUNCTIONPR(CScriptGrid::Create, (asIObjectType*, void*), CScriptGrid*), asCALL_CDECL); assert( r >= 0 );
 
 	// The memory management methods
 	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptGrid,AddRef), asCALL_THISCALL); assert( r >= 0 );
@@ -248,6 +248,7 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 	objType = ot;
 	objType->AddRef();
 	buffer = 0;
+	subTypeId = objType->GetSubTypeId();
 
 	asIScriptEngine *engine = ot->GetEngine();
 
@@ -268,28 +269,57 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 		return;
 	}
 
+	// Skip the height value at the start of the buffer
+	buf = (asUINT*)(buf)+1;
+
 	// Copy the values of the grid elements from the buffer
 	if( (ot->GetSubTypeId() & asTYPEID_MASK_OBJECT) == 0 )
 	{
 		CreateBuffer(&buffer, width, height);
 
 		// Copy the values of the primitive type into the internal buffer
-		// TODO: copy row by row, since the first 4 bytes in each row is the width
-		memcpy(At(0,0), (((asUINT*)buf)+1), width * elementSize);
+		for( asUINT y = 0; y < height; y++ )
+		{
+			// Skip the length value at the start of each row
+			buf = (asUINT*)(buf)+1;
+
+			// Copy the line
+			memcpy(At(0,y), buf, width*elementSize);
+
+			// Move to next line
+			buf = (char*)(buf) + width*elementSize;
+
+			// Align to 4 byte boundary
+			if( asPWORD(buf) & 0x3 )
+				buf = (char*)(buf) + 4 - (asPWORD(buf) & 0x3);
+		}
 	}
 	else if( ot->GetSubTypeId() & asTYPEID_OBJHANDLE )
 	{
 		CreateBuffer(&buffer, width, height);
 
 		// Copy the handles into the internal buffer
-		// TODO: copy row by row, since the first 4 bytes in each row is the width
-		memcpy(At(0,0), (((asUINT*)buf)+1), width * elementSize);
+		for( asUINT y = 0; y < height; y++ )
+		{
+			// Skip the length value at the start of each row
+			buf = (asUINT*)(buf)+1;
 
-		// With object handles it is safe to clear the memory in the received buffer
-		// instead of increasing the ref count. It will save time both by avoiding the
-		// call the increase ref, and also relieve the engine from having to release
-		// its references too
-		memset((((asUINT*)buf)+1), 0, width * elementSize);
+			// Copy the line
+			memcpy(At(0,y), buf, width*elementSize);
+
+			// With object handles it is safe to clear the memory in the received buffer
+			// instead of increasing the ref count. It will save time both by avoiding the
+			// call the increase ref, and also relieve the engine from having to release
+			// its references too
+			memset(buf, 0, width*elementSize);
+
+			// Move to next line
+			buf = (char*)(buf) + width*elementSize;
+
+			// Align to 4 byte boundary
+			if( asPWORD(buf) & 0x3 )
+				buf = (char*)(buf) + 4 - (asPWORD(buf) & 0x3);
+		}
 	}
 	else if( ot->GetSubType()->GetFlags() & asOBJ_REF )
 	{
@@ -299,12 +329,27 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 		subTypeId &= ~asTYPEID_OBJHANDLE;
 
 		// Copy the handles into the internal buffer
-		// TOOD: copy row by row, since the first 4 bytes in each row is the width
-		memcpy(buffer->data, (((asUINT*)buf)+1), width * elementSize);
+		for( asUINT y = 0; y < height; y++ )
+		{
+			// Skip the length value at the start of each row
+			buf = (asUINT*)(buf)+1;
 
-		// For ref types we can do the same as for handles, as they are
-		// implicitly stored as handles.
-		memset((((asUINT*)buf)+1), 0, width * elementSize);
+			// Copy the line
+			memcpy(At(0,y), buf, width*elementSize);
+
+			// With object handles it is safe to clear the memory in the received buffer
+			// instead of increasing the ref count. It will save time both by avoiding the
+			// call the increase ref, and also relieve the engine from having to release
+			// its references too
+			memset(buf, 0, width*elementSize);
+
+			// Move to next line
+			buf = (char*)(buf) + width*elementSize;
+
+			// Align to 4 byte boundary
+			if( asPWORD(buf) & 0x3 )
+				buf = (char*)(buf) + 4 - (asPWORD(buf) & 0x3);
+		}
 	}
 	else
 	{
@@ -316,16 +361,27 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 		CreateBuffer(&buffer, width, height);
 
 		// For value types we need to call the opAssign for each individual object
-		// TODO: copy row by row, since the first 4 bytes in each row is the width
+		asIObjectType *subType = ot->GetSubType();
+		asUINT subTypeSize = subType->GetSize();
 		for( asUINT y = 0;y < height; y++ )
 		{
+			// Skip the length value at the start of each row
+			buf = (asUINT*)(buf)+1;
+
+			// Call opAssign for each of the objects on the row
 			for( asUINT x = 0; x < width; x++ )
 			{
 				void *obj = At(x,y);
-				asBYTE *srcObj = (asBYTE*)buf;
-				srcObj += 4 + x*ot->GetSubType()->GetSize();
-				engine->AssignScriptObject(obj, srcObj, ot->GetSubType());
+				asBYTE *srcObj = (asBYTE*)(buf) + x*subTypeSize;
+				engine->AssignScriptObject(obj, srcObj, subType);
 			}
+
+			// Move to next line
+			buf = (char*)(buf) + width*subTypeSize;
+
+			// Align to 4 byte boundary
+			if( asPWORD(buf) & 0x3 )
+				buf = (char*)(buf) + 4 - (asPWORD(buf) & 0x3);
 		}
 	}
 
@@ -341,6 +397,7 @@ CScriptGrid::CScriptGrid(asUINT width, asUINT height, asIObjectType *ot)
 	objType = ot;
 	objType->AddRef();
 	buffer = 0;
+	subTypeId = objType->GetSubTypeId();
 
 	// Determine element size
 	if( subTypeId & asTYPEID_MASK_OBJECT )
@@ -369,6 +426,7 @@ CScriptGrid::CScriptGrid(asUINT width, asUINT height, void *defVal, asIObjectTyp
 	objType = ot;
 	objType->AddRef();
 	buffer = 0;
+	subTypeId = objType->GetSubTypeId();
 
 	// Determine element size
 	if( subTypeId & asTYPEID_MASK_OBJECT )
@@ -504,7 +562,7 @@ const void *CScriptGrid::At(asUINT x, asUINT y) const
 
 	asUINT index = x+y*buffer->width;
 	if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
-		return (void*)((size_t*)buffer->data)[index];
+		return *(void**)(buffer->data + elementSize*index);
 	else
 		return buffer->data + elementSize*index;
 }
@@ -584,8 +642,6 @@ void CScriptGrid::Destruct(SGridBuffer *buf)
 		}
 	}
 }
-
-
 
 // GC behaviour
 void CScriptGrid::EnumReferences(asIScriptEngine *engine)

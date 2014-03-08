@@ -12,10 +12,45 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
-	asIScriptContext *ctx;
+//	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+//	asIScriptModule *mod;
 
-	// TODO: test the script grid
+	// Test initialization lists
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptGrid(engine);
+		RegisterStdString(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, 
+			"grid<int8> g = {{1,2,3},{4,5,6},{7,8,9}}; \n"
+			"assert( g[0,0] == 1 ); \n"
+			"assert( g[2,2] == 9 ); \n"
+			"assert( g[0,2] == 7 ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, 
+			"grid<string> g = {{'1','2'},{'4','5'}}; \n"
+			"assert( g[0,0] == '1' ); \n"
+			"assert( g[1,1] == '5' ); \n"
+			"assert( g[0,1] == '4' ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine,
+			"grid<grid<int>@> g = {{grid<int> = {{1}}, grid<int> = {{2}}}, {grid<int> = {{3}}, grid<int> = {{4}}}}; \n"
+			"assert( g[0,0][0,0] == 1 ); \n"
+			"assert( g[1,1][0,0] == 4 ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+	
+		engine->Release();
+	}
 
 	// Success
 	return fail;
