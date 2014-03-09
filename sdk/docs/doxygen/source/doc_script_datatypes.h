@@ -102,7 +102,7 @@ Example:
 </pre>
 
 <code>a</code>, <code>b</code>, and <code>c</code> are now arrays of integers, and <code>d</code>
-is and array of handles to objects of the Foo type.
+is an array of handles to objects of the Foo type.
 
 When declaring arrays it is possible to define the initial size of the array by passing the length as
 a parameter to the constructor. The elements can also be individually initialized by specifying an 
@@ -124,7 +124,7 @@ Multidimensional arrays are supported as arrays of arrays, for example:
   array<array<int>> c(10, array<int>(10)); // A 10 by 10 array of integers with uninitialized values
 </pre>
 
-Each element in the array is accessed with the indexing operator. The indices are zero based, i.e the
+Each element in the array is accessed with the indexing operator. The indices are zero based, i.e. the
 range of valid indices are from 0 to length - 1.
 
 <pre>
@@ -140,6 +140,8 @@ When the array stores \ref doc_script_handle "handles" the elements are assigned
   // Set the first element to point to a new instance of Foo
   \@arr[0] = Foo();
 </pre>
+
+
 
 \section doc_datatypes_arrays_addon Supporting array object and functions
 

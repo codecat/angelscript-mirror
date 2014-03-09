@@ -142,7 +142,7 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 
 	// Close to comparison with epsilon 
 	r = engine->RegisterGlobalFunction("bool closeTo(float, float, float = 0.00001f)", asFUNCTIONPR(closeTo, (float, float, float), bool), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("bool closeTo(double, double, double = 0.0000000001f)", asFUNCTIONPR(closeTo, (double, double, double), bool), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("bool closeTo(double, double, double = 0.0000000001)", asFUNCTIONPR(closeTo, (double, double, double), bool), asCALL_CDECL); assert( r >= 0 );
 
 #if AS_USE_FLOAT
 	// Trigonometric functions

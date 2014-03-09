@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.28.1
-#define ANGELSCRIPT_VERSION        22801
-#define ANGELSCRIPT_VERSION_STRING "2.28.1"
+//! Version 2.28.2
+#define ANGELSCRIPT_VERSION        22802
+#define ANGELSCRIPT_VERSION_STRING "2.28.2"
 
 // Data types
 
@@ -597,6 +597,15 @@ typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 //! The function signature for the object type cleanup callback function
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
+
+// Check if the compiler can use C++11 features
+#if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
+#if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
+#if !(defined(__GNUC__) && defined(__cplusplus) && __cplusplus < 201103L) // g++ -std=c++11
+#define AS_CAN_USE_CPP11 1
+#endif
+#endif
+#endif
 
 // This macro does basically the same thing as offsetof defined in stddef.h, but
 // GNUC should not complain about the usage as I'm not using 0 as the base pointer.

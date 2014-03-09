@@ -19,6 +19,7 @@
  - \ref handle
  - \ref parenthesis
  - \ref scope
+ - \ref anonobj
 
 
 \section assignment Assignments
@@ -385,4 +386,26 @@ the name is overloaded by a local variable or function. Write the scope name on 
 and the name of the variable/function on the right.
 
 \see \ref doc_global_namespace
+
+
+
+
+\section anonobj Anonymous objects
+
+Anonymous objects, i.e. objects that are created without being declared as variables, can be instantiated in expressions 
+by calling invoking the object's constructor as if it was a function. Both reference types and value types can be created
+like this.
+
+<pre>
+  // Call the function with a new object of the type MyClass
+  func(MyClass(1,2,3));
+</pre>
+
+For types that support it, the anonymous objects can also be initialized with initialization lists.
+
+<pre>
+  // Call the function with a dictionary
+  func(dictionary = {{'banana',1}, {'apple',2}, {'orange',3}});
+</pre>
+
 */

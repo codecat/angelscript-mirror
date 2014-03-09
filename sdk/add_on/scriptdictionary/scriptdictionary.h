@@ -41,7 +41,7 @@ public:
 	// Constructor
 	CScriptDictionary(asIScriptEngine *engine);
 
-	// Constructor. Called from the script to instanciate a dictionary from an initialization list
+	// Constructor. Called from the script to instantiate a dictionary from an initialization list
 	CScriptDictionary(asBYTE *buffer);
 
 	// Reference counting
@@ -89,9 +89,6 @@ public:
 	class CIterator
 	{
 	public:
-		CIterator(const CScriptDictionary &dict,
-			      std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it);
-
 		void operator++();    // Pre-increment
 		void operator++(int); // Post-increment
 
@@ -109,7 +106,11 @@ public:
 		bool               GetValue(void *value, int typeId) const;
 
 	protected:
+		friend class CScriptDictionary;
+
 		CIterator();
+		CIterator(const CScriptDictionary &dict,
+		          std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it);
 
 		std::map<std::string, CScriptDictionary::valueStruct>::const_iterator m_it;
 		const CScriptDictionary &m_dict;

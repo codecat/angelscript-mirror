@@ -144,12 +144,13 @@ to create and initialize the object.
 
 In order for the script engine to know what information must be placed in the buffer the
 application must provide the list pattern when registering the list factory. The list pattern
-is declared with a special syntax involving datatypes and the following tokens: {, }, ?, and repeat.
+is declared with a special syntax involving datatypes and the following tokens: {, }, ?, repeat, and repeat_same.
 
 The tokens { } are used to declare that the list pattern expects a list of values or a sublist of values. 
-The repeat token is used to signal that the next type or sub list can be repeated 0 or more times. Any
-data type can be used in the list pattern, as long as it can be passed by value. When a variable type
-is desired the token ? can be used.
+The repeat token is used to signal that the next type or sub list can be repeated 0 or more times. 
+The repeat_same token is similar to repeat except that it also tells the compiler that every time the same
+list is repeated it should have the same length. Any data type can be used in the list pattern, as long 
+as it can be passed by value. When a variable type is desired the token ? can be used.
 
 Here's a couple of examples for registering list factories with list patterns:
 
@@ -161,6 +162,10 @@ engine->RegisterObjectBehaviour("intarray", asBEHAVE_LIST_FACTORY,
 // The dictionary type can be initialized with: dictionary d = {{'a',1}, {'b',2}, {'c',3}};
 engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, 
   "dictionary @f(int &in) {repeat {string, ?}}", ...);
+  
+// The grid type can be initialized with: grid a = {{1,2},{3,4}};
+engine->RgisterObjectBehaviour("grid", asBEHAVE_LIST_FACTORY,
+  "grid @f(int &in) {repeat {repeat_same int}}", ...);
 \endcode
 
 The list buffer passed to the factory function will be populated using the following rules:

@@ -86,7 +86,7 @@ bool Test()
 
 		std::string keys; 
 		asINT64 values = 0;
-#ifdef AS_CAN_USE_CPP11
+#if AS_CAN_USE_CPP11
 		for( auto it : *dict )
 #else
 		for( CScriptDictionary::CIterator it = dict->begin(); it != dict->end(); it++ )

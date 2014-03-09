@@ -337,11 +337,14 @@ so a port from script to C++ and vice versa might be easier if STL names are use
 class CScriptArray
 {
 public:
-  // Constructor
-  CScriptArray(const CScriptArray &other);
-  CScriptArray(asUINT length, asIObjectType *ot);
-  CscriptArray(asUINT length, void *defaultValue, asIObjectType *ot);
-  virtual ~CScriptArray();
+  // Set the memory functions that should be used by all CScriptArrays
+  static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+
+  // Factory functions
+  static CScriptArray *Create(asIObjectType *ot);
+  static CScriptArray *Create(asIObjectType *ot, asUINT length);
+  static CScriptArray *Create(asIObjectType *ot, asUINT length, void *defaultValue);
+  static CScriptArray *Create(asIObjectType *ot, void *listBuffer);
 
   // Memory management
   void AddRef() const;
@@ -368,8 +371,10 @@ public:
   void       *At(asUINT index);
   const void *At(asUINT index) const;
 
-  // Set value of an element. The value arg should be a pointer
-  // to the value that will be copied to the element
+  // Set value of an element. 
+  // The value arg should be a pointer to the value that will be copied to the element.
+  // Remember, if the array holds handles the value parameter should be the 
+  // address of the handle. The refCount of the object will also be incremented
   void  SetValue(asUINT index, void *value);
 
   // Copy the contents of one array to another (only if the types are the same)
@@ -387,6 +392,7 @@ public:
   void SortAsc(asUINT startAt, asUINT count);
   void SortDesc();
   void SortDesc(asUINT startAt, asUINT count);
+  void Sort(asUINT startAt, asUINT count, bool asc);
   void Reverse();
   int  Find(void *value) const;
   int  Find(asUINT startAt, void *value) const;
@@ -421,7 +427,7 @@ CScriptArray *CreateArrayOfStrings()
     asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
 
     // Create an array with the initial size of 3 elements
-    CScriptArray* arr = new CScriptArray(3, t);
+    CScriptArray* arr = CScriptArray::Create(t, 3);
     for( asUINT i = 0; i < arr->GetSize(); i++ )
     {
       // Set the value of each element
@@ -804,6 +810,9 @@ public:
   void Set(const std::string &key, double &value);
   bool Get(const std::string &key, double &value) const;
 
+  // Returns the type id of the stored value, or negative if it doesn't exist
+  int  GetTypeId(const std::string &key) const;
+
   // Get an array of all keys
   CScriptArray *GetKeys() const;
   
@@ -821,6 +830,27 @@ public:
   
   // Deletes all keys
   void DeleteAll();
+  
+  // STL style iterator
+  class CIterator
+  {
+  public:
+    void operator++();    // Pre-increment
+    void operator++(int); // Post-increment
+
+    bool operator==(const CIterator &other) const;
+    bool operator!=(const CIterator &other) const;
+
+    // Accessors
+    const std::string &GetKey() const;
+    int                GetTypeId() const;
+    bool               GetValue(asINT64 &value) const;
+    bool               GetValue(double &value) const;
+    bool               GetValue(void *value, int typeId) const;
+  };
+  
+  CIterator begin() const;
+  CIterator end() const;
 };
 \endcode
 
@@ -1047,6 +1077,10 @@ represents a complex number, i.e. a number with real and imaginary parts.
   
   // Returns the fraction
   float fraction(float val);
+
+  // Approximate float comparison, to deal with numeric imprecision
+  bool closeTo(float a, float b, float epsilon = 0.00001f);
+  bool closeTo(double a, double b, double epsilon = 0.0000000001);
   
   // Conversion between floating point and IEEE 754 representations
   float  fpFromIEEE(uint raw); 
