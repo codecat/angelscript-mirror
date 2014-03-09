@@ -22,6 +22,10 @@ Note that the host application may add types specific to that application, refer
  - \subpage doc_datatypes_strings
  - \subpage doc_datatypes_arrays
 
+\todo dictionary
+\todo ref
+\todo weakref
+
  
  
 \page doc_datatypes_primitives Primitives

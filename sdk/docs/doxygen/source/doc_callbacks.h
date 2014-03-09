@@ -10,7 +10,7 @@ interface if the intention is for the script to set callbacks that will be calle
 this is done, the application can receive the function handles as an asIScriptFunction pointer which can
 then be \ref doc_call_script_func "executed" normally.
 
-
+\todo Show example of how a function and a delegate is received from a script and then called by application
 
 
 */

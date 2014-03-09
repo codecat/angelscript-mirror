@@ -26,6 +26,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
  - \subpage doc_addon_math
+ - \subpage doc_addon_grid
 
 
  
@@ -441,6 +442,114 @@ CScriptArray *CreateArrayOfStrings()
   return 0;
 }
 \endcode
+
+
+
+
+
+
+
+
+
+
+
+
+\page doc_addon_grid grid template object
+
+<b>Path:</b> /sdk/add_on/scriptgrid/
+
+The <code>grid</code> type is a \ref doc_adv_template "template object" that allow the scripts to declare 2D grids of any type.
+In many ways it is similar to the \ref doc_addon_array, but it is specialized for use with areas.
+
+The type is registered with <code>RegisterScriptGrid(asIScriptEngine *engine)</code>. 
+
+\section doc_addon_grid_1 Public C++ interface
+
+\code
+class CScriptGrid
+{
+public:
+  // Set the memory functions that should be used by all CScriptGrids
+  static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+
+  // Factory functions
+  static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height);
+  static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height, void *defaultValue);
+  static CScriptGrid *Create(asIObjectType *ot, void *listBuffer);
+
+  // Memory management
+  void AddRef() const;
+  void Release() const;
+
+  // Type information
+  asIObjectType *GetGridObjectType() const;
+  int            GetGridTypeId() const;
+  int            GetElementTypeId() const;
+
+  // Get the current size
+  asUINT GetWidth() const;
+  asUINT GetHeight() const;
+  
+  // Get a pointer to an element. Returns 0 if out of bounds
+  void       *At(asUINT x, asUINT y);
+  const void *At(asUINT x, asUINT y) const;
+
+  // Set value of an element. 
+  // The value arg should be a pointer to the value that will be copied to the element.
+  // Remember, if the grid holds handles the value parameter should be the 
+  // address of the handle. The refCount of the object will also be incremented
+  void  SetValue(asUINT x, asUINT y, void *value);
+};
+\endcode
+
+\section doc_addon_grid_2 Public script interface
+
+<pre>
+  class grid<T>
+  {
+    grid(uint width, uint height);
+    grid(uint width, uint height, const T &in fillValue);
+  
+    uint width() const;
+    uint height() const;
+    
+    T &opIndex(uint, uint);
+    const T &opIndex(uint, uint) const;
+  }
+</pre>
+
+\section doc_addon_grid_3 Example usage in script
+
+<pre>
+  // Initialize a 5x5 map
+  grid<int> map = {{1,0,1,1,1},
+                   {0,0,1,0,0},
+                   {0,1,1,0,1},
+                   {0,1,1,0,1},
+                   {0,0,0,0,1}};
+   
+  // A function to verify if the next area is walkable
+  bool canWalk(uint x, uint y)
+  {
+    // If the map in the destination is 
+    // clear, it is possible to wark there
+    return map[x,y] == 0;
+  }
+</pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
