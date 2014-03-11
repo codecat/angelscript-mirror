@@ -1504,7 +1504,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 					// function, then it is enough that the variable is local to guarantee the lifetime.
 					if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
 					{
-						if( ctx->type.dataType.GetObjectType()->flags & asOBJ_REF && param.IsReadOnly() )
+						if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && param.IsReadOnly() )
 						{
 							// If the object is a reference type, and the parameter is a const reference,
 							// then it is not necessary to make a copy of the object. The compiler just needs
@@ -1521,7 +1521,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 							ctx->bc.Instr(asBC_PopPtr);
 							ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
 
-							ctx->type.SetVariable(dt, offset, true);
+							// The type should be set to the param type instead of dt to guarantee
+							// that the expression keeps the correct type for variable ? args. Otherwise
+							// MoveArgsToStack will use the wrong bytecode to move the arg to the stack
+							ctx->type.SetVariable(param, offset, true);
 						}
 						else
 						{

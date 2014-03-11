@@ -1119,6 +1119,7 @@ bool TestOptimize()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script =
 			"void main() { \n"
@@ -1126,7 +1127,7 @@ bool TestOptimize()
 			"} \n"
 			"C glob; \n"
 			"class C {} \n"
-			"void func(const C &in) {} \n";
+			"void func(const C &in arg) { assert( arg is glob ); } \n";
 
 		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
@@ -1137,8 +1138,8 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-				// TODO: runtime optimize: This bytecode sequence can be improved. VAR+GETOBJREF => PshVPtr, CHKREF can be removed since the code already checks for the null pointer later
-				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_VAR,asBC_GETOBJREF,asBC_ChkNullS,asBC_CALL,asBC_FREE,
+				// TODO: runtime optimize: This bytecode sequence can be improved. VAR+GETOBJREF => PshVPtr
+				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_VAR,asBC_GETOBJREF,asBC_CALL,asBC_FREE,
 				asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )

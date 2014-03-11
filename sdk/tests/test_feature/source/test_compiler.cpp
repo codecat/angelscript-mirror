@@ -235,6 +235,50 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test problem with opAssign reported by loboWu
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptAny(engine);
+		RegisterScriptArray(engine, true);
+		RegisterStdString(engine);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class VARIANT \n"
+			"{ \n"
+			"    VARIANT@ opAssign(const VARIANT &in v) \n"
+			"    { \n"
+			"        return this; \n"
+			"    } \n"
+			"}; \n"
+			"dictionary variant_code_map; \n"
+			"void main() \n"
+			"{ \n"
+			"    VARIANT[] variant_code(1); \n"
+			"    any a(variant_code[0]); \n"
+			"    variant_code_map.set('current_variant_code', variant_code[0]); \n" // Crash!!!!!
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test crash with global variables of non-pod types and reference arguments
 	// http://www.gamedev.net/topic/653919-global-variables-and-const-argument-by-reference/
 	{
