@@ -513,13 +513,14 @@ bool asCDataType::IsBooleanType() const
 
 bool asCDataType::IsObject() const
 {
-	//	Enumerations are not objects, even though they are described with an objectType.
-	if( IsEnumType() )
+	if( IsPrimitive() )
 		return false;
 
-	if( objectType ) return true;
+	// Null handle doesn't have an object type but should still be considered an object
+	if( objectType == 0 ) 
+		return IsNullHandle();
 
-	return false;
+	return true;
 }
 
 int asCDataType::GetSizeInMemoryBytes() const

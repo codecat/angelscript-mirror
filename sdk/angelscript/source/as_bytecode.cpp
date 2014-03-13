@@ -2115,7 +2115,12 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 			}
 		}
 		if( !found )
-			fprintf(file, " %.3d: %s {noname}\n", func->scriptData->objVariablePos[n], func->scriptData->objVariableTypes[n]->name.AddressOf());
+		{
+			if( func->scriptData->objVariableTypes[n] )
+				fprintf(file, " %.3d: %s {noname}\n", func->scriptData->objVariablePos[n], func->scriptData->objVariableTypes[n]->name.AddressOf());
+			else
+				fprintf(file, " %.3d: null handle {noname}\n", func->scriptData->objVariablePos[n]);
+		}
 	}
 	fprintf(file, "\n\n");
 

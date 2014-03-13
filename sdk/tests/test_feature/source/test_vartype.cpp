@@ -19,6 +19,8 @@ void testFuncI(asIScriptGeneric *gen)
 		assert(((CScriptString*)ref)->buffer == "test");
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
 		assert((*(CScriptString**)ref)->buffer == "test");
+	else if( typeId == 0 )
+		assert( *(void**)ref == 0 );
 	else
 		assert(false);
 }
@@ -44,6 +46,8 @@ void testFuncO(asIScriptGeneric *gen)
 		((CScriptString*)ref)->buffer = "test";
 	else if( typeId == gen->GetEngine()->GetTypeIdByDecl("string@") )
 		*(CScriptString**)ref = new CScriptString("test");
+	else if( typeId == 0 )
+		assert( *(void**)ref == 0 );
 	else
 		assert(false);
 }
@@ -362,6 +366,8 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "string @a = @\"test\"; testFuncI(@a);");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "testFuncI(null);");
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	// Both functions should receive the string by reference
 	r = ExecuteString(engine, "string a = 'test'; testFuncI(a); testFuncS(a);");
@@ -372,6 +378,12 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void testFuncO(?&out)", asFUNCTION(testFuncO), asCALL_GENERIC);
 	if( r < 0 ) TEST_FAILED;
 
+	r = ExecuteString(engine, "testFuncO(0)"); // skip out value
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "testFuncO(void)"); // skip out value
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+	r = ExecuteString(engine, "testFuncO(null)"); // skip out value
+	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "int a; testFuncO(a); assert(a == 42);");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "string a; testFuncO(a); assert(a == \"test\");");

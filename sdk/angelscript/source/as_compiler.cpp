@@ -1053,6 +1053,10 @@ void asCCompiler::CallDestructor(asCDataType &type, int offset, bool isObjectOnH
 		// Call destructor for the data type
 		if( type.IsObject() )
 		{
+			// The null pointer doesn't need to be destroyed
+			if( type.IsNullHandle() )
+				return;
+
 			// Nothing is done for list pattern types, as this is taken care of by the CompileInitList method
 			if( type.GetObjectType()->flags & asOBJ_LIST_PATTERN )
 				return;
@@ -1396,6 +1400,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 		// Since the function is expecting a var type ?, then we don't want to convert the argument to anything else
 		param = ctx->type.dataType;
 		param.MakeHandle(ctx->type.isExplicitHandle || ctx->type.IsNullConstant());
+
+		// Treat the void expression like a null handle when working with var types
+		if( ctx->type.IsVoidExpression() )
+			param = asCDataType::CreateNullHandle();
 
 		// If value assign is disabled for reference types, then make
 		// sure to always pass the handle to ? parameters
@@ -1744,7 +1752,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 			if( dt.IsObjectHandle() )
 				ctx->type.isExplicitHandle = true;
 
-			if( dt.IsObject() )
+			if( dt.IsObject() && !dt.IsNullHandle() )
 			{
 				if( !dt.IsReference() )
 				{
@@ -1775,7 +1783,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 	}
 
 	// Don't put any pointer on the stack yet
-	if( param.IsReference() || param.IsObject() )
+	if( param.IsReference() || (param.IsObject() && !param.IsNullHandle()) )
 	{
 		// &inout parameter may leave the reference on the stack already
 		if( refType != 3 )
