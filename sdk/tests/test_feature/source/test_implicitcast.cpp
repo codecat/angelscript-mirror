@@ -1010,7 +1010,7 @@ class BTest5 : public RefTest5, public ATest5
 public:
 	static BTest5* Factory() { return new BTest5; }
 
-	virtual int GetValue() const override
+	virtual int GetValue() const 
 	{
 		return 7;
 	}
@@ -1067,7 +1067,7 @@ bool Test5()
 	asMETHOD(CTest5, opShl), asCALL_THISCALL);
 	engine->RegisterObjectProperty("C", "int Value", offsetof(CTest5, Value));
 
-	asIScriptModule* mod = engine->GetModule(nullptr, asGM_ALWAYS_CREATE);
+	asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("Script", script);
 
 	//engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);

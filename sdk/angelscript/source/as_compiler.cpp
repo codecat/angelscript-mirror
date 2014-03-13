@@ -11490,7 +11490,7 @@ void asCCompiler::ImplicitConvObjectToBestMathType(asSExprContext *ctx, asCScrip
 		while( funcs.GetLength() > 1 )
 		{
 			eTokenType returnType = builder->GetFunctionDescription(funcs[0])->returnType.GetTokenType();
-			int value1, value2;
+			int value1 = 11, value2 = 11;
 			for( asUINT i = 0; i < 10; i++ )
 			{
 				if( returnType == match[i] )

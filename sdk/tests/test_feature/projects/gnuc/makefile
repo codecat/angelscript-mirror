@@ -197,7 +197,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 obj/scriptarray.o: ../../../../add_on/scriptarray/scriptarray.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-obj/scriptarray.o: ../../../../add_on/scriptgrid/scriptgrid.cpp
+obj/scriptgrid.o: ../../../../add_on/scriptgrid/scriptgrid.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scripthandle.o: ../../../../add_on/scripthandle/scripthandle.cpp

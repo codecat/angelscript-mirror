@@ -288,9 +288,9 @@ bool Test()
 
 		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
-		r = engine->RegisterObjectType("Value", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS );
+		r = engine->RegisterObjectType("Value", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 
-		r = engine->RegisterObjectType("Vec2f", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDAK );
+		r = engine->RegisterObjectType("Vec2f", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDAK);
 		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
 		// There is no copy constructor so the compiler must use the opAssign
 		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
