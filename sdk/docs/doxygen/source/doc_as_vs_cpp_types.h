@@ -117,27 +117,15 @@ way to have functions return multiple values.</td></tr>
 <tr><td valign=top>const &out</td><td>Useless as the function wouldn't be able 
 to modify the value.</td></tr>
 <tr><td valign=top>&inout</td><td>The true reference is always passed to the 
-function. If the life time of the value cannot be guaranteed, a compile time error 
-is generated and the script writer will have to copy the value to a local variable 
-first. Objects that support object handles are best suitable for this type as they 
-can always be guaranteed.</td></tr>
-<tr><td valign=top>const &inout</td><td>The reference cannot be changed by the 
-function.</td></tr>
+function. Only objects that support object handles can be used with this type
+as they can always be guaranteed to stay alive during the call.</td></tr>
+<tr><td valign=top>const &inout</td><td>The referred to object will be read-only.</td></tr>
 </table>
 
 If the application wants parameter references that work like they do in C++, 
-then the engine property asEP_ALLOW_UNSAFE_REFERENCES can be set. When this is done, 
-the parameter references can be declared without the <code>in</code>, <code>out</code>, 
-or <code>inout</code>. The parameter references declared without any of the keywords 
-will always pass the address to the original value, and will not have any restrictions 
-to the expressions that can be used. The parameter references with the <code>in</code> 
-and <code>out</code> keywords will still work like before, but the references with the 
-<code>inout</code> keyword will have the restrictions removed so that they work just 
-like normal C++ references.
+then this can be allowed by \ref doc_adv_custom_options_lang_mod "setting an engine property".
 
-The application writer and script writer has to be aware that it is possible to 
-write scripts that access invalid references when the library is compiled in this 
-mode, just like it is possible to do so in C++.
+
 
 
 

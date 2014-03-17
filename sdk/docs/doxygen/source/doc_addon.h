@@ -965,50 +965,9 @@ public:
 
 \section doc_addon_dict_2 Public script interface
 
-<pre>
-  class dictionary
-  {
-    dictionary &opAssign(const dictionary &in other);
+\see \ref doc_datatypes_dictionary "Dictionaries in the script language"
 
-    void set(const string &in key, ? &in value);
-    bool get(const string &in key, ? &out value) const;
-    
-    void set(const string &in key, int64 &in value);
-    bool get(const string &in key, int64 &out value) const;
-    
-    void set(const string &in key, double &in value);
-    bool get(const string &in key, double &out value) const;
 
-    array<string> \@getKeys() const;    
-
-    bool exists(const string &in key) const;
-    void delete(const string &in key);
-    void deleteAll();
-    bool isEmpty() const;
-    uint getSize() const;
-  }
-</pre>
-
-\section doc_addon_dict_3 Script example
-
-<pre>
-  obj object;
-  obj \@handle;
-  dictionary dict = ({'one', 1}, {'object', object}, {'handle', \@handle}};
-  
-  if( dict.exists('one') )
-  {
-    bool found = dict.get('handle', \@handle);
-    if( found )
-    {
-      dict.delete('object');
-    }
-  }
-  
-  dict.set('newvalue', 42);
-  
-  dict.deleteAll();
-</pre>
 
 
 

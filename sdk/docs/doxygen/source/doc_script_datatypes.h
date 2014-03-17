@@ -21,10 +21,9 @@ Note that the host application may add types specific to that application, refer
  
  - \subpage doc_datatypes_strings
  - \subpage doc_datatypes_arrays
+ - \subpage doc_datatypes_dictionary
 
-\todo dictionary
-\todo ref
-\todo weakref
+\todo ref & weakref
 
  
  
@@ -154,29 +153,29 @@ The array object supports a number of operators and has several class methods to
 The array object is a \ref doc_datatypes_obj "reference type" even if the elements are not, so it's possible
 to use handles to the array object when passing it around to avoid costly copies.
 
-\subsection doc_datatypes_strings_addon_ops Operators
+\subsection doc_datatypes_array_addon_ops Operators
 
  - =       assignment
  - []      index operator
  - ==, !=  equality
 
-\subsection doc_datatypes_strings_addon_mthd Methods
+\subsection doc_datatypes_array_addon_mthd Methods
 
-  - uint length() const;
-  - void resize(uint);
-  - void reverse();
-  - void insertAt(uint index, const T& in);
-  - void insertLast(const T& in);
-  - void removeAt(uint index);
-  - void removeLast();
-  - void sortAsc();
-  - void sortAsc(uint startAt, uint count);
-  - void sortDesc();
-  - void sortDesc(uint startAt, uint count);
-  - int  find(const T& in);
-  - int  find(uint startAt, const T& in);
-  - int  findByRef(const T& in);
-  - int  findByRef(uint startAt, const T& in);
+  - uint length() const
+  - void resize(uint)
+  - void reverse()
+  - void insertAt(uint index, const T& in)
+  - void insertLast(const T& in)
+  - void removeAt(uint index)
+  - void removeLast()
+  - void sortAsc()
+  - void sortAsc(uint startAt, uint count)
+  - void sortDesc()
+  - void sortDesc(uint startAt, uint count)
+  - int  find(const T& in)
+  - int  find(uint startAt, const T& in)
+  - int  findByRef(const T& in)
+  - int  findByRef(uint startAt, const T& in)
 
 The T represents the type of the array elements.
   
@@ -203,6 +202,62 @@ Script example:
 
 
 
+
+\page doc_datatypes_dictionary dictionary
+
+<b>Observe:</b> Dictionaries are only available in the scripts if the application registers the support for them. The syntax
+for using dictionaries may differ for the application you're working with so consult the application's manual
+for more details.
+
+\see \ref doc_addon_dict
+
+The dictionary stores key-value pairs, where the key is a string, and the value can be of any type. Key-value
+pairs can be added or removed dynamically, making the dictionary a good general purpose container object.
+
+<pre>
+  obj object;
+  obj \@handle;
+  dictionary dict = ({'one', 1}, {'object', object}, {'handle', \@handle}};
+  
+  if( dict.exists('one') )
+  {
+    bool found = dict.get('handle', \@handle);
+    if( found )
+    {
+      dict.delete('object');
+    }
+  }
+  
+  dict.set('newvalue', 42);
+  
+  dict.deleteAll();
+</pre>
+
+\section doc_datatypes_dictionary_addon Supporting dictionary object and functions
+
+The dictionary object is a \ref doc_datatypes_obj "reference type", so it's possible
+to use handles to the dictionary object when passing it around to avoid costly copies.
+
+\subsection doc_datatypes_dictionary_addon_ops Operators
+
+ - =       assignment
+ 
+The assignment operator performs a shallow copy of the content.
+
+\subsection doc_datatypes_dictionary_addon_mthd Methods
+
+ - void set(const string &in key, ? &in value)
+ - void set(const string &in key, int64 &in value)
+ - void set(const string &in key, double &in value)
+ - bool get(const string &in key, ? &out value) const
+ - bool get(const string &in key, int64 &out value) const
+ - bool get(const string &in key, double &out value) const
+ - array<string> \@getKeys() const
+ - bool exists(const string &in key) const
+ - void delete(const string &in key)
+ - void deleteAll()
+ - bool isEmpty() const
+ - uint getSize() const
 
 
 
@@ -386,21 +441,21 @@ a default transformation of the primitive to a string.
  
 \subsection doc_datatypes_strings_addon_mthd Methods
 
- - uint           length() const;
- - void           resize(uint);
- - bool           isEmpty() const;
- - string         substr(uint start = 0, int count = -1) const;
- - int            findFirst(const string &in str, uint start = 0) const;
- - int            findLast(const string &in str, int start = -1) const;
- - array<string>@ split(const string &in delimiter) const;  
+ - uint           length() const
+ - void           resize(uint)
+ - bool           isEmpty() const
+ - string         substr(uint start = 0, int count = -1) const
+ - int            findFirst(const string &in str, uint start = 0) const
+ - int            findLast(const string &in str, int start = -1) const
+ - array<string>@ split(const string &in delimiter) const
 
 \subsection doc_datatypes_strings_addon_funcs Functions
 
- - string join(const array<string> &in arr, const string &in delimiter);
- - int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0);
- - double parseFloat(const string &in, uint &out byteCount = 0);
- - string formatInt(int64 val, const string &in options, uint width = 0);
- - string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0);
+ - string join(const array<string> &in arr, const string &in delimiter)
+ - int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0)
+ - double parseFloat(const string &in, uint &out byteCount = 0)
+ - string formatInt(int64 val, const string &in options, uint width = 0)
+ - string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0)
 
 The format functions takes a string that defines how the number should be formatted. The string
 is a combination of the following characters:
