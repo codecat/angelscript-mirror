@@ -57,6 +57,8 @@
 		<Unit filename="../../../../add_on/scriptdictionary/scriptdictionary.h" />
 		<Unit filename="../../../../add_on/scriptfile/scriptfile.cpp" />
 		<Unit filename="../../../../add_on/scriptfile/scriptfile.h" />
+		<Unit filename="../../../../add_on/scriptgrid/scriptgrid.cpp" />
+		<Unit filename="../../../../add_on/scriptgrid/scriptgrid.h" />
 		<Unit filename="../../../../add_on/scripthandle/scripthandle.cpp" />
 		<Unit filename="../../../../add_on/scripthandle/scripthandle.h" />
 		<Unit filename="../../../../add_on/scripthelper/scripthelper.cpp" />
@@ -91,6 +93,7 @@
 		<Unit filename="../../source/test_addon_dictionary.cpp" />
 		<Unit filename="../../source/test_addon_scriptarray.cpp" />
 		<Unit filename="../../source/test_addon_scriptbuilder.cpp" />
+		<Unit filename="../../source/test_addon_scriptgrid.cpp" />
 		<Unit filename="../../source/test_addon_scripthandle.cpp" />
 		<Unit filename="../../source/test_addon_scriptmath.cpp" />
 		<Unit filename="../../source/test_addon_serializer.cpp" />

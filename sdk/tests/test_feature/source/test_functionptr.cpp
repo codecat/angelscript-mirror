@@ -300,6 +300,7 @@ bool Test()
 			TEST_FAILED;
 
 		// A delegate to own method held as member of class must be properly resolved by gc
+		bout.buffer = "";
 		mod->AddScriptSection("test",
 			"funcdef void CALL(); \n"
 			"class Test { \n"
@@ -308,11 +309,16 @@ bool Test()
 			"} \n"
 			"void main() { \n"
 			"  Test t; \n"
-			"  t.c = CALL(t.call); \n"
+			"  @t.c = CALL(t.call); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->GarbageCollect();
 
@@ -758,7 +764,7 @@ bool Test()
 			"    void set_events( ifuncdef1_2@ events ) { @this._events_ = events; } \n"
 			"    void crashme() \n"
 			"    { \n"
-			"         if( @this._events_ != null && @this._events_.f != null ) \n"
+			"         if( this._events_ !is null && this._events_.f !is null ) \n"
 			"         { \n"
 			"            this.events.f( this ); \n"
 //			"            this.get_events().get_f()( this ); \n" // This should produce the same bytecode as the above
@@ -775,7 +781,7 @@ bool Test()
 			"void start() \n"
 			"{ \n"
 			"    ifuncdef1_1@ i = cfuncdef1_1(); \n"
-			"    i.events.f = end; \n" // TODO: Shouldn't this give an error? It's attempting to do an value assignment to a function pointer
+			"    @i.events.f = end; \n" // TODO: Shouldn't this give an error? It's attempting to do an value assignment to a function pointer
 			"    i.crashme(); \n"
 			"} \n"
 			"bool called = false; \n"

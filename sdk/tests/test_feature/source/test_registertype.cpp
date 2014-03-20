@@ -101,18 +101,17 @@ bool Test()
 #ifdef AS_CAN_USE_CPP11
 		asUINT appFlags = GetTypeTraits<vec3_t>();
 #else
-		asUINT appFlags = asOBJ_APP_CLASS;
+		asUINT appFlags = asOBJ_APP_ARRAY;
 #endif
 
-		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | asOBJ_APP_CLASS | asOBJ_POD);
+		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | appFlags | asOBJ_POD);
 		engine->RegisterObjectProperty("vec3_t", "float x", 0);
 		engine->RegisterObjectProperty("vec3_t", "float y", 4);
 		engine->RegisterObjectProperty("vec3_t", "float z", 8);
 
 		engine->RegisterObjectType("gentity_t", sizeof(gentity_t), asOBJ_REF | asOBJ_NOCOUNT);
 
-		// TODO: The vec3_t is passed by reference implicitly as it is an array 
-		engine->RegisterGlobalFunction("bool CalcMuzzlePoint(gentity_t@ ent, const vec3_t &in fwd, const vec3_t &in right, const vec3_t &in up, const vec3_t &in muzzle, float lead_in)", asFUNCTIONPR(helper::CalcMuzzlePoint, ( gentity_t *const , vec3_t , vec3_t , vec3_t , vec3_t , float ), bool), asCALL_CDECL);
+		engine->RegisterGlobalFunction("bool CalcMuzzlePoint(gentity_t@ ent, vec3_t fwd, vec3_t right, vec3_t up, vec3_t muzzle, float lead_in)", asFUNCTIONPR(helper::CalcMuzzlePoint, ( gentity_t *const , vec3_t , vec3_t , vec3_t , vec3_t , float ), bool), asCALL_CDECL);
 
 		vec3_t wpFwd = {1,2,3}, wpVright = {4,5,6}, wpUp = {7,8,9}, wpMuzzle = {0,1,2};
 		engine->RegisterGlobalProperty("vec3_t wpFwd", &wpFwd);

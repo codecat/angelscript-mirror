@@ -76,6 +76,9 @@ asUINT GetTypeTraits()
 		return flags;
 	}
 
+	if( isArray )
+		return asOBJ_APP_ARRAY;
+
 	// Unknown type traits
 	return 0;
 }

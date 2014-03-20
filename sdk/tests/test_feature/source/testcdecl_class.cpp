@@ -285,19 +285,17 @@ bool TestCDecl_Class()
 		};
 
 #ifdef AS_CAN_USE_CPP11
-		// TODO: Should return asOBJ_APP_ARRAY
 		asUINT appFlags = GetTypeTraits<vec3_t>();
-		if( appFlags != 0 )
+		if( appFlags != asOBJ_APP_ARRAY )
 			TEST_FAILED;
 #endif
 
-		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | asOBJ_APP_CLASS | asOBJ_POD);
+		engine->RegisterObjectType("vec3_t", sizeof(vec3_t), asOBJ_VALUE | asOBJ_APP_ARRAY | asOBJ_POD);
 		engine->RegisterObjectProperty("vec3_t", "float x", 0);
 		engine->RegisterObjectProperty("vec3_t", "float y", 4);
 		engine->RegisterObjectProperty("vec3_t", "float z", 8);
 
-		// TODO: The vec3_t is passed by reference implicitly as it is an array 
-		engine->RegisterGlobalFunction("bool TestArrayByVal(const vec3_t &in, const vec3_t &in)", asFUNCTION(helper::TestArrayByVal), asCALL_CDECL);
+		engine->RegisterGlobalFunction("bool TestArrayByVal(vec3_t, vec3_t)", asFUNCTION(helper::TestArrayByVal), asCALL_CDECL);
 
 		vec3_t a1 = {1,2,3}, a2 = {4,5,6};
 		engine->RegisterGlobalProperty("vec3_t a1", &a1);
