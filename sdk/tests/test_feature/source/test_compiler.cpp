@@ -460,6 +460,18 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test clean up
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+		engine->RegisterObjectType("ScriptConsoleLine", sizeof(asDWORD), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+		engine->RegisterGlobalProperty("array<ScriptConsoleLine> @m_ScriptConsoleLineArray", (void*)1);
+
+		engine->Release();
+	}
+
 	// Test handle assign on class member as array
 	// http://www.gamedev.net/topic/652656-problem-with-arrays-when-upgraded-to-228/
 	{
