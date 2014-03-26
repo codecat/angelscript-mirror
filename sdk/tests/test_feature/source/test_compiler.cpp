@@ -2640,7 +2640,7 @@ bool Test()
 	if( bout.buffer != "22 (2, 1) : Info    : Compiling void Func(Some@)\n"
 	                   "22 (5, 1) : Error   : No matching signatures to 'Func_(<null handle>)'\n"
 					   "22 (5, 1) : Info    : Candidates are:\n"
-					   "22 (5, 1) : Info    : void Func_(uint)\n" )
+					   "22 (5, 1) : Info    : void Func_(uint i)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -2841,14 +2841,14 @@ bool Test()
 		if( bout.buffer != " (9, 1) : Info    : Compiling void main()\n"
 						   " (10, 5) : Error   : No matching signatures to 'test()'\n"
 						   " (10, 5) : Info    : Candidates are:\n"
-						   " (10, 5) : Info    : void test(int)\n"
-						   " (10, 5) : Info    : void test(float)\n"
-					   	   " (10, 5) : Info    : void test(bool)\n"
+						   " (10, 5) : Info    : void test(int a)\n"
+						   " (10, 5) : Info    : void test(float a)\n"
+					   	   " (10, 5) : Info    : void test(bool c)\n"
 						   " (12, 10) : Error   : No matching signatures to 'Test::test()'\n"
 						   " (12, 10) : Info    : Candidates are:\n"
-						   " (12, 10) : Info    : void Test::test(int)\n"
-						   " (12, 10) : Info    : void Test::test(float)\n"
-						   " (12, 10) : Info    : void Test::test(bool)\n" )
+						   " (12, 10) : Info    : void Test::test(int a)\n"
+						   " (12, 10) : Info    : void Test::test(float a)\n"
+						   " (12, 10) : Info    : void Test::test(bool c)\n" )
 		{
 			TEST_FAILED;
 			printf("%s", bout.buffer.c_str());
@@ -3173,7 +3173,7 @@ bool Test()
 		if( bout.buffer != "script (3, 2) : Info    : Compiling irc_event::irc_event()\n"
 		                   "script (6, 10) : Error   : No matching signatures to 'irc_event::set_command(string)'\n"
 		                   "script (6, 10) : Info    : Candidates are:\n"
-		                   "script (6, 10) : Info    : void irc_event::set_command(string@[])\n" )
+		                   "script (6, 10) : Info    : void irc_event::set_command(string@[] i)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3215,7 +3215,7 @@ bool Test()
 		if( bout.buffer != "script (11, 1) : Info    : Compiling void main()\n"
 			               "script (14, 19) : Error   : No matching signatures to 'tone_synth::set_waveform_type(::sine)'\n"
 		                   "script (14, 19) : Info    : Candidates are:\n"
-		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type)\n" )
+		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type i)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

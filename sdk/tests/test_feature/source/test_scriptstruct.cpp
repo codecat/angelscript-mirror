@@ -1496,7 +1496,7 @@ bool Test()
 						   "script (10, 5) : Error   : There is no copy operator for the type 'CBar' available.\n"
 						   "script (11, 10) : Error   : No matching signatures to 'CBar()'\n"
 						   "script (11, 10) : Info    : Candidates are:\n"
-						   "script (11, 10) : Info    : CBar@ CBar(int)\n" )
+						   "script (11, 10) : Info    : CBar@ CBar(int a)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

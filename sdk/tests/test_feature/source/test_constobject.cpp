@@ -168,7 +168,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching signatures to 'Test(const obj@&)'\n"
 		               "ExecuteString (1, 1) : Info    : Candidates are:\n"
-					   "ExecuteString (1, 1) : Info    : void Test(obj@)\n" )
+					   "ExecuteString (1, 1) : Info    : void Test(obj@ o)\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

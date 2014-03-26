@@ -154,7 +154,7 @@ bool Test()
 		if( bout.buffer != "TestUnsafeRef (1, 1) : Info    : Compiling void func()\n"
 		                   "TestUnsafeRef (5, 3) : Error   : No matching signatures to 'funcA(int, float, uint8)'\n"
 		                   "TestUnsafeRef (5, 3) : Info    : Candidates are:\n"
-		                   "TestUnsafeRef (5, 3) : Info    : void funcA(float&inout, uint8&inout, int&inout)\n" )
+		                   "TestUnsafeRef (5, 3) : Info    : void funcA(float&inout a, uint8&inout b, int&inout c)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -228,7 +228,7 @@ bool Test()
 		if( bout.buffer != "TestUnsafeRef (7, 1) : Info    : Compiling void func()\n"
 						   "TestUnsafeRef (8, 3) : Error   : No matching signatures to 'f(T)'\n"
 						   "TestUnsafeRef (8, 3) : Info    : Candidates are:\n"
-						   "TestUnsafeRef (8, 3) : Info    : void f(T@&inout)\n" )
+						   "TestUnsafeRef (8, 3) : Info    : void f(T@&inout t)\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

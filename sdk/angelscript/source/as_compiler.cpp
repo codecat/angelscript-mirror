@@ -1458,10 +1458,6 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				if( !(param.IsReadOnly() && ctx->type.isVariable) )
 					ConvertToTempVariable(ctx);
 
-				if( !dt.IsPrimitive() )
-					// Remove the reference that was pushed on the stack as it will not be used
-					ctx->bc.Instr(asBC_PopPtr);
-
 				PushVariableOnStack(ctx, true);
 				ctx->type.dataType.MakeReadOnly(param.IsReadOnly());
 			}
@@ -2255,7 +2251,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 				asASSERT( node );
 				if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 				builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
-				PrintMatchingFuncs(origFuncs, node);
+				PrintMatchingFuncs(origFuncs, node, objectType);
 			}
 		}
 		else
@@ -2263,7 +2259,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 			Error(str, node);
 
-			PrintMatchingFuncs(funcs, node);
+			PrintMatchingFuncs(funcs, node, objectType);
 		}
 	}
 
@@ -4380,7 +4376,7 @@ void asCCompiler::Information(const asCString &msg, asCScriptNode *node)
 	builder->WriteInfo(script->name, msg, r, c, false);
 }
 
-void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
+void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node, asCObjectType *inType)
 {
 	int r = 0, c = 0;
 	asASSERT( node );
@@ -4388,9 +4384,11 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 
 	for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 	{
-		asIScriptFunction *func = builder->GetFunctionDescription(funcs[n]);
+		asCScriptFunction *func = builder->GetFunctionDescription(funcs[n]);
+		if( inType && func->funcType == asFUNC_VIRTUAL )
+			func = inType->virtualFunctionTable[func->vfTableIdx];
 
-		builder->WriteInfo(script->name, func->GetDeclaration(true), r, c, false);
+		builder->WriteInfo(script->name, func->GetDeclaration(true, false, true), r, c, false);
 	}
 }
 

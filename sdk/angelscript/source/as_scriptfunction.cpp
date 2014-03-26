@@ -575,7 +575,7 @@ bool asCScriptFunction::DoesReturnOnStack() const
 }
 
 // internal
-asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace) const
+asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
 {
 	asCString str;
 
@@ -633,6 +633,12 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
 			}
 
+			if( includeParamNames && n < parameterNames.GetLength() && parameterNames[n].GetLength() != 0 )
+			{
+				str += " ";
+				str += parameterNames[n];
+			}
+
 			if( defaultArgs.GetLength() > n && defaultArgs[n] )
 			{
 				asCString tmp;
@@ -650,6 +656,12 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 			if( inOutFlags[n] == asTM_INREF ) str += "in";
 			else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
 			else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
+		}
+
+		if( includeParamNames && n < parameterNames.GetLength() && parameterNames[n].GetLength() != 0 )
+		{
+			str += " ";
+			str += parameterNames[n];
 		}
 
 		if( defaultArgs.GetLength() > n && defaultArgs[n] )
@@ -1236,10 +1248,10 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 }
 
 // interface
-const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace) const
+const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
 {
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = GetDeclarationStr(includeObjectName, includeNamespace);
+	*tempString = GetDeclarationStr(includeObjectName, includeNamespace, includeParamNames);
 	return tempString->AddressOf();
 }
 

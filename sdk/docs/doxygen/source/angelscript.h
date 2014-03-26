@@ -3301,8 +3301,9 @@ public:
 	//! \brief Returns the function declaration
 	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
 	//! \param[in] includeNamespace Indicates whether the namespace should be prepended to the function name
+	//! \param[in] includeParamNames Indicates whether parameter names should be added to the declaration
 	//! \return A null terminated string with the function declaration.
-	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const = 0;
+	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const = 0;
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only
 	virtual bool             IsReadOnly() const = 0;
