@@ -81,6 +81,16 @@ the additional output value won't be used use the special argument 'void' to tel
   func(void);
 </pre>
 
+Arguments can also be named and passed to a specific argument independent of the order the parameters were
+declared in. No positional arguments may follow any named arguments.
+
+<pre>
+  void func(int flagA = false, int flagB = false, int flagC = false) {}
+  
+  // Call the function, setting only a subset of its parameters
+  func(flagC = true);
+  func(flagB = true, flagA = true);
+</pre>
 
 
 

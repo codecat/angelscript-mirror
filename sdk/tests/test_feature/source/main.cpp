@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 	if( TestNamespace::Test()           ) goto failed; else printf("-- TestNamespace passed\n");
 	if( TestShared::Test()              ) goto failed; else printf("-- TestShared passed\n");
 	if( TestDefaultArg::Test()          ) goto failed; else printf("-- TestDefaultArg passed\n");
-//	if( TestNamedArgs::Test()           ) goto failed; else printf("-- TestNamedArgs passed\n");
+	if( TestNamedArgs::Test()           ) goto failed; else printf("-- TestNamedArgs passed\n");
 	if( TestScriptRetRef::Test()        ) goto failed; else printf("-- TestScriptRetRef passed\n");
 	if( TestGarbageCollect::Test()      ) goto failed; else printf("-- TestGarbageCollect passed\n");
 	if( TestFunctionPtr::Test()         ) goto failed; else printf("-- TestFunctionPtr passed\n");
