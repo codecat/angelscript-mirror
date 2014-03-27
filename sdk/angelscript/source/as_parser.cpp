@@ -1419,7 +1419,27 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 
 		for(;;)
 		{
-			node->AddChildLast(ParseAssignment());
+			// Determine if this is a named argument
+			sToken tl, t2;
+			GetToken(&tl);
+			GetToken(&t2);
+			RewindTo(&tl);
+
+			if( tl.type == ttIdentifier && t2.type == ttAssignment )
+			{
+				asCScriptNode *named = CreateNode(snNamedArgument);
+				if( named == 0 ) return 0;
+				node->AddChildLast(named);
+
+				named->AddChildLast(ParseIdentifier());
+				GetToken(&t2);
+				asASSERT( t2.type == ttAssignment );
+
+				named->AddChildLast(ParseAssignment());
+			}
+			else
+				node->AddChildLast(ParseAssignment());
+
 			if( isSyntaxError ) return node;
 
 			// Check if list continues

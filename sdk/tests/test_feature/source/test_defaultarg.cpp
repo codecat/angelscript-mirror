@@ -454,7 +454,7 @@ bool Test()
 			"void main() \n"
 			"{ \n"
 			"  uint8 a; \n"
-			"  func(a = 'a'[0]); \n"
+			"  func((a = 'a'[0])); \n"
 			"} \n";
 
 		mod->AddScriptSection("script", script);

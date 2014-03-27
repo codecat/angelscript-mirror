@@ -1925,7 +1925,8 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	int argCount = 0;
 	while( arg )
 	{
-		argCount++;
+		if( arg->nodeType != snNamedArgument )
+			argCount++;
 		arg = arg->next;
 	}
 
@@ -1942,6 +1943,13 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	arg = node->lastChild;
 	while( arg )
 	{
+		if( arg->nodeType == snNamedArgument )
+		{
+			Error("Named arguments are not yet supported", arg);
+			anyErrors = true;
+			arg = arg->prev;
+			continue;
+		}
 		asSExprContext expr(engine);
 		int r = CompileAssignment(arg, &expr);
 		if( r < 0 ) anyErrors = true;

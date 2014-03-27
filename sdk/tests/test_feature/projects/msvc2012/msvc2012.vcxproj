@@ -327,6 +327,7 @@
     <ClCompile Include="..\..\source\test_custommem.cpp" />
     <ClCompile Include="..\..\source\test_debug.cpp" />
     <ClCompile Include="..\..\source\test_defaultarg.cpp" />
+    <ClCompile Include="..\..\source\test_namedargs.cpp" />
     <ClCompile Include="..\..\source\test_destructor.cpp" />
     <ClCompile Include="..\..\source\test_dict.cpp" />
     <ClCompile Include="..\..\source\test_discard.cpp" />
