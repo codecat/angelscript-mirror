@@ -64,7 +64,7 @@ bool Test()
 	}
 
 	// opCall on property accessor
-/*	{
+	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
@@ -127,7 +127,7 @@ bool Test()
 			TEST_FAILED;
 
 		engine->Release();
-	}*/
+	}
 
 	// opCall
 	{

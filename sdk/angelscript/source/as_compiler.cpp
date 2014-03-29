@@ -9337,6 +9337,11 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 					Error(msg, node);
 					return -1;
 				}
+
+				// If the name is an access property, make sure the original value isn't 
+				// dereferenced when calling the access property as part a dot post operator
+				if( objectType && (funcExpr.property_get || funcExpr.property_set) && !ctx->type.dataType.IsReference() )
+					funcExpr.property_ref = false;
 			}
 
 			// If a class method is being called implicitly, then add the this pointer for the call
