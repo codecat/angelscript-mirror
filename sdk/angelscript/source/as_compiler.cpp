@@ -9372,7 +9372,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 					if( funcs.GetLength() == 0 )
 					{
 						int r = CompileVariableAccess(name, scope, &funcExpr, node, true, true);
-						if( r >= 0 && !funcExpr.type.dataType.GetFuncDef() )
+						if( r >= 0 && 
+							!(funcExpr.type.dataType.GetFuncDef() || funcExpr.type.dataType.IsObject()) && 
+							funcExpr.methodName == "" )
 						{
 							// The variable is not a function
 							asCString msg;

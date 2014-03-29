@@ -37,6 +37,98 @@ bool Test()
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 
+	// opCall for global variable
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void global()\n"
+			"{\n"
+			"    bool ok=globalF(0);\n"
+			"}\n"
+			"class Functor\n"
+			"{\n"
+			"    bool opCall(double d)\n"
+			"    {\n"
+			"        return d!=0;\n"
+			"    }\n"
+			"};\n"
+			"Functor globalF;\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// opCall on property accessor
+/*	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int i=0;\n"
+			"class Functor\n"
+			"{\n"
+			"    void opCall()\n"
+			"    {\n"
+		//	"        print('opCall'+i+'\n');\n"
+			"        i++;\n"
+			"    }\n"
+			"    void callThis()\n"
+			"    {\n"
+			"        this();\n"
+			"    }\n"
+			"};\n"
+			"class Hybrid\n"
+			"{\n"
+			"    Functor f;\n"
+			"    Functor g\n"
+			"    {\n"
+			"        get const\n"
+			"        {\n"
+			"            return f;\n"
+			"        }\n"
+			"    }\n"
+			"    void callMember()\n"
+			"    {\n"
+			"        f();\n"
+			"    }\n"
+			"    void callMemberProp()\n"
+			"    {\n"
+			"        g();\n"
+			"    }\n"
+			"}\n"
+			"Hybrid glob;\n"
+			"void member()\n"
+			"{\n"
+			"    Hybrid local;\n"
+			"    local.f();\n"
+			"    local.callMember();\n"
+			"    local.g();\n"
+			"    local.callMemberProp();\n"
+			"    glob.f();\n"
+			"    glob.get_g()();\n"
+			"    glob.g();\n"
+			"    glob.callMember();\n"
+			"    glob.callMemberProp();\n"
+			"    Functor@ fPtr=glob.g;\n"
+			"    fPtr();\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "member()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}*/
+
 	// opCall
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
