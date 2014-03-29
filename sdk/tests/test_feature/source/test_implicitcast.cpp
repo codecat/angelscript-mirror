@@ -131,16 +131,45 @@ bool Test()
 	}
 
 
-	bool fail = Test2();
-	fail = Test3() || fail;
-	fail = Test4() || fail;
-	fail = Test5() || fail;
-
+	bool fail = false;
 	int r;
 	asIScriptEngine *engine;
 
 	CBufferedOutStream bout;
 	COutStream out;
+
+	// Test problem reported by Amer Koleci
+	// It was causing assert failure as the compiler tried to release the same temporary variable twice
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("String", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+		engine->RegisterObjectBehaviour("String", asBEHAVE_CONSTRUCT, "void f(uint)", asFUNCTION(0), asCALL_GENERIC);
+
+		engine->RegisterObjectType("Texture2D", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("Texture2D", "uint get_width() const", asFUNCTION(0), asCALL_GENERIC);
+
+		engine->RegisterGlobalFunction("void Print(const String &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			" Texture2D@ texture; \n"
+			" Print(texture.width); \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	fail = Test2() || fail;
+	fail = Test3() || fail;
+	fail = Test4() || fail;
+	fail = Test5() || fail;
 
 	// Two forms of casts: value cast and ref cast
 	// A value cast actually constructs a new object

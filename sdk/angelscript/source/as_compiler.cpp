@@ -6461,6 +6461,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 
 	// TODO: clean up: This part is similar to CompileConstructCall(). It should be put in a common function
 
+	// Clear the type of ctx, as the type is moved to the arg
+	ctx->type.SetDummy();
+
 	bool onHeap = true;
 
 	// Value types and script types are allocated through the constructor
