@@ -17,6 +17,7 @@ public:
 	static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
 	// Factory functions
+	static CScriptGrid *Create(asIObjectType *ot);
 	static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height);
 	static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height, void *defaultValue);
 	static CScriptGrid *Create(asIObjectType *ot, void *listBuffer);
@@ -30,8 +31,10 @@ public:
 	int            GetGridTypeId() const;
 	int            GetElementTypeId() const;
 
+	// Size
 	asUINT GetWidth() const;
 	asUINT GetHeight() const;
+	void   Resize(asUINT width, asUINT height);
 
 	// Get a pointer to an element. Returns 0 if out of bounds
 	void       *At(asUINT x, asUINT y);
@@ -68,6 +71,8 @@ protected:
 	void  DeleteBuffer(SGridBuffer *buf);
 	void  Construct(SGridBuffer *buf);
 	void  Destruct(SGridBuffer *buf);
+	void  SetValue(SGridBuffer *buf, asUINT x, asUINT y, void *value);
+	void *At(SGridBuffer *buf, asUINT x, asUINT y);
 };
 
 void RegisterScriptGrid(asIScriptEngine *engine);

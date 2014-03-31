@@ -30,7 +30,12 @@ struct SGridBuffer
 	asBYTE  data[1];
 };
 
-CScriptGrid* CScriptGrid::Create(asIObjectType *ot, asUINT w, asUINT h)
+CScriptGrid *CScriptGrid::Create(asIObjectType *ot)
+{
+	return CScriptGrid::Create(ot, 0, 0);
+}
+
+CScriptGrid *CScriptGrid::Create(asIObjectType *ot, asUINT w, asUINT h)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 
@@ -58,7 +63,7 @@ CScriptGrid* CScriptGrid::Create(asIObjectType *ot, asUINT w, asUINT h)
 	return a;
 }
 
-CScriptGrid* CScriptGrid::Create(asIObjectType *ot, void *initList)
+CScriptGrid *CScriptGrid::Create(asIObjectType *ot, void *initList)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 
@@ -86,7 +91,7 @@ CScriptGrid* CScriptGrid::Create(asIObjectType *ot, void *initList)
 	return a;
 }
 
-CScriptGrid* CScriptGrid::Create(asIObjectType *ot, asUINT w, asUINT h, void *defVal)
+CScriptGrid *CScriptGrid::Create(asIObjectType *ot, asUINT w, asUINT h, void *defVal)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 
@@ -215,6 +220,7 @@ static void RegisterScriptGrid_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", asFUNCTION(ScriptGridTemplateCallback), asCALL_CDECL); assert( r >= 0 );
 
 	// Templates receive the object type as the first parameter. To the script writer this is hidden
+	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_FACTORY, "grid<T>@ f(int&in)", asFUNCTIONPR(CScriptGrid::Create, (asIObjectType*), CScriptGrid*), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_FACTORY, "grid<T>@ f(int&in, uint, uint)", asFUNCTIONPR(CScriptGrid::Create, (asIObjectType*, asUINT, asUINT), CScriptGrid*), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("grid<T>", asBEHAVE_FACTORY, "grid<T>@ f(int&in, uint, uint, const T &in)", asFUNCTIONPR(CScriptGrid::Create, (asIObjectType*, asUINT, asUINT, void *), CScriptGrid*), asCALL_CDECL); assert( r >= 0 );
 
@@ -230,6 +236,7 @@ static void RegisterScriptGrid_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("grid<T>", "const T &opIndex(uint, uint) const", asMETHODPR(CScriptGrid, At, (asUINT, asUINT) const, const void*), asCALL_THISCALL); assert( r >= 0 );
 
 	// Other methods
+	r = engine->RegisterObjectMethod("grid<T>", "void resize(uint width, uint height)", asMETHODPR(CScriptGrid, Resize, (asUINT, asUINT), void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("grid<T>", "uint width() const", asMETHOD(CScriptGrid, GetWidth), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("grid<T>", "uint height() const", asMETHOD(CScriptGrid, GetHeight), asCALL_THISCALL); assert( r >= 0 );
 
@@ -419,6 +426,30 @@ CScriptGrid::CScriptGrid(asUINT width, asUINT height, asIObjectType *ot)
 		objType->GetEngine()->NotifyGarbageCollectorOfNewObject(this, objType);
 }
 
+void CScriptGrid::Resize(asUINT width, asUINT height)
+{
+	// Make sure the size isn't too large for us to handle
+	if( !CheckMaxSize(width, height) )
+		return;
+
+	// Create a new buffer
+	SGridBuffer *tmpBuffer = 0;
+	CreateBuffer(&tmpBuffer, width, height);
+	if( tmpBuffer == 0 )
+		return;
+
+	// Copy the existing values to the new buffer
+	asUINT w = width > buffer->width ? buffer->width : width;
+	asUINT h = height > buffer->height ? buffer->height : height;
+	for( asUINT y = 0; y < h; y++ )
+		for( asUINT x = 0; x < w; x++ )
+			SetValue(tmpBuffer, x, y, At(buffer, x, y));
+
+	// Replace the internal buffer
+	DeleteBuffer(buffer);
+	buffer = tmpBuffer;
+}
+
 CScriptGrid::CScriptGrid(asUINT width, asUINT height, void *defVal, asIObjectType *ot)
 {
 	refCount = 1;
@@ -455,9 +486,14 @@ CScriptGrid::CScriptGrid(asUINT width, asUINT height, void *defVal, asIObjectTyp
 
 void CScriptGrid::SetValue(asUINT x, asUINT y, void *value)
 {
+	SetValue(buffer, x, y, value);
+}
+
+void CScriptGrid::SetValue(SGridBuffer *buf, asUINT x, asUINT y, void *value)
+{
 	// At() will take care of the out-of-bounds checking, though
 	// if called from the application then nothing will be done
-	void *ptr = At(x, y);
+	void *ptr = At(buf, x, y);
 	if( ptr == 0 ) return;
 
 	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
@@ -548,10 +584,15 @@ int CScriptGrid::GetElementTypeId() const
 	return subTypeId;
 }
 
-// Return a pointer to the array element. Returns 0 if the index is out of bounds
-const void *CScriptGrid::At(asUINT x, asUINT y) const
+void *CScriptGrid::At(asUINT x, asUINT y)
 {
-	if( buffer == 0 || x >= buffer->width || y >= buffer->height )
+	return At(buffer, x, y);
+}
+
+// Return a pointer to the array element. Returns 0 if the index is out of bounds
+void *CScriptGrid::At(SGridBuffer *buf, asUINT x, asUINT y)
+{
+	if( buf == 0 || x >= buf->width || y >= buf->height )
 	{
 		// If this is called from a script we raise a script exception
 		asIScriptContext *ctx = asGetActiveContext();
@@ -560,15 +601,15 @@ const void *CScriptGrid::At(asUINT x, asUINT y) const
 		return 0;
 	}
 
-	asUINT index = x+y*buffer->width;
+	asUINT index = x+y*buf->width;
 	if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
-		return *(void**)(buffer->data + elementSize*index);
+		return *(void**)(buf->data + elementSize*index);
 	else
-		return buffer->data + elementSize*index;
+		return buf->data + elementSize*index;
 }
-void *CScriptGrid::At(asUINT x, asUINT y)
+const void *CScriptGrid::At(asUINT x, asUINT y) const
 {
-	return const_cast<void*>(const_cast<const CScriptGrid *>(this)->At(x, y));
+	return const_cast<CScriptGrid*>(this)->At(const_cast<SGridBuffer*>(buffer), x, y);
 }
 
 

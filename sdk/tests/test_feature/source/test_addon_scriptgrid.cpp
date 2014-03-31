@@ -16,6 +16,31 @@ bool Test()
 	asIScriptEngine *engine;
 //	asIScriptModule *mod;
 
+	// Test resize
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptGrid(engine);
+		RegisterStdString(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, 
+			"grid<string> g; \n"
+			"g.resize(1,1); \n"
+			"g[0,0] = 'hello'; \n"
+			"g.resize(2,2); \n"
+			"assert( g[0,0] == 'hello' ); \n"
+			"g[1,1] = 'there'; \n"
+			"g.resize(1,1); \n"
+			"assert( g.width() == 1 && g.height() == 1 ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test initialization lists
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
