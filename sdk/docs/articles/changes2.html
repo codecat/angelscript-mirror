@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.0 WIP - 2014/03/30</h2>
+<h2>Version 2.29.0 WIP - 2014/03/31</h2>
 
 <ul>
 <li>Bug fixes
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure with implicit cast and get accessor (Thanks Amer Koleci)
 <li>Fixed opCall on global variable (Thanks gjl)
 <li>Fixed crash when calling opCall on a property accessor on a global variable (Thanks gjl)
+<li>Fixed bug in compiler where temporary variable could be overwritten when calling overloaded operators (Thanks Jason Goepel)
 </ul>
 <li>Library
 <ul>

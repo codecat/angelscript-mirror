@@ -11373,6 +11373,28 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			// Process the lctx expression as get accessor
 			ProcessPropertyGetAccessor(lctx, node);
 
+			// Make sure the rvalue doesn't have deferred temporary variables that are also used in the lvalue,
+			// since that would cause the VM to overwrite the variable while executing the bytecode for the lvalue.
+			asCArray<int> usedVars;
+			lctx->bc.GetVarsUsed(usedVars);
+			size_t oldReservedVars = reservedVariables.GetLength();
+			for( asUINT n = 0; n < rctx->deferredParams.GetLength(); n++ )
+			{
+				if( usedVars.Exists(rctx->deferredParams[n].argType.stackOffset) )
+				{
+					if( reservedVariables.GetLength() == oldReservedVars )
+						reservedVariables.Concatenate(usedVars);
+
+					// Allocate a new variable for the deferred argument
+					int offset = AllocateVariableNotIn(rctx->deferredParams[n].argType.dataType, true, false, rctx);
+					int oldVar = rctx->deferredParams[n].argType.stackOffset;
+					rctx->deferredParams[n].argType.stackOffset = short(offset);
+					rctx->bc.ExchangeVar(oldVar, offset);
+					ReleaseTemporaryVariable(oldVar, 0);
+				}
+			}
+			reservedVariables.SetLength(oldReservedVars);
+
 			// Merge the bytecode so that it forms lvalue.methodName(rvalue)
 			asCArray<asSExprContext *> args;
 			args.PushLast(rctx);

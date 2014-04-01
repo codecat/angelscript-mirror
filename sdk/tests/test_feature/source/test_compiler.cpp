@@ -235,6 +235,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test memory leak issue
+	// http://www.gamedev.net/topic/655054-garbage-collection-bug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int g_int; \n"
+			"class Leaker \n"
+			"{ \n"
+			"  Leaker@ Foo()      { return this;  } \n"
+			"  Leaker@ Bar()      { return this;  } \n"
+			"  Leaker@ Goo()      { return this;  } \n"
+			"  Leaker@ opDiv(int) { return this;  } \n"
+			"  int& Car()         { return g_int; } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"    Leaker x; \n"
+			"    x.Foo().Goo() / x.Foo().Bar().Goo().Car(); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test problem with opAssign reported by loboWu
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
