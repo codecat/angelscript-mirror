@@ -1227,6 +1227,42 @@ asUINT asCScriptFunction::GetParamCount() const
 }
 
 // interface
+int asCScriptFunction::GetParam(asUINT index, int *typeId, asDWORD *flags, const char **name, const char **defaultArg) const
+{
+	if( index >= parameterTypes.GetLength() )
+		return asINVALID_ARG;
+
+	if( typeId )
+		*typeId = engine->GetTypeIdFromDataType(parameterTypes[index]);
+
+	if( flags )
+	{
+		*flags = inOutFlags[index];
+		*flags |= parameterTypes[index].IsReadOnly() ? asTM_CONST : 0;
+	}
+
+	if( name )
+	{
+		// The parameter names are not stored if loading from bytecode without debug information
+		if( index < parameterNames.GetLength() )
+			*name = parameterNames[index].AddressOf();
+		else
+			*name = 0;
+	}
+
+	if( defaultArg )
+	{
+		if( index < defaultArgs.GetLength() && defaultArgs[index] )
+			*defaultArg = defaultArgs[index]->AddressOf();
+		else
+			*defaultArg = 0;
+	}
+
+	return asSUCCESS;
+}
+
+#ifdef AS_DEPRECATED
+// Deprecated since 2014-04-06, 2.29.0
 int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
 {
 	if( index >= parameterTypes.GetLength() )
@@ -1240,6 +1276,7 @@ int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
 
 	return engine->GetTypeIdFromDataType(parameterTypes[index]);
 }
+#endif
 
 // interface
 asIScriptEngine *asCScriptFunction::GetEngine() const

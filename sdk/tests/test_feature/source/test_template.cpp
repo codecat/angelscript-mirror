@@ -357,8 +357,11 @@ bool Test()
 		asIScriptFunction *func = type->GetMethodByName("func");
 		if( func->GetReturnTypeId() != asTYPEID_FLOAT )
 			TEST_FAILED;
-		if( func->GetParamTypeId(0) != asTYPEID_BOOL ||
-			func->GetParamTypeId(1) != asTYPEID_INT32 )
+		int t0, t1;
+		func->GetParam(0, &t0);
+		func->GetParam(1, &t1);
+		if( t0 != asTYPEID_BOOL ||
+			t1 != asTYPEID_INT32 )
 			TEST_FAILED;
 
 		engine->Release();

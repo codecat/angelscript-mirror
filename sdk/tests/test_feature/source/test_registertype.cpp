@@ -1174,7 +1174,8 @@ struct CParamValidator
 	static int Validate(asIScriptFunction *descr, int arg)
 	{
 		asDWORD flags;
-		int t1 = descr->GetParamTypeId(arg, &flags);
+		int t1;
+		descr->GetParam(arg, &t1, &flags);
 		int t2 = descr->GetEngine()->GetTypeIdByDecl(CTypeInfo<A1>::GetTypeName());
 		if( t1 != t2 )
 			return -1;

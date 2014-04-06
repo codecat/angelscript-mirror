@@ -994,7 +994,11 @@ public:
 	virtual bool             IsOverride() const = 0;
 	virtual bool             IsShared() const = 0;
 	virtual asUINT           GetParamCount() const = 0;
+	virtual int              GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.29.0, 2014-04-06
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
+#endif
 	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 
 	// Type id for function pointers 

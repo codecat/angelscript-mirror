@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.0 WIP - 2014/04/05</h2>
+<h2>Version 2.29.0 WIP - 2014/04/06</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,10 +32,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Added the flag asOBJ_APP_ARRAY to support registering types that are really C arrays
 <li>The parameter names from the declaration are now stored in the functions (Thanks GGLucas)
+<li>The parameter names are stored with the saved bytecode, unless debug information is stripped
 </ul>
 <li>Library interface
 <ul>
 <li>asIScriptFunction::GetDeclaration has an optional argument to include the parameter names (Thanks GGLucas)
+<li>Added asIScriptFunction::GetParam that can optionally return both the name and default argument in addition to the type id
+<li>Deprecated asIScriptFunction::GetParamTypeId
 </ul>
 <li>Script language
 <ul>

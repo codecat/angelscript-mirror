@@ -142,8 +142,11 @@ public:
 	bool                 IsOverride() const;
 	bool                 IsShared() const;
 	asUINT               GetParamCount() const;
-	// TODO: 2.29.0: Change to GetParam(index, flags, name)
+	int                  GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const;
+#ifdef AS_DEPRECATED
+	// Deprecated, since 2.29.0, 2014-04-06
 	int                  GetParamTypeId(asUINT index, asDWORD *flags = 0) const;
+#endif
 	int                  GetReturnTypeId(asDWORD *flags = 0) const;
 
 	// Type id for function pointers 
