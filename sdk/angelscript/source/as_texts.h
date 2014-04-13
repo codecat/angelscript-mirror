@@ -67,6 +67,8 @@
 #define TXT_CONSTRUCTOR_NAME_ERROR                 "The name of constructors and destructors must be the same as the class"
 
 #define TXT_DATA_TYPE_CANT_BE_s                     "Data type can't be '%s'"
+#define TXT_CANNOT_RESOLVE_AUTO                     "Unable to resolve auto type"
+#define TXT_AUTO_NOT_ALLOWED                        "Auto is not allowed here"
 #define TXT_DECL_IN_SWITCH                          "Variables cannot be declared in switch cases, except inside statement blocks"
 #define TXT_DEFAULT_MUST_BE_LAST                    "The default case must be the last one"
 #define TXT_DEF_ARG_MISSING_IN_FUNC_s               "All subsequent parameters after the first default value must have default values in function '%s'"

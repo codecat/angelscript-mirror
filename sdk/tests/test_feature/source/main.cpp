@@ -135,6 +135,7 @@ namespace TestEnum              { bool Test(); }
 namespace TestFile              { bool Test(); }
 namespace TestRefCast           { bool Test(); }
 namespace TestImplicitHandle    { bool Test(); }
+namespace TestAuto              { bool Test(); }
 namespace TestInheritance       { bool Test(); }
 namespace TestDump              { bool Test(); }
 namespace TestTemplate          { bool Test(); }
@@ -225,6 +226,7 @@ int main(int argc, char **argv)
 	if( Test_Addon_ScriptHandle::Test()  ) goto failed; else printf("-- Test_Addon_ScriptHandle passed\n");
 	if( Test_Addon_ScriptArray::Test()   ) goto failed; else printf("-- Test_Addon_ScriptArray passed\n");
 	if( Test_Addon_Dictionary::Test()    ) goto failed; else printf("-- Test_Addon_Dictionary passed\n");
+	if( TestAuto::Test()                ) goto failed; else printf("-- TestAuto passed\n");
 	if( TestPow::Test()                 ) goto failed; else printf("-- TestPow passed\n");
 	if( TestMixin::Test()               ) goto failed; else printf("-- TestMixin passed\n");
 	if( TestNamespace::Test()           ) goto failed; else printf("-- TestNamespace passed\n");

@@ -67,6 +67,7 @@ SRCNAMES = \
   test_getset.cpp \
   test_implicitcast.cpp \
   test_implicithandle.cpp \
+  test_auto.cpp \
   test_import.cpp \
   test_import2.cpp \
   test_inheritance.cpp \

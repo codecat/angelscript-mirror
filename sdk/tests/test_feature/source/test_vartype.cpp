@@ -281,8 +281,6 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "script (1, 22) : Error   : Expected data type\n" 
 		               "script (1, 22) : Error   : Instead found '?'\n"
-		               "script (1, 22) : Error   : Expected method or property\n" 
-					   "script (1, 22) : Error   : Instead found '?'\n"
 					   "script (1, 33) : Error   : Unexpected token '}'\n" ) 
 	{
 		printf("%s", bout.buffer.c_str());

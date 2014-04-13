@@ -55,8 +55,8 @@ BEGIN_AS_NAMESPACE
 template<>
 void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asSNameSpaceNamePair &key) const
 {
-	asSNameSpace *ns = entry->property->nameSpace;
-	asCString name = entry->property->name;
+	asSNameSpace *ns = entry->ns;
+	asCString name = entry->name;
 	key = asSNameSpaceNamePair(ns, name);
 }
 
@@ -242,9 +242,11 @@ int asCBuilder::Build()
 
 	ParseScripts();
 
+	// Compile the global variables first, so the auto types can be
+	// resolved before the variables is used else where in the code
+	CompileGlobalVariables();
 	CompileInterfaces();
 	CompileClasses();
-	CompileGlobalVariables();
 	CompileFunctions();
 
 	// TODO: Attempt to reorder the initialization of global variables so that
@@ -1448,12 +1450,14 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 		gvar->isCompiled  = false;
 		gvar->datatype    = type;
 		gvar->isEnumValue = false;
+		gvar->ns          = ns;
 
 		// TODO: Give error message if wrong
 		asASSERT(!gvar->datatype.IsReference());
 
-		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype, ns);
-		gvar->index    = gvar->property->id;
+		// Allocation is done when the variable is compiled, to allow for autos
+		gvar->property = 0;
+		gvar->index    = 0;
 
 		globVariables.Put(gvar);
 
@@ -1878,7 +1882,7 @@ void asCBuilder::CompileGlobalVariables()
 				}
 
 				// Set the namespace that should be used for this function
-				initFunc->nameSpace = gvar->property->nameSpace;
+				initFunc->nameSpace = gvar->ns;
 
 				asCCompiler comp(engine);
 				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->initializationNode, gvar, initFunc);
@@ -3464,6 +3468,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				gvar->initializationNode = asnNode;
 				gvar->name               = name;
 				gvar->datatype           = type;
+				gvar->ns                 = ns;
 				// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
 				// Set the index to a negative to allow compiler to diferentiate from ordinary global var when compiling the initialization
 				gvar->index              = -1; 
@@ -4690,6 +4695,10 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			dt = asCDataType::CreatePrimitive(ttInt, isConst);
 			return dt;
 		}
+	}
+	else if( n->tokenType == ttAuto )
+	{
+		dt = asCDataType::CreateAuto(isConst);
 	}
 	else
 	{

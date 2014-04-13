@@ -44,10 +44,9 @@ bool Test()
 	r = mod->Build();
 	if( r >= 0 )
 		TEST_FAILED;
+	// TODO: The } token isn't unexpected, the parser is just not understanding that it is still inside the object declaration
 	if( bout.buffer != "TestParser (3, 17) : Error   : Expected ')' or ','\n"
 		               "TestParser (3, 17) : Error   : Instead found 'int'\n"
-					   "TestParser (3, 20) : Error   : Expected method or property\n"
-					   "TestParser (3, 20) : Error   : Instead found '&'\n"
 					   "TestParser (4, 1) : Error   : Unexpected token '}'\n" )
 	{
 		printf("%s", bout.buffer.c_str());

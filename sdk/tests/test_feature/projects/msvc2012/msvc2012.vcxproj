@@ -348,6 +348,7 @@
     <ClCompile Include="..\..\source\test_getset.cpp" />
     <ClCompile Include="..\..\source\test_implicitcast.cpp" />
     <ClCompile Include="..\..\source\test_implicithandle.cpp" />
+    <ClCompile Include="..\..\source\test_auto.cpp" />
     <ClCompile Include="..\..\source\test_import.cpp" />
     <ClCompile Include="..\..\source\test_import2.cpp" />
     <ClCompile Include="..\..\source\test_inheritance.cpp" />

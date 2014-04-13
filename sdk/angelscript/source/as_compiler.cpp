@@ -1193,10 +1193,20 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		node = parser.GetScriptNode();
 	}
 
+	asSExprContext compiledCtx(engine);
+	bool preCompiled = false;
+	if( gvar->datatype.IsAuto() )
+		preCompiled = CompileAutoType(gvar->datatype, compiledCtx, node);
+	if( gvar->property == 0 )
+	{
+		gvar->property = builder->module->AllocateGlobalProperty(gvar->name.AddressOf(), gvar->datatype, gvar->ns);
+		gvar->index = gvar->property->id;
+	}
+
 	// Compile the expression
 	asSExprContext ctx(engine);
 	asQWORD constantValue;
-	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1) )
+	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1, preCompiled ? &compiledCtx : 0) )
 	{
 		// Should the variable be marked as pure constant?
 		if( gvar->datatype.IsPrimitive() && gvar->datatype.IsReadOnly() )
@@ -2444,6 +2454,56 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 	return cost;
 }
 
+bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx, asCScriptNode *node)
+{
+	if( node && node->nodeType == snAssignment )
+	{
+		int r = CompileAssignment(node, &compiledCtx);
+		if( r >= 0 )
+		{
+			asCDataType newType = compiledCtx.type.dataType;
+			bool success = true;
+
+			//Handle const qualifier on auto
+			if( type.IsReadOnly() )
+				newType.MakeReadOnly(true);
+			else if( newType.IsPrimitive() )
+				newType.MakeReadOnly(false);
+
+			//Handle reference/value stuff
+			newType.MakeReference(false);
+			if( !newType.IsObjectHandle() )
+			{
+				// We got a value object or an object reference.
+				// Turn the variable into a handle if specified
+				// as auto@, otherwise make it a 'value'.
+				if( type.IsHandleToAuto() )
+				{
+					if( newType.MakeHandle(true) < 0 )
+					{
+						Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
+						success = false;
+					}
+				}
+			}
+
+			if(success)
+				type = newType;
+			else
+				type = asCDataType::CreatePrimitive(ttInt, false);
+			return true;
+		}
+
+		return false;
+	}
+	else
+	{
+		Error(TXT_CANNOT_RESOLVE_AUTO, node);
+		type = asCDataType::CreatePrimitive(ttInt, false);
+		return false;
+	}
+}
+
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
 	// Get the data type
@@ -2453,6 +2513,12 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 	asCScriptNode *node = decl->firstChild->next;
 	while( node )
 	{
+		// If this is an auto type, we have to compile the assignment now to figure out the type
+		asSExprContext compiledCtx(engine);
+		bool preCompiled = false;
+		if( type.IsAuto() )
+			preCompiled = CompileAutoType(type, compiledCtx, node->next);
+
 		// Is the type allowed?
 		if( !type.CanBeInstanciated() )
 		{
@@ -2521,7 +2587,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		{
 			// Compile the initialization expression
 			asQWORD constantValue = 0;
-			if( CompileInitialization(node, bc, type, varNode, offset, &constantValue, 0) )
+			if( CompileInitialization(node, bc, type, varNode, offset, &constantValue, 0, preCompiled ? &compiledCtx : 0) )
 			{
 				// Check if the variable should be marked as pure constant
 				if( type.IsPrimitive() && type.IsReadOnly() )
@@ -2539,7 +2605,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 }
 
 // Returns true if the initialization expression is a constant expression
-bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem)
+bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem, asSExprContext *preCompiled)
 {
 	bool isConstantExpression = false;
 	if( node && node->nodeType == snArgList )
@@ -2702,6 +2768,21 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		//             just the copy constructor. Only if no appropriate constructor is
 		//             available should the assignment operator be used.
 
+		// Compile the expression
+		asSExprContext newExpr(engine);
+		asSExprContext* expr;
+		int r = 0;
+
+		if( preCompiled )
+		{
+			expr = preCompiled;
+		}
+		else
+		{
+			expr = &newExpr;
+			r = CompileAssignment(node, expr);
+		}
+
 		// Call the default constructor here
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
@@ -2710,20 +2791,17 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		else if( isVarGlobOrMem == 2 )
 			CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
 
-		// Compile the expression
-		asSExprContext expr(engine);
-		int r = CompileAssignment(node, &expr);
 		if( r >= 0 )
 		{
 			if( type.IsPrimitive() )
 			{
-				if( type.IsReadOnly() && expr.type.isConstant )
+				if( type.IsReadOnly() && expr->type.isConstant )
 				{
-					ImplicitConversion(&expr, type, node, asIC_IMPLICIT_CONV);
+					ImplicitConversion(expr, type, node, asIC_IMPLICIT_CONV);
 
 					// Tell caller that the expression is a constant so it can mark the variable as pure constant
 					isConstantExpression = true;
-					*constantValue = expr.type.qwordValue;
+					*constantValue = expr->type.qwordValue;
 				}
 
 				asSExprContext lctx(engine);
@@ -2754,7 +2832,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				lctx.type.dataType.MakeReadOnly(false);
 				lctx.type.isLValue = true;
 
-				DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
+				DoAssignment(&ctx, &lctx, expr, node, node, ttAssignment, node);
 				ProcessDeferredParams(&ctx);
 			}
 			else
@@ -2810,7 +2888,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
 				if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 				{
-					assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
+					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx);
 					if( assigned )
 					{
 						// Pop the resulting value
@@ -2827,27 +2905,27 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 
 				if( !assigned )
 				{
-					PrepareForAssignment(&lexpr.type.dataType, &expr, node, false);
+					PrepareForAssignment(&lexpr.type.dataType, expr, node, false);
 
 					// If the expression is constant and the variable also is constant
 					// then mark the variable as pure constant. This will allow the compiler
 					// to optimize expressions with this variable.
-					if( type.IsReadOnly() && expr.type.isConstant )
+					if( type.IsReadOnly() && expr->type.isConstant )
 					{
 						isConstantExpression = true;
-						*constantValue = expr.type.qwordValue;
+						*constantValue = expr->type.qwordValue;
 					}
 
 					// Add expression code to bytecode
-					MergeExprBytecode(&ctx, &expr);
+					MergeExprBytecode(&ctx, expr);
 
 					// Add byte code for storing value of expression in variable
 					ctx.bc.AddCode(&lexpr.bc);
 
-					PerformAssignment(&lexpr.type, &expr.type, &ctx.bc, errNode);
+					PerformAssignment(&lexpr.type, &expr->type, &ctx.bc, errNode);
 
 					// Release temporary variables used by expression
-					ReleaseTemporaryVariable(expr.type, &ctx.bc);
+					ReleaseTemporaryVariable(expr->type, &ctx.bc);
 
 					ctx.bc.Instr(asBC_PopPtr);
 

@@ -10,6 +10,7 @@ may reserve additional keywords that are specific to that application.
 <tr>
 <td width=100 valign=top><code>
 and<br>
+auto<br>
 bool<br>
 break<br>
 case<br>
