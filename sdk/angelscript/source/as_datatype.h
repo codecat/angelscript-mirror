@@ -76,7 +76,6 @@ public:
 	int MakeReference(bool b);
 	int MakeReadOnly(bool b);
 	int MakeHandleToConst(bool b);
-	void MakeAuto(bool b);
 
 	bool IsTemplate()       const;
 	bool IsScriptObject()   const;
@@ -91,7 +90,7 @@ public:
 	bool IsDoubleType()     const;
 	bool IsBooleanType()    const;
 	bool IsObjectHandle()   const {return isObjectHandle;}
-	bool IsHandleToAuto()   const {return isHandleToAuto;}
+	bool IsHandleToAuto()   const {return isAuto && isObjectHandle;}
 	bool IsHandleToConst()  const;
 	bool IsArrayType()      const;
 	bool IsEnumType()       const;
@@ -142,8 +141,7 @@ protected:
 	bool isObjectHandle:1;
 	bool isConstHandle:1;
 	bool isAuto:1;
-	bool isHandleToAuto:1;
-	char dummy:2;
+	char dummy:3;
 };
 
 END_AS_NAMESPACE

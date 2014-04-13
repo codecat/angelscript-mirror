@@ -2464,13 +2464,13 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx
 			asCDataType newType = compiledCtx.type.dataType;
 			bool success = true;
 
-			//Handle const qualifier on auto
+			// Handle const qualifier on auto
 			if( type.IsReadOnly() )
 				newType.MakeReadOnly(true);
 			else if( newType.IsPrimitive() )
 				newType.MakeReadOnly(false);
 
-			//Handle reference/value stuff
+			// Handle reference/value stuff
 			newType.MakeReference(false);
 			if( !newType.IsObjectHandle() )
 			{

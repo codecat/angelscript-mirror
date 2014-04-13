@@ -51,7 +51,6 @@ asCDataType::asCDataType()
 	isReference    = false;
 	isReadOnly     = false;
 	isAuto         = false;
-	isHandleToAuto = false;
 	isObjectHandle = false;
 	isConstHandle  = false;
 	funcDef        = 0;
@@ -64,7 +63,6 @@ asCDataType::asCDataType(const asCDataType &dt)
 	isReference    = dt.isReference;
 	isReadOnly     = dt.isReadOnly;
 	isAuto         = dt.isAuto;
-	isHandleToAuto = dt.isHandleToAuto;
 	isObjectHandle = dt.isObjectHandle;
 	isConstHandle  = dt.isConstHandle;
 	funcDef        = dt.funcDef;
@@ -208,7 +206,7 @@ asCString asCDataType::Format(bool includeNamespace) const
 	}
 	else if( isAuto )
 	{
-		if( isHandleToAuto )
+		if( isObjectHandle )
 			str += "<auto@>";
 		else
 			str += "<auto>";
@@ -240,7 +238,6 @@ asCDataType &asCDataType::operator =(const asCDataType &dt)
 	isObjectHandle   = dt.isObjectHandle;
 	isConstHandle    = dt.isConstHandle;
 	isAuto           = dt.isAuto;
-	isHandleToAuto   = dt.isHandleToAuto;
 	funcDef          = dt.funcDef;
 
 	return (asCDataType &)*this;
@@ -250,15 +247,14 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 {
 	if( !b )
 	{
-		isObjectHandle = b;
+		isObjectHandle = false;
 		isConstHandle = false;
-		isHandleToAuto = false;
 	}
 	else
 	{
 		if( isAuto )
 		{
-			isHandleToAuto = true;
+			isObjectHandle = true;
 		}
 		else if( !isObjectHandle )
 		{
@@ -332,11 +328,6 @@ int asCDataType::MakeHandleToConst(bool b)
 
 	isReadOnly = b;
 	return 0;
-}
-
-void asCDataType::MakeAuto(bool b)
-{
-	isAuto = b;
 }
 
 bool asCDataType::SupportHandles() const
