@@ -410,8 +410,7 @@ CScriptArray* CScriptDictionary::GetKeys() const
 	//                 Only problem is if multiple engines are used, as they may not
 	//                 share the same type id. Alternatively it can be stored in the 
 	//                 user data for the dictionary type.
-	int stringArrayType = engine->GetTypeIdByDecl("array<string>");
-	asIObjectType *ot = engine->GetObjectTypeById(stringArrayType);
+	asIObjectType *ot = engine->GetObjectTypeByDecl("array<string>");
 
 	// Create the array object
 	CScriptArray *array = CScriptArray::Create(ot, asUINT(dict.size()));

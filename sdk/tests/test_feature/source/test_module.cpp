@@ -205,6 +205,9 @@ bool Test()
 		if( type == 0 || std::string(type->GetName()) != "array" )
 			TEST_FAILED;
 
+		if( type != mod->GetObjectTypeByDecl("array<A@>") )
+			TEST_FAILED;
+
 		mod->Discard();
 		engine->GarbageCollect();
 

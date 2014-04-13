@@ -193,7 +193,7 @@ bool Test()
 			TEST_FAILED;
 
 		// As the subtype holds handles and can form circular references it is possible for the array to form circular references too
-		asIObjectType *type = engine->GetObjectTypeById(mod->GetTypeIdByDecl("array<F>"));
+		asIObjectType *type = mod->GetObjectTypeByDecl("array<F>");
 		if( type == 0 || (type->GetFlags() & asOBJ_GC) == 0 )
 			TEST_FAILED;
 		

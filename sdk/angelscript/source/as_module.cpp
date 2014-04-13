@@ -745,6 +745,24 @@ int asCModule::GetTypeIdByDecl(const char *decl) const
 }
 
 // interface
+asIObjectType *asCModule::GetObjectTypeByDecl(const char *decl) const
+{
+	asCDataType dt;
+
+	// This const cast is safe since we know the engine won't be modified
+	asCBuilder bld(engine, const_cast<asCModule*>(this));
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+
+	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
+	if( r < 0 )
+		return 0;
+
+	return dt.GetObjectType();
+}
+
+// interface
 asUINT asCModule::GetEnumCount() const
 {
 	return (asUINT)enumTypes.GetLength();

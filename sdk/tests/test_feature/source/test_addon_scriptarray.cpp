@@ -149,7 +149,7 @@ CScriptArray *CreateArrayOfStrings()
 	if( ctx )
 	{
 		asIScriptEngine* engine = ctx->GetEngine();
-		asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
+		asIObjectType* t = engine->GetObjectTypeByDecl("array<string@>");
 		CScriptArray* arr = CScriptArray::Create(t, 3);
 		for( asUINT i = 0; i < arr->GetSize(); i++ )
 		{

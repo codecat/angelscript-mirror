@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -132,6 +132,7 @@ public:
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const;
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 
 	// Enums

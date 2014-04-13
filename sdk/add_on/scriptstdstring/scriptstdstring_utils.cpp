@@ -28,7 +28,7 @@ static CScriptArray *StringSplit(const string &delim, const string &str)
 
 	// TODO: This should only be done once
 	// TODO: This assumes that CScriptArray was already registered
-	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
+	asIObjectType *arrayType = engine->GetObjectTypeByDecl("array<string>");
 
 	// Create the array object
 	CScriptArray *array = CScriptArray::Create(arrayType);

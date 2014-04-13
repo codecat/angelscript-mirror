@@ -4374,6 +4374,23 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 }
 
 // interface
+asIObjectType *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
+{
+	asCDataType dt;
+	// This cast is ok, because we are not changing anything in the engine
+	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+	
+	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
+	if( r < 0 )
+		return 0;
+
+	return dt.GetObjectType();
+}
+
+// interface
 int asCScriptEngine::GetTypeIdByDecl(const char *decl) const
 {
 	asCDataType dt;

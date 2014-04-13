@@ -592,6 +592,7 @@ public:
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0) = 0;
@@ -731,6 +732,7 @@ public:
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 
 	// Enums

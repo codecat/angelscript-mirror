@@ -182,7 +182,7 @@ static void StringSplit_Generic(asIScriptGeneric *gen)
     asIScriptContext *ctx = asGetActiveContext();
     asIScriptEngine *engine = ctx->GetEngine();
 
-	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string@>"));
+	asIObjectType *arrayType = engine->GetObjectTypeByDecl("array<string@>");
 
     // Create the array object
     CScriptArray *array = CScriptArray::Create(arrayType);
