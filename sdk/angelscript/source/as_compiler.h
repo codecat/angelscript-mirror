@@ -233,7 +233,7 @@ protected:
 	asUINT MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs = NULL, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
 	int  CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional = false, bool noFunction = false, bool noGlobal = false, asCObjectType *objType = 0);
 	void CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults);
-	bool CompileAutoType(asCDataType &autoType, asSExprContext &compiledCtx, asCScriptNode *node);
+	bool CompileAutoType(asCDataType &autoType, asSExprContext &compiledCtx, asCScriptNode *exprNode, asCScriptNode *errNode);
 	bool CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem, asSExprContext *preCompiled = 0);
 	void CompileInitAsCopy(asCDataType &type, int offset, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool derefDestination);
 

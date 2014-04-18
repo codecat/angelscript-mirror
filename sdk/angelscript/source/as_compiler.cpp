@@ -1196,7 +1196,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	asSExprContext compiledCtx(engine);
 	bool preCompiled = false;
 	if( gvar->datatype.IsAuto() )
-		preCompiled = CompileAutoType(gvar->datatype, compiledCtx, node);
+		preCompiled = CompileAutoType(gvar->datatype, compiledCtx, node, gvar->declaredAtNode);
 	if( gvar->property == 0 )
 	{
 		gvar->property = builder->module->AllocateGlobalProperty(gvar->name.AddressOf(), gvar->datatype, gvar->ns);
@@ -2454,7 +2454,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 	return cost;
 }
 
-bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx, asCScriptNode *node)
+bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx, asCScriptNode *node, asCScriptNode *errNode)
 {
 	if( node && node->nodeType == snAssignment )
 	{
@@ -2481,7 +2481,7 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx
 				{
 					if( newType.MakeHandle(true) < 0 )
 					{
-						Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
+						Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, errNode);
 						success = false;
 					}
 				}
@@ -2498,7 +2498,7 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx
 	}
 	else
 	{
-		Error(TXT_CANNOT_RESOLVE_AUTO, node);
+		Error(TXT_CANNOT_RESOLVE_AUTO, errNode);
 		type = asCDataType::CreatePrimitive(ttInt, false);
 		return false;
 	}
@@ -2517,7 +2517,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		asSExprContext compiledCtx(engine);
 		bool preCompiled = false;
 		if( type.IsAuto() )
-			preCompiled = CompileAutoType(type, compiledCtx, node->next);
+			preCompiled = CompileAutoType(type, compiledCtx, node->next, node);
 
 		// Is the type allowed?
 		if( !type.CanBeInstanciated() )

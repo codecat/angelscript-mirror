@@ -203,6 +203,26 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test error when no expression is given
+	// http://www.gamedev.net/topic/655641-assert-when-compiling-with-auto/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = ExecuteString(engine, "auto i;");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 6) : Error   : Unable to resolve auto type\n" )
+		{
+			printf("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Success
 	return fail;
 }
