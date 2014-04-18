@@ -161,6 +161,62 @@ bool Test()
 	asIScriptModule *mod = 0;
 	int r;
 
+	// Test copy constructor for reference types
+	// Problem reported by Wracky of piko3d fame
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void func() { \n"
+			"  string test = 'hello';\n"
+			"  string copy(test); \n"
+			"  assert( copy == test ); \n"
+			"  assert( copy !is test ); \n"
+			"  string @hndl = copy; \n"
+			"  assert( hndl == test ); \n"
+			"  assert( hndl is copy ); \n"
+			"  string @copy2 = string(test); \n"
+			"  assert( copy2 == test ); \n"
+			"  assert( copy2 !is test ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		mod->AddScriptSection("test",
+			"class C { \n"
+			"  string @get_member() { \n"
+			"    return test; \n"
+			"  } \n"
+			"  string test = 'hello'; \n"
+			"} \n"
+			"void func2() { \n"
+			"  C obj; \n"
+			"  string@ copy = string(obj.member); \n"
+			"  assert( copy == obj.test ); \n"
+			"  assert( copy !is obj.test ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func2()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
 	fail = Test2() || fail;
 	fail = TestUTF16() || fail;
 
