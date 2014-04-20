@@ -4427,25 +4427,6 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 	return dt.GetSizeInMemoryBytes();
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.27.0, 2013-07-18
-void *asCScriptEngine::CreateScriptObject(int typeId)
-{
-	// Make sure the type id is for an object type, and not a primitive or a handle
-	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return 0;
-	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return 0;
-
-	asCDataType dt = GetDataTypeFromTypeId(typeId);
-
-	// Is the type id valid?
-	if( !dt.IsValid() ) return 0;
-
-	asCObjectType *objType = dt.GetObjectType();
-
-	return CreateScriptObject(objType);
-}
-#endif
-
 // interface
 void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 {
@@ -4546,28 +4527,6 @@ void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 	return ptr;
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.27.0, 2013-07-18
-// interface
-void *asCScriptEngine::CreateUninitializedScriptObject(int typeId)
-{
-	// Make sure the type id is for an object type, and not a primitive or a handle.
-	// This function only works for script classes. Registered types cannot be created this way.
-	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return 0;
-	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return 0;
-	if( (typeId & asTYPEID_SCRIPTOBJECT) == 0 ) return 0;
-
-	asCDataType dt = GetDataTypeFromTypeId(typeId);
-
-	// Is the type id valid?
-	if( !dt.IsValid() ) return 0;
-
-	asCObjectType *objType = dt.GetObjectType();
-
-	return CreateUninitializedScriptObject(objType);
-}
-#endif
-
 // interface
 void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type)
 {
@@ -4586,23 +4545,6 @@ void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type
 
 	return obj;
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.27.0, 2013-07-18
-void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, int typeId)
-{
-	asCDataType dt = GetDataTypeFromTypeId(typeId);
-	if( !dt.IsValid() ) return 0;
-	asCObjectType *objType = dt.GetObjectType();
-
-	void *newObj = CreateScriptObject(objType);
-	if( newObj == 0 ) return 0;
-
-	AssignScriptObject(newObj, origObj, typeId);
-
-	return newObj;
-}
-#endif
 
 // interface
 void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType *type)
@@ -4629,26 +4571,6 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 
 	AssignScriptObject(mem, obj, type);
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.27.0, 2013-07-18
-void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, int typeId)
-{
-	// Make sure the type id is for an object type, and not a primitive or a handle
-	if( (typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR)) != typeId ) return;
-	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
-
-	// Copy the contents from the original object, using the assignment operator
-	asCDataType dt = GetDataTypeFromTypeId(typeId);
-
-	// Is the type id valid?
-	if( !dt.IsValid() ) return;
-
-	asCObjectType *objType = dt.GetObjectType();
-
-	AssignScriptObject(dstObj, srcObj, objType);
-}
-#endif
 
 // interface
 void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type)
@@ -4680,31 +4602,6 @@ void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIOb
 	}
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.27.0, 2013-07-18
-void asCScriptEngine::AddRefScriptObject(void *obj, int typeId)
-{
-	// Make sure it is not a null pointer
-	if( obj == 0 ) return;
-
-	// Make sure the type id is for an object type or a handle
-	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
-
-	asCDataType dt = GetDataTypeFromTypeId(typeId);
-
-	// Is the type id valid?
-	if( !dt.IsValid() ) return;
-
-	asCObjectType *objType = dt.GetObjectType();
-
-	if( objType->beh.addref )
-	{
-		// Call the addref behaviour
-		CallObjectMethod(obj, objType->beh.addref);
-	}
-}
-#endif
-
 // interface
 void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
 {
@@ -4718,27 +4615,6 @@ void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
 		CallObjectMethod(obj, objType->beh.addref);
 	}
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.27.0, 2013-07-18
-void asCScriptEngine::ReleaseScriptObject(void *obj, int typeId)
-{
-	// Make sure it is not a null pointer
-	if( obj == 0 ) return;
-
-	// Make sure the type id is for an object type or a handle
-	if( (typeId & asTYPEID_MASK_OBJECT) == 0 ) return;
-
-	asCDataType dt = GetDataTypeFromTypeId(typeId);
-
-	// Is the type id valid?
-	if( !dt.IsValid() ) return;
-
-	asCObjectType *objType = dt.GetObjectType();
-
-	ReleaseScriptObject(obj, objType);
-}
-#endif
 
 // interface
 void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
