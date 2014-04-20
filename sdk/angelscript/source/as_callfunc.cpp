@@ -486,6 +486,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 
 	context->m_callingSystemFunction = descr;
+	bool cppException = false;
 #ifdef AS_NO_EXCEPTIONS
 	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
 #else
@@ -500,6 +501,8 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	}
 	catch(...)
 	{
+		cppException = true;
+
 		// Convert the exception to a script exception so the VM can 
 		// properly report the error to the application and then clean up
 		context->SetException(TXT_EXCEPTION_CAUGHT);
@@ -602,7 +605,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				}
 			}
 
-			if( context->m_status == asEXECUTION_EXCEPTION )
+			if( context->m_status == asEXECUTION_EXCEPTION && !cppException )
 			{
 				// If the function raised a script exception it really shouldn't have 
 				// initialized the object. However, as it is a soft exception there is 

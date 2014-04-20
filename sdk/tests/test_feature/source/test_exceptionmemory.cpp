@@ -204,6 +204,13 @@ void ExceptionHandle_gen(asIScriptGeneric *gen)
 	gen->SetReturnObject(0);
 }
 
+std::string ReturnStringButException()
+{
+	// Observe, on MSVC in debug mode this will show 2 "First-chance exception at <address> in msvc test as.exe: Microsoft C++ exception: int at memory location <address>"
+	throw 42; // random exception. AngelScript will catch all the same way
+	return ""; // This is never returned so AngelScript has to properly handle the situation
+}
+
 bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
@@ -216,6 +223,28 @@ bool Test()
 	bool fail = false;
 	int r;
 	int suspendId, exceptionId;
+
+	// Test calling a function that throws an exception
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("string RetStrButExcept()", asFUNCTION(ReturnStringButException), asCALL_CDECL);
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "string str = RetStrButExcept()", 0, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		else if( std::string(ctx->GetExceptionString()) != "Caught an exception from the application" )
+		{
+			printf("Got exception : %s\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+	
+		ctx->Release();
+		engine->Release();
+	}
+	
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
