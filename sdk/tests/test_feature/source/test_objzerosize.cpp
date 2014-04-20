@@ -89,7 +89,8 @@ bool Test()
 	// It must not be allowed as sub type of array
 	bout.buffer = "";
 	r = ExecuteString(engine, "Object[] obj;");
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n" )
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n"
+							     "array (0, 0) : Error   : The subtype has no default factory\n" )
 	{
 		printf("%s", bout.buffer.c_str());
 		TEST_FAILED;

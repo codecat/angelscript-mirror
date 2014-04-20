@@ -459,6 +459,7 @@ bool Test()
 		if( ctx ) ctx->Release();
 
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 		r = mod->Build();
@@ -534,7 +535,8 @@ bool Test()
 		r = ExecuteString(engine, "array<single> a;");
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
+		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+						   "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -948,7 +950,8 @@ bool Test()
 		r = mod->Build();
 		if( r > 0 ) 
 			TEST_FAILED;
-		if( bout.buffer != "script (5, 7) : Error   : Can't instanciate template 'array' with subtype 'CTest'\n" )
+		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+						   "script (5, 7) : Error   : Can't instanciate template 'array' with subtype 'CTest'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

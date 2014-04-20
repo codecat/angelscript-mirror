@@ -486,6 +486,12 @@ int asCReader::ReadInner()
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				Error(TXT_INVALID_BYTECODE_d);
 			}
+			else
+			{
+				// If the callback said this template instance won't be garbage collected then remove the flag
+				if( dontGarbageCollect )
+					usedTypes[i]->flags &= ~asOBJ_GC;
+			}
 		}
 	}
 	engine->deferValidationOfTemplateTypes = false;

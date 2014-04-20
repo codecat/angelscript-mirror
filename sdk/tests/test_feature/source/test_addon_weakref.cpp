@@ -132,6 +132,7 @@ bool Test()
 						   "Test_Addon_WeakRef (3, 11) : Error   : Can't instanciate template 'weakref' with subtype 'int'\n"
 						   "Test_Addon_WeakRef (4, 11) : Error   : Can't instanciate template 'weakref' with subtype 'string'\n"
 						   "Test_Addon_WeakRef (5, 11) : Error   : Can't instanciate template 'weakref' with subtype 'Test@'\n"
+						   "weakref (0, 0) : Error   : The subtype doesn't support weak references\n"
 						   "Test_Addon_WeakRef (6, 11) : Error   : Can't instanciate template 'weakref' with subtype 'array<Test>'\n" )
 		{
 			printf("%s", bout.buffer.c_str());

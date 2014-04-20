@@ -968,6 +968,25 @@ int asCScriptEngine::WriteMessage(const char *section, int row, int col, asEMsgT
 	if( !msgCallback )
 		return 0;
 
+	// If a pre-message has been set, then write that first
+	if( preMessage.isSet )
+	{
+		asSMessageInfo msg;
+		msg.section = preMessage.scriptname.AddressOf();
+		msg.row     = preMessage.r;
+		msg.col     = preMessage.c;
+		msg.type    = asMSGTYPE_INFORMATION;
+		msg.message = preMessage.message.AddressOf();
+
+		if( msgCallbackFunc.callConv < ICC_THISCALL )
+			CallGlobalFunction(&msg, msgCallbackObj, &msgCallbackFunc, 0);
+		else
+			CallObjectMethod(msgCallbackObj, &msg, &msgCallbackFunc, 0);
+
+		preMessage.isSet = false;
+	}
+
+	// Write the message to the callback
 	asSMessageInfo msg;
 	msg.section = section;
 	msg.row     = row;
@@ -3385,25 +3404,25 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Before filling in the methods, call the template instance callback behaviour to validate the type
 	if( templateType->beh.templateCallback )
 	{
-		bool dontGarbageCollect = false;
-
-		asCScriptFunction *callback = scriptFunctions[templateType->beh.templateCallback];
-		if( !CallGlobalFunctionRetBool(ot, &dontGarbageCollect, callback->sysFuncIntf, callback) )
+		// If the validation is deferred then the validation will be done later,
+		// so it is necessary to continue the preparation of the template instance type
+		if( !deferValidationOfTemplateTypes )
 		{
-			// If the validation is deferred then the validation will be done later,
-			// so it is necessary to continue the preparation of the template instance type
-			if( !deferValidationOfTemplateTypes )
+			asCScriptFunction *callback = scriptFunctions[templateType->beh.templateCallback];
+	
+			bool dontGarbageCollect = false;
+			if( !CallGlobalFunctionRetBool(ot, &dontGarbageCollect, callback->sysFuncIntf, callback) )
 			{
 				// The type cannot be instanciated
 				ot->templateSubTypes.SetLength(0);
 				asDELETE(ot, asCObjectType);
 				return 0;
 			}
-		}
 
-		// If the callback said this template instance won't be garbage collected then remove the flag
-		if( dontGarbageCollect )
-			ot->flags &= ~asOBJ_GC;
+			// If the callback said this template instance won't be garbage collected then remove the flag
+			if( dontGarbageCollect )
+				ot->flags &= ~asOBJ_GC;
+		}
 
 		ot->beh.templateCallback = templateType->beh.templateCallback;
 		scriptFunctions[ot->beh.templateCallback]->AddRef();

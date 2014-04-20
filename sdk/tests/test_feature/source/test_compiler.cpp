@@ -1072,7 +1072,8 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "Test (2, 7) : Error   : Can't instanciate template 'array' with subtype 'C'\n" )
+		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
+						   "Test (2, 7) : Error   : Can't instanciate template 'array' with subtype 'C'\n" )
 		{
 			printf("%s", bout.buffer.c_str());
 			TEST_FAILED;

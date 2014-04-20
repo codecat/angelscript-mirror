@@ -406,7 +406,17 @@ public:
 	bool                        msgCallback;
 	asSSystemFunctionInterface  msgCallbackFunc;
 	void                       *msgCallbackObj;
+	struct preMessage_t
+	{
+		preMessage_t() { isSet = false; }
+		bool      isSet;
+		asCString message;
+		asCString scriptname;
+		int       r;
+		int       c;
+	} preMessage;
 
+	// JIt compilation
 	asIJITCompiler             *jitCompiler;
 
 	// Namespaces

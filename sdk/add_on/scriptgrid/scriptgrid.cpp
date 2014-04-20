@@ -156,6 +156,7 @@ static bool ScriptGridTemplateCallback(asIObjectType *ot, bool &dontGarbageColle
 			if( !found )
 			{
 				// There is no default constructor
+				ot->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default constructor");
 				return false;
 			}
 		}
@@ -183,6 +184,7 @@ static bool ScriptGridTemplateCallback(asIObjectType *ot, bool &dontGarbageColle
 			if( !found )
 			{
 				// No default factory
+				ot->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default factory");
 				return false;
 			}
 		}

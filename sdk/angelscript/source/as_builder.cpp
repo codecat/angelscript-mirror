@@ -206,7 +206,7 @@ void asCBuilder::Reset()
 {
 	numErrors = 0;
 	numWarnings = 0;
-	preMessage.isSet = false;
+	engine->preMessage.isSet = false;
 
 #ifndef AS_NO_COMPILER
 	// Clear the cache of known types
@@ -746,7 +746,7 @@ void asCBuilder::CompileFunctions()
 			// When compiling a constructor need to pass the class declaration for member initializations
 			compiler.CompileFunction(this, current->script, current->paramNames, current->node, func, classDecl);
 
-			preMessage.isSet = false;
+			engine->preMessage.isSet = false;
 		}
 		else if( current->objType && current->name == current->objType->name )
 		{
@@ -764,7 +764,7 @@ void asCBuilder::CompileFunctions()
 			// automatically if not implemented by the user.
 			compiler.CompileDefaultConstructor(this, current->script, node, func, classDecl);
 
-			preMessage.isSet = false;
+			engine->preMessage.isSet = false;
 		}
 		else
 		{
@@ -1973,7 +1973,7 @@ void asCBuilder::CompileGlobalVariables()
 				accumWarnings += numWarnings;
 			}
 
-			preMessage.isSet = false;
+			engine->preMessage.isSet = false;
 		}
 
 		if( !compileSucceeded )
@@ -4384,15 +4384,15 @@ void asCBuilder::WriteInfo(const asCString &scriptname, const asCString &message
 	// Need to store the pre message in a structure
 	if( pre )
 	{
-		preMessage.isSet = true;
-		preMessage.c = c;
-		preMessage.r = r;
-		preMessage.message = message;
-		preMessage.scriptname = scriptname;
+		engine->preMessage.isSet      = true;
+		engine->preMessage.c          = c;
+		engine->preMessage.r          = r;
+		engine->preMessage.message    = message;
+		engine->preMessage.scriptname = scriptname;
 	}
 	else
 	{
-		preMessage.isSet = false;
+		engine->preMessage.isSet = false;
 
 		if( !silent )
 			engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_INFORMATION, message.AddressOf());
@@ -4421,10 +4421,6 @@ void asCBuilder::WriteError(const asCString &scriptname, const asCString &messag
 {
 	numErrors++;
 
-	// Need to pass the preMessage first
-	if( preMessage.isSet )
-		WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
-
 	if( !silent )
 		engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_ERROR, message.AddressOf());
 }
@@ -4434,10 +4430,6 @@ void asCBuilder::WriteWarning(const asCString &scriptname, const asCString &mess
 	if( engine->ep.compilerWarnings )
 	{
 		numWarnings++;
-
-		// Need to pass the preMessage first
-		if( preMessage.isSet )
-			WriteInfo(preMessage.scriptname, preMessage.message, preMessage.r, preMessage.c, false);
 
 		if( !silent )
 			engine->WriteMessage(scriptname.AddressOf(), r, c, asMSGTYPE_WARNING, message.AddressOf());
