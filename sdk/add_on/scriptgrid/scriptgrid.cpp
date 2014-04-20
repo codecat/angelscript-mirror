@@ -662,7 +662,19 @@ void CScriptGrid::Construct(SGridBuffer *buf)
 		asIObjectType *subType = objType->GetSubType();
 
 		for( ; d < max; d++ )
+		{
 			*d = (void*)engine->CreateScriptObject(subType);
+			if( *d == 0 )
+			{
+				// Set the remaining entries to null so the destructor 
+				// won't attempt to destroy invalid objects later
+				memset(d, 0, sizeof(void*)*(max-d));
+
+				// There is no need to set an exception on the context,
+				// as CreateScriptObject has already done that
+				return;
+			}
+		}
 	}
 }
 

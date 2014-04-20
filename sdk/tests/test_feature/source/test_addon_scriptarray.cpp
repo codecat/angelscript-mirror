@@ -143,6 +143,17 @@ static const char *script7 =
 
 bool Test2();
 
+class ClassExceptionInConstructor
+{
+public:
+	ClassExceptionInConstructor() { throw 42; }
+	~ClassExceptionInConstructor() {}
+	ClassExceptionInConstructor &operator=(const ClassExceptionInConstructor &o) { return *this; }
+
+	static void Construct(void *mem) { new(mem) ClassExceptionInConstructor(); }
+	static void Destruct(ClassExceptionInConstructor *mem) { mem->~ClassExceptionInConstructor(); }
+};
+
 CScriptArray *CreateArrayOfStrings()
 {
 	asIScriptContext *ctx = asGetActiveContext();
@@ -170,6 +181,32 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test exception in constructor of value type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		engine->RegisterObjectType("Except", sizeof(ClassExceptionInConstructor), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+		engine->RegisterObjectBehaviour("Except", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ClassExceptionInConstructor::Construct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("Except", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(ClassExceptionInConstructor::Destruct), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("Except", "Except &opAssign(const Except &in)", asMETHOD(ClassExceptionInConstructor, operator=), asCALL_THISCALL);
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "array<Except> arr(2);", 0, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		else if( std::string(ctx->GetExceptionString()) != "Caught an exception from the application" )
+		{
+			printf("Got exception : %s\n", ctx->GetExceptionString());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
 
 	// Test initializing an array with string registered as reference
 	// type, and skipping values in initialization list

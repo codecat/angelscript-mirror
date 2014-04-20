@@ -1555,18 +1555,22 @@ public:
 	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::AddRefScriptObject(void *, const asIObjectType *) instead
 	virtual void                   AddRefScriptObject(void *obj, int typeId) = 0;
 #endif
-	//! \brief Creates a script object defined by its type id.
+	//! \brief Creates an object defined by its type.
 	//! \param[in] type The type of the object to create.
 	//! \return A pointer to the new object if successful, or null if not.
 	//!
-	//! This method is used to create a script object based on it's type id. The method will 
+	//! This method is used to create an object based on it's type. The method will 
 	//! call the object type's default factory. If the object type doesn't have a default 
 	//! factory the call will fail and no object will be created.
 	//!
 	//! Created objects will have their reference counter set to 1 so the application 
 	//! needs to release the pointer when it will no longer use it.
 	//!
-	//! This only works for objects, for primitive types and object handles the method 
+	//! If the type is a registered value type, then the memory for the object will be 
+	//! allocated using the \ref asSetGlobalMemoryFunctions "default memory routine". To 
+	//! destroy and and deallocate the object it is best to use \ref ReleaseScriptObject.
+	//!
+	//! The method only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.
 	virtual void                  *CreateScriptObject(const asIObjectType *type) = 0;
 	//! \brief Creates a copy of a script object.
@@ -1579,7 +1583,7 @@ public:
 	//! This only works for objects, for primitive types and object handles the method 
 	//! doesn't do anything and returns a null pointer.
 	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type) = 0;
-	//! \brief Creates an uninitialized script object defined by its type id.
+	//! \brief Creates an uninitialized script object defined by its type.
 	//! \param[in] type The type of the object to create.
 	//! \return A pointer to the new object if successful, or null if not.
 	//!
@@ -1609,11 +1613,14 @@ public:
 	//!
 	//! This only works for objects.
 	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type) = 0;
-	//! \brief Release the script object pointer.
+	//! \brief Release the object pointer.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] type The type of the object.
 	//!
 	//! This calls the release method of the object to release the reference.
+	//!
+	//! If the type is a value type, the method will destroy the object and deallocate
+	//! the memory using the \ref asSetGlobalMemoryFunctions "default memory routine".
 	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
 	//! \brief Increase the reference counter for the script object.
 	//! \param[in] obj A pointer to the object.

@@ -35,6 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The parameter names from the declaration are now stored in the functions (Thanks GGLucas)
 <li>The parameter names are stored with the saved bytecode, unless debug information is stripped
 <li>Improved C++ exception handling to avoid deleting object that was never returned (Thanks Polyák István)
+<li>CreateScriptObject will return null if the object constructor throws C++ exception
 </ul>
 <li>Library interface
 <ul>
@@ -52,6 +53,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>The GetTypeTraits&lt;T&gt;() helper function automatically detects when to use asOBJ_APP_ARRAY
 <li>Added default factory and resize method to the grid
+<li>Array and grid properly handle exceptions while constructing elements (Thanks Polyák István)
 </ul>
 </ul>
 

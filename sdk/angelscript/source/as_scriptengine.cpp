@@ -4473,18 +4473,41 @@ void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 	{
 		// The registered factory that takes the object type is moved
 		// to the construct behaviour when the type is instanciated
+#ifdef AS_NO_EXCEPTIONS
 		ptr = CallGlobalFunctionRetPtr(objType->beh.construct, objType);
+#else
+		try
+		{
+			ptr = CallGlobalFunctionRetPtr(objType->beh.construct, objType);
+		}
+		catch(...)
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			if( ctx )
+				ctx->SetException(TXT_EXCEPTION_CAUGHT);
+		}
+#endif
 	}
 	else if( objType->flags & asOBJ_REF )
 	{
 		// Call the default factory directly
+#ifdef AS_NO_EXCEPTIONS
 		ptr = CallGlobalFunctionRetPtr(objType->beh.factory);
+#else
+		try
+		{
+			ptr = CallGlobalFunctionRetPtr(objType->beh.factory);
+		}
+		catch(...)
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			if( ctx )
+				ctx->SetException(TXT_EXCEPTION_CAUGHT);
+		}
+#endif
 	}
 	else
 	{
-		// TODO: Shouldn't support allocating object like this, because the
-		//       caller cannot be certain how the memory was allocated.
-
 		// Make sure there is a default constructor or that it is a POD type
 		if( objType->beh.construct == 0 && !(objType->flags & asOBJ_POD) )
 		{
@@ -4498,7 +4521,26 @@ void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 		ptr = CallAlloc(objType);
 		int funcIndex = objType->beh.construct;
 		if( funcIndex )
+		{
+#ifdef AS_NO_EXCEPTIONS
 			CallObjectMethod(ptr, funcIndex);
+#else
+			try
+			{
+				CallObjectMethod(ptr, funcIndex);
+			}
+			catch(...)
+			{
+				asIScriptContext *ctx = asGetActiveContext();
+				if( ctx )
+					ctx->SetException(TXT_EXCEPTION_CAUGHT);
+
+				// Free the memory
+				CallFree(ptr);
+				ptr = 0;
+			}
+#endif
+		}
 	}
 
 	return ptr;
@@ -4716,15 +4758,14 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
 	}
 	else
 	{
-		// There is really only one reason why the application would want to 
-		// call this method for a value type, and that is if it is calling it
-		// as from a JIT compiled asBC_FREE instruction.
-
 		// Call the destructor
 		if( objType->beh.destruct )
 			CallObjectMethod(obj, objType->beh.destruct);
 		else if( objType->flags & asOBJ_LIST_PATTERN )
 			DestroyList((asBYTE*)obj, objType);
+
+		// We'll have to trust that the memory for the object was allocated with CallAlloc.
+		// This is true if the object was created in the context, or with CreateScriptObject.
 
 		// Then free the memory
 		CallFree(obj);

@@ -588,7 +588,7 @@ void CScriptArray::Reserve(asUINT maxElements)
 	}
 
 	// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
-	//       This should really be using the objects copy constructor to copy each object
+	//       This should really be using the objects copy/move constructor to copy each object
 	//       to the new location. It would most likely be a hit on the performance though.
 	memcpy(newBuffer->data, buffer->data, buffer->numElements*elementSize);
 
@@ -647,7 +647,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 		}
 
 		// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy constructor to copy each object
+		//       This should really be using the objects copy/move constructor to copy each object
 		//       to the new location. It would most likely be a hit on the performance though.
 		memcpy(newBuffer->data, buffer->data, at*elementSize);
 		if( at < buffer->numElements )
@@ -665,7 +665,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 	{
 		Destruct(buffer, at, at-delta);
 		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy constructor to copy each object
+		//       This should really be using the objects copy/move constructor to copy each object
 		//       to the new location. It would most likely be a hit on the performance though.
 		memmove(buffer->data + at*elementSize, buffer->data + (at-delta)*elementSize, (buffer->numElements - (at-delta))*elementSize);
 		buffer->numElements += delta;
@@ -673,7 +673,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 	else
 	{
 		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy constructor to copy each object
+		//       This should really be using the objects copy/move constructor to copy each object
 		//       to the new location. It would most likely be a hit on the performance though.
 		memmove(buffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements - at)*elementSize);
 		Construct(buffer, at, at+delta);
@@ -832,7 +832,19 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 		asIObjectType *subType = objType->GetSubType();
 
 		for( ; d < max; d++ )
+		{
 			*d = (void*)engine->CreateScriptObject(subType);
+			if( *d == 0 )
+			{
+				// Set the remaining entries to null so the destructor 
+				// won't attempt to destroy invalid objects later
+				memset(d, 0, sizeof(void*)*(max-d));
+
+				// There is no need to set an exception on the context,
+				// as CreateScriptObject has already done that
+				return;
+			}
+		}
 	}
 }
 
