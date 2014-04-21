@@ -82,10 +82,21 @@ public:
 	// Get an array of all keys
 	CScriptArray *GetKeys() const;
 
-	// STL style iterator
 protected:
-	struct valueStruct;
+	// The structure for holding the values
+	struct valueStruct
+	{
+		union
+		{
+			asINT64 valueInt;
+			double  valueFlt;
+			void   *valueObj;
+		};
+		int   typeId;
+	};
+
 public:
+	// STL style iterator
 	class CIterator
 	{
 	public:
@@ -140,18 +151,6 @@ protected:
 	asIScriptEngine *engine;
 	mutable int refCount;
 	mutable bool gcFlag;
-
-	// The structure for holding the values
-	struct valueStruct
-	{
-		union
-		{
-			asINT64 valueInt;
-			double  valueFlt;
-			void   *valueObj;
-		};
-		int   typeId;
-	};
 
 	// TODO: optimize: Use C++11 std::unordered_map instead
 	std::map<std::string, valueStruct> dict;

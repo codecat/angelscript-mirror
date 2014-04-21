@@ -715,7 +715,7 @@ void CScriptGrid::EnumReferences(asIScriptEngine *engine)
 }
 
 // GC behaviour
-void CScriptGrid::ReleaseAllHandles(asIScriptEngine *engine)
+void CScriptGrid::ReleaseAllHandles(asIScriptEngine*)
 {
 	DeleteBuffer(buffer);
 	buffer = 0;
