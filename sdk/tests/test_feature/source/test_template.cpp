@@ -166,11 +166,7 @@ MyDualTmpl *MyDualTmpl_factory(asIObjectType *type)
 
 bool Test()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("Skipped due to max portability\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	int r;

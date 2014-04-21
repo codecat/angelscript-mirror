@@ -139,8 +139,8 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
-#ifndef AS_MAX_PORTABILITY
 	// http://www.gamedev.net/topic/636163-segfault-when-casting-directly/
+	SKIP_ON_MAX_PORT
 	{
 		c = new ASConsole();
 
@@ -195,7 +195,6 @@ bool Test()
 
 		engine->Release();
 	}
-#endif
 
   	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

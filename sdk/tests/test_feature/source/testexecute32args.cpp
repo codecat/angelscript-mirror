@@ -263,7 +263,7 @@ bool TestExecute32Args()
 		TEST_FAILED;
 	}
 	
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	SKIP_ON_MAX_PORT
 	{
 		called = false;
 		testVal = false;

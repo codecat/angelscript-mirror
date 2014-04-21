@@ -372,11 +372,7 @@ void GetClassInstance(asIScriptEngine *engine, asIScriptFunction *func, asIScrip
 
 bool Test3()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", "TestRZ");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	int r;

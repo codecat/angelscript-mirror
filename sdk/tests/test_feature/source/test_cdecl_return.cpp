@@ -223,11 +223,7 @@ asRect TestRect()
 
 bool TestReturnStruct()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		// Skipping this test for max portability
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	int r;

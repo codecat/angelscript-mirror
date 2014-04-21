@@ -150,11 +150,8 @@ CRefClass *Factory()
 
 bool Test()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
-		return false;
-	}
+	RET_ON_MAX_PORT
+
 	bool fail = false;
 	int r;
 	COutStream out;

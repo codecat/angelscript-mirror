@@ -659,9 +659,9 @@ bool Test()
 #endif
 	}
 
-#ifndef AS_MAX_PORTABILITY
 	// Test saving/loading global variable of registered value type
 	// http://www.gamedev.net/topic/638529-wrong-function-called-on-bytecode-restoration/
+	SKIP_ON_MAX_PORT
 	{
 		struct A
 		{
@@ -716,7 +716,6 @@ bool Test()
 
 		engine->Release();
 	}
-#endif
 
 	//-----------------------------------------
 	// Saving bytecode for a module that failed to compile shouldn't be allowed

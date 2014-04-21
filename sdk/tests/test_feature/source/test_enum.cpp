@@ -76,12 +76,7 @@ public:
 
 static bool TestEnum()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		// Skipping this due to not supporting native calling conventions
-		printf("Skipped due to AS_MAX_PORTABILITY\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	asIScriptEngine   *engine;
 	CBufferedOutStream bout;
@@ -755,11 +750,7 @@ string script =
 
 int TestNalin()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("Skipped due to AS_MAX_PORTABILITY\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	asIScriptEngine   *engine;
 	int r;

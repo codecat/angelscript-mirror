@@ -8,6 +8,8 @@ static const char *TESTNAME = "Test_Addon_ScriptGrid";
 
 bool Test()
 {
+	RET_ON_MAX_PORT
+
 	bool fail = false;
 	int r;
 	COutStream out;

@@ -517,6 +517,20 @@ void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
 	*(bool*)gen->GetAddressOfReturnLocation() = ret;
 }
 
+void ScriptDictionaryIsEmpty_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+	bool ret = dict->IsEmpty();
+	*(bool*)gen->GetAddressOfReturnLocation() = ret;
+}
+
+void ScriptDictionaryGetSize_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+	asUINT ret = dict->GetSize();
+	*(asUINT*)gen->GetAddressOfReturnLocation() = ret;
+}
+
 void ScriptDictionaryDelete_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
@@ -650,6 +664,8 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, double&out) const", asFUNCTION(ScriptDictionaryGetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in) const", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "bool isEmpty() const", asFUNCTION(ScriptDictionaryIsEmpty_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "uint getSize() const", asFUNCTION(ScriptDictionaryGetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );
 

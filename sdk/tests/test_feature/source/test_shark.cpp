@@ -82,11 +82,7 @@ static const char *script =
 
 bool Test()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: This test has not been adapted for AS_MAX_PORTABILITY\n", TESTNAME);
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	int r;

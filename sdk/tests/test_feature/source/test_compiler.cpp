@@ -323,11 +323,11 @@ bool Test()
 		r = engine->RegisterObjectType("Value", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS | asOBJ_APP_CLASS_ALLINTS);
 
 		r = engine->RegisterObjectType("Vec2f", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CDAK);
-		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		// There is no copy constructor so the compiler must use the opAssign
-		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("Vec2f", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		// The opAssign is registered to return a value type by value
-		r = engine->RegisterObjectMethod("Vec2f", "Value opAssign(const Vec2f &in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("Vec2f", "Value opAssign(const Vec2f &in)", asFUNCTION(0), asCALL_GENERIC);
 
 
 
@@ -432,6 +432,7 @@ bool Test()
 
 	// Test string with implicit cast to primitive and dictionary
 	// http://www.gamedev.net/topic/652681-bug-problem-with-dictionary-addonimplicit-casts/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -515,9 +516,9 @@ bool Test()
 
 		engine->RegisterObjectType("ScriptConsoleLine", sizeof(asDWORD), asOBJ_VALUE | asOBJ_APP_CLASS);
 		engine->RegisterObjectProperty("ScriptConsoleLine", "array<string>@ m_SA_Strings", 0);
-		engine->RegisterObjectMethod("ScriptConsoleLine", "ScriptConsoleLine &opAssign(const ScriptConsoleLine& in)", asFUNCTION(0), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("ScriptConsoleLine", asBEHAVE_CONSTRUCT, "void XEAS_ScriptConsoleLineConstructor()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectBehaviour("ScriptConsoleLine", asBEHAVE_DESTRUCT, "void XEAS_ScriptConsoleLineDestructor()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("ScriptConsoleLine", "ScriptConsoleLine &opAssign(const ScriptConsoleLine& in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("ScriptConsoleLine", asBEHAVE_CONSTRUCT, "void XEAS_ScriptConsoleLineConstructor()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("ScriptConsoleLine", asBEHAVE_DESTRUCT, "void XEAS_ScriptConsoleLineDestructor()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterGlobalProperty("array<ScriptConsoleLine> @m_ScriptConsoleLineArray", (void*)1);
 
 		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
@@ -1168,9 +1169,9 @@ bool Test()
 		engine->Release();
 	}
 
-#ifndef AS_MAX_PORTABILITY
 	// Test
 	// http://www.gamedev.net/topic/640966-returning-text-crashes-as-with-mingw-471-but-not-with-441/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -1204,11 +1205,10 @@ bool Test()
 
 		engine->Release();
 	}
-#endif
 
-#ifndef AS_MAX_PORTABILITY
 	// Test that integer constants are signed by default
 	// http://www.gamedev.net/topic/625735-bizarre-errata-with-ternaries-and-integer-literals/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -1231,7 +1231,6 @@ bool Test()
 
 		engine->Release();
 	}
-#endif
 
 	// Test warnings as error
 	{
@@ -1477,9 +1476,9 @@ bool Test()
 		InstallMemoryManager();
 	}
 
-#ifndef AS_MAX_PORTABILITY
 	// Problem reported by Paril101
 	// http://www.gamedev.net/topic/636336-member-function-chaining/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -1517,7 +1516,6 @@ bool Test()
 
 		engine->Release();
 	}
-#endif
 
 	// Problem reported by zerochen
 	// http://www.gamedev.net/topic/634768-after-unreachable-code-wrong-error-msg/
@@ -4024,8 +4022,7 @@ void doStuff(float, float)
 
 bool Test2()
 {
-	if( strstr(asGetLibraryOptions(), " AS_MAX_PORTABILITY ") )
-		return false;
+	RET_ON_MAX_PORT
 
 #if defined(__GNUC__) && defined(__amd64__)
 	// TODO: Add this support
@@ -4288,8 +4285,7 @@ bool Test6()
 // http://www.gamedev.net/community/forums/topic.asp?topic_id=525467
 bool Test7()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		return false;
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 

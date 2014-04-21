@@ -31,11 +31,7 @@ static void STDCALL cfunction(int f1, float f2, double f3, int f4)
 
 bool TestStdcall4Args()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 

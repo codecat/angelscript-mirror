@@ -23,11 +23,7 @@ static const char *script =
 
 bool TestBStr()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: Test skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 

@@ -202,3 +202,7 @@ asDWORD ComputeCRC32(const asBYTE *buf, asUINT length);
 
 #define TEST_FAILED do { fail = true; printf("Failed on line %d in %s\n", __LINE__, __FILE__); } while(!fail)
 
+#define RET_ON_MAX_PORT if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") ) { printf("Test on line %d in %s skipped\n", __LINE__, __FILE__); return false; }
+
+#define SKIP_ON_MAX_PORT if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") ) { printf("Test on line %d in %s skipped\n", __LINE__, __FILE__); } else
+

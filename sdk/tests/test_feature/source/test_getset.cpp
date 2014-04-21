@@ -79,11 +79,7 @@ void formattedPrintAS( std::string& /*format*/, void* a, int typeId_a )
 
 bool Test()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("Skipped due to AS_MAX_PORTABILITY\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	int r;

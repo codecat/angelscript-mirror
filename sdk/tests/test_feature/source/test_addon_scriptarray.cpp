@@ -183,6 +183,7 @@ bool Test()
 	asIScriptEngine *engine;
 
 	// Test exception in constructor of value type
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -663,11 +664,7 @@ bool Test()
 
 	// Test creating script array from application
 	{
-		if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		{
-			printf("Subtest: Skipped due to AS_MAX_PORTABILITY\n");
-		}
-		else
+		SKIP_ON_MAX_PORT
 		{
 			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			RegisterScriptArray(engine, false);

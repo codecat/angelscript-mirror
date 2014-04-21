@@ -76,6 +76,7 @@ bool Test()
 
 	// Test registering a float[3] typedef
 	// http://www.gamedev.net/topic/653085-dont-think-im-handling-objects-properly/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -189,7 +190,7 @@ bool Test()
 		engine->RegisterObjectType("GfxSprite", 0, 1);
 		engine->RegisterObjectMethod("GfxSprite", "array<GfxSprite@>@ GetChildren() const", asFUNCTION(0), asCALL_GENERIC);
 
-		r = engine->RegisterObjectMethod("GfxSprite", "void Foo(const array<float> &in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("GfxSprite", "void Foo(const array<float> &in)", asFUNCTION(0), asCALL_GENERIC);
 
 		engine->Release();
 	}
@@ -276,8 +277,8 @@ bool Test()
 		TEST_FAILED;
 #endif
 
-#ifndef AS_MAX_PORTABILITY
 	// It should be possible to use asCALL_THISCALL_ASGLOBAL for global obj behaviours and string factory
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -291,7 +292,6 @@ bool Test()
 
 		engine->Release();
 	}
-#endif
 
 	// Test registering a specialized template instance 
 	// http://www.gamedev.net/topic/647678-bug-multiple-registration-of-template-type/
@@ -324,7 +324,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 		bout.buffer = "";
-		r = engine->RegisterGlobalFunction("void func(type @+)", asFUNCTION(0), asCALL_CDECL);
+		r = engine->RegisterGlobalFunction("void func(type @+)", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
 			TEST_FAILED;
 
@@ -776,7 +776,7 @@ bool Test()
 
 	// It should be allowed to register the type without specifying the application type,
 	// if the engine won't use it (i.e. no native functions take or return the type by value)
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -904,12 +904,7 @@ void Scoped_InRef(int &)
 
 bool TestRefScoped()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		// Skipping this due to not supporting native calling conventions
-		printf("Skipped due to AS_MAX_PORTABILITY\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	int r = 0;
@@ -1244,12 +1239,7 @@ void func9(std::string &, int) {}
 
 bool TestHelper()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		// Skipping this due to not supporting native calling conventions
-		printf("Skipped due to AS_MAX_PORTABILITY\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 

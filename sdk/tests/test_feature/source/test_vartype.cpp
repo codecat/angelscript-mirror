@@ -99,6 +99,8 @@ void testFuncSI_generic(asIScriptGeneric *gen)
 
 bool Test()
 {
+	RET_ON_MAX_PORT
+
 	bool fail = false;
 	int r;
 	COutStream out;
@@ -407,7 +409,7 @@ bool Test()
 
 
 	// It must be possible to use native functions
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	SKIP_ON_MAX_PORT
 	{
 		r = engine->RegisterGlobalFunction("void _testFuncIS(?& in, const string &in)", asFUNCTION(testFuncIS), asCALL_CDECL);
 		if( r < 0 ) TEST_FAILED;

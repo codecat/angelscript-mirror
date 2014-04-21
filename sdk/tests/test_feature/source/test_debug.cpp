@@ -316,9 +316,9 @@ bool Test()
 		engine->Release();
 	}
 
-#ifndef AS_MAX_PORTABILITY
     // Test crash in GetLineNumber
     // http://www.gamedev.net/topic/638656-crash-in-ctx-getlinenumber/
+	SKIP_ON_MAX_PORT
     {
         asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
         engine->RegisterInterface("foo");
@@ -354,7 +354,6 @@ bool Test()
 
         engine->Release();
     }
-#endif
 
 	int number = 0;
 
@@ -436,8 +435,7 @@ void DebugCall()
 
 bool Test2()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		return false;
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 	COutStream out;

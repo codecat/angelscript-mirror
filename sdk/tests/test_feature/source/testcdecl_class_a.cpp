@@ -71,11 +71,7 @@ static void class3ByVal(ClassA3 c)
 
 bool TestCDecl_ClassA()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("%s: Skipped due to AS_MAX_PORTABILITY\n", TESTNAME);
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 	bool fail = false;
 

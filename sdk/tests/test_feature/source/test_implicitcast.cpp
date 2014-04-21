@@ -124,11 +124,7 @@ static bool Test5();
 
 bool Test()
 {
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	{
-		printf("Skipped due to AS_MAX_PORTABILITY\n");
-		return false;
-	}
+	RET_ON_MAX_PORT
 
 
 	bool fail = false;
@@ -292,8 +288,7 @@ bool Test()
 
 	// Test5
 	// Exclicit value cast
-	// TODO: This should work for MAX_PORTABILITY as well
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -455,8 +450,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// TODO: This should work for MAX_PORTABILITY as well
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	SKIP_ON_MAX_PORT
 	{
 
 		// It must be possible to cast an object handle to another object handle, without 
