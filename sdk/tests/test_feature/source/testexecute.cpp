@@ -40,7 +40,7 @@ bool TestExecute()
 	ExecuteString(engine, "cfunction()");
 
 	if (!called) {
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	}
 

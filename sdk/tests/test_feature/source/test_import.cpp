@@ -81,7 +81,7 @@ bool Test()
 
 	if( number != 1234567890 )
 	{
-		printf("%s: Failed to set the number as expected\n", TESTNAME);
+		PRINTF("%s: Failed to set the number as expected\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -172,7 +172,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -206,7 +206,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -225,7 +225,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -253,7 +253,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -265,7 +265,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

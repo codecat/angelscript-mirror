@@ -163,7 +163,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	ctx = engine->CreateContext();
@@ -173,7 +173,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		printf("%s: Failed to execute script\n", TESTNAME);
+		PRINTF("%s: Failed to execute script\n", TESTNAME);
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
@@ -184,13 +184,13 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	r = ExecuteString(engine, "TestArrayException()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: No exception\n", TESTNAME);
+		PRINTF("%s: No exception\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -200,14 +200,14 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	ctx = engine->CreateContext();
 	r = ExecuteString(engine, "TestArrayMulti()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: Failure\n", TESTNAME);
+		PRINTF("%s: Failure\n", TESTNAME);
 		TEST_FAILED;
 	}
 	if( r == asEXECUTION_EXCEPTION )
@@ -223,13 +223,13 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 	ctx = engine->CreateContext();
 	r = ExecuteString(engine, "TestArrayChar()", mod, ctx);
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: Failure\n", TESTNAME);
+		PRINTF("%s: Failure\n", TESTNAME);
 		TEST_FAILED;
 	}
 	if( r == asEXECUTION_EXCEPTION )
@@ -348,7 +348,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'void'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

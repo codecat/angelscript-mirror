@@ -230,7 +230,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -404,7 +404,7 @@ bool Test()
 	if( printBuffer != correct )
 	{
 		TEST_FAILED;
-		printf("%s", printBuffer.c_str());
+		PRINTF("%s", printBuffer.c_str());
 	}
 
 	// Success

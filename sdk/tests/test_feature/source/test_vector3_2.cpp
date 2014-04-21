@@ -118,7 +118,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: Failed to build\n", TESTNAME);
+		PRINTF("%s: Failed to build\n", TESTNAME);
 		TEST_FAILED;
 	}
 	else
@@ -127,7 +127,7 @@ bool Test()
 		r = ExecuteString(engine, "func()", mod);
 		if( r < 0 )
 		{
-			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+			PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 			TEST_FAILED;
 		}
 	}

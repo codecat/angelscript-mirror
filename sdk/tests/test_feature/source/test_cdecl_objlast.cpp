@@ -54,7 +54,7 @@ bool Test()
 {
 	if( strstr(asGetLibraryOptions(), "MAX_PORTABILITY") )
 	{
-		printf("%s skipped due to max portability\n", TESTNAME);
+		PRINTF("%s skipped due to max portability\n", TESTNAME);
 		return false;
 	}
 

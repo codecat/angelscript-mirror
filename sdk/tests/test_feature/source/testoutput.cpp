@@ -43,7 +43,7 @@ bool Test()
 		              "TestOutput (2, 3) : Error   : Expected identifier\n"
 					  "TestOutput (2, 3) : Error   : Instead found '='\n" )
 	{
-		printf("%s", out.buffer.c_str());
+		PRINTF("%s", out.buffer.c_str());
 		TEST_FAILED;
 	}
 

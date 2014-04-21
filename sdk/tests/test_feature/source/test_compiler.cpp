@@ -300,7 +300,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -344,7 +344,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -393,7 +393,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -423,7 +423,7 @@ bool Test()
 
 		if( bout.buffer != " (0, 0) : Warning : Function 'void func()' appears to have been compiled without JIT entry points\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -565,7 +565,7 @@ bool Test()
 						   "Test (2, 24) : Error   : No conversion from 'void' to 'ParticleEmitter@' available.\n"
 						   "Test (2, 24) : Error   : Can't implicitly convert from 'const int' to 'ParticleEmitter@&'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -597,7 +597,7 @@ bool Test()
 		if( bout.buffer != "Test (1, 1) : Info    : Compiling vec2i f()\n"
 						   "Test (3, 25) : Warning : Float value truncated in implicit conversion to integer\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -629,7 +629,7 @@ bool Test()
 		
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -670,7 +670,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -689,7 +689,7 @@ bool Test()
 		if( bout.buffer != "ExecuteString (1, 16) : Warning : Value is too large for data type\n"
 			               "ExecuteString (1, 13) : Warning : Implicit conversion changed sign of value\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -730,7 +730,7 @@ bool Test()
 						   "Test (3, 8) : Error   : Void cannot be an operand in expressions\n"
 						   "Test (4, 3) : Error   : Expression is not an l-value\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1034,7 +1034,7 @@ bool Test()
 						   "test (5, 5) : Error   : Compound assignment on reference types is not allowed\n"
 						   "test (6, 3) : Error   : Expression is not an l-value\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1057,7 +1057,7 @@ bool Test()
 		if( bout.buffer != "test (2, 1) : Error   : Reference types cannot be passed by value in function parameters\n"
                            "test (3, 1) : Error   : Reference types cannot be returned by value from functions\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1076,7 +1076,7 @@ bool Test()
 		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
 						   "Test (2, 7) : Error   : Can't instanciate template 'array' with subtype 'C'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1112,7 +1112,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1141,7 +1141,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1199,7 +1199,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1225,7 +1225,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1248,7 +1248,7 @@ bool Test()
 		if( bout.buffer != "ExecuteString (1, 13) : Warning : Implicit conversion changed sign of value\n"
 		                   " (0, 0) : Error   : Warnings are treated as errors by the application\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1314,7 +1314,7 @@ bool Test()
 						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
 						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1366,7 +1366,7 @@ bool Test()
 		if( bout.buffer != "test (12, 3) : Error   : Failed to initialize global variable 'Dummy'\n"
 		                   "test (10, 0) : Info    : Exception 'Unbound function called' in 'T::T()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1389,7 +1389,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1404,7 +1404,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1436,7 +1436,7 @@ bool Test()
 
 		if( bout.buffer != "test (8, 11) : Error   : Non-terminated string literal\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1467,7 +1467,7 @@ bool Test()
 		if( bout.buffer != "test (1, 1) : Warning : The script section is empty\n"
 						   " (0, 0) : Error   : Nothing was built in the module\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1506,7 +1506,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1542,7 +1542,7 @@ bool Test()
 		if( bout.buffer != "test (2, 1) : Info    : Compiling int dummy()\n"
 		                   "test (5, 3) : Warning : Unreachable code\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1614,7 +1614,7 @@ bool Test()
 		if( bout.buffer != "test (3, 3) : Info    : Compiling void Test::Do()\n"
 		                   "test (4, 14) : Error   : No matching signatures to 'Test::DoFail()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1650,7 +1650,7 @@ bool Test()
 		if( bout.buffer != "test (1, 1) : Info    : Compiling void startGame()\n"
 		                   "test (5, 7) : Error   : Illegal operation on this datatype\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1709,7 +1709,7 @@ bool Test()
 						   "test (24, 3) : Info    : Compiling X1& X2::f6() const\n"
 						   "test (26, 9) : Error   : Can't implicitly convert from 'const X1' to 'X1&'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1768,7 +1768,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1784,7 +1784,7 @@ bool Test()
 		                  "--end--\n"
 		                  "delete Data()\n" )
 		{
-			printf("%s", g_printbuf.c_str());
+			PRINTF("%s", g_printbuf.c_str());
 			TEST_FAILED;
 		}
 
@@ -1821,7 +1821,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1862,7 +1862,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1914,7 +1914,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1944,7 +1944,7 @@ bool Test()
 						   "ExecuteString (3, 18) : Error   : Expected ')'\n"
 						   "ExecuteString (3, 18) : Error   : Instead found 'p'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1967,7 +1967,7 @@ bool Test()
 		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void testFunction()\n"
 						   "TestCompiler (3, 2) : Error   : Identifier 'Assert' is not a data type\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2008,7 +2008,7 @@ bool Test()
 		if( bout.buffer != "TestCompiler (3, 2) : Info    : Compiling END_MenuItem::END_MenuItem()\n"
 						   "TestCompiler (4, 2) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2052,7 +2052,7 @@ bool Test()
 						   "TestCompiler (3, 3) : Info    : Candidates are:\n"
 						   "TestCompiler (3, 3) : Info    : void string_contains(string&in, int&in)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2072,7 +2072,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2085,7 +2085,7 @@ bool Test()
 						 "Character 3o\n"
 						 "Character 4d\n" )
 		{
-			printf("%s", alert_buf.c_str());
+			PRINTF("%s", alert_buf.c_str());
 			TEST_FAILED;
 		}
 
@@ -2126,7 +2126,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2165,7 +2165,7 @@ bool Test()
 						   "TestCompiler (6, 13) : Error   : Both operands must be handles when comparing identity\n"
 						   "TestCompiler (7, 10) : Error   : Illegal operation on 'int&'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2188,7 +2188,7 @@ bool Test()
 		if( bout.buffer != "TestCompiler (5, 10) : Info    : Compiling void SomeClass::Create()\n"
 						   "TestCompiler (7, 38) : Error   : Illegal operation on this datatype\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2223,7 +2223,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2250,7 +2250,7 @@ bool Test()
 		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void f()\n"
 		                   "TestCompiler (3, 3) : Error   : Expression doesn't form a function call. 'a' is a variable of a non-function type\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2280,7 +2280,7 @@ bool Test()
 		if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void main()\n"
 		                   "TestCompiler (7, 10) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2305,7 +2305,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2338,7 +2338,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2368,7 +2368,7 @@ bool Test()
 					   "TestCompiler (4, 13) : Error   : Can't implicitly convert from 'int' to 'bool'.\n"
 					   "TestCompiler (5, 5) : Error   : No conversion from 'bool' to math type available.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2400,7 +2400,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'string' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2424,7 +2424,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("failed on 6\n");
+		PRINTF("failed on 6\n");
 		TEST_FAILED;
 	}
 
@@ -2435,7 +2435,7 @@ bool Test()
 	ExecuteString(engine, "void m;");
 	if( bout.buffer != "ExecuteString (1, 6) : Error   : Data type can't be 'void'\n" )
 	{
-		printf("failed on 7\n");
+		PRINTF("failed on 7\n");
 		TEST_FAILED;
 	}
 
@@ -2470,7 +2470,7 @@ bool Test()
 	                   "script (1, 77) : Error   : Multiline strings are not allowed in this application\n"
 	                   "script (1, 32) : Error   : No matching signatures to 'Print(string@&)'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2487,7 +2487,7 @@ bool Test()
 	if( bout.buffer != "script (2, 1) : Info    : Compiling int fuzzy()\n"
 		               "script (3, 3) : Error   : No conversion from 'void' to 'int' available.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2504,7 +2504,7 @@ bool Test()
 	if( bout.buffer != "script (2, 1) : Info    : Compiling void test()\n"
 		               "script (2, 26) : Error   : Can't implicitly convert from 'void' to 'int'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2523,7 +2523,7 @@ bool Test()
 					   "script (4, 3) : Info    : Compiling void c::func()\n"
                        "script (5, 18) : Error   : Illegal operation on 'int&'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2535,7 +2535,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Can't implicitly convert from 'const int' to 'uint[]&'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2550,7 +2550,7 @@ bool Test()
 	if( bout.buffer != "script (4, 1) : Info    : Compiling void assert()\n"
                        "script (6, 4) : Error   : Both expressions must have the same type\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2563,7 +2563,7 @@ bool Test()
 					   "ExecuteString (1, 1) : Error   : Instead found 'class'\n"
 	                   "ExecuteString (1, 23) : Error   : Identifier 'XXX' is not a data type\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2578,7 +2578,7 @@ bool Test()
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 36) : Warning : 'b' is not initialized.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2593,7 +2593,7 @@ bool Test()
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 		               "script (1, 23) : Warning : 'a' is not initialized.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2606,7 +2606,7 @@ bool Test()
                        "ExecuteString (1, 20) : Warning : 'b2' is not initialized.\n"
                        "ExecuteString (1, 20) : Error   : Illegal operation on this datatype\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2626,7 +2626,7 @@ bool Test()
 	if( bout.buffer != "script20 (2, 1) : Info    : Compiling void test()\n"
 	                   "script20 (3, 22) : Error   : No matching signatures to 'A::GetClient()'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2648,7 +2648,7 @@ bool Test()
 	if( bout.buffer != "script21 (2, 1) : Info    : Compiling void main()\n"
 					   "script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2673,7 +2673,7 @@ bool Test()
 					   "22 (5, 1) : Info    : Candidates are:\n"
 					   "22 (5, 1) : Info    : void Func_(uint i)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2685,7 +2685,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'openHandle' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2698,7 +2698,7 @@ bool Test()
 	if( bout.buffer != "24 (1, 1) : Info    : Compiling string SomeFunc()\n"
 		               "24 (1, 28) : Error   : Can't implicitly convert from '<null handle>' to 'string'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2713,7 +2713,7 @@ bool Test()
 	if( bout.buffer != "26 (1, 1) : Info    : Compiling void main()\n"
 	                   "26 (1, 20) : Error   : 'anyWord' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2740,7 +2740,7 @@ bool Test()
 		                             "test (1, 12) : Error   : Can't implicitly convert from 'const int' to 'derp&'.\n"
 		                             "test (1, 6) : Error   : There is no copy operator for the type 'derp' available.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2762,7 +2762,7 @@ bool Test()
 		if( bout.buffer != "ExecuteString (1, 9) : Error   : If with empty statement\n"
 			               "ExecuteString (1, 27) : Error   : Else with empty statement\n")
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2790,7 +2790,7 @@ bool Test()
 		                   "s (3, 15) : Info    : int func()\n"
 		                   "s (3, 15) : Info    : float func()\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2818,7 +2818,7 @@ bool Test()
 		if( bout.buffer != "s (1, 1) : Info    : Compiling void main()\n"
 						   "s (3, 21) : Error   : 'ti' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -2834,7 +2834,7 @@ bool Test()
 		if( r >= 0 )
 		{
 			TEST_FAILED;
-			printf("%s: ExecuteString() succeeded even though it shouldn't\n", TESTNAME);
+			PRINTF("%s: ExecuteString() succeeded even though it shouldn't\n", TESTNAME);
 		}
 
 		engine->Release();
@@ -2882,7 +2882,7 @@ bool Test()
 						   " (12, 10) : Info    : void Test::test(bool c)\n" )
 		{
 			TEST_FAILED;
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();
@@ -2943,7 +2943,7 @@ bool Test()
 		if( bout.buffer != "scriptMain (1, 1) : Info    : Compiling void error()\n"
 						   "scriptMain (1, 20) : Error   : 'a' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->Release();
@@ -2980,7 +2980,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3017,7 +3017,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "main()", mod);
@@ -3065,7 +3065,7 @@ bool Test()
 						   "script (5, 14) : Error   : No default constructor for object of type 'Entity'.\n"
 						   "script (5, 14) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3099,7 +3099,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "test (2, 20) : Error   : Data type can't be 'ITest'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3131,7 +3131,7 @@ bool Test()
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void my_method()\n"
 		                   "script (4, 12) : Error   : 'unexisting_var' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3164,7 +3164,7 @@ bool Test()
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
 		                   "script (3, 9) : Error   : Expression must be of boolean type\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3206,7 +3206,7 @@ bool Test()
 		                   "script (6, 10) : Info    : Candidates are:\n"
 		                   "script (6, 10) : Info    : void irc_event::set_command(string@[] i)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3248,7 +3248,7 @@ bool Test()
 		                   "script (14, 19) : Info    : Candidates are:\n"
 		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type i)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3287,7 +3287,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3330,7 +3330,7 @@ bool Test()
 		                   "script (13, 7) : Error   : 'bad' is already declared\n"
 		                   "script (14, 25) : Error   : 'x' is not a member of 'int'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3356,7 +3356,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3395,7 +3395,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3457,7 +3457,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3552,7 +3552,7 @@ bool Test()
 						   "script (4, 16) : Error   : Expected ']'\n"
 						   "script (4, 16) : Error   : Instead found ')'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3748,7 +3748,7 @@ bool Test()
 
 		if( g_printbuf != "The average of first 1475 ratios of Fibonacci number is: 1.618.\n" )
 		{
-			printf("%s", g_printbuf.c_str());
+			PRINTF("%s", g_printbuf.c_str());
 			TEST_FAILED;
 		}
 
@@ -3776,7 +3776,7 @@ bool Test()
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
 		                   "script (4, 19) : Error   : 'typo' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3806,7 +3806,7 @@ bool Test()
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
                            "script (5, 3) : Error   : Expression doesn't form a function call. 'name' is a variable of a non-function type\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3839,7 +3839,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -3872,7 +3872,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -4213,7 +4213,7 @@ bool Test6()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4231,7 +4231,7 @@ bool Test6()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4252,7 +4252,7 @@ bool Test6()
 					   "script (4, 28) : Error   : 'bar' is not declared\n"
 					   "script (4, 24) : Error   : 'a' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4271,7 +4271,7 @@ bool Test6()
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
 					   "script (2, 9) : Error   : 'i' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4353,7 +4353,7 @@ bool Test8()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4388,7 +4388,7 @@ bool Test9()
 	if( bout.buffer != "sc (1, 1) : Info    : Compiling void Func()\n"
 					   "sc (3, 3) : Error   : 'aaa' is not declared\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4536,7 +4536,7 @@ bool TestRetRef()
 
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -4561,7 +4561,7 @@ bool TestRetRef()
 
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

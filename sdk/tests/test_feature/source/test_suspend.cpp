@@ -121,7 +121,7 @@ bool Test()
 			ctx->Execute();
 		if( loopCount != 3 )
 		{
-			printf("%s: failed\n", TESTNAME);
+			PRINTF("%s: failed\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -131,7 +131,7 @@ bool Test()
 			ctx->Execute();
 		if( loopCount != 3 )
 		{
-			printf("%s: failed\n", TESTNAME);
+			PRINTF("%s: failed\n", TESTNAME);
 			TEST_FAILED;
 		}
 

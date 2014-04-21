@@ -12,7 +12,7 @@ bool TestCreateEngine()
 	if( engine == 0 )
 	{
 		// Failure
-		printf("TestCreateEngine: asCreateScriptEngine() failed\n");
+		PRINTF("TestCreateEngine: asCreateScriptEngine() failed\n");
 		return true;
 	}
 	else
@@ -22,7 +22,7 @@ bool TestCreateEngine()
 		if( engine2 == 0 )
 		{
 			// Failure
-			printf("TestCreateEngine: asCreateScriptEngine() failed for 2nd engine\n");
+			PRINTF("TestCreateEngine: asCreateScriptEngine() failed for 2nd engine\n");
 			return true;
 		}
 		else

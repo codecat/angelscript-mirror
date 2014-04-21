@@ -163,21 +163,21 @@ bool TestExecute32MixedArgs()
 	if( !called ) 
 	{
 		// failure
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} 
 	else if( !testVal ) 
 	{
 		// failure
-		printf("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
+		PRINTF("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
 		int pos = 0;
 		for( int i = 0; i < 4; i++ ) 
 		{
 			int j;
 			for( j = 0; j < 4; j++ ) 
-				printf("ivalue[%d]: %d\n", pos+j, ivalues[pos+j]);
+				PRINTF("ivalue[%d]: %d\n", pos+j, ivalues[pos+j]);
 			for( j = 0; j < 4; j++ ) 
-				printf("fvalue[%d]: %f\n", pos+j, fvalues[pos+j]);
+				PRINTF("fvalue[%d]: %f\n", pos+j, fvalues[pos+j]);
 			pos += 4;
 		}
 		TEST_FAILED;

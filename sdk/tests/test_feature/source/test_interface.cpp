@@ -151,7 +151,7 @@ bool Test()
 					   "TestInterface (15, 16) : Error   : Can't implicitly convert from 'myclass&' to 'nointf@&'.\n"
 					   "TestInterface (16, 16) : Error   : Can't implicitly convert from 'intf@&' to 'myclass@&'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -221,7 +221,7 @@ bool Test()
 		if( bout.buffer != "TestInterface (3, 7) : Error   : Missing implementation of 'void B::b()'\n"
 		                   "TestInterface (3, 7) : Error   : Missing implementation of 'void A::a()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -236,7 +236,7 @@ bool Test()
 		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "TestInterface (2, 22) : Error   : Shared type cannot implement non-shared interface 'A'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -256,7 +256,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -271,7 +271,7 @@ bool Test()
 		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "TestInterface (3, 15) : Error   : Can't implement itself, or another interface that implements this interface\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -316,7 +316,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -460,7 +460,7 @@ bool Test2()
 
 		if( bout.buffer != "script (1, 53) : Error   : Shared type 'B' doesn't match the original declaration in other module\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -566,7 +566,7 @@ bool Test2()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

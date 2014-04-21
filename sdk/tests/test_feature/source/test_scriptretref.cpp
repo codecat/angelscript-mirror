@@ -35,7 +35,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -59,7 +59,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -68,7 +68,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -88,7 +88,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -112,7 +112,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -138,7 +138,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -164,7 +164,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -190,7 +190,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -218,7 +218,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -245,7 +245,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -272,7 +272,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -307,7 +307,7 @@ bool Test()
 		if( r < 0 ) TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -321,7 +321,7 @@ bool Test()
 		}
 		else if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
 		{
-			printf("%s", ctx->GetExceptionString());
+			PRINTF("%s", ctx->GetExceptionString());
 			TEST_FAILED;
 		}
 		ctx->Release();
@@ -343,7 +343,7 @@ bool Test()
 		if( bout.buffer != "script (1, 1) : Info    : Compiling uint8& Test2()\n"
 		                   "script (4, 3) : Error   : Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -369,7 +369,7 @@ bool Test()
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
 		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -395,7 +395,7 @@ bool Test()
 		if( bout.buffer != "script (6, 1) : Info    : Compiling string& Test2()\n"
 		                   "script (9, 3) : Error   : Resulting reference cannot be returned. There are deferred arguments that may invalidate it.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -415,7 +415,7 @@ bool Test()
 		if( bout.buffer != "script (1, 1) : Info    : Compiling int& Test()\n"
 						   "script (3, 3) : Error   : Not a valid reference\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -436,7 +436,7 @@ bool Test()
 		if( bout.buffer != "script19 (2, 1) : Info    : Compiling Object& Test(Object&in)\n"
 						   "script19 (4, 3) : Error   : Can't return reference to local value.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -453,7 +453,7 @@ bool Test()
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling int& SomeFunc()\n"
 						   "25 (1, 30) : Error   : Can't return reference to local value.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -469,7 +469,7 @@ bool Test()
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling string& SomeFunc()\n"
 						   "25 (1, 22) : Error   : Can't return reference to local value.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}

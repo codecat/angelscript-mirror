@@ -120,7 +120,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", "TestAny");
+			PRINTF("%s: Failed to compile the script\n", "TestAny");
 		}
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "TestAny()", mod, ctx);
@@ -130,7 +130,7 @@ bool Test()
 				PrintException(ctx);
 
 			TEST_FAILED;
-			printf("%s: Execution failed\n", "TestAny");
+			PRINTF("%s: Execution failed\n", "TestAny");
 		}
 		if( ctx ) ctx->Release();
 		engine->Release();
@@ -153,7 +153,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", "TestAny");
+			PRINTF("%s: Failed to compile the script\n", "TestAny");
 		}
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "TestAny()", mod, ctx);
@@ -163,7 +163,7 @@ bool Test()
 				PrintException(ctx);
 
 			TEST_FAILED;
-			printf("%s: Execution failed\n", "TestAny");
+			PRINTF("%s: Execution failed\n", "TestAny");
 		}
 		if( ctx ) ctx->Release();
 		
@@ -195,12 +195,12 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to Build()\n", "TestAny");
+			PRINTF("%s: Failed to Build()\n", "TestAny");
 		}
 		if( bout.buffer != "TestAny (5, 1) : Info    : Compiling void TestAny()\n"
 				   "TestAny (9, 15) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -224,14 +224,14 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile\n", "TestAny");
+			PRINTF("%s: Failed to compile\n", "TestAny");
 		}
 		
 		r = ExecuteString(engine, "TestAny()", mod);
 		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to execute\n", "TestAny");
+			PRINTF("%s: Failed to execute\n", "TestAny");
 		}
 
 		if( myAny )
@@ -247,14 +247,14 @@ bool Test()
 			if( (decl == 0) || (strcmp(decl, "string@") != 0) )
 			{
 				TEST_FAILED;
-				printf("%s: Failed to return the correct type\n", "TestAny");
+				PRINTF("%s: Failed to return the correct type\n", "TestAny");
 			}
 
 			int typeId2 = engine->GetTypeIdByDecl("string@");
 			if( typeId != typeId2 )
 			{
 				TEST_FAILED;
-				printf("%s: Failed to return the correct type\n", "TestAny");
+				PRINTF("%s: Failed to return the correct type\n", "TestAny");
 			}
 
 			CScriptString *str = 0;
@@ -263,7 +263,7 @@ bool Test()
 			if( str->buffer != "test" )
 			{
 				TEST_FAILED;
-				printf("%s: Failed to set the string correctly\n", "TestAny");
+				PRINTF("%s: Failed to set the string correctly\n", "TestAny");
 			}
 
 			if( str ) str->Release();

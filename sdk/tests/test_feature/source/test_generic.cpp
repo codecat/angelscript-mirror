@@ -15,7 +15,7 @@ void GenFunc1(asIScriptGeneric *gen)
 {
 	assert(gen->GetObject() == 0);
 
-//	printf("GenFunc1\n");
+//	PRINTF("GenFunc1\n");
 
 	int arg1 = (int)gen->GetArgDWord(0);
 	double arg2 = gen->GetArgDouble(1);
@@ -32,7 +32,7 @@ void GenMethod1(asIScriptGeneric *gen)
 {
 	assert(gen->GetObject() == &obj);
 
-//	printf("GenMethod1\n");
+//	PRINTF("GenMethod1\n");
 
 	int arg1 = (int)gen->GetArgDWord(0);
 	double arg2 = gen->GetArgDouble(1);
@@ -417,7 +417,7 @@ bool Test2()
 						 "add (2)\n"
 						 "rem (1)\n" )
 		{
-			printf("%s", buf.str().c_str());
+			PRINTF("%s", buf.str().c_str());
 			TEST_FAILED;
 		}
 
@@ -429,7 +429,7 @@ bool Test2()
 #else
 bool Test2()
 {
-	printf("The test of the autowrapper was skipped due to lack of proper template support\n");
+	PRINTF("The test of the autowrapper was skipped due to lack of proper template support\n");
 	return false;
 }
 #endif

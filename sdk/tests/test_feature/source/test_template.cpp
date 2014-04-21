@@ -186,7 +186,7 @@ bool Test()
 		if( bout.buffer != " (0, 0) : Error   : First parameter to template factory must be a reference. This will be used to pass the object type of the template\n"
 						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'Tmpl1' and 'Tmpl1<T> @f()' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -218,7 +218,7 @@ bool Test()
 		if( bout.buffer != "test (2, 1) : Info    : Compiling void func()\n"
 		                   "test (3, 10) : Error   : Template subtype must not be read-only\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -325,7 +325,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -337,7 +337,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -376,7 +376,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -400,7 +400,7 @@ bool Test()
 		if( bout.buffer != "test (1, 1) : Error   : Template 'tmpl' expects 1 sub type(s)\n"
 		                   "test (2, 1) : Error   : Template 'tmpl' expects 1 sub type(s)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -433,7 +433,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -471,7 +471,7 @@ bool Test()
 						   "test (6, 4) : Error   : Type 'int' doesn't support the indexing operator\n"
 						   "test (8, 8) : Error   : Reference is read-only\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -487,7 +487,7 @@ bool Test()
 	r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
 	if( r == asNOT_SUPPORTED )
 	{
-		printf("Skipping template test because it is not yet supported\n");
+		PRINTF("Skipping template test because it is not yet supported\n");
 		engine->Release();
 		return false;	
 	}
@@ -615,7 +615,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'int'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -645,7 +645,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'string'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -715,7 +715,7 @@ bool Test()
 		                   "mod (2, 34) : Error   : There is no copy operator for the type 'MyTmpl' available.\n"
 						   "mod (2, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -725,7 +725,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "ExecuteString (1, 13) : Error   : No default constructor for object of type 'MyTmpl'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

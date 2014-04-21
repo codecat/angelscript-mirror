@@ -68,13 +68,13 @@ bool TestExecute4Argsf()
 	if( !called )
 	{
 		// failure
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	}
 	else if( !testVal )
 	{
 		// failure
-		printf("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
+		PRINTF("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
 		TEST_FAILED;
 	}
 
@@ -86,7 +86,7 @@ bool TestExecute4Argsf()
 		if( !called )
 		{
 			// failure
-			printf("\n%s: cfunction2 not called from script\n\n", TESTNAME);
+			PRINTF("\n%s: cfunction2 not called from script\n\n", TESTNAME);
 			TEST_FAILED;
 		}
 	}

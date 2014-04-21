@@ -44,29 +44,29 @@ bool TestException()
 		const asIScriptFunction *function = ctx->GetExceptionFunction();
 		if( strcmp(function->GetName(), "ExecuteString") != 0 )
 		{
-			printf("%s: Exception function name is wrong\n", TESTNAME);
+			PRINTF("%s: Exception function name is wrong\n", TESTNAME);
 			TEST_FAILED;
 		}
 		if( strcmp(function->GetDeclaration(), "void ExecuteString()") != 0 )
 		{
-			printf("%s: Exception function declaration is wrong\n", TESTNAME);
+			PRINTF("%s: Exception function declaration is wrong\n", TESTNAME);
 			TEST_FAILED;
 		}
 
 		if( line != 2 )
 		{
-			printf("%s: Exception line number is wrong\n", TESTNAME);
+			PRINTF("%s: Exception line number is wrong\n", TESTNAME);
 			TEST_FAILED;
 		}
 		if( strcmp(desc, "Divide by zero") != 0 )
 		{
-			printf("%s: Exception string is wrong\n", TESTNAME);
+			PRINTF("%s: Exception string is wrong\n", TESTNAME);
 			TEST_FAILED;
 		}
 	}
 	else
 	{
-		printf("%s: Failed to raise exception\n", TESTNAME);
+		PRINTF("%s: Failed to raise exception\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -209,7 +209,7 @@ bool TestException()
 			TEST_FAILED;
 		if( string(ctx->GetExceptionString()) != "Divide by zero" )
 		{
-			printf("%s\n", ctx->GetExceptionString());
+			PRINTF("%s\n", ctx->GetExceptionString());
 			TEST_FAILED;
 		}
 		if( string(ctx->GetExceptionFunction()->GetName()) != "Test" )
@@ -250,7 +250,7 @@ bool TestException()
 			TEST_FAILED;
 		if( string(ctx->GetExceptionString()) != "Null pointer access" )
 		{
-			printf("%s\n", ctx->GetExceptionString());
+			PRINTF("%s\n", ctx->GetExceptionString());
 			TEST_FAILED;
 		}
 		if( string(ctx->GetExceptionFunction()->GetName()) != "startGame" )

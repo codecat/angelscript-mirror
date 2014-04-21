@@ -97,7 +97,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -112,7 +112,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -150,7 +150,7 @@ bool Test()
 		if( bout.buffer != "B (3, 13) : Error   : Shared type 'ielement' doesn't match the original declaration in other module\n"
                            "B (3, 18) : Error   : Shared type 'ielement' doesn't match the original declaration in other module\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -181,7 +181,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -230,7 +230,7 @@ bool Test()
 		                   "A (2, 3) : Error   : Identifier 'B' is not a data type\n"
 		                   "A (2, 6) : Error   : Shared type 'A' doesn't match the original declaration in other module\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -327,7 +327,7 @@ bool Test()
 						   "a (43, 1) : Info    : Compiling void sfunc()\n"
 		                   "a (45, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->DiscardModule("");
@@ -349,7 +349,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -375,7 +375,7 @@ bool Test()
 
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -405,7 +405,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -423,7 +423,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -456,7 +456,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -559,7 +559,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}		
 

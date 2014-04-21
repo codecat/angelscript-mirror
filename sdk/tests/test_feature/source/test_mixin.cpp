@@ -35,7 +35,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != " (0, 0) : Error   : Nothing was built in the module\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -59,7 +59,7 @@ bool Test()
 			if( bout.buffer != " (2, 13) : Error   : Name conflict. 'Test' is a mixin class.\n"
 							   " (3, 5) : Error   : Name conflict. 'Test' is a mixin class.\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -77,7 +77,7 @@ bool Test()
 			if( bout.buffer != " (1, 7) : Error   : Mixin class cannot be declared as 'shared'\n"
 							   " (1, 14) : Error   : Mixin class cannot be declared as 'final'\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -102,7 +102,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -124,7 +124,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != " (3, 26) : Error   : Mixin class cannot inherit from classes\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -144,7 +144,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != " (2, 22) : Error   : Mixin class cannot inherit from classes\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -166,7 +166,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -185,7 +185,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -225,7 +225,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -245,7 +245,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -267,7 +267,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -310,7 +310,7 @@ bool Test()
 							   "test (4, 3) : Info    : Compiling void Clss2::func()\n"
 			                   "test (4, 21) : Error   : Function 'opPostInc()' not found\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -332,7 +332,7 @@ bool Test()
 			if( bout.buffer != "test (2, 3) : Error   : Mixin classes cannot have constructors or destructors\n"
 			                   "test (3, 3) : Error   : Mixin classes cannot have constructors or destructors\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}
@@ -352,7 +352,7 @@ bool Test()
 				TEST_FAILED;
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 		}

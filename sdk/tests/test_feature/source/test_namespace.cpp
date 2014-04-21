@@ -365,7 +365,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -383,7 +383,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -444,7 +444,7 @@ bool Test()
 		if( bout.buffer != "ExecuteString (1, 9) : Error   : 'A::VALUE' is not declared\n"
 		                   "ExecuteString (1, 28) : Warning : 'a' is not initialized.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -741,7 +741,7 @@ bool Test()
 		if( bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
 						   "test (8, 11) : Error   : 'foo2' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -776,7 +776,7 @@ bool Test()
 		if( bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
 						   "test (8, 11) : Error   : 'foo2' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -809,7 +809,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

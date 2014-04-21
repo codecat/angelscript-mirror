@@ -66,13 +66,13 @@ public:
 		val = ('C' | ('O'<<8) | ('b'<<16) | ('j'<<24)); 
 		mem = new int[1]; 
 		*mem = ('M' | ('e'<<8) | ('m'<<16) | (' '<<24)); 
-		//printf("C: %x\n", this);
+		//PRINTF("C: %x\n", this);
 		CObject_constructCount++;
 	}
 	~CObject() 
 	{
 		delete[] mem; 
-		//printf("D: %x\n", this);
+		//PRINTF("D: %x\n", this);
 		CObject_destructCount++;
 	}
 	int val;
@@ -231,7 +231,7 @@ bool Test()
 			TEST_FAILED;
 		else if( std::string(ctx->GetExceptionString()) != "Caught an exception from the application" )
 		{
-			printf("Got exception : %s\n", ctx->GetExceptionString());
+			PRINTF("Got exception : %s\n", ctx->GetExceptionString());
 			TEST_FAILED;
 		}
 	
@@ -285,14 +285,14 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	// The object has been initialized
 	r = ExecuteString(engine, "Test1()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -300,7 +300,7 @@ bool Test()
 	r = ExecuteString(engine, "Test2()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -308,7 +308,7 @@ bool Test()
 	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -318,7 +318,7 @@ bool Test()
 	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -330,7 +330,7 @@ bool Test()
 	r = ExecuteString(engine, "Test4()", mod, ctx);
 	if( r != asEXECUTION_SUSPENDED )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 	ctx->Abort();
@@ -342,7 +342,7 @@ bool Test()
 	r = ExecuteString(engine, "Test5()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -350,7 +350,7 @@ bool Test()
 	r = ExecuteString(engine, "Test6()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -358,7 +358,7 @@ bool Test()
 	r = ExecuteString(engine, "Test7()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -369,7 +369,7 @@ bool Test()
 	r = ExecuteString(engine, "calc()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -546,7 +546,7 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_EXCEPTION )
 		{
-			printf("Return code is %d\n", r);
+			PRINTF("Return code is %d\n", r);
 			TEST_FAILED;
 		}
 

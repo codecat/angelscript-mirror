@@ -133,7 +133,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
 	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("TestObjHandle");
@@ -147,7 +147,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
-		printf("%s: Execution failed: %d\n", TESTNAME, r);
+		PRINTF("%s: Execution failed: %d\n", TESTNAME, r);
 	}
 	if( ctx ) ctx->Release();
 
@@ -163,7 +163,7 @@ bool Test()
 		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "TestRefArgument (6, 18) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -211,7 +211,7 @@ bool Test()
 		if( bout.buffer != "System function (1, 17) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n" 
 		                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(float &)' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -265,7 +265,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 3) : Error   : Not a valid reference\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

@@ -13,7 +13,7 @@ void *MyAlloc(size_t size)
 	objectsAllocated++;
 
 	void *mem = new asBYTE[size];
-//	printf("MyAlloc(%d) %X\n", size, mem);
+//	PRINTF("MyAlloc(%d) %X\n", size, mem);
 	return mem;
 }
 
@@ -21,7 +21,7 @@ void MyFree(void *mem)
 {
 	objectsAllocated--;
 
-//	printf("MyFree(%X)\n", mem);
+//	PRINTF("MyFree(%X)\n", mem);
 	delete[] (asBYTE*)mem;
 }
 
@@ -82,7 +82,7 @@ bool Test()
 
 	if( objectsAllocated )
 	{
-		printf("%s: Failed\n", TESTNAME);
+		PRINTF("%s: Failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 

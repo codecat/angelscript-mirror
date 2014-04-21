@@ -99,7 +99,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	r = ExecuteString(engine, "TestObject2()", mod);

@@ -52,13 +52,13 @@ bool Test()
 	int r = ExecuteString(engine, "TestMe(0xDEADC0DE);");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c1.a != 0xDEADC0DE )
 	{
-		printf("Class member wasn't updated correctly\n");
+		PRINTF("Class member wasn't updated correctly\n");
 		TEST_FAILED;
 	}
 

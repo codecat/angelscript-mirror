@@ -29,7 +29,7 @@ bool TestStack()
 	int r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: Failed to build script\n", TESTNAME);
+		PRINTF("%s: Failed to build script\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -40,7 +40,7 @@ bool TestStack()
 	r = ctx->Execute();
 	if( r != asEXECUTION_EXCEPTION )
 	{
-		printf("%s: Execution didn't throw an exception as was expected\n", TESTNAME);
+		PRINTF("%s: Execution didn't throw an exception as was expected\n", TESTNAME);
 		TEST_FAILED;
 	}
 

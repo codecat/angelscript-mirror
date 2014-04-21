@@ -80,7 +80,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if (!returned) 
 	{
-		printf("\nTestReturn: cfunction didn't return properly\n\n");
+		PRINTF("\nTestReturn: cfunction didn't return properly\n\n");
 		TEST_FAILED;
 	}
 
@@ -92,7 +92,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( returned )
 	{
-		printf("\nTestReturn: retfalse didn't return properly\n\n");
+		PRINTF("\nTestReturn: retfalse didn't return properly\n\n");
 		TEST_FAILED;
 	}
 
@@ -104,7 +104,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( returned )
 	{
-		printf("\nTestReturn: retfalse2 didn't return properly\n\n");
+		PRINTF("\nTestReturn: retfalse2 didn't return properly\n\n");
 		TEST_FAILED;
 	}
 
@@ -147,7 +147,7 @@ bool TestReturnF()
 
 	if( returnValue_f != 18.87f ) 
 	{
-		printf("\n%s: cfunction didn't return properly. Expected %f, got %f\n\n", TESTNAME, 18.87f, returnValue_f);
+		PRINTF("\n%s: cfunction didn't return properly. Expected %f, got %f\n\n", TESTNAME, 18.87f, returnValue_f);
 		TEST_FAILED;
 	}
 
@@ -187,7 +187,7 @@ bool TestReturnD()
 
 	if( returnValue_d != 88.32 ) 
 	{
-		printf("\n%s: cfunction didn't return properly. Expected %f, got %f\n\n", TESTNAME, 88.32, returnValue_d);
+		PRINTF("\n%s: cfunction didn't return properly. Expected %f, got %f\n\n", TESTNAME, 88.32, returnValue_d);
 		TEST_FAILED;
 	}
 
@@ -248,7 +248,7 @@ bool TestReturnStruct()
 	if( rc.tl.x != 3 || rc.tl.y != 4 || rc.br.x != 5 || rc.br.y != 6 )
 	{
 		TEST_FAILED;
-		printf("Got {%f, %f, %f, %f}\n", rc.tl.x, rc.tl.y, rc.br.x, rc.br.y);
+		PRINTF("Got {%f, %f, %f, %f}\n", rc.tl.x, rc.tl.y, rc.br.x, rc.br.y);
 	}
     
     // at that point, 'p' should contain 1,2 while 'rc' should contain 3,4,5,6

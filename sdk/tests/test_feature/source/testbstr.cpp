@@ -37,12 +37,12 @@ bool TestBStr()
 	int r = ExecuteString(engine, "bstr s = NewString(10)");
 	if( r < 0 ) 
 	{
-		printf("%s: ExecuteString() failed\n", TESTNAME);
+		PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 	else if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: ExecuteString() returned %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() returned %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 

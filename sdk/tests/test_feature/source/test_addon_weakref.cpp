@@ -93,7 +93,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "main()", mod);
@@ -135,7 +135,7 @@ bool Test()
 						   "weakref (0, 0) : Error   : The subtype doesn't support weak references\n"
 						   "Test_Addon_WeakRef (6, 11) : Error   : Can't instanciate template 'weakref' with subtype 'array<Test>'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -172,7 +172,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "main()", mod);

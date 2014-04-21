@@ -82,7 +82,7 @@ bool Test()
 						   " (1, 1) : Error   : Identifier 'type' is not a data type\n"
 						   " (0, 0) : Error   : Failed in call to function 'RegisterStringFactory' with 'type' (Code: -12)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}

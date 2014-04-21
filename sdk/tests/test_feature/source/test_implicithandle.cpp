@@ -62,20 +62,20 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 
 	r = ExecuteString(engine, "main()", mod);
 	if( r != asEXECUTION_FINISHED )
 	{
 		TEST_FAILED;
-		printf("Execution failed\n");
+		PRINTF("Execution failed\n");
 	}
 
 	if( output != "Hello!\nCreated\n---\n7\n---\n7\n" )
 	{
 		TEST_FAILED;
-		printf("Got: \n%s", output.c_str());
+		PRINTF("Got: \n%s", output.c_str());
 	}
 
 	

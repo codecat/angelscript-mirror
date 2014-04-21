@@ -43,7 +43,7 @@ private:
 void Log(const string& s)
 {
 	assert( s == "hello" );
-//	printf("Log: %s\n", s.c_str());
+//	PRINTF("Log: %s\n", s.c_str());
 }
 
 class TestClass 
@@ -146,7 +146,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -173,7 +173,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "test (1, 5) : Error   : Virtual property must have at least one get or set accessor\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -275,18 +275,18 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("Failed to compile the script\n");
+			PRINTF("Failed to compile the script\n");
 		}
 
 		r = ExecuteString(engine, "Test t; @t.s = 'test';", mod);
 		if( r >= 0 )
 		{
 			TEST_FAILED;
-			printf("Shouldn't be allowed\n");
+			PRINTF("Shouldn't be allowed\n");
 		}
 		if( bout.buffer != "ExecuteString (1, 14) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -318,11 +318,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -361,7 +361,7 @@ bool Test()
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main1()\n"
 	                   "script (9, 10) : Error   : Compound assignments with property accessors are not allowed\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -388,11 +388,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -417,11 +417,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -445,11 +445,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -475,7 +475,7 @@ bool Test()
 	if( r >= 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (4, 3) : Error   : A function with the same name and parameters already exists\n"
 			           "script (8, 1) : Info    : Compiling void main()\n"
@@ -486,7 +486,7 @@ bool Test()
 	                   "script (12, 4) : Info    : void Test::set_s(float)\n"
 	                   "script (12, 4) : Info    : void Test::set_s(uint)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -508,14 +508,14 @@ bool Test()
 	if( r >= 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
                        "script (9, 4) : Error   : The property 'p' has mismatching types for the get and set accessors\n"
                        "script (9, 4) : Info    : uint Test::get_p()\n"
                        "script (9, 4) : Info    : void Test::set_p(float)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -539,13 +539,13 @@ bool Test()
 	if( r >= 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
 					   "script (9, 7) : Error   : The property has no set accessor\n"
 					   "script (10, 7) : Error   : The property has no get accessor\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -568,13 +568,13 @@ bool Test()
 	if( r >= 0 )
 	{
 		TEST_FAILED;
-		printf("Didn't fail to compile the script\n");
+		PRINTF("Didn't fail to compile the script\n");
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
 					   "script (9, 6) : Error   : Invalid reference. Property accessors cannot be used in combined read/write operations\n"
 				 	   "script (10, 3) : Error   : Invalid reference. Property accessors cannot be used in combined read/write operations\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -603,11 +603,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -639,11 +639,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -678,11 +678,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -699,7 +699,7 @@ bool Test()
 	}
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : Compound assignments with property accessors are not allowed\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	
@@ -726,11 +726,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -760,11 +760,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -788,7 +788,7 @@ bool Test()
 		 bout.buffer != "ExecuteString (1, 13) : Warning : A non-const method is called on temporary object. Changes to the object may be lost.\n"
 		                "ExecuteString (1, 13) : Info    : void string::resize(uint64)\n") )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 */
@@ -811,11 +811,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -841,11 +841,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -872,11 +872,11 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("Failed to compile the script\n");
+		PRINTF("Failed to compile the script\n");
 	}
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -911,7 +911,7 @@ bool Test()
 					   "script (12, 7) : Error   : Non-const method call on read-only object reference\n"
 	                   "script (12, 7) : Info    : void Test::set_s(int)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -935,7 +935,7 @@ bool Test()
 	if( bout.buffer != "script (7, 1) : Info    : Compiling void test_get()\n"
 	                   "script (9, 21) : Error   : The property has no get accessor\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -951,7 +951,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "Test t; t.set_direction(3);", mod);
@@ -976,7 +976,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -1005,7 +1005,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "func()", mod);
@@ -1161,7 +1161,7 @@ bool Test()
 		if( bout.buffer != "script (1, 8) : Error   : Failed to initialize global variable '_s'\n"
 		                   "script (2, 0) : Info    : Exception 'Null pointer access' in 'string get_s()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1372,7 +1372,7 @@ bool Test()
 		                   "script (18, 8) : Error   : Compound assignments with property accessors are not allowed\n"
 		                   "script (20, 9) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1486,7 +1486,7 @@ bool Test()
 		if( bout.buffer != "script (8, 1) : Info    : Compiling void main()\n"
 		                   "script (10, 36) : Error   : Invalid reference. Property accessors cannot be used in combined read/write operations\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1557,7 +1557,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "ExecuteString (2, 1) : Error   : Expression is not an l-value\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1599,7 +1599,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1626,7 +1626,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1655,7 +1655,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1700,7 +1700,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1797,7 +1797,7 @@ bool Test2()
 	if( bout.buffer != "ExecuteString (1, 12) : Error   : 'Text' is not a member of 'CMyObj'\n" )
 	{
 		TEST_FAILED;
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 	}
 
 	// Test disabling property accessors in script
@@ -1818,7 +1818,7 @@ bool Test2()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

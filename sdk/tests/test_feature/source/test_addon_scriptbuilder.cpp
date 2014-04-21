@@ -179,7 +179,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != " (1, 1) : Error   : Unexpected token '<unrecognized token>'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -210,7 +210,7 @@ bool Test()
 						   " (1, 7) : Error   : Expected '{'\n"
 						   " (1, 7) : Error   : Instead found '<end of file>'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}

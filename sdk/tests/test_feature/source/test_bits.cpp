@@ -134,7 +134,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	

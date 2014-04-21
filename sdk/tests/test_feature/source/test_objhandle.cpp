@@ -96,35 +96,35 @@ public:
 	CRefClass()
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
-//		printf("ln:%d ", ctx->GetCurrentLineNumber());
-//		printf("Construct(%X)\n",this);
+//		PRINTF("ln:%d ", ctx->GetCurrentLineNumber());
+//		PRINTF("Construct(%X)\n",this);
 		refCount = 1;
 	}
 	~CRefClass()
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
-//		printf("ln:%d ", ctx->GetCurrentLineNumber());
-//		printf("Destruct(%X)\n",this);
+//		PRINTF("ln:%d ", ctx->GetCurrentLineNumber());
+//		PRINTF("Destruct(%X)\n",this);
 	}
 	CRefClass &operator=(const CRefClass & /*o*/)
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
-//		printf("ln:%d ", ctx->GetCurrentLineNumber());
-//		printf("Assign(%X, %X)\n", this, &o);
+//		PRINTF("ln:%d ", ctx->GetCurrentLineNumber());
+//		PRINTF("Assign(%X, %X)\n", this, &o);
 		return *this;
 	}
 	int AddRef()
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
-//		printf("ln:%d ", ctx->GetCurrentLineNumber());
-//		printf("AddRef(%X)\n",this);
+//		PRINTF("ln:%d ", ctx->GetCurrentLineNumber());
+//		PRINTF("AddRef(%X)\n",this);
 		return ++refCount;
 	}
 	int Release()
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
-//		printf("ln:%d ", ctx->GetCurrentLineNumber());
-//		printf("Release(%X)\n",this);
+//		PRINTF("ln:%d ", ctx->GetCurrentLineNumber());
+//		PRINTF("Release(%X)\n",this);
 		int r = --refCount;
 		if( refCount == 0 ) delete this;
 		return r;
@@ -132,8 +132,8 @@ public:
 	static CRefClass &Add(CRefClass &self, CRefClass & /*other*/)
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
-//		printf("ln:%d ", ctx->GetCurrentLineNumber());
-//		printf("Add(%X, %X)\n", &self, &other);
+//		PRINTF("ln:%d ", ctx->GetCurrentLineNumber());
+//		PRINTF("Add(%X, %X)\n", &self, &other);
 		return self;
 	}
 	CRefClass &Do()
@@ -180,7 +180,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	ctx = engine->CreateContext();
@@ -191,7 +191,7 @@ bool Test()
 			PrintException(ctx);
 
 		TEST_FAILED;
-		printf("%s: Execution failed\n", TESTNAME);
+		PRINTF("%s: Execution failed\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
 
@@ -209,12 +209,12 @@ bool Test()
 			PrintException(ctx);
 
 		TEST_FAILED;
-		printf("%s: Execution failed\n", TESTNAME);
+		PRINTF("%s: Execution failed\n", TESTNAME);
 	}
 	if( refclass->refCount != 2 )
 	{
 		TEST_FAILED;
-		printf("%s: Ref count is wrong\n", TESTNAME);
+		PRINTF("%s: Ref count is wrong\n", TESTNAME);
 	}
 
 	refclass->Release();

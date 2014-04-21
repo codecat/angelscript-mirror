@@ -40,13 +40,13 @@ bool TestExecute1Arg()
 	if( !called ) 
 	{
 		// failure
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} 
 	else if( testVal != 5 ) 
 	{
 		// failure
-		printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 5);
+		PRINTF("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 5);
 		TEST_FAILED;
 	}
 
@@ -73,13 +73,13 @@ bool TestExecute1Arg()
 			if( !called ) 
 			{
 				// failure
-				printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+				PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 				TEST_FAILED;
 			} 
 			else if( testVal != 5 ) 
 			{
 				// failure
-				printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 5);
+				PRINTF("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 5);
 				TEST_FAILED;
 			}
 		}

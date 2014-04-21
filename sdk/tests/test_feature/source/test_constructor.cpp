@@ -131,7 +131,7 @@ bool TestConstructor()
 	if( out.buffer != "" ) 
 	{
 		TEST_FAILED;
-		printf("%s", out.buffer.c_str());
+		PRINTF("%s", out.buffer.c_str());
 	}
 
 	ExecuteString(engine, "TestConstructor2()", mod);

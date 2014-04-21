@@ -227,7 +227,7 @@ void TestScripts(asIScriptEngine *engine)
 	asIScriptFunction *func = mod->GetFunctionByDecl("void TestHandle(A @)");
 	if( func == 0 ) 
 	{
-		printf("%s: Failed to identify function with handle\n", TESTNAME);
+		PRINTF("%s: Failed to identify function with handle\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -235,7 +235,7 @@ void TestScripts(asIScriptEngine *engine)
 
 	if( number != 1234567890 )
 	{
-		printf("%s: Failed to set the number as expected\n", TESTNAME);
+		PRINTF("%s: Failed to set the number as expected\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -262,7 +262,7 @@ void TestScripts(asIScriptEngine *engine)
 
 	if( number != 1241 )
 	{
-		printf("%s: Interface method failed\n", TESTNAME);
+		PRINTF("%s: Interface method failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 }
@@ -551,23 +551,23 @@ bool Test()
 
 #ifndef STREAM_TO_FILE
 		if( stream.buffer.size() != 2488 )
-			printf("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
+			PRINTF("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
 		if( zeroes != 539 )
 		{
-			printf("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
+			PRINTF("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
 		if( crc32 != 0x2754F6ED )
-			printf("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
 		if( stream2.buffer.size() != 2089 )
-			printf("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
+			PRINTF("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
 		if( zeroes != 429 )
-			printf("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
+			PRINTF("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
 		if( mod->LoadByteCode(&stream) != 0 )
@@ -646,15 +646,15 @@ bool Test()
 			}
 		if( !match )
 		{
-			printf("Tiny module gave a different result than expected:\n");
-			printf("got     : ");
+			PRINTF("Tiny module gave a different result than expected:\n");
+			PRINTF("got     : ");
 			for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
-				printf("%0.2X", streamTiny.buffer[n]);
-			printf("\n");
-			printf("expected: ");
+				PRINTF("%0.2X", streamTiny.buffer[n]);
+			PRINTF("\n");
+			PRINTF("expected: ");
 			for( asUINT m = 0; m < sizeof(expected); m++ )
-				printf("%0.2X", expected[m]);
-			printf("\n");
+				PRINTF("%0.2X", expected[m]);
+			PRINTF("\n");
 		}
 #endif
 	}
@@ -1475,7 +1475,7 @@ bool Test()
 		if( bout.buffer != " (0, 0) : Error   : Attempting to instanciate invalid template type 'tmpl<int>'\n"
 			               " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 120\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1774,7 +1774,7 @@ bool TestAndrewPrice()
 		if( bout.buffer != " (0, 0) : Error   : Template type 'array' doesn't exist\n"
 			               " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 14\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1788,7 +1788,7 @@ bool TestAndrewPrice()
 		if( bout.buffer != " (0, 0) : Error   : Object type 'char_ptr' doesn't exist\n"
 						   " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 22\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

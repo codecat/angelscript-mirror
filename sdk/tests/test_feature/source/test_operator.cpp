@@ -302,7 +302,7 @@ bool Test()
 		                   "test (34, 15) : Info    : int C::opCmp(const C&in)\n"
 		                   "test (34, 15) : Info    : int C::opCmp(const C@)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -381,7 +381,7 @@ bool Test()
 		if( bout.buffer != "script (29, 1) : Info    : Compiling void main()\n"
 		                   "script (39, 16) : Warning : Implicit conversion of value is not exact\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		
@@ -398,7 +398,7 @@ bool Test()
 		}
 		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'int' available.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();
@@ -451,7 +451,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 
 		r = ExecuteString(engine, "main()", mod);
@@ -552,7 +552,7 @@ bool Test()
 		}
 		if( bout.buffer != "ExecuteString (1, 38) : Error   : No conversion from 'const Test@&' to 'int' available.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();
@@ -612,7 +612,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		
@@ -672,7 +672,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		
@@ -742,7 +742,7 @@ bool Test()
 		}
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 		
 		r = ExecuteString(engine, "main()", mod);
@@ -762,7 +762,7 @@ bool Test()
 			               "ExecuteString (1, 57) : Error   : Function 'opPostInc() const' not found\n"
 		                   "ExecuteString (1, 61) : Error   : Function 'opPreDec() const' not found\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();

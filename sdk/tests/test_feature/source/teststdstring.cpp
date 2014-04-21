@@ -150,7 +150,7 @@ bool TestStdString()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: ExecuteString() failed\n", TESTNAME);
+		PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 	}
 
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -162,7 +162,7 @@ bool TestStdString()
 	if( printOutput != "hello Ida" )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to print the correct string\n", TESTNAME);
+		PRINTF("%s: Failed to print the correct string\n", TESTNAME);
 	}
 
 	ExecuteString(engine, "string s = \"test\\\\test\\\\\"", mod);
@@ -177,7 +177,7 @@ bool TestStdString()
 	if( printOutput != "Hello World!" )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to print the correct string\n", TESTNAME);
+		PRINTF("%s: Failed to print the correct string\n", TESTNAME);
 	}
 
 	printOutput = "";
@@ -524,7 +524,7 @@ bool TestStdWString()
 	// wchar_t on Linux is 32bits in size. Thus this test fails on Linux. 
 	if( !strstr(asGetLibraryOptions(), "AS_WIN") )
 	{
-		printf("TestStdWString is skipped because wstring is platform dependent and this test only works on Windows\n");
+		PRINTF("TestStdWString is skipped because wstring is platform dependent and this test only works on Windows\n");
 		return false;
 	}
 

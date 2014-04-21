@@ -63,7 +63,7 @@ bool TestExecuteString()
 
 		if( !g_Obj.a || g_Obj.b )
 		{
-			printf("%s: ExecuteString() didn't execute correctly\n", TESTNAME);
+			PRINTF("%s: ExecuteString() didn't execute correctly\n", TESTNAME);
 			TEST_FAILED;
 		}
 	}

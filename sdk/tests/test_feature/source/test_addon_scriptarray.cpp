@@ -201,7 +201,7 @@ bool Test()
 			TEST_FAILED;
 		else if( std::string(ctx->GetExceptionString()) != "Caught an exception from the application" )
 		{
-			printf("Got exception : %s\n", ctx->GetExceptionString());
+			PRINTF("Got exception : %s\n", ctx->GetExceptionString());
 			TEST_FAILED;
 		}
 		ctx->Release();
@@ -368,7 +368,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		ctx = engine->CreateContext();
@@ -378,7 +378,7 @@ bool Test()
 			if( r == asEXECUTION_EXCEPTION )
 				PrintException(ctx);
 
-			printf("%s: Failed to execute script\n", TESTNAME);
+			PRINTF("%s: Failed to execute script\n", TESTNAME);
 			TEST_FAILED;
 		}
 		if( ctx ) ctx->Release();
@@ -389,13 +389,13 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "TestArrayException()", mod);
 		if( r != asEXECUTION_EXCEPTION )
 		{
-			printf("%s: No exception\n", TESTNAME);
+			PRINTF("%s: No exception\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -406,14 +406,14 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "TestArrayMulti()", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
-			printf("%s: Failure\n", TESTNAME);
+			PRINTF("%s: Failure\n", TESTNAME);
 			TEST_FAILED;
 		}
 		if( r == asEXECUTION_EXCEPTION )
@@ -430,13 +430,13 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "TestArrayChar()", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
-			printf("%s: Failure\n", TESTNAME);
+			PRINTF("%s: Failure\n", TESTNAME);
 			TEST_FAILED;
 		}
 		if( r == asEXECUTION_EXCEPTION )
@@ -469,7 +469,7 @@ bool Test()
 						   "Test_Addon_ScriptArray (3, 20) : Error   : Initialization lists cannot be used with 'array<int>@'\n"
 						   "Test_Addon_ScriptArray (4, 21) : Error   : Initialization lists cannot be used with 'int'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -539,7 +539,7 @@ bool Test()
 		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
 						   "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -950,7 +950,7 @@ bool Test()
 		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
 						   "script (5, 7) : Error   : Can't instanciate template 'array' with subtype 'CTest'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -974,7 +974,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "array<T> arr(1); \n", mod);
@@ -1014,7 +1014,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "main()", mod);
@@ -1053,7 +1053,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "main()", mod);
@@ -1097,7 +1097,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "main()", mod);

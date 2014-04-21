@@ -112,7 +112,7 @@ bool Test_main()
 
 	if( bout.buffer != " (0, 0) : Error   : The script object of type 'Bar' is being resurrected illegally during destruction\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -349,9 +349,9 @@ bool Test2();
 void TraceExec(asIScriptContext * /*ctx*/, void *)
 {
 //	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
-//		printf(" ");
-//	printf("%s", ctx->GetFunction()->GetDeclaration());
-//	printf("    Line: %d\n", ctx->GetLineNumber());
+//		PRINTF(" ");
+//	PRINTF("%s", ctx->GetFunction()->GetDeclaration());
+//	PRINTF("    Line: %d\n", ctx->GetLineNumber());
 }
 
 bool Test()
@@ -407,7 +407,7 @@ bool Test()
 						   "test (14, 12) : Error   : No default constructor for object of type 'ssNode'.\n"
 						   "test (14, 12) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -437,7 +437,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -463,7 +463,7 @@ bool Test()
 
 		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: -6)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -498,7 +498,7 @@ bool Test()
 		if( bout.buffer != "test (8, 7) : Info    : Compiling B::B()\n"
                            "test (10, 26) : Error   : 'en_B' is not declared\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -688,7 +688,7 @@ bool Test()
 						   "test (15, 3) : Info    : Compiling Bar2::Bar2()\n"
 						   "test (15, 10) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -734,7 +734,7 @@ bool Test()
 		{
 			if( std::string(ctx->GetExceptionString()) != "Null pointer access" )
 			{
-				printf("%s\n", ctx->GetExceptionString());
+				PRINTF("%s\n", ctx->GetExceptionString());
 				TEST_FAILED;
 			}
 			if( std::string(ctx->GetExceptionFunction()->GetName()) != "Func" )
@@ -907,7 +907,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -922,7 +922,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -953,7 +953,7 @@ bool Test()
 		if( bout.buffer != "test2 (1, 7) : Info    : Compiling T::T()\n"
 		                   "test (2, 11) : Error   : No matching signatures to 'func()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -1066,7 +1066,7 @@ bool Test()
 		if( bout.buffer != "test (3, 3) : Info    : Compiling T::T()\n"
 		                   "test (2, 12) : Error   : Divide by zero\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1216,7 +1216,7 @@ bool Test()
 		{
 			if( r == asEXECUTION_EXCEPTION )
 			{
-				printf("%s\n", ctx->GetExceptionString());
+				PRINTF("%s\n", ctx->GetExceptionString());
 			}
 			TEST_FAILED;
 		}
@@ -1308,7 +1308,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1344,7 +1344,7 @@ bool Test()
 		if( bout.buffer != "s (4, 1) : Info    : Compiling void main()\n"
 		                   "s (4, 21) : Error   : Illegal access to private property 'a'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1371,7 +1371,7 @@ bool Test()
 		if( bout.buffer != "s (4, 1) : Info    : Compiling void main()\n"
 		                   "s (4, 20) : Error   : Illegal call to private method 'void C::func()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1403,7 +1403,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -1499,7 +1499,7 @@ bool Test()
 						   "script (11, 10) : Info    : Candidates are:\n"
 						   "script (11, 10) : Info    : CBar@ CBar(int a)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
  

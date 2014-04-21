@@ -648,7 +648,7 @@ bool Test()
 	engine->Release();
 
 	if( fail )
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 
 	// Success
 	return fail;

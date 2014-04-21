@@ -9,7 +9,7 @@ char RetInt8(char in)
 {
 	if( in != 1 )
 	{
-		printf("failed to pass parameter correctly\n");
+		PRINTF("failed to pass parameter correctly\n");
 	}
 	return 1;
 }
@@ -77,7 +77,7 @@ bool Test()
 	ExecuteString(engine, "gvar = RetInt8(1)");
 	if( var != 1 )
 	{
-		printf("failed to return value correctly\n");
+		PRINTF("failed to return value correctly\n");
 		TEST_FAILED;
 	}
 	

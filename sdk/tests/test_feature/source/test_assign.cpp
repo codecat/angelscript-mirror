@@ -28,14 +28,14 @@ void print_generic(asIScriptGeneric *gen)
 	{
 		int a = *(int*)gen->GetAddressOfArg(0);
 		UNUSED_VAR(a);
-//		printf("%d\n", a);
+//		PRINTF("%d\n", a);
 	}
 	else
 	{
 		string s = **(string**)gen->GetAddressOfArg(0);
 		UNUSED_VAR(s);
 		buffer += s;
-//		printf("%s\n", s.c_str());
+//		PRINTF("%s\n", s.c_str());
 	}
 }
 
@@ -62,7 +62,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	ctx = engine->CreateContext();
@@ -72,7 +72,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		printf("%s: Failed to execute script\n", TESTNAME);
+		PRINTF("%s: Failed to execute script\n", TESTNAME);
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
@@ -106,7 +106,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "test()", mod);
@@ -123,7 +123,7 @@ bool Test()
 		              "CTest::~CTest() for Ent1\n"
 		              "CTest::~CTest() for Ent1\n" )
 		{
-			printf("%s", buffer.c_str());
+			PRINTF("%s", buffer.c_str());
 			TEST_FAILED;
 		}
 	}

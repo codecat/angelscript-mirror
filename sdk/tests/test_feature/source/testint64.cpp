@@ -57,7 +57,7 @@ bool TestInt64()
 	int r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("\n%s: The execution didn't finish correctly (code %d)\n", TESTNAME, r);
+		PRINTF("\n%s: The execution didn't finish correctly (code %d)\n", TESTNAME, r);
 		TEST_FAILED;
 
 		if( r == asEXECUTION_EXCEPTION )
@@ -66,7 +66,7 @@ bool TestInt64()
 	
     if( called != 3 ) 
 	{
-		printf("\n%s: cfunction called %d times. Expected 3 times\n", TESTNAME, called);
+		PRINTF("\n%s: cfunction called %d times. Expected 3 times\n", TESTNAME, called);
 		TEST_FAILED;
 	}
 

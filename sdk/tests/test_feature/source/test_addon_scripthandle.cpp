@@ -172,7 +172,7 @@ bool Test()
 		if( r < 0 )
 		{
 			TEST_FAILED;
-			printf("%s: Failed to compile the script\n", TESTNAME);
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		ctx = engine->CreateContext();
@@ -182,7 +182,7 @@ bool Test()
 			if( r == asEXECUTION_EXCEPTION )
 				PrintException(ctx, true);
 
-			printf("%s: Failed to execute script\n", TESTNAME);
+			PRINTF("%s: Failed to execute script\n", TESTNAME);
 			TEST_FAILED;
 		}
 		if( ctx ) ctx->Release();

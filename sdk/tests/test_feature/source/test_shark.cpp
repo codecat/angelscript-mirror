@@ -105,7 +105,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: Failed to build\n", TESTNAME);
+		PRINTF("%s: Failed to build\n", TESTNAME);
 		TEST_FAILED;
 	}
 	else

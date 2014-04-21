@@ -51,7 +51,7 @@ bool Test()
 	int typeId = mod->GetTypeIdByDecl("MyStruct");
 	if( typeId < 0 )
 	{
-		printf("%s: Failed to retrieve the type id for the script struct\n", TESTNAME);
+		PRINTF("%s: Failed to retrieve the type id for the script struct\n", TESTNAME);
 		TEST_FAILED;
 	}
 

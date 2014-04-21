@@ -67,13 +67,13 @@ bool TestNegateOperator()
 	if( !called ) 
 	{
 		// failure
-		printf("\n%s: behaviour function was not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: behaviour function was not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} 
 	else if( testVal != -1000 ) 
 	{
 		// failure
-		printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, -1000);
+		PRINTF("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, -1000);
 		TEST_FAILED;
 	}
 
@@ -83,13 +83,13 @@ bool TestNegateOperator()
 	if( !called ) 
 	{
 		// failure
-		printf("\n%s: behaviour function was not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: behaviour function was not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} 
 	else if( testVal != 0 ) 
 	{
 		// failure
-		printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 0);
+		PRINTF("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, 0);
 		TEST_FAILED;
 	}
 	

@@ -77,7 +77,7 @@ bool Test()
 						   "default arg (1, 1) : Error   : 'this' is not declared\n"
 						   "test (10, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void monster::calculate_necessary_experience(int = this . level)'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -261,7 +261,7 @@ bool Test()
 		                   "default arg (1, 1) : Error   : The type of the default argument expression doesn't match the function parameter type\n"
 		                   "test (23, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void kill_all(bool = kill)'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -344,7 +344,7 @@ bool Test()
 		string decl = func->GetDeclaration();
 		if( decl != "void defarg(bool, int = 34 + 45, int = 23)" )
 		{
-			printf("%s\n", decl.c_str());
+			PRINTF("%s\n", decl.c_str());
 			TEST_FAILED;
 		}
 		engine->Release();
@@ -361,7 +361,7 @@ bool Test()
 		if( bout.buffer != "System function (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void defarg(bool, int = 34 + 45, int)'\n"
 			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void defarg(bool, int a = 34+45, int)' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->Release();
@@ -392,7 +392,7 @@ bool Test()
 		                   "default arg (1, 1) : Error   : 'n' is not declared\n"
 		                   "script (5, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void func(int = n)'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -496,7 +496,7 @@ bool Test()
 						   "script (5, 3) : Info    : Candidates are:\n"
 						   "script (5, 3) : Info    : void myFunc(float f, int a = 0, int b)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -535,7 +535,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -578,7 +578,7 @@ bool Test()
 						   "default arg (1, 17) : Error   : Instead found '<end of file>'\n"
 						   "script (6, 3) : Error   : Failed while compiling default arg for parameter 1 in function 'void my_function(int, int = my_array [ i [ ])'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -607,7 +607,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

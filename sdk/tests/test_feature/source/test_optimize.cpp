@@ -464,7 +464,7 @@ bool TestOptimize()
 	{
 		if( g_i[n] != 56 )
 		{
-			printf("%s: Optimized add failed\n", TESTNAME);
+			PRINTF("%s: Optimized add failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -474,7 +474,7 @@ bool TestOptimize()
 	{
 		if( g_i[n] != 30 )
 		{
-			printf("%s: Optimized sub failed\n", TESTNAME);
+			PRINTF("%s: Optimized sub failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -484,7 +484,7 @@ bool TestOptimize()
 	{
 		if( g_i[n] != 559 )
 		{
-			printf("%s: Optimized mul failed\n", TESTNAME);
+			PRINTF("%s: Optimized mul failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -494,7 +494,7 @@ bool TestOptimize()
 	{
 		if( g_i[n] != 3 )
 		{
-			printf("%s: Optimized div failed\n", TESTNAME);
+			PRINTF("%s: Optimized div failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -504,14 +504,14 @@ bool TestOptimize()
 	{
 		if( g_i[n] != 4 )
 		{
-			printf("%s: Optimized mod failed\n", TESTNAME);
+			PRINTF("%s: Optimized mod failed\n", TESTNAME);
 			break;
 		}
 	}
 
-	ExecuteString(engine, "g_i0 = 13; g_i1 = -g_i0; g_i2 = -13;"); if( g_i[1] != -13 || g_i[2] != -13 ) { printf("%s: negi failed\n", TESTNAME); }
-	ExecuteString(engine, "g_i0 = 0; g_i1 = g_i0++; g_i2 = ++g_i0;"); if( g_i[0] != 2 || g_i[1] != 0 || g_i[2] != 2 ) { printf("%s: inci failed\n", TESTNAME); }
-	ExecuteString(engine, "g_i0 = 0; g_i1 = g_i0--; g_i2 = --g_i0;"); if( g_i[0] != -2 || g_i[1] != 0 || g_i[2] != -2 ) { printf("%s: deci failed\n", TESTNAME); }
+	ExecuteString(engine, "g_i0 = 13; g_i1 = -g_i0; g_i2 = -13;"); if( g_i[1] != -13 || g_i[2] != -13 ) { PRINTF("%s: negi failed\n", TESTNAME); }
+	ExecuteString(engine, "g_i0 = 0; g_i1 = g_i0++; g_i2 = ++g_i0;"); if( g_i[0] != 2 || g_i[1] != 0 || g_i[2] != 2 ) { PRINTF("%s: inci failed\n", TESTNAME); }
+	ExecuteString(engine, "g_i0 = 0; g_i1 = g_i0--; g_i2 = --g_i0;"); if( g_i[0] != -2 || g_i[1] != 0 || g_i[2] != -2 ) { PRINTF("%s: deci failed\n", TESTNAME); }
 
 
 	ExecuteString(engine, "TestOptimizeAdd64()", mod);
@@ -519,7 +519,7 @@ bool TestOptimize()
 	{
 		if( g_i64[n] != 56 )
 		{
-			printf("%s: Optimized add64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized add64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -529,7 +529,7 @@ bool TestOptimize()
 	{
 		if( g_i64[n] != 30 )
 		{
-			printf("%s: Optimized sub64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized sub64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -539,7 +539,7 @@ bool TestOptimize()
 	{
 		if( g_i64[n] != 559 )
 		{
-			printf("%s: Optimized mul64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized mul64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -549,7 +549,7 @@ bool TestOptimize()
 	{
 		if( g_i64[n] != 3 )
 		{
-			printf("%s: Optimized div64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized div64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -559,14 +559,14 @@ bool TestOptimize()
 	{
 		if( g_i64[n] != 4 )
 		{
-			printf("%s: Optimized mod64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized mod64 failed\n", TESTNAME);
 			break;
 		}
 	}
 
-	ExecuteString(engine, "g_i64_0 = 13; g_i64_1 = -g_i64_0; g_i64_2 = -13;"); if( g_i64[1] != -13 || g_i64[2] != -13 ) { printf("%s: negi64 failed\n", TESTNAME); }
-	ExecuteString(engine, "g_i64_0 = 0; g_i64_1 = g_i64_0++; g_i64_2 = ++g_i64_0;"); if( g_i64[0] != 2 || g_i64[1] != 0 || g_i64[2] != 2 ) { printf("%s: inci64 failed\n", TESTNAME); }
-	ExecuteString(engine, "g_i64_0 = 0; g_i64_1 = g_i64_0--; g_i64_2 = --g_i64_0;"); if( g_i64[0] != -2 || g_i64[1] != 0 || g_i64[2] != -2 ) { printf("%s: deci64 failed\n", TESTNAME); }
+	ExecuteString(engine, "g_i64_0 = 13; g_i64_1 = -g_i64_0; g_i64_2 = -13;"); if( g_i64[1] != -13 || g_i64[2] != -13 ) { PRINTF("%s: negi64 failed\n", TESTNAME); }
+	ExecuteString(engine, "g_i64_0 = 0; g_i64_1 = g_i64_0++; g_i64_2 = ++g_i64_0;"); if( g_i64[0] != 2 || g_i64[1] != 0 || g_i64[2] != 2 ) { PRINTF("%s: inci64 failed\n", TESTNAME); }
+	ExecuteString(engine, "g_i64_0 = 0; g_i64_1 = g_i64_0--; g_i64_2 = --g_i64_0;"); if( g_i64[0] != -2 || g_i64[1] != 0 || g_i64[2] != -2 ) { PRINTF("%s: deci64 failed\n", TESTNAME); }
 
 
 
@@ -575,7 +575,7 @@ bool TestOptimize()
 	{
 		if( g_f[n] != 56 )
 		{
-			printf("%s: Optimized addf failed\n", TESTNAME);
+			PRINTF("%s: Optimized addf failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -585,7 +585,7 @@ bool TestOptimize()
 	{
 		if( g_f[n] != 30 )
 		{
-			printf("%s: Optimized subf failed\n", TESTNAME);
+			PRINTF("%s: Optimized subf failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -595,7 +595,7 @@ bool TestOptimize()
 	{
 		if( g_f[n] != 559 )
 		{
-			printf("%s: Optimized mulf failed\n", TESTNAME);
+			PRINTF("%s: Optimized mulf failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -605,7 +605,7 @@ bool TestOptimize()
 	{
 		if( g_f[n] != 3.30769230769230748f )
 		{
-			printf("%s: Optimized divf failed\n", TESTNAME);
+			PRINTF("%s: Optimized divf failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -615,21 +615,21 @@ bool TestOptimize()
 	{
 		if( g_f[n] != 4 )
 		{
-			printf("%s: Optimized modf failed\n", TESTNAME);
+			PRINTF("%s: Optimized modf failed\n", TESTNAME);
 			break;
 		}
 	}
 
-	ExecuteString(engine, "g_f0 = 13; g_f1 = -g_f0; g_f2 = -13;"); if( g_f[1] != -13 || g_f[2] != -13 ) { printf("%s: negf failed\n", TESTNAME); }
-	ExecuteString(engine, "g_f0 = 0; g_f1 = g_f0++; g_f2 = ++g_f0;"); if( g_f[0] != 2 || g_f[1] != 0 || g_f[2] != 2 ) { printf("%s: incf failed\n", TESTNAME); }
-	ExecuteString(engine, "g_f0 = 0; g_f1 = g_f0--; g_f2 = --g_f0;"); if( g_f[0] != -2 || g_f[1] != 0 || g_f[2] != -2 ) { printf("%s: decf failed\n", TESTNAME); }
+	ExecuteString(engine, "g_f0 = 13; g_f1 = -g_f0; g_f2 = -13;"); if( g_f[1] != -13 || g_f[2] != -13 ) { PRINTF("%s: negf failed\n", TESTNAME); }
+	ExecuteString(engine, "g_f0 = 0; g_f1 = g_f0++; g_f2 = ++g_f0;"); if( g_f[0] != 2 || g_f[1] != 0 || g_f[2] != 2 ) { PRINTF("%s: incf failed\n", TESTNAME); }
+	ExecuteString(engine, "g_f0 = 0; g_f1 = g_f0--; g_f2 = --g_f0;"); if( g_f[0] != -2 || g_f[1] != 0 || g_f[2] != -2 ) { PRINTF("%s: decf failed\n", TESTNAME); }
 
 	ExecuteString(engine, "TestOptimizeAddd()", mod);
 	for( n = 0; n < 6; ++ n )
 	{
 		if( g_d[n] != 56 )
 		{
-			printf("%s: Optimized addd failed\n", TESTNAME);
+			PRINTF("%s: Optimized addd failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -639,7 +639,7 @@ bool TestOptimize()
 	{
 		if( g_d[n] != 30 )
 		{
-			printf("%s: Optimized subd failed\n", TESTNAME);
+			PRINTF("%s: Optimized subd failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -649,7 +649,7 @@ bool TestOptimize()
 	{
 		if( g_d[n] != 559 )
 		{
-			printf("%s: Optimized muld failed\n", TESTNAME);
+			PRINTF("%s: Optimized muld failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -659,7 +659,7 @@ bool TestOptimize()
 	{
 		if( g_d[n] != 3.30769230769230748 )
 		{
-			printf("%s: Optimized divd failed\n", TESTNAME);
+			PRINTF("%s: Optimized divd failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -669,21 +669,21 @@ bool TestOptimize()
 	{
 		if( g_d[n] != 4 )
 		{
-			printf("%s: Optimized modd failed\n", TESTNAME);
+			PRINTF("%s: Optimized modd failed\n", TESTNAME);
 			break;
 		}
 	}
 
-	ExecuteString(engine, "g_d0 = 13; g_d1 = -g_d0; g_d2 = -13;"); if( g_d[1] != -13 || g_d[2] != -13 ) { printf("%s: negd failed\n", TESTNAME); }
-	ExecuteString(engine, "g_d0 = 0; g_d1 = g_d0++; g_d2 = ++g_d0;"); if( g_d[0] != 2 || g_d[1] != 0 || g_d[2] != 2 ) { printf("%s: incd failed\n", TESTNAME); }
-	ExecuteString(engine, "g_d0 = 0; g_d1 = g_d0--; g_d2 = --g_d0;"); if( g_d[0] != -2 || g_d[1] != 0 || g_d[2] != -2 ) { printf("%s: decd failed\n", TESTNAME); }
+	ExecuteString(engine, "g_d0 = 13; g_d1 = -g_d0; g_d2 = -13;"); if( g_d[1] != -13 || g_d[2] != -13 ) { PRINTF("%s: negd failed\n", TESTNAME); }
+	ExecuteString(engine, "g_d0 = 0; g_d1 = g_d0++; g_d2 = ++g_d0;"); if( g_d[0] != 2 || g_d[1] != 0 || g_d[2] != 2 ) { PRINTF("%s: incd failed\n", TESTNAME); }
+	ExecuteString(engine, "g_d0 = 0; g_d1 = g_d0--; g_d2 = --g_d0;"); if( g_d[0] != -2 || g_d[1] != 0 || g_d[2] != -2 ) { PRINTF("%s: decd failed\n", TESTNAME); }
 
 	ExecuteString(engine, "TestOptimizeAnd()", mod);
 	for( n = 0; n < 6; ++ n )
 	{
 		if( g_b[n] != (0xF3 & 0x17) )
 		{
-			printf("%s: Optimized and failed\n", TESTNAME);
+			PRINTF("%s: Optimized and failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -693,7 +693,7 @@ bool TestOptimize()
 	{
 		if( g_b[n] != (0xF3 | 0x17) )
 		{
-			printf("%s: Optimized or failed\n", TESTNAME);
+			PRINTF("%s: Optimized or failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -703,7 +703,7 @@ bool TestOptimize()
 	{
 		if( g_b[n] != (0xF3 ^ 0x17) )
 		{
-			printf("%s: Optimized xor failed\n", TESTNAME);
+			PRINTF("%s: Optimized xor failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -713,7 +713,7 @@ bool TestOptimize()
 	{
 		if( g_b[n] != (0xF3 << 3) )
 		{
-			printf("%s: Optimized sll failed\n", TESTNAME);
+			PRINTF("%s: Optimized sll failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -723,7 +723,7 @@ bool TestOptimize()
 	{
 		if( g_b[n] != (0xF3u >> 3) )
 		{
-			printf("%s: Optimized srl failed\n", TESTNAME);
+			PRINTF("%s: Optimized srl failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -733,12 +733,12 @@ bool TestOptimize()
 	{
 		if( g_b[n] != (0xF3 >> 3) )
 		{
-			printf("%s: Optimized sra failed\n", TESTNAME);
+			PRINTF("%s: Optimized sra failed\n", TESTNAME);
 			break;
 		}
 	}
 	
-	ExecuteString(engine, "g_b0 = 0xF3; g_b1 = ~g_b0; g_b2 = ~0xF3;"); if( g_b[1] != ~0xF3 || g_b[2] != ~0xF3 ) { printf("%s: bnot failed\n", TESTNAME); }
+	ExecuteString(engine, "g_b0 = 0xF3; g_b1 = ~g_b0; g_b2 = ~0xF3;"); if( g_b[1] != ~0xF3 || g_b[2] != ~0xF3 ) { PRINTF("%s: bnot failed\n", TESTNAME); }
 
 
 	ExecuteString(engine, "TestOptimizeAnd64()", mod);
@@ -746,7 +746,7 @@ bool TestOptimize()
 	{
 		if( g_b64[n] != (0xF3 & 0x17) )
 		{
-			printf("%s: Optimized and64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized and64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -756,7 +756,7 @@ bool TestOptimize()
 	{
 		if( g_b64[n] != (0xF3 | 0x17) )
 		{
-			printf("%s: Optimized or64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized or64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -766,7 +766,7 @@ bool TestOptimize()
 	{
 		if( g_b64[n] != (0xF3 ^ 0x17) )
 		{
-			printf("%s: Optimized xor64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized xor64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -776,7 +776,7 @@ bool TestOptimize()
 	{
 		if( g_b64[n] != (0xF3 << 3) )
 		{
-			printf("%s: Optimized sll64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized sll64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -786,7 +786,7 @@ bool TestOptimize()
 	{
 		if( g_b64[n] != (0xF3u >> 3) )
 		{
-			printf("%s: Optimized srl64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized srl64 failed\n", TESTNAME);
 			break;
 		}
 	}
@@ -796,12 +796,12 @@ bool TestOptimize()
 	{
 		if( g_b64[n] != (0xF3 >> 3) )
 		{
-			printf("%s: Optimized sra64 failed\n", TESTNAME);
+			PRINTF("%s: Optimized sra64 failed\n", TESTNAME);
 			break;
 		}
 	}
 	
-	ExecuteString(engine, "g_b64_0 = 0xF3; g_b64_1 = ~g_b64_0; g_b64_2 = ~uint64(0xF3);"); if( g_b64[1] != ~I64(0xF3) || g_b64[2] != ~I64(0xF3) ) { printf("%s: bnot64 failed\n", TESTNAME); }
+	ExecuteString(engine, "g_b64_0 = 0xF3; g_b64_1 = ~g_b64_0; g_b64_2 = ~uint64(0xF3);"); if( g_b64[1] != ~I64(0xF3) || g_b64[2] != ~I64(0xF3) ) { PRINTF("%s: bnot64 failed\n", TESTNAME); }
 
 
 
@@ -809,21 +809,21 @@ bool TestOptimize()
 	r = ExecuteString(engine, "bool b = false; if( !b ) {}");
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: !b failed\n", TESTNAME);
+		PRINTF("%s: !b failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 		
 	r = ExecuteString(engine, "bool b = false; b = not b;");
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: !b failed\n", TESTNAME);
+		PRINTF("%s: !b failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "uint tmp = 50; uint x = tmp + 0x50;");
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: uint failed\n", TESTNAME);
+		PRINTF("%s: uint failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 

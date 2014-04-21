@@ -140,10 +140,10 @@ bool TestExecuteMixedArgs()
 	ExecuteString(engine, "cfunction(10, 1.92f, 3.88, 97)");
 
 	if (!called) {
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} else if (!testVal) {
-		printf("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
+		PRINTF("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
 		TEST_FAILED;
 	}
 
@@ -164,12 +164,12 @@ bool TestExecuteMixedArgs()
 		ExecuteString(engine, "cfunction2(0x102030405, 3, 24, 128)");
 		if( !called )
 		{
-			printf("%s: cfunction2 not called\n", TESTNAME);
+			PRINTF("%s: cfunction2 not called\n", TESTNAME);
 			TEST_FAILED;
 		}
 		else if( !testVal )
 		{
-			printf("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
+			PRINTF("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
 			TEST_FAILED;
 		}
 
@@ -177,10 +177,10 @@ bool TestExecuteMixedArgs()
 		testVal = false;
 		ExecuteString(engine, "cfunction3(10, 3.88, 1.92f, 97)");
 		if (!called) {
-			printf("\n%s: cfunction3 not called from script\n\n", TESTNAME);
+			PRINTF("\n%s: cfunction3 not called from script\n\n", TESTNAME);
 			TEST_FAILED;
 		} else if (!testVal) {
-			printf("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
+			PRINTF("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
 			TEST_FAILED;
 		}
 
@@ -189,12 +189,12 @@ bool TestExecuteMixedArgs()
 		ExecuteString(engine, "cfunction4(128, 0x102030405, 3, 24)");
 		if( !called )
 		{
-			printf("%s: cfunction4 not called\n", TESTNAME);
+			PRINTF("%s: cfunction4 not called\n", TESTNAME);
 			TEST_FAILED;
 		}
 		else if( !testVal )
 		{
-			printf("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
+			PRINTF("%s: testVal not of expected value. Got(%lld, %g, %d, %d)\n", TESTNAME, g1, g2, g3, g4);
 			TEST_FAILED;
 		}
 
@@ -203,11 +203,11 @@ bool TestExecuteMixedArgs()
 		ExecuteString(engine, "cfunction5(10, 3.88, 1.92f, 97)");
 		if( !called )
 		{
-			printf("%s: cfunction4 not called\n", TESTNAME);
+			PRINTF("%s: cfunction4 not called\n", TESTNAME);
 			TEST_FAILED;
 		}
 		else if (!testVal) {
-			printf("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
+			PRINTF("\n%s: testVal is not of expected value. Got (%d, %f, %f, %c), expected (%d, %f, %f, %c)\n\n", TESTNAME, t1, t2, t3, t4, 10, 1.92f, 3.88, 97);
 			TEST_FAILED;
 		}
 	}

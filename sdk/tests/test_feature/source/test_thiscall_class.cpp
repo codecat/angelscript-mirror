@@ -150,13 +150,13 @@ bool TestThiscallClass()
 	int r = ExecuteString(engine, "c1 = c4.class1();");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c1.a != 0xDEADC0DE )
 	{
-		printf("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, (unsigned int)(c1.a));
+		PRINTF("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, (unsigned int)(c1.a));
 		TEST_FAILED;
 	}
 
@@ -167,19 +167,19 @@ bool TestThiscallClass()
 	r = ExecuteString(engine, "c2 = c4.class2();");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c2.a != 0xDEADC0DE )
 	{
-		printf("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, (unsigned int)(c2.a));
+		PRINTF("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, (unsigned int)(c2.a));
 		TEST_FAILED;
 	}
 
 	if( c2.b != 0x01234567 )
 	{
-		printf("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, (unsigned int)(c2.b));
+		PRINTF("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, (unsigned int)(c2.b));
 		TEST_FAILED;
 	}
 
@@ -187,13 +187,13 @@ bool TestThiscallClass()
 	r = ExecuteString(engine, "c2_2 = c4.class2_2();");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c2_2.a != 0xDEADC0DE01234567L )
 	{
-		printf("%s: Failed to assign object returned from function. c2.a = %lx\n", TESTNAME, c2_2.a);
+		PRINTF("%s: Failed to assign object returned from function. c2.a = %lx\n", TESTNAME, c2_2.a);
 		TEST_FAILED;
 	}
 
@@ -204,25 +204,25 @@ bool TestThiscallClass()
 	r = ExecuteString(engine, "c3 = c4.class3();");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c3.a != 0xDEADC0DE )
 	{
-		printf("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, (unsigned int)(c3.a));
+		PRINTF("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, (unsigned int)(c3.a));
 		TEST_FAILED;
 	}
 
 	if( c3.b != 0x01234567 )
 	{
-		printf("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, (unsigned int)(c3.b));
+		PRINTF("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, (unsigned int)(c3.b));
 		TEST_FAILED;
 	}
 
 	if( c3.c != 0x89ABCDEF )
 	{
-		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)(c3.c));
+		PRINTF("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, (unsigned int)(c3.c));
 		TEST_FAILED;
 	}
 

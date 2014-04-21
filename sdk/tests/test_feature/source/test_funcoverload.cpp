@@ -74,7 +74,7 @@ bool TestFuncOverload()
 	if( bout.buffer != "TestFuncOverload (1, 1) : Info    : Compiling void ScriptFunc(void)\n"
                        "TestFuncOverload (1, 1) : Error   : Parameter type can't be 'void', because the type cannot be instanciated.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

@@ -35,7 +35,7 @@ bool Test()
 	if( out.buffer != "Test2Func (2, 1) : Error   : A function with the same name and parameters already exists\n" )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to identify the error with two equal functions\n", TESTNAME);
+		PRINTF("%s: Failed to identify the error with two equal functions\n", TESTNAME);
 	}
 
 	out.buffer = "";
@@ -54,7 +54,7 @@ bool Test()
 
 	if( fail )
 	{
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 	}
 
 	// Success

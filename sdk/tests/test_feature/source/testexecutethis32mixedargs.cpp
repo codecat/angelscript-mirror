@@ -234,13 +234,13 @@ bool TestExecuteThis32MixedArgs()
     if( !called )
     {
         // failure
-        printf("\n%s: c1.cfunction1 not called from script\n\n", TESTNAME);
+        PRINTF("\n%s: c1.cfunction1 not called from script\n\n", TESTNAME);
         TEST_FAILED;
     }
     else if( !testVal )
     {
         // failure
-        printf("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
+        PRINTF("\n%s: testVal is not of expected value. Got (%f, %f, %f, %f), expected (%f, %f, %f, %f)\n\n", TESTNAME, t1, t2, t3, t4, 9.2f, 13.3f, 18.8, 3.1415f);
         TEST_FAILED;
     }
     called = false;
@@ -248,7 +248,7 @@ bool TestExecuteThis32MixedArgs()
     if( !called )
     {
         // failure
-        printf("\n%s: c1.cfunction2 not called from script\n\n", TESTNAME);
+        PRINTF("\n%s: c1.cfunction2 not called from script\n\n", TESTNAME);
         TEST_FAILED;
     }
 
@@ -314,18 +314,18 @@ bool TestExecuteThis32MixedArgs()
 		")");
 
 	if (!test.called) {
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} else if (!test.testVal) {
-		printf("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
+		PRINTF("\n%s: testVal is not of expected value. Got:\n\n", TESTNAME);
 		int pos = 0;
 		for (int i = 0; i < 4; i++) {
 			int j;
 			for (j = 0; j < 4; j++) {
-				printf("ivalue[%d]: %d\n", pos+j, test.ivalues[pos+j]);
+				PRINTF("ivalue[%d]: %d\n", pos+j, test.ivalues[pos+j]);
 			}
 			for (j = 0; j < 4; j++) {
-				printf("fvalue[%d]: %f\n", pos+j, test.fvalues[pos+j]);
+				PRINTF("fvalue[%d]: %f\n", pos+j, test.fvalues[pos+j]);
 			}
 			pos += 4;
 		}

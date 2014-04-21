@@ -38,13 +38,13 @@ bool TestExecute2Args()
 	if( !called ) 
 	{
 		// failure
-		printf("\n%s: cfunction not called from script\n\n", TESTNAME);
+		PRINTF("\n%s: cfunction not called from script\n\n", TESTNAME);
 		TEST_FAILED;
 	} 
 	else if( testVal != (5 + 9) ) 
 	{
 		// failure
-		printf("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, (5 + 9));
+		PRINTF("\n%s: testVal is not of expected value. Got %d, expected %d\n\n", TESTNAME, testVal, (5 + 9));
 		TEST_FAILED;
 	}
 

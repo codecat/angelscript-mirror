@@ -20,7 +20,7 @@ bool Test2Modules()
 	mod->AddScriptSection("script", script, strlen(script), 0);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: failed to build module a\n", TESTNAME);
+		PRINTF("%s: failed to build module a\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -28,7 +28,7 @@ bool Test2Modules()
 	mod->AddScriptSection("script", script, strlen(script), 0);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: failed to build module b\n", TESTNAME);
+		PRINTF("%s: failed to build module b\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -37,14 +37,14 @@ bool Test2Modules()
 		asIScriptFunction *aFunc = engine->GetModule("a")->GetFunctionByName("Test");
 		if( aFunc == 0 )
 		{
-			printf("%s: failed to retrieve func ID for module a\n", TESTNAME);
+			PRINTF("%s: failed to retrieve func ID for module a\n", TESTNAME);
 			TEST_FAILED;
 		}
 
 		asIScriptFunction *bFunc = engine->GetModule("b")->GetFunctionByName("Test");
 		if( bFunc == 0 )
 		{
-			printf("%s: failed to retrieve func ID for module b\n", TESTNAME);
+			PRINTF("%s: failed to retrieve func ID for module b\n", TESTNAME);
 			TEST_FAILED;
 		}
 	}

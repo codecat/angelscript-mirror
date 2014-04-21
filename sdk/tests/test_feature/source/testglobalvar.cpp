@@ -78,9 +78,9 @@ void print(asIScriptGeneric *gen)
 		s != "5\n" &&
 		s != "35.2\n" &&
 		s != "4\n" )
-		printf("Error....\n");
+		PRINTF("Error....\n");
 
-//	printf(s.c_str());
+//	PRINTF(s.c_str());
 }
 
 bool TestGlobalVar()
@@ -105,7 +105,7 @@ bool TestGlobalVar()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: build failed\n", TESTNAME);
+		PRINTF("%s: build failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -113,14 +113,14 @@ bool TestGlobalVar()
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: build failed\n", TESTNAME);
+		PRINTF("%s: build failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	mod->AddScriptSection("script", script3, strlen(script3), 0);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: build failed\n", TESTNAME);
+		PRINTF("%s: build failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -139,7 +139,7 @@ bool TestGlobalVar()
 
 	if( !CompareDouble(*f, 2) || *str != "test" )
 	{
-		printf("%s: Failed to reset the module\n", TESTNAME);
+		PRINTF("%s: Failed to reset the module\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -148,7 +148,7 @@ bool TestGlobalVar()
 	mod->AddScriptSection("script", script4);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: build failed\n", TESTNAME);
+		PRINTF("%s: build failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -257,7 +257,7 @@ bool TestGlobalVar()
 			               "Property (1, 17) : Error   : Instead found '='\n"
 			               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with 'const int value = 3345;' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->Release();
@@ -355,7 +355,7 @@ bool TestGlobalVar()
 		if( bout.buffer != " (4, 3) : Error   : Failed to initialize global variable 'g_b'\n"
 		                   " (2, 0) : Info    : Exception 'Null pointer access' in 'B::B()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -378,7 +378,7 @@ bool TestGlobalVar()
 
 		if( bout.buffer != " (1, 1) : Error   : Global variables have been disabled by the application\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -429,7 +429,7 @@ bool TestGlobalVar()
 		if( bout.buffer != " (1, 6) : Error   : Failed to initialize global variable 'stuff'\n"
                            " (16, 0) : Info    : Exception 'Null pointer access' in 'int create_whatever()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		bout.buffer = "";
@@ -447,7 +447,7 @@ bool TestGlobalVar()
 		if( bout.buffer != " (1, 6) : Error   : Failed to initialize global variable 'stuff'\n"
                            " (16, 0) : Info    : Exception 'Null pointer access' in 'int create_whatever()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

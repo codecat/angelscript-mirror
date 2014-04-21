@@ -122,7 +122,7 @@ bool TestSwitch()
 	int r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: Failed to build script\n", TESTNAME);
+		PRINTF("%s: Failed to build script\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -132,7 +132,7 @@ bool TestSwitch()
 
 	if( sum != 254 )
 	{
-		printf("%s: Expected %d, got %d\n", TESTNAME, 254, sum);
+		PRINTF("%s: Expected %d, got %d\n", TESTNAME, 254, sum);
 		TEST_FAILED;
 	}
 
@@ -151,7 +151,7 @@ bool TestSwitch()
                 "The switch works\n" )
 	{
 		TEST_FAILED;
-		printf("%s: Switch failed. Got: %s\n", TESTNAME, _log.c_str());
+		PRINTF("%s: Switch failed. Got: %s\n", TESTNAME, _log.c_str());
 	}
  
 	CBufferedOutStream bout;
@@ -189,7 +189,7 @@ bool TestSwitch()
 		if( bout.buffer != "name (1, 1) : Info    : Compiling int func(int)\n"
 		                   "name (5, 2) : Error   : The default case must be the last one\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -204,7 +204,7 @@ bool TestSwitch()
 
 		if( bout.buffer != "ExecuteString (1, 28) : Error   : Duplicate switch case\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -231,7 +231,7 @@ bool TestSwitch()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -256,7 +256,7 @@ bool TestSwitch()
 		if( bout.buffer != "script (1, 2) : Info    : Compiling void test()\n"
 		                   "script (6, 10) : Error   : Variables cannot be declared in switch cases, except inside statement blocks\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}

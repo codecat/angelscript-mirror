@@ -141,7 +141,7 @@ std::string outbuffer;
 void print(asIScriptGeneric *gen)
 {
 	std::string s = ((CScriptString*)gen->GetArgAddress(0))->buffer;
-//	printf("%s\n", s.c_str());
+//	PRINTF("%s\n", s.c_str());
 	outbuffer += s + "\n";
 }
 
@@ -195,7 +195,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The name of constructors and destructors must be the same as the class\n" ) 
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -353,7 +353,7 @@ bool Test()
 	}
 	if( outbuffer != "Test::Set\nTest::Set\nSet::Set\n" )
 	{
-		printf("%s", outbuffer.c_str());
+		PRINTF("%s", outbuffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -408,7 +408,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "script (2, 3) : Error   : The method cannot be named with the class name\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->Release();
@@ -443,7 +443,7 @@ bool Test()
 		{
 			if( strcmp(ctx->GetExceptionString(), "Null pointer access") != 0 )
 			{
-				printf("%s", ctx->GetExceptionString());
+				PRINTF("%s", ctx->GetExceptionString());
 				TEST_FAILED;
 			}
 		}
@@ -452,7 +452,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

@@ -170,7 +170,7 @@ bool Test()
 		               "ExecuteString (1, 1) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 1) : Info    : void Test(obj@ o)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -200,7 +200,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if(bout.buffer != "ExecuteString (1, 28) : Error   : Can't implicitly convert from 'const obj@' to 'obj@'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -239,7 +239,7 @@ bool Test()
 		               "script (15, 13) : Error   : No matching signatures to 'CTest::SetInt(const int) const'\n"
 					   "script (16, 7) : Error   : No matching signatures to 'CTest::SetInt(const int) const'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -255,14 +255,14 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
 	engine->Release();
 
 	if( fail )
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 
 	// Success
 	return fail;
@@ -332,7 +332,7 @@ bool Test2()
 	if( bout.buffer != "script (9, 1) : Info    : Compiling void Func(const MyType&in)\n"
 					   "script (11, 6) : Error   : No matching signatures to 'MyType::TestConst() const'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -357,7 +357,7 @@ bool Test2()
 	if( bout.buffer != "script (4, 4) : Info    : Compiling void MyType::TestConst() const\n"
 					   "script (6, 11) : Error   : Reference is read-only\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -382,7 +382,7 @@ bool Test2()
 	if( bout.buffer != "script (4, 4) : Info    : Compiling void MyType::TestConst() const\n"
 					   "script (6, 16) : Error   : Reference is read-only\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

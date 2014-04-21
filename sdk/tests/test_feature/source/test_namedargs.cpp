@@ -205,7 +205,7 @@ bool Test()
 						   "test (5, 20) : Error   : Positional arguments cannot be passed after named arguments\n"
 						   )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -241,7 +241,7 @@ bool Test()
 						   "test (5, 16) : Info    : bool func(int a, int b, int c)\n"
 						   )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -272,7 +272,7 @@ bool Test()
 						   "test (5, 23) : Error   : Duplicate named argument\n"
 						   )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

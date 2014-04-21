@@ -245,7 +245,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -287,7 +287,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -312,7 +312,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -416,7 +416,7 @@ bool Test()
 		if( bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
 		                   "test (7, 9) : Error   : No matching signatures to 'void F()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -433,7 +433,7 @@ bool Test()
 		if( bout.buffer != "test (3, 5) : Info    : Compiling CB@ cb\n"
 		                   "test (3, 10) : Error   : Can't create delegate for types that do not support handles\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -535,7 +535,7 @@ bool Test()
 						   "script (2, 10) : Info    : Compiling functype myFunc\n"
 						   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -550,7 +550,7 @@ bool Test()
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
 						   "script (2, 15) : Error   : No matching signatures to 'functype()'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -564,7 +564,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "script (2, 5) : Error   : Name conflict. 'test' is a funcdef.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -586,7 +586,7 @@ bool Test()
 		if( bout.buffer != "script (3, 3) : Info    : Compiling void t::func()\n"
 		                   "script (5, 12) : Error   : Can't implicitly convert from 't' to 'F@&'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -615,7 +615,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "main()", mod);
@@ -648,7 +648,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -686,7 +686,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		r = ExecuteString(engine, "fp(); assert( called );", mod);

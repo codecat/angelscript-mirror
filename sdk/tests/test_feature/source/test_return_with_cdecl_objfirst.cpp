@@ -92,13 +92,13 @@ bool TestReturnWithCDeclObjFirst()
 	r = ExecuteString(engine, "c1 = f.notComplex1(int(0xDEADC0DE));");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c1.a != 0xDEADC0DE )
 	{
-		printf("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, c1.a);
+		PRINTF("%s: Failed to assign object returned from function. c1.a = %X\n", TESTNAME, c1.a);
 		TEST_FAILED;
 	}
 
@@ -108,19 +108,19 @@ bool TestReturnWithCDeclObjFirst()
 	r = ExecuteString(engine, "c2 = f.notComplex2(int(0xDEADC0DE), 0x01234567);");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c2.a != 0xDEADC0DE )
 	{
-		printf("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, c2.a);
+		PRINTF("%s: Failed to assign object returned from function. c2.a = %X\n", TESTNAME, c2.a);
 		TEST_FAILED;
 	}
 
 	if( c2.b != 0x01234567 )
 	{
-		printf("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, c2.b);
+		PRINTF("%s: Failed to assign object returned from function. c2.b = %X\n", TESTNAME, c2.b);
 		TEST_FAILED;
 	}
 
@@ -131,25 +131,25 @@ bool TestReturnWithCDeclObjFirst()
 	r = ExecuteString(engine, "c3 = f.notComplex3(int(0xDEADC0DE), 0x01234567, int(0x89ABCDEF));");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 
 	if( c3.a != 0xDEADC0DE )
 	{
-		printf("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, c3.a);
+		PRINTF("%s: Failed to assign object returned from function. c3.a = %X\n", TESTNAME, c3.a);
 		TEST_FAILED;
 	}
 
 	if( c3.b != 0x01234567 )
 	{
-		printf("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, c3.b);
+		PRINTF("%s: Failed to assign object returned from function. c3.b = %X\n", TESTNAME, c3.b);
 		TEST_FAILED;
 	}
 
 	if( c3.c != 0x89ABCDEF )
 	{
-		printf("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, c3.c);
+		PRINTF("%s: Failed to assign object returned from function. c3.c = %X\n", TESTNAME, c3.c);
 		TEST_FAILED;
 	}
 

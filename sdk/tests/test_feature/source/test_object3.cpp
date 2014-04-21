@@ -166,7 +166,7 @@ cFloat& Get(int index)
 void Print(float f)
 {
 	assert(f == 30.0f);
-//	printf("%f\n", f);
+//	PRINTF("%f\n", f);
 }
 
 bool Test()

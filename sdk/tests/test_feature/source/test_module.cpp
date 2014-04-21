@@ -60,7 +60,7 @@ bool Test()
 					   "no code (0, 0) : Error   : The code must contain one and only one function\n"
 					   "var (0, 0) : Error   : The code must contain one and only one function\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -83,7 +83,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != " (1, 2) : Error   : No matching signatures to 'func()'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -141,7 +141,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != " (1, 1) : Error   : Name conflict. 'g_var' is a global property.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -179,7 +179,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -249,7 +249,7 @@ bool Test()
 
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -266,7 +266,7 @@ bool Test()
 							   "error (1, 23) : Error   : Expected ';'\n"
 							   "error (1, 23) : Error   : Instead found '}'\n" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 
@@ -333,12 +333,12 @@ bool Test()
 				if( strcmp(type->GetName(), "_builtin_function_") == 0 )
 				{
 					asIScriptFunction *func = (asIScriptFunction*)obj;
-					printf("func: %s\n", func->GetDeclaration());
+					PRINTF("func: %s\n", func->GetDeclaration());
 				}
 				else
 				{
 					asIObjectType *ot = (asIObjectType*)obj;
-					printf("type: %s\n", ot->GetName());
+					PRINTF("type: %s\n", ot->GetName());
 				}
 			}*/
 
@@ -349,7 +349,7 @@ bool Test()
 
 			if( bout.buffer != "" )
 			{
-				printf("%s", bout.buffer.c_str());
+				PRINTF("%s", bout.buffer.c_str());
 				TEST_FAILED;
 			}
 

@@ -235,7 +235,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : Illegal operation on 'type'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -244,7 +244,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type' and 'type' found\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -253,7 +253,7 @@ bool Test()
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 14) : Error   : No matching operator that takes the types 'type' and 'type' found\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -280,7 +280,7 @@ bool Test()
 	}
 	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'type' and 'bool f()' (Code: -7)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -320,7 +320,7 @@ bool Test()
 			TEST_FAILED;
 		if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'type' to 'int'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

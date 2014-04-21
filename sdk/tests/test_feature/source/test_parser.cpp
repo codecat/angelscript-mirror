@@ -35,7 +35,7 @@ bool Test()
 	if( bout.buffer != "TestParser (3, 1) : Error   : Expected '}'\n"
 		               "TestParser (3, 1) : Error   : Instead found '<end of file>'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -49,7 +49,7 @@ bool Test()
 		               "TestParser (3, 17) : Error   : Instead found 'int'\n"
 					   "TestParser (4, 1) : Error   : Unexpected token '}'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

@@ -53,7 +53,7 @@ bool Test1()
 
 	if( tid1 != tid2 )
 	{
-		printf("Object type was released incorrectly by GC\n");
+		PRINTF("Object type was released incorrectly by GC\n");
 		TEST_FAILED;
 	}
 
@@ -63,7 +63,7 @@ bool Test1()
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("execution failed\n");
+		PRINTF("execution failed\n");
 		TEST_FAILED;
 	}
 	else
@@ -72,7 +72,7 @@ bool Test1()
 		int typeId = any->GetTypeId();
 		if( !(typeId & asTYPEID_OBJHANDLE) )
 		{
-			printf("not a handle\n");
+			PRINTF("not a handle\n");
 			TEST_FAILED;
 		}
 
@@ -86,7 +86,7 @@ bool Test1()
 		// GC, any, global, application
 		if( refCount != 4 )
 		{
-			printf("ref count is wrong\n");
+			PRINTF("ref count is wrong\n");
 			TEST_FAILED;
 		}
 
@@ -101,7 +101,7 @@ bool Test1()
 		// GC, global, application
 		if( refCount != 3 )
 		{
-			printf("ref count is wrong\n");
+			PRINTF("ref count is wrong\n");
 			TEST_FAILED;
 		}
 	}
@@ -116,7 +116,7 @@ bool Test1()
 	// GC, global, application
 	if( refCount != 3 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -131,7 +131,7 @@ bool Test1()
 	// GC, global, application
 	if( refCount != 3 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -145,7 +145,7 @@ bool Test1()
 	// GC, global, application
 	if( refCount != 3 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -159,7 +159,7 @@ bool Test1()
 	// GC, application
 	if( refCount != 2 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -169,7 +169,7 @@ bool Test1()
 	// GC
 	if( refCount != 1 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -224,7 +224,7 @@ bool Test2()
 	r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("execution failed\n");
+		PRINTF("execution failed\n");
 		TEST_FAILED;
 	}
 	else
@@ -233,7 +233,7 @@ bool Test2()
 		int typeId = any->GetTypeId();
 		if( !(typeId & asTYPEID_OBJHANDLE) )
 		{
-			printf("not a handle\n");
+			PRINTF("not a handle\n");
 			TEST_FAILED;
 		}
 
@@ -247,7 +247,7 @@ bool Test2()
 		// any, global, application
 		if( refCount != 3 )
 		{
-			printf("ref count is wrong\n");
+			PRINTF("ref count is wrong\n");
 			TEST_FAILED;
 		}
 
@@ -262,7 +262,7 @@ bool Test2()
 		// global, application
 		if( refCount != 2 )
 		{
-			printf("ref count is wrong\n");
+			PRINTF("ref count is wrong\n");
 			TEST_FAILED;
 		}
 	}
@@ -277,7 +277,7 @@ bool Test2()
 	// global, application
 	if( refCount != 2 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -292,7 +292,7 @@ bool Test2()
 	// global, application
 	if( refCount != 2 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -306,7 +306,7 @@ bool Test2()
 	// global, application
 	if( refCount != 2 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -320,7 +320,7 @@ bool Test2()
 	// application
 	if( refCount != 1 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 
@@ -330,7 +330,7 @@ bool Test2()
 	// nobody
 	if( refCount != 0 )
 	{
-		printf("ref count is wrong\n");
+		PRINTF("ref count is wrong\n");
 		TEST_FAILED;
 	}
 

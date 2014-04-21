@@ -106,7 +106,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile\n", TESTNAME);
+		PRINTF("%s: Failed to compile\n", TESTNAME);
 	}
 
 	r = ExecuteString(engine, "{ MyClass test; test.Test(); }", mod);

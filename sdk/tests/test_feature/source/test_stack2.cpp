@@ -269,7 +269,7 @@ bool Test()
 	}
 
 	if( fail )
-		printf("%s: fail\n", TESTNAME);
+		PRINTF("%s: fail\n", TESTNAME);
 
 	// Success
 	return fail;

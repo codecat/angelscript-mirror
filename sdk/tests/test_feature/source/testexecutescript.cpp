@@ -70,7 +70,7 @@ static bool ExecuteScript()
 	asIScriptContext *ctx = engine->CreateContext();
 	if( ctx == 0 )
 	{
-		printf("%s: Failed to create a context\n", TESTNAME);
+		PRINTF("%s: Failed to create a context\n", TESTNAME);
 		return true;
 	}
 
@@ -83,7 +83,7 @@ static bool ExecuteScript()
 	int r = ctx->Prepare(engine->GetModule(0)->GetFunctionByName("main"));
 	if( r < 0 )
 	{
-		printf("%s: Failed to prepare context\n", TESTNAME);
+		PRINTF("%s: Failed to prepare context\n", TESTNAME);
 		return true;
 	}
 
@@ -95,7 +95,7 @@ static bool ExecuteScript()
 	r = ctx->Execute();
 	if( r < 0 )
 	{
-		printf("%s: Unexpected error during script execution\n", TESTNAME);
+		PRINTF("%s: Unexpected error during script execution\n", TESTNAME);
 		return true;
 	}
 
@@ -108,32 +108,32 @@ static bool ExecuteScript()
 		if (retVal == 7.826446f)
 			r = 0;
 		else
-			printf("%s: Script didn't return the correct value. Returned: %f, expected: %f\n", TESTNAME, retVal, 7.826446f);
+			PRINTF("%s: Script didn't return the correct value. Returned: %f, expected: %f\n", TESTNAME, retVal, 7.826446f);
 	}
 	else if( r == asEXECUTION_SUSPENDED )
 	{
-		printf("%s: Execution was suspended.\n", TESTNAME);
+		PRINTF("%s: Execution was suspended.\n", TESTNAME);
 
 		// In this case we can call Execute again to continue
 		// execution where it last stopped.
 
 		const asIScriptFunction *func = ctx->GetFunction();
-		printf("func : %s\n", func->GetName());
-		printf("line : %d\n", ctx->GetLineNumber());
+		PRINTF("func : %s\n", func->GetName());
+		PRINTF("line : %d\n", ctx->GetLineNumber());
 	}
 	else if( r == asEXECUTION_ABORTED )
 	{
-		printf("%s: Execution was aborted.\n", TESTNAME);
+		PRINTF("%s: Execution was aborted.\n", TESTNAME);
 	}
 	else if( r == asEXECUTION_EXCEPTION )
 	{
-		printf("%s: An exception occured during execution\n", TESTNAME);
+		PRINTF("%s: An exception occured during execution\n", TESTNAME);
 
 		// Print exception description
 		const asIScriptFunction *func = ctx->GetExceptionFunction();
-		printf("func : %s\n", func->GetName());
-		printf("line : %d\n", ctx->GetExceptionLineNumber());
-		printf("desc : %s\n", ctx->GetExceptionString());
+		PRINTF("func : %s\n", func->GetName());
+		PRINTF("line : %d\n", ctx->GetExceptionLineNumber());
+		PRINTF("desc : %s\n", ctx->GetExceptionString());
 	}
 
 	// Don't forget to release the context when you are finished with it

@@ -96,24 +96,24 @@ bool Test()
 	r = ExecuteString(engine, "obj.function(); obj.val = 23;");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 	if( obj.val != 23 )
 	{
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "ptr->function(); ptr->val = 13;");
 	if( r < 0 )
 	{
-		printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+		PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 		TEST_FAILED;
 	}
 	if( obj.val != 13 )
 	{
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -122,14 +122,14 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Test()", mod);
 	if( r < 0 )
 	{
-		printf("%s: failed\n", TESTNAME);
+		PRINTF("%s: failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 

@@ -205,7 +205,7 @@ bool Test()
 		if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
 		{
 			TEST_FAILED;
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 		}
 
 		engine->Release();

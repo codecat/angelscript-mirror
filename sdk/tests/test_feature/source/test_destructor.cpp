@@ -71,7 +71,7 @@ void Print(asIScriptGeneric *gen)
 {
 	std::string *str = (std::string*)gen->GetArgAddress(0);
 	UNUSED_VAR(str);
-//	printf("%s\n", str->c_str());
+//	PRINTF("%s\n", str->c_str());
 	count++;
 }
 

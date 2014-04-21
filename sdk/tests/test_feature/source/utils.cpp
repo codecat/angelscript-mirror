@@ -19,20 +19,20 @@ void Assert(asIScriptGeneric *gen)
 		expr = gen->GetArgDWord(0) ? true : false;
 	if( !expr )
 	{
-		printf("--- Assert failed ---\n");
+		PRINTF("--- Assert failed ---\n");
 		asIScriptContext *ctx = asGetActiveContext();
 		if( ctx )
 		{
 			const asIScriptFunction *function = ctx->GetFunction();
 			if( function != 0 )
 			{
-				printf("func: %s\n", function->GetDeclaration());
-				printf("mdle: %s\n", function->GetModuleName());
-				printf("sect: %s\n", function->GetScriptSectionName());
+				PRINTF("func: %s\n", function->GetDeclaration());
+				PRINTF("mdle: %s\n", function->GetModuleName());
+				PRINTF("sect: %s\n", function->GetScriptSectionName());
 			}
-			printf("line: %d\n", ctx->GetLineNumber());
+			PRINTF("line: %d\n", ctx->GetLineNumber());
 			ctx->SetException("Assert failed");
-			printf("---------------------\n");
+			PRINTF("---------------------\n");
 		}
 	}
 }
@@ -166,7 +166,7 @@ void PrintAllocIndices()
 	map<void*,int>::iterator i = memCount.begin();
 	while( i != memCount.end() )
 	{
-		printf("%d\n", i->second);
+		PRINTF("%d\n", i->second);
 		i++;
 	}
 }
@@ -180,13 +180,13 @@ void RemoveMemoryManager()
 //	assert( numAllocs == numFrees );
 //	assert( currentMemAlloc == 0 );
 
-	printf("---------\n");
-	printf("MEMORY STATISTICS\n");
-	printf("number of allocations                 : %d\n", numAllocs);                   // 125744
-	printf("max allocated memory at any one time  : %d\n", (int)maxMemAlloc);                 // 121042
-	printf("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 2134
-	printf("total amount of allocated memory      : %d\n", (int)sumAllocSize);                // 10106765
-	printf("medium size of allocations            : %d\n", numAllocs ? (int)sumAllocSize/numAllocs : 0);
+	PRINTF("---------\n");
+	PRINTF("MEMORY STATISTICS\n");
+	PRINTF("number of allocations                 : %d\n", numAllocs);                   // 125744
+	PRINTF("max allocated memory at any one time  : %d\n", (int)maxMemAlloc);                 // 121042
+	PRINTF("max number of simultaneous allocations: %d\n", maxNumAllocsSameTime);        // 2134
+	PRINTF("total amount of allocated memory      : %d\n", (int)sumAllocSize);                // 10106765
+	PRINTF("medium size of allocations            : %d\n", numAllocs ? (int)sumAllocSize/numAllocs : 0);
 
 #ifdef TRACK_SIZES
 	// Find the mean size of allocations
@@ -204,17 +204,17 @@ void RemoveMemoryManager()
 		n += i->second;
 		i++;
 	}
-	printf("mean size of allocations              : %d\n", meanAllocSize);
-	printf("smallest allocation size              : %d\n", meanSize.begin()->first);
-	printf("largest allocation size               : %d\n", meanSize.rbegin()->first);
-	printf("number of different allocation sizes  : %d\n", meanSize.size());
+	PRINTF("mean size of allocations              : %d\n", meanAllocSize);
+	PRINTF("smallest allocation size              : %d\n", meanSize.begin()->first);
+	PRINTF("largest allocation size               : %d\n", meanSize.rbegin()->first);
+	PRINTF("number of different allocation sizes  : %d\n", meanSize.size());
 
 	// Print allocation sizes
 	i = meanSize.begin();
 	while( i != meanSize.end() )
 	{
 		if( i->second >= 1000 )
-			printf("alloc size %d: %d\n", i->first, i->second);
+			PRINTF("alloc size %d: %d\n", i->first, i->second);
 		i++;
 	}
 #endif
@@ -227,7 +227,7 @@ void RemoveMemoryManager()
 		const char *file  = i2->first.file;
 		int         line  = i2->first.line;
 		int         count = i2->second;
-		printf("%s (%d): %d\n", file, line, count);
+		PRINTF("%s (%d): %d\n", file, line, count);
 		i2++;
 	}
 #endif

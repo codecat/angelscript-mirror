@@ -11,7 +11,7 @@ void PrintString_Generic(asIScriptGeneric *gen)
 	std::string *str = (std::string*)gen->GetArgAddress(0);
 	UNUSED_VAR(str);
 	buf += *str;
-//	printf("%s",str->c_str());
+//	PRINTF("%s",str->c_str());
 	called++;
 }
 
@@ -90,7 +90,7 @@ bool Test()
     for( asUINT n = 0; n < 3; n++ )
     {
         // Execute
-        //printf("----- execute\n");
+        //PRINTF("----- execute\n");
         ctx->Prepare(mod->GetFunctionByDecl("void main()"));
         ctx->Execute();
  
@@ -111,7 +111,7 @@ bool Test()
 				totalDestroyed != n+1 ||
 				totalDetected  != 0 )
 				TEST_FAILED;
-            //printf("(%lu,%lu,%lu)\n" , currentSize , totalDestroyed , totalDetected );
+            //PRINTF("(%lu,%lu,%lu)\n" , currentSize , totalDestroyed , totalDetected );
         }
     }
 
@@ -429,7 +429,7 @@ bool Test()
 		if( buf != "Big instance being destroyed\n"
 		           "Before attempting access to global var\n" )
 		{
-			printf("%s", buf.c_str());
+			PRINTF("%s", buf.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -604,7 +604,7 @@ bool Test()
 						   " (0, 0) : Error   : Object {8}. GC cannot destroy an object of type '_builtin_objecttype_' as it can't see all references. Current ref count is 1.\n"
 						   " (0, 0) : Info    : The builtin type in previous message is named 'A'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

@@ -204,7 +204,7 @@ bool Test()
                        "script (1, 14) : Error   : Expected expression value\n"
 					   "script (1, 14) : Error   : Instead found '?'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -216,7 +216,7 @@ bool Test()
 		               "Property (1, 1) : Error   : Instead found '?'\n"
 	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with '? prop' (Code: -10)\n" ) 
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -232,7 +232,7 @@ bool Test()
 		               "Property (1, 1) : Error   : Instead found '?'\n"
 		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'test' and '? prop' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -250,7 +250,7 @@ bool Test()
 		               "script (1, 10) : Error   : Instead found '?'\n"
 		               "script (1, 19) : Error   : Unexpected token '}'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -263,7 +263,7 @@ bool Test()
 	if( bout.buffer != "script (1, 11) : Error   : Expected data type\n"
 		               "script (1, 11) : Error   : Instead found '?'\n")
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -285,7 +285,7 @@ bool Test()
 		               "script (1, 22) : Error   : Instead found '?'\n"
 					   "script (1, 33) : Error   : Unexpected token '}'\n" ) 
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -299,7 +299,7 @@ bool Test()
 		               "script (1, 10) : Error   : Instead found '?'\n"
 		               "script (1, 23) : Error   : Unexpected token '}'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -313,7 +313,7 @@ bool Test()
 		               "script (1, 15) : Error   : Expected expression value\n"
 					   "script (1, 15) : Error   : Instead found '?'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -327,7 +327,7 @@ bool Test()
 		               "script (1, 15) : Error   : Expected expression value\n"
 					   "script (1, 15) : Error   : Instead found '?'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";
@@ -339,7 +339,7 @@ bool Test()
 					   "System function (1, 1) : Error   : Instead found '?'\n"
 		               " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with '? testFunc()' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	bout.buffer = "";

@@ -19,7 +19,7 @@ bool TestModuleRef()
 	mod->AddScriptSection("script", script);
 	if( mod->Build() < 0 )
 	{
-		printf("%s: failed to build module a\n", TESTNAME);
+		PRINTF("%s: failed to build module a\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -29,21 +29,21 @@ bool TestModuleRef()
 
 	if( engine->GetModule("a")->GetFunctionCount() < 0 )
 	{
-		printf("%s: Failed to get function count\n", TESTNAME);
+		PRINTF("%s: Failed to get function count\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	engine->DiscardModule("a");
 	if( engine->GetModule("a") )
 	{
-		printf("%s: Module was not discarded\n", TESTNAME);
+		PRINTF("%s: Module was not discarded\n", TESTNAME);
 		TEST_FAILED;
 	} 
 
 	int r = ctx->Execute();
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("%s: Execution failed\n", TESTNAME);
+		PRINTF("%s: Execution failed\n", TESTNAME);
 		TEST_FAILED;
 	}
 

@@ -173,7 +173,7 @@ void CFunc(float /*f*/, int a, int b, const std::string & /*name*/)
 {
 	if( (a & 0xFFFFFF00) || (b & 0xFFFFFF00) )
 	{
-		printf("Receiving boolean value with scrap in higher bytes. Not sure this is an error.\n");
+		PRINTF("Receiving boolean value with scrap in higher bytes. Not sure this is an error.\n");
 	}
 }
 
@@ -199,7 +199,7 @@ std::string buf;
 void Print(std::string &str)
 {
 	buf += str + "\n";
-//	printf("%s\n", str.c_str());
+//	PRINTF("%s\n", str.c_str());
 }
 
 bool Test()

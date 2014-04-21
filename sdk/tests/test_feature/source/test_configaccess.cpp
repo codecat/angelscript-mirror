@@ -143,7 +143,7 @@ bool Test()
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the types 'mytype' and 'mytype' found\n"
 		               "ExecuteString (1, 19) : Error   : 'val' is not a member of 'mytype'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

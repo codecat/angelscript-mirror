@@ -33,7 +33,7 @@ void Test()                                \n\
 void Print_Generic(asIScriptGeneric *gen)
 {
 	CScriptString *str = (CScriptString*)gen->GetArgAddress(0);
-	printf("%s", str->buffer.c_str());
+	PRINTF("%s", str->buffer.c_str());
 }
 
 bool Test()
@@ -56,7 +56,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 	r = ExecuteString(engine, "Test()", mod);
 	if( r != asEXECUTION_FINISHED )

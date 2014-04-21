@@ -170,7 +170,7 @@ bool Test()
 						   "test (4, 21) : Error   : Too many values to match pattern\n"
 						   "test (5, 23) : Error   : Not enough values to match pattern\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -213,7 +213,7 @@ bool Test()
 
 		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'Test' and 'Test &opAssign(const Test &)' (Code: -13)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -243,7 +243,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -309,7 +309,7 @@ bool Test()
 
 		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'array<int>' (Code: -13)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -331,7 +331,7 @@ bool Test()
 		if( bout.buffer != "System function (1, 11) : Error   : Identifier 'type' is not a data type\n"
 						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(type @+)' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -399,7 +399,7 @@ bool Test()
 
 		if( bout.buffer != "" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -421,7 +421,7 @@ bool Test()
 	if( bout.buffer != " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 		               " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -436,7 +436,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -453,7 +453,7 @@ bool Test()
 		               " (0, 0) : Info    : A garbage collected type must have the addref, release, and all gc behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -479,7 +479,7 @@ bool Test()
 					   " (0, 0) : Error   : The behaviour is not compatible with the type\n"
 					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'val' and 'int f()' (Code: -23)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -499,7 +499,7 @@ bool Test()
 	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(ref)' (Code: -10)\n"
 	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref f()' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -517,7 +517,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for the type 'ref' available.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -534,7 +534,7 @@ bool Test()
 		               " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -558,7 +558,7 @@ bool Test()
 					   "System function (1, 5) : Error   : Object handle is not supported for this type\n"
 					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'ref @f()' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -573,7 +573,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -590,7 +590,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for the type 'val' available.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -615,7 +615,7 @@ bool Test()
 					   " (0, 0) : Info    : A non-pod value type must have the default constructor and destructor behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -640,7 +640,7 @@ bool Test()
 					   " (0, 0) : Info    : A reference type must have the addref and release behaviours\n"
 					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -663,7 +663,7 @@ bool Test()
 					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'ref' and 'void f()' (Code: -23)\n"
 					   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release();
@@ -691,7 +691,7 @@ bool Test()
 		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()' (Code: -13)\n"
 		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'const A@ f() const' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -718,7 +718,7 @@ bool Test()
 					   "script (1, 34) : Error   : No matching signatures to 'ref()'\n"
 					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->Release(); 
@@ -740,7 +740,7 @@ bool Test()
 		               "script (1, 1) : Error   : Parameter type can't be 'ref&in', because the type cannot be instanciated.\n"
 					   "script (1, 1) : Error   : Parameter type can't be 'ref&out', because the type cannot be instanciated.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -767,7 +767,7 @@ bool Test()
 	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n"
 					   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -804,7 +804,7 @@ bool Test()
 						   " (0, 0) : Error   : Don't support passing type 'test1' by value to application in native calling convention on this platform\n"
 						   " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 		engine->Release();
@@ -842,7 +842,7 @@ bool Test()
 						   "Property (1, 10) : Error   : Instead found 'int'\n"
 		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'Npc' and 'unsigned int hp' (Code: -10)\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -866,14 +866,14 @@ int *Scoped_Factory()
 {
 	int *p = new int(42);
 
-//	printf("new %p\n", p);
+//	PRINTF("new %p\n", p);
 
 	return p;
 }
 
 void Scoped_Release(int *p)
 {
-//	printf("del %p\n", p);
+//	PRINTF("del %p\n", p);
 
 	if( p ) delete p;
 }
@@ -887,7 +887,7 @@ int *Scoped_Negate(int *p)
 
 int &Scoped_Assignment(int &a, int *p)
 {
-//	printf("assign %p = %p\n", p, &a);
+//	PRINTF("assign %p = %p\n", p, &a);
 
 	*p = a;
 	return *p;
@@ -960,7 +960,7 @@ bool TestRefScoped()
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
 						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -969,7 +969,7 @@ bool TestRefScoped()
 		if( bout.buffer != "ExecuteString (1, 8) : Error   : Object handle is not supported for this type\n"
 						   "ExecuteString (1, 13) : Error   : Can't implicitly convert from '<null handle>' to 'scoped&'.\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
@@ -983,7 +983,7 @@ bool TestRefScoped()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -1004,7 +1004,7 @@ bool TestRefScoped()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -1017,7 +1017,7 @@ bool TestRefScoped()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	r = ExecuteString(engine, "A a; scoped s; a.s = s;", mod);
@@ -1035,7 +1035,7 @@ bool TestRefScoped()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	CBytecodeStream stream("test");
@@ -1054,7 +1054,7 @@ bool TestRefScoped()
 	if( bout.buffer != "System function (1, 14) : Error   : Object handle is not supported for this type\n"
 	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped@)' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -1065,7 +1065,7 @@ bool TestRefScoped()
 	if( bout.buffer != "System function (1, 14) : Error   : Only object types that support object handles can use &inout. Use &in or &out instead\n"
 	                   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void f(scoped&)' (Code: -10)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -1535,7 +1535,7 @@ bool TestHandleType()
 		TEST_FAILED;
 	if( bout.buffer != "" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -1597,7 +1597,7 @@ bool TestHandleType()
 		                   "script (10, 1) : Info    : Compiling void test()\n"
 		                   "script (14, 3) : Error   : Illegal operation on 'ref'\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}

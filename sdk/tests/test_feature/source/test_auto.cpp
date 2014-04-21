@@ -165,7 +165,7 @@ bool Test()
 						   "test (3, 1) : Error   : Unexpected token '}'\n"
 						   )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -196,7 +196,7 @@ bool Test()
 						   "test (1, 21) : Error   : Use of uninitialized global variable 'x'.\n"
 						   )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
@@ -216,7 +216,7 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 6) : Error   : Unable to resolve auto type\n" )
 		{
-			printf("%s", bout.buffer.c_str());
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 

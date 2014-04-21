@@ -64,7 +64,7 @@ bool Test()
 	r = ExecuteString(engine, "Object obj;");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 8) : Error   : Data type can't be 'Object'\n" )
 	{
-		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
+		PRINTF("%s: Didn't fail to compile as expected\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -78,7 +78,7 @@ bool Test()
 		                         "script (1, 8) : Info    : Compiling Object obj2\n"
 		  					     "script (1, 8) : Error   : No default constructor for object of type 'Object'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 	engine->DiscardModule(0);
@@ -89,7 +89,7 @@ bool Test()
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 7) : Error   : Data type can't be 'Object'\n"
 							     "array (0, 0) : Error   : The subtype has no default factory\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -97,28 +97,28 @@ bool Test()
 	r = ExecuteString(engine, "Object @obj;");
 	if( r < 0 )
 	{
-		printf("%s: Failed to compile\n", TESTNAME);
+		PRINTF("%s: Failed to compile\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Object@ obj = @CreateObject();");
 	if( r < 0 )
 	{
-		printf("%s: Failed to compile\n", TESTNAME);
+		PRINTF("%s: Failed to compile\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "CreateObject();");
 	if( r < 0 )
 	{
-		printf("%s: Failed to compile\n", TESTNAME);
+		PRINTF("%s: Failed to compile\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = ExecuteString(engine, "Object@ obj = @CreateObject(); @obj = @CreateObject();");
 	if( r < 0 )
 	{
-		printf("%s: Failed to compile\n", TESTNAME);
+		PRINTF("%s: Failed to compile\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -127,7 +127,7 @@ bool Test()
 	r = ExecuteString(engine, "Object@ obj = @CreateObject(); obj = CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 36) : Error   : There is no copy operator for the type 'Object' available.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -137,7 +137,7 @@ bool Test()
 	r = ExecuteString(engine, "@CreateObject() = @CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 1) : Error   : Reference is temporary\n" )
 	{
-		printf("%s: Didn't fail to compile as expected\n", TESTNAME);
+		PRINTF("%s: Didn't fail to compile as expected\n", TESTNAME);
 		TEST_FAILED;
 	}
 	*/
@@ -146,7 +146,7 @@ bool Test()
 	r = ExecuteString(engine, "CreateObject() = CreateObject();");
 	if( r >= 0 || bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for the type 'Object' available.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -164,7 +164,7 @@ bool Test()
 		TEST_FAILED;
 	if( bout.buffer != "script (4, 12) : Error   : Data type can't be 'Object'\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

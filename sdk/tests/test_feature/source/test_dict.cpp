@@ -26,7 +26,7 @@ public:
 
 	CDict &operator[](string s) 
 	{ 
-//		printf(s.c_str()); 
+//		PRINTF(s.c_str()); 
 		return *this;
 	}
 };
@@ -69,7 +69,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	asIScriptContext *ctx = engine->CreateContext();
@@ -79,7 +79,7 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		printf("%s: Failed to execute script\n", TESTNAME);
+		PRINTF("%s: Failed to execute script\n", TESTNAME);
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();

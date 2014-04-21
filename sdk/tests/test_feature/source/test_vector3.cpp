@@ -45,7 +45,7 @@ bool TestVector3()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: Failed to build\n", TESTNAME);
+		PRINTF("%s: Failed to build\n", TESTNAME);
 		TEST_FAILED;
 	}
 	else
@@ -54,12 +54,12 @@ bool TestVector3()
 		r = ExecuteString(engine, "v = TestVector3();", mod);
 		if( r < 0 )
 		{
-			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+			PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 			TEST_FAILED;
 		}
 		if( v.x != 1 || v.y != 2 || v.z != 3 )
 		{
-			printf("%s: Failed to assign correct Vector3\n", TESTNAME);
+			PRINTF("%s: Failed to assign correct Vector3\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -73,7 +73,7 @@ bool TestVector3()
 		Vector3 *ret = (Vector3*)ctx->GetReturnObject();
 		if( ret->x != 1 || ret->y != 2 || ret->z != 3 )
 		{
-			printf("%s: Failed to assign correct Vector3\n", TESTNAME);
+			PRINTF("%s: Failed to assign correct Vector3\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -84,7 +84,7 @@ bool TestVector3()
 		ret = (Vector3*)ctx->GetReturnObject();
 		if( ret->x != 3 || ret->y != 2 || ret->z != 1 )
 		{
-			printf("%s: Failed to pass Vector3 by val\n", TESTNAME);
+			PRINTF("%s: Failed to pass Vector3 by val\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -93,7 +93,7 @@ bool TestVector3()
 		ctx->Execute();
 		if( v.x != 1 || v.y != 2 || v.z != 3 )
 		{
-			printf("%s: Failed to pass Vector3 by ref\n", TESTNAME);
+			PRINTF("%s: Failed to pass Vector3 by ref\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -154,7 +154,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : vector3::vector3(float, float = 0, float = 0)\n"
 	                   "ExecuteString (1, 13) : Error   : Can't implicitly convert from 'const int' to 'vector3'.\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -194,7 +194,7 @@ bool TestVector3()
         if( (GetNumAllocs() - allocs) != 0 )
 #endif
 		{
-			printf("There were %d allocations during the execution\n", GetNumAllocs() - allocs);
+			PRINTF("There were %d allocations during the execution\n", GetNumAllocs() - allocs);
 			TEST_FAILED;
 		}
 		*/

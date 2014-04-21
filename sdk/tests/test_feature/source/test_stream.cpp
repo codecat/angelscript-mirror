@@ -25,7 +25,7 @@ public:
 
 CScriptStream &operator<<(CScriptStream &s, const string &other)
 {
-//	printf("(%X) << \"%s\"\n", &s, other.c_str());
+//	PRINTF("(%X) << \"%s\"\n", &s, other.c_str());
 
 	stream << other;
 	s.s << other;
@@ -41,19 +41,19 @@ CScriptStream &operator>>(CScriptStream &s, string &other)
 
 CScriptStream::CScriptStream()
 {
-//	printf("new (%X)\n", this);
+//	PRINTF("new (%X)\n", this);
 
 	refCount = 1;
 }
 
 CScriptStream::~CScriptStream()
 {
-//	printf("del (%X)\n", this);
+//	PRINTF("del (%X)\n", this);
 }
 
 CScriptStream &CScriptStream::operator=(const CScriptStream & /*other*/)
 {
-//	printf("(%X) = (%X)\n", this, &other);
+//	PRINTF("(%X) = (%X)\n", this, &other);
 
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx )
@@ -125,7 +125,7 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		printf("%s: Failed to compile the script\n", TESTNAME);
+		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 
 	asIScriptContext *ctx = engine->CreateContext();
@@ -135,14 +135,14 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PrintException(ctx);
 
-		printf("%s: Failed to execute script\n", TESTNAME);
+		PRINTF("%s: Failed to execute script\n", TESTNAME);
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
 
 	if( stream.str() != "abc" )
 	{
-		printf("%s: Failed to create the correct stream\n", TESTNAME);
+		PRINTF("%s: Failed to create the correct stream\n", TESTNAME);
 		TEST_FAILED;
 	}
 

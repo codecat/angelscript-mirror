@@ -109,7 +109,7 @@ bool Test()
 	r = mod->Build();
 	if( r < 0 )
 	{
-		printf("%s: Failed to build\n", TESTNAME);
+		PRINTF("%s: Failed to build\n", TESTNAME);
 		TEST_FAILED;
 	}
 	else
@@ -118,12 +118,12 @@ bool Test()
 		r = ExecuteString(engine, "v = TestComplex();", mod);
 		if( r < 0 )
 		{
-			printf("%s: ExecuteString() failed %d\n", TESTNAME, r);
+			PRINTF("%s: ExecuteString() failed %d\n", TESTNAME, r);
 			TEST_FAILED;
 		}
 		if( v.r != 1 || v.i != 2 )
 		{
-			printf("%s: Failed to assign correct Complex\n", TESTNAME);
+			PRINTF("%s: Failed to assign correct Complex\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -137,7 +137,7 @@ bool Test()
 		Complex *ret = (Complex*)ctx->GetReturnObject();
 		if( ret->r != 1 || ret->i != 2 )
 		{
-			printf("%s: Failed to assign correct Complex\n", TESTNAME);
+			PRINTF("%s: Failed to assign correct Complex\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -148,7 +148,7 @@ bool Test()
 		ret = (Complex*)ctx->GetReturnObject();
 		if( ret->r != 3 || ret->i != 2 )
 		{
-			printf("%s: Failed to pass Complex by val\n", TESTNAME);
+			PRINTF("%s: Failed to pass Complex by val\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -157,7 +157,7 @@ bool Test()
 		ctx->Execute();
 		if( v.r != 1 || v.i != 2 )
 		{
-			printf("%s: Failed to pass Complex by ref\n", TESTNAME);
+			PRINTF("%s: Failed to pass Complex by ref\n", TESTNAME);
 			TEST_FAILED;
 		}
 
@@ -227,7 +227,7 @@ bool Test()
 					   "ExecuteString (1, 13) : Info    : complex::complex(float)\n"
 					   "ExecuteString (1, 13) : Info    : complex::complex(float, float)\n" )
 	{
-		printf("%s", bout.buffer.c_str());
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

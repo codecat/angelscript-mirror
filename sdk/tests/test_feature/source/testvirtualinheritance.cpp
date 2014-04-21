@@ -62,7 +62,7 @@ public:
 bool TestVirtualInheritance()
 {
 #ifdef __GNUC__
-	printf("%s: GNUC: AngelScript cannot detect virtual inheritance thus this test doesn't apply\n", TESTNAME);
+	PRINTF("%s: GNUC: AngelScript cannot detect virtual inheritance thus this test doesn't apply\n", TESTNAME);
 	return false;
 #else
 
@@ -76,14 +76,14 @@ bool TestVirtualInheritance()
 	r = engine->RegisterObjectMethod("class1", "void CallMe1()", asMETHOD(CDerivedVirtual, CallMe1), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
-		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
+		PRINTF("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = engine->RegisterObjectMethod("class1", "void CallMe2()", asMETHOD(CDerivedVirtual, CallMe2), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
-		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
+		PRINTF("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		TEST_FAILED;
 	}
 
@@ -92,21 +92,21 @@ bool TestVirtualInheritance()
 	// just with ordinary multiple inheritance, because even though the pointer for a class with multiple
 	// inheritance is just 12 bytes, it will be padded to 16 bytes which is the same as the pointer for
 	// a class with virtual inheritance.
-	printf("%s: MSVC 64bit: AngelScript cannot detect virtual inheritance thus this test doesn't apply\n", TESTNAME);
+	PRINTF("%s: MSVC 64bit: AngelScript cannot detect virtual inheritance thus this test doesn't apply\n", TESTNAME);
 #else
 	// Register the derived class that has not been forward declared
 	r = engine->RegisterObjectType("class2", 0, asOBJ_REF);
 	r = engine->RegisterObjectMethod("class2", "void CallMe1()", asMETHOD(CDerivedVirtual2, CallMe1), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
-		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
+		PRINTF("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		TEST_FAILED;
 	}
 
 	r = engine->RegisterObjectMethod("class2", "void CallMe2()", asMETHOD(CDerivedVirtual2, CallMe2), asCALL_THISCALL);
 	if( r != asNOT_SUPPORTED )
 	{
-		printf("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
+		PRINTF("%s: Registering virtual methods shouldn't be supported.\n", TESTNAME);
 		TEST_FAILED;
 	}
 #endif

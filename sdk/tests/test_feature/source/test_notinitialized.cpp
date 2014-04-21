@@ -26,7 +26,7 @@ bool TestNotInitialized()
 
 	if( out.buffer != "ExecuteString (1, 18) : Warning : 'a' is not initialized.\n" )
 	{
-		printf("%s: Failed to catch use of uninitialized variable\n", TESTNAME);
+		PRINTF("%s: Failed to catch use of uninitialized variable\n", TESTNAME);
 		TEST_FAILED;
 	}
 

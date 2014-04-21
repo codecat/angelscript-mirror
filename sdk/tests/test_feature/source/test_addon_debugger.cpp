@@ -223,7 +223,7 @@ bool Test()
 							"type t = {XXXXXXXX}\n"
 							"ExecuteString:2; void ExecuteString()\n" )
 		{
-			printf("%s", debug.output.c_str());
+			PRINTF("%s", debug.output.c_str());
 			TEST_FAILED;
 		}
 
@@ -328,7 +328,7 @@ bool Test()
 							"{XXXXXXXX}\n"
 							"  int value = 42\n" )
 		{
-			printf("%s", debug.output.c_str());
+			PRINTF("%s", debug.output.c_str());
 			TEST_FAILED;
 		}
 
