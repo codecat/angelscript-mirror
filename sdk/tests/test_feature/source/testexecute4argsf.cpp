@@ -57,7 +57,7 @@ bool TestExecute4Argsf()
 	{
 		int r;
 		r = engine->RegisterGlobalFunction("void cfunction(float, float, double, float)", asFUNCTION(cfunction), asCALL_CDECL); assert( r >= 0 );
-		r = engine->RegisterGlobalFunction("void cfunction2(double, double, double, double)", asFUNCTION(cfunction), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("void cfunction2(double, double, double, double)", asFUNCTION(cfunction2), asCALL_CDECL); assert( r >= 0 );
 	}
 
 	COutStream out;

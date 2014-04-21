@@ -35,32 +35,6 @@ public:
 	asDWORD c;
 };
 
-static Class1 class1()
-{
-	Class1 c = {0xDEADC0DE};
-	return c;
-}
-
-static Class2 class2()
-{
-	Class2 c = {0xDEADC0DE, 0x01234567};
-	return c;
-}
-
-static Class2_2 class2_2()
-{
-	Class2_2 c = {0xDEADC0DE01234567L};
-	return c;
-}
-
-
-static Class3 class3()
-{
-	Class3 c = {0xDEADC0DE, 0x01234567, 0x89ABCDEF};
-	return c;
-}
-
-
 class Class4
 {
 public:

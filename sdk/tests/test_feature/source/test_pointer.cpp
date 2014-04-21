@@ -22,24 +22,24 @@ class ObjectType
 public:
 };
 
-static void ObjectFunction(ObjectInstance *obj)
+static void ObjectFunction(ObjectInstance *)
 {
 
 }
 
 ObjectInstance obj;
-static ObjectInstance *CreateObjectInstance(ObjectType *type)
+static ObjectInstance *CreateObjectInstance(ObjectType *)
 {
 	return &obj;
 }
 
 ObjectType type;
-static ObjectType *CreateObjectType(std::string &str)
+static ObjectType *CreateObjectType(std::string &)
 {
 	return &type;
 }
 
-static void FunctionOnObject(ObjectInstance *obj)
+static void FunctionOnObject(ObjectInstance *)
 {
 }
 

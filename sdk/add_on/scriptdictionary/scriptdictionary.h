@@ -112,6 +112,8 @@ public:
 		CIterator(const CScriptDictionary &dict,
 		          std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it);
 
+		CIterator &operator=(const CIterator &) {return *this;} // Not used
+
 		std::map<std::string, CScriptDictionary::valueStruct>::const_iterator m_it;
 		const CScriptDictionary &m_dict;
 	};

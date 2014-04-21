@@ -117,9 +117,9 @@ public:
 	virtual short health() const
 	{
 //		printf("Creep::health()\n");
-		return h;
+		return short(h);
 	}
-	virtual void health(short h)
+	virtual void health(short /*h*/)
 	{
 //		printf("Creep::health(%d)\n", h);
 	}
@@ -135,9 +135,9 @@ public:
 	short health() const
 	{
 //		printf("CreepClient::health()\n");
-		return h;
+		return short(h);
 	}
-	void health(short h)
+	void health(short /*h*/)
 	{
 //		printf("CreepClient::health(%d)\n", h);
 	}

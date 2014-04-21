@@ -106,7 +106,7 @@ public:
 //		printf("ln:%d ", ctx->GetCurrentLineNumber());
 //		printf("Destruct(%X)\n",this);
 	}
-	CRefClass &operator=(const CRefClass &o)
+	CRefClass &operator=(const CRefClass & /*o*/)
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
 //		printf("ln:%d ", ctx->GetCurrentLineNumber());
@@ -129,7 +129,7 @@ public:
 		if( refCount == 0 ) delete this;
 		return r;
 	}
-	static CRefClass &Add(CRefClass &self, CRefClass &other)
+	static CRefClass &Add(CRefClass &self, CRefClass & /*other*/)
 	{
 //		asIScriptContext *ctx = asGetActiveContext();
 //		printf("ln:%d ", ctx->GetCurrentLineNumber());

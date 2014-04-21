@@ -41,7 +41,7 @@ public:
 	static void StringConstruct(Str *p) { new(p) Str(); }
 	static void StringCopyConstruct(const Str &o, Str *p) { new(p) Str(o); }
 	static void StringDestruct(Str *p) { p->~Str(); }
-	static Str StringFactory(unsigned int length, const char *s) { Str str; str.str = s; return str; }
+	static Str StringFactory(unsigned int /*length*/, const char *s) { Str str; str.str = s; return str; }
 	bool opEquals(const Str &o) { return str == o.str; }
 	Str &opAssign(const Str &o) { str = o.str; return *this; }
 

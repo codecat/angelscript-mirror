@@ -154,7 +154,7 @@ class tst
 {
 public:
 
-  int test_f(unsigned int param)
+  int test_f(unsigned int /*param*/)
   {
 	if( sizeof(bool) == 1 )
 	{
@@ -169,7 +169,7 @@ public:
 };
 
 
-void CFunc(float f, int a, int b, const std::string &name)
+void CFunc(float /*f*/, int a, int b, const std::string & /*name*/)
 {
 	if( (a & 0xFFFFFF00) || (b & 0xFFFFFF00) )
 	{

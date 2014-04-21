@@ -196,7 +196,7 @@ public:
 // + AS_MAX_PORTABILITY
 //----------------------------------
 
-int main(int argc, char **argv)
+int main(int /*argc*/, char ** /*argv*/)
 {
 	DetectMemoryLeaks();
 

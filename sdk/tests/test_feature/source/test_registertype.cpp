@@ -86,7 +86,7 @@ bool Test()
 
 		struct helper
 		{
-			static bool CalcMuzzlePoint( gentity_t *const ent, vec3_t wpFwd, vec3_t right, vec3_t wpUp, vec3_t muzzlePoint, float lead_in ) 
+			static bool CalcMuzzlePoint( gentity_t *const, vec3_t wpFwd, vec3_t right, vec3_t wpUp, vec3_t muzzlePoint, float lead_in ) 
 			{
 				bool ok = true;
 				ok &= wpFwd[0] == 1;

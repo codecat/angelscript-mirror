@@ -62,7 +62,7 @@ void destruct(T* memory){
         memory->~T();
 }
 
-void PrintNumber(int x)
+void PrintNumber(int /*x*/)
 {
 //        cout << x << "\n";
 }
@@ -344,7 +344,7 @@ static const char *script14 =
 
 bool Test2();
 
-void TraceExec(asIScriptContext *ctx, void *)
+void TraceExec(asIScriptContext * /*ctx*/, void *)
 {
 //	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
 //		printf(" ");

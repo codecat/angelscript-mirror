@@ -64,7 +64,7 @@ public:
     }
 };
 
-void formattedPrintAS( std::string& format, void* a, int typeId_a )
+void formattedPrintAS( std::string& /*format*/, void* a, int typeId_a )
 {
 	bool fail = false;
 	if( typeId_a != asTYPEID_FLOAT ) fail = true;

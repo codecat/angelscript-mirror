@@ -409,8 +409,8 @@ bool Test()
 		class JitCompiler : public asIJITCompiler
 		{
 		public:
-			virtual int  CompileFunction(asIScriptFunction *function, asJITFunction *output) { return 0; }
-			virtual void ReleaseJITFunction(asJITFunction func) { }
+			virtual int  CompileFunction(asIScriptFunction * /*function*/, asJITFunction * /*output*/) { return 0; }
+			virtual void ReleaseJITFunction(asJITFunction /*func*/) { }
 		} jit;
 
 		engine->SetJITCompiler(&jit);
@@ -4018,7 +4018,7 @@ float add(float &a, float &b)
 	return a+b;
 }
 
-void doStuff(float a, float b)
+void doStuff(float, float)
 {
 }
 
@@ -4412,8 +4412,8 @@ public:
 	Variant() {val = "test";}
 	Variant(const Variant &other) {val = other.val;}
 	~Variant() {val = "deleted";}
-	Variant &operator=(const Variant &other) {return *this;}
-	Variant &operator=(int v) {return *this;}
+	Variant &operator=(const Variant &) {return *this;}
+	Variant &operator=(int) {return *this;}
 	const std::string &GetString() const {return val;}
 	std::string val;
 };

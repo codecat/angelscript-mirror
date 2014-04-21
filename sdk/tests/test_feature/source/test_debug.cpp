@@ -112,7 +112,7 @@ void print(const char *format, ...)
 
 void PrintVariables(asIScriptContext *ctx, asUINT stackLevel);
 
-void LineCallback(asIScriptContext *ctx, void *param)
+void LineCallback(asIScriptContext *ctx, void * /*param*/)
 {
 	if( ctx->GetState() != asEXECUTION_ACTIVE )
 		return;
@@ -165,9 +165,8 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 	}
 }
 
-void ExceptionCallback(asIScriptContext *ctx, void *param)
+void ExceptionCallback(asIScriptContext *ctx, void * /*param*/)
 {
-	asIScriptEngine *engine = ctx->GetEngine();
 	const asIScriptFunction *function = ctx->GetExceptionFunction();
 	print("--- exception ---\n");
 	print("desc: %s\n", ctx->GetExceptionString());
@@ -200,7 +199,7 @@ void *TestLineNumber()
 {
     asIScriptContext *ctx = asGetActiveContext();
     const char *script_section;
-    int line = ctx->GetLineNumber(0, 0, &script_section);
+    /*int line =*/ ctx->GetLineNumber(0, 0, &script_section);
 	assert( std::string(script_section) == "a" );
     return 0;
 }

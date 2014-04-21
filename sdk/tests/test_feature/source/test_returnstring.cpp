@@ -17,13 +17,13 @@ struct Foo
 };
 
 //THIS CRASHES.
-std::string foo_member_fun_one(const std::string& in, Foo* thisp)
+std::string foo_member_fun_one(const std::string& in, Foo*)
 {
 	assert(in == "foo");
 	return in;
 }
 
-void foo_member_fun_two(const std::string& in, Foo* thisp)
+void foo_member_fun_two(const std::string& in, Foo*)
 {
 	assert(in == "foo");
 }

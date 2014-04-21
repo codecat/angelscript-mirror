@@ -467,7 +467,7 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 
 		// Find the variable
 		void *ptr = 0;
-		int typeId;
+		int typeId = 0;
 
 		asIScriptFunction *func = ctx->GetFunction();
 		if( !func ) return;

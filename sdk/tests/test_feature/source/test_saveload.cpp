@@ -306,7 +306,7 @@ void DummyRelease(asIScriptGeneric *gen)
 		delete object;
 }
 
-void Dummy(asIScriptGeneric *gen)
+void Dummy(asIScriptGeneric *)
 {
 }
 
@@ -326,7 +326,7 @@ public:
 	void AddRef() {refCount++;}
 	void Release() {if( --refCount == 0 ) delete this;}
 	static Tmpl *TmplFactory(asIObjectType*) {return new Tmpl;}
-	static bool TmplCallback(asIObjectType *ot, bool &dontGC) {return false;}
+	static bool TmplCallback(asIObjectType * /*ot*/, bool & /*dontGC*/) {return false;}
 	int refCount;
 };
 
@@ -1704,7 +1704,7 @@ bool Test2()
 
 
 
-const char *APStringFactory(int length, const char *s)
+const char *APStringFactory(int /*length*/, const char *s)
 {
 	return s;
 }

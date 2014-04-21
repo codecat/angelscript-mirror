@@ -79,7 +79,7 @@ public:
 	int *mem;
 };
 
-void Assign_gen(asIScriptGeneric *gen)
+void Assign_gen(asIScriptGeneric *)
 {
 	// Don't do anything
 }
@@ -131,7 +131,7 @@ void Construct_gen(asIScriptGeneric *gen)
 	new(o) CObject();
 }
 
-void Construct2(asIScriptGeneric *gen)
+void Construct2(asIScriptGeneric *)
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx ) ctx->SetException("application exception");
@@ -206,8 +206,7 @@ void ExceptionHandle_gen(asIScriptGeneric *gen)
 
 std::string ReturnStringButException()
 {
-	// Observe, on MSVC in debug mode this will show 2 "First-chance exception at <address> in msvc test as.exe: Microsoft C++ exception: int at memory location <address>"
-	throw 42; // random exception. AngelScript will catch all the same way
+	throw std::exception("error"); // random exception. AngelScript will catch all the same way
 	return ""; // This is never returned so AngelScript has to properly handle the situation
 }
 

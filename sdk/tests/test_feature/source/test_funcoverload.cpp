@@ -27,7 +27,7 @@ void FuncVoid()
 {
 }
 
-void FuncInt(int v)
+void FuncInt(int)
 {
 }
 

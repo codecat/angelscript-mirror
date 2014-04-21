@@ -3,7 +3,7 @@ using namespace std;
 
 static const char * const TESTNAME = "TestNotInitialized";
 
-static void cfunction(asIScriptGeneric *gen)
+static void cfunction(asIScriptGeneric *)
 {
 
 }

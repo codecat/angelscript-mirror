@@ -318,7 +318,7 @@ class A {
 public:
 	A() {}
 	A(const A &) {}
-	Value &operator[] (int n) {
+	Value &operator[] (int ) {
 		return v_static;
 	}
 };
@@ -326,7 +326,7 @@ class AArray {
 public:
 	AArray() {}
 	AArray(const AArray &) {}
-	A operator[] (int n) {
+	A operator[] (int ) {
 		return A();
 	}
 };
@@ -334,7 +334,7 @@ class AArrayArray {
 public:
 	AArrayArray() {}
 	AArrayArray(const AArrayArray &) {}
-	AArray operator[] (int n) {
+	AArray operator[] (int ) {
 		return AArray();
 	}
 };

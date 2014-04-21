@@ -729,7 +729,7 @@ bool TestEnum2(int e)
 	return false;
 }
 
-void print(const string& log)
+void print(const string& /*log*/)
 {
 //	cout << log << endl;
 }

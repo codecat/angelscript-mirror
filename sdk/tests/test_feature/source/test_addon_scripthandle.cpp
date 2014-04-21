@@ -21,7 +21,6 @@ static void ReceiveRefByRef(CScriptHandle &/*hndl*/)
 static CScriptHandle GetFunc1()
 {
 	asIScriptContext *ctx = asGetActiveContext();
-	asIScriptFunction *func = ctx->GetFunction();
 	asIScriptEngine *engine = ctx->GetEngine();
 	asIScriptModule *mod = engine->GetModule("test");
 

@@ -146,9 +146,9 @@ bool Test2();
 class ClassExceptionInConstructor
 {
 public:
-	ClassExceptionInConstructor() { throw 42; }
+	ClassExceptionInConstructor() { throw std::exception("error"); }
 	~ClassExceptionInConstructor() {}
-	ClassExceptionInConstructor &operator=(const ClassExceptionInConstructor &o) { return *this; }
+	ClassExceptionInConstructor &operator=(const ClassExceptionInConstructor &) { return *this; }
 
 	static void Construct(void *mem) { new(mem) ClassExceptionInConstructor(); }
 	static void Destruct(ClassExceptionInConstructor *mem) { mem->~ClassExceptionInConstructor(); }

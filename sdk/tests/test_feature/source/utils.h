@@ -129,7 +129,7 @@ protected:
 class CBytecodeStream : public asIBinaryStream
 {
 public:
-	CBytecodeStream(const char *name) {wpointer = 0;rpointer = 0;}
+	CBytecodeStream(const char * /*name*/) {wpointer = 0;rpointer = 0;}
 
 	void Write(const void *ptr, asUINT size) 
 	{
@@ -200,5 +200,5 @@ asDWORD ComputeCRC32(const asBYTE *buf, asUINT length);
 
 #define UNUSED_VAR(x) ((void)(x))
 
-#define TEST_FAILED do { fail = true; printf("Failed on line %d in %s\n", __LINE__, __FILE__); } while(0)
+#define TEST_FAILED do { fail = true; printf("Failed on line %d in %s\n", __LINE__, __FILE__); } while(!fail)
 

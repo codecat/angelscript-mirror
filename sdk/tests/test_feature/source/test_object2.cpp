@@ -22,7 +22,7 @@ public:
 	void AddRef() {refCount++;}
 	void Release() {refCount--; if( refCount == 0 ) delete this;}
 
-	void SetName(const std::string &text) {}
+	void SetName(const std::string &) {}
 
 	int refCount;
 };
@@ -54,12 +54,12 @@ void CVector2_Construct(int a, int b, CVector2 *o)
 
 int GUI;
 CGuiButton button;
-CGuiButton* Gui_AddButton(const std::string& text, const CVector2& pos, const CVector2& size, int *GUI)
+CGuiButton* Gui_AddButton(const std::string& , const CVector2& , const CVector2& , int *)
 {
 	return &button;
 }
 
-CGuiButton* Gui_GetButton(const std::string& text)
+CGuiButton* Gui_GetButton(const std::string& )
 {
 	return &button;
 }

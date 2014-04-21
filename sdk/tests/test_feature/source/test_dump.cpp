@@ -81,8 +81,6 @@ bool Test()
 
 void DumpObjectType(stringstream &s, asIObjectType *objType)
 {
-	asIScriptEngine *engine = objType->GetEngine();
-
 	if( objType->GetFlags() & asOBJ_SCRIPT_OBJECT )
 	{
 		if( objType->GetSize() ) 

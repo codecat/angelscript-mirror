@@ -22,7 +22,7 @@ public:
 	CDict() {}
 	~CDict() {}
 
-	CDict &operator=(const CDict &other) { return *this; }
+	CDict &operator=(const CDict &) { return *this; }
 
 	CDict &operator[](string s) 
 	{ 

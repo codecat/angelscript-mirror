@@ -83,7 +83,7 @@ public:
 	{
 		// Some method
 	}
-	CRefClass &operator=(const CRefClass &o) {return *this;}
+	CRefClass &operator=(const CRefClass & /*o*/) {return *this;}
 	int refCount;
 	int id;
 };
@@ -351,7 +351,7 @@ public:
 		return new CallerClass();
 	}
 
-	void DoSomething(const ArgClass &arg, Point &pos )
+	void DoSomething(const ArgClass &arg, Point &)
 	{
 		float weight = arg.GetWeight();
 		if( (weight > 2.9f) && (weight < 3.1f) )

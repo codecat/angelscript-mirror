@@ -80,7 +80,7 @@ void testFuncIS_generic(asIScriptGeneric *gen)
 
 // AngelScript syntax: void testFuncSI(const string &in, ?& in)
 // C++ syntax: void testFuncSI(CScriptString &, void *ref, int typeId)
-void testFuncSI(CScriptString &str, void *ref, int typeId)
+void testFuncSI(CScriptString &str, void *ref, int /*typeId*/)
 {
 	assert(str.buffer == "test");
 	assert(*(int*)ref == 42);

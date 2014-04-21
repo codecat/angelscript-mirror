@@ -117,7 +117,7 @@ public:
 	std::string output;
 };
 
-std::string StringToString(void *obj, bool expandMembers, CDebugger *dbg)
+std::string StringToString(void *obj, bool /*expandMembers*/, CDebugger * /*dbg*/)
 {
 	std::string *val = reinterpret_cast<std::string*>(obj);
 	std::stringstream s;
@@ -129,7 +129,7 @@ std::string StringToString(void *obj, bool expandMembers, CDebugger *dbg)
 	return s.str();
 }
 
-std::string ArrayToString(void *obj, bool expandMembers, CDebugger *dbg)
+std::string ArrayToString(void *obj, bool /*expandMembers*/, CDebugger *dbg)
 {
 	CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj);
 

@@ -54,12 +54,12 @@ public:
 		return name;
 	}
 
-	MyTmpl &Assign(const MyTmpl &other)
+	MyTmpl &Assign(const MyTmpl &)
 	{
 		return *this;
 	}
 
-	void SetVal(void *val)
+	void SetVal(void *)
 	{
 	}
 
@@ -109,12 +109,12 @@ public:
 		return "MyTmpl<float>";
 	}
 
-	MyTmpl_float &Assign(const MyTmpl_float &other)
+	MyTmpl_float &Assign(const MyTmpl_float &)
 	{
 		return *this;
 	}
 
-	void SetVal(float &val)
+	void SetVal(float &)
 	{
 	}
 

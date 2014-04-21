@@ -120,7 +120,7 @@ template<class A, class B> B* ASRefCast(A* a)
 	return b;
 }
 
-void addListener(EventSource* source, int mask) 
+void addListener(EventSource* source, int /*mask*/) 
 {
 	if( source != c )
 		g_fail = true;

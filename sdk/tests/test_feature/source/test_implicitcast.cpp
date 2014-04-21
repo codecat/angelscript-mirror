@@ -49,7 +49,7 @@ public:
 		if( refCount == 0 ) 
 			delete this;
 	}
-	virtual A& assign(const A &other)
+	virtual A& assign(const A &)
 	{
 		return *this;
 	}
@@ -751,7 +751,7 @@ struct Simple {
 struct Complex {
 };
 
-void implicit(asIScriptGeneric * gen) {
+void implicit(asIScriptGeneric *) {
 }
 
 static bool Test2()
@@ -920,7 +920,7 @@ struct Castee{
 
 	static void Construct(void *mem) { new(mem) Castee(); }
 	static void Construct2(void *mem, const Castee &v) { new(mem) Castee(v); }
-	static void Destruct(void *mem) {}
+	static void Destruct(void * /*mem*/) {}
 };
 struct Caster{ 
 	Caster() {}
@@ -930,7 +930,7 @@ struct Caster{
 
 	static void Construct(void *mem) { new(mem) Caster(); }
 	static void Construct2(void *mem, int v) { new(mem) Caster(v); }
-	static void Destruct(void *mem) {}
+	static void Destruct(void * /*mem*/) {}
 }; 
 
 static bool Test4()
