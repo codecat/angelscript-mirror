@@ -664,7 +664,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	}
 
 	func->inOutFlags.SetLength(func->parameterTypes.GetLength());
-	if( func->parameterTypes.GetLength() != func->parameterTypes.GetLength() )
+	if( func->inOutFlags.GetLength() != func->parameterTypes.GetLength() )
 	{
 		// Out of memory
 		error = true;
@@ -2134,9 +2134,10 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	// Pre-compute the size of each instruction in order to translate jump offsets
 	asUINT n;
 	asDWORD *bc = func->scriptData->byteCode.AddressOf();
-	asCArray<asUINT> bcSizes(func->scriptData->byteCode.GetLength());
-	asCArray<asUINT> instructionNbrToPos(func->scriptData->byteCode.GetLength());
-	for( n = 0; n < func->scriptData->byteCode.GetLength(); )
+	asUINT bcLength = (asUINT)func->scriptData->byteCode.GetLength();
+	asCArray<asUINT> bcSizes(bcLength);
+	asCArray<asUINT> instructionNbrToPos(bcLength);
+	for( n = 0; n < bcLength; )
 	{
 		int c = *(asBYTE*)&bc[n];
 		asUINT size = asBCTypeSize[asBCInfo[c].type];
@@ -2151,7 +2152,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	}
 
 	asUINT bcNum = 0;
-	for( n = 0; n < func->scriptData->byteCode.GetLength(); bcNum++ )
+	for( n = 0; n < bcLength; bcNum++ )
 	{
 		int c = *(asBYTE*)&bc[n];
 		if( c == asBC_REFCPY || 
@@ -2421,7 +2422,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 	// Adjust all variable positions in the bytecode
 	bc = func->scriptData->byteCode.AddressOf();
-	for( n = 0; n < func->scriptData->byteCode.GetLength(); )
+	for( n = 0; n < bcLength; )
 	{
 		int c = *(asBYTE*)&bc[n];
 		switch( asBCInfo[c].type )
@@ -2490,7 +2491,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	//                 This will also make the AdjustGetOffset() function quicker as it can 
 	//                 receive the called function directly instead of having to search for it.
 	bc = func->scriptData->byteCode.AddressOf();
-	for( n = 0; n < func->scriptData->byteCode.GetLength(); )
+	for( n = 0; n < bcLength; )
 	{
 		int c = *(asBYTE*)&bc[n];
 

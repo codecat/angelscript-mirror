@@ -1609,7 +1609,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				tmpBC.AddCode(&ctx->bc);
 				ctx->bc.AddCode(&tmpBC);
 
-				dt.MakeReference((!dt.IsObject() || dt.IsObjectHandle()));
+				dt.MakeReference(!dt.IsObject() || dt.IsObjectHandle());
 				asCTypeInfo type;
 				type.Set(dt);
 				type.isTemporary = true;
@@ -6542,8 +6542,6 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 	// Clear the type of ctx, as the type is moved to the arg
 	ctx->type.SetDummy();
 
-	bool onHeap = true;
-
 	// Value types and script types are allocated through the constructor
 	asCTypeInfo tempObj;
 	tempObj.dataType = to;
@@ -6552,7 +6550,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 	tempObj.isTemporary = true;
 	tempObj.isVariable = true;
 
-	onHeap = IsVariableOnHeap(tempObj.stackOffset);
+	bool onHeap = IsVariableOnHeap(tempObj.stackOffset);
 
 	// Push the address of the object on the stack
 	if( onHeap )

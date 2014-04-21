@@ -1148,15 +1148,15 @@ int asCScriptEngine::ClearUnusedTypes()
 
 		for( n = 0; n < types.GetLength(); n++ )
 		{
-			int refCount = 0;
+			int typeRefCount = 0;
 			asCObjectType *type = types[n];
 
 			// Template types and script classes will have two references for each factory stub
 			if( (type->flags & asOBJ_TEMPLATE) )
 			{
-				refCount = 2*(int)type->beh.factories.GetLength();
+				typeRefCount = 2*(int)type->beh.factories.GetLength();
 				if( type->beh.listFactory )
-					refCount += 2;
+					typeRefCount += 2;
 
 				// If it is an orphaned script type, then the gc holds 1 reference too
 				bool isScriptTemplate = false;
@@ -1170,10 +1170,10 @@ int asCScriptEngine::ClearUnusedTypes()
 				}
 				
 				if( isScriptTemplate && type->module == 0 )
-					refCount++;
+					typeRefCount++;
 			}
 
-			if( type->GetRefCount() == refCount || type->GetRefCount() == 0 )
+			if( type->GetRefCount() == typeRefCount || type->GetRefCount() == 0 )
 			{
 				if( type->flags & asOBJ_TEMPLATE )
 				{
