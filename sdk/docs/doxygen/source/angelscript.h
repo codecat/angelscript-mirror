@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.28.2
-#define ANGELSCRIPT_VERSION        22802
-#define ANGELSCRIPT_VERSION_STRING "2.28.2"
+//! Version 2.29.0
+#define ANGELSCRIPT_VERSION        22900
+#define ANGELSCRIPT_VERSION_STRING "2.29.0"
 
 // Data types
 
@@ -218,31 +218,31 @@ enum asECallConvTypes
 enum asEObjTypeFlags
 {
 	//! A reference type.
-	asOBJ_REF                        = 0x01,
+	asOBJ_REF                        = (1<<0),
 	//! A value type.
-	asOBJ_VALUE                      = 0x02,
+	asOBJ_VALUE                      = (1<<1),
 	//! A garbage collected type. Only valid for reference types.
-	asOBJ_GC                         = 0x04,
+	asOBJ_GC                         = (1<<2),
 	//! A plain-old-data type. Only valid for value types.
-	asOBJ_POD                        = 0x08,
+	asOBJ_POD                        = (1<<3),
 	//! This reference type doesn't allow handles to be held. Only valid for reference types.
-	asOBJ_NOHANDLE                   = 0x10,
+	asOBJ_NOHANDLE                   = (1<<4),
 	//! The life time of objects of this type are controlled by the scope of the variable. Only valid for reference types.
-	asOBJ_SCOPED                     = 0x20,
+	asOBJ_SCOPED                     = (1<<5),
 	//! A template type.
-	asOBJ_TEMPLATE                   = 0x40,
+	asOBJ_TEMPLATE                   = (1<<6),
 	//! The value type should be treated as a handle.
-	asOBJ_ASHANDLE                   = 0x80,
+	asOBJ_ASHANDLE                   = (1<<7),
 	//! The C++ type is a class type. Only valid for value types.
-	asOBJ_APP_CLASS                  = 0x100,
+	asOBJ_APP_CLASS                  = (1<<8),
 	//! The C++ class has an explicit constructor. Only valid for value types.
-	asOBJ_APP_CLASS_CONSTRUCTOR      = 0x200,
+	asOBJ_APP_CLASS_CONSTRUCTOR      = (1<<9),
 	//! The C++ class has an explicit destructor. Only valid for value types.
-	asOBJ_APP_CLASS_DESTRUCTOR       = 0x400,
+	asOBJ_APP_CLASS_DESTRUCTOR       = (1<<10),
 	//! The C++ class has an explicit assignment operator. Only valid for value types.
-	asOBJ_APP_CLASS_ASSIGNMENT       = 0x800,
+	asOBJ_APP_CLASS_ASSIGNMENT       = (1<<11),
 	//! The C++ class has an explicit copy constructor. Only valid for value types.
-	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = 0x1000,
+	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = (1<<12),
 	//! The C++ type is a class with a constructor.
 	asOBJ_APP_CLASS_C                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
 	//! The C++ type is a class with a constructor and destructor.
@@ -274,26 +274,28 @@ enum asEObjTypeFlags
 	//! The C++ type is a class with a copy constructor.
 	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	//! The C++ type is a primitive type. Only valid for value types.
-	asOBJ_APP_PRIMITIVE              = 0x2000,
+	asOBJ_APP_PRIMITIVE              = (1<<13),
 	//! The C++ type is a float or double. Only valid for value types.
-	asOBJ_APP_FLOAT                  = 0x4000,
+	asOBJ_APP_FLOAT                  = (1<<14),
+	//! The C++ type is a static array. Only valid for value types.
+	asOBJ_APP_ARRAY                  = (1<<15),
 	//! The C++ class can be treated as if all its members are integers.
-	asOBJ_APP_CLASS_ALLINTS          = 0x8000,
+	asOBJ_APP_CLASS_ALLINTS          = (1<<16),
 	//! The C++ class can be treated as if all its members are floats or doubles.
-	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
+	asOBJ_APP_CLASS_ALLFLOATS        = (1<<17),
 	//! The type doesn't use reference counting. Only valid for reference types.
-	asOBJ_NOCOUNT                    = 0x20000,
+	asOBJ_NOCOUNT                    = (1<<18),
 	//! The C++ class contains types that may require 8byte alignment. Only valid for value types.
-	asOBJ_APP_CLASS_ALIGN8           = 0x40000,
-	asOBJ_MASK_VALID_FLAGS           = 0x7FFFF,
+	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
+	asOBJ_MASK_VALID_FLAGS           = 0x0FFFFF,
 	//! The object is a script class or an interface.
-	asOBJ_SCRIPT_OBJECT              = 0x80000,
+	asOBJ_SCRIPT_OBJECT              = (1<<20),
 	//! Type object type is shared between modules.
-	asOBJ_SHARED                     = 0x100000,
+	asOBJ_SHARED                     = (1<<21),
 	//! The object type is marked as final and cannot be inherited.
-	asOBJ_NOINHERIT                  = 0x200000,
+	asOBJ_NOINHERIT                  = (1<<22),
 	//! The object type is a script function
-	asOBJ_SCRIPT_FUNCTION            = 0x400000
+	asOBJ_SCRIPT_FUNCTION            = (1<<23)
 };
 
 // Behaviours
@@ -1209,6 +1211,16 @@ public:
 	//! \param[in] name The name of the type.
 	//! \return The object type or null if no match is found.
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
+	//! \brief Returns an object type by declaration.
+	//! \param[in] decl The declaration of the type.
+	//! \return The object type or null on error.
+	//!
+	//! Translates a type declaration into the object type. The returned object type is valid for as 
+	//! long as the type is valid, so you can safely store it for later use to avoid potential overhead from 
+	//! calling this function each time. Just remember to update the object type, any time the type is 
+	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
+	//! engine configuration.
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 	//! \}
 
 	// String factory
@@ -1540,21 +1552,6 @@ public:
 	//! This method creates a context that will be used to execute the script functions. 
 	//! The context interface created will have its reference counter already increased.
 	virtual asIScriptContext      *CreateContext() = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.27.0, 2013-07-18
-	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::CreateScriptObject(const asIObjectType *) instead
-	virtual void                  *CreateScriptObject(int typeId) = 0;
-	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::CreateScriptObjectCopy(void *, const asIObjectType *) instead
-	virtual void                  *CreateScriptObjectCopy(void *obj, int typeId) = 0;
-	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::CreateUninitializedScriptObject(const asIObjectType *) instead
-	virtual void                  *CreateUninitializedScriptObject(int typeId) = 0;
-	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::AssignScriptObject(void *, void *, const asIObjectType *) instead
-	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
-	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::ReleaseScriptObject(void *, const asIObjectType *) instead
-	virtual void                   ReleaseScriptObject(void *obj, int typeId) = 0;
-	//! \deprecated Since 2.27.0. Use \ref asIScriptEngine::AddRefScriptObject(void *, const asIObjectType *) instead
-	virtual void                   AddRefScriptObject(void *obj, int typeId) = 0;
-#endif
 	//! \brief Creates an object defined by its type.
 	//! \param[in] type The type of the object to create.
 	//! \return A pointer to the new object if successful, or null if not.
@@ -1863,8 +1860,13 @@ public:
 	//! \retval asINVALID_ARG The \a code argument is null.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
-	//! This adds a script section to the module. All sections added will be treated as if one 
-	//! large script. Errors reported will give the name of the corresponding section.
+	//! This adds a script section to the module. The script section isn't processed with this
+	//! call. Only when \ref Build is called will the script be parsed and compiled into 
+	//! executable byte code.
+	//!
+	//! Error messages from the compiler will refer to the name of the script section and the position
+	//! within it. Normally each section is the content of a source file, so it is recommended to name
+	//! the script sections as the name of the source file.
 	//!
 	//! The code added is copied by the engine, so there is no need to keep the original buffer after the call.
 	//! Note that this can be changed by setting the engine property \ref asEP_COPY_SCRIPT_SECTIONS
@@ -1878,17 +1880,22 @@ public:
 	//! \retval asINIT_GLOBAL_VARS_FAILED It was not possible to initialize at least one of the global variables.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
-	//! Builds the script based on the added sections, and registered types and functions. After the
-	//! build is complete the script sections are removed to free memory. If the script module needs 
-	//! to be rebuilt all of the script sections needs to be added again.
+	//! Builds the script based on the previously \ref AddScriptSection "added sections", \ref doc_register_api "registered types and functions". 
+	//! After the build is complete the script sections are removed to free memory. 
+	//!
+	//! Before starting the build the \ref Build method removes any previously compiled script content, including the
+	//! dynamically added content from \ref CompileFunction and \ref CompileGlobalVar. If the script 
+	//! module needs to be rebuilt all of the script sections needs to be added again.
 	//!
 	//! Compiler messages are sent to the message callback function set with \ref asIScriptEngine::SetMessageCallback. 
 	//! If there are no errors or warnings, no messages will be sent to the callback function.
 	//!
 	//! Any global variables found in the script will be initialized by the
 	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set. If you get the error
-	//! asINIT_GLOBAL_VARS_FAILED, then it is probable that one of the global variables during the initialization 
+	//! \ref asINIT_GLOBAL_VARS_FAILED, then it is probable that one of the global variables during the initialization 
 	//! is trying to access another global variable before it has been initialized. 
+	//!
+	//! \see \ref doc_compile_script
 	virtual int         Build() = 0;
 	//! \brief Compile a single function.
 	//! \param[in] sectionName The name of the script section
@@ -1903,9 +1910,13 @@ public:
 	//! \retval asERROR The compilation failed.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
 	//!
-	//! Use this to compile a single function. The function can be optionally added to the scope of the module, in which case
-	//! it will be available for subsequent compilations. If not added to the module, the function can still be returned in the
-	//! output parameter, which will allow the application to execute it, and then discard it when it is no longer needed.
+	//! Use this to compile a single function. Any existing compiled code in the module can be used
+	//! by the function. 
+	//!
+	//! The newly compiled function can be optionally added to the scope of the module where it can later
+	//! be referred to by the application or used in subsequent compilations. If not added to the module 
+	//! the function can still be returned in the output parameter, which will allow the application 
+	//! to execute it and then discard it when it is no longer needed.
 	//!
 	//! If the output function parameter is set, remember to release the function object when you're done with it.
 	virtual int         CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asIScriptFunction **outFunc) = 0;
@@ -1926,6 +1937,8 @@ public:
 	//!
 	//! The script code may contain an initialization expression, which will be executed by the
 	//! compiler if the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD is set.
+	//!
+	//! Any existing compiled code in the module can be used in the initialization expression.
 	virtual int         CompileGlobalVar(const char *sectionName, const char *code, int lineOffset) = 0;
 	//! \brief Sets the access mask that should be used during the compilation.
 	//! \param[in] accessMask The access bit mask
@@ -2077,13 +2090,23 @@ public:
 	//!
 	//! This does not increase the reference count of the returned object.
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
+	//! \brief Returns a type by declaration.
+	//! \param[in] decl The declaration of the type.
+	//! \return The object type or null on error.
+	//!
+	//! Translates a type declaration into the object type. The returned object type is valid for as 
+	//! long as the type is valid, so you can safely store it for later use to avoid potential overhead from 
+	//! calling this function each time. Just remember to update the object type, any time the type is 
+	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
+	//! engine configuration.
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 	//! \brief Returns a type id by declaration.
 	//! \param[in] decl The declaration of the type.
 	//! \return A negative value on error, or the type id of the type.
 	//! \retval asINVALID_TYPE \a decl is not a valid type.
 	//!
 	//! Translates a type declaration into a type id. The returned type id is valid for as long as
-	//! the type is valid, so you can safely store it for later use to avoid potential overhead by 
+	//! the type is valid, so you can safely store it for later use to avoid potential overhead from 
 	//! calling this function each time. Just remember to update the type id, any time the type is 
 	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
 	//! engine configuration.
@@ -3331,10 +3354,18 @@ public:
 	virtual asUINT           GetParamCount() const = 0;
 	//! \brief Returns the type id of the specified parameter.
 	//! \param[in] index The zero based parameter index.
+	//! \param[out] typeId The typeId of the parameter.
 	//! \param[out] flags A combination of \ref asETypeModifiers.
-	//! \return A negative value on error, or the type id of the specified parameter.
+	//! \param[out] name The name of the parameter (or null if not defined).
+	//! \param[out] defaultArg The default argument expression (or null if not defined).
+	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The index is out of bounds.
+	virtual int              GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.29.0, 2014-04-06
+	//! \deprecated Since 2.29.0. Use \ref asIScriptFunction::GetParam instead.
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
+#endif
 	//! \brief Returns the type id of the return type.
 	//! \param[out] flags A combination of \ref asETypeModifiers.
 	//! \return The type id of the return type.
