@@ -166,6 +166,9 @@
 // Embarcadero C++Builder
 //  __BORLANDC__ is defined
 
+// Sun CC compiler
+// __SUNPRO_CC is defined
+
 
 
 //
@@ -213,6 +216,9 @@
 // AS_BIG_ENDIAN
 // Define this for CPUs that use big endian memory layout, e.g. PPC
 
+// AS_SPARC
+// Define this for SPARC CPU family
+
 
 
 //
@@ -241,6 +247,7 @@
 // AS_HAIKU     - Haiku
 // AS_ILLUMOS   - Illumos like (OpenSolaris, OpenIndiana, NCP, etc)
 // AS_MARMALADE - Marmalade cross platform SDK (a layer on top of the OS)
+// AS_SUN       - Sun UNIX
 
 
 
@@ -998,6 +1005,39 @@
 	#endif
 
 	#define UNREACHABLE_RETURN
+#endif
+
+// Sun CC
+// Initial information provided by Andrey Bergman
+#if defined(__SUNPRO_CC)
+	#if defined(__sparc)
+		#define AS_SPARC
+	#endif
+
+	#if defined(__sun)
+		#define AS_SUN
+	#endif
+
+	// Native calling conventions is not yet supported for Sun CC
+	#if !defined(AS_MAX_PORTABILITY)
+		#define AS_MAX_PORTABILITY
+	#endif
+	#if !defined(AS_NO_CLASS_METHODS)
+		#define AS_NO_CLASS_METHODS
+	#endif
+
+	#if !defined(AS_SIZEOF_BOOL)
+		#define AS_SIZEOF_BOOL 1 // sizeof(bool) == 1
+	#endif
+	#if !defined(UNREACHABLE_RETURN)
+		#define UNREACHABLE_RETURN
+	#endif
+	#if !defined(STDCALL)
+		#define STDCALL // There is no stdcall on Solaris/SunPro/SPARC
+	#endif
+	#if !defined(asVSNPRINTF)
+		#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
+	#endif
 #endif
 
 

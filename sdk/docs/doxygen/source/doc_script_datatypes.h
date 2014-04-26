@@ -218,7 +218,7 @@ pairs can be added or removed dynamically, making the dictionary a good general 
 <pre>
   obj object;
   obj \@handle;
-  dictionary dict = ({'one', 1}, {'object', object}, {'handle', \@handle}};
+  dictionary dict = {{'one', 1}, {'object', object}, {'handle', \@handle}};
   
   if( dict.exists('one') )
   {

@@ -723,7 +723,7 @@ int asCScriptFunction::FindNextLineWithCode(int line) const
 		{
 			static int cmp(const void *a, const void *b) { return *(int*)a - *(int*)b; }
 		};
-		qsort(&lineNbrs[0], lineNbrs.GetLength(), sizeof(int), C::cmp);
+		std::qsort(&lineNbrs[0], lineNbrs.GetLength(), sizeof(int), C::cmp);
 
 		if( line < lineNbrs[0] && line < (scriptData->declaredAt&0xFFFFF)) return -1;
 		if( line > lineNbrs[lineNbrs.GetLength()-1] ) return -1;

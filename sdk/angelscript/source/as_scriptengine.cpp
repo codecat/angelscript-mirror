@@ -120,6 +120,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_MAC
 		"AS_MAC "
 #endif
+#ifdef AS_SUN
+		"AS_SUN "
+#endif
 #ifdef AS_BSD
 		"AS_BSD "
 #endif
@@ -198,6 +201,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_X64_MSVC
 		"AS_X64_MSVC "
 #endif
+#ifdef AS_SPARC
+		"AS_SPARC "
+#endif
 	;
 
 	return string;
@@ -228,15 +234,17 @@ AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version)
 
 	// Verify endianess
 #ifdef AS_BIG_ENDIAN
-	asASSERT( *(asDWORD*)"\x00\x01\x02\x03" == 0x00010203 );
-	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == ((asQWORD(0x00010203)<<32)|asQWORD(0x04050607)) );
+	asDWORD dw = 0x00010203;
+	asQWORD qw = ((asQWORD(0x00010203)<<32)|asQWORD(0x04050607));
 #else
-	asASSERT( *(asDWORD*)"\x00\x01\x02\x03" == 0x03020100 );
+	asDWORD dw = 0x03020100;
 	// C++ didn't have a standard way of declaring 64bit literal constants until C++11, so
 	// I'm forced to do it like this to avoid compilers warnings when compiling with the full
 	// C++ compliance.
-	asASSERT( *(asQWORD*)"\x00\x01\x02\x03\x04\x05\x06\x07" == ((asQWORD(0x07060504)<<32)|asQWORD(0x03020100)) );
+	asQWORD qw = ((asQWORD(0x07060504)<<32)|asQWORD(0x03020100));
 #endif
+	asASSERT( memcmp("\x00\x01\x02\x03", &dw, 4) == 0 );
+	asASSERT( memcmp("\x00\x01\x02\x03\x04\x05\x06\x07", &qw, 8) == 0 );
 
 	return asNEW(asCScriptEngine)();
 }
@@ -3794,7 +3802,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 				asPWORD baseOffset;  // Same size as the pointer
 			} f;
 		} p;
-		p.f.func = (void (*)())(i->func);
+		p.f.func = (asFUNCTION_t)(i->func);
 		p.f.baseOffset = asPWORD(i->baseOffset);
 		void (asCSimpleDummy::*f)() = p.mthd;
 		(((asCSimpleDummy*)obj)->*f)();
@@ -3813,7 +3821,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i,
 			asSIMPLEMETHOD_t mthd;
 			asFUNCTION_t func;
 		} p;
-		p.func = (void (*)())(i->func);
+		p.func = (asFUNCTION_t)(i->func);
 		void (asCSimpleDummy::*f)() = p.mthd;
 		obj = (void*)(asPWORD(obj) + i->baseOffset);
 		(((asCSimpleDummy*)obj)->*f)();
@@ -3860,7 +3868,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func) const
 				asPWORD baseOffset;
 			} f;
 		} p;
-		p.f.func = (void (*)())(i->func);
+		p.f.func = (asFUNCTION_t)(i->func);
 		p.f.baseOffset = asPWORD(i->baseOffset);
 		bool (asCSimpleDummy::*f)() = (bool (asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
@@ -3879,7 +3887,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func) const
 			asSIMPLEMETHOD_t mthd;
 			asFUNCTION_t func;
 		} p;
-		p.func = (void (*)())(i->func);
+		p.func = (asFUNCTION_t)(i->func);
 		bool (asCSimpleDummy::*f)() = (bool (asCSimpleDummy::*)())p.mthd;
 		obj = (void*)(asPWORD(obj) + i->baseOffset);
 		return (((asCSimpleDummy*)obj)->*f)();
@@ -3927,7 +3935,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func) const
 				asPWORD baseOffset;
 			} f;
 		} p;
-		p.f.func = (void (*)())(i->func);
+		p.f.func = (asFUNCTION_t)(i->func);
 		p.f.baseOffset = asPWORD(i->baseOffset);
 		int (asCSimpleDummy::*f)() = (int (asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
@@ -3946,7 +3954,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func) const
 			asSIMPLEMETHOD_t mthd;
 			asFUNCTION_t func;
 		} p;
-		p.func = (void (*)())(i->func);
+		p.func = (asFUNCTION_t)(i->func);
 		int (asCSimpleDummy::*f)() = (int (asCSimpleDummy::*)())p.mthd;
 		obj = (void*)(asPWORD(obj) + i->baseOffset);
 		return (((asCSimpleDummy*)obj)->*f)();
@@ -3994,7 +4002,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
 				asPWORD baseOffset;
 			} f;
 		} p;
-		p.f.func = (void (*)())(i->func);
+		p.f.func = (asFUNCTION_t)(i->func);
 		p.f.baseOffset = asPWORD(i->baseOffset);
 		void *(asCSimpleDummy::*f)() = (void *(asCSimpleDummy::*)())(p.mthd);
 		return (((asCSimpleDummy*)obj)->*f)();
@@ -4013,7 +4021,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
 			asSIMPLEMETHOD_t mthd;
 			asFUNCTION_t func;
 		} p;
-		p.func = (void (*)())(i->func);
+		p.func = (asFUNCTION_t)(i->func);
 		void *(asCSimpleDummy::*f)() = (void *(asCSimpleDummy::*)())p.mthd;
 		obj = (void*)(asPWORD(obj) + i->baseOffset);
 		return (((asCSimpleDummy*)obj)->*f)();
@@ -4127,7 +4135,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 				asPWORD baseOffset;  // Same size as the pointer
 			} f;
 		} p;
-		p.f.func = (void (*)())(i->func);
+		p.f.func = (asFUNCTION_t)(i->func);
 		p.f.baseOffset = asPWORD(i->baseOffset);
 		void (asCSimpleDummy::*f)(void*) = (void (asCSimpleDummy::*)(void*))(p.mthd);
 		(((asCSimpleDummy*)obj)->*f)(param);
@@ -4146,7 +4154,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunction
 			asSIMPLEMETHOD_t mthd;
 			asFUNCTION_t func;
 		} p;
-		p.func = (void (*)())(i->func);
+		p.func = (asFUNCTION_t)(i->func);
 		void (asCSimpleDummy::*f)(void *) = (void (asCSimpleDummy::*)(void *))(p.mthd);
 		obj = (void*)(asPWORD(obj) + i->baseOffset);
 		(((asCSimpleDummy*)obj)->*f)(param);

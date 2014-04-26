@@ -80,10 +80,10 @@ private:
 
 #endif
 
-asCBuilder::asCBuilder(asCScriptEngine *engine, asCModule *module)
+asCBuilder::asCBuilder(asCScriptEngine *_engine, asCModule *_module)
 {
-	this->engine = engine;
-	this->module = module;
+	this->engine = _engine;
+	this->module = _module;
 	silent = false;
 }
 

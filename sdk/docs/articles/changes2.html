@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.0 WIP - 2014/04/21</h2>
+<h2>Version 2.29.0 WIP - 2014/04/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved C++ exception handling to avoid deleting object that was never returned (Thanks Polyák István)
 <li>CreateScriptObject will return null if the object constructor throws C++ exception
 <li>The template callback can now write error messages to facilitate the understanding of why a template cannot be instantiated (Thanks JaviCervera)
+<li>Compiling the library with Sun CC for SPARC is now possible, though without native calling conventions (Thanks Andrey Bergman)
 </ul>
 <li>Library interface
 <ul>
