@@ -14,9 +14,9 @@ share the same module, and thus the same bytecode and function ids, etc.
 
 
 
-\section doc_use_script_class_1 Instanciating the script class
+\section doc_use_script_class_1 Instantiating the script class
 
-Before instanciating the script class you need to know which class to instanciate. Exactly how this is done 
+Before instantiating the script class you need to know which class to instantiate. Exactly how this is done 
 depends on the application, but here are some suggestions.
 
 If the application knows the name of the class, either hardcoded or from some configuration, the class type

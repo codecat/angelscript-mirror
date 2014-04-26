@@ -1177,7 +1177,7 @@ public:
 	//!
 	//! \see \ref doc_register_func, \ref doc_reg_opbeh
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
-	//! \brief Registers an interface.
+	//! \brief Registers a script interface.
 	//! \param[in] name The name of the interface.
 	//! \return A negative value on error.
 	//! \retval asINVALID_NAME The \a name is null, or a reserved keyword.
@@ -1188,8 +1188,10 @@ public:
 	//! This registers an interface that script classes can implement. By doing this the application 
 	//! can register functions and methods that receives an \ref asIScriptObject and still be sure that the 
 	//! class implements certain methods needed by the application. 
+	//!
+	//! \see \ref doc_use_script_class_3
 	virtual int            RegisterInterface(const char *name) = 0;
-	//! \brief Registers an interface method.
+	//! \brief Registers a script interface method.
 	//! \param[in] intf The name of the interface.
 	//! \param[in] declaration The method declaration.
 	//! \return A negative value on error.
@@ -1198,7 +1200,7 @@ public:
 	//! \retval asINVALID_DECLARATION The \a declaration is invalid.
 	//! \retval asNAME_TAKEN The method name is already taken.
 	//!
-	//! This registers a method that the class that implements the interface must have.
+	//! This registers a method that the class that implements the script interface must have.
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	//! \brief Returns the number of registered object types.
 	//! \return The number of object types registered by the application.
