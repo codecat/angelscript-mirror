@@ -539,8 +539,10 @@ extern "C"
 	AS_API int               asThreadCleanup();
 
 	// Memory management
-	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
-	AS_API int asResetGlobalMemoryFunctions();
+	AS_API int   asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+	AS_API int   asResetGlobalMemoryFunctions();
+	AS_API void *asAllocMem(size_t size);
+	AS_API void  asFreeMem(void *mem);
 
 	// Auxiliary
 	AS_API asILockableSharedBool *asCreateLockableSharedBool();

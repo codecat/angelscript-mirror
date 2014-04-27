@@ -48,6 +48,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetObjectTypeByDecl to both engine and module
 <li>Removed old deprecated methods
 <li>Modules, contexts, and functions now also support multiple user data
+<li>Added the global functions asAllocMem and asFreeMem that call the registered custom memory functions
 </ul>
 <li>Script language
 <ul>
@@ -60,6 +61,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added default factory and resize method to the grid
 <li>Array and grid properly handle exceptions while constructing elements (Thanks Polyák István)
 <li>Fixed compilation error with xcode 5.1 in dictionary (Thanks Jordi Oliveras Rovira)
+<li>The array and grid addons use the asAllocMem and asFreeMem as default memory routines
 </ul>
 </ul>
 

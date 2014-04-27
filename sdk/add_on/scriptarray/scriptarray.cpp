@@ -11,8 +11,9 @@ using namespace std;
 BEGIN_AS_NAMESPACE
 
 // Set the default memory routines
-static asALLOCFUNC_t userAlloc = ::malloc;
-static asFREEFUNC_t  userFree  = ::free;
+// Use the angelscript engine's memory routines by default
+static asALLOCFUNC_t userAlloc = asAllocMem;
+static asFREEFUNC_t  userFree  = asFreeMem;
 
 // Allows the application to set which memory routines should be used by the array object
 void CScriptArray::SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc)
