@@ -28,6 +28,39 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Proper error message when trying to pass class method as function pointer directly
+	// http://www.gamedev.net/topic/655390-is-there-a-bug-with-function-callbacks/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		
+		bout.buffer = "";
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void CALLBACK(int); \n"
+			"class Test { \n"
+			"  void Init() { \n"
+			"    SetCallback(MyCallback); \n" // This should fail, since delegate is necessary
+			"  } \n"
+			"  void MyCallback(int) {} \n"
+			"} \n"
+			"void SetCallback(CALLBACK @) {} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 3) : Info    : Compiling void Test::Init()\n"
+						   "test (4, 5) : Error   : No matching signatures to 'SetCallback(Test::MyCallback)'\n"
+						   "test (4, 5) : Error   : Can't pass class method as arg directly. Use a delegate object instead\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// opEquals with funcdef
 	// http://www.gamedev.net/topic/647797-difference-between-xopequalsy-and-xy-with-funcdefs/
 	{

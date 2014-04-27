@@ -2378,6 +2378,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 	if( funcs.GetLength() != 1 && !silent )
 	{
 		// Build a readable string of the function with parameter types
+		bool attemptsPassingClassMethod = false;
 		asCString str;
 		if( scope != "" )
 		{
@@ -2388,18 +2389,20 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 		}
 		str += name;
 		str += "(";
-		if( args.GetLength() )
+		for( n = 0; n < args.GetLength(); n++ )
 		{
-			if( args[0]->methodName != "" )
-				str += args[0]->methodName;
-			else
-				str += args[0]->type.dataType.Format();
-		}
-		for( n = 1; n < args.GetLength(); n++ )
-		{
-			str += ", ";
+			if( n > 0 )
+				str += ", ";
 			if( args[n]->methodName != "" )
+			{
+				if( args[n]->IsClassMethod() )
+				{
+					attemptsPassingClassMethod = true;
+					str += args[n]->type.dataType.GetObjectType()->GetName();
+					str += "::";
+				}
 				str += args[n]->methodName;
+			}
 			else
 				str += args[n]->type.dataType.Format();
 		}
@@ -2432,18 +2435,28 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 			Error(str, node);
 
-			// Print the list of candidates
-			if( origFuncs.GetLength() > 0 )
+			if( attemptsPassingClassMethod )
 			{
-				int r = 0, c = 0;
-				asASSERT( node );
-				if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
-				builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
-				PrintMatchingFuncs(origFuncs, node, objectType);
+				// Class methods must use delegate objects
+				Error(TXT_CANNOT_PASS_CLASS_METHOD_AS_ARG, node);
+			}
+			else
+			{
+				// Print the list of candidates
+				if( origFuncs.GetLength() > 0 )
+				{
+					int r = 0, c = 0;
+					asASSERT( node );
+					if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+					builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
+					PrintMatchingFuncs(origFuncs, node, objectType);
+				}
 			}
 		}
 		else
 		{
+			asASSERT( attemptsPassingClassMethod == false );
+
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 			Error(str, node);
 
