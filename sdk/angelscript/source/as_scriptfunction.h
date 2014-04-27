@@ -109,6 +109,11 @@ struct asSSystemFunctionInterface;
 //       also functions/methods that are being called. This could be used to build a 
 //       code database with call graphs, etc.
 
+// TODO: 2.29.0: The asIScriptFunction should provide operator== and operator!= that should do a
+//       a value comparison. Two delegate objects that point to the same object and class method should compare as equal
+
+// TODO: 2.29.0: The operator== should also be provided in script as opEquals to allow the same comparison in script
+
 void RegisterScriptFunction(asCScriptEngine *engine);
 
 class asCScriptFunction : public asIScriptFunction
@@ -168,8 +173,8 @@ public:
 	asDWORD             *GetByteCode(asUINT *length = 0);
 
 	// User data
-	void                *SetUserData(void *userData);
-	void                *GetUserData() const;
+	void                *SetUserData(void *userData, asPWORD type);
+	void                *GetUserData(asPWORD type) const;
 
 public:
 	//-----------------------------------
@@ -230,7 +235,7 @@ public:
 	asCScriptEngine             *engine;
 	asCModule                   *module;
 
-	void                        *userData;
+	asCArray<asPWORD>            userData;
 
 	// Function signature
 	asCString                    name;

@@ -389,9 +389,16 @@ asCScriptFunction::~asCScriptFunction()
 void asCScriptFunction::DestroyInternal()
 {
 	// Clean up user data
-	if( userData && engine->cleanFunctionFunc )
-		engine->cleanFunctionFunc(this);
-	userData = 0;
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n+1] )
+		{
+			for( asUINT c = 0; c < engine->cleanFunctionFuncs.GetLength(); c++ )
+				if( engine->cleanFunctionFuncs[c].type == userData[n] )
+					engine->cleanFunctionFuncs[c].cleanFunc(this);
+		}
+	}
+	userData.SetLength(0);
 
 	// Release all references the function holds to other objects
 	ReleaseReferences();
@@ -1389,17 +1396,55 @@ asDWORD *asCScriptFunction::GetByteCode(asUINT *length)
 }
 
 // interface
-void *asCScriptFunction::SetUserData(void *data)
+void *asCScriptFunction::SetUserData(void *data, asPWORD type)
 {
-	void *oldData = userData;
-	userData = data;
-	return oldData;
+	// As a thread might add a new new user data at the same time as another
+	// it is necessary to protect both read and write access to the userData member
+	ACQUIREEXCLUSIVE(engine->engineRWLock);
+
+	// It is not intended to store a lot of different types of userdata,
+	// so a more complex structure like a associative map would just have
+	// more overhead than a simple array.
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n] == type )
+		{
+			void *oldData = reinterpret_cast<void*>(userData[n+1]);
+			userData[n+1] = reinterpret_cast<asPWORD>(data);
+
+			RELEASEEXCLUSIVE(engine->engineRWLock);
+
+			return oldData;
+		}
+	}
+
+	userData.PushLast(type);
+	userData.PushLast(reinterpret_cast<asPWORD>(data));
+
+	RELEASEEXCLUSIVE(engine->engineRWLock);
+
+	return 0;
 }
 
 // interface
-void *asCScriptFunction::GetUserData() const
+void *asCScriptFunction::GetUserData(asPWORD type) const
 {
-	return userData;
+	// There may be multiple threads reading, but when
+	// setting the user data nobody must be reading.
+	ACQUIRESHARED(engine->engineRWLock);
+
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
+	{
+		if( userData[n] == type )
+		{
+			RELEASESHARED(engine->engineRWLock);
+			return reinterpret_cast<void*>(userData[n+1]);
+		}
+	}
+
+	RELEASESHARED(engine->engineRWLock);
+
+	return 0;
 }
 
 // internal

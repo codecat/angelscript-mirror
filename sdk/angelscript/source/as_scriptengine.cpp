@@ -507,11 +507,6 @@ asCScriptEngine::asCScriptEngine()
 	deferValidationOfTemplateTypes = false;
 	lastModule = 0;
 
-	// User data
-	cleanModuleFunc     = 0;
-	cleanContextFunc    = 0;
-	cleanFunctionFunc   = 0;
-
 
 	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
 
@@ -5430,21 +5425,69 @@ void asCScriptEngine::SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callb
 }
 
 // interface
-void asCScriptEngine::SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback)
+void asCScriptEngine::SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type)
 {
-	cleanModuleFunc = callback;
+	ACQUIREEXCLUSIVE(engineRWLock);
+
+	for( asUINT n = 0; n < cleanModuleFuncs.GetLength(); n++ )
+	{
+		if( cleanModuleFuncs[n].type == type )
+		{
+			cleanModuleFuncs[n].cleanFunc = callback;
+
+			RELEASEEXCLUSIVE(engineRWLock);
+
+			return;
+		}
+	}
+	SModuleClean otc = {type, callback};
+	cleanModuleFuncs.PushLast(otc);
+
+	RELEASEEXCLUSIVE(engineRWLock);
 }
 
 // interface
-void asCScriptEngine::SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback)
+void asCScriptEngine::SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type)
 {
-	cleanContextFunc = callback;
+	ACQUIREEXCLUSIVE(engineRWLock);
+
+	for( asUINT n = 0; n < cleanContextFuncs.GetLength(); n++ )
+	{
+		if( cleanContextFuncs[n].type == type )
+		{
+			cleanContextFuncs[n].cleanFunc = callback;
+
+			RELEASEEXCLUSIVE(engineRWLock);
+
+			return;
+		}
+	}
+	SContextClean otc = {type, callback};
+	cleanContextFuncs.PushLast(otc);
+
+	RELEASEEXCLUSIVE(engineRWLock);
 }
 
 // interface
-void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback)
+void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type)
 {
-	cleanFunctionFunc = callback;
+	ACQUIREEXCLUSIVE(engineRWLock);
+
+	for( asUINT n = 0; n < cleanFunctionFuncs.GetLength(); n++ )
+	{
+		if( cleanFunctionFuncs[n].type == type )
+		{
+			cleanFunctionFuncs[n].cleanFunc = callback;
+
+			RELEASEEXCLUSIVE(engineRWLock);
+
+			return;
+		}
+	}
+	SFunctionClean otc = {type, callback};
+	cleanFunctionFuncs.PushLast(otc);
+
+	RELEASEEXCLUSIVE(engineRWLock);
 }
 
 // interface

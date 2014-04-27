@@ -187,12 +187,12 @@ public:
 	virtual void GCEnumCallback(void *reference);
 
 	// User data
-	virtual void *SetUserData(void *data, asPWORD type = 0);
-	virtual void *GetUserData(asPWORD type = 0) const;
-	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback, asPWORD type = 0);
-	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback);
-	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback);
-	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback);
+	virtual void *SetUserData(void *data, asPWORD type);
+	virtual void *GetUserData(asPWORD type) const;
+	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback, asPWORD type);
+	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type);
+	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type);
+	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type);
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type);
 
 //===========================================================
@@ -431,13 +431,16 @@ public:
 	// User data
 	asCArray<asPWORD>       userData;
 
-	struct SEngineClean { asPWORD type; asCLEANENGINEFUNC_t cleanFunc; };
-	asCArray<SEngineClean>  cleanEngineFuncs;
-	asCLEANMODULEFUNC_t     cleanModuleFunc;
-	asCLEANCONTEXTFUNC_t    cleanContextFunc;
-	asCLEANFUNCTIONFUNC_t   cleanFunctionFunc;
-	struct SObjTypeClean { asPWORD type; asCLEANOBJECTTYPEFUNC_t cleanFunc; };
-	asCArray<SObjTypeClean> cleanObjectTypeFuncs;
+	struct SEngineClean   { asPWORD type; asCLEANENGINEFUNC_t     cleanFunc; };
+	asCArray<SEngineClean>   cleanEngineFuncs;
+	struct SModuleClean   { asPWORD type; asCLEANMODULEFUNC_t     cleanFunc; };
+	asCArray<SModuleClean>   cleanModuleFuncs;
+	struct SContextClean  { asPWORD type; asCLEANCONTEXTFUNC_t    cleanFunc; };
+	asCArray<SContextClean>  cleanContextFuncs;
+	struct SFunctionClean { asPWORD type; asCLEANFUNCTIONFUNC_t   cleanFunc; };
+	asCArray<SFunctionClean> cleanFunctionFuncs;
+	struct SObjTypeClean  { asPWORD type; asCLEANOBJECTTYPEFUNC_t cleanFunc; };
+	asCArray<SObjTypeClean>  cleanObjectTypeFuncs;
 
 	// Synchronization for threads
 	DECLAREREADWRITELOCK(mutable engineRWLock)
