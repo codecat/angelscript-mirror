@@ -125,7 +125,7 @@ bool Test()
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "Object@ obj = @CreateObject(); obj = CreateObject();");
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 36) : Error   : There is no copy operator for the type 'Object' available.\n" )
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 36) : Error   : No appropriate opAssign method found in 'Object'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -144,7 +144,7 @@ bool Test()
 
 	bout.buffer = "";
 	r = ExecuteString(engine, "CreateObject() = CreateObject();");
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for the type 'Object' available.\n" )
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'Object'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

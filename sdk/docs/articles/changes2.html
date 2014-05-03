@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.0 WIP - 2014/05/02</h2>
+<h2>Version 2.29.0 WIP - 2014/05/03</h2>
 
 <ul>
 <li>Bug fixes
@@ -40,6 +40,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiling the library with Sun CC for SPARC is now possible, though without native calling conventions (Thanks Andrey Bergman)
 <li>Improved error message when trying to pass class method as argument (Thanks Grimshaw)
 <li>Types registered with asOBJ_ASHANDLE should now provide the opHndlAssign method to support handle assignments
+<li>Types registered with asOBJ_ASHANDLE can also register the opAssign method to support value assignments
 </ul>
 <li>Library interface
 <ul>
@@ -63,7 +64,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Array and grid properly handle exceptions while constructing elements (Thanks Polyák István)
 <li>Fixed compilation error with xcode 5.1 in dictionary (Thanks Jordi Oliveras Rovira)
 <li>The array and grid addons use the asAllocMem and asFreeMem as default memory routines
-<li>CScriptHandle implements the opHndlAssign
+<li>CScriptHandle implements the opHndlAssign instead of the opAssign
 </ul>
 </ul>
 

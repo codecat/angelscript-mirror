@@ -4571,6 +4571,8 @@ void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type
 // interface
 void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType *type)
 {
+	if( origObj == 0 || type == 0 ) return 0;
+
 	// TODO: Should use the copy constructor if available
 	void *newObj = CreateScriptObject(type);
 	if( newObj == 0 ) return 0;

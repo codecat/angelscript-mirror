@@ -2899,12 +2899,11 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				// and a simple assignment.
 				bool assigned = false;
 				// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
-				// TODO: 2.29.0: opHndlAssign: The ASHANDLE type should have a different overload to support both value assign and handle assign
-				//                             If the rvalue is an expression that support handles the initialization should use opHandleAssign, else opAssign
-				//                             Maybe we can differentiate on how the type has been declared, i.e. with or without @
 				if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 				{
-					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx);
+					// TODO: 2.29.0: opHndlAssign: If the rvalue is an expression that support handles the initialization should use opHandleAssign, else opAssign
+					//                             Maybe we can differentiate on how the type has been declared, i.e. with or without @
+					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx, (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) ? true : false);
 					if( assigned )
 					{
 						// Pop the resulting value
@@ -7272,7 +7271,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 				}
 			}
 
-			if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx) )
+			if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx, true) )
 			{
 				// An overloaded assignment operator was found (or a compilation error occured)
 				return 0;
@@ -7315,17 +7314,6 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 	}
 	else // if( lctx->type.dataType.IsObject() )
 	{
-		// An ASHANDLE type must not allow a value assignment, as
-		// the opAssign operator is used for the handle assignment
-		// TODO: 2.29.0: opHndlAssign: Implement opHandleAssign to allow value assign too
-		if( lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
-		{
-			asCString str;
-			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format().AddressOf());
-			Error(str, lexpr);
-			return -1;
-		}
-
 		// The lvalue reference may be marked as a temporary, if for example
 		// it was originated as a handle returned from a function. In such
 		// cases it must be possible to assign values to it anyway.
@@ -11196,7 +11184,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&arg->bc);
 }
 
-bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, bool isHandle)
 {
 	DetermineSingleFunc(lctx, node);
 	DetermineSingleFunc(rctx, node);
@@ -11353,28 +11341,33 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 
 	// Assignment operators
 	op = 0;
-	switch( token )
+	if( isHandle )
 	{
-	case ttAssignment:        op = "opAssign";     break;
-	case ttAddAssign:         op = "opAddAssign";  break;
-	case ttSubAssign:         op = "opSubAssign";  break;
-	case ttMulAssign:         op = "opMulAssign";  break;
-	case ttDivAssign:         op = "opDivAssign";  break;
-	case ttModAssign:         op = "opModAssign";  break;
-	case ttPowAssign:         op = "opPowAssign";  break;
-	case ttOrAssign:          op = "opOrAssign";   break;
-	case ttAndAssign:         op = "opAndAssign";  break;
-	case ttXorAssign:         op = "opXorAssign";  break;
-	case ttShiftLeftAssign:   op = "opShlAssign";  break;
-	case ttShiftRightLAssign: op = "opShrAssign";  break;
-	case ttShiftRightAAssign: op = "opUShrAssign"; break;
-	}
+		// Only asOBJ_ASHANDLE types can get here
+		asASSERT( lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) );
+		asASSERT( token == ttAssignment );
 
-	// TODO: 2.29.0: opHndlAssign: It should be possible to support both value assign and handle assign for ASHANDLE types
-	if( token == ttAssignment &&
-		lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+		if( token == ttAssignment )
+			op = "opHndlAssign";
+	}
+	else
 	{
-		op = "opHndlAssign";
+		switch( token )
+		{
+		case ttAssignment:        op = "opAssign";     break;
+		case ttAddAssign:         op = "opAddAssign";  break;
+		case ttSubAssign:         op = "opSubAssign";  break;
+		case ttMulAssign:         op = "opMulAssign";  break;
+		case ttDivAssign:         op = "opDivAssign";  break;
+		case ttModAssign:         op = "opModAssign";  break;
+		case ttPowAssign:         op = "opPowAssign";  break;
+		case ttOrAssign:          op = "opOrAssign";   break;
+		case ttAndAssign:         op = "opAndAssign";  break;
+		case ttXorAssign:         op = "opXorAssign";  break;
+		case ttShiftLeftAssign:   op = "opShlAssign";  break;
+		case ttShiftRightLAssign: op = "opShrAssign";  break;
+		case ttShiftRightAAssign: op = "opUShrAssign"; break;
+		}
 	}
 
 	if( op )

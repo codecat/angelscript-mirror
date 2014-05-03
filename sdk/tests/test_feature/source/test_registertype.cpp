@@ -515,7 +515,7 @@ bool Test()
 	r = ExecuteString(engine, "ref r1, r2; r1 = r2;");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for the type 'ref' available.\n" )
+	if( bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'ref'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -588,7 +588,7 @@ bool Test()
 	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 16) : Error   : There is no copy operator for the type 'val' available.\n" )
+	if( bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'val'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -1281,14 +1281,14 @@ public:
 		m_ref = 0;
 		m_typeId = 0;
 		m_engine = o.m_engine;
-		opAssign(o.m_ref, o.m_typeId);
+		opHndlAssign(o.m_ref, o.m_typeId);
 	}
 	CHandleType(void *ref, int typeId)
 	{
 		m_ref = 0;
 		m_typeId = 0;
 		m_engine = asGetActiveContext()->GetEngine();
-		opAssign(ref, typeId);
+		opHndlAssign(ref, typeId);
 	}
 	~CHandleType()
 	{
@@ -1296,11 +1296,11 @@ public:
 	}
 	CHandleType &operator=(const CHandleType &o)
 	{
-		opAssign(o.m_ref, o.m_typeId);
+		opHndlAssign(o.m_ref, o.m_typeId);
 		return *this;
 	}
 
-	CHandleType &opAssign(void *ref, int typeId)
+	CHandleType &opHndlAssign(void *ref, int typeId)
 	{
 		ReleaseHandle();
 
@@ -1319,6 +1319,27 @@ public:
 		m_typeId = typeId;
 
 		AddRefHandle();
+
+		return *this;
+	}
+
+	CHandleType &opAssign(void *ref, int typeId)
+	{
+		ReleaseHandle();
+
+		// When receiving a null handle we just clear our memory
+		if( typeId == 0 )
+			ref = 0;
+		// Dereference handles
+		if( typeId & asTYPEID_OBJHANDLE )
+		{
+			// Store the actual reference
+			ref = *(void**)ref;
+			typeId &= ~asTYPEID_OBJHANDLE;
+		}
+
+		m_ref    = m_engine->CreateScriptObjectCopy(ref, m_engine->GetObjectTypeById(typeId));
+		m_typeId = typeId;
 
 		return *this;
 	}
@@ -1417,6 +1438,15 @@ void CHandleType_ConstructVar_Generic(asIScriptGeneric *gen)
 	CHandleType::Construct(self, ref, typeId);
 }
 
+void CHandleType_HndlAssignVar_Generic(asIScriptGeneric *gen)
+{
+	void *ref = gen->GetArgAddress(0);
+	int typeId = gen->GetArgTypeId(0);
+	CHandleType *self = reinterpret_cast<CHandleType*>(gen->GetObject());
+	self->opHndlAssign(ref, typeId);
+	gen->SetReturnAddress(self);
+}
+
 void CHandleType_AssignVar_Generic(asIScriptGeneric *gen)
 {
 	void *ref = gen->GetArgAddress(0);
@@ -1462,7 +1492,9 @@ bool TestHandleType()
 	// TODO: 2.29.0: opHndlAssign: Test that both opAssign and opHndlAssign can be used. If the lvalue is explicit handle opHndlAssign should be used, else opAssign
 	//                             Compiler should give error if attempting value assign when rvalue is explicit handle
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", asMETHOD(CHandleType, operator=), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asMETHOD(CHandleType, opHndlAssign), asCALL_THISCALL); assert( r >= 0 );
+	// TODO: 2.29.0: Test without opAssign first to make sure appropriate error is shown if value assign is made for ASHANDLE without opAssign
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL);
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
@@ -1472,136 +1504,127 @@ bool TestHandleType()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ? &in)", asFUNCTION(CHandleType_ConstructVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_FIRST_PR(CHandleType::Destruct, (CHandleType *), void), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", WRAP_MFN(CHandleType, operator=), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asFUNCTION(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asFUNCTION(CHandleType_HndlAssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", WRAP_MFN_PR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asFUNCTION(CHandleType_EqualsVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asFUNCTION(CHandleType_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 
-	// It must be possible to use the is and !is operators on the handle type
-	// It must be possible to use handle assignment on the handle type
-	// It must be possible to do a cast on the handle type to get the real handle
-	const char *script = "class A {} \n"
-		                 "class B {} \n"
-						 "void main() \n"
-						 "{ \n"
-						 "  ref@ ra, rb; \n"
-						 "  A a; B b; \n"
-						 // Assignment of reference
-						 "  @ra = @a; \n"
-						 "  assert( ra is a ); \n"
-						 "  @rb = @b; \n"
-						 // Casting to reference
-						 "  A@ ha = cast<A>(ra); \n"
-						 "  assert( ha !is null ); \n"
-						 "  B@ hb = cast<B>(ra); \n"
-						 "  assert( hb is null ); \n"
-						 // Assigning null, and comparing with null
-						 "  @ra = null; \n"
-						 "  assert( ra is null ); \n"
-						 "  func2(ra); \n"
-						 // Handle assignment with explicit handle
-						 "  @ra = @rb; \n"
-						 "  assert( ra is b ); \n"
-						 "  assert( rb is b ); \n"
-						 "  assert( ra is rb ); \n"
-						 // Handle assignment with implicit handle
-						 "  @rb = rb; \n"
-						 "  assert( rb is b ); \n"
-						 "  assert( ra is rb ); \n"
-						 // Function call and return value
-						 "  @rb = func(rb); \n"
-						 "  assert( rb is b ); \n"
-						 "  assert( func(rb) is b ); \n"
-						 // Global variable
-						 "  @g = @b; \n"
-						 "  assert( g is b ); \n"
-						 // Assignment to reference
-						 "  @func3() = @a; \n"
-						 "  assert( g is a ); \n"
-						 "  assert( func3() is a ); \n"
-						 // Copying the reference
-						 "  ref@ rc = rb; \n"
-						 "  assert( rc is rb ); \n"
-						 "} \n"
-						 "ref@ func(ref@ r) { return r; } \n"
-						 "void func2(ref@r) { assert( r is null ); } \n"
-						 "ref@ g; \n"
-						 "ref@ g2 = g; \n"
-						 "ref@& func3() { return g; } \n";
-	asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script);
-	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	if( bout.buffer != "" )
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	CHandleType *ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g"));
-	if( !ptr || ptr->m_engine != engine )
-		TEST_FAILED;
-	ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g2"));
-	if( !ptr || ptr->m_engine != engine )
-		TEST_FAILED;
-
-
-	asIScriptContext *ctx = engine->CreateContext();
-	r = ExecuteString(engine, "main()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
-	{
-		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
-		TEST_FAILED;
-	}
-	ctx->Release();
-
-
-	{
-		// TODO: Should require the ASHANDLE to be declared with @
-		//       Currently it doesn't matter whether it is declared with or without
-		// This type must always be passed as if it is a handle to arguments, i.e. ref @func(ref @);
-		script = "ref func() { return null; } \n" // ERROR
-			     "void func2(ref a) {} \n"        // ERROR
-  			 	 // It must also be declared as handle in variables, globals, and members.
-				 "ref globl; \n"                  // ERROR
-				 "void main() \n"
-				 "{ \n"
-				 "  ref a; \n"                    // ERROR
-				 "} \n"
-				 "class T { ref a; } \n"          // ERROR
-				 // It must not be allowed to do a value assignment on the type
-				 "class S {} \n"
-				 "void test() \n"
-				 "{ \n"
-                 "  ref @r; \n"
-				 "  S s; \n"
-				 "  r = s; \n"                    // ERROR
-				 "} \n";
-
-		bout.buffer = "";
+		// It must be possible to use the is and !is operators on the handle type
+		// It must be possible to use handle assignment on the handle type
+		// It must be possible to do a cast on the handle type to get the real handle
+		const char *script = "class A {} \n"
+							 "class B {} \n"
+							 "void main() \n"
+							 "{ \n"
+							 "  ref@ ra, rb; \n"
+							 "  A a; B b; \n"
+							 // Assignment of reference
+							 "  @ra = @a; \n"
+							 "  assert( ra is a ); \n"
+							 "  @rb = @b; \n"
+							 // Casting to reference
+							 "  A@ ha = cast<A>(ra); \n"
+							 "  assert( ha !is null ); \n"
+							 "  B@ hb = cast<B>(ra); \n"
+							 "  assert( hb is null ); \n"
+							 // Assigning null, and comparing with null
+							 "  @ra = null; \n"
+							 "  assert( ra is null ); \n"
+							 "  func2(ra); \n"
+							 // Handle assignment with explicit handle
+							 "  @ra = @rb; \n"
+							 "  assert( ra is b ); \n"
+							 "  assert( rb is b ); \n"
+							 "  assert( ra is rb ); \n"
+							 // Handle assignment with implicit handle
+							 "  @rb = rb; \n"
+							 "  assert( rb is b ); \n"
+							 "  assert( ra is rb ); \n"
+							 // Function call and return value
+							 "  @rb = func(rb); \n"
+							 "  assert( rb is b ); \n"
+							 "  assert( func(rb) is b ); \n"
+							 // Global variable
+							 "  @g = @b; \n"
+							 "  assert( g is b ); \n"
+							 // Assignment to reference
+							 "  @func3() = @a; \n"
+							 "  assert( g is a ); \n"
+							 "  assert( func3() is a ); \n"
+							 // Copying the reference
+							 "  ref@ rc = rb; \n"
+							 "  assert( rc is rb ); \n"
+							 "} \n"
+							 "ref@ func(ref@ r) { return r; } \n"
+							 "void func2(ref@r) { assert( r is null ); } \n"
+							 "ref@ g; \n"
+							 "ref@ g2 = g; \n"
+							 "ref@& func3() { return g; } \n";
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
+		//engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 		r = mod->Build();
-		if( r >= 0 )
+		if( r < 0 )
 			TEST_FAILED;
-		if( bout.buffer != //"script (3, 1) : Error   : Data type can't be 'ref'\n"
-		                   //"script (8, 11) : Error   : Data type can't be 'ref'\n"
-		                   //"script (1, 1) : Info    : Compiling ref func()\n"
-		                   //"script (1, 1) : Error   : Data type can't be 'ref'\n"
-		                   //"script (1, 21) : Error   : Can't implicitly convert from '<null handle>' to 'ref'.\n"
-		                   //"script (2, 1) : Info    : Compiling void func2(ref)\n"
-		                   //"script (2, 12) : Error   : Parameter type can't be 'ref'\n"
-		                   //"script (4, 1) : Info    : Compiling void main()\n"
-		                   //"script (6, 7) : Error   : Data type can't be 'ref'\n"
-		                   "script (10, 1) : Info    : Compiling void test()\n"
-		                   "script (14, 3) : Error   : Illegal operation on 'ref'\n" )
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+		CHandleType *ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g"));
+		if( !ptr || ptr->m_engine != engine )
+			TEST_FAILED;
+		ptr = (CHandleType*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("g2"));
+		if( !ptr || ptr->m_engine != engine )
+			TEST_FAILED;
+
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PrintException(ctx);
+			TEST_FAILED;
+		}
+		ctx->Release();
+	}
+
+	// Support both handle assign and value assign
+	{
+		const char *script =
+			"class Test { int val = 42; } \n"
+			"void main() { \n"
+			"  ref a; \n"
+			"  Test b; \n"
+			"  b.val = 24; \n"
+			"  a = b; \n" // value assign
+			"  assert( a !is b ); \n"
+			"  assert( cast<Test>(a).val == b.val ); \n"
+			"  @a = b; \n" // handle assign
+			"  assert( a is b ); \n"
+			"} \n";
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 	}
 
 	engine->Release();

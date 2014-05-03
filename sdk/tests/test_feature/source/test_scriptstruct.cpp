@@ -1493,8 +1493,8 @@ bool Test()
 		if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
 						   "script (7, 8) : Error   : No default constructor for object of type 'CBar'.\n"
 						   "script (9, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-						   "script (9, 8) : Error   : There is no copy operator for the type 'CBar' available.\n"
-						   "script (10, 5) : Error   : There is no copy operator for the type 'CBar' available.\n"
+						   "script (9, 8) : Error   : No appropriate opAssign method found in 'CBar'\n"
+						   "script (10, 5) : Error   : No appropriate opAssign method found in 'CBar'\n"
 						   "script (11, 10) : Error   : No matching signatures to 'CBar()'\n"
 						   "script (11, 10) : Info    : Candidates are:\n"
 						   "script (11, 10) : Info    : CBar@ CBar(int a)\n" )
