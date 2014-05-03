@@ -1459,8 +1459,10 @@ bool TestHandleType()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ? &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, void *, int), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(CHandleType::Destruct, (CHandleType *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", asMETHOD(CHandleType, operator=), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL); assert( r >= 0 );
+	// TODO: 2.29.0: opHndlAssign: Test that both opAssign and opHndlAssign can be used. If the lvalue is explicit handle opHndlAssign should be used, else opAssign
+	//                             Compiler should give error if attempting value assign when rvalue is explicit handle
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", asMETHOD(CHandleType, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
@@ -1469,8 +1471,8 @@ bool TestHandleType()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", WRAP_OBJ_FIRST_PR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ? &in)", asFUNCTION(CHandleType_ConstructVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_FIRST_PR(CHandleType::Destruct, (CHandleType *), void), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", WRAP_MFN(CHandleType, operator=), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asFUNCTION(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", WRAP_MFN(CHandleType, operator=), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asFUNCTION(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", WRAP_MFN_PR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asFUNCTION(CHandleType_EqualsVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asFUNCTION(CHandleType_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );

@@ -105,6 +105,15 @@ static void ScriptFunction_CreateDelegate_Generic(asIScriptGeneric *gen)
 	gen->SetReturnAddress(CreateDelegate(func, obj));
 }
 
+// TODO: 2.29.0: operator==
+/*static void ScriptFunction_opEquals_Generic(asIScriptGeneric *gen)
+{
+	asCScriptFunction *funcSelf = (asCScriptFunction*)gen->GetObject();
+	asCScriptFunction *funcOther = (asCScriptFunction*)gen->GetArgAddress(0);
+	*(bool*)gen->GetAddressOfReturnLocation() = *funcSelf == *funcOther;
+}
+*/
+
 #endif
 
 
@@ -124,6 +133,8 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(asCScriptFunction,GetFlag), asCALL_THISCALL, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(asCScriptFunction,EnumReferences), asCALL_THISCALL, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(asCScriptFunction,ReleaseAllHandles), asCALL_THISCALL, 0); asASSERT( r >= 0 );
+	// TODO: 2.29.0: Need some way to allow the arg type to adapt when the funcdefs are instanciated
+//	r = engine->RegisterMethodToObjectType(&engine->functionBehaviours, "bool opEquals(const int &in)", asMETHOD(asCScriptFunction,operator==), asCALL_THISCALL); asASSERT( r >= 0 );
 #else
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptFunction_AddRef_Generic), asCALL_GENERIC, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptFunction_Release_Generic), asCALL_GENERIC, 0); asASSERT( r >= 0 );
@@ -132,6 +143,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptFunction_GetFlag_Generic), asCALL_GENERIC, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptFunction_EnumReferences_Generic), asCALL_GENERIC, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptFunction_ReleaseAllHandles_Generic), asCALL_GENERIC, 0); asASSERT( r >= 0 );
+//	r = engine->RegisterMethodToObjectType(&engine->functionBehaviours, "bool opEquals(const int &in)", asFUNCTION(ScriptFunction_opEquals_Generic), asCALL_GENERIC); asASSERT( r >= 0 );
 #endif
 
 	// Register the builtin function for creating delegates
@@ -213,6 +225,24 @@ asIScriptFunction *asCScriptFunction::GetDelegateFunction() const
 {
 	return funcForDelegate;
 }
+
+// TODO: 2.29.0: operator==
+/*
+// internal
+bool asCScriptFunction::operator==(const asCScriptFunction &other) const
+{
+	if( this == &other ) return true;
+
+	if( this->funcType == asFUNC_DELEGATE && other.funcType == asFUNC_DELEGATE )
+	{
+		if( this->objForDelegate == other.objForDelegate &&
+			this->funcForDelegate == other.funcForDelegate )
+			return true;
+	}
+
+	return false;
+}
+*/
 
 // internal
 int asCScriptFunction::RegisterListPattern(const char *decl, asCScriptNode *listNodes)

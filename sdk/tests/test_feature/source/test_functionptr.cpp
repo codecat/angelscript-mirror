@@ -28,6 +28,34 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test value comparison for function pointers
+/*
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void CALLBACK(); \n"
+			"void func1() {} \n"
+			"void func2() {} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "CALLBACK@ c1 = func1, c2 = func1; \n"
+								  "assert( c1 == c2 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// TODO: Test that two different function pointers give false
+		// TODO: Test for delegate objects
+
+		engine->Release();
+	}
+*/
 	// Proper error message when trying to pass class method as function pointer directly
 	// http://www.gamedev.net/topic/655390-is-there-a-bug-with-function-callbacks/
 	{

@@ -4310,7 +4310,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 			int typeId = mapTypeIdToDataType.GetKey(cursor);
 			if( dtIn.GetObjectType() && !(dtIn.GetObjectType()->flags & asOBJ_ASHANDLE) )
 			{
-				// The the ASHANDLE types behave like handles, but are really
+				// The ASHANDLE types behave like handles, but are really
 				// value types so the typeId is never returned as a handle
 				if( dtIn.IsObjectHandle() )
 					typeId |= asTYPEID_OBJHANDLE;

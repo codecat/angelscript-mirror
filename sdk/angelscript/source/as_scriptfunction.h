@@ -109,11 +109,6 @@ struct asSSystemFunctionInterface;
 //       also functions/methods that are being called. This could be used to build a 
 //       code database with call graphs, etc.
 
-// TODO: 2.29.0: The asIScriptFunction should provide operator== and operator!= that should do a
-//       a value comparison. Two delegate objects that point to the same object and class method should compare as equal
-
-// TODO: 2.29.0: The operator== should also be provided in script as opEquals to allow the same comparison in script
-
 void RegisterScriptFunction(asCScriptEngine *engine);
 
 class asCScriptFunction : public asIScriptFunction
@@ -182,6 +177,14 @@ public:
 
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);
 	~asCScriptFunction();
+
+	// TODO: 2.29.0: operator==
+	// TODO: 2.29.0: The asIScriptFunction should provide operator== and operator!= that should do a
+	//               a value comparison. Two delegate objects that point to the same object and class method should compare as equal
+	// TODO: 2.29.0: The operator== should also be provided in script as opEquals to allow the same comparison in script
+	//               To do this we'll need some way to adapt the argtype for opEquals for each funcdef, preferrably without instantiating lots of different methods
+	//               Perhaps reusing 'auto' to mean the same type as the object
+	//bool      operator==(const asCScriptFunction &other) const;
 
 	void      DestroyInternal();
 	void      Orphan(asIScriptModule *mod);

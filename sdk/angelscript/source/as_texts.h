@@ -162,7 +162,7 @@
 #define TXT_NAME_CONFLICT_s_METHOD                 "Name conflict. '%s' is a class method."
 #define TXT_NAME_CONFLICT_s_ALREADY_USED           "Name conflict. '%s' is already used."
 #define TXT_NO_APPROPRIATE_INDEX_OPERATOR          "No appropriate indexing operator found"
-#define TXT_NO_APPROPRIATE_OPASSIGN                "No appropriate opAssign method found"
+#define TXT_NO_APPROPRIATE_OPHNDLASSIGN_s          "No appropriate opHndlAssign method found in '%s'"
 #define TXT_NO_APPROPRIATE_OPEQUALS                "No appropriate opEquals method found"
 #define TXT_NO_CONVERSION_s_TO_s                   "No conversion from '%s' to '%s' available."
 #define TXT_NO_CONVERSION_s_TO_MATH_TYPE           "No conversion from '%s' to math type available."
