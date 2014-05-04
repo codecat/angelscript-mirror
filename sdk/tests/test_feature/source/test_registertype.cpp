@@ -1489,12 +1489,8 @@ bool TestHandleType()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ? &in)", asFUNCTIONPR(CHandleType::Construct, (CHandleType *, void *, int), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(CHandleType::Destruct, (CHandleType *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	// TODO: 2.29.0: opHndlAssign: Test that both opAssign and opHndlAssign can be used. If the lvalue is explicit handle opHndlAssign should be used, else opAssign
-	//                             Compiler should give error if attempting value assign when rvalue is explicit handle
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", asMETHOD(CHandleType, operator=), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asMETHOD(CHandleType, opHndlAssign), asCALL_THISCALL); assert( r >= 0 );
-	// TODO: 2.29.0: Test without opAssign first to make sure appropriate error is shown if value assign is made for ASHANDLE without opAssign
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL);
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
@@ -1505,7 +1501,6 @@ bool TestHandleType()
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", WRAP_OBJ_FIRST_PR(CHandleType::Destruct, (CHandleType *), void), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", WRAP_MFN(CHandleType, operator=), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asFUNCTION(CHandleType_HndlAssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", WRAP_MFN_PR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asFUNCTION(CHandleType_EqualsVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asFUNCTION(CHandleType_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -1593,6 +1588,37 @@ bool TestHandleType()
 		}
 		ctx->Release();
 	}
+
+	// Give appropriate error if opAssign isn't registered
+	{
+		const char *script =
+			"class Test { } \n"
+			"void main() { \n"
+			"  ref a; \n"
+			"  Test b; \n"
+			"  a = b; \n" // value assign
+			"} \n";
+
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
+						   "script (5, 5) : Error   : No appropriate opAssign method found in 'ref'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+#ifndef AS_MAX_PORTABILITY
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL);
+#else
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
 
 	// Support both handle assign and value assign
 	{

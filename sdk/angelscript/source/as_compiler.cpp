@@ -2901,9 +2901,13 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
 				if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 				{
-					// TODO: 2.29.0: opHndlAssign: If the rvalue is an expression that support handles the initialization should use opHandleAssign, else opAssign
-					//                             Maybe we can differentiate on how the type has been declared, i.e. with or without @
-					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx, (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) ? true : false);
+					bool useHndlAssign = false;
+					if( (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
+					{
+						// TODO: 2.29.0: Maybe we can differentiate on how the type has been declared, i.e. with or without @
+						useHndlAssign = expr->type.dataType.SupportHandles() || expr->type.isExplicitHandle;
+					}
+					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx, useHndlAssign);
 					if( assigned )
 					{
 						// Pop the resulting value
@@ -11426,7 +11430,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		for( n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
-			if( func->name == methodName &&
+			asASSERT( func );
+			if( func && func->name == methodName &&
 				(!specificReturn || func->returnType == returnType) &&
 				func->parameterTypes.GetLength() == 1 &&
 				(!isConst || func->isReadOnly) )

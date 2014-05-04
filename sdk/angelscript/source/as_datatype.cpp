@@ -333,7 +333,7 @@ int asCDataType::MakeHandleToConst(bool b)
 bool asCDataType::SupportHandles() const
 {
 	if( objectType &&
-		(objectType->flags & asOBJ_REF) && 
+		(objectType->flags & (asOBJ_REF | asOBJ_ASHANDLE)) && 
 		!(objectType->flags & asOBJ_NOHANDLE) &&
 		!isObjectHandle )
 		return true;
