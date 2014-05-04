@@ -275,6 +275,18 @@ bool Test()
 		if( r != asEXECUTION_FINISHED ) 
 			TEST_FAILED;
 
+		// Give appropriate error if not declared with @
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = ExecuteString(engine, "ref r = array<int>(10);"); // no opAssign available
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 5) : Error   : No appropriate opAssign method found in 'ref'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 

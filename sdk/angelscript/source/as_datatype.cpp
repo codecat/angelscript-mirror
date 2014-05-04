@@ -46,26 +46,28 @@ BEGIN_AS_NAMESPACE
 
 asCDataType::asCDataType()
 {
-	tokenType      = ttUnrecognizedToken;
-	objectType     = 0;
-	isReference    = false;
-	isReadOnly     = false;
-	isAuto         = false;
-	isObjectHandle = false;
-	isConstHandle  = false;
-	funcDef        = 0;
+	tokenType              = ttUnrecognizedToken;
+	objectType             = 0;
+	isReference            = false;
+	isReadOnly             = false;
+	isAuto                 = false;
+	isObjectHandle         = false;
+	isConstHandle          = false;
+	funcDef                = 0;
+	isHandleToAsHandleType = false;
 }
 
 asCDataType::asCDataType(const asCDataType &dt)
 {
-	tokenType      = dt.tokenType;
-	objectType     = dt.objectType;
-	isReference    = dt.isReference;
-	isReadOnly     = dt.isReadOnly;
-	isAuto         = dt.isAuto;
-	isObjectHandle = dt.isObjectHandle;
-	isConstHandle  = dt.isConstHandle;
-	funcDef        = dt.funcDef;
+	tokenType              = dt.tokenType;
+	objectType             = dt.objectType;
+	isReference            = dt.isReference;
+	isReadOnly             = dt.isReadOnly;
+	isAuto                 = dt.isAuto;
+	isObjectHandle         = dt.isObjectHandle;
+	isConstHandle          = dt.isConstHandle;
+	funcDef                = dt.funcDef;
+	isHandleToAsHandleType = dt.isHandleToAsHandleType;
 }
 
 asCDataType::~asCDataType()
@@ -231,14 +233,15 @@ asCString asCDataType::Format(bool includeNamespace) const
 
 asCDataType &asCDataType::operator =(const asCDataType &dt)
 {
-	tokenType        = dt.tokenType;
-	isReference      = dt.isReference;
-	objectType       = dt.objectType;
-	isReadOnly       = dt.isReadOnly;
-	isObjectHandle   = dt.isObjectHandle;
-	isConstHandle    = dt.isConstHandle;
-	isAuto           = dt.isAuto;
-	funcDef          = dt.funcDef;
+	tokenType              = dt.tokenType;
+	isReference            = dt.isReference;
+	objectType             = dt.objectType;
+	isReadOnly             = dt.isReadOnly;
+	isObjectHandle         = dt.isObjectHandle;
+	isConstHandle          = dt.isConstHandle;
+	isAuto                 = dt.isAuto;
+	funcDef                = dt.funcDef;
+	isHandleToAsHandleType = dt.isHandleToAsHandleType;
 
 	return (asCDataType &)*this;
 }
@@ -249,6 +252,7 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 	{
 		isObjectHandle = false;
 		isConstHandle = false;
+		isHandleToAsHandleType = false;
 	}
 	else
 	{
@@ -275,7 +279,10 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 
 			// ASHANDLE supports being handle, but as it really is a value type it will not be marked as a handle
 			if( (objectType->flags & asOBJ_ASHANDLE) )
+			{
 				isObjectHandle = false;
+				isHandleToAsHandleType = true;
+			}
 		}
 	}
 

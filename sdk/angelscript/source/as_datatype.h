@@ -77,24 +77,25 @@ public:
 	int MakeReadOnly(bool b);
 	int MakeHandleToConst(bool b);
 
-	bool IsTemplate()       const;
-	bool IsScriptObject()   const;
-	bool IsPrimitive()      const;
-	bool IsObject()         const;
-	bool IsReference()      const {return isReference;}
-	bool IsAuto()           const {return isAuto;}
-	bool IsReadOnly()       const;
-	bool IsIntegerType()    const;
-	bool IsUnsignedType()   const;
-	bool IsFloatType()      const;
-	bool IsDoubleType()     const;
-	bool IsBooleanType()    const;
-	bool IsObjectHandle()   const {return isObjectHandle;}
-	bool IsHandleToAuto()   const {return isAuto && isObjectHandle;}
-	bool IsHandleToConst()  const;
-	bool IsArrayType()      const;
-	bool IsEnumType()       const;
-	bool IsAnyType()        const {return tokenType == ttQuestion;}
+	bool IsTemplate()             const;
+	bool IsScriptObject()         const;
+	bool IsPrimitive()            const;
+	bool IsObject()               const;
+	bool IsReference()            const {return isReference;}
+	bool IsAuto()                 const {return isAuto;}
+	bool IsReadOnly()             const;
+	bool IsIntegerType()          const;
+	bool IsUnsignedType()         const;
+	bool IsFloatType()            const;
+	bool IsDoubleType()           const;
+	bool IsBooleanType()          const;
+	bool IsObjectHandle()         const {return isObjectHandle;}
+	bool IsHandleToAuto()         const {return isAuto && isObjectHandle;}
+	bool IsHandleToConst()        const;
+	bool IsArrayType()            const;
+	bool IsEnumType()             const;
+	bool IsAnyType()              const {return tokenType == ttQuestion;}
+	bool IsHandleToAsHandleType() const {return isHandleToAsHandleType;}
 
 	bool IsObjectConst()    const;
 
@@ -141,7 +142,8 @@ protected:
 	bool isObjectHandle:1;
 	bool isConstHandle:1;
 	bool isAuto:1;
-	char dummy:3;
+	bool isHandleToAsHandleType:1; // Used by the compiler to know how to initialize the object
+	char dummy:2;
 };
 
 END_AS_NAMESPACE

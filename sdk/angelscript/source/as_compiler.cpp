@@ -2901,12 +2901,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
 				if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 				{
-					bool useHndlAssign = false;
-					if( (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
-					{
-						// TODO: 2.29.0: Maybe we can differentiate on how the type has been declared, i.e. with or without @
-						useHndlAssign = expr->type.dataType.SupportHandles() || expr->type.isExplicitHandle;
-					}
+					bool useHndlAssign = lexpr.type.dataType.IsHandleToAsHandleType();
 					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx, useHndlAssign);
 					if( assigned )
 					{
