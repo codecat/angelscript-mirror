@@ -136,6 +136,14 @@ CScriptHandle &CScriptHandle::Assign(void *ref, int typeId)
 	asIScriptEngine  *engine = ctx->GetEngine();
 	asIObjectType    *type   = engine->GetObjectTypeById(typeId);
 
+	// If the argument is another CScriptHandle, we should copy the content instead
+	if( type && strcmp(type->GetName(), "ref") == 0 )
+	{
+		CScriptHandle *r = (CScriptHandle*)ref;
+		ref  = r->m_ref;
+		type = r->m_type;
+	}
+
 	Set(ref, type);
 
 	return *this;

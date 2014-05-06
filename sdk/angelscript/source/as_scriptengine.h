@@ -217,7 +217,7 @@ public:
 
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
 
-	void *CallAlloc(asCObjectType *objType) const;
+	void *CallAlloc(const asCObjectType *objType) const;
 	void  CallFree(void *obj) const;
 
 	// TODO: interface: This should be the public interface

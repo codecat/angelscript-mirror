@@ -2298,6 +2298,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	else if( behaviour == asBEHAVE_IMPLICIT_VALUE_CAST ||
 		     behaviour == asBEHAVE_VALUE_CAST )
 	{
+		// TODO: 2.29.0: These should be registered as methods with opConv or opImplConv names
 		// Verify parameter count
 		if( func.parameterTypes.GetLength() != 0 )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
@@ -4230,7 +4231,7 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 	}
 }
 
-void *asCScriptEngine::CallAlloc(asCObjectType *type) const
+void *asCScriptEngine::CallAlloc(const asCObjectType *type) const
 {
     // Allocate 4 bytes as the smallest size. Otherwise CallSystemFunction may try to
     // copy a DWORD onto a smaller memory block, in case the object type is return in registers.
@@ -4573,11 +4574,41 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType
 {
 	if( origObj == 0 || type == 0 ) return 0;
 
-	// TODO: Should use the copy constructor if available
-	void *newObj = CreateScriptObject(type);
-	if( newObj == 0 ) return 0;
+	void *newObj = 0;
 
-	AssignScriptObject(newObj, origObj, type);
+	const asCObjectType *ot = reinterpret_cast<const asCObjectType*>(type);
+	// TODO: runtime optimize: Should call copy factory for ref types too
+	if( ot->beh.copyconstruct )
+	{
+		// Manually allocate the memory, then call the copy constructor
+		newObj = CallAlloc(ot);
+#ifdef AS_NO_EXCEPTIONS
+		CallObjectMethod(newObj, origObj, ot->beh.copyconstruct);
+#else
+		try
+		{
+			CallObjectMethod(newObj, origObj, ot->beh.copyconstruct);
+		}
+		catch(...)
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			if( ctx )
+				ctx->SetException(TXT_EXCEPTION_CAUGHT);
+
+			// Free the memory
+			CallFree(newObj);
+			newObj = 0;
+		}
+#endif
+	}
+	else
+	{
+		// Allocate the object and then do a value assign
+		newObj = CreateScriptObject(type);
+		if( newObj == 0 ) return 0;
+
+		AssignScriptObject(newObj, origObj, type);
+	}
 
 	return newObj;
 }
@@ -4588,12 +4619,20 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 	// This function is only meant to be used for value types
 	asASSERT( type->flags & asOBJ_VALUE );
 
-	// TODO: runtime optimize: Should use the copy constructor when available
-	int funcIndex = type->beh.construct;
+	// Call the copy constructor if available, else call the default constructor followed by the opAssign
+	int funcIndex = type->beh.copyconstruct;
 	if( funcIndex )
-		CallObjectMethod(mem, funcIndex);
+	{
+		CallObjectMethod(mem, obj, funcIndex);
+	}
+	else
+	{
+		funcIndex = type->beh.construct;
+		if( funcIndex )
+			CallObjectMethod(mem, funcIndex);
 
-	AssignScriptObject(mem, obj, type);
+		AssignScriptObject(mem, obj, type);
+	}
 }
 
 // interface

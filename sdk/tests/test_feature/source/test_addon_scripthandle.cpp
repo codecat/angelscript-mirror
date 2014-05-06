@@ -86,6 +86,7 @@ bool Test()
 		// The engine is really only destroyed after the handle has been destroyed
 	}
 
+	// Basic tests with the CScriptHandle type
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
@@ -199,7 +200,7 @@ bool Test()
 		// Test return by ref
 		r = ExecuteString(engine, "ref @r = ReturnRef(); \n"
 								  "assert( r !is null ); \n"
-		                          "CTest @t = cast<CTest>(r); \n"
+								  "CTest @t = cast<CTest>(r); \n"
 								  "assert( t !is null ); \n"
 								  "assert( t.val == 42 ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
@@ -287,6 +288,58 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// It's not allowed to do a value assign of a ref to another ref
+		bout.buffer = "";
+		r = ExecuteString(engine, "ref@ a, b; a = b;"); // value assign isn't available
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 14) : Error   : No appropriate opAssign method found in 'ref'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	// Test calling script function that takes CScriptHandle
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptHandle(engine);
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		
+		const char *script =
+			"class Test {} \n"
+			"void func(ref @t) { \n"
+			"  assert( t !is null ); \n"
+			"} \n";
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CScriptHandle ref;
+		asIObjectType *type = mod->GetObjectTypeByName("Test");
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
+		ref.Set(obj, type);
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(func);
+		ctx->SetArgObject(0, &ref);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		ref.Set(0,0);
+		obj->Release();
+
+		ctx->Release();
+		
 		engine->Release();
 	}
 

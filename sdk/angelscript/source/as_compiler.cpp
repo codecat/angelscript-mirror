@@ -5790,6 +5790,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 			for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 			{
 				// accept both implicit and explicit cast
+				// TODO: 2.29.0: look for opConv or opImplConv methods
 				if( (beh->operators[n] == asBEHAVE_VALUE_CAST ||
 					 beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST) &&
 					builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
@@ -5801,6 +5802,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 			for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 			{
 				// accept only implicit cast
+				// TODO: 2.29.0: look for opImplConv methods
 				if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
 					builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
 					funcs.PushLast(beh->operators[n+1]);
@@ -6023,6 +6025,7 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 				for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 				{
 					// accept both implicit and explicit cast
+					// TODO: 2.29.0: Look for opConv and opImplConv methods instead
 					if( (beh->operators[n] == asBEHAVE_VALUE_CAST ||
 						 beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST) &&
 						builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
@@ -6034,6 +6037,7 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 				for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 				{
 					// accept only implicit cast
+					// TODO: 2.29.0: Look for opImplConv methods instead
 					if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
 						builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
 						funcs.PushLast(beh->operators[n+1]);
@@ -11827,6 +11831,7 @@ void asCCompiler::ImplicitConvObjectToBestMathType(asSExprContext *ctx, asCScrip
 		for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 		{
 			// Consider only implicit casts
+			// TODO: 2.29.0: Look for opImplConv methods instead
 			if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
 				builder->GetFunctionDescription(beh->operators[n+1])->returnType.IsPrimitive() )
 				funcs.PushLast(beh->operators[n+1]);
