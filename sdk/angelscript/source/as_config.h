@@ -1022,9 +1022,9 @@
 	#if !defined(AS_MAX_PORTABILITY)
 		#define AS_MAX_PORTABILITY
 	#endif
-	#if !defined(AS_NO_CLASS_METHODS)
-		#define AS_NO_CLASS_METHODS
-	#endif
+
+	// I presume Sun CC uses a similar structure of method pointers as gnuc
+	#define MULTI_BASE_OFFSET(x) (*((asPWORD*)(&x)+1))
 
 	#if !defined(AS_SIZEOF_BOOL)
 		#define AS_SIZEOF_BOOL 1 // sizeof(bool) == 1
