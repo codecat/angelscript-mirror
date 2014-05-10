@@ -20,6 +20,170 @@ int *CreateWidget()
 	return &g_widget;
 }
 
+class CVariant
+{
+public:
+	CVariant(asIScriptEngine *_engine) { engine = _engine; }
+	CVariant(const CVariant &o) { engine = o.engine; typeId = 0; valueObj = 0; Set(const_cast<void**>(&o.valueObj), o.typeId); }
+	~CVariant() {}
+	CVariant &operator=(const CVariant &o) 
+	{
+		Set(const_cast<void**>(&o.valueObj), o.typeId);
+		return *this;
+	}
+
+	// AngelScript: used as var = expr
+	CVariant &opAssign(void *val, int typeId)
+	{
+		Set(val, typeId);
+		return *this;
+	}
+
+	// AngelScript: used as @var = expr
+	CVariant &opHandleAssign(void *hndl, int typeId) 
+	{
+		Set(hndl, typeId);
+		return *this;
+	}
+
+	// AngelScript: used as @obj = cast<obj>(var)
+	void opCast(void **outRef, int _typeId)
+	{
+		// If we don't hold an object, then just return null
+		if( (typeId & asTYPEID_MASK_OBJECT) == 0 )
+		{
+			*outRef = 0;
+			return;
+		}
+	
+		// It is expected that the outRef is always a handle
+		assert( _typeId & asTYPEID_OBJHANDLE );
+
+		// Compare the type id of the actual object
+		_typeId &= ~asTYPEID_OBJHANDLE;
+		asIObjectType *wantedType = engine->GetObjectTypeById(_typeId);
+		asIObjectType *heldType = engine->GetObjectTypeById(typeId);
+
+		*outRef = 0;
+
+		if( wantedType == heldType )
+		{
+			// If the requested type is a script function it is 
+			// necessary to check if the functions are compatible too
+			if( heldType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
+			{
+				asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(valueObj);
+				if( !func->IsCompatibleWithTypeId(_typeId) )
+					return;
+			}
+
+			// Must increase the ref count as we're returning a new reference to the object
+			engine->AddRefScriptObject(valueObj, heldType);
+			*outRef = valueObj;
+		}
+		else if( heldType->GetFlags() & asOBJ_SCRIPT_OBJECT )
+		{
+			// Attempt a dynamic cast of the stored handle to the requested handle type
+			if( engine->IsHandleCompatibleWithObject(valueObj, heldType->GetTypeId(), _typeId) )
+			{
+				// The script type is compatible so we can simply return the same pointer
+				engine->AddRefScriptObject(valueObj, heldType);
+				*outRef = valueObj;
+			}
+		}
+		else
+		{
+			// TODO: Check for the existance of a reference cast behaviour.
+			//       Both implicit and explicit casts may be used
+			//       Calling the reference cast behaviour may change the actual
+			//       pointer so the AddRef must be called on the new pointer
+		}
+	}
+
+	// AngelScript: used as int(var)
+	void opConv(void **outRef, int typeId)
+	{
+	}
+
+	void Set(void *value, int _typeId)
+	{
+		Clear();
+		typeId = _typeId;
+		if( typeId & asTYPEID_OBJHANDLE )
+		{
+			// We're receiving a reference to the handle, so we need to dereference it
+			valueObj = *(void**)value;
+			engine->AddRefScriptObject(valueObj, engine->GetObjectTypeById(typeId));
+		}
+		else if( typeId & asTYPEID_MASK_OBJECT )
+		{
+			// Create a copy of the object
+			valueObj = engine->CreateScriptObjectCopy(value, engine->GetObjectTypeById(typeId));
+		}
+		else
+		{
+			// Copy the primitive value
+			// We receive a pointer to the value.
+			int size = engine->GetSizeOfPrimitiveType(typeId);
+			memcpy(&valueInt, value, size);
+		}
+	}
+
+	void Clear()
+	{
+		// If it is a handle or a ref counted object, call release
+		if( typeId & asTYPEID_MASK_OBJECT )
+		{
+			// Let the engine release the object
+			engine->ReleaseScriptObject(valueObj, engine->GetObjectTypeById(typeId));
+		}
+
+		typeId = 0;
+		valueObj = 0;
+	}
+
+	static void Register(asIScriptEngine *engine)
+	{
+		int r;
+		r = engine->RegisterObjectType("var", sizeof(CVariant), asOBJ_VALUE | asOBJ_ASHANDLE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("var", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CVariant::Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("var", asBEHAVE_CONSTRUCT, "void f(const var &in)", asFUNCTION(CVariant::CopyConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("var", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(CVariant::Destruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+		r = engine->RegisterObjectMethod("var", "var &opAssign(const ?&in)", asMETHOD(CVariant, opAssign), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("var", "var &opHndlAssign(const ?&in)", asMETHOD(CVariant, opHandleAssign), asCALL_THISCALL); assert( r >= 0 );
+
+		r = engine->RegisterObjectBehaviour("var", asBEHAVE_REF_CAST, "void f(?&out)", asMETHOD(CVariant, opCast), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("var", asBEHAVE_VALUE_CAST, "void f(?&out)", asMETHOD(CVariant, opConv), asCALL_THISCALL); assert( r >= 0 );
+	}
+
+	static void Construct(void *mem)
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		new (mem) CVariant(ctx->GetEngine());
+	}
+
+	static void CopyConstruct(const CVariant &o, void *mem)
+	{
+		new (mem) CVariant(o);
+	}
+
+	static void Destruct(CVariant &obj)
+	{
+		obj.~CVariant();
+	}
+
+public:
+	asIScriptEngine *engine;
+	union
+	{
+		asINT64 valueInt;
+		double  valueFlt;
+		void   *valueObj;
+	};
+	int   typeId;
+};
+
 // Use asSFuncPtr in structure initialized with a list
 // http://www.gamedev.net/topic/649653-angelscript-2280-is-out/
 typedef struct asBehavior_s
@@ -48,6 +212,16 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine;
 	const char *script;
+
+	// Testing a variant type that supports holding both handles and value
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		CVariant::Register(engine);
+
+		engine->Release();
+	}
 
 	// Test potential memory leak with template types
 	// http://www.gamedev.net/topic/653872-memory-leak-when-registering-implicit-reference-cast-for-template/

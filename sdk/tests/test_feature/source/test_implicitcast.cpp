@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "utils.h"
 
 namespace TestImplicitCast
@@ -19,6 +21,20 @@ void Type_castInt(asIScriptGeneric *gen)
 {
 	int *a = (int*)gen->GetObject();
 	*(int*)gen->GetAddressOfReturnLocation() = *a;
+}
+
+void Type_castVar(void *ptr, int typeId, int *obj)
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+
+	asIObjectType *type = engine->GetObjectTypeById(typeId);
+	if( std::string(type->GetName()) == "string" )
+	{
+		std::stringstream strm;
+		strm << *obj;
+		*(std::string*)ptr = strm.str();
+	}
 }
 
 bool Type_equal(int &a, int &b)
@@ -344,6 +360,15 @@ bool Test()
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "func(5); assert( funcCalled );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test generic value cast
+		RegisterStdString(engine);
+		r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "void f(?&out)", asFUNCTION(Type_castVar), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+		// TODO: runtime optimize: This code produces a lot of unecessary bytecode
+		r = ExecuteString(engine, "type t; t.v = 5; string s = string(t); assert( s == '5' );");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

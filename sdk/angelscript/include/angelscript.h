@@ -354,7 +354,7 @@ typedef unsigned int   asUINT;
     typedef long asINT64;
 #else
     typedef unsigned long asDWORD;
-  #if defined(__GNUC__) || defined(__MWERKS__)
+  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC)
     typedef uint64_t asQWORD;
     typedef int64_t asINT64;
   #else
@@ -384,7 +384,9 @@ typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
 #if !(defined(__GNUC__) && defined(__cplusplus) && __cplusplus < 201103L) // g++ -std=c++11
+#if !defined(__SUNPRO_CC)
 #define AS_CAN_USE_CPP11 1
+#endif
 #endif
 #endif
 #endif

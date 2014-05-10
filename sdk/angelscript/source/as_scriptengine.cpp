@@ -2299,16 +2299,18 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		     behaviour == asBEHAVE_VALUE_CAST )
 	{
 		// TODO: 2.29.0: These should be registered as methods with opConv or opImplConv names
-		// Verify parameter count
-		if( func.parameterTypes.GetLength() != 0 )
+
+		// There are two allowed signatures
+		// 1. type f()
+		// 2. void f(?&out)
+
+		if( !(func.parameterTypes.GetLength() == 1 && func.parameterTypes[0].GetTokenType() == ttQuestion && func.inOutFlags[0] == asTM_OUTREF && func.returnType.GetTokenType() == ttVoid) &&
+			!(func.parameterTypes.GetLength() == 0 &&  func.returnType.GetTokenType() != ttVoid) )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
-		// Verify return type
+		// It is not allowed to implement a value cast to bool
 		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) )
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-
-		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttVoid, false)) )
-			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
 		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
 

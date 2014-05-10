@@ -809,7 +809,7 @@ int asCCompiler::CallCopyConstructor(asCDataType &type, int offset, bool isObjec
 	return -1;
 }
 
-int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem, bool derefDest)
+int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem, bool derefDest)
 {
 	if( !type.IsObject() || type.IsObjectHandle() )
 		return 0;
@@ -6006,7 +6006,7 @@ asUINT asCCompiler::ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType
 	return asCC_NO_CONV;
 }
 
-asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataType &to, asCScriptNode * /*node*/, EImplicitConv convType, bool generateCode)
+asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode)
 {
 	asUINT cost = asCC_NO_CONV;
 
@@ -6015,33 +6015,32 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 	if( to.GetObjectType() != ctx->type.dataType.GetObjectType() )
 	{
 		// TODO: Implement support for implicit constructor/factory
+		asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
+		if( beh == 0 )
+			return cost;
 
 		asCArray<int> funcs;
-		asSTypeBehaviour *beh = ctx->type.dataType.GetBehaviour();
-		if( beh )
+		if( convType == asIC_EXPLICIT_VAL_CAST )
 		{
-			if( convType == asIC_EXPLICIT_VAL_CAST )
+			for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 			{
-				for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
-				{
-					// accept both implicit and explicit cast
-					// TODO: 2.29.0: Look for opConv and opImplConv methods instead
-					if( (beh->operators[n] == asBEHAVE_VALUE_CAST ||
-						 beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST) &&
-						builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
-						funcs.PushLast(beh->operators[n+1]);
-				}
+				// accept both implicit and explicit cast
+				// TODO: 2.29.0: Look for opConv and opImplConv methods instead
+				if( (beh->operators[n] == asBEHAVE_VALUE_CAST ||
+					 beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST) &&
+					builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
+					funcs.PushLast(beh->operators[n+1]);
 			}
-			else
+		}
+		else
+		{
+			for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
 			{
-				for( unsigned int n = 0; n < beh->operators.GetLength(); n += 2 )
-				{
-					// accept only implicit cast
-					// TODO: 2.29.0: Look for opImplConv methods instead
-					if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
-						builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
-						funcs.PushLast(beh->operators[n+1]);
-				}
+				// accept only implicit cast
+				// TODO: 2.29.0: Look for opImplConv methods instead
+				if( beh->operators[n] == asBEHAVE_IMPLICIT_VALUE_CAST &&
+					builder->GetFunctionDescription(beh->operators[n+1])->returnType.GetObjectType() == to.GetObjectType() )
+					funcs.PushLast(beh->operators[n+1]);
 			}
 		}
 
@@ -6077,6 +6076,66 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 				ctx->type.Set(f->returnType);
 
 			cost = asCC_TO_OBJECT_CONV;
+		}
+		else
+		{
+			// Look for a value cast with variable type
+			for( asUINT n = 0; n < beh->operators.GetLength(); n+= 2 )
+			{
+				if( ((convType == asIC_EXPLICIT_VAL_CAST) && asBEHAVE_VALUE_CAST == beh->operators[n]) ||
+					asBEHAVE_IMPLICIT_VALUE_CAST == beh->operators[n] )
+				{
+					int funcId = beh->operators[n+1];
+
+					// Does the operator take the ?&out parameter?
+					asCScriptFunction *func = engine->scriptFunctions[funcId];
+					if( func->parameterTypes.GetLength() != 1 ||
+						func->parameterTypes[0].GetTokenType() != ttQuestion ||
+						func->inOutFlags[0] != asTM_OUTREF )
+						continue;
+
+					funcs.PushLast(funcId);
+				}
+			}
+
+			// TODO: If there are multiple valid value casts, then we must choose the most appropriate one
+			asASSERT( funcs.GetLength() <= 1 );
+
+			if( funcs.GetLength() == 1 )
+			{
+				cost = asCC_TO_OBJECT_CONV;
+				if( generateCode )
+				{
+					// Allocate a temporary variable of the requested type
+					int stackOffset = AllocateVariableNotIn(to, true, false, ctx);
+					CallDefaultConstructor(to, stackOffset, IsVariableOnHeap(stackOffset), &ctx->bc, node);
+
+					// Pass the reference of that variable to the function as output parameter
+					asCDataType toRef(to);
+					toRef.MakeReference(false);
+					asCArray<asSExprContext *> args;
+					asSExprContext arg(engine);
+					arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+					// Don't mark the variable as temporary, so it won't be freed too early
+					arg.type.SetVariable(toRef, stackOffset, false);
+					arg.type.isLValue = true;
+					arg.exprNode = node;
+					args.PushLast(&arg);
+
+					// Call the behaviour method
+					MakeFunctionCall(ctx, funcs[0], ctx->type.dataType.GetObjectType(), args, node);
+
+					// Use the reference to the variable as the result of the expression
+					// Now we can mark the variable as temporary
+					ctx->type.SetVariable(toRef, stackOffset, true);
+					ctx->bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+				}
+				else
+				{
+					// All casts are legal
+					ctx->type.Set(to);
+				}
+			}
 		}
 	}
 
