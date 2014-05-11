@@ -182,6 +182,9 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// TODO: 2.29.0: Test releasing the script engine while a script array is still alive
+	//               It must be gracefully handled, preferrably with an appropriate error message
+
 	// Test exception in constructor of value type
 	SKIP_ON_MAX_PORT
 	{

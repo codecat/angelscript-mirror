@@ -23,12 +23,12 @@ int *CreateWidget()
 class CVariant
 {
 public:
-	CVariant(asIScriptEngine *_engine) { engine = _engine; }
-	CVariant(const CVariant &o) { engine = o.engine; typeId = 0; valueObj = 0; Set(const_cast<void**>(&o.valueObj), o.typeId); }
-	~CVariant() {}
+	CVariant(asIScriptEngine *engine) { m_engine = engine; }
+	CVariant(const CVariant &o) { m_engine = o.m_engine; m_typeId = 0; m_valueObj = 0; Set(const_cast<void**>(&o.m_valueObj), o.m_typeId); }
+	~CVariant() { Clear(); }
 	CVariant &operator=(const CVariant &o) 
 	{
-		Set(const_cast<void**>(&o.valueObj), o.typeId);
+		Set(const_cast<void**>(&o.m_valueObj), o.m_typeId);
 		return *this;
 	}
 
@@ -42,27 +42,33 @@ public:
 	// AngelScript: used as @var = expr
 	CVariant &opHandleAssign(void *hndl, int typeId) 
 	{
+		if( (typeId & asTYPEID_OBJHANDLE) == 0 )
+		{
+			void **tmp = &hndl;
+			Set(tmp, typeId | asTYPEID_OBJHANDLE);
+			return *this;
+		}
+
 		Set(hndl, typeId);
 		return *this;
 	}
 
 	// AngelScript: used as @obj = cast<obj>(var)
-	void opCast(void **outRef, int _typeId)
+	void opCast(void **outRef, int outTypeId)
 	{
 		// If we don't hold an object, then just return null
-		if( (typeId & asTYPEID_MASK_OBJECT) == 0 )
+		if( (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
 		{
 			*outRef = 0;
 			return;
 		}
 	
 		// It is expected that the outRef is always a handle
-		assert( _typeId & asTYPEID_OBJHANDLE );
+		assert( outTypeId & asTYPEID_OBJHANDLE );
 
 		// Compare the type id of the actual object
-		_typeId &= ~asTYPEID_OBJHANDLE;
-		asIObjectType *wantedType = engine->GetObjectTypeById(_typeId);
-		asIObjectType *heldType = engine->GetObjectTypeById(typeId);
+		asIObjectType *wantedType = m_engine->GetObjectTypeById(outTypeId);
+		asIObjectType *heldType = m_engine->GetObjectTypeById(m_typeId);
 
 		*outRef = 0;
 
@@ -72,23 +78,23 @@ public:
 			// necessary to check if the functions are compatible too
 			if( heldType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
 			{
-				asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(valueObj);
-				if( !func->IsCompatibleWithTypeId(_typeId) )
+				asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(m_valueObj);
+				if( !func->IsCompatibleWithTypeId(outTypeId) )
 					return;
 			}
 
 			// Must increase the ref count as we're returning a new reference to the object
-			engine->AddRefScriptObject(valueObj, heldType);
-			*outRef = valueObj;
+			m_engine->AddRefScriptObject(m_valueObj, heldType);
+			*outRef = m_valueObj;
 		}
 		else if( heldType->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
 			// Attempt a dynamic cast of the stored handle to the requested handle type
-			if( engine->IsHandleCompatibleWithObject(valueObj, heldType->GetTypeId(), _typeId) )
+			if( m_engine->IsHandleCompatibleWithObject(m_valueObj, heldType->GetTypeId(), outTypeId) )
 			{
 				// The script type is compatible so we can simply return the same pointer
-				engine->AddRefScriptObject(valueObj, heldType);
-				*outRef = valueObj;
+				m_engine->AddRefScriptObject(m_valueObj, heldType);
+				*outRef = m_valueObj;
 			}
 		}
 		else
@@ -101,45 +107,95 @@ public:
 	}
 
 	// AngelScript: used as int(var)
-	void opConv(void **outRef, int typeId)
+	void opConv(void *outRef, int outTypeId)
 	{
+		// Return the value
+		if( outTypeId & asTYPEID_OBJHANDLE )
+		{
+			// A handle can be retrieved if the stored type is a handle of same or compatible type
+			// or if the stored type is an object that implements the interface that the handle refer to.
+			if( (m_typeId & asTYPEID_MASK_OBJECT) && 
+				m_engine->IsHandleCompatibleWithObject(m_valueObj, m_typeId, outTypeId) )
+			{
+				m_engine->AddRefScriptObject(m_valueObj, m_engine->GetObjectTypeById(m_typeId));
+				*(void**)outRef = m_valueObj;
+
+				return;
+			}
+		}
+		else if( outTypeId & asTYPEID_MASK_OBJECT )
+		{
+			// Verify that the copy can be made
+			bool isCompatible = false;
+			if( m_typeId == outTypeId )
+				isCompatible = true;
+
+			// Copy the object into the given reference
+			if( isCompatible )
+			{
+				m_engine->AssignScriptObject(outRef, m_valueObj, m_engine->GetObjectTypeById(outTypeId));
+
+				return;
+			}
+		}
+		else
+		{
+			if( m_typeId == outTypeId )
+			{
+				int size = m_engine->GetSizeOfPrimitiveType(outTypeId);
+				memcpy(outRef, &m_valueInt, size);
+				return;
+			}
+
+			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
+			if( m_typeId == asTYPEID_INT64 && outTypeId == asTYPEID_DOUBLE )
+			{
+				*(double*)outRef = double(m_valueInt);
+				return;
+			}
+			else if( m_typeId == asTYPEID_DOUBLE && outTypeId == asTYPEID_INT64 )
+			{
+				*(asINT64*)outRef = asINT64(m_valueFlt);
+				return;
+			}
+		}
 	}
 
-	void Set(void *value, int _typeId)
+	void Set(void *value, int typeId)
 	{
 		Clear();
-		typeId = _typeId;
+		m_typeId = typeId;
 		if( typeId & asTYPEID_OBJHANDLE )
 		{
 			// We're receiving a reference to the handle, so we need to dereference it
-			valueObj = *(void**)value;
-			engine->AddRefScriptObject(valueObj, engine->GetObjectTypeById(typeId));
+			m_valueObj = *(void**)value;
+			m_engine->AddRefScriptObject(m_valueObj, m_engine->GetObjectTypeById(typeId));
 		}
 		else if( typeId & asTYPEID_MASK_OBJECT )
 		{
 			// Create a copy of the object
-			valueObj = engine->CreateScriptObjectCopy(value, engine->GetObjectTypeById(typeId));
+			m_valueObj = m_engine->CreateScriptObjectCopy(value, m_engine->GetObjectTypeById(typeId));
 		}
 		else
 		{
 			// Copy the primitive value
 			// We receive a pointer to the value.
-			int size = engine->GetSizeOfPrimitiveType(typeId);
-			memcpy(&valueInt, value, size);
+			int size = m_engine->GetSizeOfPrimitiveType(typeId);
+			memcpy(&m_valueInt, value, size);
 		}
 	}
 
 	void Clear()
 	{
 		// If it is a handle or a ref counted object, call release
-		if( typeId & asTYPEID_MASK_OBJECT )
+		if( m_typeId & asTYPEID_MASK_OBJECT )
 		{
 			// Let the engine release the object
-			engine->ReleaseScriptObject(valueObj, engine->GetObjectTypeById(typeId));
+			m_engine->ReleaseScriptObject(m_valueObj, m_engine->GetObjectTypeById(m_typeId));
 		}
 
-		typeId = 0;
-		valueObj = 0;
+		m_typeId = 0;
+		m_valueObj = 0;
 	}
 
 	static void Register(asIScriptEngine *engine)
@@ -174,14 +230,14 @@ public:
 	}
 
 public:
-	asIScriptEngine *engine;
+	asIScriptEngine *m_engine;
 	union
 	{
-		asINT64 valueInt;
-		double  valueFlt;
-		void   *valueObj;
+		asINT64 m_valueInt;
+		double  m_valueFlt;
+		void   *m_valueObj;
 	};
-	int   typeId;
+	int   m_typeId;
 };
 
 // Use asSFuncPtr in structure initialized with a list
@@ -219,7 +275,29 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		CVariant::Register(engine);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
 
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "var v = 42; \n"
+								  "int val = int(v); \n"
+ 								  "assert( val == 42 ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "var v = 'test'; \n"
+								  "string val = string(v); \n"
+								  "assert( val == 'test' ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "var @v = array<int> = {1,2}; \n"
+								  "array<int> val = cast<array<int>>(v); \n"
+								  "assert( val[0] == 1 && val[1] == 2 ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+			
 		engine->Release();
 	}
 
