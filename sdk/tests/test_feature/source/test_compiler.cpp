@@ -235,6 +235,28 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test name conflict with global variables
+	// http://www.gamedev.net/topic/656569-global-variable-redeclaration/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"double x; \n"
+			"double x; \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test (2, 8) : Error   : Name conflict. 'x' is a global property.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test memory leak issue
 	// http://www.gamedev.net/topic/655054-garbage-collection-bug/
 	{

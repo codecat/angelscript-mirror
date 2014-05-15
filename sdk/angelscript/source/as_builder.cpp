@@ -913,32 +913,20 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 }
 #endif
 
-asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace *ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp)
+bool asCBuilder::DoesGlobalPropertyExist(const char *prop, asSNameSpace *ns, asCGlobalProperty **outProp, sGlobalVariableDescription **outDesc, bool *isAppProp)
 {
-	if( isCompiled )     *isCompiled     = true;
-	if( isPureConstant ) *isPureConstant = false;
-	if( isAppProp )      *isAppProp      = false;
+	if( outProp )   *outProp = 0;
+	if( outDesc )   *outDesc = 0;
+	if( isAppProp ) *isAppProp = false;
 
 	// Check application registered properties
 	asCString name(prop);
 	asCGlobalProperty *globProp = engine->registeredGlobalProps.GetFirst(ns, name);
 	if( globProp )
 	{
-		if( module )
-		{
-			// Determine if the module has access to the property
-			if( module->accessMask & globProp->accessMask )
-			{
-				if( isAppProp ) *isAppProp = true;
-				return globProp;
-			}
-		}
-		else
-		{
-			// We're not compiling a module right now, so it must be a registered global property
-			if( isAppProp ) *isAppProp = true;
-			return globProp;
-		}
+		if( isAppProp ) *isAppProp = true;
+		if( outProp )   *outProp   = globProp;
+		return true;
 	}
 
 #ifndef AS_NO_COMPILER
@@ -946,18 +934,52 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 	sGlobalVariableDescription* desc = globVariables.GetFirst(ns, prop);
 	if( desc && !desc->isEnumValue )
 	{
-		if( isCompiled )     *isCompiled     = desc->isCompiled;
-		if( isPureConstant ) *isPureConstant = desc->isPureConstant;
-		if( constantValue  ) *constantValue  = desc->constantValue;
-		return desc->property;
+		if( outProp ) *outProp = desc->property;
+		if( outDesc ) *outDesc = desc;
+		return true;
 	}
-#else
-	UNUSED_VAR(constantValue);
 #endif
 
 	// Check previously compiled global variables
 	if( module )
-		return module->scriptGlobals.GetFirst(ns, prop);
+	{
+		globProp = module->scriptGlobals.GetFirst(ns, prop);
+		if( globProp )
+		{
+			if( outProp ) *outProp = globProp;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace *ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp)
+{
+	if( isCompiled )     *isCompiled     = true;
+	if( isPureConstant ) *isPureConstant = false;
+	if( isAppProp )      *isAppProp      = false;
+	if( constantValue )  *constantValue  = 0;
+
+	asCGlobalProperty          *globProp = 0;
+	sGlobalVariableDescription *globDesc = 0;
+	if( DoesGlobalPropertyExist(prop, ns, &globProp, &globDesc, isAppProp) )
+	{
+		if( globDesc )
+		{
+			// The property was declared in this build call, check if it has been compiled successfully already
+			if( isCompiled )     *isCompiled     = globDesc->isCompiled;
+			if( isPureConstant ) *isPureConstant = globDesc->isPureConstant;
+			if( constantValue  ) *constantValue  = globDesc->constantValue;
+		}
+		else if( isAppProp )
+		{
+			// Don't return the property if the module doesn't have access to it
+			if( !(module->accessMask & globProp->accessMask) )
+				globProp = 0;
+		}
+		return globProp;
+	}
 
 	return 0;
 }
@@ -1220,10 +1242,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 		return -1;
 	}
 
-	// TODO: Must verify global properties in all config groups, whether the module has access or not
 	// Check against global properties
-	asCGlobalProperty *prop = GetGlobalProperty(name, ns, 0, 0, 0, 0);
-	if( prop )
+	if( DoesGlobalPropertyExist(name, ns) )
 	{
 		if( code )
 		{

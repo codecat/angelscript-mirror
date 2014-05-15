@@ -162,6 +162,7 @@ protected:
 	void               WriteError(const asCString &msg, asCScriptCode *file, asCScriptNode *node);
 	void               WriteWarning(const asCString &scriptname, const asCString &msg, int r, int c);
 
+	bool               DoesGlobalPropertyExist(const char *prop, asSNameSpace *ns, asCGlobalProperty **outProp = 0, sGlobalVariableDescription **outDesc = 0, bool *isAppProp = 0);
 	asCGlobalProperty *GetGlobalProperty(const char *prop, asSNameSpace *ns, bool *isCompiled, bool *isPureConstant, asQWORD *constantValue, bool *isAppProp);
 	int                ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
 	asCString          GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
