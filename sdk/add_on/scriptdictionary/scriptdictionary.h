@@ -105,7 +105,7 @@ public:
 
 	// Index accessors. If the dictionary is not const it inserts the value if it doesn't already exist
 	// If the dictionary is const then a script exception is set if it doesn't exist and a null pointer is returned
-	CScriptDictValue &operator[](const std::string &key);
+	CScriptDictValue *operator[](const std::string &key);
 	const CScriptDictValue *operator[](const std::string &key) const;
 
 	// Returns the type id of the stored value, or negative if it doesn't exist

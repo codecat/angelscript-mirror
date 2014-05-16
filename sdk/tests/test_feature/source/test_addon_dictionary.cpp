@@ -77,6 +77,52 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test the dictionaryValue
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"  dictionary dict; \n"
+			"  dict['hello'] = 42; \n"
+			"  assert( int(dict['hello']) == 42 ); \n"
+			"  @dict['hello'] = dict; \n"
+			"  assert( cast<dictionary>(dict['hello']) is dict ); \n"
+			"  dict['hello'] = 'hello'; \n"
+			"  assert( string(dict['hello']) == 'hello' ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Exception if attempt to add entry on const dictionary
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "dictionary dict; \n"
+			                      "const dictionary @d = dict; \n"
+			                      "d['hello']; \n", 0, ctx);
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		if( std::string(ctx->GetExceptionString()) != "Invalid access to non-existing value" )
+		{
+			PrintException(ctx);
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
+
 	// Test the STL iterator
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
