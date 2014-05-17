@@ -10,6 +10,22 @@ using namespace std;
 //--------------------------------------------------------------------------
 // CScriptDictionary implementation
 
+CScriptDictionary *CScriptDictionary::Create(asIScriptEngine *engine)
+{
+	// Use the custom memory routine from AngelScript to allow application to better control how much memory is used
+	CScriptDictionary *obj = (CScriptDictionary*)asAllocMem(sizeof(CScriptDictionary));
+	new(obj) CScriptDictionary(engine);
+	return obj;
+}
+
+CScriptDictionary *CScriptDictionary::Create(asBYTE *buffer)
+{
+	// Use the custom memory routine from AngelScript to allow application to better control how much memory is used
+	CScriptDictionary *obj = (CScriptDictionary*)asAllocMem(sizeof(CScriptDictionary));
+	new(obj) CScriptDictionary(buffer);
+	return obj;
+}
+
 CScriptDictionary::CScriptDictionary(asIScriptEngine *engine)
 {
 	// We start with one reference
@@ -139,7 +155,10 @@ void CScriptDictionary::Release() const
 	// We need to clear the GC flag
 	gcFlag = false;
 	if( asAtomicDec(refCount) == 0 )
-		delete this;
+	{
+		this->~CScriptDictionary();
+		asFreeMem(const_cast<CScriptDictionary*>(this));
+	}
 }
 
 int CScriptDictionary::GetRefCount()
@@ -357,13 +376,13 @@ CScriptArray* CScriptDictionary::GetKeys() const
 
 void ScriptDictionaryFactory_Generic(asIScriptGeneric *gen)
 {
-	*(CScriptDictionary**)gen->GetAddressOfReturnLocation() = new CScriptDictionary(gen->GetEngine());
+	*(CScriptDictionary**)gen->GetAddressOfReturnLocation() = CScriptDictionary::Create(gen->GetEngine());
 }
 
 void ScriptDictionaryListFactory_Generic(asIScriptGeneric *gen)
 {
 	asBYTE *buffer = (asBYTE*)gen->GetArgAddress(0);
-	*(CScriptDictionary**)gen->GetAddressOfReturnLocation() = new CScriptDictionary(buffer);
+	*(CScriptDictionary**)gen->GetAddressOfReturnLocation() = CScriptDictionary::Create(buffer);
 }
 
 void ScriptDictionaryAddRef_Generic(asIScriptGeneric *gen)
@@ -508,6 +527,21 @@ static void CScriptDictionaryGetKeys_Generic(asIScriptGeneric *gen)
 	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
 	*(CScriptArray**)gen->GetAddressOfReturnLocation() = self->GetKeys();
 }
+
+static void CScriptDictionary_opIndex_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
+	std::string *key = (std::string*)gen->GetAddressOfArg(0);
+	*(CScriptDictValue**)gen->GetAddressOfReturnLocation() = self->operator[](*key);
+}
+
+static void CScriptDictionary_opIndex_const_Generic(asIScriptGeneric *gen)
+{
+	const CScriptDictionary *self = (const CScriptDictionary*)gen->GetObject();
+	std::string *key = (std::string*)gen->GetAddressOfArg(0);
+	*(const CScriptDictValue**)gen->GetAddressOfReturnLocation() = self->operator[](*key);
+}
+
 
 //-------------------------------------------------------------------------
 // CScriptDictValue
@@ -722,6 +756,61 @@ static double CScriptDictValue_opConvDouble(CScriptDictValue *obj)
 	return value;
 }
 
+//-------------------------------------------------------------------
+// generic wrapper for CScriptDictValue
+
+static void CScriptDictValue_opConvDouble_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	double value;
+	self->Get(gen->GetEngine(), value);
+	*(double*)gen->GetAddressOfReturnLocation() = value;
+}
+
+static void CScriptDictValue_opConvInt_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	asINT64 value;
+	self->Get(gen->GetEngine(), value);
+	*(asINT64*)gen->GetAddressOfReturnLocation() = value;
+}
+
+static void CScriptDictValue_opCast_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	self->Get(gen->GetEngine(), gen->GetArgAddress(0), gen->GetArgTypeId(0));
+}
+
+static void CScriptDictValue_opAssign_int64_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	*(CScriptDictValue**)gen->GetAddressOfReturnLocation() = &CScriptDictValue_opAssign((asINT64)gen->GetArgQWord(0), self);
+}
+
+static void CScriptDictValue_opAssign_double_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	*(CScriptDictValue**)gen->GetAddressOfReturnLocation() = &CScriptDictValue_opAssign(gen->GetArgDouble(0), self);
+}
+
+static void CScriptDictValue_opAssign_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	*(CScriptDictValue**)gen->GetAddressOfReturnLocation() = &CScriptDictValue_opAssign(gen->GetArgAddress(0), gen->GetArgTypeId(0), self);
+}
+
+static void CScriptDictValue_Construct_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	CScriptDictValue_Construct(self);
+}
+
+static void CScriptDictValue_Destruct_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictValue *self = (CScriptDictValue*)gen->GetObject();
+	CScriptDictValue_Destruct(self);
+}
+
 //--------------------------------------------------------------------------
 // Register the type
 
@@ -801,6 +890,18 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 {
 	int r;
 
+	r = engine->RegisterObjectType("dictionaryValue", sizeof(CScriptDictValue), asOBJ_VALUE | asOBJ_ASHANDLE | asOBJ_APP_CLASS_CD); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(CScriptDictValue_Construct_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(CScriptDictValue_Destruct_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opHndlAssign(const ?&in)", asFUNCTION(CScriptDictValue_opAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(const ?&in)", asFUNCTION(CScriptDictValue_opAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(double)", asFUNCTION(CScriptDictValue_opAssign_double_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(int64)", asFUNCTION(CScriptDictValue_opAssign_int64_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_REF_CAST, "void opCast(?&out)", asFUNCTION(CScriptDictValue_opCast_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_VALUE_CAST, "void opConv(?&out)", asFUNCTION(CScriptDictValue_opCast_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_VALUE_CAST, "int64 opConv()", asFUNCTION(CScriptDictValue_opConvInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_VALUE_CAST, "double opConv()", asFUNCTION(CScriptDictValue_opConvDouble_Generic), asCALL_GENERIC); assert( r >= 0 );
+
 	r = engine->RegisterObjectType("dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_FACTORY, "dictionary@ f()", asFUNCTION(ScriptDictionaryFactory_Generic), asCALL_GENERIC); assert( r>= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_LIST_FACTORY, "dictionary @f(int &in) {repeat {string, ?}}", asFUNCTION(ScriptDictionaryListFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -825,6 +926,9 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("dictionary", "array<string> @getKeys() const", asFUNCTION(CScriptDictionaryGetKeys_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("dictionary", "dictionaryValue &opIndex(const string &in)", asFUNCTION(CScriptDictionary_opIndex_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "const dictionaryValue &opIndex(const string &in) const", asFUNCTION(CScriptDictionary_opIndex_const_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register GC behaviours
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptDictionaryGetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );

@@ -126,7 +126,7 @@ bool Test()
 	// Test the STL iterator
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		CScriptDictionary *dict = new CScriptDictionary(engine);
+		CScriptDictionary *dict = CScriptDictionary::Create(engine);
 		dict->Set("a", asINT64(1));
 		dict->Set("b", asINT64(2));
 

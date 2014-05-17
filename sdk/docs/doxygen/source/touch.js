@@ -1,3 +1,6 @@
+// Code provided by Alex Andreotti based on the information found here:
+// http://chris-barr.com/2010/05/scrolling_a_overflowauto_element_on_a_touch_screen_device/
+
 function isTouchDevice(){
     try{
         document.createEvent("TouchEvent");

@@ -36,7 +36,6 @@ BEGIN_AS_NAMESPACE
 class CScriptArray;
 class CScriptDictionary;
 
-// TODO: 2.29.0: Register this type, and expose the operator[] on the dictionary
 class CScriptDictValue
 {
 public:
@@ -80,11 +79,11 @@ protected:
 class CScriptDictionary
 {
 public:
-	// Constructor
-	CScriptDictionary(asIScriptEngine *engine);
+	// Factory functions
+	static CScriptDictionary *Create(asIScriptEngine *engine);
 
-	// Constructor. Called from the script to instantiate a dictionary from an initialization list
-	CScriptDictionary(asBYTE *buffer);
+	// Called from the script to instantiate a dictionary from an initialization list
+	static CScriptDictionary *Create(asBYTE *buffer);
 
 	// Reference counting
 	void AddRef() const;
@@ -174,6 +173,12 @@ public:
 	void ReleaseAllReferences(asIScriptEngine *engine);
 
 protected:
+	// Since the dictionary uses the asAllocMem and asFreeMem functions to allocate memory
+	// the constructors are made protected so that the application cannot allocate it 
+	// manually in a different way
+	CScriptDictionary(asIScriptEngine *engine);
+	CScriptDictionary(asBYTE *buffer);
+
 	// We don't want anyone to call the destructor directly, it should be called through the Release method
 	virtual ~CScriptDictionary();
 	
@@ -182,6 +187,7 @@ protected:
 	mutable int refCount;
 	mutable bool gcFlag;
 
+	// TODO: memory: The allocator should use the asAllocMem and asFreeMem
 	// TODO: optimize: Use C++11 std::unordered_map instead
 	std::map<std::string, CScriptDictValue> dict;
 };
