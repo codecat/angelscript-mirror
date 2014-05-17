@@ -369,16 +369,14 @@ int asCObjectType::GetTypeId() const
 // interface
 int asCObjectType::GetSubTypeId(asUINT subtypeIndex) const
 {
-	if( flags & asOBJ_TEMPLATE )
-	{
-		if( subtypeIndex >= templateSubTypes.GetLength() )
-			return asINVALID_ARG;
+	// This method is only supported for templates and template specializations
+	if( templateSubTypes.GetLength() == 0 )
+		return asERROR;
 
-		return engine->GetTypeIdFromDataType(templateSubTypes[subtypeIndex]);
-	}
+	if( subtypeIndex >= templateSubTypes.GetLength() )
+		return asINVALID_ARG;
 
-	// Only template types have sub types
-	return asERROR;
+	return engine->GetTypeIdFromDataType(templateSubTypes[subtypeIndex]);
 }
 
 // interface

@@ -393,6 +393,10 @@ bool Test()
 	r = engine->RegisterObjectType("int[]", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 	r = engine->EndConfigGroup(); assert( r >= 0 );
 
+	asIObjectType *ot = engine->GetObjectTypeByDecl("int[]");
+	if( ot->GetSubTypeId() != asTYPEID_INT32 )
+		TEST_FAILED;
+
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
