@@ -718,19 +718,32 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	if( listPattern )
 	{
 		asSListPatternNode *n = listPattern;
+		bool first = true;
 		while( n )
 		{
 			if( n->type == asLPT_START )
+			{
 				str += " {";
+				first = true;
+			}
 			else if( n->type == asLPT_END )
+			{
 				str += " }";
+				first = false;
+			}
 			else if( n->type == asLPT_REPEAT )
 				str += " repeat";
 			else if( n->type == asLPT_REPEAT_SAME )
 				str += " repeat_same";
 			else if( n->type == asLPT_TYPE )
 			{
-				str += " ";
+				if( first )
+				{
+					str += " ";
+					first = false;
+				}
+				else
+					str += ", ";
 				str += reinterpret_cast<asSListPatternDataTypeNode*>(n)->dataType.Format();
 			}
 
