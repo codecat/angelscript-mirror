@@ -40,7 +40,8 @@ function touchScroll(id){
     }
 }
 
+// Add the touchScroll event handler to the nav-tree and main content divs
 $(document).ready(function() {
-    $('.contents').each(function(){ touchScroll(this.id); })
+    $('#doc-content #nav-tree').each(function(){ touchScroll(this.id); })
 });
 

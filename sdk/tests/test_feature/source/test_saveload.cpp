@@ -345,43 +345,62 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test",
+		asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"funcdef void CALLBACK(); \n");
+		r = mod1->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
 			"funcdef void CALLBACK(); \n"
-			"shared interface A \n"
-			"{ \n"
-			"    void Func(CALLBACK@ callback); \n"
-			"} \n"
-			"class B : A \n"
-			"{ \n"
-			"    void Func(CALLBACK@ callback){} \n"
-			"} \n");
-		r = mod->Build();
+			"void Foo1(CALLBACK@){} \n"
+			"void Foo2(){Foo1(null);} \n");
+		r = mod2->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
-		CBytecodeStream stream(__FILE__"shared");
-		r = mod->SaveByteCode(&stream);
-		if( r < 0 )
-			TEST_FAILED;
-
-		asDWORD crc1 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-
-		r = mod->LoadByteCode(&stream);
+		CBytecodeStream stream1(__FILE__"shared1");
+		r = mod1->SaveByteCode(&stream1);
 		if( r < 0 )
 			TEST_FAILED;
 
 		CBytecodeStream stream2(__FILE__"shared2");
-		r = mod->SaveByteCode(&stream2);
+		r = mod2->SaveByteCode(&stream2);
 		if( r < 0 )
 			TEST_FAILED;
 
-		asDWORD crc2 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
+		asDWORD crc1 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
+
+		r = mod1->LoadByteCode(&stream1);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = mod2->LoadByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream3(__FILE__"shared1");
+		r = mod1->SaveByteCode(&stream3);
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream4(__FILE__"shared2");
+		r = mod2->SaveByteCode(&stream4);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asDWORD crc2 = ComputeCRC32(&stream4.buffer[0], asUINT(stream4.buffer.size()));
 
 		if( crc1 != crc2 )
 			TEST_FAILED;
 
-		r = mod->LoadByteCode(&stream2);
+		r = mod1->LoadByteCode(&stream3);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = mod2->LoadByteCode(&stream4);
 		if( r < 0 )
 			TEST_FAILED;
 
