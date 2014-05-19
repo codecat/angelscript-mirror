@@ -521,6 +521,11 @@ asCScriptEngine::asCScriptEngine()
 	// Create the global namespace
 	defaultNamespace = AddNameSpace("");
 
+	requestCtxFunc  = 0;
+	requestCtxParam = 0;
+	returnCtxFunc   = 0;
+	returnCtxParam  = 0;
+
 	// We must set the namespace in the built-in types explicitly as
 	// this wasn't done by the default constructor. If we do not do
 	// this we will get null pointer access in other parts of the code
@@ -785,8 +790,53 @@ void asCScriptEngine::CleanupAfterDiscardModule()
 }
 
 // interface
+void asCScriptEngine::SetRequestContextCallback(asREQUESTCONTEXTFUNC_t func, void *param)
+{
+	requestCtxFunc  = func;
+	requestCtxParam = param;
+}
+
+// interface
+void asCScriptEngine::SetReturnContextCallback(asRETURNCONTEXTFUNC_t func, void *param)
+{
+	returnCtxFunc  = func;
+	returnCtxParam = param;
+}
+
+// interface
+asIScriptContext *asCScriptEngine::RequestContext()
+{
+	if( requestCtxFunc )
+	{
+		// The return callback must also exist
+		asASSERT( returnCtxFunc );
+
+		asIScriptContext *ctx = requestCtxFunc(this, requestCtxParam);
+		return ctx;
+	}
+
+	// As fallback we create a new context
+	return CreateContext();
+}
+
+// interface
+void asCScriptEngine::ReturnContext(asIScriptContext *ctx)
+{
+	if( returnCtxFunc )
+	{
+		returnCtxFunc(this, ctx, returnCtxParam);
+		return;
+	}
+
+	// As fallback we just release the context
+	if( ctx )
+		ctx->Release();
+}
+
+// interface
 int asCScriptEngine::AddRef() const
 {
+	asASSERT( refCount.get() > 0 || shuttingDown );
 	return refCount.atomicInc();
 }
 
@@ -797,7 +847,10 @@ int asCScriptEngine::Release() const
 
 	if( r == 0 )
 	{
-		asDELETE(const_cast<asCScriptEngine*>(this),asCScriptEngine);
+		// It is possible that some function will temporarily increment the engine ref count 
+		// during clean-up for example while destroying the objects in the garbage collector.
+		if( !shuttingDown )
+			asDELETE(const_cast<asCScriptEngine*>(this),asCScriptEngine);
 		return 0;
 	}
 

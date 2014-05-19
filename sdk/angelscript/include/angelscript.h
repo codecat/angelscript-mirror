@@ -379,6 +379,8 @@ typedef void (*asCLEANMODULEFUNC_t)(asIScriptModule *);
 typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
+typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
+typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
 
 // Check if the compiler can use C++11 features
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
@@ -659,6 +661,12 @@ public:
 	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
 	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
 	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
+
+	// Context pooling
+	virtual asIScriptContext      *RequestContext() = 0;
+	virtual void                   ReturnContext(asIScriptContext *ctx) = 0;
+	virtual void                   SetRequestContextCallback(asREQUESTCONTEXTFUNC_t, void *param = 0) = 0;
+	virtual void                   SetReturnContextCallback(asRETURNCONTEXTFUNC_t, void *param = 0) = 0;
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const = 0;

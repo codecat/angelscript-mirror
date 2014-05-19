@@ -339,6 +339,55 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 	
+	// Test repeated save/loads with shared interfaces and funcdefs
+	// http://www.gamedev.net/topic/656784-wrong-bytecode-with-funcdef-in-shared-interface/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void CALLBACK(); \n"
+			"shared interface A \n"
+			"{ \n"
+			"    void Func(CALLBACK@ callback); \n"
+			"} \n"
+			"class B : A \n"
+			"{ \n"
+			"    void Func(CALLBACK@ callback){} \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"shared");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asDWORD crc1 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
+
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream2(__FILE__"shared2");
+		r = mod->SaveByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asDWORD crc2 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
+
+		if( crc1 != crc2 )
+			TEST_FAILED;
+
+		r = mod->LoadByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test multiple modules with shared enums and shared classes
 	// http://www.gamedev.net/topic/632922-huge-problems-with-precompilde-byte-code/
 	{

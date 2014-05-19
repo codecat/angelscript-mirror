@@ -161,20 +161,26 @@ public:
 	virtual int            GetSizeOfPrimitiveType(int typeId) const;
 
 	// Script execution
-	virtual asIScriptContext  *CreateContext();
-	virtual void              *CreateScriptObject(const asIObjectType *type);
-	virtual void              *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
-	virtual void              *CreateUninitializedScriptObject(const asIObjectType *type);
-	virtual asIScriptFunction *CreateDelegate(asIScriptFunction *func, void *obj);
-	virtual void               AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
-	virtual void               ReleaseScriptObject(void *obj, const asIObjectType *type);
-	virtual void               AddRefScriptObject(void *obj, const asIObjectType *type);
+	virtual asIScriptContext      *CreateContext();
+	virtual void                  *CreateScriptObject(const asIObjectType *type);
+	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
+	virtual void                  *CreateUninitializedScriptObject(const asIObjectType *type);
+	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj);
+	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
+	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type);
+	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type);
 	// TODO: interface: Should have a method void *CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType); 
 	//                  For script objects it should simply check if the object implements or derives from the toType
 	//                  For application objects it should look for ref cast behaviours and call the matching one
 	//                  Once implemented the IsHandleCompatibleWithObject should be removed from the engine
-	virtual bool               IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
-	asILockableSharedBool     *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
+	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
+	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
+
+	// Context pooling
+	virtual asIScriptContext *RequestContext();
+	virtual void              ReturnContext(asIScriptContext *ctx);
+	virtual void              SetRequestContextCallback(asREQUESTCONTEXTFUNC_t, void *param);
+	virtual void              SetReturnContextCallback(asRETURNCONTEXTFUNC_t, void *param);
 
 	// String interpretation
 	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const;
@@ -427,6 +433,12 @@ public:
 	// only deleted once the engine is destroyed
 	asCArray<asCString*>          stringConstants;
 	asCMap<asCStringPointer, int> stringToIdMap;
+
+	// Callbacks for context pooling
+	asREQUESTCONTEXTFUNC_t  requestCtxFunc;
+	void                   *requestCtxParam;
+	asRETURNCONTEXTFUNC_t   returnCtxFunc;
+	void                   *returnCtxParam;
 
 	// User data
 	asCArray<asPWORD>       userData;
