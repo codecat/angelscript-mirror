@@ -338,73 +338,130 @@ bool Test()
 	COutStream out;
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
-	
+
+	// Test saving and loading script with array of classes initialized from initialization list
+	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+
+		const char *script = 
+			"array<A@> g_a = {A()}; \n"
+			"class A {}             \n";
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(":1", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"1");
+		mod->SaveByteCode(&stream);
+
+		if( mod->LoadByteCode(&stream) != 0 )
+			TEST_FAILED;
+
+		// The garbage collector must not complain about not being able to release objects
+		engine->Release();
+	}
+
 	// Test repeated save/loads with shared interfaces and funcdefs
 	// http://www.gamedev.net/topic/656784-wrong-bytecode-with-funcdef-in-shared-interface/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-
-		asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod1->AddScriptSection("test",
-			"funcdef void CALLBACK(); \n");
-		r = mod1->Build();
-		if( r < 0 )
-			TEST_FAILED;
-
-		asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod2->AddScriptSection("test",
-			"funcdef void CALLBACK(); \n"
-			"void Foo1(CALLBACK@){} \n"
-			"void Foo2(){Foo1(null);} \n");
-		r = mod2->Build();
-		if( r < 0 )
-			TEST_FAILED;
-
 		CBytecodeStream stream1(__FILE__"shared1");
-		r = mod1->SaveByteCode(&stream1);
-		if( r < 0 )
-			TEST_FAILED;
-
 		CBytecodeStream stream2(__FILE__"shared2");
-		r = mod2->SaveByteCode(&stream2);
-		if( r < 0 )
-			TEST_FAILED;
+		CBytecodeStream stream3(__FILE__"shared1");
+		CBytecodeStream stream4(__FILE__"shared2");
+
+		{
+			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+			asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			mod1->AddScriptSection("test",
+				"funcdef void CALLBACK(); \n");
+			r = mod1->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			mod2->AddScriptSection("test",
+				"funcdef void CALLBACK(); \n"
+				"void Foo1(CALLBACK@){} \n"
+				"void Foo2(){Foo1(null);} \n");
+			r = mod2->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			r = mod1->SaveByteCode(&stream1);
+			if( r < 0 )
+				TEST_FAILED;
+
+			r = mod2->SaveByteCode(&stream2);
+			if( r < 0 )
+				TEST_FAILED;
+
+			engine->Release();
+		}
 
 		asDWORD crc1 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
 
-		r = mod1->LoadByteCode(&stream1);
-		if( r < 0 )
-			TEST_FAILED;
+		{
+			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		r = mod2->LoadByteCode(&stream2);
-		if( r < 0 )
-			TEST_FAILED;
+			asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			r = mod1->LoadByteCode(&stream1);
+			if( r < 0 )
+				TEST_FAILED;
 
-		CBytecodeStream stream3(__FILE__"shared1");
-		r = mod1->SaveByteCode(&stream3);
-		if( r < 0 )
-			TEST_FAILED;
+			asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			r = mod2->LoadByteCode(&stream2);
+			if( r < 0 )
+				TEST_FAILED;
 
-		CBytecodeStream stream4(__FILE__"shared2");
-		r = mod2->SaveByteCode(&stream4);
-		if( r < 0 )
-			TEST_FAILED;
+			r = mod1->SaveByteCode(&stream3);
+			if( r < 0 )
+				TEST_FAILED;
+
+			r = mod2->SaveByteCode(&stream4);
+			if( r < 0 )
+				TEST_FAILED;
+
+			engine->Release();
+		}
 
 		asDWORD crc2 = ComputeCRC32(&stream4.buffer[0], asUINT(stream4.buffer.size()));
 
 		if( crc1 != crc2 )
 			TEST_FAILED;
 
-		r = mod1->LoadByteCode(&stream3);
-		if( r < 0 )
-			TEST_FAILED;
+		if( stream4.buffer.size() == stream2.buffer.size() )
+		{
+			for( size_t b = 0; b < stream4.buffer.size(); ++b )
+				if( stream4.buffer[b] != stream2.buffer[b] )
+					PRINTF("streams differ on byte %d\n", b);
+		}
+		else
+			PRINTF("streams differ in size\n");
 
-		r = mod2->LoadByteCode(&stream4);
-		if( r < 0 )
-			TEST_FAILED;
+		{
+			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		engine->Release();
+			asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			r = mod1->LoadByteCode(&stream3);
+			if( r < 0 )
+				TEST_FAILED;
+
+			asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			r = mod2->LoadByteCode(&stream4);
+			if( r < 0 )
+				TEST_FAILED;
+
+			engine->Release();
+		}
 	}
 
 	// Test multiple modules with shared enums and shared classes

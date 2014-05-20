@@ -386,6 +386,10 @@ int asCReader::ReadInner()
 		func = ReadFunction(isNew, false, false);
 		if( func )
 		{
+			// All the global functions were already loaded while loading the scriptFunctions, here
+			// we're just re-reading the refernces to know which goes into the globalFunctions array
+			asASSERT( !isNew );
+
 			module->globalFunctions.Put(func);
 			func->AddRef();
 		}
@@ -764,7 +768,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 
 	// Load the new function
 	isNew = true;
-	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,module,asFUNC_DUMMY);
+	asCScriptFunction *func = asNEW(asCScriptFunction)(engine,0,asFUNC_DUMMY);
 	if( func == 0 )
 	{
 		// Out of memory
@@ -927,6 +931,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	{
 		// The refCount is already 1
 		module->scriptFunctions.PushLast(func);
+		func->module = module;
 	}
 	if( addToEngine )
 	{
@@ -1516,6 +1521,9 @@ void asCReader::ReadGlobalProperty()
 	asCScriptFunction *func = ReadFunction(isNew, false, true, false);
 	if( func )
 	{
+		// Make sure the function knows it is owned by the module
+		func->module = module;
+
 		prop->SetInitFunc(func);
 		func->Release();
 	}
