@@ -18,11 +18,12 @@ BEGIN_AS_NAMESPACE
 
 struct SContextInfo
 {
-    asUINT sleepUntil;
+	asUINT sleepUntil;
 	vector<asIScriptContext*> coRoutines;
 	asUINT currentCoRoutine;
 };
 
+// TODO: Instead of using a global variable the context's user data
 static CContextMgr *g_ctxMgr = 0;
 static void ScriptSleep(asUINT milliSeconds)
 {
@@ -54,35 +55,27 @@ static void ScriptYield()
 	}
 }
 
-// TODO: Use function pointers to receive the function that should be called
-void ScriptCreateCoRoutine(string &func, CScriptAny *arg)
+void ScriptCreateCoRoutine(asIScriptFunction *func, CScriptDictionary *arg)
 {
+	if( func == 0 )
+		return;
+
 	asIScriptContext *ctx = asGetActiveContext();
 	if( ctx && g_ctxMgr )
 	{
-		asIScriptModule *mod = ctx->GetFunction()->GetModule();
-
-		// We need to find the function that will be created as the co-routine
-		string decl = "void " + func + "(any @)";
-		asIScriptFunction *func = mod->GetFunctionByDecl(decl.c_str());
-		if( func == 0 )
-		{
-			// No function could be found, raise an exception
-			ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
-			return;
-		}
-
 		// Create a new context for the co-routine
 		asIScriptContext *coctx = g_ctxMgr->AddContextForCoRoutine(ctx, func);
 
 		// Pass the argument to the context
 		coctx->SetArgObject(0, arg);
+
+		// The context manager will call Execute() on the context when it is time
 	}
 }
 
 CContextMgr::CContextMgr()
 {
-    m_getTimeFunc   = 0;
+	m_getTimeFunc   = 0;
 	m_currentThread = 0;
 
 	m_numExecutions         = 0;
@@ -262,9 +255,9 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunc
 		info = new SContextInfo;
 	}
 
-    info->coRoutines.push_back(ctx);
+	info->coRoutines.push_back(ctx);
 	info->currentCoRoutine = 0;
-    info->sleepUntil = 0;
+	info->sleepUntil = 0;
 	m_threads.push_back(info);
 
 	return ctx;
@@ -304,7 +297,7 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 
 void CContextMgr::SetSleeping(asIScriptContext *ctx, asUINT milliSeconds)
 {
-    assert( m_getTimeFunc != 0 );
+	assert( m_getTimeFunc != 0 );
 
 	// Find the context and update the timeStamp
 	// for when the context is to be continued
@@ -324,11 +317,11 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine)
 {
 	int r;
 
-    // Must set the get time callback function for this to work
-    assert( m_getTimeFunc != 0 );
+	// Must set the get time callback function for this to work
+	assert( m_getTimeFunc != 0 );
 
-    // Register the sleep function
-    r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
+	// Register the sleep function
+	r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert( r >= 0 );
 
 	// TODO: Add support for spawning new threads, waiting for signals, etc
 }
@@ -337,8 +330,12 @@ void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine *engine)
 {
 	int r;
 
+	// The dictionary add-on must have been registered already
+	assert( engine->GetObjectTypeByDecl("dictionary") );
+
 	r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void createCoRoutine(const string &in, any @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterFuncdef("void coroutine(dictionary@)");
+	r = engine->RegisterGlobalFunction("void createCoRoutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
 }
 
 void CContextMgr::SetGetTimeCallback(TIMEFUNC_t func)

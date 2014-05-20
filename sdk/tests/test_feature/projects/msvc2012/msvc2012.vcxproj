@@ -292,6 +292,7 @@
     <ClCompile Include="..\..\source\scriptstring_utils.cpp" />
     <ClCompile Include="..\..\source\test2modules.cpp" />
     <ClCompile Include="..\..\source\test_2func.cpp" />
+    <ClCompile Include="..\..\source\test_addon_contextmgr.cpp" />
     <ClCompile Include="..\..\source\test_addon_debugger.cpp" />
     <ClCompile Include="..\..\source\test_addon_dictionary.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptarray.cpp" />
