@@ -965,6 +965,7 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 	sGlobalVariableDescription *globDesc = 0;
 	if( DoesGlobalPropertyExist(prop, ns, &globProp, &globDesc, isAppProp) )
 	{
+#ifndef AS_NO_COMPILER
 		if( globDesc )
 		{
 			// The property was declared in this build call, check if it has been compiled successfully already
@@ -972,7 +973,9 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 			if( isPureConstant ) *isPureConstant = globDesc->isPureConstant;
 			if( constantValue  ) *constantValue  = globDesc->constantValue;
 		}
-		else if( isAppProp )
+		else 
+#endif
+		if( isAppProp )
 		{
 			// Don't return the property if the module doesn't have access to it
 			if( !(module->accessMask & globProp->accessMask) )
