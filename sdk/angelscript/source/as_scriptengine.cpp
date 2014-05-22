@@ -4320,17 +4320,10 @@ int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIOb
 	return gc.GetObjectInGC(idx, seqNbr, obj, type);
 }
 
-// internal
+// interface
 int asCScriptEngine::GarbageCollect(asDWORD flags, asUINT iterations)
 {
 	return gc.GarbageCollect(flags, iterations);
-}
-
-// interface
-// TODO: interface: Allow caller to inform number of iterations
-int asCScriptEngine::GarbageCollect(asDWORD flags)
-{
-	return gc.GarbageCollect(flags, 1);
 }
 
 // interface
