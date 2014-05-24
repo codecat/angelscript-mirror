@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <fstream>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -515,11 +516,10 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	return 0;
 }
 
-int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm)
+int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *configFile)
 {
 	int r;
-	const char *configFile = "configuration";
-	
+
 	// Some helper functions for parsing the configuration
 	struct in
 	{

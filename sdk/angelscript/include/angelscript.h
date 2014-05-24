@@ -188,10 +188,16 @@ enum asEObjTypeFlags
 	asOBJ_NOCOUNT                    = (1<<18),
 	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
 	asOBJ_MASK_VALID_FLAGS           = 0x0FFFFF,
+	// Internal flags
 	asOBJ_SCRIPT_OBJECT              = (1<<20),
 	asOBJ_SHARED                     = (1<<21),
 	asOBJ_NOINHERIT                  = (1<<22),
-	asOBJ_SCRIPT_FUNCTION            = (1<<23)
+	asOBJ_SCRIPT_FUNCTION            = (1<<23),
+	asOBJ_IMPLICIT_HANDLE            = (1<<24),
+	asOBJ_LIST_PATTERN               = (1<<25),
+	asOBJ_ENUM                       = (1<<26),
+	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
+	asOBJ_TYPEDEF                    = (1<<28)
 };
 
 // Behaviours

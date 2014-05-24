@@ -33,7 +33,7 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
 
 // Write the registered application interface to a text stream.
 int WriteConfigToStream(asIScriptEngine *engine, std::ostream &strm); 
-int ConfigEngineFromStream(asIScriptEngine *engine, std::istream &strm);
+int ConfigEngineFromStream(asIScriptEngine *engine, std::istream &strm, const char *nameOfStream = "config");
 
 // Print details of the script exception to the standard output
 void PrintException(asIScriptContext *ctx, bool printStack = false);
