@@ -190,7 +190,10 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 				detectState  = clearCounters_init;
 			}
 			if( doDestroy )
+			{
+				destroyNewState = destroyGarbage_init;
 				destroyOldState = destroyGarbage_init;
+			}
 
 			// The full cycle only works with the objects in the old list so that the
 			// set of objects scanned for garbage is fixed even if new objects are added
@@ -204,7 +207,11 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 
 				// Now destroy all known garbage
 				if( doDestroy )
+				{
+					if( !doDetect )
+						while( DestroyNewGarbage() == 1 ) {}
 					while( DestroyOldGarbage() == 1 ) {}
+				}
 
 				// Run another iteration if any garbage was destroyed
 				if( count != (unsigned int)(gcOldObjects.GetLength()) )

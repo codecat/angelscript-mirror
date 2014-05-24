@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in GetDeclaration when returning the list pattern (Thanks agentprog)
 <li>GetSubTypeId and GetSubType now works for registered template specializations too (Thanks Jason Goepel)
 <li>Loading bytecode with funcdefs declared from script wasn't working identical to building from source (Thanks cvet)
+<li>GarbageCollect(asGC_FULL_CYCLE | asGC_DESTROY_GARBAGE) will now properly destroy the garbage in the new generation too (Thanks Maciej Biedrzycki)
 </ul>
 <li>Library
 <ul>
