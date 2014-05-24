@@ -609,22 +609,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 				CompileMemberInitialization(&byteCode, false);
 			}
 		}
-
-		// Increase the reference for the object pointer, so that it is guaranteed to live during the entire call
-		if( !m_isConstructor && !outFunc->returnType.IsReference() )
-		{
-			// TODO: runtime optimize: If the function is trivial, i.e. doesn't access any outside functions,
-			//                         then this is not necessary. If I implement this, then the function needs
-			//                         to set a flag so the exception handler doesn't try to release the handle.
-			// It is not necessary to do this for constructors, as they have no outside references that can be released anyway
-			// It is not necessary to do this for methods that return references, as the caller is guaranteed to hold a reference to the object
-			asCByteCode tmpBC(engine);
-			tmpBC.InstrSHORT(asBC_PSF, 0);
-			tmpBC.Instr(asBC_RDSPtr);
-			tmpBC.Call(asBC_CALLSYS, outFunc->objectType->beh.addref, AS_PTR_SIZE);
-			tmpBC.OptimizeLocally(tempVariableOffsets);
-			byteCode.AddCode(&tmpBC);
-		}
 	}
 
 	// Add the code for the statement block
@@ -666,10 +650,6 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 		// Do not deallocate parameters
 	}
-
-	// Release the object pointer again
-	if( outFunc->objectType && !m_isConstructor && !outFunc->returnType.IsReference() )
-		byteCode.InstrW_PTR(asBC_FREE, 0, outFunc->objectType);
 
 	// Check if the number of labels in the functions isn't too many to be handled
 	if( nextLabel >= (1<<15) )
@@ -13401,26 +13381,29 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 	int argSize = descr->GetSpaceNeededForArguments();
 
-	if( descr->objectType && descr->returnType.IsReference() &&
-		!(ctx->type.isVariable || ctx->type.isTemporary) &&
+	// If we're calling a class method we must make sure the object is guaranteed to stay
+	// alive throughout the call by holding on to a reference in a local variable. This must
+	// be done for any methods that return references, and any calls on script objects.
+	// Application registered objects are assumed to know to keep themselves alive even
+	// if the method doesn't return a refernce.
+	if( descr->objectType &&
 		(ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
+		(descr->returnType.IsReference() || (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCRIPT_OBJECT)) &&
+		!(ctx->type.isVariable || ctx->type.isTemporary) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_ASHANDLE) )
 	{
-		// The class method we're calling is returning a reference, which may be to a member of the object.
-		// In order to guarantee the lifetime of the reference, we must hold a local reference to the object.
 		// TODO: runtime optimize: This can be avoided for local variables (non-handles) as they have a well defined life time
 		int tempRef = AllocateVariable(ctx->type.dataType, true);
 		ctx->bc.InstrSHORT(asBC_PSF, (short)tempRef);
 		ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
 
-		// Add the release of this reference, as a deferred expression
+		// Add the release of this reference as a deferred expression
 		asSDeferredParam deferred;
 		deferred.origExpr = 0;
 		deferred.argInOutFlags = asTM_INREF;
 		deferred.argNode = 0;
 		deferred.argType.SetVariable(ctx->type.dataType, tempRef, true);
-
 		ctx->deferredParams.PushLast(deferred);
 
 		// Forget the current type

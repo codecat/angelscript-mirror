@@ -368,6 +368,16 @@ int asCContext::Prepare(asIScriptFunction *func)
 	// Release the returned object (if any)
 	CleanReturnObject();
 
+	// Release the object if it is a script object
+	if( m_initialFunction && m_initialFunction->objectType && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT) )
+	{
+		asCScriptObject *obj = *(asCScriptObject**)&m_regs.stackFramePointer[0];
+		if( obj )
+			obj->Release();
+
+		*(asPWORD*)&m_regs.stackFramePointer[0] = 0;
+	}
+
 	if( m_initialFunction && m_initialFunction == func )
 	{
 		// If the same function is executed again, we can skip a lot of the setup
@@ -482,6 +492,14 @@ int asCContext::Unprepare()
 
 	// Release the returned object (if any)
 	CleanReturnObject();
+
+	// Release the object if it is a script object
+	if( m_initialFunction && m_initialFunction->objectType && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT) )
+	{
+		asCScriptObject *obj = *(asCScriptObject**)&m_regs.stackFramePointer[0];
+		if( obj )
+			obj->Release();
+	}
 
 	// Release the initial function
 	if( m_initialFunction )
@@ -670,7 +688,11 @@ int asCContext::SetObject(void *obj)
 		return asERROR;
 	}
 
+	asASSERT( *(asPWORD*)&m_regs.stackFramePointer[0] == 0 );
+
 	*(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)obj;
+	if( obj && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT) )
+		reinterpret_cast<asCScriptObject*>(obj)->AddRef();
 
 	return 0;
 }
@@ -4664,23 +4686,6 @@ void asCContext::CleanStackFrame()
 					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->beh;
 					if( beh->destruct )
 						m_engine->CallObjectMethod((void*)(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
-				}
-			}
-		}
-
-		// If the object is a script declared object, then we must release it
-		// as the compiler adds a reference at the entry of the function. Make sure
-		// the function has actually been entered
-		if( m_currentFunction->objectType && m_regs.programPointer != m_currentFunction->scriptData->byteCode.AddressOf() )
-		{
-			// Methods returning a reference or constructors don't add a reference
-			if( !m_currentFunction->returnType.IsReference() && m_currentFunction->name != m_currentFunction->objectType->name )
-			{
-				asSTypeBehaviour *beh = &m_currentFunction->objectType->beh;
-				if( beh->release && *(asPWORD*)&m_regs.stackFramePointer[0] != 0 )
-				{
-					m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[0], beh->release);
-					*(asPWORD*)&m_regs.stackFramePointer[0] = 0;
 				}
 			}
 		}

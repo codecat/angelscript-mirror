@@ -47,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Types registered with asOBJ_ASHANDLE can also register the opAssign method to support value assignments
 <li>CreateScriptObjectCopy now uses the copy constructor for value types, if available
 <li>The asBEHAVE_VALUE_CAST behaviour now supports the generic form 'void f(?&amp;out)'
+<li>Improved runtime performance by avoiding increasing/decreasing refcount of script object in class methods (Thanks GGLucas)
 </ul>
 <li>Library interface
 <ul>
