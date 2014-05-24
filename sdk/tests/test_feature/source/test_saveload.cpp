@@ -341,9 +341,19 @@ bool Test()
 
 	// Test saving and loading script with string literal
 	{
+		// Write the configuration to stream
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
+		stringstream strm;
+		WriteConfigToStream(engine, strm);
+		engine->Release();
+
+		// Configure engine from stream and compile the script to bytecode
+		strm.seekp(0);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		ConfigEngineFromStream(engine, strm);
 
 		const char *script = 
 			"void func() { \n"
@@ -358,8 +368,17 @@ bool Test()
 			TEST_FAILED;
 
 		CBytecodeStream stream(__FILE__"1");
-		mod->SaveByteCode(&stream);
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+		engine->Release();
 
+		// Load the bytecode
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		if( mod->LoadByteCode(&stream) != 0 )
 			TEST_FAILED;
 

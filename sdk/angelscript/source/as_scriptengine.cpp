@@ -3230,12 +3230,12 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 }
 
 // interface
-int asCScriptEngine::GetStringFactoryReturnTypeId() const
+int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 {
 	if( stringFactory == 0 )
 		return asNO_FUNCTION;
 
-	return GetTypeIdFromDataType(stringFactory->returnType);
+	return stringFactory->GetReturnTypeId(flags);
 }
 
 // interface

@@ -111,7 +111,7 @@ public:
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0);
-	virtual int GetStringFactoryReturnTypeId() const;
+	virtual int GetStringFactoryReturnTypeId(asDWORD *flags) const;
 
 	// Default array type
 	virtual int RegisterDefaultArrayType(const char *type);

@@ -1,6 +1,8 @@
 #ifndef SCRIPTHELPER_H
 #define SCRIPTHELPER_H
 
+#include <sstream>
+
 #ifndef ANGELSCRIPT_H
 // Avoid having to inform include path if header is already include before
 #include <angelscript.h>
@@ -28,6 +30,10 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ret, int retT
 // Write the registered application interface to a file for an offline compiler.
 // The format is compatible with the offline compiler in /sdk/samples/asbuild/.
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
+
+// Write the registered application interface to a text stream.
+int WriteConfigToStream(asIScriptEngine *engine, std::ostream &strm); 
+int ConfigEngineFromStream(asIScriptEngine *engine, std::istream &strm);
 
 // Print details of the script exception to the standard output
 void PrintException(asIScriptContext *ctx, bool printStack = false);

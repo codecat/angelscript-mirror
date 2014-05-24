@@ -602,7 +602,7 @@ public:
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0) = 0;
-	virtual int GetStringFactoryReturnTypeId() const = 0;
+	virtual int GetStringFactoryReturnTypeId(asDWORD *flags = 0) const = 0;
 
 	// Default array type
 	virtual int RegisterDefaultArrayType(const char *type) = 0;
