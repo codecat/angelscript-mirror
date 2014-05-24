@@ -23,7 +23,7 @@ int *CreateWidget()
 class CVariant
 {
 public:
-	CVariant(asIScriptEngine *engine) { m_engine = engine; }
+	CVariant(asIScriptEngine *engine) { m_engine = engine; m_typeId = 0; m_valueObj = 0; }
 	CVariant(const CVariant &o) { m_engine = o.m_engine; m_typeId = 0; m_valueObj = 0; Set(const_cast<void**>(&o.m_valueObj), o.m_typeId); }
 	~CVariant() { Clear(); }
 	CVariant &operator=(const CVariant &o) 
@@ -280,21 +280,27 @@ bool Test()
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
+		// TODO: runtime optimize: The byte code can be improved
 		r = ExecuteString(engine, "var v = 42; \n"
 								  "int val = int(v); \n"
  								  "assert( val == 42 ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// TODO: runtime optimize: The byte code can be improved
 		r = ExecuteString(engine, "var v = 'test'; \n"
 								  "string val = string(v); \n"
 								  "assert( val == 'test' ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// TODO: runtime optimize: The byte code can be improved
 		r = ExecuteString(engine, "var @v = array<int> = {1,2}; \n"
-								  "array<int> val = cast<array<int>>(v); \n"
-								  "assert( val[0] == 1 && val[1] == 2 ); \n");
+								  "array<int> @val = cast<array<int>>(v); \n"
+								  "assert( val[0] == 1 && val[1] == 2 ); \n"
+								  "val[0] = 2; \n"
+								  "array<int> @val2 = cast<array<int>>(v); \n"
+								  "assert( val2[0] == 2 ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 			

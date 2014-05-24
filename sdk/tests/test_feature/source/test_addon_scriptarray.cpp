@@ -146,7 +146,7 @@ bool Test2();
 class ClassExceptionInConstructor
 {
 public:
-	ClassExceptionInConstructor() { throw std::exception("error"); }
+	ClassExceptionInConstructor() { throw std::exception(); }
 	~ClassExceptionInConstructor() {}
 	ClassExceptionInConstructor &operator=(const ClassExceptionInConstructor &) { return *this; }
 

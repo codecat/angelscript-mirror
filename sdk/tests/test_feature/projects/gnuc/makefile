@@ -14,6 +14,7 @@ SRCNAMES = \
   bstr.cpp \
   main.cpp \
   test_2func.cpp \
+  test_addon_contextmgr.cpp \
   test_addon_scriptarray.cpp \
   test_addon_scriptbuilder.cpp \
   test_addon_scriptgrid.cpp \
@@ -181,6 +182,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/serializer.o \
   obj/debugger.o \
   obj/weakref.o \
+  obj/contextmgr.o \
 
 
 BIN = ../../bin/testgnuc
@@ -239,6 +241,9 @@ obj/debugger.o: ../../../../add_on/debugger/debugger.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/weakref.o: ../../../../add_on/weakref/weakref.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/contextmgr.o: ../../../../add_on/contextmgr/contextmgr.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

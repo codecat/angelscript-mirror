@@ -5922,7 +5922,6 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 			toRef.MakeReadOnly(false);
 			asCArray<asSExprContext *> args;
 			asSExprContext arg(engine);
-			arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
 			// Don't mark the variable as temporary, so it won't be freed too early
 			arg.type.SetVariable(toRef, stackOffset, false);
 			arg.type.isLValue = true;
@@ -5934,8 +5933,8 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 
 			// Use the reference to the variable as the result of the expression
 			// Now we can mark the variable as temporary
+			toRef.MakeReference(false);
 			ctx->type.SetVariable(toRef, stackOffset, true);
-			ctx->bc.InstrSHORT(asBC_PSF, (short)stackOffset);
 		}
 		else
 			ctx->type.Set(to);

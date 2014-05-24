@@ -339,6 +339,33 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test saving and loading script with string literal
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+
+		const char *script = 
+			"void func() { \n"
+			"  'test'; \n"
+			"  return; \n"
+			"} \n";
+
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"1");
+		mod->SaveByteCode(&stream);
+
+		if( mod->LoadByteCode(&stream) != 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test saving and loading script with array of classes initialized from initialization list
 	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
@@ -378,14 +405,14 @@ bool Test()
 			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-			asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			asIScriptModule *mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE);
 			mod1->AddScriptSection("test",
 				"funcdef void CALLBACK(); \n");
 			r = mod1->Build();
 			if( r < 0 )
 				TEST_FAILED;
 
-			asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
 			mod2->AddScriptSection("test",
 				"funcdef void CALLBACK(); \n"
 				"void Foo1(CALLBACK@){} \n"
@@ -411,12 +438,12 @@ bool Test()
 			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-			asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			asIScriptModule *mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE);
 			r = mod1->LoadByteCode(&stream1);
 			if( r < 0 )
 				TEST_FAILED;
 
-			asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
 			r = mod2->LoadByteCode(&stream2);
 			if( r < 0 )
 				TEST_FAILED;
@@ -450,12 +477,12 @@ bool Test()
 			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-			asIScriptModule *mod1 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			asIScriptModule *mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE);
 			r = mod1->LoadByteCode(&stream3);
 			if( r < 0 )
 				TEST_FAILED;
 
-			asIScriptModule *mod2 = engine->GetModule(0, asGM_ALWAYS_CREATE);
+			asIScriptModule *mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE);
 			r = mod2->LoadByteCode(&stream4);
 			if( r < 0 )
 				TEST_FAILED;

@@ -206,7 +206,7 @@ void ExceptionHandle_gen(asIScriptGeneric *gen)
 
 std::string ReturnStringButException()
 {
-	throw std::exception("error"); // random exception. AngelScript will catch all the same way
+	throw std::exception(); // random exception. AngelScript will catch all the same way
 	return ""; // This is never returned so AngelScript has to properly handle the situation
 }
 
