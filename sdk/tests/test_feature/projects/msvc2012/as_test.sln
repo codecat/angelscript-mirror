@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asbuild", "..\..\..\..\samp
 		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD} = {39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asrun", "..\..\..\..\samples\asrun\projects\msvc2012\asrun.vcxproj", "{271C24EA-8749-48F2-AF08-D428EAA26441}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -69,6 +71,18 @@ Global
 		{1454C75F-8CE0-450D-A520-D9D487A37ACD}.Release|Win32.ActiveCfg = Release|Win32
 		{1454C75F-8CE0-450D-A520-D9D487A37ACD}.Release|Win32.Build.0 = Release|Win32
 		{1454C75F-8CE0-450D-A520-D9D487A37ACD}.Release|x64.ActiveCfg = Release|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Debug|ARM.ActiveCfg = Debug|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Debug|Win32.ActiveCfg = Debug|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Debug|Win32.Build.0 = Debug|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Debug|x64.ActiveCfg = Debug|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Release|ARM.ActiveCfg = Release|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Release|Win32.ActiveCfg = Release|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Release|Win32.Build.0 = Release|Win32
+		{271C24EA-8749-48F2-AF08-D428EAA26441}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

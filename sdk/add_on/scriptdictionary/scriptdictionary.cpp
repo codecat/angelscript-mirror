@@ -952,9 +952,9 @@ CScriptDictionary::CIterator CScriptDictionary::end() const
 }
 
 CScriptDictionary::CIterator::CIterator(
-		const CScriptDictionary &dict, 
+		const CScriptDictionary &dict,
 		std::map<std::string, CScriptDictValue>::const_iterator it)
-	: m_dict(dict), m_it(it)
+	: m_it(it), m_dict(dict)
 {}
 
 void CScriptDictionary::CIterator::operator++() 

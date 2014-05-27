@@ -691,6 +691,9 @@ int asCContext::SetObject(void *obj)
 	asASSERT( *(asPWORD*)&m_regs.stackFramePointer[0] == 0 );
 
 	*(asPWORD*)&m_regs.stackFramePointer[0] = (asPWORD)obj;
+
+	// TODO: This should be optional by having a flag where the application can chose whether it should be done or not
+	//       The flag could be named something like takeOwnership and have default value of true
 	if( obj && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT) )
 		reinterpret_cast<asCScriptObject*>(obj)->AddRef();
 

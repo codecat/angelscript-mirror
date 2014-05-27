@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.0 WIP - 2014/05/24</h2>
+<h2>Version 2.29.0 WIP - 2014/05/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetSubTypeId and GetSubType now works for registered template specializations too (Thanks Jason Goepel)
 <li>Loading bytecode with funcdefs declared from script wasn't working identical to building from source (Thanks cvet)
 <li>GarbageCollect(asGC_FULL_CYCLE | asGC_DESTROY_GARBAGE) will now properly destroy the garbage in the new generation too (Thanks Maciej Biedrzycki)
+<li>Stack unwinding now works on Linux 64bit with native calling conventions
 </ul>
 <li>Library
 <ul>

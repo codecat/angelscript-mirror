@@ -516,7 +516,7 @@ asCScriptEngine::asCScriptEngine()
 	defaultAccessMask = 1;
 
 	msgCallback = 0;
-    jitCompiler = 0;
+	jitCompiler = 0;
 
 	// Create the global namespace
 	defaultNamespace = AddNameSpace("");
@@ -4288,8 +4288,8 @@ bool asCScriptEngine::CallGlobalFunctionRetBool(void *param1, void *param2, asSS
 
 void *asCScriptEngine::CallAlloc(const asCObjectType *type) const
 {
-    // Allocate 4 bytes as the smallest size. Otherwise CallSystemFunction may try to
-    // copy a DWORD onto a smaller memory block, in case the object type is return in registers.
+	// Allocate 4 bytes as the smallest size. Otherwise CallSystemFunction may try to
+	// copy a DWORD onto a smaller memory block, in case the object type is return in registers.
 
 	// Pad to the next even 4 bytes to avoid asBC_CPY writing outside of allocated buffer for registered POD types
 	asUINT size = type->size;

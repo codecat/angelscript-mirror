@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -36,6 +36,10 @@
  * Initial author: niteice
  */
 
+// Useful references for the System V AMD64 ABI:
+// http://eli.thegreenplace.net/2011/09/06/stack-frame-layout-on-x86-64/
+// http://math-atlas.sourceforge.net/devel/assembly/abi_sysV_amd64.pdf
+ 
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY
@@ -73,6 +77,8 @@ static asQWORD __attribute__((noinline)) X64_CallFunction(const asQWORD *args, i
 
 	// Backup stack pointer in R15 that is guaranteed to maintain its value over function calls
 		"  movq %%rsp, %%r15 \n"
+	// Make sure the stack unwind logic knows we've backed up the stack pointer in register r15
+		" .cfi_def_cfa_register r15 \n"
 
 	// Skip the first 128 bytes on the stack frame, called "red zone",  
 	// that might be used by the compiler to store temporary values
@@ -124,6 +130,8 @@ static asQWORD __attribute__((noinline)) X64_CallFunction(const asQWORD *args, i
 
 	// Restore stack pointer
 		"  mov %%r15, %%rsp \n"
+	// Inform the stack unwind logic that the stack pointer has been restored
+		" .cfi_def_cfa_register rsp \n"
 
 	// Put return value in retQW1 and retQW2, using either RAX:RDX or XMM0:XMM1 depending on type of return value
 		"  movl %5, %%ecx \n"
