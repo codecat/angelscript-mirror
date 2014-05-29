@@ -1224,7 +1224,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "main", mod);
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
@@ -1256,7 +1256,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "main", mod);
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
@@ -1288,7 +1288,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "main", mod);
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
@@ -1337,7 +1337,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = ExecuteString(engine, "main", mod);
+		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

@@ -28,6 +28,32 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test invalid use of function pointer
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func2() { \n"
+			"  func; \n"
+			"} \n"
+			"void func() {} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void func2()\n"
+						   "test (2, 3) : Error   : Invalid expression: ambiguous name\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test value comparison for function pointers
 /*
 	{
@@ -42,7 +68,7 @@ bool Test()
 			"void func1() {} \n"
 			"void func2() {} \n");
 		r = mod->Build();
-		if( r >= 0 )
+		if( r < 0 )
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "CALLBACK@ c1 = func1, c2 = func1; \n"
@@ -56,6 +82,7 @@ bool Test()
 		engine->Release();
 	}
 */
+
 	// Proper error message when trying to pass class method as function pointer directly
 	// http://www.gamedev.net/topic/655390-is-there-a-bug-with-function-callbacks/
 	{
@@ -635,7 +662,7 @@ bool Test()
 			"funcdef void F(); \n"
 		    "class t { \n"
 			"  void func() { \n"
-			"    @func; \n" // TODO: Should warn about expression that doesn't do anything
+			"    @func; \n"
 			"    F @f = @func; \n"
             "    } \n"
 			"} \n";
@@ -645,6 +672,7 @@ bool Test()
 			TEST_FAILED;
 		// TODO: The error message should be better
 		if( bout.buffer != "script (3, 3) : Info    : Compiling void t::func()\n"
+			               "script (4, 5) : Error   : Invalid expression: ambiguous name\n"
 		                   "script (5, 12) : Error   : Can't implicitly convert from 't' to 'F@&'.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

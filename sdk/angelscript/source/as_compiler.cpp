@@ -4253,6 +4253,10 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 		asSExprContext expr(engine);
 		CompileAssignment(enode->firstChild, &expr);
 
+		// Must not have unused ambiguous names
+		if( expr.IsClassMethod() || expr.IsGlobalFunc() )
+			Error(TXT_INVALID_EXPRESSION_AMBIGUOUS_NAME, enode);
+
 		// If we get here and there is still an unprocessed property
 		// accessor, then process it as a get access. Don't call if there is
 		// already a compile error, or we might report an error that is not valid
