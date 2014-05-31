@@ -1962,6 +1962,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	if( behaviour != asBEHAVE_FACTORY && behaviour != asBEHAVE_LIST_FACTORY )
 		func.objectType = objectType;
 
+	// TODO: cleanup: This is identical to what is in RegisterMethodToObjectType
 	// Check if the method restricts that use of the template to value types or reference types
 	if( objectType->flags & asOBJ_TEMPLATE )
 	{
@@ -1973,6 +1974,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 					objectType->acceptValueSubType = false;
 				else if( !func.returnType.IsReference() )
 					objectType->acceptRefSubType = false;
+				
+				// Can't support template subtypes by value, since each type is treated differently in the ABI
+				if( !func.returnType.IsObjectHandle() && !func.returnType.IsReference() )
+					return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), decl);
 			}
 
 			for( asUINT n = 0; n < func.parameterTypes.GetLength(); n++ )
@@ -1984,6 +1989,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 						objectType->acceptValueSubType = false;
 					else if( !func.parameterTypes[n].IsReference() )
 						objectType->acceptRefSubType = false;
+
+					// Can't support template subtypes by value, since each type is treated differently in the ABI
+					if( !func.parameterTypes[n].IsObjectHandle() && !func.parameterTypes[n].IsReference() )
+						return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), decl);
 				}
 			}
 		}
@@ -2812,6 +2821,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 					func->objectType->acceptValueSubType = false;
 				else if( !func->returnType.IsReference() )
 					func->objectType->acceptRefSubType = false;
+				
+				// Can't support template subtypes by value, since each type is treated differently in the ABI
+				if( !func->returnType.IsObjectHandle() && !func->returnType.IsReference() )
+					return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 			}
 
 			for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
@@ -2823,6 +2836,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 						func->objectType->acceptValueSubType = false;
 					else if( !func->parameterTypes[n].IsReference() )
 						func->objectType->acceptRefSubType = false;
+					
+					// Can't support template subtypes by value, since each type is treated differently in the ABI
+					if( !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() )
+						return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 				}
 			}
 		}

@@ -622,28 +622,28 @@ bool Test()
 		engine->Release();
 	}
 
-	// Test that a template registered to take subtype by value cannot be instanciated for reference types
+	// Test that a template registered to take subtype by value isn't supported
 	{
 		bout.buffer = "";
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		RegisterScriptString(engine);
 
 		r = engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int &in)", asFUNCTIONPR(MyTmpl_factory, (asIObjectType*), MyTmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL); assert( r >= 0 );
 
-		// This method makes it impossible to instanciate the template for reference types
-		r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(T)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		
-		r = ExecuteString(engine, "MyTmpl<string> t;");
+		// This method is not supported. The subtype must not be passed by value since it would impact the ABI
+		r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(T)", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
-		{
 			TEST_FAILED;
-		}
+		
+		r = engine->RegisterObjectMethod("MyTmpl<T>", "T GetVal()", asFUNCTION(0), asCALL_GENERIC);
+		if( r >= 0 )
+			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'string'\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl' and 'void SetVal(T)' (Code: -7)\n"
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl' and 'T GetVal()' (Code: -7)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
