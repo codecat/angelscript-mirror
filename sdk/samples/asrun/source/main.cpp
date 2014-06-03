@@ -310,7 +310,7 @@ CScriptArray *GetCommandLineArgs()
 
 	// Create the array object
 	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
-	g_commandLineArgs = new CScriptArray(0, arrayType);
+	g_commandLineArgs = CScriptArray::Create(arrayType, (asUINT)0);
 
 	// Find the existence of the delimiter in the input string
 	for( int n = 0; n < g_argc; n++ )

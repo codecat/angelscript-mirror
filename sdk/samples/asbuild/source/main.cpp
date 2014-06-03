@@ -23,9 +23,6 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile);
 int CompileScript(asIScriptEngine *engine, const char *scriptFile);
 int SaveBytecode(asIScriptEngine *engine, const char *outputFile);
 static const char *GetCurrentDir(char *buf, size_t size);
-asETokenClass GetToken(asIScriptEngine *engine, string &token, const string &text, asUINT &pos);
-asUINT GetLineNumber(const string &text, asUINT pos);
-void ReplaceSlashQuote(string &str);
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
@@ -120,48 +117,6 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 	engine->WriteMessage(configFile, 0, 0, asMSGTYPE_INFORMATION, "Configuration successfully registered");
 	
 	return 0;
-}
-
-asETokenClass GetToken(asIScriptEngine *engine, string &token, const string &text, asUINT &pos)
-{
-	int len;
-	asETokenClass t = engine->ParseToken(&text[pos], text.length() - pos, &len);
-	while( (t == asTC_WHITESPACE || t == asTC_COMMENT) && pos < text.length() )
-	{
-		pos += len;
-		t = engine->ParseToken(&text[pos], text.length() - pos, &len);
-	}
-
-	token.assign(&text[pos], len);
-
-	pos += len;
-
-	return t;
-}
-
-void ReplaceSlashQuote(string &str)
-{
-	int pos = 0;
-	for(;;)
-	{
-		// Search for \" in the string
-		pos = str.find("\\\"", pos);
-		if( pos == string::npos )
-			break;
-
-		// Remove the \ character
-		str.erase(pos, 1);
-	}
-}
-
-asUINT GetLineNumber(const string &text, asUINT pos)
-{
-	asUINT count = 1;
-	for( asUINT n = 0; n < pos; n++ )
-		if( text[n] == '\n' )
-			count++;
-
-	return count;
 }
 
 int CompileScript(asIScriptEngine *engine, const char *scriptFile)
