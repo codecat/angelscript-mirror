@@ -848,11 +848,10 @@
 			#if defined(__SOFTFP__) && __SOFTFP__ == 1
 				// -ffloat-abi=softfp or -ffloat-abi=soft
 				#define AS_SOFTFP
-			#else
-				// Tested with hard float abi (probably works with soft abi
-				// because it is very similar to Android ARM).
-				#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#endif
+
+			// Tested with both hard float and soft float abi
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 
 		#elif defined(__mips__)
 			#define AS_MIPS
