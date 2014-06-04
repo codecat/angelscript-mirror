@@ -34,6 +34,8 @@
  * Author: Ionut "gargltk" Leonte <ileonte@bitdefender.com>
  *
  * Initial author: niteice
+ *
+ * Added support for functor methods by Jordi Oliveras Rovira in April, 2014.
  */
 
 // Useful references for the System V AMD64 ABI:
@@ -180,8 +182,27 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		callConv++;
 	}
 
+#ifndef AS_NO_THISCALL_FUNCTOR_METHOD
+	// Unpack the two object pointers
+	void **objectsPtrs  = (void**)obj;
+	void  *secondObject = objectsPtrs[1];
+	obj                 = objectsPtrs[0];
+
+	// param_post has value 2 if is an THISCALL_OBJLAST
+#endif
+
+
+#ifdef AS_NO_THISCALL_FUNCTOR_METHOD
 	// Determine the real function pointer in case of virtual method
 	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ) ) 
+#else
+	if ( obj && ( callConv == ICC_VIRTUAL_THISCALL ||
+		callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM) )
+#endif
 	{
 		vftable = *((funcptr_t**)obj);
 		func = vftable[FuncPtrToUInt(asFUNCTION_t(func)) >> 3];
@@ -203,6 +224,11 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 			break;
 		}
+#ifndef AS_NO_THISCALL_FUNCTOR_METHOD
+		case ICC_THISCALL_OBJLAST:
+		case ICC_VIRTUAL_THISCALL_OBJLAST:
+			param_post = 2;
+#endif
 		case ICC_THISCALL:
 		case ICC_VIRTUAL_THISCALL:
 		case ICC_CDECL_OBJFIRST: 
@@ -214,6 +240,11 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 			break;
 		}
+#ifndef AS_NO_THISCALL_FUNCTOR_METHOD
+		case ICC_THISCALL_OBJLAST_RETURNINMEM:
+		case ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM:
+			param_post = 2;
+#endif
 		case ICC_THISCALL_RETURNINMEM:
 		case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		case ICC_CDECL_OBJFIRST_RETURNINMEM: 
@@ -227,7 +258,33 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 			break;
 		}
-		case ICC_CDECL_OBJLAST: 
+#ifndef AS_NO_THISCALL_FUNCTOR_METHOD
+		case ICC_THISCALL_OBJFIRST:
+		case ICC_VIRTUAL_THISCALL_OBJFIRST:
+		{
+			paramBuffer[0] = (asPWORD)obj;
+			paramBuffer[1] = (asPWORD)secondObject;
+			argsType[0] = x64INTARG;
+			argsType[1] = x64INTARG;
+
+			argIndex = 2;
+			break;
+		}
+		case ICC_THISCALL_OBJFIRST_RETURNINMEM:
+		case ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM:
+		{
+			paramBuffer[0] = (asPWORD)retPointer;
+			paramBuffer[1] = (asPWORD)obj;
+			paramBuffer[2] = (asPWORD)secondObject;
+			argsType[0] = x64INTARG;
+			argsType[1] = x64INTARG;
+			argsType[2] = x64INTARG;
+
+			argIndex = 3;
+			break;
+		}
+#endif
+		case ICC_CDECL_OBJLAST:
 			param_post = 1;
 			break;
 		case ICC_CDECL_OBJLAST_RETURNINMEM: 
@@ -345,7 +402,11 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// For the CDECL_OBJ_LAST calling convention we need to add the object pointer as the last argument
 	if( param_post )
 	{
+#ifdef AS_NO_THISCALL_FUNCTOR_METHOD
 		paramBuffer[argIndex] = (asPWORD)obj;
+#else
+		paramBuffer[argIndex] = (asPWORD)(param_post > 1 ? secondObject : obj);
+#endif
 		argsType[argIndex] = x64INTARG;
 		argIndex++;
 	}

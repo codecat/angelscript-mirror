@@ -113,6 +113,8 @@ SRCNAMES = \
   test_template.cpp \
   test_thiscall_asglobal.cpp \
   test_thiscall_class.cpp \
+  test_thiscall_as_method.cpp \
+  test_thiscall_as_method_config.cpp \
   test_typedef.cpp \
   test_unsaferef.cpp \
   test_vartype.cpp \

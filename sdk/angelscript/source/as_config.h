@@ -101,6 +101,10 @@
 // if the new order of the member initialization caused null pointer exceptions in older
 // scripts (e.g. if a base class accessed members of a derived class through a virtual method).
 
+// AS_USE_NAMESPACE
+// Adds the AngelScript namespace on the declarations.
+
+
 
 //
 // Library usage
@@ -140,11 +144,11 @@
 // STDCALL
 // This is used to declare a function to use the stdcall calling convention.
 
-// AS_USE_NAMESPACE
-// Adds the AngelScript namespace on the declarations.
-
 // AS_NO_MEMORY_H
 // Some compilers don't come with the memory.h header file.
+
+// AS_NO_THISCALL_FUNCTOR_METHOD
+// Defined if the support for functor methods hasn't been implemented on the platform.
 
 
 
@@ -346,6 +350,9 @@
 #define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
 #define THISCALL_CALLEE_POPS_HIDDEN_RETURN_POINTER
 
+// Not implemented by default. Undefined with tested platforms.
+#define AS_NO_THISCALL_FUNCTOR_METHOD
+
 
 // Embarcadero C++Builder
 #if defined(__BORLANDC__)
@@ -460,8 +467,13 @@
 	#else
 		#if defined(_XBOX) || (defined(_M_IX86) && !defined(__LP64__))
 			#define AS_X86
+			#ifndef _XBOX
+				// Not tested with xbox (only enabled if is Windows)
+				#undef AS_NO_THISCALL_FUNCTOR_METHOD
+			#endif 
 		#elif defined(_M_X64)
 			#define AS_X64_MSVC
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define AS_LARGE_OBJS_PASSED_BY_REF
 			#define AS_LARGE_OBJ_MIN_SIZE 3
@@ -657,6 +669,7 @@
 		#if (defined(_ARM_) || defined(__arm__))
 			// iOS use ARM processor
 			#define AS_ARM
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY
@@ -698,6 +711,7 @@
 		#elif (defined(i386) || defined(__i386) || defined(__i386__)) && !defined(__LP64__)
 			// Support native calling conventions on Mac OS X + Intel 32bit CPU
 			#define AS_X86
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#undef COMPLEX_MASK
 			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
@@ -707,6 +721,7 @@
 		#elif defined(__LP64__) && !defined(__ppc__) && !defined(__PPC__) && !defined(__arm64__)
 			// http://developer.apple.com/library/mac/#documentation/DeveloperTools/Conceptual/LowLevelABI/140-x86-64_Function_Calling_Conventions/x86_64.html#//apple_ref/doc/uid/TP40005035-SW1
 			#define AS_X64_GCC
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define HAS_128_BIT_PRIMITIVES
 			#define SPLIT_OBJS_BY_MEMBER_TYPES
 			#undef COMPLEX_MASK
@@ -753,6 +768,7 @@
 		#if (defined(i386) || defined(__i386) || defined(__i386__)) && !defined(__LP64__)
 			// Support native calling conventions on Intel 32bit CPU
 			#define AS_X86
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 
 			// As of version 4.7 MinGW changed the ABI, presumably
 			// to be better aligned with how MSVC works
@@ -766,6 +782,7 @@
 
 		#elif defined(__x86_64__)
 			#define AS_X64_MINGW
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define AS_LARGE_OBJS_PASSED_BY_REF
 			#define AS_LARGE_OBJ_MIN_SIZE 3
 			#define COMPLEX_OBJS_PASSED_BY_REF
@@ -791,8 +808,10 @@
 			// Support native calling conventions on Intel 32bit CPU
 			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 		#elif defined(__LP64__) && !defined(__arm64__)
 			#define AS_X64_GCC
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define HAS_128_BIT_PRIMITIVES
 			#define SPLIT_OBJS_BY_MEMBER_TYPES
 			#define AS_LARGE_OBJS_PASSED_BY_REF
@@ -829,6 +848,10 @@
 			#if defined(__SOFTFP__) && __SOFTFP__ == 1
 				// -ffloat-abi=softfp or -ffloat-abi=soft
 				#define AS_SOFTFP
+			#else
+				// Tested with hard float abi (probably works with soft abi
+				// because it is very similar to Android ARM).
+				#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#endif
 
 		#elif defined(__mips__)
@@ -921,36 +944,47 @@
 	#elif defined(ANDROID) || defined(__ANDROID__)
 		#define AS_ANDROID
 
-		// Android NDK 9+ supports posix threads
+		// Android 2.3+ supports posix threads
 		#define AS_POSIX_THREADS
 
+		// Common configuration with Android arm and x86
 		#define CDECL_RETURN_SIMPLE_IN_MEMORY
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 
-		#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
-		#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
-		#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
-
-		#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
-		#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
-		#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+		#undef COMPLEX_MASK
+		#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
+		#undef COMPLEX_RETURN_MASK
+		#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
 
 		#if (defined(_ARM_) || defined(__arm__))
+			// Android ARM
+
+			#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+			#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+			#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+			#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+			#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+
 			// The stdcall calling convention is not used on the arm cpu
 			#undef STDCALL
 			#define STDCALL
 
 			#undef GNU_STYLE_VIRTUAL_METHOD
 
-			#undef COMPLEX_MASK
-			#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
-			#undef COMPLEX_RETURN_MASK
-			#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
-
 			#define AS_ARM
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#define AS_SOFTFP
 			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
+		#elif (defined(i386) || defined(__i386) || defined(__i386__)) && !defined(__LP64__)
+			// Android Intel x86 (same config as Linux x86). Tested with Intel x86 Atom System Image.
+
+			// Support native calling conventions on Intel 32bit CPU
+			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
+			#define AS_X86
+			#undef AS_NO_THISCALL_FUNCTOR_METHOD
 		#endif
 
 	// Haiku OS

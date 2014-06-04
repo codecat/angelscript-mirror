@@ -153,6 +153,8 @@ namespace TestCDeclObjLast      { bool Test(); }
 namespace TestMixin             { bool Test(); }
 namespace TestThiscallAsGlobal  { bool Test(); }
 namespace TestPow               { bool Test(); }
+namespace TestThisCallMethod    { bool Test(); }
+namespace TestThisCallMethod_ConfigErrors { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -228,6 +230,7 @@ int allTests()
 	if( Test_Addon_ScriptHandle::Test()  ) goto failed; else PRINTF("-- Test_Addon_ScriptHandle passed\n");
 	if( Test_Addon_ScriptArray::Test()   ) goto failed; else PRINTF("-- Test_Addon_ScriptArray passed\n");
 	if( Test_Addon_Dictionary::Test()    ) goto failed; else PRINTF("-- Test_Addon_Dictionary passed\n");
+	if( TestThisCallMethod_ConfigErrors::Test() ) goto failed; else PRINTF("-- TestThisCallMethod_ConfigErrors passed\n");
 	if( TestAuto::Test()                ) goto failed; else PRINTF("-- TestAuto passed\n");
 	if( TestPow::Test()                 ) goto failed; else PRINTF("-- TestPow passed\n");
 	if( TestMixin::Test()               ) goto failed; else PRINTF("-- TestMixin passed\n");
@@ -372,6 +375,9 @@ int allTests()
 
 		// thiscall_asglobal
 		if( TestThiscallAsGlobal::Test()  ) goto failed; else PRINTF("-- TestThiscallAsGlobal passed\n");
+
+		// thiscall_objlast & objfirst
+		if( TestThisCallMethod::Test()    ) goto failed; else PRINTF("-- TestThisCallMethod passed\n");
 
 		// stdcall
 		if( TestStdcall4Args()            ) goto failed; else PRINTF("-- TestStdcall4Args passed\n");

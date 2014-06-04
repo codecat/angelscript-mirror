@@ -109,6 +109,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_MEMBER_INIT
 		"AS_NO_MEMBER_INIT "
 #endif
+#ifdef AS_NO_THISCALL_FUNCTOR_METHOD
+		"AS_NO_THISCALL_FUNCTOR_METHOD "
+#endif
 
 	// Target system
 #ifdef AS_WIN
@@ -986,7 +989,7 @@ int asCScriptEngine::SetMessageCallback(const asSFuncPtr &callback, void *obj, a
 	msgCallback = true;
 	msgCallbackObj = obj;
 	bool isObj = false;
-	if( (unsigned)callConv == asCALL_GENERIC )
+	if( (unsigned)callConv == asCALL_GENERIC || (unsigned)callConv == asCALL_THISCALL_OBJFIRST || (unsigned)callConv == asCALL_THISCALL_OBJLAST )
 	{
 		msgCallback = false;
 		return asNOT_SUPPORTED;
@@ -1917,6 +1920,9 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 #ifdef AS_MAX_PORTABILITY
 		if( callConv != asCALL_GENERIC )
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+#else
+		if( callConv == asCALL_THISCALL_OBJFIRST || callConv == asCALL_THISCALL_OBJLAST )
+			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 #endif
 		int r = DetectCallingConvention(false, funcPointer, callConv, objForThiscall, &internal);
 		if( r < 0 )
@@ -2694,7 +2700,7 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 }
 
 // interface
-int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
 {
 	if( obj == 0 )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
@@ -2716,14 +2722,14 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		dt.GetObjectType() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
-	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv);
+	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv, objForThiscall);
 }
 
 // internal
-int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv)
+int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
 {
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(true, funcPointer, callConv, 0, &internal);
+	int r = DetectCallingConvention(true, funcPointer, callConv, objForThiscall, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 
@@ -2735,6 +2741,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	if( callConv != asCALL_THISCALL &&
 		callConv != asCALL_CDECL_OBJLAST &&
 		callConv != asCALL_CDECL_OBJFIRST &&
+#ifndef AS_NO_THISCALL_FUNCTOR_METHOD
+		callConv != asCALL_THISCALL_OBJFIRST &&
+		callConv != asCALL_THISCALL_OBJLAST &&
+#endif
 		callConv != asCALL_GENERIC )
 		return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 #endif

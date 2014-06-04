@@ -4786,7 +4786,7 @@ int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 	m_regs.doProcessSuspend = true;
 	m_lineCallbackObj = obj;
 	bool isObj = false;
-	if( (unsigned)callConv == asCALL_GENERIC )
+	if( (unsigned)callConv == asCALL_GENERIC || (unsigned)callConv == asCALL_THISCALL_OBJFIRST || (unsigned)callConv == asCALL_THISCALL_OBJLAST )
 	{
 		m_lineCallback = false;
 		m_regs.doProcessSuspend = m_doSuspend;
@@ -4825,7 +4825,7 @@ int asCContext::SetExceptionCallback(asSFuncPtr callback, void *obj, int callCon
 	m_exceptionCallback = true;
 	m_exceptionCallbackObj = obj;
 	bool isObj = false;
-	if( (unsigned)callConv == asCALL_GENERIC )
+	if( (unsigned)callConv == asCALL_GENERIC || (unsigned)callConv == asCALL_THISCALL_OBJFIRST || (unsigned)callConv == asCALL_THISCALL_OBJLAST )
 		return asNOT_SUPPORTED;
 	if( (unsigned)callConv >= asCALL_THISCALL )
 	{
