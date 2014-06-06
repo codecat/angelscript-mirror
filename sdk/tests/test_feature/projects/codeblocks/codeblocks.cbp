@@ -89,6 +89,7 @@
 		<Unit filename="../../source/stdvector.h" />
 		<Unit filename="../../source/test2modules.cpp" />
 		<Unit filename="../../source/test_2func.cpp" />
+		<Unit filename="../../source/test_addon_contextmgr.cpp" />
 		<Unit filename="../../source/test_addon_debugger.cpp" />
 		<Unit filename="../../source/test_addon_dictionary.cpp" />
 		<Unit filename="../../source/test_addon_scriptarray.cpp" />
@@ -105,6 +106,7 @@
 		<Unit filename="../../source/test_arrayintf.cpp" />
 		<Unit filename="../../source/test_arrayobject.cpp" />
 		<Unit filename="../../source/test_assign.cpp" />
+		<Unit filename="../../source/test_auto.cpp" />
 		<Unit filename="../../source/test_autohandle.cpp" />
 		<Unit filename="../../source/test_bits.cpp" />
 		<Unit filename="../../source/test_bool.cpp" />
@@ -153,6 +155,7 @@
 		<Unit filename="../../source/test_mixin.cpp" />
 		<Unit filename="../../source/test_module.cpp" />
 		<Unit filename="../../source/test_multiassign.cpp" />
+		<Unit filename="../../source/test_namedargs.cpp" />
 		<Unit filename="../../source/test_namespace.cpp" />
 		<Unit filename="../../source/test_nested.cpp" />
 		<Unit filename="../../source/test_nevervisited.cpp" />
@@ -190,6 +193,8 @@
 		<Unit filename="../../source/test_structintf.cpp" />
 		<Unit filename="../../source/test_suspend.cpp" />
 		<Unit filename="../../source/test_template.cpp" />
+		<Unit filename="../../source/test_thiscall_as_method.cpp" />
+		<Unit filename="../../source/test_thiscall_as_method_config.cpp" />
 		<Unit filename="../../source/test_thiscall_asglobal.cpp" />
 		<Unit filename="../../source/test_thiscall_class.cpp" />
 		<Unit filename="../../source/test_typedef.cpp" />

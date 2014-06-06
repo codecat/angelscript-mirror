@@ -93,16 +93,26 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 		if( base == asCALL_THISCALL || base == asCALL_THISCALL_OBJFIRST || base == asCALL_THISCALL_OBJLAST )
 		{
 			internalCallConv thisCallConv;
-			if (base == asCALL_THISCALL)
+			if( base == asCALL_THISCALL )
+			{
+				if( callConv != asCALL_THISCALL_ASGLOBAL && objForThiscall )
+					return asINVALID_ARG;
+
 				thisCallConv = ICC_THISCALL;
+			}
 			else
 			{
-				if (objForThiscall == 0)
+#ifdef AS_NO_THISCALL_FUNCTOR_METHOD
+				return asNOT_SUPPORTED;
+#endif
+
+				if( objForThiscall == 0 )
 					return asINVALID_ARG;
+
 				internal->objForThiscall = objForThiscall;
-				if (base == asCALL_THISCALL_OBJFIRST)
+				if( base == asCALL_THISCALL_OBJFIRST )
 					thisCallConv = ICC_THISCALL_OBJFIRST;
-				else //if (base == asCALL_THISCALL_OBJLAST)
+				else //if( base == asCALL_THISCALL_OBJLAST )
 					thisCallConv = ICC_THISCALL_OBJLAST;
 			}
 
@@ -495,6 +505,10 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		}
 	}
 #else
+	// TODO: clean-up: CallSystemFunctionNative should have two arguments for object pointers
+	//                 objForThiscall is the object pointer that should be used for the thiscall
+	//                 objForArg is the object pointer that should be passed as argument when using OBJFIRST or OBJLAST
+
 	// Used to save two object pointers with THISCALL_OBJLAST or THISCALL_OBJFIRST
 	void* objectsPtrs[2] = { 0, 0 };
 

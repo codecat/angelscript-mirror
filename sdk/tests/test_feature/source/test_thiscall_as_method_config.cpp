@@ -66,44 +66,46 @@ namespace TestThisCallMethod_ConfigErrors
 		// Value type behaviours checks
 		{
 			engine->RegisterObjectType("Val", sizeof(TestType), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CD);
+			engine->RegisterObjectType("Val2", sizeof(TestType), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CD);
 
 			// Constructor behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Value::Constructor), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Value::Constructor), asCALL_THISCALL_OBJLAST));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val2", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 
 			// Destructor behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Value::Destructor), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Value::Destructor), asCALL_THISCALL_OBJLAST));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val2", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 
 			// Copy constructor behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Value::CopyConstructor), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Value::CopyConstructor), asCALL_THISCALL_OBJLAST));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val2", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 
 			// List constructor behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) { float, float }", asFUNCTION(Value::ListConstructor), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Val", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) { float, float }", asFUNCTION(Value::ListConstructor), asCALL_THISCALL_OBJLAST));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) { float, float }", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK_OK(engine->RegisterObjectBehaviour("Val2", asBEHAVE_LIST_CONSTRUCT, "void f(int &in) { float, float }", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 		}
 
 		{
 			engine->RegisterObjectType("Ref", 0, asOBJ_REF);
+			engine->RegisterObjectType("Ref2", 0, asOBJ_REF);
 
 			// Factory behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_FACTORY, "Ref@ f()", asFUNCTION(Refer::Factory), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_FACTORY, "Ref@ f()", asFUNCTION(Refer::Factory), asCALL_THISCALL_OBJLAST));
+			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_FACTORY, "Ref@ f()", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref2", asBEHAVE_FACTORY, "Ref2@ f()", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 
 			// Add ref behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(Refer::AddRef), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(Refer::AddRef), asCALL_THISCALL_OBJLAST));
+			CHECK_OK(engine->RegisterObjectBehaviour("Ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK_OK(engine->RegisterObjectBehaviour("Ref2", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 
 			// Release behaviour
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(Refer::Release), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(Refer::Release), asCALL_THISCALL_OBJLAST));
+			CHECK_OK(engine->RegisterObjectBehaviour("Ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK_OK(engine->RegisterObjectBehaviour("Ref2", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 
 			// List factory behaviour
 			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_LIST_FACTORY, "Ref@ f(int &in) { float, float }",
-				asFUNCTION(Value::ListConstructor), asCALL_THISCALL_OBJFIRST));
-			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref", asBEHAVE_LIST_FACTORY, "Ref@ f(int &in) { float, float }",
-				asFUNCTION(Value::ListConstructor), asCALL_THISCALL_OBJLAST));
+				asFUNCTION(0), asCALL_THISCALL_OBJFIRST, (void*)1));
+			CHECK(asNOT_SUPPORTED, engine->RegisterObjectBehaviour("Ref2", asBEHAVE_LIST_FACTORY, "Ref2@ f(int &in) { float, float }",
+				asFUNCTION(0), asCALL_THISCALL_OBJLAST, (void*)1));
 		}
 
 		if (strstr(asGetLibraryOptions(), "THISCALL_METHOD_NO_IMPLEMENTED"))
