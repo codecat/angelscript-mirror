@@ -14,6 +14,45 @@ bool Test()
 	const char *script;
 	asIScriptModule *mod;
 
+	// Mixins and namespaces
+	// http://www.gamedev.net/topic/657378-mixin-and-namespace/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+
+		script =
+			"mixin class M1 \n"
+			"{ \n"
+			"  int a; \n"
+			"} \n"
+			"namespace N1 \n"
+			"{ \n"
+			"  class C1 : M1 \n"
+			"  { \n"
+			"    void foo() \n"
+			"    { \n"
+			"      a = 10; \n"
+			"    } \n"
+			"  } \n"
+			"} \n";
+		mod->AddScriptSection("test", script);
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	
+		engine->Release();
+	}
+
+	// Basic tests
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -29,6 +68,7 @@ bool Test()
 				"  int Prop1, Prop2; \n"
 				"} \n";
 
+			bout.buffer = "";
 			mod->AddScriptSection("", script);
 			r = mod->Build();
 			if( r >= 0 )

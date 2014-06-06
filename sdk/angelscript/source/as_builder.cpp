@@ -2537,6 +2537,8 @@ void asCBuilder::CompileClasses()
 			// added to the shared class that wasn't there in the previous
 			// compilation. We do not care if something that is there in the previous
 			// declaration is not included in the new declaration though.
+
+			asASSERT( decl->objType->interfaces.GetLength() == decl->objType->interfaceVFTOffsets.GetLength() );
 		}
 
 		// Methods included from mixin classes should take precedence over inherited methods
@@ -2771,6 +2773,8 @@ void asCBuilder::CompileClasses()
 
 		if( !decl->isExistingShared )
 			toValidate.PushLast(decl);
+
+		asASSERT( decl->objType->interfaces.GetLength() == decl->objType->interfaceVFTOffsets.GetLength() );
 	}
 
 	// TODO: Warn if a method overrides a base method without marking it as 'override'.
@@ -3035,7 +3039,20 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 			continue;
 		}
 
-		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
+		sMixinClass *mixin = 0;
+		while( ns )
+		{
+			// Need to make sure the name is not an object type 
+			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
+			if( objType == 0 )
+				mixin = GetMixinClass(name.AddressOf(), ns);
+			
+			if( objType || mixin )
+				break;
+
+			ns = GetParentNameSpace(ns);
+		}
+
 		if( mixin )
 		{
 			// Find methods from mixin declaration
@@ -3097,7 +3114,20 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 			continue;
 		}
 
-		sMixinClass *mixin = GetMixinClass(name.AddressOf(), ns);
+		sMixinClass *mixin = 0;
+		while( ns )
+		{
+			// Need to make sure the name is not an object type 
+			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
+			if( objType == 0 )
+				mixin = GetMixinClass(name.AddressOf(), ns);
+			
+			if( objType || mixin )
+				break;
+
+			ns = GetParentNameSpace(ns);
+		}
+
 		if( mixin )
 		{
 			// Find properties from mixin declaration
