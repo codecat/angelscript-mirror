@@ -240,19 +240,18 @@ int ExecuteWithDebug(asIScriptContext *ctx)
 <b>Path:</b> /sdk/add_on/contextmgr/
 
 The <code>CContextMgr</code> is a class designed to aid the management of multiple simultaneous 
-scripts executing in parallel. It supports both \ref doc_adv_concurrent "concurrent script threads" and \ref doc_adv_coroutine "co-routines". 
+scripts executing in parallel. It supports both \ref doc_adv_concurrent "concurrent script threads" 
+and \ref doc_adv_coroutine "co-routines". 
 
 If the application doesn't need multiple contexts, i.e. all scripts that are executed 
 always complete before the next script is executed, then this class is not necessary.
 
 Multiple context managers can be used, for example when you have a group of scripts controlling 
-ingame objects, and another group of scripts controlling GUI elements, then each of these groups
+in-game objects, and another group of scripts controlling GUI elements, then each of these groups
 may be managed by different context managers.
 
-Observe, that the context manager class hasn't been designed for multithreading, so you need to
+Observe that the context manager class hasn't been designed for multi-threading, so you need to
 be careful if your application needs to execute scripts from multiple threads.
-
-\todo update
 
 \see The samples \ref doc_samples_concurrent and \ref doc_samples_corout for uses
 
@@ -268,16 +267,17 @@ public:
   // Set the function that the manager will use to obtain the time in milliseconds.
   void SetGetTimeCallback(TIMEFUNC_t func);
 
-  // Registers the script function
+  // Registers the following:
   //
   //  void sleep(uint milliseconds)
   //
   // The application must set the get time callback for this to work
   void RegisterThreadSupport(asIScriptEngine *engine);
 
-  // Registers the script functions
+  // Registers the following:
   //
-  //  void createCoRoutine(const string &in functionName, any @arg)
+  //  funcdef void coroutine(dictionary@)
+  //  void createCoRoutine(coroutine @func, dictionary @args)
   //  void yield()
   void RegisterCoRoutineSupport(asIScriptEngine *engine);
 

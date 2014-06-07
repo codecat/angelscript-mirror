@@ -86,10 +86,11 @@ to each other by calling yield().
 
  - \ref doc_addon_ctxmgr
  - Co-routines created from the scripts with variable parameter structure.
- - Strings
+ - \ref doc_addon_std_string
  - Registered global functions
  - Handling the variable argument type
  - Passing arguments to script functions
+ - \ref doc_addon_dict
 
 
 \page doc_samples_events Events
@@ -102,7 +103,7 @@ script before resuming the execution of the main script. The event handling scri
 of the long running script.
 
  - LineCallback() function which suspends execution when the time is up
- - Strings
+ - \ref doc_addon_std_string
  - Registered global functions
  - Scripted event handlers
 

@@ -34,16 +34,17 @@ public:
 	// Set the function that the manager will use to obtain the time in milliseconds
 	void SetGetTimeCallback(TIMEFUNC_t func);
 
-	// Registers the script function
+	// Registers the following:
 	//
 	//  void sleep(uint milliseconds)
 	//
 	// The application must set the get time callback for this to work
 	void RegisterThreadSupport(asIScriptEngine *engine);
 
-	// Registers the script functions
+	// Registers the following:
 	//
-	//  void createCoRoutine(const string &in functionName, dictionary @args)
+	//  funcdef void coroutine(dictionary@)
+	//  void createCoRoutine(coroutine @func, dictionary @args)
 	//  void yield()
 	void RegisterCoRoutineSupport(asIScriptEngine *engine);
 

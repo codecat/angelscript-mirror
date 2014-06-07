@@ -328,7 +328,7 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine *engine)
 
 void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine *engine)
 {
-	int r;
+	int r; 
 
 	// The dictionary add-on must have been registered already
 	assert( engine->GetObjectTypeByDecl("dictionary") );
