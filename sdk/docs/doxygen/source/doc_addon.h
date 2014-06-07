@@ -252,6 +252,8 @@ may be managed by different context managers.
 Observe, that the context manager class hasn't been designed for multithreading, so you need to
 be careful if your application needs to execute scripts from multiple threads.
 
+\todo update
+
 \see The samples \ref doc_samples_concurrent and \ref doc_samples_corout for uses
 
 \section doc_addon_ctxmgr_1 Public C++ interface
@@ -462,6 +464,8 @@ The <code>grid</code> type is a \ref doc_adv_template "template object" that all
 In many ways it is similar to the \ref doc_addon_array, but it is specialized for use with areas.
 
 The type is registered with <code>RegisterScriptGrid(asIScriptEngine *engine)</code>. 
+
+\todo update the interface
 
 \section doc_addon_grid_1 Public C++ interface
 
@@ -1508,6 +1512,8 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ret, int retT
 // application interface has been fully registered. This way you will not have to create the configuration
 // file manually.
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
+
+\todo WriteConfigToStream, ConfigEngineFromStream
 
 // Print information on script exception to the standard output.
 // Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application 

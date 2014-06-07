@@ -46,7 +46,7 @@ r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
 
 \section doc_reg_basicref_1 Factory function
 
-The factory function is the one that AngelScript will use to instanciate
+The factory function is the one that AngelScript will use to instantiate
 objects of this type when a variable is declared. It is responsible for
 allocating and initializing the object memory.
 
@@ -123,13 +123,13 @@ Without the addref and release behaviours the application must be careful to not
 objects that may potentially still be referenced by the script engine, e.g. in a global variable,
 or other location.
 
-Unless the objects are guaranteed to stay alive as long as the script engine is instanciated, you
+Unless the objects are guaranteed to stay alive as long as the script engine is instantiated, you
 may want to consider disabling global variables with engine property \ref asEP_DISALLOW_GLOBAL_VARS. 
 This will make it much easier for the application to know where references to the objects are kept.
 An alternative to disabling all global variables, is to selectively disallow only the global variables,
 that can eventually store a reference to the object type. This can be done by 
 \ref asIScriptModule::GetGlobalVarCount "enumerating the compiled global variables" after script has
-been built and giving an error to the user incase he includes a variable he shouldn't. 
+been built and giving an error to the user in case he includes a variable he shouldn't. 
 
 
 
@@ -186,9 +186,9 @@ The list buffer passed to the factory function will be populated using the follo
 
 
 
-\section doc_reg_noinst Registering an uninstanciable reference type
+\section doc_reg_noinst Registering an uninstantiable reference type
 
-Sometimes it may be useful to register types that cannot be instanciated by
+Sometimes it may be useful to register types that cannot be instantiated by
 the scripts, yet can be interacted with. You can do this by registering the
 type as a normal reference type, but omit the registration of the factory
 behaviour. You can later register global properties, or functions that allow the
@@ -291,6 +291,8 @@ There are a few different flags:
 <tr><td>\ref asOBJ_APP_PRIMITIVE              &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
 <tr><td>\ref asOBJ_APP_FLOAT                  &nbsp; </td><td>The C++ type is a float or double</td></tr>
 </table>
+
+\todo Describe asOBJ_APP_ARRAY
 
 Note that these don't represent how the type will behave in the script language, only what the real type is in the host 
 application. So if you want to register a C++ class that you want to behave as a primitive type in the script language
@@ -440,6 +442,7 @@ returns a reference or an object handle make sure it points to a new value and n
 The object constructors and factories also serve as alternative explicit value cast operators, so if a constructor or factory is already available
 then there is no need to register the explicit value cast operator. 
 
+\todo Describe the generic form 'void f(?&out)'
 
 
 

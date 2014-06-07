@@ -210,6 +210,8 @@ Script example:
 for using dictionaries may differ for the application you're working with so consult the application's manual
 for more details.
 
+\todo describe the new dictvalue and the index operators
+
 \see \ref doc_addon_dict
 
 The dictionary stores key-value pairs, where the key is a string, and the value can be of any type. Key-value

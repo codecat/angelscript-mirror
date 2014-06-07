@@ -210,7 +210,11 @@ enum asECallConvTypes
 	//! A cdecl function that takes the object pointer as the first parameter.
 	asCALL_CDECL_OBJFIRST    = 5,
 	//! A function using the generic calling convention.
-	asCALL_GENERIC           = 6
+	asCALL_GENERIC           = 6,
+	//! A thiscall class method registered as a functor object.
+	asCALL_THISCALL_OBJLAST  = 7,
+	//! A thiscall class method registered as a functor object.
+	asCALL_THISCALL_OBJFIRST = 8
 };
 
 // Object type flags
@@ -288,6 +292,7 @@ enum asEObjTypeFlags
 	//! The C++ class contains types that may require 8byte alignment. Only valid for value types.
 	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
 	asOBJ_MASK_VALID_FLAGS           = 0x0FFFFF,
+	// Internal flags
 	//! The object is a script class or an interface.
 	asOBJ_SCRIPT_OBJECT              = (1<<20),
 	//! Type object type is shared between modules.
@@ -295,7 +300,13 @@ enum asEObjTypeFlags
 	//! The object type is marked as final and cannot be inherited.
 	asOBJ_NOINHERIT                  = (1<<22),
 	//! The object type is a script function
-	asOBJ_SCRIPT_FUNCTION            = (1<<23)
+	asOBJ_SCRIPT_FUNCTION            = (1<<23),
+	//! The object is declared for implicit handle
+	asOBJ_IMPLICIT_HANDLE            = (1<<24),
+	asOBJ_LIST_PATTERN               = (1<<25),
+	asOBJ_ENUM                       = (1<<26),
+	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
+	asOBJ_TYPEDEF                    = (1<<28)
 };
 
 // Behaviours
@@ -386,7 +397,6 @@ enum asEMsgType
 };
 
 // Garbage collector flags
-
 //! \brief Garbage collector flags.
 enum asEGCFlags
 {
@@ -566,7 +576,7 @@ typedef unsigned int   asUINT;
     typedef long asINT64;
 #else
     typedef unsigned long asDWORD;
-  #if defined(__GNUC__) || defined(__MWERKS__)
+  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC)
     typedef uint64_t asQWORD;
     typedef int64_t asINT64;
   #else
@@ -599,12 +609,18 @@ typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 //! The function signature for the object type cleanup callback function
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
+//! The function signature for the request context callback
+typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
+//! The function signature for the return context callback
+typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
 
 // Check if the compiler can use C++11 features
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
 #if !(defined(__GNUC__) && defined(__cplusplus) && __cplusplus < 201103L) // g++ -std=c++11
+#if !defined(__SUNPRO_CC)
 #define AS_CAN_USE_CPP11 1
+#endif
 #endif
 #endif
 #endif
@@ -873,12 +889,19 @@ extern "C"
 	//!
 	//! If not called, AngelScript will use the malloc and free functions from the
 	//! standard C library.
-	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+	AS_API int   asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 	//! \brief Remove previously registered memory management functions.
 	//! \return A negative value on error.
 	//!
 	//! Call this method to restore the default memory management functions.
-	AS_API int asResetGlobalMemoryFunctions();
+	AS_API int   asResetGlobalMemoryFunctions();
+	//! \brief Allocate memory using the memory function registered with AngelScript
+	//! \param[in] size The size of the buffer to allocate
+	//! \return A pointer to the allocated buffer, or null on error.
+	AS_API void *asAllocMem(size_t size);
+	//! \brief Deallocates memory using the memory function registered with AngelScript
+	//! \param[in] mem A pointer to the buffer to deallocate
+	AS_API void  asFreeMem(void *mem);
 
 	// Auxiliary
 	//! \brief Create a lockable shared boolean
@@ -896,6 +919,14 @@ extern "C"
 // Interface declarations
 
 //! \brief The engine interface
+//!
+//! The engine is the central object. It is where the application 
+//! \ref doc_register_api_topic "registers the application interface"
+//! that the scripts should be able to use, and it is where the application can 
+//! \ref doc_compile_script "request modules to build scripts" and 
+//! \ref doc_call_script_func "contexts to execute them".
+//!
+//! The engine instance is created with a call to \ref asCreateScriptEngine. 
 //!
 //! It is allowed to have multiple instances of script engines, but there is rarely a need for it.
 //! Even if the application needs to expose different interfaces to different types of scripts
@@ -1018,6 +1049,7 @@ public:
 	//! \retval asINVALID_DECLARATION The function declaration is invalid.
 	//! \retval asNAME_TAKEN The function name is already used elsewhere.
 	//! \retval asALREADY_REGISTERED The function has already been registered with the same parameter list.
+	//! \retval asINVALID_ARG The objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! This method registers system functions that the scripts may use to communicate with the host application.
 	//!
@@ -1134,6 +1166,7 @@ public:
 	//! \param[in] declaration The declaration of the method in script syntax.
 	//! \param[in] funcPointer The method or function pointer.
 	//! \param[in] callConv The calling convention for the method or function.
+	//! \param[in] objForThiscall A pointer to the functor object for use with \ref asCALL_THISCALL_OBJFIRST and \ref asCALL_THISCALL_OBJLAST
 	//! \return A negative value on error, or the function id if successful.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asNOT_SUPPORTED The calling convention is not supported.
@@ -1142,6 +1175,7 @@ public:
 	//! \retval asNAME_TAKEN The name conflicts with other members.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention isn't compatible with \a callConv.
 	//! \retval asALREADY_REGISTERED The method has already been registered with the same parameter list.
+	//! \retval asINVALID_ARG The objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! Use this method to register a member method for the type. The method
 	//! that is registered may be an actual class method, or a global function
@@ -1149,14 +1183,14 @@ public:
 	//! it may be a global function implemented with the generic calling convention.
 	//!
 	//! \see \ref doc_register_func
-	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv) = 0;
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
 	//! \brief Registers a behaviour for the object type.
 	//! \param[in] obj The name of the type.
 	//! \param[in] behaviour One of the object behaviours from \ref asEBehaviours.
 	//! \param[in] declaration The declaration of the method in script syntax.
 	//! \param[in] funcPointer The method or function pointer.
 	//! \param[in] callConv The calling convention for the method or function.
-	//! \param[in] objForThiscall The object pointer used for \ref asCALL_THISCALL_ASGLOBAL.
+	//! \param[in] objForThiscall The object pointer used for \ref asCALL_THISCALL_ASGLOBAL, \ref asCALL_THISCALL_OBJFIRST, and \ref asCALL_THISCALL_OBJLAST
 	//! \return A negative value on error, or the function id is successful.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asINVALID_ARG \a obj is not set, or a global behaviour is given in \a behaviour.
@@ -1166,6 +1200,7 @@ public:
 	//! \retval asINVALID_DECLARATION The \a declaration is invalid.
 	//! \retval asILLEGAL_BEHAVIOUR_FOR_TYPE The \a behaviour is not allowed for this type.
 	//! \retval asALREADY_REGISTERED The behaviour is already registered with the same signature.
+	//! \retval asINVALID_ARG The objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! Use this method to register behaviour functions that will be called by
 	//! the virtual machine to perform certain operations, such as memory management,
@@ -1260,8 +1295,9 @@ public:
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0) = 0;
 	//! \brief Returns the type id of the type that the string factory returns.
 	//! \return The type id of the type that the string type returns, or a negative value on error.
+	//! \param[out] flags The \ref asETypeModifiers "type modifiers" for the return type
 	//! \retval asNO_FUNCTION The string factory has not been registered.
-	virtual int GetStringFactoryReturnTypeId() const = 0;
+	virtual int GetStringFactoryReturnTypeId(asDWORD *flags = 0) const = 0;
 	//! \}
 
 	// Default array type
@@ -1553,6 +1589,8 @@ public:
 	//!
 	//! This method creates a context that will be used to execute the script functions. 
 	//! The context interface created will have its reference counter already increased.
+	//!
+	//! \see \ref RequestContext
 	virtual asIScriptContext      *CreateContext() = 0;
 	//! \brief Creates an object defined by its type.
 	//! \param[in] type The type of the object to create.
@@ -1647,6 +1685,44 @@ public:
 	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
 	//! \}
 
+	// Context pooling
+	//! \name Context pooling
+	//! \{
+
+	//! \brief Request a context
+	//! \return An unprepared context
+	//!
+	//! This method will invoke the registered request context callback
+	//! and return an available context in an unprepared state.
+	//! 
+	//! Contexts obtained through this method shouldn't be released, instead
+	//! they should be returned to the origin with a call to \ref ReturnContext.
+	//!
+	//! \see \ref CreateContext
+	virtual asIScriptContext      *RequestContext() = 0;
+	//! \brief Return a context when it won't be used anymore
+	//! \param[in] ctx The context that should be returned to the origin
+	virtual void                   ReturnContext(asIScriptContext *ctx) = 0;
+	//! \brief Register a request context callback
+	//! \param[in] callback The callback function
+	//! \param[in] param An optional parameter that will be passed to the callback
+	//!
+	//! This method together with \ref SetReturnContextCallback can be
+	//! used by the application to implement a context pool, or to perform
+	//! custom configuration on the contexts that the engine uses internally.
+	//!
+	//! This can for example be used to debug calls to initialize global variables
+	//! when building modules, or to detect script exceptions that may occur in 
+	//! script class constructors when called from the garbage collector.
+	virtual void                   SetRequestContextCallback(asREQUESTCONTEXTFUNC_t callback, void *param = 0) = 0;
+	//! \brief Register a return context callback
+	//! \param[in] callback The callback function
+	//! \param[in] param An optional parameter that will be passed to the callback
+	//!
+	//! \see \ref SetReturnContextCallback
+	virtual void                   SetReturnContextCallback(asRETURNCONTEXTFUNC_t callback, void *param = 0) = 0;
+	//! \}
+
 	// String interpretation
 	//! \name String interpretation
 	//! \{
@@ -1669,6 +1745,7 @@ public:
 
 	//! \brief Perform garbage collection.
 	//! \param[in] flags Set to a combination of the \ref asEGCFlags.
+	//! \param[in] numIterations The number of iterations to perform when not doing a full cycle
 	//! \return 1 if the cycle wasn't completed, 0 if it was.
 	//!
 	//! This method will free script objects that can no longer be reached. When the engine 
@@ -1683,7 +1760,7 @@ public:
 	//! of the application.
 	//!
 	//! \see \ref doc_gc
-	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE) = 0;
+	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE, asUINT numIterations = 1) = 0;
 	//! \brief Obtain statistics from the garbage collector.
 	//! \param[out] currentSize The current number of objects known to the garbage collector.
 	//! \param[out] totalDestroyed The total number of objects destroyed by the garbage collector.
@@ -1758,31 +1835,34 @@ public:
 	virtual void  SetEngineUserDataCleanupCallback(asCLEANENGINEFUNC_t callback, asPWORD type = 0) = 0;
 	//! \brief Set the function that should be called when the module is destroyed
 	//! \param[in] callback A pointer to the function
+	//! \param[in] type An identifier specifying which user data the callback is to be used with.
 	//!
 	//! The function given with this call will be invoked when the module
 	//! is destroyed if any \ref asIScriptModule::SetUserData "user data" has been registered with the module.
 	//!
 	//! The function is called from within the module destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
-	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback) = 0;
+	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type = 0) = 0;
 	//! \brief Set the function that should be called when a context is destroyed
 	//! \param[in] callback A pointer to the function
+	//! \param[in] type An identifier specifying which user data the callback is to be used with.
 	//!
 	//! The function given with this call will be invoked when a context
 	//! is destroyed if any \ref asIScriptContext::SetUserData "user data" has been registered with the context.
 	//!
 	//! The function is called from within the context destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
-	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback) = 0;
+	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type = 0) = 0;
 	//! \brief Set the function that should be called when a function is destroyed
 	//! \param[in] callback A pointer to the function
+	//! \param[in] type An identifier specifying which user data the callback is to be used with.
 	//!
 	//! The function given with this call will be invoked when a function
 	//! is destroyed if any \ref asIScriptFunction::SetUserData "user data" has been registered with the function.
 	//!
 	//! The function is called from within the function destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
-	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback) = 0;
+	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
 	//! \brief Set the function that should be called when an object type is destroyed
 	//! \param[in] callback A pointer to the function
 	//! \param[in] type An identifier specifying which user data the callback is to be used with.
@@ -2275,15 +2355,19 @@ public:
 
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The previous pointer stored in the module
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the module instance.
 	//!
+	//! The type values 1000 through 1999 are reserved for use by the official add-ons.
+	//!
 	//! Optionally, a callback function can be \ref asIScriptEngine::SetModuleUserDataCleanupCallback "registered" to clean up the user data when the module is destroyed.
-	virtual void *SetUserData(void *data) = 0;
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
 	//! \brief Returns the address of the previously registered user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The pointer to the user data.
-	virtual void *GetUserData() const = 0;
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
 	//! \}
 
 protected:
@@ -2762,17 +2846,21 @@ public:
 
 	//! \brief Register the memory address of some user data.
 	//! \param[in] data A pointer to the user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The previous pointer stored in the context.
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the context instance.
 	//!
+	//! The type values 1000 through 1999 are reserved for use by the official add-ons.
+	//!
 	//! Optionally, a callback function can be \ref asIScriptEngine::SetContextUserDataCleanupCallback "registered" 
 	//! to clean up the user data when the context is destroyed. As the callback is registered with the engine, it is
 	//! only necessary to do it once, even if more than one context is used.
-	virtual void *SetUserData(void *data) = 0;
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
 	//! \brief Returns the address of the previously registered user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The pointer to the user data.
-	virtual void *GetUserData() const = 0;
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
 	//! \}
 
 protected:
@@ -3446,17 +3534,21 @@ public:
 
 	//! \brief Register the memory address of some user data.
 	//! \param[in] userData A pointer to the user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The previous pointer stored in the context.
 	//!
 	//! This method allows the application to associate a value, e.g. a pointer, with the context instance.
 	//!
+	//! The type values 1000 through 1999 are reserved for use by the official add-ons.
+	//!
 	//! Optionally, a callback function can be \ref asIScriptEngine::SetFunctionUserDataCleanupCallback "registered" 
 	//! to clean up the user data when the function is destroyed. As the callback is registered with the engine, it is
 	//! only necessary to do it once.
-	virtual void            *SetUserData(void *userData) = 0;
+	virtual void            *SetUserData(void *userData, asPWORD type = 0) = 0;
 	//! \brief Returns the address of the previously registered user data.
+	//! \param[in] type An identifier specifying the user data to set.
 	//! \return The pointer to the user data.
-	virtual void            *GetUserData() const = 0;
+	virtual void            *GetUserData(asPWORD type = 0) const = 0;
 	//! \}
 
 protected:

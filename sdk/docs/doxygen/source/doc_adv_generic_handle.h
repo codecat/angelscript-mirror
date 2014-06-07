@@ -6,7 +6,7 @@ Sometimes it is useful to be able to take a reference to an object without havin
 force specific implementation on the object, e.g. when providing a generic storage class
 to scripts, or providing a generic messaging system. 
 
-In AngelScript there is no common denominator for all object types, the reaons for this is 
+In AngelScript there is no common denominator for all object types, the reasons for this is 
 that script classes and application registered classes have completely different implementation and
 cannot be generalized under a single superclass. 
 
@@ -22,8 +22,8 @@ To register the generic handle type, the application should follow the same prin
  - The type must be registered with the additional flag \ref asOBJ_ASHANDLE. This is the flag that 
    tells AngelScript that the type simulates a generic handle. 
 
- - In order to allow assigning any handle to the type, the \ref doc_script_class_ops "opAssign" method must be registered with
-   a \ref doc_adv_var_type "variable paramater type", e.g. 'ref &opAssign(const ?&in)'.
+ - In order to allow assigning any handle to the type, the \ref doc_script_class_ops "opHndlAssign" method must be registered with
+   a \ref doc_adv_var_type "variable parameter type", e.g. 'ref &opHndlAssign(const ?&in)'.
    
  - The \ref doc_script_class_ops "opEquals" method must also be registered with a \ref doc_adv_var_type in order to allow the 
    is and !is operators to behave as expected for a handle, e.g. 'bool opEquals(const ?&in)'.

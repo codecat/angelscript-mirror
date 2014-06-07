@@ -8,6 +8,8 @@ that can set break points, inspect/manipulate variables in functions, visualize 
 Observe that the CDebugMgr class used in the examples below doesn't exist. It is only used as an abstraction to
 avoid having to write fictional debug routines.
 
+\todo Write how to use the request context callback to debug calls made internally by the engine
+
 \see \ref doc_addon_debugger for a standard implementation
 
 \section doc_debug_1 Setting line breaks

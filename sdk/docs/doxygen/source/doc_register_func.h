@@ -105,6 +105,8 @@ Classes with \ref doc_register_func_4 "virtual inheritance are not supported nat
 to create wrapper functions. These wrapper functions can either be implemented manually, or the template based automatic 
 wrappers from the \ref doc_addon_autowrap "add-on" can be used.
 
+\todo Describe how to use the asCALL_THISCALL_OBJFIRST and asCALL_THISCALL_OBJLAST
+
 \see \ref doc_generic
 
 
