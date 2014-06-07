@@ -173,7 +173,9 @@ bool Test()
 			"  complex c; \n"
 			"  dict.get('complex', c); \n"
 			"  assert( c == complex(1,2) ); \n"
-			"} \n");
+			"  func(dictionary = {{'hello', 'world'}}); \n"
+			"} \n"
+			"void func(dictionary @dict) {} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
