@@ -465,8 +465,6 @@ In many ways it is similar to the \ref doc_addon_array, but it is specialized fo
 
 The type is registered with <code>RegisterScriptGrid(asIScriptEngine *engine)</code>. 
 
-\todo update the interface
-
 \section doc_addon_grid_1 Public C++ interface
 
 \code
@@ -477,6 +475,7 @@ public:
   static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
   // Factory functions
+  static CScriptGrid *Create(asIObjectType *ot);
   static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height);
   static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height, void *defaultValue);
   static CScriptGrid *Create(asIObjectType *ot, void *listBuffer);
@@ -490,9 +489,10 @@ public:
   int            GetGridTypeId() const;
   int            GetElementTypeId() const;
 
-  // Get the current size
+  // Size
   asUINT GetWidth() const;
   asUINT GetHeight() const;
+  void   Resize(asUINT width, asUINT height);
   
   // Get a pointer to an element. Returns 0 if out of bounds
   void       *At(asUINT x, asUINT y);
@@ -511,11 +511,13 @@ public:
 <pre>
   class grid<T>
   {
+    grid();
     grid(uint width, uint height);
     grid(uint width, uint height, const T &in fillValue);
   
     uint width() const;
     uint height() const;
+    void resize(uint w, uint h);
     
     T &opIndex(uint, uint);
     const T &opIndex(uint, uint) const;

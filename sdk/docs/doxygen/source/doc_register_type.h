@@ -269,7 +269,7 @@ the wrapper with AngelScript, which is sure to result in unexpected behaviours.
 Note that you may need to include the &lt;new&gt; header to declare the placement new operator that is used 
 to initialize a preallocated memory block.
 
-See also \ref doc_reg_val_3.
+\see \ref doc_reg_val_3.
 
 
 
@@ -290,9 +290,8 @@ There are a few different flags:
 <tr><td>\ref asOBJ_APP_CLASS_COPY_CONSTRUCTOR &nbsp; </td><td>The C++ type has a copy constructor</td></tr>
 <tr><td>\ref asOBJ_APP_PRIMITIVE              &nbsp; </td><td>The C++ type is a C++ primitive, but not a float or double</td></tr>
 <tr><td>\ref asOBJ_APP_FLOAT                  &nbsp; </td><td>The C++ type is a float or double</td></tr>
+<tr><td>\ref asOBJ_APP_ARRAY                  &nbsp; </td><td>The C++ type is an array</td></tr>
 </table>
-
-\todo Describe asOBJ_APP_ARRAY
 
 Note that these don't represent how the type will behave in the script language, only what the real type is in the host 
 application. So if you want to register a C++ class that you want to behave as a primitive type in the script language
@@ -338,7 +337,7 @@ if all members are integers, or it should be treated as if all members are float
 <tr><td>\ref asOBJ_APP_CLASS_ALIGN8    &nbsp; </td><td>The C++ class contains members that may require 8byte alignment, e.g. a double.</td></tr>
 </table>
 
-It is difficult to explain when one or the other should be used as it requires indepth knowledge of the ABI for the 
+It is difficult to explain when one or the other should be used as it requires in-depth knowledge of the ABI for the 
 respective system, so if you find that you really need to use these flags, make sure you perform adequate testing 
 to guarantee that your functions are called correctly by the script engine. If neither of these flags work, and you're 
 not able to change the class to work without them, then the only other option is to use the generic calling convention,
@@ -373,7 +372,7 @@ engine->RegisterObjectBehaviour("vector3", asBEHAVE_LIST_CONSTRUCT, "void f(int 
 In order for AngelScript to know how to work with the application registered types, it is 
 necessary to register some behaviours, for example for memory management.
 
-The memory management behaviours are described with the registeration of registering 
+The memory management behaviours are described with the registration of 
 \ref doc_reg_basicref "reference types" and \ref doc_register_val_type "value types".
 
 Other advanced behaviours are described with the \ref doc_advanced_api "advanced types".
@@ -442,7 +441,10 @@ returns a reference or an object handle make sure it points to a new value and n
 The object constructors and factories also serve as alternative explicit value cast operators, so if a constructor or factory is already available
 then there is no need to register the explicit value cast operator. 
 
-\todo Describe the generic form 'void f(?&out)'
+The value cast behaviour can also be registered with the generic form "void f(?&out)" to support casts to any
+type. This is most useful for generic containers, e.g. variants or the dictionary.
+
+\see \ref doc_addon_dict
 
 
 
