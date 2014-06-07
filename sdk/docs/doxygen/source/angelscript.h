@@ -1049,7 +1049,7 @@ public:
 	//! \retval asINVALID_DECLARATION The function declaration is invalid.
 	//! \retval asNAME_TAKEN The function name is already used elsewhere.
 	//! \retval asALREADY_REGISTERED The function has already been registered with the same parameter list.
-	//! \retval asINVALID_ARG The objForThiscall pointer wasn't set according to calling convention.
+	//! \retval asINVALID_ARG The \a objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! This method registers system functions that the scripts may use to communicate with the host application.
 	//!
@@ -1175,7 +1175,7 @@ public:
 	//! \retval asNAME_TAKEN The name conflicts with other members.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention isn't compatible with \a callConv.
 	//! \retval asALREADY_REGISTERED The method has already been registered with the same parameter list.
-	//! \retval asINVALID_ARG The objForThiscall pointer wasn't set according to calling convention.
+	//! \retval asINVALID_ARG The \a objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! Use this method to register a member method for the type. The method
 	//! that is registered may be an actual class method, or a global function
@@ -1200,7 +1200,7 @@ public:
 	//! \retval asINVALID_DECLARATION The \a declaration is invalid.
 	//! \retval asILLEGAL_BEHAVIOUR_FOR_TYPE The \a behaviour is not allowed for this type.
 	//! \retval asALREADY_REGISTERED The behaviour is already registered with the same signature.
-	//! \retval asINVALID_ARG The objForThiscall pointer wasn't set according to calling convention.
+	//! \retval asINVALID_ARG The \a objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! Use this method to register behaviour functions that will be called by
 	//! the virtual machine to perform certain operations, such as memory management,

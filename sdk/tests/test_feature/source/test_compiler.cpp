@@ -235,6 +235,30 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test proper error in case of double handle in variable decl
+	// http://www.gamedev.net/topic/657480-double-handle/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		r = ExecuteString(engine, "dictionary @@dict;");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 13) : Error   : Handle to handle is not allowed\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test name conflict with global variables
 	// http://www.gamedev.net/topic/656569-global-variable-redeclaration/
 	{

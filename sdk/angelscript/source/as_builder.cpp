@@ -4776,7 +4776,12 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		else
 		{
 			// Make the type a handle
-			if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
+			if( dt.IsObjectHandle() )
+			{
+				WriteError(TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED, file, n);
+				break;
+			}
+			else if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
 			{
 				WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
 				break;
