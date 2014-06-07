@@ -905,32 +905,34 @@ so a port from script to C++ and vice versa might be easier if STL names are use
 class CScriptDictionary
 {
 public:
-  // Memory management
-  CScriptDictionary(asIScriptEngine *engine);
+  // Factory functions
+  static CScriptDictionary *Create(asIScriptEngine *engine);
+
+  // Reference counting
   void AddRef() const;
   void Release() const;
 
   // Perform a shallow copy of the other dictionary
   CScriptDictionary &operator=(const CScriptDictionary &other);
 
-  // Sets/Gets a variable type value for a key
+  // Sets a key/value pair
   void Set(const std::string &key, void *value, int typeId);
-  bool Get(const std::string &key, void *value, int typeId) const;
-
-  // Sets/Gets an integer number value for a key
   void Set(const std::string &key, asINT64 &value);
-  bool Get(const std::string &key, asINT64 &value) const;
-
-  // Sets/Gets a real number value for a key
   void Set(const std::string &key, double &value);
+
+  // Gets the stored value. Returns false if the value isn't compatible with informed type  
+  bool Get(const std::string &key, void *value, int typeId) const;
+  bool Get(const std::string &key, asINT64 &value) const;
   bool Get(const std::string &key, double &value) const;
 
+  // Index accessors. If the dictionary is not const it inserts the value if it doesn't already exist
+  // If the dictionary is const then a script exception is set if it doesn't exist and a null pointer is returned
+  CScriptDictValue *operator[](const std::string &key);
+  const CScriptDictValue *operator[](const std::string &key) const;
+  
   // Returns the type id of the stored value, or negative if it doesn't exist
   int  GetTypeId(const std::string &key) const;
 
-  // Get an array of all keys
-  CScriptArray *GetKeys() const;
-  
   // Returns true if the key is set
   bool Exists(const std::string &key) const;
   
@@ -945,7 +947,10 @@ public:
   
   // Deletes all keys
   void DeleteAll();
-  
+
+  // Get an array of all keys
+  CScriptArray *GetKeys() const;
+
   // STL style iterator
   class CIterator
   {

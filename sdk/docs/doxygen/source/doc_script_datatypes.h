@@ -210,8 +210,6 @@ Script example:
 for using dictionaries may differ for the application you're working with so consult the application's manual
 for more details.
 
-\todo describe the new dictvalue and the index operators
-
 \see \ref doc_addon_dict
 
 The dictionary stores key-value pairs, where the key is a string, and the value can be of any type. Key-value
@@ -220,19 +218,29 @@ pairs can be added or removed dynamically, making the dictionary a good general 
 <pre>
   obj object;
   obj \@handle;
+  
+  // Initialize with a list
   dictionary dict = {{'one', 1}, {'object', object}, {'handle', \@handle}};
   
+  // Examine and access the values through get or set methods ...
   if( dict.exists('one') )
   {
     bool found = dict.get('handle', \@handle);
     if( found )
     {
       dict.delete('object');
+      dict.set('value', 1);
     }
   }
   
-  dict.set('newvalue', 42);
+  // ... or through index operators
+  int val = int(dict['value']);
+  dict['value'] = val + 1;
+  \@handle = cast<obj>(dict['handle']);
+  if( handle is null )
+    \@dict['handle'] = object;
   
+  // Delete everything with a single call
   dict.deleteAll();
 </pre>
 
@@ -244,8 +252,12 @@ to use handles to the dictionary object when passing it around to avoid costly c
 \subsection doc_datatypes_dictionary_addon_ops Operators
 
  - =       assignment
+ - []      index operator
  
 The assignment operator performs a shallow copy of the content.
+
+The index operator takes a string for the key, and returns a reference to the value.
+If the key/value pair doesn't exist, it will be inserted with a null value.
 
 \subsection doc_datatypes_dictionary_addon_mthd Methods
 
@@ -261,8 +273,6 @@ The assignment operator performs a shallow copy of the content.
  - void deleteAll()
  - bool isEmpty() const
  - uint getSize() const
-
-
 
 
 
