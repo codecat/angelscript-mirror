@@ -219,7 +219,7 @@ CDebugger dbg;
 int ExecuteWithDebug(asIScriptContext *ctx)
 {
   // Tell the context to invoke the debugger's line callback
-  ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), dbg, asCALL_THISCALL);
+  ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), &dbg, asCALL_THISCALL);
 
   // Allow the user to initialize the debugging before moving on
   dbg.TakeCommands(ctx);

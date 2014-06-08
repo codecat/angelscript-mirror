@@ -1703,24 +1703,20 @@ public:
 	//! \brief Return a context when it won't be used anymore
 	//! \param[in] ctx The context that should be returned to the origin
 	virtual void                   ReturnContext(asIScriptContext *ctx) = 0;
-	//! \brief Register a request context callback
-	//! \param[in] callback The callback function
+	//! \brief Register context callbacks for pooling
+	//! \param[in] requestCtx The request context callback function
+	//! \param[in] returnCtx The return context callback function
 	//! \param[in] param An optional parameter that will be passed to the callback
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG One or both of the context functions are null
 	//!
-	//! This method together with \ref SetReturnContextCallback can be
-	//! used by the application to implement a context pool, or to perform
-	//! custom configuration on the contexts that the engine uses internally.
+	//! This method can be used by the application to implement a context pool, 
+	//! or to perform custom configuration on the contexts that the engine uses internally.
 	//!
 	//! This can for example be used to debug calls to initialize global variables
 	//! when building modules, or to detect script exceptions that may occur in 
-	//! script class constructors when called from the garbage collector.
-	virtual void                   SetRequestContextCallback(asREQUESTCONTEXTFUNC_t callback, void *param = 0) = 0;
-	//! \brief Register a return context callback
-	//! \param[in] callback The callback function
-	//! \param[in] param An optional parameter that will be passed to the callback
-	//!
-	//! \see \ref SetReturnContextCallback
-	virtual void                   SetReturnContextCallback(asRETURNCONTEXTFUNC_t callback, void *param = 0) = 0;
+	//! script class destructors when called from the garbage collector.
+	virtual int                    SetContextCallbacks(asREQUESTCONTEXTFUNC_t requestCtx, asRETURNCONTEXTFUNC_t returnCtx, void *param = 0) = 0;
 	//! \}
 
 	// String interpretation
