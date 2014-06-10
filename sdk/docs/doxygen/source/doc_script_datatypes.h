@@ -23,8 +23,9 @@ Note that the host application may add types specific to that application, refer
  - \subpage doc_datatypes_strings
  - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_dictionary
+ - \subpage doc_datatypes_ref
 
-\todo ref & weakref
+\todo weakref
 
  
  
@@ -494,6 +495,62 @@ Examples:
   // Right justified, padded with zeroes and two digits after decimal separator
   string num = formatFloat(number, '0', 8, 2);
 </pre>
+
+
+
+
+
+
+\page doc_datatypes_ref ref
+
+<b>Observe:</b> ref is only available in the scripts if the application registers the support for it. 
+
+\see \ref doc_addon_handle
+
+The ref type works like a generic object handle. Normally a \ref handles "handle" can only refer to 
+objects of a specific type or those related to it, however not all object types are related, and this is
+where ref comes in. Being completely generic it can refer to any object type (as long as it is a \ref doc_datatypes_obj "reference type").
+
+<pre>
+  // Two unrelated types
+  class car {}
+  class banana {}
+
+  // A function that take the ref type as argument can work on both types
+  void func(ref \@handle)
+  {
+    // Cast the handle to the expected type and check which cast work
+    car \@c = cast<car>(handle);
+    banana \@b = cast<banana>(handle);
+    if( c !is null )
+      print('The handle refers to a car\\n');
+    else if( b !is null )
+      print('The handle refers to a banana\\n');
+    else if( handle !is null )
+      print('The handle refers to a different object\\n');
+    else
+      print('The handle is null\\n');
+  }
+
+  void main()
+  {
+    // Assigning a ref handle works the same way as ordinary handles
+    ref \@r = car();
+    func(r);
+    \@r = banana();
+    func(r);
+  }
+</pre>
+
+\section doc_datatypes_ref_addon Supporting ref object
+
+The ref object supports only a few operators as it is just a place holder for handles.
+
+\subsection doc_datatypes_ref_addon_ops Operators
+
+ - \@=          handle assignment
+ - is, !is      identity operator
+ - cast<type>   cast operator
 
 
 

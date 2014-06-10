@@ -704,28 +704,9 @@ public:
 };
 \endcode
 
-\section doc_addon_handle_3 Example usage in script
+\section doc_addon_handle_3 Public script interface
 
-In the scripts it can be used as follows:
-
-<pre>
-  ref\@ unknown;
-
-  // Store a handle in the ref variable
-  object obj;
-  \@unknown = \@obj;
-
-  // Compare equalness
-  if( unknown != null )
-  {
-    // Dynamically cast the handle to wanted type
-    object \@obj2 = cast<object>(unknown);
-    if( obj2 != null )
-    {
-      ...
-    }
-  }
-</pre>
+\see \ref doc_datatypes_ref "ref in the script language"
 
 \section doc_addon_handle_4 Example usage from C++
 
