@@ -19,6 +19,9 @@ CDebugger::~CDebugger()
 
 string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine)
 {
+	if( value == 0 )
+		return "<null>";
+
 	stringstream s;
 	if( typeId == asTYPEID_VOID )
 		return "<void>";
@@ -180,7 +183,7 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 	}
 
 	stringstream s;
-	const char *file;
+	const char *file = 0;
 	int lineNbr = ctx->GetLineNumber(0, 0, &file);
 	s << (file ? file : "{unnamed}") << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
 	Output(s.str());
@@ -456,7 +459,7 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 {
 	asIScriptEngine *engine = ctx->GetEngine();
 
-	int len;
+	int len = 0;
 	asETokenClass t = engine->ParseToken(expr.c_str(), 0, &len);
 
 	// TODO: If the expression starts with :: we should only look for global variables
@@ -594,7 +597,7 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 	stringstream s;
 	for( asUINT n = 0; n < mod->GetGlobalVarCount(); n++ )
 	{
-		int typeId;
+		int typeId = 0;
 		mod->GetGlobalVar(n, 0, 0, &typeId);
 		s << mod->GetGlobalVarDeclaration(n) << " = " << ToString(mod->GetAddressOfGlobalVar(n), typeId, false, ctx->GetEngine()) << endl;
 	}
@@ -622,8 +625,8 @@ void CDebugger::ListStatistics(asIScriptContext *ctx)
 void CDebugger::PrintCallstack(asIScriptContext *ctx)
 {
 	stringstream s;
-	const char *file;
-	int lineNbr;
+	const char *file = 0;
+	int lineNbr = 0;
 	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
 	{
 		lineNbr = ctx->GetLineNumber(n, 0, &file);

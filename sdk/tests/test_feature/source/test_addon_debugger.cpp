@@ -29,6 +29,9 @@ public:
 			// Call the command for listing local variables
 			InterpretCommand("l v", ctx);
 
+			// Call the command for listing global variables
+			InterpretCommand("l g", ctx);
+
 			// Invoke the original line callback
 			CDebugger::LineCallback(ctx);
 		}
@@ -155,6 +158,7 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptContext *ctx;
 	
+	// Simulate a step-by-step execution with variable inspection
 	{
 		CMyDebugger debug;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -170,6 +174,7 @@ bool Test()
 			"{ \n"
 			"  array<int> arr = {1,2,3}; \n"
 			"} \n"
+			"string glob = 'test';\n"
 			"class type {} \n";
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -189,7 +194,9 @@ bool Test()
 
 		if( debug.output != "ExecuteString:1; void ExecuteString()\n"
 							"ExecuteString:1; void ExecuteString()\n"
+							"string glob = (len=4) \"test\"\n"
 							"script:0; type@ type()\n"
+							"string glob = (len=4) \"test\"\n"
 							"script:0; type::type()\n"
 							"type t = {XXXXXXXX}\n"
 							"ExecuteString:1; void ExecuteString()\n"
@@ -200,6 +207,7 @@ bool Test()
 							"type@ e = {XXXXXXXX}\n"
 							"type& f = {XXXXXXXX}\n"
 							"type@& g = {XXXXXXXX}\n"
+							"string glob = (len=4) \"test\"\n"
 							"script:3; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
 							"int a = 1\n"
 							"const int& b = 2\n"
@@ -208,6 +216,7 @@ bool Test()
 							"type@ e = {XXXXXXXX}\n"
 							"type& f = {XXXXXXXX}\n"
 							"type@& g = {XXXXXXXX}\n"
+							"string glob = (len=4) \"test\"\n"
 							"script:3; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
 							"{unnamed}:0; int[]@ factstub(int&in) { repeat int }\n"
 							"int a = 1\n"
@@ -219,6 +228,7 @@ bool Test()
 							"type@& g = {XXXXXXXX}\n"
 							"int[] arr = {YYYYYYYY}\n"
 							"(len=3) [1, 2, 3]\n"
+							"string glob = (len=4) \"test\"\n"
 							"script:4; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
 							"type t = {XXXXXXXX}\n"
 							"ExecuteString:2; void ExecuteString()\n" )
