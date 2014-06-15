@@ -820,14 +820,9 @@ void CScriptArray::DeleteBuffer(SArrayBuffer *buf)
 // internal
 void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 {
-	if( subTypeId & asTYPEID_OBJHANDLE )
+	if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
-		// Set all object handles to null
-		void *d = (void*)(buf->data + start * sizeof(void*));
-		memset(d, 0, (end-start)*sizeof(void*));
-	}
-	else if( subTypeId & asTYPEID_MASK_OBJECT )
-	{
+		// Create an object using the default constructor/factory for each element
 		void **max = (void**)(buf->data + end * sizeof(void*));
 		void **d = (void**)(buf->data + start * sizeof(void*));
 
@@ -848,6 +843,12 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 				return;
 			}
 		}
+	}
+	else
+	{
+		// Set all elements to zero whether they are handles or primitives
+		void *d = (void*)(buf->data + start * elementSize);
+		memset(d, 0, (end-start)*elementSize);
 	}
 }
 
