@@ -656,8 +656,8 @@ void CScriptArray::Resize(int delta, asUINT at)
 		if( at < buffer->numElements )
 			memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);
 
-		if( subTypeId & asTYPEID_MASK_OBJECT )
-			Construct(newBuffer, at, at+delta);
+		// Initialize the new elements with default values
+		Construct(newBuffer, at, at+delta);
 
 		// Release the old buffer
 		userFree(buffer);

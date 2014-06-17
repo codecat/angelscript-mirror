@@ -519,17 +519,22 @@ bool Test()
 
 		// Make sure it is possible to do multiple assignments with the array type
 		r = ExecuteString(engine, "array<int> a, b, c; a = b = c;");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		// Must support syntax as: array<array<int>>, i.e. without white space between the closing angled brackets.
 		r = ExecuteString(engine, "array<array<int>> a(2); Assert( a.length() == 2 );");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		// Must support arrays of handles
 		r = ExecuteString(engine, "array<array<int>@> a(1); @a[0] = @array<int>(4);");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// resize initializes the members to zero
+		r = ExecuteString(engine, "array<int> a; a.resize(2); Assert( a[1] == 0 ); \n");
+		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		// Do not allow the instantiation of a template with a subtype that cannot be created
