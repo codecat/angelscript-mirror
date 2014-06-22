@@ -278,7 +278,7 @@ public:
 		// The stack space needed for the local variables
 		asDWORD                         variableSpace;
 
-		// These hold information objects and function pointers, including temporary
+		// These hold information on objects and function pointers, including temporary
 		// variables used by exception handler and when saving bytecode
 		asCArray<asCObjectType*>        objVariableTypes;
 		asCArray<asCScriptFunction*>    funcVariableTypes;

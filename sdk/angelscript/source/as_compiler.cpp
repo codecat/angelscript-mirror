@@ -1091,6 +1091,13 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 	asCScriptNode *node = block->firstChild;
 	while( node )
 	{
+#ifdef AS_DEBUG
+		// Keep the current line in a variable so it will be easier
+		// to determine where in a script an assert is occurring.
+		int currentLine = 0;
+		script->ConvertPosToRowCol(node->tokenPos, &currentLine, 0);
+#endif
+
 		if( !hasUnreachableCode && (*hasReturn || isFinished) )
 		{
 			// Empty statements don't count
@@ -9033,6 +9040,9 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args, asSExprContext *ctx, bool deferAll)
 {
+	// deferAll is set to true if for example the function returns a reference, since in 
+	// this case the function might be returning a reference to one of the arguments.
+
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcID);
 
 	// Parameters that are sent by reference should be assigned
@@ -9042,8 +9052,10 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 	int n = (int)descr->parameterTypes.GetLength() - 1;
 	for( ; n >= 0; n-- )
 	{
+		// All &out arguments must be deferred
+		// If deferAll is set all objects passed by reference or handle must be deferred
 		if( (descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] & asTM_OUTREF)) ||
-		    (descr->parameterTypes[n].IsObject() && deferAll) )
+			(descr->parameterTypes[n].IsObject() && deferAll && (descr->parameterTypes[n].IsReference() || descr->parameterTypes[n].IsObjectHandle())) )
 		{
 			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == asTM_OUTREF)) || args[n]->origExpr );
 

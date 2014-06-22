@@ -84,6 +84,56 @@ bool Test()
 
 	engine->Release();
 
+	// Test bug
+	// http://www.gamedev.net/topic/657960-tempvariables-assertion-with-indexed-unsafe-reference/
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		engine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, true);
+		engine->SetEngineProperty(asEP_BUILD_WITHOUT_LINE_CUES, true);
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("ShortStringHash", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK);
+		engine->RegisterObjectBehaviour("ShortStringHash", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterObjectType("Variant", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+		engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", asFUNCTION(0), asCALL_THISCALL);
+
+		engine->RegisterObjectType("VariantMap", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f(const VariantMap&in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("VariantMap", "Variant& opIndex(ShortStringHash)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("VariantMap", "const Variant& opIndex(ShortStringHash) const", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterObjectType("UIElement", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("UIElement", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("UIElement", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_THISCALL);
+		engine->RegisterObjectMethod("UIElement", "VariantMap& get_vars()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+
+		asIScriptModule* module = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+
+		const char *script =
+			"UIElement@ element;\n"
+			"VariantMap internalVars;\n"
+			"void Test()\n"
+			"{\n"
+			"    ShortStringHash key; \n"
+			"    internalVars[key] = element.vars[key];\n"
+			"}\n\n";
+
+		module->AddScriptSection("Test", script);
+		module->Build();
+
+		engine->Release();
+	}
+
 	// Test value class with unsafe ref
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
