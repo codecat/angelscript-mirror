@@ -2067,7 +2067,8 @@ void asCBuilder::CompileGlobalVariables()
 
 			asDELETE(gvar, sGlobalVariableDescription);
 		}
-		it++;
+		else
+			it++;
 	}
 }
 

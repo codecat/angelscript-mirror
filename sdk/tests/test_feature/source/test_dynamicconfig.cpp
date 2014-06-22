@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "../../../add_on/scriptany/scriptany.h"
 
+using namespace std;
+
 namespace TestDynamicConfig
 {
 
@@ -110,6 +112,76 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Test that removing a group doesn't remove other functions
+	// http://www.gamedev.net/topic/657987-bug-new-functions-not-accessibly-by-getglobalfunctionbyindex-after-removing-different-configuration-group/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		// register 3 script functions a(), b() and c()
+		r = engine->RegisterGlobalFunction("void a()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void b()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void c()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+
+		asIScriptFunction *func = engine->GetGlobalFunctionByIndex(0);
+		if( func == 0 || string(func->GetName()) != "a" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(1);
+		if( func == 0 || string(func->GetName()) != "b" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(2);
+		if( func == 0 || string(func->GetName()) != "c" )
+			TEST_FAILED;
+
+		// Add a dynamic group, then remove it
+		r = engine->BeginConfigGroup("myconfig"); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void x()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void y()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->EndConfigGroup(); assert(r>=0);
+
+		r = engine->RemoveConfigGroup("myconfig"); assert(r>=0);
+
+		// original functions should still be available
+		func = engine->GetGlobalFunctionByIndex(0);
+		if( func == 0 || string(func->GetName()) != "a" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(1);
+		if( func == 0 || string(func->GetName()) != "b" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(2);
+		if( func == 0 || string(func->GetName()) != "c" )
+			TEST_FAILED;
+
+		// add some more functions in the default group
+		r = engine->RegisterGlobalFunction("void d()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void e()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void f()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+
+		// original functions should still be available
+		func = engine->GetGlobalFunctionByIndex(0);
+		if( func == 0 || string(func->GetName()) != "a" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(1);
+		if( func == 0 || string(func->GetName()) != "b" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(2);
+		if( func == 0 || string(func->GetName()) != "c" )
+			TEST_FAILED;
+
+		// new functions must also be available
+		func = engine->GetGlobalFunctionByIndex(3);
+		if( func == 0 || string(func->GetName()) != "d" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(4);
+		if( func == 0 || string(func->GetName()) != "e" )
+			TEST_FAILED;
+		func = engine->GetGlobalFunctionByIndex(5);
+		if( func == 0 || string(func->GetName()) != "f" )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Test dynamic config groups with function definitions used for callbacks
 	// http://www.gamedev.net/topic/618909-assertion-failure-in-as-configgroupcpp/

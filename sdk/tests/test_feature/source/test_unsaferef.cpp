@@ -129,7 +129,9 @@ bool Test()
 			"}\n\n";
 
 		module->AddScriptSection("Test", script);
-		module->Build();
+		r = module->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
 		engine->Release();
 	}
