@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptgrid/scriptgrid.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace Test_Addon_ScriptGrid
 {
@@ -17,6 +18,44 @@ bool Test()
 //	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 //	asIScriptModule *mod;
+
+	// Test grid object forcibly destroyed by garbage collector
+	// http://www.gamedev.net/topic/657955-a-quite-specific-bug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptGrid(engine);
+		RegisterScriptAny(engine);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class B {} \n"
+			"class A \n"
+			"{ \n"
+			"	any a; \n"
+			"	grid<B> t(10, 10); \n"
+			"	A() \n"
+			"	{ \n"
+			"		a.store(@this); \n"
+			"	} \n"
+			"} \n"
+			"array<A@> arr; \n"
+			"void main() \n"
+			"{ \n"
+			"	arr.insertLast(@A()); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Test resize
 	{

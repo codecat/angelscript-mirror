@@ -441,15 +441,19 @@ void CScriptGrid::Resize(asUINT width, asUINT height)
 	if( tmpBuffer == 0 )
 		return;
 
-	// Copy the existing values to the new buffer
-	asUINT w = width > buffer->width ? buffer->width : width;
-	asUINT h = height > buffer->height ? buffer->height : height;
-	for( asUINT y = 0; y < h; y++ )
-		for( asUINT x = 0; x < w; x++ )
-			SetValue(tmpBuffer, x, y, At(buffer, x, y));
+	if( buffer )
+	{
+		// Copy the existing values to the new buffer
+		asUINT w = width > buffer->width ? buffer->width : width;
+		asUINT h = height > buffer->height ? buffer->height : height;
+		for( asUINT y = 0; y < h; y++ )
+			for( asUINT x = 0; x < w; x++ )
+				SetValue(tmpBuffer, x, y, At(buffer, x, y));
 
-	// Replace the internal buffer
-	DeleteBuffer(buffer);
+		// Replace the internal buffer
+		DeleteBuffer(buffer);
+	}
+
 	buffer = tmpBuffer;
 }
 
@@ -539,12 +543,18 @@ CScriptGrid::~CScriptGrid()
 
 asUINT CScriptGrid::GetWidth() const
 {
-	return buffer->width;
+	if( buffer )
+		return buffer->width;
+
+	return 0;
 }
 
 asUINT CScriptGrid::GetHeight() const
 {
-	return buffer->height;
+	if( buffer )
+		return buffer->height;
+
+	return 0;
 }
 
 // internal
@@ -641,6 +651,8 @@ void CScriptGrid::CreateBuffer(SGridBuffer **buf, asUINT w, asUINT h)
 // internal
 void CScriptGrid::DeleteBuffer(SGridBuffer *buf)
 {
+	assert( buf );
+
 	Destruct(buf);
 
 	// Free the buffer
@@ -650,6 +662,8 @@ void CScriptGrid::DeleteBuffer(SGridBuffer *buf)
 // internal
 void CScriptGrid::Construct(SGridBuffer *buf)
 {
+	assert( buf );
+
 	if( subTypeId & asTYPEID_OBJHANDLE )
 	{
 		// Set all object handles to null
@@ -684,6 +698,8 @@ void CScriptGrid::Construct(SGridBuffer *buf)
 // internal
 void CScriptGrid::Destruct(SGridBuffer *buf)
 {
+	assert( buf );
+
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{
 		asIScriptEngine *engine = objType->GetEngine();
@@ -702,6 +718,8 @@ void CScriptGrid::Destruct(SGridBuffer *buf)
 // GC behaviour
 void CScriptGrid::EnumReferences(asIScriptEngine *engine)
 {
+	if( buffer == 0 ) return;
+
 	// If the array is holding handles, then we need to notify the GC of them
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{
@@ -718,6 +736,8 @@ void CScriptGrid::EnumReferences(asIScriptEngine *engine)
 // GC behaviour
 void CScriptGrid::ReleaseAllHandles(asIScriptEngine*)
 {
+	if( buffer == 0 ) return;
+
 	DeleteBuffer(buffer);
 	buffer = 0;
 }
