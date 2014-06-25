@@ -1635,7 +1635,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	// is known, can the flag be cleared for those objects that truly cannot
 	// form circular references. This is important because a template
 	// callback may be called with a script class before the compilation
-	// complete, and until it is known, the callback must assume the class
+	// completes, and until it is known, the callback must assume the class
 	// is garbage collected.
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
 

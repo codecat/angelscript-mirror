@@ -50,6 +50,17 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
+		// The type B is not really garbage collected
+		asIObjectType *t = mod->GetObjectTypeByDecl("B");
+		if( t->GetFlags() & asOBJ_GC )
+			TEST_FAILED;
+
+		// But the grid<B> type will be anyway since the template callback was evaluated before B's content was known
+		// TODO: run-time optimize: Re-evaluate the template callback after the B's content is fully known
+		t = mod->GetObjectTypeByDecl("grid<B>");
+		if( !(t->GetFlags() & asOBJ_GC) )
+			TEST_FAILED;
+
 		r = ExecuteString(engine, "main()", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
