@@ -2298,8 +2298,10 @@ bool asCParser::IsVarDecl()
 	}
 
 	// Object handles can be interleaved with the array brackets
+	// Even though declaring variables with & is invalid we'll accept 
+	// it here to give an appropriate error message later
 	GetToken(&t2);
-	while( t2.type == ttHandle || t2.type == ttOpenBracket )
+	while( t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket )
 	{
 		if( t2.type == ttOpenBracket )
 		{

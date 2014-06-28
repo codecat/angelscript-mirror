@@ -37,16 +37,6 @@ const char *script5 =
 
 const char *script6 = "class t { bool Test(bool, float) {return false;} }";
 
-const char *script7 =
-"class Ship                           \n\
-{                                     \n\
-	Sprite		_sprite;              \n\
-									  \n\
-	string GetName() {                \n\
-		return _sprite.GetName();     \n\
-	}								  \n\
-}";
-
 const char *script8 =
 "float calc(float x, float y) { Print(\"GOT THESE NUMBERS: \" + x + \", \" + y + \"\n\"); return x*y; }";
 
@@ -234,6 +224,52 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Test appropriate error when attempting to declare variable as reference
+	// http://www.gamedev.net/topic/657196-problem-returning-reference-to-internal-members/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {}; \n"
+			"void func(int a) { \n"
+			"  A &a; \n"      // Must detect this as a declaration and give error 
+			"  A &b = a; \n"  // instead of thinking it is a bitwise and-operation
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Info    : Compiling void func(int)\n"
+		                   "test (3, 5) : Error   : Expected identifier\n"
+		                   "test (3, 5) : Error   : Instead found '&'\n"
+		                   "test (4, 5) : Error   : Expected identifier\n"
+		                   "test (4, 5) : Error   : Instead found '&'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"int &glob; \n");  // Must give error for invalid reference
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 5) : Error   : Expected identifier\n"
+		                   "test (1, 5) : Error   : Instead found '&'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+
+		engine->Release();
+	}
 
 	// Test proper error when attempting to use a type from an unrelated namespace
 	{
@@ -2466,18 +2502,6 @@ bool Test()
 		TEST_FAILED;
 	}
 
-	// test 5
-	RegisterScriptString(engine);
-	bout.buffer = "";
-	r = ExecuteString(engine, "string &ref");
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'string' is not declared\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
 	bout.buffer = "";
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
@@ -2515,7 +2539,18 @@ bool Test()
 
 	// test 8
 	// Don't assert on implicit conversion to object when a compile error has occurred
+	const char *script7 =
+		"class Ship                           \n"
+		"{                                    \n"
+		"	Sprite		_sprite;              \n"
+		"									  \n"
+		"	string GetName() {                \n"
+		"		return _sprite.GetName();     \n"
+		"	}								  \n"
+		"} \n";
+
 	bout.buffer = "";
+	RegisterStdString(engine);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script7, strlen(script7));
 	r = mod->Build();
@@ -2543,7 +2578,7 @@ bool Test()
 	}
 	if( bout.buffer != "script (1, 1) : Info    : Compiling float calc(float, float)\n"
 	                   "script (1, 77) : Error   : Multiline strings are not allowed in this application\n"
-	                   "script (1, 32) : Error   : No matching signatures to 'Print(string@&)'\n" )
+	                   "script (1, 32) : Error   : No matching signatures to 'Print(string)'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
