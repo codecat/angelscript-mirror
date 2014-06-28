@@ -516,8 +516,9 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = mod->Build();
-	if( r >= 0 || bout.buffer != "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type\n" )
+	if( r >= 0 || bout.buffer != "TestDynamicConfig (3, 3) : Error   : Identifier 'mytype' is not a data type in global namespace\n" )
 	{
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -552,7 +553,7 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = mod->Build();
-	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 11) : Error   : Identifier 'mytype' is not a data type\n" )
+	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 11) : Error   : Identifier 'mytype' is not a data type in global namespace\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

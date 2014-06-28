@@ -2396,6 +2396,7 @@ void asCBuilder::CompileClasses()
 			// Find the object type for the interface
 			asCObjectType *objType = 0;
 			sMixinClass *mixin = 0;
+			asSNameSpace *origNs = ns;
 			while( ns )
 			{
 				objType = GetObjectType(name.AddressOf(), ns);
@@ -2411,7 +2412,10 @@ void asCBuilder::CompileClasses()
 			if( objType == 0 && mixin == 0 )
 			{
 				asCString str;
-				str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, name.AddressOf());
+				if( origNs->name == "" )
+					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, name.AddressOf());
+				else
+					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, name.AddressOf(), origNs->name.AddressOf());
 				WriteError(str, file, node);
 			}
 			else if( mixin )
@@ -4586,6 +4590,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		str.Assign(&file->code[n->tokenPos], n->tokenLength);
 
 		// Recursively search parent namespaces for matching type
+		asSNameSpace *origNs = ns;
 		while( ns && !found )
 		{
 			asCObjectType *ot = 0;
@@ -4735,7 +4740,10 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		if( !found )
 		{
 			asCString msg;
-			msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, (const char *)str.AddressOf());
+			if( origNs->name == "" )
+				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, str.AddressOf());
+			else
+				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), origNs->name.AddressOf());
 			WriteError(msg, file, n);
 
 			dt = asCDataType::CreatePrimitive(ttInt, isConst);

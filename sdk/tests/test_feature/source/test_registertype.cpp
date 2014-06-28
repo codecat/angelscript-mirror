@@ -586,7 +586,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "System function (1, 11) : Error   : Identifier 'type' is not a data type\n"
+		if( bout.buffer != "System function (1, 11) : Error   : Identifier 'type' is not a data type in global namespace\n"
 						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void func(type @+)' (Code: -10)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

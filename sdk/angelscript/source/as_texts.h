@@ -115,6 +115,8 @@
 #define TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED      "Handle to handle is not allowed"
 
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE             "Identifier '%s' is not a data type"
+#define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS "Identifier '%s' is not a data type in global namespace"
+#define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s     "Identifier '%s' is not a data type in namespace '%s' or parent"
 #define TXT_IF_WITH_EMPTY_STATEMENT                "If with empty statement"
 #define TXT_ILLEGAL_MEMBER_TYPE                    "Illegal member type"
 // TODO: Should be TXT_ILLEGAL_OPERATION_ON_s

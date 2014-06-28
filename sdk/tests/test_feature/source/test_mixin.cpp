@@ -340,7 +340,7 @@ bool Test()
 			r = mod->Build();
 			if( r >= 0 )
 				TEST_FAILED;
-			if( bout.buffer != "test (12, 1) : Error   : Identifier 'Mix' is not a data type\n"
+			if( bout.buffer != "test (12, 1) : Error   : Identifier 'Mix' is not a data type in global namespace\n"
 				               "test (2, 3) : Error   : Class properties cannot be declared as const\n"
 			                   "test (3, 7) : Error   : Name conflict. 'mthd' is a class method.\n"
 							   "test (6, 14) : Info    : Previous error occurred while including mixin\n"

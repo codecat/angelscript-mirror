@@ -225,9 +225,9 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "A (3, 13) : Error   : Identifier 'B' is not a data type\n"
+		if( bout.buffer != "A (3, 13) : Error   : Identifier 'B' is not a data type in global namespace\n"
 		                   "A (3, 3) : Error   : Shared type 'A' doesn't match the original declaration in other module\n"
-		                   "A (2, 3) : Error   : Identifier 'B' is not a data type\n"
+		                   "A (2, 3) : Error   : Identifier 'B' is not a data type in global namespace\n"
 		                   "A (2, 6) : Error   : Shared type 'A' doesn't match the original declaration in other module\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

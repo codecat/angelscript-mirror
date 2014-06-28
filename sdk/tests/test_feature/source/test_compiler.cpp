@@ -235,6 +235,31 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test proper error when attempting to use a type from an unrelated namespace
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace A { class C {} } \n"
+			"namespace B { void func( C @c ) {} } \n"
+			"void func2( C @c ) {} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 26) : Error   : Identifier 'C' is not a data type in namespace 'B' or parent\n"
+			               "test (3, 13) : Error   : Identifier 'C' is not a data type in global namespace\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test proper error in case of double handle in variable decl
 	// http://www.gamedev.net/topic/657480-double-handle/
 	{
@@ -2206,7 +2231,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "TestCompiler (3, 3) : Error   : Identifier 'Car' is not a data type\n"
+		if( bout.buffer != "TestCompiler (3, 3) : Error   : Identifier 'Car' is not a data type in global namespace\n"
 						   "TestCompiler (4, 3) : Info    : Compiling void AAA::Update()\n"
 						   "TestCompiler (6, 13) : Error   : Both operands must be handles when comparing identity\n"
 						   "TestCompiler (7, 10) : Error   : Illegal operation on 'int&'\n" )
@@ -2435,8 +2460,11 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 
-	if( bout.buffer != "TestCompiler (1, 11) : Error   : Identifier 'I' is not a data type\n" )
+	if( bout.buffer != "TestCompiler (1, 11) : Error   : Identifier 'I' is not a data type in global namespace\n" )
+	{
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
+	}
 
 	// test 5
 	RegisterScriptString(engine);
@@ -2495,10 +2523,11 @@ bool Test()
 	{
 		TEST_FAILED;
 	}
-	if( bout.buffer != "script (3, 2) : Error   : Identifier 'Sprite' is not a data type\n"
+	if( bout.buffer != "script (3, 2) : Error   : Identifier 'Sprite' is not a data type in global namespace\n"
 					   "script (5, 2) : Info    : Compiling string Ship::GetName()\n"
 					   "script (6, 17) : Error   : Illegal operation on 'int&'\n" )
 	{
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2565,7 +2594,7 @@ bool Test()
 	{
 		TEST_FAILED;
 	}
-	if( bout.buffer != "script (3, 3) : Error   : Identifier 'object' is not a data type\n"
+	if( bout.buffer != "script (3, 3) : Error   : Identifier 'object' is not a data type in global namespace\n"
 					   "script (4, 3) : Info    : Compiling void c::func()\n"
                        "script (5, 18) : Error   : Illegal operation on 'int&'\n" )
 	{
