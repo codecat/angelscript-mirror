@@ -171,7 +171,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 
 		PRINTF("%s: Failed to execute script\n", TESTNAME);
 		TEST_FAILED;
@@ -212,7 +212,7 @@ bool Test()
 	}
 	if( r == asEXECUTION_EXCEPTION )
 	{
-		PrintException(ctx);
+		PRINTF("%s", GetExceptionInfo(ctx).c_str());
 	}
 	if( ctx ) ctx->Release();
 	ctx = 0;
@@ -234,7 +234,7 @@ bool Test()
 	}
 	if( r == asEXECUTION_EXCEPTION )
 	{
-		PrintException(ctx);
+		PRINTF("%s", GetExceptionInfo(ctx).c_str());
 	}
 
 	if( ctx ) ctx->Release();
@@ -247,7 +247,7 @@ bool Test()
 	r = ExecuteString(engine, "TestArrayInitList()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	if( r == asEXECUTION_EXCEPTION )
-		PrintException(ctx);
+		PRINTF("%s", GetExceptionInfo(ctx).c_str());
 
 	if( ctx ) ctx->Release();
 

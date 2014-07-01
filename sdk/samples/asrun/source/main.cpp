@@ -256,7 +256,7 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			cout << "The script failed with an exception" << endl;
-			PrintException(ctx, true);
+			cout << GetExceptionInfo(ctx, true).c_str();
 			r = -1;
 		}
 		else if( r == asEXECUTION_ABORTED )

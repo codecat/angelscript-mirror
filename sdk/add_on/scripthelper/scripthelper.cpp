@@ -1,9 +1,7 @@
 #include <string.h>
 #include "scripthelper.h"
-#include <string>
 #include <assert.h>
 #include <stdio.h>
-#include <sstream>
 #include <fstream>
 #include <stdlib.h>
 
@@ -871,20 +869,22 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 	return 0;
 }
 
-void PrintException(asIScriptContext *ctx, bool printStack)
+string GetExceptionInfo(asIScriptContext *ctx, bool showStack)
 {
-	if( ctx->GetState() != asEXECUTION_EXCEPTION ) return;
+	if( ctx->GetState() != asEXECUTION_EXCEPTION ) return "";
+
+	stringstream text;
 
 	const asIScriptFunction *function = ctx->GetExceptionFunction();
-	printf("func: %s\n", function->GetDeclaration());
-	printf("modl: %s\n", function->GetModuleName());
-	printf("sect: %s\n", function->GetScriptSectionName());
-	printf("line: %d\n", ctx->GetExceptionLineNumber());
-	printf("desc: %s\n", ctx->GetExceptionString());
+	text << "func: " << function->GetDeclaration() << "\n";
+	text << "modl: " << function->GetModuleName() << "\n";
+	text << "sect: " << function->GetScriptSectionName() << "\n";
+	text << "line: " << ctx->GetExceptionLineNumber() << "\n";
+	text << "desc: " << ctx->GetExceptionString() << "\n";
 
-	if( printStack )
+	if( showStack )
 	{
-		printf("--- call stack ---\n");
+		text << "--- call stack ---\n";
 		for( asUINT n = 1; n < ctx->GetCallstackSize(); n++ )
 		{
 			function = ctx->GetFunction(n);
@@ -892,23 +892,23 @@ void PrintException(asIScriptContext *ctx, bool printStack)
 			{
 				if( function->GetFuncType() == asFUNC_SCRIPT )
 				{
-					printf("%s (%d): %s\n", function->GetScriptSectionName(),
-											ctx->GetLineNumber(n),
-											function->GetDeclaration());
+					text << function->GetScriptSectionName() << " (" << ctx->GetLineNumber(n) << "): " << function->GetDeclaration() << "\n";
 				}
 				else
 				{
 					// The context is being reused by the application for a nested call
-					printf("{...application...}: %s\n", function->GetDeclaration());
+					text << "{...application...}: " << function->GetDeclaration() << "\n";
 				}
 			}
 			else
 			{
 				// The context is being reused by the script engine for a nested call
-				printf("{...script engine...}\n");
+				text << "{...script engine...}\n";
 			}
 		}
 	}
+
+	return text.str();
 }
 
 END_AS_NAMESPACE

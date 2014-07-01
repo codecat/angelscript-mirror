@@ -212,7 +212,7 @@ bool Test()
 		PRINTF("%s: Failed to execute script\n", TESTNAME);
 
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		
 		TEST_FAILED;
 	}
@@ -235,7 +235,7 @@ bool Test()
 		PRINTF("%s: Failed to execute script\n", TESTNAME);
 
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		
 		TEST_FAILED;
 	}

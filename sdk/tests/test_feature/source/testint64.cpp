@@ -61,7 +61,7 @@ bool TestInt64()
 		TEST_FAILED;
 
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 	}
 	
     if( called != 3 ) 

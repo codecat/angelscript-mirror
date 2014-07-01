@@ -1501,12 +1501,12 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ret, int retT
 // file manually.
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
 
-// Print information on script exception to the standard output.
+// Format the details of the script exception into a human readable text.
 // Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application 
-// can call this function to print some more information about that exception onto the standard
-// output. The information obtained includes the current function, the script source section, 
+// can call this function to get more information about that exception in a human readable form.
+// The information obtained includes the current function, the script source section, 
 // program position in the source section, and the exception description itself.
-void PrintException(asIScriptContext *ctx, bool printStack = false);
+std::string GetExceptionInfo(asIScriptContext *ctx, bool showStack = false);
 \endcode
 
 \todo WriteConfigToStream, ConfigEngineFromStream

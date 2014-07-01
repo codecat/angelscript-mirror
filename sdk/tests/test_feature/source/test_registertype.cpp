@@ -1841,7 +1841,7 @@ bool TestHandleType()
 		if( r != asEXECUTION_FINISHED )
 		{
 			if( r == asEXECUTION_EXCEPTION )
-				PrintException(ctx);
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
 		ctx->Release();

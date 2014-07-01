@@ -260,7 +260,7 @@ bool Test()
 		if( sizeof(void*) == 4 && string(ctx->GetExceptionFunction()->GetName()) != "testclass" ||
 			sizeof(void*) == 8 && string(ctx->GetExceptionFunction()->GetName()) != "testclass" )
 		{
-			PrintException(ctx, true);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
 		ctx->Release();

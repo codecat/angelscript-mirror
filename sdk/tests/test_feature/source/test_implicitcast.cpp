@@ -235,7 +235,7 @@ bool Test()
 	if( r != 0 )
 	{
 		if( r == 3 )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
@@ -552,7 +552,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		ctx->Release();
 
 		// Various situations with ref casts on null pointers

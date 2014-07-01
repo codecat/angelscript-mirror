@@ -326,11 +326,11 @@ bool Test()
 		{
 			TEST_FAILED;
 			if( r == asEXECUTION_EXCEPTION )
-				PrintException(ctx, true);
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		}
 		ctx->Release();
 
-		engine->Release();		
+		engine->Release();
 	}
 
 	// http://www.gamedev.net/topic/636443-there-is-no-copy-operator-for-the-type-val-available/

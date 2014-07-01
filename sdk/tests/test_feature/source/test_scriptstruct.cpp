@@ -1166,7 +1166,7 @@ bool Test()
 		r = ExecuteString(engine, "TestStruct()", mod, ctx);
 		if( r != asEXECUTION_FINISHED ) 
 		{
-			if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
+			if( r == asEXECUTION_EXCEPTION ) PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
 		if( ctx ) ctx->Release();
@@ -1455,7 +1455,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 		{
 			if( r == asEXECUTION_EXCEPTION )
-				PrintException(ctx, true);
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
 		ctx->Release();

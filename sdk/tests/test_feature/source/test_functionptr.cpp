@@ -606,7 +606,7 @@ bool Test()
 		{
 			TEST_FAILED;
 			if( r == asEXECUTION_EXCEPTION )
-				PrintException(ctx);
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		}
 		ctx->Release();
 
@@ -884,7 +884,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx, true);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		ctx->Release();
 
 		CBytecodeStream stream(__FILE__"1");

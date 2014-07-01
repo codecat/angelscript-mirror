@@ -315,7 +315,7 @@ bool TestStdString()
 		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "save_settings();", mod, ctx);
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 		ctx->Release();

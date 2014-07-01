@@ -188,7 +188,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 
 		TEST_FAILED;
 		PRINTF("%s: Execution failed\n", TESTNAME);
@@ -206,7 +206,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 
 		TEST_FAILED;
 		PRINTF("%s: Execution failed\n", TESTNAME);

@@ -181,7 +181,7 @@ bool Test()
 	r = ExecuteString(engine, "Test()", mod, ctx);
 	if( r != asEXECUTION_FINISHED ) 
 	{
-		if( r == asEXECUTION_EXCEPTION ) PrintException(ctx);
+		if( r == asEXECUTION_EXCEPTION ) PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();

@@ -190,7 +190,7 @@ void PrintExceptionInfo(asIScriptContext *ctx)
 If desired, it is also possible to \ref asIScriptContext::SetExceptionCallback "register a callback function" 
 that will be called at the moment the exception occurred, before the \ref asIScriptContext::Execute "Execute" method returns. 
 
-\see \ref doc_debug for information on examining the callstack, and \ref doc_addon_helpers "PrintException" for an helper function to get information on exceptions.
+\see \ref doc_debug for information on examining the callstack, and \ref doc_addon_helpers "GetExceptionInfo" for a helper function to get information on exceptions.
 
 
 */

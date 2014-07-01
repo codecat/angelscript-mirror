@@ -133,7 +133,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 
 		PRINTF("%s: Failed to execute script\n", TESTNAME);
 		TEST_FAILED;
@@ -159,7 +159,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		TEST_FAILED;
 	}
 	if( ctx ) ctx->Release();
