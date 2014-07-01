@@ -1501,22 +1501,15 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ret, int retT
 // file manually.
 int WriteConfigToFile(asIScriptEngine *engine, const char *filename);
 
-\todo WriteConfigToStream, ConfigEngineFromStream
-
 // Print information on script exception to the standard output.
 // Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application 
 // can call this function to print some more information about that exception onto the standard
 // output. The information obtained includes the current function, the script source section, 
 // program position in the source section, and the exception description itself.
 void PrintException(asIScriptContext *ctx, bool printStack = false);
-
-// Determine the application type flags to use when registering the object type as a value type with 
-// AngelScript. The function is not capable of determining the flags that describes the content of the 
-// type though, so those flags must still be informed manually if needed. This template function will 
-// only compile correctly if the C++ compiler supports the C++11 standard. 
-template<typename T>
-asUINT GetTypeTraits();
 \endcode
+
+\todo WriteConfigToStream, ConfigEngineFromStream
 
 \section doc_addon_helpers_2 Example
 

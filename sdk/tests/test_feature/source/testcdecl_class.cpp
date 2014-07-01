@@ -281,7 +281,7 @@ bool TestCDecl_Class()
 		};
 
 #ifdef AS_CAN_USE_CPP11
-		asUINT appFlags = GetTypeTraits<vec3_t>();
+		asUINT appFlags = asGetTypeTraits<vec3_t>();
 		if( appFlags != asOBJ_APP_ARRAY )
 			TEST_FAILED;
 #endif

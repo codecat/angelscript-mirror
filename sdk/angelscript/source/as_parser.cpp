@@ -3565,7 +3565,14 @@ asCScriptNode *asCParser::ParseStatement()
 	else if( t1.type == ttSwitch )
 		return ParseSwitch();
 	else
+	{
+		if( IsVarDecl() )
+		{
+			Error(TXT_UNEXPECTED_VAR_DECL, &t1);
+			return 0;
+		}
 		return ParseExpressionStatement();
+	}
 }
 
 asCScriptNode *asCParser::ParseExpressionStatement()

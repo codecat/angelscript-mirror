@@ -30,6 +30,7 @@
  - \ref asGetLibraryVersion
  - \ref asGetLibraryOptions
  - \ref asCreateLockableSharedBool
+ - \ref asGetTypeTraits
 
 
 */

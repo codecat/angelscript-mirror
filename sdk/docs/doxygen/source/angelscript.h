@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.29.0
-#define ANGELSCRIPT_VERSION        22900
-#define ANGELSCRIPT_VERSION_STRING "2.29.0"
+//! Version 2.29.1
+#define ANGELSCRIPT_VERSION        22901
+#define ANGELSCRIPT_VERSION_STRING "2.29.1"
 
 // Data types
 
@@ -619,6 +619,7 @@ typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, voi
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
 #if !(defined(__GNUC__) && defined(__cplusplus) && __cplusplus < 201103L) // g++ -std=c++11
 #if !defined(__SUNPRO_CC)
+//! \brief This macro is defined if the compiler supports the C++11 feature set
 #define AS_CAN_USE_CPP11 1
 #endif
 #endif
@@ -627,14 +628,11 @@ typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, voi
 
 // This macro does basically the same thing as offsetof defined in stddef.h, but
 // GNUC should not complain about the usage as I'm not using 0 as the base pointer.
-//! \ingroup funcs
 //! \brief Returns the offset of an attribute in a struct
 #define asOFFSET(s,m) ((size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
 
-//! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the function specified by the name
 #define asFUNCTION(f) asFunctionPtr(f)
-//! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the function specified by the name, parameter list, and return type
 #if (defined(_MSC_VER) && _MSC_VER <= 1200) || (defined(__BORLANDC__) && __BORLANDC__ < 0x590)
 // MSVC 6 has a bug that prevents it from properly compiling using the correct asFUNCTIONPR with operator >
@@ -698,10 +696,8 @@ template <typename T>
  #define AS_METHOD_AMBIGUITY_CAST(t) static_cast<t >
 #endif
 
-//! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the class method specified by class and method name.
 #define asMETHOD(c,m) asSMethodPtr<sizeof(void (c::*)())>::Convert((void (c::*)())(&c::m))
-//! \ingroup funcs
 //! \brief Returns an asSFuncPtr representing the class method specified by class, method name, parameter list, return type.
 #define asMETHODPR(c,m,p,r) asSMethodPtr<sizeof(void (c::*)())>::Convert(AS_METHOD_AMBIGUITY_CAST(r (c::*)p)(&c::m))
 
@@ -915,6 +911,76 @@ extern "C"
 	AS_API asILockableSharedBool *asCreateLockableSharedBool();
 }
 #endif // ANGELSCRIPT_DLL_MANUAL_IMPORT
+
+// Determine traits of a type for registration of value types
+// Relies on C++11 features so it can not be used with non-compliant compilers
+#ifdef AS_CAN_USE_CPP11
+
+#if 0 // Doxygen doesn't like this
+END_AS_NAMESPACE
+#include <type_traits>
+BEGIN_AS_NAMESPACE
+#endif
+
+//! \brief Returns the appropriate flags for use with RegisterObjectType.
+//! \tparam T The type for which the flags should be determined
+//! \return The flags necessary to register this type as a value type
+//!
+//! \note This function is only availabe if the compiler supports C++11 feature set. Check existance with \#if \ref AS_CAN_USE_CPP11.
+//!
+//! This template function uses C++11 STL template functions to determine
+//! the appropriate flags to use when registering the desired type as a value
+//! type with \ref asIScriptEngine::RegisterObjectType.
+//!
+//! It is capable to determine all the \ref asEObjTypeFlags "asOBJ_APP_xxx" flags, except for 
+//! \ref asOBJ_APP_CLASS_ALLINTS, \ref asOBJ_APP_CLASS_ALLFLOATS, and \ref asOBJ_APP_CLASS_ALIGN8. 
+//! These flags must still be informed manually when needed.
+//!
+//! \see \ref doc_reg_val_2
+template<typename T>
+asUINT asGetTypeTraits()
+{
+	bool hasConstructor =  std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
+#if defined(__GNUC__) && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) 
+	// http://stackoverflow.com/questions/12702103/writing-code-that-works-when-has-trivial-destructor-is-defined-instead-of-is
+	bool hasDestructor = std::is_destructible<T>::value && !std::is_trivially_destructible<T>::value;
+#else
+	bool hasDestructor = std::is_destructible<T>::value && !std::has_trivial_destructor<T>::value;
+#endif
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value && !std::has_trivial_copy_assign<T>::value;
+	bool hasCopyConstructor = std::is_copy_constructible<T>::value && !std::has_trivial_copy_constructor<T>::value;
+	bool isFloat = std::is_floating_point<T>::value;
+	bool isPrimitive = std::is_integral<T>::value || std::is_pointer<T>::value || std::is_enum<T>::value;
+	bool isClass = std::is_class<T>::value;
+	bool isArray = std::is_array<T>::value;
+
+	if( isFloat )
+		return asOBJ_APP_FLOAT;
+	if( isPrimitive )
+		return asOBJ_APP_PRIMITIVE;
+	
+	if( isClass )
+	{
+		asDWORD flags = asOBJ_APP_CLASS;
+		if( hasConstructor )
+			flags |= asOBJ_APP_CLASS_CONSTRUCTOR;
+		if( hasDestructor )
+			flags |= asOBJ_APP_CLASS_DESTRUCTOR;
+		if( hasAssignmentOperator )
+			flags |= asOBJ_APP_CLASS_ASSIGNMENT;
+		if( hasCopyConstructor )
+			flags |= asOBJ_APP_CLASS_COPY_CONSTRUCTOR;
+		return flags;
+	}
+
+	if( isArray )
+		return asOBJ_APP_ARRAY;
+
+	// Unknown type traits
+	return 0;
+}
+
+#endif // c++11
 
 // Interface declarations
 

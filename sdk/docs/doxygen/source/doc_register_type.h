@@ -276,9 +276,49 @@ to initialize a preallocated memory block.
 
 \section doc_reg_val_2 Value types and native calling conventions
 
-If the type will be passed to and from the application by value using native calling conventions, it is important to inform
+If the type will be passed to or from the application by value using native calling conventions it is important to inform
 AngelScript of its real type in C++, otherwise AngelScript won't be able to determine exactly how C++ is treating the type in
 a parameter or return value. 
+
+To inform AngelScript of actual type in C++ the template function \ref asGetTypeTraits should preferably be used as it
+will automatically determine the correct flags to pass to \ref asIScriptEngine::RegisterObjectType "RegisterObjectType" 
+together with the asOBJ_VALUE flag. 
+
+\code
+// With C++11 the type can be registered with GetTypeTraits
+r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asGetTypeTraits<complex>()); assert( r >= 0 );
+\endcode
+
+On some platforms the native calling convention may require further knowledge about the class members that \ref asGetTypeTraits
+cannot determine in order to work properly; most notable are the Linux 64bit and Mac OSX 64bit systems with the GNUC compiler.
+On these systems small classes that do not have a destructor or a copy constructor will have different behaviours depending 
+on the type and order of their members.
+
+AngelScript lets the application give information that cover the most common variants, e.g. the class should be treated as 
+if all members are integers, or it should be treated as if all members are floats. 
+
+<table border=0 cellspacing=0 cellpadding=0>
+<tr><td>\ref asOBJ_APP_CLASS_ALLINTS   &nbsp; </td><td>The C++ class members can be treated as if all integers</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALLFLOATS &nbsp; </td><td>The C++ class members can be treated as if all floats or doubles</td></tr>
+<tr><td>\ref asOBJ_APP_CLASS_ALIGN8    &nbsp; </td><td>The C++ class contains members that may require 8byte alignment, e.g. a double.</td></tr>
+</table>
+
+If these flags are not informed and AngelScript needs them on the platform, you'll get an error message like 
+"Don't support passing/returning type 'MyType' by value to application in native calling convention on this platform". 
+
+It is difficult to explain when one or the other should be used as it requires in-depth knowledge of the ABI for the 
+respective system, so if you find that you really need to use these flags, make sure you perform adequate testing 
+to guarantee that your functions are called correctly by the script engine. If neither of these flags work, and you're 
+not able to change the class to work without them, then the only other option is to use the generic calling convention,
+preferably with the \ref doc_addon_autowrap "auto wrappers".
+
+\subsection doc_reg_val_2_nocpp11 For compilers that don't support C++11
+
+If your compiler doesn't support C++11 features the \ref asGetTypeTraits function will not be available. In this case you 
+have no option but to inform the correct flags manually. Be careful to inform the correct flags, because if the wrong flags
+are used you may get unexpected behaviour when calling registered functions that passes or returns these types by value. 
+Common problems are stack corruptions or invalid memory accesses. In some cases you may face more silent errors that
+may be difficult to detect, e.g. the function is not returning the expected values.
 
 There are a few different flags:
 
@@ -304,7 +344,7 @@ requires it. So even if the type you want to register doesn't have a declared de
 register the type with the flag asOBJ_APP_CLASS_CONSTRUCTOR. The same for the other functions.
 
 For class types there is also a shorter form of the flags for each combination of the 5 flags. They are of the form \ref asOBJ_APP_CLASS_CDAK, 
-where the existance of the last letters determine if the constructor, destructor, and/or assignment behaviour are available. For example
+where the existence of the last letters determine if the constructor, destructor, and/or assignment behaviour are available. For example
 \ref asOBJ_APP_CLASS_CDAK is defined as \ref asOBJ_APP_CLASS | \ref asOBJ_APP_CLASS_CONSTRUCTOR | \ref asOBJ_APP_CLASS_DESTRUCTOR | \ref asOBJ_APP_CLASS_ASSIGNMENT | \ref asOBJ_APP_CLASS_COPY_CONSTRUCTOR.
 
 \code
@@ -312,36 +352,6 @@ where the existance of the last letters determine if the constructor, destructor
 r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 \endcode
 
-Make sure you inform these flags correctly, because if you do not you may get various errors when executing the scripts. 
-Common problems are stack corruptions and invalid memory accesses. In some cases you may face more silent errors that
-may be difficult to detect, e.g. the function is not returning the expected values.
-
-If you use a compiler with support for the C++11 standard, then you can use the helper function \ref doc_addon_helpers "GetTypeTraits"
-to automatically determine the correct set of the above flags to use for a type.
-
-\code
-// With C++11 the type can be registered with GetTypeTraits
-r = engine->RegisterObjectType("complex", sizeof(complex), asOBJ_VALUE | GetTypeTraits<complex>()); assert( r >= 0 );
-\endcode
-
-On some platforms the native calling convention may require further knowledge about the class members in order to work 
-properly; most notable are the Linux 64bit and Mac OSX 64bit systems with the GNUC compiler. On these systems small classes 
-that do not have a destructor or a copy constructor will have different behaviours depending on the type of their members.
-
-AngelScript lets the application give information that cover the most common variants, e.g. the class should be treated as 
-if all members are integers, or it should be treated as if all members are floats. 
-
-<table border=0 cellspacing=0 cellpadding=0>
-<tr><td>\ref asOBJ_APP_CLASS_ALLINTS   &nbsp; </td><td>The C++ class members can be treated as if all integers</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_ALLFLOATS &nbsp; </td><td>The C++ class members can be treated as if all floats or doubles</td></tr>
-<tr><td>\ref asOBJ_APP_CLASS_ALIGN8    &nbsp; </td><td>The C++ class contains members that may require 8byte alignment, e.g. a double.</td></tr>
-</table>
-
-It is difficult to explain when one or the other should be used as it requires in-depth knowledge of the ABI for the 
-respective system, so if you find that you really need to use these flags, make sure you perform adequate testing 
-to guarantee that your functions are called correctly by the script engine. If neither of these flags work, and you're 
-not able to change the class to work without them, then the only other option is to use the generic calling convention,
-preferably with the \ref doc_addon_autowrap "auto wrappers".
 
 
 

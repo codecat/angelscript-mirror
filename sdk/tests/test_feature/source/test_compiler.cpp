@@ -225,6 +225,34 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Give proper error when declaring variable as only statement of an if
+	// http://www.gamedev.net/topic/653474-compile-error-in-if-statement-without-braces/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(int a) \n"
+			"{ \n"
+			"  if( true ) \n"
+			"    int a; \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void func(int)\n"
+		                   "test (4, 5) : Error   : Unexpected variable declaration\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test appropriate error when attempting to declare variable as reference
 	// http://www.gamedev.net/topic/657196-problem-returning-reference-to-internal-members/
 	{
@@ -266,7 +294,6 @@ bool Test()
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-
 
 		engine->Release();
 	}
@@ -1288,7 +1315,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 #ifdef AS_CAN_USE_CPP11
-        if( GetTypeTraits<A>() != asOBJ_APP_CLASS_CDAK )
+        if( asGetTypeTraits<A>() != asOBJ_APP_CLASS_CDAK )
             TEST_FAILED;
 #endif
 

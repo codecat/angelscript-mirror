@@ -358,7 +358,7 @@ bool Test()
 		};
 
 #ifdef AS_CAN_USE_CPP11
-		asUINT appFlags = GetTypeTraits<vec3_t>();
+		asUINT appFlags = asGetTypeTraits<vec3_t>();
 #else
 		asUINT appFlags = asOBJ_APP_ARRAY;
 #endif
@@ -520,18 +520,18 @@ bool Test()
 
 #ifdef AS_CAN_USE_CPP11
 	// Test the automatic determination of flags for registering value types
-	if( GetTypeTraits<std::string>() != asOBJ_APP_CLASS_CDAK )
+	if( asGetTypeTraits<std::string>() != asOBJ_APP_CLASS_CDAK )
 		TEST_FAILED;
-	if( GetTypeTraits<void*>() != asOBJ_APP_PRIMITIVE )
+	if( asGetTypeTraits<void*>() != asOBJ_APP_PRIMITIVE )
 		TEST_FAILED;
-	if( GetTypeTraits<float>() != asOBJ_APP_FLOAT )
+	if( asGetTypeTraits<float>() != asOBJ_APP_FLOAT )
 		TEST_FAILED;
-	if( GetTypeTraits<double>() != asOBJ_APP_FLOAT )
+	if( asGetTypeTraits<double>() != asOBJ_APP_FLOAT )
 		TEST_FAILED;
-	if( GetTypeTraits<bool>() != asOBJ_APP_PRIMITIVE )
+	if( asGetTypeTraits<bool>() != asOBJ_APP_PRIMITIVE )
 		TEST_FAILED;
 	struct T {bool a;};
-	if( GetTypeTraits<T>() != asOBJ_APP_CLASS )
+	if( asGetTypeTraits<T>() != asOBJ_APP_CLASS )
 		TEST_FAILED;
 #endif
 
