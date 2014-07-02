@@ -572,6 +572,12 @@ asCScriptEngine::~asCScriptEngine()
 	asASSERT(refCount.get() == 0);
 	asUINT n;
 
+	// Clear the context callbacks. If new context's are needed for the clean-up the engine will take care of this itself.
+	// Context callbacks are normally used for pooling contexts, and if we allow new contexts to be created without being
+	// immediately destroyed afterwards it means the engine's refcount will increase. This is turn may cause memory access
+	// violations later on when the pool releases its contexts.
+	SetContextCallbacks(0, 0, 0);
+
 	// The modules must be deleted first, as they may use
 	// object types from the config groups
 	for( n = (asUINT)scriptModules.GetLength(); n-- > 0; )
@@ -651,6 +657,11 @@ asCScriptEngine::~asCScriptEngine()
 	// There may be instances where one more gc cycle must be run
 	GarbageCollect();
 	ClearUnusedTypes();
+
+	// It is allowed to create new references to the engine temporarily while destroying objects
+	// but these references must be release immediately or else something is can go wrong later on
+	if( refCount.get() > 0 )
+		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ENGINE_REF_COUNT_ERROR_DURING_SHUTDOWN);
 
 	// If the application hasn't registered GC behaviours for all types
 	// that can form circular references with script types, then there
@@ -796,7 +807,8 @@ void asCScriptEngine::CleanupAfterDiscardModule()
 // interface
 int asCScriptEngine::SetContextCallbacks(asREQUESTCONTEXTFUNC_t requestCtx, asRETURNCONTEXTFUNC_t returnCtx, void *param)
 {
-	if( requestCtx == 0 || returnCtx == 0 )
+	// Both callbacks or neither must be set
+	if( (requestCtx == 0 && returnCtx != 0) || (requestCtx != 0 && returnCtx == 0) )
 		return asINVALID_ARG;
 
 	requestCtxFunc   = requestCtx;

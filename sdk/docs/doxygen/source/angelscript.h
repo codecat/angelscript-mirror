@@ -1774,7 +1774,7 @@ public:
 	//! \param[in] returnCtx The return context callback function
 	//! \param[in] param An optional parameter that will be passed to the callback
 	//! \return A negative value on error
-	//! \retval asINVALID_ARG One or both of the context functions are null
+	//! \retval asINVALID_ARG Only one of the context functions is informed
 	//!
 	//! This method can be used by the application to implement a context pool, 
 	//! or to perform custom configuration on the contexts that the engine uses internally.

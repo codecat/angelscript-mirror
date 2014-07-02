@@ -1,7 +1,8 @@
 #include "debugger.h"
 #include <iostream>  // cout
-#include <sstream> // stringstream
-#include <stdlib.h> // atoi
+#include <sstream>   // stringstream
+#include <stdlib.h>  // atoi
+#include <assert.h>  // assert
 
 using namespace std;
 
@@ -147,6 +148,12 @@ void CDebugger::RegisterToStringCallback(const asIObjectType *ot, ToStringCallba
 
 void CDebugger::LineCallback(asIScriptContext *ctx)
 {
+	assert( ctx );
+
+	// This should never happen, but it doesn't hurt to validate it
+	if( ctx == 0 )
+		return;
+
 	// By default we ignore callbacks when the context is not active.
 	// An application might override this to for example disconnect the
 	// debugger as the execution finished.
@@ -193,6 +200,9 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 
 bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+		return false;
+
 	// TODO: Should cache the break points in a function by checking which possible break points
 	//       can be hit when entering a function. If there are no break points in the current function
 	//       then there is no need to check every line.
@@ -301,11 +311,21 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 		break;
 
 	case 'n':
+		if( ctx == 0 )
+		{
+			Output("No script is running\n");
+			return false;
+		}
 		m_action = STEP_OVER;
 		m_lastCommandAtStackLevel = ctx->GetCallstackSize();
 		break;
 
 	case 'o':
+		if( ctx == 0 )
+		{
+			Output("No script is running\n");
+			return false;
+		}
 		m_action = STEP_OUT;
 		m_lastCommandAtStackLevel = ctx->GetCallstackSize();
 		break;
@@ -442,6 +462,11 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 
 	case 'a':
 		// abort the execution
+		if( ctx == 0 )
+		{
+			Output("No script is running\n");
+			return false;
+		}
 		ctx->Abort();
 		break;
 
@@ -457,6 +482,12 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 
 void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+	{
+		Output("No script is running\n");
+		return;
+	}
+
 	asIScriptEngine *engine = ctx->GetEngine();
 
 	int len = 0;
@@ -562,6 +593,12 @@ void CDebugger::ListBreakPoints()
 
 void CDebugger::ListMemberProperties(asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+	{
+		Output("No script is running\n");
+		return;
+	}
+
 	void *ptr = ctx->GetThisPointer();
 	if( ptr )
 	{
@@ -573,6 +610,12 @@ void CDebugger::ListMemberProperties(asIScriptContext *ctx)
 
 void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+	{
+		Output("No script is running\n");
+		return;
+	}
+
 	asIScriptFunction *func = ctx->GetFunction();
 	if( !func ) return;
 
@@ -587,6 +630,12 @@ void CDebugger::ListLocalVariables(asIScriptContext *ctx)
 
 void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+	{
+		Output("No script is running\n");
+		return;
+	}
+
 	// Determine the current module from the function
 	asIScriptFunction *func = ctx->GetFunction();
 	if( !func ) return;
@@ -606,6 +655,12 @@ void CDebugger::ListGlobalVariables(asIScriptContext *ctx)
 
 void CDebugger::ListStatistics(asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+	{
+		Output("No script is running\n");
+		return;
+	}
+
 	asIScriptEngine *engine = ctx->GetEngine();
 	
 	asUINT gcCurrSize, gcTotalDestr, gcTotalDet, gcNewObjects, gcTotalNewDestr;
@@ -624,6 +679,12 @@ void CDebugger::ListStatistics(asIScriptContext *ctx)
 
 void CDebugger::PrintCallstack(asIScriptContext *ctx)
 {
+	if( ctx == 0 )
+	{
+		Output("No script is running\n");
+		return;
+	}
+
 	stringstream s;
 	const char *file = 0;
 	int lineNbr = 0;

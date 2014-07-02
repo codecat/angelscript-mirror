@@ -61,7 +61,8 @@ public:
 	// Execute each script that is not currently sleeping. The function returns after 
 	// each script has been executed once. The application should call this function
 	// for each iteration of the message pump, or game loop, or whatever.
-	void ExecuteScripts();
+	// Returns the number of scripts still in execution.
+	int ExecuteScripts();
 
 	// Put a script to sleep for a while
 	void SetSleeping(asIScriptContext *ctx, asUINT milliSeconds);

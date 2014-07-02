@@ -16,27 +16,35 @@ using namespace std;
 
 BEGIN_AS_NAMESPACE
 
+// The id for the context manager user data.
+// The add-ons have reserved the numbers 1000
+// through 1999 for this purpose, so we should be fine.
+const asPWORD CONTEXT_MGR = 1002;
+
 struct SContextInfo
 {
-	asUINT sleepUntil;
+	asUINT                    sleepUntil;
 	vector<asIScriptContext*> coRoutines;
-	asUINT currentCoRoutine;
+	asUINT                    currentCoRoutine;
 };
 
-// TODO: Instead of using a global variable the context's user data
-static CContextMgr *g_ctxMgr = 0;
 static void ScriptSleep(asUINT milliSeconds)
 {
 	// Get a pointer to the context that is currently being executed
 	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx && g_ctxMgr )
+	if( ctx )
 	{
-		// Suspend its execution. The VM will continue until the current
-		// statement is finished and then return from the Execute() method
-		ctx->Suspend();
+		// Get the context manager from the user data
+		CContextMgr *ctxMgr = reinterpret_cast<CContextMgr*>(ctx->GetUserData(CONTEXT_MGR));
+		if( ctxMgr )
+		{
+			// Suspend its execution. The VM will continue until the current
+			// statement is finished and then return from the Execute() method
+			ctx->Suspend();
 
-		// Tell the context manager when the context is to continue execution
-		g_ctxMgr->SetSleeping(ctx, milliSeconds);
+			// Tell the context manager when the context is to continue execution
+			ctxMgr->SetSleeping(ctx, milliSeconds);
+		}
 	}
 }
 
@@ -44,14 +52,19 @@ static void ScriptYield()
 {
 	// Get a pointer to the context that is currently being executed
 	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx && g_ctxMgr )
+	if( ctx )
 	{
-		// Let the context manager know that it should run the next co-routine
-		g_ctxMgr->NextCoRoutine();
+		// Get the context manager from the user data
+		CContextMgr *ctxMgr = reinterpret_cast<CContextMgr*>(ctx->GetUserData(CONTEXT_MGR));
+		if( ctxMgr )
+		{
+			// Let the context manager know that it should run the next co-routine
+			ctxMgr->NextCoRoutine();
 
-		// The current context must be suspended so that VM will return from
-		// the Execute() method where the context manager will continue.
-		ctx->Suspend();
+			// The current context must be suspended so that VM will return from
+			// the Execute() method where the context manager will continue.
+			ctx->Suspend();
+		}
 	}
 }
 
@@ -61,15 +74,20 @@ void ScriptCreateCoRoutine(asIScriptFunction *func, CScriptDictionary *arg)
 		return;
 
 	asIScriptContext *ctx = asGetActiveContext();
-	if( ctx && g_ctxMgr )
+	if( ctx )
 	{
-		// Create a new context for the co-routine
-		asIScriptContext *coctx = g_ctxMgr->AddContextForCoRoutine(ctx, func);
+		// Get the context manager from the user data
+		CContextMgr *ctxMgr = reinterpret_cast<CContextMgr*>(ctx->GetUserData(CONTEXT_MGR));
+		if( ctxMgr )
+		{
+			// Create a new context for the co-routine
+			asIScriptContext *coctx = ctxMgr->AddContextForCoRoutine(ctx, func);
 
-		// Pass the argument to the context
-		coctx->SetArgObject(0, arg);
+			// Pass the argument to the context
+			coctx->SetArgObject(0, arg);
 
-		// The context manager will call Execute() on the context when it is time
+			// The context manager will call Execute() on the context when it is time
+		}
 	}
 }
 
@@ -94,8 +112,12 @@ CContextMgr::~CContextMgr()
 		{
 			for( asUINT c = 0; c < m_threads[n]->coRoutines.size(); c++ )
 			{
-				if( m_threads[n]->coRoutines[c] )
-					m_threads[n]->coRoutines[c]->Release();
+				asIScriptContext *ctx = m_threads[n]->coRoutines[c];
+				if( ctx )
+				{
+					// Return the context to the engine (and possible context pool configured in it)
+					ctx->GetEngine()->ReturnContext(ctx);
+				}
 			}
 
 			delete m_threads[n];
@@ -113,10 +135,8 @@ CContextMgr::~CContextMgr()
 	}
 }
 
-void CContextMgr::ExecuteScripts()
+int CContextMgr::ExecuteScripts()
 {
-	g_ctxMgr = this;
-
 	// TODO: Should have an optional time out for this function. If not all scripts executed before the
 	//       time out, the next time the function is called the loop should continue
 	//       where it left off.
@@ -153,7 +173,7 @@ void CContextMgr::ExecuteScripts()
 				//       accessed.
 
 				// The context has terminated execution (for one reason or other)
-				thread->coRoutines[currentCoRoutine]->Release();
+				engine->ReturnContext(thread->coRoutines[currentCoRoutine]);
 				thread->coRoutines[currentCoRoutine] = 0;
 
 				thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
@@ -192,7 +212,7 @@ void CContextMgr::ExecuteScripts()
 		}
 	}
 
-	g_ctxMgr = 0;
+	return int(m_threads.size());
 }
 
 void CContextMgr::NextCoRoutine()
@@ -211,11 +231,12 @@ void CContextMgr::AbortAll()
 	{
 		for( asUINT c = 0; c < m_threads[n]->coRoutines.size(); c++ )
 		{
-			if( m_threads[n]->coRoutines[c] )
+			asIScriptContext *ctx = m_threads[n]->coRoutines[c];
+			if( ctx )
 			{
-				m_threads[n]->coRoutines[c]->Abort();
-				m_threads[n]->coRoutines[c]->Release();
-				m_threads[n]->coRoutines[c] = 0;
+				ctx->Abort();
+				ctx->GetEngine()->ReturnContext(ctx);
+				ctx = 0;
 			}
 		}
 		m_threads[n]->coRoutines.resize(0);
@@ -230,8 +251,9 @@ void CContextMgr::AbortAll()
 
 asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunction *func)
 {
-	// Create the new context
-	asIScriptContext *ctx = engine->CreateContext();
+	// Use RequestContext instead of CreateContext so we can take 
+	// advantage of possible context pooling configured with the engine
+	asIScriptContext *ctx = engine->RequestContext();
 	if( ctx == 0 )
 		return 0;
 
@@ -239,9 +261,13 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunc
 	int r = ctx->Prepare(func);
 	if( r < 0 )
 	{
-		ctx->Release();
+		engine->ReturnContext(ctx);
 		return 0;
 	}
+
+	// Set the context manager as user data with the context so it
+	// can be retrieved by the functions registered with the engine
+	ctx->SetUserData(this, CONTEXT_MGR);
 
 	// Add the context to the list for execution
 	SContextInfo *info = 0;
@@ -266,7 +292,7 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunc
 asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx, asIScriptFunction *func)
 {
 	asIScriptEngine *engine = currCtx->GetEngine();
-	asIScriptContext *coctx = engine->CreateContext();
+	asIScriptContext *coctx = engine->RequestContext();
 	if( coctx == 0 )
 	{
 		return 0;
@@ -277,9 +303,13 @@ asIScriptContext *CContextMgr::AddContextForCoRoutine(asIScriptContext *currCtx,
 	if( r < 0 )
 	{
 		// Couldn't prepare the context
-		coctx->Release();
+		engine->ReturnContext(coctx);
 		return 0;
 	}
+
+	// Set the context manager as user data with the context so it
+	// can be retrieved by the functions registered with the engine
+	coctx->SetUserData(this, CONTEXT_MGR);
 
 	// Find the current context thread info
 	// TODO: Start with the current thread so that we can find the group faster

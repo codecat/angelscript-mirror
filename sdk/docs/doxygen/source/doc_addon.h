@@ -246,6 +246,9 @@ and \ref doc_adv_coroutine "co-routines".
 If the application doesn't need multiple contexts, i.e. all scripts that are executed 
 always complete before the next script is executed, then this class is not necessary.
 
+The context manager uses \ref asIScriptEngine::RequestContext to take advantage of any context
+callbacks registered with the engine, e.g. for debugging or pooling.
+
 Multiple context managers can be used, for example when you have a group of scripts controlling 
 in-game objects, and another group of scripts controlling GUI elements, then each of these groups
 may be managed by different context managers.
@@ -294,7 +297,8 @@ public:
   // Execute each script that is not currently sleeping. The function returns after 
   // each script has been executed once. The application should call this function
   // for each iteration of the message pump, or game loop, or whatever.
-  void ExecuteScripts();
+  // Returns the number of scripts still in execution.
+  int ExecuteScripts();
 
   // Put a script to sleep for a while
   void SetSleeping(asIScriptContext *ctx, asUINT milliSeconds);
