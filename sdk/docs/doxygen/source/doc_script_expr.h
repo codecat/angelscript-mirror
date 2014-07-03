@@ -88,8 +88,8 @@ declared in. No positional arguments may follow any named arguments.
   void func(int flagA = false, int flagB = false, int flagC = false) {}
   
   // Call the function, setting only a subset of its parameters
-  func(flagC = true);
-  func(flagB = true, flagA = true);
+  func(flagC: true);
+  func(flagB: true, flagA: true);
 </pre>
 
 

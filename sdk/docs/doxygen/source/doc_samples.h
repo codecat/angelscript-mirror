@@ -167,7 +167,7 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref doc_addon_debugger
  - \ref doc_addon_std_string
  - \ref doc_addon_array
- - \ref doc_addon_dictionary
+ - \ref doc_addon_dict
  - \ref doc_addon_file
  - \ref doc_addon_ctxmgr
  - \ref doc_addon_build

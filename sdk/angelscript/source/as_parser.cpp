@@ -1425,14 +1425,15 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 		for(;;)
 		{
 			// Determine if this is a named argument
-			// Careful not to mistake 'type = {init list}' as named argument
-			sToken tl, t2, t3;
+			sToken tl, t2;
 			GetToken(&tl);
 			GetToken(&t2);
-			GetToken(&t3);
 			RewindTo(&tl);
 
-			if( tl.type == ttIdentifier && t2.type == ttAssignment && t3.type != ttStartStatementBlock )
+			// Named arguments uses the syntax: arg : expr
+			// This avoids confusion when the argument has the same name as a local variable, i.e. var = expr
+			// It also avoids conflict with expressions to that creates anonymous objects initialized with lists, i.e. type = {...}
+			if( tl.type == ttIdentifier && t2.type == ttColon )
 			{
 				asCScriptNode *named = CreateNode(snNamedArgument);
 				if( named == 0 ) return 0;
@@ -1440,7 +1441,6 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 
 				named->AddChildLast(ParseIdentifier());
 				GetToken(&t2);
-				asASSERT( t2.type == ttAssignment );
 
 				named->AddChildLast(ParseAssignment());
 			}
