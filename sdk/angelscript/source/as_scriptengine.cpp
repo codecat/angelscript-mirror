@@ -370,6 +370,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.disallowValueAssignForRefType = value ? true : false;
 		break;
 
+	case asEP_ALTER_SYNTAX_NAMED_ARGS:
+		if( value <= 2 )
+			ep.alterSyntaxNamedArgs = (int)value;
+		else
+			return asINVALID_ARG;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -442,6 +449,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE:
 		return ep.disallowValueAssignForRefType;
 
+	case asEP_ALTER_SYNTAX_NAMED_ARGS:
+		return ep.alterSyntaxNamedArgs;
+
 	default:
 		return 0;
 	}
@@ -499,6 +509,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.compilerWarnings              = 1;         // 0 = no warnings, 1 = warning, 2 = treat as error
 		// TODO: 3.0.0: disallowValueAssignForRefType should be true by default
 		ep.disallowValueAssignForRefType = false;
+		ep.alterSyntaxNamedArgs          = 0;         // 0 = no alternate syntax, 1 = accept alternate syntax but warn, 2 = accept without warning
 	}
 
 	gc.engine = this;

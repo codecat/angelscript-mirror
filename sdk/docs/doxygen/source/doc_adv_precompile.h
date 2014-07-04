@@ -59,12 +59,8 @@ protected:
    actually implement all of them. Object properties must be registered with different offsets so that
    they can be differentiated by the bytecode loader. You should also set the engine property \ref asEP_INIT_GLOBAL_VARS_AFTER_BUILD 
    to false with \ref asIScriptEngine::SetEngineProperty, so the script engine doesn't attempt to initialize 
-   the global variables after the script has been built.
-
- - The saved bytecode is almost fully platform independent. The following is properly handled, pointer size,
-   size of registered types, offsets of registered properties, CPU endianess, etc. Some things that are not
-   handled include difference in size of primitive types (e.g. bool on older Mac PPC platforms) and CPU floating point
-   representation (e.g. IEEE 754 versus non-IEEE 754).
+   the global variables after the script has been built. The \ref doc_addon_helpers "helper add-on" has a 
+   couple of functions to facilitate building an offline compiler.
 
  - If the application is not going to compile scripts from source code, but only load pre-compiled scripts,
    then it may be beneficial to compile the library with the AS_NO_COMPILER define so as to reduce the size
@@ -73,7 +69,15 @@ protected:
  - To reduce the size of the saved bytecode you can strip the debug information from the code. This will skip
    saving information that is not necessary for executing the scripts, such as the name of script sections,
    line numbers, and the name and type of local variables. 
+   
+ - The saved bytecode is platform independent with only a couple of exceptions that is unlikely to affect 
+   application developers. The exceptions are 1) difference in size of primitive types (e.g. bool on older
+   Mac PPC platforms) and 2) CPU floating point representation (i.e. IEEE 754 versus non-IEEE 754). Differences
+   in pointer size (32bit vs 64bit), CPU endianess, different size of registered types and offsets of registered
+   properties are all handled to provide platform independence.
 
+ - The saved bytecode is not guaranteed to be compatible for different versions of the AngelScript library so
+   make sure you use the same library version when saving the bytecode that will be used when loading it.
 
 
 

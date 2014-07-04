@@ -165,6 +165,7 @@
 #define TXT_NAME_CONFLICT_s_OBJ_PROPERTY           "Name conflict. '%s' is an object property."
 #define TXT_NAME_CONFLICT_s_METHOD                 "Name conflict. '%s' is a class method."
 #define TXT_NAME_CONFLICT_s_ALREADY_USED           "Name conflict. '%s' is already used."
+#define TXT_NAMED_ARGS_WITH_OLD_SYNTAX             "Detected named argument with old syntax"
 #define TXT_NO_APPROPRIATE_INDEX_OPERATOR          "No appropriate indexing operator found"
 #define TXT_NO_APPROPRIATE_OPHNDLASSIGN_s          "No appropriate opHndlAssign method found in '%s'"
 #define TXT_NO_APPROPRIATE_OPEQUALS                "No appropriate opEquals method found"

@@ -82,7 +82,7 @@ If this flag is set to true, the compiler will always provide a default construc
 by the script. Normally this option is not recommended, because if a script class provides a non-default constructor but not the 
 default constructor it is most likely because it is desired that the class should always be initialized with the non-default constructor.
 
-
+\todo asEP_ALTER_SYNTAX_NAMED_ARGS
 
 
 

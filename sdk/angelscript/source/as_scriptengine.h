@@ -475,6 +475,7 @@ public:
 		bool   alwaysImplDefaultConstruct;
 		int    compilerWarnings;
 		bool   disallowValueAssignForRefType;
+		int    alterSyntaxNamedArgs;
 	} ep;
 
 	// This flag is to allow a quicker shutdown when releasing the engine

@@ -851,6 +851,15 @@ void asCParser::Error(const asCString &text, sToken *token)
 		builder->WriteError(script->name, text, row, col);
 }
 
+void asCParser::Warning(const asCString &text, sToken *token)
+{
+	int row, col;
+	script->ConvertPosToRowCol(token->pos, &row, &col);
+
+	if( builder )
+		builder->WriteWarning(script->name, text, row, col);
+}
+
 void asCParser::Info(const asCString &text, sToken *token)
 {
 	RewindTo(token);
@@ -1433,7 +1442,9 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 			// Named arguments uses the syntax: arg : expr
 			// This avoids confusion when the argument has the same name as a local variable, i.e. var = expr
 			// It also avoids conflict with expressions to that creates anonymous objects initialized with lists, i.e. type = {...}
-			if( tl.type == ttIdentifier && t2.type == ttColon )
+			// The alternate syntax: arg = expr, is supported to provide backwards compatibility with 2.29.0
+			// TODO: 3.0.0: Remove the alternate syntax
+			if( tl.type == ttIdentifier && (t2.type == ttColon || (engine->ep.alterSyntaxNamedArgs && t2.type == ttAssignment)) )
 			{
 				asCScriptNode *named = CreateNode(snNamedArgument);
 				if( named == 0 ) return 0;
@@ -1441,6 +1452,9 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 
 				named->AddChildLast(ParseIdentifier());
 				GetToken(&t2);
+
+				if( engine->ep.alterSyntaxNamedArgs == 1 && t2.type == ttAssignment )
+					Warning(TXT_NAMED_ARGS_WITH_OLD_SYNTAX, &t2);
 
 				named->AddChildLast(ParseAssignment());
 			}
