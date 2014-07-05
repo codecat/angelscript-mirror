@@ -340,8 +340,8 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	}
 
 	// Is the return type allowed?
-	if( (!returnType.CanBeInstantiated() && returnType != asCDataType::CreatePrimitive(ttVoid, false)) ||
-		(returnType.IsReference() && !returnType.CanBeInstantiated()) )
+	if( returnType != asCDataType::CreatePrimitive(ttVoid, false) &&
+		!returnType.CanBeInstantiated() )
 	{
 		// TODO: Hasn't this been validated by the builder already?
 		asCString str;
@@ -2523,9 +2523,13 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		if( !type.CanBeInstantiated() )
 		{
 			asCString str;
-			// TODO: Change to "'type' cannot be declared as variable"
-			// TODO: Explain why
-			str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
+			if( type.IsAbstractClass() )
+				str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, type.Format().AddressOf());
+			else if( type.IsInterface() )
+				str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, type.Format().AddressOf());
+			else
+				// TODO: Improve error message to explain why
+				str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
 			Error(str, node);
 
 			// Use int instead to avoid further problems
@@ -9206,9 +9210,13 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	if( !dt.CanBeInstantiated() )
 	{
 		asCString str;
-		// TODO: Change to "'type' cannot be instantiated"
-		// TODO: Explain why
-		str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+		if( dt.IsAbstractClass() )
+			str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+		else if( dt.IsInterface() )
+			str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+		else
+			// TODO: Improve error message to explain why
+			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 		Error(str, node);
 		ctx->type.SetDummy();
 		return;

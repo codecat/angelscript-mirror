@@ -42,6 +42,7 @@
 // Compiler messages
 
 #define TXT_s_ALREADY_DECLARED                    "'%s' is already declared"
+#define TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED "Abstract class '%s' cannot be instantiated"
 #define TXT_ARG_NOT_LVALUE                        "Argument cannot be assigned. Output will be discarded."
 #define TXT_ATTR_s_INFORMED_MULTIPLE_TIMES        "Attribute '%s' informed multiple times"
 
@@ -128,6 +129,7 @@
 #define TXT_ILLEGAL_VARIABLE_NAME_s                "Illegal variable name '%s'."
 #define TXT_INIT_LIST_CANNOT_BE_USED_WITH_s        "Initialization lists cannot be used with '%s'"
 #define TXT_INSTEAD_FOUND_s                        "Instead found '%s'"
+#define TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED     "Interface '%s' cannot be instantiated"
 #define TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE "Interfaces can only implement other interfaces"
 #define TXT_INVALID_BREAK                          "Invalid 'break'"
 #define TXT_INVALID_CHAR_LITERAL                   "Invalid character literal"
@@ -169,13 +171,13 @@
 #define TXT_NAME_CONFLICT_s_ALREADY_USED           "Name conflict. '%s' is already used."
 #define TXT_NAMED_ARGS_WITH_OLD_SYNTAX             "Detected named argument with old syntax"
 #define TXT_NO_APPROPRIATE_INDEX_OPERATOR          "No appropriate indexing operator found"
-#define TXT_NO_APPROPRIATE_OPHNDLASSIGN_s          "No appropriate opHndlAssign method found in '%s'"
+#define TXT_NO_APPROPRIATE_OPHNDLASSIGN_s          "No appropriate opHndlAssign method found in '%s' for handle assignment"
 #define TXT_NO_APPROPRIATE_OPEQUALS                "No appropriate opEquals method found"
 #define TXT_NO_CONVERSION_s_TO_s                   "No conversion from '%s' to '%s' available."
 #define TXT_NO_CONVERSION_s_TO_MATH_TYPE           "No conversion from '%s' to math type available."
 #define TXT_NO_DEFAULT_ARRAY_TYPE                  "The application doesn't support the default array type."
 #define TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s           "No default constructor for object of type '%s'."
-#define TXT_NO_DEFAULT_COPY_OP_FOR_s               "No appropriate opAssign method found in '%s'"
+#define TXT_NO_DEFAULT_COPY_OP_FOR_s               "No appropriate opAssign method found in '%s' for value assignment"
 #define TXT_NO_COPY_CONSTRUCTOR_FOR_s              "No copy constructor for object of type '%s'."
 #define TXT_NO_MATCHING_SIGNATURES_TO_s            "No matching signatures to '%s'"
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPE_s        "No matching operator that takes the type '%s' found"

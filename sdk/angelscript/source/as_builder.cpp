@@ -1431,12 +1431,13 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 	if( !type.CanBeInstantiated() )
 	{
 		asCString str;
-		// TODO: Change to "'type' cannot be declared as variable"
-		// TODO: Explain why
-		str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
-
-		int r, c;
-		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+		if( type.IsAbstractClass() )
+			str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, type.Format().AddressOf());
+		else if( type.IsInterface() )
+			str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, type.Format().AddressOf());
+		else
+			// TODO: Improve error message to explain why
+			str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
 
 		WriteError(str, file, node);
 	}
@@ -2139,7 +2140,7 @@ void asCBuilder::AddInterfaceFromMixinToClass(sClassDeclaration *decl, asCScript
 			asCObjectType *objType = GetObjectType(name.AddressOf(), ns);
 
 			// Check that the object type is an interface
-			if( objType && objType->size == 0 && (objType->flags & asOBJ_SCRIPT_OBJECT) )
+			if( objType && objType->IsInterface() )
 			{
 				// Only add the interface if the class doesn't already implement it
 				if( !decl->objType->Implements(objType) )
@@ -2249,7 +2250,7 @@ void asCBuilder::CompileInterfaces()
 
 			// Check that the object type is an interface
 			bool ok = true;
-			if( objType && objType->size == 0 && (objType->flags & asOBJ_SCRIPT_OBJECT) )
+			if( objType && objType->IsInterface() )
 			{
 				// Check that the implemented interface is shared if the base interface is shared
 				if( intfType->IsShared() && !objType->IsShared() )
@@ -3290,9 +3291,14 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 		{
 			if( file && node )
 			{
-				// TODO: Explain why
 				asCString str;
-				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+				if( dt.IsAbstractClass() )
+					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+				else if( dt.IsInterface() )
+					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+				else
+					// TODO: Improve error message to explain why
+					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 				WriteError(str, file, node);
 			}
 			return 0;
@@ -4794,8 +4800,14 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			if( !dt.CanBeInstantiated() )
 			{
 				asCString str;
-				// TODO: Change to "Array sub type cannot be 'type'"
-				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+				if( dt.IsAbstractClass() )
+					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+				else if( dt.IsInterface() )
+					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+				else
+					// TODO: Improve error message to explain why
+					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+
 				WriteError(str, file, n);
 			}
 

@@ -1327,7 +1327,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 	asCModule *mod = 0;
 
 	// Is this a script class?
-	if( ot->flags & asOBJ_SCRIPT_OBJECT && ot->size > 0 )
+	if( (ot->flags & asOBJ_SCRIPT_OBJECT) && ot->size > 0 )
 		mod = scriptFunctions[ot->beh.factories[0]]->module;
 
 	asCBuilder bld(this, mod);
@@ -2849,7 +2849,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	// TODO: beh.copy member will be removed, so this is not necessary
 	// Is this the default copy behaviour?
 	if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 && func->isReadOnly == false &&
-		(objectType->flags & asOBJ_SCRIPT_OBJECT || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false))) )
+		((objectType->flags & asOBJ_SCRIPT_OBJECT) || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false))) )
 	{
 		if( func->objectType->beh.copy != 0 )
 			return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);

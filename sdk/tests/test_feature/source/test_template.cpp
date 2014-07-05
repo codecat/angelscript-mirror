@@ -710,9 +710,9 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "mod (1, 7) : Info    : Compiling T::T()\n"
-		                   "mod (1, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n"
+						   "mod (1, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n"
 						   "mod (2, 26) : Info    : Compiling S::S()\n"
-		                   "mod (2, 34) : Error   : No appropriate opAssign method found in 'MyTmpl'\n"
+						   "mod (2, 34) : Error   : No appropriate opAssign method found in 'MyTmpl' for value assignment\n"
 						   "mod (2, 23) : Error   : No default constructor for object of type 'MyTmpl'.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

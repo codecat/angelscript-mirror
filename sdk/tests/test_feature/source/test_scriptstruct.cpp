@@ -384,7 +384,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "test (2, 1) : Error   : Data type can't be 'A'\n" )
+		if( bout.buffer != "test (2, 1) : Error   : Abstract class 'A' cannot be instantiated\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -403,8 +403,8 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
-						   "test (3, 5) : Error   : Data type can't be 'A'\n"
-						   "test (5, 8) : Error   : Data type can't be 'A'\n"
+						   "test (3, 5) : Error   : Abstract class 'A' cannot be instantiated\n"
+						   "test (5, 8) : Error   : Abstract class 'A' cannot be instantiated\n"
 						   "test (5, 8) : Error   : Can't implicitly convert from 'const int' to 'A@'.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -1555,8 +1555,8 @@ bool Test()
 		if( bout.buffer != "script (5, 1) : Info    : Compiling void func()\n"
 						   "script (7, 8) : Error   : No default constructor for object of type 'CBar'.\n"
 						   "script (9, 8) : Error   : No default constructor for object of type 'CBar'.\n"
-						   "script (9, 8) : Error   : No appropriate opAssign method found in 'CBar'\n"
-						   "script (10, 5) : Error   : No appropriate opAssign method found in 'CBar'\n"
+						   "script (9, 8) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
+						   "script (10, 5) : Error   : No appropriate opAssign method found in 'CBar' for value assignment\n"
 						   "script (11, 10) : Error   : No matching signatures to 'CBar()'\n"
 						   "script (11, 10) : Info    : Candidates are:\n"
 						   "script (11, 10) : Info    : CBar@ CBar(int a)\n" )

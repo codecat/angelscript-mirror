@@ -2560,7 +2560,7 @@ bool Test()
 	ExecuteString(engine, "void m;");
 	if( bout.buffer != "ExecuteString (1, 6) : Error   : Data type can't be 'void'\n" )
 	{
-		PRINTF("failed on 7\n");
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 
@@ -2875,7 +2875,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 || bout.buffer != "test (1, 6) : Info    : Compiling derp wtf\n"
 		                             "test (1, 12) : Error   : Can't implicitly convert from 'const int' to 'derp&'.\n"
-		                             "test (1, 6) : Error   : No appropriate opAssign method found in 'derp'\n" )
+		                             "test (1, 6) : Error   : No appropriate opAssign method found in 'derp' for value assignment\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3234,7 +3234,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "test (2, 20) : Error   : Data type can't be 'ITest'\n" )
+		if( bout.buffer != "test (2, 20) : Error   : Interface 'ITest' cannot be instantiated\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

@@ -773,7 +773,7 @@ bool Test()
 	r = ExecuteString(engine, "ref r1, r2; r1 = r2;");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'ref'\n" )
+	if( bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'ref' for value assignment\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -846,7 +846,7 @@ bool Test()
 	r = ExecuteString(engine, "val v1, v2; v1 = v2;");
 	if( r >= 0 )
 		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'val'\n" )
+	if( bout.buffer != "ExecuteString (1, 16) : Error   : No appropriate opAssign method found in 'val' for value assignment\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -1865,7 +1865,7 @@ bool TestHandleType()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
-						   "script (5, 5) : Error   : No appropriate opAssign method found in 'ref'\n" )
+						   "script (5, 5) : Error   : No appropriate opAssign method found in 'ref' for value assignment\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

@@ -282,7 +282,7 @@ bool Test()
 		r = ExecuteString(engine, "ref r = array<int>(10);"); // no opAssign available
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 5) : Error   : No appropriate opAssign method found in 'ref'\n" )
+		if( bout.buffer != "ExecuteString (1, 5) : Error   : No appropriate opAssign method found in 'ref' for value assignment\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -293,7 +293,7 @@ bool Test()
 		r = ExecuteString(engine, "ref@ a, b; a = b;"); // value assign isn't available
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 14) : Error   : No appropriate opAssign method found in 'ref'\n" )
+		if( bout.buffer != "ExecuteString (1, 14) : Error   : No appropriate opAssign method found in 'ref' for value assignment\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
