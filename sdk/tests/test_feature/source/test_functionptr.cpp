@@ -610,7 +610,7 @@ bool Test()
 		}
 		ctx->Release();
 
-		// It must not be possible to declare a non-handle variable of the funcdef type
+		// funcdefs cannot be instantiated without being a delegate
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		script = "funcdef void functype();\n"
@@ -619,8 +619,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "script (2, 1) : Error   : Data type can't be 'functype'\n"
-						   "script (2, 10) : Info    : Compiling functype myFunc\n"
+		if( bout.buffer != "script (2, 10) : Info    : Compiling functype myFunc\n"
 						   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -660,11 +659,11 @@ bool Test()
 		bout.buffer = "";
 		script = 
 			"funcdef void F(); \n"
-		    "class t { \n"
+			"class t { \n"
 			"  void func() { \n"
 			"    @func; \n"
 			"    F @f = @func; \n"
-            "    } \n"
+			"    } \n"
 			"} \n";
 		mod->AddScriptSection("script", script);
 		r = mod->Build();

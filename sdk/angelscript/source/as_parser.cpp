@@ -1992,8 +1992,8 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		// Handle primitive typedefs
 			else if( t1.type == ttClass || 
-					 ((IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN)) && t2.type == ttClass) || 
-					 (IdentifierIs(t1, SHARED_TOKEN) && IdentifierIs(t2, FINAL_TOKEN)) )
+					((IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, ABSTRACT_TOKEN)) && t2.type == ttClass) || 
+					 (IdentifierIs(t1, SHARED_TOKEN) && (IdentifierIs(t2, FINAL_TOKEN) || IdentifierIs(t2, ABSTRACT_TOKEN))) )
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttMixin )
 				node->AddChildLast(ParseMixin());
@@ -2974,15 +2974,10 @@ asCScriptNode *asCParser::ParseClass()
 	sToken t;
 	GetToken(&t);
 
-	// Allow the keyword 'shared' before 'class'
-	if( IdentifierIs(t, SHARED_TOKEN) )
-	{
-		RewindTo(&t);
-		node->AddChildLast(ParseIdentifier());
-		GetToken(&t);
-	}
-
-	if( IdentifierIs(t, FINAL_TOKEN) )
+	// Allow the keywords 'shared', 'abstract', and 'final' before 'class'
+	while( IdentifierIs(t, SHARED_TOKEN) ||
+		   IdentifierIs(t, ABSTRACT_TOKEN) ||
+		   IdentifierIs(t, FINAL_TOKEN) )
 	{
 		RewindTo(&t);
 		node->AddChildLast(ParseIdentifier());

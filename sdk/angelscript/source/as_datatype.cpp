@@ -348,14 +348,21 @@ bool asCDataType::SupportHandles() const
 	return false;
 }
 
-bool asCDataType::CanBeInstanciated() const
+bool asCDataType::CanBeInstantiated() const
 {
-	if( GetSizeOnStackDWords() == 0 ||
-		(IsObject() && 
-		 (objectType->flags & asOBJ_REF) &&        // It's a ref type and
-		 ((objectType->flags & asOBJ_NOHANDLE) ||  // the ref type doesn't support handles or
-		  (!IsObjectHandle() &&                    // it's not a handle and
-		   objectType->beh.factories.GetLength() == 0))) ) // the ref type cannot be instanciated
+	if( GetSizeOnStackDWords() == 0 ) return false;
+
+	if( !IsObject() ) return true;
+
+	if( funcDef ) return true; // Funcdefs can be instantiated as delegates
+
+	if( (objectType->flags & asOBJ_REF) &&                // It's a ref type and
+		 ((objectType->flags & asOBJ_NOHANDLE) ||         // the ref type doesn't support handles or
+		  (!IsObjectHandle() &&                           // it's not a handle and
+		   objectType->beh.factories.GetLength() == 0)) ) // the ref type cannot be instantiated
+		return false;
+
+	if( (objectType->flags & asOBJ_ABSTRACT) && !IsObjectHandle() ) // Can't instantiate abstract classes
 		return false;
 
 	return true;
@@ -369,8 +376,8 @@ bool asCDataType::CanBeCopied() const
 	// Plain-old-data structures can always be copied
 	if( objectType->flags & asOBJ_POD ) return true;
 
-	// It must be possible to instanciate the type
-	if( !CanBeInstanciated() ) return false;
+	// It must be possible to instantiate the type
+	if( !CanBeInstantiated() ) return false;
 
 	// It must have a default constructor or factory
 	if( objectType->beh.construct == 0 &&

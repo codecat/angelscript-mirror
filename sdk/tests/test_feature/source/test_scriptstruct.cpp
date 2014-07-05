@@ -367,6 +367,68 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
+
+	// Test abstract classes
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"abstract class A {} \n"
+			"A a; \n"    // global variable can't instantiate the abstract class
+			"A @b; \n"); // as a handle it is ok
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Error   : Data type can't be 'A'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"abstract class A {} \n"
+			"void main() { \n"
+			"  A a; \n"      // local variable can't instantiate the abstract class
+			"  A @b; \n"     // as a handle it is ok
+			"  @b = A(); \n" // not ok
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
+						   "test (3, 5) : Error   : Data type can't be 'A'\n"
+						   "test (5, 8) : Error   : Data type can't be 'A'\n"
+						   "test (5, 8) : Error   : Can't implicitly convert from 'const int' to 'A@'.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"abstract class A {} \n"
+			"class B : A {} \n" // inheriting from abstract class is ok
+			"B b; \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test 
 	// Reported by Scott Bean
 	{

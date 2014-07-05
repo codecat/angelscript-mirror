@@ -545,7 +545,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
-						   "ExecuteString (1, 7) : Error   : Can't instanciate template 'array' with subtype 'single'\n" )
+						   "ExecuteString (1, 7) : Error   : Can't instantiate template 'array' with subtype 'single'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -956,7 +956,7 @@ bool Test()
 		if( r > 0 ) 
 			TEST_FAILED;
 		if( bout.buffer != "array (0, 0) : Error   : The subtype has no default factory\n"
-						   "script (5, 7) : Error   : Can't instanciate template 'array' with subtype 'CTest'\n" )
+						   "script (5, 7) : Error   : Can't instantiate template 'array' with subtype 'CTest'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

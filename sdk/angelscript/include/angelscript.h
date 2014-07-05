@@ -200,7 +200,8 @@ enum asEObjTypeFlags
 	asOBJ_LIST_PATTERN               = (1<<25),
 	asOBJ_ENUM                       = (1<<26),
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
-	asOBJ_TYPEDEF                    = (1<<28)
+	asOBJ_TYPEDEF                    = (1<<28),
+	asOBJ_ABSTRACT                   = (1<<29)
 };
 
 // Behaviours

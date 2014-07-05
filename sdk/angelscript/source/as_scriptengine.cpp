@@ -58,7 +58,7 @@ BEGIN_AS_NAMESPACE
 
 
 #ifdef AS_PROFILE
-// Instanciate the profiler once
+// Instantiate the profiler once
 CProfiler g_profiler;
 #endif
 
@@ -1534,7 +1534,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 		return ConfigError(asOUT_OF_MEMORY, "RegisterInterface", name, 0);
 
 	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_SHARED;
-	st->size = 0; // Cannot be instanciated
+	st->size = 0; // Cannot be instantiated
 	st->name = name;
 	st->nameSpace = defaultNamespace;
 
@@ -3484,7 +3484,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 			bool dontGarbageCollect = false;
 			if( !CallGlobalFunctionRetBool(ot, &dontGarbageCollect, callback->sysFuncIntf, callback) )
 			{
-				// The type cannot be instanciated
+				// The type cannot be instantiated
 				ot->templateSubTypes.SetLength(0);
 				asDELETE(ot, asCObjectType);
 				return 0;
@@ -3510,7 +3510,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 		scriptFunctions[ot->beh.constructors[n]]->AddRef();
 
-	// As the new template type is instanciated the engine should
+	// As the new template type is instantiated the engine should
 	// generate new functions to substitute the ones with the template subtype.
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 	{
@@ -3574,7 +3574,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	ot->beh.getWeakRefFlag = templateType->beh.getWeakRefFlag;
 	if( scriptFunctions[ot->beh.getWeakRefFlag] ) scriptFunctions[ot->beh.getWeakRefFlag]->AddRef();
 
-	// As the new template type is instanciated the engine should
+	// As the new template type is instantiated the engine should
 	// generate new functions to substitute the ones with the template subtype.
 	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
 	{
@@ -3589,7 +3589,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		}
 	}
 
-	// As the new template type is instanciated, the engine should
+	// As the new template type is instantiated, the engine should
 	// generate new functions to substitute the ones with the template subtype.
 	for( n = 0; n < ot->methods.GetLength(); n++ )
 	{
@@ -3818,9 +3818,9 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
 		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType, ot);
 
-	// TODO: template: Must be careful when instanciating templates for garbage collected types
+	// TODO: template: Must be careful when instantiating templates for garbage collected types
 	//                 If the template hasn't been registered with the behaviours, it shouldn't
-	//                 permit instanciation of garbage collected types that in turn may refer to
+	//                 permit instantiation of garbage collected types that in turn may refer to
 	//                 this instance.
 
 	func2->inOutFlags = func->inOutFlags;
@@ -4536,7 +4536,7 @@ void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 	else if( objType->flags & asOBJ_TEMPLATE )
 	{
 		// The registered factory that takes the object type is moved
-		// to the construct behaviour when the type is instanciated
+		// to the construct behaviour when the type is instantiated
 #ifdef AS_NO_EXCEPTIONS
 		ptr = CallGlobalFunctionRetPtr(objType->beh.construct, objType);
 #else

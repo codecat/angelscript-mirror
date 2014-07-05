@@ -105,7 +105,7 @@ public:
 	bool IsNullHandle()                                    const;
 
 	bool SupportHandles() const;
-	bool CanBeInstanciated() const;
+	bool CanBeInstantiated() const;
 	bool CanBeCopied() const;
 
 	bool operator ==(const asCDataType &) const;

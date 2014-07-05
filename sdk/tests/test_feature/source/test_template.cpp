@@ -613,7 +613,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instanciate template 'MyTmpl' with subtype 'int'\n" )
+		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instantiate template 'MyTmpl' with subtype 'int'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

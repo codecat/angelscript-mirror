@@ -98,9 +98,7 @@ asCBuilder::~asCBuilder()
 		if( functions[n] )
 		{
 			if( functions[n]->node )
-			{
 				functions[n]->node->Destroy(engine);
-			}
 
 			asDELETE(functions[n],sFunctionDescription);
 		}
@@ -125,9 +123,7 @@ asCBuilder::~asCBuilder()
 	for( n = 0; n < scripts.GetLength(); n++ )
 	{
 		if( scripts[n] )
-		{
 			asDELETE(scripts[n],asCScriptCode);
-		}
 
 		scripts[n] = 0;
 	}
@@ -138,9 +134,7 @@ asCBuilder::~asCBuilder()
 		if( classDeclarations[n] )
 		{
 			if( classDeclarations[n]->node )
-			{
 				classDeclarations[n]->node->Destroy(engine);
-			}
 
 			asDELETE(classDeclarations[n],sClassDeclaration);
 			classDeclarations[n] = 0;
@@ -152,9 +146,7 @@ asCBuilder::~asCBuilder()
 		if( interfaceDeclarations[n] )
 		{
 			if( interfaceDeclarations[n]->node )
-			{
 				interfaceDeclarations[n]->node->Destroy(engine);
-			}
 
 			asDELETE(interfaceDeclarations[n],sClassDeclaration);
 			interfaceDeclarations[n] = 0;
@@ -166,9 +158,7 @@ asCBuilder::~asCBuilder()
 		if( namedTypeDeclarations[n] )
 		{
 			if( namedTypeDeclarations[n]->node )
-			{
 				namedTypeDeclarations[n]->node->Destroy(engine);
-			}
 
 			asDELETE(namedTypeDeclarations[n],sClassDeclaration);
 			namedTypeDeclarations[n] = 0;
@@ -494,9 +484,7 @@ void asCBuilder::ParseScripts()
 
 		// Register the complete function definitions
 		for( n = 0; n < funcDefs.GetLength(); n++ )
-		{
 			CompleteFuncDef(funcDefs[n]);
-		}
 
 		// Register script methods found in the interfaces
 		for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
@@ -865,8 +853,8 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	name.Assign(&decl[nameNode->tokenPos], nameNode->tokenLength);
 
 	// Validate that the type really can be a registered property
-	// We cannot use CanBeInstanciated, as it is allowed to register
-	// properties of type that cannot otherwise be instanciated
+	// We cannot use CanBeInstantiated, as it is allowed to register
+	// properties of type that cannot otherwise be instantiated
 	if( type.GetFuncDef() && !type.IsObjectHandle() )
 	{
 		// Function definitions must always be handles
@@ -1440,10 +1428,11 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 	// What data type is it?
 	asCDataType type = CreateDataTypeFromNode(node->firstChild, file, ns);
 
-	if( !type.CanBeInstanciated() )
+	if( !type.CanBeInstantiated() )
 	{
 		asCString str;
 		// TODO: Change to "'type' cannot be declared as variable"
+		// TODO: Explain why
 		str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
 
 		int r, c;
@@ -1562,24 +1551,58 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	asCScriptNode *n = node->firstChild;
 	bool isFinal = false;
 	bool isShared = false;
+	bool isAbstract = false;
 
-	if( n->tokenType == ttIdentifier && file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) )
+	// Check the class modifiers
+	while( n->tokenType == ttIdentifier )
 	{
-		isFinal = true;
-		n = n->next;
-	}
-
-	if( n->tokenType == ttIdentifier && file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN) )
-	{
-		isShared = true;
-		n = n->next;
-
-		// Check for final again
-		if( n->tokenType == ttIdentifier && file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) )
+		if( file->TokenEquals(n->tokenPos, n->tokenLength, FINAL_TOKEN) )
 		{
-			isFinal = true;
-			n = n->next;
+			if( isAbstract )
+				WriteError(TXT_CLASS_CANT_BE_FINAL_AND_ABSTRACT, file, n);
+			else
+			{
+				if( isFinal )
+				{
+					asCString msg;
+					msg.Format(TXT_ATTR_s_INFORMED_MULTIPLE_TIMES, asCString(&file->code[n->tokenPos], n->tokenLength).AddressOf());
+					WriteWarning(msg, file, n);
+				}
+				isFinal = true;
+			}
 		}
+		else if( file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN) )
+		{
+			if( isShared )
+			{
+				asCString msg;
+				msg.Format(TXT_ATTR_s_INFORMED_MULTIPLE_TIMES, asCString(&file->code[n->tokenPos], n->tokenLength).AddressOf());
+				WriteWarning(msg, file, n);
+			}
+			isShared = true;
+		}
+		else if( file->TokenEquals(n->tokenPos, n->tokenLength, ABSTRACT_TOKEN) )
+		{
+			if( isFinal )
+				WriteError(TXT_CLASS_CANT_BE_FINAL_AND_ABSTRACT, file, n);
+			else
+			{
+				if( isAbstract )
+				{
+					asCString msg;
+					msg.Format(TXT_ATTR_s_INFORMED_MULTIPLE_TIMES, asCString(&file->code[n->tokenPos], n->tokenLength).AddressOf());
+					WriteWarning(msg, file, n);
+				}
+				isAbstract = true;
+			}
+		}
+		else
+		{
+			// This is the name of the class
+			break;
+		}
+
+		n = n->next;
 	}
 
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
@@ -1644,6 +1667,9 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 
 	if( isFinal )
 		st->flags |= asOBJ_NOINHERIT;
+
+	if( isAbstract )
+		st->flags |= asOBJ_ABSTRACT;
 
 	if( node->tokenType == ttHandle )
 		st->flags |= asOBJ_IMPLICIT_HANDLE;
@@ -1744,7 +1770,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	if( isShared )
 		st->flags |= asOBJ_SHARED;
 
-	st->size = 0; // Cannot be instanciated
+	st->size = 0; // Cannot be instantiated
 	st->name = name;
 	st->nameSpace = ns;
 	module->classTypes.PushLast(st);
@@ -2366,16 +2392,10 @@ void asCBuilder::CompileClasses()
 		bool multipleInheritance = false;
 		asCScriptNode *node = decl->node->firstChild;
 
-		if( decl->objType->IsShared() )
+		while( file->TokenEquals(node->tokenPos, node->tokenLength, FINAL_TOKEN) ||
+			   file->TokenEquals(node->tokenPos, node->tokenLength, SHARED_TOKEN) ||
+			   file->TokenEquals(node->tokenPos, node->tokenLength, ABSTRACT_TOKEN) )
 		{
-			// Skip the keyword 'shared'
-			asASSERT(node->tokenType == ttIdentifier);
-			node = node->next;
-		}
-		if( decl->objType->flags & asOBJ_NOINHERIT )
-		{
-			// skip the keyword 'final'
-			asASSERT(node->tokenType == ttIdentifier);
 			node = node->next;
 		}
 
@@ -2690,10 +2710,6 @@ void asCBuilder::CompileClasses()
 
 		// Enumerate each of the declared properties
 		asCScriptNode *node = decl->node->firstChild->next;
-		if( decl->objType->IsShared() )
-			node = node->next;
-		if( decl->objType->flags & asOBJ_NOINHERIT )
-			node = node->next;
 
 		// Skip list of classes and interfaces
 		while( node && node->nodeType == snIdentifier )
@@ -3024,10 +3040,9 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 {
 	asCScriptNode *node = decl->node->firstChild;
 
-	// Skip the 'final' and 'shared' keywords
-	if( decl->objType->IsShared() )
-		node = node->next;
-	if( decl->objType->flags & asOBJ_NOINHERIT )
+	// Skip the class attributes
+	while( node->nodeType == ttIdentifier &&
+		   !decl->script->TokenEquals(node->tokenPos, node->tokenLength, decl->name.AddressOf()) )
 		node = node->next;
 
 	// Skip the name of the class
@@ -3099,10 +3114,9 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 {
 	asCScriptNode *node = decl->node->firstChild;
 
-	// Skip the 'final' and 'shared' keywords
-	if( decl->objType->IsShared() )
-		node = node->next;
-	if( decl->objType->flags & asOBJ_NOINHERIT )
+	// Skip the class attributes
+	while( node->nodeType == ttIdentifier &&
+		   !decl->script->TokenEquals(node->tokenPos, node->tokenLength, decl->name.AddressOf()) )
 		node = node->next;
 
 	// Skip the name of the class
@@ -3272,10 +3286,11 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 	if( node )
 	{
 		// Check if the property is allowed
-		if( !dt.CanBeInstanciated() )
+		if( !dt.CanBeInstantiated() )
 		{
 			if( file && node )
 			{
+				// TODO: Explain why
 				asCString str;
 				str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
 				WriteError(str, file, node);
@@ -4494,6 +4509,15 @@ void asCBuilder::WriteWarning(const asCString &scriptname, const asCString &mess
 	}
 }
 
+void asCBuilder::WriteWarning(const asCString &message, asCScriptCode *file, asCScriptNode *node)
+{
+	int r = 0, c = 0;
+	if( node && file )
+		file->ConvertPosToRowCol(node->tokenPos, &r, &c);
+
+	WriteWarning(file ? file->name : asCString(""), message, r, c);
+}
+
 asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *script, asCScriptNode **next)
 {
 	asCString scope;
@@ -4694,7 +4718,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 								{
 									asCString msg;
 									// TODO: Should name all subtypes
-									msg.Format(TXT_CANNOT_INSTANCIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subTypes[0].Format().AddressOf());
+									msg.Format(TXT_CANNOT_INSTANTIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subTypes[0].Format().AddressOf());
 									WriteError(msg, file, n);
 								}
 
@@ -4766,8 +4790,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	{
 		if( n->tokenType == ttOpenBracket )
 		{
-			// Make sure the sub type can be instanciated
-			if( !dt.CanBeInstanciated() )
+			// Make sure the sub type can be instantiated
+			if( !dt.CanBeInstantiated() )
 			{
 				asCString str;
 				// TODO: Change to "Array sub type cannot be 'type'"
