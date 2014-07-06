@@ -4701,8 +4701,6 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 								return asCDataType::CreatePrimitive(ttInt, false);
 							}
 
-							asASSERT( subTypes.GetLength() == ot->templateSubTypes.GetLength() );
-
 							// Check if any of the given subtypes are different from the template's declared subtypes
 							bool isDifferent = false;
 							for( subtypeIndex = 0; subtypeIndex < subTypes.GetLength(); subtypeIndex++ )

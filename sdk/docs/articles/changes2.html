@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.1 WIP - 2014/07/05</h2>
+<h2>Version 2.29.1 WIP - 2014/07/06</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The module's ResetGlobalVars uses the context callbacks to support debugging initialization of global variables without informing a pre-created context
 <li>The context callbacks are disabled before destroying the engine to avoid creation of new contexts while cleaning up objects
 <li>Added asEP_ALTER_SYNTAX_NAMED_ARGS to optionally support the previous syntax for named args
+<li>asOBJ_TEMPLATE can now be used with value types too
 </ul>
 <li>Library interface
 <ul>

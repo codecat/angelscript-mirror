@@ -1648,12 +1648,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	else if( flags & asOBJ_VALUE )
 	{
 		// Cannot use reference flags
-		// TODO: template: Should be possible to register a value type as template type
-		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_TEMPLATE | asOBJ_NOCOUNT) )
+		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_NOCOUNT) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 
-		// flags are exclusive
-		if( (flags & asOBJ_POD) && (flags & asOBJ_ASHANDLE) )
+		// Flags are exclusive
+		if( (flags & asOBJ_POD) && (flags & (asOBJ_ASHANDLE | asOBJ_TEMPLATE)) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 
 		// If the app type is given, we must validate the flags
@@ -2033,12 +2032,22 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				return ConfigError(asILLEGAL_BEHAVIOUR_FOR_TYPE, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 			}
 
+			// The templates take a hidden parameter with the object type
+			if( (objectType->flags & asOBJ_TEMPLATE) &&
+				(func.parameterTypes.GetLength() == 0 ||
+				 !func.parameterTypes[0].IsReference()) )
+			{
+				WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_FIRST_PARAM_MUST_BE_REF_FOR_TEMPLATE_FACTORY);
+				return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+			}
+
 			// TODO: Verify that the same constructor hasn't been registered already
 
 			// Store all constructors in a list
 			func.id = AddBehaviourFunction(func, internal);
 			beh->constructors.PushLast(func.id);
-			if( func.parameterTypes.GetLength() == 0 )
+			if( func.parameterTypes.GetLength() == 0 ||
+				(func.parameterTypes.GetLength() == 1 && (objectType->flags & asOBJ_TEMPLATE)) )
 			{
 				beh->construct = func.id;
 			}
@@ -3503,10 +3512,18 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	for( n = 0; n < ot->methods.GetLength(); n++ )
 		scriptFunctions[ot->methods[n]]->AddRef();
 
-	// Store the real factory in the constructor. This is used by the CreateScriptObject function.
-	// Otherwise it wouldn't be necessary to store the real factory ids.
-	ot->beh.construct = templateType->beh.factory;
-	ot->beh.constructors = templateType->beh.factories;
+	if( templateType->flags & asOBJ_REF )
+	{
+		// Store the real factory in the constructor. This is used by the CreateScriptObject function.
+		// Otherwise it wouldn't be necessary to store the real factory ids.
+		ot->beh.construct = templateType->beh.factory;
+		ot->beh.constructors = templateType->beh.factories;
+	}
+	else
+	{
+		ot->beh.construct = templateType->beh.construct;
+		ot->beh.constructors = templateType->beh.constructors;
+	}
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
 		scriptFunctions[ot->beh.constructors[n]]->AddRef();
 
@@ -3530,17 +3547,37 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	ot->beh.factory = 0;
 
-	// Generate factory stubs for each of the factories
-	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+	if( templateType->flags & asOBJ_REF )
 	{
-		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
+		// Generate factory stubs for each of the factories
+		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+		{
+			asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
 
-		// The function's refCount was already initialized to 1
-		ot->beh.factories.PushLast(func->id);
+			// The function's refCount was already initialized to 1
+			ot->beh.factories.PushLast(func->id);
 
-		// Set the default factory as well
-		if( ot->beh.constructors[n] == ot->beh.construct )
-			ot->beh.factory = func->id;
+			// Set the default factory as well
+			if( ot->beh.constructors[n] == ot->beh.construct )
+				ot->beh.factory = func->id;
+		}
+	}
+	else
+	{
+		// Generate factory stubs for each of the constructors
+		for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+		{
+			asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
+
+			// The function's refCount was already initialized to 1
+			if( ot->beh.constructors[n] == ot->beh.construct )
+				ot->beh.construct = func->id;
+
+			// Release previous constructor
+			scriptFunctions[ot->beh.constructors[n]]->Release();
+
+			ot->beh.constructors[n] = func->id;
+		}
 	}
 
 	// Generate stub for the list factory as well
@@ -3556,6 +3593,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	if( scriptFunctions[ot->beh.addref] ) scriptFunctions[ot->beh.addref]->AddRef();
 	ot->beh.release = templateType->beh.release;
 	if( scriptFunctions[ot->beh.release] ) scriptFunctions[ot->beh.release]->AddRef();
+	ot->beh.destruct = templateType->beh.destruct;
+	if( scriptFunctions[ot->beh.destruct] ) scriptFunctions[ot->beh.destruct]->AddRef();
 	ot->beh.copy = templateType->beh.copy;
 	if( scriptFunctions[ot->beh.copy] ) scriptFunctions[ot->beh.copy]->AddRef();
 	ot->beh.operators = templateType->beh.operators;
@@ -3702,8 +3741,16 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->AllocateScriptFunctionData();
 	func->name             = "factstub";
 	func->id               = GetNextScriptFunctionId();
-	func->returnType       = asCDataType::CreateObjectHandle(ot, false);
 	func->isShared         = true;
+	if( templateType->flags & asOBJ_REF )
+	{
+		func->returnType   = asCDataType::CreateObjectHandle(ot, false);
+	}
+	else
+	{
+		func->returnType   = factory->returnType; // constructors return nothing
+		func->objectType   = ot;
+	}
 
 	// Skip the first parameter as this is the object type pointer that the stub will add
 	func->parameterTypes.SetLength(factory->parameterTypes.GetLength()-1);
@@ -3724,6 +3771,8 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 	if( ep.includeJitInstructions )
 		bcLength += asBCTypeSize[asBCInfo[asBC_JitEntry].type];
+	if( templateType->flags & asOBJ_VALUE )
+		bcLength += asBCTypeSize[asBCInfo[asBC_SwapPtr].type];
 
 	func->scriptData->byteCode.SetLength(bcLength);
 	asDWORD *bc = func->scriptData->byteCode.AddressOf();
@@ -3738,6 +3787,12 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	*(asBYTE*)bc = asBC_OBJTYPE;
 	*(asPWORD*)(bc+1) = (asPWORD)ot;
 	bc += asBCTypeSize[asBCInfo[asBC_OBJTYPE].type];
+	if( templateType->flags & asOBJ_VALUE )
+	{
+		// Swap the object pointer with the object type
+		*(asBYTE*)bc = asBC_SwapPtr;
+		bc += asBCTypeSize[asBCInfo[asBC_SwapPtr].type];
+	}
 	*(asBYTE*)bc = asBC_CALLSYS;
 	*(asDWORD*)(bc+1) = factoryId;
 	bc += asBCTypeSize[asBCInfo[asBC_CALLSYS].type];

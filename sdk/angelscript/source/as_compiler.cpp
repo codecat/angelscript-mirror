@@ -1803,6 +1803,7 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asSE
 
 	// If the function being called is the opAssign or copy constructor for the same type
 	// as the argument, then we should avoid making temporary copy of the argument
+	asASSERT( descr->parameterTypes.GetLength() == args.GetLength() );
 	bool makingCopy = false;
 	if( descr->parameterTypes.GetLength() == 1 &&
 		descr->parameterTypes[0].IsEqualExceptRefAndConst(args[0]->type.dataType) &&
