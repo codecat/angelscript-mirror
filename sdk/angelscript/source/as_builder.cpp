@@ -3042,7 +3042,7 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 	asCScriptNode *node = decl->node->firstChild;
 
 	// Skip the class attributes
-	while( node->nodeType == ttIdentifier &&
+	while( node->nodeType == snIdentifier &&
 		   !decl->script->TokenEquals(node->tokenPos, node->tokenLength, decl->name.AddressOf()) )
 		node = node->next;
 
@@ -3116,7 +3116,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 	asCScriptNode *node = decl->node->firstChild;
 
 	// Skip the class attributes
-	while( node->nodeType == ttIdentifier &&
+	while( node->nodeType == snIdentifier &&
 		   !decl->script->TokenEquals(node->tokenPos, node->tokenLength, decl->name.AddressOf()) )
 		node = node->next;
 
