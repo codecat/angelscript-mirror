@@ -1247,14 +1247,25 @@ asCScriptNode *asCParser::ParseExprValue()
 			else 
 				break;
 		}
+
+		bool isDataType = IsDataType(t2);
+		bool isTemplateType = false;
+		if( isDataType )
+		{
+			// Is this a template type?
+			tempString.Assign(&script->code[t2.pos], t2.length);
+			if( engine->IsTemplateType(tempString.AddressOf()) )
+				isTemplateType = true;
+		}
 		
 		// Rewind so the real parsing can be done, after deciding what to parse
 		RewindTo(&t1);
 
 		// Check if this is a construct call
-		if( IsDataType(t2) && (t.type == ttOpenParanthesis || 
-		                       t.type == ttLessThan || 
-		                       t.type == ttOpenBracket) )
+		if( isDataType && (t.type == ttOpenParanthesis ||  // type()
+			               t.type == ttOpenBracket) )      // type[]()
+			node->AddChildLast(ParseConstructCall());
+		else if( isTemplateType && t.type == ttLessThan )  // type<t>()
 			node->AddChildLast(ParseConstructCall());
 		else if( IsFunctionCall() )
 			node->AddChildLast(ParseFunctionCall());

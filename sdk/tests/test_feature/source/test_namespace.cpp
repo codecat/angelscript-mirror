@@ -11,6 +11,34 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Overloading type name in namespace with local variable
+	// http://www.gamedev.net/topic/658748-namespace-bug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace n1 \n"
+			"{ \n"
+			"	class c1 \n"
+			"	{ \n"
+			"	} \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	int c1 = 1; \n"
+			"	if(c1 < 2) // Error here \n"
+			"		c1 = 3; \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// The compiler should search parent namespaces for inherited classes
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
