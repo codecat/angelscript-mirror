@@ -10,6 +10,7 @@ may reserve additional keywords that are specific to that application.
 <tr>
 <td width=100 valign=top><code>
 and<br>
+abstract*<br>
 auto<br>
 bool<br>
 break<br>
@@ -20,9 +21,9 @@ const<br>
 continue<br>
 default<br>
 do<br>
-double<br>
 </code></td>
 <td width=100 valign=top><code>
+double<br>
 else<br>
 enum<br>
 false<br>

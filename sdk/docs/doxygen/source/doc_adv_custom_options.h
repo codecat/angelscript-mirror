@@ -78,11 +78,19 @@ when the application wish to have full control of what can and cannot be stored 
  
 \ref asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT
 
-If this flag is set to true, the compiler will always provide a default constructor for clasaes even if it hasn't been implemented
+If this flag is set to true, the compiler will always provide a default constructor for classes even if it hasn't been implemented
 by the script. Normally this option is not recommended, because if a script class provides a non-default constructor but not the 
 default constructor it is most likely because it is desired that the class should always be initialized with the non-default constructor.
 
-\todo asEP_ALTER_SYNTAX_NAMED_ARGS
+\ref asEP_ALTER_SYNTAX_NAMED_ARGS
+
+If this flag is set to 1 or 2 the compiler will accept the '=' instead of ':' for \ref function "naming arguments in function calls". 
+When option 1 is used the compiler will warn about it, so the script writer can update the script to the correct ':' token. When 
+option 2 is used both '=' and ':' are accepted silently.
+
+Observe that the use of the '=' token for naming arguments may cause a bit of a confusion. Especially if there is a variable
+with the same name as the function argument as the script writer may think he's updating the value of the variable, but is 
+just naming the function argument.
 
 
 

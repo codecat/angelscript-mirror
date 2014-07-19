@@ -240,13 +240,19 @@ is not known at compile time if the cast is valid.
   }
 </pre>
 
-\section doc_script_class_inheritance_2 Extra control with final and override
+\section doc_script_class_inheritance_2 Extra control with final, abstract, and override
 
 A class can be marked as 'final' to prevent the inheritance of it. This is an optional feature and
 mostly used in larger projects where there are many classes and it may be difficult to manually 
 control the correct use of all classes. It is also possible to mark individual class methods of a 
 class as 'final', in which case it is still possible to inherit from the class, but the finalled
 method cannot be overridden.
+
+Another keyword that can be used to mark a class is 'abstract'. Abstract classes cannot be 
+instantiated, but they can be derived from. Abstract classes are most frequently used when you
+want to create a family of classes by deriving from a common base class, but do not want the
+base class to be instantiated by itself. It is currently not possible to mark methods as abstract
+so all methods must have an implementation even for abstract classes.
 
 <pre>
   // A final class that cannot be inherited from
@@ -265,6 +271,9 @@ method cannot be overridden.
     // Normal method that can still be overridden by derived class
     void Method2() {}
   }
+  
+  // An abstract class
+  abstract class MyAbstractBase {}
 </pre>
 
 When deriving a class it is possible to tell the compiler that a method is meant to override a method in the 
@@ -333,6 +342,8 @@ wish to avoid programmer errors where properties or methods are inappropriately 
     obj.PrivateFunc();   // Error
   }
 </pre>
+
+\note private members are visible to derived classes. There is currently no way of hiding members of a base class from the derived classes.
 
 
 

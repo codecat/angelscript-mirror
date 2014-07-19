@@ -18,45 +18,56 @@ support for all other types that cannot be pre-determined.
 
 \section doc_adv_template_1 Registering the template type
 
-The template registration is registered similarly to normal \ref doc_reg_basicref "reference types",
-with a few differences. The name of the type is formed by the name of the template type plus
-the name of the subtype with angle brackets. Multiple subtypes can be informed, separated by comma.
-The type flag asOBJ_TEMPLATE must used to tell AngelScript that it is a template type that is being registered.
+Template types can be either \ref doc_reg_basicref "reference types" or \ref doc_register_val_type "value types", 
+are registered in a similar manner except for a few differences.
+
+The name of the type is formed by the name of the template type plus the name of the subtype with angle brackets. 
+Multiple subtypes can be informed, separated by comma. The type flag asOBJ_TEMPLATE must used to tell AngelScript 
+that it is a template type that is being registered.
 
 \code
-// Register the template type
+// Register the template type as a garbage collected reference type
 r = engine->RegisterObjectType("myTemplate<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
+
+// Register another template type as a value type
+r = engine->RegisterObjectType("myValueTemplate<class T>", sizeof(MyValueTempl), asOBJ_VALUE | asOBJ_TEMPLATE | asGetTypeTraits<MyValueTempl>()); assert( r >= 0 );
 \endcode
 
 The template type doesn't have to be \ref doc_gc_object "garbage collected", but since you may not know 
-which subtypes it will be instanciated for, it is usually best to implement that support.
+which subtypes it will be instantiated for, it is usually best to implement that support.
 
 When registering the behaviours, methods, and properties for the template type the type is identified
 with the name and subtype within angle brackets, but without the class token, e.g. <tt>myTemplate&lt;T&gt;</tt>.
 The sub type is identified by just the name of the subtype as it was declared in the call to RegisterObjectType.
 
-The factory behaviour for the template type is also different. In order for the implementation to know
-which subtype it is instanciated for the factory receives the \ref asIObjectType of the template instance
-as a hidden first parameter. When registering the factory this hidden parameter is reflected in the declaration,
+The factory/construct behaviour for the template type is also different. In order for the implementation to know
+which subtype it is instantiated for, the factory/constructor receives the \ref asIObjectType of the template instance
+as a hidden first parameter. When registering the factory/constructor this hidden parameter is reflected in the declaration,
 for example as <tt>int &amp;in</tt>.
 
 \code
 // Register the factory behaviour
 r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_FACTORY, "myTemplate<T>@ f(int&in)", asFUNCTIONPR(myTemplateFactory, (asIObjectType*), myTemplate*), asCALL_CDECL); assert( r >= 0 );
+
+// Register the construct behaviour
+r = engine->RegisterObjectBehaviour("myValueTemplate<T>", asBEHAVE_CONSTRUCT, "void f(int&in)", asFUNCTIONPR(myValueTemplConstructor, (asIObjectType*, void*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
-The list factory, used to instanciate objects with initialization lists, is registered in the same way, i.e.:
+The list factory/constructor, used to instantiate objects with initialization lists, is registered in the same way, i.e.:
 
 \code
 // Register the list factory behaviour
 r = engine->RegisterObjectBehaviour("myTemplate<T>", asBEHAVE_LIST_FACTORY, "myTemplate<T>@ f(int&in, uint)", asFUNCTIONPR(myTemplateListFactory, (asIObjectType*, unsigned int), myTemplate*), asCALL_CDECL); assert( r >= 0 );
+
+// Register the list constructor behaviour
+r = engine->RegisterObjectBehaviour("myValueTemplate<T>", asBEHAVE_LIST_CONSTRUCT, "void f(int&in, uint)", asFUNCTIONPR(myValueTemplListConstruct, (asIObjectType*, unsigned int, void*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
 
 Remember that since the subtype must be determined dynamically at runtime, it is not possible to declare
 functions to receive the subtype by value, nor to return it by value. Instead you'll have to design the
 methods and behaviours to take the type by reference. It is possible to use object handles, but then
-the script engine won't be able to instanciate the template type for primitives and other values types.
+the script engine won't be able to instantiate the template type for primitives and other values types.
 
 \see \ref doc_addon_array
 
@@ -68,7 +79,7 @@ the script engine won't be able to instanciate the template type for primitives 
 
 In order to avoid unnecessary runtime validations of invalid template instantiations, the application 
 should preferably register the \ref asBEHAVE_TEMPLATE_CALLBACK behaviour. This is a special behaviour function
-that the script engine will invoke everytime a new template instance type is generated. The callback
+that the script engine will invoke every time a new template instance type is generated. The callback
 function can then perform necessary validations to verify if the type can be handled, and if not tell
 the engine that the instance isn't supported. 
 

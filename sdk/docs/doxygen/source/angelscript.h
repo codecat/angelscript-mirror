@@ -189,6 +189,8 @@ enum asEEngineProp
 	asEP_COMPILER_WARNINGS                  = 19,
 	//! Disallow value assignment for reference types to avoid ambiguity. Default: false
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
+	//! Change the script syntax for named arguments: 0 - no change, 1 - accept = but warn, 2 - accept = without warning. Default: 0
+	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
 
 	asEP_LAST_PROPERTY
 };
@@ -306,7 +308,8 @@ enum asEObjTypeFlags
 	asOBJ_LIST_PATTERN               = (1<<25),
 	asOBJ_ENUM                       = (1<<26),
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
-	asOBJ_TYPEDEF                    = (1<<28)
+	asOBJ_TYPEDEF                    = (1<<28),
+	asOBJ_ABSTRACT                   = (1<<29)
 };
 
 // Behaviours
