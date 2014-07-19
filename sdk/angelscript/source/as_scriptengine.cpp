@@ -3465,6 +3465,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	ot->flags            = templateType->flags;
 	ot->size             = templateType->size;
 	ot->name             = templateType->name;
+	ot->nameSpace        = templateType->nameSpace;
 
 	// The template instance type will inherit the same module as the subType
 	// This will allow the module to orphan the template instance types afterwards

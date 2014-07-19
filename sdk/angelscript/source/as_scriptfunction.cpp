@@ -416,6 +416,23 @@ asCScriptFunction::~asCScriptFunction()
 }
 
 // internal
+void asCScriptFunction::DestroyHalfCreated()
+{
+	asASSERT( refCount.get() == 1 );
+
+	// Set the funcType to dummy so the destructor won't complain
+	funcType = asFUNC_DUMMY;
+
+	// If the bytecode exist remove it before destroying, otherwise it
+	// will fail when the destructor releases the references as the bytecode
+	// is not fully constructed.
+	if( scriptData )
+		scriptData->byteCode.SetLength(0);
+
+	delete this;
+}
+
+// internal
 void asCScriptFunction::DestroyInternal()
 {
 	// Clean up user data
