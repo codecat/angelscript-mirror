@@ -37,6 +37,34 @@ bool Test()
 	asIScriptEngine *engine = 0;
 	asIScriptModule *mod = 0;
 
+	// opCall on element returned from array
+	// http://www.gamedev.net/topic/658983-opcall-access-violation/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  array<foo> bar(1); \n"
+			"  bar[0](''); \n"
+			"}; \n"
+			"class foo { \n"
+			"  void opCall(string) {} \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// opCall for global variable
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
