@@ -19,6 +19,29 @@ bool Test()
 	asIScriptEngine *engine;
 //	asIScriptModule *mod;
 
+	// Test empty initialization list
+	// http://www.gamedev.net/topic/658849-empty-array-initialization/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptGrid(engine);
+
+		r = ExecuteString(engine, "grid<int> a = {};"); // Valid 0x0 grid
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "grid<int> a = {{}};"); // Valid 0x1 grid
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "grid<int> a = {{},{}};"); // Valid 0x2 grid
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test grid object forcibly destroyed by garbage collector
 	// http://www.gamedev.net/topic/657955-a-quite-specific-bug/
 	{

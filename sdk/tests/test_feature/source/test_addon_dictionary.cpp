@@ -77,6 +77,23 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test empty initialization list
+	// http://www.gamedev.net/topic/658849-empty-array-initialization/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		r = ExecuteString(engine, "dictionary a = {};");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test the dictionaryValue
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

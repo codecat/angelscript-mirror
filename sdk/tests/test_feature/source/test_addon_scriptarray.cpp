@@ -185,6 +185,21 @@ bool Test()
 	// TODO: 2.29.0: Test releasing the script engine while a script array is still alive
 	//               It must be gracefully handled, preferrably with an appropriate error message
 
+	// Test empty initialization list
+	// http://www.gamedev.net/topic/658849-empty-array-initialization/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		r = ExecuteString(engine, "array<int> a = {};");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test exception in constructor of value type
 	SKIP_ON_MAX_PORT
 	{
