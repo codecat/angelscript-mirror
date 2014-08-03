@@ -150,6 +150,28 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
+	// Test global var with implicit cast
+	// http://www.gamedev.net/topic/659415-implicit-downcast-not-works/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A \n"
+			"{ \n"
+			"} \n"
+			"class B : A \n"
+			"{ \n"
+			"} \n"
+			"A@ a = B(); \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test problem reported by Amer Koleci
 	// It was causing assert failure as the compiler tried to release the same temporary variable twice
 	{
