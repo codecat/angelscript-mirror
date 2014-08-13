@@ -396,7 +396,7 @@ In AngelScript all operator overloads are implemented as \ref doc_script_class_o
 which is different from C++ where both class methods and global functions may be used. Especially the dual operators, i.e.
 those that take two operands, usually has one implemented as a class method, and a global function for the reverse order.
 
-Two register C++ operator overloads you'll use the methods described in \ref doc_register_func_1.
+To register C++ operator overloads you'll use the methods described in \ref doc_register_func_1.
 
 Example on how to register operator overloads
 

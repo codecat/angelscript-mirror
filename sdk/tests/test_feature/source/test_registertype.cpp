@@ -269,6 +269,19 @@ bool Test()
  	asIScriptEngine *engine;
 	const char *script;
 
+	// Testing the asOBJ_APP_ALIGN16 flag
+	if( strstr(asGetLibraryOptions(), "WIP_16BYTE_ALIGN") )
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = engine->RegisterObjectType("type16", 16, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT | asOBJ_APP_ALIGN16);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Testing a variant type that supports holding both handles and value
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

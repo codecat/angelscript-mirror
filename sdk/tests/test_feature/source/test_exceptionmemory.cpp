@@ -314,7 +314,10 @@ bool Test()
 
 	// An object has been initialized and passed by value to a function, but 
 	// the function cannot be called due to the stack being full
-	engine->SetEngineProperty(asEP_MAX_STACK_SIZE, sizeof(void*));
+	if( strstr(asGetLibraryOptions(), "WIP_16BYTE_ALIGN") )
+		engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 16);
+	else
+		engine->SetEngineProperty(asEP_MAX_STACK_SIZE, sizeof(void*));
 	r = ExecuteString(engine, "Test3()", mod);
 	if( r != asEXECUTION_EXCEPTION )
 	{

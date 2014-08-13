@@ -242,7 +242,6 @@ bool Test()
 	
 	if( ctx ) ctx->Release();
 
-#ifdef __GNUC__
 	mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 	r = mod->Build();
 	if( r < 0 )
@@ -263,12 +262,11 @@ bool Test()
 	if( r != asEXECUTION_FINISHED )
 	{
 		if( r == asEXECUTION_EXCEPTION )
-			PrintException(ctx);
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		TEST_FAILED;
 	}
 
 	ctx->Release();
-#endif
 
 	engine->Release();
 
