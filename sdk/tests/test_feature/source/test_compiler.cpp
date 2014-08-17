@@ -802,6 +802,10 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		r = ExecuteString(engine, "uint64 ui64 = 18446744073709551615; assert( ui64 == 0xFFFFFFFFFFFFFFFF ); ");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
 		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -822,6 +826,17 @@ bool Test()
 
 		if( bout.buffer != "ExecuteString (1, 16) : Warning : Value is too large for data type\n"
 			               "ExecuteString (1, 13) : Warning : Implicit conversion changed sign of value\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Don't warn 
+		bout.buffer = "";
+		r = ExecuteString(engine, "int64 i64 = -9223372036854775808; assert( uint64(i64) == 0x8000000000000000 ); ");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1444,9 +1459,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 17) : Warning : Implicit conversion changed sign of value\n"
-						   "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

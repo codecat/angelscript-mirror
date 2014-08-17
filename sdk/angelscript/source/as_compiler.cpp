@@ -10016,7 +10016,9 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 		}
 
 		if( ctx->type.dataType.IsReference() ) ConvertToVariable(ctx);
-		ImplicitConversion(ctx, to, node, asIC_IMPLICIT_CONV);
+
+		// Use an explicit conversion in case of constants to avoid unnecessary warning about change of sign
+		ImplicitConversion(ctx, to, node, ctx->type.isConstant ? asIC_EXPLICIT_VAL_CAST : asIC_IMPLICIT_CONV);
 
 		if( !ctx->type.isConstant )
 		{
