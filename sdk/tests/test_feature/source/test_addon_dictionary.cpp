@@ -77,6 +77,85 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test enums in the dictionary
+	// http://www.gamedev.net/topic/659155-inconsistent-behavior-with-dictionary-and-enums/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterEnum("MyAppDefinedEnum");
+
+		const char *script = 
+			"enum foo { a, b, c }; \n"
+			"void main() \n"
+			"{ \n"
+			"    assert( b == 1 ); \n"
+			"    { \n"
+			"        dictionary d = { {'enumVal', 1} }; \n"
+			"        int val = int(d['enumVal']); \n"
+			"        assert( val == 1 ); \n"
+			"    } \n"
+			"    { \n"
+			"        dictionary d = { {'enumVal', b} }; \n"
+			"        int val = int(d['enumVal']); \n"
+			"        assert( val == 1 ); \n"
+			"    } \n"
+			"    { \n"
+			"        dictionary d = { {'enumVal', b} }; \n"
+			"        foo val = foo(d['enumVal']); \n"
+			"        assert( val == 1 ); \n"
+			"    } \n"
+			"    MyAppDefinedEnum mode = MyAppDefinedEnum(10); \n"
+			"    assert( mode == 10 ); \n"
+			"    { \n"
+			"        dictionary d = { {'mode', mode} }; \n"
+			"        MyAppDefinedEnum m = MyAppDefinedEnum(d['mode']); \n"
+			"        assert( mode == 10 ); \n"
+			"        one(d); \n"
+			"        two(d); \n"
+			"    } \n"
+			"    { \n"
+			"        dictionary d; \n"
+			"        d['mode'] = mode; \n"
+			"        MyAppDefinedEnum m = MyAppDefinedEnum(d['mode']); \n"
+			"        assert( mode == 10 ); \n"
+			"        one(d); \n"
+			"        two(d); \n"
+			"    } \n"
+			"} \n"
+			"void one(dictionary@ d) \n"
+			"{ \n"
+			"    MyAppDefinedEnum m = MyAppDefinedEnum(d['mode']); \n"
+			"    assert( m == 10 ); \n"
+			"} \n"
+			"void two(dictionary@ d) \n"
+			"{ \n"
+			"    int m = int(d['mode']); \n"
+			"    assert( m == 10 ); \n"
+			"} \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PRINTF("%s", GetExceptionInfo(ctx, true).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+		engine->Release();
+	}
+
 	// Test empty initialization list
 	// http://www.gamedev.net/topic/658849-empty-array-initialization/
 	{
