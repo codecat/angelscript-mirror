@@ -9230,6 +9230,22 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		return;
 	}
 
+	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
+	{
+		// Types declared as implicit handle must not attempt to construct a handle
+		dt.MakeHandle(false);
+	}
+
+	// Don't accept syntax like object@(expr)
+	if( dt.IsObjectHandle() )
+	{
+		asCString str;
+		str.Format(TXT_CANT_CONSTRUCT_s_USE_REF_CAST, dt.Format().AddressOf());
+		Error(str, node);
+		ctx->type.SetDummy();
+		return;
+	}
+
 	if( !dt.CanBeInstantiated() )
 	{
 		asCString str;

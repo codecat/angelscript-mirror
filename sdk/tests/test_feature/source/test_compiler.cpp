@@ -225,6 +225,39 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test invalid syntax
+	// http://www.gamedev.net/topic/659153-crash-when-instantiating-handle-with-weird-syntax/
+	{
+		const char *script = 
+			"array<string> foo = { 'a', 'b', 'c' };\n"
+			"dictionary d1 = { {'arr', foo} };\n"
+			"array<string>@ s1 = array<string>@(d1['arr']);\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 16) : Info    : Compiling array<string>@ s1\n"
+		                   "test (3, 21) : Error   : Can't construct handle 'array<string>@'. Use ref cast instead\n"
+		                   "test (3, 21) : Error   : Can't implicitly convert from 'const int' to 'array<string>@&'.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Give proper error when declaring variable as only statement of an if
 	// http://www.gamedev.net/topic/653474-compile-error-in-if-statement-without-braces/
 	{
