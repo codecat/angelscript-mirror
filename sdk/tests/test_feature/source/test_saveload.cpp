@@ -332,6 +332,8 @@ public:
 
 bool TestAndrewPrice();
 
+static asIScriptFunction *g_func = 0;
+
 bool Test()
 {
 	int r;
@@ -339,6 +341,75 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
+
+	// Test save/load with funcdef and imported functions
+	// http://www.gamedev.net/topic/657621-using-global-funcdef-setter-with-imported-function-gives-assert-or-invalid-bytecode/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		struct T
+		{
+			static void set_funcdef_var(asIScriptFunction*f) { if( g_func ) g_func->Release(); g_func = f; }
+		};
+
+		const char *script =
+			"import void bar() from \"somewhere\";"
+			"void test1(){ @foo = test2; }"
+			"void test2(){ @foo = bar;   }";
+
+		engine->RegisterFuncdef( "void MyVoid()" );
+		engine->RegisterGlobalFunction( "void set_foo(MyVoid@)", asFUNCTION(T::set_funcdef_var), asCALL_CDECL );
+
+		asIScriptModule* module = engine->GetModule( "script", asGM_ALWAYS_CREATE );
+		module->AddScriptSection( "script", script );
+		if( module->Build() < 0 ) // assert (-DNDEBUG not present)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "test2()", module);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( g_func == 0 || string(g_func->GetName()) != "bar" )
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(g_func);
+		r = ctx->Execute();
+		if( r != asEXECUTION_EXCEPTION ) // should fail since the imported function is not bound
+			TEST_FAILED;
+		if( string(ctx->GetExceptionString()) == "Unbound function called" )
+		ctx->Release();
+
+		CBytecodeStream bytecode("");
+		if( module->SaveByteCode( &bytecode ) < 0 )
+			TEST_FAILED;
+
+		asIScriptModule* module_bytecode = engine->GetModule( "script_bytecode", asGM_ALWAYS_CREATE );
+		if( module_bytecode->LoadByteCode( &bytecode ) < 0 ) // error (-DNDEBUG present)
+			TEST_FAILED;
+
+		if( g_func )
+		{
+			g_func->Release();
+			g_func = 0;
+		}
+
+		r = ExecuteString(engine, "test2()", module);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( g_func == 0 || string(g_func->GetName()) != "bar" )
+			TEST_FAILED;
+
+		if( g_func )
+		{
+			g_func->Release();
+			g_func = 0;
+		}
+
+		engine->Release();
+	}
 
 	// Test saving and loading with template in a namespace
 	// http://www.gamedev.net/topic/658862-loading-bytecode-bug/

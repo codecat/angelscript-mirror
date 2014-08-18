@@ -393,10 +393,8 @@ void asCScriptFunction::DeallocateScriptFunctionData()
 // internal
 asCScriptFunction::~asCScriptFunction()
 {
-	// Imported functions are not reference counted, nor are dummy
-	// functions that are allocated on the stack
+	// Dummy functions that are allocated on the stack are not reference counted
 	asASSERT( funcType == asFUNC_DUMMY    ||
-		      funcType == asFUNC_IMPORTED ||
 		      refCount.get() == 0         );
 
 	// If the engine pointer is 0, then DestroyInternal has already been called and there is nothing more to do
@@ -482,7 +480,6 @@ int asCScriptFunction::GetId() const
 int asCScriptFunction::AddRef() const
 {
 	gcFlag = false;
-	asASSERT( funcType != asFUNC_IMPORTED );
 	return refCount.atomicInc();
 }
 
@@ -490,7 +487,6 @@ int asCScriptFunction::AddRef() const
 int asCScriptFunction::Release() const
 {
 	gcFlag = false;
-	asASSERT( funcType != asFUNC_IMPORTED );
 	int r = refCount.atomicDec();
 	if( r == 0 &&
 		funcType != asFUNC_FUNCDEF && // Funcdefs are treated as object types and will be deleted by ClearUnusedTypes()
@@ -506,7 +502,7 @@ void asCScriptFunction::Orphan(asIScriptModule *mod)
 	if( mod && module == mod )
 	{
 		module = 0;
-		if( funcType == asFUNC_SCRIPT && refCount.get() > 1 )
+		if( (funcType == asFUNC_SCRIPT || funcType == asFUNC_IMPORTED) && refCount.get() > 1 )
 		{
 			// This function is being orphaned, so notify the GC so it can check for circular references
 			engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);

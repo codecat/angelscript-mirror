@@ -1193,6 +1193,14 @@ int asCContext::Execute()
 					SetInternalException(TXT_NULL_POINTER_ACCESS);
 			}
 		}
+		else if( m_currentFunction->funcType == asFUNC_IMPORTED )
+		{
+			int funcId = m_engine->importedFunctions[m_currentFunction->id & ~FUNC_IMPORTED]->boundFunctionId;
+			if( funcId > 0 )
+				m_currentFunction = m_engine->scriptFunctions[funcId];
+			else
+				SetInternalException(TXT_UNBOUND_FUNCTION);
+		}
 
 		if( m_currentFunction->funcType == asFUNC_SCRIPT )
 		{
