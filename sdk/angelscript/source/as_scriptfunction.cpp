@@ -1044,7 +1044,9 @@ void asCScriptFunction::AddReferences()
 			case asBC_RefCpyV:
 				{
 					asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&bc[n]);
-					objType->AddRef();
+					asASSERT( objType );
+					if( objType )
+						objType->AddRef();
 				}
 				break;
 
@@ -1052,11 +1054,13 @@ void asCScriptFunction::AddReferences()
 			case asBC_ALLOC:
 				{
 					asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&bc[n]);
-					objType->AddRef();
+					asASSERT( objType );
+					if( objType )
+						objType->AddRef();
 
-					int func = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
-					if( func )
-						engine->scriptFunctions[func]->AddRef();
+					int funcId = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
+					if( funcId )
+						engine->scriptFunctions[funcId]->AddRef();
 				}
 				break;
 
@@ -1095,7 +1099,9 @@ void asCScriptFunction::AddReferences()
 					asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 					if( group != 0 ) group->AddRef();
 
-					engine->scriptFunctions[funcId]->AddRef();
+					asASSERT( funcId > 0 );
+					if( funcId > 0 )
+						engine->scriptFunctions[funcId]->AddRef();
 				}
 				break;
 
@@ -1103,8 +1109,10 @@ void asCScriptFunction::AddReferences()
 			case asBC_CALL:
 			case asBC_CALLINTF:
 				{
-					int func = asBC_INTARG(&bc[n]);
-					engine->scriptFunctions[func]->AddRef();
+					int funcId = asBC_INTARG(&bc[n]);
+					asASSERT( funcId > 0 );
+					if( funcId > 0 )
+						engine->scriptFunctions[funcId]->AddRef();
 				}
 				break;
 
@@ -1112,7 +1120,9 @@ void asCScriptFunction::AddReferences()
 			case asBC_FuncPtr:
 				{
 					asCScriptFunction *func = (asCScriptFunction*)asBC_PTRARG(&bc[n]);
-					func->AddRef();
+					asASSERT( func );
+					if( func )
+						func->AddRef();
 				}
 				break;
 			}
@@ -1164,10 +1174,10 @@ void asCScriptFunction::ReleaseReferences()
 					if( objType )
 						objType->Release();
 
-					int func = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
-					if( func )
+					int funcId = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
+					if( funcId > 0 )
 					{
-						asCScriptFunction *fptr = engine->scriptFunctions[func];
+						asCScriptFunction *fptr = engine->scriptFunctions[funcId];
 						if( fptr )
 							fptr->Release();
 
@@ -1224,10 +1234,10 @@ void asCScriptFunction::ReleaseReferences()
 			case asBC_CALL:
 			case asBC_CALLINTF:
 				{
-					int func = asBC_INTARG(&bc[n]);
-					if( func )
+					int funcId = asBC_INTARG(&bc[n]);
+					if( funcId )
 					{
-						asCScriptFunction *fptr = engine->scriptFunctions[func];
+						asCScriptFunction *fptr = engine->scriptFunctions[funcId];
 						if( fptr )
 							fptr->Release();
 

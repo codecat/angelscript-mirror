@@ -77,6 +77,24 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test null in initialization list
+	// http://www.gamedev.net/topic/660037-crash-when-instantiating-dictionary-with-null-value/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "dictionary dict = {{'test', null}};");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test enums in the dictionary
 	// http://www.gamedev.net/topic/659155-inconsistent-behavior-with-dictionary-and-enums/
 	{

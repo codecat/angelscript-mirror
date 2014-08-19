@@ -3358,18 +3358,28 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				}
 			}
 
-			asSExprContext ctx(engine);
-			DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
+			if( lctx.type.dataType.IsNullHandle() )
+			{
+				// Don't add any code to assign a null handle. RefCpy doesn't work without a known type. 
+				// The buffer is already initialized to zero in asBC_AllocMem anyway.
+				asASSERT( rctx.bc.GetLastInstr() == asBC_PshNull );
+				asASSERT( reinterpret_cast<asSListPatternDataTypeNode*>(patternNode)->dataType.GetTokenType() == ttQuestion );
+			}
+			else
+			{
+				asSExprContext ctx(engine);
+				DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
 
-			if( !lctx.type.dataType.IsPrimitive() )
-				ctx.bc.Instr(asBC_PopPtr);
+				if( !lctx.type.dataType.IsPrimitive() )
+					ctx.bc.Instr(asBC_PopPtr);
 
-			// Release temporary variables used by expression
-			ReleaseTemporaryVariable(ctx.type, &ctx.bc);
+				// Release temporary variables used by expression
+				ReleaseTemporaryVariable(ctx.type, &ctx.bc);
 
-			ProcessDeferredParams(&ctx);
+				ProcessDeferredParams(&ctx);
 
-			byteCode.AddCode(&ctx.bc);
+				byteCode.AddCode(&ctx.bc);
+			}
 		}
 		else
 		{
@@ -7392,7 +7402,7 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 			return -1;
 		}
 
-		if( lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE )
+		if( lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE) )
 		{
 			// The object is a value type but that should be treated as a handle
 
