@@ -225,6 +225,34 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test identity comparison with output handle
+	// http://www.gamedev.net/topic/660025-inconsistent-behavior-with-ref-type-and-out-references-to-handle-params/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(A@&out a) \n"
+			"{ \n"
+			"  assert( a is null ); \n"
+			"  @a = A(); \n"
+			"  assert( a !is null ); \n"
+			"} \n"
+			"class A{} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A @a; func(a); assert( a !is null );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test invalid syntax
 	// http://www.gamedev.net/topic/659153-crash-when-instantiating-handle-with-weird-syntax/
 	{

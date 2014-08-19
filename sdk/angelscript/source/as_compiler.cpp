@@ -13408,7 +13408,14 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	int op = node->tokenType;
 	if( op == ttEqual || op == ttNotEqual || op == ttIs || op == ttNotIs )
 	{
-		// TODO: runtime optimize: don't do REFCPY
+		// Make sure handles received as parameters by reference are copied to a local variable before the 
+		// asBC_CmpPtr, so we don't end up comparing the reference to the handle instead of the handle itself
+		if( lctx->type.isVariable && !lctx->type.isTemporary && lctx->type.stackOffset <= 0 )
+			lctx->type.isVariable = false;
+		if( rctx->type.isVariable && !rctx->type.isTemporary && rctx->type.stackOffset <= 0 )
+			rctx->type.isVariable = false;
+
+		// TODO: runtime optimize: don't do REFCPY if not necessary
 		ConvertToVariableNotIn(lctx, rctx);
 		ConvertToVariable(rctx);
 

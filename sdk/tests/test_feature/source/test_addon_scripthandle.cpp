@@ -50,6 +50,13 @@ static CScriptHandle ReturnRef()
 	return ref;
 }
 
+std::string g_buf;
+void print(const std::string &s)
+{
+	g_buf += s;
+	g_buf += "\n";
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -58,6 +65,106 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test assigning directly to out reference
+	// This also tests that derived script classes can be properly cast to
+	// http://www.gamedev.net/topic/660025-inconsistent-behavior-with-ref-type-and-out-references-to-handle-params/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptHandle(engine);
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+
+		const char *script = 
+			"class base {}\n"
+			"class derived : base {}\n"
+			"class unrelated {}\n"
+			"void fillInProperType(ref@ obj, base@& out b, unrelated@& out u)\n"
+			"{\n"
+			"	if ( obj is null )\n"
+			"	{\n"
+			"		print('obj is null');\n"
+			"		return;\n"
+			"	}\n"
+			"	@b = cast<base>(obj);\n"
+			"	@u = cast<unrelated>(obj);\n"
+			"	if ( b !is null )\n"
+			"		print('b');\n"
+			"	if ( u !is null )\n"
+			"		print('u');\n"
+			"}\n";
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		g_buf = "";
+		r = ExecuteString(engine, 
+			"ref@ r = null;\n"
+			"base@ b = null;\n"
+			"unrelated@ u = null;\n"
+			"fillInProperType(r, b, u);\n"
+			"assert( b is null && u is null );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( g_buf != "obj is null\n" )
+		{
+			PRINTF("%s", g_buf.c_str());
+			TEST_FAILED;
+		}
+
+		g_buf = "";
+		r = ExecuteString(engine, 
+			"ref@ r = base();\n"
+			"base@ b = null;\n"
+			"unrelated@ u = null;\n"
+			"fillInProperType(r, b, u);\n"
+			"assert( b !is null && u is null );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( g_buf != "b\n" )
+		{
+			PRINTF("%s", g_buf.c_str());
+			TEST_FAILED;
+		}
+
+		g_buf = "";
+		r = ExecuteString(engine, 
+			"ref@ r = unrelated();\n"
+			"base@ b = null;\n"
+			"unrelated@ u = null;\n"
+			"fillInProperType(r, b, u);\n"
+			"assert( b is null && u !is null );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( g_buf != "u\n" )
+		{
+			PRINTF("%s", g_buf.c_str());
+			TEST_FAILED;
+		}
+
+		g_buf = "";
+		r = ExecuteString(engine, 
+			"ref@ r = derived();\n"
+			"base@ b = null;\n"
+			"unrelated@ u = null;\n"
+			"fillInProperType(r, b, u);\n"
+			"assert( b !is null && u is null );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( g_buf != "b\n" )
+		{
+			PRINTF("%s", g_buf.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Test storing a script object in a handle, then release the engine
 	{
