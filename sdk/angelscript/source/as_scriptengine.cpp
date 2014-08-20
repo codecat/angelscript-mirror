@@ -2399,7 +2399,8 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	else if( behaviour == asBEHAVE_IMPLICIT_VALUE_CAST ||
 		     behaviour == asBEHAVE_VALUE_CAST )
 	{
-		// TODO: 2.29.0: These should be registered as methods with opConv or opImplConv names
+		// TODO: 2.30.0: Deprecate these behaviours, the application should register 
+		//               them directly as methods with opConv or opImplConv names
 
 		// There are two allowed signatures
 		// 1. type f()
@@ -2413,11 +2414,13 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) )
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
-		// TODO: verify that the same cast is not registered already (const or non-const is treated the same for the return type)
-
-		beh->operators.PushLast(behaviour);
-		func.id = AddBehaviourFunction(func, internal);
-		beh->operators.PushLast(func.id);
+		asCString decl;
+		decl += func.returnType.Format();
+		decl += behaviour == asBEHAVE_VALUE_CAST ? " opConv(" : " opImplConv(";
+		if( func.parameterTypes.GetLength() )
+			decl += "?&out";
+		decl += ")";
+		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
 	}
 	else if( behaviour == asBEHAVE_REF_CAST ||
 	         behaviour == asBEHAVE_IMPLICIT_REF_CAST )
@@ -2809,15 +2812,33 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 
 	// Check against duplicate methods
 	asUINT n;
-	for( n = 0; n < func->objectType->methods.GetLength(); n++ )
+	if( func->name == "opConv" || func->name == "opImplConv" )
 	{
-		asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];
-		if( f->name == func->name &&
-			f->IsSignatureExceptNameAndReturnTypeEqual(func) )
+		// opConv and opImplConv are special methods that the compiler differentiates between by the return type
+		for( n = 0; n < func->objectType->methods.GetLength(); n++ )
 		{
-			func->funcType = asFUNC_DUMMY;
-			asDELETE(func,asCScriptFunction);
-			return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+			asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];
+			if( f->name == func->name &&
+				f->IsSignatureExceptNameEqual(func) )
+			{
+				func->funcType = asFUNC_DUMMY;
+				asDELETE(func,asCScriptFunction);
+				return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+			}
+		}
+	}
+	else
+	{
+		for( n = 0; n < func->objectType->methods.GetLength(); n++ )
+		{
+			asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];
+			if( f->name == func->name &&
+				f->IsSignatureExceptNameAndReturnTypeEqual(func) )
+			{
+				func->funcType = asFUNC_DUMMY;
+				asDELETE(func,asCScriptFunction);
+				return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+			}
 		}
 	}
 

@@ -669,7 +669,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			if( m_typeId == asTYPEID_INT64 )
 				*(double*)value = double(m_valueInt);
 			else if( m_typeId == asTYPEID_BOOL )
-				*(double*)value = bool(m_valueInt) ? 1.0 : 0.0;
+				*(double*)value = char(m_valueInt) ? 1.0 : 0.0;
 			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
 				*(double*)value = double(int(m_valueInt)); // enums are 32bit
 			else
@@ -685,7 +685,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			if( m_typeId == asTYPEID_DOUBLE )
 				*(asINT64*)value = asINT64(m_valueFlt);
 			else if( m_typeId == asTYPEID_BOOL )
-				*(asINT64*)value = bool(m_valueInt) ? 1 : 0;
+				*(asINT64*)value = char(m_valueInt) ? 1 : 0;
 			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
 				*(asINT64*)value = int(m_valueInt); // enums are 32bit
 			else
@@ -704,7 +704,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			else if( m_typeId == asTYPEID_INT64 )
 				*(int*)value = int(m_valueInt);
 			else if( m_typeId == asTYPEID_BOOL )
-				*(int*)value = bool(m_valueInt) ? 1 : 0;
+				*(int*)value = char(m_valueInt) ? 1 : 0;
 			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
 				*(int*)value = int(m_valueInt);
 			else

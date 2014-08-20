@@ -782,6 +782,40 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test opImplConv in script class
+	// Test math operator with primitive and object type with implicit cast to primitive
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class type { \n"
+			"  double dbl; \n"
+			"  double opImplConv() { return dbl; } \n"
+			"  int opImplConv() { return int(dbl); } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  type x; \n"
+			"  x.dbl = 3.5; \n"
+			"  double y = x * 2; \n" // the implicit cast should choose double, since it has better precision
+			"  assert( y == 7 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED ) 
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }
