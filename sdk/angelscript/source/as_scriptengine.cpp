@@ -4785,8 +4785,13 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType
 }
 
 // internal
+// TODO: interface: Should return status code
 void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type)
 {
+	// TODO: Warn about invalid call in message stream
+	// TODO: Should a script exception be set in case a context is active?
+	if( type == 0 || mem == 0 || obj == 0 ) return;
+
 	// This function is only meant to be used for value types
 	asASSERT( type->flags & asOBJ_VALUE );
 
@@ -4807,9 +4812,12 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 }
 
 // interface
+// TODO: interface: Should return status code
 void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type)
 {
-	if( type == 0 ) return;
+	// TODO: Warn about invalid call in message stream
+	// TODO: Should a script exception be set in case a context is active?
+	if( type == 0 || dstObj == 0 || srcObj == 0 ) return;
 
 	const asCObjectType *objType = reinterpret_cast<const asCObjectType*>(type);
 

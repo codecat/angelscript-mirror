@@ -226,8 +226,9 @@ pairs can be added or removed dynamically, making the dictionary a good general 
   // Examine and access the values through get or set methods ...
   if( dict.exists('one') )
   {
-    bool found = dict.get('handle', \@handle);
-    if( found )
+    // get returns true if the stored type is compatible with the requested type
+    bool isValid = dict.get('handle', \@handle);
+    if( isValid )
     {
       dict.delete('object');
       dict.set('value', 1);

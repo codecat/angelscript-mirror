@@ -77,6 +77,47 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test retrieving arrays from dictionaries
+	// http://www.gamedev.net/topic/660363-retrieving-an-array-of-strings-from-a-dictionary/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"  dictionary d = { {'arr', array<string>(1, 'something')} }; \n"
+			"  array<string> arr1 = cast<array<string>>(d['arr']); \n"
+			"  assert( arr1.length() == 1 && arr1[0] == 'something' ); \n"
+			"  array<string>@ arr2 = null; \n"
+			"  bool found2 = d.get('arr', @arr2); \n"
+			"  assert( arr2.length() == 1 && arr2[0] == 'something' ); \n"
+			"  assert( found2 ); \n"
+			"  array<string> arr3; \n"
+			"  bool found3 = d.get('arr', arr3); \n"
+			"  assert( arr3.length() == 1 && arr3[0] == 'something' ); \n"
+			"  assert( found3 ); \n"
+		//	"  array<string> arr4; \n"
+		//	"  bool found4 = d.get('arr', @arr4); \n" // This is not valid, because arr4 is not a handle and cannot be reassigned
+		//	"  assert( arr4.length() == 1 && arr4[0] == 'something' ); \n"
+		//	"  assert( found4 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test null in initialization list
 	// http://www.gamedev.net/topic/660037-crash-when-instantiating-dictionary-with-null-value/
 	{
