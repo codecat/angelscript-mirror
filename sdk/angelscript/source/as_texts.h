@@ -43,7 +43,7 @@
 
 #define TXT_s_ALREADY_DECLARED                    "'%s' is already declared"
 #define TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED "Abstract class '%s' cannot be instantiated"
-#define TXT_ARG_NOT_LVALUE                        "Argument cannot be assigned. Output will be discarded."
+#define TXT_ARG_NOT_LVALUE                        "Output argument expression is not assignable"
 #define TXT_ATTR_s_INFORMED_MULTIPLE_TIMES        "Attribute '%s' informed multiple times"
 
 #define TXT_BOTH_MUST_BE_SAME                     "Both expressions must have the same type"

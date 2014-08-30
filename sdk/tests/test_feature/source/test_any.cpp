@@ -192,13 +192,10 @@ bool Test()
 		mod->AddScriptSection("TestAny", script3, strlen(script3), 0);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		r = mod->Build();
-		if( r < 0 )
-		{
+		if( r >= 0 )
 			TEST_FAILED;
-			PRINTF("%s: Failed to Build()\n", "TestAny");
-		}
 		if( bout.buffer != "TestAny (5, 1) : Info    : Compiling void TestAny()\n"
-				   "TestAny (9, 15) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
+				   "TestAny (9, 15) : Error   : Output argument expression is not assignable\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

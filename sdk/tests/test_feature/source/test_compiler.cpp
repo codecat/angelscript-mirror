@@ -225,6 +225,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Give error if &out arg is called with non-lvalue expr
+	// http://www.gamedev.net/topic/660363-retrieving-an-array-of-strings-from-a-dictionary/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"  dictionary d = { {'arr', array<string>(1, 'something')} }; \n"
+			"  array<string> arr4; \n"
+			"  bool found4 = d.get('arr', @arr4); \n" // This is not valid, because arr4 is not a handle and cannot be reassigned
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+		                   "test (4, 31) : Error   : Output argument expression is not assignable\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test identity comparison with output handle
 	// http://www.gamedev.net/topic/660025-inconsistent-behavior-with-ref-type-and-out-references-to-handle-params/
 	{
@@ -2466,14 +2498,17 @@ bool Test()
 	}
 
 	{
-		// When passing 'null' to an output parameter the compiler shouldn't warn
+		// When passing 'null' or 'void' to an output parameter the compiler shouldn't warn
 		const char *script = "class C {} void func(C @&out) {} \n"
 			                 "void main() { \n"
 							 "  bool f = true; \n"
 							 "  if( f ) \n"
-							 "    func(null); \n"
+							 "  { \n"
+							 "    func(void); \n" // ok. output will be discarded
+							 "    func(null); \n" // ok. output will be discarded
+							 "  } \n"
 							 "  else \n"
-							 "    func(C()); \n"
+							 "    func(C()); \n" // error. not assignable
 	                         "}\n";
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -2483,10 +2518,10 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
-		if( r < 0 )
+		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "TestCompiler (2, 1) : Info    : Compiling void main()\n"
-		                   "TestCompiler (7, 10) : Warning : Argument cannot be assigned. Output will be discarded.\n" )
+		                   "TestCompiler (10, 10) : Error   : Output argument expression is not assignable\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

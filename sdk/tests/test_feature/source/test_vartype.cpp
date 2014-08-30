@@ -442,8 +442,8 @@ bool Test()
 	mod->AddScriptSection("script", script);
 	mod->Build();
 	r = ExecuteString(engine, "const C c; testFuncO(@c.a);", mod);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 23) : Warning : Argument cannot be assigned. Output will be discarded.\n" ) TEST_FAILED;
+	if( r >= 0 ) TEST_FAILED;
+	if( bout.buffer != "ExecuteString (1, 23) : Error   : Output argument expression is not assignable\n" ) TEST_FAILED;
 	bout.buffer = "";
 
 	// ?& with opAssign is allowed, but won't be used with the assignment operator

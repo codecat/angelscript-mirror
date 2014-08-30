@@ -9190,9 +9190,9 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 				if( !expr->type.IsVoidExpression() && (!expr->type.isConstant || expr->type.IsNullConstant()) )
 					ctx->bc.Instr(asBC_PopPtr);
 
-				// Give a warning, except if the argument is void, null or 0 which indicate the argument is really to be ignored
+				// Give an error, except if the argument is void, null or 0 which indicate the argument is explicitly to be ignored
 				if( !expr->type.IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
-					Warning(TXT_ARG_NOT_LVALUE, outParam.argNode);
+					Error(TXT_ARG_NOT_LVALUE, outParam.argNode);
 
 				ReleaseTemporaryVariable(outParam.argType, &ctx->bc);
 			}
