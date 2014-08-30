@@ -816,6 +816,43 @@ bool Test()
 		engine->Release();
 	}
 
+	// Test inheriting opConv and adding others
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class base { \n"
+			"  double dbl; \n"
+			"  double opConv() { return dbl; } \n"
+			"} \n"
+			"class derived : base { \n"
+			"  int opConv() { return int(dbl); } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  derived x; \n"
+			"  x.dbl = 3.5; \n"
+			"  double y = double(x) * 2; \n"
+			"  assert( y == 7 ); \n"
+			"  int z = int(x) * 2; \n"
+			"  assert( z == 6 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED ) 
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Success
  	return fail;
 }

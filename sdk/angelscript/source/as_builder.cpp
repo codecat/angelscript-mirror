@@ -2448,7 +2448,7 @@ void asCBuilder::CompileClasses()
 				AddInterfaceFromMixinToClass(decl, node, mixin);
 			}
 			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) ||
-					 objType->flags & asOBJ_NOINHERIT )
+					 (objType->flags & asOBJ_NOINHERIT) )
 			{
 				// Either the class is not a script class or interface
 				// or the class has been declared as 'final'
@@ -2607,28 +2607,51 @@ void asCBuilder::CompileClasses()
 				for( asUINT d = 0; d < decl->objType->methods.GetLength(); d++ )
 				{
 					derivedFunc = GetFunctionDescription(decl->objType->methods[d]);
-					if( derivedFunc->name == baseFunc->name &&
-						derivedFunc->IsSignatureExceptNameAndReturnTypeEqual(baseFunc) )
+					if( baseFunc->name == "opConv" || baseFunc->name == "opImplConv" )
 					{
-						if( baseFunc->returnType != derivedFunc->returnType )
+						// For the opConv and opImplConv methods, the return type can differ if they are different methods
+						if( derivedFunc->name == baseFunc->name &&
+							derivedFunc->IsSignatureExceptNameEqual(baseFunc) )
 						{
-							asCString msg;
-							msg.Format(TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s, baseFunc->GetDeclaration());
-							WriteError(msg, decl->script, decl->node);
-						}
+							if( baseFunc->IsFinal() )
+							{
+								asCString msg;
+								msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
+								WriteError(msg, decl->script, decl->node);
+							}
 
-						if( baseFunc->IsFinal() )
+							// Move the function from the methods array to the virtualFunctionTable
+							decl->objType->methods.RemoveIndex(d);
+							decl->objType->virtualFunctionTable.PushLast(derivedFunc);
+							found = true;
+							break;
+						}
+					}
+					else
+					{
+						if( derivedFunc->name == baseFunc->name &&
+							derivedFunc->IsSignatureExceptNameAndReturnTypeEqual(baseFunc) )
 						{
-							asCString msg;
-							msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
-							WriteError(msg, decl->script, decl->node);
-						}
+							if( baseFunc->returnType != derivedFunc->returnType )
+							{
+								asCString msg;
+								msg.Format(TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s, baseFunc->GetDeclaration());
+								WriteError(msg, decl->script, decl->node);
+							}
 
-						// Move the function from the methods array to the virtualFunctionTable
-						decl->objType->methods.RemoveIndex(d);
-						decl->objType->virtualFunctionTable.PushLast(derivedFunc);
-						found = true;
-						break;
+							if( baseFunc->IsFinal() )
+							{
+								asCString msg;
+								msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
+								WriteError(msg, decl->script, decl->node);
+							}
+
+							// Move the function from the methods array to the virtualFunctionTable
+							decl->objType->methods.RemoveIndex(d);
+							decl->objType->virtualFunctionTable.PushLast(derivedFunc);
+							found = true;
+							break;
+						}
 					}
 				}
 
