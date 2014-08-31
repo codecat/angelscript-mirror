@@ -182,8 +182,21 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
-	// TODO: 2.29.0: Test releasing the script engine while a script array is still alive
-	//               It must be gracefully handled, preferrably with an appropriate error message
+	// Test releasing the script engine while a script array is still alive
+	// It must be gracefully handled, preferrably with an appropriate error message
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		CScriptArray *arr = CScriptArray::Create(engine->GetObjectTypeByDecl("array<int>"));
+		
+		engine->Release();
+
+		arr->Release();
+	}
+
 
 	// Test empty initialization list
 	// http://www.gamedev.net/topic/658849-empty-array-initialization/

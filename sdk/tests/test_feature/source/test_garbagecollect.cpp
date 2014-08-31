@@ -609,10 +609,11 @@ bool Test()
 		}
 
 		// We can't release the function after the engine, because it will attempt to access the engine
+		// TODO: The application must not crash if the delegate is released after the engine. A leak might be acceptable, but not a crash
 		// TODO: Can we use the custom memory manager to force the memory cleanup so we can enable this test?
-		//func->Release();
-	}
-*/
+		func->Release();
+	} */
+
 
 /*
 	{

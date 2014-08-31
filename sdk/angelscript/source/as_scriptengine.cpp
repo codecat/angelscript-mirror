@@ -601,6 +601,12 @@ asCScriptEngine::~asCScriptEngine()
 
 	GarbageCollect();
 
+	if( defaultArrayObjectType )
+	{
+		defaultArrayObjectType->Release();
+		defaultArrayObjectType = 0;
+	}
+
 	// Delete the functions for template types that may references object types
 	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
@@ -721,11 +727,7 @@ asCScriptEngine::~asCScriptEngine()
 	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
 		if( templateInstanceTypes[n] )
-		{
-			// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
-			templateInstanceTypes[n]->templateSubTypes.SetLength(0);
-			asDELETE(templateInstanceTypes[n],asCObjectType);
-		}
+			templateInstanceTypes[n]->DropFromEngine();
 	}
 	templateInstanceTypes.SetLength(0);
 
@@ -735,7 +737,7 @@ asCScriptEngine::~asCScriptEngine()
 	{
 		// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
 		cursor2->value->templateSubTypes.SetLength(0);
-		asDELETE(cursor2->value, asCObjectType);
+		cursor2->value->DropFromEngine();
 
 		allRegisteredTypes.MoveNext(&cursor2, cursor2);
 	}
@@ -1269,7 +1271,7 @@ int asCScriptEngine::ClearUnusedTypes()
 				else
 				{
 					RemoveFromTypeIdMap(type);
-					asDELETE(type,asCObjectType);
+					type->DropFromEngine();
 					clearCount++;
 
 					classTypes.RemoveIndexUnordered(classTypes.IndexOf(type));
@@ -1485,14 +1487,14 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 
 	dt.GetObjectType()->properties.PushLast(prop);
 
-	// Add references to template instances so they are not released too early
-	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+	// Add references to types so they are not released too early
+	if( type.GetObjectType() )
 	{
-		if( !currentGroup->objTypes.Exists(type.GetObjectType()) )
-		{
-			type.GetObjectType()->AddRef();
+		type.GetObjectType()->AddRef();
+
+		// Add template instances to the config group
+		if( (type.GetObjectType()->flags & asOBJ_TEMPLATE) && !currentGroup->objTypes.Exists(type.GetObjectType()) )
 			currentGroup->objTypes.PushLast(type.GetObjectType());
-		}
 	}
 
 	currentGroup->RefConfigGroup(FindConfigGroupForObjectType(type.GetObjectType()));
@@ -1898,9 +1900,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			type->name       = dt.GetObjectType()->name;
 			// The namespace will be the same as the original template type
 			type->nameSpace  = dt.GetObjectType()->nameSpace;
-			// TODO: template: Support multiple subtypes
 			type->templateSubTypes.PushLast(dt.GetSubType());
-			if( type->templateSubTypes[0].GetObjectType() ) type->templateSubTypes[0].GetObjectType()->AddRef();
+			for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
+				if( type->templateSubTypes[s].GetObjectType() ) 
+					type->templateSubTypes[s].GetObjectType()->AddRef();
 			type->size       = byteSize;
 #ifdef WIP_16BYTE_ALIGN
 			// TODO: Types smaller than 4 don't need to be aligned to 4 byte boundaries

@@ -763,7 +763,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-
+			
 		engine->Release();
 	}
 
@@ -3514,8 +3514,8 @@ bool Test()
 			"    Foo() \n"
 			"    { \n"
 			"        Hoge h; \n"
-			"        Obj tmpObj = h.obj(); /* OK */ \n"
-			"        mObj = h.obj(); /* Build failed */ \n" // this should work
+			"        Obj tmpObj = h.obj(); \n"
+			"        mObj = h.obj(); \n" // this should work
 			"    } \n"
 			"    Obj mObj; \n"
 			"} \n";

@@ -82,8 +82,11 @@ bool Test()
 	RET_ON_MAX_PORT
 
 	int r;
+	COutStream out;
+	CBufferedOutStream bout;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	// Register an object type
 	r = engine->RegisterObjectType("obj", sizeof(CObj), asOBJ_REF); assert( r>=0 );
@@ -108,15 +111,13 @@ bool Test()
 
 	RegisterScriptString(engine);
 
-	COutStream out;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script1", script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
 
-	CBufferedOutStream bout;
 
 	// TODO: A member array of a const object is also const
 

@@ -798,7 +798,7 @@ bool Test()
 	// Reported by slicer4ever
 	// http://www.gamedev.net/topic/632288-registering-specialized-template-class/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		r = engine->RegisterObjectType("ConvexHull", 0, asOBJ_REF|asOBJ_NOCOUNT);
