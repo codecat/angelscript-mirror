@@ -171,10 +171,12 @@ public:
 	MyValueTmpl(asIObjectType *type) : ot(type) 
 	{ 
 		ot->AddRef(); 
+		isSet = false;
 	}
 	MyValueTmpl(asIObjectType *type, const MyValueTmpl &other) : ot(type)
 	{
 		ot->AddRef();
+		isSet = false;
 		assert( ot == other.ot );
 	}
 	~MyValueTmpl()
@@ -182,13 +184,14 @@ public:
 		ot->Release(); 
 	}
 
-	std::string GetSubType() { return std::string(ot->GetEngine()->GetTypeDeclaration(ot->GetSubTypeId())); }
+	std::string GetSubType() { isSet = true; return std::string(ot->GetEngine()->GetTypeDeclaration(ot->GetSubTypeId())); }
 
 	static void Construct(asIObjectType *type, void *mem) { new(mem) MyValueTmpl(type); }
 	static void CopyConstruct(asIObjectType *type, const MyValueTmpl &other, void *mem) { new(mem) MyValueTmpl(type, other); }
 	static void Destruct(MyValueTmpl *obj) { obj->~MyValueTmpl(); }
 
 	asIObjectType *ot;
+	bool isSet;
 };
 
 bool Test()
@@ -199,6 +202,43 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
+
+	// Properties in templates
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		r = engine->RegisterObjectType("MyValueTmpl<class T>", sizeof(MyValueTmpl), asOBJ_VALUE | asOBJ_TEMPLATE);
+		if( r < 0 ) TEST_FAILED;
+		r = engine->RegisterObjectBehaviour("MyValueTmpl<T>", asBEHAVE_CONSTRUCT, "void f(int&in)", asFUNCTION(MyValueTmpl::Construct), asCALL_CDECL_OBJLAST);
+		if( r < 0 ) TEST_FAILED;
+		r = engine->RegisterObjectBehaviour("MyValueTmpl<T>", asBEHAVE_CONSTRUCT, "void f(int&in, const MyValueTmpl<T> &in)", asFUNCTION(MyValueTmpl::CopyConstruct), asCALL_CDECL_OBJLAST);
+		if( r < 0 ) TEST_FAILED;
+		r = engine->RegisterObjectBehaviour("MyValueTmpl<T>", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(MyValueTmpl::Destruct), asCALL_CDECL_OBJLAST);
+		if( r < 0 ) TEST_FAILED;
+		r = engine->RegisterObjectProperty("MyValueTmpl<T>", "bool isSet", asOFFSET(MyValueTmpl, isSet));
+		if( r < 0 ) TEST_FAILED;
+		r = engine->RegisterObjectMethod("MyValueTmpl<T>", "string GetSubType()", asMETHOD(MyValueTmpl, GetSubType), asCALL_THISCALL);
+		if( r < 0 ) TEST_FAILED;
+
+		r = ExecuteString(engine, "MyValueTmpl<int> t; \n"
+			"assert( t.isSet == false ); \n"
+			"t.GetSubType(); \n"
+			"assert( t.isSet == true ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Value types can also be registered as templates
 	{

@@ -3,13 +3,13 @@
 \page doc_adv_template Template types
 
 A template type in AngelScript works similarly to how templates work in C++. The scripts 
-will be able to instanciate different forms of the template type by specifying which subtype 
+will be able to instantiate different forms of the template type by specifying which subtype 
 that should be used. The methods for the instance will then be adapted to this subtype, so
 that the correct handling of parameters and return types will be applied.
 
 The implementation of the template type is not a C++ template though, instead it must 
 be implemented as a generic class that can determine what to do dynamically at runtime based
-on the subtype for which it was instanciated. This is obviously a lot less efficient than
+on the subtype for which it was instantiated. This is obviously a lot less efficient than
 having specific implementations for each type, and for that reason AngelScript permits the
 application to register a template specialization where the extra performance is needed. 
 
@@ -18,8 +18,8 @@ support for all other types that cannot be pre-determined.
 
 \section doc_adv_template_1 Registering the template type
 
-Template types can be either \ref doc_reg_basicref "reference types" or \ref doc_register_val_type "value types", 
-are registered in a similar manner except for a few differences.
+Template types can be either \ref doc_reg_basicref "reference types" or \ref doc_register_val_type "value types". 
+Both are registered in a similar manner with only a few differences.
 
 The name of the type is formed by the name of the template type plus the name of the subtype with angle brackets. 
 Multiple subtypes can be informed, separated by comma. The type flag asOBJ_TEMPLATE must used to tell AngelScript 
@@ -68,6 +68,10 @@ Remember that since the subtype must be determined dynamically at runtime, it is
 functions to receive the subtype by value, nor to return it by value. Instead you'll have to design the
 methods and behaviours to take the type by reference. It is possible to use object handles, but then
 the script engine won't be able to instantiate the template type for primitives and other values types.
+
+The same goes for object properties. Templates can have properties just like any other class, but the
+properties must not be of the template subtype, since it is not known at the time of registration the size
+of this type.
 
 \see \ref doc_addon_array
 

@@ -3695,6 +3695,15 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		if( ot->templateSubTypes[n].GetObjectType() )
 			ot->templateSubTypes[n].GetObjectType()->AddRef();
 
+	// Copy the properties to the template instance
+	for( n = 0; n < templateType->properties.GetLength(); n++ )
+	{
+		asCObjectProperty *prop = templateType->properties[n];
+		ot->properties.PushLast(asNEW(asCObjectProperty)(*prop));
+		if( prop->type.GetObjectType() )
+			prop->type.GetObjectType()->AddRef();
+	}
+
 	templateInstanceTypes.PushLast(ot);
 
 	// Store the template instance types that have been created automatically by the engine from a template type
