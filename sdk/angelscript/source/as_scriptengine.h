@@ -245,7 +245,7 @@ public:
 
 	int  ClearUnusedTypes();
 	void RemoveTemplateInstanceType(asCObjectType *t);
-	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
+	void RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot);
 
 	asCConfigGroup *FindConfigGroupForFunction(int funcId) const;
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId) const;
@@ -378,8 +378,8 @@ public:
 	// Tokenizer is instantiated once to share resources
 	asCTokenizer tok;
 
-	// Stores script declared object types
-	asCArray<asCObjectType *> classTypes;
+	// Stores script declared types (classes, interfaces, enums, typedefs)
+	asCArray<asCObjectType *> scriptTypes;
 	// This array stores the template instances types that have been automatically generated from template types
 	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs

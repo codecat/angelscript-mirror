@@ -661,15 +661,15 @@ asCScriptEngine::~asCScriptEngine()
 	ClearUnusedTypes();
 
 	// Break all relationship between remaining class types and functions
-	for( n = 0; n < classTypes.GetLength(); n++ )
+	for( n = 0; n < scriptTypes.GetLength(); n++ )
 	{
-		if( classTypes[n] )
-			classTypes[n]->ReleaseAllFunctions();
+		if( scriptTypes[n] )
+			scriptTypes[n]->ReleaseAllFunctions();
 
-		if( classTypes[n]->derivedFrom )
+		if( scriptTypes[n]->derivedFrom )
 		{
-			classTypes[n]->derivedFrom->Release();
-			classTypes[n]->derivedFrom = 0;
+			scriptTypes[n]->derivedFrom->Release();
+			scriptTypes[n]->derivedFrom = 0;
 		}
 	}
 
@@ -1176,13 +1176,24 @@ int asCScriptEngine::ClearUnusedTypes()
 	int clearCount = 0;
 
 	// Build a list of all types to check for
-	asCArray<asCObjectType*> types;
-	types = classTypes;
-	types.Concatenate(generatedTemplateTypes);
+	// Use a set instead of an array to allow quicker searches
+	// TODO: optimize: Only orphaned types should be checked, since non-orphaned types are still owned by the modules
+	asCMap<asCObjectType*,char> types;
+	for( asUINT n = 0; n < scriptTypes.GetLength(); n++ )
+	{
+		if( !types.MoveTo(0, scriptTypes[n]) )
+			types.Insert(scriptTypes[n], 0);
+	}
+	for( asUINT n = 0; n < generatedTemplateTypes.GetLength(); n++ )
+	{
+		if( !types.MoveTo(0, generatedTemplateTypes[n]) )
+			types.Insert(generatedTemplateTypes[n], 0);
+	}
 
 	// Go through all modules
+	// TODO: optimize: If only the orphaned types was inserted in the types map, then this step is not necessary
 	asUINT n;
-	for( n = 0; n < scriptModules.GetLength() && types.GetLength(); n++ )
+	for( n = 0; n < scriptModules.GetLength() && types.GetCount(); n++ )
 	{
 		asCModule *mod = scriptModules[n];
 		if( mod )
@@ -1191,17 +1202,17 @@ int asCScriptEngine::ClearUnusedTypes()
 
 			// Go through all type declarations
 			asUINT m;
-			for( m = 0; m < mod->classTypes.GetLength() && types.GetLength(); m++ )
+			for( m = 0; m < mod->classTypes.GetLength() && types.GetCount(); m++ )
 				RemoveTypeAndRelatedFromList(types, mod->classTypes[m]);
-			for( m = 0; m < mod->enumTypes.GetLength() && types.GetLength(); m++ )
+			for( m = 0; m < mod->enumTypes.GetLength() && types.GetCount(); m++ )
 				RemoveTypeAndRelatedFromList(types, mod->enumTypes[m]);
-			for( m = 0; m < mod->typeDefs.GetLength() && types.GetLength(); m++ )
+			for( m = 0; m < mod->typeDefs.GetLength() && types.GetCount(); m++ )
 				RemoveTypeAndRelatedFromList(types, mod->typeDefs[m]);
 		}
 	}
 
 	// Go through all function parameters and remove used types
-	for( n = 0; n < scriptFunctions.GetLength() && types.GetLength(); n++ )
+	for( n = 0; n < scriptFunctions.GetLength() && types.GetCount(); n++ )
 	{
 		asCScriptFunction *func = scriptFunctions[n];
 		if( func )
@@ -1230,7 +1241,7 @@ int asCScriptEngine::ClearUnusedTypes()
 	}
 
 	// Go through all global properties
-	for( n = 0; n < globalProperties.GetLength() && types.GetLength(); n++ )
+	for( n = 0; n < globalProperties.GetLength() && types.GetCount(); n++ )
 	{
 		if( globalProperties[n] && globalProperties[n]->type.GetObjectType() )
 			RemoveTypeAndRelatedFromList(types, globalProperties[n]->type.GetObjectType());
@@ -1241,10 +1252,13 @@ int asCScriptEngine::ClearUnusedTypes()
 	{
 		bool didClearTemplateInstanceType = false;
 
-		for( n = 0; n < types.GetLength(); n++ )
+		asSMapNode<asCObjectType*,char>* node;
+		types.MoveFirst(&node);
+
+		while( node )
 		{
 			int typeRefCount = 0;
-			asCObjectType *type = types[n];
+			asCObjectType *type = node->key;
 
 			// Template types and script classes will have two references for each factory stub
 			if( (type->flags & asOBJ_TEMPLATE) )
@@ -1282,13 +1296,17 @@ int asCScriptEngine::ClearUnusedTypes()
 					type->DropFromEngine();
 					clearCount++;
 
-					classTypes.RemoveIndexUnordered(classTypes.IndexOf(type));
+					scriptTypes.RemoveIndexUnordered(scriptTypes.IndexOf(type));
 				}
 
-				// Remove the type from the array
-				types.RemoveIndexUnordered(n);
-				n--;
+				// Remove the type from the set
+				asSMapNode<asCObjectType*,char>* cur = node;
+				types.MoveNext(&node, node);
+				types.Erase(cur);
+				continue;
 			}
+
+			types.MoveNext(&node, node);
 		}
 
 		if( didClearTemplateInstanceType == false )
@@ -1309,14 +1327,15 @@ int asCScriptEngine::ClearUnusedTypes()
 	return clearCount;
 }
 
-// internal
-void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot)
+// Internal
+void asCScriptEngine::RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot)
 {
 	// Remove the type from the list
-	int i = types.IndexOf(ot);
-	if( i == -1 ) return;
+	asSMapNode<asCObjectType*,char>* node;
+	if( !types.MoveTo(&node, ot) )
+		return;
 
-	types.RemoveIndexUnordered(i);
+	types.Erase(node);
 
 	// If the type is an template type then remove all sub types as well
 	for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
@@ -1332,7 +1351,6 @@ void asCScriptEngine::RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &typ
 			RemoveTypeAndRelatedFromList(types, ot->properties[n]->type.GetObjectType());
 	}
 }
-
 
 // internal
 int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *decl)

@@ -1634,9 +1634,9 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	// creating a new one.
 	if( isShared )
 	{
-		for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
 		{
-			asCObjectType *st = engine->classTypes[n];
+			asCObjectType *st = engine->scriptTypes[n];
 			if( st &&
 				st->IsShared() &&
 				st->name == name &&
@@ -1684,7 +1684,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	st->nameSpace = ns;
 	st->module    = module;
 	module->classTypes.PushLast(st);
-	engine->classTypes.PushLast(st);
+	engine->scriptTypes.PushLast(st);
 	st->AddRef();
 	decl->objType = st;
 
@@ -1746,9 +1746,9 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	// creating a new one.
 	if( isShared )
 	{
-		for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
 		{
-			asCObjectType *st = engine->classTypes[n];
+			asCObjectType *st = engine->scriptTypes[n];
 			if( st &&
 				st->IsShared() &&
 				st->name == name &&
@@ -1779,7 +1779,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	st->name = name;
 	st->nameSpace = ns;
 	module->classTypes.PushLast(st);
-	engine->classTypes.PushLast(st);
+	engine->scriptTypes.PushLast(st);
 	st->AddRef();
 	decl->objType = st;
 
@@ -3450,9 +3450,9 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 	if( isShared )
 	{
 		// Look for a pre-existing shared enum with the same signature
-		for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
+		for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
 		{
-			asCObjectType *o = engine->classTypes[n];
+			asCObjectType *o = engine->scriptTypes[n];
 			if( o &&
 				o->IsShared() &&
 				(o->flags & asOBJ_ENUM) &&
@@ -3492,7 +3492,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 		// TODO: cleanup: Should the enum type really be stored in the engine->classTypes?
 		//                http://www.gamedev.net/topic/616912-c-header-file-shared-with-scripts/page__gopid__4895940
 		if( !existingSharedType )
-			engine->classTypes.PushLast(st);
+			engine->scriptTypes.PushLast(st);
 
 		// Store the location of this declaration for reference in name collisions
 		sClassDeclaration *decl = asNEW(sClassDeclaration);
@@ -3642,7 +3642,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 		st->AddRef();
 
 		module->typeDefs.PushLast(st);
-		engine->classTypes.PushLast(st);
+		engine->scriptTypes.PushLast(st);
 
 		// Store the location of this declaration for reference in name collisions
 		sClassDeclaration *decl = asNEW(sClassDeclaration);
