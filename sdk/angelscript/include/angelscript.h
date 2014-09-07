@@ -134,6 +134,7 @@ enum asEEngineProp
 	asEP_COMPILER_WARNINGS                  = 19,
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
 	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
+	asEP_DISABLE_INTEGER_DIVISION           = 22,
 
 	asEP_LAST_PROPERTY
 };

@@ -87,6 +87,7 @@ add_executable(
         ../../source/test_pointer.cpp
         ../../source/test_postprocess.cpp
         ../../source/test_pow.cpp
+        ../../source/test_propintegerdivision.cpp
         ../../source/test_refargument.cpp
         ../../source/test_refcast.cpp
         ../../source/test_registertype.cpp

@@ -155,6 +155,7 @@ namespace TestThiscallAsGlobal  { bool Test(); }
 namespace TestPow               { bool Test(); }
 namespace TestThisCallMethod    { bool Test(); }
 namespace TestThisCallMethod_ConfigErrors { bool Test(); }
+namespace TestPropIntegerDivision { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -230,6 +231,8 @@ int allTests()
 	if( Test_Addon_ScriptHandle::Test()  ) goto failed; else PRINTF("-- Test_Addon_ScriptHandle passed\n");
 	if( Test_Addon_ScriptArray::Test()   ) goto failed; else PRINTF("-- Test_Addon_ScriptArray passed\n");
 	if( Test_Addon_Dictionary::Test()    ) goto failed; else PRINTF("-- Test_Addon_Dictionary passed\n");
+
+	if( TestPropIntegerDivision::Test() ) goto failed; else PRINTF("-- TestPropIntegerDivision passed\n");
 	if( TestThisCallMethod_ConfigErrors::Test() ) goto failed; else PRINTF("-- TestThisCallMethod_ConfigErrors passed\n");
 	if( TestAuto::Test()                ) goto failed; else PRINTF("-- TestAuto passed\n");
 	if( TestPow::Test()                 ) goto failed; else PRINTF("-- TestPow passed\n");

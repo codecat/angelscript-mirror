@@ -191,6 +191,8 @@ enum asEEngineProp
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
 	//! Change the script syntax for named arguments: 0 - no change, 1 - accept = but warn, 2 - accept = without warning. Default: 0
 	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
+	//! When true, the / and /= operators will perform floating-point division (i.e. 1/2 = 0.5 instead of 0). Default: false
+	asEP_DISABLE_INTEGER_DIVISION           = 22,
 
 	asEP_LAST_PROPERTY
 };

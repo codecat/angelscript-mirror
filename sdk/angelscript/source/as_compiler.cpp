@@ -12126,6 +12126,18 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		(rctx->type.isConstant && rctx->type.dataType.IsDoubleType() && !lctx->type.isConstant && lctx->type.dataType.IsFloatType()) )
 		to.SetTokenType(ttFloat);
 
+	// If integer division is disabled, convert to floating-point
+	int op = node->tokenType;
+	if( engine->ep.disableIntegerDivision &&
+		(op == ttSlash || op == ttDivAssign) &&
+		(to.IsIntegerType() || to.IsUnsignedType()) )
+	{
+		// Use double to avoid losing precision when dividing with 32bit ints
+		// For 64bit ints there is unfortunately no greater type so with those
+		// there is still a risk of loosing precision
+		to.SetTokenType(ttDouble);
+	}
+
 	// Do the actual conversion
 	int l = int(reservedVariables.GetLength());
 	rctx->bc.GetVarsUsed(reservedVariables);
@@ -12136,7 +12148,6 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	if( rctx->type.dataType.IsReference() )
 		ConvertToVariable(rctx);
 
-	int op = node->tokenType;
 	if( to.IsPrimitive() )
 	{
 		// ttStarStar allows an integer, right-hand operand and a double

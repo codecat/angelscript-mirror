@@ -92,6 +92,13 @@ Observe that the use of the '=' token for naming arguments may cause a bit of a 
 with the same name as the function argument as the script writer may think he's updating the value of the variable, but is 
 just naming the function argument.
 
+\ref asEP_DISABLE_INTEGER_DIVISION
+ 
+This option changes the default behaviour of the / and /= operators. When true, this option replaces integer division
+with floating-point division, e.g. 1/2 == 0.5 instead of 1/2 == 0
+ 
+
+
 
 
 \section doc_adv_custom_options_engine Engine behaviours

@@ -380,6 +380,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 			return asINVALID_ARG;
 		break;
 
+	case asEP_DISABLE_INTEGER_DIVISION:
+		ep.disableIntegerDivision = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -455,6 +459,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_ALTER_SYNTAX_NAMED_ARGS:
 		return ep.alterSyntaxNamedArgs;
 
+	case asEP_DISABLE_INTEGER_DIVISION:
+		return ep.disableIntegerDivision;
+
 	default:
 		return 0;
 	}
@@ -513,6 +520,7 @@ asCScriptEngine::asCScriptEngine()
 		// TODO: 3.0.0: disallowValueAssignForRefType should be true by default
 		ep.disallowValueAssignForRefType = false;
 		ep.alterSyntaxNamedArgs          = 0;         // 0 = no alternate syntax, 1 = accept alternate syntax but warn, 2 = accept without warning
+		ep.disableIntegerDivision        = false;
 	}
 
 	gc.engine = this;
