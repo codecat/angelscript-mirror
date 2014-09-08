@@ -1778,6 +1778,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	st->size = 0; // Cannot be instantiated
 	st->name = name;
 	st->nameSpace = ns;
+	st->module = module;
 	module->classTypes.PushLast(st);
 	engine->scriptTypes.PushLast(st);
 	st->AddRef();
@@ -3485,6 +3486,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 			st->size      = 4;
 			st->name      = name;
 			st->nameSpace = ns;
+			st->module    = module;
 		}
 		module->enumTypes.PushLast(st);
 		st->AddRef();
@@ -3638,6 +3640,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 		st->name            = name;
 		st->nameSpace       = ns;
 		st->templateSubTypes.PushLast(dataType);
+		st->module          = module;
 
 		st->AddRef();
 

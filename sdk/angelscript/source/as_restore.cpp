@@ -173,7 +173,12 @@ int asCReader::ReadInner()
 		if( sharedExists )
 			existingShared.Insert(ot, true);
 		else
+		{
 			engine->scriptTypes.PushLast(ot);
+
+			// Set this module as the owner
+			ot->module = module;
+		}
 		module->enumTypes.PushLast(ot);
 		ot->AddRef();
 		ReadObjectTypeDeclaration(ot, 2);
@@ -312,6 +317,7 @@ int asCReader::ReadInner()
 		}
 
 		ReadObjectTypeDeclaration(ot, 1);
+		ot->module = module;
 		engine->scriptTypes.PushLast(ot);
 		module->typeDefs.PushLast(ot);
 		ot->AddRef();

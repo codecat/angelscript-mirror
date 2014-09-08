@@ -185,12 +185,12 @@ void asCObjectType::Orphan(asCModule *mod)
 		{
 			// Tell the GC that this type exists so it can resolve potential circular references
 			engine->gc.AddScriptObjectToGC(this, &engine->objectTypeBehaviours);
-
-			// It's necessary to orphan the template instance types that refer to this object type,
-			// otherwise the garbage collector cannot identify the circular references that involve 
-			// the type and the template type
-			engine->OrphanTemplateInstances(this);
 		}
+
+		// It's necessary to orphan the template instance types that refer to this object type,
+		// otherwise the garbage collector cannot identify the circular references that involve 
+		// the type and the template type
+		engine->OrphanTemplateInstances(this);
 	}
 
 	Release();

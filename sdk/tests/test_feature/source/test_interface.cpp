@@ -95,17 +95,27 @@ bool Test()
 	r = engine->RegisterInterface("appintf"); assert( r >= 0 );
 	r = engine->RegisterInterfaceMethod("appintf", "void test()"); assert( r >= 0 );
 
+	// Registered interfaces do not belong to any module
+	asIObjectType *type = engine->GetObjectTypeByName("appintf");
+	if( type == 0 || type->GetModule() != 0 )
+		TEST_FAILED;
+
 	// Test working example
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
 
+	// Script declared interfaces belong to the module that declared them
+	type = mod->GetObjectTypeByName("intf2");
+	if( type == 0 || type->GetModule() != mod )
+		TEST_FAILED;
+
 	r = ExecuteString(engine, "test()", mod);
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 
 	// Test calling the interface method from the application
-	asIObjectType *type = engine->GetModule(0)->GetObjectTypeByName("myclass");
+	type = engine->GetModule(0)->GetObjectTypeByName("myclass");
 	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("myintf");
