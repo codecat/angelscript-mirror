@@ -150,6 +150,39 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
+	// Test implicit cast in arg using the constructor
+	// TODO: Add this support (only for value types for now)
+	// http://www.gamedev.net/topic/660695-passing-strings-inline/
+/*	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+
+		r = engine->RegisterObjectType("EventArg", 4, asOBJ_VALUE); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("EventArg", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("EventArg", asBEHAVE_CONSTRUCT, "void f(const float)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("EventArg", asBEHAVE_CONSTRUCT, "void f(const EventArg &in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("EventArg", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("EventArg", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		r = engine->RegisterGlobalFunction("void sendEvent(const uint, EventArg = EventArg(), EventArg = EventArg(), EventArg = EventArg(), EventArg = EventArg())", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  sendEvent(123, 'string', 1.234f); \n"
+			"  string str = 'string'; \n"
+			"  sendEvent(123, str, 1.234f); \n"
+			"  EventArg a = 'string'; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	} */
+
 	// Test global var with implicit cast
 	// http://www.gamedev.net/topic/659415-implicit-downcast-not-works/
 	{

@@ -414,7 +414,7 @@ public:
 
 \section doc_addon_array_4 C++ example
 
-This function shows how a script array can be instanciated 
+This function shows how a script array can be instantiated 
 from the application and then passed to the script.
 
 \code
@@ -431,7 +431,7 @@ CScriptArray *CreateArrayOfStrings()
     // The script array needs to know its type to properly handle the elements.
     // Note that the object type should be cached to avoid performance issues
     // if the function is called frequently.
-    asIObjectType* t = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
+    asIObjectType* t = engine->GetObjectTypeByDecl("array<string>");
 
     // Create an array with the initial size of 3 elements
     CScriptArray* arr = CScriptArray::Create(t, 3);

@@ -117,6 +117,7 @@
 #define TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP     "It is not allowed to perform a handle assignment on a non-handle property"
 #define TXT_HANDLE_COMPARISON                    "The operand is implicitly converted to handle in order to compare them"
 #define TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED      "Handle to handle is not allowed"
+#define TXT_s_HIDES_VAR_IN_OUTER_SCOPE           "Variable '%s' hides another variable of same name in outer scope"
 
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE             "Identifier '%s' is not a data type"
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS "Identifier '%s' is not a data type in global namespace"

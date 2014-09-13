@@ -2574,6 +2574,16 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 			// lead to more errors that are likely false
 			return;
 		}
+		else
+		{
+			// Warn if this variable hides another variable in a higher scope
+			if( variables->parent && variables->parent->GetVariable(name.AddressOf()) )
+			{
+				asCString str;
+				str.Format(TXT_s_HIDES_VAR_IN_OUTER_SCOPE, name.AddressOf());
+				Warning(str, node);
+			}
+		}
 
 		// Add marker that the variable has been declared
 		bc->VarDecl((int)outFunc->scriptData->variables.GetLength());

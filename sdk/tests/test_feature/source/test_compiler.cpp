@@ -225,6 +225,38 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Warn if inner scope re-declares variable from outer scope
+	// http://www.gamedev.net/topic/660746-problem-with-random-float-value-on-android/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"  array<uint> arr = {0,1,2,3,4,5,6,7,8,9}; \n"
+			"  for( uint i = 0; i < 10; i++ ) { \n"
+			"    for( uint i = 0; i < arr[i]; i++ ) { \n"
+			"    } \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+						   "test (4, 15) : Warning : Variable 'i' hides another variable of same name in outer scope\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Give error if &out arg is called with non-lvalue expr
 	// http://www.gamedev.net/topic/660363-retrieving-an-array-of-strings-from-a-dictionary/
 	{
