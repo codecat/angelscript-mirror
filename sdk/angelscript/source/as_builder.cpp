@@ -337,6 +337,64 @@ int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, 
 }
 
 #ifndef AS_NO_COMPILER
+// This function will verify if the newly created function will conflict another overload due to having  
+// identical function arguments that are not default args, e.g: foo(int) and foo(int, int=0)
+int asCBuilder::CheckForConflictsDueToDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func, asCObjectType *objType)
+{
+	// TODO: Implement for global functions too
+	if( func->objectType == 0 || objType == 0 ) return 0;
+
+	asCArray<int> funcs;
+	GetObjectMethodDescriptions(func->name.AddressOf(), objType, funcs, false);
+	for( asUINT n = 0; n < funcs.GetLength(); n++ )
+	{
+		asCScriptFunction *func2 = engine->scriptFunctions[funcs[n]];
+		if( func == func2 )
+			continue;
+
+		if( func->IsReadOnly() != func2->IsReadOnly() )
+			continue;
+
+		bool match = true;
+		asUINT p = 0;
+		for( ; p < func->parameterTypes.GetLength() && p < func2->parameterTypes.GetLength(); p++ )
+		{
+			// Only verify until the first argument with default args
+			if( (func->defaultArgs.GetLength() > p && func->defaultArgs[p]) ||
+				(func2->defaultArgs.GetLength() > p && func2->defaultArgs[p]) )
+				break;
+
+			if( func->parameterTypes[p] != func2->parameterTypes[p] ||
+				func->inOutFlags[p] != func2->inOutFlags[p] )
+			{
+				match = false;
+				break;
+			}
+		}
+
+		if( match )
+		{
+			if( !((p >= func->parameterTypes.GetLength() && p < func2->defaultArgs.GetLength() && func2->defaultArgs[p]) ||
+				  (p >= func2->parameterTypes.GetLength() && p < func->defaultArgs.GetLength() && func->defaultArgs[p])) )
+			{
+				// The argument lists match for the full length of the shorter, but the next
+				// argument on the longer does not have a default arg so there is no conflict
+				match = false;
+			}
+		}
+
+		if( match )
+		{
+			WriteWarning(TXT_OVERLOAD_CONFLICTS_DUE_TO_DEFAULT_ARGS, script, node);
+			WriteInfo(func->GetDeclaration(), script, node);
+			WriteInfo(func2->GetDeclaration(), script, node);
+			break;
+		}
+	}
+
+	return 0;
+}
+
 int asCBuilder::CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc)
 {
 	asASSERT(outFunc != 0);
@@ -2661,6 +2719,8 @@ void asCBuilder::CompileClasses()
 					// Push the base class function on the virtual function table
 					decl->objType->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[m]);
 					baseType->virtualFunctionTable[m]->AddRef();
+
+					CheckForConflictsDueToDefaultArgs(decl->script, decl->node, baseType->virtualFunctionTable[m], decl->objType);
 				}
 
 				decl->objType->methods.PushLast(baseType->methods[m]);
@@ -4130,6 +4190,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 	// Make sure the default args are declared correctly
 	ValidateDefaultArgs(file, node, engine->scriptFunctions[funcId]);
+	CheckForConflictsDueToDefaultArgs(file, node, engine->scriptFunctions[funcId], objType);
 
 	if( objType )
 	{

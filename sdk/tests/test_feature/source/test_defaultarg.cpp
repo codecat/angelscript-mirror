@@ -15,6 +15,44 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test that compiler properly detects when two functions will conflict if the first non-default arguments equal
+	{
+		const char *script = 
+			"class T { \n"
+			"  void test() {} \n"
+			"  void test(float a = 0) {} \n"
+			"} \n"
+			"class Base { \n"
+			"  void test() {} \n"
+			"} \n"
+			"class Derived : Base { \n"
+			"  void test(float a = 0) {} \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (3, 3) : Warning : The overloaded functions are identical on initial parameters without default arguments\n"
+						   "test (3, 3) : Info    : void T::test(float = 0)\n"
+						   "test (3, 3) : Info    : void T::test()\n"
+						   "test (8, 7) : Warning : The overloaded functions are identical on initial parameters without default arguments\n"
+						   "test (8, 7) : Info    : void Base::test()\n"
+						   "test (8, 7) : Info    : void Derived::test(float = 0)\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test that default arg uses global var instead of local
 	// TODO: Should the default arg access the local variable first?
 	{
