@@ -203,6 +203,44 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Use of second template in first template's arguments
+	// http://www.gamedev.net/topic/660932-variable-parameter-type-to-accept-only-handles-during-compile-also-more-template-woes/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("List<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("List<T>", asBEHAVE_FACTORY, "List<T> @f(int&in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		r = engine->RegisterObjectType("List_iterator<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("List_iterator<T>", asBEHAVE_FACTORY, "List_iterator<T> @f(int&in, List<T>&)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("List_iterator<T>", "void test(List<T>&)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		// Add a circular reference between the two template types
+		r = engine->RegisterObjectMethod("List<T>", "List_iterator<T> @begin()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+
+		asIScriptModule *mod = engine->GetModule("Test",asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void func() { \n"
+			"  List<int> list; \n"
+			"  List_iterator<int> @it = List_iterator<int>(list); \n"
+			"  it.test(list); \n"
+			"  @it = list.begin(); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Properties in templates
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

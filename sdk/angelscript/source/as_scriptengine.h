@@ -295,6 +295,8 @@ public:
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
 	void               OrphanTemplateInstances(asCObjectType *subType);
 	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
+	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
+
 
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked

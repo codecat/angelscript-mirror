@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.2 WIP - 2014/09/14</h2>
+<h2>Version 2.29.2 WIP - 2014/09/16</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Identity comparison on handle received as parameter by reference wasn't working (Thanks iraxef)
 <li>Application no longer crashes if an asIObjectType is released after the engine has been released
 <li>Template instances now receive the member properties that were registered for the template (Thanks Samichama)
+<li>Template types can now use other template types as method arguments where the sub-types are shared (Thanks Samichama)
 </ul>
 <li>Library interface
 <ul>
@@ -37,7 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script interfaces now returns module that owns with GetModule (Thanks cvet)
 </ul>
 <li>Library
-</ul>
+<ul>
 <li>Added asEP_DISABLE_INTEGER_DIVISION that makes all divisions with integer values result in doubles (Thanks Jason Goepel)
 <li>Improved performance of shutting down the engine (Thanks ThyReaper)
 <li>Compiler warns when variable in inner scope hides variable of same name in outer scope (Thanks carew)
