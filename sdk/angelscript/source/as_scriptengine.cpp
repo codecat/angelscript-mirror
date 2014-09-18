@@ -3803,33 +3803,54 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 		dt.MakeReference(orig.IsReference());
 		dt.MakeReadOnly(orig.IsReadOnly());
 	}
-	else if( orig.GetObjectType() && (orig.GetObjectType()->flags & asOBJ_TEMPLATE) && !templateInstanceTypes.Exists(orig.GetObjectType()) )
+	else if( orig.GetObjectType() && (orig.GetObjectType()->flags & asOBJ_TEMPLATE) )
 	{
 		// The type is itself a template, so it is necessary to find the correct template instance type
 		asCArray<asCDataType> tmplSubTypes;
 		asCObjectType *origType = orig.GetObjectType();
+		bool needInstance = true;
 
 		// Find the matching replacements for the subtypes
 		for( asUINT n = 0; n < origType->templateSubTypes.GetLength(); n++ )
 		{
+			if( origType->templateSubTypes[n].GetObjectType() == 0 || 
+				!(origType->templateSubTypes[n].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
+			{
+				// The template is already an instance so we shouldn't attempt to create another instance
+				needInstance = false;
+				break;
+			}
+
 			for( asUINT m = 0; m < tmpl->templateSubTypes.GetLength(); m++ )
 				if( origType->templateSubTypes[n].GetObjectType() == tmpl->templateSubTypes[m].GetObjectType() )
 					tmplSubTypes.PushLast(ot->templateSubTypes[m]);
 
 			if( tmplSubTypes.GetLength() != n+1 )
 			{
-				// Failed to find all the template subtypes
 				asASSERT( false );
 				return orig;
 			}
 		}
 
-		asCObjectType *ntype = GetTemplateInstanceType(origType, tmplSubTypes);
-		if( ntype == 0 )
+		asCObjectType *ntype = origType;
+		if( needInstance )
 		{
-			// It not possible to instantiate the subtype
-			asASSERT( false );
-			ntype = tmpl;
+			// Always find the original template type when creating a new template instance otherwise the
+			// generation will fail since it will attempt to create factory stubs when they already exists, etc
+			for( asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++ )
+				if( registeredTemplateTypes[n]->name == origType->name )
+				{
+					origType = registeredTemplateTypes[n];
+					break;
+				}
+
+			ntype = GetTemplateInstanceType(origType, tmplSubTypes);
+			if( ntype == 0 )
+			{
+				// It not possible to instantiate the subtype
+				asASSERT( false );
+				ntype = tmpl;
+			}
 		}
 
 		if( orig.IsObjectHandle() )
@@ -3866,6 +3887,8 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->AllocateScriptFunctionData();
 	func->name             = "factstub";
 	func->id               = GetNextScriptFunctionId();
+	SetScriptFunction(func);
+
 	func->isShared         = true;
 	if( templateType->flags & asOBJ_REF )
 	{
@@ -3882,13 +3905,11 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->inOutFlags.SetLength(factory->inOutFlags.GetLength()-1);
 	for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
 	{
-		func->parameterTypes[p-1] = DetermineTypeForTemplate(factory->parameterTypes[p], templateType, ot);
+		func->parameterTypes[p-1] = factory->parameterTypes[p];
 		func->inOutFlags[p-1] = factory->inOutFlags[p];
 	}
 	func->scriptData->objVariablesOnHeap = 0;
-
-	SetScriptFunction(func);
-
+	
 	// Generate the bytecode for the factory stub
 	asUINT bcLength = asBCTypeSize[asBCInfo[asBC_OBJTYPE].type] +
 	                  asBCTypeSize[asBCInfo[asBC_CALLSYS].type] +
@@ -3964,7 +3985,13 @@ bool asCScriptEngine::RequireTypeReplacement(asCDataType &type, asCObjectType *t
 {
 	if( type.GetObjectType() == templateType ) return true;
 	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) ) return true;
-	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) && !templateInstanceTypes.Exists(type.GetObjectType()) ) return true;
+	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+	{
+		for( asUINT n = 0; n < type.GetObjectType()->templateSubTypes.GetLength(); n++ )
+			if( type.GetObjectType()->templateSubTypes[n].GetObjectType() &&
+				type.GetObjectType()->templateSubTypes[n].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE )
+				return true;
+	}
 
 	return false;
 }

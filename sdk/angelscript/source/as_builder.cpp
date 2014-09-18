@@ -1141,7 +1141,8 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 		// Move to next parameter
 		n = n->next->next;
-		if( n && n->nodeType == snIdentifier ) {
+		if( n && n->nodeType == snIdentifier ) 
+		{
 			func->parameterNames[index] = asCString(&source.code[n->tokenPos], n->tokenLength);
 			n = n->next;
 		}
@@ -4751,7 +4752,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 			// If this is for a template type, then we must first determine if the
 			// identifier matches any of the template subtypes
-			if( currentType && (currentType->flags & asOBJ_TEMPLATE))
+			if( currentType && (currentType->flags & asOBJ_TEMPLATE) )
 			{
 				for( asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
 				{
@@ -4779,7 +4780,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				// Make sure the module has access to the object type
 				if( !module || (module->accessMask & ot->accessMask) )
 				{
-					if(asOBJ_TYPEDEF == (ot->flags & asOBJ_TYPEDEF))
+					if( asOBJ_TYPEDEF == (ot->flags & asOBJ_TYPEDEF) )
 					{
 						// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
 						// Create primitive data type based on object flags
@@ -4801,7 +4802,10 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							{
 								n = n->next;
 
-								asCDataType subType = CreateDataTypeFromNode(n, file, implicitNamespace, false, module ? 0 : ot);
+								// When parsing function definitions for template registrations (currentType != 0) it is necessary 
+								// to pass in the current template type to the recursive call since it is this ones sub-template types
+								// that should be allowed.
+								asCDataType subType = CreateDataTypeFromNode(n, file, implicitNamespace, false, module ? 0 : (currentType ? currentType : ot));
 								subTypes.PushLast(subType);
 
 								if( subType.IsReadOnly() )

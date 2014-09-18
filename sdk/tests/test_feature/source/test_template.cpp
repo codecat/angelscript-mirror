@@ -213,9 +213,9 @@ bool Test()
 		r = engine->RegisterObjectType("List<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("List<T>", asBEHAVE_FACTORY, "List<T> @f(int&in)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
-		r = engine->RegisterObjectType("List_iterator<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("List_iterator<T>", asBEHAVE_FACTORY, "List_iterator<T> @f(int&in, List<T>&)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("List_iterator<T>", "void test(List<T>&)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectType("List_iterator<class T2>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("List_iterator<T2>", asBEHAVE_FACTORY, "List_iterator<T2> @f(int&in, List<T2>&)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("List_iterator<T2>", "void test(List<T2>&)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 		// Add a circular reference between the two template types
 		r = engine->RegisterObjectMethod("List<T>", "List_iterator<T> @begin()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
