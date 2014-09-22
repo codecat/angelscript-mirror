@@ -230,6 +230,6 @@ asDWORD ComputeCRC32(const asBYTE *buf, asUINT length);
 
 #define SKIP_ON_MAX_PORT if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") ) { PRINTF("Test on line %d in %s skipped\n", __LINE__, __FILE__); } else
 
-
+std::string GetCurrentDir();
 
 

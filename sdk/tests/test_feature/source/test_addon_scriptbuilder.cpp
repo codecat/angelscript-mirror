@@ -167,13 +167,43 @@ bool Test()
 		TEST_FAILED;
 #endif
 
+	// Test proper error for missing include files
+	// http://www.gamedev.net/topic/661064-include-in-scriptbuilder-addon-may-report-wrong-path-on-error/
+	{
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("test1", "#include 'rel_dir/missing_include.as'\n");
+		builder.AddSectionFromMemory("test2", "#include '/abs_dir/missing_inc.as'\n");
+		builder.AddSectionFromMemory("test3", "#include 'c:/disk_path/missing_inc.as'\n");
+		r = builder.BuildModule();
+		if( r >= 0 )
+			TEST_FAILED;
+		string error = "rel_dir/missing_include.as (0, 0) : Error   : Failed to open script file '" + GetCurrentDir() + "/rel_dir/missing_include.as'\n"
+					   "/abs_dir/missing_inc.as (0, 0) : Error   : Failed to open script file '/abs_dir/missing_inc.as'\n"
+					   "c:/disk_path/missing_inc.as (0, 0) : Error   : Failed to open script file 'c:/disk_path/missing_inc.as'\n"
+					   "test1 (1, 1) : Warning : The script section is empty\n"
+					   "test2 (1, 1) : Warning : The script section is empty\n"
+					   "test3 (1, 1) : Warning : The script section is empty\n"
+					   " (0, 0) : Error   : Nothing was built in the module\n";
+		if( bout.buffer != error )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
+
 	// http://www.gamedev.net/topic/624445-cscriptbuilder-asset-string-subscript-out-of-range/
 	{
 		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
 		CScriptBuilder builder;
 		builder.StartNewModule(engine, "mod");
 		builder.AddSectionFromMemory("", "#", 0, 2); // Add a line offset for error reporting
-		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		r = builder.BuildModule();
 		if( r >= 0 )
 			TEST_FAILED;
