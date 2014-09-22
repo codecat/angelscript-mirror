@@ -172,12 +172,12 @@ bool Test()
 		bout.buffer = "";
 		CScriptBuilder builder;
 		builder.StartNewModule(engine, "mod");
-		builder.AddSectionFromMemory("", "#");
+		builder.AddSectionFromMemory("", "#", 0, 2); // Add a line offset for error reporting
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		r = builder.BuildModule();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != " (1, 1) : Error   : Unexpected token '<unrecognized token>'\n" )
+		if( bout.buffer != " (3, 1) : Error   : Unexpected token '<unrecognized token>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
