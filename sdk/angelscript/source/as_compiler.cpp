@@ -5408,6 +5408,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 				ctx->type.SetConstantDW(out, value);
 				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 
+				// Reset the enum value since we no longer need it
+				ctx->enumValue = "";
+
 				// It wasn't really a conversion. The compiler just resolved the ambiguity (or not)
 				return asCC_NO_CONV;
 			}
@@ -12890,6 +12893,12 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	// Check for signed/unsigned mismatch
 	if( signMismatch )
 		Warning(TXT_SIGNED_UNSIGNED_MISMATCH, node);
+
+	// Attempt to resolve ambiguous enumerations
+	if( lctx->type.dataType.IsEnumType() && rctx->enumValue != "" )
+		ImplicitConversion(rctx, lctx->type.dataType, node, asIC_IMPLICIT_CONV);
+	else if( rctx->type.dataType.IsEnumType() && lctx->enumValue != "" )
+		ImplicitConversion(lctx, rctx->type.dataType, node, asIC_IMPLICIT_CONV);
 
 	// Do the actual conversion
 	int l = int(reservedVariables.GetLength());

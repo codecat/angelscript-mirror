@@ -83,6 +83,43 @@ static bool TestEnum()
 	int		 		   r;
 	bool               fail = false;
 
+	// Test ambiguos enum in comparison
+	// http://www.gamedev.net/topic/660871-ambiguous-enum-comparison/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum MyEnum1\n"
+			"{\n"
+			"    cYes,\n"
+			"    cNo\n"
+			"}\n"
+			"enum MyEnum2\n"
+			"{\n"
+			"    cNo,\n"
+			"    cYes\n"
+			"}\n"
+			"bool main()\n"
+			"{\n"
+			"    MyEnum1 e = cNo;\n"
+			"    return e == cYes;\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+
  	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	bout.buffer = "";
