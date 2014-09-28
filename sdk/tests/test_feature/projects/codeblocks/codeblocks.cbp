@@ -18,7 +18,8 @@
 					<Add directory="../../../../angelscript/include" />
 				</Compiler>
 				<Linker>
-					<Add library="..\..\..\..\angelscript\lib\libangelscript.a" />
+					<Add option="-m32" />
+					<Add library="..\..\..\..\angelscript\lib\libangelscriptd.a" />
 				</Linker>
 			</Target>
 			<Target title="Release 64">
@@ -34,6 +35,7 @@
 					<Add directory="../../../../angelscript/include" />
 				</Compiler>
 				<Linker>
+					<Add option="-m64" />
 					<Add library="..\..\..\..\angelscript\lib\libangelscript64.a" />
 				</Linker>
 			</Target>
@@ -172,6 +174,7 @@
 		<Unit filename="../../source/test_pointer.cpp" />
 		<Unit filename="../../source/test_postprocess.cpp" />
 		<Unit filename="../../source/test_pow.cpp" />
+		<Unit filename="../../source/test_propintegerdivision.cpp" />
 		<Unit filename="../../source/test_refargument.cpp" />
 		<Unit filename="../../source/test_refcast.cpp" />
 		<Unit filename="../../source/test_registertype.cpp" />
