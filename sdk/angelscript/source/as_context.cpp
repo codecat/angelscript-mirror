@@ -2484,9 +2484,9 @@ void asCContext::ExecuteNext()
 
 	case asBC_CALLBND:
 		{
+			// TODO: Clean-up: This code is very similar to asBC_CallPtr. Create a shared method for them
 			// Get the function ID from the stack
 			int i = asBC_INTARG(l_bc);
-			l_bc += 2;
 
 			asASSERT( i >= 0 );
 			asASSERT( i & FUNC_IMPORTED );
@@ -2499,6 +2499,9 @@ void asCContext::ExecuteNext()
 			int funcId = m_engine->importedFunctions[i & ~FUNC_IMPORTED]->boundFunctionId;
 			if( funcId == -1 )
 			{
+				// Need to update the program pointer for the exception handler
+				m_regs.programPointer += 2;
+
 				// Tell the exception handler to clean up the arguments to this function
 				m_needToCleanupArgs = true;
 				SetInternalException(TXT_UNBOUND_FUNCTION);
@@ -2507,8 +2510,46 @@ void asCContext::ExecuteNext()
 			else
 			{
 				asCScriptFunction *func = m_engine->GetScriptFunction(funcId);
+				if( func->funcType == asFUNC_SCRIPT )
+				{
+					m_regs.programPointer += 2;
+					CallScriptFunction(func);
+				}
+				else if( func->funcType == asFUNC_DELEGATE )
+				{
+					// Push the object pointer on the stack. There is always a reserved space for this so
+					// we don't don't need to worry about overflowing the allocated memory buffer
+					asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
+					m_regs.stackPointer -= AS_PTR_SIZE;
+					*(asPWORD*)m_regs.stackPointer = asPWORD(func->objForDelegate);
 
-				CallScriptFunction(func);
+					// Call the delegated method
+					if( func->funcForDelegate->funcType == asFUNC_SYSTEM )
+					{
+						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this, 0);
+
+						// Update program position after the call so the line number
+						// is correct in case the system function queries it
+						m_regs.programPointer += 2;
+					}
+					else
+					{
+						m_regs.programPointer += 2;
+
+						// TODO: run-time optimize: The true method could be figured out when creating the delegate
+						CallInterfaceMethod(func->funcForDelegate);
+					}
+				}
+				else
+				{
+					asASSERT( func->funcType == asFUNC_SYSTEM );
+
+					m_regs.stackPointer += CallSystemFunction(func->id, this, 0);
+
+					// Update program position after the call so the line number
+					// is correct in case the system function queries it
+					m_regs.programPointer += 2;
+				}
 			}
 
 			// Extract the values from the context again

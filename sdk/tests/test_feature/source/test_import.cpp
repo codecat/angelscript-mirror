@@ -46,7 +46,7 @@ static const char *script4 =
 "void Func(A&out) {}       \n"
 "A@ Func2() {return null;} \n";
 
-
+int retone() { return 1; }
 
 bool Test()
 {
@@ -56,6 +56,42 @@ bool Test()
 	int r;
 	asIScriptEngine *engine = 0;
 	COutStream out;
+	CBufferedOutStream bout;
+
+	// Test importing an application registered function
+	// http://www.gamedev.net/topic/661310-binding-native-functions-for-imports/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("int retone()", asFUNCTION(retone), asCALL_CDECL);
+
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"import int func() from 'anywhere';\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = mod->BindImportedFunction(0, engine->GetGlobalFunctionByDecl("int retone()"));
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( func() == 1 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Test 1
 	// Importing a function from another module

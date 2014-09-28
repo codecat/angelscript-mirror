@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.29.2 WIP - 2014/09/27</h2>
+<h2>Version 2.29.2 WIP - 2014/09/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -49,6 +49,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Script classes can now implement opConv and opImplConv to support type conversions
 <li>Passing a non-lvalue expression to a &amp;out argument will now yield compiler error instead of warning
+</ul>
+<li>Virtual machine
+<ul>
+<li>Updated asBC_CALLBND so that imported functions can now be bound to application registered functions too (Thanks gjl)
 </ul>
 <li>Add-ons
 <ul>
