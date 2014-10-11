@@ -183,6 +183,46 @@ bool Test()
 		engine->Release();
 	} */
 
+	// Test bug fix for implicit conv and math operations
+	// http://www.gamedev.net/topic/661765-implicit-convert-math-bug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"int x = 1;\n"
+			"class A\n"
+			"{\n"
+			"	int val;\n"
+			"	A(int x)\n"
+			"	{\n"
+			"		val = x;\n"
+			"	}\n"
+			"	int opImplConv()\n"
+			"	{\n"
+			"		return val;\n"
+			"	}\n"
+			"}\n"
+			"A myA(5);\n"
+			"void main()\n"
+			"{\n"
+			"	assert(myA + (x + 1) == myA + x + 1);\n"
+			"}\n";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test global var with implicit cast
 	// http://www.gamedev.net/topic/659415-implicit-downcast-not-works/
 	{

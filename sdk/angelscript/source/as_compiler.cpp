@@ -12101,9 +12101,19 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 
 	// If either operand is a non-primitive then use the primitive type
 	if( !lctx->type.dataType.IsPrimitive() )
+	{
+		int l = int(reservedVariables.GetLength());
+		rctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConvObjectToBestMathType(lctx, node);
+		reservedVariables.SetLength(l);
+	}
 	if( !rctx->type.dataType.IsPrimitive() )
+	{
+		int l = int(reservedVariables.GetLength());
+		lctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConvObjectToBestMathType(rctx, node);
+		reservedVariables.SetLength(l);
+	}
 
 	// Both types must now be primitives. Implicitly convert them so they match
 	asCDataType to;
@@ -12819,9 +12829,19 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 
 	// If either operand is a non-primitive then first convert them to the best number type
 	if( !lctx->type.dataType.IsPrimitive() )
+	{
+		int l = int(reservedVariables.GetLength());
+		rctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConvObjectToBestMathType(lctx, node);
+		reservedVariables.SetLength(l);
+	}
 	if( !rctx->type.dataType.IsPrimitive() )
+	{
+		int l = int(reservedVariables.GetLength());
+		lctx->bc.GetVarsUsed(reservedVariables);
 		ImplicitConvObjectToBestMathType(rctx, node);
+		reservedVariables.SetLength(l);
+	}
 
 	// Implicitly convert the operands to matching types
 	asCDataType to;
@@ -13521,7 +13541,14 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_SCOPED) &&
 		!(ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_ASHANDLE) )
 	{
+		// TODO: runtime optimize: Avoid this for global variables, by storing a reference to the global variable once in a 
+		//                         local variable and then refer to the same for each call. An alias for the global variable
+		//                         should be stored in the variable scope so that the compiler can find it. For loops and 
+		//                         scopes that will always be executed, i.e. non-if scopes the alias should be stored in the 
+		//                         higher scope to increase the probability of re-use.
+
 		// TODO: runtime optimize: This can be avoided for local variables (non-handles) as they have a well defined life time
+
 		int tempRef = AllocateVariable(ctx->type.dataType, true);
 		ctx->bc.InstrSHORT(asBC_PSF, (short)tempRef);
 		ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetObjectType());
