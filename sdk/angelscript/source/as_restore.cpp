@@ -119,7 +119,7 @@ int asCReader::Error(const char *msg)
 		error = true;
 	}
 
-	return -1;
+	return asERROR;
 }
 
 int asCReader::ReadInner() 

@@ -1236,7 +1236,8 @@ public:
   //         <0 on error
   int AddSectionFromMemory(const char *sectionName,
                            const char *scriptCode, 
-                           unsigned int scriptLength = 0);
+                           unsigned int scriptLength = 0,
+                           int lineOffset = 0);
 
   // Build the added script sections
   int BuildModule();

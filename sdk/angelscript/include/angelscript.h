@@ -837,7 +837,7 @@ public:
 	virtual int         BindAllImportedFunctions() = 0;
 	virtual int         UnbindAllImportedFunctions() = 0;
 
-	// Bytecode saving and loading
+	// Byte code saving and loading
 	virtual int SaveByteCode(asIBinaryStream *out, bool stripDebugInfo = false) const = 0;
 	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped = 0) = 0;
 

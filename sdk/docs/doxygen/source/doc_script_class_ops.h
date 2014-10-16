@@ -161,5 +161,33 @@ as <tt>expr.opCall(arglist)</tt> and compile that instead.
 
 
 
+\section doc_script_class_conv Type conversion operators
+
+<table cellspacing=0 cellpadding=0 border=0>
+<tr><td width=80><b>op</b></td><td width=200><b>opfunc</b></td></tr>
+<tr><td><i>type</i>(<i>expr</i>)<td>opConv, opImplConv</td></tr>
+</table>
+
+When the expression <tt>type(expr)</tt> is compiled and type doesn't have a constructor that take an argument with 
+the type of the expression, the compiler will try to rewrite it as <tt>expr.opConv()</tt>. The compiler will then chose
+the opConv that returns the desired type. 
+
+By implementing the opImplConv instead of opConv, the compiler will be able to use this
+for implicit conversions too, e.g. when compiling an assignment or a function argument.
+
+<pre>
+  class MyObj
+  {
+    double myValue;
+    double opImplConv() const  { return myValue; }
+    int    opConv() const      { return int(myValue); }
+  }
+</pre>
+
+This should only be used for value conversions and not reference casts. That is, the methods are expected to return
+a new instance of the value with the new type.
+
+\see \ref conversion
+
 
 */

@@ -311,7 +311,8 @@ enum asEObjTypeFlags
 	asOBJ_ENUM                       = (1<<26),
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
 	asOBJ_TYPEDEF                    = (1<<28),
-	asOBJ_ABSTRACT                   = (1<<29)
+	asOBJ_ABSTRACT                   = (1<<29),
+	asOBJ_APP_ALIGN16                = (1<<30)
 };
 
 // Behaviours
@@ -675,7 +676,7 @@ struct asSFuncPtr
 		// The largest known method point is 20 bytes (MSVC 64bit),
 		// but with 8byte alignment this becomes 24 bytes. So we need
 		// to be able to store at least that much.
-		char dummy[25]; 
+		char dummy[25];
 		struct {asMETHOD_t   mthd; char dummy[25-sizeof(asMETHOD_t)];} m;
 		struct {asFUNCTION_t func; char dummy[25-sizeof(asFUNCTION_t)];} f;
 	} ptr;
@@ -762,7 +763,7 @@ struct asSMessageInfo
   #else // statically linked library
     #define AS_API
   #endif
-#elif defined(__GNUC__) 
+#elif defined(__GNUC__)
   #if defined(ANGELSCRIPT_EXPORT)
     #define AS_API __attribute__((visibility ("default")))
   #else
@@ -945,25 +946,40 @@ BEGIN_AS_NAMESPACE
 template<typename T>
 asUINT asGetTypeTraits()
 {
-	bool hasConstructor =  std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
-#if defined(__GNUC__) && __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) 
-	// http://stackoverflow.com/questions/12702103/writing-code-that-works-when-has-trivial-destructor-is-defined-instead-of-is
-	bool hasDestructor = std::is_destructible<T>::value && !std::is_trivially_destructible<T>::value;
+#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS)
+	// MSVC & XCode/Clang
+	// C++11 compliant code
+	bool hasConstructor        = std::is_default_constructible<T>::value && !std::is_trivially_default_constructible<T>::value;
+	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::is_trivially_copy_assignable<T>::value;
+	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::is_trivially_copy_constructible<T>::value;
+#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+	// gnuc 4.8+
+	// gnuc is using a mix of C++11 standard and pre-standard templates
+	bool hasConstructor        = std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
+	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::has_trivial_copy_assign<T>::value;
+	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::has_trivial_copy_constructor<T>::value;
 #else
-	bool hasDestructor = std::is_destructible<T>::value && !std::has_trivial_destructor<T>::value;
+	// Not fully C++11 compliant. The has_trivial checks were used while the standard was still
+	// being elaborated, but were then removed in favor of the above is_trivially checks
+	// http://stackoverflow.com/questions/12702103/writing-code-that-works-when-has-trivial-destructor-is-defined-instead-of-is
+	// https://github.com/mozart/mozart2/issues/51
+	bool hasConstructor        = std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
+	bool hasDestructor         = std::is_destructible<T>::value          && !std::has_trivial_destructor<T>::value;
+	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::has_trivial_copy_assign<T>::value;
+	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::has_trivial_copy_constructor<T>::value;
 #endif
-	bool hasAssignmentOperator = std::is_copy_assignable<T>::value && !std::has_trivial_copy_assign<T>::value;
-	bool hasCopyConstructor = std::is_copy_constructible<T>::value && !std::has_trivial_copy_constructor<T>::value;
-	bool isFloat = std::is_floating_point<T>::value;
+	bool isFloat     = std::is_floating_point<T>::value;
 	bool isPrimitive = std::is_integral<T>::value || std::is_pointer<T>::value || std::is_enum<T>::value;
-	bool isClass = std::is_class<T>::value;
-	bool isArray = std::is_array<T>::value;
+	bool isClass     = std::is_class<T>::value;
+	bool isArray     = std::is_array<T>::value;
 
 	if( isFloat )
 		return asOBJ_APP_FLOAT;
 	if( isPrimitive )
 		return asOBJ_APP_PRIMITIVE;
-	
+
 	if( isClass )
 	{
 		asDWORD flags = asOBJ_APP_CLASS;
@@ -2378,11 +2394,11 @@ public:
 	virtual int         UnbindAllImportedFunctions() = 0;
 	//! \}
 
-	// Bytecode saving and loading
-	//! \name Bytecode saving and loading
+	// Byte code saving and loading
+	//! \name Byte code saving and loading
 	//! \{
 
-	//! \brief Save compiled bytecode to a binary stream.
+	//! \brief Save compiled byte code to a binary stream.
 	//! \param[in] out The output stream.
 	//! \param[in] stripDebugInfo Set to true to skip saving the debug information.
 	//! \return A negative value on error.
@@ -2396,13 +2412,15 @@ public:
 	//!
 	//! \see \ref doc_adv_precompile
 	virtual int SaveByteCode(asIBinaryStream *out, bool stripDebugInfo = false) const = 0;
-	//! \brief Load pre-compiled bytecode from a binary stream.
+	//! \brief Load pre-compiled byte code from a binary stream.
 	//!
 	//! \param[in] in The input stream.
-	//! \param[out] wasDebugInfoStripped Set to true if the bytecode was saved without debug information.
+	//! \param[out] wasDebugInfoStripped Set to true if the byte code was saved without debug information.
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The stream object wasn't specified.
 	//! \retval asBUILD_IN_PROGRESS Another thread is currently building.
+	//! \retval asOUT_OF_MEMORY The engine ran out of memory while loading the byte code.
+	//! \retval asERROR It was not possible to load the byte code.
 	//!
 	//! This method is used to load pre-compiled byte code from disk or memory. The application must
 	//! implement an object that inherits from \ref asIBinaryStream to provide the necessary stream operations.
@@ -2411,6 +2429,11 @@ public:
 	//! pre-compiled byte code is from a trusted source. The application should also make sure the
 	//! pre-compiled byte code is compatible with the current engine configuration, i.e. that the
 	//! engine has been configured in the same way as when the byte code was first compiled.
+	//!
+	//! If the method returns asERROR it is either because the byte code is incorrect, e.g. corrupted due to
+	//! disk failure, or it has been compiled with a different engine configuration. If possible the engine 
+	//! provides information about the type of error that caused the failure while loading the byte code to the
+	//! \ref asIScriptEngine::SetMessageCallback "message stream". 
 	//!
 	//! \see \ref doc_adv_precompile
 	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped = 0) = 0;
@@ -3084,7 +3107,7 @@ public:
 	//! \brief Gets the address to the memory where the return value should be placed.
 	//! \return A pointer to the memory where the return values is to be placed.
 	//!
-	//! The memory is not initialized, so if you're going to return a complex type by value,
+	//! The memory is not initialized, so if you're going to return a complex type by value
 	//! you shouldn't use the assignment operator to initialize it. Instead use the placement new
 	//! operator to call the type's copy constructor to perform the initialization.
 	//!
@@ -3532,7 +3555,7 @@ public:
 	//! \name Type id for function pointers
 	//! \{
 
-	// Type id for function pointers 
+	// Type id for function pointers
 	//! \brief Returns the type id representing a function pointer for this function
 	//! \return The type id that represents a function pointer for this function
 	virtual int              GetTypeId() const = 0;
@@ -3668,7 +3691,7 @@ public:
 	//! \brief Sets the value of the shared boolean
 	//! \param[in] val The new value
 	virtual void Set(bool val) = 0;
-	
+
 	// Thread management
 	//! \brief Locks the shared boolean
 	//! If the boolean is already locked, then this method 
@@ -3693,7 +3716,7 @@ inline asSFuncPtr asFunctionPtr(T func)
 	asSFuncPtr p(2);
 
 #ifdef AS_64BIT_PTR
-	// The size_t cast is to avoid a compiler warning with asFUNCTION(0) 
+	// The size_t cast is to avoid a compiler warning with asFUNCTION(0)
 	// on 64bit, as 0 is interpreted as a 32bit int value
 	p.ptr.f.func = reinterpret_cast<asFUNCTION_t>(size_t(func));
 #else
@@ -3789,9 +3812,9 @@ struct asSMethodPtr<SINGLE_PTR_SIZE+2*sizeof(int)>
 
 #if defined(_MSC_VER) && !defined(AS_64BIT_PTR)
 			// Method pointers for virtual inheritance is not supported,
-			// as it requires the location of the vbase table, which is 
+			// as it requires the location of the vbase table, which is
 			// only available to the C++ compiler, but not in the method
-			// pointer. 
+			// pointer.
 
 			// You can get around this by forward declaring the class and
 			// storing the sizeof its method pointer in a constant. Example:
