@@ -1116,8 +1116,17 @@ public:
 	//! \{
 
 	//! \brief Sets the JIT compiler
+	//! \param[in] compiler A pointer to the JIT compiler
+	//! \return A negative value on error.
+	//! 
+	//! This method is used to set the JIT compiler. The engine
+	//! will automatically invoke the JIT compiler when it is set
+	//! after compiling scripts or loading pre-compiled byte code.
+	//! 
+	//! \see \ref doc_adv_jit
 	virtual int SetJITCompiler(asIJITCompiler *compiler) = 0;
 	//! \brief Returns the JIT compiler
+	//! \return Returns a pointer to the JIT compiler
 	virtual asIJITCompiler *GetJITCompiler() const = 0;
 	//! \}
 
@@ -1768,7 +1777,11 @@ public:
 	//! \param[in] type The object type
 	//! \return The weak ref flag, if the object supports weak references.
 	//!
-	//! The method doesn't increase the reference to the returned shared boolean.
+	//! As long as the weak ref flag is not set, the owning object is still alive. Once the weak ref flag
+	//! is set, the object is dead and should no longer be accessed. Check if the flag is set with the 
+	//! \ref asILockableSharedBool::Get method.
+	//!
+	//! This method doesn't increase the reference to the returned shared boolean.
 	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
 	//! \}
 
@@ -2798,6 +2811,7 @@ public:
 	//! See \ref SetLineCallback for details on the calling convention.
 	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
+	//!
 	//! Removes a previously registered callback.
 	virtual void               ClearExceptionCallback() = 0;
 	//! \}
@@ -2836,6 +2850,7 @@ public:
 	//! \see \ref doc_debug
 	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes a previously registered callback.
+	//!
 	//! Removes a previously registered callback.
 	virtual void               ClearLineCallback() = 0;
 	//! \brief Returns the size of the callstack, i.e. the number of functions that have yet to complete.
@@ -3694,10 +3709,15 @@ public:
 
 	// Thread management
 	//! \brief Locks the shared boolean
+	//!
 	//! If the boolean is already locked, then this method 
 	//! will wait until it is unlocked before returning.
+	//!
+	//! Unlock the shared boolean with a call to \ref Unlock
 	virtual void Lock() const = 0;
 	//! \brief Unlocks the shared boolean
+	//!
+	//! Unlock the shared boolean after a call to \ref Lock
 	virtual void Unlock() const = 0;
 
 protected:

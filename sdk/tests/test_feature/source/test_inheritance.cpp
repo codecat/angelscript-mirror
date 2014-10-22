@@ -25,6 +25,145 @@ bool Test()
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
 
+	// Script class inheriting from an application class through proxy
+	// http://www.gamedev.net/topic/658925-casting-and-inheritance/
+	// http://www.gamedev.net/topic/535837-application-registered-classes/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
+
+		class FooScripted
+		{
+		public:
+			void CallMe()
+			{
+				if( !m_isDead->Get() )
+				{
+					asIScriptEngine *engine = m_obj->GetEngine();
+					asIScriptContext *ctx = engine->RequestContext();
+					ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
+					ctx->SetObject(m_obj);
+					ctx->Execute();
+					engine->ReturnContext(ctx);
+				}
+			}
+			int m_value;
+
+			static FooScripted *Factory()
+			{
+				asIScriptContext *ctx = asGetActiveContext();
+
+				// Get the function that is calling the factory so we can be certain it is the FooScript class
+				asIScriptFunction *func = ctx->GetFunction(0);
+				if( func->GetObjectType() == 0 || std::string(func->GetObjectType()->GetName()) != "FooScripted" )
+				{
+					ctx->SetException("Invalid attempt to manually instantiate FooScript_t");
+					return 0;
+				}
+
+				// Get the this pointer from the calling function
+				asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(ctx->GetThisPointer(0));
+
+				return new FooScripted(obj);
+			}
+
+			void AddRef()
+			{
+				if( !m_isDead->Get() )
+					m_obj->AddRef();
+				m_refCount++;
+			}
+
+			void Release()
+			{
+				if( !m_isDead->Get() )
+					m_obj->Release();
+				if( --m_refCount == 0 )
+					delete this;
+			}
+
+		protected:
+			FooScripted(asIScriptObject *obj) 
+			{ 
+				m_obj = 0;
+				m_isDead = 0;
+				m_value = 0;
+				m_refCount = 1;
+
+				asIScriptEngine *engine = obj->GetEngine();
+				m_isDead = engine->GetWeakRefFlagOfScriptObject(obj, obj->GetObjectType());
+				m_isDead->AddRef();
+
+				m_obj = obj;
+			}
+			~FooScripted()
+			{
+				m_isDead->Release();
+			}
+
+			int m_refCount;
+			asILockableSharedBool *m_isDead;
+			asIScriptObject *m_obj;
+		};
+
+		engine->RegisterObjectType("FooScripted_t", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("FooScripted_t", asBEHAVE_FACTORY, "FooScripted_t @f()", asFUNCTION(FooScripted::Factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("FooScripted_t", asBEHAVE_ADDREF, "void f()", asMETHOD(FooScripted, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("FooScripted_t", asBEHAVE_RELEASE, "void f()", asMETHOD(FooScripted, Release), asCALL_THISCALL);
+		engine->RegisterObjectMethod("FooScripted_t", "void CallMe()", asMETHOD(FooScripted, CallMe), asCALL_THISCALL);
+		engine->RegisterObjectProperty("FooScripted_t", "int m_value", asOFFSET(FooScripted, m_value));
+
+		asIScriptModule *mod = engine->GetModule("Foo", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Foo",
+			"shared abstract class FooScripted { \n"
+			"  FooScripted() { \n"
+			"    @m_obj = FooScripted_t(); \n"
+			"  } \n"
+			"  void CallMe() { m_obj.CallMe(); } \n"
+			"  int m_value { \n"
+			"    get { return m_obj.m_value; } \n"
+			"    set { m_obj.m_value = value; } \n"
+			"  } \n"
+			"  private FooScripted_t @m_obj; \n"
+			"} \n");
+
+		mod->AddScriptSection("Foo2",
+			"class FooDerived : FooScripted { \n"
+			"  void CallMe() { \n"
+			"    m_value = m_value + 1; \n"
+			"  } \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "FooDerived f; \n"
+								  "assert( f.m_value == 0 ); \n"
+								  "f.CallMe(); \n"
+								  "assert( f.m_value == 1 ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(mod->GetObjectTypeByName("FooDerived")));
+		FooScripted *obj2 = *reinterpret_cast<FooScripted**>(obj->GetAddressOfProperty(0));
+		obj2->AddRef();
+		obj->Release();
+		engine->GarbageCollect();
+
+		if( obj2->m_value != 0 )
+			TEST_FAILED;
+		obj2->CallMe();
+		if( obj2->m_value != 1 )
+			TEST_FAILED;
+
+		obj2->Release();
+
+		engine->Release();
+	}
+
 	// Value assignment on the base class where the operands are two different derived classes
 	// Reported by Philip Bennefall
 	{

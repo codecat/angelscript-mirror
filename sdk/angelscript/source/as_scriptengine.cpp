@@ -1099,13 +1099,13 @@ int asCScriptEngine::WriteMessage(const char *section, int row, int col, asEMsgT
 
 int asCScriptEngine::SetJITCompiler(asIJITCompiler *compiler)
 {
-    jitCompiler = compiler;
-    return asSUCCESS;
+	jitCompiler = compiler;
+	return asSUCCESS;
 }
 
 asIJITCompiler *asCScriptEngine::GetJITCompiler() const
 {
-    return jitCompiler;
+	return jitCompiler;
 }
 
 // interface
