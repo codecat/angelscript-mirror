@@ -2062,45 +2062,34 @@ void registerVec(asIScriptEngine *engine)
 {
 	int r = engine->RegisterObjectType("vec", 0, asOBJ_REF | asOBJ_SCOPED); assert(r >= 0);
 
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f()",				WRAPEXPR(vec*, (),			new vec()),		asCALL_CDECL);		assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(const vec &in v)",			WRAPEXPR(vec*, (const vec &o),		new vec(o)),		asCALL_CDECL);		assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float nx, float nx, float nz)",	WRAPEXPR(vec*, (float x, float y, float z), new vec(x, y, z)),	asCALL_CDECL);		assert(r >= 0);
-//	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float n)",				WRAPEXPR(vec*, (float n),		new vec(n)),		asCALL_CDECL);		assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_RELEASE, "void f()",				WRAPFUNC(void, (vec* t), {if(t)		{ delete t; }}),	asCALL_CDECL_OBJLAST);	assert(r >= 0);
+	// Allocate memory with proper alignment using _aligned_malloc. Free it with _aligned_free
+	// ref: http://msdn.microsoft.com/en-us/library/8z34s9c6.aspx
+	// TODO: With g++ use aligned_alloc/free instead: 
+	// ref http://linux.die.net/man/3/memalign 
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f()",							 WRAPEXPR(vec*, (), new(_aligned_malloc(sizeof(vec), std::alignment_of<vec>().value)) vec()), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(const vec &in v)",				 WRAPEXPR(vec*, (const vec &o), new(_aligned_malloc(sizeof(vec), std::alignment_of<vec>().value)) vec(o)), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float nx, float nx, float nz)", WRAPEXPR(vec*, (float x, float y, float z), new(_aligned_malloc(sizeof(vec), std::alignment_of<vec>().value)) vec(x, y, z)), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_RELEASE, "void f()",							 WRAPFUNC(void, (vec* t), {if(t) { t->~vec(); _aligned_free(t); }}), asCALL_CDECL_OBJLAST); assert(r >= 0);
 
 	r = engine->RegisterObjectMethod("vec", "vec &opAssign(const vec &in v)",	asMETHODPR(vec, operator =, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec &opMulAssign(const float)",	asMETHODPR(vec, operator *=, (const float), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec &opDivAssign(const float)",	asMETHODPR(vec, operator /=, (const float), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec @opDiv(const float) const",	WRAPEXPR(vec*, (float o, vec* v), new vec(*v / o)), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "vec @opMul(const float) const",	WRAPEXPR(vec*, (float o, vec* v), new vec(*v * o)), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "bool opEquals(const vec &in v) const", asMETHODPR(vec, operator==, (const vec &) const, bool), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec &opAddAssign(const vec &in v)", asMETHODPR(vec, operator +=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec &opSubAssign(const vec &in v)", asMETHODPR(vec, operator -=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec &opMulAssign(const vec &in v)", asMETHODPR(vec, operator *=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec &opDivAssign(const vec &in v)", asMETHODPR(vec, operator /=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec @opDiv(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v / vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "vec @opMul(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v * vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "vec @opSub(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v - vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "vec @opAdd(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v + vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "void normalize()",		asMETHOD(vec, normalize), asCALL_THISCALL); assert( r >= 0 );
-//	r = engine->RegisterObjectMethod("vec", "vec @normalized()",	WRAPEXPR(vec*, (vec* v), new vec(v->normalized())), asCALL_CDECL_OBJLAST); assert(r >= 0);
-//	r = engine->RegisterObjectMethod("vec", "float magnitude()",	asMETHOD(vec, magnitude), asCALL_THISCALL); assert( r >= 0 );
 
 	r = engine->RegisterObjectProperty("vec", "float x", asOFFSET(vec, x)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("vec", "float y", asOFFSET(vec, y)); assert( r >= 0 );
 	r = engine->RegisterObjectProperty("vec", "float z", asOFFSET(vec, z)); assert( r >= 0 );
 }
 
-bool playerInSphere(vec &v, float r)
+bool checkVec(vec &v)
 {
-	assert( fabs(v.x - -74.256790f) < 0.001f );
-	assert( v.y == 0 );
-	assert( fabs(v.z - 27.402715f) < 0.001f );
+	// Check the content
+	if( fabs(v.x - -74.256790f) >= 0.001f ) return false;
+	if( v.y != 0 ) return false;
+	if( fabs(v.z - 27.402715f) >= 0.001f ) return false;
 
-	assert( std::alignment_of<vec>::value == 16 );
-//	assert( (asPWORD(&v) & 0xF) == 0 );  // the new operator does not guarantee correct alignment
+	// Check the memory alignment
+	if( std::alignment_of<vec>::value != 16 ) return false;
+	if( (asPWORD(&v) & 0xF) != 0 ) return false;
 
-	return false;
+	return true;
 }
 
 bool TestAlignedScoped()
@@ -2112,16 +2101,17 @@ bool TestAlignedScoped()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	registerVec(engine);
 
-	int r = engine->RegisterGlobalFunction("bool playerInSphere(const vec &in p, float r)", asFUNCTION(playerInSphere), asCALL_CDECL); assert( r >= 0 );
+	int r = engine->RegisterGlobalFunction("bool checkVec(const vec &in p)", asFUNCTION(checkVec), asCALL_CDECL); assert( r >= 0 );
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test",
 		"vec g_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
 		"void loop() \n"
 		"{ \n"
-		"   vec l_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
-		"	playerInSphere(l_pos, 25); \n"
-		"	playerInSphere(g_pos, 25); \n"
+		"  vec l_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
+		"  assert( checkVec(l_pos) ); \n"
+		"  assert( checkVec(g_pos) ); \n"
 		"} \n");
 	// TODO: runtime optimize: The bytecode produced is not optimal. It should use the copy constructor to copy the global variable to a local variable
 	r = mod->Build();
