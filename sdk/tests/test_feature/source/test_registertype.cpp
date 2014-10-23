@@ -7,11 +7,9 @@ namespace TestRegisterType
 void DummyFunc(asIScriptGeneric *) {}
 
 bool TestHandleType();
-
 bool TestIrrTypes();
-
 bool TestRefScoped();
-
+bool TestAlignedScoped();
 bool TestHelper();
 
 int g_widget;
@@ -261,6 +259,7 @@ static const asBehavior_t astrace_ObjectBehaviors[] =
 bool Test()
 {
 	bool fail = TestHelper();
+	fail = TestAlignedScoped() || fail;
 	fail = TestHandleType() || fail;
 	fail = TestIrrTypes() || fail;
 	int r = 0;
@@ -2030,6 +2029,108 @@ bool TestIrrTypes()
 	{
 		TEST_FAILED;
 	}
+
+	engine->Release();
+
+	return fail;
+}
+
+///===================================================================================================
+// http://www.gamedev.net/topic/662178-odd-behavior-with-globally-declared-scoped-reference-types-is-this-normal/
+
+class vec
+{
+public:
+	vec() : x(0), y(0), z(0), w(0) {}
+	vec(float _x, float _y, float _z) : x(_x), y(_y), z(_z), w(0) {}
+	vec(const vec &o) : v(o.v) {}
+	vec &operator=(const vec &o) { v = o.v; return *this; }
+
+	union {
+		__m128 v;
+		struct {
+			float x, y, z, w;
+		};
+	};
+};
+
+//these do lambda magic to allow the definition of wrappers inline
+#define WRAPFUNC(ret, args, body) asFUNCTION(static_cast<ret(*)args>([]args -> ret body))
+#define WRAPEXPR(ret, args, expr) WRAPFUNC(ret, args, {return expr;})
+
+void registerVec(asIScriptEngine *engine)
+{
+	int r = engine->RegisterObjectType("vec", 0, asOBJ_REF | asOBJ_SCOPED); assert(r >= 0);
+
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f()",				WRAPEXPR(vec*, (),			new vec()),		asCALL_CDECL);		assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(const vec &in v)",			WRAPEXPR(vec*, (const vec &o),		new vec(o)),		asCALL_CDECL);		assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float nx, float nx, float nz)",	WRAPEXPR(vec*, (float x, float y, float z), new vec(x, y, z)),	asCALL_CDECL);		assert(r >= 0);
+//	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float n)",				WRAPEXPR(vec*, (float n),		new vec(n)),		asCALL_CDECL);		assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_RELEASE, "void f()",				WRAPFUNC(void, (vec* t), {if(t)		{ delete t; }}),	asCALL_CDECL_OBJLAST);	assert(r >= 0);
+
+	r = engine->RegisterObjectMethod("vec", "vec &opAssign(const vec &in v)",	asMETHODPR(vec, operator =, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec &opMulAssign(const float)",	asMETHODPR(vec, operator *=, (const float), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec &opDivAssign(const float)",	asMETHODPR(vec, operator /=, (const float), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec @opDiv(const float) const",	WRAPEXPR(vec*, (float o, vec* v), new vec(*v / o)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "vec @opMul(const float) const",	WRAPEXPR(vec*, (float o, vec* v), new vec(*v * o)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "bool opEquals(const vec &in v) const", asMETHODPR(vec, operator==, (const vec &) const, bool), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec &opAddAssign(const vec &in v)", asMETHODPR(vec, operator +=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec &opSubAssign(const vec &in v)", asMETHODPR(vec, operator -=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec &opMulAssign(const vec &in v)", asMETHODPR(vec, operator *=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec &opDivAssign(const vec &in v)", asMETHODPR(vec, operator /=, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec @opDiv(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v / vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "vec @opMul(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v * vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "vec @opSub(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v - vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "vec @opAdd(const vec &in) const",	WRAPEXPR(vec*, (const vec &vo, vec* v), new vec(*v + vo)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "void normalize()",		asMETHOD(vec, normalize), asCALL_THISCALL); assert( r >= 0 );
+//	r = engine->RegisterObjectMethod("vec", "vec @normalized()",	WRAPEXPR(vec*, (vec* v), new vec(v->normalized())), asCALL_CDECL_OBJLAST); assert(r >= 0);
+//	r = engine->RegisterObjectMethod("vec", "float magnitude()",	asMETHOD(vec, magnitude), asCALL_THISCALL); assert( r >= 0 );
+
+	r = engine->RegisterObjectProperty("vec", "float x", asOFFSET(vec, x)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vec", "float y", asOFFSET(vec, y)); assert( r >= 0 );
+	r = engine->RegisterObjectProperty("vec", "float z", asOFFSET(vec, z)); assert( r >= 0 );
+}
+
+bool playerInSphere(vec &v, float r)
+{
+	assert( fabs(v.x - -74.256790f) < 0.001f );
+	assert( v.y == 0 );
+	assert( fabs(v.z - 27.402715f) < 0.001f );
+
+	assert( std::alignment_of<vec>::value == 16 );
+//	assert( (asPWORD(&v) & 0xF) == 0 );  // the new operator does not guarantee correct alignment
+
+	return false;
+}
+
+bool TestAlignedScoped()
+{
+	bool fail = false;
+	COutStream out;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	registerVec(engine);
+
+	int r = engine->RegisterGlobalFunction("bool playerInSphere(const vec &in p, float r)", asFUNCTION(playerInSphere), asCALL_CDECL); assert( r >= 0 );
+
+	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+	mod->AddScriptSection("test",
+		"vec g_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
+		"void loop() \n"
+		"{ \n"
+		"   vec l_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
+		"	playerInSphere(l_pos, 25); \n"
+		"	playerInSphere(g_pos, 25); \n"
+		"} \n");
+	// TODO: runtime optimize: The bytecode produced is not optimal. It should use the copy constructor to copy the global variable to a local variable
+	r = mod->Build();
+	if( r < 0 )
+		TEST_FAILED;
+
+	r = ExecuteString(engine, "loop()", mod);
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
 
 	engine->Release();
 

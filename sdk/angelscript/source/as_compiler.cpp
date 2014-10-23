@@ -1505,11 +1505,11 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 					// function, then it is enough that the variable is local to guarantee the lifetime.
 					if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
 					{
-						if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && param.IsReadOnly() )
+						if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_REF) && param.IsReadOnly() && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_SCOPED) )
 						{
-							// If the object is a reference type, and the parameter is a const reference,
-							// then it is not necessary to make a copy of the object. The compiler just needs
-							// to hold a handle to guarantee the lifetime.
+							// If the object is a reference type (except scoped reference types), and the
+							// parameter is a const reference, then it is not necessary to make a copy of the
+							// object. The compiler just needs to hold a handle to guarantee the lifetime.
 
 							// Allocate a handle variable
 							dt.MakeHandle(true);
