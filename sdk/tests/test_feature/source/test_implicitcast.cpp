@@ -284,7 +284,7 @@ bool Test()
 
 	// Should be possible to tell AngelScript if it may use the behaviour implicitly or not
 	// Since care must be taken with implicit casts, it is not allowed by default,
-	// i.e. asBEHAVE_VALUE_CAST and asBEHAVE_VALUE_CAST_IMPLICIT or
+	// i.e. opConv and opImplConv or
 	//      asBEHAVE_REF_CAST and asBEHAVE_REF_CAST_IMPLICIT
 
 	//----------------------------------------------------------------------------
@@ -313,7 +313,7 @@ bool Test()
 	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("type", "int opImplConv()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
 
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "type t(5); \n"
@@ -380,11 +380,12 @@ bool Test()
 
 	// Test4
 	// It shall not be possible to register a cast behaviour from an object to a boolean type
- 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+/* 
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 	r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "bool f()", asFUNCTION(Type_castInt), asCALL_GENERIC); 
+	r = engine->RegisterObjectMethod("type", "bool opImplConv()", asFUNCTION(Type_castInt), asCALL_GENERIC); 
 	if( r != asNOT_SUPPORTED )
 	{
 		TEST_FAILED;
@@ -396,7 +397,7 @@ bool Test()
 	}
 
 	engine->Release();
-
+*/
 	// Test5
 	// Exclicit value cast
 	SKIP_ON_MAX_PORT
@@ -409,7 +410,7 @@ bool Test()
 		r = engine->RegisterObjectType("type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Type_construct0), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("type", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Type_construct1), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "int f()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("type", "int opConv()", asFUNCTION(Type_castInt), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("type", "bool opEquals(const type &in) const", asFUNCTION(Type_equal), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 		r = engine->RegisterObjectProperty("type", "int v", 0);
 
@@ -460,7 +461,7 @@ bool Test()
 
 		// Test generic value cast
 		RegisterStdString(engine);
-		r = engine->RegisterObjectBehaviour("type", asBEHAVE_VALUE_CAST, "void f(?&out)", asFUNCTION(Type_castVar), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("type", "void opConv(?&out)", asFUNCTION(Type_castVar), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 		// TODO: runtime optimize: This code produces a lot of unecessary bytecode
 		r = ExecuteString(engine, "type t; t.v = 5; string s = string(t); assert( s == '5' );");
@@ -737,7 +738,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_ADDREF,  "void f()", asMETHOD(Param<double>, add_ref), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_RELEASE, "void f()", asMETHOD(Param<double>, release), asCALL_THISCALL); assert( r >= 0 );
 
-		r = engine->RegisterObjectBehaviour("Pdouble", asBEHAVE_IMPLICIT_VALUE_CAST, "double f() const", asMETHOD(Param<double>, v), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Pdouble", "double opImplConv() const", asMETHOD(Param<double>, v), asCALL_THISCALL); assert( r >= 0 );
 
 		r = engine->RegisterGlobalFunction("double myFunction(const double)", asFUNCTIONPR(myFunction, (const double), double), asCALL_CDECL); assert( r >= 0 );
 
@@ -793,7 +794,7 @@ bool Test()
 
 		engine->RegisterObjectType("type", sizeof(Value), asOBJ_VALUE|asOBJ_POD);
 		engine->RegisterObjectProperty("type", "double dbl", asOFFSET(Value, dbl));
-		engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "double f()", asMETHOD(Value, castToDouble), asCALL_THISCALL);
+		engine->RegisterObjectMethod("type", "double opImplConv()", asMETHOD(Value, castToDouble), asCALL_THISCALL);
 		
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -830,8 +831,8 @@ bool Test()
 
 		engine->RegisterObjectType("type", sizeof(Value), asOBJ_VALUE|asOBJ_POD);
 		engine->RegisterObjectProperty("type", "double dbl", asOFFSET(Value, dbl));
-		engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asMETHOD(Value, castToInt), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("type", asBEHAVE_IMPLICIT_VALUE_CAST, "double f()", asMETHOD(Value, castToDouble), asCALL_THISCALL);
+		engine->RegisterObjectMethod("type", "int opImplConv()", asMETHOD(Value, castToInt), asCALL_THISCALL);
+		engine->RegisterObjectMethod("type", "double opImplConv()", asMETHOD(Value, castToDouble), asCALL_THISCALL);
 		
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -949,9 +950,9 @@ static bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	r = engine->RegisterObjectType("simple", sizeof(Simple), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert(r >= 0);
 	r = engine->RegisterObjectType("complex", sizeof(Complex), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("complex", asBEHAVE_IMPLICIT_VALUE_CAST, "int f()", asFUNCTION(implicit), asCALL_GENERIC);
-	r = engine->RegisterObjectBehaviour("complex", asBEHAVE_IMPLICIT_VALUE_CAST, "double f()", asFUNCTION(implicit), asCALL_GENERIC);
-	r = engine->RegisterObjectBehaviour("complex", asBEHAVE_IMPLICIT_VALUE_CAST, "simple f()", asFUNCTION(implicit), asCALL_GENERIC);
+	r = engine->RegisterObjectMethod("complex", "int opImplConv()", asFUNCTION(implicit), asCALL_GENERIC);
+	r = engine->RegisterObjectMethod("complex", "double opImplConv()", asFUNCTION(implicit), asCALL_GENERIC);
+	r = engine->RegisterObjectMethod("complex", "simple opImplConv()", asFUNCTION(implicit), asCALL_GENERIC);
 
 	const char script[] =
 	"void main() {\n"
@@ -1138,7 +1139,7 @@ static bool Test4()
 	r = engine->RegisterObjectBehaviour("Caster", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Caster::Construct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Caster", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(Caster::Construct2), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Caster", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Caster::Destruct), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("Caster", asBEHAVE_IMPLICIT_VALUE_CAST, "Castee f() const", asMETHOD(Caster, operator Castee), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Caster", "Castee opImplConv() const", asMETHOD(Caster, operator Castee), asCALL_THISCALL); assert( r >= 0 );
 
 	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 

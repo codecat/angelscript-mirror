@@ -208,7 +208,7 @@ public:
 		r = engine->RegisterObjectMethod("var", "var &opHndlAssign(const ?&in)", asMETHOD(CVariant, opHandleAssign), asCALL_THISCALL); assert( r >= 0 );
 
 		r = engine->RegisterObjectBehaviour("var", asBEHAVE_REF_CAST, "void f(?&out)", asMETHOD(CVariant, opCast), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("var", asBEHAVE_VALUE_CAST, "void f(?&out)", asMETHOD(CVariant, opConv), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("var", "void opConv(?&out)", asMETHOD(CVariant, opConv), asCALL_THISCALL); assert( r >= 0 );
 	}
 
 	static void Construct(void *mem)

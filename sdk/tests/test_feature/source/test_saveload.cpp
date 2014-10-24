@@ -421,7 +421,7 @@ bool Test()
 		engine->RegisterObjectType( "type", sizeof( 4 ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS );
 		engine->RegisterObjectType( "typeof<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT);
 		engine->RegisterObjectBehaviour("typeof<T>", asBEHAVE_FACTORY, "typeof<T> @f(int&in)", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("typeof<T>", asBEHAVE_IMPLICIT_VALUE_CAST, "type f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("typeof<T>", "type opImplConv()", asFUNCTION(0), asCALL_GENERIC);
 		engine->SetDefaultNamespace( "" );
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
@@ -454,7 +454,7 @@ bool Test()
 		engine->RegisterObjectType( "type", sizeof( 4 ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS );
 		engine->RegisterObjectType( "typeof<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT);
 		engine->RegisterObjectBehaviour("typeof<T>", asBEHAVE_FACTORY, "typeof<T> @f(int&in)", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("typeof<T>", asBEHAVE_IMPLICIT_VALUE_CAST, "type f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("typeof<T>", "type opImplConv()", asFUNCTION(0), asCALL_GENERIC);
 		engine->SetDefaultNamespace( "" );
 
 		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
@@ -481,7 +481,7 @@ bool Test()
 		engine->RegisterObjectType( "type", sizeof( 4 ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS );
 //		engine->RegisterObjectType( "typeof<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE | asOBJ_NOCOUNT);
 //		engine->RegisterObjectBehaviour("typeof<T>", asBEHAVE_FACTORY, "typeof<T> @f(int&in)", asFUNCTION(0), asCALL_GENERIC);
-//		engine->RegisterObjectBehaviour("typeof<T>", asBEHAVE_IMPLICIT_VALUE_CAST, "type f()", asFUNCTION(0), asCALL_GENERIC);
+//		engine->RegisterObjectMethod("typeof<T>", "type opImplConv()", asFUNCTION(0), asCALL_GENERIC);
 		engine->SetDefaultNamespace( "" );
 
 		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);

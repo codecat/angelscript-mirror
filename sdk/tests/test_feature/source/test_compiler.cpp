@@ -721,7 +721,7 @@ bool Test()
 			}
 		};
 		r = engine->RegisterObjectBehaviour( "string", asBEHAVE_FACTORY, "string @f(double)", asFUNCTION( helper::objectString_FactoryFromDouble ), asCALL_CDECL ); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour( "string", asBEHAVE_IMPLICIT_VALUE_CAST, "double f() const", asFUNCTION( helper::objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+		r = engine->RegisterObjectMethod( "string", "double opImplConv() const", asFUNCTION( helper::objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 		//r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const string &in)", asFUNCTION(0), asCALL_GENERIC);
 		//r = engine->RegisterObjectMethod("dictionary", "void get(const string &in, string &out)", asFUNCTION(0), asCALL_GENERIC);

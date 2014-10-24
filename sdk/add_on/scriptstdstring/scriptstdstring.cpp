@@ -532,9 +532,13 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 {
 	int r;
 
-
 	// Register the string type
+#if AS_CAN_USE_CPP11
+	// With C++11 it is possible to use asGetTypeTraits to automatically determine the correct flags to use
+	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asGetTypeTraits<string>()); assert( r >= 0 );
+#else
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+#endif
 
 #if AS_USE_STRINGPOOL == 1
 	// Register the string factory
