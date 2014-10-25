@@ -2425,12 +2425,11 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		else if( behaviour == asBEHAVE_RELEASEREFS )
 			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
 	}
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.30.0. 2014-10-24
 	else if( behaviour == asBEHAVE_IMPLICIT_VALUE_CAST ||
 		     behaviour == asBEHAVE_VALUE_CAST )
 	{
-		// TODO: 2.30.0: Deprecate these behaviours, the application should register 
-		//               them directly as methods with opConv or opImplConv names
-
 		// There are two allowed signatures
 		// 1. type f()
 		// 2. void f(?&out)
@@ -2451,6 +2450,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		decl += ")";
 		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
 	}
+#endif
 	else if( behaviour == asBEHAVE_REF_CAST ||
 	         behaviour == asBEHAVE_IMPLICIT_REF_CAST )
 	{
