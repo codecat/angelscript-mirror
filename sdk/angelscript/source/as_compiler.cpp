@@ -13410,6 +13410,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 			to = lctx->type.dataType;
 		else
 			to = rctx->type.dataType;
+
+		// Assume handle-to-const as it is not possible to convert handle-to-const to handle-to-non-const
+		to.MakeHandleToConst(true);
 	}
 
 	// Need to pop the value if it is a null constant

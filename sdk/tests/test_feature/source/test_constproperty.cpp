@@ -129,6 +129,43 @@ bool Test()
 
 	engine->Release();
 
+	// Test const property with identity comparison
+	// http://www.gamedev.net/topic/662239-issue-with-implicit-const-qualifier-on-member-handle-vs-object/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &out, asCALL_THISCALL);
+		out.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class Interface {}; \n"
+			"class Object : Interface {}; \n"
+			"class Test \n"
+			"{ \n"
+			"    bool PerformTest() const \n"
+			"    { \n"
+			"        bool a = m_interface is @m_object; \n"
+			"        bool b = m_interface is m_object; \n"
+			"        bool c = @m_interface is @m_object; \n"
+			"        bool d = @m_interface is m_object; \n"
+			"        return a; \n"
+			"    } \n"
+			"    private Interface@ m_interface; \n"
+			"    private Object m_object; \n"
+			"} \n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( out.buffer != "" )
+		{
+			PRINTF("%s", out.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;
