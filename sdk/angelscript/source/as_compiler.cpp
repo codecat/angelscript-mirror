@@ -12421,6 +12421,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						v = as_powi(lctx->type.intValue, rctx->type.intValue, isOverflow);
 					else
 						v = as_powu(lctx->type.dwordValue, rctx->type.dwordValue, isOverflow);
+
+					if( isOverflow )
+						Error(TXT_POW_OVERFLOW, node);
 				}
 
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
@@ -12467,6 +12470,9 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						v = as_powi64(asINT64(lctx->type.qwordValue), asINT64(rctx->type.qwordValue), isOverflow);
 					else
 						v = as_powu64(lctx->type.qwordValue, rctx->type.qwordValue, isOverflow);
+
+					if( isOverflow )
+						Error(TXT_POW_OVERFLOW, node);
 				}
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
@@ -12500,7 +12506,12 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					v = fmodf(lctx->type.floatValue, rctx->type.floatValue);
 			}
 			else if( op == ttStarStar )
+			{
 				v = pow(lctx->type.floatValue, rctx->type.floatValue);
+
+				if( v == HUGE_VAL )
+					Error(TXT_POW_OVERFLOW, node);
+			}
 
 			ctx->type.SetConstantF(lctx->type.dataType, v);
 		}
@@ -12512,7 +12523,11 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				asASSERT(rctx->type.dataType.GetSizeInMemoryDWords() == 1);
 
 				if( op == ttStarStar || op == ttPowAssign )
+				{
 					v = pow(lctx->type.doubleValue, rctx->type.intValue);
+					if( v == HUGE_VAL )
+						Error(TXT_POW_OVERFLOW, node);
+				}
 				else
 					asASSERT(false);  // Should not be possible
 			}
@@ -12539,7 +12554,11 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						v = fmod(lctx->type.doubleValue, rctx->type.doubleValue);
 				}
 				else if( op == ttStarStar )
+				{
 					v = pow(lctx->type.doubleValue, rctx->type.doubleValue);
+					if( v == HUGE_VAL )
+						Error(TXT_POW_OVERFLOW, node);
+				}
 			}
 
 			ctx->type.SetConstantD(lctx->type.dataType, v);

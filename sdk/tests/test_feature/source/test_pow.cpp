@@ -91,68 +91,100 @@ bool Test()
 {
 	bool fail = false;
 	COutStream out;
+	CBufferedOutStream bout;
 	int r;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	asIScriptContext *ctx = engine->CreateContext();
-	asIScriptFunction *func;
-	string err_str;
+		asIScriptContext *ctx = engine->CreateContext();
+		asIScriptFunction *func;
+		string err_str;
 
-	func = mod->GetFunctionByName("test_pow");
-	ctx->Prepare(func);
-	r = ctx->Execute();
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
+		func = mod->GetFunctionByName("test_pow");
+		ctx->Prepare(func);
+		r = ctx->Execute();
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
-	func = mod->GetFunctionByName("test_overflow1");
-	ctx->Prepare(func);
-	r = ctx->Execute();
-	if( r != asEXECUTION_EXCEPTION )
-		TEST_FAILED;
-    else
-    {
-        err_str = ctx->GetExceptionString();
-        if( err_str != "Overflow in exponent operation" )
-            TEST_FAILED;
-    }
+		func = mod->GetFunctionByName("test_overflow1");
+		ctx->Prepare(func);
+		r = ctx->Execute();
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		else
+		{
+			err_str = ctx->GetExceptionString();
+			if( err_str != "Overflow in exponent operation" )
+				TEST_FAILED;
+		}
 
+		func = mod->GetFunctionByName("test_overflow2");
+		ctx->Prepare(func);
+		r = ctx->Execute();
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		else
+		{
+			err_str = ctx->GetExceptionString();
+			if( err_str != "Overflow in exponent operation" )
+				TEST_FAILED;
+		}
 
+		func = mod->GetFunctionByName("test_overflow3");
+		ctx->Prepare(func);
+		r = ctx->Execute();
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		else
+		{
+			err_str = ctx->GetExceptionString();
+			if( err_str != "Overflow in exponent operation" )
+				TEST_FAILED;
+		}
 
-	func = mod->GetFunctionByName("test_overflow2");
-	ctx->Prepare(func);
-	r = ctx->Execute();
-	if( r != asEXECUTION_EXCEPTION )
-		TEST_FAILED;
-    else
-    {
-        err_str = ctx->GetExceptionString();
-        if( err_str != "Overflow in exponent operation" )
-            TEST_FAILED;
-    }
+		ctx->Release();
+		engine->Release();
+	}
 
-	func = mod->GetFunctionByName("test_overflow3");
-	ctx->Prepare(func);
-	r = ctx->Execute();
-	if( r != asEXECUTION_EXCEPTION )
-		TEST_FAILED;
-    else
-    {
-        err_str = ctx->GetExceptionString();
-        if( err_str != "Overflow in exponent operation" )
-            TEST_FAILED;
-    }
+	// Test overflow in constant expression
+	// http://www.gamedev.net/topic/662096-removing/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-	ctx->Release();
-	engine->Release();
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"void func() { \n"
+			"  int    ipow = 500    ** 3000; \n"
+			"  float  fpow = 500.0f ** 3000.0f; \n"
+			"  double dpow = 500.0f ** 3000.0f; \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+						   "test (2, 24) : Error   : Overflow in exponent operation\n"
+						   "test (3, 24) : Error   : Overflow in exponent operation\n"
+						   "test (4, 24) : Error   : Overflow in exponent operation\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	return fail;
 }
