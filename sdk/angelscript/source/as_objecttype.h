@@ -215,6 +215,11 @@ public:
 	bool                  acceptValueSubType;
 	bool                  acceptRefSubType;
 
+	// Store the script section where the code was declared
+	int                             scriptSectionIdx;
+	// Store the location where the function was declared (row in the lower 20 bits, and column in the upper 12)
+	int                             declaredAt;
+
 	asCScriptEngine  *engine;
 	asCModule        *module;
 	asCArray<asPWORD> userData;

@@ -203,6 +203,31 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Template callbacks must only be invoked after the types are fully constructed
+	// http://www.gamedev.net/topic/658982-funcdef-error/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class foo {} \n"
+			"funcdef void bar(array<foo>); \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Use of second template in first template's arguments
 	// http://www.gamedev.net/topic/660932-variable-parameter-type-to-accept-only-handles-during-compile-also-more-template-woes/
 	{
@@ -760,7 +785,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		if( bout.buffer != "ExecuteString (1, 8) : Error   : Can't instantiate template 'MyTmpl' with subtype 'int'\n" )
+		if( bout.buffer != "ExecuteString (1, 8) : Error   : Attempting to instantiate invalid template type 'MyTmpl<int>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

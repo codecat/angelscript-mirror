@@ -535,6 +535,12 @@ void asCBuilder::ParseScripts()
 		}
 	}
 
+	// The template callbacks must only be called after the subtypes have a known structure,
+	// otherwise the callback may think it is not possible to create the template instance, 
+	// even though it is.
+	engine->deferValidationOfTemplateTypes = true;
+	asUINT numTempl = engine->templateInstanceTypes.GetLength();
+
 	if( numErrors == 0 )
 	{
 		// Find all type declarations
@@ -644,6 +650,38 @@ void asCBuilder::ParseScripts()
 			RegisterNonTypesFromScript(node, scripts[n], engine->nameSpaces[0]);
 		}
 	}
+
+	// Evaluate the template instances now
+	// TODO: It is still not quite right to do it here, because the inheritances of script classes has not been
+	//       evaluated yet, and thus it is possible that the template callback will attempt to use some information
+	//       that is not known yet, e.g. inherited members, or the asOBJ_GC flag in the object type. But it is also
+	//       not possible to simply move this to after the script classes has been built, because building the classes
+	//       may also depend on the templates being correctly evaluated first.
+	for( asUINT n = numTempl; n < engine->templateInstanceTypes.GetLength(); n++ )
+	{
+		bool dontGarbageCollect = false;
+		asCObjectType *tmpl = engine->templateInstanceTypes[n];
+		asCScriptFunction *callback = engine->scriptFunctions[tmpl->beh.templateCallback];
+		if( callback && !engine->CallGlobalFunctionRetBool(tmpl, &dontGarbageCollect, callback->sysFuncIntf, callback) )
+		{
+			asCString sub = tmpl->templateSubTypes[0].Format();
+			for( asUINT n = 1; n < tmpl->templateSubTypes.GetLength(); n++ )
+			{
+				sub += ",";
+				sub += tmpl->templateSubTypes[n].Format();
+			}
+			asCString str;
+			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, tmpl->name.AddressOf(), sub.AddressOf());
+			WriteError(tmpl->scriptSectionIdx >= 0 ? engine->scriptSectionNames[tmpl->scriptSectionIdx]->AddressOf() : "", str, tmpl->declaredAt&0xFFFFF, (tmpl->declaredAt>>20)&0xFFF);
+		}
+		else
+		{
+			// If the callback said this template instance won't be garbage collected then remove the flag
+			if( dontGarbageCollect )
+				tmpl->flags &= ~asOBJ_GC;
+		}
+	}
+	engine->deferValidationOfTemplateTypes = false;
 
 	for( n = 0; n < parsers.GetLength(); n++ )
 	{
@@ -4846,12 +4884,26 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 								// Need to find the correct object type
 								asCObjectType *otInstance = engine->GetTemplateInstanceType(ot, subTypes);
 
+								if( otInstance && otInstance->scriptSectionIdx < 0 )
+								{
+									// If this is the first time the template instance is used, store where it was declared from
+									otInstance->scriptSectionIdx = engine->GetScriptSectionNameIndex(file->name.AddressOf());
+									int row, column;
+									file->ConvertPosToRowCol(n->tokenPos, &row, &column);
+									otInstance->declaredAt = (row&0xFFFFF)|(column<<20);
+								}
+
 								if( !otInstance )
 								{
-									asCString msg;
-									// TODO: Should name all subtypes
-									msg.Format(TXT_CANNOT_INSTANTIATE_TEMPLATE_s_WITH_s, ot->name.AddressOf(), subTypes[0].Format().AddressOf());
-									WriteError(msg, file, n);
+									asCString sub = subTypes[0].Format();
+									for( asUINT s = 1; s < subTypes.GetLength(); s++ )
+									{
+										sub += ",";
+										sub += subTypes[s].Format();
+									}
+									asCString str;
+									str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, ot->name.AddressOf(), sub.AddressOf());
+									WriteError(str, file, n);
 								}
 
 								ot = otInstance;

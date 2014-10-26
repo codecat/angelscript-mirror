@@ -129,11 +129,11 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "Test_Addon_WeakRef (2, 1) : Info    : Compiling void main()\n"
-						   "Test_Addon_WeakRef (3, 11) : Error   : Can't instantiate template 'weakref' with subtype 'int'\n"
-						   "Test_Addon_WeakRef (4, 11) : Error   : Can't instantiate template 'weakref' with subtype 'string'\n"
-						   "Test_Addon_WeakRef (5, 11) : Error   : Can't instantiate template 'weakref' with subtype 'Test@'\n"
+						   "Test_Addon_WeakRef (3, 11) : Error   : Attempting to instantiate invalid template type 'weakref<int>'\n"
+						   "Test_Addon_WeakRef (4, 11) : Error   : Attempting to instantiate invalid template type 'weakref<string>'\n"
+						   "Test_Addon_WeakRef (5, 11) : Error   : Attempting to instantiate invalid template type 'weakref<Test@>'\n"
 						   "weakref (0, 0) : Error   : The subtype doesn't support weak references\n"
-						   "Test_Addon_WeakRef (6, 11) : Error   : Can't instantiate template 'weakref' with subtype 'array<Test>'\n" )
+						   "Test_Addon_WeakRef (6, 11) : Error   : Attempting to instantiate invalid template type 'weakref<array<Test>>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

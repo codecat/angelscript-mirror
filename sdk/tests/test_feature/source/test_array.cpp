@@ -346,7 +346,7 @@ bool Test()
 		r = ExecuteString(engine, "array<void> a;");
 		if( r != -1 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 7) : Error   : Can't instantiate template 'array' with subtype 'void'\n" )
+		if( bout.buffer != "ExecuteString (1, 7) : Error   : Attempting to instantiate invalid template type 'array<void>'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

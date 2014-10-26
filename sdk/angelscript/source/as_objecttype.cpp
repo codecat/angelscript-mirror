@@ -123,35 +123,41 @@ void RegisterObjectTypeGCBehaviours(asCScriptEngine *engine)
 
 asCObjectType::asCObjectType() 
 {
-	engine = 0; 
-	module = 0;
 	refCount.set(0); 
+	engine      = 0; 
+	module      = 0;
 	derivedFrom = 0;
 
 	acceptValueSubType = true;
-	acceptRefSubType = true;
+	acceptRefSubType   = true;
+
+	scriptSectionIdx = -1;
+	declaredAt       = 0;
 
 	accessMask = 0xFFFFFFFF;
-	nameSpace = 0;
+	nameSpace  = 0;
 #ifdef WIP_16BYTE_ALIGN
-	alignment = 4;
+	alignment  = 4;
 #endif
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
 {
-	this->engine = engine; 
-	module = 0;
 	refCount.set(0); 
+	this->engine = engine; 
+	module       = 0;
 	derivedFrom  = 0;
 
 	acceptValueSubType = true;
-	acceptRefSubType = true;
+	acceptRefSubType   = true;
+
+	scriptSectionIdx = -1;
+	declaredAt       = 0;
 
 	accessMask = 0xFFFFFFFF;
-	nameSpace = engine->nameSpaces[0];
+	nameSpace  = engine->nameSpaces[0];
 #ifdef WIP_16BYTE_ALIGN
-	alignment = 4;
+	alignment  = 4;
 #endif
 }
 

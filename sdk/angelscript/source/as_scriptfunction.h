@@ -305,7 +305,7 @@ public:
 		asCArray<int>                   lineNumbers;
 		// Store the script section where the code was declared
 		int                             scriptSectionIdx;
-		// Store the location where the function was declared
+		// Store the location where the function was declared  (row in the lower 20 bits, and column in the upper 12)
 		int                             declaredAt;
 		// Store position/index pairs if the bytecode is compiled from multiple script sections
 		asCArray<int>                   sectionIdxs;
