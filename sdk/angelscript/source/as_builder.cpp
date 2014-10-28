@@ -230,11 +230,52 @@ int asCBuilder::Build()
 {
 	Reset();
 
+	// The template callbacks must only be called after the subtypes have a known structure,
+	// otherwise the callback may think it is not possible to create the template instance, 
+	// even though it is.
+	// TODO: This flag shouldn't be set globally in the engine, as it would mean that another 
+	//       thread requesting a template instance in parallel to the compilation wouldn't 
+	//       evaluate the template instance. 
+	engine->deferValidationOfTemplateTypes = true;
+	asUINT numTempl = engine->templateInstanceTypes.GetLength();
+
 	ParseScripts();
 
 	// Compile the types first
 	CompileInterfaces();
 	CompileClasses();
+
+	// Evaluate the template instances now
+	// TODO: If a class holds a template type as member the template instance should be evaluated before determining
+	//       if the class needs to be garbage collected or not, otherwise the class may be marked as garbage collected
+	//       needlessly. Cyclic reference may also exist between class and array, e.g. class A { array<A@> arr; }. How
+	//       should this be solved? Perhaps it is not necessary to solve, it as by default both the class and array 
+	//       will be garbage collected.
+	for( asUINT n = numTempl; n < engine->templateInstanceTypes.GetLength(); n++ )
+	{
+		bool dontGarbageCollect = false;
+		asCObjectType *tmpl = engine->templateInstanceTypes[n];
+		asCScriptFunction *callback = engine->scriptFunctions[tmpl->beh.templateCallback];
+		if( callback && !engine->CallGlobalFunctionRetBool(tmpl, &dontGarbageCollect, callback->sysFuncIntf, callback) )
+		{
+			asCString sub = tmpl->templateSubTypes[0].Format();
+			for( asUINT n = 1; n < tmpl->templateSubTypes.GetLength(); n++ )
+			{
+				sub += ",";
+				sub += tmpl->templateSubTypes[n].Format();
+			}
+			asCString str;
+			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, tmpl->name.AddressOf(), sub.AddressOf());
+			WriteError(tmpl->scriptSectionIdx >= 0 ? engine->scriptSectionNames[tmpl->scriptSectionIdx]->AddressOf() : "", str, tmpl->declaredAt&0xFFFFF, (tmpl->declaredAt>>20)&0xFFF);
+		}
+		else
+		{
+			// If the callback said this template instance won't be garbage collected then remove the flag
+			if( dontGarbageCollect )
+				tmpl->flags &= ~asOBJ_GC;
+		}
+	}
+	engine->deferValidationOfTemplateTypes = false;
 
 	// Then the global variables. Here the variables declared with auto
 	// will be resolved, so they can be accessed properly in the functions
@@ -535,12 +576,6 @@ void asCBuilder::ParseScripts()
 		}
 	}
 
-	// The template callbacks must only be called after the subtypes have a known structure,
-	// otherwise the callback may think it is not possible to create the template instance, 
-	// even though it is.
-	engine->deferValidationOfTemplateTypes = true;
-	asUINT numTempl = engine->templateInstanceTypes.GetLength();
-
 	if( numErrors == 0 )
 	{
 		// Find all type declarations
@@ -650,38 +685,6 @@ void asCBuilder::ParseScripts()
 			RegisterNonTypesFromScript(node, scripts[n], engine->nameSpaces[0]);
 		}
 	}
-
-	// Evaluate the template instances now
-	// TODO: It is still not quite right to do it here, because the inheritances of script classes has not been
-	//       evaluated yet, and thus it is possible that the template callback will attempt to use some information
-	//       that is not known yet, e.g. inherited members, or the asOBJ_GC flag in the object type. But it is also
-	//       not possible to simply move this to after the script classes has been built, because building the classes
-	//       may also depend on the templates being correctly evaluated first.
-	for( asUINT n = numTempl; n < engine->templateInstanceTypes.GetLength(); n++ )
-	{
-		bool dontGarbageCollect = false;
-		asCObjectType *tmpl = engine->templateInstanceTypes[n];
-		asCScriptFunction *callback = engine->scriptFunctions[tmpl->beh.templateCallback];
-		if( callback && !engine->CallGlobalFunctionRetBool(tmpl, &dontGarbageCollect, callback->sysFuncIntf, callback) )
-		{
-			asCString sub = tmpl->templateSubTypes[0].Format();
-			for( asUINT n = 1; n < tmpl->templateSubTypes.GetLength(); n++ )
-			{
-				sub += ",";
-				sub += tmpl->templateSubTypes[n].Format();
-			}
-			asCString str;
-			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, tmpl->name.AddressOf(), sub.AddressOf());
-			WriteError(tmpl->scriptSectionIdx >= 0 ? engine->scriptSectionNames[tmpl->scriptSectionIdx]->AddressOf() : "", str, tmpl->declaredAt&0xFFFFF, (tmpl->declaredAt>>20)&0xFFF);
-		}
-		else
-		{
-			// If the callback said this template instance won't be garbage collected then remove the flag
-			if( dontGarbageCollect )
-				tmpl->flags &= ~asOBJ_GC;
-		}
-	}
-	engine->deferValidationOfTemplateTypes = false;
 
 	for( n = 0; n < parsers.GetLength(); n++ )
 	{

@@ -58,7 +58,7 @@ bool Test()
 			"class A \n"
 			"{ \n"
 			"	any a; \n"
-			"	grid<B> t(10, 10); \n"
+			"	grid<B@> t(10, 10); \n"
 			"	A() \n"
 			"	{ \n"
 			"		a.store(@this); \n"
@@ -78,9 +78,14 @@ bool Test()
 		if( t->GetFlags() & asOBJ_GC )
 			TEST_FAILED;
 
-		// But the grid<B> type will be anyway since the template callback was evaluated before B's content was known
-		// TODO: run-time optimize: Re-evaluate the template callback after the B's content is fully known
+		// grid<B> is not garbage collected since B is not
 		t = mod->GetObjectTypeByDecl("grid<B>");
+		if( (t->GetFlags() & asOBJ_GC) )
+			TEST_FAILED;
+
+		// grid<B@> is however garbage collected because it is not possible to know 
+		// that no class derived from B can't form a circular reference with it.
+		t = mod->GetObjectTypeByDecl("grid<B@>");
 		if( !(t->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
 
