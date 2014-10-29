@@ -225,6 +225,36 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test that script class isn't marked as garbage collected needlessly
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		// class B is declared between A and C, since generally the classes are built in the order they are declared
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {} \n"							  // don't need garbage collection
+			"class B { array<A> a; array<C@> c; } \n" // don't need garbage collection
+			"final class C {} \n"					  // don't need garbage collection
+			);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = mod->GetObjectTypeByName("A");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) )
+			TEST_FAILED;
+		type = mod->GetObjectTypeByName("B");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) )
+			TEST_FAILED;
+		type = mod->GetObjectTypeByName("C");
+		if( type == 0 || (type->GetFlags() & asOBJ_GC) )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Warn if inner scope re-declares variable from outer scope
 	// http://www.gamedev.net/topic/660746-problem-with-random-float-value-on-android/
 	{

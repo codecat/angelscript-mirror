@@ -215,7 +215,7 @@ protected:
 	int                RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	void               CompleteFuncDef(sFuncDef *funcDef);
 	void               CompileInterfaces();
-	void               CompileClasses();
+	void               CompileClasses(asUINT originalNumTempl);
 	void               GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool &isConstMethod, bool &isConstructor, bool &isDestructor, bool &isPrivate, bool &isOverride, bool &isFinal, bool &isShared, asSNameSpace *implicitNamespace);
 	bool               DoesMethodExist(asCObjectType *objType, int methodId, asUINT *methodIndex = 0);
 	void               AddDefaultConstructor(asCObjectType *objType, asCScriptCode *file);
@@ -233,6 +233,7 @@ protected:
 	asCScriptFunction *GetFunctionDescription(int funcId);
 	void               GetFunctionDescriptions(const char *name, asCArray<int> &funcs, asSNameSpace *ns);
 	void               GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope = "");
+	void               EvaluateTemplateInstances(asUINT startIdx, bool keepSilent);
 
 	asCArray<asCScriptCode *>                  scripts;
 	asCArray<sFunctionDescription *>           functions;
