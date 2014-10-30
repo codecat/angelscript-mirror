@@ -290,6 +290,7 @@
 #define TXT_d_GC_CANNOT_FREE_OBJ_OF_TYPE_s               "Object {%d}. GC cannot destroy an object of type '%s' as it doesn't know how many references to there are."
 #define TXT_d_GC_CANNOT_FREE_OBJ_OF_TYPE_s_REF_COUNT_d   "Object {%d}. GC cannot destroy an object of type '%s' as it can't see all references. Current ref count is %d."
 #define TXT_OBJECT_TYPE_s_DOESNT_EXIST                   "Object type '%s' doesn't exist"
+#define TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER   "Cannot register template specialization. The template type instance '%s' has already been generated."
 #define TXT_TEMPLATE_TYPE_s_DOESNT_EXIST                 "Template type '%s' doesn't exist"
 #define TXT_TEMPLATE_SUBTYPE_s_DOESNT_EXIST              "Template subtype '%s' doesn't exist"
 #define TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS   "Template list factory expects two reference parameters. The last is the pointer to the initialization buffer"

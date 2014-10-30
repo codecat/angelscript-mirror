@@ -1901,12 +1901,15 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				dt.IsReference() )
 				return ConfigError(asINVALID_TYPE, "RegisterObjectType", name, 0);
 
-			// Was the template instance type created before?
-			if( (generatedTemplateTypes.GetLength() &&
-				 generatedTemplateTypes[generatedTemplateTypes.GetLength()-1] == mostRecentTemplateInstanceType) ||
-				mostRecentTemplateInstanceType == dt.GetObjectType() )
-				// TODO: Should have a better error message
+			// Was the template instance type generated before?
+			if( generatedTemplateTypes.Exists(dt.GetObjectType()) &&
+				generatedTemplateTypes[generatedTemplateTypes.GetLength()-1] == mostRecentTemplateInstanceType )
+			{
+				asCString str;
+				str.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, typeName.AddressOf());
+				WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				return ConfigError(asNOT_SUPPORTED, "RegisterObjectType", name, 0);
+			}
 
 			// If this is not a template instance type, then it means it is an
 			// already registered template specialization

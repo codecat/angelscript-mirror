@@ -2202,6 +2202,9 @@ public:
 	//! \retval asNO_GLOBAL_VAR The matching global variable was found.
 	//!
 	//! This method should be used to retrieve the index of the script variable that you wish to access.
+	//!
+	//! If the variable is declared in a namespace first call \ref SetDefaultNamespace 
+	//! to set the namespace that should be searched first for the variable.
 	virtual int         GetGlobalVarIndexByName(const char *name) const = 0;
 	//! \brief Returns the global variable index by declaration.
 	//! \param[in] decl The global variable declaration.
@@ -2213,6 +2216,9 @@ public:
 	//! This method should be used to retrieve the index of the script variable that you wish to access.
 	//!
 	//! The method will find the script variable with the exact same declaration.
+	//!
+	//! If the variable is declared in a namespace first call \ref SetDefaultNamespace 
+	//! to set the namespace that should be searched first for the variable.
 	virtual int         GetGlobalVarIndexByDecl(const char *decl) const = 0;
 	//! \brief Returns the global variable declaration.
 	//! \param[in] index The index of the global variable.

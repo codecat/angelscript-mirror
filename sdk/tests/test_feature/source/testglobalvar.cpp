@@ -215,6 +215,50 @@ bool TestGlobalVar()
 	}
 	engine->Release();
 
+	// Test accessing global var in namespace
+	// http://www.gamedev.net/topic/662385-calling-a-method-on-a-script-class-from-c/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", 
+			"class foo \n"
+			"{ \n"
+			"  void test() {} \n"
+			"} \n"
+			"namespace ns \n"
+			"{ \n"
+			"	foo bar; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		int i = mod->GetGlobalVarIndexByName("bar");
+		if( i >= 0 )
+			TEST_FAILED;
+
+		i = mod->GetGlobalVarIndexByDecl("foo ns::bar");
+		if( i < 0 )
+			TEST_FAILED;
+
+		i = mod->GetGlobalVarIndexByDecl("ns::foo ns::bar");
+		if( i < 0 )
+			TEST_FAILED;
+
+		mod->SetDefaultNamespace("ns");
+		i = mod->GetGlobalVarIndexByName("bar");
+		if( i < 0 )
+			TEST_FAILED;
+
+		i = mod->GetGlobalVarIndexByDecl("foo bar");
+		if( i < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	//----------------------
 	// Global object handles initialized with other global variables
 	{

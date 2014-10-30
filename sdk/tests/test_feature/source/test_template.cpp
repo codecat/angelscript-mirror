@@ -749,6 +749,33 @@ bool Test()
 	string decl = engine->GetTypeDeclaration(typeId);
 	if( decl != "MyTmpl<float>" )
 		TEST_FAILED;
+
+	// Attempting to registering the same template specialization twice should give proper error
+	// Attempting to register a template specialization when the template itself hasn't been registered should also give proper error
+	// http://www.gamedev.net/topic/662414-issue-in-registering-template-specialization/
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+	bout.buffer = "";
+	typeId = engine->GetTypeIdByDecl("MyTmpl<int>");
+	if( typeId < 0 )
+		TEST_FAILED;
+	r = engine->RegisterObjectType("MyTmpl<int>", 0, asOBJ_REF);
+	if( r != asNOT_SUPPORTED )
+		TEST_FAILED;
+	r = engine->RegisterObjectType("NoTmpl<int>", 0, asOBJ_REF);
+	if( r != asINVALID_NAME )
+		TEST_FAILED;
+	r = engine->RegisterObjectType("MyTmpl<float>", 0, asOBJ_REF);
+	if( r != asALREADY_REGISTERED )
+		TEST_FAILED;
+	if( bout.buffer != " (0, 0) : Error   : Cannot register template specialization. The template type instance 'MyTmpl<int>' has already been generated.\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<int>' (Code: -7)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'NoTmpl<int>' (Code: -8)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<float>' (Code: -13)\n" )
+	{
+		PRINTF("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
 	
 	// TODO: Test behaviours that take and return the template sub type
 	// TODO: Test behaviours that take and return the proper template instance type
