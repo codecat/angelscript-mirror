@@ -1947,6 +1947,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			// Remove the template instance type, which will no longer be used.
 			RemoveTemplateInstanceType(dt.GetObjectType());
+
+			// Must clear unused types after removing the template instance, since it is possible that other
+			// template types were generated as a consequence of it, and thus must also be removed 
+			ClearUnusedTypes();
 		}
 	}
 

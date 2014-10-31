@@ -776,6 +776,31 @@ bool Test()
 		TEST_FAILED;
 	}
 
+	engine->Release();
+
+	// Registering template specialization with related templates
+	// http://www.gamedev.net/topic/662414-issue-in-registering-template-specialization/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("vector<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectType("vector_iterator<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectMethod("vector<T>", "vector_iterator<T> @begin()", asFUNCTION(0), asCALL_GENERIC);
+
+		r = engine->RegisterObjectType("vector<int8>", 0, asOBJ_REF);
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterObjectType("vector_iterator<int8>", 0, asOBJ_REF);
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterObjectMethod("vector<int8>", "vector_iterator<int8> @begin()", asFUNCTION(0), asCALL_GENERIC);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
 	
 	// TODO: Test behaviours that take and return the template sub type
 	// TODO: Test behaviours that take and return the proper template instance type
@@ -790,7 +815,6 @@ bool Test()
 
 
 
-	engine->Release();
 
 	// Test that a proper error occurs if the instance of a template causes invalid data types, e.g. int@
 	{
