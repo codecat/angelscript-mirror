@@ -211,7 +211,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 	int nested = 0;
 	while( pos < modifiedScript.size() )
 	{
-		int len;
+		asUINT len = 0;
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 		if( t == asTC_UNKNOWN && modifiedScript[pos] == '#' && (pos + 1 < modifiedScript.size()) )
 		{
@@ -280,7 +280,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 	pos = 0;
 	while( pos < modifiedScript.size() )
 	{
-		int len;
+		asUINT len = 0;
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 		if( t == asTC_COMMENT || t == asTC_WHITESPACE )
 		{
@@ -625,7 +625,7 @@ int CScriptBuilder::Build()
 
 int CScriptBuilder::SkipStatement(int pos)
 {
-	int len;
+	asUINT len = 0;
 
 	// Skip until ; or { whichever comes first
 	while( pos < (int)modifiedScript.length() && modifiedScript[pos] != ';' && modifiedScript[pos] != '{' )
@@ -664,7 +664,7 @@ int CScriptBuilder::SkipStatement(int pos)
 // Overwrite all code with blanks until the matching #endif
 int CScriptBuilder::ExcludeCode(int pos)
 {
-	int len;
+	asUINT len = 0;
 	int nested = 0;
 	while( pos < (int)modifiedScript.size() )
 	{
@@ -727,7 +727,7 @@ int CScriptBuilder::ExtractMetadataString(int pos, string &metadata)
 	pos += 1;
 
 	int level = 1;
-	int len;
+	asUINT len = 0;
 	while( level > 0 && pos < (int)modifiedScript.size() )
 	{
 		asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
@@ -761,7 +761,7 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &declaration, int &type)
 	int start = pos;
 
 	std::string token;
-	int len = 0;
+	asUINT len = 0;
 	asETokenClass t = asTC_WHITESPACE;
 
 	// Skip white spaces and comments

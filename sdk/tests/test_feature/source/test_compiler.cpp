@@ -645,7 +645,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-		int len;
+		asUINT len = 0;
 		if( engine->ParseToken("uintHello", 0, &len) != asTC_IDENTIFIER || len != 9 )
 			TEST_FAILED;
 

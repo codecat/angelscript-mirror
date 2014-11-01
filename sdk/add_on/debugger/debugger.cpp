@@ -490,7 +490,7 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 
 	asIScriptEngine *engine = ctx->GetEngine();
 
-	int len = 0;
+	asUINT len = 0;
 	asETokenClass t = engine->ParseToken(expr.c_str(), 0, &len);
 
 	// TODO: If the expression starts with :: we should only look for global variables

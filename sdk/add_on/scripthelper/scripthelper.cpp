@@ -523,7 +523,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 	{
 		static asETokenClass GetToken(asIScriptEngine *engine, string &token, const string &text, asUINT &pos)
 		{
-			int len;
+			asUINT len = 0;
 			asETokenClass t = engine->ParseToken(&text[pos], text.length() - pos, &len);
 			while( (t == asTC_WHITESPACE || t == asTC_COMMENT) && pos < text.length() )
 			{

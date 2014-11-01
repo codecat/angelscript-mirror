@@ -1109,8 +1109,7 @@ asIJITCompiler *asCScriptEngine::GetJITCompiler() const
 }
 
 // interface
-// TODO: interface: tokenLength should be asUINT
-asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLength, int *tokenLength) const
+asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLength, asUINT *tokenLength) const
 {
 	if( stringLength == 0 )
 		stringLength = strlen(string);
@@ -1120,7 +1119,7 @@ asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLengt
 	tok.GetToken(string, stringLength, &len, &tc);
 
 	if( tokenLength )
-		*tokenLength = (int)len;
+		*tokenLength = (asUINT)len;
 
 	return tc;
 }
@@ -4906,11 +4905,8 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType
 }
 
 // internal
-// TODO: interface: Should return status code
 void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type)
 {
-	// TODO: Warn about invalid call in message stream
-	// TODO: Should a script exception be set in case a context is active?
 	if( type == 0 || mem == 0 || obj == 0 ) return;
 
 	// This function is only meant to be used for value types
@@ -4933,18 +4929,17 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 }
 
 // interface
-// TODO: interface: Should return status code
-void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type)
+int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type)
 {
 	// TODO: Warn about invalid call in message stream
 	// TODO: Should a script exception be set in case a context is active?
-	if( type == 0 || dstObj == 0 || srcObj == 0 ) return;
+	if( type == 0 || dstObj == 0 || srcObj == 0 ) return asINVALID_ARG;
 
 	const asCObjectType *objType = reinterpret_cast<const asCObjectType*>(type);
 
 	// If value assign for ref types has been disabled, then don't do anything if the type is a ref type
 	if( ep.disallowValueAssignForRefType && (objType->flags & asOBJ_REF) && !(objType->flags & asOBJ_SCOPED) )
-		return;
+		return asNOT_SUPPORTED;
 
 	// Must not copy if the opAssign is not available and the object is not a POD object
 	if( objType->beh.copy )
@@ -4963,6 +4958,8 @@ void asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIOb
 	{
 		memcpy(dstObj, srcObj, objType->size);
 	}
+
+	return asSUCCESS;
 }
 
 // interface
@@ -5513,9 +5510,9 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 	if( NULL == valueName )
 		return ConfigError(asINVALID_NAME, "RegisterEnumValue", typeName, valueName);
 
-	int tokenLen;
+	asUINT tokenLen = 0;
 	asETokenClass tokenClass = ParseToken(valueName, 0, &tokenLen);
-	if( tokenClass != asTC_IDENTIFIER || tokenLen != (int)strlen(valueName) )
+	if( tokenClass != asTC_IDENTIFIER || tokenLen != strlen(valueName) )
 		return ConfigError(asINVALID_NAME, "RegisterEnumValue", typeName, valueName);
 
 	for( unsigned int n = 0; n < ot->enumValues.GetLength(); n++ )

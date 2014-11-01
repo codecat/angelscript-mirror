@@ -166,7 +166,7 @@ public:
 	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
 	virtual void                  *CreateUninitializedScriptObject(const asIObjectType *type);
 	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj);
-	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
+	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
 	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type);
 	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type);
 	// TODO: interface: Should have a method void *CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType); 
@@ -182,7 +182,7 @@ public:
 	virtual int               SetContextCallbacks(asREQUESTCONTEXTFUNC_t requestCtx, asRETURNCONTEXTFUNC_t returnCtx, void *param = 0);
 
 	// String interpretation
-	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const;
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, asUINT *tokenLength = 0) const;
 
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE, asUINT numIterations = 1);
