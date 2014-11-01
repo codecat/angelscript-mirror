@@ -776,6 +776,25 @@ bool Test()
 		TEST_FAILED;
 	}
 
+	// Should give proper error if attempting to register anything for a type that has been generated from a template
+	bout.buffer = "";
+	r = engine->RegisterObjectBehaviour("MyTmpl<int>", asBEHAVE_CONSTRUCT, "MyTmpl<int> @f()", asFUNCTION(0), asCALL_GENERIC);
+	if( r != asINVALID_TYPE )
+		TEST_FAILED;
+	r = engine->RegisterObjectMethod("MyTmpl<int>", "void f()", asFUNCTION(0), asCALL_GENERIC);
+	if( r != asINVALID_TYPE )
+		TEST_FAILED;
+	r = engine->RegisterObjectProperty("MyTmpl<int>", "int p", 0);
+	if( r != asINVALID_TYPE )
+		TEST_FAILED;
+	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'MyTmpl<int>' and 'MyTmpl<int> @f()' (Code: -12)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl<int>' and 'void f()' (Code: -12)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'MyTmpl<int>' and 'int p' (Code: -12)\n" )
+	{
+		PRINTF("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
+
 	engine->Release();
 
 	// Registering template specialization with related templates
@@ -785,9 +804,11 @@ bool Test()
 
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		engine->RegisterObjectType("vector<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
-		engine->RegisterObjectType("vector_iterator<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
-		engine->RegisterObjectMethod("vector<T>", "vector_iterator<T> @begin()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectType("vector<class T>", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_TEMPLATE);
+		engine->RegisterObjectType("vector_iterator<class T>", 4, asOBJ_VALUE | asOBJ_TEMPLATE);
+		engine->RegisterObjectBehaviour("vector_iterator<T>", asBEHAVE_CONSTRUCT, "void f(int&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("vector_iterator<T>", asBEHAVE_CONSTRUCT, "void f(int&in,vector<T> &)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("vector<T>", "vector_iterator<T> begin()", asFUNCTION(0), asCALL_GENERIC);
 
 		r = engine->RegisterObjectType("vector<int8>", 0, asOBJ_REF);
 		if( r < 0 )

@@ -1262,7 +1262,10 @@ int asCScriptEngine::ClearUnusedTypes()
 			// Template types and script classes will have two references for each factory stub
 			if( (type->flags & asOBJ_TEMPLATE) )
 			{
-				typeRefCount = 2*(int)type->beh.factories.GetLength();
+				if( type->flags & asOBJ_REF )
+					typeRefCount = 2*(int)type->beh.factories.GetLength();
+				else
+					typeRefCount = (int)type->beh.constructors.GetLength();
 				if( type->beh.listFactory )
 					typeRefCount += 2;
 
@@ -1477,6 +1480,10 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	r = bld.ParseDataType(obj, &dt, defaultNamespace);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectProperty", obj, declaration);
+
+	// Don't allow modifying generated template instances
+	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetObjectType()) )
+		return ConfigError(asINVALID_TYPE, "RegisterObjectProperty", obj, declaration);
 
 	// Verify that the correct config group is used
 	if( currentGroup->FindType(dt.GetObjectType()->name.AddressOf()) == 0 )
@@ -1839,8 +1846,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		// Keep the most recent template generated instance type, so we know what it was before parsing the datatype
 		asCObjectType *mostRecentTemplateInstanceType = 0;
-		if( generatedTemplateTypes.GetLength() )
-			mostRecentTemplateInstanceType = generatedTemplateTypes[generatedTemplateTypes.GetLength()-1];
+		asUINT originalSizeOfGeneratedTemplateTypes = (asUINT)generatedTemplateTypes.GetLength();
+		if( originalSizeOfGeneratedTemplateTypes )
+			mostRecentTemplateInstanceType = generatedTemplateTypes[originalSizeOfGeneratedTemplateTypes-1];
 
 		// Use builder to parse the datatype
 		asCDataType dt;
@@ -1949,7 +1957,11 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			// Must clear unused types after removing the template instance, since it is possible that other
 			// template types were generated as a consequence of it, and thus must also be removed 
-			ClearUnusedTypes();
+			while( ClearUnusedTypes() );
+
+			asASSERT( generatedTemplateTypes.GetLength() == originalSizeOfGeneratedTemplateTypes );
+			asASSERT( (mostRecentTemplateInstanceType == 0 && generatedTemplateTypes.GetLength() == 0) ||
+				(mostRecentTemplateInstanceType && generatedTemplateTypes[generatedTemplateTypes.GetLength() - 1] == mostRecentTemplateInstanceType) );
 		}
 	}
 
@@ -1983,6 +1995,10 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
 	if( type.IsReadOnly() || type.IsReference() )
+		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
+
+	// Don't allow modifying generated template instances
+	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(type.GetObjectType()) )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
 	return RegisterBehaviourToObjectType(type.GetObjectType(), behaviour, decl, funcPointer, callConv, objForThiscall);
@@ -2793,6 +2809,10 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 		dt.GetObjectType() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
+	// Don't allow modifying generated template instances
+	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetObjectType()) )
+		return ConfigError(asINVALID_TYPE, "RegisterObjectMethod", obj, declaration);
+
 	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv, objForThiscall);
 }
 
@@ -3422,6 +3442,15 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 	}
 	t->beh.factories.SetLength(0);
 
+	// Destroy the constructor stubs
+	for( n = 0; n < (int)t->beh.constructors.GetLength(); n++ )
+	{
+		// Make sure the factory stub isn't referencing this object anymore
+		scriptFunctions[t->beh.constructors[n]]->ReleaseAllHandles(this);
+		scriptFunctions[t->beh.constructors[n]]->Release();
+	}
+	t->beh.constructors.SetLength(0);
+
 	// Destroy the stub for the list factory too
 	if( t->beh.listFactory )
 	{
@@ -3437,6 +3466,13 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 			scriptFunctions[t->beh.operators[n]]->Release();
 	}
 	t->beh.operators.SetLength(0);
+
+	for( n = 0; n < (int)t->methods.GetLength(); n++ )
+	{
+		if( t->methods[n] )
+			scriptFunctions[t->methods[n]]->Release();
+	}
+	t->methods.SetLength(0);
 
 	// Start searching from the end of the list, as most of
 	// the time it will be the last two types
