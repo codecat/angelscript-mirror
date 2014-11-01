@@ -76,11 +76,11 @@ public:
 //===================================
 // From asIScriptObject
 //===================================
-	asIScriptEngine *GetEngine() const;
 
 	// Memory management
-	int AddRef() const;
-	int Release() const;
+	int                    AddRef() const;
+	int                    Release() const;
+	asILockableSharedBool *GetWeakRefFlag() const;
 
 	// Type info
 	int            GetTypeId() const;
@@ -92,11 +92,8 @@ public:
 	const char *GetPropertyName(asUINT prop) const;
 	void       *GetAddressOfProperty(asUINT prop);
 
-	int         CopyFrom(asIScriptObject *other);
-
-	// TODO: interface: Add a method for getting the weak ref flag directly from 
-	//                  the object, so it is not necessary to call the engine's 
-	//                  GetWeakRefFlagOfScriptObject
+	asIScriptEngine *GetEngine() const;
+	int              CopyFrom(asIScriptObject *other);
 
 //====================================
 // Internal
@@ -113,9 +110,6 @@ public:
 	bool GetFlag();
 	void EnumReferences(asIScriptEngine *engine);
 	void ReleaseAllHandles(asIScriptEngine *engine);
-
-	// Weakref methods
-	asILockableSharedBool *GetWeakRefFlag() const;
 
 	// Used for properties
 	void *AllocateUninitializedObject(asCObjectType *objType, asCScriptEngine *engine);

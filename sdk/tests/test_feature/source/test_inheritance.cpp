@@ -92,8 +92,7 @@ bool Test()
 				m_value = 0;
 				m_refCount = 1;
 
-				asIScriptEngine *engine = obj->GetEngine();
-				m_isDead = engine->GetWeakRefFlagOfScriptObject(obj, obj->GetObjectType());
+				m_isDead = obj->GetWeakRefFlag();
 				m_isDead->AddRef();
 
 				m_obj = obj;

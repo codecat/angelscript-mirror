@@ -974,8 +974,9 @@ class asIScriptObject
 {
 public:
 	// Memory management
-	virtual int AddRef() const = 0;
-	virtual int Release() const = 0;
+	virtual int                    AddRef() const = 0;
+	virtual int                    Release() const = 0;
+	virtual asILockableSharedBool *GetWeakRefFlag() const = 0;
 
 	// Type info
 	virtual int            GetTypeId() const = 0;

@@ -66,11 +66,9 @@ protected:
   // The constructor and destructor are indirectly called
   FooScripted(asIScriptObject *obj) : m_obj(0), m_isDead(0), m_value(0), m_refCount(1)
   {
-    asIScriptEngine *engine = obj->GetEngine();
-
     // Get the weak ref flag for the script object to 
     // avoid holding a strong reference to the script class
-    m_isDead = engine->GetWeakRefFlagOfScriptObject(obj, obj->GetObjectType());
+    m_isDead = obj->GetWeakRefFlag();
     m_isDead->AddRef();
 
     m_obj = obj;
