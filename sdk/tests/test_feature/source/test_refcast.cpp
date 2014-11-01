@@ -167,6 +167,16 @@ bool Test()
 		testClassObj->Release();
 	}
 
+	typeB* b = 0;
+	r = engine->CastObject(a, engine->GetObjectTypeByName("typeA"), engine->GetObjectTypeByName("typeB"), (void**)&b);
+	if( r != asSUCCESS )
+		TEST_FAILED;
+	if( b == 0 )
+		TEST_FAILED;
+	if( b->iRef != 2 )
+		TEST_FAILED;
+	b->Release();
+
 	a->Release();
 
 	engine->Release();

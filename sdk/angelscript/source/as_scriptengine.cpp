@@ -4742,6 +4742,116 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 }
 
 // interface
+int asCScriptEngine::CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast)
+{
+	if( newPtr == 0 ) return asINVALID_ARG;
+	*newPtr = 0;
+
+	if( fromType == 0 || toType == 0 ) return asINVALID_ARG;
+
+	if( obj == 0 )
+		return asSUCCESS;
+
+	// For script classes and interfaces there is a quick route
+	if( (fromType->GetFlags() & asOBJ_SCRIPT_OBJECT) && (toType->GetFlags() & asOBJ_SCRIPT_OBJECT) )
+	{
+		// Up casts to base class or interface can be done implicitly
+		if( fromType->DerivesFrom(toType) ||
+			fromType->Implements(toType) )
+		{
+			*newPtr = obj;
+			reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();
+			return asSUCCESS;
+		}
+		// Down casts to derived class or from interface can only be done explicitly
+		if( !useOnlyImplicitCast )
+		{
+			if( toType->Implements(fromType) || 
+				toType->DerivesFrom(fromType) )
+			{
+				*newPtr = obj;
+				reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();
+				return asSUCCESS;
+			}
+
+			// Get the true type of the object so the explicit cast can evaluate all possibilities
+			asIObjectType *from = reinterpret_cast<asCScriptObject*>(obj)->GetObjectType();
+			if( from->DerivesFrom(toType) ||
+				from->Implements(toType) )
+			{
+				*newPtr = obj;
+				reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();
+				return asSUCCESS;
+			}
+		}
+
+		// Let it continue, since it is possible the script class implements an opCast method
+	}
+	// Script functions can only be cast to another if the signature is equal
+	else if( (fromType->GetFlags() & asOBJ_SCRIPT_FUNCTION) && (toType->GetFlags() & asOBJ_SCRIPT_FUNCTION) )
+	{
+		asCScriptFunction *func = reinterpret_cast<asCScriptFunction*>(obj);
+		if( func->IsCompatibleWithTypeId(toType->GetTypeId()) )
+		{
+			*newPtr = obj;
+			func->AddRef();
+			return asSUCCESS;
+		}
+
+		// It's still a success even though the newPtr is null
+		return asSUCCESS;
+	}
+
+	// For application classes it is necessary to look for ref cast behaviours
+	asCScriptFunction *universalCastFunc = 0;
+	asCObjectType *from = reinterpret_cast<asCObjectType*>(fromType);
+	for( asUINT n = 0; n < from->beh.operators.GetLength(); n += 2 )
+	{
+		if( from->beh.operators[n] == asBEHAVE_IMPLICIT_REF_CAST ||
+			(!useOnlyImplicitCast && from->beh.operators[n] == asBEHAVE_REF_CAST) )
+		{
+			asCScriptFunction *func = scriptFunctions[from->beh.operators[n+1]];
+			if( func->returnType.GetObjectType() == toType )
+			{
+				*newPtr = CallObjectMethodRetPtr(obj, func->id);
+				// The ref cast behaviour returns a handle with incremented
+				// ref counter, so there is no need to call AddRef explicitly
+				// unless the function is registered with autohandle
+				if( func->sysFuncIntf->returnAutoHandle )
+					AddRefScriptObject(*newPtr, toType);
+				return asSUCCESS;
+			}
+			else
+			{
+				asASSERT( func->returnType.GetTokenType() == ttVoid && 
+						  func->parameterTypes.GetLength() == 1 && 
+						  func->parameterTypes[0].GetTokenType() == ttQuestion );
+				universalCastFunc = func;
+			}
+		}
+	}
+
+	// One last chance if the object has a void opCast(?&out) behaviour
+	// TODO: 2.30.0: implement this
+	/*
+	if( universalCastFunc )
+	{
+		// TODO: Add proper error handling
+		asIScriptContext *ctx = RequestContext();
+		ctx->Prepare(universalCastFunc);
+		ctx->SetObject(obj);
+		// TODO: interface: Context needs a SetArgVar to be able to call functions that take ? arguments
+		ctx->SetArgVar(0, newPtr, toType->GetTypeId() | asTYPEID_OBJHANDLE);
+		ctx->Execute();
+		ReturnContext(ctx);
+	}
+	*/
+
+	// The cast is not available, but it is still a success
+	return asSUCCESS;
+}
+
+// interface
 void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 {
 	if( type == 0 ) return 0;

@@ -223,22 +223,10 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 		engine->AddRefScriptObject(m_ref, m_type);
 		*outRef = m_ref;
 	}
-	else if( m_type->GetFlags() & asOBJ_SCRIPT_OBJECT )
+	else 
 	{
-		// Attempt a dynamic cast of the stored handle to the requested handle type
-		if( engine->IsHandleCompatibleWithObject(m_ref, m_type->GetTypeId(), typeId) )
-		{
-			// The script type is compatible so we can simply return the same pointer
-			engine->AddRefScriptObject(m_ref, m_type);
-			*outRef = m_ref;
-		}
-	}
-	else
-	{
-		// TODO: Check for the existance of a reference cast behaviour.
-		//       Both implicit and explicit casts may be used
-		//       Calling the reference cast behaviour may change the actual
-		//       pointer so the AddRef must be called on the new pointer
+		// CastObject will increment the refCount of the returned object if successful
+		engine->CastObject(m_ref, m_type, type, outRef);
 	}
 }
 

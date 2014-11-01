@@ -169,10 +169,8 @@ public:
 	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
 	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type);
 	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type);
-	// TODO: interface: Should have a method void *CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType); 
-	//                  For script objects it should simply check if the object implements or derives from the toType
-	//                  For application objects it should look for ref cast behaviours and call the matching one
-	//                  Once implemented the IsHandleCompatibleWithObject should be removed from the engine
+	virtual int                    CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast = false);
+	// TODO: interface: Deprecate IsHandleCompatibleWithObject
 	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
 	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
 

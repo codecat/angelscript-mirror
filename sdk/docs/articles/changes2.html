@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asIScriptEngine::AssignScriptObject now returns an int with the success or error code
 <li>The tokenLength arg for ParseToken is changed to asUINT
 <li>Added asIScriptObject::GetWeakRefFlag
+<li>Implemented asIScriptEngine::CastObject
 </ul>
 <li>Library
 <ul>
@@ -41,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Add-ons
 <ul>
 <li>The script array and grid add-ons avoid flagging themselves as garbage collected for handle subtypes that are known not to be garbage collected
+<li>The CScriptHandle uses the new CastObject to properly cast to all supported types of the contained handle
 </ul>
 </ul>
 
