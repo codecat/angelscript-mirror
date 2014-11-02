@@ -4,7 +4,9 @@
 #include <string.h> // strstr()
 #include <stdio.h>	// sprintf()
 #include <stdlib.h> // strtod()
-#include <locale.h> // setlocale()
+#ifndef __psp2__
+	#include <locale.h> // setlocale()
+#endif
 #include <map>      // std::map
 
 using namespace std;
@@ -227,6 +229,22 @@ static string &AddAssignDoubleToString(double f, string &dest)
 	return dest;
 }
 
+static string &AssignFloatToString(float f, string &dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest = stream.str();
+	return dest;
+}
+
+static string &AddAssignFloatToString(float f, string &dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest += stream.str();
+	return dest;
+}
+
 static string &AssignBoolToString(bool b, string &dest)
 {
 	ostringstream stream;
@@ -251,6 +269,20 @@ static string AddStringDouble(const string &str, double f)
 }
 
 static string AddDoubleString(double f, const string &str)
+{
+	ostringstream stream;
+	stream << f;
+	return stream.str() + str;
+}
+
+static string AddStringFloat(const string &str, float f)
+{
+	ostringstream stream;
+	stream << f;
+	return str + stream.str();
+}
+
+static string AddFloatString(float f, const string &str)
 {
 	ostringstream stream;
 	stream << f;
@@ -354,14 +386,14 @@ static string formatInt(asINT64 value, const string &options, asUINT width)
 	if( spaceOnSign ) fmt += " ";
 	if( padWithZero ) fmt += "0";
 
-#ifdef __GNUC__
+#ifdef _WIN32
+	fmt += "*I64";
+#else
 #ifdef _LP64
 	fmt += "*l";
 #else
 	fmt += "*ll";
 #endif
-#else
-	fmt += "*I64";
 #endif
 
 	if( hexSmall ) fmt += "x";
@@ -483,7 +515,7 @@ double parseFloat(const string &val, asUINT *byteCount)
     // WinCE doesn't have setlocale. Some quick testing on my current platform
     // still manages to parse the numbers such as "3.14" even if the decimal for the
     // locale is ",".
-#if !defined(_WIN32_WCE) && !defined(ANDROID)
+#if !defined(_WIN32_WCE) && !defined(ANDROID) && !defined(__psp2__)
 	// Set the locale to C so that we are guaranteed to parse the float value correctly
 	char *orig = setlocale(LC_NUMERIC, 0);
 	setlocale(LC_NUMERIC, "C");
@@ -491,7 +523,7 @@ double parseFloat(const string &val, asUINT *byteCount)
 
 	double res = strtod(val.c_str(), &end);
 
-#if !defined(_WIN32_WCE) && !defined(ANDROID)
+#if !defined(_WIN32_WCE) && !defined(ANDROID) && !defined(__psp2__)
 	// Restore the locale
 	setlocale(LC_NUMERIC, orig);
 #endif
@@ -584,6 +616,11 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(double)", asFUNCTION(AddAssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd(double) const", asFUNCTION(AddStringDouble), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const", asFUNCTION(AddDoubleString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("string", "string &opAssign(float)", asFUNCTION(AssignFloatToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(float)", asFUNCTION(AddAssignFloatToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(float) const", asFUNCTION(AddStringFloat), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd_r(float) const", asFUNCTION(AddFloatString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("string", "string &opAssign(int64)", asFUNCTION(AssignInt64ToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int64)", asFUNCTION(AddAssignInt64ToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -827,6 +864,16 @@ static void AssignDouble2StringGeneric(asIScriptGeneric *gen)
 	gen->SetReturnAddress(self);
 }
 
+static void AssignFloat2StringGeneric(asIScriptGeneric *gen)
+{
+	float *a = static_cast<float*>(gen->GetAddressOfArg(0));
+	string *self = static_cast<string*>(gen->GetObject());
+	std::stringstream sstr;
+	sstr << *a;
+	*self = sstr.str();
+	gen->SetReturnAddress(self);
+}
+
 static void AssignBool2StringGeneric(asIScriptGeneric *gen)
 {
 	bool *a = static_cast<bool*>(gen->GetAddressOfArg(0));
@@ -840,6 +887,16 @@ static void AssignBool2StringGeneric(asIScriptGeneric *gen)
 static void AddAssignDouble2StringGeneric(asIScriptGeneric * gen)
 {
   double * a = static_cast<double *>(gen->GetAddressOfArg(0));
+  string * self = static_cast<string *>(gen->GetObject());
+  std::stringstream sstr;
+  sstr << *a;
+  *self += sstr.str();
+  gen->SetReturnAddress(self);
+}
+
+static void AddAssignFloat2StringGeneric(asIScriptGeneric * gen)
+{
+  float * a = static_cast<float *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a;
@@ -887,6 +944,16 @@ static void AddString2DoubleGeneric(asIScriptGeneric * gen)
   gen->SetReturnObject(&ret_val);
 }
 
+static void AddString2FloatGeneric(asIScriptGeneric * gen)
+{
+  string * a = static_cast<string *>(gen->GetObject());
+  float * b = static_cast<float *>(gen->GetAddressOfArg(0));
+  std::stringstream sstr;
+  sstr << *a << *b;
+  std::string ret_val = sstr.str();
+  gen->SetReturnObject(&ret_val);
+}
+
 static void AddString2IntGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
@@ -920,6 +987,16 @@ static void AddString2BoolGeneric(asIScriptGeneric * gen)
 static void AddDouble2StringGeneric(asIScriptGeneric * gen)
 {
   double* a = static_cast<double *>(gen->GetAddressOfArg(0));
+  string * b = static_cast<string *>(gen->GetObject());
+  std::stringstream sstr;
+  sstr << *a << *b;
+  std::string ret_val = sstr.str();
+  gen->SetReturnObject(&ret_val);
+}
+
+static void AddFloat2StringGeneric(asIScriptGeneric * gen)
+{
+  float* a = static_cast<float *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a << *b;
@@ -1013,6 +1090,11 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(double)", asFUNCTION(AddAssignDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd(double) const", asFUNCTION(AddString2DoubleGeneric), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const", asFUNCTION(AddDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("string", "string &opAssign(float)", asFUNCTION(AssignFloat2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(float)", asFUNCTION(AddAssignFloat2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(float) const", asFUNCTION(AddString2FloatGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd_r(float) const", asFUNCTION(AddFloat2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("string", "string &opAssign(int64)", asFUNCTION(AssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int64)", asFUNCTION(AddAssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );

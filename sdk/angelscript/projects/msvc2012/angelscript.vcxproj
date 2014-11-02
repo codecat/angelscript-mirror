@@ -321,6 +321,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">armasm.exe -o $(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj %(RootDir)%(Directory)\%(Filename)%(Extension)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj;%(Outputs)</Outputs>
     </CustomBuild>
+    <None Include="..\..\source\as_callfunc_arm_vita.S" />
     <None Include="..\..\source\as_callfunc_arm_xcode.S" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

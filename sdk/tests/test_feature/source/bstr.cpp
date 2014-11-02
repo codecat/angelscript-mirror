@@ -1,4 +1,6 @@
-#include <memory.h> // memcpy(), memcmp()
+#if !defined(__CELLOS_LV2__) && !defined(__psp2__)
+#	include <memory.h> // memcpy(), memcmp()
+#endif
 #include <string.h> // some compilers declare memcmp() here
 #include <assert.h> // assert()
 #include <stdio.h>  // sprintf()

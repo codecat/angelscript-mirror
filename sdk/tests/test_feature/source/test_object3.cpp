@@ -5,7 +5,7 @@ namespace TestObject3
 
 static const char * const TESTNAME = "TestObject3";
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__psp2__)
 #undef __cdecl
 #define __cdecl
 #endif

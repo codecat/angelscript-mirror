@@ -112,6 +112,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef AS_NO_THISCALL_FUNCTOR_METHOD
 		"AS_NO_THISCALL_FUNCTOR_METHOD "
 #endif
+#ifdef AS_NO_EXCEPTIONS
+		"AS_NO_EXCEPTIONS "
+#endif
 #ifdef WIP_16BYTE_ALIGN
 		"WIP_16BYTE_ALIGN "
 #endif
@@ -146,6 +149,9 @@ AS_API const char * asGetLibraryOptions()
 #endif
 #ifdef AS_PS3
 		"AS_PS3 "
+#endif
+#ifdef AS_PSVITA
+		"AS_PSVITA "
 #endif
 #ifdef AS_DC
 		"AS_DC "
@@ -4100,7 +4106,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, int func) const
 
 void asCScriptEngine::CallObjectMethod(void *obj, asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(AS_PSVITA)
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
 		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
@@ -4166,7 +4172,7 @@ bool asCScriptEngine::CallObjectMethodRetBool(void *obj, int func) const
 	asASSERT( s != 0 );
 	asSSystemFunctionInterface *i = s->sysFuncIntf;
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(AS_PSVITA)
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
 		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
@@ -4233,7 +4239,7 @@ int asCScriptEngine::CallObjectMethodRetInt(void *obj, int func) const
 	asASSERT( s != 0 );
 	asSSystemFunctionInterface *i = s->sysFuncIntf;
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(AS_PSVITA)
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
 		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
@@ -4300,7 +4306,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
 	asASSERT( s != 0 );
 	asSSystemFunctionInterface *i = s->sysFuncIntf;
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(AS_PSVITA)
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
 		asCGeneric gen(const_cast<asCScriptEngine*>(this), s, obj, 0);
@@ -4428,7 +4434,7 @@ void asCScriptEngine::CallObjectMethod(void *obj, void *param, int func) const
 
 void asCScriptEngine::CallObjectMethod(void *obj, void *param, asSSystemFunctionInterface *i, asCScriptFunction *s) const
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(AS_PSVITA)
 	if( i->callConv == ICC_CDECL_OBJLAST )
 	{
 		void (*f)(void *, void *) = (void (*)(void *, void *))(i->func);

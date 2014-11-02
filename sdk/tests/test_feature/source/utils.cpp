@@ -91,7 +91,7 @@ void *MyAllocWithStats(size_t size, const char *file, int line)
 
 	// Allocate the memory
 	void *ptr = malloc(size);
-
+#if !defined(__psp2__) && !defined(__CELLOS_LV2__)
 	// Count number of allocations made
 	numAllocs++;
 
@@ -130,12 +130,13 @@ void *MyAllocWithStats(size_t size, const char *file, int line)
 	else
 		locCount.insert(map<loc,int>::value_type(l,1));
 #endif
-
+#endif
 	return ptr;
 }
 
 void MyFreeWithStats(void *address)
 {
+#if !defined(__psp2__) && !defined(__CELLOS_LV2__)
 	// Count the number of deallocations made
 	numFrees++;
 
@@ -159,7 +160,7 @@ void MyFreeWithStats(void *address)
 	}
 	else
 		assert(false);
-
+#endif
 	// Free the actual memory
 	free(address);
 }

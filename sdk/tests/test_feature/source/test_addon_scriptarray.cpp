@@ -146,7 +146,16 @@ bool Test2();
 class ClassExceptionInConstructor
 {
 public:
-	ClassExceptionInConstructor() { throw std::exception(); }
+	ClassExceptionInConstructor()
+	{
+		if( !strstr(asGetLibraryOptions(), "AS_NO_EXCEPTIONS") )
+			throw std::exception();
+		else
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			if( ctx ) ctx->SetException("Caught an exception from the application");
+		}
+	}
 	~ClassExceptionInConstructor() {}
 	ClassExceptionInConstructor &operator=(const ClassExceptionInConstructor &) { return *this; }
 

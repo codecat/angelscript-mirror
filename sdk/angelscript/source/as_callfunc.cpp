@@ -122,7 +122,7 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 				internal->callConv = (internalCallConv)(thisCallConv + 2);
 #endif
 			internal->baseOffset = ( int )MULTI_BASE_OFFSET(ptr);
-#if defined(AS_ARM) && defined(__GNUC__)
+#if defined(AS_ARM) && (defined(__GNUC__) || defined(AS_PSVITA))
 			// As the least significant bit in func is used to switch to THUMB mode
 			// on ARM processors, the LSB in the __delta variable is used instead of
 			// the one in __pfn on ARM processors.
@@ -491,7 +491,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			}
 
 			// Add the base offset for multiple inheritance
-#if defined(__GNUC__) && defined(AS_ARM)
+#if (defined(__GNUC__) && defined(AS_ARM)) || defined(AS_PSVITA)
 			// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
 			// and the whole offset is thus shifted one bit left to keep the original
 			// offset resolution
@@ -553,7 +553,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 				}
 
 				// Add the base offset for multiple inheritance
-#if defined(__GNUC__) && defined(AS_ARM)
+#if (defined(__GNUC__) && defined(AS_ARM)) || defined(AS_PSVITA)
 				// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
 				// and the whole offset is thus shifted one bit left to keep the original
 				// offset resolution

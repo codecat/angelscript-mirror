@@ -369,7 +369,7 @@ typedef unsigned int   asUINT;
     typedef long asINT64;
 #else
     typedef unsigned long asDWORD;
-  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC)
+  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__)
     typedef uint64_t asQWORD;
     typedef int64_t asINT64;
   #else

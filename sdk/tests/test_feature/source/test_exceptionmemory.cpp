@@ -206,7 +206,14 @@ void ExceptionHandle_gen(asIScriptGeneric *gen)
 
 std::string ReturnStringButException()
 {
-	throw std::exception(); // random exception. AngelScript will catch all the same way
+	if( !strstr(asGetLibraryOptions(), "AS_NO_EXCEPTIONS") )
+		throw std::exception(); // random exception. AngelScript will catch all the same way
+	else
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx ) ctx->SetException("Caught an exception from the application");
+	}
+
 	return ""; // This is never returned so AngelScript has to properly handle the situation
 }
 

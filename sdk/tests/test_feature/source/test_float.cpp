@@ -93,8 +93,10 @@ bool Test()
 
 	ExecuteString(engine, "start()", mod);
 
+#if !defined(__psp2__)
 	// The locale affects the way the compiler reads float values
 	setlocale(LC_NUMERIC, "");
+#endif
 
 	float f;
 	engine->RegisterGlobalProperty("float f", &f);
@@ -105,7 +107,9 @@ bool Test()
 	if( f < 3.139999f || f > 3.140001f )
 		TEST_FAILED;
 
+#if !defined(__psp2__)
 	setlocale(LC_NUMERIC, "C");
+#endif
 
 	engine->Release();
 

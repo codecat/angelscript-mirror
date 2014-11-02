@@ -139,7 +139,7 @@ bool Test()
 	RegisterStdString(engine);
 	RegisterVector<char>("int8[]", "int8", engine);
 	RegisterVector<int>("int[]", "int", engine);
-#if defined(__GNUC__) || _MSC_VER >= 1500 || defined(__BORLANDC__)
+#if !defined(_MSC_VER) || _MSC_VER >= 1500 || defined(__BORLANDC__)
 	RegisterVector<string>("string[]", "string", engine);
 	RegisterVector< std::vector<int> >("int[][]", "int[]", engine);
 #else

@@ -2043,16 +2043,27 @@ class vec
 public:
 	vec() : x(0), y(0), z(0), w(0) {}
 	vec(float _x, float _y, float _z) : x(_x), y(_y), z(_z), w(0) {}
-	vec(const vec &o) : v(o.v) {}
-	vec &operator=(const vec &o) { v = o.v; return *this; }
+	vec(const vec &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
+	vec &operator=(const vec &o) { x = o.x; y = o.y; z = o.z; w = o.w; return *this; }
 
 	union {
+#ifdef _WIN32
 		__m128 v;
+#endif
 		struct {
 			float x, y, z, w;
 		};
 	};
-};
+}
+#ifndef _WIN32
+__attribute__((aligned(16)))
+#endif
+;
+
+#if defined(__psp2__) || defined(__CELLOS_LV2__)
+	#define _aligned_malloc(s, a) memalign(a, s)
+	#define _aligned_free free
+#endif
 
 //these do lambda magic to allow the definition of wrappers inline
 #define WRAPFUNC(ret, args, body) asFUNCTION(static_cast<ret(*)args>([]args -> ret body))
@@ -2066,9 +2077,9 @@ void registerVec(asIScriptEngine *engine)
 	// ref: http://msdn.microsoft.com/en-us/library/8z34s9c6.aspx
 	// TODO: With g++ use aligned_alloc/free instead: 
 	// ref http://linux.die.net/man/3/memalign 
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f()",							 WRAPEXPR(vec*, (), new(_aligned_malloc(sizeof(vec), std::alignment_of<vec>().value)) vec()), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(const vec &in v)",				 WRAPEXPR(vec*, (const vec &o), new(_aligned_malloc(sizeof(vec), std::alignment_of<vec>().value)) vec(o)), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float nx, float nx, float nz)", WRAPEXPR(vec*, (float x, float y, float z), new(_aligned_malloc(sizeof(vec), std::alignment_of<vec>().value)) vec(x, y, z)), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f()",							 WRAPEXPR(vec*, (), new(_aligned_malloc(sizeof(vec), __alignof(vec))) vec()), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(const vec &in v)",				 WRAPEXPR(vec*, (const vec &o), new(_aligned_malloc(sizeof(vec), __alignof(vec))) vec(o)), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float nx, float nx, float nz)", WRAPEXPR(vec*, (float x, float y, float z), new(_aligned_malloc(sizeof(vec), __alignof(vec))) vec(x, y, z)), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_RELEASE, "void f()",							 WRAPFUNC(void, (vec* t), {if(t) { t->~vec(); _aligned_free(t); }}), asCALL_CDECL_OBJLAST); assert(r >= 0);
 
 	r = engine->RegisterObjectMethod("vec", "vec &opAssign(const vec &in v)",	asMETHODPR(vec, operator =, (const vec&), vec&), asCALL_THISCALL); assert( r >= 0 );
@@ -2086,7 +2097,7 @@ bool checkVec(vec &v)
 	if( fabs(v.z - 27.402715f) >= 0.001f ) return false;
 
 	// Check the memory alignment
-	if( std::alignment_of<vec>::value != 16 ) return false;
+	if( __alignof(vec) != 16 ) return false;
 	if( (asPWORD(&v) & 0xF) != 0 ) return false;
 
 	return true;

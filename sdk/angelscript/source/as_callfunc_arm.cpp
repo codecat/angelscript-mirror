@@ -427,7 +427,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
 			// TODO: runtime optimize: Declare a reference to descr->parameterTypes[n] so the array doesn't have to be access all the time
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
+			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() &&
+				!(descr->parameterTypes[n].GetObjectType()->flags & asOBJ_APP_ARRAY) )
 			{
 #ifdef COMPLEX_OBJS_PASSED_BY_REF
 				if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )

@@ -240,6 +240,7 @@
 // AS_XBOX      - Microsoft XBox
 // AS_XBOX360   - Microsoft XBox 360
 // AS_PSP       - Sony Playstation Portable
+// AS_PSVITA    - Sony Playstation Vita
 // AS_PS2       - Sony Playstation 2
 // AS_PS3       - Sony Playstation 3
 // AS_DC        - Sega Dreamcast
@@ -529,13 +530,26 @@
 
 // SN Systems ProDG
 #if defined(__SNC__) || defined(SNSYS)
-	#define GNU_STYLE_VIRTUAL_METHOD
 	#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+1))
 	#define CALLEE_POPS_HIDDEN_RETURN_POINTER
 	#define COMPLEX_OBJS_PASSED_BY_REF
-	#define ASM_AT_N_T  // AT&T style inline assembly
-	#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR)
-	#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR)
+
+	#ifdef __psp2__
+		#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+		#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+		#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+		#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 2
+	#else
+		#define GNU_STYLE_VIRTUAL_METHOD
+		#define ASM_AT_N_T  // AT&T style inline assembly
+		#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR)
+		#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR)
+	#endif
+
 	#define AS_SIZEOF_BOOL 1
 	#define asVSNPRINTF(a, b, c, d) vsnprintf(a, b, c, d)
 
@@ -559,11 +573,22 @@
 		// Support native calling conventions on PS3
 		#define AS_PS3
 		#define AS_PPC_64
+		#define AS_NO_MEMORY_H
+		#define AS_NO_EXCEPTIONS
+		#include <stdlib.h>
 	// PSP
 	#elif defined(__psp__)
 		#define AS_NO_MEMORY_H
 		#define AS_MIPS
 		#define AS_PSP
+	// PSVita
+	#elif defined(__psp2__)
+		#define AS_PSVITA
+		#define AS_ARM
+		#define AS_NO_MEMORY_H
+		#define AS_NO_EXCEPTIONS
+		#define AS_CALLEE_DESTROY_OBJ_BY_VAL
+		#undef AS_NO_THISCALL_FUNCTOR_METHOD
 	#endif
 
 	#define UNREACHABLE_RETURN
