@@ -86,9 +86,11 @@ asCModule::~asCModule()
 		}
 
 		// Remove the module from the engine
+		ACQUIREEXCLUSIVE(engine->engineRWLock);
 		if( engine->lastModule == this )
 			engine->lastModule = 0;
 		engine->scriptModules.RemoveValue(this);
+		RELEASEEXCLUSIVE(engine->engineRWLock);
 	}
 }
 

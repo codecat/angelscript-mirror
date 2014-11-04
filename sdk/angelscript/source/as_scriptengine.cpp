@@ -1163,16 +1163,21 @@ int asCScriptEngine::DiscardModule(const char *module)
 // interface
 asUINT asCScriptEngine::GetModuleCount() const
 {
-	return asUINT(scriptModules.GetLength());
+	ACQUIRESHARED(engineRWLock);
+	asUINT length = asUINT(scriptModules.GetLength());
+	RELEASESHARED(engineRWLock);
+	return length;
 }
 
 // interface
 asIScriptModule *asCScriptEngine::GetModuleByIndex(asUINT index) const
 {
-	if( index >= scriptModules.GetLength() )
-		return 0;
-
-	return scriptModules[index];
+	asIScriptModule *mod = 0;
+	ACQUIRESHARED(engineRWLock);
+	if( index < scriptModules.GetLength() )
+		mod = scriptModules[index];
+	RELEASESHARED(engineRWLock);
+	return mod;
 }
 
 // internal
@@ -1198,6 +1203,7 @@ int asCScriptEngine::ClearUnusedTypes()
 	// Go through all modules
 	// TODO: optimize: If only the orphaned types was inserted in the types map, then this step is not necessary
 	asUINT n;
+	ACQUIRESHARED(engineRWLock);
 	for( n = 0; n < scriptModules.GetLength() && types.GetCount(); n++ )
 	{
 		asCModule *mod = scriptModules[n];
@@ -1215,6 +1221,7 @@ int asCScriptEngine::ClearUnusedTypes()
 				RemoveTypeAndRelatedFromList(types, mod->typeDefs[m]);
 		}
 	}
+	RELEASESHARED(engineRWLock);
 
 	// Go through all function parameters and remove used types
 	for( n = 0; n < scriptFunctions.GetLength() && types.GetCount(); n++ )
@@ -3363,7 +3370,7 @@ int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 	return stringFactory->GetReturnTypeId(flags);
 }
 
-// interface
+// internal
 asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 {
 	// Accept null as well as zero-length string
@@ -3373,13 +3380,18 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 	if( lastModule && lastModule->name == name )
 		return lastModule;
 
+	lastModule = 0;
+	ACQUIRESHARED(engineRWLock);
 	// TODO: optimize: Improve linear search
 	for( asUINT n = 0; n < scriptModules.GetLength(); ++n )
 		if( scriptModules[n] && scriptModules[n]->name == name )
 		{
 			lastModule = scriptModules[n];
-			return lastModule;
+			break;
 		}
+	RELEASESHARED(engineRWLock);
+	if( lastModule ) 
+		return lastModule;
 
 	if( create )
 	{
@@ -3390,7 +3402,9 @@ asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
 			return 0;
 		}
 
+		ACQUIREEXCLUSIVE(engineRWLock);
 		scriptModules.PushLast(module);
+		RELEASEEXCLUSIVE(engineRWLock);
 
 		lastModule = module;
 
