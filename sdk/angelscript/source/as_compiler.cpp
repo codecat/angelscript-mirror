@@ -11687,7 +11687,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			size_t oldReservedVars = reservedVariables.GetLength();
 			for( asUINT n = 0; n < rctx->deferredParams.GetLength(); n++ )
 			{
-				if( usedVars.Exists(rctx->deferredParams[n].argType.stackOffset) )
+				if( rctx->deferredParams[n].argType.isTemporary && 
+					usedVars.Exists(rctx->deferredParams[n].argType.stackOffset) )
 				{
 					if( reservedVariables.GetLength() == oldReservedVars )
 						reservedVariables.Concatenate(usedVars);

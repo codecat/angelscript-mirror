@@ -77,6 +77,49 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test assigning one dictionary value to another
+	// http://www.gamedev.net/topic/662542-assert-assigning-from-one-dictionary-to-another/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void foo() { \n"
+			"dictionary d1 = {{'1','1'}};\n"
+			"dictionary d2 = {{'2','2'}};\n"
+			"array<string>@ keys = d2.getKeys();\n"
+			"for(uint i = 0; i < keys.length(); ++i)\n"
+			"{\n"
+			// Try 1:
+			// No appropriate opAssign method found in 'dictionaryValue' for value assignment
+			// Previous error occurred while attempting to create a temporary copy of object
+			"  d1[keys[i]] = d2[keys[i]];\n"
+			// Try 2:
+			// Assert "tempVariables.exists(offset)" at as_compiler.cpp:4895, asCCompiler::ReleaseTemporaryVariable()
+			"  string key = keys[i];\n"
+			"  d1[key] = d2[key];\n"
+			"}\n"
+			"  assert( string(d1['1']) == '1' );\n"
+			"  assert( string(d1['2']) == '2' );\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "foo()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test retrieving arrays from dictionaries
 	// http://www.gamedev.net/topic/660363-retrieving-an-array-of-strings-from-a-dictionary/
 	{

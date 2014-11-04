@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/11/02</h2>
+<h2>Version 2.30.0 WIP - 2014/11/03</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Engine detects if application attempts to register method or property for generated template instances (Thanks glcolor)
 <li>Fixed bug with asOBJ_APP_ARRAY in arm and ppc64 calling conventions (Thanks Brandon Bare)
 <li>Fixed bug in Linux arm hardfloat ABI (Thanks Brandon Bare)
+<li>Fixed an assert failure in the compiler when compiling an assignment with non-temporary deferred arguments (Thanks iraxef)
 </ul>
 <li>Library interface
 <ul>
@@ -47,6 +48,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>The script array and grid add-ons avoid flagging themselves as garbage collected for handle subtypes that are known not to be garbage collected
 <li>The CScriptHandle uses the new CastObject to properly cast to all supported types of the contained handle
+<li>The dictionaryValue was missing a copy opAssign method so it wasn't possible to directly assign one dictionaryValue to another (Thanks iraxef)
 </ul>
 </ul>
 
