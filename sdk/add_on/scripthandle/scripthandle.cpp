@@ -225,8 +225,8 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 	}
 	else 
 	{
-		// CastObject will increment the refCount of the returned object if successful
-		engine->CastObject(m_ref, m_type, type, outRef);
+		// RefCastObject will increment the refCount of the returned object if successful
+		engine->RefCastObject(m_ref, m_type, type, outRef);
 	}
 }
 

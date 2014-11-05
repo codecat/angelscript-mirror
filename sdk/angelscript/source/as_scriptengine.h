@@ -169,10 +169,11 @@ public:
 	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
 	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type);
 	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type);
-	// TODO: interface: Rename it to RefCastObject to avoid people thinking it can be used for value conversions
-	virtual int                    CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast = false);
-	// TODO: interface: Deprecate IsHandleCompatibleWithObject
+	virtual int                    RefCastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast = false);
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.30.0, 2014-11-04
 	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
+#endif
 	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
 
 	// Context pooling

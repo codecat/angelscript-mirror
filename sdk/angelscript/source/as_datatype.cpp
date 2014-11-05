@@ -504,7 +504,7 @@ bool asCDataType::IsEqualExceptConst(const asCDataType &dt) const
 
 bool asCDataType::IsPrimitive() const
 {
-	//	Enumerations are primitives
+	// Enumerations are primitives
 	if( IsEnumType() )
 		return true;
 

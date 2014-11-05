@@ -640,11 +640,14 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 	{
 		// A handle can be retrieved if the stored type is a handle of same or compatible type
 		// or if the stored type is an object that implements the interface that the handle refer to.
-		if( (m_typeId & asTYPEID_MASK_OBJECT) && 
-			engine->IsHandleCompatibleWithObject(m_valueObj, m_typeId, typeId) )
+		if( (m_typeId & asTYPEID_MASK_OBJECT) )
 		{
-			engine->AddRefScriptObject(m_valueObj, engine->GetObjectTypeById(m_typeId));
-			*(void**)value = m_valueObj;
+			// Don't allow the get if the stored handle is to a const, but the desired handle is not
+			if( (m_typeId & asTYPEID_HANDLETOCONST) && !(typeId & asTYPEID_HANDLETOCONST) )
+				return false;
+
+			// RefCastObject will increment the refcount if successful
+			engine->RefCastObject(m_valueObj, engine->GetObjectTypeById(m_typeId), engine->GetObjectTypeById(typeId), reinterpret_cast<void**>(value));
 
 			return true;
 		}

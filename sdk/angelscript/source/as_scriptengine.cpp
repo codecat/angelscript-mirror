@@ -4798,7 +4798,7 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 }
 
 // interface
-int asCScriptEngine::CastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast)
+int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast)
 {
 	if( newPtr == 0 ) return asINVALID_ARG;
 	*newPtr = 0;
@@ -4811,6 +4811,13 @@ int asCScriptEngine::CastObject(void *obj, asIObjectType *fromType, asIObjectTyp
 	// For script classes and interfaces there is a quick route
 	if( (fromType->GetFlags() & asOBJ_SCRIPT_OBJECT) && (toType->GetFlags() & asOBJ_SCRIPT_OBJECT) )
 	{
+		if( fromType == toType )
+		{
+			*newPtr = obj;
+			reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();
+			return asSUCCESS;
+		}
+
 		// Up casts to base class or interface can be done implicitly
 		if( fromType->DerivesFrom(toType) ||
 			fromType->Implements(toType) )
@@ -4855,6 +4862,13 @@ int asCScriptEngine::CastObject(void *obj, asIObjectType *fromType, asIObjectTyp
 		}
 
 		// It's still a success even though the newPtr is null
+		return asSUCCESS;
+	}
+
+	if( fromType == toType )
+	{
+		*newPtr = obj;
+		AddRefScriptObject(*newPtr, toType);
 		return asSUCCESS;
 	}
 
@@ -5174,6 +5188,8 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
 	}
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.30.0, 2014-11-04
 // interface
 bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const
 {
@@ -5208,6 +5224,7 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 
 	return false;
 }
+#endif
 
 // interface
 int asCScriptEngine::BeginConfigGroup(const char *groupName)

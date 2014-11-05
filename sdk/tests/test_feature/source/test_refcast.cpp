@@ -168,7 +168,7 @@ bool Test()
 	}
 
 	typeB* b = 0;
-	r = engine->CastObject(a, engine->GetObjectTypeByName("typeA"), engine->GetObjectTypeByName("typeB"), (void**)&b);
+	r = engine->RefCastObject(a, engine->GetObjectTypeByName("typeA"), engine->GetObjectTypeByName("typeB"), (void**)&b);
 	if( r != asSUCCESS )
 		TEST_FAILED;
 	if( b == 0 )

@@ -88,12 +88,7 @@ public:
 		else if( heldType->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
 			// Attempt a dynamic cast of the stored handle to the requested handle type
-			if( m_engine->IsHandleCompatibleWithObject(m_valueObj, heldType->GetTypeId(), outTypeId) )
-			{
-				// The script type is compatible so we can simply return the same pointer
-				m_engine->AddRefScriptObject(m_valueObj, heldType);
-				*outRef = m_valueObj;
-			}
+			m_engine->RefCastObject(m_valueObj, heldType, m_engine->GetObjectTypeById(outTypeId), outRef);
 		}
 		else
 		{
@@ -112,11 +107,9 @@ public:
 		{
 			// A handle can be retrieved if the stored type is a handle of same or compatible type
 			// or if the stored type is an object that implements the interface that the handle refer to.
-			if( (m_typeId & asTYPEID_MASK_OBJECT) && 
-				m_engine->IsHandleCompatibleWithObject(m_valueObj, m_typeId, outTypeId) )
+			if( (m_typeId & asTYPEID_MASK_OBJECT) )
 			{
-				m_engine->AddRefScriptObject(m_valueObj, m_engine->GetObjectTypeById(m_typeId));
-				*(void**)outRef = m_valueObj;
+				m_engine->RefCastObject(m_valueObj, m_engine->GetObjectTypeById(m_typeId), m_engine->GetObjectTypeById(outTypeId), (void**)outRef);
 
 				return;
 			}
