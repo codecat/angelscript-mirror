@@ -194,11 +194,13 @@ public:
 	bool isSet;
 };
 
+bool TestScriptType();
+
 bool Test()
 {
 	RET_ON_MAX_PORT
 
-	bool fail = false;
+	bool fail = TestScriptType();
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
@@ -992,6 +994,199 @@ bool Test()
 	}
 
  	return fail;
+}
+
+
+// ScriptType implemented by Michael Rubin, a.k.a iraxef
+class CScriptType
+{
+public:
+
+    static void Construct(asIObjectType *type, void *mem);
+    static void CopyConstruct(asIObjectType *type, const CScriptType &other, void *mem);
+    static void Destruct(CScriptType *obj);
+
+    CScriptType(asIObjectType *type);
+    CScriptType(asIObjectType *type, const CScriptType &other);
+    virtual ~CScriptType();
+
+    int GetSubTypeId() const;
+
+    // CScriptType &operator=(const CScriptType&);
+
+    // Compare two types
+    bool operator==(const CScriptType &) const;
+    bool Equals(int typeId) const;
+
+    // std::string GetSubType() { return std::string(ot->GetEngine()->GetTypeDeclaration(ot->GetSubTypeId())); }
+
+protected:
+    asIObjectType *ot;
+};
+
+static bool ScriptTypeTypeidEquals(int other, int *self)
+{
+    return *self == other;
+}
+
+static int ScriptTypeGetTypeof(void *, int typeId)
+{
+    return typeId;
+}
+
+static std::string ScriptTypeGetClassname(int typeId)
+{
+    asIScriptContext* ctx = asGetActiveContext();
+    if ( ctx )
+    {
+        return ctx->GetEngine()->GetTypeDeclaration(typeId, true);
+        // asIObjectType* objType = ctx->GetEngine()->GetObjectTypeById(typeId);
+        // if ( objType )
+        // {
+
+        //     const std::string ns( objType->GetNamespace() );
+        //     const std::string name( objType->GetName() );
+
+        //     return ns.empty() ? name : (ns + "::" + name);
+        // }
+    }
+
+    return "";
+}
+
+static std::string ScriptTypeGetClassname(void *, int typeId)
+{
+    return ScriptTypeGetClassname(typeId);
+}
+
+static std::string ScriptTypeGetClassname(void *obj)
+{
+    CScriptType *self = reinterpret_cast<CScriptType*>(obj);
+    return ScriptTypeGetClassname(self->GetSubTypeId());
+}
+
+static std::string ScriptTypeTypeidToString(int *self)
+{
+    return ScriptTypeGetClassname(*self);
+}
+
+void CScriptType::Construct(asIObjectType *type, void *mem)
+{
+    new(mem) CScriptType(type);
+}
+
+void CScriptType::CopyConstruct(asIObjectType *type, const CScriptType &other, void *mem)
+{
+    new(mem) CScriptType(type, other);
+}
+
+void CScriptType::Destruct(CScriptType *obj)
+{
+    obj->~CScriptType();
+}
+
+CScriptType::CScriptType(asIObjectType *type)
+    : ot(type)
+{
+    ot->AddRef();
+}
+
+CScriptType::CScriptType(asIObjectType *type, const CScriptType &other)
+    : ot(type)
+{
+    ot->AddRef();
+    assert( ot == other.ot );
+}
+
+CScriptType::~CScriptType()
+{
+    ot->Release();
+}
+
+int CScriptType::GetSubTypeId() const
+{
+    return ot->GetSubTypeId();
+}
+
+bool CScriptType::operator==(const CScriptType &other) const
+{
+    return GetSubTypeId() == other.GetSubTypeId();
+}
+
+bool CScriptType::Equals(int typeId) const
+{
+    return GetSubTypeId() == typeId;
+}
+
+
+static void RegisterScriptType_Native(asIScriptEngine *engine)
+{
+    int r;
+
+    r = engine->RegisterObjectType("typeid", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("typeid", "bool opEquals(typeid) const", asFUNCTIONPR(ScriptTypeTypeidEquals, (int, int*), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("typeid", "string opImplConv() const",   asFUNCTIONPR(ScriptTypeTypeidToString, (int*), std::string), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+    r = engine->RegisterGlobalFunction("typeid typeof(const ?&in)", asFUNCTIONPR(ScriptTypeGetTypeof, (void*, int), int), asCALL_CDECL); assert( r >= 0 );
+    r = engine->RegisterGlobalFunction("string classname(const ?&in)", asFUNCTIONPR(ScriptTypeGetClassname, (void*, int), std::string), asCALL_CDECL); assert( r >= 0 );
+
+    // Register the 'type' type as a template
+    r = engine->RegisterObjectType("type<class T>", sizeof(CScriptType), asOBJ_VALUE | asOBJ_APP_CLASS_D | asOBJ_TEMPLATE); assert( r >= 0 );
+
+    r = engine->RegisterObjectBehaviour("type<T>", asBEHAVE_CONSTRUCT, "void f(int&in)", asFUNCTION(CScriptType::Construct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("type<T>", asBEHAVE_CONSTRUCT, "void f(int&in, const type<T> &in)", asFUNCTION(CScriptType::CopyConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+    r = engine->RegisterObjectBehaviour("type<T>", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(CScriptType::Destruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+    // The assignment operator
+    // r = engine->RegisterObjectMethod("type<T>", "type<T> &opAssign(const type<T>&in)", asMETHOD(CScriptType, operator=), asCALL_THISCALL); assert( r >= 0 );
+
+    r = engine->RegisterObjectMethod("type<T>", "bool opEquals(const type<T>&in) const", asMETHOD(CScriptType, operator==), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("type<T>", "bool opEquals(typeid) const",     asMETHODPR(CScriptType, Equals, (int) const, bool), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("type<T>", "typeid opImplConv() const",       asMETHOD(CScriptType, GetSubTypeId), asCALL_THISCALL); assert( r >= 0 );
+    r = engine->RegisterObjectMethod("type<T>", "string opImplConv() const",       asFUNCTIONPR(ScriptTypeGetClassname, (void*), std::string), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+}
+
+
+string g_str;
+void pr(const string &s, unsigned short l)
+{
+	g_str += s;
+	if( l != 10 )
+		g_str += " l != 10 ";
+	else
+		g_str += " l == 10 ";
+}
+
+bool TestScriptType()
+{
+	bool fail = false;
+	COutStream out;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	RegisterStdString(engine);
+	RegisterScriptType_Native(engine);
+
+	unsigned short DLVL_INFO = 10;
+	engine->RegisterGlobalProperty("const uint16 DLVL_INFO",   (void*)&DLVL_INFO);
+	engine->RegisterGlobalFunction("void print(const string& in,uint16 level = DLVL_INFO)", asFUNCTION(pr), asCALL_CDECL);
+
+	int r = ExecuteString(engine, 
+		"type<int> typeInt; \n"
+		"print('typeInt: ' + typeInt); \n"
+		"print('typeInt: ' + type<int>());\n");
+	if( r != asEXECUTION_FINISHED )
+		TEST_FAILED;
+
+	if( g_str != "typeInt: int l == 10 typeInt: int l == 10 " )
+	{
+		PRINTF("%s", g_str.c_str());
+		TEST_FAILED;
+	}
+
+	engine->Release();
+
+	return fail;
 }
 
 } // namespace

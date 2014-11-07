@@ -4005,7 +4005,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	*(asDWORD*)(bc+1) = factoryId;
 	bc += asBCTypeSize[asBCInfo[asBC_CALLSYS].type];
 	*(asBYTE*)bc = asBC_RET;
-	*(((asWORD*)bc)+1) = (asWORD)func->GetSpaceNeededForArguments();
+	*(((asWORD*)bc)+1) = (asWORD)func->GetSpaceNeededForArguments() + (func->objectType ? AS_PTR_SIZE : 0);
 
 	func->AddReferences();
 	func->scriptData->stackNeeded = AS_PTR_SIZE;
