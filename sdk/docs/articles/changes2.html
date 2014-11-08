@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/11/07</h2>
+<h2>Version 2.30.0 WIP - 2014/11/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,6 +32,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed an assert failure in the compiler when compiling an assignment with non-temporary deferred arguments (Thanks iraxef)
 <li>The constructor stubs for value template types didn't pop the object pointer from the stack (Thanks iraxef)
 <li>GetFunctionByDecl wasn't able to find the global function if the name was prefixed with :: (Thanks Ser Ementaler)
+<li>The compiler was producing wrong bytecode when calling asBEHAVE_IMPLICIT_REF_CAST on value type
+<li>Fixed crash when script class contained value template type as member
 </ul>
 <li>Library interface
 <ul>
@@ -54,6 +56,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The script array and grid add-ons avoid flagging themselves as garbage collected for handle subtypes that are known not to be garbage collected
 <li>CScriptHandle, CScriptAny, and CScriptDictionary use the new RefCastObject to properly cast to all supported types of the contained handle
 <li>The dictionaryValue was missing a copy opAssign method so it wasn't possible to directly assign one dictionaryValue to another (Thanks iraxef)
+<li>The weakref is now a value template type
+<li>The syntax for using weakref in script is much more like a normal handles
 </ul>
 </ul>
 

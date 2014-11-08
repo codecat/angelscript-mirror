@@ -83,8 +83,21 @@ bool Test()
 			"  Test @t = Test(); \n"
 			"  weakref<Test> r(t); \n"
 			"  assert( r.get() !is null ); \n"
+			"  const_weakref<Test> c; \n"
+			"  @c = r; \n"
+			"  assert( c.get() !is null ); \n"
 			"  @t = null; \n"
 			"  assert( r.get() is null ); \n"
+			"  assert( c.get() is null ); \n"
+			"  @t = Test(); \n"
+			"  @c = t; \n"
+			"  assert( c.get() !is null ); \n"
+			"  const Test @ct = c; \n"
+			"  assert( ct !is null ); \n"
+			"  assert( c !is null ); \n"
+			"  assert( c is ct ); \n"
+			"  @c = null; \n"
+			"  assert( c is null ); \n"
 			"} \n";
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -103,7 +116,57 @@ bool Test()
 		engine->Release();
 	}
 
-	// It shouldn't be possible to instanciate the weakref for types that do not support it
+	// Weakref as member of script class
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterScriptWeakRef(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script =
+			"class Test { weakref<Test> friend; } \n"
+			"void main() { \n"
+			"  Test t; \n"
+			"  assert( t.friend is null ); \n"
+			"  @t.friend = t; \n"
+			"  assert( t.friend is t ); \n"
+			"} \n";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		CBytecodeStream stream("test");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod2);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+	// It shouldn't be possible to instantiate the weakref for types that do not support it
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);

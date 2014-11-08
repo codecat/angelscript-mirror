@@ -3025,14 +3025,21 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				asCObjectProperty *prop = decl->objType->properties[n];
 				asCDataType dt = prop->type;
 
+				// TODO: Add this check again, once solving the issues commented below
+				/* 
 				if( dt.IsTemplate() )
 				{
+					// TODO: This must verify all sub types, not just the first one
+					// TODO: Just because the subtype is not a handle doesn't mean the template will actually instance the object
+					//       this it shouldn't automatically raise an error for this, e.g. weakref<Object> should be legal as member
+					//       of the Object class
 					asCDataType sub = dt;
 					while( sub.IsTemplate() && !sub.IsObjectHandle() )
 						sub = sub.GetSubType();
 
 					dt = sub;
 				}
+				*/
 
 				if( dt.IsObject() && !dt.IsObjectHandle() )
 				{

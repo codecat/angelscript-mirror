@@ -1000,7 +1000,31 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 					bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 				}
 
-				bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
+				if( (type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+				{
+					asCScriptFunction *descr = engine->scriptFunctions[func];
+					asASSERT( descr->funcType == asFUNC_SCRIPT );
+
+					// Find the id of the real constructor and not the generated stub
+					asUINT id = 0;
+					asDWORD *funcBc = descr->scriptData->byteCode.AddressOf();
+					while( funcBc )
+					{
+						if( (*(asBYTE*)funcBc) == asBC_CALLSYS )
+						{
+							id = asBC_INTARG(funcBc);
+							break;
+						}
+						funcBc += asBCTypeSize[asBCInfo[*(asBYTE*)funcBc].type];
+					}
+
+					asASSERT( id );
+
+					bc->InstrPTR(asBC_OBJTYPE, type.GetObjectType());
+					bc->Alloc(asBC_ALLOC, type.GetObjectType(), id, AS_PTR_SIZE + AS_PTR_SIZE);
+				}
+				else
+					bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
 			}
 
 			// Cleanup
@@ -5260,50 +5284,60 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				//                         functions with 1 parameter, even though they should still be
 				//                         registered with RegisterObjectBehaviour()
 
-				// Add code to avoid calling the cast behaviour if the handle is already null,
-				// because that will raise a null pointer exception due to the cast behaviour
-				// being a class method, and the this pointer cannot be null.
-
-				if( !ctx->type.isVariable )
+				if( ctx->type.dataType.GetObjectType()->flags & asOBJ_REF )
 				{
-					Dereference(ctx, true);
-					ConvertToVariable(ctx);
+					// Add code to avoid calling the cast behaviour if the handle is already null,
+					// because that will raise a null pointer exception due to the cast behaviour
+					// being a class method, and the this pointer cannot be null.
+
+					if( !ctx->type.isVariable )
+					{
+						Dereference(ctx, true);
+						ConvertToVariable(ctx);
+					}
+
+					// The reference on the stack will not be used
+					ctx->bc.Instr(asBC_PopPtr);
+
+					// TODO: runtime optimize: should have immediate comparison for null pointer
+					int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
+					// TODO: runtime optimize: ClrVPtr is not necessary, because the VM should initialize the variable to null anyway (it is currently not done for null pointers though)
+					ctx->bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
+					ctx->bc.InstrW_W(asBC_CmpPtr, ctx->type.stackOffset, offset);
+					DeallocateVariable(offset);
+
+					int afterLabel = nextLabel++;
+					ctx->bc.InstrDWORD(asBC_JZ, afterLabel);
+
+					// Call the cast operator
+					ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+					ctx->bc.Instr(asBC_RDSPtr);
+					ctx->type.dataType.MakeReference(false);
+
+					asCArray<asSExprContext *> args;
+					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
+					ctx->bc.Instr(asBC_PopPtr);
+
+					int endLabel = nextLabel++;
+
+					ctx->bc.InstrINT(asBC_JMP, endLabel);
+					ctx->bc.Label((short)afterLabel);
+
+					// Make a NULL pointer
+					ctx->bc.InstrSHORT(asBC_ClrVPtr, ctx->type.stackOffset);
+					ctx->bc.Label((short)endLabel);
+
+					// Push the reference to the handle on the stack
+					ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
 				}
+				else
+				{
+					// Value types cannot be null, so there is no need to check for this
 
-				// The reference on the stack will not be used
-				ctx->bc.Instr(asBC_PopPtr);
-
-				// TODO: runtime optimize: should have immediate comparison for null pointer
-				int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
-				// TODO: runtime optimize: ClrVPtr is not necessary, because the VM should initialize the variable to null anyway (it is currently not done for null pointers though)
-				ctx->bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
-				ctx->bc.InstrW_W(asBC_CmpPtr, ctx->type.stackOffset, offset);
-				DeallocateVariable(offset);
-
-				int afterLabel = nextLabel++;
-				ctx->bc.InstrDWORD(asBC_JZ, afterLabel);
-
-				// Call the cast operator
-				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
-				ctx->bc.Instr(asBC_RDSPtr);
-				ctx->type.dataType.MakeReference(false);
-
-				asCArray<asSExprContext *> args;
-				MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
-
-				ctx->bc.Instr(asBC_PopPtr);
-
-				int endLabel = nextLabel++;
-
-				ctx->bc.InstrINT(asBC_JMP, endLabel);
-				ctx->bc.Label((short)afterLabel);
-
-				// Make a NULL pointer
-				ctx->bc.InstrSHORT(asBC_ClrVPtr, ctx->type.stackOffset);
-				ctx->bc.Label((short)endLabel);
-
-				// Push the reference to the handle on the stack
-				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+					// Call the cast operator
+					asCArray<asSExprContext *> args;
+					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
+				}
 			}
 			else
 			{
@@ -13607,7 +13641,30 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 
 		asASSERT(useVariable == false);
 
-		ctx->bc.Alloc(asBC_ALLOC, objType, descr->id, argSize+AS_PTR_SIZE);
+		if( (objType->flags & asOBJ_TEMPLATE) )
+		{
+			asASSERT( descr->funcType == asFUNC_SCRIPT );
+
+			// Find the id of the real constructor and not the generated stub
+			asUINT id = 0;
+			asDWORD *bc = descr->scriptData->byteCode.AddressOf();
+			while( bc )
+			{
+				if( (*(asBYTE*)bc) == asBC_CALLSYS )
+				{
+					id = asBC_INTARG(bc);
+					break;
+				}
+				bc += asBCTypeSize[asBCInfo[*(asBYTE*)bc].type];
+			}
+
+			asASSERT( id );
+
+			ctx->bc.InstrPTR(asBC_OBJTYPE, objType);
+			ctx->bc.Alloc(asBC_ALLOC, objType, id, argSize + AS_PTR_SIZE + AS_PTR_SIZE);
+		}
+		else
+			ctx->bc.Alloc(asBC_ALLOC, objType, descr->id, argSize+AS_PTR_SIZE);
 
 		// The instruction has already moved the returned object to the variable
 		ctx->type.Set(asCDataType::CreatePrimitive(ttVoid, false));
