@@ -720,7 +720,7 @@ const char *asCModule::GetGlobalVarDeclaration(asUINT index, bool includeNamespa
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
 	*tempString = prop->type.Format();
 	*tempString += " ";
-	if( includeNamespace )
+	if( includeNamespace && prop->nameSpace->name != "" )
 		*tempString += prop->nameSpace->name + "::";
 	*tempString += prop->name;
 

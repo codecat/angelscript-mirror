@@ -171,9 +171,9 @@ asCString asCDataType::Format(bool includeNamespace) const
 
 	if( includeNamespace )
 	{
-		if( objectType )
+		if( objectType && objectType->nameSpace->name != "" )
 			str += objectType->nameSpace->name + "::";
-		else if( funcDef )
+		else if( funcDef && funcDef->nameSpace->name != "" )
 			str += funcDef->nameSpace->name + "::";
 	}
 

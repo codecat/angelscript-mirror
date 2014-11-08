@@ -200,7 +200,7 @@ void DumpModule(asIScriptModule *mod)
 		int tid;
 		const char *name = mod->GetTypedefByIndex(n, &tid);
 
-		s << "typedef: " << name << " => " << engine->GetTypeDeclaration(tid) << endl;
+		s << "typedef: " << name << " => " << engine->GetTypeDeclaration(tid, true) << endl;
 	}
 
 	// Enumerate imported functions
@@ -224,7 +224,7 @@ void DumpModule(asIScriptModule *mod)
 		s << "reg prop: ";
 		if( isConst ) 
 			s << "const ";
-		s << engine->GetTypeDeclaration(typeId) << " " << name;
+		s << engine->GetTypeDeclaration(typeId, true) << " " << name;
 		s << " group: " << (group ? group : "<null>") << endl;
 	}
 
@@ -234,7 +234,7 @@ void DumpModule(asIScriptModule *mod)
 	{
 		int typeId;
 		const char *name = engine->GetTypedefByIndex(n, &typeId);
-		s << "reg typedef: " << name << " => " << engine->GetTypeDeclaration(typeId) << endl;
+		s << "reg typedef: " << name << " => " << engine->GetTypeDeclaration(typeId, true) << endl;
 	}
 
 	// Enumerate registered global functions

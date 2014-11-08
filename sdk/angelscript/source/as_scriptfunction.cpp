@@ -642,7 +642,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	}
 	if( objectType && includeObjectName )
 	{
-		if( includeNamespace )
+		if( includeNamespace && objectType->nameSpace->name != "" )
 			str += objectType->nameSpace->name + "::";
 
 		if( objectType->name != "" )
@@ -650,7 +650,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		else
 			str += "_unnamed_type_::";
 	}
-	else if( includeNamespace )
+	else if( includeNamespace && nameSpace->name != "" )
 	{
 		str += nameSpace->name + "::";
 	}

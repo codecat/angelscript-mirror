@@ -2368,13 +2368,8 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 		// Build a readable string of the function with parameter types
 		bool attemptsPassingClassMethod = false;
 		asCString str;
-		if( scope != "" )
-		{
-			if( scope == "::" )
-				str = scope;
-			else
-				str = scope + "::";
-		}
+		if( scope != "" && scope != "::" )
+			str = scope + "::";
 		str += name;
 		str += "(";
 		for( n = 0; n < args.GetLength(); n++ )

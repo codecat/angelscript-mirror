@@ -74,6 +74,25 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
+		// Fully specify the namespace to find the function
+		asIScriptFunction *func = mod->GetFunctionByDecl("void B::main()");
+		std::string str = func->GetDeclaration(true, true, true);
+		if( str != "void B::main()" )
+		{
+			PRINTF("%s", str.c_str());
+			TEST_FAILED;
+		}
+
+		// Should be possible to find the function by using the global scope
+		func = mod->GetFunctionByDecl("void ::func()");
+		str = func->GetDeclaration(true, true, true);
+		if( str != "void func()" )
+		{
+			PRINTF("%s", str.c_str());
+			TEST_FAILED;
+		}
+		
+
 		engine->Release();
 	}
 
@@ -93,6 +112,17 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
+
+		// Must be possible to find variable with fully specified namespace
+		int idx = mod->GetGlobalVarIndexByDecl("int ::a");
+		if( idx < 0 )
+			TEST_FAILED;
+		std::string str = mod->GetGlobalVarDeclaration(idx, true);
+		if( str != "int a" )
+		{
+			PRINTF("%s", str.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}
@@ -155,6 +185,25 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
+
+		// Fully specify the namespace to get the correct object
+		asIObjectType *type = mod->GetObjectTypeByDecl("net::room::kernel");
+		std::string str = engine->GetTypeDeclaration(type->GetTypeId(), true);
+		if( str != "net::room::kernel" )
+		{
+			PRINTF("%s", str.c_str());
+			TEST_FAILED;
+		}
+
+		// Also possible to get it by setting the default namespace
+		mod->SetDefaultNamespace("net::room");
+		type = mod->GetObjectTypeByDecl("kernel");
+		str = engine->GetTypeDeclaration(type->GetTypeId(), true);
+		if( str != "net::room::kernel" )
+		{
+			PRINTF("%s", str.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

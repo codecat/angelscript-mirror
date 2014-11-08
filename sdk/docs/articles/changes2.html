@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in Linux arm hardfloat ABI (Thanks Brandon Bare)
 <li>Fixed an assert failure in the compiler when compiling an assignment with non-temporary deferred arguments (Thanks iraxef)
 <li>The constructor stubs for value template types didn't pop the object pointer from the stack (Thanks iraxef)
+<li>GetFunctionByDecl wasn't able to find the global function if the name was prefixed with :: (Thanks Ser Ementaler)
 </ul>
 <li>Library interface
 <ul>
@@ -46,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved the algorithm for verifying if script classes require garbage collection
 <li>Added support for native calling conventions on PS Vita (Thanks Brandon Bare)
 <li>GetModule and DiscardModule are now thread-safe (Thanks Brandon Bare)
+<li>Returned declarations with namespaces no longer prefix symbols with :: when declared in the global namespace (Thanks iraxef)
 </ul>
 <li>Add-ons
 <ul>

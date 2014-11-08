@@ -827,7 +827,7 @@ bool Test2()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 27) : Info    : Compiling B::B()\n"
-					   "script (1, 33) : Error   : No matching signatures to '::super()'\n" )
+					   "script (1, 33) : Error   : No matching signatures to 'super()'\n" )
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());

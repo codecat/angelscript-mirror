@@ -1120,7 +1120,10 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	// Determine scope
 	asCScriptNode *n = node->firstChild->next->next;
 	asCString scope = GetScopeFromNode(n, &source, &n);
-	func->nameSpace = engine->FindNameSpace(scope.AddressOf());
+	if( scope == "::" )
+		func->nameSpace = engine->nameSpaces[0];
+	else
+		func->nameSpace = engine->FindNameSpace(scope.AddressOf());
 	if( func->nameSpace == 0 )
 		return asINVALID_DECLARATION;
 

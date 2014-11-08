@@ -67,7 +67,7 @@ bool Test()
 		if( (typeId & asTYPEID_MASK_OBJECT) != asTYPEID_SCRIPTOBJECT )
 			TEST_FAILED;
 
-		if( strcmp(engine->GetTypeDeclaration(typeId), "MyStruct@") )
+		if( strcmp(engine->GetTypeDeclaration(typeId, true), "MyStruct@") )
 			TEST_FAILED;
 
 		typeId = s->GetTypeId();

@@ -240,14 +240,14 @@ bool Test()
 			if( (typeId & asTYPEID_MASK_OBJECT) != asTYPEID_APPOBJECT )
 				TEST_FAILED;
 
-			const char *decl = engine->GetTypeDeclaration(typeId);
+			const char *decl = engine->GetTypeDeclaration(typeId, true);
 			if( (decl == 0) || (strcmp(decl, "string@") != 0) )
 			{
 				TEST_FAILED;
 				PRINTF("%s: Failed to return the correct type\n", "TestAny");
 			}
 
-			int typeId2 = engine->GetTypeIdByDecl("string@");
+			int typeId2 = engine->GetTypeIdByDecl("::string@");
 			if( typeId != typeId2 )
 			{
 				TEST_FAILED;
