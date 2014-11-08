@@ -170,6 +170,7 @@
     <ClCompile Include="..\..\..\..\add_on\contextmgr\contextmgr.cpp" />
     <ClCompile Include="..\..\..\..\add_on\debugger\debugger.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptdictionary\scriptdictionary.cpp" />
+    <ClCompile Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.cpp" />
     <ClCompile Include="..\..\source\main.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptarray\scriptarray.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp" />
@@ -181,6 +182,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\..\add_on\contextmgr\contextmgr.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptdictionary\scriptdictionary.h" />
+    <ClInclude Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
     <ClInclude Include="..\..\..\..\add_on\debugger\debugger.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptarray\scriptarray.h" />

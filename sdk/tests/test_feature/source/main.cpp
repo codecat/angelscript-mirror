@@ -167,6 +167,7 @@ namespace Test_Addon_Debugger      { bool Test(); }
 namespace Test_Addon_WeakRef       { bool Test(); }
 namespace Test_Addon_ScriptGrid    { bool Test(); }
 namespace Test_Addon_ContextMgr    { bool Test(); }
+namespace Test_Addon_ScriptFile    { bool Test(); }
 
 #include "utils.h"
 
@@ -221,6 +222,7 @@ int allTests()
 
 	InstallMemoryManager();
 
+	if( Test_Addon_ScriptFile::Test()    ) goto failed; else PRINTF("-- Test_Addon_ScriptFile passed\n");
 	if( Test_Addon_ContextMgr::Test()    ) goto failed; else PRINTF("-- Test_Addon_ContextMgr passed\n");
 	if( Test_Addon_ScriptGrid::Test()    ) goto failed; else PRINTF("-- Test_Addon_ScriptGrid passed\n");
 	if( Test_Addon_WeakRef::Test()       ) goto failed; else PRINTF("-- Test_Addon_WeakRef passed\n");

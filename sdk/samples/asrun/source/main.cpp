@@ -10,6 +10,7 @@
 #include "../../../add_on/scriptarray/scriptarray.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptfile/scriptfile.h"
+#include "../../../add_on/scriptfile/scriptfilesystem.h"
 #include "../../../add_on/scripthelper/scripthelper.h"
 #include "../../../add_on/debugger/debugger.h"
 #include "../../../add_on/contextmgr/contextmgr.h"
@@ -139,6 +140,7 @@ int ConfigureEngine(asIScriptEngine *engine)
 	RegisterStdStringUtils(engine);
 	RegisterScriptDictionary(engine);
 	RegisterScriptFile(engine);
+	RegisterScriptFileSystem(engine);
 
 	// Register a couple of extra functions for the scripts
 	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );

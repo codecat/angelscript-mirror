@@ -99,7 +99,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -283,6 +283,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptgrid\scriptgrid.cpp" />
     <ClCompile Include="..\..\..\..\add_on\weakref\weakref.cpp" />
     <ClCompile Include="..\..\source\bstr.cpp" />
@@ -297,6 +298,7 @@
     <ClCompile Include="..\..\source\test_addon_dictionary.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptarray.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptbuilder.cpp" />
+    <ClCompile Include="..\..\source\test_addon_scriptfile.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptgrid.cpp" />
     <ClCompile Include="..\..\source\test_addon_scripthandle.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptmath.cpp" />
@@ -457,6 +459,7 @@
     <ClCompile Include="..\..\..\..\add_on\serializer\serializer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptgrid\scriptgrid.h" />
     <ClInclude Include="..\..\..\..\add_on\weakref\weakref.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
