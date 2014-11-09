@@ -24,7 +24,8 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine)
 	
 	r = engine->RegisterObjectMethod("filesystem", "bool changeCurrentPath(const string &in)", asMETHOD(CScriptFileSystem, ChangeCurrentPath), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "string getCurrentPath() const", asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @getMathingFiles(const string &in)", asMETHOD(CScriptFileSystem, GetMatchingFiles), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @getMatchingDirs(const string &in)", asMETHOD(CScriptFileSystem, GetMatchingDirs), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @getMatchingFiles(const string &in)", asMETHOD(CScriptFileSystem, GetMatchingFiles), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptFileSystem(asIScriptEngine *engine)
@@ -75,8 +76,12 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 	// pattern can include wildcards * and ?
 	string searchPattern = currentPath + "/" + pattern;
 	
-	WIN32_FIND_DATAA ffd;
-	HANDLE hFind = FindFirstFileA(searchPattern.c_str(), &ffd);
+	// Windows uses UTF16 so it is necessary to convert the string
+	wchar_t bufUTF16[10000];
+	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
+
+	WIN32_FIND_DATAW ffd;
+	HANDLE hFind = FindFirstFileW(bufUTF16, &ffd);
 	if( INVALID_HANDLE_VALUE == hFind ) 
 		return array;
 	
@@ -85,12 +90,65 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 		// Skip directories
 		if( (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
 			continue;
+
+		// Convert the file name back to UTF8
+		char bufUTF8[10000];
+		WideCharToMultiByte(CP_UTF8, 0, ffd.cFileName, -1, bufUTF8, 10000, 0, 0);
 		
 		// Add the file to the array
 		array->Resize(array->GetSize()+1);
-		((string*)(array->At(array->GetSize()-1)))->assign(ffd.cFileName);
+		((string*)(array->At(array->GetSize()-1)))->assign(bufUTF8);
 	}
-	while( FindNextFileA(hFind, &ffd) != 0 );
+	while( FindNextFileW(hFind, &ffd) != 0 );
+
+	FindClose(hFind);
+
+	return array;
+}
+
+CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
+{
+	// Obtain a pointer to the engine
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+
+	// TODO: This should only be done once
+	// TODO: This assumes that CScriptArray was already registered
+	asIObjectType *arrayType = engine->GetObjectTypeByDecl("array<string>");
+
+	// Create the array object
+	CScriptArray *array = CScriptArray::Create(arrayType);
+
+	// pattern can include wildcards * and ?
+	string searchPattern = currentPath + "/" + pattern;
+
+	// Windows uses UTF16 so it is necessary to convert the string
+	wchar_t bufUTF16[10000];
+	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
+	
+	WIN32_FIND_DATAW ffd;
+	HANDLE hFind = FindFirstFileW(bufUTF16, &ffd);
+	if( INVALID_HANDLE_VALUE == hFind ) 
+		return array;
+	
+	do
+	{
+		// Skip files
+		if( !(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+			continue;
+
+		// Convert the file name back to UTF8
+		char bufUTF8[10000];
+		WideCharToMultiByte(CP_UTF8, 0, ffd.cFileName, -1, bufUTF8, 10000, 0, 0);
+
+		if( strcmp(bufUTF8, ".") == 0 || strcmp(bufUTF8, "..") == 0 )
+			continue;
+		
+		// Add the dir to the array
+		array->Resize(array->GetSize()+1);
+		((string*)(array->At(array->GetSize()-1)))->assign(bufUTF8);
+	}
+	while( FindNextFileW(hFind, &ffd) != 0 );
 
 	FindClose(hFind);
 
@@ -108,8 +166,12 @@ bool CScriptFileSystem::ChangeCurrentPath(const string &path)
 	while( currentPath.length() && (currentPath.back() == '/' || currentPath.back() == '\\') )
 		currentPath.resize(currentPath.length()-1);
 
+	// Windows uses UTF16 so it is necessary to convert the string
+	wchar_t bufUTF16[10000];
+	MultiByteToWideChar(CP_UTF8, 0, currentPath.c_str(), -1, bufUTF16, 10000);
+
 	// Check if the path exists
-	DWORD attrib = GetFileAttributesA(currentPath.c_str());
+	DWORD attrib = GetFileAttributesW(bufUTF16);
 	if( attrib == INVALID_FILE_ATTRIBUTES ||
 		!(attrib & FILE_ATTRIBUTE_DIRECTORY) )
 		return false;

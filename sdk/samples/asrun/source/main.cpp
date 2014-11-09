@@ -15,6 +15,10 @@
 #include "../../../add_on/debugger/debugger.h"
 #include "../../../add_on/contextmgr/contextmgr.h"
 
+#ifdef _WIN32
+#include <Windows.h> // WriteConsoleW
+#endif
+
 #if defined(_MSC_VER)
 #include <crtdbg.h>   // MSVC debugging routines
 #endif
@@ -355,7 +359,28 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 // This little function allows the script to print a string to the screen
 void PrintString(const string &str)
 {
+#ifdef _WIN32
+	// Unless the std out has been redirected to file we'll need to allow Windows to convert
+	// the text to the current locale so that characters will be displayed appropriately.
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	BOOL ret = GetConsoleMode(console, 0);
+	if( ret != 0 )
+	{
+		// We're writing to a console window, so convert the UTF8 string to UTF16 and write with
+		// WriteConsoleW. Windows will then automatically display the characters correctly according
+		// to the user's settings
+		wchar_t bufUTF16[10000];
+		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, bufUTF16, 10000);
+		WriteConsoleW(console, bufUTF16, lstrlenW(bufUTF16), 0, 0);
+	}
+	else
+	{
+		// We're writing to a file, so just write the bytes as-is without any conversion
+		cout << str;
+	}
+#else
 	cout << str;
+#endif
 }
 
 // This function returns the command line arguments that were passed to the script

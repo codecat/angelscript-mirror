@@ -40,6 +40,10 @@ public:
 	// Pattern can include ? to match a single character, and * to match multiple characters
 	CScriptArray *GetMatchingFiles(const std::string &pattern) const;
 
+	// Returns a list of the matching directories
+	// Pattern can include ? to match a single character, and * to match multiple characters
+	CScriptArray *GetMatchingDirs(const std::string &pattern) const;
+
 protected:
     ~CScriptFileSystem();
 

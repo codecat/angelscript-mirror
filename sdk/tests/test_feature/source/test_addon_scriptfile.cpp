@@ -27,9 +27,11 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"void main() { \n"
-			"  filesystem fs; \n"									 // starts in applications working dir
-			"  fs.changeCurrentPath('scripts'); \n"					 // move to the sub directory
-			"  array<string> files = fs.getMathingFiles('*.as'); \n" // get the script files in the directory
+			"  filesystem fs; \n"										// starts in applications working dir
+			"  array<string> dirs = fs.getMatchingDirs('*'); \n"		
+			"  assert( dirs.find('scripts') >= 0 ); \n"
+			"  fs.changeCurrentPath('scripts'); \n"						// move to the sub directory
+			"  array<string> files = fs.getMatchingFiles('*.as'); \n"	// get the script files in the directory
 			"  assert( files.length() == 2 ); \n"
 			"  file f; \n"
 			"  f.open('scripts/include.as', 'r'); \n"
