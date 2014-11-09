@@ -2059,7 +2059,7 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExp
 			asSNamedArgument &named = (*namedArgs)[n];
 			named.ctx->bc.GetVarsUsed(varsUsed);
 
-			//Find the right spot to put it in
+			// Find the right spot to put it in
 			asUINT index = asUINT(-1);
 			for( asUINT j = 0; j < func->parameterTypes.GetLength(); ++j )
 			{
@@ -2103,10 +2103,18 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExp
 		script = &code;
 
 		// Don't allow the expression to access local variables
-		// TODO: namespace: The default arg should see the symbols declared in the same scope as the function that is called
 		isCompilingDefaultArg = true;
+
+		// Temporarily set the namespace in the output function to the namespace of the called
+		// function so that the default arguments are evaluated in the correct namespace
+		asSNameSpace *origNameSpace = outFunc->nameSpace;
+		outFunc->nameSpace = func->nameSpace;
+
 		asSExprContext expr(engine);
 		r = CompileExpression(arg, &expr);
+
+		// Restore the namespace
+		outFunc->nameSpace = origNameSpace;
 
 		// Don't allow address of class method
 		if( expr.methodName != "" )

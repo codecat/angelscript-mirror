@@ -15,6 +15,37 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// default args should be compiled in the same namespace that the function was declared in
+	// http://www.gamedev.net/topic/657430-default-parameters-within-namespace/
+	{
+		const char *script = 
+			"namespace foo { \n"
+			"  int global = 42; \n"
+			"  void func(int var = global) {} \n"
+			"} \n"
+			"void main() { \n"
+			"  foo::func(); \n"
+			"} \n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test that compiler properly detects when two functions will conflict if the first non-default arguments equal
 	{
 		const char *script = 
