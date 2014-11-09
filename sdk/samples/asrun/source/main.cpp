@@ -282,7 +282,7 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 	// Set up a context to execute the script
 	// The context manager will request the context from the 
 	// pool, which will automatically attach the debugger
-	asIScriptContext *ctx = g_ctxMgr->AddContext(engine, func);
+	asIScriptContext *ctx = g_ctxMgr->AddContext(engine, func, true);
 
 	// Execute the script until completion
 	// The script may create co-routines. These will automatically
@@ -320,6 +320,9 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 		else
 			r = 0;
 	}
+
+	// Return the context after retrieving the return value
+	g_ctxMgr->DoneWithContext(ctx);
 
 	// Destroy the context manager
 	if( g_ctxMgr )

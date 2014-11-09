@@ -51,13 +51,17 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetModule and DiscardModule are now thread-safe (Thanks Brandon Bare)
 <li>Returned declarations with namespaces no longer prefix symbols with :: when declared in the global namespace (Thanks iraxef)
 </ul>
-<li>Add-ons
+<li>Add-ons &amp; Samples
 <ul>
 <li>The script array and grid add-ons avoid flagging themselves as garbage collected for handle subtypes that are known not to be garbage collected
 <li>CScriptHandle, CScriptAny, and CScriptDictionary use the new RefCastObject to properly cast to all supported types of the contained handle
 <li>The dictionaryValue was missing a copy opAssign method so it wasn't possible to directly assign one dictionaryValue to another (Thanks iraxef)
 <li>The weakref is now a value template type
 <li>The syntax for using weakref in script is much more like a normal handles
+<li>Implemented a CScriptFileSystem add-on to complement the CScriptFile add-on
+<li>Changed ContextMgr::AddContext to allow application to tell manager that it want to keep the context after execution
+<li>Added ContextMgr::DoneWithContext to return the context after the application has retrieve what it wants from the
+<li>Fixed the asrun sample so now returns the status from the script again
 </ul>
 </ul>
 

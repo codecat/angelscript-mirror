@@ -26,6 +26,7 @@ struct SContextInfo
 	asUINT                    sleepUntil;
 	vector<asIScriptContext*> coRoutines;
 	asUINT                    currentCoRoutine;
+	asIScriptContext *        keepCtxAfterExecution;
 };
 
 static void ScriptSleep(asUINT milliSeconds)
@@ -168,12 +169,10 @@ int CContextMgr::ExecuteScripts()
 
 			if( r != asEXECUTION_SUSPENDED )
 			{
-				// TODO: It should be possible to retrieve the return value before the context is released.
-				//       Maybe by calling a callback, or by storing the context somewhere until it has been
-				//       accessed.
-
 				// The context has terminated execution (for one reason or other)
-				engine->ReturnContext(thread->coRoutines[currentCoRoutine]);
+				// Unless the application has requested to keep the context we'll return it to the pool now
+				if( thread->keepCtxAfterExecution != thread->coRoutines[currentCoRoutine] )
+					engine->ReturnContext(thread->coRoutines[currentCoRoutine]);
 				thread->coRoutines[currentCoRoutine] = 0;
 
 				thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
@@ -215,6 +214,11 @@ int CContextMgr::ExecuteScripts()
 	return int(m_threads.size());
 }
 
+void CContextMgr::DoneWithContext(asIScriptContext *ctx)
+{
+	ctx->GetEngine()->ReturnContext(ctx);
+}
+
 void CContextMgr::NextCoRoutine()
 {
 	m_threads[m_currentThread]->currentCoRoutine++;
@@ -249,7 +253,7 @@ void CContextMgr::AbortAll()
 	m_currentThread = 0;
 }
 
-asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunction *func)
+asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunction *func, bool keepCtxAfterExec)
 {
 	// Use RequestContext instead of CreateContext so we can take 
 	// advantage of possible context pooling configured with the engine
@@ -282,8 +286,9 @@ asIScriptContext *CContextMgr::AddContext(asIScriptEngine *engine, asIScriptFunc
 	}
 
 	info->coRoutines.push_back(ctx);
-	info->currentCoRoutine = 0;
-	info->sleepUntil = 0;
+	info->currentCoRoutine      = 0;
+	info->sleepUntil            = 0;
+	info->keepCtxAfterExecution = keepCtxAfterExec ? ctx : 0;
 	m_threads.push_back(info);
 
 	return ctx;
