@@ -191,6 +191,37 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test alternate syntax where empty list members give error
+	// http://www.gamedev.net/topic/661578-array-trailing-comma/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_DISALLOW_EMPTY_LIST_ELEMENTS, 1);
+
+		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		// The last comma should be ignored
+		r = ExecuteString(engine, "array<int> arr = {1,2,3,}; assert( arr.length() == 3 );");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "array<int> arr = {,2,3,,5};");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 19) : Error   : Empty list element is not allowed\n"
+						   "ExecuteString (1, 24) : Error   : Empty list element is not allowed\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test releasing the script engine while a script array is still alive
 	// It must be gracefully handled, preferrably with an appropriate error message
 	{

@@ -3404,12 +3404,14 @@ asCScriptNode *asCParser::ParseInitList()
 			{
 				// No expression 
 				node->AddChildLast(CreateNode(snUndefined));
+				node->lastChild->UpdateSourcePos(t1.pos, 1);
 				
 				GetToken(&t1);
 				if( t1.type == ttEndStatementBlock )
 				{
 					// No expression
 					node->AddChildLast(CreateNode(snUndefined));
+					node->lastChild->UpdateSourcePos(t1.pos, 1);
 					node->UpdateSourcePos(t1.pos, t1.length);
 					return node;
 				}
@@ -3419,7 +3421,7 @@ asCScriptNode *asCParser::ParseInitList()
 			{
 				// No expression 
 				node->AddChildLast(CreateNode(snUndefined));
-
+				node->lastChild->UpdateSourcePos(t1.pos, 1);
 				node->UpdateSourcePos(t1.pos, t1.length);
 
 				// Statement block is finished

@@ -593,42 +593,20 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			asEEngineProp ep = asEEngineProp(atol(tmp.c_str()));
 
 			// Only set properties that affect the compiler
-			switch( ep )
+			if( ep != asEP_COPY_SCRIPT_SECTIONS &&
+				ep != asEP_MAX_STACK_SIZE &&
+				ep != asEP_INIT_GLOBAL_VARS_AFTER_BUILD &&
+				ep != asEP_EXPAND_DEF_ARRAY_TO_TMPL &&
+				ep != asEP_AUTO_GARBAGE_COLLECT )
 			{
-			case asEP_ALLOW_UNSAFE_REFERENCES:
-			case asEP_OPTIMIZE_BYTECODE:
-			case asEP_USE_CHARACTER_LITERALS:
-			case asEP_ALLOW_MULTILINE_STRINGS:
-			case asEP_ALLOW_IMPLICIT_HANDLE_TYPES:
-			case asEP_BUILD_WITHOUT_LINE_CUES:
-			case asEP_REQUIRE_ENUM_SCOPE:
-			case asEP_SCRIPT_SCANNER:
-			case asEP_INCLUDE_JIT_INSTRUCTIONS:
-			case asEP_STRING_ENCODING:
-			case asEP_PROPERTY_ACCESSOR_MODE:
-			case asEP_DISALLOW_GLOBAL_VARS:
-			case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
-			case asEP_COMPILER_WARNINGS:
-			case asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE:
-				{
-					// Get the value for the property
-					in::GetToken(engine, tmp, config, pos);
-					stringstream s(tmp);
-					asPWORD value;
+				// Get the value for the property
+				in::GetToken(engine, tmp, config, pos);
+				stringstream s(tmp);
+				asPWORD value;
 
-					s >> value;
+				s >> value;
 
-					engine->SetEngineProperty(ep, value);
-				}
-				break;
-
-			case asEP_COPY_SCRIPT_SECTIONS:
-			case asEP_MAX_STACK_SIZE:
-			case asEP_INIT_GLOBAL_VARS_AFTER_BUILD:
-			case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
-			case asEP_AUTO_GARBAGE_COLLECT:
-				// These don't affect the compiler, so there is no need to export them
-				break;
+				engine->SetEngineProperty(ep, value);
 			}
 		}
 		else if( token == "namespace" )

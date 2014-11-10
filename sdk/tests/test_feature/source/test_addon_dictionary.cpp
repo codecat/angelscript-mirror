@@ -77,6 +77,34 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test alternate syntax where empty list members give error
+	// http://www.gamedev.net/topic/661578-array-trailing-comma/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_DISALLOW_EMPTY_LIST_ELEMENTS, 1);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		// The last comma will not be ignored since the dictValue expects exactly two values
+		r = ExecuteString(engine, "dictionary dict = {{'a',}};");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 25) : Error   : Empty list element is not allowed\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test assigning one dictionary value to another
 	// http://www.gamedev.net/topic/662542-assert-assigning-from-one-dictionary-to-another/
 	{

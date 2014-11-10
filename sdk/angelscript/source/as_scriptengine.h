@@ -479,6 +479,7 @@ public:
 		bool   disallowValueAssignForRefType;
 		int    alterSyntaxNamedArgs;
 		bool   disableIntegerDivision;
+		bool   disallowEmptyListElements;
 	} ep;
 
 	// This flag is to allow a quicker shutdown when releasing the engine

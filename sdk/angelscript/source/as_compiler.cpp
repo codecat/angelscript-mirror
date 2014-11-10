@@ -3183,8 +3183,17 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				return -1;
 			}
 
+			asCScriptNode *errNode = node;
 			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, byteCode, elementsInSubList);
 			if( r < 0 ) return r;
+
+			if( r == 1 )
+			{
+				asASSERT( engine->ep.disallowEmptyListElements );
+				// Empty elements in the middle are not allowed
+				Error(TXT_EMPTY_LIST_ELEMENT_IS_NOT_ALLOWED, errNode);
+			}
+
 			asASSERT( patternNode );
 		}
 
@@ -3227,10 +3236,21 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		while( valueNode )
 		{
 			patternNode = nextNode;
+			asCScriptNode *errNode = valueNode;
 			int r = CompileInitListElement(patternNode, valueNode, bufferTypeId, bufferVar, bufferSize, ctx.bc, elementsInSubSubList);
 			if( r < 0 ) return r;
 
-			countElements++;
+			if( r == 0 )
+				countElements++;
+			else 
+			{
+				asASSERT( r == 1 && engine->ep.disallowEmptyListElements );
+				if( valueNode )
+				{
+					// Empty elements in the middle are not allowed
+					Error(TXT_EMPTY_LIST_ELEMENT_IS_NOT_ALLOWED, errNode);
+				}
+			}
 		}
 
 		if( countElements == 0 )
@@ -3278,6 +3298,8 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
+		bool isEmpty = false;
+
 		// Determine the size of the element
 		asUINT size = 0;
 
@@ -3420,110 +3442,128 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		}
 		else
 		{
-			// There is no specific value so we need to fill it with a default value
-			if( dt.GetTokenType() == ttQuestion )
+			if( builder->engine->ep.disallowEmptyListElements )
 			{
-				// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
-				if( bufferSize & 0x3 )
-					bufferSize += 4 - (bufferSize & 0x3);
-
-				// Place the type id for a null handle in the buffer
-				byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, 0);
-				bufferSize += 4;
-
-				dt = asCDataType::CreateNullHandle();
-
-				// No need to initialize the handle as the buffer is already initialized with zeroes
+				// Empty elements are not allowed, except if it is the last in the list
+				isEmpty = true;
 			}
-			else if( dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_VALUE )
+			else
 			{
-				// For value types with default constructor we need to call the constructor
-				asSTypeBehaviour *beh = dt.GetBehaviour();
-				int func = 0;
-				if( beh ) func = beh->construct;
-				if( func == 0 && (dt.GetObjectType()->flags & asOBJ_POD) == 0 )
-				{
-					asCString str;
-					// TODO: funcdef: asCDataType should have a GetTypeName()
-					if( dt.GetFuncDef() )
-						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
-					else
-						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
-					Error(str, valueNode);
-				}
-				else if( func )
+				// There is no specific value so we need to fill it with a default value
+				if( dt.GetTokenType() == ttQuestion )
 				{
 					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
 					if( bufferSize & 0x3 )
 						bufferSize += 4 - (bufferSize & 0x3);
 
-					// Call the constructor as a normal function
-					byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+					// Place the type id for a null handle in the buffer
+					byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, 0);
+					bufferSize += 4;
 
-					asSExprContext ctx(engine);
-					PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());
-					byteCode.AddCode(&ctx.bc);
+					dt = asCDataType::CreateNullHandle();
+
+					// No need to initialize the handle as the buffer is already initialized with zeroes
 				}
-			}
-			else if( !dt.IsObjectHandle() && dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_REF )
-			{
-				// For ref types (not handles) we need to call the default factory
-				asSTypeBehaviour *beh = dt.GetBehaviour();
-				int func = 0;
-				if( beh ) func = beh->factory;
-				if( func == 0 )
+				else if( dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_VALUE )
 				{
-					asCString str;
-					// TODO: funcdef: asCDataType should have a GetTypeName()
-					if( dt.GetFuncDef() )
-						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
-					else
-						str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
-					Error(str, valueNode);
+					// For value types with default constructor we need to call the constructor
+					asSTypeBehaviour *beh = dt.GetBehaviour();
+					int func = 0;
+					if( beh ) func = beh->construct;
+					if( func == 0 && (dt.GetObjectType()->flags & asOBJ_POD) == 0 )
+					{
+						asCString str;
+						// TODO: funcdef: asCDataType should have a GetTypeName()
+						if( dt.GetFuncDef() )
+							str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
+						else
+							str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
+						Error(str, valueNode);
+					}
+					else if( func )
+					{
+						// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+						if( bufferSize & 0x3 )
+							bufferSize += 4 - (bufferSize & 0x3);
+
+						// Call the constructor as a normal function
+						byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+
+						asSExprContext ctx(engine);
+						PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());
+						byteCode.AddCode(&ctx.bc);
+					}
 				}
-				else if( func )
+				else if( !dt.IsObjectHandle() && dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_REF )
 				{
-					asSExprContext rctx(engine);
-					PerformFunctionCall(func, &rctx, false, 0, dt.GetObjectType());
+					// For ref types (not handles) we need to call the default factory
+					asSTypeBehaviour *beh = dt.GetBehaviour();
+					int func = 0;
+					if( beh ) func = beh->factory;
+					if( func == 0 )
+					{
+						asCString str;
+						// TODO: funcdef: asCDataType should have a GetTypeName()
+						if( dt.GetFuncDef() )
+							str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetFuncDef()->GetName());
+						else
+							str.Format(TXT_NO_DEFAULT_CONSTRUCTOR_FOR_s, dt.GetObjectType()->GetName());
+						Error(str, valueNode);
+					}
+					else if( func )
+					{
+						asSExprContext rctx(engine);
+						PerformFunctionCall(func, &rctx, false, 0, dt.GetObjectType());
 
-					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
-					if( bufferSize & 0x3 )
-						bufferSize += 4 - (bufferSize & 0x3);
+						// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
+						if( bufferSize & 0x3 )
+							bufferSize += 4 - (bufferSize & 0x3);
 
-					asSExprContext lctx(engine);
-					lctx.bc.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
-					lctx.type.Set(dt);
-					lctx.type.isLValue = true;
-					lctx.type.isExplicitHandle = true;
-					lctx.type.dataType.MakeReference(true);
+						asSExprContext lctx(engine);
+						lctx.bc.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+						lctx.type.Set(dt);
+						lctx.type.isLValue = true;
+						lctx.type.isExplicitHandle = true;
+						lctx.type.dataType.MakeReference(true);
 
-					asSExprContext ctx(engine);
-					DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
+						asSExprContext ctx(engine);
+						DoAssignment(&ctx, &lctx, &rctx, valueNode, valueNode, ttAssignment, valueNode);
 
-					if( !lctx.type.dataType.IsPrimitive() )
-						ctx.bc.Instr(asBC_PopPtr);
+						if( !lctx.type.dataType.IsPrimitive() )
+							ctx.bc.Instr(asBC_PopPtr);
 
-					// Release temporary variables used by expression
-					ReleaseTemporaryVariable(ctx.type, &ctx.bc);
+						// Release temporary variables used by expression
+						ReleaseTemporaryVariable(ctx.type, &ctx.bc);
 
-					ProcessDeferredParams(&ctx);
+						ProcessDeferredParams(&ctx);
 
-					byteCode.AddCode(&ctx.bc);
+						byteCode.AddCode(&ctx.bc);
+					}
 				}
 			}
 		}
 
-		// Determine size of the element
-		if( dt.IsPrimitive() || (!dt.IsNullHandle() && (dt.GetObjectType()->flags & asOBJ_VALUE)) )
-			size = dt.GetSizeInMemoryBytes();
-		else
-			size = AS_PTR_SIZE*4;
-		asASSERT( size <= 4 || (size & 0x3) == 0 );
+		if( !isEmpty )
+		{
+			// Determine size of the element
+			if( dt.IsPrimitive() || (!dt.IsNullHandle() && (dt.GetObjectType()->flags & asOBJ_VALUE)) )
+				size = dt.GetSizeInMemoryBytes();
+			else
+				size = AS_PTR_SIZE*4;
+			asASSERT( size <= 4 || (size & 0x3) == 0 );
+
+			bufferSize += size;
+		}
 
 		// Move to the next element
-		bufferSize += size;
 		patternNode = patternNode->next;
 		valueNode = valueNode->next;
+
+		if( isEmpty )
+		{
+			// The caller will determine if the empty element should be ignored or not
+			return 1;
+		}
 	}
 	else
 		asASSERT( false );

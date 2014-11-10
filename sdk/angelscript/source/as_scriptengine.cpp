@@ -390,6 +390,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.disableIntegerDivision = value ? true : false;
 		break;
 
+	case asEP_DISALLOW_EMPTY_LIST_ELEMENTS:
+		ep.disallowEmptyListElements = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -468,6 +472,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_DISABLE_INTEGER_DIVISION:
 		return ep.disableIntegerDivision;
 
+	case asEP_DISALLOW_EMPTY_LIST_ELEMENTS:
+		return ep.disallowEmptyListElements;
+
 	default:
 		return 0;
 	}
@@ -527,6 +534,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.disallowValueAssignForRefType = false;
 		ep.alterSyntaxNamedArgs          = 0;         // 0 = no alternate syntax, 1 = accept alternate syntax but warn, 2 = accept without warning
 		ep.disableIntegerDivision        = false;
+		ep.disallowEmptyListElements     = false;
 	}
 
 	gc.engine = this;
