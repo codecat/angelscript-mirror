@@ -4813,8 +4813,13 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 
 	if( fromType == 0 || toType == 0 ) return asINVALID_ARG;
 
+	// A null-pointer can always be cast to another type, so it will always be successful
 	if( obj == 0 )
 		return asSUCCESS;
+
+	// This method doesn't support casting function pointers, since they cannot be described with just an object type
+	if( fromType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
+		return asNOT_SUPPORTED;
 
 	// For script classes and interfaces there is a quick route
 	if( (fromType->GetFlags() & asOBJ_SCRIPT_OBJECT) && (toType->GetFlags() & asOBJ_SCRIPT_OBJECT) )
@@ -4857,20 +4862,6 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 		}
 
 		// Let it continue, since it is possible the script class implements an opCast method
-	}
-	// Script functions can only be cast to another if the signature is equal
-	else if( (fromType->GetFlags() & asOBJ_SCRIPT_FUNCTION) && (toType->GetFlags() & asOBJ_SCRIPT_FUNCTION) )
-	{
-		asCScriptFunction *func = reinterpret_cast<asCScriptFunction*>(obj);
-		if( func->IsCompatibleWithTypeId(toType->GetTypeId()) )
-		{
-			*newPtr = obj;
-			func->AddRef();
-			return asSUCCESS;
-		}
-
-		// It's still a success even though the newPtr is null
-		return asSUCCESS;
 	}
 
 	if( fromType == toType )

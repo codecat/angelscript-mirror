@@ -77,6 +77,59 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Storing a function pointer in the dictionary
+	// http://www.gamedev.net/topic/662542-assert-assigning-from-one-dictionary-to-another/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int count = 0; \n"
+			"funcdef void CB(); \n"
+			"void test() \n"
+			"{ \n"
+			"    count++; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"    CB@ func = @test; \n"
+			"    dictionary dict; \n"
+			"    @dict['func'] = func; \n"
+			"    assert( dict.exists('func') ); \n"
+			"    CB@ func2 = cast<CB>(dict['func']); \n"
+			"    func2(); \n"
+			"    assert( count == 1 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test alternate syntax where empty list members give error
 	// http://www.gamedev.net/topic/661578-array-trailing-comma/
 	{
