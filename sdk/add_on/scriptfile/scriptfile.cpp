@@ -18,7 +18,7 @@ BEGIN_AS_NAMESPACE
 
 CScriptFile *ScriptFile_Factory()
 {
-    return new CScriptFile();
+	return new CScriptFile();
 }
 
 void ScriptFile_Factory_Generic(asIScriptGeneric *gen)
