@@ -16,6 +16,7 @@ bool Test()
 	RegisterScriptString(engine);
 	RegisterScriptFile(engine);
 
+	// TODO: Merge this test with test_addon_scriptfile and remove this test
 	const char *script =
 		"file f;                                                  \n"
 		"int r = f.open(\"scripts/TestExecuteScript.as\", \"r\"); \n"

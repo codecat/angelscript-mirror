@@ -9688,8 +9688,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			}
 			else
 			{
-				// The scope is can be used to specify the base class
-				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType ? objectType : outFunc->objectType, funcs, objIsConst, scope);
+				// The scope can be used to specify the base class
+				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType ? objectType : outFunc->objectType, funcs, objIsConst, scope, node, script);
 			}
 
 			// It is still possible that there is a class member of a function type or a type with opCall methods

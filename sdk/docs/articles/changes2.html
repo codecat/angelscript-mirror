@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/11/10</h2>
+<h2>Version 2.30.0 WIP - 2014/11/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetFunctionByDecl wasn't able to find the global function if the name was prefixed with :: (Thanks Ser Ementaler)
 <li>The compiler was producing wrong bytecode when calling asBEHAVE_IMPLICIT_REF_CAST on value type
 <li>Fixed crash when script class contained value template type as member
+<li>Class method can refer to base class' method with fully specified namespace (Thanks iraxef)
 </ul>
 <li>Library interface
 <ul>

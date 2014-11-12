@@ -848,6 +848,7 @@ bool Test2()
 					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"
 					   "script (1, 65) : Info    : Candidates are:\n"
 					   "script (1, 65) : Info    : void A::method()\n"
+					   "script (1, 79) : Error   : Namespace 'B' doesn't exist.\n"
 					   "script (1, 79) : Error   : Namespace 'B::A' doesn't exist.\n" )
 	{
 		TEST_FAILED;

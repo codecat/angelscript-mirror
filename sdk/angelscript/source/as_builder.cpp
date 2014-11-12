@@ -4680,12 +4680,21 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 	}
 }
 
-void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope)
+void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope, asCScriptNode *errNode, asCScriptCode *script)
 {
 	if( scope != "" )
 	{
+		// If searching with a scope informed, then the node and script must also be informed for potential error reporting
+		asASSERT( errNode && script );
+
+		// If the scope contains ::identifier, then use the last identifier as the class name and the rest of is as the namespace
+		int n = scope.FindLast("::");
+		asCString className = n >= 0 ? scope.SubString(n+2) : scope;
+		asCString nsName = n >= 0 ? scope.SubString(0, n) : "";
+		asSNameSpace *ns = GetNameSpaceByString(nsName, objectType->nameSpace, errNode, script);
+
 		// Find the base class with the specified scope
-		while( objectType && objectType->name != scope )
+		while( objectType && (objectType->name != className || objectType->nameSpace != ns) )
 			objectType = objectType->derivedFrom;
 
 		// If the scope is not any of the base classes, then return no methods
@@ -4831,21 +4840,7 @@ asCString asCBuilder::GetScopeFromNode(asCScriptNode *node, asCScriptCode *scrip
 asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCode *script, asSNameSpace *implicitNs, asCScriptNode **next)
 {
 	asCString scope = GetScopeFromNode(node, script, next);
-	asSNameSpace *ns = implicitNs;
-	if( scope == "::" )
-		ns = engine->nameSpaces[0];
-	else if( scope != "" )
-	{
-		ns = engine->FindNameSpace(scope.AddressOf());
-		if( ns == 0 )
-		{
-			asCString msg;
-			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-			WriteError(msg, script, node);
-		}
-	}
-
-	return ns;
+	return GetNameSpaceByString(scope, implicitNs, node, script);
 }
 
 asSNameSpace *asCBuilder::GetParentNameSpace(asSNameSpace *ns)
@@ -4862,6 +4857,25 @@ asSNameSpace *asCBuilder::GetParentNameSpace(asSNameSpace *ns)
 	}
 
 	return engine->nameSpaces[0];
+}
+
+asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script)
+{
+	asSNameSpace *ns = implicitNs;
+	if( nsName == "::" )
+		ns = engine->nameSpaces[0];
+	else if( nsName != "" )
+	{
+		ns = engine->FindNameSpace(nsName.AddressOf());
+		if( ns == 0 )
+		{
+			asCString msg;
+			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, nsName.AddressOf());
+			WriteError(msg, script, errNode);
+		}
+	}
+
+	return ns;
 }
 
 asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType)

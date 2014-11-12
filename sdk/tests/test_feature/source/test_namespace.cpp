@@ -11,6 +11,58 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Referring to base class' method with namespace
+	// http://www.gamedev.net/topic/662755-fully-qualified-namespace-when-calling-base-class-implementation/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace ns { \n"
+			"  class Base { \n"
+			"    void Setup() {} \n"
+			"  } \n"
+			"  class Derived : ns::Base { \n"
+			"    void Setup() { ns::Base::Setup(); } \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Shouldn't be possible to refer to Base class in different namespace
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"namespace ns2 { \n"
+			"  class Base { \n"
+			"    void Setup() {} \n"
+			"  } \n"
+			"} \n"
+			"namespace ns { \n"
+			"  class Base { \n"
+			"    void Setup() {} \n"
+			"  } \n"
+			"  class Derived : ns::Base { \n"
+			"    void Setup() { ns2::Base::Setup(); } \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		// TODO: The error message should be better, something like: Cannot call non-static member of class ns2::Base
+		if( bout.buffer != "test (11, 5) : Info    : Compiling void Derived::Setup()\n"
+						   "test (11, 20) : Error   : Namespace 'ns2::Base' doesn't exist.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Overloading type name in namespace with local variable
 	// http://www.gamedev.net/topic/658748-namespace-bug/
 	{
