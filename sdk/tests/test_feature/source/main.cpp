@@ -132,7 +132,6 @@ namespace TestImplicitCast      { bool Test(); }
 namespace TestAssign            { bool Test(); }
 namespace TestTypedef           { bool Test(); }
 namespace TestEnum              { bool Test(); }
-namespace TestFile              { bool Test(); }
 namespace TestRefCast           { bool Test(); }
 namespace TestImplicitHandle    { bool Test(); }
 namespace TestAuto              { bool Test(); }
@@ -258,7 +257,6 @@ int allTests()
 	if( TestInterface::Test()           ) goto failed; else PRINTF("-- TestInterface passed\n");
 	if( TestCastOp::Test()              ) goto failed; else PRINTF("-- TestCastOp passed\n");
 	if( Test2Modules()                  ) goto failed; else PRINTF("-- Test2Modules passed\n");
-	if( TestFile::Test()                ) goto failed; else PRINTF("-- TestFile passed\n");
 	if( TestArrayObject::Test()         ) goto failed; else PRINTF("-- TestArrayObject passed\n");
 	if( TestCompiler::Test()            ) goto failed; else PRINTF("-- TestCompiler passed\n");
 	if( TestOptimize()                  ) goto failed; else PRINTF("-- TestOptimize passed\n");

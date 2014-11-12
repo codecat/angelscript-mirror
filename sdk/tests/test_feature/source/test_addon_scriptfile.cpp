@@ -35,8 +35,7 @@ bool Test()
 			"  assert( files.length() == 2 ); \n"
 			"  file f; \n"
 			"  f.open('scripts/include.as', 'r'); \n"
-			"  string str; \n"
-			"  f.readLine(str); \n"
+			"  string str = f.readLine(); \n"
 			"  str = str.substr(3, 25); \n"
 			"  assert( str == 'void MyIncludedFunction()' ); \n"
 			"} \n");
@@ -51,6 +50,41 @@ bool Test()
 		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+		RegisterScriptFile(engine);
+
+		const char *script =
+			"file f;                                                  \n"
+			"int r = f.open(\"scripts/TestExecuteScript.as\", \"r\"); \n"
+			"if( r >= 0 ) {                                           \n"
+			"  assert( f.getSize() > 0 );                             \n"
+			"  string s1 = f.readString(10000);                       \n"
+			"  assert( s1.length() == uint(f.getSize()) );            \n"
+			"  f.close();                                             \n"
+			"  f.open('scripts/TestExecuteScript.as', 'r');           \n"
+			"  string s2;                                             \n"
+			"  while( !f.isEndOfFile() )                              \n"
+			"  {                                                      \n"
+			"    string s3 = f.readLine();                            \n"
+			"    s2 += s3;                                            \n"
+			"  }                                                      \n"
+			"  assert( s1 == s2 );                                    \n"
+			"  f.close();                                             \n"
+			"}                                                        \n";
+
+		r = ExecuteString(engine, script);
+		if( r != asEXECUTION_FINISHED )
+		{
 			TEST_FAILED;
 		}
 

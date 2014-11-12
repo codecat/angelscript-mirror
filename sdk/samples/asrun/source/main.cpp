@@ -363,8 +363,8 @@ void PrintString(const string &str)
 	// Unless the std out has been redirected to file we'll need to allow Windows to convert
 	// the text to the current locale so that characters will be displayed appropriately.
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-	BOOL ret = GetConsoleMode(console, 0);
-	if( ret != 0 )
+	DWORD mode = 0;
+	if( console != INVALID_HANDLE_VALUE && GetConsoleMode(console, &mode) != 0 ) 
 	{
 		// We're writing to a console window, so convert the UTF8 string to UTF16 and write with
 		// WriteConsoleW. Windows will then automatically display the characters correctly according

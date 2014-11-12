@@ -340,7 +340,6 @@
     <ClCompile Include="..\..\source\test_exception.cpp" />
     <ClCompile Include="..\..\source\test_exceptionmemory.cpp" />
     <ClCompile Include="..\..\source\test_factory.cpp" />
-    <ClCompile Include="..\..\source\test_file.cpp" />
     <ClCompile Include="..\..\source\test_float.cpp" />
     <ClCompile Include="..\..\source\test_for.cpp" />
     <ClCompile Include="..\..\source\test_funcoverload.cpp" />
