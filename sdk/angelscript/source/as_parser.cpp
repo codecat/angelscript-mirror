@@ -545,6 +545,7 @@ asCScriptNode *asCParser::ParseDataType(bool allowVariableType, bool allowAuto)
 	return node;
 }
 
+// BNF: PRIMTYPE ::= 'void' | 'int' | 'int8' | 'int16' | 'int32' | 'int64' | 'uint' | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'float' | 'double' | 'bool'
 asCScriptNode *asCParser::ParseRealType()
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -2874,7 +2875,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 	return node;
 }
 
-// TODO: BNF: INTERFACE ::=
+// BNF: INTERFACE ::= ['shared'] 'interface' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'
 asCScriptNode *asCParser::ParseInterface()
 {
 	asCScriptNode *node = CreateNode(snInterface);
@@ -2971,7 +2972,7 @@ asCScriptNode *asCParser::ParseInterface()
 	return node;
 }
 
-// TODO: BNF: MIXIN ::=
+// BNF: MIXIN ::= 'mixin' CLASS
 asCScriptNode *asCParser::ParseMixin()
 {
 	asCScriptNode *node = CreateNode(snMixin);
@@ -2995,7 +2996,7 @@ asCScriptNode *asCParser::ParseMixin()
 	return node;
 }
 
-// TODO: BNF: CLASS ::=
+// BNF: CLASS ::= {'shared' | 'abstract' | 'final'} 'class' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR} '}'
 asCScriptNode *asCParser::ParseClass()
 {
 	asCScriptNode *node = CreateNode(snClass);
@@ -3305,7 +3306,7 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 	return node;
 }
 
-// TODO: BNF: STATBLOCK ::=
+// BNF: STATBLOCK ::= '{' {VAR | STATEMENT} '}'
 asCScriptNode *asCParser::ParseStatementBlock()
 {
 	asCScriptNode *node = CreateNode(snStatementBlock);
@@ -3388,7 +3389,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 	UNREACHABLE_RETURN;
 }
 
-// TODO: BNF: INITLIST ::=
+// BNF: INITLIST ::= '{' [ASSIGN | INITLIST] {',' [ASSIGN | INITLIST]} '}'
 asCScriptNode *asCParser::ParseInitList()
 {
 	asCScriptNode *node = CreateNode(snInitList);
@@ -3499,7 +3500,7 @@ asCScriptNode *asCParser::ParseInitList()
 	UNREACHABLE_RETURN;
 }
 
-// TODO: BNF: VAR ::=
+// BNF: VAR ::= ['private'] TYPE IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST] {',' IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST]} ';'
 asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 {
 	asCScriptNode *node = CreateNode(snDeclaration);
@@ -4096,7 +4097,7 @@ asCScriptNode *asCParser::ParseContinue()
 }
 
 // TODO: typedef: Typedefs should accept complex types as well
-// TODO: BNF: TYPEDEF ::=
+// BNF: TYPEDEF ::= 'typedef' PRIMTYPE IDENTIFIER ';'
 asCScriptNode *asCParser::ParseTypedef()
 {
 	// Create the typedef node
@@ -4108,7 +4109,7 @@ asCScriptNode *asCParser::ParseTypedef()
 	GetToken(&token);
 	if( token.type != ttTypedef)
 	{
-		Error(ExpectedToken(asCTokenizer::GetDefinition(token.type)), &token);
+		Error(ExpectedToken(asCTokenizer::GetDefinition(ttTypedef)), &token);
 		Error(InsteadFound(token), &token);
 		return node;
 	}
@@ -4162,4 +4163,5 @@ void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
 #endif
 
 END_AS_NAMESPACE
+
 
