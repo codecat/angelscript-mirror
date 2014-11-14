@@ -384,7 +384,7 @@ int CScriptFile::MovePos(int delta)
 string CScriptFile::ReadString(unsigned int length)
 {
 	if( file == 0 )
-		return 0;
+		return "";
 
 	// Read the string
 	string str;
@@ -398,7 +398,7 @@ string CScriptFile::ReadString(unsigned int length)
 string CScriptFile::ReadLine()
 {
 	if( file == 0 )
-		return 0;
+		return "";
 
 	// Read until the first new-line character
 	string str;

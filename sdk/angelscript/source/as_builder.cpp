@@ -4175,7 +4175,14 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 		// Verify that the name of the constructor/destructor is the same as the class
 		if( name != objType->name )
-			WriteError(TXT_CONSTRUCTOR_NAME_ERROR, file, node);
+		{
+			asCString str;
+			if( isDestructor )
+				str.Format(TXT_DESTRUCTOR_s_s_NAME_ERROR, objType->name.AddressOf(), name.AddressOf());
+			else
+				str.Format(TXT_METHOD_s_s_HAS_NO_RETURN_TYPE, objType->name.AddressOf(), name.AddressOf());
+			WriteError(str, file, node);
+		}
 
 		if( isDestructor )
 			name = "~" + name;

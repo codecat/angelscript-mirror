@@ -190,10 +190,11 @@ bool Test()
 	bout.buffer = "";
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, "class t{ s() {} };", 18, 0);
+	mod->AddScriptSection(TESTNAME, "class t{ s() {} \n ~d() {} };");
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
-	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : The name of constructors and destructors must be the same as the class\n" ) 
+	if( bout.buffer != "TestScriptClassMethod (1, 10) : Error   : Method 't::s' is missing the return type, nor is it the same name as object to be a constructor\n"
+	                   "TestScriptClassMethod (2, 2) : Error   : The name of the destructor 't::~d' must be the same as the class\n" ) 
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
