@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptmath/scriptmathcomplex.h"
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 
 namespace Test_Addon_Dictionary
@@ -76,6 +77,58 @@ bool Test()
  	asIScriptEngine *engine = 0;
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
+
+	// Storing a ref in the dictionary
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+		RegisterScriptHandle(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T {} \n"
+			"void main() \n"
+			"{ \n"
+			"    dictionary dict; \n"
+			"    ref @t = T(); \n"
+			"    @dict['test'] = t; \n"
+			"    T @obj = cast<T>(dict['test']); \n"
+			"    assert( obj !is null ); \n"
+			"    assert( obj is t ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			if( r == asEXECUTION_EXCEPTION )
+				PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+ 		ctx->Release();
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Must manually call GC, because the dictionary with the script handle was placed on the GC, and these
+		// hold a reference to the engine. If this is not done the engine will be kept alive forever
+		// TODO: How to avoid the need for this explicit call to GarbageCollect?
+		engine->GarbageCollect();
+
+		engine->Release();
+	} 
 
 	// Storing a function pointer in the dictionary
 	// http://www.gamedev.net/topic/662542-assert-assigning-from-one-dictionary-to-another/

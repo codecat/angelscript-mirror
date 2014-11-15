@@ -890,6 +890,7 @@ public:
 	virtual int   SetArgDouble(asUINT arg, double value) = 0;
 	virtual int   SetArgAddress(asUINT arg, void *addr) = 0;
 	virtual int   SetArgObject(asUINT arg, void *obj) = 0;
+	virtual int   SetArgVarType(asUINT arg, void *ptr, int typeId) = 0;
 	virtual void *GetAddressOfArg(asUINT arg) = 0;
 
 	// Return value

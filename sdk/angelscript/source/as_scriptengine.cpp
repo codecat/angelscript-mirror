@@ -621,6 +621,8 @@ asCScriptEngine::~asCScriptEngine()
 			scriptModules[n]->Discard();
 	scriptModules.SetLength(0);
 
+	// Do another full garbage collection to destroy the object types/functions
+	// that may have been placed in the gc when destroying the modules
 	GarbageCollect();
 
 	if( defaultArrayObjectType )
@@ -4905,20 +4907,19 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 	}
 
 	// One last chance if the object has a void opCast(?&out) behaviour
-	// TODO: 2.30.0: implement this
-	/*
 	if( universalCastFunc )
 	{
 		// TODO: Add proper error handling
 		asIScriptContext *ctx = RequestContext();
 		ctx->Prepare(universalCastFunc);
 		ctx->SetObject(obj);
-		// TODO: interface: Context needs a SetArgVar to be able to call functions that take ? arguments
-		ctx->SetArgVar(0, newPtr, toType->GetTypeId() | asTYPEID_OBJHANDLE);
+		ctx->SetArgVarType(0, newPtr, toType->GetTypeId() | asTYPEID_OBJHANDLE);
 		ctx->Execute();
 		ReturnContext(ctx);
+
+		// The opCast(?&out) method already incremented the
+		// refCount so there is no need to do it manually
 	}
-	*/
 
 	// The cast is not available, but it is still a success
 	return asSUCCESS;

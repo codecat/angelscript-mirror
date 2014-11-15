@@ -1051,6 +1051,44 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 	return 0;
 }
 
+int asCContext::SetArgVarType(asUINT arg, void *ptr, int typeId)
+{
+	if( m_status != asEXECUTION_PREPARED )
+		return asCONTEXT_NOT_PREPARED;
+
+	if( arg >= (unsigned)m_initialFunction->parameterTypes.GetLength() )
+	{
+		m_status = asEXECUTION_ERROR;
+		return asINVALID_ARG;
+	}
+
+	// Verify the type of the argument
+	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
+	if( dt->GetTokenType() != ttQuestion )
+	{
+		m_status = asEXECUTION_ERROR;
+		return asINVALID_TYPE;
+	}
+
+	// Determine the position of the argument
+	int offset = 0;
+	if( m_initialFunction->objectType )
+		offset += AS_PTR_SIZE;
+
+	// If function returns object by value an extra pointer is pushed on the stack
+	if( m_returnValueSize )
+		offset += AS_PTR_SIZE;
+
+	for( asUINT n = 0; n < arg; n++ )
+		offset += m_initialFunction->parameterTypes[n].GetSizeOnStackDWords();
+
+	// Set the typeId and pointer
+	*(asPWORD*)(&m_regs.stackFramePointer[offset]) = (asPWORD)ptr;
+	offset += AS_PTR_SIZE;
+	*(int*)(&m_regs.stackFramePointer[offset]) = typeId;
+
+	return 0;
+}
 
 // TODO: Instead of GetAddressOfArg, maybe we need a SetArgValue(int arg, void *value, bool takeOwnership) instead.
 

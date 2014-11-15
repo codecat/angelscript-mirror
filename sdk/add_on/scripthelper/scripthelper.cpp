@@ -169,7 +169,7 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 		return r;
 
 	// If no context was provided, request a new one from the engine
-	asIScriptContext *execCtx = ctx ? ctx : engine->CreateContext();
+	asIScriptContext *execCtx = ctx ? ctx : engine->RequestContext();
 	r = execCtx->Prepare(func);
 	if( r < 0 )
 	{
@@ -206,7 +206,7 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 
 	// Clean up
 	func->Release();
-	if( !ctx ) execCtx->Release();
+	if( !ctx ) engine->ReturnContext(execCtx);
 
 	return r;
 }
