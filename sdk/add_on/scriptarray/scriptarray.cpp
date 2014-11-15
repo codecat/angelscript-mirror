@@ -10,6 +10,10 @@ using namespace std;
 
 BEGIN_AS_NAMESPACE
 
+// This macro is used to avoid warnings about unused variables.
+// Usually where the variables are only used in debug mode.
+#define UNUSED_VAR(x) (void)(x)
+
 // Set the default memory routines
 // Use the angelscript engine's memory routines by default
 static asALLOCFUNC_t userAlloc = asAllocMem;
@@ -273,12 +277,14 @@ void RegisterScriptArray(asIScriptEngine *engine, bool defaultArray)
 	if( defaultArray )
 	{
 		int r = engine->RegisterDefaultArrayType("array<T>"); assert( r >= 0 );
+		UNUSED_VAR(r);
 	}
 }
 
 static void RegisterScriptArray_Native(asIScriptEngine *engine)
 {
-	int r;
+	int r = 0;
+	UNUSED_VAR(r);
 
 	// Register the object type user data clean up
 	engine->SetObjectTypeUserDataCleanupCallback(CleanupObjectTypeArrayCache, ARRAY_CACHE);
@@ -1899,7 +1905,8 @@ static void ScriptArrayReleaseAllHandles_Generic(asIScriptGeneric *gen)
 
 static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 {
-	int r;
+	int r = 0;
+	UNUSED_VAR(r);
 
 	engine->SetObjectTypeUserDataCleanupCallback(CleanupObjectTypeArrayCache, ARRAY_CACHE);
 

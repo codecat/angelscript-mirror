@@ -760,7 +760,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			// All properties must have different offsets in order to make them
 			// distinct, so we simply register them with an incremental offset.
 			// The pointer must also be non-null so we add 1 to have a value.
-			r = engine->RegisterGlobalProperty(decl.c_str(), (void*)(engine->GetGlobalPropertyCount()+1));
+			r = engine->RegisterGlobalProperty(decl.c_str(), reinterpret_cast<void*>(engine->GetGlobalPropertyCount()+1));
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, in::GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register global property");

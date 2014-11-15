@@ -13,6 +13,10 @@ using namespace std;
 
 BEGIN_AS_NAMESPACE
 
+// This macro is used to avoid warnings about unused variables.
+// Usually where the variables are only used in debug mode.
+#define UNUSED_VAR(x) (void)(x)
+
 #if AS_USE_STRINGPOOL == 1
 
 // By keeping the literal strings in a pool the application
@@ -562,7 +566,8 @@ static bool StringEquals(const std::string& lhs, const std::string& rhs)
 
 void RegisterStdString_Native(asIScriptEngine *engine)
 {
-	int r;
+	int r = 0;
+	UNUSED_VAR(r);
 
 	// Register the string type
 #if AS_CAN_USE_CPP11
@@ -1047,7 +1052,8 @@ static void StringSubString_Generic(asIScriptGeneric *gen)
 
 void RegisterStdString_Generic(asIScriptEngine *engine)
 {
-	int r;
+	int r = 0;
+	UNUSED_VAR(r);
 
 	// Register the string type
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
