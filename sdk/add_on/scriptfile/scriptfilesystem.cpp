@@ -1,7 +1,11 @@
 #include "scriptfilesystem.h"
 
+#if defined(_WIN32)
 #include <direct.h> // _getcwd
 #include <Windows.h> // FindFirstFile, GetFileAttributes
+#else
+#include <unistd.h> // getcwd
+#endif
 #include <assert.h> // assert
 
 using namespace std;
@@ -42,7 +46,11 @@ CScriptFileSystem::CScriptFileSystem()
 
 	// Gets the application's current working directory as the starting point
 	char buffer[1000];
+#if defined(_WIN32)
 	currentPath = _getcwd(buffer, 1000);
+#else
+	currentPath = getcwd(buffer, 1000);
+#endif
 }
 
 CScriptFileSystem::~CScriptFileSystem()
@@ -75,7 +83,8 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 
 	// pattern can include wildcards * and ?
 	string searchPattern = currentPath + "/" + pattern;
-	
+
+#if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
 	wchar_t bufUTF16[10000];
 	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
@@ -102,6 +111,9 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 	while( FindNextFileW(hFind, &ffd) != 0 );
 
 	FindClose(hFind);
+#else
+	// TODO: implement this for Linux etc
+#endif
 
 	return array;
 }
@@ -122,6 +134,7 @@ CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
 	// pattern can include wildcards * and ?
 	string searchPattern = currentPath + "/" + pattern;
 
+#if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
 	wchar_t bufUTF16[10000];
 	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
@@ -151,6 +164,9 @@ CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
 	while( FindNextFileW(hFind, &ffd) != 0 );
 
 	FindClose(hFind);
+#else
+	// TODO: Implement this for Linux etc
+#endif
 
 	return array;
 }
@@ -166,6 +182,7 @@ bool CScriptFileSystem::ChangeCurrentPath(const string &path)
 	while( currentPath.length() && (currentPath.back() == '/' || currentPath.back() == '\\') )
 		currentPath.resize(currentPath.length()-1);
 
+#if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
 	wchar_t bufUTF16[10000];
 	MultiByteToWideChar(CP_UTF8, 0, currentPath.c_str(), -1, bufUTF16, 10000);
@@ -175,6 +192,9 @@ bool CScriptFileSystem::ChangeCurrentPath(const string &path)
 	if( attrib == INVALID_FILE_ATTRIBUTES ||
 		!(attrib & FILE_ATTRIBUTE_DIRECTORY) )
 		return false;
+#else
+	// TODO: Implement this for Linux etc
+#endif
 		
 	return true;
 }

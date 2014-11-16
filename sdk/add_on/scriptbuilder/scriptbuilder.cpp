@@ -10,7 +10,7 @@ using namespace std;
 #include <windows.h> // For GetModuleFileName()
 #endif
 
-#if defined(__S3E__) || defined(__APPLE__)
+#if defined(__S3E__) || defined(__APPLE__) || defined(__GNUC__)
 #include <unistd.h> // For getcwd()
 #endif
 

@@ -4,7 +4,7 @@
 #ifdef _WIN32_WCE
 #include <windows.h> // For GetModuleFileName()
 #endif
-#if defined(__S3E__) || defined(__APPLE__)
+#if defined(__S3E__) || defined(__APPLE__) || defined(__GNUC__)
 #include <unistd.h> // For getcwd()
 #endif
 
@@ -351,7 +351,7 @@ string GetCurrentDir()
 #else
 	return _getcwd(buffer, (int)1024);
 #endif // _MSC_VER
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__GNUC__)
 	return getcwd(buffer, 1024);
 #else
 	return "";

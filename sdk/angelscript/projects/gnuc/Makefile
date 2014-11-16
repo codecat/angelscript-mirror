@@ -19,7 +19,7 @@
 # I still _miss_ the rotary telephone!
 
 LIBNAME=libangelscript
-SHLIB=$(LIBNAME).so
+SHLIB=$(LIBNAME)_s.so
 ARLIB=$(LIBNAME).a
 
 ifeq ($(PREFIX),)
@@ -142,7 +142,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.s
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 install_shared:
-	@ver=`awk -F\" '/#define ANGELSCRIPT_VERSION_STRING/{print $$2}' ../../include/angelscript.h`; \
+	@ver=`awk -F\" '/#define ANGELSCRIPT_VERSION_STRING/{print $$2}' ../../include/angelscript.h | cut -d" " -f1`; \
 	if [ "$$ver" = "" ]; then \
 		echo "Skipping creation of symbolic links..."; \
 	else \

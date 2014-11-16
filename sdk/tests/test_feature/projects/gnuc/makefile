@@ -17,6 +17,7 @@ SRCNAMES = \
   test_addon_contextmgr.cpp \
   test_addon_scriptarray.cpp \
   test_addon_scriptbuilder.cpp \
+  test_addon_scriptfile.cpp \
   test_addon_scriptgrid.cpp \
   test_addon_scripthandle.cpp \
   test_addon_scriptmath.cpp \
@@ -57,7 +58,6 @@ SRCNAMES = \
   test_enum.cpp \
   test_exception.cpp \
   test_exceptionmemory.cpp \
-  test_file.cpp \
   test_float.cpp \
   test_for.cpp \
   test_funcoverload.cpp \
@@ -181,6 +181,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/scriptmathcomplex.o \
   obj/scriptdictionary.o \
   obj/scriptfile.o \
+  obj/scriptfilesystem.o \
   obj/scriptbuilder.o \
   obj/serializer.o \
   obj/debugger.o \
@@ -232,6 +233,9 @@ obj/scriptany.o: ../../../../add_on/scriptany/scriptany.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptfile.o: ../../../../add_on/scriptfile/scriptfile.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/scriptfilesystem.o: ../../../../add_on/scriptfile/scriptfilesystem.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/scriptbuilder.o: ../../../../add_on/scriptbuilder/scriptbuilder.cpp

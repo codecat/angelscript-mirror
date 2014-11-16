@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include <malloc.h> // gnuc: memalign
 
 namespace TestRegisterType
 {
@@ -2053,7 +2054,7 @@ __attribute__((aligned(16)))
 #endif
 ;
 
-#if defined(__psp2__) || defined(__CELLOS_LV2__)
+#if defined(__psp2__) || defined(__CELLOS_LV2__) || defined(__GNUC__)
 	#define _aligned_malloc(s, a) memalign(a, s)
 	#define _aligned_free free
 #endif
