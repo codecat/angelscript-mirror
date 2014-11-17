@@ -5,6 +5,8 @@
 #include <Windows.h> // FindFirstFile, GetFileAttributes
 #else
 #include <unistd.h> // getcwd
+#include <dirent.h> // opendir, readdir, closedir
+#include <sys/stat.h> // stat
 #endif
 #include <assert.h> // assert
 
@@ -112,7 +114,30 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 
 	FindClose(hFind);
 #else
-	// TODO: implement this for Linux etc
+	// TODO: implement pattern matching for Linux etc
+	dirent *ent = 0;
+	DIR *dir = opendir(currentPath.c_str());
+	while( (ent = readdir(dir)) != NULL ) 
+	{
+		const string filename = ent->d_name;
+
+		// Skip . and ..
+		if( filename[0] == '.' )
+			continue;
+
+		// Skip sub directories
+		const string fullname = currentPath + "/" + filename;
+		struct stat st;
+		if( stat(fullname.c_str(), &st) == -1 )
+			continue;
+		if( (st.st_mode & S_IFDIR) != 0 )
+			continue;
+
+		// Add the file to the array
+		array->Resize(array->GetSize()+1);
+		((string*)(array->At(array->GetSize()-1)))->assign(filename);
+	}
+	closedir(dir);
 #endif
 
 	return array;
@@ -165,7 +190,30 @@ CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
 
 	FindClose(hFind);
 #else
-	// TODO: Implement this for Linux etc
+	// TODO: implement pattern matching for Linux etc
+	dirent *ent = 0;
+	DIR *dir = opendir(currentPath.c_str());
+	while( (ent = readdir(dir)) != NULL ) 
+	{
+		const string filename = ent->d_name;
+
+		// Skip . and ..
+		if( filename[0] == '.' )
+			continue;
+
+		// Skip files
+		const string fullname = currentPath + "/" + filename;
+		struct stat st;
+		if( stat(fullname.c_str(), &st) == -1 )
+			continue;
+		if( (st.st_mode & S_IFDIR) == 0 )
+			continue;
+
+		// Add the dir to the array
+		array->Resize(array->GetSize()+1);
+		((string*)(array->At(array->GetSize()-1)))->assign(filename);
+	}
+	closedir(dir);
 #endif
 
 	return array;
