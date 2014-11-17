@@ -147,8 +147,8 @@ install_shared:
 		echo "Skipping creation of symbolic links..."; \
 	else \
 		( install -Dm 755 $(LIBDIR)/$(SHLIB) $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so && \
-		ln -fs $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so $(LIBRARYDEST)$(LIBNAME)_s.so && \
-		ln -fs $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so $(LIBRARYDEST)$(LIBNAME)_s.so.$$ver ) \
+		ln -fs $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so $(LIBRARYDEST)$(SHLIB) && \
+		ln -fs $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so $(LIBRARYDEST)$(SHLIB).$$ver ) \
 	fi ;
 
 
@@ -158,8 +158,8 @@ clean:
 install: $(LIBDIR)/$(ARLIB) $(LIBDIR)/$(SHLIB)
 	@echo Installing to: $(LIBRARYDEST) and $(INCLUDEDEST)...
 	@echo -------------------------------------------------------------------
-	install -Dm 644 $(LIBDIR)/$(ARLIB) $(LIBRARYDEST)
-	install -Dm 644 $(INCDIR)/$(HEADER) $(INCLUDEDEST)
+	install -Dm 644 $(LIBDIR)/$(ARLIB) $(LIBRARYDEST)$(ARLIB)
+	install -Dm 644 $(INCDIR)/$(HEADER) $(INCLUDEDEST)$(HEADER)
 	$(MAKE) install_shared
 	@echo -------------------------------------------------------------------
 	@echo Angelscript library installed. Enjoy!
