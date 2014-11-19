@@ -23,7 +23,7 @@ using namespace std;
 #define UINT unsigned int 
 typedef unsigned int DWORD;
 int ch;
-// Linux doesn't have timeGetTime(), this essintially does the same
+// Linux doesn't have timeGetTime(), this essentially does the same
 // thing, except this is milliseconds since Epoch (Jan 1st 1970) instead
 // of system start. It will work the same though...
 DWORD timeGetTime()

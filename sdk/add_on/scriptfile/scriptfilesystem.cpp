@@ -30,8 +30,9 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine)
 	
 	r = engine->RegisterObjectMethod("filesystem", "bool changeCurrentPath(const string &in)", asMETHOD(CScriptFileSystem, ChangeCurrentPath), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "string getCurrentPath() const", asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @getMatchingDirs(const string &in)", asMETHOD(CScriptFileSystem, GetMatchingDirs), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @getMatchingFiles(const string &in)", asMETHOD(CScriptFileSystem, GetMatchingFiles), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @getDirs()", asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @getFiles()", asMETHOD(CScriptFileSystem, GetFiles), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "bool isDir(const string &in)", asMETHOD(CScriptFileSystem, IsDir), asCALL_THISCALL); assert( r >= 0 );
 }
 
 void RegisterScriptFileSystem(asIScriptEngine *engine)
@@ -70,7 +71,7 @@ void CScriptFileSystem::Release() const
 		delete this;
 }
 
-CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
+CScriptArray *CScriptFileSystem::GetFiles() const
 {
 	// Obtain a pointer to the engine
 	asIScriptContext *ctx = asGetActiveContext();
@@ -83,12 +84,10 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 	// Create the array object
 	CScriptArray *array = CScriptArray::Create(arrayType);
 
-	// pattern can include wildcards * and ?
-	string searchPattern = currentPath + "/" + pattern;
-
 #if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
 	wchar_t bufUTF16[10000];
+	string searchPattern = currentPath + "/*";
 	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
 
 	WIN32_FIND_DATAW ffd;
@@ -114,7 +113,6 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 
 	FindClose(hFind);
 #else
-	// TODO: implement pattern matching for Linux etc
 	dirent *ent = 0;
 	DIR *dir = opendir(currentPath.c_str());
 	while( (ent = readdir(dir)) != NULL ) 
@@ -143,7 +141,7 @@ CScriptArray *CScriptFileSystem::GetMatchingFiles(const string &pattern) const
 	return array;
 }
 
-CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
+CScriptArray *CScriptFileSystem::GetDirs() const
 {
 	// Obtain a pointer to the engine
 	asIScriptContext *ctx = asGetActiveContext();
@@ -156,12 +154,10 @@ CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
 	// Create the array object
 	CScriptArray *array = CScriptArray::Create(arrayType);
 
-	// pattern can include wildcards * and ?
-	string searchPattern = currentPath + "/" + pattern;
-
 #if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
 	wchar_t bufUTF16[10000];
+	string searchPattern = currentPath + "/*";
 	MultiByteToWideChar(CP_UTF8, 0, searchPattern.c_str(), -1, bufUTF16, 10000);
 	
 	WIN32_FIND_DATAW ffd;
@@ -190,7 +186,6 @@ CScriptArray *CScriptFileSystem::GetMatchingDirs(const string &pattern) const
 
 	FindClose(hFind);
 #else
-	// TODO: implement pattern matching for Linux etc
 	dirent *ent = 0;
 	DIR *dir = opendir(currentPath.c_str());
 	while( (ent = readdir(dir)) != NULL ) 
@@ -230,20 +225,36 @@ bool CScriptFileSystem::ChangeCurrentPath(const string &path)
 	while( currentPath.length() && (currentPath.back() == '/' || currentPath.back() == '\\') )
 		currentPath.resize(currentPath.length()-1);
 
+	return IsDir(currentPath);
+}
+
+bool CScriptFileSystem::IsDir(const string &path) const
+{
+	string search;
+	if( path.find(":") != string::npos || path.find("/") == 0 || path.find("\\") == 0 )
+		search = path;
+	else
+		search = currentPath + "/" + path;
+
 #if defined(_WIN32)
 	// Windows uses UTF16 so it is necessary to convert the string
 	wchar_t bufUTF16[10000];
-	MultiByteToWideChar(CP_UTF8, 0, currentPath.c_str(), -1, bufUTF16, 10000);
+	MultiByteToWideChar(CP_UTF8, 0, search.c_str(), -1, bufUTF16, 10000);
 
-	// Check if the path exists
+	// Check if the path exists and is a directory
 	DWORD attrib = GetFileAttributesW(bufUTF16);
 	if( attrib == INVALID_FILE_ATTRIBUTES ||
 		!(attrib & FILE_ATTRIBUTE_DIRECTORY) )
 		return false;
 #else
-	// TODO: Implement this for Linux etc
+	// Check if the path exists and is a directory
+	struct stat st;
+	if( stat(search.c_str(), &st) == -1 )
+		return false;
+	if( (st.st_mode & S_IFDIR) == 0 )
+		return false;
 #endif
-		
+
 	return true;
 }
 

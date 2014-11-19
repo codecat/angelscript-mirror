@@ -28,10 +28,10 @@ bool Test()
 		mod->AddScriptSection("test", 
 			"void main() { \n"
 			"  filesystem fs; \n"										// starts in applications working dir
-			"  array<string> dirs = fs.getMatchingDirs('*'); \n"		
+			"  array<string> dirs = fs.getDirs(); \n"
 			"  assert( dirs.find('scripts') >= 0 ); \n"
 			"  fs.changeCurrentPath('scripts'); \n"						// move to the sub directory
-			"  array<string> files = fs.getMatchingFiles('*.as'); \n"	// get the script files in the directory
+			"  array<string> files = fs.getFiles(); \n"					// get the script files in the directory
 			"  assert( files.length() == 2 ); \n"
 			"  file f; \n"
 			"  f.open('scripts/include.as', 'r'); \n"

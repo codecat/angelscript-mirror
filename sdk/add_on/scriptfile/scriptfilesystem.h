@@ -26,23 +26,14 @@ public:
 	bool ChangeCurrentPath(const std::string &path);
 	std::string GetCurrentPath() const;
 
-	// Determines the relative path compared to the current path
-//	std::string GetRelativePathTo(const std::string &path) const;
+	// Returns true if the path is a directory. Input can be either a full path or a relative path
+	bool IsDir(const std::string &path) const;
 
-//	bool DirectoryExists(const std::string &path) const;
-//	bool IsDirectory(const std::string &path) const;
+	// Returns a list of the files in the current path
+	CScriptArray *GetFiles() const;
 
-//	bool   FileExists(const std::string &path) const;
-//	asUINT GetSizeOfFile(const std::string &path) const;
-//	asUINT ComputeCRC32(const std::string &path) const;
-
-	// Returns a list of the matching files
-	// Pattern can include ? to match a single character, and * to match multiple characters
-	CScriptArray *GetMatchingFiles(const std::string &pattern) const;
-
-	// Returns a list of the matching directories
-	// Pattern can include ? to match a single character, and * to match multiple characters
-	CScriptArray *GetMatchingDirs(const std::string &pattern) const;
+	// Returns a list of the directories in the current path
+	CScriptArray *GetDirs() const;
 
 protected:
     ~CScriptFileSystem();

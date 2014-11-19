@@ -847,6 +847,9 @@
 		#elif defined(__ARMEL__) || defined(__arm__)
 			#define AS_ARM
 
+			// TODO: The stack unwind on exceptions currently fails due to the assembler code in as_callfunc_arm_gcc.S
+			#define AS_NO_EXCEPTIONS
+
 			#undef STDCALL
 			#define STDCALL
 
