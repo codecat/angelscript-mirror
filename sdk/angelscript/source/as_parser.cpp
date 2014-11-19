@@ -269,6 +269,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
 	return 0;
 }
 
+// BNF: SCOPE ::= [[IDENTIFIER] '::' {IDENTIFIER '::'}]
 void asCParser::ParseOptionalScope(asCScriptNode *node)
 {
 	sToken t1, t2;
@@ -321,7 +322,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	return node;
 }
 
-// TODO: BNF: TYPEMOD ::=
+// BNF: TYPEMOD ::= [& ['in' | 'out' | 'inout']]
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -362,7 +363,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 	return node;
 }
 
-// TODO: BNF: TYPE ::=
+// BNF: TYPE ::= ['const'] SCOPE DATATYPE ['<' TYPE {',' TYPE} '>'] { ('[' ']') | '@' }
 asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -509,7 +510,7 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 	return node;
 }
 
-
+// TODO: BNF: DATATYPE ::= 
 asCScriptNode *asCParser::ParseDataType(bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -588,7 +589,7 @@ asCScriptNode *asCParser::ParseIdentifier()
 	return node;
 }
 
-// TODO: BNF: PARAMLIST ::=
+// BNF: PARAMLIST ::= '(' ('void' | (TYPE TYPEMOD [IDENTIFIER] ['=' EXPR] {',' TYPE TYPEMOD [IDENTIFIER] ['=' EXPR]}) ')'
 asCScriptNode *asCParser::ParseParameterList()
 {
 	asCScriptNode *node = CreateNode(snParameterList);
@@ -1402,7 +1403,7 @@ asCScriptNode *asCParser::ParseConstructCall()
 	return node;
 }
 
-// TODO: BNF: ARGLIST ::=
+// BNF: ARGLIST ::= '(' [IDENTIFIER ':'] ASSIGN {',' [IDENTIFIER ':'] ASSIGN} ')'
 asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 {
 	asCScriptNode *node = CreateNode(snArgList);
@@ -1540,7 +1541,7 @@ bool asCParser::IsFunctionCall()
 	return false;
 }
 
-// TODO: BNF: ASSIGN ::=
+// BNF: ASSIGN ::= CONDITION [ ASSIGNOP ASSIGN ]
 asCScriptNode *asCParser::ParseAssignment()
 {
 	asCScriptNode *node = CreateNode(snAssignment);
@@ -1774,6 +1775,7 @@ asCScriptNode *asCParser::ParseExprOperator()
 	return node;
 }
 
+// BNF: ASSIGNOP ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>=' 
 asCScriptNode *asCParser::ParseAssignOperator()
 {
 	asCScriptNode *node = CreateNode(snExprOperator);
