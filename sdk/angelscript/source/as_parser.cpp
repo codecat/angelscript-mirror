@@ -510,7 +510,7 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 	return node;
 }
 
-// TODO: BNF: DATATYPE ::= 
+// BNF: DATATYPE ::= (IDENTIFIER | PRIMTYPE | '?' | 'auto')
 asCScriptNode *asCParser::ParseDataType(bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -1566,7 +1566,7 @@ asCScriptNode *asCParser::ParseAssignment()
 	return node;
 }
 
-// TODO: BNF: CONDITION ::= 
+// BNF: CONDITION ::= EXPR ['?' ASSIGN ':' ASSIGN]
 asCScriptNode *asCParser::ParseCondition()
 {
 	asCScriptNode *node = CreateNode(snCondition);
@@ -1923,7 +1923,7 @@ int asCParser::ParseExpression(asCScriptCode *script)
 	return 0;
 }
 
-// TODO: BNF: IMPORT ::=
+// BNF: IMPORT ::= 'import' TYPE TYPEMOD IDENTIFIER PARAMLIST 'from' STRING ';'
 asCScriptNode *asCParser::ParseImport()
 {
 	asCScriptNode *node = CreateNode(snImport);
@@ -2624,7 +2624,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	return false;
 }
 
-// BNF: FUNCDEF ::= 'funcdef' TYPE [TYPEMOD] IDENTIFIER PARAMLIST ';'
+// BNF: FUNCDEF ::= 'funcdef' TYPE TYPEMOD IDENTIFIER PARAMLIST ';'
 asCScriptNode *asCParser::ParseFuncDef()
 {
 	asCScriptNode *node = CreateNode(snFuncDef);
@@ -2734,7 +2734,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	return node;
 }
 
-// BNF: INTFMTHD ::= TYPE [TYPEMOD] IDENTIFIER PARAMLIST ['const'] ';'
+// BNF: INTFMTHD ::= TYPE TYPEMOD IDENTIFIER PARAMLIST ['const'] ';'
 asCScriptNode *asCParser::ParseInterfaceMethod()
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -2772,7 +2772,7 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 	return node;
 }
 
-// TODO: BNF: VIRTPROP ::= 
+// BNF: VIRTPROP ::= ['private'] TYPE TYPEMOD IDENTIFIER '{' {('get' | 'set') ['const'] [('override' | 'final')] (STATBLOCK | ';')} '}'
 asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterface)
 {
 	asCScriptNode *node = CreateNode(snVirtualProperty);
@@ -3656,7 +3656,7 @@ asCScriptNode *asCParser::ParseExpressionStatement()
 	return node;
 }
 
-// TODO: BNF: SWITCH ::=
+// BNF: SWITCH ::= 'switch' '(' ASSIGN ')' '{' {CASE} '}'
 asCScriptNode *asCParser::ParseSwitch()
 {
 	asCScriptNode *node = CreateNode(snSwitch);
@@ -3731,7 +3731,7 @@ asCScriptNode *asCParser::ParseSwitch()
 	return node;
 }
 
-// TODO: BNF: CASE ::=
+// BNF: CASE ::= (('case' EXPR) | 'default') ':' {STATEMENT}
 asCScriptNode *asCParser::ParseCase()
 {
 	asCScriptNode *node = CreateNode(snCase);
@@ -3839,7 +3839,7 @@ asCScriptNode *asCParser::ParseIf()
 	return node;
 }
 
-// TODO: BNF: FOR ::=
+// BNF: FOR ::= 'for' '(' (VAR | EXPRSTAT) EXPRSTAT [ASSIGN] ')' STATEMENT
 asCScriptNode *asCParser::ParseFor()
 {
 	asCScriptNode *node = CreateNode(snFor);
