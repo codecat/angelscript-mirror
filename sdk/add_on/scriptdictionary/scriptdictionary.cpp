@@ -743,6 +743,22 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 				*(int*)value = 0;
 			}
 		}
+		else if( typeId == asTYPEID_BOOL )
+		{
+			if( m_typeId & asTYPEID_OBJHANDLE )
+				*(bool*)value = m_valueObj ? true : false;
+			else if( m_typeId & asTYPEID_MASK_OBJECT )
+			{
+				// TODO: Check if the object has a conversion operator to a primitive value
+				*(bool*)value = true;
+			}
+			else
+			{
+				asQWORD zero = 0;
+				int size = engine->GetSizeOfPrimitiveType(typeId);
+				*(bool*)value = memcmp(&m_valueInt, &zero, size) == 0 ? false : true;
+			}
+		}
 	}
 
 	// It was not possible to retrieve the value using the desired typeId

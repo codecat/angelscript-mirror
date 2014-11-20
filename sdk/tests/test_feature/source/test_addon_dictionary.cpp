@@ -78,6 +78,48 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test bool in dictionary
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"    dictionary dict; \n"
+			"    dict['true'] = true; \n"
+			"    dict['false'] = false; \n"
+			"    assert( bool(dict['true']) == true ); \n"
+			"    assert( int(dict['true']) == 1 ); \n"
+			"    assert( bool(dict['false']) == false ); \n"
+			"    assert( int(dict['false']) == 0 ); \n"
+			"    dict['value'] = 42; \n"
+			"    assert( bool(dict['value']) == true ); \n"
+			"    dict['value'] = 0; \n"
+			"    assert( bool(dict['value']) == false ); \n"
+			"    @dict['handle'] = dict; \n"
+			"    assert( bool(dict['handle']) == true ); \n"
+			"    @dict['handle'] = null; \n"
+			"    assert( bool(dict['handle']) == false ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Storing a ref in the dictionary
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
