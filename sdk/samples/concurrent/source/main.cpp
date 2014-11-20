@@ -170,8 +170,8 @@ int main(int argc, char **argv)
 		contextManager.ExecuteScripts();
 	}
 
-	// Release the engine
-	engine->Release();
+	// Shut down the engine
+	engine->ShutDownAndRelease();
 
 	return 0;
 }

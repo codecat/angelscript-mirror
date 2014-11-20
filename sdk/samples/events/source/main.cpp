@@ -219,8 +219,8 @@ int main(int argc, char **argv)
 	mainCtx->Release();
 	eventCtx->Release();
 
-	// Release the engine
-	engine->Release();
+	// Shut down the engine
+	engine->ShutDownAndRelease();
 
 	return 0;
 }

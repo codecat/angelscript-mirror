@@ -122,12 +122,10 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// Must manually call GC, because the dictionary with the script handle was placed on the GC, and these
-		// hold a reference to the engine. If this is not done the engine will be kept alive forever
-		// TODO: How to avoid the need for this explicit call to GarbageCollect?
-		engine->GarbageCollect();
-
-		engine->Release();
+		// Must use ShutDownAndRelease, or else manually call GC, because the dictionary with the script 
+		// handle was placed on the GC, and these hold a reference to the engine. If this is not done the 
+		// engine will be kept alive forever
+		engine->ShutDownAndRelease();
 	} 
 
 	// Storing a function pointer in the dictionary

@@ -645,6 +645,7 @@ public:
 	// Memory management
 	virtual int AddRef() const = 0;
 	virtual int Release() const = 0;
+	virtual int ShutDownAndRelease() = 0;
 
 	// Engine properties
 	virtual int     SetEngineProperty(asEEngineProp property, asPWORD value) = 0;

@@ -110,10 +110,10 @@ int main(int argc, char **argv)
 	// Execute the script
 	r = ExecuteScript(engine, argv[scriptArg], debug);
 	
-	// Release the engine
+	// Shut down the engine
 	if( g_commandLineArgs )
 		g_commandLineArgs->Release();
-	engine->Release();
+	engine->ShutDownAndRelease();
 
 	return r;
 }

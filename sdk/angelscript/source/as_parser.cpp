@@ -34,7 +34,12 @@
 //
 // This class parses the script code and builds a tree for compilation
 //
-
+//
+// I've documented the syntax in Extended BNF. You'll find it by doing a search in 
+// this file by "BNF:". The starting point for the script language is SCRIPT ::=.
+//
+// Ref: http://matt.might.net/articles/grammars-bnf-ebnf/
+//
 
 
 #include "as_config.h"
@@ -3586,7 +3591,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 	UNREACHABLE_RETURN;
 }
 
-// BNF: STATEMENT ::= [IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT]
+// BNF: STATEMENT ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT)
 asCScriptNode *asCParser::ParseStatement()
 {
 	sToken t1;

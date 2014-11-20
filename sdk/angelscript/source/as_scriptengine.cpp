@@ -506,6 +506,7 @@ asCScriptEngine::asCScriptEngine()
 	asCThreadManager::Prepare(0);
 
 	shuttingDown = false;
+	inDestructor = false;
 
 	// Engine properties
 	{
@@ -603,28 +604,19 @@ asCScriptEngine::asCScriptEngine()
 
 asCScriptEngine::~asCScriptEngine()
 {
-	shuttingDown = true;
+	asUINT n = 0;
+	inDestructor = true;
 
 	asASSERT(refCount.get() == 0);
-	asUINT n;
 
-	// Clear the context callbacks. If new context's are needed for the clean-up the engine will take care of this itself.
-	// Context callbacks are normally used for pooling contexts, and if we allow new contexts to be created without being
-	// immediately destroyed afterwards it means the engine's refcount will increase. This is turn may cause memory access
-	// violations later on when the pool releases its contexts.
-	SetContextCallbacks(0, 0, 0);
+	// If ShutDown hasn't been called yet do it now
+	if( !shuttingDown )
+	{
+		AddRef();
+		ShutDownAndRelease();
+	}
 
-	// The modules must be deleted first, as they may use
-	// object types from the config groups
-	for( n = (asUINT)scriptModules.GetLength(); n-- > 0; )
-		if( scriptModules[n] )
-			scriptModules[n]->Discard();
-	scriptModules.SetLength(0);
-
-	// Do another full garbage collection to destroy the object types/functions
-	// that may have been placed in the gc when destroying the modules
-	GarbageCollect();
-
+	// Unravel the registered interface
 	if( defaultArrayObjectType )
 	{
 		defaultArrayObjectType->Release();
@@ -891,7 +883,7 @@ void asCScriptEngine::ReturnContext(asIScriptContext *ctx)
 // interface
 int asCScriptEngine::AddRef() const
 {
-	asASSERT( refCount.get() > 0 || shuttingDown );
+	asASSERT( refCount.get() > 0 || inDestructor );
 	return refCount.atomicInc();
 }
 
@@ -904,12 +896,43 @@ int asCScriptEngine::Release() const
 	{
 		// It is possible that some function will temporarily increment the engine ref count
 		// during clean-up for example while destroying the objects in the garbage collector.
-		if( !shuttingDown )
+		if( !inDestructor )
 			asDELETE(const_cast<asCScriptEngine*>(this),asCScriptEngine);
 		return 0;
 	}
 
 	return r;
+}
+
+// interface
+int asCScriptEngine::ShutDownAndRelease()
+{
+	// Do a full garbage collection cycle to clean up any object that may still hold on to the engine
+	GarbageCollect();
+
+	// Set the flag that the engine is being shutdown now. This will speed up
+	// the process, and will also allow the engine to warn about invalid calls
+	shuttingDown = true;
+
+	// Clear the context callbacks. If new context's are needed for the clean-up the engine will take care of this itself.
+	// Context callbacks are normally used for pooling contexts, and if we allow new contexts to be created without being
+	// immediately destroyed afterwards it means the engine's refcount will increase. This is turn may cause memory access
+	// violations later on when the pool releases its contexts.
+	SetContextCallbacks(0, 0, 0);
+
+	// The modules must be deleted first, as they may use
+	// object types from the config groups
+	for( asUINT n = (asUINT)scriptModules.GetLength(); n-- > 0; )
+		if( scriptModules[n] )
+			scriptModules[n]->Discard();
+	scriptModules.SetLength(0);
+
+	// Do another full garbage collection to destroy the object types/functions
+	// that may have been placed in the gc when destroying the modules
+	GarbageCollect();
+
+	// Release the engine reference
+	return Release();
 }
 
 // internal

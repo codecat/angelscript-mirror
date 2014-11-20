@@ -70,6 +70,7 @@ public:
 	// Memory management
 	virtual int AddRef() const;
 	virtual int Release() const;
+	virtual int ShutDownAndRelease();
 
 	// Engine properties
 	virtual int     SetEngineProperty(asEEngineProp property, asPWORD value);
@@ -484,6 +485,11 @@ public:
 
 	// This flag is to allow a quicker shutdown when releasing the engine
 	bool shuttingDown;
+
+	// This flag is set when the engine's destructor is called, this is to 
+	// avoid recursive calls if an object happens to increment/decrement
+	// the ref counter during shutdown
+	bool inDestructor;
 };
 
 END_AS_NAMESPACE

@@ -202,8 +202,8 @@ int RunApplication()
 	// We must release the contexts when no longer using them
 	ctx->Release();
 
-	// Release the engine
-	engine->Release();
+	// Shut down the engine
+	engine->ShutDownAndRelease();
 
 	return 0;
 }
