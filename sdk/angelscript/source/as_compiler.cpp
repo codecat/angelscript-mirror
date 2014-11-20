@@ -9061,7 +9061,6 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 
 		// Determine the requested type
 		to = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace);
-		to = builder->ModifyDataTypeFromNode(to, node->firstChild->next, script, 0, 0);
 
 		// If the type support object handles, then use it
 		if( to.SupportHandles() )

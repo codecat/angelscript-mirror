@@ -1163,6 +1163,7 @@ bool asCParser::CheckTemplateType(sToken &t)
 	return true;
 }
 
+// BNF: CAST ::= 'cast' '<' TYPE '>' '(' ASSIGN ')'
 asCScriptNode *asCParser::ParseCast()
 {
 	asCScriptNode *node = CreateNode(snCast);
@@ -1189,9 +1190,6 @@ asCScriptNode *asCParser::ParseCast()
 
 	// Parse the data type
 	node->AddChildLast(ParseType(true));
-	if( isSyntaxError ) return node;
-
-	node->AddChildLast(ParseTypeMod(false));
 	if( isSyntaxError ) return node;
 
 	GetToken(&t1);
@@ -1226,6 +1224,7 @@ asCScriptNode *asCParser::ParseCast()
 	return node;
 }
 
+// BNF: EXPRVALUE ::= 'void' | CONSTRUCTCALL | FUNCCALL | VARACCESS | CAST | LITERAL | '(' ASSIGN ')'
 asCScriptNode *asCParser::ParseExprValue()
 {
 	asCScriptNode *node = CreateNode(snExprValue);
@@ -1312,6 +1311,7 @@ asCScriptNode *asCParser::ParseExprValue()
 	return node;
 }
 
+// TODO: BNF: LITERAL ::= 
 asCScriptNode *asCParser::ParseConstant()
 {
 	asCScriptNode *node = CreateNode(snConstant);
@@ -1364,6 +1364,7 @@ asCScriptNode *asCParser::ParseStringConstant()
 	return node;
 }
 
+// TODO: BNF: FUNCCALL ::= 
 asCScriptNode *asCParser::ParseFunctionCall()
 {
 	asCScriptNode *node = CreateNode(snFunctionCall);
@@ -1381,6 +1382,7 @@ asCScriptNode *asCParser::ParseFunctionCall()
 	return node;
 }
 
+// TODO: BNF: VARACCESS ::=
 asCScriptNode *asCParser::ParseVariableAccess()
 {
 	asCScriptNode *node = CreateNode(snVariableAccess);
@@ -1395,6 +1397,7 @@ asCScriptNode *asCParser::ParseVariableAccess()
 	return node;
 }
 
+// TODO: BNF: CONSTRUCTCALL ::=
 asCScriptNode *asCParser::ParseConstructCall()
 {
 	asCScriptNode *node = CreateNode(snConstructCall);
@@ -1604,7 +1607,7 @@ asCScriptNode *asCParser::ParseCondition()
 	return node;
 }
 
-// TODO: BNF: EXPR ::=
+// BNF: EXPR ::= (TYPE '=' INILIST) | (EXPRTERM {EXPROP EXPRTERM})
 asCScriptNode *asCParser::ParseExpression()
 {
 	asCScriptNode *node = CreateNode(snExpression);
@@ -1654,6 +1657,7 @@ asCScriptNode *asCParser::ParseExpression()
 	UNREACHABLE_RETURN;
 }
 
+// BNF: EXPRTERM ::= {EXPRPREOP} EXPRVALUE {EXPRPOSTOP}
 asCScriptNode *asCParser::ParseExprTerm()
 {
 	asCScriptNode *node = CreateNode(snExprTerm);
@@ -1689,6 +1693,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 	UNREACHABLE_RETURN;
 }
 
+// BNF: EXPRPREOP ::= '-' | '+' | '!' | '++' | '--' | '~' | '@'
 asCScriptNode *asCParser::ParseExprPreOp()
 {
 	asCScriptNode *node = CreateNode(snExprPreOp);
@@ -1709,6 +1714,7 @@ asCScriptNode *asCParser::ParseExprPreOp()
 	return node;
 }
 
+// BNF: EXPRPOSTOP ::= ('.' (FUNCCALL | IDENTIFIER)) | ('[' [IDENTIFIER ':'] ASSIGN {',' [IDENTIFIER ':' ASSIGN} ']') | ARGLIST | '++' | '--'
 asCScriptNode *asCParser::ParseExprPostOp()
 {
 	asCScriptNode *node = CreateNode(snExprPostOp);
@@ -1760,6 +1766,11 @@ asCScriptNode *asCParser::ParseExprPostOp()
 	return node;
 }
 
+// BNF: EXPROP ::= MATHOP | COMPOP | LOGICOP | BITOP
+// BNF: MATHOP ::= '+' | '-' | '*' | '/' | '%' | '**'
+// BNF: COMPOP ::= '==' | '!=' | '<' | '<=' | '>' | '>=' | 'is' | '!is'
+// BNF: LOGICOP ::= '&&' | '||' | '^^' | 'and' | 'or' | 'xor'
+// BNF: BITOP ::= '&' | '|' | '^' | '<<' | '>>' | '>>>'
 asCScriptNode *asCParser::ParseExprOperator()
 {
 	asCScriptNode *node = CreateNode(snExprOperator);
