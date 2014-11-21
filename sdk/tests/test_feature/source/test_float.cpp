@@ -113,8 +113,35 @@ bool Test()
 
 	engine->Release();
 
-	if( fail )
-		PRINTF("%s: failed\n", TESTNAME);
+	// Test that compiler properly scans the digits
+	// http://www.gamedev.net/topic/662758-formatfloat-fails-for-documented-dbl-max/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterStdStringUtils(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "double d = 1.79769313486231e+308; \n"
+								  "string s = formatFloat(d, 'e'); \n"
+								  "assert( s == '2e+308' ); \n"
+								  "d = 2.22507385850720e-308; \n"
+								  "s = formatFloat(d, 'e'); \n"
+								  "assert( s == '2e-308' ); \n"
+								  "float f = 3.402823466e+38f; \n"
+								  "s = formatFloat(f, 'e'); \n"
+								  "assert( s == '3e+038' ); \n"
+								  "f = 1.175494351e-38f; \n"
+								  "s = formatFloat(f, 'e'); \n"
+								  "assert( s == '1e-038' ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Success
  	return fail;

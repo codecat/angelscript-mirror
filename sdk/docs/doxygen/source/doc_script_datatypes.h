@@ -72,11 +72,11 @@ As the scripting engine has been optimized for 32 bit datatypes, using the small
 
 <table border=0 cellspacing=0 cellpadding=0>
 <tr><td width=100><b>type</b></td><td width=230><b>range of values</b></td><td width=230><b>smallest positive value</b></td> <td><b>maximum digits</b></td></tr>
-<tr><td><code>float </code></td> <td>+/- 3.402823466e+38        </td> <td>1.175494351e-38        </td> <td>6 </td></tr>
-<tr><td><code>double</code></td> <td>+/- 1.7976931348623158e+308</td> <td>2.2250738585072014e-308</td> <td>15</td></tr>
+<tr><td><code>float </code></td> <td>+/- 3.402823466e+38      </td> <td>1.175494351e-38      </td> <td>6 </td></tr>
+<tr><td><code>double</code></td> <td>+/- 1.79769313486231e+308</td> <td>2.22507385850720e-308</td> <td>15</td></tr>
 </table>
 
-Rounding errors will occur if more digits than the maximum number of digits are used.
+Rounding errors may occur if more digits than the maximum number of digits are used.
 
 <b>Curiousity</b>: Real numbers may also have the additional values of positive and negative 0 or 
 infinite, and NaN (Not-a-Number). For <code>float</code> NaN is represented by the 32 bit data word 0x7fc00000.
