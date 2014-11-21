@@ -395,6 +395,7 @@ typedef void (*asCLEANMODULEFUNC_t)(asIScriptModule *);
 typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
+typedef void (*asCLEANSCRIPTOBJECTFUNC_t)(asIScriptObject *);
 typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
 
@@ -774,6 +775,7 @@ public:
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type = 0) = 0;
+	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
 
 protected:
 	virtual ~asIScriptEngine() {}
@@ -995,8 +997,13 @@ public:
 	virtual const char *GetPropertyName(asUINT prop) const = 0;
 	virtual void       *GetAddressOfProperty(asUINT prop) = 0;
 
+	// Miscellaneous
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
+
+	// User data
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
 
 protected:
 	virtual ~asIScriptObject() {}
@@ -1005,6 +1012,7 @@ protected:
 class asIObjectType
 {
 public:
+	// Miscellaneous
 	virtual asIScriptEngine *GetEngine() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;

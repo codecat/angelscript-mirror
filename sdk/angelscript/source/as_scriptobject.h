@@ -92,8 +92,13 @@ public:
 	const char *GetPropertyName(asUINT prop) const;
 	void       *GetAddressOfProperty(asUINT prop);
 
+	// Miscellaneous
 	asIScriptEngine *GetEngine() const;
 	int              CopyFrom(asIScriptObject *other);
+
+	// User data
+	void *SetUserData(void *data, asPWORD type = 0);
+	void *GetUserData(asPWORD type = 0) const;
 
 //====================================
 // Internal
@@ -122,20 +127,26 @@ public:
 //=============================================
 // Properties
 //=============================================
-public:
-	asCObjectType *objType;
-
 protected:
-	mutable asCAtomic refCount;
-	mutable asBYTE gcFlag:1;
-	mutable asBYTE hasRefCountReachedZero:1;
-	bool isDestructCalled;
+	friend class asCContext;
+	asCObjectType    *objType;
 
-	// TODO: 2.30.0: Allow storing user data in script objects too and minimize the memory overhead by
-	//               storing the structure for holding the user data in a separate object that will only
-	//               be allocated as needed. The weakRefFlag should be moved to this separate object too,
-	//               so that by default the only overhead is a single pointer in the script object.
-	mutable asCLockableSharedBool *weakRefFlag;
+	mutable asCAtomic refCount;
+	mutable asBYTE    gcFlag:1;
+	mutable asBYTE    hasRefCountReachedZero:1;
+	bool              isDestructCalled;
+
+	// Most script classes instances won't have neither the weakRefFlags nor
+	// userData so we only allocate this if requested. Even when used it is 
+	// not something that will be accessed all the time so having the extra
+	// indirection will not affect the performance significantly.
+	struct SExtra
+	{
+		SExtra() : weakRefFlag(0) {};
+		asCLockableSharedBool *weakRefFlag;
+		asCArray<asPWORD>      userData;
+	};
+	mutable SExtra *extra;
 };
 
 void ScriptObject_Construct(asCObjectType *objType, asCScriptObject *self);

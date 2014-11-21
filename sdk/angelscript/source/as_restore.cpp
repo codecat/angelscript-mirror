@@ -1597,7 +1597,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 	eTokenType tokenType = (eTokenType)ReadEncodedUInt();
 
 	// Reserve a spot in the savedDataTypes
-	size_t saveSlot = savedDataTypes.GetLength();
+	asUINT saveSlot = savedDataTypes.GetLength();
 	savedDataTypes.PushLast(asCDataType());
 
 	// Read the datatype for the first time
@@ -3994,7 +3994,7 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	}
 
 	// Compute the sequence number of each bytecode instruction in order to update the jump offsets
-	size_t length = func->scriptData->byteCode.GetLength();
+	asUINT length = func->scriptData->byteCode.GetLength();
 	asDWORD *bc = func->scriptData->byteCode.AddressOf();
 	bytecodeNbrByPos.SetLength(length);
 	asUINT num;
@@ -4303,9 +4303,9 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			int offset = *(int*)(tmp+1);
 
 			// Determine instruction number for next instruction and destination
-			int bcSeqNum = bytecodeNbrByPos[bc - startBC] + 1;
+			int bcSeqNum = bytecodeNbrByPos[asUINT(bc - startBC)] + 1;
 			asDWORD *targetBC = bc + 2 + offset;
-			int targetBcSeqNum = bytecodeNbrByPos[targetBC - startBC];
+			int targetBcSeqNum = bytecodeNbrByPos[asUINT(targetBC - startBC)];
 
 			// Set the offset in number of instructions
 			*(int*)(tmp+1) = targetBcSeqNum - bcSeqNum;

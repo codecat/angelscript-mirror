@@ -515,7 +515,7 @@ asIScriptFunction *asCObjectType::GetMethodByIndex(asUINT index, bool getVirtual
 asIScriptFunction *asCObjectType::GetMethodByName(const char *name, bool getVirtual) const
 {
 	int id = -1;
-	for( size_t n = 0; n < methods.GetLength(); n++ )
+	for( asUINT n = 0; n < methods.GetLength(); n++ )
 	{
 		if( engine->scriptFunctions[methods[n]]->name == name )
 		{

@@ -1421,7 +1421,7 @@ int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *dec
 
 	// Search for matching factory function
 	int id = -1;
-	for( size_t n = 0; n < ot->beh.factories.GetLength(); n++ )
+	for( asUINT n = 0; n < ot->beh.factories.GetLength(); n++ )
 	{
 		asCScriptFunction *f = scriptFunctions[ot->beh.factories[n]];
 		if( f->IsSignatureEqual(&func) )
@@ -1457,7 +1457,7 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 
 	// Search script functions for matching interface
 	int id = -1;
-	for( size_t n = 0; n < ot->methods.GetLength(); ++n )
+	for( asUINT n = 0; n < ot->methods.GetLength(); ++n )
 	{
 		if( func.IsSignatureEqual(scriptFunctions[ot->methods[n]]) )
 		{
@@ -3155,7 +3155,7 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 			)
 		{
 			bool match = true;
-			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
+			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
 				if( func.parameterTypes[p] != funcPtr->parameterTypes[p] )
 				{
@@ -6056,6 +6056,28 @@ void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC
 	}
 	SObjTypeClean otc = {type, callback};
 	cleanObjectTypeFuncs.PushLast(otc);
+
+	RELEASEEXCLUSIVE(engineRWLock);
+}
+
+// interface
+void asCScriptEngine::SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type)
+{
+	ACQUIREEXCLUSIVE(engineRWLock);
+
+	for( asUINT n = 0; n < cleanScriptObjectFuncs.GetLength(); n++ )
+	{
+		if( cleanScriptObjectFuncs[n].type == type )
+		{
+			cleanScriptObjectFuncs[n].cleanFunc = callback;
+
+			RELEASEEXCLUSIVE(engineRWLock);
+
+			return;
+		}
+	}
+	SScriptObjClean soc = {type, callback};
+	cleanScriptObjectFuncs.PushLast(soc);
 
 	RELEASEEXCLUSIVE(engineRWLock);
 }

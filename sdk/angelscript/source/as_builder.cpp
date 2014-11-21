@@ -3736,7 +3736,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				// If this is a pre-existent shared enum, then just double check
 				// that the value is already defined in the original declaration
 				bool found = false;
-				for( size_t n = 0; n < st->enumValues.GetLength(); n++ )
+				for( asUINT n = 0; n < st->enumValues.GetLength(); n++ )
 					if( st->enumValues[n]->name == name )
 					{
 						found = true;

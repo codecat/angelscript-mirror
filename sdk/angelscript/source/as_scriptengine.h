@@ -200,6 +200,7 @@ public:
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type);
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type);
+	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type);
 
 //===========================================================
 // internal methods
@@ -441,16 +442,18 @@ public:
 	// User data
 	asCArray<asPWORD>       userData;
 
-	struct SEngineClean   { asPWORD type; asCLEANENGINEFUNC_t     cleanFunc; };
-	asCArray<SEngineClean>   cleanEngineFuncs;
-	struct SModuleClean   { asPWORD type; asCLEANMODULEFUNC_t     cleanFunc; };
-	asCArray<SModuleClean>   cleanModuleFuncs;
-	struct SContextClean  { asPWORD type; asCLEANCONTEXTFUNC_t    cleanFunc; };
-	asCArray<SContextClean>  cleanContextFuncs;
-	struct SFunctionClean { asPWORD type; asCLEANFUNCTIONFUNC_t   cleanFunc; };
-	asCArray<SFunctionClean> cleanFunctionFuncs;
-	struct SObjTypeClean  { asPWORD type; asCLEANOBJECTTYPEFUNC_t cleanFunc; };
-	asCArray<SObjTypeClean>  cleanObjectTypeFuncs;
+	struct SEngineClean    { asPWORD type; asCLEANENGINEFUNC_t      cleanFunc; };
+	asCArray<SEngineClean>    cleanEngineFuncs;
+	struct SModuleClean    { asPWORD type; asCLEANMODULEFUNC_t      cleanFunc; };
+	asCArray<SModuleClean>    cleanModuleFuncs;
+	struct SContextClean   { asPWORD type; asCLEANCONTEXTFUNC_t     cleanFunc; };
+	asCArray<SContextClean>   cleanContextFuncs;
+	struct SFunctionClean  { asPWORD type; asCLEANFUNCTIONFUNC_t    cleanFunc; };
+	asCArray<SFunctionClean>  cleanFunctionFuncs;
+	struct SObjTypeClean   { asPWORD type; asCLEANOBJECTTYPEFUNC_t  cleanFunc; };
+	asCArray<SObjTypeClean>   cleanObjectTypeFuncs;
+	struct SScriptObjClean { asPWORD type; asCLEANSCRIPTOBJECTFUNC_t cleanFunc; };
+	asCArray<SScriptObjClean> cleanScriptObjectFuncs;
 
 	// Synchronization for threads
 	DECLAREREADWRITELOCK(mutable engineRWLock)

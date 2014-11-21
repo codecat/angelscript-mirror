@@ -2175,7 +2175,7 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExp
 				// Reserve all variables already used in the expression so none of them will be used
 				asCArray<int> used;
 				args[n]->bc.GetVarsUsed(used);
-				size_t prevReserved = reservedVariables.GetLength();
+				asUINT prevReserved = reservedVariables.GetLength();
 				reservedVariables.Concatenate(used);
 
 				int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(offset));
@@ -11760,7 +11760,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			// since that would cause the VM to overwrite the variable while executing the bytecode for the lvalue.
 			asCArray<int> usedVars;
 			lctx->bc.GetVarsUsed(usedVars);
-			size_t oldReservedVars = reservedVariables.GetLength();
+			asUINT oldReservedVars = reservedVariables.GetLength();
 			for( asUINT n = 0; n < rctx->deferredParams.GetLength(); n++ )
 			{
 				if( rctx->deferredParams[n].argType.isTemporary && 

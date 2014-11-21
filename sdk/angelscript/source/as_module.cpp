@@ -142,8 +142,9 @@ void *asCModule::GetUserData(asPWORD type) const
 	{
 		if( userData[n] == type )
 		{
+			void *ud = reinterpret_cast<void*>(userData[n+1]);
 			RELEASESHARED(engine->engineRWLock);
-			return reinterpret_cast<void*>(userData[n+1]);
+			return ud;
 		}
 	}
 
@@ -453,7 +454,7 @@ void asCModule::InternalReset()
 {
 	CallExit();
 
-	size_t n;
+	asUINT n;
 
 	// Release all global functions
 	asCSymbolTable<asCScriptFunction>::iterator funcIt = globalFunctions.List();
@@ -621,7 +622,7 @@ asIScriptFunction *asCModule::GetFunctionByDecl(const char *decl) const
 			)
 		{
 			bool match = true;
-			for( size_t p = 0; p < func.parameterTypes.GetLength(); ++p )
+			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
 			{
 				if( func.parameterTypes[p] != funcPtr->parameterTypes[p] )
 				{
@@ -1049,7 +1050,7 @@ int asCModule::BindImportedFunction(asUINT index, asIScriptFunction *func)
 	if( dst->parameterTypes.GetLength() != src->parameterTypes.GetLength() )
 		return asINVALID_INTERFACE;
 
-	for( size_t n = 0; n < dst->parameterTypes.GetLength(); ++n )
+	for( asUINT n = 0; n < dst->parameterTypes.GetLength(); ++n )
 	{
 		if( dst->parameterTypes[n] != src->parameterTypes[n] )
 			return asINVALID_INTERFACE;
@@ -1153,7 +1154,7 @@ int asCModule::UnbindAllImportedFunctions()
 // internal
 asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns)
 {
-	size_t n;
+	asUINT n;
 
 	// TODO: optimize: Improve linear search
 	for( n = 0; n < classTypes.GetLength(); n++ )
