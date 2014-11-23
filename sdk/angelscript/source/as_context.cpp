@@ -1252,7 +1252,7 @@ int asCContext::Execute()
 			// The current function is an application registered function
 
 			// Call the function directly
-			CallSystemFunction(m_currentFunction->id, this, 0);
+			CallSystemFunction(m_currentFunction->id, this);
 
 			// Was the call successful?
 			if( m_status == asEXECUTION_ACTIVE )
@@ -2490,7 +2490,7 @@ void asCContext::ExecuteNext()
 			m_regs.stackPointer      = l_sp;
 			m_regs.stackFramePointer = l_fp;
 
-			l_sp += CallSystemFunction(i, this, 0);
+			l_sp += CallSystemFunction(i, this);
 
 			// Update the program position after the call so that line number is correct
 			l_bc += 2;
@@ -2564,7 +2564,7 @@ void asCContext::ExecuteNext()
 					// Call the delegated method
 					if( func->funcForDelegate->funcType == asFUNC_SYSTEM )
 					{
-						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this, 0);
+						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this);
 
 						// Update program position after the call so the line number
 						// is correct in case the system function queries it
@@ -2582,7 +2582,7 @@ void asCContext::ExecuteNext()
 				{
 					asASSERT( func->funcType == asFUNC_SYSTEM );
 
-					m_regs.stackPointer += CallSystemFunction(func->id, this, 0);
+					m_regs.stackPointer += CallSystemFunction(func->id, this);
 
 					// Update program position after the call so the line number
 					// is correct in case the system function queries it
@@ -2678,13 +2678,17 @@ void asCContext::ExecuteNext()
 
 				if( func )
 				{
+					// Push the object pointer on the stack (it will be popped by the function)
+					l_sp -= AS_PTR_SIZE;
+					*(asPWORD*)l_sp = (asPWORD)mem;
+
 					// Need to move the values back to the context as the called functions
 					// may use the debug interface to inspect the registers
 					m_regs.programPointer    = l_bc;
 					m_regs.stackPointer      = l_sp;
 					m_regs.stackFramePointer = l_fp;
 
-					l_sp += CallSystemFunction(func, this, mem);
+					l_sp += CallSystemFunction(func, this);
 				}
 
 				// Pop the variable address from the stack
@@ -3857,7 +3861,7 @@ void asCContext::ExecuteNext()
 					// Call the delegated method
 					if( func->funcForDelegate->funcType == asFUNC_SYSTEM )
 					{
-						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this, 0);
+						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this);
 
 						// Update program position after the call so the line number
 						// is correct in case the system function queries it
@@ -3875,7 +3879,7 @@ void asCContext::ExecuteNext()
 				{
 					asASSERT( func->funcType == asFUNC_SYSTEM );
 
-					m_regs.stackPointer += CallSystemFunction(func->id, this, 0);
+					m_regs.stackPointer += CallSystemFunction(func->id, this);
 
 					// Update program position after the call so the line number
 					// is correct in case the system function queries it
@@ -4998,7 +5002,7 @@ void asCContext::ClearExceptionCallback()
 	m_exceptionCallback = false;
 }
 
-int asCContext::CallGeneric(asCScriptFunction *descr, void *objectPointer)
+int asCContext::CallGeneric(asCScriptFunction *descr)
 {
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	void (*func)(asIScriptGeneric*) = (void (*)(asIScriptGeneric*))sysFunc->func;
@@ -5010,31 +5014,21 @@ int asCContext::CallGeneric(asCScriptFunction *descr, void *objectPointer)
 	asASSERT( sysFunc->callConv == ICC_GENERIC_FUNC || sysFunc->callConv == ICC_GENERIC_METHOD );
 	if( sysFunc->callConv == ICC_GENERIC_METHOD )
 	{
-		if( objectPointer )
+		// The object pointer should be popped from the context stack
+		popSize += AS_PTR_SIZE;
+
+		// Check for null pointer
+		currentObject = (void*)*(asPWORD*)(args);
+		if( currentObject == 0 )
 		{
-			currentObject = objectPointer;
-
-			// Don't increase the reference of this pointer
-			// since it will not have been constructed yet
+			SetInternalException(TXT_NULL_POINTER_ACCESS);
+			return 0;
 		}
-		else
-		{
-			// The object pointer should be popped from the context stack
-			popSize += AS_PTR_SIZE;
 
-			// Check for null pointer
-			currentObject = (void*)*(asPWORD*)(args);
-			if( currentObject == 0 )
-			{
-				SetInternalException(TXT_NULL_POINTER_ACCESS);
-				return 0;
-			}
+		asASSERT( sysFunc->baseOffset == 0 );
 
-			asASSERT( sysFunc->baseOffset == 0 );
-
-			// Skip object pointer
-			args += AS_PTR_SIZE;
-		}
+		// Skip object pointer
+		args += AS_PTR_SIZE;
 	}
 
 	if( descr->DoesReturnOnStack() )

@@ -418,14 +418,14 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 
 #ifdef AS_MAX_PORTABILITY
 
-int CallSystemFunction(int id, asCContext *context, void *objectPointer)
+int CallSystemFunction(int id, asCContext *context)
 {
 	asCScriptEngine *engine = context->m_engine;
 	asCScriptFunction *func = engine->scriptFunctions[id];
 	asSSystemFunctionInterface *sysFunc = func->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(func, objectPointer);
+		return context->CallGeneric(func);
 
 	context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 
@@ -459,7 +459,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2);
 
 
-int CallSystemFunction(int id, asCContext *context, void *objectPointer)
+int CallSystemFunction(int id, asCContext *context)
 {
 	asCScriptEngine            *engine  = context->m_engine;
 	asCScriptFunction          *descr   = engine->scriptFunctions[id];
@@ -467,7 +467,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(descr, objectPointer);
+		return context->CallGeneric(descr);
 
 	asQWORD  retQW             = 0;
 	asQWORD  retQW2            = 0;
@@ -484,11 +484,6 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		{
 			// This class method is being called as if it is a global function
 			obj = sysFunc->objForThiscall;
-			asASSERT( objectPointer == 0 );
-		}
-		else if( objectPointer )
-		{
-			obj = objectPointer;
 		}
 		else
 		{
@@ -542,42 +537,35 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 			// This class method is being called as if it is a global function
 			objectsPtrs[0] = sysFunc->objForThiscall;
 			continueCheck = false;
-			asASSERT( objectPointer == 0 );
 		}
 
 		if( continueCheck )
 		{
 			void *tempPtr = 0;
-			if( objectPointer )
+
+			// The object pointer should be popped from the context stack
+			popSize += AS_PTR_SIZE;
+
+			// Check for null pointer
+			tempPtr = (void*)*(asPWORD*)(args);
+			if( tempPtr == 0 )
 			{
-				tempPtr = objectPointer;
+				context->SetInternalException(TXT_NULL_POINTER_ACCESS);
+				return 0;
 			}
-			else
-			{
-				// The object pointer should be popped from the context stack
-				popSize += AS_PTR_SIZE;
 
-				// Check for null pointer
-				tempPtr = (void*)*(asPWORD*)(args);
-				if( tempPtr == 0 )
-				{
-					context->SetInternalException(TXT_NULL_POINTER_ACCESS);
-					return 0;
-				}
-
-				// Add the base offset for multiple inheritance
+			// Add the base offset for multiple inheritance
 #if (defined(__GNUC__) && defined(AS_ARM)) || defined(AS_PSVITA)
-				// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
-				// and the whole offset is thus shifted one bit left to keep the original
-				// offset resolution
-				tempPtr = (void*)(asPWORD(tempPtr) + (sysFunc->baseOffset>>1));
+			// On GNUC + ARM the lsb of the offset is used to indicate a virtual function
+			// and the whole offset is thus shifted one bit left to keep the original
+			// offset resolution
+			tempPtr = (void*)(asPWORD(tempPtr) + (sysFunc->baseOffset>>1));
 #else
-				tempPtr = (void*)(asPWORD(tempPtr) + sysFunc->baseOffset);
+			tempPtr = (void*)(asPWORD(tempPtr) + sysFunc->baseOffset);
 #endif
 
-				// Skip the object pointer
-				args += AS_PTR_SIZE;
-			}
+			// Skip the object pointer
+			args += AS_PTR_SIZE;
 
 			objectsPtrs[continueCheckIndex] = tempPtr;
 		}
@@ -794,7 +782,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 	if( sysFunc->hasAutoHandles )
 	{
 		args = context->m_regs.stackPointer;
-		if( callConv >= ICC_THISCALL && !objectPointer )
+		if( callConv >= ICC_THISCALL )
 			args += AS_PTR_SIZE;
 
 		int spos = 0;

@@ -40,7 +40,7 @@ static int ExtVar;
 
 void Test(double *testTime)
 {
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
@@ -48,9 +48,9 @@ void Test(double *testTime)
 
 	// Register an object type with an opAssign
 	engine->RegisterObjectType("Type", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->RegisterObjectMethod("Type", "Type &opAssign(int)", asFUNCTION(Type_opAssign), asCALL_CDECL_OBJLAST);
+	//engine->RegisterObjectMethod("Type", "Type &opAssign(int)", asFUNCTION(Type_opAssign), asCALL_CDECL_OBJLAST);
 	// The generic calling convention is slightly faster on 64bit
-	// engine->RegisterObjectMethod("Type", "Type &opAssign(int)", asFUNCTION(Type_opAssign_generic), asCALL_GENERIC);
+	engine->RegisterObjectMethod("Type", "Type &opAssign(int)", asFUNCTION(Type_opAssign_generic), asCALL_GENERIC);
 	engine->RegisterGlobalProperty("Type ExtVar", &ExtVar);
 
 /*
