@@ -159,6 +159,18 @@ int PrepareSystemFunctionGeneric(asCScriptFunction *func, asSSystemFunctionInter
 	// Calculate the size needed for the parameters
 	internal->paramSize = func->GetSpaceNeededForArguments();
 
+	// Check if any of the arguments are objects, if so set the flag hasAutoHandles 
+	// to signal that the arguments require cleanup after a call
+	internal->hasAutoHandles = false;
+	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
+	{
+		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsReference() )
+		{
+			internal->hasAutoHandles = true;
+			break;
+		}
+	}
+
 	return 0;
 }
 
@@ -409,10 +421,11 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 {
 	asCScriptEngine *engine = context->m_engine;
-	asSSystemFunctionInterface *sysFunc = engine->scriptFunctions[id]->sysFuncIntf;
+	asCScriptFunction *func = engine->scriptFunctions[id];
+	asSSystemFunctionInterface *sysFunc = func->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(id, objectPointer);
+		return context->CallGeneric(func, objectPointer);
 
 	context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 
@@ -454,7 +467,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 
 	int callConv = sysFunc->callConv;
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
-		return context->CallGeneric(id, objectPointer);
+		return context->CallGeneric(descr, objectPointer);
 
 	asQWORD  retQW             = 0;
 	asQWORD  retQW2            = 0;
@@ -787,17 +800,18 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		int spos = 0;
 		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
+			asCDataType &dt = descr->parameterTypes[n];
 			if( sysFunc->paramAutoHandles[n] && *(asPWORD*)&args[spos] != 0 )
 			{
 				// Call the release method on the type
-				engine->CallObjectMethod((void*)*(asPWORD*)&args[spos], descr->parameterTypes[n].GetObjectType()->beh.release);
+				engine->CallObjectMethod((void*)*(asPWORD*)&args[spos], dt.GetObjectType()->beh.release);
 				*(asPWORD*)&args[spos] = 0;
 			}
 
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
+			if( dt.IsObject() && !dt.IsObjectHandle() && !dt.IsReference() )
 				spos += AS_PTR_SIZE;
 			else
-				spos += descr->parameterTypes[n].GetSizeOnStackDWords();
+				spos += dt.GetSizeOnStackDWords();
 		}
 	}
 

@@ -8367,10 +8367,12 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 								// If the object is a value type or a non-handle variable to a reference type,
 								// then we must validate the existance as it could potentially be accessed
 								// before it is initialized.
-								if( (ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE) ||
-									!ctx->type.dataType.IsObjectHandle() )
+								// This check is not needed for application registered properties, since they
+								// are guaranteed to be valid by the application itself.
+								if( !isAppProp &&
+									((ctx->type.dataType.GetObjectType()->flags & asOBJ_VALUE) ||
+									 !ctx->type.dataType.IsObjectHandle()) )
 								{
-									// TODO: runtime optimize: This is not necessary for application registered properties
 									ctx->bc.Instr(asBC_ChkRefS);
 								}
 

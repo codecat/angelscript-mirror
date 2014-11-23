@@ -22,57 +22,62 @@ namespace TestThisProp     { void Test(double *time); }
 namespace TestVector3      { void Test(double *time); }
 namespace TestAssign       { void Test(double *times); }
 namespace TestArray        { void Test(double *time); }
+namespace TestGlobalVar    { void Test(double *time); }
 
-// Times for 2.28.1 WIP
-double testTimesOrig[19] = 
+const int NUM_TESTS = 20;
+
+// Times for 2.30.0 WIP (64bit)
+double testTimesOrig[NUM_TESTS] = 
 {
-1.375,  // Basic
-0.266,  // Basic2
-0.500,  // Call
+1.328,  // Basic
+0.234,  // Basic2
+0.563,  // Call
 0.953,  // Call2
-2.250,  // Fib
+2.016,  // Fib
 0.297,  // Int
-2.281,  // Intf
-2.031,  // Mthd
-1.797,  // String
-0.891,  // String2
-1.172,  // StringPooled
-0.797,  // ThisProp
-0.438,  // Vector3
-0.625,  // Assign.1
-0.813,  // Assign.2
-0.609,  // Assign.3
-1.094,  // Assign.4
-1.094,  // Assign.5
-0.922   // Array
+0.703,  // Intf
+0.672,  // Mthd
+1.563,  // String
+0.688,  // String2
+0.984,  // StringPooled
+1.641,  // ThisProp
+0.375,  // Vector3
+0.594,  // Assign.1
+0.953,  // Assign.2
+0.516,  // Assign.3
+0.813,  // Assign.4
+0.813,  // Assign.5
+0.766,  // Array
+0.0     // GlobalVar
 };
 
-// Times for 2.28.1 WIP 1 (localized optimizations)
-double testTimesOrig2[19] = 
+// Times for 2.30.0 WIP (64bit) (localized optimizations)
+double testTimesOrig2[NUM_TESTS] = 
 {
-1.406,  // Basic
-0.250,  // Basic2
-0.500,  // Call
-0.953,  // Call2
-2.391,  // Fib
-0.328,  // Int
-2.125,  // Intf
-2.109,  // Mthd
-1.766,  // String
-0.875,  // String2
-1.172,  // StringPooled
-0.797,  // ThisProp
-0.453,  // Vector3
-0.625,  // Assign.1
-0.813,  // Assign.2
-0.625,  // Assign.3
-0.922,  // Assign.4
-0.906,  // Assign.5
-0.906   // Array
+1.258,  // Basic
+0.243,  // Basic2
+0.672,  // Call
+0.965,  // Call2
+1.988,  // Fib
+0.293,  // Int
+0.731,  // Intf
+0.695,  // Mthd
+1.579,  // String
+0.676,  // String2
+0.995,  // StringPooled
+0.864,  // ThisProp
+0.363,  // Vector3
+0.608,  // Assign.1
+0.820,  // Assign.2
+0.540,  // Assign.3
+0.760,  // Assign.4
+0.760,  // Assign.5
+0.791,  // Array
+0.789   // GlobalVar
 };
 
-double testTimesBest[19];
-double testTimes[19];
+double testTimesBest[NUM_TESTS];
+double testTimes[NUM_TESTS];
 
 void DetectMemoryLeaks()
 {
@@ -95,7 +100,7 @@ int main(int argc, char **argv)
 	printf("AngelScript %s\n", asGetLibraryVersion()); 
 
 	int n;
-	for( n = 0; n < 19; n++ )
+	for( n = 0; n < NUM_TESTS; n++ )
 		testTimesBest[n] = 1000;
 
 	for( n = 0; n < 3; n++ )
@@ -115,8 +120,9 @@ int main(int argc, char **argv)
 		TestVector3::Test(&testTimes[12]); printf("."); fflush(stdout);
 		TestAssign::Test(&testTimes[13]); printf("."); fflush(stdout);
 		TestArray::Test(&testTimes[18]); printf("."); fflush(stdout);
+		TestGlobalVar::Test(&testTimes[19]); printf("."); fflush(stdout);
 
-		for( int t = 0; t < 19; t++ )
+		for( int t = 0; t < NUM_TESTS; t++ )
 		{
 			if( testTimesBest[t] > testTimes[t] )
 				testTimesBest[t] = testTimes[t];
@@ -144,6 +150,7 @@ int main(int argc, char **argv)
 	printf("Assign.4       %.3f    %.3f    %.3f%s\n", testTimesOrig[16], testTimesOrig2[16], testTimesBest[16], testTimesBest[16] < testTimesOrig2[16] ? " +" : " -"); 
 	printf("Assign.5       %.3f    %.3f    %.3f%s\n", testTimesOrig[17], testTimesOrig2[17], testTimesBest[17], testTimesBest[17] < testTimesOrig2[17] ? " +" : " -"); 
 	printf("Array          %.3f    %.3f    %.3f%s\n", testTimesOrig[18], testTimesOrig2[18], testTimesBest[18], testTimesBest[18] < testTimesOrig2[18] ? " +" : " -"); 
+	printf("GlobalVar      %.3f    %.3f    %.3f%s\n", testTimesOrig[19], testTimesOrig2[19], testTimesBest[19], testTimesBest[19] < testTimesOrig2[19] ? " +" : " -"); 
 
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");

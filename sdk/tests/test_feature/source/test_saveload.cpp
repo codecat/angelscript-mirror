@@ -880,7 +880,7 @@ bool Test()
 		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-		if( stream.buffer.size() != 2488 )
+		if( stream.buffer.size() != 2486 )
 			PRINTF("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
 		if( zeroes != 575 )
@@ -889,11 +889,11 @@ bool Test()
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0x8254B635 )
+		if( crc32 != 0xBAE6E6EC )
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
-		if( stream2.buffer.size() != 2086 )
+		if( stream2.buffer.size() != 2084 )
 			PRINTF("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
 		if( zeroes != 461 )

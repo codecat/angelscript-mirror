@@ -72,6 +72,9 @@
     <ClCompile Include="..\..\source\test_array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\test_globalvar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h">

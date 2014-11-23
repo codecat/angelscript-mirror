@@ -76,6 +76,8 @@ As the scripting engine has been optimized for 32 bit datatypes, using the small
 <tr><td><code>double</code></td> <td>+/- 1.79769313486231e+308</td> <td>2.22507385850720e-308</td> <td>15</td></tr>
 </table>
 
+\note These numbers assume the platform uses the IEEE 754 to represent floating point numbers in the CPU
+
 Rounding errors may occur if more digits than the maximum number of digits are used.
 
 <b>Curiousity</b>: Real numbers may also have the additional values of positive and negative 0 or 

@@ -137,7 +137,7 @@ public:
 	void CallLineCallback();
 	void CallExceptionCallback();
 
-	int  CallGeneric(int funcID, void *objectPointer);
+	int  CallGeneric(asCScriptFunction *func, void *objectPointer);
 
 	void DetachEngine();
 

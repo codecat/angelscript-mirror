@@ -4998,16 +4998,16 @@ void asCContext::ClearExceptionCallback()
 	m_exceptionCallback = false;
 }
 
-int asCContext::CallGeneric(int id, void *objectPointer)
+int asCContext::CallGeneric(asCScriptFunction *descr, void *objectPointer)
 {
-	asCScriptFunction *sysFunction = m_engine->scriptFunctions[id];
-	asSSystemFunctionInterface *sysFunc = sysFunction->sysFuncIntf;
+	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	void (*func)(asIScriptGeneric*) = (void (*)(asIScriptGeneric*))sysFunc->func;
 	int popSize = sysFunc->paramSize;
 	asDWORD *args = m_regs.stackPointer;
 
 	// Verify the object pointer if it is a class method
 	void *currentObject = 0;
+	asASSERT( sysFunc->callConv == ICC_GENERIC_FUNC || sysFunc->callConv == ICC_GENERIC_METHOD );
 	if( sysFunc->callConv == ICC_GENERIC_METHOD )
 	{
 		if( objectPointer )
@@ -5030,59 +5030,61 @@ int asCContext::CallGeneric(int id, void *objectPointer)
 				return 0;
 			}
 
-			// Add the base offset for multiple inheritance
-			currentObject = (void*)(asPWORD(currentObject) + sysFunc->baseOffset);
+			asASSERT( sysFunc->baseOffset == 0 );
 
 			// Skip object pointer
 			args += AS_PTR_SIZE;
 		}
 	}
 
-	if( sysFunction->DoesReturnOnStack() )
+	if( descr->DoesReturnOnStack() )
 	{
 		// Skip the address where the return value will be stored
 		args += AS_PTR_SIZE;
 		popSize += AS_PTR_SIZE;
 	}
 
-	asCGeneric gen(m_engine, sysFunction, currentObject, args);
+	asCGeneric gen(m_engine, descr, currentObject, args);
 
-	m_callingSystemFunction = sysFunction;
+	m_callingSystemFunction = descr;
 	func(&gen);
 	m_callingSystemFunction = 0;
 
 	m_regs.valueRegister = gen.returnVal;
 	m_regs.objectRegister = gen.objectRegister;
-	m_regs.objectType = sysFunction->returnType.GetObjectType();
+	m_regs.objectType = descr->returnType.GetObjectType();
 
 	// Clean up function parameters
-	int offset = 0;
-	for( asUINT n = 0; n < sysFunction->parameterTypes.GetLength(); n++ )
+	if( sysFunc->hasAutoHandles )
 	{
-		if( sysFunction->parameterTypes[n].IsObject() && !sysFunction->parameterTypes[n].IsReference() )
+		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 		{
-			void *obj = *(void**)&args[offset];
-			if( obj )
+			asCDataType &paramType = descr->parameterTypes[n];
+			if( paramType.IsObject() && !paramType.IsReference() )
 			{
-				// Release the object
-				asSTypeBehaviour *beh = &sysFunction->parameterTypes[n].GetObjectType()->beh;
-				if( sysFunction->parameterTypes[n].GetObjectType()->flags & asOBJ_REF )
+				void *obj = *(void**)args;
+				if( obj )
 				{
-					asASSERT( (sysFunction->parameterTypes[n].GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
-					if( beh->release )
-						m_engine->CallObjectMethod(obj, beh->release);
-				}
-				else
-				{
-					// Call the destructor then free the memory
-					if( beh->destruct )
-						m_engine->CallObjectMethod(obj, beh->destruct);
+					// Release the object
+					asSTypeBehaviour *beh = &paramType.GetObjectType()->beh;
+					if( paramType.GetObjectType()->flags & asOBJ_REF )
+					{
+						asASSERT( (paramType.GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
+						if( beh->release )
+							m_engine->CallObjectMethod(obj, beh->release);
+					}
+					else
+					{
+						// Call the destructor then free the memory
+						if( beh->destruct )
+							m_engine->CallObjectMethod(obj, beh->destruct);
 
-					m_engine->CallFree(obj);
+						m_engine->CallFree(obj);
+					}
 				}
 			}
+			args += paramType.GetSizeOnStackDWords();
 		}
-		offset += sysFunction->parameterTypes[n].GetSizeOnStackDWords();
 	}
 
 	// Return how much should be popped from the stack
