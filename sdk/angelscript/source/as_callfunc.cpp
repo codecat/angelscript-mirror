@@ -449,14 +449,12 @@ int CallSystemFunction(int id, asCContext *context)
 // args       - This is the function arguments, which are packed as in AngelScript
 // retPointer - This points to a the memory buffer where the return object is to be placed, if the function returns the value in memory rather than in registers
 // retQW2     - This output parameter should be used if the function returns a value larger than 64bits in registers
+// secondObj  - This is the object pointer that the proxy method should invoke its method on when the call convention is THISCALL_OBJFIRST/LAST
 //
 // Return value:
 //
 // The function should return the value that is returned in registers. 
-//
-// When thiscall functors are enabled (!AS_NO_THISCALL_FUNCTOR_METHOD) the 
-// obj argument is a an array of 2 void* holding the two possible this pointers
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2);
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObj);
 
 
 int CallSystemFunction(int id, asCContext *context)
@@ -477,6 +475,7 @@ int CallSystemFunction(int id, asCContext *context)
 
 #ifdef AS_NO_THISCALL_FUNCTOR_METHOD
 	void    *obj               = 0;
+	void    *secondObj         = 0;
 
 	if( callConv >= ICC_THISCALL )
 	{
@@ -518,7 +517,8 @@ int CallSystemFunction(int id, asCContext *context)
 	//                 objForArg is the object pointer that should be passed as argument when using OBJFIRST or OBJLAST
 
 	// Used to save two object pointers with THISCALL_OBJLAST or THISCALL_OBJFIRST
-	void* objectsPtrs[2] = { 0, 0 };
+	void *obj               = 0;
+	void *secondObj         = 0;
 
 	if( callConv >= ICC_THISCALL )
 	{
@@ -529,13 +529,13 @@ int CallSystemFunction(int id, asCContext *context)
 		{
 			asASSERT( sysFunc->objForThiscall != 0 );
 			// This class method is being called as object method (sysFunc->objForThiscall must be set).
-			objectsPtrs[0] = sysFunc->objForThiscall;
+			obj = sysFunc->objForThiscall;
 			continueCheckIndex = 1;
 		}
 		else if( sysFunc->objForThiscall )
 		{
 			// This class method is being called as if it is a global function
-			objectsPtrs[0] = sysFunc->objForThiscall;
+			obj = sysFunc->objForThiscall;
 			continueCheck = false;
 		}
 
@@ -567,10 +567,15 @@ int CallSystemFunction(int id, asCContext *context)
 			// Skip the object pointer
 			args += AS_PTR_SIZE;
 
-			objectsPtrs[continueCheckIndex] = tempPtr;
+			if( continueCheckIndex )
+				secondObj = tempPtr;
+			else
+			{
+				asASSERT( obj == 0 );
+				obj = tempPtr;
+			}
 		}
 	}
-	void *obj = &objectsPtrs[0]; // Get the pointer to first element
 #endif // AS_NO_THISCALL_FUNCTOR_METHOD
 
 	if( descr->DoesReturnOnStack() )
@@ -593,7 +598,7 @@ int CallSystemFunction(int id, asCContext *context)
 	context->m_callingSystemFunction = descr;
 	bool cppException = false;
 #ifdef AS_NO_EXCEPTIONS
-	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
+	retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2, secondObj);
 #else
 	// This try/catch block is to catch potential exception that may 
 	// be thrown by the registered function. The implementation of the
@@ -602,7 +607,7 @@ int CallSystemFunction(int id, asCContext *context)
 	// executed in case of an exception.
 	try
 	{
-		retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2);
+		retQW = CallSystemFunctionNative(context, descr, obj, args, sysFunc->hostReturnInMemory ? retPointer : 0, retQW2, secondObj);
 	}
 	catch(...)
 	{

@@ -547,8 +547,10 @@ inline bool IsVariableArgument( asCDataType type )
 	return (type.GetTokenType() == ttQuestion) ? true : false;
 }
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void */*secondObject*/)
 {
+	// TODO: PPC 64 does not yet support THISCALL_OBJFIRST/LAST
+
 	// use a working array of types, we'll configure the final one in stackArgs
 	asBYTE argsType[AS_PPC_MAX_ARGS + 1 + 1 + 1];
 	memset( argsType, 0, sizeof(argsType));
