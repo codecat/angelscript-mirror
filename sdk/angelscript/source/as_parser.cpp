@@ -40,6 +40,13 @@
 //
 // Ref: http://matt.might.net/articles/grammars-bnf-ebnf/
 //
+// ( )  - used for grouping
+// { }  - 0 or more repetitions
+// [ ]  - optional
+//  |   - or
+// ' '  - token
+//
+
 
 
 #include "as_config.h"
@@ -327,7 +334,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	return node;
 }
 
-// BNF: TYPEMOD ::= [& ['in' | 'out' | 'inout']]
+// BNF: TYPEMOD ::= ['&' ['in' | 'out' | 'inout']]
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -573,6 +580,7 @@ asCScriptNode *asCParser::ParseRealType()
 	return node;
 }
 
+// BNF: IDENTIFIER ::= single token:  starts with letter or _, can include any letter and digit, same as in C++
 asCScriptNode *asCParser::ParseIdentifier()
 {
 	asCScriptNode *node = CreateNode(snIdentifier);
@@ -1311,7 +1319,10 @@ asCScriptNode *asCParser::ParseExprValue()
 	return node;
 }
 
-// TODO: BNF: LITERAL ::= 
+// BNF: LITERAL ::= NUMBER | STRING | BITS | 'true' | 'false' | 'null'
+// BNF: NUMBER ::= single token:  includes integers and real numbers, same as C++
+// BNF: STRING ::= single token:  single quoted ', double quoted ", or heredoc multi-line string """
+// BNF: BITS ::= single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
 asCScriptNode *asCParser::ParseConstant()
 {
 	asCScriptNode *node = CreateNode(snConstant);
@@ -1364,7 +1375,7 @@ asCScriptNode *asCParser::ParseStringConstant()
 	return node;
 }
 
-// TODO: BNF: FUNCCALL ::= 
+// BNF: FUNCCALL ::= SCOPE IDENTIFIER ARGLIST
 asCScriptNode *asCParser::ParseFunctionCall()
 {
 	asCScriptNode *node = CreateNode(snFunctionCall);
@@ -1382,7 +1393,7 @@ asCScriptNode *asCParser::ParseFunctionCall()
 	return node;
 }
 
-// TODO: BNF: VARACCESS ::=
+// BNF: VARACCESS ::= SCOPE IDENTIFIER
 asCScriptNode *asCParser::ParseVariableAccess()
 {
 	asCScriptNode *node = CreateNode(snVariableAccess);
@@ -1397,7 +1408,7 @@ asCScriptNode *asCParser::ParseVariableAccess()
 	return node;
 }
 
-// TODO: BNF: CONSTRUCTCALL ::=
+// BNF: CONSTRUCTCALL ::= TYPE ARGLIST
 asCScriptNode *asCParser::ParseConstructCall()
 {
 	asCScriptNode *node = CreateNode(snConstructCall);
