@@ -5048,36 +5048,32 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 	m_regs.objectRegister = gen.objectRegister;
 	m_regs.objectType = descr->returnType.GetObjectType();
 
-	// Clean up function parameters
-	if( sysFunc->hasAutoHandles )
+	// Clean up arguments
+	const asUINT cleanCount = sysFunc->cleanArgs.GetLength();
+	if( cleanCount )
 	{
-		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		asSSystemFunctionInterface::SClean *clean = sysFunc->cleanArgs.AddressOf();
+		for( asUINT n = 0; n < cleanCount; n++, clean++ )
 		{
-			asCDataType &paramType = descr->parameterTypes[n];
-			if( paramType.IsObject() && !paramType.IsReference() )
+			void **addr = (void**)&args[clean->off];
+			if( clean->op == 0 )
 			{
-				void *obj = *(void**)args;
-				if( obj )
+				if( *addr != 0 )
 				{
-					// Release the object
-					asSTypeBehaviour *beh = &paramType.GetObjectType()->beh;
-					if( paramType.GetObjectType()->flags & asOBJ_REF )
-					{
-						asASSERT( (paramType.GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
-						if( beh->release )
-							m_engine->CallObjectMethod(obj, beh->release);
-					}
-					else
-					{
-						// Call the destructor then free the memory
-						if( beh->destruct )
-							m_engine->CallObjectMethod(obj, beh->destruct);
-
-						m_engine->CallFree(obj);
-					}
+					m_engine->CallObjectMethod(*addr, clean->ot->beh.release);
+					*addr = 0;
 				}
 			}
-			args += paramType.GetSizeOnStackDWords();
+			else 
+			{
+				asASSERT( clean->op == 1 || clean->op == 2 );
+				asASSERT( *addr );
+
+				if( clean->op == 2 )
+					m_engine->CallObjectMethod(*addr, clean->ot->beh.destruct);
+				
+				m_engine->CallFree(*addr);
+			}
 		}
 	}
 

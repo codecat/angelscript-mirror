@@ -159,16 +159,46 @@ int PrepareSystemFunctionGeneric(asCScriptFunction *func, asSSystemFunctionInter
 	// Calculate the size needed for the parameters
 	internal->paramSize = func->GetSpaceNeededForArguments();
 
-	// Check if any of the arguments are objects, if so set the flag hasAutoHandles 
-	// to signal that the arguments require cleanup after a call
-	internal->hasAutoHandles = false;
+	// Prepare the clean up instructions for the function arguments
+	int offset = 0;
 	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsReference() )
+		asCDataType &dt = func->parameterTypes[n];
+
+		if( dt.IsObject() && !dt.IsReference() )
 		{
-			internal->hasAutoHandles = true;
-			break;
+			asSTypeBehaviour *beh = &dt.GetObjectType()->beh;
+			if( dt.GetObjectType()->flags & asOBJ_REF )
+			{
+				asASSERT( (dt.GetObjectType()->flags & asOBJ_NOCOUNT) || beh->release );
+				if( beh->release )
+				{
+					asSSystemFunctionInterface::SClean clean;
+					clean.op  = 0; // call release
+					clean.ot  = dt.GetObjectType();
+					clean.off = short(offset);
+					internal->cleanArgs.PushLast(clean);
+				}
+			}
+			else
+			{
+				asSSystemFunctionInterface::SClean clean;
+				clean.op  = 1; // call free
+				clean.ot  = dt.GetObjectType();
+				clean.off = short(offset);
+
+				// Call the destructor then free the memory
+				if( beh->destruct )
+					clean.op = 2; // call destruct, then free
+
+				internal->cleanArgs.PushLast(clean);
+			}
 		}
+
+		if( dt.IsObject() && !dt.IsObjectHandle() && !dt.IsReference() )
+			offset += AS_PTR_SIZE;
+		else
+			offset += dt.GetSizeOnStackDWords();
 	}
 
 	return 0;
@@ -402,15 +432,54 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 		}
 	}
 
-	// Verify if the function has any registered autohandles
-	internal->hasAutoHandles = false;
-	for( n = 0; n < internal->paramAutoHandles.GetLength(); n++ )
+	// Prepare the clean up instructions for the function arguments
+	int offset = 0;
+	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
-		if( internal->paramAutoHandles[n] )
+		asCDataType &dt = func->parameterTypes[n];
+
+#if defined(COMPLEX_OBJS_PASSED_BY_REF) || defined(AS_LARGE_OBJS_PASSED_BY_REF)
+		bool needFree = false;
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
+		if( dt.GetObjectType() && dt.GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
+#endif
+#ifdef AS_LARGE_OBJS_PASSED_BY_REF
+		if( dt.GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
+#endif
+		if( needFree &&
+			dt.IsObject() &&
+			!dt.IsObjectHandle() && 
+			!dt.IsReference() )
 		{
-			internal->hasAutoHandles = true;
-			break;
+			asSSystemFunctionInterface::SClean clean;
+			clean.op  = 1; // call free
+			clean.ot  = dt.GetObjectType();
+			clean.off = short(offset);
+
+#ifndef AS_CALLEE_DESTROY_OBJ_BY_VAL
+			// If the called function doesn't destroy objects passed by value we must do so here
+			asSTypeBehaviour *beh = &dt.GetObjectType()->beh;
+			if( beh->destruct )
+				clean.op = 2; // call destruct, then free
+#endif
+
+			internal->cleanArgs.PushLast(clean);
 		}
+#endif
+
+		if( n < internal->paramAutoHandles.GetLength() && internal->paramAutoHandles[n] )
+		{
+			asSSystemFunctionInterface::SClean clean;
+			clean.op  = 0; // call release
+			clean.ot  = dt.GetObjectType();
+			clean.off = short(offset);
+			internal->cleanArgs.PushLast(clean);
+		}
+
+		if( dt.IsObject() && !dt.IsObjectHandle() && !dt.IsReference() )
+			offset += AS_PTR_SIZE;
+		else
+			offset += dt.GetSizeOnStackDWords();
 	}
 #endif // !defined(AS_MAX_PORTABILITY)
 	return 0;
@@ -620,51 +689,6 @@ int CallSystemFunction(int id, asCContext *context)
 #endif
 	context->m_callingSystemFunction = 0;
 
-#if defined(COMPLEX_OBJS_PASSED_BY_REF) || defined(AS_LARGE_OBJS_PASSED_BY_REF)
-	if( sysFunc->takesObjByVal )
-	{
-		// Need to free the complex objects passed by value, but that the 
-		// calling convention implicitly passes by reference behind the scene as the 
-		// calling function is the owner of that memory.
-
-		// args is pointing to the first real argument as used in CallSystemFunctionNative,
-		// i.e. hidden arguments such as the object pointer and return address have already 
-		// been skipped.
-
-		int spos = 0;
-		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
-		{
-			bool needFree = false;
-			asCDataType &dt = descr->parameterTypes[n];
-#ifdef COMPLEX_OBJS_PASSED_BY_REF
-			if( dt.GetObjectType() && dt.GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
-#endif
-#ifdef AS_LARGE_OBJS_PASSED_BY_REF
-			if( dt.GetSizeInMemoryDWords() >= AS_LARGE_OBJ_MIN_SIZE ) needFree = true;
-#endif
-			if( needFree &&
-				dt.IsObject() &&
-				!dt.IsObjectHandle() && 
-				!dt.IsReference() )
-			{
-				void *obj = (void*)*(asPWORD*)&args[spos];
-				spos += AS_PTR_SIZE;
-
-#ifndef AS_CALLEE_DESTROY_OBJ_BY_VAL
-				// If the called function doesn't destroy objects passed by value we must do so here
-				asSTypeBehaviour *beh = &dt.GetObjectType()->beh;
-				if( beh->destruct )
-					engine->CallObjectMethod(obj, beh->destruct);
-#endif
-
-				engine->CallFree(obj);
-			}
-			else
-				spos += dt.GetSizeOnStackDWords();
-		}
-	}
-#endif
-
 	// Store the returned value in our stack
 	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
 	{
@@ -783,28 +807,36 @@ int CallSystemFunction(int id, asCContext *context)
 			context->m_regs.valueRegister = retQW;
 	}
 
-	// Release autohandles in the arguments
-	if( sysFunc->hasAutoHandles )
+	// Clean up arguments
+	const asUINT cleanCount = sysFunc->cleanArgs.GetLength();
+	if( cleanCount )
 	{
 		args = context->m_regs.stackPointer;
 		if( callConv >= ICC_THISCALL )
 			args += AS_PTR_SIZE;
 
-		int spos = 0;
-		for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+		asSSystemFunctionInterface::SClean *clean = sysFunc->cleanArgs.AddressOf();
+		for( asUINT n = 0; n < cleanCount; n++, clean++ )
 		{
-			asCDataType &dt = descr->parameterTypes[n];
-			if( sysFunc->paramAutoHandles[n] && *(asPWORD*)&args[spos] != 0 )
+			void **addr = (void**)&args[clean->off];
+			if( clean->op == 0 )
 			{
-				// Call the release method on the type
-				engine->CallObjectMethod((void*)*(asPWORD*)&args[spos], dt.GetObjectType()->beh.release);
-				*(asPWORD*)&args[spos] = 0;
+				if( *addr != 0 )
+				{
+					engine->CallObjectMethod(*addr, clean->ot->beh.release);
+					*addr = 0;
+				}
 			}
+			else 
+			{
+				asASSERT( clean->op == 1 || clean->op == 2 );
+				asASSERT( *addr );
 
-			if( dt.IsObject() && !dt.IsObjectHandle() && !dt.IsReference() )
-				spos += AS_PTR_SIZE;
-			else
-				spos += dt.GetSizeOnStackDWords();
+				if( clean->op == 2 )
+					engine->CallObjectMethod(*addr, clean->ot->beh.destruct);
+				
+				engine->CallFree(*addr);
+			}
 		}
 	}
 

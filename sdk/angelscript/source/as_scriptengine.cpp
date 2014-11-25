@@ -4139,6 +4139,13 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	func2->objectType = ot;
 	func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
 
+	// Adjust the clean up instructions
+	for( asUINT c = 0; c < func2->sysFuncIntf->cleanArgs.GetLength(); c++ )
+	{
+		asCDataType dt = DetermineTypeForTemplate(asCDataType::CreateObject(func2->sysFuncIntf->cleanArgs[c].ot, false), templateType, ot);
+		func2->sysFuncIntf->cleanArgs[c].ot = dt.GetObjectType();
+	}
+
 	func2->id       = GetNextScriptFunctionId();
 	SetScriptFunction(func2);
 

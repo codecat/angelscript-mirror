@@ -16,6 +16,8 @@ static const char *script =
 "    for( uint i = 0; i < 1000000; i++ )       \n"
 "    {                                         \n"
 "        array<int> a = {0,1,2,3,4,5,6,7,8,0}; \n"
+"        for( uint p = 0; p < 10; p++ )        \n"
+"            a[p]++;                           \n"
 "    }                                         \n"
 "}                                             \n";
 
