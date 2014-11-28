@@ -7795,6 +7795,23 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 			}
 			else
 			{
+				// TODO: Allow "(a ? b : c) = d;" and "return (a ? b : c);" (where the latter returns the reference)
+				//
+				//       Restrictions for the condition to be used as lvalue:
+				//        1. both b and c must be of the same type and be lvalue references
+				//        2. neither of the expressions can have any deferred arguments
+				//           that would have to be cleaned up after the reference
+				//        3. neither expression can be temporary
+				//
+				//       If either expression is local, the resulting lvalue is not valid 
+				//       for return since it is not allowed to return references to local 
+				//       variables.
+				//
+				//       The reference to the local variable must be loaded into the register,
+				//       the resulting expression must not be considered as a local variable 
+				//       with a stack offset (i.e. it will not be allowed to use asBC_VAR)
+
+
 				// Allocate temporary variable and copy the result to that one
 				asCTypeInfo temp;
 				temp = le.type;

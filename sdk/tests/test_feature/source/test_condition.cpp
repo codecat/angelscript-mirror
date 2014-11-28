@@ -70,7 +70,43 @@ bool TestCondition()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+/*
+	// TODO: Test condition used as lvalue
+	// If both expressions are lvalues of the same type and neither have
+	// deferred arguments the condition itself can be an lvalue
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		
+		bout.buffer = "";
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class TestClass{ int a; int b; int &func(bool c) { return c ? a : b; } } \n"
+			"void Test() { \n"
+			"   TestClass t; \n"
+			"   t.func(true) = 1; \n"
+			"   t.func(false) = 2; \n"
+			"   assert( t.a == 1 ); \n"
+			"   assert( t.b == 2 ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "Test()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+*/
 	// Test condition with null handle
 	// http://www.gamedev.net/topic/652528-cant-implicitly-convert-from-const-testclass-to-testclass/
 	{

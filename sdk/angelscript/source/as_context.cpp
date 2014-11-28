@@ -4922,13 +4922,14 @@ asEContextState asCContext::GetState() const
 // interface
 int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 {
-	m_lineCallback = true;
-	m_regs.doProcessSuspend = true;
+	// First turn off the line callback to avoid a second thread 
+	// attempting to call it while the new one is still being set
+	m_lineCallback = false;
+
 	m_lineCallbackObj = obj;
 	bool isObj = false;
 	if( (unsigned)callConv == asCALL_GENERIC || (unsigned)callConv == asCALL_THISCALL_OBJFIRST || (unsigned)callConv == asCALL_THISCALL_OBJLAST )
 	{
-		m_lineCallback = false;
 		m_regs.doProcessSuspend = m_doSuspend;
 		return asNOT_SUPPORTED;
 	}
@@ -4937,15 +4938,18 @@ int asCContext::SetLineCallback(asSFuncPtr callback, void *obj, int callConv)
 		isObj = true;
 		if( obj == 0 )
 		{
-			m_lineCallback = false;
 			m_regs.doProcessSuspend = m_doSuspend;
 			return asINVALID_ARG;
 		}
 	}
 
 	int r = DetectCallingConvention(isObj, callback, callConv, 0, &m_lineCallbackFunc);
-	if( r < 0 ) m_lineCallback = false;
+	
+	// Turn on the line callback after setting both the function pointer and object pointer
+	if( r >= 0 ) m_lineCallback = true;
 
+	// The BC_SUSPEND instruction should be processed if either line 
+	// callback is set or if the application has requested a suspension
 	m_regs.doProcessSuspend = m_doSuspend || m_lineCallback;
 
 	return r;
