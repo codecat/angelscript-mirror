@@ -4552,6 +4552,14 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 				}
 			}
 
+			// Can't return the reference if could point to a local variable
+			if( expr.type.isRefToLocal )
+			{
+				ProcessDeferredParams(&expr);
+				Error(TXT_REF_CANT_BE_TO_LOCAL_VAR, rnode);
+				return;
+			}
+
 			// All objects in the function must be cleaned up before the expression
 			// is evaluated, otherwise there is a possibility that the cleanup will
 			// invalidate the reference.
@@ -7795,118 +7803,170 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 			}
 			else
 			{
-				// TODO: Allow "(a ? b : c) = d;" and "return (a ? b : c);" (where the latter returns the reference)
+				// Allow "(a ? b : c) = d;" and "return (a ? b : c);" (where the latter returns the reference)
 				//
-				//       Restrictions for the condition to be used as lvalue:
-				//        1. both b and c must be of the same type and be lvalue references
-				//        2. neither of the expressions can have any deferred arguments
-				//           that would have to be cleaned up after the reference
-				//        3. neither expression can be temporary
+				// Restrictions for the condition to be used as lvalue:
+				//  1. both b and c must be of the same type and be lvalue references
+				//  2. neither of the expressions can have any deferred arguments
+				//     that would have to be cleaned up after the reference
+				//  3. neither expression can be temporary
 				//
-				//       If either expression is local, the resulting lvalue is not valid 
-				//       for return since it is not allowed to return references to local 
-				//       variables.
+				// If either expression is local, the resulting lvalue is not valid 
+				// for return since it is not allowed to return references to local 
+				// variables.
 				//
-				//       The reference to the local variable must be loaded into the register,
-				//       the resulting expression must not be considered as a local variable 
-				//       with a stack offset (i.e. it will not be allowed to use asBC_VAR)
+				// The reference to the local variable must be loaded into the register,
+				// the resulting expression must not be considered as a local variable 
+				// with a stack offset (i.e. it will not be allowed to use asBC_VAR)
 
-
-				// Allocate temporary variable and copy the result to that one
-				asCTypeInfo temp;
-				temp = le.type;
-				temp.dataType.MakeReference(false);
-				temp.dataType.MakeReadOnly(false);
-
-				// Make sure the variable isn't used in any of the expressions,
-				// as it would be overwritten which may cause crashes or less visible bugs
-				int l = int(reservedVariables.GetLength());
-				e.bc.GetVarsUsed(reservedVariables);
-				le.bc.GetVarsUsed(reservedVariables);
-				re.bc.GetVarsUsed(reservedVariables);
-				int offset = AllocateVariable(temp.dataType, true, false);
-				reservedVariables.SetLength(l);
-
-				temp.SetVariable(temp.dataType, offset, true);
-
-				// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
-
-				CallDefaultConstructor(temp.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, expr);
-
-				// Put the code for the condition expression on the output
-				MergeExprBytecode(ctx, &e);
-
-				// Add the branch decision
-				ctx->type = e.type;
-				ConvertToVariable(ctx);
-				ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
-				ctx->bc.Instr(asBC_ClrHi);
-				ctx->bc.InstrDWORD(asBC_JZ, elseLabel);
-				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
-
-				// Assign the result of the left expression to the temporary variable
-				asCTypeInfo rtemp;
-				rtemp = temp;
-				if( rtemp.dataType.IsObjectHandle() )
-					rtemp.isExplicitHandle = true;
-
-				PrepareForAssignment(&rtemp.dataType, &le, cexpr->next, true);
-				MergeExprBytecode(ctx, &le);
-
-				if( !rtemp.dataType.IsPrimitive() )
+				if( le.type.isLValue && re.type.isLValue &&
+					le.deferredParams.GetLength() == 0 && re.deferredParams.GetLength() ==0 &&
+					!le.type.isTemporary && !re.type.isTemporary &&
+					le.type.dataType == re.type.dataType )
 				{
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
+					// Put the code for the condition expression on the output
+					MergeExprBytecode(ctx, &e);
+
+					// Add the branch decision
+					ctx->type = e.type;
+					ConvertToVariable(ctx);
+					ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
+					ctx->bc.Instr(asBC_ClrHi);
+					ctx->bc.InstrDWORD(asBC_JZ, elseLabel);
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+					// Start of the left expression
+					MergeExprBytecode(ctx, &le);
+					if( !le.type.dataType.IsReference() && le.type.isVariable )
+					{
+						// Load the address of the variable into the register
+						ctx->bc.InstrSHORT(asBC_LDV, le.type.stackOffset);
+					}
+
+					ctx->bc.InstrINT(asBC_JMP, afterLabel);
+
+					// Start of the right expression
+					ctx->bc.Label((short)elseLabel);
+
+					MergeExprBytecode(ctx, &re);
+					if( !re.type.dataType.IsReference() && re.type.isVariable )
+					{
+						// Load the address of the variable into the register
+						ctx->bc.InstrSHORT(asBC_LDV, re.type.stackOffset);
+					}
+
+					ctx->bc.Label((short)afterLabel);
+
+					// The result is an lvalue
+					ctx->type.isLValue = true;
+					ctx->type.dataType = le.type.dataType;
+					ctx->type.dataType.MakeReference(true);
+
+					// It can't be a treated as a variable, since we don't know which one was used
+					ctx->type.isVariable = false;
+					ctx->type.isTemporary = false;
+
+					// Must remember if the reference was to a local variable, since it must not be allowed to be returned
+					ctx->type.isRefToLocal = le.type.isVariable || le.type.isRefToLocal || re.type.isVariable || re.type.isRefToLocal; 
 				}
-				asCTypeInfo result;
-				result = rtemp;
-				PerformAssignment(&result, &le.type, &ctx->bc, cexpr->next);
-				if( !result.dataType.IsPrimitive() )
-					ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
-
-				// Release the old temporary variable
-				ReleaseTemporaryVariable(le.type, &ctx->bc);
-
-				ctx->bc.InstrINT(asBC_JMP, afterLabel);
-
-				// Start of the right expression
-				ctx->bc.Label((short)elseLabel);
-
-				// Copy the result to the same temporary variable
-				PrepareForAssignment(&rtemp.dataType, &re, cexpr->next, true);
-				MergeExprBytecode(ctx, &re);
-
-				if( !rtemp.dataType.IsPrimitive() )
+				else
 				{
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
+					// Allocate temporary variable and copy the result to that one
+					asCTypeInfo temp;
+					temp = le.type;
+					temp.dataType.MakeReference(false);
+					temp.dataType.MakeReadOnly(false);
+
+					// Make sure the variable isn't used in any of the expressions,
+					// as it would be overwritten which may cause crashes or less visible bugs
+					int l = int(reservedVariables.GetLength());
+					e.bc.GetVarsUsed(reservedVariables);
+					le.bc.GetVarsUsed(reservedVariables);
+					re.bc.GetVarsUsed(reservedVariables);
+					int offset = AllocateVariable(temp.dataType, true, false);
+					reservedVariables.SetLength(l);
+
+					temp.SetVariable(temp.dataType, offset, true);
+
+					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
+
+					CallDefaultConstructor(temp.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, expr);
+
+					// Put the code for the condition expression on the output
+					MergeExprBytecode(ctx, &e);
+
+					// Add the branch decision
+					ctx->type = e.type;
+					ConvertToVariable(ctx);
+					ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
+					ctx->bc.Instr(asBC_ClrHi);
+					ctx->bc.InstrDWORD(asBC_JZ, elseLabel);
+					ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+					// Assign the result of the left expression to the temporary variable
+					asCTypeInfo rtemp;
+					rtemp = temp;
+					if( rtemp.dataType.IsObjectHandle() )
+						rtemp.isExplicitHandle = true;
+
+					PrepareForAssignment(&rtemp.dataType, &le, cexpr->next, true);
+					MergeExprBytecode(ctx, &le);
+
+					if( !rtemp.dataType.IsPrimitive() )
+					{
+						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+						rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
+					}
+					asCTypeInfo result;
+					result = rtemp;
+					PerformAssignment(&result, &le.type, &ctx->bc, cexpr->next);
+					if( !result.dataType.IsPrimitive() )
+						ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
+
+					// Release the old temporary variable
+					ReleaseTemporaryVariable(le.type, &ctx->bc);
+
+					ctx->bc.InstrINT(asBC_JMP, afterLabel);
+
+					// Start of the right expression
+					ctx->bc.Label((short)elseLabel);
+
+					// Copy the result to the same temporary variable
+					PrepareForAssignment(&rtemp.dataType, &re, cexpr->next, true);
+					MergeExprBytecode(ctx, &re);
+
+					if( !rtemp.dataType.IsPrimitive() )
+					{
+						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+						rtemp.dataType.MakeReference(IsVariableOnHeap(offset));
+					}
+					result = rtemp;
+					PerformAssignment(&result, &re.type, &ctx->bc, cexpr->next);
+					if( !result.dataType.IsPrimitive() )
+						ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
+
+					// Release the old temporary variable
+					ReleaseTemporaryVariable(re.type, &ctx->bc);
+
+					ctx->bc.Label((short)afterLabel);
+
+					// Make sure both expressions have the same type
+					if( !le.type.dataType.IsEqualExceptConst(re.type.dataType) )
+						Error(TXT_BOTH_MUST_BE_SAME, expr);
+
+					// Set the temporary variable as output
+					ctx->type = rtemp;
+					ctx->type.isExplicitHandle = isExplicitHandle;
+
+					if( !ctx->type.dataType.IsPrimitive() )
+					{
+						ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+						ctx->type.dataType.MakeReference(IsVariableOnHeap(offset));
+					}
+
+					// Make sure the output isn't marked as being a literal constant
+					ctx->type.isConstant = false;
 				}
-				result = rtemp;
-				PerformAssignment(&result, &re.type, &ctx->bc, cexpr->next);
-				if( !result.dataType.IsPrimitive() )
-					ctx->bc.Instr(asBC_PopPtr); // Pop the original value (always a pointer)
-
-				// Release the old temporary variable
-				ReleaseTemporaryVariable(re.type, &ctx->bc);
-
-				ctx->bc.Label((short)afterLabel);
-
-				// Make sure both expressions have the same type
-				if( !le.type.dataType.IsEqualExceptConst(re.type.dataType) )
-					Error(TXT_BOTH_MUST_BE_SAME, expr);
-
-				// Set the temporary variable as output
-				ctx->type = rtemp;
-				ctx->type.isExplicitHandle = isExplicitHandle;
-
-				if( !ctx->type.dataType.IsPrimitive() )
-				{
-					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-					ctx->type.dataType.MakeReference(IsVariableOnHeap(offset));
-				}
-
-				// Make sure the output isn't marked as being a literal constant
-				ctx->type.isConstant = false;
 			}
 		}
 		else

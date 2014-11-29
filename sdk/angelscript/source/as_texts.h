@@ -220,6 +220,7 @@
 #define TXT_PROPERTY_HAS_NO_SET_ACCESSOR          "The property has no set accessor"
 #define TXT_PROPERTY_WITHOUT_ACCESSOR             "Virtual property must have at least one get or set accessor"
 
+#define TXT_REF_CANT_BE_TO_LOCAL_VAR            "Resulting reference cannot be returned. Returned references must not refer to local variables."
 #define TXT_REF_CANT_BE_RETURNED_DEFERRED_PARAM "Resulting reference cannot be returned. There are deferred arguments that may invalidate it."
 #define TXT_REF_CANT_BE_RETURNED_LOCAL_VARS     "Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it."
 #define TXT_REF_IS_READ_ONLY                    "Reference is read-only"

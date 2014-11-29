@@ -63,6 +63,40 @@ static void print(asIScriptGeneric *gen)
 //	PRINTF((str + "\n").c_str());
 }
 
+static void StringFactoryConstRefGeneric(asIScriptGeneric *gen) {
+  asUINT length = gen->GetArgDWord(0);
+  const char *s = (const char*)gen->GetArgAddress(1);
+  static string str;
+  str = string(s, length);
+  gen->SetReturnAddress(&str);
+}
+
+static void ConstructStringGeneric(asIScriptGeneric * gen) {
+  new (gen->GetObject()) string();
+}
+
+static void CopyConstructStringGeneric(asIScriptGeneric * gen) {
+  string * a = static_cast<string *>(gen->GetArgObject(0));
+  new (gen->GetObject()) string(*a);
+}
+
+static void DestructStringGeneric(asIScriptGeneric * gen) {
+  string * ptr = static_cast<string *>(gen->GetObject());
+  ptr->~string();
+}
+
+static void AssignStringGeneric(asIScriptGeneric *gen) {
+  string * a = static_cast<string *>(gen->GetArgObject(0));
+  string * self = static_cast<string *>(gen->GetObject());
+  *self = *a;
+  gen->SetReturnAddress(self);
+}
+
+static bool StringEquals(const std::string& lhs, const std::string& rhs)
+{
+    return lhs == rhs;
+}
+
 bool TestCondition()
 {
 	bool fail = false;
@@ -70,25 +104,38 @@ bool TestCondition()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
-/*
-	// TODO: Test condition used as lvalue
+
+	// Test condition used as lvalue
 	// If both expressions are lvalues of the same type and neither have
 	// deferred arguments the condition itself can be an lvalue
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
 		
 		bout.buffer = "";
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
-			"class TestClass{ int a; int b; int &func(bool c) { return c ? a : b; } } \n"
+			"class TestClass{ int a; int b; \n"
+			"  int &func(bool c) { return c ? a : b; } \n"
+			"  void func2(bool c, int val) { (c ? a : b) = val; } \n"
+			"} \n"
 			"void Test() { \n"
 			"   TestClass t; \n"
 			"   t.func(true) = 1; \n"
 			"   t.func(false) = 2; \n"
 			"   assert( t.a == 1 ); \n"
 			"   assert( t.b == 2 ); \n"
+			"   t.func2(true, 3); \n"
+			"   t.func2(false, 4); \n"
+			"   assert( t.a == 3 ); \n"
+			"   assert( t.b == 4 ); \n"
+			"   int a = 0, b = 0; \n"
+			"   (true?a:b) = 1; \n"
+			"   (false?a:b) = 2; \n"
+			"   assert( a == 1 ); \n"
+			"   assert( b == 2 ); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
@@ -104,9 +151,71 @@ bool TestCondition()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Must not allow returning reference to local variable
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"int &func(bool c) { int a, b; return c ? a : b; } \n"
+			"string &func2(bool c) { string a, b; return c ? a : b; } \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if(	bout.buffer != "test (1, 1) : Info    : Compiling int& func(bool)\n"
+						   "test (1, 31) : Error   : Resulting reference cannot be returned. Returned references must not refer to local variables.\n"
+						   "test (2, 1) : Info    : Compiling string& func2(bool)\n"
+			               "test (2, 38) : Error   : Resulting reference cannot be returned. The expression uses objects that during cleanup may invalidate it.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
-*/
+
+	// Problem reported by Philip Bennefall
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// Special string class
+		r = engine->RegisterObjectType("string", sizeof(std::string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+		r = engine->RegisterStringFactory("const string &", asFUNCTION(StringFactoryConstRefGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
+#ifndef AS_MAX_PORTABILITY
+		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(StringEquals, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+#else
+		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", WRAP_OBJ_FIRST_PR(StringEquals, (const string &, const string &), bool), asCALL_GENERIC); assert( r >= 0 );
+#endif
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+
+		// Condition was failing due to the string factory returning a const reference
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME,
+			"void func(int value)\n"
+			"{\n"
+			"  string result= (value<5) ? 'less than 5' : (value>8) ? 'Greater than 8' : 'greater than 5';\n"
+			"  assert( result == 'greater than 5' ); \n"
+			"}\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "func(5)", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test condition with null handle
 	// http://www.gamedev.net/topic/652528-cant-implicitly-convert-from-const-testclass-to-testclass/
 	{
