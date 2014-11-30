@@ -3942,6 +3942,10 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 	int r = CompileAssignment(inode->firstChild, &expr);
 	if( r == 0 )
 	{
+		// Allow value types to be converted to bool using 'bool opImplConv()'
+		if( expr.type.dataType.GetObjectType() && (expr.type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), inode, asIC_IMPLICIT_CONV);
+
 		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 			Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
 		else
@@ -4091,6 +4095,10 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 		int r = CompileAssignment(second->firstChild, &expr);
 		if( r >= 0 )
 		{
+			// Allow value types to be converted to bool using 'bool opImplConv()'
+			if( expr.type.dataType.GetObjectType() && (expr.type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+				ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), second->firstChild, asIC_IMPLICIT_CONV);
+
 			if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 				Error(TXT_EXPR_MUST_BE_BOOL, second);
 			else
@@ -4200,6 +4208,10 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	int r = CompileAssignment(wnode->firstChild, &expr);
 	if( r == 0 )
 	{
+		// Allow value types to be converted to bool using 'bool opImplConv()'
+		if( expr.type.dataType.GetObjectType() && (expr.type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+			ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->firstChild, asIC_IMPLICIT_CONV);
+
 		if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 			Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
 		else
@@ -4288,6 +4300,11 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 	// Compile expression
 	asSExprContext expr(engine);
 	CompileAssignment(wnode->lastChild, &expr);
+
+	// Allow value types to be converted to bool using 'bool opImplConv()'
+	if( expr.type.dataType.GetObjectType() && (expr.type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+		ImplicitConversion(&expr, asCDataType::CreatePrimitive(ttBool, false), wnode->lastChild, asIC_IMPLICIT_CONV);
+
 	if( !expr.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
 	else
@@ -5947,51 +5964,69 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 		}
 	}
 
-	// This matrix describes the priorities of the types to search for, for each target type
-	// The first column is the target type, the priorities goes from left to right
-	eTokenType matchMtx[10][10] =
+	int funcId = 0;
+	if( to.IsMathType() )
 	{
-		{ttDouble, ttFloat,  ttInt64,  ttUInt64, ttInt,    ttUInt,   ttInt16,  ttUInt16, ttInt8,   ttUInt8},
-		{ttFloat,  ttDouble, ttInt64,  ttUInt64, ttInt,    ttUInt,   ttInt16,  ttUInt16, ttInt8,   ttUInt8},
-		{ttInt64,  ttUInt64, ttInt,    ttUInt,   ttInt16,  ttUInt16, ttInt8,   ttUInt8,  ttDouble, ttFloat},
-		{ttUInt64, ttInt64,  ttUInt,   ttInt,    ttUInt16, ttInt16,  ttUInt8,  ttInt8,   ttDouble, ttFloat},
-		{ttInt,    ttUInt,   ttInt64,  ttUInt64, ttInt16,  ttUInt16, ttInt8,   ttUInt8,  ttDouble, ttFloat},
-		{ttUInt,   ttInt,    ttUInt64, ttInt64,  ttUInt16, ttInt16,  ttUInt8,  ttInt8,   ttDouble, ttFloat},
-		{ttInt16,  ttUInt16, ttInt,    ttUInt,   ttInt64,  ttUInt64, ttInt8,   ttUInt8,  ttDouble, ttFloat},
-		{ttUInt16, ttInt16,  ttUInt,   ttInt,    ttUInt64, ttInt64,  ttUInt8,  ttInt8,   ttDouble, ttFloat},
-		{ttInt8,   ttUInt8,  ttInt16,  ttUInt16, ttInt,    ttUInt,   ttInt64,  ttUInt64, ttDouble, ttFloat},
-		{ttUInt8,  ttInt8,   ttUInt16, ttInt16,  ttUInt,   ttInt,    ttUInt64, ttInt64,  ttDouble, ttFloat},
-	};
-
-	// Which row to use?
-	eTokenType *row = 0;
-	for( unsigned int type = 0; type < 10; type++ )
-	{
-		if( to.GetTokenType() == matchMtx[type][0] )
+		// This matrix describes the priorities of the types to search for, for each target type
+		// The first column is the target type, the priorities goes from left to right
+		eTokenType matchMtx[10][10] =
 		{
-			row = &matchMtx[type][0];
-			break;
+			{ttDouble, ttFloat,  ttInt64,  ttUInt64, ttInt,    ttUInt,   ttInt16,  ttUInt16, ttInt8,   ttUInt8},
+			{ttFloat,  ttDouble, ttInt64,  ttUInt64, ttInt,    ttUInt,   ttInt16,  ttUInt16, ttInt8,   ttUInt8},
+			{ttInt64,  ttUInt64, ttInt,    ttUInt,   ttInt16,  ttUInt16, ttInt8,   ttUInt8,  ttDouble, ttFloat},
+			{ttUInt64, ttInt64,  ttUInt,   ttInt,    ttUInt16, ttInt16,  ttUInt8,  ttInt8,   ttDouble, ttFloat},
+			{ttInt,    ttUInt,   ttInt64,  ttUInt64, ttInt16,  ttUInt16, ttInt8,   ttUInt8,  ttDouble, ttFloat},
+			{ttUInt,   ttInt,    ttUInt64, ttInt64,  ttUInt16, ttInt16,  ttUInt8,  ttInt8,   ttDouble, ttFloat},
+			{ttInt16,  ttUInt16, ttInt,    ttUInt,   ttInt64,  ttUInt64, ttInt8,   ttUInt8,  ttDouble, ttFloat},
+			{ttUInt16, ttInt16,  ttUInt,   ttInt,    ttUInt64, ttInt64,  ttUInt8,  ttInt8,   ttDouble, ttFloat},
+			{ttInt8,   ttUInt8,  ttInt16,  ttUInt16, ttInt,    ttUInt,   ttInt64,  ttUInt64, ttDouble, ttFloat},
+			{ttUInt8,  ttInt8,   ttUInt16, ttInt16,  ttUInt,   ttInt,    ttUInt64, ttInt64,  ttDouble, ttFloat},
+		};
+
+		// Which row to use?
+		eTokenType *row = 0;
+		for( unsigned int type = 0; type < 10; type++ )
+		{
+			if( to.GetTokenType() == matchMtx[type][0] )
+			{
+				row = &matchMtx[type][0];
+				break;
+			}
+		}
+
+		// Find the best matching cast operator
+		if( row )
+		{
+			asCDataType target(to);
+
+			// Priority goes from left to right in the matrix
+			for( unsigned int attempt = 0; attempt < 10 && funcId == 0; attempt++ )
+			{
+				target.SetTokenType(row[attempt]);
+				for( unsigned int n = 0; n < funcs.GetLength(); n++ )
+				{
+					asCScriptFunction *descr = builder->GetFunctionDescription(funcs[n]);
+					if( descr->returnType.IsEqualExceptRefAndConst(target) )
+					{
+						funcId = funcs[n];
+						break;
+					}
+				}
+			}
 		}
 	}
-
-	// Find the best matching cast operator
-	int funcId = 0;
-	if( row )
+	else
 	{
-		asCDataType target(to);
+		// Only accept the exact conversion for non-math types
 
-		// Priority goes from left to right in the matrix
-		for( unsigned int attempt = 0; attempt < 10 && funcId == 0; attempt++ )
+		// Find the matching cast operator
+		for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 		{
-			target.SetTokenType(row[attempt]);
-			for( unsigned int n = 0; n < funcs.GetLength(); n++ )
+			asCScriptFunction *descr = builder->GetFunctionDescription(funcs[n]);
+			if( descr->returnType.IsEqualExceptRefAndConst(to) )
 			{
-				asCScriptFunction *descr = builder->GetFunctionDescription(funcs[n]);
-				if( descr->returnType.IsEqualExceptRefAndConst(target) )
-				{
-					funcId = funcs[n];
-					break;
-				}
+				funcId = funcs[n];
+				break;
 			}
 		}
 	}
@@ -7708,6 +7743,11 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		int r = CompileExpression(cexpr, &e);
 		if( r < 0 )
 			e.type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+
+		// Allow value types to be converted to bool using 'bool opImplConv()'
+		if( e.type.dataType.GetObjectType() && (e.type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+			ImplicitConversion(&e, asCDataType::CreatePrimitive(ttBool, false), cexpr, asIC_IMPLICIT_CONV);
+
 		if( r >= 0 && !e.type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		{
 			Error(TXT_EXPR_MUST_BE_BOOL, cexpr);
@@ -10265,6 +10305,10 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( op == ttNot )
 	{
+		// Allow value types to be converted to bool using 'bool opImplConv()'
+		if( ctx->type.dataType.GetObjectType() && (ctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+			ImplicitConversion(ctx, asCDataType::CreatePrimitive(ttBool, false), node, asIC_IMPLICIT_CONV);
+
 		if( ctx->type.dataType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, true)) )
 		{
 			if( ctx->type.isConstant )
@@ -13355,8 +13399,12 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	int l = int(reservedVariables.GetLength());
 	rctx->bc.GetVarsUsed(reservedVariables);
 	lctx->bc.GetVarsUsed(reservedVariables);
-	ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV);
-	ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV);
+
+	// Allow value types to be converted to bool using 'bool opImplConv()'
+	if( lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV);
+	if( rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->GetFlags() & asOBJ_VALUE) )
+		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV);
 	reservedVariables.SetLength(l);
 
 	// Verify that the conversion was successful

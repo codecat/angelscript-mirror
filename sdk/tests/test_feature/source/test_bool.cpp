@@ -202,6 +202,16 @@ void Print(std::string &str)
 //	PRINTF("%s\n", str.c_str());
 }
 
+bool ConvToBool(int &obj)
+{
+	return obj == 0 ? false : true;
+}
+
+void ConstructFromBool(bool v, int &obj)
+{
+	obj = v ? 1 : 0;
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -209,6 +219,94 @@ bool Test()
 	bool fail = false;
 	int r;
 	COutStream out;
+	CBufferedOutStream bout;
+
+	// Safe bool issue (where a value with boolean conversion is accidentally used for other purpose)
+	// ref: http://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Safe_bool
+
+	// Testing implicit casts to bool from primitives (not allowed)
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+		const char *script = 
+			"  int a = 1; \n"
+			"  bool correct = false; \n"
+			"  if( a ) \n"                 // implicit conversion to bool is not allowed by default
+			"    correct = true; \n"
+			"  assert( correct ); \n"
+			"  correct = false; \n"
+			"  if( bool(a) ) \n"           // explicit conversion to bool is not available by default
+			"    correct = true; \n"
+			"  assert( correct ); \n"
+			"  correct = false; \n"
+			"  if( a && true ) \n"         // binary logical operator
+			"    correct = true; \n"
+			"  assert( correct ); \n"
+			"  correct = false; \n"
+			"  if( !a == false ) \n"       // unary logical operator
+			"    correct = true; \n"
+			"  assert( correct ); \n";
+
+		r = ExecuteString(engine, script);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (3, 7) : Error   : Expression must be of boolean type\n"
+						   "ExecuteString (7, 7) : Error   : No conversion from 'const int' to 'const bool' available.\n"
+						   "ExecuteString (7, 7) : Error   : Expression must be of boolean type\n"
+						   "ExecuteString (11, 9) : Error   : No conversion from 'int' to 'bool' available.\n"
+						   "ExecuteString (15, 7) : Error   : Illegal operation on this datatype\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+/*
+		// TODO: Should I allow implicit conversion of bool to/from math primitives?
+		engine->SetEngineProperty(asEP_ALT_BOOL_CONV, 1); // allow bool to be used as arithmetic type, and also to allow arithmetic types to be used as bools
+
+		r = ExecuteString(engine, script);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+*/
+		engine->Release();
+	}
+
+	// Value types should allow bool opImplConv() to be used
+	// http://www.gamedev.net/topic/662813-opconv-and-opimplconv-with-bool/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterObjectType("MyBool", sizeof(int), asOBJ_APP_PRIMITIVE | asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("MyBool", "bool opImplConv() const", asFUNCTION(ConvToBool), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("MyBool", asBEHAVE_CONSTRUCT, "void f(bool)", asFUNCTION(ConstructFromBool), asCALL_CDECL_OBJLAST);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		r = ExecuteString(engine, 
+			"MyBool b = false; \n"
+			"assert( !b ); \n"
+			"b = true; \n"
+			"bool correct = false; \n"
+			"if( b ) correct = true; \n"
+			"assert( correct ); \n"
+			"assert( b ); \n"
+			"correct = false; \n"
+			"if( b && true ) correct = true; \n"
+			"assert( correct ); \n");
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
+
+	// TODO: Test with ref object types
+	// For ref types with bool opImplConv() it should only be possible to directly convert if engine property is set
+	// For ref types, if the handle is null an exception will be thrown, so the compiler should warn on the implicit conversion
+	// if( @expr ) would be the same as if( expr !is null ) if the engine property is turned on
 
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	

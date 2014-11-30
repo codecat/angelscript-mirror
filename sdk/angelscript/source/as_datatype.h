@@ -80,6 +80,7 @@ public:
 	bool IsTemplate()             const;
 	bool IsScriptObject()         const;
 	bool IsPrimitive()            const;
+	bool IsMathType()             const;
 	bool IsObject()               const;
 	bool IsReference()            const {return isReference;}
 	bool IsAuto()                 const {return isAuto;}

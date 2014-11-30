@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/11/29</h2>
+<h2>Version 2.30.0 WIP - 2014/11/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -65,6 +65,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Script language
 <ul>
 <li>The ternary condition operator can now be used as lvalue if both options are lvalues of the same type (Thanks Polyák István)
+<li>opImplConv can now be used to allow implicit conversion to bool for registered value types
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
@@ -81,6 +82,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Changed CScriptFile::ReadLine and ReadString to return the string by value instead of as an output parameter
 <li>Fixed some compiler warnings on gnuc in the add-ons (Thanks Bertram25)
 <li>dictionaryValue has better support for boolean values
+<li>Added support for asrun to execute system commands
 </ul>
 </ul>
 
