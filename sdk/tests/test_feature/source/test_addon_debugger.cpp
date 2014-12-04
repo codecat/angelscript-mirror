@@ -256,11 +256,13 @@ bool Test()
 			"  CTest() { value = 42; } \n"
 			"  int value; \n"
 			"} \n"
+			"int t = 24; \n"
 			"void Func() \n"
 			"{ \n"
 			"  CTest t; \n"
 			"  assert( t.value == 42 ); \n"
-			"} \n");
+			"} \n"
+			"namespace foo { float pi = 3.14f; } \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -271,10 +273,10 @@ bool Test()
 		ctx->SetLineCallback(asMETHOD(CMyDebugger, LineCallback), &debug, asCALL_THISCALL);
 
 		// Set a break point on the line where the object will be created
-		debug.InterpretCommand("b test:8", ctx);
+		debug.InterpretCommand("b test:9", ctx);
 
 		// Set a break point after the object has been created
-		debug.InterpretCommand("b test:9", ctx);
+		debug.InterpretCommand("b test:10", ctx);
 
 		ctx->Prepare(mod->GetFunctionByName("Func"));
 
@@ -293,7 +295,7 @@ bool Test()
 				TEST_FAILED;
 			
 			// Now we should be on the line where the object will be created created
-			if( ctx->GetLineNumber() != 8 )
+			if( ctx->GetLineNumber() != 9 )
 				TEST_FAILED;
 			else
 			{
@@ -311,7 +313,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Now we should be on the line after the object has been created
-		if( ctx->GetLineNumber() != 9 )
+		if( ctx->GetLineNumber() != 10 )
 			TEST_FAILED;
 		else
 		{
@@ -324,19 +326,25 @@ bool Test()
 			if( *(int*)obj->GetAddressOfProperty(0) != 42 )
 				TEST_FAILED;
 
-			debug.PrintValue("t", ctx);
+			debug.PrintValue("t", ctx);       // Print the value of the local variable
+			debug.PrintValue("::t", ctx);     // Print the value of the global variable
+			debug.PrintValue("foo::pi", ctx); // Print the value of the global variable in namespace
 		}
 
-		if( debug.output != "Setting break point in file 'test' at line 8\n"
-							"Setting break point in file 'test' at line 9\n"
-							"Reached break point 0 in file 'test' at line 8\n"
-							"test:8; void Func()\n"
-							"Reached break point 0 in file 'test' at line 8\n"
-							"test:8; void Func()\n"
-							"Reached break point 1 in file 'test' at line 9\n"
+		if( debug.output != "Setting break point in file 'test' at line 9\n"
+							"Setting break point in file 'test' at line 10\n"
+							"Reached break point 0 in file 'test' at line 9\n"
 							"test:9; void Func()\n"
+							"24\n"
+							"Reached break point 0 in file 'test' at line 9\n"
+							"test:9; void Func()\n"
+							"24\n"
+							"Reached break point 1 in file 'test' at line 10\n"
+							"test:10; void Func()\n"
 							"{XXXXXXXX}\n"
-							"  int value = 42\n" )
+							"  int value = 42\n"
+							"24\n"
+							"3.14\n")
 		{
 			PRINTF("%s", debug.output.c_str());
 			TEST_FAILED;
