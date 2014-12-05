@@ -71,7 +71,8 @@ bool Test()
 			"CTest a; \n"
 			"CTest @b; \n"
 			"CTest @t2 = @a; \n"
-			"CTest @n = @a; \n";
+			"CTest @n = @a; \n"
+			"array<CTest> arrOfTest; \n";
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
@@ -89,7 +90,9 @@ bool Test()
 								  "t.a = 24; \n"
 								  "t.str = 'olleh'; \n"
 								  "@t2 = t; \n"
-								  "@n = null; \n", mod);
+								  "@n = null; \n"
+								  "arrOfTest.insertLast(CTest());\n"
+								  "arrOfTest[0].str = 'blah';\n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
@@ -123,7 +126,8 @@ bool Test()
 								  "assert(t.a == 24); \n"
 								  "assert(t.str == 'olleh'); \n"
 								  "assert(t is t2); \n"
-								  "assert(n is null); \n", mod);
+								  "assert(n is null); \n"
+								  "assert(arrOfTest.length() == 1 && arrOfTest[0].str == 'blah'); \n", mod);
 
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;

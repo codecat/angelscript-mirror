@@ -133,15 +133,15 @@ struct CArrayType : public CUserType
     CScriptArray *arr = (CScriptArray*)ptr;
 
     for( unsigned int i = 0; i < arr->GetSize(); i++ )
-      val->m_children.push_back(new CSerializedValue(val ,"", arr->At(i), arr->GetElementTypeId()));
+      val->m_children.push_back(new CSerializedValue(val ,"", "", arr->At(i), arr->GetElementTypeId()));
   }
   void Restore(CSerializedValue *val, void *ptr)
   {
     CScriptArray *arr = (CScriptArray*)ptr;
-    arr->Resize(val->m_children.size());
+    arr->Resize(asUINT(val->m_children.size()));
 
     for( size_t i = 0; i < val->m_children.size(); ++i )
-      val->m_children[i]->Restore(arr->At(i));
+      val->m_children[i]->Restore(arr->At(asUINT(i)), arr->GetElementTypeId());
   }
 };
 \endcode

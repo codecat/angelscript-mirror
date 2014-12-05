@@ -148,6 +148,42 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
+	// Test GetTypeDeclaration with arrays
+	// http://www.gamedev.net/topic/663428-simplest-way-to-get-variable-type/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		RegisterScriptArray(engine, true);
+
+		int typeId = engine->GetTypeIdByDecl("array<array<int>@>");
+		if( typeId < 0 )
+			TEST_FAILED;
+
+		std::string typeDecl = engine->GetTypeDeclaration(typeId, true);
+		if( typeDecl != "int[]@[]" )
+		{
+			PRINTF("%s\n", typeDecl.c_str());
+			TEST_FAILED;
+		}
+
+		engine->SetDefaultNamespace("foo");
+		engine->RegisterEnum("MyEnum");
+		engine->SetDefaultNamespace("");
+
+		typeId = engine->GetTypeIdByDecl("array<foo::MyEnum>");
+		if( typeId < 0 )
+			TEST_FAILED;
+
+		typeDecl = engine->GetTypeDeclaration(typeId, true);
+		if( typeDecl != "foo::MyEnum[]" )
+		{
+			PRINTF("%s\n", typeDecl.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
