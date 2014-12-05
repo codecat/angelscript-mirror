@@ -79,9 +79,35 @@ static bool TestEnum()
 	RET_ON_MAX_PORT
 
 	asIScriptEngine   *engine;
+	COutStream         out;
 	CBufferedOutStream bout;
-	int		 		   r;
+	int                r;
 	bool               fail = false;
+
+	// Test registering same enum in different namespaces
+	// http://www.gamedev.net/topic/663391-enum-names-collisions/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		r = engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = engine->RegisterEnum("myenum");
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterEnumValue("myenum", "value", 1);
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->SetDefaultNamespace("foo");
+		r = engine->RegisterEnum("myenum");
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterEnumValue("myenum", "value", 1);
+		if( r < 0 )
+			TEST_FAILED;
+		engine->SetDefaultNamespace("");
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test ambiguos enum in comparison
 	// http://www.gamedev.net/topic/660871-ambiguous-enum-comparison/

@@ -1586,7 +1586,6 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( name == 0 ) return ConfigError(asINVALID_NAME, "RegisterInterface", 0, 0);
 
 	// Verify if the name has been registered as a type already
-	// TODO: Must check against registered funcdefs too
 	if( GetRegisteredObjectType(name, defaultNamespace) )
 		return asALREADY_REGISTERED;
 
@@ -1596,7 +1595,13 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	bool oldMsgCallback = msgCallback; msgCallback = false;
 	int r = bld.ParseDataType(name, &dt, defaultNamespace);
 	msgCallback = oldMsgCallback;
-	if( r >= 0 ) return ConfigError(asERROR, "RegisterInterface", name, 0);
+	if( r >= 0 )
+	{
+		// If it is not in the defaultNamespace then the type was successfully parsed because
+		// it is declared in a parent namespace which shouldn't be treated as an error
+		if( dt.GetObjectType() && dt.GetObjectType()->nameSpace == defaultNamespace )
+			return ConfigError(asERROR, "RegisterInterface", name, 0);
+	}
 
 	// Make sure the name is not a reserved keyword
 	size_t tokenLen;
@@ -1817,7 +1822,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			return ConfigError(r, "RegisterObjectType", name, 0);
 
 		// Verify that the template name hasn't been registered as a type already
-		// TODO: Must check against registered funcdefs too
 		if( GetRegisteredObjectType(typeName, defaultNamespace) )
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
@@ -1879,7 +1883,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		typeName = name;
 
 		// Verify if the name has been registered as a type already
-		// TODO: Must check against registered funcdefs too
 		if( GetRegisteredObjectType(typeName, defaultNamespace) )
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
@@ -5662,7 +5665,6 @@ int asCScriptEngine::RegisterEnum(const char *name)
 		return ConfigError(asINVALID_NAME, "RegisterEnum", name, 0);
 
 	// Verify if the name has been registered as a type already
-	// TODO: Must check for registered funcdefs too
 	if( GetRegisteredObjectType(name, defaultNamespace) )
 		return asALREADY_REGISTERED;
 
@@ -5673,7 +5675,12 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	int r = bld.ParseDataType(name, &dt, defaultNamespace);
 	msgCallback = oldMsgCallback;
 	if( r >= 0 )
-		return ConfigError(asERROR, "RegisterEnum", name, 0);
+	{
+		// If it is not in the defaultNamespace then the type was successfully parsed because
+		// it is declared in a parent namespace which shouldn't be treated as an error
+		if( dt.GetObjectType() && dt.GetObjectType()->nameSpace == defaultNamespace )
+			return ConfigError(asERROR, "RegisterEnum", name, 0);
+	}
 
 	// Make sure the name is not a reserved keyword
 	size_t tokenLen;
