@@ -178,6 +178,9 @@ bool CScriptDictionary::GetGCFlag()
 
 void CScriptDictionary::EnumReferences(asIScriptEngine *engine)
 {
+	// TODO: If garbage collection can be done from a separate thread, then this method must be
+	//       protected so that it doesn't get lost during the iteration if the dictionary is modified
+
 	// Call the gc enum callback for each of the objects
 	map<string, CScriptDictValue>::iterator it;
 	for( it = dict.begin(); it != dict.end(); it++ )

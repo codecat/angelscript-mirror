@@ -4669,7 +4669,8 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 	// TODO: optimize: Linear search: This is probably not that critial. Also bindInformation will probably be removed in near future
 	for( n = 0; n < module->bindInformations.GetLength(); n++ )
 	{
-		if( module->bindInformations[n]->importedFunctionSignature->name == name )
+		if( module->bindInformations[n]->importedFunctionSignature->name == name &&
+			module->bindInformations[n]->importedFunctionSignature->nameSpace == ns )
 			funcs.PushLast(module->bindInformations[n]->importedFunctionSignature->id);
 	}
 

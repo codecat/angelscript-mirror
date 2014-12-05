@@ -131,8 +131,9 @@ r = engine->RegisterObjectBehaviour("gc", asBEHAVE_ADDREF, "void f()", asMETHOD(
 r = engine->RegisterObjectBehaviour("gc", asBEHAVE_RELEASE, "void f()", asMETHOD(CGCRef,Release), asCALL_THISCALL); assert( r >= 0 );
 \endcode
 
+\section doc_reg_gcref_3 Garbage collected objects and multi-threading
 
-
+\todo Write observations about this, e.g. AddRef/Release() must be made atomic, EnumReferences must be thread-safe
 
 
 

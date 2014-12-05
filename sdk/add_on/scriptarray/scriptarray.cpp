@@ -1617,6 +1617,9 @@ void CScriptArray::Precache()
 // GC behaviour
 void CScriptArray::EnumReferences(asIScriptEngine *engine)
 {
+	// TODO: If garbage collection can be done from a separate thread, then this method must be
+	//       protected so that it doesn't get lost during the iteration if the array is modified
+
 	// If the array is holding handles, then we need to notify the GC of them
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{

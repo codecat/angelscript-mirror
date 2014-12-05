@@ -58,6 +58,49 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test imports in namespaces
+	// http://www.gamedev.net/topic/656835-imports-in-namespace/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod1 = engine->GetModule("mod1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"namespace A { \n"
+			"  import int foo() from 'mod2'; \n"
+			"} \n"
+			"namespace B { \n"
+			"  import int foo() from 'mod2'; \n"
+			"} \n");
+		r = mod1->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"namespace A { \n"
+			"  int foo() { return 1; } \n"
+			"} \n"
+			"namespace B { \n"
+			"  int foo() { return 2; } \n"
+			"} \n");
+		r = mod2->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = mod1->BindAllImportedFunctions();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( A::foo() == 1 ); \n"
+								  "assert( B::foo() == 2 ); \n", mod1);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test importing an application registered function
 	// http://www.gamedev.net/topic/661310-binding-native-functions-for-imports/
 	{
