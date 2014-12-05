@@ -306,6 +306,7 @@ bool ValidateByteCode(asIScriptFunction *func, asBYTE *expect)
 
 string GetCurrentDir()
 {
+	string str;
 	char buffer[1024];
 #ifdef _MSC_VER
 #ifdef _WIN32_WCE
@@ -338,22 +339,29 @@ string GetCurrentDir()
     memcpy(buffer, apppath, min(1024, strlen(apppath)));
 #endif
 
-    return buffer;
+    str = buffer;
 #elif defined(__S3E__)
 	// Marmalade uses its own portable C library
-	return getcwd(buffer, (int)1024);
+	str = getcwd(buffer, (int)1024);
 #elif _XBOX_VER >= 200
 	// XBox 360 doesn't support the getcwd function, just use the root folder
-	return "game:\\";
+	str = "game:\\";
 #elif defined(_M_ARM)
 	// TODO: How to determine current working dir on Windows Phone?
-	return ""; 
+	str = ""; 
 #else
-	return _getcwd(buffer, (int)1024);
+	str = _getcwd(buffer, (int)1024);
 #endif // _MSC_VER
 #elif defined(__APPLE__) || defined(__GNUC__)
-	return getcwd(buffer, 1024);
+	str = getcwd(buffer, 1024);
 #else
-	return "";
+	str = "";
 #endif
+
+	// Replace backslashes for forward slashes
+	size_t pos = 0;
+	while( (pos = str.find("\\", pos)) != string::npos )
+		str[pos] = '/';
+
+	return str;
 }

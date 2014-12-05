@@ -71,12 +71,13 @@ string CScriptBuilder::GetSectionName(unsigned int idx) const
 
 int CScriptBuilder::AddSectionFromFile(const char *filename)
 {
-	// TODO: The file name stored in the set should be the fully resolved name because
+	// The file name stored in the set should be the fully resolved name because
 	// it is possible to name the same file in multiple ways using relative paths.
+	string fullpath = GetAbsolutePath(filename);
 
-	if( IncludeIfNotAlreadyIncluded(filename) )
+	if( IncludeIfNotAlreadyIncluded(fullpath.c_str()) )
 	{
-		int r = LoadScriptSection(filename);
+		int r = LoadScriptSection(fullpath.c_str());
 		if( r < 0 )
 			return r;
 		else
@@ -913,11 +914,40 @@ const char *CScriptBuilder::GetMetadataStringForTypeMethod(int typeId, asIScript
 
 string GetAbsolutePath(const string &file)
 {
-	if( (file.length() > 0 && (file[0] == '/' || file [0] == '\\')) ||
-		file.find(":") != string::npos )
-		return file;
+	string str = file;
 
-	return GetCurrentDir() + "/" + file;
+	// If this is a relative path, complement it with the current path
+	if( !((str.length() > 0 && (str[0] == '/' || str[0] == '\\')) ||
+		  str.find(":") != string::npos) )
+	{
+		str = GetCurrentDir() + "/" + str;
+	}
+
+	// Replace backslashes for forward slashes
+	size_t pos = 0;
+	while( (pos = str.find("\\", pos)) != string::npos )
+		str[pos] = '/';
+
+	// Replace /./ with nothing
+	pos = 0;
+	while( (pos = str.find("/./", pos)) != string::npos )
+		str.erase(pos, 3);
+
+	// For each /../ remove the parent dir and the /../
+	pos = 0;
+	while( (pos = str.find("/../")) != string::npos )
+	{
+		size_t pos2 = str.rfind("/", pos-1);
+		if( pos2 != string::npos )
+			str.erase(pos2, pos+3-pos2);
+		else
+		{
+			// The path is invalid
+			break;
+		}
+	}
+
+	return str;
 }
 
 string GetCurrentDir()
@@ -959,7 +989,7 @@ string GetCurrentDir()
 	return getcwd(buffer, (int)1024);
 	#elif _XBOX_VER >= 200
 	// XBox 360 doesn't support the getcwd function, just use the root folder
-	return "game:\\";
+	return "game:/";
 	#elif defined(_M_ARM)
 	// TODO: How to determine current working dir on Windows Phone?
 	return ""; 
