@@ -4,7 +4,7 @@
 
 Though AngelScript uses reference counting for memory management, there is still need for a garbage collector to 
 take care of the few cases where circular referencing between objects prevents the reference counter from reaching zero.
-By default AngelScript automatically runs a few incremental steps of the garbage collector everytime a new garbage 
+By default AngelScript automatically runs a few incremental steps of the garbage collector every time a new garbage 
 collected object is created, this allows the destruction of garbage in an automatic way, yet doesn't waste time or 
 disrupts the responsiveness of the application. 
 
@@ -35,6 +35,13 @@ needed, it can easily be turned off with a call to \ref asIScriptEngine::SetEngi
 
 \see \ref doc_memory
 
+\section doc_gc_threads Garbage collection and multi-threading
+
+The garbage collector itself is thread safe, but in order to be able to safely use the garbage collector in a multi-threaded
+environment the application must make sure all the objects that may be in the garbage collector has thread safe implementations
+of \ref doc_gc_object "the GC behaviours". 
+
+\see \ref doc_reg_gcref_4
 
 
 */

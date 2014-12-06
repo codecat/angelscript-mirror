@@ -135,4 +135,19 @@ engine->SetEngineProperty(asEP_AUTO_GARBAGE_COLLECT, false);
 
 
 
+
+\section doc_finetuning_6 Compare native calling convention versus generic calling convention
+
+If you have specific functions that are called very frequently it may be worth comparing the performance
+between binding the functions using native calling convention versus the generic calling convention. It
+is not possible to generalize and say that one is always faster than the other, as it will vary depending
+on the function signature and the platforms ABI complexity.
+
+\see \ref doc_generic, \ref doc_register_func_2
+
+
+
+
+
+
 */
