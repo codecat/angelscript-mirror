@@ -88,6 +88,84 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// TODO: Test compound assignment with virtual properties
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		const char *script = 
+			"int iprop { get { return g_ivar; } set { g_ivar = value; } } \n"
+			"int g_ivar = 0; \n"
+			"string sprop { get { return g_svar; } set { g_svar = value; } } \n"
+			"string g_svar = 'foo'; \n";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// This shall be expanded to "set_iprop(get_iprop() + 2)"
+		r = ExecuteString(engine, "iprop += 2; assert( g_ivar == 2 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// This shall be expanded to "set_iprop(get_iprop() / 2)"
+		r = ExecuteString(engine, "iprop /= 2; assert( g_ivar == 1 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Using value objects
+		r = ExecuteString(engine, "sprop += 'bar'; assert( g_svar == 'foobar' );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// TODO: Test member virtual properties
+/*		script = 
+			"class Test { \n"
+			"  int iprop { get { return m_ivar; } set { m_ivar = value; } } \n"
+			"  int m_ivar = 0; \n"
+			"  string sprop { get { return m_svar; } set { m_svar = value; } } \n"
+			"  string m_svar = 'foo'; \n"
+			"} \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// This shall be expanded to "t.set_iprop(t.get_iprop() + 2)"
+		r = ExecuteString(engine, "Test t; t.iprop += 2; assert( t.m_ivar == 2 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// This shall be expanded to "t.set_iprop(t.get_iprop() / 2)"
+		r = ExecuteString(engine, "Test t; t.iprop /= 2; assert( t.m_ivar == 1 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Using value objects
+		r = ExecuteString(engine, "Test t; t.sprop += 'bar'; assert( t.m_svar == 'foobar' );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+*/
+		// TODO: Test with ++ too
+		// This shall be expanded to "set_prop(get_prop() + 1)"
+/*		r = ExecuteString(engine, "prop++; assert( g_var == 2 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+*/
+		// TODO: Complex expressions must be prohibited, as it is not possible to guarantee safety
+		// e.g. arr[5].prop += 1;  where arr[5] returns a reference to a value type
+		// if arr[5] returns a reference type it can be allowed since the compiler can add a reference
+
+		engine->ShutDownAndRelease();
+	}
+
+
 	// Test memory leak with shared classes and virtual properties
 	// http://www.gamedev.net/topic/644919-memory-leak-in-virtual-properties/
 	{
@@ -691,18 +769,6 @@ bool Test()
 		TEST_FAILED;
 	}
 
-	// Compound assignments for object properties will not be allowed
-	r = ExecuteString(engine, "Test t; t.s += 'hello';", mod);
-	if( r >= 0 )
-	{
-		TEST_FAILED;
-	}
-	if( bout.buffer != "ExecuteString (1, 13) : Error   : Compound assignments with property accessors are not allowed\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-	
 	// Test @t.prop = @obj; Property is a handle, and the property is assigned a new handle. Should work
 	const char *script13 = 
 		"class Test                                   \n"

@@ -7407,7 +7407,7 @@ void asCCompiler::ImplicitConversionConstant(asSExprContext *from, const asCData
 	}
 }
 
-int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, int op, asCScriptNode *opNode)
+int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, asCScriptNode *lexpr, asCScriptNode *rexpr, eTokenType op, asCScriptNode *opNode)
 {
 	// Don't allow any operators on expressions that take address of class method
 	// If methodName is set but the type is not an object, then it is a global function
@@ -7433,16 +7433,8 @@ int asCCompiler::DoAssignment(asSExprContext *ctx, asSExprContext *lctx, asSExpr
 	{
 		if( op != ttAssignment )
 		{
-			// TODO: getset: We may actually be able to support this, if we can
-			//               guarantee that the object reference will stay valid
-			//               between the calls to the get and set accessors.
-
-			// Process the property to free the memory
-			ProcessPropertySetAccessor(lctx, rctx, opNode);
-
-			// Compound assignments are not allowed for properties
-			Error(TXT_COMPOUND_ASGN_WITH_PROP, opNode);
-			return -1;
+			// Generate the code for the compound assignment, i.e. get the value, apply operator, then set the value
+			return ProcessPropertyGetSetAccessor(ctx, lctx, rctx, op, opNode);
 		}
 
 		// It is not allowed to do a handle assignment on a property
@@ -10824,6 +10816,74 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	return 0;
 }
 
+int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, eTokenType op, asCScriptNode *errNode)
+{
+	// TODO: Add support for compound assignments and indexed property accessors (avoid computing the index expression twice)
+	// Compound assignment for indexed property accessors is not supported yet
+	if( lctx->property_arg != 0 || lctx->property_ref )
+	{
+		// Process the property to free the memory
+		ProcessPropertySetAccessor(lctx, rctx, errNode);
+
+		// Compound assignments are not allowed for properties
+		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
+		return -1;
+	}
+
+	// Translate the compound assignment to the corresponding dual operator
+	switch( op )
+	{
+	case ttAddAssign: op = ttPlus; break;
+	case ttSubAssign: op = ttMinus; break;
+	case ttMulAssign: op = ttStar; break;
+	case ttDivAssign: op = ttSlash; break;
+	case ttModAssign: op = ttPercent; break;
+	case ttPowAssign: op = ttStarStar; break;
+	
+	case ttAndAssign: op = ttAmp; break;
+	case ttOrAssign:  op = ttBitOr; break; 
+	case ttXorAssign: op = ttBitXor; break;
+
+	case ttShiftLeftAssign:   op = ttBitShiftLeft; break;
+	case ttShiftRightAAssign: op = ttBitShiftRightArith; break;
+	case ttShiftRightLAssign: op = ttBitShiftRight; break;
+
+	default: op = ttUnrecognizedToken; break;
+	}
+
+	if( op == ttUnrecognizedToken )
+	{
+		// Shouldn't happen
+		asASSERT(false); 
+
+		// Process the property to free the memory
+		ProcessPropertySetAccessor(lctx, rctx, errNode);
+		return -1;
+	}
+
+	// TODO: Perhaps it might be interesting to allow the definition of compound setters for better performance, e.g. set_add_prop, set_mul_prop, etc
+
+	// Keep the original information on the property
+	asSExprContext llctx(engine);
+	llctx.type = lctx->type;
+	llctx.property_arg    = lctx->property_arg;
+	llctx.property_const  = lctx->property_const;
+	llctx.property_get    = lctx->property_get;
+	llctx.property_handle = lctx->property_handle;
+	llctx.property_ref    = lctx->property_ref;
+	llctx.property_set    = lctx->property_set;
+
+	// Compile the dual operator using the get accessor
+	CompileOperator(errNode, lctx, rctx, ctx, op);
+
+	// Compile the assignment using the set accessor
+	ProcessPropertySetAccessor(&llctx, ctx, errNode);
+
+	MergeExprBytecode(ctx, &llctx);
+
+	return 0;
+}
+
 void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode *node)
 {
 	// If no property accessor has been prepared then don't do anything
@@ -11594,7 +11654,7 @@ void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asC
 	ctx->bc.AddCode(&arg->bc);
 }
 
-bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, bool isHandle)
+bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, bool isHandle, eTokenType token)
 {
 	DetermineSingleFunc(lctx, node);
 	DetermineSingleFunc(rctx, node);
@@ -11602,7 +11662,8 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	ctx->exprNode = node;
 
 	// What type of operator is it?
-	int token = node->tokenType;
+	if( token == ttUnrecognizedToken )
+		token = node->tokenType;
 	if( token == ttUnrecognizedToken )
 	{
 		// This happens when the compiler is inferring an assignment
@@ -12003,7 +12064,7 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 	PerformFunctionCall(funcId, ctx, false, &args, 0, useVariable, stackOffset, funcPtrVar);
 }
 
-int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, eTokenType op)
 {
 	// Don't allow any operators on expressions that take address of class method, but allow it on global functions
 	if( (lctx->IsClassMethod()) || (rctx->IsClassMethod()) )
@@ -12019,20 +12080,23 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		return -1;
 	}
 
+	if( op == ttUnrecognizedToken )
+		op = node->tokenType;
+
 	IsVariableInitialized(&lctx->type, node);
 	IsVariableInitialized(&rctx->type, node);
 
 	if( lctx->type.isExplicitHandle || rctx->type.isExplicitHandle ||
 		lctx->type.IsNullConstant() || rctx->type.IsNullConstant() ||
-		node->tokenType == ttIs || node->tokenType == ttNotIs )
+		op == ttIs || op == ttNotIs )
 	{
-		CompileOperatorOnHandles(node, lctx, rctx, ctx);
+		CompileOperatorOnHandles(node, lctx, rctx, ctx, op);
 		return 0;
 	}
 	else
 	{
 		// Compile an overloaded operator for the two operands
-		if( CompileOverloadedDualOperator(node, lctx, rctx, ctx) )
+		if( CompileOverloadedDualOperator(node, lctx, rctx, ctx, false, op) )
 			return 0;
 
 		// If both operands are objects, then we shouldn't continue
@@ -12063,7 +12127,6 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 
 		// Math operators
 		// + - * / % ** += -= *= /= %= **=
-		int op = node->tokenType;
 		if( op == ttPlus     || op == ttAddAssign ||
 			op == ttMinus    || op == ttSubAssign ||
 			op == ttStar     || op == ttMulAssign ||
@@ -12071,7 +12134,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 			op == ttPercent  || op == ttModAssign ||
 			op == ttStarStar || op == ttPowAssign )
 		{
-			CompileMathOperator(node, lctx, rctx, ctx);
+			CompileMathOperator(node, lctx, rctx, ctx, op);
 			return 0;
 		}
 
@@ -12084,7 +12147,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 			op == ttBitShiftRight      || op == ttShiftRightLAssign ||
 			op == ttBitShiftRightArith || op == ttShiftRightAAssign )
 		{
-			CompileBitwiseOperator(node, lctx, rctx, ctx);
+			CompileBitwiseOperator(node, lctx, rctx, ctx, op);
 			return 0;
 		}
 
@@ -12094,7 +12157,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 			op == ttLessThan    || op == ttLessThanOrEqual    ||
 			op == ttGreaterThan || op == ttGreaterThanOrEqual )
 		{
-			CompileComparisonOperator(node, lctx, rctx, ctx);
+			CompileComparisonOperator(node, lctx, rctx, ctx, op);
 			return 0;
 		}
 
@@ -12102,7 +12165,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		// && || ^^
 		if( op == ttAnd || op == ttOr || op == ttXor )
 		{
-			CompileBooleanOperator(node, lctx, rctx, ctx);
+			CompileBooleanOperator(node, lctx, rctx, ctx, op);
 			return 0;
 		}
 	}
@@ -12293,7 +12356,7 @@ void asCCompiler::ImplicitConvObjectToBestMathType(asSExprContext *ctx, asCScrip
 	}
 }
 
-void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext  *rctx, asSExprContext *ctx)
+void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext  *rctx, asSExprContext *ctx, eTokenType op)
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
@@ -12349,8 +12412,10 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 		(rctx->type.isConstant && rctx->type.dataType.IsDoubleType() && !lctx->type.isConstant && lctx->type.dataType.IsFloatType()) )
 		to.SetTokenType(ttFloat);
 
+	if( op == ttUnrecognizedToken )
+		op = node->tokenType;
+
 	// If integer division is disabled, convert to floating-point
-	int op = node->tokenType;
 	if( engine->ep.disableIntegerDivision &&
 		(op == ttSlash || op == ttDivAssign) &&
 		(to.IsIntegerType() || to.IsUnsignedType()) )
@@ -12771,11 +12836,12 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	}
 }
 
-void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, eTokenType op)
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
-	eTokenType op = node->tokenType;
+	if( op == ttUnrecognizedToken )
+		op = node->tokenType;
 	if( op == ttAmp    || op == ttAndAssign ||
 		op == ttBitOr  || op == ttOrAssign  ||
 		op == ttBitXor || op == ttXorAssign )
@@ -13042,7 +13108,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 	}
 }
 
-void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, eTokenType op)
 {
 	// Both operands must be of the same type
 
@@ -13179,13 +13245,14 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	}
 
 	bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
-	int op = node->tokenType;
+	
+	if( op == ttUnrecognizedToken )
+		op = node->tokenType;
 
 	if( !isConstant )
 	{
 		if( to.IsBooleanType() )
 		{
-			int op = node->tokenType;
 			if( op == ttEqual || op == ttNotEqual )
 			{
 				// Must convert to temporary variable, because we are changing the value before comparison
@@ -13284,7 +13351,6 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	{
 		if( to.IsBooleanType() )
 		{
-			int op = node->tokenType;
 			if( op == ttEqual || op == ttNotEqual )
 			{
 				// Make sure they are equal if not false
@@ -13389,7 +13455,7 @@ void asCCompiler::PushVariableOnStack(asSExprContext *ctx, bool asReference)
 	}
 }
 
-void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, eTokenType op)
 {
 	// Both operands must be booleans
 	asCDataType to;
@@ -13431,7 +13497,8 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	ctx->type.Set(asCDataType::CreatePrimitive(ttBool, true));
 
 	// What kind of operator is it?
-	int op = node->tokenType;
+	if( op == ttUnrecognizedToken )
+		op = node->tokenType;
 	if( op == ttXor )
 	{
 		if( !isConstant )
@@ -13555,7 +13622,7 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asSExprContext *lc
 	}
 }
 
-void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx)
+void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *lctx, asSExprContext *rctx, asSExprContext *ctx, eTokenType opToken)
 {
 	// Process the property accessor as get
 	ProcessPropertyGetAccessor(lctx, node);
@@ -13574,8 +13641,11 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 		ReleaseTemporaryVariable(offset, 0);
 	}
 
+	if( opToken == ttUnrecognizedToken )
+		opToken = node->tokenType;
+
 	// Warn if not both operands are explicit handles or null handles
-	if( (node->tokenType == ttEqual || node->tokenType == ttNotEqual) &&
+	if( (opToken == ttEqual || opToken == ttNotEqual) &&
 		((!(lctx->type.isExplicitHandle || lctx->type.IsNullConstant()) && !(lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE))) ||
 		 (!(rctx->type.isExplicitHandle || rctx->type.IsNullConstant()) && !(rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE)))) )
 	{
@@ -13585,8 +13655,8 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 	// If one of the operands is a value type used as handle, we should look for the opEquals method
 	if( ((lctx->type.dataType.GetObjectType() && (lctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) ||
 		 (rctx->type.dataType.GetObjectType() && (rctx->type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE))) &&
-		(node->tokenType == ttEqual || node->tokenType == ttIs ||
-		 node->tokenType == ttNotEqual || node->tokenType == ttNotIs) )
+		(opToken == ttEqual || opToken == ttIs ||
+		 opToken == ttNotEqual || opToken == ttNotIs) )
 	{
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching opEquals method
@@ -13599,7 +13669,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 		if( r == 1 )
 		{
-			if( node->tokenType == ttNotEqual || node->tokenType == ttNotIs )
+			if( opToken == ttNotEqual || opToken == ttNotIs )
 				ctx->bc.InstrSHORT(asBC_NOT, ctx->type.stackOffset);
 
 			// Success, don't continue
@@ -13685,8 +13755,7 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 	ctx->type.Set(asCDataType::CreatePrimitive(ttBool, true));
 
-	int op = node->tokenType;
-	if( op == ttEqual || op == ttNotEqual || op == ttIs || op == ttNotIs )
+	if( opToken == ttEqual || opToken == ttNotEqual || opToken == ttIs || opToken == ttNotIs )
 	{
 		// Make sure handles received as parameters by reference are copied to a local variable before the 
 		// asBC_CmpPtr, so we don't end up comparing the reference to the handle instead of the handle itself
@@ -13712,9 +13781,9 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *
 
 		ctx->bc.InstrW_W(asBC_CmpPtr, b, c);
 
-		if( op == ttEqual || op == ttIs )
+		if( opToken == ttEqual || opToken == ttIs )
 			ctx->bc.Instr(asBC_TZ);
-		else if( op == ttNotEqual || op == ttNotIs )
+		else if( opToken == ttNotEqual || opToken == ttNotIs )
 			ctx->bc.Instr(asBC_TNZ);
 
 		ctx->bc.InstrSHORT(asBC_CpyRtoV4, (short)a);
