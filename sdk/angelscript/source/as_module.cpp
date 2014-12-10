@@ -46,6 +46,30 @@
 
 BEGIN_AS_NAMESPACE
 
+// TODO: Improved method for discarding modules (faster clean-up, less abuse of garbage collector)
+//
+// I need to separate the reference counter for internal references and outside references:
+//
+//  - Internal references are for example, when the module refers to a function or object since it is declared in the module, or when
+//    a function refers to another function since it is being called in the code.
+//  - Outside references are for example object instances holding a reference to the object type, or a context currently
+//    executing a function.
+//
+// If no object instances are alive or no contexts are alive it is known that functions from a discarded module
+// can be called, so they can be destroyed without any need to execute the complex garbage collection routines.
+//
+// If there are live objects, the entire module should be kept for safe keeping, though no longer visible.
+//
+// TODO: How to avoid global variables keeping code alive? For example a script object, or a funcdef?
+//       Can I do a quick check of the object types and functions to count number of outside references, and then do another
+//       check over the global variables to subtract the outside references coming from these? What if the outside reference
+//       is added by an application type in a global variable that the engine doesn't know about? Example, a global dictionary 
+//       holding object instances. Should discarding a module immediately destroy the content of the global variables? What if
+//       a live object tries to access the global variable after it has been discarded? Throwing a script exception is acceptable?
+//       Perhaps I need to allow the user to provide a clean-up routine that will be executed before destroying the objects. 
+//       Or I might just put that responsibility on the application.
+
+
 // internal
 asCModule::asCModule(const char *name, asCScriptEngine *engine)
 {
