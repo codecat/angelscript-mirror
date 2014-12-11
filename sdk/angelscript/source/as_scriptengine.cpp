@@ -3427,14 +3427,20 @@ asCModule *asCScriptEngine::GetModule(const char *name, bool create)
 		for( asUINT n = 0; n < scriptModules.GetLength(); ++n )
 			if( scriptModules[n] && scriptModules[n]->name == name )
 			{
-				lastModule = retModule = scriptModules[n];
+				retModule = scriptModules[n];
 				break;
 			}
 	}
 	RELEASESHARED(engineRWLock);
 
-	if( retModule ) 
+	if( retModule )
+	{
+		ACQUIREEXCLUSIVE(engineRWLock);
+		lastModule = retModule;
+		RELEASEEXCLUSIVE(engineRWLock);
+
 		return retModule;
+	}
 
 	if( create )
 	{
