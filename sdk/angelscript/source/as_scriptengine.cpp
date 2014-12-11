@@ -3411,47 +3411,47 @@ int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 }
 
 // internal
-asCModule *asCScriptEngine::GetModule(const char *_name, bool create)
+asCModule *asCScriptEngine::GetModule(const char *name, bool create)
 {
 	// Accept null as well as zero-length string
-	const char *name = "";
-	if( _name != 0 ) name = _name;
+	if( name == 0 ) name = "";
 
-	if( lastModule && lastModule->name == name )
-		return lastModule;
+	asCModule *retModule = 0;
 
-	lastModule = 0;
 	ACQUIRESHARED(engineRWLock);
-	// TODO: optimize: Improve linear search
-	for( asUINT n = 0; n < scriptModules.GetLength(); ++n )
-		if( scriptModules[n] && scriptModules[n]->name == name )
-		{
-			lastModule = scriptModules[n];
-			break;
-		}
+	if( lastModule && lastModule->name == name )
+		retModule = lastModule;
+	else
+	{
+		// TODO: optimize: Improve linear search
+		for( asUINT n = 0; n < scriptModules.GetLength(); ++n )
+			if( scriptModules[n] && scriptModules[n]->name == name )
+			{
+				lastModule = retModule = scriptModules[n];
+				break;
+			}
+	}
 	RELEASESHARED(engineRWLock);
-	if( lastModule ) 
-		return lastModule;
+
+	if( retModule ) 
+		return retModule;
 
 	if( create )
 	{
-		asCModule *module = asNEW(asCModule)(name, this);
-		if( module == 0 )
+		retModule = asNEW(asCModule)(name, this);
+		if( retModule == 0 )
 		{
 			// Out of memory
 			return 0;
 		}
 
 		ACQUIREEXCLUSIVE(engineRWLock);
-		scriptModules.PushLast(module);
+		scriptModules.PushLast(retModule);
+		lastModule = retModule;
 		RELEASEEXCLUSIVE(engineRWLock);
-
-		lastModule = module;
-
-		return lastModule;
 	}
 
-	return 0;
+	return retModule;
 }
 
 asCModule *asCScriptEngine::GetModuleFromFuncId(int id)
