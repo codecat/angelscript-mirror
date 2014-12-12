@@ -490,7 +490,12 @@
 		#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 		#define COMPLEX_MASK (asOBJ_APP_CLASS_ASSIGNMENT | asOBJ_APP_ARRAY)
 		#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_ASSIGNMENT | asOBJ_APP_ARRAY)
-		#define AS_SOFTFP
+	
+		// Windows CE uses softfp calling convention, while Windows RT uses hardfp calling convention
+		// ref: http://stackoverflow.com/questions/16375355/what-is-the-windows-rt-on-arm-native-code-calling-convention
+		#if defined(_WIN32_WCE)
+			#define AS_SOFTFP
+		#endif
 	#endif
 
 	#ifndef COMPLEX_MASK

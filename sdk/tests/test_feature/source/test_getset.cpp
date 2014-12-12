@@ -94,6 +94,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
 
 		const char *script = 
 			"int iprop { get { return g_ivar; } set { g_ivar = value; } } \n"
@@ -123,7 +124,7 @@ bool Test()
 			TEST_FAILED;
 
 		// TODO: Test member virtual properties
-/*		script = 
+		script = 
 			"class Test { \n"
 			"  int iprop { get { return m_ivar; } set { m_ivar = value; } } \n"
 			"  int m_ivar = 0; \n"
@@ -138,12 +139,13 @@ bool Test()
 			TEST_FAILED;
 
 		// This shall be expanded to "t.set_iprop(t.get_iprop() + 2)"
+		// TODO: optimize: The bytecode production is very sub-optimal
 		r = ExecuteString(engine, "Test t; t.iprop += 2; assert( t.m_ivar == 2 );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
 		// This shall be expanded to "t.set_iprop(t.get_iprop() / 2)"
-		r = ExecuteString(engine, "Test t; t.iprop /= 2; assert( t.m_ivar == 1 );", mod);
+		r = ExecuteString(engine, "Test t; t.iprop = 2; t.iprop /= 2; assert( t.m_ivar == 1 );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
@@ -151,16 +153,61 @@ bool Test()
 		r = ExecuteString(engine, "Test t; t.sprop += 'bar'; assert( t.m_svar == 'foobar' );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
-*/
-		// TODO: Test with ++ too
+
+		// When the object is retrieved as reference
+		r = ExecuteString(engine, "array<Test> t(1); t[0].iprop += 2; assert( t[0].m_ivar == 2 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// When the object is retrieved as reference
+		r = ExecuteString(engine, "array<Test> t(1); t[0].sprop += 'bar'; assert( t[0].m_svar == 'foobar' );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		// TODO: 2.30.0: Test with ++ too
 		// This shall be expanded to "set_prop(get_prop() + 1)"
 /*		r = ExecuteString(engine, "prop++; assert( g_var == 2 );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 */
-		// TODO: Complex expressions must be prohibited, as it is not possible to guarantee safety
-		// e.g. arr[5].prop += 1;  where arr[5] returns a reference to a value type
-		// if arr[5] returns a reference type it can be allowed since the compiler can add a reference
+
+		// Compound assignments will not be allowed for properties that are members of value
+		// types since it is not possible to guarantee the life time of the object 
+		// TODO: It could be allowed if the object is a local variable (but wouldn't it be confusing to allow it sometimes but other times not?)
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("type", "int get_prop() const", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("type", "void set_prop(int)", asFUNCTION(0), asCALL_GENERIC);
+		bout.buffer = "";
+		r = ExecuteString(engine, "type t; t.prop += 1;");
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 16) : Error   : Compound assignments with property accessors are not allowed\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Compound assignments for indexed property accessors are not allowed
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T { \n"
+			"  int get_idx(int i) { return 0; } \n"
+			"  void set_idx(int i, int value) {} \n"
+			"} \n"
+			"void main() { \n"
+			"  T t; t.idx[0] += 1; \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
+		                   "test (6, 17) : Error   : Compound assignments with property accessors are not allowed\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->ShutDownAndRelease();
 	}

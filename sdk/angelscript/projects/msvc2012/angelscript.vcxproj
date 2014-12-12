@@ -314,9 +314,9 @@
     <None Include="..\..\source\as_callfunc_arm_gcc.S" />
     <CustomBuild Include="..\..\source\as_callfunc_arm_msvc.asm">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">armasm.exe -g -o $(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj %(RootDir)%(Directory)\%(Filename)%(Extension)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">armasm.exe -g -32 -o $(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj %(RootDir)%(Directory)\%(Filename)%(Extension)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">armasm.exe -o $(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj %(RootDir)%(Directory)\%(Filename)%(Extension)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">armasm.exe -32 -o $(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj %(RootDir)%(Directory)\%(Filename)%(Extension)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(Platform)\$(Configuration)\as_callfunc_arm_msvc.obj;%(Outputs)</Outputs>
     </CustomBuild>
     <None Include="..\..\source\as_callfunc_arm_vita.S" />

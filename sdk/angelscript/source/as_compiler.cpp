@@ -10818,14 +10818,41 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 
 int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, eTokenType op, asCScriptNode *errNode)
 {
-	// TODO: Add support for compound assignments and indexed property accessors (avoid computing the index expression twice)
+	// TODO: Perhaps it might be interesting to allow the definition of compound setters for better 
+	//       performance, e.g. set_add_prop, set_mul_prop, etc. With these it would also be possible 
+	//       to support value types, since it would be a single call
+
 	// Compound assignment for indexed property accessors is not supported yet
-	if( lctx->property_arg != 0 || lctx->property_ref )
+	if( lctx->property_arg != 0 )
 	{
 		// Process the property to free the memory
 		ProcessPropertySetAccessor(lctx, rctx, errNode);
 
-		// Compound assignments are not allowed for properties
+		// TODO: 2.30.0: Better error message
+		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
+		return -1;
+	}
+
+	// Compound assignments require both get and set accessors
+	if( lctx->property_set == 0 || lctx->property_get == 0 )
+	{
+		// Process the property to free the memory
+		ProcessPropertySetAccessor(lctx, rctx, errNode);
+
+		// TODO: 2.30.0: Better error message
+		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
+		return -1;
+	}
+
+	// Property accessors on value types (or scoped references types) are not supported since 
+	// it is not possible to guarantee that the object will stay alive between the two calls
+	asCScriptFunction *func = engine->scriptFunctions[lctx->property_set];
+	if( func->objectType && (func->objectType->flags & (asOBJ_VALUE | asOBJ_SCOPED)) )
+	{
+		// Process the property to free the memory
+		ProcessPropertySetAccessor(lctx, rctx, errNode);
+
+		// TODO: 2.30.0: Better error message
 		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
 		return -1;
 	}
@@ -10861,7 +10888,36 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprConte
 		return -1;
 	}
 
-	// TODO: Perhaps it might be interesting to allow the definition of compound setters for better performance, e.g. set_add_prop, set_mul_prop, etc
+	asSExprContext before(engine);
+	if( func->objectType && (func->objectType->flags & (asOBJ_REF|asOBJ_SCOPED)) == asOBJ_REF )
+	{
+		// Keep a reference to the object in a local variable
+		before.bc.AddCode(&lctx->bc);
+
+		asUINT len = reservedVariables.GetLength();
+		rctx->bc.GetVarsUsed(reservedVariables);
+		before.bc.GetVarsUsed(reservedVariables);
+
+		asCDataType dt = asCDataType::CreateObjectHandle(func->objectType, false);
+		int offset = AllocateVariable(dt, true);
+
+		reservedVariables.SetLength(len);
+
+		before.type.SetVariable(dt, offset, true);
+
+		if( lctx->property_ref )
+			before.bc.Instr(asBC_RDSPtr);
+		before.bc.InstrSHORT(asBC_PSF, (short)offset);
+		before.bc.InstrPTR(asBC_REFCPY, func->objectType);
+		before.bc.Instr(asBC_PopPtr);
+
+		// Update the left expression to use the local variable
+		lctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+		lctx->type.stackOffset = (short)offset;
+		lctx->property_ref = true;
+
+		ctx->bc.AddCode(&before.bc);
+	}
 
 	// Keep the original information on the property
 	asSExprContext llctx(engine);
@@ -10876,10 +10932,17 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprConte
 	// Compile the dual operator using the get accessor
 	CompileOperator(errNode, lctx, rctx, ctx, op);
 
+	// If we made a local variable to hold the reference it must be reused
+	if( before.type.stackOffset )
+		llctx.bc.InstrSHORT(asBC_PSF, before.type.stackOffset);
+
 	// Compile the assignment using the set accessor
 	ProcessPropertySetAccessor(&llctx, ctx, errNode);
 
 	MergeExprBytecode(ctx, &llctx);
+
+	if( before.type.stackOffset )
+		ReleaseTemporaryVariable(before.type.stackOffset, &ctx->bc);
 
 	return 0;
 }

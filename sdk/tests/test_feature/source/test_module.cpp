@@ -11,7 +11,47 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	// TODO: 2.30.0: Test to verify if proper clean up of script code is done when discarding and recompiling modules
+	// Reported by Michael Rubin
+/*
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo { private array<Foo@> m_Foo; }\n"); // circular reference between class and template instance
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		asUINT gcSize = 0, gcDestroyed = 0;
+		engine->GetGCStatistics(&gcSize, &gcDestroyed);
+		if( gcSize != 0 || gcDestroyed != 0 )
+			TEST_FAILED;
+
+		mod->Discard();
+		engine->GetGCStatistics(&gcSize, &gcDestroyed);
+		if( gcSize != 0 || gcDestroyed == 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo { private array<Foo@>@ m_Foo = null; }\n"); // circular reference between class and template instance
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod->Discard();
+		engine->GetGCStatistics(&gcSize, &gcDestroyed);
+		if( gcSize != 0 || gcDestroyed == 0 )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+*/
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
