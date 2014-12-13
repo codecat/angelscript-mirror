@@ -69,7 +69,9 @@
 #define TXT_CHANGE_SIGN                            "Implicit conversion changed sign of value"
 #define TXT_CLASS_CANT_BE_FINAL_AND_ABSTRACT       "A class cannot be both abstract and final"
 #define TXT_COMPILING_s                            "Compiling %s"
-#define TXT_COMPOUND_ASGN_WITH_PROP                "Compound assignments with property accessors are not allowed"
+#define TXT_COMPOUND_ASGN_ON_VALUE_TYPE            "Compound assignments with property accessors on value types are not supported"
+#define TXT_COMPOUND_ASGN_WITH_IDX_PROP            "Compound assignments with indexed property accessors are not supported"
+#define TXT_COMPOUND_ASGN_REQUIRE_GET_SET          "Compound assignments with property accessors require both get and set accessors"
 
 #define TXT_DATA_TYPE_CANT_BE_s                     "Data type can't be '%s'"
 #define TXT_DECL_IN_SWITCH                          "Variables cannot be declared in switch cases, except inside statement blocks"

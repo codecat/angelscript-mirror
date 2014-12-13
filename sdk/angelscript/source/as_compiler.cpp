@@ -10827,9 +10827,7 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprConte
 	{
 		// Process the property to free the memory
 		ProcessPropertySetAccessor(lctx, rctx, errNode);
-
-		// TODO: 2.30.0: Better error message
-		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
+		Error(TXT_COMPOUND_ASGN_WITH_IDX_PROP, errNode);
 		return -1;
 	}
 
@@ -10838,9 +10836,7 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprConte
 	{
 		// Process the property to free the memory
 		ProcessPropertySetAccessor(lctx, rctx, errNode);
-
-		// TODO: 2.30.0: Better error message
-		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
+		Error(TXT_COMPOUND_ASGN_REQUIRE_GET_SET, errNode);
 		return -1;
 	}
 
@@ -10851,9 +10847,7 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprConte
 	{
 		// Process the property to free the memory
 		ProcessPropertySetAccessor(lctx, rctx, errNode);
-
-		// TODO: 2.30.0: Better error message
-		Error(TXT_COMPOUND_ASGN_WITH_PROP, errNode);
+		Error(TXT_COMPOUND_ASGN_ON_VALUE_TYPE, errNode);
 		return -1;
 	}
 

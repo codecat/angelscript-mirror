@@ -13,15 +13,6 @@ static const char * const TESTNAME = "TestCondition";
 using std::string;
 static CScriptString *a = 0;
 
-static const char *script1 =
-"void Test(string strA, string strB)   \n"
-"{                                     \n"
-"  a = true ? strA : strB;             \n"
-"  a = false ? \"t\" : \"f\";          \n"
-"  SetAttrib(true ? strA : strB);      \n"
-"  SetAttrib(false ? \"t\" : \"f\");   \n"
-"}                                     \n"
-"void SetAttrib(string str) {}         \n";
 /*
 static const char *script2 =
 "void Test()                     \n"
@@ -360,6 +351,15 @@ bool TestCondition()
 		}
 
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script1 =
+			"void Test(string strA, string strB)   \n"
+			"{                                     \n"
+			"  a = true ? strA : strB;             \n"
+			"  a = false ? \"t\" : \"f\";          \n"
+			"  SetAttrib(true ? strA : strB);      \n"
+			"  SetAttrib(false ? \"t\" : \"f\");   \n"
+			"}                                     \n"
+			"void SetAttrib(string str) {}         \n";
 		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 		mod->Build();
 

@@ -123,7 +123,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		// TODO: Test member virtual properties
+		// Test member virtual properties
 		script = 
 			"class Test { \n"
 			"  int iprop { get { return m_ivar; } set { m_ivar = value; } } \n"
@@ -182,7 +182,7 @@ bool Test()
 		r = ExecuteString(engine, "type t; t.prop += 1;");
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 16) : Error   : Compound assignments with property accessors are not allowed\n" )
+		if( bout.buffer != "ExecuteString (1, 16) : Error   : Compound assignments with property accessors on value types are not supported\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -203,7 +203,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
-		                   "test (6, 17) : Error   : Compound assignments with property accessors are not allowed\n" )
+		                   "test (6, 17) : Error   : Compound assignments with indexed property accessors are not supported\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -484,7 +484,7 @@ bool Test()
 		TEST_FAILED;
 	}
 	if( bout.buffer != "script (6, 1) : Info    : Compiling void main1()\n"
-	                   "script (9, 10) : Error   : Compound assignments with property accessors are not allowed\n" )
+	                   "script (9, 10) : Error   : Compound assignments with property accessors require both get and set accessors\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -1482,7 +1482,7 @@ bool Test()
 		if( r > 0 )
 			TEST_FAILED;
 		if( bout.buffer != "script (15, 1) : Info    : Compiling void main()\n"
-		                   "script (18, 8) : Error   : Compound assignments with property accessors are not allowed\n"
+		                   "script (18, 8) : Error   : Compound assignments with indexed property accessors are not supported\n"
 		                   "script (20, 9) : Error   : It is not allowed to perform a handle assignment on a non-handle property\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
