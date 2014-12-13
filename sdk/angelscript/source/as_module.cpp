@@ -60,6 +60,9 @@ BEGIN_AS_NAMESPACE
 //
 // If there are live objects, the entire module should be kept for safe keeping, though no longer visible.
 //
+// TODO: It may not be necessary to keep track of internal references. Without keeping track of internal references, can I still
+//       handle RemoveFunction and RemoveGlobalVariable correctly?
+//
 // TODO: How to avoid global variables keeping code alive? For example a script object, or a funcdef?
 //       Can I do a quick check of the object types and functions to count number of outside references, and then do another
 //       check over the global variables to subtract the outside references coming from these? What if the outside reference

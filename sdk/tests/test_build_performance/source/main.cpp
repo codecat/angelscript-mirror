@@ -10,6 +10,7 @@ namespace TestBigArrays { void Test(); }
 namespace TestManySymbols { void Test(); }
 namespace TestManyFuncs { void Test(); }
 namespace TestComplex { void Test(); }
+namespace TestRebuild { void Test(); }
 
 void DetectMemoryLeaks()
 {
@@ -36,6 +37,7 @@ int main(int argc, char **argv)
 	TestManySymbols::Test();
 	TestManyFuncs::Test();
 	TestComplex::Test();
+	TestRebuild::Test();
 	
 	printf("--------------------------------------------\n");
 	printf("Press any key to quit.\n");
