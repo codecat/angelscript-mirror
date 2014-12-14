@@ -7889,10 +7889,22 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 					ctx->bc.Label((short)afterLabel);
 
+					// In case the options were to objects, it is necessary to dereference the pointer on 
+					// the stack so it will point to the actual object, instead of the variable
+					if( le.type.dataType.IsReference() && le.type.isVariable && le.type.dataType.IsObject() && !le.type.dataType.IsObjectHandle() )
+					{
+						asASSERT( re.type.dataType.IsReference() && re.type.isVariable && re.type.dataType.IsObject() && !re.type.dataType.IsObjectHandle() );
+
+						ctx->bc.Instr(asBC_RDSPtr);
+					}
+
 					// The result is an lvalue
 					ctx->type.isLValue = true;
 					ctx->type.dataType = le.type.dataType;
-					ctx->type.dataType.MakeReference(true);
+					if( ctx->type.dataType.IsPrimitive() || ctx->type.dataType.IsObjectHandle() )
+						ctx->type.dataType.MakeReference(true);
+					else
+						ctx->type.dataType.MakeReference(false);
 
 					// It can't be a treated as a variable, since we don't know which one was used
 					ctx->type.isVariable = false;

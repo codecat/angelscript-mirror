@@ -13,24 +13,6 @@ static const char * const TESTNAME = "TestCondition";
 using std::string;
 static CScriptString *a = 0;
 
-/*
-static const char *script2 =
-"void Test()                     \n"
-"{                               \n"
-"  int a = 0;                    \n"
-"  Data *v = 0;                  \n"
-"  Data *p;                      \n"
-"  p = a != 0 ? v : 0;           \n"
-"  p = a == 0 ? 0 : v;           \n"
-"}                               \n";
-*/
-static const char *script3 =
-"void Test()                                  \n"
-"{                                            \n"
-"  int test = 5;                              \n"
-"  int test2 = int((test == 5) ? 23 : 12);    \n"
-"}                                            \n";
-
 static void formatf(asIScriptGeneric *gen)
 {
 	float f = gen->GetArgFloat(0);
@@ -344,7 +326,7 @@ bool TestCondition()
 
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = ExecuteString(engine, "print(a == \"a\" ? \"t\" : \"f\")");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
@@ -357,20 +339,32 @@ bool TestCondition()
 			"  a = true ? strA : strB;             \n"
 			"  a = false ? \"t\" : \"f\";          \n"
 			"  SetAttrib(true ? strA : strB);      \n"
-			"  SetAttrib(false ? \"t\" : \"f\");   \n"
+			"  SetAttrib(false ? \"f\" : \"t\");   \n"
 			"}                                     \n"
-			"void SetAttrib(string str) {}         \n";
+			"void SetAttrib(string str) { assert( str == 't' ); }   \n";
 		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 		mod->Build();
 
 		r = ExecuteString(engine, "Test(\"t\", \"f\")", mod);
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		}
 
-	/*	mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
+	/*	
+		// Pointers are no longer supported since version 2.0.0
+		const char *script2 =
+			"void Test()                     \n"
+			"{                               \n"
+			"  int a = 0;                    \n"
+			"  Data *v = 0;                  \n"
+			"  Data *p;                      \n"
+			"  p = a != 0 ? v : 0;           \n"
+			"  p = a == 0 ? 0 : v;           \n"
+			"}                               \n";
+
+		mod->AddScriptSection(0, TESTNAME, script2, strlen(script2), 0);
 		mod->Build(0);
 
 		r = ExecuteString(engine, "Test()");
@@ -380,32 +374,39 @@ bool TestCondition()
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		}
 	*/
+
+		const char *script3 =
+			"void Test()                                  \n"
+			"{                                            \n"
+			"  int test = 5;                              \n"
+			"  int test2 = int((test == 5) ? 23 : 12);    \n"
+			"}                                            \n";
 		mod->AddScriptSection(TESTNAME, script3, strlen(script3), 0);
 		mod->Build();
 
 		r = ExecuteString(engine, "Test()", mod);
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(float(b ? 15 : 0)));");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "bool b = true; print(\"Test: \" + format(b ? 15 : 0));");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "(true) ? print(\"true\") : print(\"false\")");
-		if( r < 0 )
+		if( r != asEXECUTION_FINISHED )
 		{
 			TEST_FAILED;
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
