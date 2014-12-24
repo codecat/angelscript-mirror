@@ -49,6 +49,7 @@ struct asSTypeBehaviour;
 class asCScriptEngine;
 class asCObjectType;
 class asCScriptFunction;
+class asCModule;
 
 // TODO: refactor: Reference should not be part of the datatype. This should be stored separately, e.g. in asCTypeInfo
 //                 MakeReference, MakeReadOnly, IsReference, IsReadOnly should be removed
@@ -72,7 +73,7 @@ public:
 	static asCDataType CreateNullHandle();
 
 	int MakeHandle(bool b, bool acceptHandleForScope = false);
-	int MakeArray(asCScriptEngine *engine);
+	int MakeArray(asCScriptEngine *engine, asCModule *requestingModule);
 	int MakeReference(bool b);
 	int MakeReadOnly(bool b);
 	int MakeHandleToConst(bool b);

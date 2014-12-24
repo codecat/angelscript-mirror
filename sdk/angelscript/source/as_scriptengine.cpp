@@ -572,8 +572,6 @@ asCScriptEngine::asCScriptEngine()
 	// this we will get null pointer access in other parts of the code
 	scriptTypeBehaviours.nameSpace     = defaultNamespace;
 	functionBehaviours.nameSpace       = defaultNamespace;
-	objectTypeBehaviours.nameSpace     = defaultNamespace;
-	globalPropertyBehaviours.nameSpace = defaultNamespace;
 
 	// Reserve function id 0 for no function
 	scriptFunctions.PushLast(0);
@@ -598,12 +596,50 @@ asCScriptEngine::asCScriptEngine()
 
 	RegisterScriptObject(this);
 	RegisterScriptFunction(this);
-	RegisterObjectTypeGCBehaviours(this);
-	asCGlobalProperty::RegisterGCBehaviours(this);
+}
+
+void asCScriptEngine::DeleteDiscardedModules()
+{
+	// TODO: 2.30.0: redesign: Prevent more than one thread from entering this function at the same time. 
+	//                         If a thread is already doing the work for the clean-up the other thread should
+	//                         simply return, as the first thread will continue.
+
+	ACQUIRESHARED(engineRWLock);
+	asUINT maxCount = discardedModules.GetLength();
+	RELEASESHARED(engineRWLock);
+
+	for( asUINT n = 0; n < maxCount; n++ )
+	{
+		ACQUIRESHARED(engineRWLock);
+		asCModule *mod = discardedModules[n];
+		RELEASESHARED(engineRWLock);
+
+		if( !mod->HasExternalReferences(shuttingDown) )
+		{
+			asDELETE(mod, asCModule);
+			n--;
+		}
+
+		ACQUIRESHARED(engineRWLock);
+		// Determine the max count again, since another module may have been discarded during the processing
+		maxCount = discardedModules.GetLength();
+		RELEASESHARED(engineRWLock);
+	}
+
+	// Go over the list of global properties, to see if it is possible to clean
+	// up some variables that are no longer referred to by any functions
+	for( asUINT n = 0; n < globalProperties.GetLength(); n++ )
+	{
+		asCGlobalProperty *prop = globalProperties[n];
+		if( prop && prop->refCount.get() == 1 )
+			RemoveGlobalProperty(prop);
+	}
 }
 
 asCScriptEngine::~asCScriptEngine()
 {
+	// TODO: 2.30.0: redesign: Clean up redundant code
+
 	asUINT n = 0;
 	inDestructor = true;
 
@@ -619,54 +655,24 @@ asCScriptEngine::~asCScriptEngine()
 	// Unravel the registered interface
 	if( defaultArrayObjectType )
 	{
-		defaultArrayObjectType->Release();
+		defaultArrayObjectType->ReleaseInternal();
 		defaultArrayObjectType = 0;
 	}
 
-	// Delete the functions for template types that may references object types
+	// Delete the functions for generated template types that may references object types
 	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
+		asCObjectType *templateType = templateInstanceTypes[n];
 		if( templateInstanceTypes[n] )
-		{
-			asUINT f;
-			asCObjectType *templateType = templateInstanceTypes[n];
-
-			// Delete the factory stubs first
-			for( f = 0; f < templateType->beh.factories.GetLength(); f++ )
-				scriptFunctions[templateType->beh.factories[f]]->Release();
-			templateType->beh.factories.Allocate(0, false);
-
-			// The list factory is not stored in the list with the rest of the factories
-			if( templateType->beh.listFactory )
-			{
-				scriptFunctions[templateType->beh.listFactory]->Release();
-				templateType->beh.listFactory = 0;
-			}
-
-			// Delete the specialized functions
-			for( f = 1; f < templateType->beh.operators.GetLength(); f += 2 )
-			{
-				if( scriptFunctions[templateType->beh.operators[f]]->objectType == templateType )
-				{
-					scriptFunctions[templateType->beh.operators[f]]->Release();
-					templateType->beh.operators[f] = 0;
-				}
-			}
-			for( f = 0; f < templateType->methods.GetLength(); f++ )
-			{
-				if( scriptFunctions[templateType->methods[f]]->objectType == templateType )
-				{
-					scriptFunctions[templateType->methods[f]]->Release();
-					templateType->methods[f] = 0;
-				}
-			}
-		}
+			templateType->DestroyInternal();
 	}
-
-	// Do one more garbage collect to free gc objects that were global variables
-	GarbageCollect();
-	FreeUnusedGlobalProperties();
-	ClearUnusedTypes();
+	for( n = 0; n < listPatternTypes.GetLength(); n++ )
+	{
+		asCObjectType *type = listPatternTypes[n];
+		if( type )
+			type->ReleaseInternal();
+	}
+	listPatternTypes.SetLength(0);
 
 	// Break all relationship between remaining class types and functions
 	for( n = 0; n < scriptTypes.GetLength(); n++ )
@@ -676,41 +682,15 @@ asCScriptEngine::~asCScriptEngine()
 
 		if( scriptTypes[n]->derivedFrom )
 		{
-			scriptTypes[n]->derivedFrom->Release();
+			scriptTypes[n]->derivedFrom->ReleaseInternal();
 			scriptTypes[n]->derivedFrom = 0;
 		}
 	}
-
-	GarbageCollect();
-	FreeUnusedGlobalProperties();
-	ClearUnusedTypes();
-
-	// Destroy internals of script functions that may still be kept alive outside of engine
-	for( n = 0; n < scriptFunctions.GetLength(); n++ )
-		if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SCRIPT )
-			scriptFunctions[n]->DestroyInternal();
-
-	// There may be instances where one more gc cycle must be run
-	GarbageCollect();
-	ClearUnusedTypes();
 
 	// It is allowed to create new references to the engine temporarily while destroying objects
 	// but these references must be release immediately or else something is can go wrong later on
 	if( refCount.get() > 0 )
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ENGINE_REF_COUNT_ERROR_DURING_SHUTDOWN);
-
-	// If the application hasn't registered GC behaviours for all types
-	// that can form circular references with script types, then there
-	// may still be objects in the GC.
-	if( gc.ReportAndReleaseUndestroyedObjects() > 0 )
-	{
-		// Some items cannot be destroyed because the application is still holding on to them
-
-		// Make sure the script functions won't attempt to access the engine if they are destroyed later on
-		for( n = 0; n < scriptFunctions.GetLength(); n++ )
-			if( scriptFunctions[n] && scriptFunctions[n]->funcType == asFUNC_SCRIPT )
-				scriptFunctions[n]->engine = 0;
-	}
 
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	while( mapTypeIdToDataType.MoveFirst(&cursor) )
@@ -734,34 +714,30 @@ asCScriptEngine::~asCScriptEngine()
 	// Remove what is remaining
 	defaultGroup.RemoveConfiguration(this);
 
-	asCSymbolTable<asCGlobalProperty>::iterator it = registeredGlobalProps.List();
-	for( ; it; it++ )
-		(*it)->Release();
-	registeredGlobalProps.Clear();
-	FreeUnusedGlobalProperties();
-
+	// Any remaining objects in templateInstanceTypes is from generated template instances
 	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
+		asCObjectType *templateType = templateInstanceTypes[n];
 		if( templateInstanceTypes[n] )
-			templateInstanceTypes[n]->DropFromEngine();
+			templateType->ReleaseInternal();
 	}
 	templateInstanceTypes.SetLength(0);
 
-	asSMapNode<asSNameSpaceNamePair, asCObjectType *> *cursor2;
-	allRegisteredTypes.MoveFirst(&cursor2);
-	while( cursor2 )
+	asCSymbolTable<asCGlobalProperty>::iterator it = registeredGlobalProps.List();
+	for( ; it; it++ )
 	{
-		// Clear the sub types before deleting the template type so that the sub types aren't freed to soon
-		cursor2->value->templateSubTypes.SetLength(0);
-		cursor2->value->DropFromEngine();
-
-		allRegisteredTypes.MoveNext(&cursor2, cursor2);
+		RemoveGlobalProperty(*it);
+		(*it)->Release();
 	}
-	allRegisteredTypes.EraseAll();
+	registeredGlobalProps.Clear();
+
 	for( n = 0; n < templateSubTypes.GetLength(); n++ )
 	{
 		if( templateSubTypes[n] )
-			asDELETE(templateSubTypes[n], asCObjectType);
+		{
+			templateSubTypes[n]->DestroyInternal();
+			templateSubTypes[n]->ReleaseInternal();
+		}
 	}
 	templateSubTypes.SetLength(0);
 	registeredTypeDefs.SetLength(0);
@@ -770,13 +746,25 @@ asCScriptEngine::~asCScriptEngine()
 
 	asCSymbolTable<asCScriptFunction>::iterator funcIt = registeredGlobalFuncs.List();
 	for( ; funcIt; funcIt++ )
-		(*funcIt)->Release();
+		(*funcIt)->ReleaseInternal();
 	registeredGlobalFuncs.Clear();
 
 	scriptTypeBehaviours.ReleaseAllFunctions();
 	functionBehaviours.ReleaseAllFunctions();
-	objectTypeBehaviours.ReleaseAllFunctions();
-	globalPropertyBehaviours.ReleaseAllFunctions();
+
+	for( n = 0; n < scriptFunctions.GetLength(); n++ )
+		if( scriptFunctions[n] )
+		{
+			scriptFunctions[n]->DestroyInternal();
+
+			// Set the engine pointer to null to signal that the function is no longer part of the engine
+			scriptFunctions[n]->engine = 0;
+		}
+	scriptFunctions.SetLength(0);
+
+	// Increase the internal ref count for these builtin object types, so the destructor is not called incorrectly
+	scriptTypeBehaviours.AddRefInternal();
+	functionBehaviours.AddRefInternal();
 
 	// Destroy the funcdefs
 	// As funcdefs are shared between modules it shouldn't be a problem to keep the objects until the engine is released
@@ -788,10 +776,21 @@ asCScriptEngine::~asCScriptEngine()
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 		if( funcDefs[n] )
 		{
-			asASSERT( funcDefs[n]->GetRefCount() == 0 );
-			asDELETE(funcDefs[n], asCScriptFunction);
+			funcDefs[n]->DestroyInternal();
+			funcDefs[n]->ReleaseInternal();
 		}
 	funcDefs.SetLength(0);
+
+	// Free the global properties
+	for( asUINT n = 0; n < globalProperties.GetLength(); n++ )
+	{
+		asCGlobalProperty *prop = globalProperties[n];
+		if( prop )
+		{
+			asASSERT( prop->refCount.get() == 1 );
+			RemoveGlobalProperty(prop);
+		}
+	}
 
 	// Free string constants
 	for( n = 0; n < stringConstants.GetLength(); n++ )
@@ -823,19 +822,6 @@ asCScriptEngine::~asCScriptEngine()
 	asCThreadManager::Unprepare();
 }
 
-// internal
-void asCScriptEngine::CleanupAfterDiscardModule()
-{
-	// Skip this when shutting down as it will be done anyway by the engine destructor
-	if( shuttingDown ) return;
-
-	if( ep.autoGarbageCollect )
-		GarbageCollect();
-
-	FreeUnusedGlobalProperties();
-	ClearUnusedTypes();
-}
-
 // interface
 int asCScriptEngine::SetContextCallbacks(asREQUESTCONTEXTFUNC_t requestCtx, asRETURNCONTEXTFUNC_t returnCtx, void *param)
 {
@@ -864,6 +850,66 @@ asIScriptContext *asCScriptEngine::RequestContext()
 
 	// As fallback we create a new context
 	return CreateContext();
+}
+
+// internal
+asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCObjectType *type, asCModule *mod)
+{
+	asASSERT( type->IsShared() );
+
+	if( type->module != mod )
+		return type->module;
+
+	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
+	{
+		// TODO: optimize: If the modules already stored the shared types separately, this would be quicker
+		int foundIdx = -1;
+		asCModule *mod = scriptModules[n];
+		if( mod == type->module ) continue;
+		if( type->flags & asOBJ_ENUM )
+			foundIdx = mod->enumTypes.IndexOf(type);
+		else if( type->flags & asOBJ_TYPEDEF )
+			foundIdx = mod->typeDefs.IndexOf(type);
+		else
+			foundIdx = mod->classTypes.IndexOf(type);
+		
+		if( foundIdx >= 0 )
+		{
+			type->module = mod;
+			break;
+		}
+	}
+
+	return type->module;
+}
+
+// internal
+asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod)
+{
+	asASSERT( func->IsShared() );
+
+	if( func->module != mod )
+		return func->module;
+
+	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
+	{
+		// TODO: optimize: If the modules already stored the shared types separately, this would be quicker
+		int foundIdx = -1;
+		asCModule *mod = scriptModules[n];
+		if( mod == func->module ) continue;
+		if( func->funcType == asFUNC_FUNCDEF )
+			foundIdx = mod->funcDefs.IndexOf(func);
+		else
+			foundIdx = mod->scriptFunctions.IndexOf(func);
+		
+		if( foundIdx >= 0 )
+		{
+			func->module = mod;
+			break;
+		}
+	}
+
+	return func->module;
 }
 
 // interface
@@ -930,6 +976,15 @@ int asCScriptEngine::ShutDownAndRelease()
 	// Do another full garbage collection to destroy the object types/functions
 	// that may have been placed in the gc when destroying the modules
 	GarbageCollect();
+
+	// Do another sweep to delete discarded modules, that may not have
+	// been deleted earlier due to still having external references
+	DeleteDiscardedModules();
+
+	// If the application hasn't registered GC behaviours for all types
+	// that can form circular references with script types, then there
+	// may still be objects in the GC.
+	gc.ReportAndReleaseUndestroyedObjects();
 
 	// Release the engine reference
 	return Release();
@@ -1213,168 +1268,6 @@ asIScriptModule *asCScriptEngine::GetModuleByIndex(asUINT index) const
 	return mod;
 }
 
-// internal
-int asCScriptEngine::ClearUnusedTypes()
-{
-	int clearCount = 0;
-
-	// Build a list of all types to check for
-	// Use a set instead of an array to allow quicker searches
-	// TODO: optimize: Only orphaned types should be checked, since non-orphaned types are still owned by the modules
-	asCMap<asCObjectType*,char> types;
-	for( asUINT n = 0; n < scriptTypes.GetLength(); n++ )
-	{
-		if( !types.MoveTo(0, scriptTypes[n]) )
-			types.Insert(scriptTypes[n], 0);
-	}
-	for( asUINT n = 0; n < generatedTemplateTypes.GetLength(); n++ )
-	{
-		if( !types.MoveTo(0, generatedTemplateTypes[n]) )
-			types.Insert(generatedTemplateTypes[n], 0);
-	}
-
-	// Go through all modules
-	// TODO: optimize: If only the orphaned types was inserted in the types map, then this step is not necessary
-	asUINT n;
-	ACQUIRESHARED(engineRWLock);
-	for( n = 0; n < scriptModules.GetLength() && types.GetCount(); n++ )
-	{
-		asCModule *mod = scriptModules[n];
-		if( mod )
-		{
-			// Functions/Methods/Globals are handled after this
-
-			// Go through all type declarations
-			asUINT m;
-			for( m = 0; m < mod->classTypes.GetLength() && types.GetCount(); m++ )
-				RemoveTypeAndRelatedFromList(types, mod->classTypes[m]);
-			for( m = 0; m < mod->enumTypes.GetLength() && types.GetCount(); m++ )
-				RemoveTypeAndRelatedFromList(types, mod->enumTypes[m]);
-			for( m = 0; m < mod->typeDefs.GetLength() && types.GetCount(); m++ )
-				RemoveTypeAndRelatedFromList(types, mod->typeDefs[m]);
-		}
-	}
-	RELEASESHARED(engineRWLock);
-
-	// Go through all function parameters and remove used types
-	for( n = 0; n < scriptFunctions.GetLength() && types.GetCount(); n++ )
-	{
-		asCScriptFunction *func = scriptFunctions[n];
-		if( func )
-		{
-			// Ignore factory stubs
-			if( func->name == "factstub" )
-				continue;
-
-			// Ignore funcdefs because these will only be destroyed when the engine is released
-			if( func->funcType == asFUNC_FUNCDEF )
-				continue;
-
-			asCObjectType *ot = func->returnType.GetObjectType();
-			if( ot != 0 && ot != func->objectType )
-				if( func->name != ot->name )
-					RemoveTypeAndRelatedFromList(types, ot);
-
-			for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
-			{
-				ot = func->parameterTypes[p].GetObjectType();
-				if( ot != 0 && ot != func->objectType )
-					if( func->name != ot->name )
-						RemoveTypeAndRelatedFromList(types, ot);
-			}
-		}
-	}
-
-	// Go through all global properties
-	for( n = 0; n < globalProperties.GetLength() && types.GetCount(); n++ )
-	{
-		if( globalProperties[n] && globalProperties[n]->type.GetObjectType() )
-			RemoveTypeAndRelatedFromList(types, globalProperties[n]->type.GetObjectType());
-	}
-
-	// All that remains in the list after this can be discarded, since they are no longer used
-	for(;;)
-	{
-		bool didClearTemplateInstanceType = false;
-
-		asSMapNode<asCObjectType*,char>* node;
-		types.MoveFirst(&node);
-
-		while( node )
-		{
-			int typeRefCount = 0;
-			asCObjectType *type = node->key;
-
-			// Template types and script classes will have two references for each factory stub
-			if( (type->flags & asOBJ_TEMPLATE) )
-			{
-				if( type->flags & asOBJ_REF )
-					typeRefCount = 2*(int)type->beh.factories.GetLength();
-				else
-					typeRefCount = (int)type->beh.constructors.GetLength();
-				if( type->beh.listFactory )
-					typeRefCount += 2;
-
-				// If it is an orphaned script type, then the gc holds 1 reference too
-				bool isScriptTemplate = false;
-				for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
-				{
-					if( type->templateSubTypes[s].GetObjectType() && (type->templateSubTypes[s].GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
-					{
-						isScriptTemplate = true;
-						break;
-					}
-				}
-
-				if( isScriptTemplate && type->module == 0 )
-					typeRefCount++;
-			}
-
-			if( type->GetRefCount() == typeRefCount || type->GetRefCount() == 0 )
-			{
-				if( type->flags & asOBJ_TEMPLATE )
-				{
-					didClearTemplateInstanceType = true;
-					RemoveTemplateInstanceType(type);
-					clearCount++;
-				}
-				else
-				{
-					RemoveFromTypeIdMap(type);
-					type->DropFromEngine();
-					clearCount++;
-
-					scriptTypes.RemoveIndexUnordered(scriptTypes.IndexOf(type));
-				}
-
-				// Remove the type from the set
-				asSMapNode<asCObjectType*,char>* cur = node;
-				types.MoveNext(&node, node);
-				types.Erase(cur);
-				continue;
-			}
-
-			types.MoveNext(&node, node);
-		}
-
-		if( didClearTemplateInstanceType == false )
-			break;
-	}
-
-	// Clear the list pattern types that are no longer used
-	for( n = 0; n < listPatternTypes.GetLength(); n++ )
-	{
-		if( listPatternTypes[n]->refCount.get() == 0 )
-		{
-			asDELETE(listPatternTypes[n], asCObjectType);
-			listPatternTypes.RemoveIndexUnordered(n);
-			n--;
-		}
-	}
-
-	return clearCount;
-}
-
 // Internal
 void asCScriptEngine::RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot)
 {
@@ -1568,14 +1461,14 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	// Add references to types so they are not released too early
 	if( type.GetObjectType() )
 	{
-		type.GetObjectType()->AddRef();
+		type.GetObjectType()->AddRefInternal();
 
 		// Add template instances to the config group
 		if( (type.GetObjectType()->flags & asOBJ_TEMPLATE) && !currentGroup->objTypes.Exists(type.GetObjectType()) )
 			currentGroup->objTypes.PushLast(type.GetObjectType());
 	}
 
-	currentGroup->RefConfigGroup(FindConfigGroupForObjectType(type.GetObjectType()));
+	currentGroup->AddReferencesForType(this, type.GetObjectType());
 
 	return asSUCCESS;
 }
@@ -1629,9 +1522,9 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	// Use the default script class behaviours
 	st->beh.factory = 0;
 	st->beh.addref = scriptTypeBehaviours.beh.addref;
-	scriptFunctions[st->beh.addref]->AddRef();
+	scriptFunctions[st->beh.addref]->AddRefInternal();
 	st->beh.release = scriptTypeBehaviours.beh.release;
-	scriptFunctions[st->beh.release]->AddRef();
+	scriptFunctions[st->beh.release]->AddRefInternal();
 	st->beh.copy = 0;
 
 	allRegisteredTypes.Insert(asSNameSpaceNamePair(st->nameSpace, st->name), st);
@@ -1679,7 +1572,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	}
 
 	func->id = GetNextScriptFunctionId();
-	SetScriptFunction(func);
+	AddScriptFunction(func);
 
 	// The index into the interface's vftable chunk should be
 	// its index in the methods array.
@@ -1689,21 +1582,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 
 	func->ComputeSignatureId();
 
-	// If parameter type from other groups are used, add references
-	// TODO: The code for adding references to config groups is repeated in a lot of places
-	if( func->returnType.GetObjectType() )
-	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
-		currentGroup->RefConfigGroup(group);
-	}
-	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].GetObjectType() )
-		{
-			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
-			currentGroup->RefConfigGroup(group);
-		}
-	}
+	currentGroup->AddReferencesForFunc(this, func);
 
 	// Return function id as success
 	return func->id;
@@ -1872,10 +1751,9 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 #endif
 				subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
 				templateSubTypes.PushLast(subtype);
-				subtype->AddRef();
 			}
 			type->templateSubTypes.PushLast(asCDataType::CreateObject(subtype, false));
-			subtype->AddRef();
+			subtype->AddRefInternal();
 		}
 	}
 	else
@@ -1971,7 +1849,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return ConfigError(asNOT_SUPPORTED, "RegisterObjectType", name, 0);
 			}
 
-			// If this is not a template instance type, then it means it is an
+			// If this is not a generated template instance type, then it means it is an
 			// already registered template specialization
 			if( !generatedTemplateTypes.Exists(dt.GetObjectType()) )
 				return ConfigError(asALREADY_REGISTERED, "RegisterObjectType", name, 0);
@@ -1992,7 +1870,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			type->templateSubTypes.PushLast(dt.GetSubType());
 			for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
 				if( type->templateSubTypes[s].GetObjectType() ) 
-					type->templateSubTypes[s].GetObjectType()->AddRef();
+					type->templateSubTypes[s].GetObjectType()->AddRefInternal();
 			type->size       = byteSize;
 #ifdef WIP_16BYTE_ALIGN
 			// TODO: Types smaller than 4 don't need to be aligned to 4 byte boundaries
@@ -2006,15 +1884,10 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			currentGroup->objTypes.PushLast(type);
 
 			// Remove the template instance type, which will no longer be used.
-			RemoveTemplateInstanceType(dt.GetObjectType());
-
-			// Must clear unused types after removing the template instance, since it is possible that other
-			// template types were generated as a consequence of it, and thus must also be removed 
-			while( ClearUnusedTypes() );
-
-			asASSERT( generatedTemplateTypes.GetLength() == originalSizeOfGeneratedTemplateTypes );
-			asASSERT( (mostRecentTemplateInstanceType == 0 && generatedTemplateTypes.GetLength() == 0) ||
-				(mostRecentTemplateInstanceType && generatedTemplateTypes[generatedTemplateTypes.GetLength() - 1] == mostRecentTemplateInstanceType) );
+			// It is possible that multiple template instances are generated if
+			// they have any relationship, so all of them must be removed
+			while( generatedTemplateTypes.GetLength() > originalSizeOfGeneratedTemplateTypes )
+				RemoveTemplateInstanceType(generatedTemplateTypes[generatedTemplateTypes.GetLength()-1]);
 		}
 	}
 
@@ -2042,8 +1915,6 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 
 	// Don't allow application to modify built-in types
 	if( type.GetObjectType() == &functionBehaviours ||
-		type.GetObjectType() == &objectTypeBehaviours ||
-		type.GetObjectType() == &globalPropertyBehaviours ||
 		type.GetObjectType() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
@@ -2144,7 +2015,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 			beh->construct = AddBehaviourFunction(func, internal);
 			beh->factory   = beh->construct;
-			scriptFunctions[beh->factory]->AddRef();
+			scriptFunctions[beh->factory]->AddRefInternal();
 			beh->constructors.PushLast(beh->construct);
 			beh->factories.PushLast(beh->factory);
 			func.id = beh->construct;
@@ -2666,22 +2537,10 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 		else
 			f->defaultArgs.PushLast(0);
 
-	SetScriptFunction(f);
+	AddScriptFunction(f);
 
 	// If parameter type from other groups are used, add references
-	if( f->returnType.GetObjectType() )
-	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(f->returnType.GetObjectType());
-		currentGroup->RefConfigGroup(group);
-	}
-	for( n = 0; n < f->parameterTypes.GetLength(); n++ )
-	{
-		if( f->parameterTypes[n].GetObjectType() )
-		{
-			asCConfigGroup *group = FindConfigGroupForObjectType(f->parameterTypes[n].GetObjectType());
-			currentGroup->RefConfigGroup(group);
-		}
-	}
+	currentGroup->AddReferencesForFunc(this, f);
 
 	return id;
 }
@@ -2716,14 +2575,10 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	varAddressMap.Insert(prop->GetAddressOfValue(), prop);
 
 	registeredGlobalProps.Put(prop);
+	prop->AddRef();
 	currentGroup->globalProps.PushLast(prop);
 
-	// If from another group add reference
-	if( type.GetObjectType() )
-	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(type.GetObjectType());
-		currentGroup->RefConfigGroup(group);
-	}
+	currentGroup->AddReferencesForType(this, type.GetObjectType());
 
 	return asSUCCESS;
 }
@@ -2752,23 +2607,21 @@ asCGlobalProperty *asCScriptEngine::AllocateGlobalProperty()
 }
 
 // internal
-void asCScriptEngine::FreeUnusedGlobalProperties()
+void asCScriptEngine::RemoveGlobalProperty(asCGlobalProperty *prop)
 {
-	for( asUINT n = 0; n < globalProperties.GetLength(); n++ )
+	int index = globalProperties.IndexOf(prop);
+	if( index >= 0 )
 	{
-		if( globalProperties[n] && globalProperties[n]->GetRefCount() == 0 )
-		{
-			freeGlobalPropertyIds.PushLast(n);
+		freeGlobalPropertyIds.PushLast(index);
+		globalProperties[index] = 0;
 
-			asSMapNode<void*, asCGlobalProperty*> *node;
-			varAddressMap.MoveTo(&node, globalProperties[n]->GetAddressOfValue());
-			asASSERT(node);
-			if( node )
-				varAddressMap.Erase(node);
+		asSMapNode<void*, asCGlobalProperty*> *node;
+		varAddressMap.MoveTo(&node, prop->GetAddressOfValue());
+		asASSERT(node);
+		if( node )
+			varAddressMap.Erase(node);
 
-			asDELETE(globalProperties[n], asCGlobalProperty);
-			globalProperties[n] = 0;
-		}
+		prop->Release();
 	}
 }
 
@@ -2857,8 +2710,6 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 
 	// Don't allow application to modify built-in types
 	if( dt.GetObjectType() == &functionBehaviours ||
-		dt.GetObjectType() == &objectTypeBehaviours ||
-		dt.GetObjectType() == &globalPropertyBehaviours ||
 		dt.GetObjectType() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
@@ -2953,23 +2804,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	func->id = GetNextScriptFunctionId();
 	func->objectType->methods.PushLast(func->id);
 	func->accessMask = defaultAccessMask;
-	SetScriptFunction(func);
+	AddScriptFunction(func);
 
-	// TODO: This code is repeated in many places
 	// If parameter type from other groups are used, add references
-	if( func->returnType.GetObjectType() )
-	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
-		currentGroup->RefConfigGroup(group);
-	}
-	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].GetObjectType() )
-		{
-			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
-			currentGroup->RefConfigGroup(group);
-		}
-	}
+	currentGroup->AddReferencesForFunc(this, func);
 
 	// Check if the method restricts that use of the template to value types or reference types
 	if( func->objectType->flags & asOBJ_TEMPLATE )
@@ -3015,7 +2853,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 			return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 
 		func->objectType->beh.copy = func->id;
-		func->AddRef();
+		func->AddRefInternal();
 	}
 
 	// Return the function id as success
@@ -3089,26 +2927,14 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 	}
 
 	func->id = GetNextScriptFunctionId();
-	SetScriptFunction(func);
+	AddScriptFunction(func);
 
 	currentGroup->scriptFunctions.PushLast(func);
 	func->accessMask = defaultAccessMask;
 	registeredGlobalFuncs.Put(func);
 
 	// If parameter type from other groups are used, add references
-	if( func->returnType.GetObjectType() )
-	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
-		currentGroup->RefConfigGroup(group);
-	}
-	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].GetObjectType() )
-		{
-			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
-			currentGroup->RefConfigGroup(group);
-		}
-	}
+	currentGroup->AddReferencesForFunc(this, func);
 
 	// Return the function id as success
 	return func->id;
@@ -3318,7 +3144,7 @@ int asCScriptEngine::RegisterDefaultArrayType(const char *type)
 		return asINVALID_TYPE;
 
 	defaultArrayObjectType = dt.GetObjectType();
-	defaultArrayObjectType->AddRef();
+	defaultArrayObjectType->AddRefInternal();
 
 	return 0;
 }
@@ -3386,7 +3212,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	func->parameterTypes.PushLast(parm1);
 	func->inOutFlags.PushLast(asTM_INREF);
 	func->id = GetNextScriptFunctionId();
-	SetScriptFunction(func);
+	AddScriptFunction(func);
 
 	stringFactory = func;
 
@@ -3495,130 +3321,60 @@ void asCScriptEngine::BuildCompleted()
 
 void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 {
-	int n;
+	// If there is a module that still owns the generated type, then don't remove it
+	if( t->module )
+		return;
 
-	RemoveFromTypeIdMap(t);
+	// Don't remove it if there are external refernces
+	if( t->externalRefCount.get() )
+		return;
 
-	// Destroy the factory stubs
-	for( n = 0; n < (int)t->beh.factories.GetLength(); n++ )
-	{
-		// Make sure the factory stub isn't referencing this object anymore
-		scriptFunctions[t->beh.factories[n]]->ReleaseAllHandles(this);
-		scriptFunctions[t->beh.factories[n]]->Release();
-	}
-	t->beh.factories.SetLength(0);
+	// Only remove the template instance type if no config group is using it
+	if( defaultGroup.generatedTemplateInstances.Exists(t) )
+		return;
+	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
+		if( configGroups[n]->generatedTemplateInstances.Exists(t) )
+			return;
 
-	// Destroy the constructor stubs
-	for( n = 0; n < (int)t->beh.constructors.GetLength(); n++ )
-	{
-		// Make sure the factory stub isn't referencing this object anymore
-		scriptFunctions[t->beh.constructors[n]]->ReleaseAllHandles(this);
-		scriptFunctions[t->beh.constructors[n]]->Release();
-	}
-	t->beh.constructors.SetLength(0);
-
-	// Destroy the stub for the list factory too
-	if( t->beh.listFactory )
-	{
-		scriptFunctions[t->beh.listFactory]->ReleaseAllHandles(this);
-		scriptFunctions[t->beh.listFactory]->Release();
-		t->beh.listFactory = 0;
-	}
-
-	// Destroy the specialized functions
-	for( n = 1; n < (int)t->beh.operators.GetLength(); n += 2 )
-	{
-		if( t->beh.operators[n] )
-			scriptFunctions[t->beh.operators[n]]->Release();
-	}
-	t->beh.operators.SetLength(0);
-
-	for( n = 0; n < (int)t->methods.GetLength(); n++ )
-	{
-		if( t->methods[n] )
-			scriptFunctions[t->methods[n]]->Release();
-	}
-	t->methods.SetLength(0);
-
-	// Start searching from the end of the list, as most of
-	// the time it will be the last two types
-	for( n = (int)templateInstanceTypes.GetLength()-1; n >= 0; n-- )
-	{
-		if( templateInstanceTypes[n] == t )
-		{
-			if( n == (signed)templateInstanceTypes.GetLength()-1 )
-				templateInstanceTypes.PopLast();
-			else
-				templateInstanceTypes[n] = templateInstanceTypes.PopLast();
-		}
-	}
-
-	// Only delete it if the refCount is 0
-	if( t->refCount.get() == 0 )
-	{
-		for( n = (int)generatedTemplateTypes.GetLength()-1; n >= 0; n-- )
-		{
-			if( generatedTemplateTypes[n] == t )
-			{
-				if( n == (signed)generatedTemplateTypes.GetLength()-1 )
-					generatedTemplateTypes.PopLast();
-				else
-					generatedTemplateTypes[n] = generatedTemplateTypes.PopLast();
-			}
-		}
-
-		asDELETE(t,asCObjectType);
-	}
+	t->DestroyInternal();
+	templateInstanceTypes.RemoveValue(t);
+	generatedTemplateTypes.RemoveValue(t);
+	t->ReleaseInternal();
 }
 
 // internal
-void asCScriptEngine::OrphanTemplateInstances(asCObjectType *subType)
-{
-	for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
-	{
-		asCObjectType *type = templateInstanceTypes[n];
-
-		if( type == 0 )
-			continue;
-
-		// If the template type isn't owned by any module it can't be orphaned
-		if( type->module == 0 )
-			continue;
-
-		for( asUINT subTypeIdx = 0; subTypeIdx < type->templateSubTypes.GetLength(); subTypeIdx++ )
-		{
-			if( type->templateSubTypes[subTypeIdx].GetObjectType() == subType )
-			{
-				// Tell the GC that the template type exists so it can resolve potential circular references
-				gc.AddScriptObjectToGC(type, &objectTypeBehaviours);
-
-				// Clear the module
-				type->module = 0;
-				type->Release();
-
-				// Do a recursive check for other template instances
-				OrphanTemplateInstances(type);
-
-				// Break out so we don't add the same template to
-				// the gc again if another subtype matches this one
-				break;
-			}
-		}
-	}
-}
-
-// internal
-asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes)
+asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes, asCModule *requestingModule)
 {
 	asUINT n;
 
 	// Is there any template instance type or template specialization already with this subtype?
 	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
-		if( templateInstanceTypes[n] &&
-			templateInstanceTypes[n]->name == templateType->name &&
-			templateInstanceTypes[n]->templateSubTypes == subTypes )
+		asCObjectType *type = templateInstanceTypes[n];
+		if( type &&
+			type->name == templateType->name &&
+			type->templateSubTypes == subTypes )
+		{
+			// If the template instance is generated, then the module should hold a reference
+			// to it so the config group can determine see that the template type is in use.
+			// Template specializations will be treated as normal types
+			if( requestingModule && generatedTemplateTypes.Exists(type) )
+			{
+				if( type->module == 0 )
+				{
+					// Set the ownership of this template type
+					// It may be without ownership if it was previously created from application with for example GetObjectTypeByDecl
+					type->module = requestingModule;
+				}
+				if( !requestingModule->templateInstances.Exists(type) )
+				{
+					requestingModule->templateInstances.PushLast(type);
+					type->AddRefInternal();
+				}
+			}
+
 			return templateInstanceTypes[n];
+		}
 	}
 
 	// No previous template instance exists
@@ -3647,17 +3403,31 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	ot->name             = templateType->name;
 	ot->nameSpace        = templateType->nameSpace;
 
-	// The template instance type will inherit the same module as the subType
-	// This will allow the module to orphan the template instance types afterwards
-	for( n = 0; n < subTypes.GetLength(); n++ )
+	// If the template is being requested from a module, then the module should hold a reference to the type
+	if( requestingModule )
 	{
-		if( subTypes[n].GetObjectType() )
+		// Set the ownership of this template type
+		ot->module = requestingModule;
+		requestingModule->templateInstances.PushLast(ot);
+		ot->AddRefInternal();
+	}
+	else
+	{
+		// If the template type is not requested directly from a module, then set the ownership
+		// of it to the same module as one of the subtypes. If none of the subtypes are owned by]
+		// any module, the template instance will be without ownership and can be removed from the
+		// engine at any time (unless the application holds an external reference).
+		for( n = 0; n < subTypes.GetLength(); n++ )
 		{
-			ot->module = subTypes[n].GetObjectType()->module;
-			if( ot->module )
+			if( subTypes[n].GetObjectType() )
 			{
-				ot->AddRef();
-				break;
+				ot->module = subTypes[n].GetObjectType()->module;
+				if( ot->module )
+				{
+					ot->module->templateInstances.PushLast(ot);
+					ot->AddRefInternal();
+					break;
+				}
 			}
 		}
 	}
@@ -3676,7 +3446,12 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 			{
 				// The type cannot be instantiated
 				ot->templateSubTypes.SetLength(0);
-				asDELETE(ot, asCObjectType);
+				if( ot->module )
+				{
+					ot->module->templateInstances.RemoveValue(ot);
+					ot->ReleaseInternal();
+				}
+				ot->ReleaseInternal();
 				return 0;
 			}
 
@@ -3686,12 +3461,12 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		}
 
 		ot->beh.templateCallback = templateType->beh.templateCallback;
-		scriptFunctions[ot->beh.templateCallback]->AddRef();
+		scriptFunctions[ot->beh.templateCallback]->AddRefInternal();
 	}
 
 	ot->methods = templateType->methods;
 	for( n = 0; n < ot->methods.GetLength(); n++ )
-		scriptFunctions[ot->methods[n]]->AddRef();
+		scriptFunctions[ot->methods[n]]->AddRefInternal();
 
 	if( templateType->flags & asOBJ_REF )
 	{
@@ -3706,7 +3481,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		ot->beh.constructors = templateType->beh.constructors;
 	}
 	for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
-		scriptFunctions[ot->beh.constructors[n]]->AddRef();
+		scriptFunctions[ot->beh.constructors[n]]->AddRefInternal();
 
 
 	// Before proceeding with the generation of the template functions for the template instance it is necessary
@@ -3730,7 +3505,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
 		{
 			// Release the old function, the new one already has its ref count set to 1
-			scriptFunctions[funcId]->Release();
+			scriptFunctions[funcId]->ReleaseInternal();
 			ot->beh.constructors[n] = func->id;
 
 			if( ot->beh.construct == funcId )
@@ -3747,7 +3522,6 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		{
 			asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
 
-			// The function's refCount was already initialized to 1
 			ot->beh.factories.PushLast(func->id);
 
 			// Set the default factory as well
@@ -3762,12 +3536,11 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		{
 			asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, ot->beh.constructors[n]);
 
-			// The function's refCount was already initialized to 1
 			if( ot->beh.constructors[n] == ot->beh.construct )
 				ot->beh.construct = func->id;
 
 			// Release previous constructor
-			scriptFunctions[ot->beh.constructors[n]]->Release();
+			scriptFunctions[ot->beh.constructors[n]]->ReleaseInternal();
 
 			ot->beh.constructors[n] = func->id;
 		}
@@ -3778,33 +3551,32 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	{
 		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.listFactory);
 
-		// The function's refCount was already initialized to 1
 		ot->beh.listFactory = func->id;
 	}
 
 	ot->beh.addref = templateType->beh.addref;
-	if( scriptFunctions[ot->beh.addref] ) scriptFunctions[ot->beh.addref]->AddRef();
+	if( scriptFunctions[ot->beh.addref] ) scriptFunctions[ot->beh.addref]->AddRefInternal();
 	ot->beh.release = templateType->beh.release;
-	if( scriptFunctions[ot->beh.release] ) scriptFunctions[ot->beh.release]->AddRef();
+	if( scriptFunctions[ot->beh.release] ) scriptFunctions[ot->beh.release]->AddRefInternal();
 	ot->beh.destruct = templateType->beh.destruct;
-	if( scriptFunctions[ot->beh.destruct] ) scriptFunctions[ot->beh.destruct]->AddRef();
+	if( scriptFunctions[ot->beh.destruct] ) scriptFunctions[ot->beh.destruct]->AddRefInternal();
 	ot->beh.copy = templateType->beh.copy;
-	if( scriptFunctions[ot->beh.copy] ) scriptFunctions[ot->beh.copy]->AddRef();
+	if( scriptFunctions[ot->beh.copy] ) scriptFunctions[ot->beh.copy]->AddRefInternal();
 	ot->beh.operators = templateType->beh.operators;
 	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
-		scriptFunctions[ot->beh.operators[n]]->AddRef();
+		scriptFunctions[ot->beh.operators[n]]->AddRefInternal();
 	ot->beh.gcGetRefCount = templateType->beh.gcGetRefCount;
-	if( scriptFunctions[ot->beh.gcGetRefCount] ) scriptFunctions[ot->beh.gcGetRefCount]->AddRef();
+	if( scriptFunctions[ot->beh.gcGetRefCount] ) scriptFunctions[ot->beh.gcGetRefCount]->AddRefInternal();
 	ot->beh.gcSetFlag = templateType->beh.gcSetFlag;
-	if( scriptFunctions[ot->beh.gcSetFlag] ) scriptFunctions[ot->beh.gcSetFlag]->AddRef();
+	if( scriptFunctions[ot->beh.gcSetFlag] ) scriptFunctions[ot->beh.gcSetFlag]->AddRefInternal();
 	ot->beh.gcGetFlag = templateType->beh.gcGetFlag;
-	if( scriptFunctions[ot->beh.gcGetFlag] ) scriptFunctions[ot->beh.gcGetFlag]->AddRef();
+	if( scriptFunctions[ot->beh.gcGetFlag] ) scriptFunctions[ot->beh.gcGetFlag]->AddRefInternal();
 	ot->beh.gcEnumReferences = templateType->beh.gcEnumReferences;
-	if( scriptFunctions[ot->beh.gcEnumReferences] ) scriptFunctions[ot->beh.gcEnumReferences]->AddRef();
+	if( scriptFunctions[ot->beh.gcEnumReferences] ) scriptFunctions[ot->beh.gcEnumReferences]->AddRefInternal();
 	ot->beh.gcReleaseAllReferences = templateType->beh.gcReleaseAllReferences;
-	if( scriptFunctions[ot->beh.gcReleaseAllReferences] ) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRef();
+	if( scriptFunctions[ot->beh.gcReleaseAllReferences] ) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRefInternal();
 	ot->beh.getWeakRefFlag = templateType->beh.getWeakRefFlag;
-	if( scriptFunctions[ot->beh.getWeakRefFlag] ) scriptFunctions[ot->beh.getWeakRefFlag]->AddRef();
+	if( scriptFunctions[ot->beh.getWeakRefFlag] ) scriptFunctions[ot->beh.getWeakRefFlag]->AddRefInternal();
 
 	// As the new template type is instantiated the engine should
 	// generate new functions to substitute the ones with the template subtype.
@@ -3816,7 +3588,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
 		{
 			// Release the old function, the new one already has its ref count set to 1
-			scriptFunctions[funcId]->Release();
+			scriptFunctions[funcId]->ReleaseInternal();
 			ot->beh.operators[n] = func->id;
 		}
 	}
@@ -3831,7 +3603,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
 		{
 			// Release the old function, the new one already has its ref count set to 1
-			scriptFunctions[funcId]->Release();
+			scriptFunctions[funcId]->ReleaseInternal();
 			ot->methods[n] = func->id;
 		}
 	}
@@ -3839,7 +3611,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Increase ref counter for sub type if it is an object type
 	for( n = 0; n < ot->templateSubTypes.GetLength(); n++ )
 		if( ot->templateSubTypes[n].GetObjectType() )
-			ot->templateSubTypes[n].GetObjectType()->AddRef();
+			ot->templateSubTypes[n].GetObjectType()->AddRefInternal();
 
 	// Copy the properties to the template instance
 	for( n = 0; n < templateType->properties.GetLength(); n++ )
@@ -3847,7 +3619,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		asCObjectProperty *prop = templateType->properties[n];
 		ot->properties.PushLast(asNEW(asCObjectProperty)(*prop));
 		if( prop->type.GetObjectType() )
-			prop->type.GetObjectType()->AddRef();
+			prop->type.GetObjectType()->AddRefInternal();
 	}
 
 	return ot;
@@ -3952,7 +3724,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 					break;
 				}
 
-			ntype = GetTemplateInstanceType(origType, tmplSubTypes);
+			ntype = GetTemplateInstanceType(origType, tmplSubTypes, ot->module);
 			if( ntype == 0 )
 			{
 				// It not possible to instantiate the subtype
@@ -3995,7 +3767,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->AllocateScriptFunctionData();
 	func->name             = "factstub";
 	func->id               = GetNextScriptFunctionId();
-	SetScriptFunction(func);
+	AddScriptFunction(func);
 
 	func->isShared         = true;
 	if( templateType->flags & asOBJ_REF )
@@ -4156,7 +3928,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	}
 
 	func2->id       = GetNextScriptFunctionId();
-	SetScriptFunction(func2);
+	AddScriptFunction(func2);
 
 	// Return the new function
 	*newFunc = func2;
@@ -4675,7 +4447,16 @@ int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIOb
 // interface
 int asCScriptEngine::GarbageCollect(asDWORD flags, asUINT iterations)
 {
-	return gc.GarbageCollect(flags, iterations);
+	int r = gc.GarbageCollect(flags, iterations);
+
+	if( r == 0 )
+	{
+		// Delete any modules that have been discarded previously but not
+		// removed due to being referred to by objects in the garbage collector
+		DeleteDiscardedModules();
+	}
+
+	return r;
 }
 
 // interface
@@ -5324,6 +5105,12 @@ int asCScriptEngine::RemoveConfigGroup(const char *groupName)
 		{
 			asCConfigGroup *group = configGroups[n];
 
+			// Remove any unused generated template instances 
+			// before verifying if the config group is still in use.
+			// RemoveTemplateInstanceType() checks if the instance is in use
+			for( asUINT g = generatedTemplateTypes.GetLength(); g-- > 0; )
+				RemoveTemplateInstanceType(generatedTemplateTypes[g]);
+
 			// Make sure the group isn't referenced by anyone
 			if( group->refCount > 0 )
 				return asCONFIG_GROUP_IS_IN_USE;
@@ -5423,7 +5210,7 @@ int asCScriptEngine::GetNextScriptFunctionId()
 	return (int)scriptFunctions.GetLength();
 }
 
-void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
+void asCScriptEngine::AddScriptFunction(asCScriptFunction *func)
 {
 	// Update the internal arrays with the function id that is now used
 	if( freeScriptFunctionIds.GetLength() && freeScriptFunctionIds[freeScriptFunctionIds.GetLength()-1] == func->id )
@@ -5439,50 +5226,77 @@ void asCScriptEngine::SetScriptFunction(asCScriptFunction *func)
 	}
 }
 
-void asCScriptEngine::FreeScriptFunctionId(int id)
+void asCScriptEngine::RemoveScriptFunction(asCScriptFunction *func)
 {
-	if( id < 0 ) return;
-	id &= ~FUNC_IMPORTED;
-	if( id >= (int)scriptFunctions.GetLength() ) return;
-
-	if( scriptFunctions[id] )
+	if( func == 0 || func->id < 0 ) return;
+	int id = func->id & ~FUNC_IMPORTED;
+	if( func->funcType == asFUNC_IMPORTED )
 	{
-		asCScriptFunction *func = scriptFunctions[id];
+		if( id >= (int)importedFunctions.GetLength() ) return;
 
-		// Remove the function from the list of script functions
-		if( id == (int)scriptFunctions.GetLength() - 1 )
+		if( importedFunctions[id] )
 		{
-			scriptFunctions.PopLast();
-		}
-		else
-		{
-			scriptFunctions[id] = 0;
-			freeScriptFunctionIds.PushLast(id);
-		}
-
-		// Is the function used as signature id?
-		if( func->signatureId == id )
-		{
-			// Remove the signature id
-			signatureIds.RemoveValue(func);
-
-			// Update all functions using the signature id
-			int newSigId = 0;
-			for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
+			// Remove the function from the list of script functions
+			if( id == (int)importedFunctions.GetLength() - 1 )
 			{
-				if( scriptFunctions[n] && scriptFunctions[n]->signatureId == id )
-				{
-					if( newSigId == 0 )
-					{
-						newSigId = scriptFunctions[n]->id;
-						signatureIds.PushLast(scriptFunctions[n]);
-					}
+				importedFunctions.PopLast();
+			}
+			else
+			{
+				importedFunctions[id] = 0;
+				freeImportedFunctionIdxs.PushLast(id);
+			}
+		}
+	}
+	else
+	{
+		if( id >= (int)scriptFunctions.GetLength() ) return;
+		asASSERT( func == scriptFunctions[id] );
 
-					scriptFunctions[n]->signatureId = newSigId;
+		if( scriptFunctions[id] )
+		{
+			// Remove the function from the list of script functions
+			if( id == (int)scriptFunctions.GetLength() - 1 )
+			{
+				scriptFunctions.PopLast();
+			}
+			else
+			{
+				scriptFunctions[id] = 0;
+				freeScriptFunctionIds.PushLast(id);
+			}
+
+			// Is the function used as signature id?
+			if( func->signatureId == id )
+			{
+				// Remove the signature id
+				signatureIds.RemoveValue(func);
+
+				// Update all functions using the signature id
+				int newSigId = 0;
+				for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
+				{
+					if( scriptFunctions[n] && scriptFunctions[n]->signatureId == id )
+					{
+						if( newSigId == 0 )
+						{
+							newSigId = scriptFunctions[n]->id;
+							signatureIds.PushLast(scriptFunctions[n]);
+						}
+
+						scriptFunctions[n]->signatureId = newSigId;
+					}
 				}
 			}
 		}
 	}
+}
+
+// internal
+void asCScriptEngine::RemoveFuncdef(asCScriptFunction *funcdef)
+{
+	// TODO: 2.30.0: redesign: How to avoid removing a funcdef that is shared by multiple modules?
+	funcDefs.RemoveValue(funcdef);
 }
 
 // interface
@@ -5514,26 +5328,15 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	}
 
 	func->id = GetNextScriptFunctionId();
-	SetScriptFunction(func);
+	AddScriptFunction(func);
 
 	funcDefs.PushLast(func);
+	func->AddRefInternal();
 	registeredFuncDefs.PushLast(func);
 	currentGroup->funcDefs.PushLast(func);
 
 	// If parameter type from other groups are used, add references
-	if( func->returnType.GetObjectType() )
-	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
-		currentGroup->RefConfigGroup(group);
-	}
-	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
-	{
-		if( func->parameterTypes[n].GetObjectType() )
-		{
-			asCConfigGroup *group = FindConfigGroupForObjectType(func->parameterTypes[n].GetObjectType());
-			currentGroup->RefConfigGroup(group);
-		}
-	}
+	currentGroup->AddReferencesForFunc(this, func);
 
 	// Return the function id as success
 	return func->id;

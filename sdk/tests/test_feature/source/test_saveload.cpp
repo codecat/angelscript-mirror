@@ -564,6 +564,7 @@ bool Test()
 		CBytecodeStream stream(__FILE__"1");
 		mod->SaveByteCode(&stream);
 
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		if( mod->LoadByteCode(&stream) != 0 )
 			TEST_FAILED;
 
@@ -900,6 +901,7 @@ bool Test()
 			PRINTF("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		if( mod->LoadByteCode(&stream) != 0 )
 			TEST_FAILED;
 

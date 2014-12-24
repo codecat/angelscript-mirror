@@ -511,7 +511,7 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	int r = ValidateDefaultArgs(script, node, func);
 	if( r < 0 )
 	{
-		func->Release();
+		func->ReleaseInternal();
 		return asERROR;
 	}
 
@@ -521,23 +521,23 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		int r = CheckNameConflict(func->name.AddressOf(), node, scripts[0], module->defaultNamespace);
 		if( r < 0 )
 		{
-			func->Orphan(module);
+			func->ReleaseInternal();
 			return asERROR;
 		}
 
 		module->globalFunctions.Put(func);
-		func->AddRef();
+		
 		module->AddScriptFunction(func);
 	}
 	else
-		engine->SetScriptFunction(func);
+		engine->AddScriptFunction(func);
 
 	// Fill in the function info for the builder too
 	node->DisconnectParent();
 	sFunctionDescription *funcDesc = asNEW(sFunctionDescription);
 	if( funcDesc == 0 )
 	{
-		func->Release();
+		func->ReleaseInternal();
 		return asOUT_OF_MEMORY;
 	}
 
@@ -562,11 +562,10 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 		{
 			module->globalFunctions.Erase(module->globalFunctions.GetIndex(func));
 			module->scriptFunctions.RemoveValue(func);
-			func->Release();
-			func->Orphan(module);
+			func->ReleaseInternal();
 		}
 
-		func->Release();
+		func->ReleaseInternal();
 
 		return asERROR;
 	}
@@ -678,20 +677,20 @@ void asCBuilder::ParseScripts()
 					// As the class has another constructor we shouldn't provide the default constructor
 					if( decl->objType->beh.construct )
 					{
-						engine->scriptFunctions[decl->objType->beh.construct]->Release();
+						engine->scriptFunctions[decl->objType->beh.construct]->ReleaseInternal();
 						decl->objType->beh.construct = 0;
 						decl->objType->beh.constructors.RemoveIndex(0);
 					}
 					if( decl->objType->beh.factory )
 					{
-						engine->scriptFunctions[decl->objType->beh.factory]->Release();
+						engine->scriptFunctions[decl->objType->beh.factory]->ReleaseInternal();
 						decl->objType->beh.factory = 0;
 						decl->objType->beh.factories.RemoveIndex(0);
 					}
 					// Only remove the opAssign method if the script hasn't provided one
 					if( decl->objType->beh.copy == engine->scriptTypeBehaviours.beh.copy )
 					{
-						engine->scriptFunctions[decl->objType->beh.copy]->Release();
+						engine->scriptFunctions[decl->objType->beh.copy]->ReleaseInternal();
 						decl->objType->beh.copy = 0;
 					}
 				}
@@ -1534,14 +1533,11 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 			// Replace our funcdef for the existing one
 			funcDef->idx = f2->id;
 			module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
-			f2->AddRef();
+			f2->AddRefInternal();
 
 			engine->funcDefs.RemoveValue(func);
 
-			func->Release();
-
-			// funcdefs aren't destroyed when the refCount reaches zero so we need to manually delete them
-			asDELETE(func, asCScriptFunction);
+			func->ReleaseInternal();
 			break;
 		}
 	}
@@ -1771,7 +1767,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 				decl->isExistingShared = true;
 				decl->objType          = st;
 				module->classTypes.PushLast(st);
-				st->AddRef();
+				st->AddRefInternal();
 				return 0;
 			}
 		}
@@ -1809,27 +1805,27 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	st->module    = module;
 	module->classTypes.PushLast(st);
 	engine->scriptTypes.PushLast(st);
-	st->AddRef();
+	st->AddRefInternal();
 	decl->objType = st;
 
 	// Use the default script class behaviours
 	st->beh = engine->scriptTypeBehaviours.beh;
 
 	// TODO: Move this to asCObjectType so that the asCRestore can reuse it
-	engine->scriptFunctions[st->beh.addref]->AddRef();
-	engine->scriptFunctions[st->beh.release]->AddRef();
-	engine->scriptFunctions[st->beh.gcEnumReferences]->AddRef();
-	engine->scriptFunctions[st->beh.gcGetFlag]->AddRef();
-	engine->scriptFunctions[st->beh.gcGetRefCount]->AddRef();
-	engine->scriptFunctions[st->beh.gcReleaseAllReferences]->AddRef();
-	engine->scriptFunctions[st->beh.gcSetFlag]->AddRef();
-	engine->scriptFunctions[st->beh.copy]->AddRef();
-	engine->scriptFunctions[st->beh.factory]->AddRef();
-	engine->scriptFunctions[st->beh.construct]->AddRef();
+	engine->scriptFunctions[st->beh.addref]->AddRefInternal();
+	engine->scriptFunctions[st->beh.release]->AddRefInternal();
+	engine->scriptFunctions[st->beh.gcEnumReferences]->AddRefInternal();
+	engine->scriptFunctions[st->beh.gcGetFlag]->AddRefInternal();
+	engine->scriptFunctions[st->beh.gcGetRefCount]->AddRefInternal();
+	engine->scriptFunctions[st->beh.gcReleaseAllReferences]->AddRefInternal();
+	engine->scriptFunctions[st->beh.gcSetFlag]->AddRefInternal();
+	engine->scriptFunctions[st->beh.copy]->AddRefInternal();
+	engine->scriptFunctions[st->beh.factory]->AddRefInternal();
+	engine->scriptFunctions[st->beh.construct]->AddRefInternal();
 	// TODO: weak: Should not do this if the class has been declared with noweak
-	engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRef();
+	engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRefInternal();
 	for( asUINT i = 1; i < st->beh.operators.GetLength(); i += 2 )
-		engine->scriptFunctions[st->beh.operators[i]]->AddRef();
+		engine->scriptFunctions[st->beh.operators[i]]->AddRefInternal();
 
 	return 0;
 }
@@ -1883,7 +1879,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 				decl->isExistingShared = true;
 				decl->objType          = st;
 				module->classTypes.PushLast(st);
-				st->AddRef();
+				st->AddRefInternal();
 				return 0;
 			}
 		}
@@ -1905,15 +1901,15 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	st->module = module;
 	module->classTypes.PushLast(st);
 	engine->scriptTypes.PushLast(st);
-	st->AddRef();
+	st->AddRefInternal();
 	decl->objType = st;
 
 	// Use the default script class behaviours
 	st->beh.construct = 0;
 	st->beh.addref = engine->scriptTypeBehaviours.beh.addref;
-	engine->scriptFunctions[st->beh.addref]->AddRef();
+	engine->scriptFunctions[st->beh.addref]->AddRefInternal();
 	st->beh.release = engine->scriptTypeBehaviours.beh.release;
-	engine->scriptFunctions[st->beh.release]->AddRef();
+	engine->scriptFunctions[st->beh.release]->AddRefInternal();
 	st->beh.copy = 0;
 
 	return 0;
@@ -2099,7 +2095,7 @@ void asCBuilder::CompileGlobalVariables()
 				{
 					// Create the init function for this variable
 					initFunc->id = engine->GetNextScriptFunctionId();
-					engine->SetScriptFunction(initFunc);
+					engine->AddScriptFunction(initFunc);
 
 					// Finalize the init function for this variable
 					initFunc->returnType = asCDataType::CreatePrimitive(ttVoid, false);
@@ -2113,7 +2109,7 @@ void asCBuilder::CompileGlobalVariables()
 
 					gvar->property->SetInitFunc(initFunc);
 
-					initFunc->Release();
+					initFunc->ReleaseInternal();
 					initFunc = 0;
 				}
 				else if( initFunc )
@@ -2500,7 +2496,7 @@ void asCBuilder::CompileInterfaces()
 				{
 					// Add the method
 					intfType->methods.PushLast(baseFunc->id);
-					baseFunc->AddRef();
+					baseFunc->AddRefInternal();
 				}
 			}
 		}
@@ -2638,7 +2634,7 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 						{
 							// Set the base class
 							decl->objType->derivedFrom = objType;
-							objType->AddRef();
+							objType->AddRefInternal();
 						}
 					}
 				}
@@ -2785,13 +2781,13 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				{
 					// Push the base class function on the virtual function table
 					decl->objType->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[m]);
-					baseType->virtualFunctionTable[m]->AddRef();
+					baseType->virtualFunctionTable[m]->AddRefInternal();
 
 					CheckForConflictsDueToDefaultArgs(decl->script, decl->node, baseType->virtualFunctionTable[m], decl->objType);
 				}
 
 				decl->objType->methods.PushLast(baseType->methods[m]);
-				engine->scriptFunctions[baseType->methods[m]]->AddRef();
+				engine->scriptFunctions[baseType->methods[m]]->AddRefInternal();
 			}
 		}
 
@@ -2859,7 +2855,7 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 					// implemented and we error out later in the checks.
 					decl->objType->virtualFunctionTable.PushLast(realFunc);
 					if( realFunc )
-						realFunc->AddRef();
+						realFunc->AddRefInternal();
 				}
 			}
 		}
@@ -3602,10 +3598,10 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 
 	// Set it as default constructor
 	if( objType->beh.construct )
-		engine->scriptFunctions[objType->beh.construct]->Release();
+		engine->scriptFunctions[objType->beh.construct]->ReleaseInternal();
 	objType->beh.construct = funcId;
 	objType->beh.constructors[0] = funcId;
-	engine->scriptFunctions[funcId]->AddRef();
+	engine->scriptFunctions[funcId]->AddRefInternal();
 
 	// The bytecode for the default constructor will be generated
 	// only after the potential inheritance has been established
@@ -3628,7 +3624,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	// Add a default factory as well
 	funcId = engine->GetNextScriptFunctionId();
 	if( objType->beh.factory )
-		engine->scriptFunctions[objType->beh.factory]->Release();
+		engine->scriptFunctions[objType->beh.factory]->ReleaseInternal();
 	objType->beh.factory = funcId;
 	objType->beh.factories[0] = funcId;
 	returnType = asCDataType::CreateObjectHandle(objType, false);
@@ -3637,7 +3633,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	functions.PushLast(0);
 	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
-	engine->scriptFunctions[funcId]->AddRef();
+	engine->scriptFunctions[funcId]->AddRefInternal();
 
 	// If the object is shared, then the factory must also be marked as shared
 	if( objType->flags & asOBJ_SHARED )
@@ -3703,7 +3699,7 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 			st->module    = module;
 		}
 		module->enumTypes.PushLast(st);
-		st->AddRef();
+		st->AddRefInternal();
 
 		// TODO: cleanup: Should the enum type really be stored in the engine->classTypes?
 		//                http://www.gamedev.net/topic/616912-c-header-file-shared-with-scripts/page__gopid__4895940
@@ -3856,7 +3852,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 		st->templateSubTypes.PushLast(dataType);
 		st->module          = module;
 
-		st->AddRef();
+		st->AddRefInternal();
 
 		module->typeDefs.PushLast(st);
 		engine->scriptTypes.PushLast(st);
@@ -4122,6 +4118,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				if( func->name == name &&
 					func->IsSignatureExceptNameEqual(returnType, parameterTypes, inOutFlags, objType, isConstMethod) )
 				{
+					// Add the shared function in this module too
+					module->AddScriptFunction(func);
+
 					found = true;
 					break;
 				}
@@ -4339,7 +4338,6 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 		// TODO: clean up: This should be done by AddScriptFunction() itself
 		module->globalFunctions.Put(f);
-		f->AddRef();
 	}
 	else
 	{
@@ -4357,19 +4355,19 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 	{
 		asASSERT( !isExistingShared );
 
-		engine->scriptFunctions[funcId]->AddRef();
+		engine->scriptFunctions[funcId]->AddRefInternal();
 		if( isConstructor )
 		{
 			int factoryId = engine->GetNextScriptFunctionId();
 			if( parameterTypes.GetLength() == 0 )
 			{
 				// Overload the default constructor
-				engine->scriptFunctions[objType->beh.construct]->Release();
+				engine->scriptFunctions[objType->beh.construct]->ReleaseInternal();
 				objType->beh.construct = funcId;
 				objType->beh.constructors[0] = funcId;
 
 				// Register the default factory as well
-				engine->scriptFunctions[objType->beh.factory]->Release();
+				engine->scriptFunctions[objType->beh.factory]->ReleaseInternal();
 				objType->beh.factory = factoryId;
 				objType->beh.factories[0] = factoryId;
 			}
@@ -4399,7 +4397,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			// Compile the factory immediately
 			asCCompiler compiler(engine);
 			compiler.CompileFactory(this, file, engine->scriptFunctions[factoryId]);
-			engine->scriptFunctions[factoryId]->AddRef();
+			engine->scriptFunctions[factoryId]->AddRefInternal();
 		}
 		else if( isDestructor )
 			objType->beh.destruct = funcId;
@@ -4411,9 +4409,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				f->parameterTypes[0].GetObjectType() == f->objectType &&
 				(f->inOutFlags[0] & asTM_INREF) )
 			{
-				engine->scriptFunctions[objType->beh.copy]->Release();
+				engine->scriptFunctions[objType->beh.copy]->ReleaseInternal();
 				objType->beh.copy = funcId;
-				f->AddRef();
+				f->AddRefInternal();
 			}
 
 			objType->methods.PushLast(funcId);
@@ -5019,7 +5017,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							{
 								// This is a template instance
 								// Need to find the correct object type
-								asCObjectType *otInstance = engine->GetTemplateInstanceType(ot, subTypes);
+								asCObjectType *otInstance = engine->GetTemplateInstanceType(ot, subTypes, module);
 
 								if( otInstance && otInstance->scriptSectionIdx < 0 )
 								{
@@ -5127,7 +5125,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			}
 
 			// Make the type an array (or multidimensional array)
-			if( dt.MakeArray(engine) < 0 )
+			if( dt.MakeArray(engine, module) < 0 )
 			{
 				WriteError(TXT_NO_DEFAULT_ARRAY_TYPE, file, n);
 				break;

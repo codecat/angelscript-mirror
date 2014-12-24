@@ -172,8 +172,7 @@ bool Test()
 		engine->GarbageCollect();
 		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-		if( !fail )
-			assert( gcCurrentSize == 0 && gcTotalDestroyed == 8 && gcTotalDetected == 7 );
+		assert( fail || gcCurrentSize == 0 && gcTotalDestroyed == 7 && gcTotalDetected == 7 );
 
 		engine->Release();
 	}

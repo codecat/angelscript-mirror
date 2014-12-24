@@ -1165,6 +1165,7 @@ static bool Test4()
 	if( r != 5 )
 		TEST_FAILED;
 
+	mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("test", "int Run() \n"
 								  "{ \n"
 								  "  Caster caster(5); \n"

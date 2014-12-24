@@ -1247,6 +1247,7 @@ bool Test()
 		r = ExecuteString(engine, "TestArrayInStruct()", mod);
 		if( r != 0 ) TEST_FAILED;
 
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -1290,6 +1291,7 @@ bool Test()
 		r = ExecuteString(engine, "TestHandleInStruct2()", mod);
 		if( r != 0 ) TEST_FAILED;
 
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;

@@ -178,6 +178,11 @@ public:
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);
 	~asCScriptFunction();
 
+	// Keep an internal reference counter to separate references coming from 
+	// application or script objects and references coming from the script code
+	int AddRefInternal();
+	int ReleaseInternal();
+
 	void     DestroyHalfCreated();
 
 	// TODO: 2.29.0: operator==
@@ -189,7 +194,6 @@ public:
 	//bool      operator==(const asCScriptFunction &other) const;
 
 	void      DestroyInternal();
-	void      Orphan(asIScriptModule *mod);
 
 	void      AddVariable(asCString &name, asCDataType &type, int stackOffset);
 
@@ -224,7 +228,7 @@ public:
 
 	asCGlobalProperty *GetPropertyByGlobalVarPtr(void *gvarPtr);
 
-	// GC methods
+	// GC methods (for delegates)
 	int  GetRefCount();
 	void SetFlag();
 	bool GetFlag();
@@ -235,7 +239,8 @@ public:
 	//-----------------------------------
 	// Properties
 
-	mutable asCAtomic            refCount;
+	mutable asCAtomic            externalRefCount; // Used for external referneces
+	        asCAtomic            internalRefCount; // Used for internal references
 	mutable bool                 gcFlag;
 	asCScriptEngine             *engine;
 	asCModule                   *module;

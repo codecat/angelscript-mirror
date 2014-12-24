@@ -386,7 +386,10 @@ bool Test()
 			TEST_FAILED;
 		if( r == asEXECUTION_EXCEPTION )
 			PRINTF("%s", GetExceptionInfo(ctx).c_str());
-		ctx->Release();	
+		ctx->Release();
+
+		// Garbage collect the objects so the module can be reused
+		engine->GarbageCollect();
 
 		// Test different signatures on opCmp and opEquals
 		mod->AddScriptSection(TESTNAME,
@@ -432,6 +435,9 @@ bool Test()
 		if( r == asEXECUTION_EXCEPTION )
 			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 		ctx->Release();
+
+		// Garbage collect the objects so the module can be reused
+		engine->GarbageCollect();
 
 		// Multiple tests in one
 		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);

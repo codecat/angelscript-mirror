@@ -29,9 +29,6 @@ bool Test()
 			TEST_FAILED;
 
 		asIScriptFunction *func = mod1->GetFunctionByName("func1");
-		int refCount = func->AddRef() - 1; func->Release();
-		if( refCount != 3 ) // The module holds 2 references, func2 holds another
-			TEST_FAILED;
 
 		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
 		mod2->AddScriptSection("test", script);
@@ -40,16 +37,12 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		refCount = func->AddRef() - 1; func->Release();
-		if( refCount != 6 ) // The modules holds an additional 2 references, func3 holds another
+		asIScriptFunction *func2 = mod2->GetFunctionByName("func1");
+		if( func != func2 )
 			TEST_FAILED;
 
 		engine->DiscardModule("test1");
 
-		refCount = func->AddRef() - 1; func->Release();
-		if( refCount != 5 ) // The mod1 released it's two references, but the gc adds one reference
-			TEST_FAILED;
-		
 		engine->Release();
 	}
 

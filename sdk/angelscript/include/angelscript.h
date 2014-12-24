@@ -107,7 +107,8 @@ enum asERetCodes
 	asWRONG_CALLING_CONV                   = -24,
 	asBUILD_IN_PROGRESS                    = -25,
 	asINIT_GLOBAL_VARS_FAILED              = -26,
-	asOUT_OF_MEMORY                        = -27
+	asOUT_OF_MEMORY                        = -27,
+	asMODULE_IS_IN_USE                     = -28
 };
 
 // Engine properties

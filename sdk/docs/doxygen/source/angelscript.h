@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.29.1
-#define ANGELSCRIPT_VERSION        22901
-#define ANGELSCRIPT_VERSION_STRING "2.29.1"
+//! Version 2.30.0
+#define ANGELSCRIPT_VERSION        23000
+#define ANGELSCRIPT_VERSION_STRING "2.30.0"
 
 // Data types
 
@@ -2034,9 +2034,9 @@ public:
 	//! \param[in] codeLength The length of the script code
 	//! \param[in] lineOffset An offset that will be added to compiler message line numbers
 	//! \return A negative value on error.
-	//! \retval asMODULE_IS_IN_USE The module is currently in use.
 	//! \retval asINVALID_ARG The \a code argument is null.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
+	//! \retval asOUT_OF_MEMORY The necessary memory to hold the script code couldn't be allocated.
 	//!
 	//! This adds a script section to the module. The script section isn't processed with this
 	//! call. Only when \ref Build is called will the script be parsed and compiled into 
@@ -2057,6 +2057,7 @@ public:
 	//! \retval asBUILD_IN_PROGRESS Another thread is currently building. 
 	//! \retval asINIT_GLOBAL_VARS_FAILED It was not possible to initialize at least one of the global variables.
 	//! \retval asNOT_SUPPORTED Compiler support is disabled in the engine.
+	//! \retval asMODULE_IS_IN_USE The code in the module is still being used and and cannot be removed. 
 	//!
 	//! Builds the script based on the previously \ref AddScriptSection "added sections", \ref doc_register_api "registered types and functions". 
 	//! After the build is complete the script sections are removed to free memory. 
@@ -2439,6 +2440,7 @@ public:
 	//! \retval asINVALID_ARG The stream object wasn't specified.
 	//! \retval asBUILD_IN_PROGRESS Another thread is currently building.
 	//! \retval asOUT_OF_MEMORY The engine ran out of memory while loading the byte code.
+	//! \retval asMODULE_IS_IN_USE The code in the module is still being used and and cannot be removed. 
 	//! \retval asERROR It was not possible to load the byte code.
 	//!
 	//! This method is used to load pre-compiled byte code from disk or memory. The application must

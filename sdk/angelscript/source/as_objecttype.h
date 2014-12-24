@@ -109,8 +109,6 @@ struct asSEnumValue
 class asCScriptEngine;
 struct asSNameSpace;
 
-void RegisterObjectTypeGCBehaviours(asCScriptEngine *engine);
-
 class asCObjectType : public asIObjectType
 {
 public:
@@ -173,15 +171,12 @@ public:
 public:
 	asCObjectType(asCScriptEngine *engine);
 	~asCObjectType();
-	void DropFromEngine();
 	void DestroyInternal();
 
-	void Orphan(asCModule *module);
-	int  GetRefCount();
-	void SetGCFlag();
-	bool GetGCFlag();
-	void EnumReferences(asIScriptEngine *);
-	void ReleaseAllHandles(asIScriptEngine *);
+	// Keep an internal reference counter to separate references coming from 
+	// application or script objects and references coming from the script code
+	int AddRefInternal();
+	int ReleaseInternal();
 
 	void ReleaseAllFunctions();
 
@@ -226,10 +221,12 @@ public:
 
 protected:
 	friend class asCScriptEngine;
+	friend class asCConfigGroup;
+	friend class asCModule;
 	asCObjectType();
 
-	mutable asCAtomic refCount;
-	mutable bool      gcFlag;
+	mutable asCAtomic externalRefCount;
+	asCAtomic         internalRefCount;
 };
 
 END_AS_NAMESPACE

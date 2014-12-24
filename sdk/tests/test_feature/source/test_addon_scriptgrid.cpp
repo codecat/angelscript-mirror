@@ -106,7 +106,7 @@ bool Test()
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		r = ExecuteString(engine, 
+		r = ExecuteString(engine,
 			"grid<string> g; \n"
 			"g.resize(1,1); \n"
 			"g[0,0] = 'hello'; \n"

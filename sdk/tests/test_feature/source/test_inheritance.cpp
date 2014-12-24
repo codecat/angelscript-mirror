@@ -538,7 +538,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 
 	asUINT gcSize;
 	engine->GetGCStatistics(&gcSize);
-	assert( gcSize == 2 );
+	assert( gcSize == 1 );
 	engine->GarbageCollect();
 	engine->GetGCStatistics(&gcSize);
 	assert( gcSize == 0 );

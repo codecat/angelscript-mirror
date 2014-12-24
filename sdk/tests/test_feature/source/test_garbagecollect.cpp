@@ -161,11 +161,11 @@ bool Test()
 			TEST_FAILED;
 
 		asUINT seqNbr; asIObjectType *type;
+		engine->GetObjectInGC(0, &seqNbr, 0, &type);
+		if( seqNbr != 0 || type == 0 || strcmp(type->GetName(), "CircularRef") != 0 )
+			TEST_FAILED;
 		engine->GetObjectInGC(1, &seqNbr, 0, &type);
 		if( seqNbr != 1 || type == 0 || strcmp(type->GetName(), "CircularRef") != 0 )
-			TEST_FAILED;
-		engine->GetObjectInGC(2, &seqNbr, 0, &type);
-		if( seqNbr != 2 || type == 0 || strcmp(type->GetName(), "CircularRef") != 0 )
 			TEST_FAILED;
 
 		engine->GarbageCollect();

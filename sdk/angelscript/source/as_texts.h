@@ -313,6 +313,8 @@
 #define TXT_INVALID_BYTECODE_d                           "LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: %d"
 #define TXT_NO_JIT_IN_FUNC_s                             "Function '%s' appears to have been compiled without JIT entry points"
 #define TXT_ENGINE_REF_COUNT_ERROR_DURING_SHUTDOWN       "Uh oh! The engine's reference count is increasing while it is being destroyed. Make sure references needed for clean-up are immediately released"
+#define TXT_MODULE_IS_IN_USE                             "The module is still in use and cannot be rebuilt. Discard it and request another module"
+#define TXT_EXTRNL_REF_TO_MODULE_s                       "There is an external reference to an object in module '%s', preventing it from being deleted"
 
 // Internal names
 

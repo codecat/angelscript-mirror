@@ -1093,6 +1093,8 @@ bool Test()
 		TEST_FAILED;
 	}
 
+	engine->GarbageCollect();
+
 	// Test const/non-const overloads for get and set accessors
 	const char *script22 = 
 		"class Test                                       \n"
@@ -1477,6 +1479,7 @@ bool Test()
 			"  CTest2 t; \n"
 			"  @t[0] = s; \n" // handle assign is not allowed for non-handle property
 			"} \n";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r > 0 )

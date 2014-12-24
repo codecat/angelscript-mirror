@@ -20,8 +20,9 @@ void Test()
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
 	printf("AngelScript 2.30.0 WIP 0: 6.50 secs\n");
+	printf("AngelScript 2.30.0 WIP 1: 0.18 secs (redesigned clean-up of script code)\n");
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

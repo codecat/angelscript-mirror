@@ -243,9 +243,8 @@ public:
 
 	void ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type);
 
-	void CleanupAfterDiscardModule();
+	void DeleteDiscardedModules();
 
-	int  ClearUnusedTypes();
 	void RemoveTemplateInstanceType(asCObjectType *t);
 	void RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot);
 
@@ -281,8 +280,9 @@ public:
 	int  GetFactoryIdByDecl(const asCObjectType *ot, const char *decl);
 
 	int  GetNextScriptFunctionId();
-	void SetScriptFunction(asCScriptFunction *func);
-	void FreeScriptFunctionId(int id);
+	void AddScriptFunction(asCScriptFunction *func);
+	void RemoveScriptFunction(asCScriptFunction *func);
+	void RemoveFuncdef(asCScriptFunction *func);
 
 	int ConfigError(int err, const char *funcName, const char *arg1, const char *arg2);
 
@@ -292,13 +292,14 @@ public:
 	void               RemoveFromTypeIdMap(asCObjectType *type);
 
 	bool               IsTemplateType(const char *name) const;
-	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes);
+	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes, asCModule *requestingModule);
 	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
-	void               OrphanTemplateInstances(asCObjectType *subType);
 	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
 	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
 
+	asCModule         *FindNewOwnerForSharedType(asCObjectType *type, asCModule *mod);
+	asCModule         *FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod);
 
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked
@@ -307,7 +308,7 @@ public:
 
 	// Global property management
 	asCGlobalProperty *AllocateGlobalProperty();
-	void FreeUnusedGlobalProperties();
+	void RemoveGlobalProperty(asCGlobalProperty *prop);
 
 	int GetScriptSectionNameIndex(const char *name);
 
@@ -325,14 +326,12 @@ public:
 	asCObjectType   *defaultArrayObjectType;
 	asCObjectType    scriptTypeBehaviours;
 	asCObjectType    functionBehaviours;
-	asCObjectType    objectTypeBehaviours;
-	asCObjectType    globalPropertyBehaviours;
 
 	// Registered interface
 	asCArray<asCObjectType *>         registeredObjTypes;
 	asCArray<asCObjectType *>         registeredTypeDefs;
 	asCArray<asCObjectType *>         registeredEnums;
-	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
+	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // increases ref count // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
 	asCArray<asCScriptFunction *>     registeredFuncDefs;
 	asCArray<asCObjectType *>         registeredTemplateTypes;
@@ -340,7 +339,7 @@ public:
 	bool configFailed;
 
 	// Stores all registered types except funcdefs
-	asCMap<asSNameSpaceNamePair, asCObjectType*> allRegisteredTypes;  
+	asCMap<asSNameSpaceNamePair, asCObjectType*> allRegisteredTypes; // increases ref count
 
 	// Dummy types used to name the subtypes in the template objects 
 	asCArray<asCObjectType *>      templateSubTypes;
@@ -348,46 +347,60 @@ public:
 	// Store information about template types
 	// This list will contain all instances of templates, both registered specialized 
 	// types and those automacially instantiated from scripts
-	asCArray<asCObjectType *>      templateInstanceTypes;
+	asCArray<asCObjectType *>      templateInstanceTypes; // increases ref count
 
 	// Store information about list patterns
-	asCArray<asCObjectType *>      listPatternTypes;
+	asCArray<asCObjectType *>      listPatternTypes; // increases ref count
 
 	// Stores all global properties, both those registered by application, and those declared by scripts.
 	// The id of a global property is the index in this array.
-	asCArray<asCGlobalProperty *> globalProperties;
+	asCArray<asCGlobalProperty *> globalProperties; // increases ref count
+	asCArray<int>                 freeGlobalPropertyIds;
 
 	// This map is used to quickly find a property by its memory address
 	// It is used principally during building, cleanup, and garbage detection for script functions
-	asCMap<void*, asCGlobalProperty*> varAddressMap;
-
-	asCArray<int>                 freeGlobalPropertyIds;
+	asCMap<void*, asCGlobalProperty*> varAddressMap; // doesn't increase ref count
 
 	// Stores all functions, i.e. registered functions, script functions, class methods, behaviours, etc.
-	asCArray<asCScriptFunction *> scriptFunctions;
+	asCArray<asCScriptFunction *> scriptFunctions;       // doesn't increase ref count
 	asCArray<int>                 freeScriptFunctionIds;
 	asCArray<asCScriptFunction *> signatureIds;
 
 	// An array with all module imported functions
-	asCArray<sBindInfo *>  importedFunctions;
+	asCArray<sBindInfo *>  importedFunctions; // doesn't increase ref count
 	asCArray<int>          freeImportedFunctionIdxs;
 
-	// These resources must be protected for multiple accesses
+	// Synchronized
 	mutable asCAtomic      refCount;
+	// Synchronized with engineRWLock
+	// This array holds all live script modules
 	asCArray<asCModule *>  scriptModules;
+	// Synchronized with engineRWLock
+	// This is a pointer to the last module that was requested. It is used for performance 
+	// improvement, since it is common that the same module is accessed many times in a row
 	asCModule             *lastModule;
+	// Synchronized with engineRWLock
+	// This flag is true if a script is currently being compiled. It is used to prevent multiple
+	// threads from requesting builds at the same time (without blocking)
 	bool                   isBuilding;
+	// Synchronized with engineRWLock
+	// This array holds modules that have been discard (thus are no longer visible to the application)
+	// but cannot yet be deleted due to having external references to some of the entities in them
+	asCArray<asCModule *>  discardedModules;
+	// This flag is set to true during compilations of scripts (or loading pre-compiled scripts) 
+	// to delay the validation of template types until the subtypes have been fully declared 
 	bool                   deferValidationOfTemplateTypes;
 
 	// Tokenizer is instantiated once to share resources
 	asCTokenizer tok;
 
+	// TODO: 2.30.0: redesign: Do the engine really need to keep a reference to non-shared types?
 	// Stores script declared types (classes, interfaces, enums, typedefs)
-	asCArray<asCObjectType *> scriptTypes;
+	asCArray<asCObjectType *> scriptTypes; // increases ref count
 	// This array stores the template instances types that have been automatically generated from template types
 	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs
-	asCArray<asCScriptFunction *> funcDefs;
+	asCArray<asCScriptFunction *> funcDefs; // doesn't increase ref count
 
 	// Stores the names of the script sections for debugging purposes
 	asCArray<asCString *> scriptSectionNames;

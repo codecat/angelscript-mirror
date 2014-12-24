@@ -330,6 +330,7 @@ bool Test()
 
 	
 	// TEST 2
+	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;

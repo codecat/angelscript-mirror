@@ -468,6 +468,7 @@ bool Test()
 		delegate->Release();
 
 		// Must be possible to create delegate for registered type too
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"funcdef bool EMPTY(); \n"
 			"void main() { \n"
@@ -596,6 +597,7 @@ bool Test()
 				 "}                          \n"
 				 "int called = 0;            \n"
 				 "void func() { called++; }  \n";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
