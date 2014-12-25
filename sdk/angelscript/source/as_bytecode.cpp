@@ -2037,7 +2037,14 @@ void asCByteCode::PostProcess()
 			DeleteInstruction(curr);
 		}
 		else
+		{
+#ifndef AS_DEBUG
+			// If the stackSize is negative, then there is a problem with the bytecode.
+			// If AS_DEBUG is turned on, this same check is done in DebugOutput.
+			asASSERT( instr->stackSize >= 0 || asBCInfo[instr->op].type == asBCTYPE_INFO );
+#endif
 			instr = instr->next;
+		}
 	}
 }
 
@@ -2134,6 +2141,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	}
 	fprintf(file, "\n\n");
 
+	bool invalidStackSize = false;
 	int pos = 0;
 	asUINT lineIndex = 0;
 	asCByteInstruction *instr = first;
@@ -2146,10 +2154,19 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 			lineIndex += 2;
 		}
 
-		fprintf(file, "%5d ", pos);
-		pos += instr->GetSize();
+		if( instr->GetSize() > 0 )
+		{
+			fprintf(file, "%5d ", pos);
+			pos += instr->GetSize();
 
-		fprintf(file, "%3d %c ", int(instr->stackSize + func->scriptData->variableSpace), instr->marked ? '*' : ' ');
+			fprintf(file, "%3d %c ", int(instr->stackSize + func->scriptData->variableSpace), instr->marked ? '*' : ' ');
+			if( instr->stackSize < 0 )
+				invalidStackSize = true;
+		}
+		else
+		{
+			fprintf(file, "            ");
+		}
 
 		switch( asBCInfo[instr->op].type )
 		{
@@ -2364,6 +2381,11 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 	}
 
 	fclose(file);
+
+	// If the stackSize is negative then there is something wrong with the 
+	// bytecode, i.e. there is a bug in the compiler or in the optimizer. We 
+	// only check this here to have the bytecode available on file for verification
+	asASSERT( !invalidStackSize );
 }
 #endif
 

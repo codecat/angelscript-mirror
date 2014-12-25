@@ -10945,7 +10945,7 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprConte
 	// Compile the assignment using the set accessor
 	ProcessPropertySetAccessor(&llctx, ctx, errNode);
 
-	MergeExprBytecode(ctx, &llctx);
+	MergeExprBytecodeAndType(ctx, &llctx);
 
 	if( before.type.stackOffset )
 		ReleaseTemporaryVariable(before.type.stackOffset, &ctx->bc);
