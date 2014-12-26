@@ -439,7 +439,7 @@ void asCScriptFunction::DestroyHalfCreated()
 	if( scriptData )
 		scriptData->byteCode.SetLength(0);
 
-	delete this;
+	asDELETE(this, asCScriptFunction);
 }
 
 // internal
