@@ -674,18 +674,8 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	listPatternTypes.SetLength(0);
 
-	// Break all relationship between remaining class types and functions
-	for( n = 0; n < scriptTypes.GetLength(); n++ )
-	{
-		if( scriptTypes[n] )
-			scriptTypes[n]->ReleaseAllFunctions();
-
-		if( scriptTypes[n]->derivedFrom )
-		{
-			scriptTypes[n]->derivedFrom->ReleaseInternal();
-			scriptTypes[n]->derivedFrom = 0;
-		}
-	}
+	// No script types must have survived
+	asASSERT( sharedScriptTypes.GetLength() == 0 );
 
 	// It is allowed to create new references to the engine temporarily while destroying objects
 	// but these references must be release immediately or else something is can go wrong later on
@@ -768,11 +758,6 @@ asCScriptEngine::~asCScriptEngine()
 
 	// Destroy the funcdefs
 	// As funcdefs are shared between modules it shouldn't be a problem to keep the objects until the engine is released
-	// TODO: refactor: This really should be done by ClearUnusedTypes() as soon as the funcdef is no longer is use.
-	//                 Perhaps to make it easier to manage the memory for funcdefs each function definition should
-	//                 have it's own object type. That would make the funcdef much more similar to the other types
-	//                 and could then be handled in much the same way. When this is done the funcdef should also be
-	//                 changed so that it doesn't take up a function id, i.e. don't keep a reference to it in scriptFunctions.
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 		if( funcDefs[n] )
 		{

@@ -184,11 +184,7 @@ bool Test()
 			TEST_FAILED;
 		string error = GetCurrentDir() + "/rel_dir/missing_include.as (0, 0) : Error   : Failed to open script file '" + GetCurrentDir() + "/rel_dir/missing_include.as'\n"
 					   "/abs_dir/missing_inc.as (0, 0) : Error   : Failed to open script file '/abs_dir/missing_inc.as'\n"
-					   "c:/disk_path/missing_inc.as (0, 0) : Error   : Failed to open script file 'c:/disk_path/missing_inc.as'\n"
-					   "test1 (1, 1) : Warning : The script section is empty\n"
-					   "test2 (1, 1) : Warning : The script section is empty\n"
-					   "test3 (1, 1) : Warning : The script section is empty\n"
-					   "test4 (1, 1) : Warning : The script section is empty\n";
+					   "c:/disk_path/missing_inc.as (0, 0) : Error   : Failed to open script file 'c:/disk_path/missing_inc.as'\n";
 		if( bout.buffer != error )
 		{
 			PRINTF("%s", bout.buffer.c_str());

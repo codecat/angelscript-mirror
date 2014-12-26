@@ -15,6 +15,49 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// problem default args and string concatenation
+	// http://www.gamedev.net/topic/663922-problem-with-default-arguments/
+	{
+		const char *script = 
+			"enum E { HUD = 1 } \n"
+			"class T { \n"
+			"  void func(E msg, const string &in text, const string &in a1 = 'a', const string &in a2 = 'b', const string &in a3 = 'c', const string &in a4 = 'd') \n"
+			"  { \n"
+			"    assert( msg == HUD ); \n"
+			"    assert( text == 'test' ); \n"
+			"    assert( a1 == 'a' ); \n"
+			"    assert( a2 == 'b' ); \n"
+			"    assert( a3 == 'c' ); \n"
+			"    assert( a4 == 'd' ); \n"
+			"  } \n"
+			"} \n"
+			"T g_t; \n";
+		
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		bout.buffer = "";
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "g_t.func(HUD, 't' + 'e' + 's' + 't'); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// default args should be compiled in the same namespace that the function was declared in
 	// http://www.gamedev.net/topic/657430-default-parameters-within-namespace/
 	{

@@ -158,7 +158,6 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "two funcs (0, 0) : Error   : The code must contain one and only one function\n"
-						   "no code (1, 1) : Warning : The script section is empty\n"
 						   "no code (0, 0) : Error   : The code must contain one and only one function\n"
 						   "var (0, 0) : Error   : The code must contain one and only one function\n" )
 		{

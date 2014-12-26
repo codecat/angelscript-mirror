@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/12/23</h2>
+<h2>Version 2.30.0 WIP - 2014/12/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -65,6 +65,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Changed SetLineCallback so that it is safe to call it from a second thread while the context is running (Thanks ziomau)
 <li>Completely re-factored the way the memory management for the internal script code is done
 <li>Discarding modules is much faster, and doesn't burden the garbage collector (Thanks ziomau)
+<li>Compiler no longer warns on empty sections since this may be a valid situation (Thanks iraxef)
 </ul>
 <li>Script language
 <ul>

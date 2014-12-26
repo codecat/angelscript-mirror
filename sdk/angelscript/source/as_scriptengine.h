@@ -394,9 +394,8 @@ public:
 	// Tokenizer is instantiated once to share resources
 	asCTokenizer tok;
 
-	// TODO: 2.30.0: redesign: Do the engine really need to keep a reference to non-shared types?
-	// Stores script declared types (classes, interfaces, enums, typedefs)
-	asCArray<asCObjectType *> scriptTypes; // increases ref count
+	// Stores shared script declared types (classes, interfaces, enums)
+	asCArray<asCObjectType *> sharedScriptTypes; // increases ref count
 	// This array stores the template instances types that have been automatically generated from template types
 	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs

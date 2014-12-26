@@ -153,9 +153,9 @@ int asCReader::ReadInner()
 		bool sharedExists = false;
 		if( ot->IsShared() )
 		{
-			for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
+			for( asUINT n = 0; n < engine->sharedScriptTypes.GetLength(); n++ )
 			{
-				asCObjectType *t = engine->scriptTypes[n];
+				asCObjectType *t = engine->sharedScriptTypes[n];
 				if( t && 
 					t->IsShared() &&
 					t->name == ot->name &&
@@ -171,16 +171,22 @@ int asCReader::ReadInner()
 		}
 
 		if( sharedExists )
+		{
 			existingShared.Insert(ot, true);
+			ot->AddRefInternal();
+		}
 		else
 		{
-			engine->scriptTypes.PushLast(ot);
+			if( ot->IsShared() )
+			{
+				engine->sharedScriptTypes.PushLast(ot);
+				ot->AddRefInternal();
+			}
 
 			// Set this module as the owner
 			ot->module = module;
 		}
 		module->enumTypes.PushLast(ot);
-		ot->AddRefInternal();
 		ReadObjectTypeDeclaration(ot, 2);
 	}
 
@@ -205,9 +211,9 @@ int asCReader::ReadInner()
 		bool sharedExists = false;
 		if( ot->IsShared() )
 		{
-			for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
+			for( asUINT n = 0; n < engine->sharedScriptTypes.GetLength(); n++ )
 			{
-				asCObjectType *t = engine->scriptTypes[n];
+				asCObjectType *t = engine->sharedScriptTypes[n];
 				if( t &&
 					t->IsShared() &&
 					t->name == ot->name &&
@@ -223,16 +229,22 @@ int asCReader::ReadInner()
 		}
 
 		if( sharedExists )
+		{
 			existingShared.Insert(ot, true);
+			ot->AddRefInternal();
+		}
 		else
 		{
-			engine->scriptTypes.PushLast(ot);
+			if( ot->IsShared() )
+			{
+				engine->sharedScriptTypes.PushLast(ot);
+				ot->AddRefInternal();
+			}
 
 			// Set this module as the owner
 			ot->module = module;
 		}
 		module->classTypes.PushLast(ot);
-		ot->AddRefInternal();
 	}
 
 	if( error ) return asERROR;
@@ -315,9 +327,7 @@ int asCReader::ReadInner()
 
 		ReadObjectTypeDeclaration(ot, 1);
 		ot->module = module;
-		engine->scriptTypes.PushLast(ot);
 		module->typeDefs.PushLast(ot);
-		ot->AddRefInternal();
 		ReadObjectTypeDeclaration(ot, 2);
 	}
 

@@ -663,8 +663,11 @@ void asCModule::InternalReset()
 		type->DestroyInternal();
 
 		// Remove the type from the engine
-		engine->scriptTypes.RemoveValue(type);
-		type->ReleaseInternal();
+		if( type->IsShared() )
+		{
+			engine->sharedScriptTypes.RemoveValue(type);
+			type->ReleaseInternal();
+		}
 
 		// Release it from the module
 		type->module = 0;
@@ -689,8 +692,11 @@ void asCModule::InternalReset()
 		type->DestroyInternal();
 
 		// Remove the type from the engine
-		engine->scriptTypes.RemoveValue(type);
-		type->ReleaseInternal();
+		if( type->IsShared() )
+		{
+			engine->sharedScriptTypes.RemoveValue(type);
+			type->ReleaseInternal();
+		}
 
 		// Release it from the module
 		type->module = 0;
@@ -700,23 +706,9 @@ void asCModule::InternalReset()
 	for( n = 0; n < typeDefs.GetLength(); n++ )
 	{
 		asCObjectType *type = typeDefs[n];
-		if( type->IsShared() )
-		{
-			// The type is shared, so transfer ownership to another module that also uses it
-			if( engine->FindNewOwnerForSharedType(type, this) != this )
-			{
-				// The type is owned by another module, just release our reference
-				type->ReleaseInternal();
-				continue;
-			}
-		}
 
 		// The type should be destroyed now
 		type->DestroyInternal();
-
-		// Remove the type from the engine
-		engine->scriptTypes.RemoveValue(type);
-		type->ReleaseInternal();
 
 		// Release it from the module
 		type->module = 0;

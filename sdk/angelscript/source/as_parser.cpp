@@ -1925,13 +1925,17 @@ int asCParser::ParseScript(asCScriptCode *script)
 	if( errorWhileParsing )
 		return -1;
 
+	// TODO: Should allow application to request this warning to be generated. 
+	//       It should be off by default, since pre-processor may remove all
+	//       code from a section while still being meant as valid code
+/*
 	// Warn in case there isn't anything in the script
 	if( scriptNode->firstChild == 0 )
 	{
 		if( builder )
 			builder->WriteWarning(script->name, TXT_SECTION_IS_EMPTY, 1, 1);
 	}
-
+*/
 	return 0;
 }
 
@@ -2303,7 +2307,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 	if( token.type != ttEndStatementBlock ) 
 	{
 		RewindTo(&token);
-		Error(ExpectedToken(asCTokenizer::GetDefinition(token.type)), &token);
+		Error(ExpectedToken("}"), &token);
 		Error(InsteadFound(token), &token);
 		return node;
 	}
