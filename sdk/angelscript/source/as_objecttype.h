@@ -183,7 +183,7 @@ public:
 	bool IsInterface() const;
 	bool IsShared() const;
 
-	asCObjectProperty *AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate);
+	asCObjectProperty *AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isInherited);
 	void ReleaseAllProperties();
 
 	asCString                    name;

@@ -8314,6 +8314,14 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
 			if( prop )
 			{
+				// Is the property access allowed?
+				if( prop->isPrivate && prop->isInherited )
+				{
+					asCString msg;
+					msg.Format(TXT_INHERITED_PRIVATE_PROP_ACCESS_s, name.AddressOf());
+					Error(msg, errNode);
+				}
+
 				if( !objType )
 				{
 					// The object pointer is located at stack position 0

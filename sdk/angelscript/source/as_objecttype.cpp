@@ -673,7 +673,7 @@ asDWORD asCObjectType::GetAccessMask() const
 }
 
 // internal
-asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate)
+asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isInherited)
 {
 	asASSERT( flags & asOBJ_SCRIPT_OBJECT );
 	asASSERT( dt.CanBeInstantiated() );
@@ -687,9 +687,10 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, cons
 		return 0;
 	}
 
-	prop->name      = name;
-	prop->type      = dt;
-	prop->isPrivate = isPrivate;
+	prop->name        = name;
+	prop->type        = dt;
+	prop->isPrivate   = isPrivate;
+	prop->isInherited = isInherited;
 
 	int propSize;
 	if( dt.IsObject() )

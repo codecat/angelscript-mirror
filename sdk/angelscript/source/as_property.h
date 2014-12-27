@@ -54,11 +54,12 @@ class asCObjectProperty
 {
 public:
 	asCObjectProperty() {accessMask = 0xFFFFFFFF;}
-	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), isPrivate(o.isPrivate), accessMask(o.accessMask) {}
+	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), isPrivate(o.isPrivate), isInherited(o.isInherited), accessMask(o.accessMask) {}
 	asCString   name;
 	asCDataType type;
 	int         byteOffset;
-	bool		isPrivate;
+	bool        isPrivate;
+	bool        isInherited;
 	asDWORD     accessMask;
 };
 

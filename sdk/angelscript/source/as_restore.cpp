@@ -1579,13 +1579,14 @@ void asCReader::ReadObjectProperty(asCObjectType *ot)
 	ReadString(&name);
 	asCDataType dt;
 	ReadDataType(&dt);
-	bool isPrivate;
-	ReadData(&isPrivate, 1);
+	int flags = ReadEncodedUInt();
+	bool isPrivate = (flags & 1) ? true : false;
+	bool isInherited = (flags & 2) ? true : false;
 
 	// TODO: shared: If the type is shared and pre-existing, we should just 
 	//               validate that the loaded methods match the original 
 	if( !existingShared.MoveTo(0, ot) )
-		ot->AddPropertyToClass(name, dt, isPrivate);
+		ot->AddPropertyToClass(name, dt, isPrivate, isInherited);
 }
 
 void asCReader::ReadDataType(asCDataType *dt) 
@@ -3802,7 +3803,10 @@ void asCWriter::WriteObjectProperty(asCObjectProperty* prop)
 {
 	WriteString(&prop->name);
 	WriteDataType(&prop->type);
-	WriteData(&prop->isPrivate, 1);
+	int flags = 0;
+	if( prop->isPrivate ) flags |= 1;
+	if( prop->isInherited ) flags |= 2;
+	WriteEncodedInt64(flags);
 }
 
 void asCWriter::WriteDataType(const asCDataType *dt) 

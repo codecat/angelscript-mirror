@@ -130,6 +130,7 @@
 #define TXT_ILLEGAL_OPERATION_ON_s                 "Illegal operation on '%s'"
 #define TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST       "Illegal target type for reference cast"
 #define TXT_ILLEGAL_VARIABLE_NAME_s                "Illegal variable name '%s'."
+#define TXT_INHERITED_PRIVATE_PROP_ACCESS_s        "Illegal access to inherited private property '%s'"
 #define TXT_INIT_LIST_CANNOT_BE_USED_WITH_s        "Initialization lists cannot be used with '%s'"
 #define TXT_INSTANCING_INVLD_TMPL_TYPE_s_s         "Attempting to instantiate invalid template type '%s<%s>'"
 #define TXT_INSTEAD_FOUND_s                        "Instead found '%s'"
