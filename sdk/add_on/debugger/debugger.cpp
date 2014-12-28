@@ -551,7 +551,7 @@ void CDebugger::PrintValue(const std::string &expr, asIScriptContext *ctx)
 						const char *propName = 0;
 						int offset = 0;
 						bool isReference = 0;
-						type->GetProperty(n, &propName, &typeId, 0, &offset, &isReference);
+						type->GetProperty(n, &propName, &typeId, 0, 0, &offset, &isReference);
 						if( name == propName )
 						{
 							ptr = (void*)(((asBYTE*)ctx->GetThisPointer())+offset);

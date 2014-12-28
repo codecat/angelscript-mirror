@@ -367,7 +367,47 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
-	// Test private members, and inheritance. Derived classes should not have access to private members in parent
+	// Test protected members
+	// Protected members cannot be access from outside the class
+	// Protected members can be accessed by derived classes
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Base { \n"
+			" protected void func() {} \n"
+			" protected int prop; \n"
+			"} \n"
+			"class Derived : Base { \n"
+			" void test() { \n"
+			"   func(); \n" // accessible
+			"   prop = 1; \n" // accessible
+			" } \n"
+			"} \n"
+			"void main() { \n"
+			"  Derived d; \n"
+			"  d.func(); \n" // not accessible
+			"  d.prop = 1; \n" // not accessible
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (11, 1) : Info    : Compiling void main()\n"
+						   "test (13, 3) : Error   : Illegal call to protected method 'void Base::func()'\n"
+						   "test (14, 4) : Error   : Illegal access to protected property 'prop'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test private members and inheritance. Derived classes should not have access to private members in parent
 	// http://www.gamedev.net/topic/658646-private-class-member-variables-act-like-cs-protected/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

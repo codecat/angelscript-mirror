@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/12/27</h2>
+<h2>Version 2.30.0 WIP - 2014/12/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,6 +37,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Class method can refer to base class' method with fully specified namespace (Thanks iraxef)
 <li>It is possible to register an enum with the same in a namespace after it has been registered in the global namespace (Simon Geilfus)
 <li>No more memory build-up when the script has circular references between classes and templates (Thanks iraxef)
+<li>Private class properties are not accessible from derived classes (Thanks iraxef)
 </ul>
 <li>Library interface
 <ul>
@@ -49,6 +50,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented SetArgVarType to the context for calling functions with variable argument types
 <li>Added ShutDownAndRelease to explicitly tell when the engine should be shut down, compared to simply releasing the reference
 <li>Implemented support for user data in script object instances
+<li>Included asIScriptFunction::IsProtected
+<li>asIObjectType::GetProperty has an additional parameter to return if the property is protected
 </ul>
 <li>Library
 <ul>
@@ -73,7 +76,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>opImplConv can now be used to allow implicit conversion to bool for registered value types
 <li>imported functions can now be placed in namespaces too (Thanks cvet)
 <li>Compound assignment operators can now be used with virtual properties
-<li>Private class properties are not accessible from derived classes (Thanks iraxef)
+<li>Included 'protected' as reserved keyword
+<li>Class members can now be declared as protected
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

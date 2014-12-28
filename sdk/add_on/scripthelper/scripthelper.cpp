@@ -437,7 +437,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 			for( m = 0; m < type->GetPropertyCount(); m++ )
 			{
 				asDWORD accessMask;
-				type->GetProperty(m, 0, 0, 0, 0, 0, &accessMask);
+				type->GetProperty(m, 0, 0, 0, 0, 0, 0, &accessMask);
 				if( accessMask != currAccessMask )
 				{
 					strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";

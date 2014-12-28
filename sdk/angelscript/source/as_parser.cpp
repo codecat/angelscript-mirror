@@ -2323,10 +2323,10 @@ bool asCParser::IsVarDecl()
 	GetToken(&t);
 	RewindTo(&t);
 
-	// A class property decl can be preceded by 'private' 
+	// A class property decl can be preceded by 'private' or 'protected'
 	sToken t1;
 	GetToken(&t1);
-	if( t1.type != ttPrivate )
+	if( t1.type != ttPrivate && t1.type != ttProtected )
 		RewindTo(&t1);
 
 	// A variable decl can start with a const
@@ -2444,10 +2444,10 @@ bool asCParser::IsVirtualPropertyDecl()
 	GetToken(&t);
 	RewindTo(&t);
 
-	// A class property decl can be preceded by 'private' 
+	// A class property decl can be preceded by 'private' or 'protected'
 	sToken t1;
 	GetToken(&t1);
-	if( t1.type != ttPrivate )
+	if( t1.type != ttPrivate && t1.type != ttProtected )
 		RewindTo(&t1);
 
 	// A variable decl can start with a const
@@ -2515,10 +2515,10 @@ bool asCParser::IsFuncDecl(bool isMethod)
 
 	if( isMethod )
 	{
-		// A class method decl can be preceded by 'private' 
+		// A class method decl can be preceded by 'private' or 'protected'
 		sToken t1, t2;
 		GetToken(&t1);
-		if( t1.type != ttPrivate )
+		if( t1.type != ttPrivate && t1.type != ttProtected )
 			RewindTo(&t1);
 
 		// A class constructor starts with identifier followed by parenthesis
@@ -2696,7 +2696,7 @@ asCScriptNode *asCParser::ParseFuncDef()
 	return node;
 }
 
-// BNF: FUNC ::= ['private' | 'shared'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} STATBLOCK 
+// BNF: FUNC ::= ['private' | 'protected' | 'shared'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} STATBLOCK 
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -2707,12 +2707,12 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	GetToken(&t2);
 	RewindTo(&t1);
 
-	// A class method can start with private
+	// A class method can start with 'private' or 'protected'
 	if( isMethod && t1.type == ttPrivate )
-	{
 		node->AddChildLast(ParseToken(ttPrivate));
-		if( isSyntaxError ) return node;
-	}
+	else if( isMethod && t1.type == ttProtected )
+		node->AddChildLast(ParseToken(ttProtected));
+	if( isSyntaxError ) return node;
 
 	// A global function can be marked as shared
 	if( !isMethod && IdentifierIs(t1, SHARED_TOKEN) )
@@ -2803,7 +2803,7 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 	return node;
 }
 
-// BNF: VIRTPROP ::= ['private'] TYPE ['&'] IDENTIFIER '{' {('get' | 'set') ['const'] [('override' | 'final')] (STATBLOCK | ';')} '}'
+// BNF: VIRTPROP ::= ['private' | 'protected'] TYPE ['&'] IDENTIFIER '{' {('get' | 'set') ['const'] [('override' | 'final')] (STATBLOCK | ';')} '}'
 asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterface)
 {
 	asCScriptNode *node = CreateNode(snVirtualProperty);
@@ -2814,12 +2814,12 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 	GetToken(&t2);
 	RewindTo(&t1);
 
-	// A class method can start with private
+	// A class method can start with 'private' or 'protected'
 	if( isMethod && t1.type == ttPrivate )
-	{
 		node->AddChildLast(ParseToken(ttPrivate));
-		if( isSyntaxError ) return node;
-	}
+	else if( isMethod && t1.type == ttProtected )
+		node->AddChildLast(ParseToken(ttProtected));
+	if( isSyntaxError ) return node;
 
 	node->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return node;
@@ -3533,7 +3533,7 @@ asCScriptNode *asCParser::ParseInitList()
 	UNREACHABLE_RETURN;
 }
 
-// BNF: VAR ::= ['private'] TYPE IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST] {',' IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST]} ';'
+// BNF: VAR ::= ['private'|'protected'] TYPE IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST] {',' IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST]} ';'
 asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 {
 	asCScriptNode *node = CreateNode(snDeclaration);
@@ -3546,6 +3546,8 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 	// A class property can be preceeded by private
 	if( t.type == ttPrivate && isClassProp )
 		node->AddChildLast(ParseToken(ttPrivate));
+	else if( t.type == ttProtected && isClassProp )
+		node->AddChildLast(ParseToken(ttProtected));
 	
 	// Parse data type
 	node->AddChildLast(ParseType(true, false, !isClassProp));

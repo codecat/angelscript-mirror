@@ -154,7 +154,7 @@ public:
 
 	// Properties
 	asUINT      GetPropertyCount() const;
-	int         GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset, bool *isReference, asDWORD *accessMask) const;
+	int         GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, bool *isProtected, int *offset, bool *isReference, asDWORD *accessMask) const;
 	const char *GetPropertyDeclaration(asUINT index, bool includeNamespace = false) const;
 
 	// Behaviours
@@ -183,7 +183,7 @@ public:
 	bool IsInterface() const;
 	bool IsShared() const;
 
-	asCObjectProperty *AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isInherited);
+	asCObjectProperty *AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isProtected, bool isInherited);
 	void ReleaseAllProperties();
 
 	asCString                    name;

@@ -759,6 +759,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 		ReadData(&b, 1);
 		func->isReadOnly = (b & 1) ? true : false;
 		func->isPrivate  = (b & 2) ? true : false;
+		func->isProtected = (b & 4) ? true : false;
 		func->nameSpace = engine->nameSpaces[0];
 	}
 	else
@@ -1581,12 +1582,13 @@ void asCReader::ReadObjectProperty(asCObjectType *ot)
 	ReadDataType(&dt);
 	int flags = ReadEncodedUInt();
 	bool isPrivate = (flags & 1) ? true : false;
-	bool isInherited = (flags & 2) ? true : false;
+	bool isProtected = (flags & 2) ? true : false;
+	bool isInherited = (flags & 4) ? true : false;
 
 	// TODO: shared: If the type is shared and pre-existing, we should just 
 	//               validate that the loaded methods match the original 
 	if( !existingShared.MoveTo(0, ot) )
-		ot->AddPropertyToClass(name, dt, isPrivate, isInherited);
+		ot->AddPropertyToClass(name, dt, isPrivate, isProtected, isInherited);
 }
 
 void asCReader::ReadDataType(asCDataType *dt) 
@@ -3415,6 +3417,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		asBYTE b = 0;
 		b += func->isReadOnly ? 1 : 0;
 		b += func->isPrivate  ? 2 : 0;
+		b += func->isProtected ? 4 : 0;
 		WriteData(&b, 1);
 	}
 	else
@@ -3805,7 +3808,8 @@ void asCWriter::WriteObjectProperty(asCObjectProperty* prop)
 	WriteDataType(&prop->type);
 	int flags = 0;
 	if( prop->isPrivate ) flags |= 1;
-	if( prop->isInherited ) flags |= 2;
+	if( prop->isProtected ) flags |= 2;
+	if( prop->isInherited ) flags |= 4;
 	WriteEncodedInt64(flags);
 }
 

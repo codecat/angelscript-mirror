@@ -213,9 +213,11 @@
 
 #define TXT_PARAMETER_ALREADY_DECLARED            "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s                   "Parameter type can't be '%s', because the type cannot be instantiated."
-#define TXT_POS_ARG_AFTER_NAMED_ARG                 "Positional arguments cannot be passed after named arguments"
+#define TXT_POS_ARG_AFTER_NAMED_ARG               "Positional arguments cannot be passed after named arguments"
 #define TXT_PRIVATE_METHOD_CALL_s                 "Illegal call to private method '%s'"
 #define TXT_PRIVATE_PROP_ACCESS_s                 "Illegal access to private property '%s'"
+#define TXT_PROTECTED_METHOD_CALL_s               "Illegal call to protected method '%s'"
+#define TXT_PROTECTED_PROP_ACCESS_s               "Illegal access to protected property '%s'"
 #define TXT_PROPERTY_ACCESSOR_DISABLED            "Property accessors have been disabled by the application"
 #define TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED "Property accessor must be implemented"
 #define TXT_PROPERTY_CANT_BE_CONST                "Class properties cannot be declared as const"

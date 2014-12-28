@@ -488,23 +488,26 @@ asUINT asCObjectType::GetPropertyCount() const
 }
 
 // interface
-int asCObjectType::GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, int *offset, bool *isReference, asDWORD *accessMask) const
+int asCObjectType::GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, bool *isProtected, int *offset, bool *isReference, asDWORD *accessMask) const
 {
 	if( index >= properties.GetLength() )
 		return asINVALID_ARG;
 
+	asCObjectProperty *prop = properties[index];
 	if( name )
-		*name = properties[index]->name.AddressOf();
+		*name = prop->name.AddressOf();
 	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(properties[index]->type);
+		*typeId = engine->GetTypeIdFromDataType(prop->type);
 	if( isPrivate )
-		*isPrivate = properties[index]->isPrivate;
+		*isPrivate = prop->isPrivate;
+	if( isProtected )
+		*isProtected = prop->isProtected;
 	if( offset )
-		*offset = properties[index]->byteOffset;
+		*offset = prop->byteOffset;
 	if( isReference )
-		*isReference = properties[index]->type.IsReference();
+		*isReference = prop->type.IsReference();
 	if( accessMask )
-		*accessMask = properties[index]->accessMask;
+		*accessMask = prop->accessMask;
 
 	return 0;
 }
@@ -518,6 +521,8 @@ const char *asCObjectType::GetPropertyDeclaration(asUINT index, bool includeName
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
 	if( properties[index]->isPrivate )
 		*tempString = "private ";
+	else if( properties[index]->isProtected )
+		*tempString = "protected ";
 	else
 		*tempString = "";
 	*tempString += properties[index]->type.Format(includeNamespace);
@@ -673,7 +678,7 @@ asDWORD asCObjectType::GetAccessMask() const
 }
 
 // internal
-asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isInherited)
+asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isProtected, bool isInherited)
 {
 	asASSERT( flags & asOBJ_SCRIPT_OBJECT );
 	asASSERT( dt.CanBeInstantiated() );
@@ -690,6 +695,7 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, cons
 	prop->name        = name;
 	prop->type        = dt;
 	prop->isPrivate   = isPrivate;
+	prop->isProtected = isProtected;
 	prop->isInherited = isInherited;
 
 	int propSize;

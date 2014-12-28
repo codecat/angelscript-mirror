@@ -1435,11 +1435,12 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	if( prop == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterObjectProperty", obj, declaration);
 
-	prop->name       = name;
-	prop->type       = type;
-	prop->byteOffset = byteOffset;
-	prop->isPrivate  = false;
-	prop->accessMask = defaultAccessMask;
+	prop->name        = name;
+	prop->type        = type;
+	prop->byteOffset  = byteOffset;
+	prop->isPrivate   = false;
+	prop->isProtected = false;
+	prop->accessMask  = defaultAccessMask;
 
 	dt.GetObjectType()->properties.PushLast(prop);
 

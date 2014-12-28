@@ -399,6 +399,8 @@ public:
 	// This array stores the template instances types that have been automatically generated from template types
 	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs
+	// TODO: 2.30.0: redesign: Only shared funcdefs should be stored here
+	//                         a funcdef becomes shared if all arguments and the return type are shared (or application registered)
 	asCArray<asCScriptFunction *> funcDefs; // doesn't increase ref count
 
 	// Stores the names of the script sections for debugging purposes

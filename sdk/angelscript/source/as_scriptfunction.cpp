@@ -352,6 +352,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	name                   = "";
 	isReadOnly             = false;
 	isPrivate              = false;
+	isProtected            = false;
 	isFinal                = false;
 	isOverride             = false;
 	sysFuncIntf            = 0;
@@ -624,6 +625,12 @@ bool asCScriptFunction::IsReadOnly() const
 bool asCScriptFunction::IsPrivate() const
 {
 	return isPrivate;
+}
+
+// interface
+bool asCScriptFunction::IsProtected() const
+{
+	return isProtected;
 }
 
 // internal

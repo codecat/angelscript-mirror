@@ -11229,10 +11229,13 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				if( prop )
 				{
 					// Is the property access allowed?
-					if( prop->isPrivate && (!outFunc || outFunc->objectType != ctx->type.dataType.GetObjectType()) )
+					if( (prop->isPrivate || prop->isProtected) && (!outFunc || outFunc->objectType != ctx->type.dataType.GetObjectType()) )
 					{
 						asCString msg;
-						msg.Format(TXT_PRIVATE_PROP_ACCESS_s, name.AddressOf());
+						if( prop->isPrivate )
+							msg.Format(TXT_PRIVATE_PROP_ACCESS_s, name.AddressOf());
+						else
+							msg.Format(TXT_PROTECTED_PROP_ACCESS_s, name.AddressOf());
 						Error(msg, node);
 					}
 
@@ -13891,11 +13894,19 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 		Error(msg, ctx->exprNode);
 	}
 
-	// Check if the function is private
+	// Check if the function is private or protected
 	if( descr->isPrivate && descr->GetObjectType() != outFunc->GetObjectType() )
 	{
 		asCString msg;
 		msg.Format(TXT_PRIVATE_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
+		Error(msg, ctx->exprNode);
+	}
+	else if( descr->isProtected && 
+		     !(descr->GetObjectType() == outFunc->GetObjectType() || 
+		       (outFunc->GetObjectType() && outFunc->GetObjectType()->DerivesFrom(descr->GetObjectType()))) )
+	{
+		asCString msg;
+		msg.Format(TXT_PROTECTED_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
 		Error(msg, ctx->exprNode);
 	}
 
