@@ -2398,40 +2398,15 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.IsReadOnly() )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
-		// Verify that the same cast is not registered already
-		// (const or non-const is treated the same for the return type)
-		if( func.parameterTypes.GetLength() == 1 )
-		{
-			// Check for existing behaviour with ?&out
-			for( asUINT n = 0; n < beh->operators.GetLength(); n+= 2 )
-			{
-				if( beh->operators[n] == asBEHAVE_REF_CAST ||
-					beh->operators[n] == asBEHAVE_IMPLICIT_REF_CAST )
-				{
-					asCScriptFunction *f = scriptFunctions[beh->operators[n+1]];
-					if( f->parameterTypes.GetLength() == 1 )
-						return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-				}
-			}
-		}
-		else
-		{
-			// Check for existing behaviour with same return type
-			for( asUINT n = 0; n < beh->operators.GetLength(); n+= 2 )
-			{
-				if( beh->operators[n] == asBEHAVE_REF_CAST ||
-					beh->operators[n] == asBEHAVE_IMPLICIT_REF_CAST )
-				{
-					asCScriptFunction *f = scriptFunctions[beh->operators[n+1]];
-					if( f->returnType.GetObjectType() == func.returnType.GetObjectType() )
-						return ConfigError(asALREADY_REGISTERED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-				}
-			}
-		}
-
-		beh->operators.PushLast(behaviour);
-		func.id = AddBehaviourFunction(func, internal);
-		beh->operators.PushLast(func.id);
+		asCString decl;
+		decl += func.returnType.Format();
+		if( internal.returnAutoHandle )
+			decl += "+";
+		decl += behaviour == asBEHAVE_REF_CAST ? " opCast(" : " opImplCast(";
+		if( func.parameterTypes.GetLength() )
+			decl += "?&out";
+		decl += ")";
+		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
 	}
 	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
 	{
@@ -4633,6 +4608,58 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 	if( fromType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
 		return asNOT_SUPPORTED;
 
+	if( fromType == toType )
+	{
+		*newPtr = obj;
+		AddRefScriptObject(*newPtr, toType);
+		return asSUCCESS;
+	}
+
+	// Look for ref cast behaviours
+	asCScriptFunction *universalCastFunc = 0;
+	asCObjectType *from = reinterpret_cast<asCObjectType*>(fromType);
+	for( asUINT n = 0; n < from->methods.GetLength(); n++ )
+	{
+		asCScriptFunction *func = scriptFunctions[from->methods[n]];
+		if( func->name == "opImplCast" ||
+			(!useOnlyImplicitCast && func->name == "opCast") )
+		{
+			if( func->returnType.GetObjectType() == toType )
+			{
+				*newPtr = CallObjectMethodRetPtr(obj, func->id);
+				// The ref cast behaviour returns a handle with incremented
+				// ref counter, so there is no need to call AddRef explicitly
+				// unless the function is registered with autohandle
+				if( func->sysFuncIntf->returnAutoHandle )
+					AddRefScriptObject(*newPtr, toType);
+				return asSUCCESS;
+			}
+			else
+			{
+				asASSERT( func->returnType.GetTokenType() == ttVoid && 
+						  func->parameterTypes.GetLength() == 1 && 
+						  func->parameterTypes[0].GetTokenType() == ttQuestion );
+				universalCastFunc = func;
+			}
+		}
+	}
+
+	// One last chance if the object has a void opCast(?&out) behaviour
+	if( universalCastFunc )
+	{
+		// TODO: Add proper error handling
+		asIScriptContext *ctx = RequestContext();
+		ctx->Prepare(universalCastFunc);
+		ctx->SetObject(obj);
+		ctx->SetArgVarType(0, newPtr, toType->GetTypeId() | asTYPEID_OBJHANDLE);
+		ctx->Execute();
+		ReturnContext(ctx);
+
+		// The opCast(?&out) method already incremented the
+		// refCount so there is no need to do it manually
+		return asSUCCESS;
+	}
+
 	// For script classes and interfaces there is a quick route
 	if( (fromType->GetFlags() & asOBJ_SCRIPT_OBJECT) && (toType->GetFlags() & asOBJ_SCRIPT_OBJECT) )
 	{
@@ -4672,59 +4699,6 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 				return asSUCCESS;
 			}
 		}
-
-		// Let it continue, since it is possible the script class implements an opCast method
-	}
-
-	if( fromType == toType )
-	{
-		*newPtr = obj;
-		AddRefScriptObject(*newPtr, toType);
-		return asSUCCESS;
-	}
-
-	// For application classes it is necessary to look for ref cast behaviours
-	asCScriptFunction *universalCastFunc = 0;
-	asCObjectType *from = reinterpret_cast<asCObjectType*>(fromType);
-	for( asUINT n = 0; n < from->beh.operators.GetLength(); n += 2 )
-	{
-		if( from->beh.operators[n] == asBEHAVE_IMPLICIT_REF_CAST ||
-			(!useOnlyImplicitCast && from->beh.operators[n] == asBEHAVE_REF_CAST) )
-		{
-			asCScriptFunction *func = scriptFunctions[from->beh.operators[n+1]];
-			if( func->returnType.GetObjectType() == toType )
-			{
-				*newPtr = CallObjectMethodRetPtr(obj, func->id);
-				// The ref cast behaviour returns a handle with incremented
-				// ref counter, so there is no need to call AddRef explicitly
-				// unless the function is registered with autohandle
-				if( func->sysFuncIntf->returnAutoHandle )
-					AddRefScriptObject(*newPtr, toType);
-				return asSUCCESS;
-			}
-			else
-			{
-				asASSERT( func->returnType.GetTokenType() == ttVoid && 
-						  func->parameterTypes.GetLength() == 1 && 
-						  func->parameterTypes[0].GetTokenType() == ttQuestion );
-				universalCastFunc = func;
-			}
-		}
-	}
-
-	// One last chance if the object has a void opCast(?&out) behaviour
-	if( universalCastFunc )
-	{
-		// TODO: Add proper error handling
-		asIScriptContext *ctx = RequestContext();
-		ctx->Prepare(universalCastFunc);
-		ctx->SetObject(obj);
-		ctx->SetArgVarType(0, newPtr, toType->GetTypeId() | asTYPEID_OBJHANDLE);
-		ctx->Execute();
-		ReturnContext(ctx);
-
-		// The opCast(?&out) method already incremented the
-		// refCount so there is no need to do it manually
 	}
 
 	// The cast is not available, but it is still a success

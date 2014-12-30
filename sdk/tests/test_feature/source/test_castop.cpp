@@ -139,6 +139,47 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
+	// TODO: 2.30.0: What should the compiler do when the class has both a valid opCast method 
+	//               and a related class in a class hierarchy? Should prefer calling opCast, right?
+	//               How does C++ do it?
+
+	// The cast op can be overloaded in script classes by implementing opCast and opImplCast
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { \n"
+			"  B @opCast() { return b; } \n"
+			"  B @b; \n"
+			"} \n"
+			"class B { \n"
+			"  A @opImplCast() { return a; } \n"
+			"  A @a; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// cast<B>(a) should be translated to a.opCast() and return B@ 
+		r = ExecuteString(engine, "A a; @a.b = B(); \n"
+								  "B @b = cast<B>(a); \n"
+								  "assert( b is a.b ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// @a = b should be translated to b.opImplCast() and return A@ 
+		r = ExecuteString(engine, "B b; @b.a = A(); \n"
+								  "A @a = b; \n"
+								  "assert( a is b.a ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// http://www.gamedev.net/topic/636163-segfault-when-casting-directly/
 	SKIP_ON_MAX_PORT
 	{

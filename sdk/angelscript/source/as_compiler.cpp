@@ -5272,7 +5272,167 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 	asCArray<int> ops;
 	asUINT n;
 
-	if( ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT )
+	// Find a suitable opCast or opImplCast method
+	asCObjectType *ot = ctx->type.dataType.GetObjectType();
+	for( n = 0; n < ot->methods.GetLength(); n++ )
+	{
+		asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+		if( (isExplicit && func->name == "opCast") ||
+			func->name == "opImplCast" )
+		{
+			// Is the operator for the output type?
+			if( func->returnType.GetObjectType() != to.GetObjectType() )
+				continue;
+
+			ops.PushLast(func->id);
+		}
+	}
+
+	// It shouldn't be possible to have more than one
+	// TODO: Should be allowed to have different behaviours for const and non-const references
+	asASSERT( ops.GetLength() <= 1 );
+
+	// Should only have one behaviour for each output type
+	if( ops.GetLength() == 1 )
+	{
+		conversionDone = true;
+		if( generateCode )
+		{
+			// TODO: runtime optimize: Instead of producing bytecode for checking if the handle is
+			//                         null, we can create a special CALLSYS instruction that checks
+			//                         if the object pointer is null and if so sets the object register
+			//                         to null directly without executing the function.
+			//
+			//                         Alternatively I could force the ref cast behaviours be global
+			//                         functions with 1 parameter, even though they should still be
+			//                         registered with RegisterObjectBehaviour()
+
+			if( ctx->type.dataType.GetObjectType()->flags & asOBJ_REF )
+			{
+				// Add code to avoid calling the cast behaviour if the handle is already null,
+				// because that will raise a null pointer exception due to the cast behaviour
+				// being a class method, and the this pointer cannot be null.
+
+				if( !ctx->type.isVariable )
+				{
+					Dereference(ctx, true);
+					ConvertToVariable(ctx);
+				}
+
+				// The reference on the stack will not be used
+				ctx->bc.Instr(asBC_PopPtr);
+
+				// TODO: runtime optimize: should have immediate comparison for null pointer
+				int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
+				// TODO: runtime optimize: ClrVPtr is not necessary, because the VM should initialize the variable to null anyway (it is currently not done for null pointers though)
+				ctx->bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
+				ctx->bc.InstrW_W(asBC_CmpPtr, ctx->type.stackOffset, offset);
+				DeallocateVariable(offset);
+
+				int afterLabel = nextLabel++;
+				ctx->bc.InstrDWORD(asBC_JZ, afterLabel);
+
+				// Call the cast operator
+				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+				ctx->bc.Instr(asBC_RDSPtr);
+				ctx->type.dataType.MakeReference(false);
+
+				asCArray<asSExprContext *> args;
+				MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
+				ctx->bc.Instr(asBC_PopPtr);
+
+				int endLabel = nextLabel++;
+
+				ctx->bc.InstrINT(asBC_JMP, endLabel);
+				ctx->bc.Label((short)afterLabel);
+
+				// Make a NULL pointer
+				ctx->bc.InstrSHORT(asBC_ClrVPtr, ctx->type.stackOffset);
+				ctx->bc.Label((short)endLabel);
+
+				// Push the reference to the handle on the stack
+				ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
+			}
+			else
+			{
+				// Value types cannot be null, so there is no need to check for this
+
+				// Call the cast operator
+				asCArray<asSExprContext *> args;
+				MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
+			}
+		}
+		else
+		{
+			asCScriptFunction *func = engine->scriptFunctions[ops[0]];
+			ctx->type.Set(func->returnType);
+		}
+	}
+	else if( ops.GetLength() == 0 && !(ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
+	{
+		// Check for the generic ref cast method: void opCast(?&out)
+		for( n = 0; n < ot->methods.GetLength(); n++ )
+		{
+			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
+			if( (isExplicit && func->name == "opCast") ||
+				func->name == "opImplCast" )
+			{
+				// Does the operator take the ?&out parameter?
+				if( func->returnType.GetTokenType() != ttVoid ||
+					func->parameterTypes.GetLength() != 1 ||
+					func->parameterTypes[0].GetTokenType() != ttQuestion ||
+					func->inOutFlags[0] != asTM_OUTREF )
+					continue;
+
+				ops.PushLast(func->id);
+			}
+		}
+
+		// It shouldn't be possible to have more than one
+		// TODO: Should be allowed to have different implementations for const and non-const references
+		asASSERT( ops.GetLength() <= 1 );
+
+		if( ops.GetLength() == 1 )
+		{
+			conversionDone = true;
+			if( generateCode )
+			{
+				asASSERT(to.IsObjectHandle());
+
+				// Allocate a temporary variable of the requested handle type
+				int stackOffset = AllocateVariableNotIn(to, true, false, ctx);
+
+				// Pass the reference of that variable to the function as output parameter
+				asCDataType toRef(to);
+				toRef.MakeReference(true);
+				asCArray<asSExprContext *> args;
+				asSExprContext arg(engine);
+				arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+				// Don't mark the variable as temporary, so it won't be freed too early
+				arg.type.SetVariable(toRef, stackOffset, false);
+				arg.type.isLValue = true;
+				arg.type.isExplicitHandle = true;
+				args.PushLast(&arg);
+
+				// Call the behaviour method
+				MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
+
+				// Use the reference to the variable as the result of the expression
+				// Now we can mark the variable as temporary
+				ctx->type.SetVariable(toRef, stackOffset, true);
+				ctx->bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+			}
+			else
+			{
+				// All casts are legal
+				ctx->type.Set(to);
+			}
+		}
+	}
+
+	// If the script object didn't implement a matching opCast or opImplCast 
+	// then check if the desired type is part of the hierarchy
+	if( !conversionDone && (ctx->type.dataType.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
 	{
 		// We need it to be a reference
 		if( !ctx->type.dataType.IsReference() )
@@ -5317,165 +5477,6 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 			{
 				conversionDone = true;
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
-			}
-		}
-	}
-	else
-	{
-		// Find a suitable registered behaviour
-		asSTypeBehaviour *beh = &ctx->type.dataType.GetObjectType()->beh;
-		for( n = 0; n < beh->operators.GetLength(); n+= 2 )
-		{
-			if( (isExplicit && asBEHAVE_REF_CAST == beh->operators[n]) ||
-				asBEHAVE_IMPLICIT_REF_CAST == beh->operators[n] )
-			{
-				int funcId = beh->operators[n+1];
-
-				// Is the operator for the output type?
-				asCScriptFunction *func = engine->scriptFunctions[funcId];
-				if( func->returnType.GetObjectType() != to.GetObjectType() )
-					continue;
-
-				ops.PushLast(funcId);
-			}
-		}
-
-		// It shouldn't be possible to have more than one
-		asASSERT( ops.GetLength() <= 1 );
-
-		// Should only have one behaviour for each output type
-		if( ops.GetLength() == 1 )
-		{
-			if( generateCode )
-			{
-				// TODO: runtime optimize: Instead of producing bytecode for checking if the handle is
-				//                         null, we can create a special CALLSYS instruction that checks
-				//                         if the object pointer is null and if so sets the object register
-				//                         to null directly without executing the function.
-				//
-				//                         Alternatively I could force the ref cast behaviours be global
-				//                         functions with 1 parameter, even though they should still be
-				//                         registered with RegisterObjectBehaviour()
-
-				if( ctx->type.dataType.GetObjectType()->flags & asOBJ_REF )
-				{
-					// Add code to avoid calling the cast behaviour if the handle is already null,
-					// because that will raise a null pointer exception due to the cast behaviour
-					// being a class method, and the this pointer cannot be null.
-
-					if( !ctx->type.isVariable )
-					{
-						Dereference(ctx, true);
-						ConvertToVariable(ctx);
-					}
-
-					// The reference on the stack will not be used
-					ctx->bc.Instr(asBC_PopPtr);
-
-					// TODO: runtime optimize: should have immediate comparison for null pointer
-					int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
-					// TODO: runtime optimize: ClrVPtr is not necessary, because the VM should initialize the variable to null anyway (it is currently not done for null pointers though)
-					ctx->bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
-					ctx->bc.InstrW_W(asBC_CmpPtr, ctx->type.stackOffset, offset);
-					DeallocateVariable(offset);
-
-					int afterLabel = nextLabel++;
-					ctx->bc.InstrDWORD(asBC_JZ, afterLabel);
-
-					// Call the cast operator
-					ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
-					ctx->bc.Instr(asBC_RDSPtr);
-					ctx->type.dataType.MakeReference(false);
-
-					asCArray<asSExprContext *> args;
-					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
-					ctx->bc.Instr(asBC_PopPtr);
-
-					int endLabel = nextLabel++;
-
-					ctx->bc.InstrINT(asBC_JMP, endLabel);
-					ctx->bc.Label((short)afterLabel);
-
-					// Make a NULL pointer
-					ctx->bc.InstrSHORT(asBC_ClrVPtr, ctx->type.stackOffset);
-					ctx->bc.Label((short)endLabel);
-
-					// Push the reference to the handle on the stack
-					ctx->bc.InstrSHORT(asBC_PSF, ctx->type.stackOffset);
-				}
-				else
-				{
-					// Value types cannot be null, so there is no need to check for this
-
-					// Call the cast operator
-					asCArray<asSExprContext *> args;
-					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
-				}
-			}
-			else
-			{
-				asCScriptFunction *func = engine->scriptFunctions[ops[0]];
-				ctx->type.Set(func->returnType);
-			}
-		}
-		else if( ops.GetLength() == 0 )
-		{
-			// Check for the generic ref cast behaviour
-			for( n = 0; n < beh->operators.GetLength(); n+= 2 )
-			{
-				if( (isExplicit && asBEHAVE_REF_CAST == beh->operators[n]) ||
-					asBEHAVE_IMPLICIT_REF_CAST == beh->operators[n] )
-				{
-					int funcId = beh->operators[n+1];
-
-					// Does the operator take the ?&out parameter?
-					asCScriptFunction *func = engine->scriptFunctions[funcId];
-					if( func->parameterTypes.GetLength() != 1 ||
-						func->parameterTypes[0].GetTokenType() != ttQuestion ||
-						func->inOutFlags[0] != asTM_OUTREF )
-						continue;
-
-					ops.PushLast(funcId);
-				}
-			}
-
-			// It shouldn't be possible to have more than one
-			asASSERT( ops.GetLength() <= 1 );
-
-			if( ops.GetLength() == 1 )
-			{
-				if( generateCode )
-				{
-					asASSERT(to.IsObjectHandle());
-
-					// Allocate a temporary variable of the requested handle type
-					int stackOffset = AllocateVariableNotIn(to, true, false, ctx);
-
-					// Pass the reference of that variable to the function as output parameter
-					asCDataType toRef(to);
-					toRef.MakeReference(true);
-					asCArray<asSExprContext *> args;
-					asSExprContext arg(engine);
-					arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
-					// Don't mark the variable as temporary, so it won't be freed too early
-					arg.type.SetVariable(toRef, stackOffset, false);
-					arg.type.isLValue = true;
-					arg.type.isExplicitHandle = true;
-					args.PushLast(&arg);
-
-					// Call the behaviour method
-					MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetObjectType(), args, node);
-
-					// Use the reference to the variable as the result of the expression
-					// Now we can mark the variable as temporary
-					ctx->type.SetVariable(toRef, stackOffset, true);
-					ctx->bc.InstrSHORT(asBC_PSF, (short)stackOffset);
-				}
-				else
-				{
-					// All casts are legal
-					ctx->type.Set(to);
-				}
 			}
 		}
 	}

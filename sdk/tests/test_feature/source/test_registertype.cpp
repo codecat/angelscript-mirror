@@ -952,7 +952,8 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()' (Code: -13)\n"
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'B' and 'A@ opImplCast()' (Code: -13)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()' (Code: -13)\n"
 		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'const A@ f() const' (Code: -10)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

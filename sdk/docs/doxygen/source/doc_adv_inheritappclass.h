@@ -2,6 +2,8 @@
 
 \page doc_adv_inheritappclass Inheriting from application registered class
 
+\todo Add info on how to use opImplCast
+
 A script class cannot directly inherit from an application registered class, 
 as the script classes are not compiled into native machine code like the
 application classes are.
