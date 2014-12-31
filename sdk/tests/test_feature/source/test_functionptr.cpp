@@ -292,12 +292,15 @@ bool Test()
 		engine->RegisterObjectType("jjOBJ", 0, asOBJ_REF | asOBJ_NOCOUNT);
 		engine->RegisterFuncdef("void jjBEHAVIOR(jjOBJ@)");
 		engine->RegisterFuncdef("void DifferentFunctionPointer()");
-		r = engine->RegisterObjectBehaviour("jjBEHAVIOR", asBEHAVE_IMPLICIT_REF_CAST, "DifferentFunctionPointer@ a()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("jjBEHAVIOR", "DifferentFunctionPointer@ opImplCast()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'jjBEHAVIOR' and 'DifferentFunctionPointer@ a()' (Code: -12)\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'jjBEHAVIOR' and 'DifferentFunctionPointer@ opImplCast()' (Code: -5)\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

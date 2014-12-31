@@ -97,7 +97,6 @@ struct asSTypeBehaviour
 
 	asCArray<int> factories;
 	asCArray<int> constructors;
-	asCArray<int> operators;
 };
 
 struct asSEnumValue

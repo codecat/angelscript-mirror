@@ -2382,7 +2382,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		decl += ")";
 		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
 	}
-#endif
+	// Deprecated since 2.30.0, 2014-12-30
 	else if( behaviour == asBEHAVE_REF_CAST ||
 	         behaviour == asBEHAVE_IMPLICIT_REF_CAST )
 	{
@@ -2408,6 +2408,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		decl += ")";
 		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
 	}
+#endif
 	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
 	{
 		// This behaviour is only allowed for reference types
@@ -3523,9 +3524,6 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	if( scriptFunctions[ot->beh.destruct] ) scriptFunctions[ot->beh.destruct]->AddRefInternal();
 	ot->beh.copy = templateType->beh.copy;
 	if( scriptFunctions[ot->beh.copy] ) scriptFunctions[ot->beh.copy]->AddRefInternal();
-	ot->beh.operators = templateType->beh.operators;
-	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
-		scriptFunctions[ot->beh.operators[n]]->AddRefInternal();
 	ot->beh.gcGetRefCount = templateType->beh.gcGetRefCount;
 	if( scriptFunctions[ot->beh.gcGetRefCount] ) scriptFunctions[ot->beh.gcGetRefCount]->AddRefInternal();
 	ot->beh.gcSetFlag = templateType->beh.gcSetFlag;
@@ -3538,21 +3536,6 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	if( scriptFunctions[ot->beh.gcReleaseAllReferences] ) scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRefInternal();
 	ot->beh.getWeakRefFlag = templateType->beh.getWeakRefFlag;
 	if( scriptFunctions[ot->beh.getWeakRefFlag] ) scriptFunctions[ot->beh.getWeakRefFlag]->AddRefInternal();
-
-	// As the new template type is instantiated the engine should
-	// generate new functions to substitute the ones with the template subtype.
-	for( n = 1; n < ot->beh.operators.GetLength(); n += 2 )
-	{
-		int funcId = ot->beh.operators[n];
-		asCScriptFunction *func = scriptFunctions[funcId];
-
-		if( GenerateNewTemplateFunction(templateType, ot, func, &func) )
-		{
-			// Release the old function, the new one already has its ref count set to 1
-			scriptFunctions[funcId]->ReleaseInternal();
-			ot->beh.operators[n] = func->id;
-		}
-	}
 
 	// As the new template type is instantiated, the engine should
 	// generate new functions to substitute the ones with the template subtype.

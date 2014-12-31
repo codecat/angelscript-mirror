@@ -228,9 +228,10 @@ enum asEBehaviours
 	// Deprecated since 2.30.0, 2014-10-24
 	asBEHAVE_VALUE_CAST,
 	asBEHAVE_IMPLICIT_VALUE_CAST,
-#endif
+	// Deprecated since 2.30.0, 2014-12-30
 	asBEHAVE_REF_CAST,
 	asBEHAVE_IMPLICIT_REF_CAST,
+#endif
 	asBEHAVE_TEMPLATE_CALLBACK,
 
 	// Garbage collection behaviours

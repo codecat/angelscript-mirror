@@ -206,7 +206,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_FACTORY, "ASConsole @f()", asFUNCTION(ASConsole::factory), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_ADDREF, "void f()", asMETHOD(ASConsole, AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_RELEASE, "void f()", asMETHOD(ASConsole, Release), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("ASConsole", asBEHAVE_IMPLICIT_REF_CAST, "EventSource@ f()", asFUNCTION((ASRefCast<ASConsole, EventSource>)), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("ASConsole", "EventSource@ opImplCast()", asFUNCTION((ASRefCast<ASConsole, EventSource>)), asCALL_CDECL_OBJLAST);
 
 		engine->RegisterGlobalFunction("void addListener(EventSource &inout, const int &in)", asFUNCTION(addListener), asCALL_CDECL);
 

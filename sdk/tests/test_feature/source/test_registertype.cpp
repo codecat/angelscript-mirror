@@ -201,7 +201,7 @@ public:
 		r = engine->RegisterObjectMethod("var", "var &opAssign(const ?&in)", asMETHOD(CVariant, opAssign), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("var", "var &opHndlAssign(const ?&in)", asMETHOD(CVariant, opHandleAssign), asCALL_THISCALL); assert( r >= 0 );
 
-		r = engine->RegisterObjectBehaviour("var", asBEHAVE_REF_CAST, "void f(?&out)", asMETHOD(CVariant, opCast), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("var", "void opCast(?&out)", asMETHOD(CVariant, opCast), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("var", "void opConv(?&out)", asMETHOD(CVariant, opConv), asCALL_THISCALL); assert( r >= 0 );
 	}
 
@@ -325,7 +325,7 @@ bool Test()
 		engine->RegisterInterface("IArchive");
 		engine->RegisterObjectType("Array<T>", 1, asOBJ_REF|asOBJ_TEMPLATE|asOBJ_NOCOUNT);
 
-		r = engine->RegisterObjectBehaviour("Array<T>", asBEHAVE_IMPLICIT_REF_CAST, "IArchive@ _beh_11_()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("Array<T>", "IArchive@ opImplCast()", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -940,21 +940,19 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		r = engine->RegisterObjectType("A", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
 		r = engine->RegisterObjectType("B", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A @f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("B", "A @opImplCast()", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
 			TEST_FAILED;
 
-		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A @f()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("B", "A @opImplCast()", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
 			TEST_FAILED;
 
-		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "const A@ f() const", asFUNCTION(0), asCALL_GENERIC);
-		if( r >= 0 )
+		r = engine->RegisterObjectMethod("B", "const A@ opImplCast() const", asFUNCTION(0), asCALL_GENERIC);
+		if( r < 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'B' and 'A@ opImplCast()' (Code: -13)\n"
-						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'A @f()' (Code: -13)\n"
-		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'B' and 'const A@ f() const' (Code: -10)\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'B' and 'A @opImplCast()' (Code: -13)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1758,7 +1756,7 @@ bool TestHandleType()
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asMETHOD(CHandleType, opHndlAssign), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CHandleType, opEquals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "void opCast(?&out)", asMETHODPR(CHandleType, opCast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
 #else
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_FIRST_PR(CHandleType::Construct, (CHandleType *), void), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ref &in)", WRAP_OBJ_FIRST_PR(CHandleType::Construct, (CHandleType *, const CHandleType &), void), asCALL_GENERIC); assert( r >= 0 );
@@ -1768,7 +1766,7 @@ bool TestHandleType()
 	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asFUNCTION(CHandleType_HndlAssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", WRAP_MFN_PR(CHandleType, opEquals, (const CHandleType &) const, bool), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asFUNCTION(CHandleType_EqualsVar_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asFUNCTION(CHandleType_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "void opCast(?&out)", asFUNCTION(CHandleType_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 
 	{

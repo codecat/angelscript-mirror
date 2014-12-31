@@ -1832,8 +1832,6 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	engine->scriptFunctions[st->beh.construct]->AddRefInternal();
 	// TODO: weak: Should not do this if the class has been declared with noweak
 	engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRefInternal();
-	for( asUINT i = 1; i < st->beh.operators.GetLength(); i += 2 )
-		engine->scriptFunctions[st->beh.operators[i]]->AddRefInternal();
 
 	return 0;
 }

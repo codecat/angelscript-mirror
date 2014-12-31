@@ -11,6 +11,8 @@ not for \ref doc_register_val_type "value types".
 
 \section doc_adv_class_hierarchy_1 Establishing the relationship
 
+\todo Update the article since asBEHAVE_REF_CAST is deprecated
+
 In order to let AngelScript know that two types are related you need to register the 
 reference cast behaviours \ref asBEHAVE_REF_CAST and \ref asBEHAVE_IMPLICIT_REF_CAST. The 
 asBEHAVE_REF_CAST should be used if you only want to allow the cast through an explicit

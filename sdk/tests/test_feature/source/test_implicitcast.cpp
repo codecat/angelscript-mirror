@@ -615,7 +615,7 @@ bool Test()
 
 		// It should be possible to register a REF_CAST to allow implicit cast
 		// Test IMPLICIT_REF_CAST from subclass to baseclass
-		r = engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST, "A@+ f()", asFUNCTION(B::castToA), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("B", "A@+ opImplCast()", asFUNCTION(B::castToA), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = ExecuteString(engine, "B b; A@ a = b; assert(a.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -632,7 +632,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Test REF_CAST from baseclass to subclass
-		r = engine->RegisterObjectBehaviour("A", asBEHAVE_REF_CAST, "B@+ f()", asFUNCTION(B::AcastToB), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("A", "B@+ opCast()", asFUNCTION(B::AcastToB), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = ExecuteString(engine, "B b; A@ a = cast<A>(b); B@ _b = cast<B>(a); assert(_b.test() == 2);");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
@@ -1060,9 +1060,9 @@ static bool Test3()
  #ifdef __BORLANDC__
     // BCC cannot infer return values for function pointer types (QC #85378).
     // Use explicit cast via asFUNCTIONPR() instead.
-	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_IMPLICIT_REF_CAST, "DisplayObject @f()", asFUNCTIONPR((refCast<MovieClip, DisplayObject>),(MovieClip*),DisplayObject*), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("MovieClip", "DisplayObject @opImplCast()", asFUNCTIONPR((refCast<MovieClip, DisplayObject>),(MovieClip*),DisplayObject*), asCALL_CDECL_OBJLAST);
  #else
-	engine->RegisterObjectBehaviour("MovieClip", asBEHAVE_IMPLICIT_REF_CAST, "DisplayObject @f()", asFUNCTION((refCast<MovieClip, DisplayObject>)), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("MovieClip", "DisplayObject @opImplCast()", asFUNCTION((refCast<MovieClip, DisplayObject>)), asCALL_CDECL_OBJLAST);
  #endif
 #endif
 
@@ -1270,13 +1270,13 @@ bool Test5()
 	
 	engine->RegisterObjectType("B", 0, asOBJ_REF);
 	engine->RegisterObjectBehaviour("B", asBEHAVE_FACTORY,
-	"B@ f()", asFUNCTION(BTest5::Factory), asCALL_CDECL);
+		"B@ f()", asFUNCTION(BTest5::Factory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("B", asBEHAVE_ADDREF,
-	"void AddRef() const", asMETHODPR(BTest5, AddRef, () const, void), asCALL_THISCALL);
+		"void AddRef() const", asMETHODPR(BTest5, AddRef, () const, void), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("B", asBEHAVE_RELEASE,
-	"void Release() const", asMETHODPR(BTest5, Release, () const, void), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("B", asBEHAVE_IMPLICIT_REF_CAST,
-	"A@ f()", asMETHOD(BTest5, RefCastA), asCALL_THISCALL);
+		"void Release() const", asMETHODPR(BTest5, Release, () const, void), asCALL_THISCALL);
+	engine->RegisterObjectMethod("B", 
+		"A@ opImplCast()", asMETHOD(BTest5, RefCastA), asCALL_THISCALL);
 
 	engine->RegisterObjectType("C", sizeof(CTest5), asOBJ_VALUE | asOBJ_POD);
 	engine->RegisterObjectMethod("C", "C& opShl(const A&)",
