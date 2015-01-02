@@ -158,6 +158,14 @@ bool Test()
 			"class B { \n"
 			"  A @opImplCast() { return a; } \n"
 			"  A @a; \n"
+			"} \n" 
+			"class C { \n"
+			"  A @opCast() { return a; } \n"
+			"  const A @opCast() const { return a; } \n"
+			"  B @opCast() { return b; } \n"
+			"  const B @opCast() const { return b; } \n"
+			"  A @a; \n"
+			"  B @b; \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
@@ -174,6 +182,17 @@ bool Test()
 		r = ExecuteString(engine, "B b; @b.a = A(); \n"
 								  "A @a = b; \n"
 								  "assert( a is b.a ); \n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// cast should be able to properly handle const overloads too
+		r = ExecuteString(engine, "C c; @c.a = A(); @c.b = B(); \n"
+			                      "const C @cc = c; \n"
+								  "A @a = cast<A>(c); \n"
+								  "const A @ca = cast<A>(cc); \n"
+								  "const B @cb = cast<B>(cc); \n"
+								  "assert( a is ca && a !is null ); \n"
+								  "assert( cb is c.b ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
@@ -276,8 +295,7 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 
-	if( bout.buffer != "ExecuteString (1, 26) : Error   : No conversion from 'const intf2@' to 'intf2@' available.\n"
-					   "ExecuteString (1, 40) : Error   : Illegal operation on 'const int'\n" )
+	if( bout.buffer != "ExecuteString (1, 41) : Error   : No matching signatures to 'intf2::Test2() const'\n" )
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());

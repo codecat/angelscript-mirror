@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -5272,6 +5272,9 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 	asCArray<int> ops;
 	asUINT n;
 
+	// A ref cast must not remove the constness
+	bool isConst = ctx->type.dataType.IsObjectConst();
+
 	// Find a suitable opCast or opImplCast method
 	asCObjectType *ot = ctx->type.dataType.GetObjectType();
 	for( n = 0; n < ot->methods.GetLength(); n++ )
@@ -5284,9 +5287,16 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 			if( func->returnType.GetObjectType() != to.GetObjectType() )
 				continue;
 
+			// Can't call a non-const function on a const object
+			if( isConst && !func->IsReadOnly() )
+				continue;
+
 			ops.PushLast(func->id);
 		}
 	}
+
+	// Filter the list by constness to remove const methods if there are matching non-const methods
+	FilterConst(ops, !isConst);
 
 	// It shouldn't be possible to have more than one
 	// TODO: Should be allowed to have different behaviours for const and non-const references
@@ -5479,6 +5489,10 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 				ctx->type.dataType.SetObjectType(to.GetObjectType());
 			}
 		}
+
+		// A ref cast must not remove the constness
+		if( isConst )
+			ctx->type.dataType.MakeHandleToConst(true);
 	}
 
 	return conversionDone;
@@ -6149,13 +6163,8 @@ asUINT asCCompiler::ImplicitConvObjectRef(asSExprContext *ctx, const asCDataType
 		// If the types are not equal yet, then we may still be able to find a reference cast
 		else if( ctx->type.dataType.GetObjectType() != to.GetObjectType() )
 		{
-			// A ref cast must not remove the constness
-			bool isConst = ctx->type.dataType.IsObjectConst();
-
 			// We may still be able to find an implicit ref cast behaviour
 			CompileRefCast(ctx, to, convType == asIC_EXPLICIT_REF_CAST, node, generateCode);
-
-			ctx->type.dataType.MakeHandleToConst(isConst);
 
 			// Was the conversion done?
 			if( ctx->type.dataType.GetObjectType() == to.GetObjectType() )
@@ -9198,6 +9207,8 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		if( to.SupportHandles() )
 		{
 			to.MakeHandle(true);
+			if( expr.type.dataType.IsObjectConst() )
+				to.MakeHandleToConst(true);
 		}
 		else if( !to.IsObjectHandle() )
 		{

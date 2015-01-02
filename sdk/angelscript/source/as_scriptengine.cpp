@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2733,9 +2733,9 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 
 	// Check against duplicate methods
 	asUINT n;
-	if( func->name == "opConv" || func->name == "opImplConv" )
+	if( func->name == "opConv" || func->name == "opImplConv" || func->name == "opCast" || func->name == "opImplCast" )
 	{
-		// opConv and opImplConv are special methods that the compiler differentiates between by the return type
+		// opConv and opCast are special methods that the compiler differentiates between by the return type
 		for( n = 0; n < func->objectType->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];

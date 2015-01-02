@@ -948,6 +948,10 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
+		r = engine->RegisterObjectMethod("B", "B @opImplCast()", asFUNCTION(0), asCALL_GENERIC);
+		if( r < 0 )
+			TEST_FAILED;
+
 		r = engine->RegisterObjectMethod("B", "const A@ opImplCast() const", asFUNCTION(0), asCALL_GENERIC);
 		if( r < 0 )
 			TEST_FAILED;

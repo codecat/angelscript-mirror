@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2738,9 +2738,10 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				for( asUINT d = 0; d < decl->objType->methods.GetLength(); d++ )
 				{
 					derivedFunc = GetFunctionDescription(decl->objType->methods[d]);
-					if( baseFunc->name == "opConv" || baseFunc->name == "opImplConv" )
+					if( baseFunc->name == "opConv" || baseFunc->name == "opImplConv" ||
+						baseFunc->name == "opCast" || baseFunc->name == "opImplCast" )
 					{
-						// For the opConv and opImplConv methods, the return type can differ if they are different methods
+						// For the opConv and opCast methods, the return type can differ if they are different methods
 						if( derivedFunc->name == baseFunc->name &&
 							derivedFunc->IsSignatureExceptNameEqual(baseFunc) )
 						{
@@ -4300,9 +4301,9 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 		GetObjectMethodDescriptions(name.AddressOf(), objType, funcs, false);
 	else
 		GetFunctionDescriptions(name.AddressOf(), funcs, ns);
-	if( objType && (name == "opConv" || name == "opImplConv") && parameterTypes.GetLength() == 0 )
+	if( objType && (name == "opConv" || name == "opImplConv" || name == "opCast" || name == "opImplCast") && parameterTypes.GetLength() == 0 )
 	{
-		// opConv and opImplConv are special methods used for type casts
+		// opConv and opCast are special methods used for type casts
 		for( asUINT n = 0; n < funcs.GetLength(); ++n )
 		{
 			asCScriptFunction *func = GetFunctionDescription(funcs[n]);
