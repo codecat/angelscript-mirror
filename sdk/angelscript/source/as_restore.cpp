@@ -755,6 +755,8 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	func->objectType = ReadObjectType();
 	if( func->objectType )
 	{
+		func->objectType->AddRefInternal();
+
 		asBYTE b;
 		ReadData(&b, 1);
 		func->isReadOnly = (b & 1) ? true : false;

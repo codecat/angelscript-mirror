@@ -399,7 +399,7 @@ int asCBuilder::ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, 
 }
 
 #ifndef AS_NO_COMPILER
-// This function will verify if the newly created function will conflict another overload due to having  
+// This function will verify if the newly created function will conflict another overload due to having
 // identical function arguments that are not default args, e.g: foo(int) and foo(int, int=0)
 int asCBuilder::CheckForConflictsDueToDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func, asCObjectType *objType)
 {
@@ -3524,6 +3524,7 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->id               = engine->GetNextScriptFunctionId();
 	vf->isReadOnly       = func->isReadOnly;
 	vf->objectType       = func->objectType;
+	vf->objectType->AddRefInternal();
 	vf->signatureId      = func->signatureId;
 	vf->isPrivate        = func->isPrivate;
 	vf->isProtected      = func->isProtected;

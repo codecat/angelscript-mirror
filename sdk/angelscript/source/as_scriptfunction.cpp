@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -471,6 +471,12 @@ void asCScriptFunction::DestroyInternal()
 	if( sysFuncIntf )
 		asDELETE(sysFuncIntf,asSSystemFunctionInterface);
 	sysFuncIntf = 0;
+
+	if( objectType )
+	{
+		objectType->ReleaseInternal();
+		objectType = 0;
+	}
 
 	DeallocateScriptFunctionData();
 
@@ -1643,6 +1649,7 @@ bool asCScriptFunction::IsShared() const
 	if( funcType == asFUNC_SYSTEM ) return true;
 
 	// All class methods for shared classes are also shared
+	asASSERT( objectType == 0 || objectType->engine == engine || objectType->engine == 0 );
 	if( objectType && (objectType->flags & asOBJ_SHARED) ) return true;
 
 	// Functions that have been specifically marked as shared are shared

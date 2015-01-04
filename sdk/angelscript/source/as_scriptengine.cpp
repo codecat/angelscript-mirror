@@ -1328,6 +1328,7 @@ int asCScriptEngine::GetMethodIdByDecl(const asCObjectType *ot, const char *decl
 	// Set the object type so that the signature can be properly compared
 	// This cast is OK, it will only be used for comparison
 	func.objectType = const_cast<asCObjectType*>(ot);
+	func.objectType->AddRefInternal();
 
 	int r = bld.ParseFunctionDeclaration(func.objectType, decl, &func, false);
 	if( r < 0 )
@@ -1539,6 +1540,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 		return ConfigError(asOUT_OF_MEMORY, "RegisterInterfaceMethod", intf, declaration);
 
 	func->objectType = dt.GetObjectType();
+	func->objectType->AddRefInternal();
 
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, false);
 	if( r < 0 )
@@ -1950,7 +1952,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	func.name.Format("_beh_%d_", behaviour);
 
 	if( behaviour != asBEHAVE_FACTORY && behaviour != asBEHAVE_LIST_FACTORY )
+	{
 		func.objectType = objectType;
+		func.objectType->AddRefInternal();
+	}
 
 	// TODO: cleanup: This is identical to what is in RegisterMethodToObjectType
 	// Check if the method restricts that use of the template to value types or reference types
@@ -2488,6 +2493,8 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	f->sysFuncIntf    = newInterface;
 	f->returnType     = func.returnType;
 	f->objectType     = func.objectType;
+	if( f->objectType )
+		f->objectType->AddRefInternal();
 	f->id             = id;
 	f->isReadOnly     = func.isReadOnly;
 	f->accessMask     = defaultAccessMask;
@@ -2711,6 +2718,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 
 	func->sysFuncIntf = newInterface;
 	func->objectType  = objectType;
+	func->objectType->AddRefInternal();
 
 	asCBuilder bld(this, 0);
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, true, &newInterface->paramAutoHandles, &newInterface->returnAutoHandle);
@@ -3722,6 +3730,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	{
 		func->returnType   = factory->returnType; // constructors return nothing
 		func->objectType   = ot;
+		func->objectType->AddRefInternal();
 	}
 
 	// Skip the first parameter as this is the object type pointer that the stub will add
@@ -3862,6 +3871,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	func2->inOutFlags = func->inOutFlags;
 	func2->isReadOnly = func->isReadOnly;
 	func2->objectType = ot;
+	func2->objectType->AddRefInternal();
 	func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
 
 	// Adjust the clean up instructions

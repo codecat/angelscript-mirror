@@ -1195,6 +1195,8 @@ int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const a
 	func->inOutFlags       = inOutFlags;
 	func->defaultArgs      = defaultArgs;
 	func->objectType       = objType;
+	if( objType )
+		objType->AddRefInternal();
 	func->isReadOnly       = isConstMethod;
 	func->isPrivate        = isPrivate;
 	func->isProtected      = isProtected;

@@ -11,6 +11,42 @@ bool Test()
 	COutStream out;
 	asIScriptContext *ctx;
 
+	// Test a problematic script for cleaning up a module
+	// Reported by Polyak Istvan
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"interface Interf\n"
+			"{\n"
+			"    int getType () const;\n"
+			"}\n"
+			"class A : Interf\n"
+			"{\n"
+			"    int getType () const\n"
+			"    {\n"
+			"        return 1;\n"
+			"    }\n"
+			"}\n");
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod->Discard();
+
+		engine->Release();
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Basic tests for the redesign of the internal memory management
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
