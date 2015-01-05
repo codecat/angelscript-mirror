@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -54,7 +54,7 @@ class asCObjectProperty
 {
 public:
 	asCObjectProperty() {accessMask = 0xFFFFFFFF;}
-	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), isPrivate(o.isPrivate), isProtected(o.isProtected), isInherited(o.isInherited), accessMask(o.accessMask) {}
+	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), accessMask(o.accessMask), isPrivate(o.isPrivate), isProtected(o.isProtected), isInherited(o.isInherited) {}
 	asCString   name;
 	asCDataType type;
 	int         byteOffset;

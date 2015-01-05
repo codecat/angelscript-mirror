@@ -222,7 +222,7 @@ bool CScriptFileSystem::ChangeCurrentPath(const string &path)
 		currentPath += "/" + path;
 
 	// Remove trailing slashes from the path
-	while( currentPath.length() && (currentPath.back() == '/' || currentPath.back() == '\\') )
+	while( currentPath.length() && (currentPath[currentPath.length()-1] == '/' || currentPath[currentPath.length()-1] == '\\') )
 		currentPath.resize(currentPath.length()-1);
 
 	return IsDir(currentPath);

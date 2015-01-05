@@ -11860,7 +11860,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 
 	// The rest of the operators are not commutative, and doesn't require specific return type
 	const char *op = 0, *op_r = 0;
-	switch( token )
+	switch( int(token) ) // convert to int to avoid warning in gnuc that not all values are tested
 	{
 	case ttPlus:               op = "opAdd";  op_r = "opAdd_r";  break;
 	case ttMinus:              op = "opSub";  op_r = "opSub_r";  break;
@@ -11915,7 +11915,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	}
 	else
 	{
-		switch( token )
+		switch( int(token) ) // convert to int to avoid warning in gnuc that not all values are tested
 		{
 		case ttAssignment:        op = "opAssign";     break;
 		case ttAddAssign:         op = "opAddAssign";  break;

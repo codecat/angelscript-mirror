@@ -133,10 +133,19 @@ bool Test()
 								  "assert( s == '2e-308' ); \n"
 								  "float f = 3.402823466e+38f; \n"
 								  "s = formatFloat(f, 'e'); \n"
+#ifdef __GNUC__								  
+								  "assert( s == '3e+38' ); \n"
+#else
 								  "assert( s == '3e+038' ); \n"
+#endif
 								  "f = 1.175494351e-38f; \n"
 								  "s = formatFloat(f, 'e'); \n"
-								  "assert( s == '1e-038' ); \n");
+#ifdef __GNUC__
+								  "assert( s == '1e-38' ); \n"
+#else
+								  "assert( s == '1e-038' ); \n"
+#endif
+						);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

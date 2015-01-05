@@ -13,6 +13,79 @@ bool Test2();
 
 bool TestModule(const char *module, asIScriptEngine *engine);
 
+class FooScripted
+{
+public:
+	void CallMe()
+	{
+		if( !m_isDead->Get() )
+		{
+			asIScriptEngine *engine = m_obj->GetEngine();
+			asIScriptContext *ctx = engine->RequestContext();
+			ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
+			ctx->SetObject(m_obj);
+			ctx->Execute();
+			engine->ReturnContext(ctx);
+		}
+	}
+	int m_value;
+
+	static FooScripted *Factory()
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+
+		// Get the function that is calling the factory so we can be certain it is the FooScript class
+		asIScriptFunction *func = ctx->GetFunction(0);
+		if( func->GetObjectType() == 0 || std::string(func->GetObjectType()->GetName()) != "FooScripted" )
+		{
+			ctx->SetException("Invalid attempt to manually instantiate FooScript_t");
+			return 0;
+		}
+
+		// Get the this pointer from the calling function
+		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(ctx->GetThisPointer(0));
+
+		return new FooScripted(obj);
+	}
+
+	void AddRef()
+	{
+		if( !m_isDead->Get() )
+			m_obj->AddRef();
+		m_refCount++;
+	}
+
+	void Release()
+	{
+		if( !m_isDead->Get() )
+			m_obj->Release();
+		if( --m_refCount == 0 )
+			delete this;
+	}
+
+protected:
+	FooScripted(asIScriptObject *obj) 
+	{ 
+		m_obj = 0;
+		m_isDead = 0;
+		m_value = 0;
+		m_refCount = 1;
+
+		m_isDead = obj->GetWeakRefFlag();
+		m_isDead->AddRef();
+
+		m_obj = obj;
+	}
+	~FooScripted()
+	{
+		m_isDead->Release();
+	}
+
+	int m_refCount;
+	asILockableSharedBool *m_isDead;
+	asIScriptObject *m_obj;
+};
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -33,79 +106,6 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
-
-		class FooScripted
-		{
-		public:
-			void CallMe()
-			{
-				if( !m_isDead->Get() )
-				{
-					asIScriptEngine *engine = m_obj->GetEngine();
-					asIScriptContext *ctx = engine->RequestContext();
-					ctx->Prepare(m_obj->GetObjectType()->GetMethodByDecl("void CallMe()"));
-					ctx->SetObject(m_obj);
-					ctx->Execute();
-					engine->ReturnContext(ctx);
-				}
-			}
-			int m_value;
-
-			static FooScripted *Factory()
-			{
-				asIScriptContext *ctx = asGetActiveContext();
-
-				// Get the function that is calling the factory so we can be certain it is the FooScript class
-				asIScriptFunction *func = ctx->GetFunction(0);
-				if( func->GetObjectType() == 0 || std::string(func->GetObjectType()->GetName()) != "FooScripted" )
-				{
-					ctx->SetException("Invalid attempt to manually instantiate FooScript_t");
-					return 0;
-				}
-
-				// Get the this pointer from the calling function
-				asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(ctx->GetThisPointer(0));
-
-				return new FooScripted(obj);
-			}
-
-			void AddRef()
-			{
-				if( !m_isDead->Get() )
-					m_obj->AddRef();
-				m_refCount++;
-			}
-
-			void Release()
-			{
-				if( !m_isDead->Get() )
-					m_obj->Release();
-				if( --m_refCount == 0 )
-					delete this;
-			}
-
-		protected:
-			FooScripted(asIScriptObject *obj) 
-			{ 
-				m_obj = 0;
-				m_isDead = 0;
-				m_value = 0;
-				m_refCount = 1;
-
-				m_isDead = obj->GetWeakRefFlag();
-				m_isDead->AddRef();
-
-				m_obj = obj;
-			}
-			~FooScripted()
-			{
-				m_isDead->Release();
-			}
-
-			int m_refCount;
-			asILockableSharedBool *m_isDead;
-			asIScriptObject *m_obj;
-		};
 
 		engine->RegisterObjectType("FooScripted_t", 0, asOBJ_REF);
 		engine->RegisterObjectBehaviour("FooScripted_t", asBEHAVE_FACTORY, "FooScripted_t @f()", asFUNCTION(FooScripted::Factory), asCALL_CDECL);

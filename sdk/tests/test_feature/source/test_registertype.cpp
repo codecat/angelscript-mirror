@@ -2033,6 +2033,9 @@ bool TestIrrTypes()
 }
 
 ///===================================================================================================
+
+#ifdef AS_CAN_USE_CPP11
+
 // http://www.gamedev.net/topic/662178-odd-behavior-with-globally-declared-scoped-reference-types-is-this-normal/
 
 class vec
@@ -2134,6 +2137,15 @@ bool TestAlignedScoped()
 
 	return fail;
 }
+
+#else
+bool TestAlignedScoped()
+{
+	PRINTF("TestAlignedScoped skipped due to lack of C++11 features\n");
+	return false;
+}
+
+#endif
 
 } // namespace
 
