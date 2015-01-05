@@ -1063,7 +1063,7 @@ void asCScriptFunction::AddReferences()
 	// Only count references if there is any bytecode
 	if( scriptData && scriptData->byteCode.GetLength() )
 	{
-		if( returnType.IsObject() )
+		if( returnType.GetObjectType() )
 		{
 			returnType.GetObjectType()->AddRefInternal();
 
@@ -1072,7 +1072,7 @@ void asCScriptFunction::AddReferences()
 		}
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
-			if( parameterTypes[p].IsObject() )
+			if( parameterTypes[p].GetObjectType() )
 			{
 				parameterTypes[p].GetObjectType()->AddRefInternal();
 
@@ -1196,7 +1196,7 @@ void asCScriptFunction::ReleaseReferences()
 	// Only count references if there is any bytecode
 	if( scriptData && scriptData->byteCode.GetLength() )
 	{
-		if( returnType.IsObject() )
+		if( returnType.GetObjectType() )
 		{
 			returnType.GetObjectType()->ReleaseInternal();
 
@@ -1205,7 +1205,7 @@ void asCScriptFunction::ReleaseReferences()
 		}
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
-			if( parameterTypes[p].IsObject() )
+			if( parameterTypes[p].GetObjectType() )
 			{
 				parameterTypes[p].GetObjectType()->ReleaseInternal();
 

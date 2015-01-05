@@ -303,7 +303,7 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 
 	// Determine the initial size from the buffer
 	asUINT height = *(asUINT*)buf;
-	asUINT width = *(asUINT*)((char*)(buf)+4);
+	asUINT width = height ? *(asUINT*)((char*)(buf)+4) : 0;
 
 	// Make sure the grid size isn't too large for us to handle
 	if( !CheckMaxSize(width, height) )

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -663,6 +663,9 @@ asSTypeBehaviour *asCDataType::GetBehaviour() const
 
 bool asCDataType::IsEnumType() const
 {
+	// Do a sanity check on the objectType, to verify that we aren't trying to access memory after it has been released
+	asASSERT( objectType == 0 || objectType->name.GetLength() < 100 );
+
 	if( objectType && (objectType->flags & asOBJ_ENUM) )
 		return true;
 
