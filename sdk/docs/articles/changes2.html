@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/12/30</h2>
+<h2>Version 2.30.0 WIP - 2014/01/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,7 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The compiler was producing wrong bytecode when calling asBEHAVE_IMPLICIT_REF_CAST on value type
 <li>Fixed crash when script class contained value template type as member
 <li>Class method can refer to base class' method with fully specified namespace (Thanks iraxef)
-<li>It is possible to register an enum with the same in a namespace after it has been registered in the global namespace (Simon Geilfus)
+<li>It is possible to register an enum with the same name in a namespace after it has been registered in the global namespace (Simon Geilfus)
 <li>No more memory build-up when the script has circular references between classes and templates (Thanks iraxef)
 <li>Private class properties are not accessible from derived classes (Thanks iraxef)
 </ul>
@@ -70,6 +70,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Completely re-factored the way the memory management for the internal script code is done
 <li>Discarding modules is much faster, and doesn't burden the garbage collector (Thanks ziomau)
 <li>Compiler no longer warns on empty sections since this may be a valid situation (Thanks iraxef)
+<li>When formatting type declarations for messages the namespace will always be included if different than the current namespace (Thanks Solokiller)
 </ul>
 <li>Script language
 <ul>
@@ -99,6 +100,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added support for asrun to execute system commands
 <li>Debugger now accepts namespace for printing variables
 <li>CScriptBuilder expands relative paths to absolute paths before verifying if the include file is duplicate (Thanks cuipeng)
+<li>Fixed WriteConfigToStream to keep the valid object type flags (Thanks Solokiller)
 </ul>
 </ul>
 

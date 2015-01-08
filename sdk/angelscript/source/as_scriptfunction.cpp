@@ -680,7 +680,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		  (name == objectType->name || (name.GetLength() > 0 && name[0] == '~') ||
 		   name == "_beh_0_" || name == "_beh_2_")) )
 	{
-		str = returnType.Format();
+		str = returnType.Format(nameSpace, includeNamespace);
 		str += " ";
 	}
 	if( objectType && includeObjectName )
@@ -718,7 +718,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		asUINT n;
 		for( n = 0; n < parameterTypes.GetLength() - 1; n++ )
 		{
-			str += parameterTypes[n].Format();
+			str += parameterTypes[n].Format(nameSpace, includeNamespace);
 			if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 			{
 				if( inOutFlags[n] == asTM_INREF ) str += "in";
@@ -743,7 +743,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		}
 
 		// Add the last parameter
-		str += parameterTypes[n].Format();
+		str += parameterTypes[n].Format(nameSpace, includeNamespace);
 		if( parameterTypes[n].IsReference() && inOutFlags.GetLength() > n )
 		{
 			if( inOutFlags[n] == asTM_INREF ) str += "in";
@@ -800,7 +800,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				}
 				else
 					str += ", ";
-				str += reinterpret_cast<asSListPatternDataTypeNode*>(n)->dataType.Format();
+				str += reinterpret_cast<asSListPatternDataTypeNode*>(n)->dataType.Format(nameSpace, includeNamespace);
 			}
 
 			n = n->next;
@@ -946,7 +946,7 @@ const char *asCScriptFunction::GetVarDecl(asUINT index, bool includeNamespace) c
 		return 0;
 
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = scriptData->variables[index]->type.Format(includeNamespace);
+	*tempString = scriptData->variables[index]->type.Format(nameSpace, includeNamespace);
 	*tempString += " " + scriptData->variables[index]->name;
 
 	return tempString->AddressOf();

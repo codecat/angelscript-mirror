@@ -526,7 +526,7 @@ const char *asCObjectType::GetPropertyDeclaration(asUINT index, bool includeName
 		*tempString = "protected ";
 	else
 		*tempString = "";
-	*tempString += properties[index]->type.Format(includeNamespace);
+	*tempString += properties[index]->type.Format(nameSpace, includeNamespace);
 	*tempString += " ";
 	*tempString += properties[index]->name;
 

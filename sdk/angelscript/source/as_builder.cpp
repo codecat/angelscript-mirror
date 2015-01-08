@@ -247,11 +247,11 @@ void asCBuilder::EvaluateTemplateInstances(asUINT startIdx, bool keepSilent)
 		asCScriptFunction *callback = engine->scriptFunctions[tmpl->beh.templateCallback];
 		if( callback && !engine->CallGlobalFunctionRetBool(tmpl, &dontGarbageCollect, callback->sysFuncIntf, callback) )
 		{
-			asCString sub = tmpl->templateSubTypes[0].Format();
+			asCString sub = tmpl->templateSubTypes[0].Format(engine->nameSpaces[0]);
 			for( asUINT n = 1; n < tmpl->templateSubTypes.GetLength(); n++ )
 			{
 				sub += ",";
-				sub += tmpl->templateSubTypes[n].Format();
+				sub += tmpl->templateSubTypes[n].Format(engine->nameSpaces[0]);
 			}
 			asCString str;
 			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, tmpl->name.AddressOf(), sub.AddressOf());
@@ -1561,12 +1561,12 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 	{
 		asCString str;
 		if( type.IsAbstractClass() )
-			str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, type.Format().AddressOf());
+			str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, type.Format(ns).AddressOf());
 		else if( type.IsInterface() )
-			str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, type.Format().AddressOf());
+			str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, type.Format(ns).AddressOf());
 		else
 			// TODO: Improve error message to explain why
-			str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format().AddressOf());
+			str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format(ns).AddressOf());
 
 		WriteError(str, file, node);
 	}
@@ -1984,7 +1984,7 @@ void asCBuilder::CompileGlobalVariables()
 			{
 				int r, c;
 				gvar->script->ConvertPosToRowCol(gvar->declaredAtNode->tokenPos, &r, &c);
-				asCString str = gvar->datatype.Format();
+				asCString str = gvar->datatype.Format(gvar->ns);
 				str += " " + gvar->name;
 				str.Format(TXT_COMPILING_s, str.AddressOf());
 				WriteInfo(gvar->script->name, str, r, c, true);
@@ -2032,7 +2032,7 @@ void asCBuilder::CompileGlobalVariables()
 								int row, col;
 								gvar->script->ConvertPosToRowCol(gvar->declaredAtNode->tokenPos, &row, &col);
 
-								asCString str = gvar->datatype.Format();
+								asCString str = gvar->datatype.Format(gvar->ns);
 								str += " " + gvar->name;
 								str.Format(TXT_COMPILING_s, str.AddressOf());
 								WriteInfo(gvar->script->name, str, row, col, true);
@@ -3555,12 +3555,12 @@ asCObjectProperty *asCBuilder::AddPropertyToClass(sClassDeclaration *decl, const
 			{
 				asCString str;
 				if( dt.IsAbstractClass() )
-					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format(decl->objType->nameSpace).AddressOf());
 				else if( dt.IsInterface() )
-					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format(decl->objType->nameSpace).AddressOf());
 				else
 					// TODO: Improve error message to explain why
-					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format(decl->objType->nameSpace).AddressOf());
 				WriteError(str, file, node);
 			}
 			return 0;
@@ -5071,11 +5071,11 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 								if( !otInstance )
 								{
-									asCString sub = subTypes[0].Format();
+									asCString sub = subTypes[0].Format(ot->nameSpace);
 									for( asUINT s = 1; s < subTypes.GetLength(); s++ )
 									{
 										sub += ",";
-										sub += subTypes[s].Format();
+										sub += subTypes[s].Format(ot->nameSpace);
 									}
 									asCString str;
 									str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, ot->name.AddressOf(), sub.AddressOf());
@@ -5155,12 +5155,12 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			{
 				asCString str;
 				if( dt.IsAbstractClass() )
-					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format(ns).AddressOf());
 				else if( dt.IsInterface() )
-					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format().AddressOf());
+					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format(ns).AddressOf());
 				else
 					// TODO: Improve error message to explain why
-					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format().AddressOf());
+					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format(ns).AddressOf());
 
 				WriteError(str, file, n);
 			}

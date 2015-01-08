@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -491,11 +491,11 @@ int asCReader::ReadInner()
 			asCScriptFunction *callback = engine->scriptFunctions[usedTypes[i]->beh.templateCallback];
 			if( !engine->CallGlobalFunctionRetBool(usedTypes[i], &dontGarbageCollect, callback->sysFuncIntf, callback) )
 			{
-				asCString sub = usedTypes[i]->templateSubTypes[0].Format();
+				asCString sub = usedTypes[i]->templateSubTypes[0].Format(usedTypes[i]->nameSpace);
 				for( asUINT n = 1; n < usedTypes[i]->templateSubTypes.GetLength(); n++ )
 				{
 					sub += ",";
-					sub += usedTypes[i]->templateSubTypes[n].Format();
+					sub += usedTypes[i]->templateSubTypes[n].Format(usedTypes[i]->nameSpace);
 				}
 				asCString str;
 				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, usedTypes[i]->name.AddressOf(), sub.AddressOf());
@@ -1733,11 +1733,11 @@ asCObjectType* asCReader::ReadObjectType()
 		if( ot == 0 )
 		{
 			// Show all subtypes in error message
-			asCString sub = subTypes[0].Format();
+			asCString sub = subTypes[0].Format(nameSpace);
 			for( asUINT n = 1; n < subTypes.GetLength(); n++ )
 			{
 				sub += ",";
-				sub += subTypes[n].Format();
+				sub += subTypes[n].Format(nameSpace);
 			}
 			asCString str;
 			str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, typeName.AddressOf(), sub.AddressOf());

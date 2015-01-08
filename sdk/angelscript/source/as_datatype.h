@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -50,6 +50,7 @@ class asCScriptEngine;
 class asCObjectType;
 class asCScriptFunction;
 class asCModule;
+struct asSNameSpace;
 
 // TODO: refactor: Reference should not be part of the datatype. This should be stored separately, e.g. in asCTypeInfo
 //                 MakeReference, MakeReadOnly, IsReference, IsReadOnly should be removed
@@ -63,7 +64,7 @@ public:
 
 	bool IsValid() const;
 
-	asCString Format(bool includeNamespace = false) const;
+	asCString Format(asSNameSpace *currNs, bool includeNamespace = false) const;
 
 	static asCDataType CreatePrimitive(eTokenType tt, bool isConst);
 	static asCDataType CreateObject(asCObjectType *ot, bool isConst);

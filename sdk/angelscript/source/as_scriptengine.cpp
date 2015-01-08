@@ -4571,7 +4571,7 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, bool includeNamespac
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = dt.Format(includeNamespace);
+	*tempString = dt.Format(defaultNamespace, includeNamespace);
 
 	return tempString->AddressOf();
 }

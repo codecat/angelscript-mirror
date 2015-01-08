@@ -249,6 +249,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 
 	asDWORD currAccessMask = 0;
 	string currNamespace = "";
+	engine->SetDefaultNamespace(currNamespace.c_str());
 
 	// Export the engine version, just for info
 	strm << "// AngelScript " << asGetLibraryVersion() << "\n";
@@ -281,6 +282,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		strm << "enum " << enumName << "\n";
 		for( int m = 0; m < engine->GetEnumValueCount(typeId); m++ )
@@ -310,6 +312,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
@@ -323,7 +326,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 			// Only the type flags are necessary. The application flags are application
 			// specific and doesn't matter to the offline compiler. The object size is also
 			// unnecessary for the offline compiler
-			strm << "objtype \"" << engine->GetTypeDeclaration(type->GetTypeId()) << "\" " << (unsigned int)(type->GetFlags() & 0xFF) << "\n";
+			strm << "objtype \"" << engine->GetTypeDeclaration(type->GetTypeId()) << "\" " << (unsigned int)(type->GetFlags() & asOBJ_MASK_VALID_FLAGS) << "\n";
 		}
 	}
 
@@ -338,6 +341,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		if( accessMask != currAccessMask )
 		{
@@ -357,6 +361,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		if( accessMask != currAccessMask )
 		{
@@ -379,6 +384,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		string typeDecl = engine->GetTypeDeclaration(type->GetTypeId());
 		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
@@ -460,6 +466,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		asDWORD accessMask = func->GetAccessMask();
 		if( accessMask != currAccessMask )
@@ -491,9 +498,12 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		{
 			strm << "namespace " << nameSpace << "\n";
 			currNamespace = nameSpace;
+			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
 		strm << "prop \"" << (isConst ? "const " : "") << engine->GetTypeDeclaration(typeId) << " " << name << "\"\n";
 	}
+
+	engine->SetDefaultNamespace("");
 
 	// Write string factory
 	strm << "\n// String factory\n";

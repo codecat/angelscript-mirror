@@ -159,7 +159,7 @@ bool asCDataType::IsNullHandle() const
 	return false;
 }
 
-asCString asCDataType::Format(bool includeNamespace) const
+asCString asCDataType::Format(asSNameSpace *currNs, bool includeNamespace) const
 {
 	if( IsNullHandle() )
 		return "<null handle>";
@@ -169,7 +169,9 @@ asCString asCDataType::Format(bool includeNamespace) const
 	if( isReadOnly )
 		str = "const ";
 
-	if( includeNamespace )
+	// If the type is not declared in the current namespace, then the namespace 
+	// must always be informed to guarantee that the correct type is informed
+	if( includeNamespace || (objectType && objectType->nameSpace != currNs) || (funcDef && funcDef->nameSpace != currNs) )
 	{
 		if( objectType && objectType->nameSpace->name != "" )
 			str += objectType->nameSpace->name + "::";
@@ -184,7 +186,7 @@ asCString asCDataType::Format(bool includeNamespace) const
 	else if( IsArrayType() && objectType && !objectType->engine->ep.expandDefaultArrayToTemplate )
 	{
 		asASSERT( objectType->templateSubTypes.GetLength() == 1 );
-		str += objectType->templateSubTypes[0].Format(includeNamespace);
+		str += objectType->templateSubTypes[0].Format(currNs, includeNamespace);
 		str += "[]";
 	}
 	else if( funcDef )
@@ -199,7 +201,7 @@ asCString asCDataType::Format(bool includeNamespace) const
 			str += "<";
 			for( asUINT subtypeIndex = 0; subtypeIndex < objectType->templateSubTypes.GetLength(); subtypeIndex++ )
 			{
-				str += objectType->templateSubTypes[subtypeIndex].Format(includeNamespace);
+				str += objectType->templateSubTypes[subtypeIndex].Format(currNs, includeNamespace);
 				if( subtypeIndex != objectType->templateSubTypes.GetLength()-1 )
 					str += ",";
 			}

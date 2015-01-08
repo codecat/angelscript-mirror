@@ -342,6 +342,90 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test WriteConfigToStream/ConfigEngineFromStream with namespaces
+	// http://www.gamedev.net/topic/664405-scripthelper-config-helpers-not-working-correctly/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("test");
+		engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->SetDefaultNamespace("blah");
+		engine->RegisterGlobalFunction("test::foo @bar(test::foo @)", asFUNCTION(0), asCALL_GENERIC);
+
+		stringstream s;
+		int r = WriteConfigToStream(engine, s);
+		if( r < 0 )
+			TEST_FAILED;
+
+		// skip the first two lines, since they vary depending on library version, platform, and compilation mode
+		string output = s.str();
+		size_t pos = output.find('\n');
+		pos = output.find('\n', pos+1);
+		output = output.substr(pos+1);
+
+		if( output != 
+					"// Engine properties\n"
+					"ep 0 0\n"
+					"ep 1 0\n"
+					"ep 2 1\n"
+					"ep 3 1\n"
+					"ep 4 0\n"
+					"ep 5 0\n"
+					"ep 6 0\n"
+					"ep 7 0\n"
+					"ep 8 0\n"
+					"ep 9 1\n"
+					"ep 10 0\n"
+					"ep 11 1\n"
+					"ep 12 0\n"
+					"ep 13 0\n"
+					"ep 14 2\n"
+					"ep 15 0\n"
+					"ep 16 1\n"
+					"ep 17 0\n"
+					"ep 18 0\n"
+					"ep 19 1\n"
+					"ep 20 0\n"
+					"ep 21 0\n"
+					"ep 22 0\n"
+					"ep 23 0\n"
+					"\n"
+					"// Enums\n"
+					"\n"
+					"// Types\n"
+					"access 1\n"
+					"namespace test\n"
+					"objtype \"foo\" 262145\n"
+					"\n"
+					"// Type members\n"
+					"\n"
+					"// Functions\n"
+					"namespace blah\n"
+					"func \"test::foo@ bar(test::foo@)\"\n"
+					"\n"
+					"// Properties\n"
+					"\n"
+					"// String factory\n"
+					"\n"
+					"// Default array type\n" )
+		{
+			PRINTF("%s", output.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = ConfigEngineFromStream(engine, s);
+		if( r < 0 )
+			TEST_FAILED;
+		
+		engine->Release();
+	}
+
 	// Test save/load with funcdef and imported functions
 	// http://www.gamedev.net/topic/657621-using-global-funcdef-setter-with-imported-function-gives-assert-or-invalid-bytecode/
 	{
