@@ -304,8 +304,9 @@ forgotten.
 \page doc_script_class_private Private class members
 
 Class members can be declared as private if you do not intend for them to be accessed 
-from outside the public class methods. This can be useful in large programs where you 
-wish to avoid programmer errors where properties or methods are inappropriately used.
+from outside the public class methods, or by derived classes. This can be useful in large 
+programs where you wish to avoid programmer errors where properties or methods are 
+inappropriately used.
 
 <pre>
   // A class with private members
@@ -343,7 +344,8 @@ wish to avoid programmer errors where properties or methods are inappropriately 
   }
 </pre>
 
-\note private members are visible to derived classes. There is currently no way of hiding members of a base class from the derived classes.
+\todo Add explanation about protected members too
+
 
 
 

@@ -352,6 +352,8 @@ bool Test()
 		engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_NOCOUNT);
 		engine->SetDefaultNamespace("blah");
 		engine->RegisterGlobalFunction("test::foo @bar(test::foo @)", asFUNCTION(0), asCALL_GENERIC);
+		engine->SetDefaultNamespace("");
+		engine->RegisterGlobalProperty("test::foo @g", (void*)1);
 
 		stringstream s;
 		int r = WriteConfigToStream(engine, s);
@@ -405,6 +407,8 @@ bool Test()
 					"func \"test::foo@ bar(test::foo@)\"\n"
 					"\n"
 					"// Properties\n"
+					"namespace ::\n"
+					"prop \"test::foo@ g\"\n"
 					"\n"
 					"// String factory\n"
 					"\n"
@@ -422,6 +426,25 @@ bool Test()
 		r = ConfigEngineFromStream(engine, s);
 		if( r < 0 )
 			TEST_FAILED;
+
+		stringstream s2;
+		r = WriteConfigToStream(engine, s2);
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Take out the engine property asEP_INIT_GLOBAL_VARS_AFTER_BUILD before 
+		// comparison, since it will not be maintained by the WriteConfigFromEngine
+		output = s.str();
+		string output2 = s2.str();
+		pos = output.find("ep 9");
+		output = output.substr(0, pos) + output.substr(pos+7);
+		output2 = output2.substr(0, pos) + output2.substr(pos+7);
+
+		if( output != output2 )
+		{
+			PRINTF("%s", s2.str().c_str());
+			TEST_FAILED;
+		}
 		
 		engine->Release();
 	}
