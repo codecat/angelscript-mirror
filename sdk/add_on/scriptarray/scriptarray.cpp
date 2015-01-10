@@ -1684,7 +1684,7 @@ static void ScriptArrayFactory_Generic(asIScriptGeneric *gen)
 {
 	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
 
-	*(CScriptArray**)gen->GetAddressOfReturnLocation() = CScriptArray::Create(ot);
+	*reinterpret_cast<CScriptArray**>(gen->GetAddressOfReturnLocation()) = CScriptArray::Create(ot);
 }
 
 static void ScriptArrayFactory2_Generic(asIScriptGeneric *gen)
@@ -1692,7 +1692,7 @@ static void ScriptArrayFactory2_Generic(asIScriptGeneric *gen)
 	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
 	asUINT length = gen->GetArgDWord(1);
 
-	*(CScriptArray**)gen->GetAddressOfReturnLocation() = CScriptArray::Create(ot, length);
+	*reinterpret_cast<CScriptArray**>(gen->GetAddressOfReturnLocation()) = CScriptArray::Create(ot, length);
 }
 
 static void ScriptArrayListFactory_Generic(asIScriptGeneric *gen)
@@ -1700,7 +1700,7 @@ static void ScriptArrayListFactory_Generic(asIScriptGeneric *gen)
 	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
 	void *buf = gen->GetArgAddress(1);
 
-	*(CScriptArray**)gen->GetAddressOfReturnLocation() = CScriptArray::Create(ot, buf);
+	*reinterpret_cast<CScriptArray**>(gen->GetAddressOfReturnLocation()) = CScriptArray::Create(ot, buf);
 }
 
 static void ScriptArrayFactoryDefVal_Generic(asIScriptGeneric *gen)
@@ -1709,14 +1709,14 @@ static void ScriptArrayFactoryDefVal_Generic(asIScriptGeneric *gen)
 	asUINT length = gen->GetArgDWord(1);
 	void *defVal = gen->GetArgAddress(2);
 
-	*(CScriptArray**)gen->GetAddressOfReturnLocation() = CScriptArray::Create(ot, length, defVal);
+	*reinterpret_cast<CScriptArray**>(gen->GetAddressOfReturnLocation()) = CScriptArray::Create(ot, length, defVal);
 }
 
 static void ScriptArrayTemplateCallback_Generic(asIScriptGeneric *gen)
 {
 	asIObjectType *ot = *(asIObjectType**)gen->GetAddressOfArg(0);
 	bool *dontGarbageCollect = *(bool**)gen->GetAddressOfArg(1);
-	*(bool*)gen->GetAddressOfReturnLocation() = ScriptArrayTemplateCallback(ot, *dontGarbageCollect);
+	*reinterpret_cast<bool*>(gen->GetAddressOfReturnLocation()) = ScriptArrayTemplateCallback(ot, *dontGarbageCollect);
 }
 
 static void ScriptArrayAssignment_Generic(asIScriptGeneric *gen)
@@ -1837,7 +1837,7 @@ static void ScriptArrayReverse_Generic(asIScriptGeneric *gen)
 static void ScriptArrayIsEmpty_Generic(asIScriptGeneric *gen)
 {
 	CScriptArray *self = (CScriptArray*)gen->GetObject();
-	self->IsEmpty();
+	*reinterpret_cast<bool*>(gen->GetAddressOfReturnLocation()) = self->IsEmpty();
 }
 
 static void ScriptArraySortAsc2_Generic(asIScriptGeneric *gen)
@@ -1877,7 +1877,7 @@ static void ScriptArrayRelease_Generic(asIScriptGeneric *gen)
 static void ScriptArrayGetRefCount_Generic(asIScriptGeneric *gen)
 {
 	CScriptArray *self = (CScriptArray*)gen->GetObject();
-	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
+	*reinterpret_cast<int*>(gen->GetAddressOfReturnLocation()) = self->GetRefCount();
 }
 
 static void ScriptArraySetFlag_Generic(asIScriptGeneric *gen)
@@ -1889,7 +1889,7 @@ static void ScriptArraySetFlag_Generic(asIScriptGeneric *gen)
 static void ScriptArrayGetFlag_Generic(asIScriptGeneric *gen)
 {
 	CScriptArray *self = (CScriptArray*)gen->GetObject();
-	*(bool*)gen->GetAddressOfReturnLocation() = self->GetFlag();
+	*reinterpret_cast<bool*>(gen->GetAddressOfReturnLocation()) = self->GetFlag();
 }
 
 static void ScriptArrayEnumReferences_Generic(asIScriptGeneric *gen)
