@@ -6,6 +6,14 @@ using namespace std;
 namespace TestDefaultArg
 {
 
+//This function is registered as void StringTest(const string& in szString1, const string& in szString2 = "")
+bool ComplexTest( const Complex& c1, const Complex& c2 )
+{
+	if( c1 != Complex(2,4) ) return false;
+	if( c2 != Complex(1,1) ) return false;
+	return true;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -16,29 +24,26 @@ bool Test()
 	asIScriptEngine *engine;
 
 	// problem default args and string concatenation
+	// The problem was that the default arg used a temporary variable that was also used to evaluate the first argument
 	// http://www.gamedev.net/topic/663922-problem-with-default-arguments/
 	{
 		const char *script = 
-			"enum E { HUD = 1 } \n"
-			"class T { \n"
-			"  void func(E msg, const string &in text, const string &in a1 = 'a', const string &in a2 = 'b', const string &in a3 = 'c', const string &in a4 = 'd') \n"
-			"  { \n"
-			"    assert( msg == HUD ); \n"
-			"    assert( text == 'test' ); \n"
-			"    assert( a1 == 'a' ); \n"
-			"    assert( a2 == 'b' ); \n"
-			"    assert( a3 == 'c' ); \n"
-			"    assert( a4 == 'd' ); \n"
-			"  } \n"
-			"} \n"
-			"T g_t; \n";
+			"void test() \n"
+			"{ \n"
+			"	bool r = ComplexTest( complex(1,2) + complex(1,2) ); \n"
+			"   assert( r ); \n"
+			"} \n";
 		
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-		RegisterStdString(engine);
-
 		bout.buffer = "";
+
+		RegisterScriptMathComplex(engine);
+
+		engine->RegisterGlobalFunction( "bool ComplexTest(const complex& in c1, const complex& in c2 = complex(1,1))", asFUNCTION( ComplexTest ), asCALL_CDECL );
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
 		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE); 
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
@@ -51,7 +56,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		r = ExecuteString(engine, "g_t.func(HUD, 't' + 'e' + 's' + 't'); \n", mod);
+		r = ExecuteString(engine, "test(); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

@@ -2040,11 +2040,12 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExp
 
 	// Make sure none of the variables used in the previous arguments are reused in the default arguments
 	bool anyErrors = false;
-	asCArray<int> varsUsed;
+	int prevReservedVars = reservedVariables.GetLength();
+	
 	int explicitArgs = (int)args.GetLength();
 
 	for( int p = 0; p < explicitArgs; p++ )
-		args[p]->bc.GetVarsUsed(varsUsed);
+		args[p]->bc.GetVarsUsed(reservedVariables);
 
 	// Make space for all the new arguments
 	args.SetLength(func->parameterTypes.GetLength());
@@ -2057,7 +2058,7 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExp
 		for( asUINT n = 0; n < namedArgs->GetLength(); ++n )
 		{
 			asSNamedArgument &named = (*namedArgs)[n];
-			named.ctx->bc.GetVarsUsed(varsUsed);
+			named.ctx->bc.GetVarsUsed(reservedVariables);
 
 			// Find the right spot to put it in
 			asUINT index = asUINT(-1);
@@ -2154,44 +2155,14 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExp
 		if( args[n] == 0 )
 		{
 			// Out of memory
+			reservedVariables.SetLength(prevReservedVars);
 			return -1;
 		}
 
 		MergeExprBytecodeAndType(args[n], &expr);
-
-		// Make sure the default arg expression doesn't end up
-		// with a variable that is used in a previous expression
-		if( args[n]->type.isVariable )
-		{
-			int offset = args[n]->type.stackOffset;
-			if( varsUsed.Exists(offset) )
-			{
-				// Release the current temporary variable
-				ReleaseTemporaryVariable(args[n]->type, 0);
-
-				asCDataType dt = args[n]->type.dataType;
-				dt.MakeReference(false);
-
-				// Reserve all variables already used in the expression so none of them will be used
-				asCArray<int> used;
-				args[n]->bc.GetVarsUsed(used);
-				asUINT prevReserved = reservedVariables.GetLength();
-				reservedVariables.Concatenate(used);
-
-				int newOffset = AllocateVariable(dt, true, IsVariableOnHeap(offset));
-				asASSERT( IsVariableOnHeap(offset) == IsVariableOnHeap(newOffset) );
-
-				reservedVariables.SetLength(prevReserved);
-
-				// Replace the variable in the expression
-				args[n]->bc.ExchangeVar(offset, newOffset);
-				args[n]->type.stackOffset = (short)newOffset;
-				args[n]->type.isTemporary = true;
-				args[n]->type.isVariable = true;
-			}
-		}
 	}
 
+	reservedVariables.SetLength(prevReservedVars);
 	return anyErrors ? -1 : 0;
 }
 

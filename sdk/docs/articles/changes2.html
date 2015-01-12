@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/01/09</h2>
+<h2>Version 2.30.0 WIP - 2014/01/11</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>It is possible to register an enum with the same name in a namespace after it has been registered in the global namespace (Simon Geilfus)
 <li>No more memory build-up when the script has circular references between classes and templates (Thanks iraxef)
 <li>Private class properties are not accessible from derived classes (Thanks iraxef)
+<li>Fixed bug in compiler where default argument could use temp var used in previous arguments (Thanks Solokiller)
 </ul>
 <li>Library interface
 <ul>
