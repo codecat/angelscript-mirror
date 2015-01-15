@@ -769,7 +769,7 @@ bool Test()
 	r = engine->RegisterObjectType("MyTmpl<float>", 0, asOBJ_REF);
 	if( r != asALREADY_REGISTERED )
 		TEST_FAILED;
-	if( bout.buffer != " (0, 0) : Error   : Cannot register template specialization. The template type instance 'MyTmpl<int>' has already been generated.\n"
+	if( bout.buffer != " (0, 0) : Error   : Cannot register. The template type instance 'MyTmpl<int>' has already been generated.\n"
 					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<int>' (Code: -7)\n"
 					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'NoTmpl<int>' (Code: -8)\n"
 					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<float>' (Code: -13)\n" )

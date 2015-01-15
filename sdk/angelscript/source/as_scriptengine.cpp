@@ -1932,6 +1932,25 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
+	// TODO: cleanup: This is identical to what is in RegisterMethodToObjectType
+	// If the object type is a template, make sure there are no generated instances already
+	if( objectType->flags & asOBJ_TEMPLATE )
+	{
+		for( asUINT n = 0; n < generatedTemplateTypes.GetLength(); n++ )
+		{
+			asCObjectType *tmpl = generatedTemplateTypes[n];
+			if( tmpl->name == objectType->name &&
+				tmpl->nameSpace == objectType->nameSpace &&
+				!(tmpl->templateSubTypes[0].GetObjectType() && (tmpl->templateSubTypes[0].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE)) )
+			{
+				asCString msg;
+				msg.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, asCDataType::CreateObject(tmpl, false).Format(tmpl->nameSpace).AddressOf());
+				WriteMessage("",0,0, asMSGTYPE_ERROR, msg.AddressOf());
+				return ConfigError(asERROR, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+			}
+		}
+	}
+
 	isPrepared = false;
 
 	asSTypeBehaviour *beh = &objectType->beh;
@@ -2701,6 +2720,25 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	int r = DetectCallingConvention(true, funcPointer, callConv, objForThiscall, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+
+	// TODO: cleanup: This is identical to what is in RegisterMethodToObjectType
+	// If the object type is a template, make sure there are no generated instances already
+	if( objectType->flags & asOBJ_TEMPLATE )
+	{
+		for( asUINT n = 0; n < generatedTemplateTypes.GetLength(); n++ )
+		{
+			asCObjectType *tmpl = generatedTemplateTypes[n];
+			if( tmpl->name == objectType->name &&
+				tmpl->nameSpace == objectType->nameSpace &&
+				!(tmpl->templateSubTypes[0].GetObjectType() && (tmpl->templateSubTypes[0].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE)) )
+			{
+				asCString msg;
+				msg.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, asCDataType::CreateObject(tmpl, false).Format(tmpl->nameSpace).AddressOf());
+				WriteMessage("",0,0, asMSGTYPE_ERROR, msg.AddressOf());
+				return ConfigError(asERROR, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
+			}
+		}
+	}
 
 	isPrepared = false;
 

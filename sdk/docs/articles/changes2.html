@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2014/01/11</h2>
+<h2>Version 2.30.0 WIP - 2015/01/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -72,6 +72,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Discarding modules is much faster, and doesn't burden the garbage collector (Thanks ziomau)
 <li>Compiler no longer warns on empty sections since this may be a valid situation (Thanks iraxef)
 <li>When formatting type declarations for messages the namespace will always be included if different than the current namespace (Thanks Solokiller)
+<li>Included check to avoid modifying template types registration after a template instance has already been generated
 </ul>
 <li>Script language
 <ul>
