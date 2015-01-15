@@ -348,15 +348,15 @@ bool Test()
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		engine->SetDefaultNamespace("test");
-		engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_NOCOUNT);
-		engine->SetDefaultNamespace("blah");
-		engine->RegisterGlobalFunction("test::foo @bar(test::foo @)", asFUNCTION(0), asCALL_GENERIC);
-		engine->SetDefaultNamespace("");
-		engine->RegisterGlobalProperty("test::foo @g", (void*)1);
+		r = engine->SetDefaultNamespace("test::sub"); assert( r >= 0 );
+		r = engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->SetDefaultNamespace("blah"); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("test::sub::foo @bar(test::sub::foo @)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->SetDefaultNamespace(""); assert( r >= 0 );
+		r = engine->RegisterGlobalProperty("test::sub::foo @g", (void*)1); assert( r >= 0 );
 
 		stringstream s;
-		int r = WriteConfigToStream(engine, s);
+		r = WriteConfigToStream(engine, s);
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -397,18 +397,18 @@ bool Test()
 					"\n"
 					"// Types\n"
 					"access 1\n"
-					"namespace test\n"
+					"namespace \"test::sub\"\n"
 					"objtype \"foo\" 262145\n"
 					"\n"
 					"// Type members\n"
 					"\n"
 					"// Functions\n"
-					"namespace blah\n"
-					"func \"test::foo@ bar(test::foo@)\"\n"
+					"namespace \"blah\"\n"
+					"func \"test::sub::foo@ bar(test::sub::foo@)\"\n"
 					"\n"
 					"// Properties\n"
-					"namespace ::\n"
-					"prop \"test::foo@ g\"\n"
+					"namespace \"\"\n"
+					"prop \"test::sub::foo@ g\"\n"
 					"\n"
 					"// String factory\n"
 					"\n"

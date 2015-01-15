@@ -280,7 +280,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		}
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -310,7 +310,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		const char *nameSpace = type->GetNamespace();
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -339,7 +339,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		const char *typeDef = engine->GetTypedefByIndex(n, &typeId, &nameSpace, 0, &accessMask);
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -359,7 +359,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		const char *nameSpace = funcDef->GetNamespace();
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -382,7 +382,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		const char *nameSpace = type->GetNamespace();
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -464,7 +464,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		const char *nameSpace = func->GetNamespace();
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -496,7 +496,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		}
 		if( nameSpace != currNamespace )
 		{
-			strm << "namespace " << (strcmp(nameSpace, "") == 0 ? "::" : nameSpace) << "\n";
+			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
@@ -623,8 +623,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 		{
 			string ns;
 			in::GetToken(engine, ns, config, pos);
-			if( ns == "::" )
-				ns = "";
+			ns = ns.substr(1, ns.length() - 2);
 
 			r = engine->SetDefaultNamespace(ns.c_str());
 			if( r < 0 )
