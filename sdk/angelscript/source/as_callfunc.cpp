@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -324,7 +324,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
 
 				asCString str;
-				str.Format(TXT_DONT_SUPPORT_RET_TYPE_s_BY_VAL, func->returnType.Format().AddressOf());
+				str.Format(TXT_DONT_SUPPORT_RET_TYPE_s_BY_VAL, func->returnType.Format(func->nameSpace).AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				engine->ConfigError(asINVALID_CONFIGURATION, 0, 0, 0);
 			}

@@ -2399,7 +2399,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
 		asCString decl;
-		decl += func.returnType.Format();
+		decl += func.returnType.Format(defaultNamespace);
 		decl += behaviour == asBEHAVE_VALUE_CAST ? " opConv(" : " opImplConv(";
 		if( func.parameterTypes.GetLength() )
 			decl += "?&out";
@@ -2423,7 +2423,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
 		asCString decl;
-		decl += func.returnType.Format();
+		decl += func.returnType.Format(defaultNamespace);
 		if( internal.returnAutoHandle )
 			decl += "+";
 		decl += behaviour == asBEHAVE_REF_CAST ? " opCast(" : " opImplCast(";
