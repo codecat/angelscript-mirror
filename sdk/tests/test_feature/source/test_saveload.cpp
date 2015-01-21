@@ -341,16 +341,19 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
-/*
+
 	// Test WriteConfigToStream/ConfigEngineFromStream with template types and dependencies
 	// http://www.gamedev.net/topic/664405-scripthelper-config-helpers-not-working-correctly/
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
 
 		// Register types with dependencies
 		r = engine->RegisterObjectType("type", 0, asOBJ_REF|asOBJ_NOCOUNT); assert( r >= 0 );
 		RegisterScriptArray(engine, false);
+		r = engine->RegisterObjectBehaviour("type", asBEHAVE_FACTORY, "type @f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("type", "void func(array<int> @)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 		stringstream s;
@@ -361,7 +364,7 @@ bool Test()
 		engine->ShutDownAndRelease();
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		r = ConfigEngineFromStream(engine, s);
 		if( r < 0 )
@@ -371,15 +374,22 @@ bool Test()
 		mod->AddScriptSection("test", 
 			"void main() { \n"
 			"  array<int> a = {1,2,3}; \n"
-			"  func(a); \n"
+			"  type t; \n"
+			"  t.func(a); \n"
 			"} \n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
 		engine->ShutDownAndRelease();
+
+		if( bout.buffer != "config (47, 0) : Warning : Cannot register template callback without the actual implementation\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
-*/
+
 	// Test WriteConfigToStream/ConfigEngineFromStream with namespaces
 	// http://www.gamedev.net/topic/664405-scripthelper-config-helpers-not-working-correctly/
 	{
@@ -437,6 +447,8 @@ bool Test()
 					"access 1\n"
 					"namespace \"test::sub\"\n"
 					"objtype \"foo\" 262145\n"
+					"\n"
+					"// Template type members\n"
 					"\n"
 					"// Type members\n"
 					"\n"

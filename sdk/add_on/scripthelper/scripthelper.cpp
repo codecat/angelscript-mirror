@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <fstream>
+#include <set>
 #include <stdlib.h>
 
 using namespace std;
@@ -244,7 +245,6 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		}
 	};
 
-
 	int c, n;
 
 	asDWORD currAccessMask = 0;
@@ -297,6 +297,9 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	// Enumerate all types
 	strm << "\n// Types\n";
 
+	// Keep a list of the template types, as the methods for these need to be exported first
+	set<asIObjectType*> templateTypes;
+
 	c = engine->GetObjectTypeCount();
 	for( n = 0; n < c; n++ )
 	{
@@ -327,6 +330,10 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 			// specific and doesn't matter to the offline compiler. The object size is also
 			// unnecessary for the offline compiler
 			strm << "objtype \"" << engine->GetTypeDeclaration(type->GetTypeId()) << "\" " << (unsigned int)(type->GetFlags() & asOBJ_MASK_VALID_FLAGS) << "\n";
+
+			// Store the template types (but not template instances)
+			if( (type->GetFlags() & asOBJ_TEMPLATE) && type->GetSubType() && (type->GetSubType()->GetFlags() & asOBJ_TEMPLATE_SUBTYPE) )
+				templateTypes.insert(type);
 		}
 	}
 
@@ -371,87 +378,105 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		strm << "funcdef \"" << funcDef->GetDeclaration() << "\"\n";
 	}
 
+	// A helper for writing object type members
+	struct TypeWriter
+	{
+		static void Write(asIScriptEngine *engine, ostream &strm, asIObjectType *type, string &currNamespace, asDWORD &currAccessMask)
+		{
+			const char *nameSpace = type->GetNamespace();
+			if( nameSpace != currNamespace )
+			{
+				strm << "namespace \"" << nameSpace << "\"\n";
+				currNamespace = nameSpace;
+				engine->SetDefaultNamespace(currNamespace.c_str());
+			}
+			string typeDecl = engine->GetTypeDeclaration(type->GetTypeId());
+			if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
+			{
+				for( asUINT m = 0; m < type->GetMethodCount(); m++ )
+				{
+					asIScriptFunction *func = type->GetMethodByIndex(m);
+					asDWORD accessMask = func->GetAccessMask();
+					if( accessMask != currAccessMask )
+					{
+						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
+						currAccessMask = accessMask;
+					}
+					strm << "intfmthd " << typeDecl.c_str() << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+				}
+			}
+			else
+			{
+				asUINT m;
+				for( m = 0; m < type->GetFactoryCount(); m++ )
+				{
+					asIScriptFunction *func = type->GetFactoryByIndex(m);
+					asDWORD accessMask = func->GetAccessMask();
+					if( accessMask != currAccessMask )
+					{
+						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
+						currAccessMask = accessMask;
+					}
+					strm << "objbeh \"" << typeDecl.c_str() << "\" " << asBEHAVE_FACTORY << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+				}
+				for( m = 0; m < type->GetBehaviourCount(); m++ )
+				{
+					asEBehaviours beh;
+					asIScriptFunction *func = type->GetBehaviourByIndex(m, &beh);
+
+					if( beh == asBEHAVE_CONSTRUCT )
+						// Prefix 'void'
+						strm << "objbeh \"" << typeDecl.c_str() << "\" " << beh << " \"void " << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+					else if( beh == asBEHAVE_DESTRUCT )
+						// Prefix 'void' and remove ~
+						strm << "objbeh \"" << typeDecl.c_str() << "\" " << beh << " \"void " << Escape::Quotes(func->GetDeclaration(false)).c_str()+1 << "\"\n";
+					else
+						strm << "objbeh \"" << typeDecl.c_str() << "\" " << beh << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+				}
+				for( m = 0; m < type->GetMethodCount(); m++ )
+				{
+					asIScriptFunction *func = type->GetMethodByIndex(m);
+					asDWORD accessMask = func->GetAccessMask();
+					if( accessMask != currAccessMask )
+					{
+						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
+						currAccessMask = accessMask;
+					}
+					strm << "objmthd \"" << typeDecl.c_str() << "\" \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+				}
+				for( m = 0; m < type->GetPropertyCount(); m++ )
+				{
+					asDWORD accessMask;
+					type->GetProperty(m, 0, 0, 0, 0, 0, 0, &accessMask);
+					if( accessMask != currAccessMask )
+					{
+						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
+						currAccessMask = accessMask;
+					}
+					strm << "objprop \"" << typeDecl.c_str() << "\" \"" << type->GetPropertyDeclaration(m) << "\"\n";
+				}
+			}
+		}
+	};
+
+	// Write the members of the template types, so they can be fully registered before any other type uses them
+	// TODO: Order the template types based on dependency to avoid failure if one type uses instances of another 
+	strm << "\n// Template type members\n";
+	for( set<asIObjectType*>::iterator it = templateTypes.begin(); it != templateTypes.end(); ++it )
+	{
+		asIObjectType *type = *it;
+		TypeWriter::Write(engine, strm, type, currNamespace, currAccessMask);
+	}
+
 	// Write the object types members
-	// TODO: All function declarations must use escape sequences for " so as not to cause the parsing of the file to fail
 	strm << "\n// Type members\n";
 
 	c = engine->GetObjectTypeCount();
 	for( n = 0; n < c; n++ )
 	{
 		asIObjectType *type = engine->GetObjectTypeByIndex(n);
-		const char *nameSpace = type->GetNamespace();
-		if( nameSpace != currNamespace )
-		{
-			strm << "namespace \"" << nameSpace << "\"\n";
-			currNamespace = nameSpace;
-			engine->SetDefaultNamespace(currNamespace.c_str());
-		}
-		string typeDecl = engine->GetTypeDeclaration(type->GetTypeId());
-		if( type->GetFlags() & asOBJ_SCRIPT_OBJECT )
-		{
-			for( asUINT m = 0; m < type->GetMethodCount(); m++ )
-			{
-				asIScriptFunction *func = type->GetMethodByIndex(m);
-				asDWORD accessMask = func->GetAccessMask();
-				if( accessMask != currAccessMask )
-				{
-					strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
-					currAccessMask = accessMask;
-				}
-				strm << "intfmthd " << typeDecl.c_str() << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
-			}
-		}
-		else
-		{
-			asUINT m;
-			for( m = 0; m < type->GetFactoryCount(); m++ )
-			{
-				asIScriptFunction *func = type->GetFactoryByIndex(m);
-				asDWORD accessMask = func->GetAccessMask();
-				if( accessMask != currAccessMask )
-				{
-					strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
-					currAccessMask = accessMask;
-				}
-				strm << "objbeh \"" << typeDecl.c_str() << "\" " << asBEHAVE_FACTORY << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
-			}
-			for( m = 0; m < type->GetBehaviourCount(); m++ )
-			{
-				asEBehaviours beh;
-				asIScriptFunction *func = type->GetBehaviourByIndex(m, &beh);
-
-				if( beh == asBEHAVE_CONSTRUCT )
-					// Prefix 'void'
-					strm << "objbeh \"" << typeDecl.c_str() << "\" " << beh << " \"void " << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
-				else if( beh == asBEHAVE_DESTRUCT )
-					// Prefix 'void' and remove ~
-					strm << "objbeh \"" << typeDecl.c_str() << "\" " << beh << " \"void " << Escape::Quotes(func->GetDeclaration(false)).c_str()+1 << "\"\n";
-				else
-					strm << "objbeh \"" << typeDecl.c_str() << "\" " << beh << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
-			}
-			for( m = 0; m < type->GetMethodCount(); m++ )
-			{
-				asIScriptFunction *func = type->GetMethodByIndex(m);
-				asDWORD accessMask = func->GetAccessMask();
-				if( accessMask != currAccessMask )
-				{
-					strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
-					currAccessMask = accessMask;
-				}
-				strm << "objmthd \"" << typeDecl.c_str() << "\" \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
-			}
-			for( m = 0; m < type->GetPropertyCount(); m++ )
-			{
-				asDWORD accessMask;
-				type->GetProperty(m, 0, 0, 0, 0, 0, 0, &accessMask);
-				if( accessMask != currAccessMask )
-				{
-					strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
-					currAccessMask = accessMask;
-				}
-				strm << "objprop \"" << typeDecl.c_str() << "\" \"" << type->GetPropertyDeclaration(m) << "\"\n";
-			}
-		}
+		if( templateTypes.find(type) == templateTypes.end() )
+			TypeWriter::Write(engine, strm, type, currNamespace, currAccessMask);
 	}
 
 	// Write functions
