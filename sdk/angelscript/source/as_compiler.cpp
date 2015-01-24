@@ -8351,9 +8351,11 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				asCScriptFunction *func = 0;
 				for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
 				{
-					if( engine->scriptFunctions[ot->methods[n]]->name == name )
+					asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+					if( f->name == name &&
+					    (builder->module->accessMask & f->accessMask) )
 					{
-						func = engine->scriptFunctions[ot->methods[n]];
+						func = f;
 						break;
 					}
 				}

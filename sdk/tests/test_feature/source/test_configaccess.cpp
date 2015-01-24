@@ -134,14 +134,15 @@ bool Test()
 
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
-	r = ExecuteString(engine, "mytype a; a + a; a.val + a.val;", mod);
+	r = ExecuteString(engine, "mytype a; a + a; a.val + a.val; a.opAdd(a);", mod);
 
 	// It should be possible to disallow individual class methods
 	if( r >= 0 )
 		TEST_FAILED;
 
 	if( bout.buffer != "ExecuteString (1, 13) : Error   : No matching operator that takes the types 'mytype' and 'mytype' found\n"
-		               "ExecuteString (1, 19) : Error   : 'val' is not a member of 'mytype'\n" )
+		               "ExecuteString (1, 19) : Error   : 'val' is not a member of 'mytype'\n"
+					   "ExecuteString (1, 35) : Error   : No matching signatures to 'mytype::opAdd(mytype)'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

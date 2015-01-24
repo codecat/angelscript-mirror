@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2015/01/20</h2>
+<h2>Version 2.30.0 WIP - 2015/01/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>No more memory build-up when the script has circular references between classes and templates (Thanks iraxef)
 <li>Private class properties are not accessible from derived classes (Thanks iraxef)
 <li>Fixed bug in compiler where default argument could use temp var used in previous arguments (Thanks Solokiller)
+<li>Compiler didn't properly check the access masks for registered class methods (Thanks Solokiller)
 </ul>
 <li>Library interface
 <ul>

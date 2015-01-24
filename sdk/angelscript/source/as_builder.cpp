@@ -4755,8 +4755,10 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// Only add const methods to the list
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
-			if( engine->scriptFunctions[objectType->methods[n]]->name == name &&
-				engine->scriptFunctions[objectType->methods[n]]->isReadOnly )
+			asCScriptFunction *func = engine->scriptFunctions[objectType->methods[n]];
+			if( func->name == name &&
+				func->isReadOnly &&
+				(func->accessMask & module->accessMask) )
 			{
 				// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
 				if( scope == "" )
@@ -4775,7 +4777,9 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// TODO: Prefer non-const over const
 		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 		{
-			if( engine->scriptFunctions[objectType->methods[n]]->name == name )
+			asCScriptFunction *func = engine->scriptFunctions[objectType->methods[n]];
+			if( func->name == name &&
+				(func->accessMask & module->accessMask) )
 			{
 				// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
 				if( scope == "" )
