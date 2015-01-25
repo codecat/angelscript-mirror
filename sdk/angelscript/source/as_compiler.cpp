@@ -9970,10 +9970,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				{
 					if( objectType && funcExpr.property_get <= 0 )
 					{
-						Dereference(ctx, true); // Dereference the object pointer to access the member
-
-						// The actual function should be called as if a global function
-						objectType = 0;
+						// Dereference the object pointer to access the member
+						Dereference(ctx, true); 
 					}
 
 					if( funcExpr.property_get > 0 )
@@ -9986,6 +9984,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 						Dereference(&funcExpr, true);
 						ConvertToVariable(&funcExpr);
 					}
+
+					// The actual function should be called as if a global function
+					objectType = 0;
 
 					// The function call will be made directly from the local variable so the function pointer shouldn't be on the stack
 					funcExpr.bc.Instr(asBC_PopPtr);

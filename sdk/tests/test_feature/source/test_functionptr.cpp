@@ -28,6 +28,61 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test calling function pointer retrieved from property accessor
+	// http://www.gamedev.net/topic/664944-stack-corruption-when-using-funcdef-and-class-property/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"funcdef void Callback( array<int>@ pArray );\n"
+			"class Class\n"
+			"{\n"
+			"	private Callback@ m_pCallback;\n"
+			"	Callback@ Callback\n"
+			"	{\n"
+			"		get const { return m_pCallback; }\n"
+			"	}\n"
+			"	Class( Callback@ pCallback )\n"
+			"	{\n"
+			"		@m_pCallback = @pCallback;\n"
+			"	}\n"
+			"}\n"
+			"void CallbackFn( array<int>@ pArray )\n"
+			"{\n"
+			"	uint uiLength = pArray.length(); \n"//Crash occurs here
+			"   g_length = uiLength; \n"
+			"}\n"
+			"uint g_length; \n"
+			"void test()\n"
+			"{\n"
+			"	Class instance( @CallbackFn );\n"
+			"	array<int> arr = {1,2,3};\n"
+			"	g_length = 0; \n"
+			"	instance.Callback( @arr );\n"
+			"	assert( g_length == 3 ); \n"
+			"	g_length = 0; \n"
+			"	Callback@ pCallback = instance.Callback; \n"
+			"	pCallback( @arr ); \n"
+			"	assert( g_length == 3 ); \n"
+			"}\n";
+
+		mod = engine->GetModule("TEst", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "test()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test invalid use of function pointer
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
