@@ -3348,7 +3348,7 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 					asCScriptNode *copy = n->CreateCopy(engine);
 
 					// Register the method, but only if it doesn't already exist in the class
-					RegisterScriptFunctionFromNode(copy, mixin->script, decl->objType, false, false, 0, false, true);
+					RegisterScriptFunctionFromNode(copy, mixin->script, decl->objType, false, false, mixin->ns, false, true);
 				}
 				else if( n->nodeType == snVirtualProperty )
 				{
@@ -4108,7 +4108,7 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 	bool                       isProtected;
 	bool                       isShared;
 
-	asASSERT( (objType && ns == 0) || isGlobalFunction );
+	asASSERT( (objType && ns == 0) || isGlobalFunction || isMixin );
 
 	// Set the default namespace
 	if( ns == 0 )

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2015/01/25</h2>
+<h2>Version 2.30.0 WIP - 2015/01/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -41,6 +41,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug in compiler where default argument could use temp var used in previous arguments (Thanks Solokiller)
 <li>Compiler didn't properly check the access masks for registered class methods (Thanks Solokiller)
 <li>Directly calling a funcdef retrieved from member property accessor would get wrong arguments (Thanks Solokiller)
+<li>Methods declared in mixins in namespaces weren't compiled with the correct namespace (Thanks Sir Ementaler)
 </ul>
 <li>Library interface
 <ul>

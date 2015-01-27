@@ -14,6 +14,39 @@ bool Test()
 	const char *script;
 	asIScriptModule *mod;
 
+	// Mixin and namespaces
+	// http://www.gamedev.net/topic/665026-error-for-non-default-namespace-interfaces-used-in-methods-of-mixin-classes-inherited-from-by-classes-in-another-namespaces/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+
+		script =
+			"namespace n { \n"
+			"	interface i {} \n"
+			"	mixin class m { \n"
+			"		void f(i@) { \n"
+			"			i@ a; \n"
+			"		} \n"
+			"	} \n"
+			"} \n"
+			"class c : n::m {} \n";
+		mod->AddScriptSection("test", script);
+
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	
+		engine->Release();
+	}
+
 	// Mixins and namespaces
 	// http://www.gamedev.net/topic/657378-mixin-and-namespace/
 	{
