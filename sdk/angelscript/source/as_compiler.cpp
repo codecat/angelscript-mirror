@@ -5864,6 +5864,10 @@ asUINT asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &t
 	if( ctx->type.dataType.GetTokenType() == ttVoid )
 		return asCC_NO_CONV;
 
+	// No conversion from class method to any type (it requires delegate)
+	if( ctx->IsClassMethod() )
+		return asCC_NO_CONV;
+
 	// Do we want a var type?
 	if( to.GetTokenType() == ttQuestion )
 	{

@@ -28,6 +28,61 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test proper error when taking address of method by mistake
+	// Reported by Polyak Istvan
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		const char *script =
+			"class C1\n"
+			"{\n"
+			"    C1 ()\n"
+			"    {\n"
+			//"        write('C1\\n');\n"
+			"    }\n"
+			"    int m1 ()\n"
+			"    {\n"
+			//"        write('m1\\n');\n"
+			"        return 2;\n"
+			"	}\n"
+			"}\n"
+			"class C2\n"
+			"{\n"
+			"    C2 (int )\n"
+			"    {\n"
+			//"        write('C2 int\\n');\n"
+			"    }\n"
+			"    C2 (const C1 &in c1)\n"
+			"    {\n"
+			//"        write('C2 C1\\n');\n"
+			"    } \n"
+			"} \n"
+			"void main () \n"
+			"{ \n"
+			"    C1 c1;            \n"  // C1
+			"    C2 c2_4(c1.m1);   \n"  // problem: C2 C1 was called instead of error
+			"} \n";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (20, 1) : Info    : Compiling void main()\n"
+						   "test (23, 12) : Error   : No matching signatures to 'C2(C1::m1)'\n"
+						   "test (23, 12) : Error   : Can't pass class method as arg directly. Use a delegate object instead\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test calling function pointer retrieved from property accessor
 	// http://www.gamedev.net/topic/664944-stack-corruption-when-using-funcdef-and-class-property/
 	{
