@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 cmake_policy(SET CMP0003 NEW)
 
-project(Angelscript)
+project(angelscript)
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 
@@ -110,24 +110,32 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
 if(MSVC)
-    add_definitions("-D_CRT_SECURE_NO_WARNINGS")    
+    set(CMAKE_DEBUG_POSTFIX "d")
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)    
 endif()
 
-add_definitions("-DANGELSCRIPT_EXPORT -D_LIB")
+add_definitions(-DANGELSCRIPT_EXPORT -D_LIB)
 
 # Fix x64 issues on Linux
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND NOT APPLE)
     add_definitions(-fPIC)
 endif()
 
-add_library(Angelscript ${ANGELSCRIPT_SOURCE} ${ANGELSCRIPT_HEADERS})
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../lib)
-target_link_libraries(Angelscript ${CMAKE_THREAD_LIBS_INIT})
+if(NOT BUILD_FRAMEWORK)
+    set(ANGELSCRIPT_LIBRARY_NAME angelscript)
+else()
+    set(ANGELSCRIPT_LIBRARY_NAME Angelscript) # OS X frameworks should have capitalized name
+    set(BUILD_SHARED_LIBS TRUE)
+endif()
 
-set_target_properties(Angelscript PROPERTIES VERSION ${PROJECT_VERSION})
+add_library(${ANGELSCRIPT_LIBRARY_NAME} ${ANGELSCRIPT_SOURCE} ${ANGELSCRIPT_HEADERS})
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../lib)
+target_link_libraries(${ANGELSCRIPT_LIBRARY_NAME} ${CMAKE_THREAD_LIBS_INIT})
+
+set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 if(BUILD_FRAMEWORK)
-    set_target_properties(Angelscript PROPERTIES
+    set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES
         FRAMEWORK TRUE
         FRAMEWORK_VERSION ${PROJECT_VERSION}
         MACOSX_FRAMEWORK_IDENTIFIER com.angelcode.Angelscript
@@ -139,7 +147,7 @@ if(BUILD_FRAMEWORK)
 endif()
 
 if(MSVC)
-    set_target_properties(Angelscript PROPERTIES COMPILE_FLAGS "/MP")
+    set_target_properties(${ANGELSCRIPT_LIBRARY_NAME} PROPERTIES COMPILE_FLAGS "/MP")
 endif()
 
 set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin)
