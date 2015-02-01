@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1054,7 +1054,7 @@ public:
 
 	// Properties
 	virtual asUINT      GetPropertyCount() const = 0;
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProperty = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProtected = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
 	virtual const char *GetPropertyDeclaration(asUINT index, bool includeNamespace = false) const = 0;
 
 	// Behaviours

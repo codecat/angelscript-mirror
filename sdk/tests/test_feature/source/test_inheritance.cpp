@@ -1,5 +1,7 @@
 #include "utils.h"
 
+using namespace std;
+
 namespace TestInheritance
 {
 
@@ -63,6 +65,21 @@ public:
 			delete this;
 	}
 
+	static bool Test(FooScripted *obj)
+	{
+		if( obj == 0 ) return false;
+
+		bool isValid = true;
+		if( obj->m_obj == 0 ) 
+			isValid = false;
+		else if( string(obj->m_obj->GetObjectType()->GetName()) != "FooDerived" )
+			isValid = false;
+
+		obj->Release();
+
+		return isValid;
+	}
+
 protected:
 	FooScripted(asIScriptObject *obj) 
 	{ 
@@ -114,6 +131,8 @@ bool Test()
 		engine->RegisterObjectMethod("FooScripted_t", "void CallMe()", asMETHOD(FooScripted, CallMe), asCALL_THISCALL);
 		engine->RegisterObjectProperty("FooScripted_t", "int m_value", asOFFSET(FooScripted, m_value));
 
+		engine->RegisterGlobalFunction("bool Test(FooScripted_t @)", asFUNCTION(FooScripted::Test), asCALL_CDECL);
+
 		asIScriptModule *mod = engine->GetModule("Foo", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("Foo",
 			"shared abstract class FooScripted { \n"
@@ -125,13 +144,16 @@ bool Test()
 			"    get { return m_obj.m_value; } \n"
 			"    set { m_obj.m_value = value; } \n"
 			"  } \n"
+			"  FooScripted_t @opImplCast() { \n"
+			"    return m_obj; \n"
+			"  } \n"
 			"  private FooScripted_t @m_obj; \n"
 			"} \n");
 
 		mod->AddScriptSection("Foo2",
 			"class FooDerived : FooScripted { \n"
 			"  void CallMe() { \n"
-			"    m_value = m_value + 1; \n"
+			"    m_value += 1; \n"
 			"  } \n"
 			"} \n");
 
@@ -142,7 +164,9 @@ bool Test()
 		r = ExecuteString(engine, "FooDerived f; \n"
 								  "assert( f.m_value == 0 ); \n"
 								  "f.CallMe(); \n"
-								  "assert( f.m_value == 1 ); \n", mod);
+								  "assert( f.m_value == 1 ); \n"
+								  // The FooDerived should be implicitly cast to FooScripted_t
+								  "assert( Test(f) ); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

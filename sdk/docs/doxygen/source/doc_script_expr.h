@@ -322,7 +322,7 @@ to the type of <code>b</code>, otherwise it will attempt to convert <code>b</cod
 
 If the conversion doesn't work, then the compiler will give an error.
 
-
+\todo Explain restrictions for using condition operator as lvalue
 
 
 

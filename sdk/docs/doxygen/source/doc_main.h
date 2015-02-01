@@ -42,7 +42,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_hello_world
  - \subpage doc_good_practice
 
-
+\todo Add page with time line and major milestones. This page should also explain the version numbers
 
 
 
@@ -136,7 +136,7 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
 
-
+\todo Add page with the Backus-Naur form of the language
 
 
 \page doc_script_global Global entities

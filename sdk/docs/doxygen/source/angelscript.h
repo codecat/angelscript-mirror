@@ -142,7 +142,9 @@ enum asERetCodes
 	//! The initialization of global variables failed
 	asINIT_GLOBAL_VARS_FAILED              = -26,
 	//! It wasn't possible to allocate the needed memory
-	asOUT_OF_MEMORY                        = -27
+	asOUT_OF_MEMORY                        = -27,
+	//! The module is referred to by live objects or from the application
+	asMODULE_IS_IN_USE                     = -28
 };
 
 // Engine properties
@@ -193,6 +195,8 @@ enum asEEngineProp
 	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
 	//! When true, the / and /= operators will perform floating-point division (i.e. 1/2 = 0.5 instead of 0). Default: false
 	asEP_DISABLE_INTEGER_DIVISION           = 22,
+	//! When true, the initialization lists may not contain empty elements
+	asEP_DISALLOW_EMPTY_LIST_ELEMENTS       = 23,
 
 	asEP_LAST_PROPERTY
 };
@@ -295,18 +299,18 @@ enum asEObjTypeFlags
 	asOBJ_NOCOUNT                    = (1<<18),
 	//! The C++ class contains types that may require 8byte alignment. Only valid for value types.
 	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
-	asOBJ_MASK_VALID_FLAGS           = 0x0FFFFF,
+	//! The object is declared for implicit handle. Only valid for reference types.
+	asOBJ_IMPLICIT_HANDLE            = (1<<20),
+	asOBJ_MASK_VALID_FLAGS           = 0x1FFFFF,
 	// Internal flags
 	//! The object is a script class or an interface.
-	asOBJ_SCRIPT_OBJECT              = (1<<20),
+	asOBJ_SCRIPT_OBJECT              = (1<<21),
 	//! Type object type is shared between modules.
-	asOBJ_SHARED                     = (1<<21),
+	asOBJ_SHARED                     = (1<<22),
 	//! The object type is marked as final and cannot be inherited.
-	asOBJ_NOINHERIT                  = (1<<22),
+	asOBJ_NOINHERIT                  = (1<<23),
 	//! The object type is a script function
-	asOBJ_SCRIPT_FUNCTION            = (1<<23),
-	//! The object is declared for implicit handle
-	asOBJ_IMPLICIT_HANDLE            = (1<<24),
+	asOBJ_SCRIPT_FUNCTION            = (1<<24),
 	asOBJ_LIST_PATTERN               = (1<<25),
 	asOBJ_ENUM                       = (1<<26),
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
@@ -340,14 +344,18 @@ enum asEBehaviours
 	asBEHAVE_GET_WEAKREF_FLAG,
 
 	// Object operators
-	//! \brief Explicit value cast operator
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.30.0, 2014-10-24
+	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opConv" instead.
 	asBEHAVE_VALUE_CAST,
-	//! \brief Implicit value cast operator
+	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opImplConv" instead.
 	asBEHAVE_IMPLICIT_VALUE_CAST,
-	//! \brief Explicit reference cast operator
+	// Deprecated since 2.30.0, 2014-12-30
+	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opCast" instead.
 	asBEHAVE_REF_CAST,
-	//! \brief Implicit reference cast operator
+	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opImplCast" instead.
 	asBEHAVE_IMPLICIT_REF_CAST,
+#endif
 	//! \brief Callback for validating template instances
 	asBEHAVE_TEMPLATE_CALLBACK,
 
@@ -582,7 +590,7 @@ typedef unsigned int   asUINT;
     typedef long asINT64;
 #else
     typedef unsigned long asDWORD;
-  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC)
+  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__)
     typedef uint64_t asQWORD;
     typedef int64_t asINT64;
   #else
@@ -615,6 +623,8 @@ typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 //! The function signature for the object type cleanup callback function
 typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
+//! The function signature for the script object cleanup callback function
+typedef void (*asCLEANSCRIPTOBJECTFUNC_t)(asIScriptObject *);
 //! The function signature for the request context callback
 typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 //! The function signature for the return context callback
@@ -1038,11 +1048,20 @@ public:
 	//!
 	//! Call this method when you will no longer use the references that you own.
 	//!
-	//! The application is responsible for releasing references to all other script
-	//! objects before releasing its last reference to the engine. If this is not done, 
-	//! it is possible that memory leaks occur as the engine cannot free objects 
-	//! kept alive by the application.
+	//! If you know that the engine is supposed to be shut down, then 
+	//! it is recommended to call the \ref ShutDownAndRelease method instead.
 	virtual int Release() const = 0;
+	//! \brief Shuts down the engine then decrease the reference counter.
+	//! \return The number of references to this object.
+	//!
+	//! Call this method when you know it is time to shut down the engine. This
+	//! will automatically discard all the script modules and run a complete 
+	//! garbage collection cycle.
+	//!
+	//! Calling this method rather than the ordinary \ref Release method will
+	//! avoid potential memory leaks if for example there are objects in the modules
+	//! or garbage collector that indirectly holds a reference to the engine.
+	virtual int ShutDownAndRelease() = 0;
 	//! \}
 
 	// Engine properties
@@ -1741,11 +1760,14 @@ public:
 	//! \param[in] dstObj A pointer to the destination object.
 	//! \param[in] srcObj A pointer to the source object.
 	//! \param[in] type The type of the objects.
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG One of the arguments is null
+	//! \retval asNOT_SUPPORTED The object type is a ref type and value assignment has been turned off
 	//!
 	//! This calls the assignment operator to copy the object from one to the other.
 	//!
 	//! This only works for objects.
-	virtual void                   AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type) = 0;
+	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type) = 0;
 	//! \brief Release the object pointer.
 	//! \param[in] obj A pointer to the object.
 	//! \param[in] type The type of the object.
@@ -1761,17 +1783,29 @@ public:
 	//!
 	//! This calls the add ref method of the object to increase the reference count.
 	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
-	//! \brief Returns true if the object referenced by a handle compatible with the specified type.
+	//! \brief Returns the handle on a successful reference cast to desired type
 	//! \param[in] obj A pointer to the object.
-	//! \param[in] objTypeId The type id of the object.
-	//! \param[in] handleTypeId The type id of the handle.
-	//! \return Returns true if the handle type is compatible with the object type.
+	//! \param[in] fromType The type of the object.
+	//! \param[in] toType The desired type for the cast.
+	//! \param[out] newPtr The new pointer to the object if successful.
+	//! \param[in] useOnlyImplicitCast If only the implicit reference cast operators should be used.
+	//! \return A negative value on error
+	//! \retval asINVALID_ARG A null pointer was supplied
+	//! \retval asNOT_SUPPORTED The type of the object is a function pointer.
 	//!
-	//! This method can be used to determine if a handle of a certain type is 
-	//! compatible with an object of another type. This is useful if you have a pointer 
-	//! to a object, but only knows that it implements a certain interface and now you 
-	//! want to determine if it implements another interface.
+	//! This method is used to cast an object pointer to a different type. While both the new 
+	//! and old pointers are expected to refer to the same object instance, the address of the 
+	//! pointers are not necessarily the same.
+	//! 
+	//! If the cast is successful the \a newPtr will be set to the new pointer,
+	//! and the reference counter will be incremented. If the cast is not successful,
+	//! the \a newPtr will be set to null, and the reference count left unchanged.
+	virtual int                    RefCastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast = false) = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.30.0, 2014-11-04
+	//! \deprecated Since 2.30.0. Use \ref asIScriptEngine::RefCastObject instead
 	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
+#endif
 	//! \brief Returns the weak ref flag from the object.
 	//! \param[in] obj The object
 	//! \param[in] type The object type
@@ -1832,7 +1866,7 @@ public:
 	//! This function is useful for those applications that want to tokenize strings into 
 	//! tokens that the script language uses, e.g. IDEs providing syntax highlighting, or intellisense.
 	//! It can also be used to parse the meta data strings that may be declared for script entities.
-	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, int *tokenLength = 0) const = 0;
+	virtual asETokenClass ParseToken(const char *string, size_t stringLength = 0, asUINT *tokenLength = 0) const = 0;
 	//! \}
 
 	// Garbage collection
@@ -1969,6 +2003,16 @@ public:
 	//! The function is called from within the object type destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type = 0) = 0;
+	//! \brief Set the function that should be called when a script object is destroyed
+	//! \param[in] callback A pointer to the function
+	//! \param[in] type An identifier specifying which user data the callback is to be used with.
+	//!
+	//! The function given with this call will be invoked when a script object instance
+	//! is destroyed if any \ref asIScriptObject::SetUserData "user data" has been registered with the type.
+	//!
+	//! The function is called from within the script object destructor, so the callback
+	//! should not be used for anything but cleaning up the user data itself.
+	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
 	//! \}
 
 protected:
@@ -2719,6 +2763,18 @@ public:
 	//! Sets an object argument. If the argument is an object handle AngelScript will increment the reference
 	//! for the object. If the argument is an object value AngelScript will make a copy of the object.
 	virtual int   SetArgObject(asUINT arg, void *obj) = 0;
+	//! \brief Sets the variable argument value and type.
+	//! \param[in] arg The argument index.
+	//! \param[in] ptr A pointer to the value.
+	//! \param[in] typeId The type id of the value.
+	//! \return A negative value on error.
+	//! \retval asCONTEXT_NOT_PREPARED The context is not in prepared state.
+	//! \retval asINVALID_ARG The \a arg is larger than the number of arguments in the prepared function.
+	//! \retval asINVALID_TYPE The argument is not a variable type.
+	//!
+	//! This method should be used when setting the argument for functions
+	//! with \ref doc_adv_var_type "variable parameter types".
+	virtual int   SetArgVarType(asUINT arg, void *ptr, int typeId) = 0;
 	//! \brief Returns a pointer to the argument for assignment.
 	//! \param[in] arg The argument index.
 	//! \return A pointer to the argument on the stack.
@@ -3159,12 +3215,17 @@ public:
 	//! \return The number of references to this object.
 	//!
 	//! Call this method when storing an additional reference to the object.
-	virtual int AddRef() const = 0;
+	virtual int                    AddRef() const = 0;
 	//! \brief Decrease reference counter.
 	//! \return The number of references to this object.
 	//!
 	//! Call this method when you will no longer use the references that you own.
-	virtual int Release() const = 0;
+	virtual int                    Release() const = 0;
+	//! \brief Returns the weak ref flag for the object.
+	//! \return The weak ref flag for the object.
+	//!
+	//! This is a short-cut for the \ref asIScriptEngine::GetWeakRefFlagOfScriptObject method.
+	virtual asILockableSharedBool *GetWeakRefFlag() const = 0;
 	//! \}
 
 	// Type info
@@ -3206,6 +3267,7 @@ public:
 	virtual void       *GetAddressOfProperty(asUINT prop) = 0;
 	//! \}
 
+	// Miscellaneous
 	//! \name Miscellaneous
 	//! \{
 
@@ -3222,6 +3284,30 @@ public:
 	virtual int              CopyFrom(asIScriptObject *other) = 0;
 	//! \}
 
+	// User data
+	//! \name User data
+	//! \{
+
+	//! \brief Sets user data on the script object instance.
+	//! \param[in] data A pointer to the user data.
+	//! \param[in] type An identifier used to identify which user data to set.
+	//! \return The previous pointer stored in the object type.
+	//!
+	//! This method allows the application to associate a value, e.g. a pointer, with the script object instance.
+	//! Multiple different values can be defined where the type argument identifies which is referred to.
+	//!
+	//! The user data types identifiers between 1000 and 1999 are reserved for use by official add-ons.
+	//!
+	//! Optionally, a callback function can be \ref asIScriptEngine::SetScriptObjectUserDataCleanupCallback "registered" 
+	//! to clean up the user data when the script object is destroyed.
+	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
+	//! \brief Gets user data from the script object instance.
+	//! \param[in] type An identifier used to identify which user data to get.
+	//! \return The pointer to the user data.
+	virtual void *GetUserData(asPWORD type = 0) const = 0;
+
+	//! \}
+
 protected:
 	virtual ~asIScriptObject() {}
 };
@@ -3232,6 +3318,7 @@ protected:
 class asIObjectType
 {
 public:
+	// Miscellaneous
 	//! \name Miscellaneous
 	//! \{
 
@@ -3406,12 +3493,13 @@ public:
 	//! \param[out] name The name of the property
 	//! \param[out] typeId The type of the property
 	//! \param[out] isPrivate Whether the property is private or not
+	//! \param[out] isProtected Whether the property is protected or not
 	//! \param[out] offset The offset into the object where the property is stored
 	//! \param[out] isReference True if the property is not stored inline
 	//! \param[out] accessMask The access mask of the property
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG The \a index is out of bounds
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProtected = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
 	//! \brief Returns the declaration of the property
 	//! \param[in] index The index of the property
 	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
@@ -3543,6 +3631,9 @@ public:
 	//! \brief Returns true if the class method is private
 	//! \return True if the class method is private
 	virtual bool             IsPrivate() const = 0;
+	//! \brief Returns true if the class method is protected
+	//! \return True if the class method is protected
+	virtual bool             IsProtected() const = 0;
 	//! \brief Returns true if the method is final.
 	//! \return True if the method is final.
 	virtual bool             IsFinal() const = 0;

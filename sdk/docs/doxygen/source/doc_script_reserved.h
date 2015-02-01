@@ -48,14 +48,15 @@ int64<br>
 is<br>
 mixin<br>
 namespace<br>
+not<br>
 </code></td>
 <td width=100 valign=top><code>
-not<br>
 null<br>
 or<br>
 out<br>
 override*<br>
 private<br>
+protected<br>
 return<br>
 set*<br>
 shared*<br>

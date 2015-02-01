@@ -85,6 +85,8 @@ and the compiler will automatically expand the expressions to the appropriate fu
   }
 </pre>
 
+\todo Update this, as compound assignments are now possible (with some restrictions)
+
 Observe that as property accessors are actually a pair of methods rather than direct access to the value, 
 some restrictions apply as to how they can be used in expressions. Expressions that need to read and write
 the value at the same time is usually not possible, e.g. the increment operator ++, or compound assignments.

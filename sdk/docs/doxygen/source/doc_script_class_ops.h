@@ -163,6 +163,8 @@ as <tt>expr.opCall(arglist)</tt> and compile that instead.
 
 \section doc_script_class_conv Type conversion operators
 
+\todo Add opCast and opImplCast
+
 <table cellspacing=0 cellpadding=0 border=0>
 <tr><td width=80><b>op</b></td><td width=200><b>opfunc</b></td></tr>
 <tr><td><i>type</i>(<i>expr</i>)<td>opConv, opImplConv</td></tr>

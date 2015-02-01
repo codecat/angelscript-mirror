@@ -2,8 +2,6 @@
 
 \page doc_adv_inheritappclass Inheriting from application registered class
 
-\todo Add info on how to use opImplCast
-
 A script class cannot directly inherit from an application registered class, 
 as the script classes are not compiled into native machine code like the
 application classes are.
@@ -134,6 +132,9 @@ all the modules that should be able to derive from the FooScripted class.
       get { return m_obj.m_value; }
       set { m_obj.m_value = value; }
     }
+
+    // The script class can be implicitly cast to the C++ type through the opImplCast method
+    FooScripted_t \@opImplCast() { return m_obj; }
     
     // Hold a reference to the C++ side of the proxy
     private FooScripted_t \@m_obj;
@@ -149,7 +150,7 @@ and access the properties and methods of the parent class normally.
   {
     void CallMe()
     {
-       m_value = m_value + 1;   
+       m_value += 1;
     }
   }
   

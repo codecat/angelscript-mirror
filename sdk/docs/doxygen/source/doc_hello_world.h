@@ -139,7 +139,7 @@ Don't forget to clean up after you're done with the engine.
 \code
 // Clean up
 ctx->Release();
-engine->Release();
+engine->ShutDownAndRelease();
 \endcode
 
 \section doc_hello_world_1 Helper functions
