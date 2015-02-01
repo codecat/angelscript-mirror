@@ -2379,7 +2379,7 @@ void asCBuilder::CompileInterfaces()
 				objType = GetObjectType(name.AddressOf(), ns);
 				if( objType ) break;
 
-				ns = GetParentNameSpace(ns);
+				ns = engine->GetParentNameSpace(ns);
 			}
 
 			// Check that the object type is an interface
@@ -2562,7 +2562,7 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				if( objType || mixin )
 					break;
 
-				ns = GetParentNameSpace(ns);
+				ns = engine->GetParentNameSpace(ns);
 			}
 
 			if( objType == 0 && mixin == 0 )
@@ -3325,7 +3325,7 @@ void asCBuilder::IncludeMethodsFromMixins(sClassDeclaration *decl)
 			if( objType || mixin )
 				break;
 
-			ns = GetParentNameSpace(ns);
+			ns = engine->GetParentNameSpace(ns);
 		}
 
 		if( mixin )
@@ -3399,7 +3399,7 @@ void asCBuilder::IncludePropertiesFromMixins(sClassDeclaration *decl)
 			if( objType || mixin )
 				break;
 
-			ns = GetParentNameSpace(ns);
+			ns = engine->GetParentNameSpace(ns);
 		}
 
 		if( mixin )
@@ -4894,22 +4894,6 @@ asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCod
 	return GetNameSpaceByString(scope, implicitNs, node, script);
 }
 
-asSNameSpace *asCBuilder::GetParentNameSpace(asSNameSpace *ns)
-{
-	if( ns == 0 ) return 0;
-	if( ns == engine->nameSpaces[0] ) return 0;
-
-	asCString scope = ns->name;
-	int pos = scope.FindLast("::");
-	if( pos >= 0 )
-	{
-		scope = scope.SubString(0, pos);
-		return engine->FindNameSpace(scope.AddressOf());
-	}
-
-	return engine->nameSpaces[0];
-}
-
 asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script)
 {
 	asSNameSpace *ns = implicitNs;
@@ -5121,7 +5105,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			if( !found )
 			{
 				// Try to find it in the parent namespace
-				ns = GetParentNameSpace(ns);
+				ns = engine->GetParentNameSpace(ns);
 			}
 		}
 

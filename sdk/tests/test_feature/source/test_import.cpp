@@ -72,6 +72,9 @@ bool Test()
 			"} \n"
 			"namespace B { \n"
 			"  import int foo() from 'mod2'; \n"
+			"} \n"
+			"namespace C { \n"
+			"  import int bar() from 'mod2'; \n" // bar is actually in a parent namespace in the source module
 			"} \n");
 		r = mod1->Build();
 		if( r < 0 )
@@ -84,7 +87,8 @@ bool Test()
 			"} \n"
 			"namespace B { \n"
 			"  int foo() { return 2; } \n"
-			"} \n");
+			"} \n"
+			"int bar() { return 3; } \n");
 		r = mod2->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -94,7 +98,8 @@ bool Test()
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "assert( A::foo() == 1 ); \n"
-								  "assert( B::foo() == 2 ); \n", mod1);
+								  "assert( B::foo() == 2 ); \n"
+								  "assert( C::bar() == 3 ); \n", mod1);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

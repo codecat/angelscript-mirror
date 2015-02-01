@@ -996,7 +996,7 @@ asSNameSpace *asCScriptEngine::AddNameSpace(const char *name)
 }
 
 // internal
-asSNameSpace *asCScriptEngine::FindNameSpace(const char *name)
+asSNameSpace *asCScriptEngine::FindNameSpace(const char *name) const
 {
 	// TODO: optimize: Improve linear search
 	for( asUINT n = 0; n < nameSpaces.GetLength(); n++ )
@@ -2649,11 +2649,20 @@ int asCScriptEngine::GetGlobalPropertyByIndex(asUINT index, const char **name, c
 // interface
 int asCScriptEngine::GetGlobalPropertyIndexByName(const char *name) const
 {
-	// Find the global var id
-	int id = registeredGlobalProps.GetFirstIndex(defaultNamespace, name);
-	if( id == -1 ) return asNO_GLOBAL_VAR;
+	asSNameSpace *ns = defaultNamespace;
 
-	return id;
+	// Find the global var id
+	while( ns )
+	{
+		int id = registeredGlobalProps.GetFirstIndex(ns, name);
+		if( id >= 0 ) 
+			return id;
+
+		// Recursively search parent namespace
+		ns = GetParentNameSpace(ns);
+	}
+
+	return asNO_GLOBAL_VAR;
 }
 
 // interface
@@ -2673,11 +2682,16 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 		return r;
 
 	// Search for a match
-	int id = registeredGlobalProps.GetFirstIndex(ns, name, asCCompGlobPropType(dt));
-	if (id < 0)
-		return asNO_GLOBAL_VAR;
+	while( ns )
+	{
+		int id = registeredGlobalProps.GetFirstIndex(ns, name, asCCompGlobPropType(dt));
+		if( id >= 0 )
+			return id;
 
-	return id;
+		ns = GetParentNameSpace(ns);
+	}
+
+	return asNO_GLOBAL_VAR;
 }
 
 // interface
@@ -2980,39 +2994,49 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 	if( r < 0 )
 		return 0;
 
+	asSNameSpace *ns = defaultNamespace;
 	// Search script functions for matching interface
-	asIScriptFunction *f = 0;
-	const asCArray<unsigned int> &idxs = registeredGlobalFuncs.GetIndexes(defaultNamespace, func.name);
-	for( unsigned int n = 0; n < idxs.GetLength(); n++ )
+	while( ns )
 	{
-		const asCScriptFunction *funcPtr = registeredGlobalFuncs.Get(idxs[n]);
-		if( funcPtr->objectType == 0 &&
-			func.returnType                 == funcPtr->returnType &&
-			func.parameterTypes.GetLength() == funcPtr->parameterTypes.GetLength()
-			)
+		asIScriptFunction *f = 0;
+		const asCArray<unsigned int> &idxs = registeredGlobalFuncs.GetIndexes(ns, func.name);
+		for( unsigned int n = 0; n < idxs.GetLength(); n++ )
 		{
-			bool match = true;
-			for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
+			const asCScriptFunction *funcPtr = registeredGlobalFuncs.Get(idxs[n]);
+			if( funcPtr->objectType == 0 &&
+				func.returnType                 == funcPtr->returnType &&
+				func.parameterTypes.GetLength() == funcPtr->parameterTypes.GetLength()
+				)
 			{
-				if( func.parameterTypes[p] != funcPtr->parameterTypes[p] )
+				bool match = true;
+				for( asUINT p = 0; p < func.parameterTypes.GetLength(); ++p )
 				{
-					match = false;
-					break;
+					if( func.parameterTypes[p] != funcPtr->parameterTypes[p] )
+					{
+						match = false;
+						break;
+					}
+				}
+
+				if( match )
+				{
+					if( f == 0 )
+						f = const_cast<asCScriptFunction*>(funcPtr);
+					else
+						// Multiple functions
+						return 0;
 				}
 			}
-
-			if( match )
-			{
-				if( f == 0 )
-					f = const_cast<asCScriptFunction*>(funcPtr);
-				else
-					// Multiple functions
-					return 0;
-			}
 		}
+
+		if( f )
+			return f;
+
+		// Recursively search parent namespaces
+		ns = GetParentNameSpace(ns);
 	}
 
-	return f;
+	return 0;
 }
 
 
@@ -5637,21 +5661,28 @@ asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 // interface
 asIObjectType *asCScriptEngine::GetObjectTypeByName(const char *name) const
 {
-	// Check the object types
-	for( asUINT n = 0; n < registeredObjTypes.GetLength(); n++ )
+	asSNameSpace *ns = defaultNamespace;
+	while( ns )
 	{
-		if( registeredObjTypes[n]->name == name &&
-			registeredObjTypes[n]->nameSpace == defaultNamespace )
-			return registeredObjTypes[n];
-	}
+		// Check the object types
+		for( asUINT n = 0; n < registeredObjTypes.GetLength(); n++ )
+		{
+			if( registeredObjTypes[n]->name == name &&
+				registeredObjTypes[n]->nameSpace == ns )
+				return registeredObjTypes[n];
+		}
 
-	// Perhaps it is a template type? In this case
-	// the returned type will be the generic type
-	for( asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++ )
-	{
-		if( registeredTemplateTypes[n]->name == name &&
-			registeredTemplateTypes[n]->nameSpace == defaultNamespace )
-			return registeredTemplateTypes[n];
+		// Perhaps it is a template type? In this case
+		// the returned type will be the generic type
+		for( asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++ )
+		{
+			if( registeredTemplateTypes[n]->name == name &&
+				registeredTemplateTypes[n]->nameSpace == ns )
+				return registeredTemplateTypes[n];
+		}
+
+		// Recursively search parent namespace
+		ns = GetParentNameSpace(ns);
 	}
 
 	return 0;
@@ -6093,6 +6124,23 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 
 		node = node->next;
 	}
+}
+
+// internal
+asSNameSpace *asCScriptEngine::GetParentNameSpace(asSNameSpace *ns) const
+{
+	if( ns == 0 ) return 0;
+	if( ns == nameSpaces[0] ) return 0;
+
+	asCString scope = ns->name;
+	int pos = scope.FindLast("::");
+	if( pos >= 0 )
+	{
+		scope = scope.SubString(0, pos);
+		return FindNameSpace(scope.AddressOf());
+	}
+
+	return nameSpaces[0];
 }
 
 END_AS_NAMESPACE

@@ -1,5 +1,6 @@
 #include "scriptbuilder.h"
 #include <vector>
+#include <assert.h>
 using namespace std;
 
 #include <stdio.h>
@@ -69,6 +70,9 @@ string CScriptBuilder::GetSectionName(unsigned int idx) const
 	return *it;
 }
 
+// Returns 1 if the section was included
+// Returns 0 if the section was not included because it had already been included before
+// Returns <0 if there was an error
 int CScriptBuilder::AddSectionFromFile(const char *filename)
 {
 	// The file name stored in the set should be the fully resolved name because
@@ -87,6 +91,9 @@ int CScriptBuilder::AddSectionFromFile(const char *filename)
 	return 0;
 }
 
+// Returns 1 if the section was included
+// Returns 0 if the section was not included because it had already been included before
+// Returns <0 if there was an error
 int CScriptBuilder::AddSectionFromMemory(const char *sectionName, const char *scriptCode, unsigned int scriptLength, int lineOffset)
 {
 	if( IncludeIfNotAlreadyIncluded(sectionName) )
@@ -514,6 +521,7 @@ int CScriptBuilder::Build()
 		{
 			// Find the type id
 			int typeId = module->GetTypeIdByDecl(decl->declaration.c_str());
+			assert( typeId >= 0 );
 			if( typeId >= 0 )
 				typeMetadataMap.insert(map<int, string>::value_type(typeId, decl->metadata));
 		}
@@ -523,6 +531,7 @@ int CScriptBuilder::Build()
 			{
 				// Find the function id
 				asIScriptFunction *func = module->GetFunctionByDecl(decl->declaration.c_str());
+				assert( func );
 				if( func )
 					funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
 			}
@@ -530,6 +539,7 @@ int CScriptBuilder::Build()
 			{
 				// Find the method id
 				int typeId = module->GetTypeIdByDecl(decl->parentClass.c_str());
+				assert( typeId > 0 );
 				map<int, SClassMetadata>::iterator it = classMetadataMap.find(typeId);
 				if( it == classMetadataMap.end() )
 				{
@@ -539,6 +549,7 @@ int CScriptBuilder::Build()
 
 				asIObjectType *type = engine->GetObjectTypeById(typeId);
 				asIScriptFunction *func = type->GetMethodByDecl(decl->declaration.c_str());
+				assert( func );
 				if( func )
 					it->second.funcMetadataMap.insert(map<int, string>::value_type(func->GetId(), decl->metadata));
 			}
@@ -559,6 +570,7 @@ int CScriptBuilder::Build()
 			{
 				// Find the method virtual property accessors
 				int typeId = module->GetTypeIdByDecl(decl->parentClass.c_str());
+				assert( typeId > 0 );
 				map<int, SClassMetadata>::iterator it = classMetadataMap.find(typeId);
 				if( it == classMetadataMap.end() )
 				{
@@ -582,12 +594,14 @@ int CScriptBuilder::Build()
 			{
 				// Find the global variable index
 				int varIdx = module->GetGlobalVarIndexByName(decl->declaration.c_str());
+				assert( varIdx >= 0 );
 				if( varIdx >= 0 )
 					varMetadataMap.insert(map<int, string>::value_type(varIdx, decl->metadata));
 			}
 			else
 			{
 				int typeId = module->GetTypeIdByDecl(decl->parentClass.c_str());
+				assert( typeId > 0 );
 
 				// Add the classes if needed
 				map<int, SClassMetadata>::iterator it = classMetadataMap.find(typeId);
@@ -614,6 +628,7 @@ int CScriptBuilder::Build()
 				}
 
 				// If found, add it
+				assert( idx >= 0 );
 				if( idx >= 0 ) it->second.varMetadataMap.insert(map<int, string>::value_type(idx, decl->metadata));
 			}
 		}

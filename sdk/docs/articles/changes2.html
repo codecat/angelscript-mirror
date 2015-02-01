@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2015/01/31</h2>
+<h2>Version 2.30.0 WIP - 2015/02/01</h2>
 
 <ul>
 <li>Bug fixes
@@ -77,6 +77,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler no longer warns on empty sections since this may be a valid situation (Thanks iraxef)
 <li>When formatting type declarations for messages the namespace will always be included if different than the current namespace (Thanks Solokiller)
 <li>Included check to avoid modifying template types registration after a template instance has already been generated
+<li>module's GetFunctionByName/Decl, GetGlobalVarIndexByName/Decl, GetObjectTypeByName recursively search parent namespaces
+<li>engine's GetGlobalPropertyIndexByName/Decl, GetGlobalFunctionByDecl, GetObjectTypeByName recursively search parent namespaces
 </ul>
 <li>Script language
 <ul>

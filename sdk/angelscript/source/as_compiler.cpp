@@ -9877,7 +9877,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 						}
 					}
 
-					ns = builder->GetParentNameSpace(ns);
+					ns = engine->GetParentNameSpace(ns);
 				}
 			}
 			else

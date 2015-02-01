@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -314,7 +314,8 @@ public:
 
 	// Namespace management
 	asSNameSpace *AddNameSpace(const char *name);
-	asSNameSpace *FindNameSpace(const char *name);
+	asSNameSpace *FindNameSpace(const char *name) const;
+	asSNameSpace *GetParentNameSpace(asSNameSpace *ns) const;
 
 //===========================================================
 // internal properties
