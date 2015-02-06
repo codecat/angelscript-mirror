@@ -25,6 +25,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_weakref
  - \subpage doc_addon_dict
  - \subpage doc_addon_file
+ - \subpage doc_addon_filesystem
  - \subpage doc_addon_math
  - \subpage doc_addon_grid
 
@@ -255,6 +256,8 @@ may be managed by different context managers.
 
 Observe that the context manager class hasn't been designed for multi-threading, so you need to
 be careful if your application needs to execute scripts from multiple threads.
+
+\todo Update documentation with changes
 
 \see The samples \ref doc_samples_concurrent and \ref doc_samples_corout for uses
 
@@ -762,6 +765,8 @@ objects, i.e. the references that will not keep the referred object alive.
 
 The type is registered with <code>RegisterScriptWeakRef(asIScriptEngine*)</code>.
 
+\todo The CScriptWeakRef class has been modified to be a value type
+
 \see \ref doc_adv_weakref
 
 \section doc_addon_weakref_1 Public C++ interface
@@ -981,6 +986,7 @@ If you do not want to provide write access for scripts then you can compile
 the add on with the define AS_WRITE_OPS 0, which will disable support for writing. 
 This define can be made in the project settings or directly in the header.
 
+\todo Update with changes
 
 \section doc_addon_file_1 Public C++ interface
 
@@ -1085,6 +1091,17 @@ public:
       f.close();
   }
 </pre>
+
+
+
+
+\page doc_addon_filesystem filesystem object 
+
+<b>Path:</b> /sdk/add_on/scriptfile/
+
+\todo Write this page
+
+
 
 
 
