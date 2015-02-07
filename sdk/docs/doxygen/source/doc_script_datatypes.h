@@ -92,11 +92,9 @@ infinite, and NaN (Not-a-Number). For <code>float</code> NaN is represented by t
 
 \page doc_datatypes_arrays Arrays
 
-\note Arrays are only available in the scripts if the application registers the support for them. The syntax
-for using arrays may differ for the application you're working with so consult the application's manual
+\note Arrays are only available in the scripts if the application \ref doc_addon_array "registers the support for them". 
+The syntax for using arrays may differ for the application you're working with so consult the application's manual
 for more details.
-
-\see \ref doc_addon_array
 
 It is possible to declare array variables with the array identifier followed by the type of the 
 elements within angle brackets. 
@@ -209,11 +207,9 @@ Script example:
 
 \page doc_datatypes_dictionary dictionary
 
-\note Dictionaries are only available in the scripts if the application registers the support for them. The syntax
-for using dictionaries may differ for the application you're working with so consult the application's manual
+\note Dictionaries are only available in the scripts if the application \ref doc_addon_dict "registers the support for them". 
+The syntax for using dictionaries may differ for the application you're working with so consult the application's manual
 for more details.
-
-\see \ref doc_addon_dict
 
 The dictionary stores key-value pairs, where the key is a string, and the value can be of any type. Key-value
 pairs can be added or removed dynamically, making the dictionary a good general purpose container object.
@@ -345,11 +341,9 @@ Object handle and array type modifiers can be combined to form handles to arrays
 
 \page doc_datatypes_strings Strings
 
-\note Strings are only available in the scripts if the application registers the support for them. The syntax
-for using strings may differ for the application you're working with so consult the application's manual
+\note Strings are only available in the scripts if the application \ref doc_addon_std_string "registers the support for them". 
+The syntax for using strings may differ for the application you're working with so consult the application's manual
 for more details.
-
-\see \ref doc_addon_std_string
 
 Strings hold an array of bytes or 16bit words depending on the application settings. 
 Normally they are used to store text but can really store any kind of binary data.
@@ -506,9 +500,7 @@ Examples:
 
 \page doc_datatypes_ref ref
 
-\note ref is only available in the scripts if the application registers the support for it. 
-
-\see \ref doc_addon_handle
+\note ref is only available in the scripts if the application \ref doc_addon_handle "registers the support for it". 
 
 The ref type works like a generic object handle. Normally a \ref handles "handle" can only refer to 
 objects of a specific type or those related to it, however not all object types are related, and this is

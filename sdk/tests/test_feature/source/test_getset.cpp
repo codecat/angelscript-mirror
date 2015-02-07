@@ -88,7 +88,7 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
-	// TODO: Test compound assignment with virtual properties
+	// Test compound assignment with virtual properties
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

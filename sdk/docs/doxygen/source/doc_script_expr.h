@@ -322,7 +322,13 @@ to the type of <code>b</code>, otherwise it will attempt to convert <code>b</cod
 
 If the conversion doesn't work, then the compiler will give an error.
 
-\todo Explain restrictions for using condition operator as lvalue
+The conditional expression can be used as an lvalue, i.e. on the left value of an assignment expression,
+if both <code>a</code> and <code>b</code> are lvalues of the same type.
+
+<pre>
+  int a, b;
+  (expr ? a : b) = 42;
+</pre>
 
 
 

@@ -2,6 +2,9 @@
 
 \page doc_script_class_prop Property accessors
 
+\note The application can optionally \ref doc_adv_custom_options_lang_mod "turn off support for property accessors", 
+so you need to verify your application's manual to determine if this is supported for your application or not.
+
 Many times when working with properties it is necessary to make sure specific logic is followed when
 accessing them. An example would be to always send a notification when a property is modified, or computing
 the value of the property from other properties. By implementing property accessor methods for the properties
@@ -85,17 +88,24 @@ and the compiler will automatically expand the expressions to the appropriate fu
   }
 </pre>
 
-\todo Update this, as compound assignments are now possible (with some restrictions)
-
 Observe that as property accessors are actually a pair of methods rather than direct access to the value, 
-some restrictions apply as to how they can be used in expressions. Expressions that need to read and write
-the value at the same time is usually not possible, e.g. the increment operator ++, or compound assignments.
+some restrictions apply as to how they can be used in expressions that inspect and mutate in the same operation. 
+Compound assignments can be used on property accessors, if the owning object is a reference type, but not if 
+the owning object is a value type, this is because the compiler must be able to guarantee that the object stays 
+alive between the two calls to the get accessor and set accessor.
+
+The increment and decrement operators are currently not supported. 
+
 In such cases the expression must be expanded so that the read and write operation are performed separately, 
 e.g. the increment operator must be rewritten as follows:
 
 <pre>
-  a = a + 1;
+  a++;     // will not work if a is a virtual property
+  a += 1;  // this is OK, as long as the owner of the virtual 
+           // property is a reference type or the property is global
 </pre>
+
+\section doc_script_class_prop_index Indexed property accessors
 
 Property accessors can be used to emulate a single property or an array of properties accessed through the index 
 operator. Property accessors for indexed access work the same way as ordinary property accessors, except that they
@@ -138,7 +148,6 @@ should take the index argument as the first argument, and the new value as the s
   }
 </pre>
 
-The application can optionally turn off support for property accessors, so you need to verify your application's
-manual to determine if this is supported for your application or not.
+Compound assignments currently doesn't work for indexed properties.
 
 */
