@@ -496,9 +496,12 @@ public:
 		bool   alwaysImplDefaultConstruct;
 		int    compilerWarnings;
 		bool   disallowValueAssignForRefType;
+		// TODO: 3.0.0: Remove the alterSyntaxNamedArgs
 		int    alterSyntaxNamedArgs;
 		bool   disableIntegerDivision;
 		bool   disallowEmptyListElements;
+		// TODO: 3.0.0: Remove the privatePropAsProtected
+		bool   privatePropAsProtected;
 	} ep;
 
 	// This flag is to allow a quicker shutdown when releasing the engine

@@ -8302,9 +8302,21 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				// Is the property access allowed?
 				if( prop->isPrivate && prop->isInherited )
 				{
-					asCString msg;
-					msg.Format(TXT_INHERITED_PRIVATE_PROP_ACCESS_s, name.AddressOf());
-					Error(msg, errNode);
+					if( engine->ep.privatePropAsProtected )
+					{
+						// The application is allowing inherited classes to access private properties of the parent
+						// class. This option is allowed to provide backwards compatibility with pre-2.30.0 versions
+						// as it was how the compiler behaved earlier.
+						asCString msg;
+						msg.Format(TXT_ACCESSING_PRIVATE_PROP_s, name.AddressOf());
+						Warning(msg, errNode);
+					}
+					else
+					{
+						asCString msg;
+						msg.Format(TXT_INHERITED_PRIVATE_PROP_ACCESS_s, name.AddressOf());
+						Error(msg, errNode);
+					}
 				}
 
 				if( !objType )

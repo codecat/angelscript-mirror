@@ -394,6 +394,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.disallowEmptyListElements = value ? true : false;
 		break;
 
+	case asEP_PRIVATE_PROP_AS_PROTECTED:
+		ep.privatePropAsProtected = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -475,6 +479,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_DISALLOW_EMPTY_LIST_ELEMENTS:
 		return ep.disallowEmptyListElements;
 
+	case asEP_PRIVATE_PROP_AS_PROTECTED:
+		return ep.privatePropAsProtected;
+
 	default:
 		return 0;
 	}
@@ -536,6 +543,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.alterSyntaxNamedArgs          = 0;         // 0 = no alternate syntax, 1 = accept alternate syntax but warn, 2 = accept without warning
 		ep.disableIntegerDivision        = false;
 		ep.disallowEmptyListElements     = false;
+		ep.privatePropAsProtected        = false;
 	}
 
 	gc.engine = this;

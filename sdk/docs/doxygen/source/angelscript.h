@@ -197,6 +197,8 @@ enum asEEngineProp
 	asEP_DISABLE_INTEGER_DIVISION           = 22,
 	//! When true, the initialization lists may not contain empty elements
 	asEP_DISALLOW_EMPTY_LIST_ELEMENTS       = 23,
+	//! When true, private properties behave like protected properties
+	asEP_PRIVATE_PROP_AS_PROTECTED          = 24,
 
 	asEP_LAST_PROPERTY
 };

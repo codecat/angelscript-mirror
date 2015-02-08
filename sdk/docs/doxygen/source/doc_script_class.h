@@ -301,50 +301,70 @@ forgotten.
 
 
 
-\page doc_script_class_private Private class members
+\page doc_script_class_private Protected and private class members
 
-Class members can be declared as private if you do not intend for them to be accessed 
-from outside the public class methods, or by derived classes. This can be useful in large 
-programs where you wish to avoid programmer errors where properties or methods are 
-inappropriately used.
+Class members can be declared as protected or private to control where they can be 
+accessed from. Protected members cannot be accessed from outside the class. Private 
+members additionally cannot be accessed by derived classes.
+
+This can be useful in large programs where you wish to avoid programmer errors where 
+properties or methods are inappropriately used.
 
 <pre>
   // A class with private members
-  class MyPrivate
+  class MyBase
   {
     // The following are public members
     void PublicFunc()
     {
-      // The class can access its own private members
-      PrivateProp = 0; // OK
-      PrivateFunc();   // OK
+      // The class can access its own protected and private members
+      ProtectedProp = 0; // OK
+      ProtectedFunc();   // OK
+      PrivateProp = 0;   // OK
+      PrivateFunc();     // OK
     }    
  
     int PublicProp;
 
-    // The following are private members
-    private void PrivateFunc()
-    {
-    } 
+    // The following are protected members
+    protected void ProtectedFunc() {}
+    protected int ProtectedProp;
 
+    // The following are private members
+    private void PrivateFunc() {} 
     private int PrivateProp;
+  }
+  
+  class MyDerived : MyBase
+  {
+    void Func()
+    {
+      // The derived class can access the protected members
+      // of the base class but not the private members
+      ProtectedProp = 1; // OK
+      ProtectedFunc();   // OK
+      PrivateProp = 1;   // Error
+      PrivateFunc();     // Error  
+    }
   }
 
   void GlobalFunc()
   {
-    MyPrivate obj;
+    MyBase obj;
 
     // Public members can be accessed normally
     obj.PublicProp = 0;  // OK
     obj.PublicFunc();    // OK
 
-    // Accessing private members will give a compiler error
-    obj.PrivateProp = 0; // Error
-    obj.PrivateFunc();   // Error
+    // Accessing protected and private members will give a compiler error
+    obj.ProtectedProp = 0; // Error
+    obj.ProtectedFunc();   // Error
+    obj.PrivateProp = 0;   // Error
+    obj.PrivateFunc();     // Error
   }
 </pre>
 
-\todo Add explanation about protected members too
+
 
 
 

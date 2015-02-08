@@ -442,6 +442,42 @@ bool Test()
 		engine->Release();
 	}
 
+	// For backwards compatibility the engine can be configured to allow acccess to private properties
+	// http://www.gamedev.net/topic/658646-private-class-member-variables-act-like-cs-protected/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_PRIVATE_PROP_AS_PROTECTED, true);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Base { \n"
+			" private void func() {} \n"
+			" private int prop; \n"
+			"} \n"
+			"class Derived : Base { \n"
+			" void test() { \n"
+			"   func(); \n"   // still not accessible
+			"   prop = 1; \n" // accessible, but warn
+			" } \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (6, 2) : Info    : Compiling void Derived::test()\n"
+		                   "test (7, 4) : Error   : Illegal call to private method 'void Base::func()'\n"
+		                   "test (8, 4) : Warning : Accessing private property 'prop' of parent class\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Test abstract classes
 	{

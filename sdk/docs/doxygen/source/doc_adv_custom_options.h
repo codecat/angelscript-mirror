@@ -97,6 +97,14 @@ just naming the function argument.
 This option changes the default behaviour of the / and /= operators. When true, this option replaces integer division
 with floating-point division, e.g. 1/2 == 0.5 instead of 1/2 == 0
  
+\ref asEP_PRIVATE_PROP_AS_PROTECTED
+
+When this option is set to true the compiler will not prevent the access to private properties inherited from the parent class.
+It will only write a warning.
+
+This option is provided to give backwards compatibility for scripts written between versions 2.19.1, when support for private 
+properties was added, albeit working more like protected properties, and version 2.30.0 when the behaviour was changed so that private
+properties work like in other languages, i.e. they can't be accessed by derived classes.
 
 
 
