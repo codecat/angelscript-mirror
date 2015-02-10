@@ -11,19 +11,17 @@ not for \ref doc_register_val_type "value types".
 
 \section doc_adv_class_hierarchy_1 Establishing the relationship
 
-\todo Update the article since asBEHAVE_REF_CAST is deprecated
-
 In order to let AngelScript know that two types are related you need to register the 
-reference cast behaviours \ref asBEHAVE_REF_CAST and \ref asBEHAVE_IMPLICIT_REF_CAST. The 
-asBEHAVE_REF_CAST should be used if you only want to allow the cast through an explicit
-call with the <tt>\ref conversion "cast&lt;class&gt;"</tt> operator. asBEHAVE_IMPLICIT_REF_CAST
+reference cast operators \ref doc_script_class_conv "opCast" and \ref doc_script_class_conv "opImplCast". The 
+opCast should be used if you only want to allow the cast through an explicit
+call with the <tt>\ref conversion "cast&lt;class&gt;"</tt> operator. opImplCast
 should be used when you want to allow the compiler to implicitly perform the cast as necessary.
 
-Usually you'll want to use asBEHAVE_IMPLICIT_REF_CAST for casts from a derived type to the base type, 
-and asBEHAVE_REF_CAST for casts from a base type to a derived type.
+Usually you'll want to use opImplCast for casts from a derived type to the base type, 
+and opCast for casts from a base type to a derived type.
 
 \code
-// Example REF_CAST behaviour
+// Example opCast behaviour
 template<class A, class B>
 B* refCast(A* a)
 {
@@ -41,8 +39,8 @@ B* refCast(A* a)
 }
 
 // Example registration of the behaviour
-r = engine->RegisterObjectBehaviour("base", asBEHAVE_REF_CAST, "derived@ f()", asFUNCTION((refCast<base,derived>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-r = engine->RegisterObjectBehaviour("derived", asBEHAVE_IMPLICIT_REF_CAST, "base@ f()", asFUNCTION((refCast<derived,base>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectMethod("base", "derived@ opCast()", asFUNCTION((refCast<base,derived>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectMethod("derived", "base@ opImplCast()", asFUNCTION((refCast<derived,base>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
 Note that it may be necessary to add extra parenthesis to the <tt>asFUNCTION</tt> macro so that the preprocessor 

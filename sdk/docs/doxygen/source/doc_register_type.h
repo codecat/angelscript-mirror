@@ -427,6 +427,8 @@ void RegisterMyClass(asIScriptEngine *engine)
 
 \section doc_reg_opbeh_2 Value cast operators
 
+\todo Update this to reflect the new opConv and opCast operator overloads
+
 The value cast operators are used to allow the scripts to convert an object type to another 
 type by constructing a new value. This is different from a \ref doc_adv_class_hierarchy "reference cast",
 that do not construct new values, but rather changes the way it is perceived.

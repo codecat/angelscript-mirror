@@ -163,11 +163,10 @@ as <tt>expr.opCall(arglist)</tt> and compile that instead.
 
 \section doc_script_class_conv Type conversion operators
 
-\todo Add opCast and opImplCast
-
 <table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=80><b>op</b></td><td width=200><b>opfunc</b></td></tr>
-<tr><td><i>type</i>(<i>expr</i>)<td>opConv, opImplConv</td></tr>
+<tr><td width=150><b>op</b></td><td width=200><b>opfunc</b></td></tr>
+<tr><td><i>type</i>(<i>expr</i>)</td><td>opConv, opImplConv</td></tr>
+<tr><td>cast&lt;<i>type</i>>(<i>expr</i>)</td><td>opCast, opImplCast</td></tr>
 </table>
 
 When the expression <tt>type(expr)</tt> is compiled and type doesn't have a constructor that take an argument with 
@@ -189,7 +188,25 @@ for implicit conversions too, e.g. when compiling an assignment or a function ar
 This should only be used for value conversions and not reference casts. That is, the methods are expected to return
 a new instance of the value with the new type.
 
-\see \ref conversion
+If a reference cast is desired, i.e. a different type of handle to the same object instance, then the opCast 
+method should be implemented instead. The compiler will attempt to rewrite an expression <tt>cast&lt;type>(expr)</tt>
+as <tt>expr.opCast()</tt>, and chose the opCast overload that returns a handle of the desired type. Here too the 
+opImplCast can be implemented instead if the reference cast is allowed to be performed implicitly by the compiler.
+
+<pre>
+  class MyObjA
+  {
+    MyObjB \@objB;
+    MyObjC \@objC;
+    MyObjB \@opCast() { return objB; }
+    MyObjC \@opImplCast() { return objC; }
+  }
+</pre>
+
+An example where the opCast/opImplCast operator overloads come in handy is when extending a type without directly 
+\ref doc_script_class_inheritance "inheriting" from it.
+
+\see \ref conversion, \ref doc_adv_inheritappclass
 
 
 */
