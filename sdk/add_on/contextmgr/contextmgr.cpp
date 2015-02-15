@@ -92,6 +92,20 @@ void ScriptCreateCoRoutine(asIScriptFunction *func, CScriptDictionary *arg)
 	}
 }
 
+#ifdef AS_MAX_PORTABILITY
+void ScriptYield_generic(asIScriptGeneric *gen)
+{
+	ScriptYield();
+}
+
+void ScriptCreateCoRoutine_generic(asIScriptGeneric *gen)
+{
+	asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(gen->GetArgAddress(0));
+	CScriptDictionary *dict = reinterpret_cast<CScriptDictionary*>(gen->GetArgAddress(1));
+	ScriptCreateCoRoutine(func, dict);
+}
+#endif
+
 CContextMgr::CContextMgr()
 {
 	m_getTimeFunc   = 0;
@@ -368,9 +382,15 @@ void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine *engine)
 	// The dictionary add-on must have been registered already
 	assert( engine->GetObjectTypeByDecl("dictionary") );
 
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterFuncdef("void coroutine(dictionary@)");
 	r = engine->RegisterGlobalFunction("void createCoRoutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert( r >= 0 );
+#else
+	r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield_generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterFuncdef("void coroutine(dictionary@)");
+	r = engine->RegisterGlobalFunction("void createCoRoutine(coroutine @, dictionary @)", asFUNCTION(ScriptCreateCoRoutine_generic), asCALL_GENERIC); assert( r >= 0 );
+#endif
 }
 
 void CContextMgr::SetGetTimeCallback(TIMEFUNC_t func)

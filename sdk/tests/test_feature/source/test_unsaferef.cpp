@@ -97,25 +97,25 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterObjectType("ShortStringHash", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK);
-		engine->RegisterObjectBehaviour("ShortStringHash", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("ShortStringHash", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 
 		engine->RegisterObjectType("Variant", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
-		engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", asFUNCTION(0), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Variant", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Variant", "Variant& opAssign(const Variant&in)", asFUNCTION(0), asCALL_GENERIC);
 
 		engine->RegisterObjectType("VariantMap", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
-		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f(const VariantMap&in)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectMethod("VariantMap", "Variant& opIndex(ShortStringHash)", asFUNCTION(0), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectMethod("VariantMap", "const Variant& opIndex(ShortStringHash) const", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_CONSTRUCT, "void f(const VariantMap&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("VariantMap", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("VariantMap", "Variant& opIndex(ShortStringHash)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("VariantMap", "const Variant& opIndex(ShortStringHash) const", asFUNCTION(0), asCALL_GENERIC);
 
 		engine->RegisterObjectType("UIElement", 0, asOBJ_REF);
-		engine->RegisterObjectBehaviour("UIElement", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_THISCALL);
-		engine->RegisterObjectBehaviour("UIElement", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_THISCALL);
-		engine->RegisterObjectMethod("UIElement", "VariantMap& get_vars()", asFUNCTION(0), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectBehaviour("UIElement", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("UIElement", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("UIElement", "VariantMap& get_vars()", asFUNCTION(0), asCALL_GENERIC);
 
 		asIScriptModule* module = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 

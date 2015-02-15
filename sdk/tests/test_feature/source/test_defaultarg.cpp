@@ -26,6 +26,7 @@ bool Test()
 	// problem default args and string concatenation
 	// The problem was that the default arg used a temporary variable that was also used to evaluate the first argument
 	// http://www.gamedev.net/topic/663922-problem-with-default-arguments/
+	SKIP_ON_MAX_PORT
 	{
 		const char *script = 
 			"void test() \n"

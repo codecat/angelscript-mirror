@@ -108,6 +108,7 @@ bool Test()
 
 	// Test importing an application registered function
 	// http://www.gamedev.net/topic/661310-binding-native-functions-for-imports/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);

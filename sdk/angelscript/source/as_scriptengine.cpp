@@ -3945,11 +3945,11 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
 
 	// Adjust the clean up instructions
-	for( asUINT c = 0; c < func2->sysFuncIntf->cleanArgs.GetLength(); c++ )
-	{
-		asCDataType dt = DetermineTypeForTemplate(asCDataType::CreateObject(func2->sysFuncIntf->cleanArgs[c].ot, false), templateType, ot);
-		func2->sysFuncIntf->cleanArgs[c].ot = dt.GetObjectType();
-	}
+	if( func2->sysFuncIntf->callConv == ICC_GENERIC_FUNC ||
+		func2->sysFuncIntf->callConv == ICC_GENERIC_METHOD )
+		PrepareSystemFunctionGeneric(func2, func2->sysFuncIntf, this);
+	else
+		PrepareSystemFunction(func2, func2->sysFuncIntf, this);
 
 	func2->id       = GetNextScriptFunctionId();
 	AddScriptFunction(func2);

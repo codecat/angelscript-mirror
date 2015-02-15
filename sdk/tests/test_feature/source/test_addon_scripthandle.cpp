@@ -51,8 +51,9 @@ static CScriptHandle ReturnRef()
 }
 
 std::string g_buf;
-void print(const std::string &s)
+void print(asIScriptGeneric *gen)
 {
+	const std::string &s = *(std::string*)gen->GetArgAddress(0);
 	g_buf += s;
 	g_buf += "\n";
 }
@@ -76,7 +77,7 @@ bool Test()
 		RegisterScriptHandle(engine);
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 		const char *script = 
 			"class base {}\n"

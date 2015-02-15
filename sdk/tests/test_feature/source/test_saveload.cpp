@@ -502,6 +502,7 @@ bool Test()
 
 	// Test save/load with funcdef and imported functions
 	// http://www.gamedev.net/topic/657621-using-global-funcdef-setter-with-imported-function-gives-assert-or-invalid-bytecode/
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.0 WIP - 2015/02/08</h2>
+<h2>Version 2.30.0 WIP - 2015/02/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -112,6 +112,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed WriteConfigToStream/ConfigEngineFromStream to keep the valid object type flags and properly handle namespaces (Thanks Solokiller)
 <li>Fixed ScriptArrayIsEmpty_Generic that didn't set the return value (Thanks _Engine_)
 <li>Improved WriteConfigToStream so that template types are fully registered before other types (Thanks Solokiller)
+<li>Prepared CContextMgr for use with AS_MAX_PORTABILITY
+<li>Fixed bug in dictionary's opIndex when generic calling convention was used
+<li>Fixed bug in CScriptHandle when AS_MAX_PORTABILITY was used
 </ul>
 </ul>
 

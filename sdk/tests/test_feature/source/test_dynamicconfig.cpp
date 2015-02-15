@@ -120,9 +120,9 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		// register 3 script functions a(), b() and c()
-		r = engine->RegisterGlobalFunction("void a()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
-		r = engine->RegisterGlobalFunction("void b()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
-		r = engine->RegisterGlobalFunction("void c()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void a()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void b()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void c()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
 
 		asIScriptFunction *func = engine->GetGlobalFunctionByIndex(0);
 		if( func == 0 || string(func->GetName()) != "a" )
@@ -136,8 +136,8 @@ bool Test()
 
 		// Add a dynamic group, then remove it
 		r = engine->BeginConfigGroup("myconfig"); assert(r>=0);
-		r = engine->RegisterGlobalFunction("void x()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
-		r = engine->RegisterGlobalFunction("void y()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void x()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void y()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
 		r = engine->EndConfigGroup(); assert(r>=0);
 
 		r = engine->RemoveConfigGroup("myconfig"); assert(r>=0);
@@ -154,9 +154,9 @@ bool Test()
 			TEST_FAILED;
 
 		// add some more functions in the default group
-		r = engine->RegisterGlobalFunction("void d()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
-		r = engine->RegisterGlobalFunction("void e()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
-		r = engine->RegisterGlobalFunction("void f()", asFUNCTION(0), asCALL_CDECL); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void d()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void e()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
+		r = engine->RegisterGlobalFunction("void f()", asFUNCTION(0), asCALL_GENERIC); assert(r>=0);
 
 		// original functions should still be available
 		func = engine->GetGlobalFunctionByIndex(0);

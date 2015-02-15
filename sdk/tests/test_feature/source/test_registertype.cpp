@@ -276,6 +276,7 @@ bool Test()
 	}
 
 	// Testing a variant type that supports holding both handles and value
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -1884,7 +1885,7 @@ bool TestHandleType()
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType, opAssign), asCALL_THISCALL);
 #else
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asFUNCTION(CHandleType_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
 
 	// Support both handle assign and value assign
@@ -2108,32 +2109,35 @@ bool TestAlignedScoped()
 	bool fail = false;
 	COutStream out;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	registerVec(engine);
+	SKIP_ON_MAX_PORT
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		registerVec(engine);
 
-	int r = engine->RegisterGlobalFunction("bool checkVec(const vec &in p)", asFUNCTION(checkVec), asCALL_CDECL); assert( r >= 0 );
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		int r = engine->RegisterGlobalFunction("bool checkVec(const vec &in p)", asFUNCTION(checkVec), asCALL_CDECL); assert( r >= 0 );
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("test",
-		"vec g_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
-		"void loop() \n"
-		"{ \n"
-		"  vec l_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
-		"  assert( checkVec(l_pos) ); \n"
-		"  assert( checkVec(g_pos) ); \n"
-		"} \n");
-	// TODO: runtime optimize: The bytecode produced is not optimal. It should use the copy constructor to copy the global variable to a local variable
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"vec g_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
+			"void loop() \n"
+			"{ \n"
+			"  vec l_pos = vec(-74.25679016113281f, 0.0f, 27.4027156829834f); \n"
+			"  assert( checkVec(l_pos) ); \n"
+			"  assert( checkVec(g_pos) ); \n"
+			"} \n");
+		// TODO: runtime optimize: The bytecode produced is not optimal. It should use the copy constructor to copy the global variable to a local variable
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
 
-	r = ExecuteString(engine, "loop()", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
+		r = ExecuteString(engine, "loop()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
 
-	engine->Release();
+		engine->Release();
+	}
 
 	return fail;
 }

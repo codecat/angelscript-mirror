@@ -330,8 +330,8 @@ void RegisterScriptHandle_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ?&in)", asFUNCTION(CScriptHandle_ConstructVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(CScriptHandle_Destruct_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "void opCast(?&out)", asFUNCTION(CScriptHandle_Cast_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", asFUNCTION(CScriptHandle_Assign_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asFUNCTION(CScriptHandle_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", asFUNCTION(CScriptHandle_Assign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asFUNCTION(CScriptHandle_AssignVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asFUNCTION(CScriptHandle_Equals_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asFUNCTION(CScriptHandle_EqualsVar_Generic), asCALL_GENERIC); assert( r >= 0 );
 }

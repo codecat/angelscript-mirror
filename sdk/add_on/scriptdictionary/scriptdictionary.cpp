@@ -534,14 +534,14 @@ static void CScriptDictionaryGetKeys_Generic(asIScriptGeneric *gen)
 static void CScriptDictionary_opIndex_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *self = (CScriptDictionary*)gen->GetObject();
-	std::string *key = (std::string*)gen->GetAddressOfArg(0);
+	std::string *key = *(std::string**)gen->GetAddressOfArg(0);
 	*(CScriptDictValue**)gen->GetAddressOfReturnLocation() = self->operator[](*key);
 }
 
 static void CScriptDictionary_opIndex_const_Generic(asIScriptGeneric *gen)
 {
 	const CScriptDictionary *self = (const CScriptDictionary*)gen->GetObject();
-	std::string *key = (std::string*)gen->GetAddressOfArg(0);
+	std::string *key = *(std::string**)gen->GetAddressOfArg(0);
 	*(const CScriptDictValue**)gen->GetAddressOfReturnLocation() = self->operator[](*key);
 }
 

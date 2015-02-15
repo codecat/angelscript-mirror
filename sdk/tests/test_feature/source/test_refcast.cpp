@@ -62,7 +62,7 @@ typeA* B_to_A(typeB* obj)
 {
 	if( !obj ) return 0;
 	typeA* o = dynamic_cast<typeA*>(obj);
-
+	o->AddRef();
 	return o;
 }
 
@@ -71,7 +71,7 @@ typeB* A_to_B(typeA* obj)
 {
 	if( !obj ) return 0;
 	typeB* o = dynamic_cast<typeB*>(obj);
-
+	o->AddRef();
 	return o;
 }
 
@@ -82,9 +82,15 @@ void RegisterA(asIScriptEngine* engine)
 	int r = 0;
 	r = engine->RegisterObjectType("typeA", sizeof(typeA), asOBJ_REF);
 
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_FACTORY, "typeA@ f()", asFUNCTION(typeA_Factory), asCALL_CDECL);
 	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_ADDREF, "void f()", asMETHOD(typeA, AddRef), asCALL_THISCALL);
 	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_RELEASE, "void f()", asMETHOD(typeA, Release), asCALL_THISCALL);
+#else
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_FACTORY, "typeA@ f()", WRAP_FN(typeA_Factory), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_ADDREF, "void f()", WRAP_MFN(typeA, AddRef), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("typeA", asBEHAVE_RELEASE, "void f()", WRAP_MFN(typeA, Release), asCALL_GENERIC);
+#endif
 }
 
 
@@ -93,12 +99,21 @@ void RegisterB(asIScriptEngine* engine)
 	int r = 0;
 	r = engine->RegisterObjectType("typeB", sizeof(typeB), asOBJ_REF);
 
+#ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_FACTORY, "typeB@ f()", asFUNCTION(typeB_Factory), asCALL_CDECL);
 	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_ADDREF, "void f()", asMETHOD(typeB, AddRef), asCALL_THISCALL);
 	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_RELEASE, "void f()", asMETHOD(typeB, Release), asCALL_THISCALL);
 
-	r = engine->RegisterObjectMethod("typeB", "typeA@+ opCast()", asFUNCTION(B_to_A), asCALL_CDECL_OBJLAST);
-	r = engine->RegisterObjectMethod("typeA", "typeB@+ opCast()", asFUNCTION(A_to_B), asCALL_CDECL_OBJLAST);
+	r = engine->RegisterObjectMethod("typeB", "typeA@ opCast()", asFUNCTION(B_to_A), asCALL_CDECL_OBJLAST);
+	r = engine->RegisterObjectMethod("typeA", "typeB@ opCast()", asFUNCTION(A_to_B), asCALL_CDECL_OBJLAST);
+#else
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_FACTORY, "typeB@ f()", WRAP_FN(typeB_Factory), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_ADDREF, "void f()", WRAP_MFN(typeB, AddRef), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("typeB", asBEHAVE_RELEASE, "void f()", WRAP_MFN(typeB, Release), asCALL_GENERIC);
+
+	r = engine->RegisterObjectMethod("typeB", "typeA@ opCast()", WRAP_OBJ_LAST(B_to_A), asCALL_GENERIC);
+	r = engine->RegisterObjectMethod("typeA", "typeB@ opCast()", WRAP_OBJ_LAST(A_to_B), asCALL_GENERIC);
+#endif
 }
 
 
@@ -137,7 +152,9 @@ bool Test()
 {
 	bool fail = false;
 	int r = 0;
+	COutStream out;
 	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 
 	RegisterA(engine);

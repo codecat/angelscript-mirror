@@ -160,6 +160,7 @@ int PrepareSystemFunctionGeneric(asCScriptFunction *func, asSSystemFunctionInter
 	internal->paramSize = func->GetSpaceNeededForArguments();
 
 	// Prepare the clean up instructions for the function arguments
+	internal->cleanArgs.SetLength(0);
 	int offset = 0;
 	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
@@ -433,6 +434,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 	}
 
 	// Prepare the clean up instructions for the function arguments
+	internal->cleanArgs.SetLength(0);
 	int offset = 0;
 	for( n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
