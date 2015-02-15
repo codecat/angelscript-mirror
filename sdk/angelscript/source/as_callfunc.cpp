@@ -104,8 +104,7 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 			{
 #ifdef AS_NO_THISCALL_FUNCTOR_METHOD
 				return asNOT_SUPPORTED;
-#endif
-
+#else
 				if( objForThiscall == 0 )
 					return asINVALID_ARG;
 
@@ -114,6 +113,7 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 					thisCallConv = ICC_THISCALL_OBJFIRST;
 				else //if( base == asCALL_THISCALL_OBJLAST )
 					thisCallConv = ICC_THISCALL_OBJLAST;
+#endif
 			}
 
 			internal->callConv = thisCallConv;
