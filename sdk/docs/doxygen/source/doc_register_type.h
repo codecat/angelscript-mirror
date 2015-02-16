@@ -425,47 +425,6 @@ void RegisterMyClass(asIScriptEngine *engine)
 
 
 
-\section doc_reg_opbeh_2 Value cast operators
-
-\todo Update this to reflect the new opConv and opCast operator overloads
-
-The value cast operators are used to allow the scripts to convert an object type to another 
-type by constructing a new value. This is different from a \ref doc_adv_class_hierarchy "reference cast",
-that do not construct new values, but rather changes the way it is perceived.
-
-By registering the behaviour either as \ref asBEHAVE_VALUE_CAST or \ref asBEHAVE_IMPLICIT_VALUE_CAST you
-let AngelScript know whether the behaviour may be used to implicitly cast the type or not.
-
-\code
-// Convert a string to an int
-int ConvStringToInt(const std::string &s)
-{
-  return atoi(s.c_str());
-}
-
-// Register the behaviour
-r = engine->RegisterObjectBehaviour("string", asBEHAVE_VALUE_CAST, "int f() const", asFUNCTION(ConvStringToInt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-\endcode
-
-The return type for the cast behaviour can be any type except bool and void. The value cast is meant to create a new value, so if the function
-returns a reference or an object handle make sure it points to a new value and not the original one.
-
-The object constructors and factories also serve as alternative explicit value cast operators, so if a constructor or factory is already available
-then there is no need to register the explicit value cast operator. 
-
-The value cast behaviour can also be registered with the generic form "void f(?&out)" to support casts to any
-type. This is most useful for generic containers, e.g. variants or the dictionary.
-
-\see \ref doc_addon_dict
-
-
-
-
-
-
-
-
-
 
 
 

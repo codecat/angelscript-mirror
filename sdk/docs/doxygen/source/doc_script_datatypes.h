@@ -584,6 +584,8 @@ can be used in place of the handle where the reference to the object is needed b
 
 \section doc_datatypes_weakref_addon Supporting weakref object
 
+
+
 \subsection doc_datatypes_weakref_addon_ops Operators
 
  - \@=          handle assignment

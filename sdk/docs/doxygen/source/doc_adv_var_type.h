@@ -49,4 +49,16 @@ to register application functions.
 \see \ref doc_addon_any and \ref doc_addon_dict for examples
 
 
+\section doc_adv_var_type Variable conversion operators
+
+The variable parameter type can also be used in special versions of \ref doc_script_class_conv "the opConv and opCast"
+operator overloads. This is especially useful for generic container types that need to
+be able to hold any type of content.
+
+ - void opCast(?&out)
+ - void opConv(?&out)
+
+\see \ref doc_addon_handle and \ref doc_addon_dict for examples
+
+
 */
