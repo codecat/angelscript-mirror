@@ -765,8 +765,6 @@ objects, i.e. the references that will not keep the referred object alive.
 
 The type is registered with <code>RegisterScriptWeakRef(asIScriptEngine*)</code>.
 
-\todo The CScriptWeakRef class has been modified to be a value type
-
 \see \ref doc_adv_weakref
 
 \section doc_addon_weakref_1 Public C++ interface
@@ -780,9 +778,7 @@ public:
   CScriptWeakRef(const CScriptWeakRef &other);
   CScriptWeakRef(void *ref, asIObjectType *type);
 
-  // Memory management
-  void AddRef() const;
-  void Release() const;
+  ~CScriptWeakRef();
 
   // Copy the stored value from another weakref object
   CScriptWeakRef &operator=(const CScriptWeakRef &other);
@@ -791,41 +787,27 @@ public:
   bool operator==(const CScriptWeakRef &o) const;
   bool operator!=(const CScriptWeakRef &o) const;
 
+  // Sets a new reference
+  CScriptWeakRef &Set(void *newRef);
+
   // Returns the object if it is still alive
+  // This will increment the refCount of the returned object
   void *Get() const;
 
+  // Returns true if the contained reference is the same
+  bool Equals(void *ref) const;
+  
   // Returns the type of the reference held
   asIObjectType *GetRefType() const;
 };
 \endcode
 
-\section doc_addon_weakref_2 Example usage in script
+\section doc_addon_weakref_2 Public script interface
 
-In the scripts it can be used as follows:
+\see \ref doc_datatypes_weakref "weakref in the script language"
 
-<pre>
-  class MyClass {}
-  MyClass \@obj1 = MyClass();
-  
-  // Keep a weakref to the object
-  weakref<MyClass> r1(obj1);
-  
-  // Keep a weakref to a readonly object
-  const_weakref<MyClass> r2(obj1);
-  
-  // As long as there is a strong reference to the object, 
-  // the weakref will be able to return a handle to the object
-  MyClass \@obj2 = r1.get();
-  assert( obj2 !is null );
-  
-  // After all strong references are removed the
-  // weakref will only return null
-  \@obj1 = null;
-  \@obj2 = null;
-  
-  const MyClass \@obj3 = r2.get();
-  assert( obj3 is null );
-</pre>
+
+
   
 
 

@@ -24,8 +24,8 @@ Note that the host application may add types specific to that application, refer
  - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_dictionary
  - \subpage doc_datatypes_ref
+ - \subpage doc_datatypes_weakref
 
-\todo weakref
 
  
  
@@ -500,11 +500,11 @@ Examples:
 
 \page doc_datatypes_ref ref
 
-\note ref is only available in the scripts if the application \ref doc_addon_handle "registers the support for it". 
+\note <code>ref</code> is only available in the scripts if the application \ref doc_addon_handle "registers the support for it". 
 
-The ref type works like a generic object handle. Normally a \ref handles "handle" can only refer to 
+The <code>ref</code> type works like a generic object handle. Normally a \ref handles "handle" can only refer to 
 objects of a specific type or those related to it, however not all object types are related, and this is
-where ref comes in. Being completely generic it can refer to any object type (as long as it is a \ref doc_datatypes_obj "reference type").
+where <code>ref</code> comes in. Being completely generic it can refer to any object type (as long as it is a \ref doc_datatypes_obj "reference type").
 
 <pre>
   // Two unrelated types
@@ -549,10 +549,56 @@ The ref object supports only a few operators as it is just a place holder for ha
 
 
 
+ 
+ 
+\page doc_datatypes_weakref weakref
+
+\note <code>weakref</code> is only available in the scripts if the application \ref doc_addon_weakref "registers the support for it". 
+
+An object handle will keep the object it refers to alive as long as the handle itself exists. A <code>weakref</code> object
+can be used in place of the handle where the reference to the object is needed but the object shouldn't be kept alive.
+
+<pre>
+  class MyClass {}
+  MyClass \@obj1 = MyClass();
+  
+  // Keep a weakref to the object
+  weakref<MyClass> r1(obj1);
+  
+  // Keep a weakref to a readonly object
+  const_weakref<MyClass> r2(obj1);
+  
+  // As long as there is a strong reference to the object, 
+  // the weakref will be able to return a handle to the object
+  MyClass \@obj2 = r1.get();
+  assert( obj2 !is null );
+  
+  // After all strong references are removed the
+  // weakref will only return null
+  \@obj1 = null;
+  \@obj2 = null;
+  
+  const MyClass \@obj3 = r2.get();
+  assert( obj3 is null );
+</pre>
+
+\section doc_datatypes_weakref_addon Supporting weakref object
+
+\subsection doc_datatypes_weakref_addon_ops Operators
+
+ - \@=          handle assignment
+ - is, !is      identity operator
+ - cast<type>   cast operator
+
+\subsection doc_datatypes_array_addon_mthd Methods
+
+ - T@ get() const
 
 
 
-
+ 
+ 
+ 
 
 \page doc_datatypes_funcptr Function handles
 
