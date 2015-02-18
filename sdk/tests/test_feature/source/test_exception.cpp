@@ -20,6 +20,24 @@ static void print(asIScriptGeneric *gen)
 	UNUSED_VAR(s);
 }
 
+class ExceptionHandler
+{
+public:
+	ExceptionHandler() : ok(false) {}
+
+	void Callback(asIScriptContext *ctx)
+	{
+		// Callback was called
+		ok = true;
+
+		// Type of exception is what was expected?
+		if( string(ctx->GetExceptionString()) != "Null pointer access" )
+			ok = false;
+	}
+
+	bool ok;
+};
+
 bool TestException()
 {
 	bool fail = false;
@@ -259,6 +277,43 @@ bool TestException()
 			TEST_FAILED;
 
 		ctx->Release();
+		engine->Release();
+	}
+
+	// Test exception handler with thiscall
+	// http://www.gamedev.net/topic/665587-angelscript-ios-x64/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class SomeClass \n"
+			"{ \n"
+			"	float some_value; \n"
+			"} \n"
+			"SomeClass @obj; \n"
+			"void test() \n"
+			"{\n"
+			"	obj.some_value = 3.14f; \n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		ExceptionHandler handler;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->SetExceptionCallback(asMETHOD(ExceptionHandler, Callback), &handler, asCALL_THISCALL);
+		ctx->Prepare(mod->GetFunctionByName("test"));
+		r = ctx->Execute();
+		if( r != asEXECUTION_EXCEPTION )
+			TEST_FAILED;
+		ctx->Release();
+		
+		if( handler.ok == false )
+			TEST_FAILED;
+
 		engine->Release();
 	}
 
