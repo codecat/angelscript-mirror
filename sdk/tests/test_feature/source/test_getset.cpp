@@ -88,6 +88,40 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test get/set with handle
+	// http://www.gamedev.net/topic/665609-with-handle-properies-doesnt-work/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		const char *script = 
+			"class SceneObject {} \n"
+			"SceneObject @object { \n"
+			"	get { \n"
+			"		return object_; \n"
+			"	} \n"
+			"} \n"
+			"SceneObject @object_; \n"
+			"void func() { \n"
+			"	if (@object != null) {}; \n"
+			"} \n";
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test compound assignment with virtual properties
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

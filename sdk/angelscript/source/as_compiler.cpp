@@ -11016,9 +11016,15 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 		}
 	}
 
+	// The explicit handle flag must be remembered
+	bool isExplicitHandle = ctx->type.isExplicitHandle;
+
 	// Call the accessor
 	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
+	if( isExplicitHandle )
+		ctx->type.isExplicitHandle = true;
 
+	// Clear the property get/set ids 
 	ctx->property_get = 0;
 	ctx->property_set = 0;
 	if( ctx->property_arg )
