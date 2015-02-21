@@ -41,6 +41,10 @@ Even if you don't want or can't use multithreading, you can still write applicat
    by the application for simultaneous access, as the script engine doesn't do this automatically. A read-write
    lock is provided by the library that can be used for this. See \ref asAcquireExclusiveLock, 
    \ref asReleaseExclusiveLock, \ref asAcquireSharedLock, and \ref asReleaseSharedLock.
+   
+ - If you use \ref doc_adv_custom_options_engine "automatic garbage collection" (turned on by default) then
+   you must make sure the behaviours registered for types to \ref doc_gc_object "support garbage collection" 
+   must be thread safe as the garbage collector can be invoked from any thread that is executing a script. 
 
  - Many of the add-ons are not thread safe. Either create your own or make sure you review the add-ons you 
    wish to use to guarantee thread safety.

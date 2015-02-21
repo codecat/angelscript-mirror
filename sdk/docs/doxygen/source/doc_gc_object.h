@@ -28,7 +28,7 @@ that points to an object, it knows that the object is part of a circular
 reference. If all the objects involved in that circular reference have no
 outside references it means that they should be destroyed.
 
-The process of determining the dead objects uses the first for of the
+The process of determining the dead objects uses the first four of the
 behaviours below, while the destruction of the objects is done by forcing the
 release of the object's references.
 
@@ -133,7 +133,17 @@ r = engine->RegisterObjectBehaviour("gc", asBEHAVE_RELEASE, "void f()", asMETHOD
 
 \section doc_reg_gcref_4 Garbage collected objects and multi-threading
 
-\todo Write observations about this, e.g. AddRef/Release() must be made atomic, EnumReferences must be thread-safe
+If you plan on executing scripts from multiple threads with \ref doc_adv_custom_options_engine "automatic garbage collection" turned on, or 
+if you plan on running the garbage collector manually from a background thread, then you must make sure that the object type behaviours
+that support the garbage collector are thread-safe. Especially the ADDREF, RELEASE, and ENUMREFS behaviours have a high probability
+of being invoked from multiple threads simultaneously. The RELEASEREFS behaviour will only be invoked when the Garbage Collector has 
+determined that the object is already dead so it is guaranteed not to be invoked by multiple threads. The others, GETREFCOUNT, SETGCFLAG, 
+and GETGCFLAG, are not sensitive as the garbage collector just use the information as a hint. 
+
+Making the ADDREF and RELEASE behaviours thread-safe is easy with the use of \ref asAtomicInc and \ref asAtomicDec. If the object is 
+static container, i.e. the memory layout of the contents cannot change, then ENUMREFS is already thread-safe, but if memory layout can
+change, e.g. dynamic arrays or hash maps, then the iteration over the content in ENUMREFS must be protected so that it doesn't break
+in case the memory happen to change in the middle of the iteration.
 
 \see \ref doc_gc_threads
 
