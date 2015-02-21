@@ -257,8 +257,6 @@ may be managed by different context managers.
 Observe that the context manager class hasn't been designed for multi-threading, so you need to
 be careful if your application needs to execute scripts from multiple threads.
 
-\todo Update documentation with changes
-
 \see The samples \ref doc_samples_concurrent and \ref doc_samples_corout for uses
 
 \section doc_addon_ctxmgr_1 Public C++ interface
@@ -290,8 +288,15 @@ public:
   // Create a new context, prepare it with the function, then return 
   // it so that the application can pass the argument values. The context
   // will be released by the manager after the execution has completed.
-  asIScriptContext *AddContext(asIScriptEngine *engine, asIScriptContext *func);
+  // Set keepCtxAfterExecution to true if the application needs to retrieve
+  // information from the context after it the script has finished. 
+  asIScriptContext *AddContext(asIScriptEngine *engine, asIScriptContext *func, bool keepCtxAfterExecution = false);
 
+  // If the context was kept after the execution, this method must be 
+  // called when the application is done with the context so it can be
+  // returned to the pool for reuse.
+  void DoneWithContext(asIScriptContext *ctx);
+  
   // Create a new context, prepare it with the function, then return
   // it so that the application can pass the argument values. The context
   // will be added as a co-routine in the same thread as the currCtx.
@@ -968,8 +973,6 @@ If you do not want to provide write access for scripts then you can compile
 the add on with the define AS_WRITE_OPS 0, which will disable support for writing. 
 This define can be made in the project settings or directly in the header.
 
-\todo Update with changes
-
 \section doc_addon_file_1 Public C++ interface
 
 \code
@@ -997,22 +1000,22 @@ public:
   bool IsEOF() const;
 
   // Reads a specified number of bytes into the string
-  int ReadString(unsigned int length, std::string &str);
+  std::string ReadString(unsigned int length);
   
   // Reads to the next new-line character
-  int ReadLine(std::string &str);
+  std::string ReadLine();
 
   // Reads a signed integer
-  asINT64  ReadInt(asUINT bytes);
+  asINT64     ReadInt(asUINT bytes);
 
   // Reads an unsigned integer
-  asQWORD  ReadUInt(asUINT bytes);
+  asQWORD     ReadUInt(asUINT bytes);
 
   // Reads a float
-  float    ReadFloat();
+  float       ReadFloat();
 
   // Reads a double
-  double   ReadDouble();
+  double      ReadDouble();
     
   // Writes a string to the file
   int WriteString(const std::string &str);
@@ -1042,8 +1045,8 @@ public:
     int      close();
     int      getSize() const;
     bool     isEndOfFile() const;
-    int      readString(uint length, string &out str);
-    int      readLine(string &out str);
+    string   readString(uint length);
+    string   readLine();
     int64    readInt(uint bytes);
     uint64   readUInt(uint bytes);
     float    readFloat();
@@ -1068,8 +1071,7 @@ public:
   if( f.open("file.txt", "r") >= 0 ) 
   {
       // Read the whole file into the string buffer
-      string str;
-      f.readString(f.getSize(), str); 
+      string str = f.readString(f.getSize()); 
       f.close();
   }
 </pre>
@@ -1081,8 +1083,49 @@ public:
 
 <b>Path:</b> /sdk/add_on/scriptfile/
 
-\todo Write this page
+This object provides support for inspecting directories on the filesystem.
 
+Register with <code>RegisterScriptFileSystem(asIScriptEngine*)</code>.
+
+\section doc_addon_filesystem_1 Public C++ interface
+
+\code
+class CScriptFileSystem
+{
+public:
+  CScriptFileSystem();
+
+  void AddRef() const;
+  void Release() const;
+
+  // Sets the current path that should be used in other calls when using relative paths
+  // It can use relative paths too, so moving up a directory is used by passing in ".."
+  bool ChangeCurrentPath(const std::string &path);
+  std::string GetCurrentPath() const;
+
+  // Returns true if the path is a directory. Input can be either a full path or a relative path
+  bool IsDir(const std::string &path) const;
+
+  // Returns a list of the files in the current path
+  CScriptArray *GetFiles() const;
+
+  // Returns a list of the directories in the current path
+  CScriptArray *GetDirs() const;
+};
+\endcode
+
+\section doc_addon_filesystem_2 Public script interface
+
+<pre>
+  class filesystem
+  {
+    bool           changeCurrentPath(const string &in);
+    string         getCurrentPath() const;
+    array<string> \@getDirs();
+    array<string> \@getFiles();
+    bool           isDir(const string &in);
+  }
+</pre>
 
 
 
