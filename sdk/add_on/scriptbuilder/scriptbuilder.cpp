@@ -968,7 +968,7 @@ string GetAbsolutePath(const string &file)
 string GetCurrentDir()
 {
 	char buffer[1024];
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(_WIN32)
 	#ifdef _WIN32_WCE
 	static TCHAR apppath[MAX_PATH] = TEXT("");
 	if (!apppath[0])
@@ -1007,7 +1007,7 @@ string GetCurrentDir()
 	return "game:/";
 	#elif defined(_M_ARM)
 	// TODO: How to determine current working dir on Windows Phone?
-	return ""; 
+	return "";
 	#else
 	return _getcwd(buffer, (int)1024);
 	#endif // _MSC_VER

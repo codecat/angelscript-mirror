@@ -25,7 +25,7 @@ public:
 	CVariant(asIScriptEngine *engine) { m_engine = engine; m_typeId = 0; m_valueObj = 0; }
 	CVariant(const CVariant &o) { m_engine = o.m_engine; m_typeId = 0; m_valueObj = 0; Set(const_cast<void**>(&o.m_valueObj), o.m_typeId); }
 	~CVariant() { Clear(); }
-	CVariant &operator=(const CVariant &o) 
+	CVariant &operator=(const CVariant &o)
 	{
 		Set(const_cast<void**>(&o.m_valueObj), o.m_typeId);
 		return *this;
@@ -39,7 +39,7 @@ public:
 	}
 
 	// AngelScript: used as @var = expr
-	CVariant &opHandleAssign(void *hndl, int typeId) 
+	CVariant &opHandleAssign(void *hndl, int typeId)
 	{
 		if( (typeId & asTYPEID_OBJHANDLE) == 0 )
 		{
@@ -61,7 +61,7 @@ public:
 			*outRef = 0;
 			return;
 		}
-	
+
 		// It is expected that the outRef is always a handle
 		assert( outTypeId & asTYPEID_OBJHANDLE );
 
@@ -73,7 +73,7 @@ public:
 
 		if( wantedType == heldType )
 		{
-			// If the requested type is a script function it is 
+			// If the requested type is a script function it is
 			// necessary to check if the functions are compatible too
 			if( heldType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
 			{
@@ -310,7 +310,7 @@ bool Test()
 								  "assert( val2[0] == 2 ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
-			
+
 		engine->Release();
 	}
 
@@ -352,7 +352,7 @@ bool Test()
 
 		struct helper
 		{
-			static bool CalcMuzzlePoint( gentity_t *const, vec3_t wpFwd, vec3_t right, vec3_t wpUp, vec3_t muzzlePoint, float lead_in ) 
+			static bool CalcMuzzlePoint( gentity_t *const, vec3_t wpFwd, vec3_t right, vec3_t wpUp, vec3_t muzzlePoint, float lead_in )
 			{
 				bool ok = true;
 				ok &= wpFwd[0] == 1;
@@ -419,7 +419,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("rect", asBEHAVE_LIST_FACTORY, "rect @f(int&in) {repeat {repeat_same int}}", asFUNCTION(0), asCALL_GENERIC);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"void main() \n"
 			"{ \n"
 			"  rect r1 = {{1,2,3},{4,5,6}}; \n" // OK 2x3 rect
@@ -558,7 +558,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// Test registering a specialized template instance 
+	// Test registering a specialized template instance
 	// http://www.gamedev.net/topic/647678-bug-multiple-registration-of-template-type/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -644,7 +644,7 @@ bool Test()
 		r = engine->RegisterGlobalFunction("Widget @CreateWidget()", WRAP_FN(CreateWidget), asCALL_GENERIC); assert( r >= 0 );
 #endif
 
-		const char *script = 
+		const char *script =
 			"class NoRef\n"
 			"{\n"
 			"         Widget @no_ref_count;\n"
@@ -989,7 +989,7 @@ bool Test()
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
-	engine->Release(); 
+	engine->Release();
 
 	// Ref types without default constructor must not be allowed to be passed by in/out reference, but must be allowed to be passed by inout reference
 	bout.buffer = "";
@@ -1013,7 +1013,7 @@ bool Test()
 	}
 
 	int t1 = engine->GetTypeIdByDecl("ref");
-	int t2 = engine->GetTypeIdByDecl("ref@") & ~asTYPEID_OBJHANDLE; 
+	int t2 = engine->GetTypeIdByDecl("ref@") & ~asTYPEID_OBJHANDLE;
 	if( t1 != t2 )
 		TEST_FAILED;
 
@@ -1995,8 +1995,8 @@ bool TestIrrTypes()
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	// The dimension2df type must be registered with asOBJ_APP_CLASS_C, 
-	// despite it having an assignment and copy constructor. It must also 
+	// The dimension2df type must be registered with asOBJ_APP_CLASS_C,
+	// despite it having an assignment and copy constructor. It must also
 	// be registered with asOBJ_APP_CLASS_FLOATS to work on Linux 64bit
 	r = engine->RegisterObjectType("dim2f", sizeof(dimension2df), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
@@ -2048,7 +2048,7 @@ public:
 	vec &operator=(const vec &o) { x = o.x; y = o.y; z = o.z; w = o.w; return *this; }
 
 	union {
-#ifdef _WIN32
+#if defined(_MSC_VER)
 		__m128 v;
 #endif
 		struct {
@@ -2056,12 +2056,12 @@ public:
 		};
 	};
 }
-#ifndef _WIN32
+#if !defined(_MSC_VER)
 __attribute__((aligned(16)))
 #endif
 ;
 
-#if defined(__psp2__) || defined(__CELLOS_LV2__) || defined(__GNUC__)
+#if !defined(_WIN32) && (defined(__psp2__) || defined(__CELLOS_LV2__) || defined(__GNUC__))
 	#define _aligned_malloc(s, a) memalign(a, s)
 	#define _aligned_free free
 #endif
@@ -2076,8 +2076,8 @@ void registerVec(asIScriptEngine *engine)
 
 	// Allocate memory with proper alignment using _aligned_malloc. Free it with _aligned_free
 	// ref: http://msdn.microsoft.com/en-us/library/8z34s9c6.aspx
-	// TODO: With g++ use aligned_alloc/free instead: 
-	// ref http://linux.die.net/man/3/memalign 
+	// TODO: With g++ use aligned_alloc/free instead:
+	// ref http://linux.die.net/man/3/memalign
 	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f()",							 WRAPEXPR(vec*, (), new(_aligned_malloc(sizeof(vec), __alignof(vec))) vec()), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(const vec &in v)",				 WRAPEXPR(vec*, (const vec &o), new(_aligned_malloc(sizeof(vec), __alignof(vec))) vec(o)), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("vec", asBEHAVE_FACTORY, "vec @f(float nx, float nx, float nz)", WRAPEXPR(vec*, (float x, float y, float z), new(_aligned_malloc(sizeof(vec), __alignof(vec))) vec(x, y, z)), asCALL_CDECL); assert(r >= 0);
