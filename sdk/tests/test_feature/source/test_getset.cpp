@@ -88,6 +88,50 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test compound assignment with get/set on object returned as handle from other get/set
+	// http://www.gamedev.net/topic/666081-virtual-property-compound-assignment-on-temporary-object-handle-v2300/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		const char *script = 
+			"class Obj { \n"
+			"  uint16 prop { \n"
+			"    get { return _prop; } \n"
+			"    set { _prop = value; } \n"
+			"  } \n"
+			"  uint16 _prop = 0; \n"
+			"} \n"
+			"Obj @get_Objs(uint idx) { \n"
+			"  return _obj; \n"
+			"} \n"
+			"Obj @_obj = Obj(); \n";
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		int r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "_obj.prop += 1; \n"         // direct access
+			                      "get_Objs(0).prop += 1; \n"  // returned from function
+			                      "Objs[0].prop += 1; \n"      // returned from indexed get accessor
+			                      "assert( _obj._prop == 3 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test get/set with handle
 	// http://www.gamedev.net/topic/665609-with-handle-properies-doesnt-work/
 	{
