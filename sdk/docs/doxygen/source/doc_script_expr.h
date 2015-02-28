@@ -3,11 +3,10 @@
 \page doc_expressions Expressions
 
  - \ref assignment
- - \ref compound
  - \ref function
- - \ref conversion
  - \ref math
  - \ref bits
+ - \ref compound
  - \ref logic
  - \ref equal
  - \ref relation
@@ -19,6 +18,7 @@
  - \ref handle
  - \ref parenthesis
  - \ref scope
+ - \ref conversion
  - \ref anonobj
 
 
@@ -31,21 +31,6 @@ expression value can be stored, e.g. a variable. An assignment evaluates to
 the same value and type of the data stored. The right hand expression is 
 always computed before the left.
 
-
-
-
-\section compound Compound assignments
-
-<pre>
-  lvalue += rvalue;
-  lvalue = lvalue + rvalue;
-</pre>
-
-A compound assignment is a combination of an operator followed by the assignment. The two expressions
-above means practically the same thing. Except that first one is more efficient in that the lvalue is
-only evaluated once, which can make a difference if the lvalue is complex expression in itself.
-
-Available operators: <code>+= -= *= /= %= **= &= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
 
 
 
@@ -96,45 +81,6 @@ declared in. No positional arguments may follow any named arguments.
 
 
 
-\section conversion Type conversions
-
-<pre>
-  // implicitly convert the clss handle to a intf handle
-  intf \@a = \@clss();
-
-  // explicitly convert the intf handle to a clss handle
-  clss \@b = cast&lt;clss&gt;(a);
-</pre>
-
-Object handles can be converted to other object handles with the cast operator. 
-If the cast is valid, i.e. the true object implements the class or interface being 
-requested, the operator returns a valid handle. If the cast is not valid, the cast 
-returns a null handle.
-
-The above is called a reference cast, and only works for types that support object handles.
-In this case the handle still refers to the same object, it is just exposed through a 
-different interface.
-
-Types that do not support object handles can be converted with a value cast instead. In
-this case a new value is constructed, or in case of objects a new instance of the object is 
-created. 
-
-<pre>
-  // implicit value cast
-  int a = 1.0f;
-  
-  // explicit value cast
-  float b = float(a)/2;
-</pre>
-
-In most cases an explicit cast is not necessary for primitive types, however, 
-as the compiler is usually able to do an implicit cast to the correct type.
-
-
-
-
-
-
 \section math Math operators
 
 <pre>
@@ -150,7 +96,7 @@ as the compiler is usually able to do an implicit cast to the correct type.
 <tr><td width=70 valign=top><code>*</code></td> <td width=100 valign=top>multiplication</td>    <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 <tr><td width=70 valign=top><code>/</code></td> <td width=100 valign=top>division</td>          <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 <tr><td width=70 valign=top><code>%</code></td> <td width=100 valign=top>modulos</td>           <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
-<td><td width=70 valign=top><code>**</code></td> <td width=100 valign=top>exponent</td>         <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
+<tr><td width=70 valign=top><code>**</code></td> <td width=100 valign=top>exponent</td>         <td width=80 valign=top><i>NUM</i></td>      <td width=80 valign=top><i>NUM</i></td>       <td width=80 valign=top><i>NUM</i></td></tr>
 </table>
 
 Plus and minus can be used as unary operators as well. NUM can be exchanged 
@@ -184,6 +130,23 @@ All except <code>~</code> are dual operators.
 
 Both operands will be converted to integers while keeping the sign of the original
 type before the operation. The resulting type will be the same as the left hand operand.
+
+
+
+\section compound Compound assignments
+
+<pre>
+  lvalue += rvalue;
+  lvalue = lvalue + rvalue;
+</pre>
+
+A compound assignment is a combination of an operator followed by the assignment. The two expressions
+above means practically the same thing. Except that first one is more efficient in that the lvalue is
+only evaluated once, which can make a difference if the lvalue is complex expression in itself.
+
+Available operators: <code>+= -= *= /= %= **= &= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code>
+
+
 
 
 
@@ -404,6 +367,44 @@ the name is overloaded by a local variable or function. Write the scope name on 
 and the name of the variable/function on the right.
 
 \see \ref doc_global_namespace
+
+
+
+
+\section conversion Type conversions
+
+<pre>
+  // implicitly convert the clss handle to a intf handle
+  intf \@a = \@clss();
+
+  // explicitly convert the intf handle to a clss handle
+  clss \@b = cast&lt;clss&gt;(a);
+</pre>
+
+Object handles can be converted to other object handles with the cast operator. 
+If the cast is valid, i.e. the true object implements the class or interface being 
+requested, the operator returns a valid handle. If the cast is not valid, the cast 
+returns a null handle.
+
+The above is called a reference cast, and only works for types that support object handles.
+In this case the handle still refers to the same object, it is just exposed through a 
+different interface.
+
+Types that do not support object handles can be converted with a value cast instead. In
+this case a new value is constructed, or in case of objects a new instance of the object is 
+created. 
+
+<pre>
+  // implicit value cast
+  int a = 1.0f;
+  
+  // explicit value cast
+  float b = float(a)/2;
+</pre>
+
+In most cases an explicit cast is not necessary for primitive types, however, 
+as the compiler is usually able to do an implicit cast to the correct type.
+
 
 
 
