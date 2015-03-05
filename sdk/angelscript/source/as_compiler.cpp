@@ -8402,12 +8402,14 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 	// Recursively search parent namespaces for global entities
 	asCString currScope = scope;
-	if( scope == "" )
-		currScope = outFunc->nameSpace->name;
+
+	// Get the namespace for this scope. This may return null if the scope is an enum
+	asSNameSpace *ns = DetermineNameSpace(currScope);
+	if( ns && currScope != "::" )
+		currScope = ns->name;
+
 	while( !found && !noGlobal && !objType )
 	{
-		asSNameSpace *ns = DetermineNameSpace(currScope);
-
 		// Is it a global property?
 		if( !found && ns )
 		{
@@ -8621,7 +8623,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				{
 					ctx->type.SetDummy();
 					asCString str;
-					str.Format(TXT_UNKNOWN_SCOPE_s, currScope.AddressOf());
+					str.Format(TXT_UNKNOWN_SCOPE_s, scope.AddressOf());
 					Error(str, errNode);
 					return -1;
 				}
@@ -8639,6 +8641,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				currScope = currScope.SubString(0, pos);
 			else
 				currScope = "::";
+
+			if( ns )
+				ns = engine->GetParentNameSpace(ns);
 		}
 	}
 
@@ -10062,7 +10067,8 @@ asSNameSpace *asCCompiler::DetermineNameSpace(const asCString &scope)
 
 	if( scope == "" )
 	{
-		if( outFunc->nameSpace->name != "" )
+		// When compiling default argument expression the correct namespace is stored in the outFunc even for objects
+		if( outFunc->nameSpace->name != "" || isCompilingDefaultArg )
 			ns = outFunc->nameSpace;
 		else if( outFunc->objectType && outFunc->objectType->nameSpace->name != "" )
 			ns = outFunc->objectType->nameSpace;

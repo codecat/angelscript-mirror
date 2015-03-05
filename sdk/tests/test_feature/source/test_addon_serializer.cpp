@@ -96,9 +96,15 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
+		// Add an extra object for serialization
+		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(mod->GetObjectTypeByName("CTest")));
+		((std::string*)(obj->GetAddressOfProperty(1)))->assign("external object");
+		
 		CSerializer modStore;
 		modStore.AddUserType(new CStringType(), "string");
 		modStore.AddUserType(new CArrayType(), "array");
+
+		modStore.AddExtraObjectToStore(obj);
 
 		r = modStore.Store(mod);
 		if( r < 0 )
@@ -131,7 +137,17 @@ bool Test()
 
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
-	
+
+		// Restore the extra object
+		asIScriptObject *obj2 = (asIScriptObject*)modStore.GetPointerToRestoredObject(obj);
+		obj->Release();
+
+		if( *(std::string*)obj2->GetAddressOfProperty(1) != "external object" )
+			TEST_FAILED;
+
+		// Since the restored object will not be stored we don't need to
+		// release it. The serializer will do that when it is destroyed
+
 		engine->Release();
 	}
 

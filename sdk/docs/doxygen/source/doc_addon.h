@@ -82,6 +82,8 @@ public:
 
 \section doc_addon_serializer_2 Example usage
 
+\todo Show how to serialize extra objects too. And explain about memory management for restored objects
+
 \code
 struct CStringType;
 struct CArrayType;

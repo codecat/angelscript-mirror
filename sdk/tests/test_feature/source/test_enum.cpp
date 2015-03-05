@@ -453,7 +453,7 @@ static bool TestEnum()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
-		               "error (5, 18) : Error   : 'SomeClass::SOMEVALUE' is not declared\n")
+		               "error (5, 18) : Error   : Unknown scope 'SomeClass'\n")
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

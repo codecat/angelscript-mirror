@@ -11,6 +11,42 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// class in namespace referring to variable in global namespace
+	// http://www.gamedev.net/topic/666308-errors-produced-by-classes-in-namespaces-accessing-global-properties/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int i; \n"
+			"void f(int a = i) {} \n"
+			"namespace n { \n"
+			" class c { \n"
+			"  void m() { \n"
+			"   f(); \n"
+			"  } \n"
+			" } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int i; \n"
+			"namespace n { \n"
+			" class c { \n"
+			"  int p = i; \n"
+			" } \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Referring to base class' method with namespace
 	// http://www.gamedev.net/topic/662755-fully-qualified-namespace-when-calling-base-class-implementation/
 	{
@@ -369,47 +405,49 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-
-		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+		else
+		{
+			r = ExecuteString(engine, "main()", mod);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
 	
-		// Retrieving entities should work properly with namespace
-		mod->SetDefaultNamespace("a");
-		asIScriptFunction *f1 = mod->GetFunctionByDecl("int func()");
-		asIScriptFunction *f2 = mod->GetFunctionByDecl("int a::func()");
-		asIScriptFunction *f3 = mod->GetFunctionByName("func");
-		if( f1 == 0 || f1 != f2 || f1 != f3 )
-			TEST_FAILED;
+			// Retrieving entities should work properly with namespace
+			mod->SetDefaultNamespace("a");
+			asIScriptFunction *f1 = mod->GetFunctionByDecl("int func()");
+			asIScriptFunction *f2 = mod->GetFunctionByDecl("int a::func()");
+			asIScriptFunction *f3 = mod->GetFunctionByName("func");
+			if( f1 == 0 || f1 != f2 || f1 != f3 )
+				TEST_FAILED;
 
-		int v1 = mod->GetGlobalVarIndexByName("var");
-		int v2 = mod->GetGlobalVarIndexByDecl("int var");
-		int v3 = mod->GetGlobalVarIndexByDecl("int a::var");
-		if( v1 < 0 || v1 != v2 || v1 != v3 )
-			TEST_FAILED;
+			int v1 = mod->GetGlobalVarIndexByName("var");
+			int v2 = mod->GetGlobalVarIndexByDecl("int var");
+			int v3 = mod->GetGlobalVarIndexByDecl("int a::var");
+			if( v1 < 0 || v1 != v2 || v1 != v3 )
+				TEST_FAILED;
 
-		int t1 = mod->GetTypeIdByDecl("cl");
-		int t2 = mod->GetTypeIdByDecl("a::cl");
-		if( t1 < 0 || t1 != t2 )
-			TEST_FAILED;
+			int t1 = mod->GetTypeIdByDecl("cl");
+			int t2 = mod->GetTypeIdByDecl("a::cl");
+			if( t1 < 0 || t1 != t2 )
+				TEST_FAILED;
 
-		// Functions with parameters must work too
-		asIScriptFunction *f = mod->GetFunctionByDecl("void a::b::funcParams(int, float)");
-		if( f == 0 || std::string(f->GetDeclaration(true, true)) != "void a::b::funcParams(int, float)" )
-			TEST_FAILED;
+			// Functions with parameters must work too
+			asIScriptFunction *f = mod->GetFunctionByDecl("void a::b::funcParams(int, float)");
+			if( f == 0 || std::string(f->GetDeclaration(true, true)) != "void a::b::funcParams(int, float)" )
+				TEST_FAILED;
 
-		// Test saving and loading 
-		CBytecodeStream s("");
-		mod->SaveByteCode(&s);
+			// Test saving and loading 
+			CBytecodeStream s("");
+			mod->SaveByteCode(&s);
 
-		asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
-		r = mod2->LoadByteCode(&s);
-		if( r < 0 )
-			TEST_FAILED;
+			asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
+			r = mod2->LoadByteCode(&s);
+			if( r < 0 )
+				TEST_FAILED;
 
-		r = ExecuteString(engine, "main()", mod2);
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
+			r = ExecuteString(engine, "main()", mod2);
+			if( r != asEXECUTION_FINISHED )
+				TEST_FAILED;
+		}
 
 		engine->Release();
 	}
