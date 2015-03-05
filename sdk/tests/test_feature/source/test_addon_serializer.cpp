@@ -42,6 +42,15 @@ struct CArrayType : public CUserType
 	}
 };
 
+class CDummy
+{
+public:
+	CDummy() : refCount(1) {};
+	void AddRef() { refCount++; }
+	void Release() { refCount--; }
+	int refCount;
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -58,6 +67,12 @@ bool Test()
 		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
+		// Register an application type that cannot be created from script. The serializer
+		// will then keep the same pointer, while properly maintaining the refcount
+		engine->RegisterObjectType("dummy", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("dummy", asBEHAVE_ADDREF, "void f()", asMETHOD(CDummy,AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("dummy", asBEHAVE_RELEASE, "void f()", asMETHOD(CDummy,Release), asCALL_THISCALL);
+
 		const char *script = 
 			"float f; \n"
 			"string str; \n"
@@ -66,6 +81,7 @@ bool Test()
 			"{ \n"
 			"  int a; \n"
 			"  string str; \n"
+			"  dummy @d; \n"
 			"} \n"
 			"CTest @t; \n"
 			"CTest a; \n"
@@ -80,6 +96,12 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
+		// Populate the handle to the external object
+		CDummy dummy;
+		asIScriptObject *obj = (asIScriptObject*)mod->GetAddressOfGlobalVar(mod->GetGlobalVarIndexByName("a"));
+		*(CDummy**)obj->GetAddressOfProperty(2) = &dummy;
+		dummy.AddRef();
+		
 		r = ExecuteString(engine, "f = 3.14f; \n"
 			                      "str = 'test'; \n"
 								  "arr.resize(3); arr[0] = 1; arr[1] = 2; arr[2] = 3; \n"
@@ -97,30 +119,39 @@ bool Test()
 			TEST_FAILED;
 
 		// Add an extra object for serialization
-		asIScriptObject *obj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(mod->GetObjectTypeByName("CTest")));
-		((std::string*)(obj->GetAddressOfProperty(1)))->assign("external object");
-		
-		CSerializer modStore;
-		modStore.AddUserType(new CStringType(), "string");
-		modStore.AddUserType(new CArrayType(), "array");
+		asIScriptObject *scriptObj = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(mod->GetObjectTypeByName("CTest")));
+		((std::string*)(scriptObj->GetAddressOfProperty(1)))->assign("external object");
 
-		modStore.AddExtraObjectToStore(obj);
+		// Reload the script while keeping the object states
+		{
+			CSerializer modStore;
+			modStore.AddUserType(new CStringType(), "string");
+			modStore.AddUserType(new CArrayType(), "array");
 
-		r = modStore.Store(mod);
-		if( r < 0 )
-			TEST_FAILED;
+			modStore.AddExtraObjectToStore(scriptObj);
 
-		engine->DiscardModule(0);
+			r = modStore.Store(mod);
+			if( r < 0 )
+				TEST_FAILED;
 
-		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", script);
-		r = mod->Build();
-		if( r < 0 )
-			TEST_FAILED;
+			engine->DiscardModule(0);
 
-		r = modStore.Restore(mod);
-		if( r < 0 )
-			TEST_FAILED;
+			mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("script", script);
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			r = modStore.Restore(mod);
+			if( r < 0 )
+				TEST_FAILED;
+
+			// Restore the extra object
+			asIScriptObject *obj2 = (asIScriptObject*)modStore.GetPointerToRestoredObject(scriptObj);
+			scriptObj->Release();
+			scriptObj = obj2;
+			scriptObj->AddRef();
+		}
 
 		r = ExecuteString(engine, "assert(f == 3.14f); \n"
 		                          "assert(str == 'test'); \n"
@@ -133,21 +164,20 @@ bool Test()
 								  "assert(t.str == 'olleh'); \n"
 								  "assert(t is t2); \n"
 								  "assert(n is null); \n"
-								  "assert(arrOfTest.length() == 1 && arrOfTest[0].str == 'blah'); \n", mod);
-
+								  "assert(arrOfTest.length() == 1 && arrOfTest[0].str == 'blah'); \n"
+								  "assert(a.d !is null); \n", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 
-		// Restore the extra object
-		asIScriptObject *obj2 = (asIScriptObject*)modStore.GetPointerToRestoredObject(obj);
-		obj->Release();
-
-		if( *(std::string*)obj2->GetAddressOfProperty(1) != "external object" )
+		// The new object has the same content
+		if( *(std::string*)scriptObj->GetAddressOfProperty(1) != "external object" )
 			TEST_FAILED;
+		scriptObj->Release();
 
-		// Since the restored object will not be stored we don't need to
-		// release it. The serializer will do that when it is destroyed
-
+		// After the serializer has been destroyed the refCount for the external handle must be the same as before
+		if( dummy.refCount != 2 )
+			TEST_FAILED;
+		
 		engine->Release();
 	}
 

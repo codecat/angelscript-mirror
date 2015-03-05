@@ -52,7 +52,13 @@ The implementation currently has some limitations:
    differently in this case.
  - If the module holds references to objects from another module it will probably fail in 
    restoring the values.
- 
+
+
+\todo Show how to serialize extra objects too. And explain about memory management for restored objects
+
+\todo Explain that handles to registered types without factories will be kept as-is
+
+\todo Registered pod-types do not need a special user type as the serializer will simply keep a bitwise copy
 
 \section doc_addon_serializer_1 Public C++ interface
 
@@ -81,8 +87,6 @@ public:
 \endcode
 
 \section doc_addon_serializer_2 Example usage
-
-\todo Show how to serialize extra objects too. And explain about memory management for restored objects
 
 \code
 struct CStringType;
