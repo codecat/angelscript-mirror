@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
 #include "../../../add_on/serializer/serializer.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 
 namespace Test_Addon_Serializer
 {
@@ -178,6 +179,44 @@ bool Test()
 		if( dummy.refCount != 2 )
 			TEST_FAILED;
 		
+		engine->Release();
+	}
+
+	// Report proper error when missing user type for non-POD type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		RegisterStdString(engine);
+		RegisterScriptMathComplex(engine);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		const char* script =
+			"string str; \n"     // non-POD: error
+			"complex cmplx; \n"; // POD:     no error
+
+		mod->AddScriptSection( 0, script );
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		bout.buffer = "";
+		CSerializer modStore;
+
+		r = modStore.Store(mod);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = modStore.Restore(mod);
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Cannot restore type 'string'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 
