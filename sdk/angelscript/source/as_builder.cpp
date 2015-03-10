@@ -965,15 +965,20 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	if( r < 0 )
 		return asINVALID_DECLARATION;
 
-	// Get data type and property name
+	// Get data type
 	asCScriptNode *dataType = parser.GetScriptNode()->firstChild;
 
-	asCScriptNode *nameNode = dataType->next;
+	// Check if the property is declared 'by reference'
+	bool isReference = (dataType->next->tokenType == ttAmp);
+
+	// Get the name of the property
+	asCScriptNode *nameNode = isReference ? dataType->next->next : dataType->next;
 
 	// If an object property is registered, then use the
 	// object's namespace, otherwise use the specified namespace
 	type = CreateDataTypeFromNode(dataType, &source, dt ? dt->GetObjectType()->nameSpace : ns);
 	name.Assign(&decl[nameNode->tokenPos], nameNode->tokenLength);
+	type.MakeReference(isReference);
 
 	// Validate that the type really can be a registered property
 	// We cannot use CanBeInstantiated, as it is allowed to register

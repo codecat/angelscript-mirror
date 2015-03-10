@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 #include <malloc.h> // gnuc: memalign
 
 namespace TestRegisterType
@@ -261,6 +262,72 @@ bool Test()
 	COutStream out;
  	asIScriptEngine *engine;
 	const char *script;
+
+	// Registering a type that has member value types as references
+	// http://www.gamedev.net/topic/658589-register-handle-as-reference/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptMathComplex(engine);
+		r = engine->RegisterObjectType("type", 0, asOBJ_REF|asOBJ_NOCOUNT);
+		r = engine->RegisterObjectProperty("type", "complex &cmplx1", 0);
+		if( r < 0 )
+			TEST_FAILED;
+		r = engine->RegisterObjectProperty("type", "complex cmplx2", 1);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIObjectType *type = engine->GetObjectTypeByName("type");
+		if( type == 0 )
+			TEST_FAILED;
+		else
+		{
+			const char *name;
+			int typeId;
+			int offset;
+			bool isReference;
+			r = type->GetProperty(0, &name, &typeId, 0, 0, &offset, &isReference);
+			if( r < 0 )
+				TEST_FAILED;
+			else if( std::string(name) != "cmplx1" ||
+				typeId != engine->GetTypeIdByDecl("complex") ||
+				offset != 0 ||
+				isReference != true )
+				TEST_FAILED;
+			r = type->GetProperty(1, &name, &typeId, 0, 0, &offset, &isReference);
+			if( r < 0 )
+				TEST_FAILED;
+			else if( std::string(name) != "cmplx2" ||
+				typeId != engine->GetTypeIdByDecl("complex") ||
+				offset != 1 ||
+				isReference != false )
+				TEST_FAILED;
+
+			// The declaration must show the & too
+			std::string decl = type->GetPropertyDeclaration(0);
+			if( decl != "complex& cmplx1" )
+				TEST_FAILED;
+		}
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "type @t; \n"
+			"void func() { \n"
+			"  t.cmplx1 = complex(0,0); \n"
+			"  t.cmplx2 = complex(0,0); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asBYTE bc[] = {asBC_SUSPEND, asBC_PshC4, asBC_PshC4, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PshGPtr, asBC_ADDSi, asBC_RDSPtr, asBC_COPY, asBC_PopPtr, 
+					   asBC_SUSPEND, asBC_PshC4, asBC_PshC4, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PshGPtr, asBC_ADDSi, asBC_COPY, asBC_PopPtr, 
+					   asBC_SUSPEND, asBC_RET};
+		if( !ValidateByteCode(func, bc) )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Testing the asOBJ_APP_ALIGN16 flag
 	if( strstr(asGetLibraryOptions(), "WIP_16BYTE_ALIGN") )

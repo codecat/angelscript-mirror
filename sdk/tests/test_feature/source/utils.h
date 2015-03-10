@@ -193,6 +193,7 @@ void RemoveMemoryManager();
 int  GetNumAllocs();
 int  GetAllocedMem();
 
+// Returns true if bytecode is as expected
 bool ValidateByteCode(asIScriptFunction *func, asBYTE *expectBC);
 
 #if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC++ 6
