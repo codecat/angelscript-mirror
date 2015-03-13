@@ -473,6 +473,8 @@ r = engine->RegisterObjectMethod("mytype", "void MethodWrapper()", asFUNCTION(My
 
 \page doc_reg_objprop Registering object properties
 
+\todo It is now possible to use & in the property declaration
+
 Class member variables can be registered so that they can be directly
 accessed by the script without the need for any method calls.
 

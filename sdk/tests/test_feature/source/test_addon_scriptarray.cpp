@@ -191,6 +191,33 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test invalid initialization list
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		r = ExecuteString(engine, "int[] arr = {1,2,null};");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "string[] arr = {'1','2',null};");
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from '<null handle>' to 'int&'.\n"
+						   "ExecuteString (1, 25) : Error   : Can't implicitly convert from '<null handle>' to 'const string&'.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test alternate syntax where empty list members give error
 	// http://www.gamedev.net/topic/661578-array-trailing-comma/
 	{
