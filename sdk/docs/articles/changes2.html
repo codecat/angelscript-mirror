@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.1 WIP - 2015/03/13</h2>
+<h2>Version 2.30.1 WIP - 2015/03/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed memory leak in serializer when using extra objects
 <li>Fixed bug in serializer with incorrect refcount on registered types when restoring the script object that references them
 <li>Serializer attempted to backup non-pod types that had no user type registered with bitwise copy potentially causing errors 
+<li>Added GetBuffer to the CScriptArray object (Thanks Solokiller)
+<li>Added GetRef to the CScriptHandle (Thanks zerochen)
 </ul>
 </ul>
 

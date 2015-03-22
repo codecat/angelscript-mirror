@@ -829,6 +829,11 @@ void *CScriptArray::At(asUINT index)
 	return const_cast<void*>(const_cast<const CScriptArray *>(this)->At(index));
 }
 
+void *CScriptArray::GetBuffer()
+{
+	return buffer->data;
+}
+
 
 // internal
 void CScriptArray::CreateBuffer(SArrayBuffer **buf, asUINT numElements)
