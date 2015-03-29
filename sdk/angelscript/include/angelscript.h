@@ -1556,8 +1556,12 @@ enum asEBCInstr
 	asBC_POWdi			= 197,
 	asBC_POWi64			= 198,
 	asBC_POWu64			= 199,
-
+#ifdef AS_EXPERIMENTAL
+	asBC_Thiscall1		= 200,
+	asBC_MAXBYTECODE	= 201,
+#else
 	asBC_MAXBYTECODE	= 200,
+#endif
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -1851,8 +1855,12 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(POWdi,		wW_rW_rW_ARG,	0),
 	asBCINFO(POWi64,	wW_rW_rW_ARG,	0),
 	asBCINFO(POWu64,	wW_rW_rW_ARG,	0),
-
+#ifdef AS_EXPERIMENTAL
+	asBCINFO(Thiscall1, DW_ARG,			-AS_PTR_SIZE-1),
+#else
 	asBCINFO_DUMMY(200),
+#endif
+
 	asBCINFO_DUMMY(201),
 	asBCINFO_DUMMY(202),
 	asBCINFO_DUMMY(203),

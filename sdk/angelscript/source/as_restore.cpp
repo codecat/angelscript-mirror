@@ -43,6 +43,10 @@
 
 BEGIN_AS_NAMESPACE
 
+#ifndef AS_EXPERIMENTAL
+const asBYTE asBC_Thiscall1 = 255;
+#endif
+
 asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {
@@ -2293,7 +2297,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		}
 		else if( c == asBC_CALL ||
 				 c == asBC_CALLINTF ||
-				 c == asBC_CALLSYS )
+				 c == asBC_CALLSYS ||
+				 c == asBC_Thiscall1 )
 		{
 			// Translate the index to the func id
 			int *fid = (int*)&bc[n+1];
@@ -2800,7 +2805,8 @@ void asCReader::CalculateStackNeeded(asCScriptFunction *func)
 		{
 			// Determine the true delta from the instruction arguments
 			if( bc == asBC_CALL ||
-			    bc == asBC_CALLSYS ||
+				bc == asBC_CALLSYS ||
+				bc == asBC_Thiscall1 ||
 				bc == asBC_CALLBND ||
 				bc == asBC_ALLOC ||
 				bc == asBC_CALLINTF ||
@@ -3030,6 +3036,7 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 
 	if( bc == asBC_CALL ||
 		bc == asBC_CALLSYS ||
+		bc == asBC_Thiscall1 ||
 		bc == asBC_CALLINTF )
 	{
 		// Find the function from the function id in bytecode
@@ -3090,6 +3097,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		asBYTE bc = *(asBYTE*)&func->scriptData->byteCode[n];
 		if( bc == asBC_CALL ||
 			bc == asBC_CALLSYS ||
+			bc == asBC_Thiscall1 ||
 			bc == asBC_CALLINTF || 
 			bc == asBC_ALLOC ||
 			bc == asBC_CALLBND ||
@@ -4058,6 +4066,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		asBYTE bc = *(asBYTE*)&func->scriptData->byteCode[n];
 		if( bc == asBC_CALL ||
 			bc == asBC_CALLSYS ||
+			bc == asBC_Thiscall1 ||
 			bc == asBC_CALLINTF )
 		{
 			// Find the function from the function id in bytecode
@@ -4262,7 +4271,8 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		}
 		else if( c == asBC_CALL ||     // DW_ARG
 				 c == asBC_CALLINTF || // DW_ARG
-				 c == asBC_CALLSYS )   // DW_ARG
+				 c == asBC_CALLSYS ||  // DW_ARG
+				 c == asBC_Thiscall1 ) // DW_ARG
 		{
 			// Translate the function id
 			*(int*)(tmp+1) = FindFunctionIndex(engine->scriptFunctions[*(int*)(tmp+1)]);

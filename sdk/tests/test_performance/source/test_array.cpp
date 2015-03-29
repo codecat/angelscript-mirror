@@ -19,9 +19,26 @@ static const char *script =
 "        for( uint p = 0; p < 10; p++ )        \n"
 "            a[p]++;                           \n"
 "    }                                         \n"
+"}                                             \n"
+"void TestArray2()                             \n"
+"{                                             \n"
+"    array<int> a = {0};                       \n"
+"    for( uint i = 0; i < 2000000; i++ )       \n"
+"    {                                         \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"        a[0]++;                             \n"
+"    }                                         \n"
 "}                                             \n";
 
-void Test(double *testTime)
+void Test(double *testTimes)
 {
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	COutStream out;
@@ -38,6 +55,7 @@ void Test(double *testTime)
 
 	double time = GetSystemTimer();
 
+	// Test mixed creation of array object and access of elements
 	int r = ctx->Execute();
 
 	time = GetSystemTimer() - time;
@@ -55,7 +73,31 @@ void Test(double *testTime)
 		}
 	}
 	else
-		*testTime = time;
+		testTimes[0] = time;
+
+	ctx->Prepare(mod->GetFunctionByDecl("void TestArray2()"));
+
+	time = GetSystemTimer();
+
+	// Test pure access of elements
+	r = ctx->Execute();
+
+	time = GetSystemTimer() - time;
+
+	if( r != 0 )
+	{
+		printf("Execution didn't terminate with asEXECUTION_FINISHED\n", TESTNAME);
+		if( r == asEXECUTION_EXCEPTION )
+		{
+			printf("Script exception\n");
+			asIScriptFunction *func = ctx->GetExceptionFunction();
+			printf("Func: %s\n", func->GetName());
+			printf("Line: %d\n", ctx->GetExceptionLineNumber());
+			printf("Desc: %s\n", ctx->GetExceptionString());
+		}
+	}
+	else
+		testTimes[1] = time;
 
 	ctx->Release();
 #endif
