@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h> // sprintf
+#include <string>
 
 #include "scriptarray.h"
 
@@ -380,6 +381,9 @@ CScriptArray &CScriptArray::operator=(const CScriptArray &other)
 
 CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 {
+	// The object type should be the template instance of the array
+	assert( ot && string(ot->GetName()) == "array" );
+
 	refCount = 1;
 	gcFlag = false;
 	objType = ot;
@@ -470,6 +474,9 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 
 CScriptArray::CScriptArray(asUINT length, asIObjectType *ot)
 {
+	// The object type should be the template instance of the array
+	assert( ot && string(ot->GetName()) == "array" );
+
 	refCount = 1;
 	gcFlag = false;
 	objType = ot;
@@ -521,6 +528,9 @@ CScriptArray::CScriptArray(const CScriptArray &other)
 
 CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
 {
+	// The object type should be the template instance of the array
+	assert( ot && string(ot->GetName()) == "array" );
+
 	refCount = 1;
 	gcFlag = false;
 	objType = ot;

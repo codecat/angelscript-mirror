@@ -103,6 +103,7 @@ void Test(double *testTimes)
 	time = GetSystemTimer();
 
 	// Test pure access of elements
+	// http://www.gamedev.net/topic/661177-qtscript-vs-angelscript/
 
 	// TODO: run-time optimize: By allowing the application to tell the compiler how a call can be inlined
 	//                          it would be possible to optimize this further. The inlined version of opIndex

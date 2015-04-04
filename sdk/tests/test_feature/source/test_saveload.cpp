@@ -1049,7 +1049,7 @@ bool Test()
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0xBAE6E6EC )
+		if( crc32 != 0x8EE8BFA0 )
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
