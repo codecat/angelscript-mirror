@@ -4301,8 +4301,16 @@ void asCContext::ExecuteNext()
 		}
 		l_bc += 2;
 		break;
-#ifdef AS_EXPERIMENTAL
 	case asBC_Thiscall1:
+		// This instruction is a faster version of asBC_CALLSYS. It is faster because
+		// it has much less runtime overhead with determining the calling convention 
+		// and no dynamic code for loading the parameters. The instruction can only
+		// be used to call functions with the following signatures:
+		//
+		//  type &obj::func(int)
+		//  type &obj::func(uint)
+		//  void  obj::func(int)
+		//  void  obj::func(uint)
 		{
 			// Get function ID from the argument
 			int i = asBC_INTARG(l_bc);
@@ -4354,9 +4362,6 @@ void asCContext::ExecuteNext()
 			}
 		}
 		break;
-#else
-	case 200: l_bc = (asDWORD*)200; break;
-#endif
 
 	// Don't let the optimizer optimize for size,
 	// since it requires extra conditions and jumps

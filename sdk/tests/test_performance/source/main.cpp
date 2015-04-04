@@ -55,7 +55,7 @@ double testTimesOrig[NUM_TESTS] =
 // Times for 2.30.1 WIP (64bit) (localized optimizations)
 double testTimesOrig2[NUM_TESTS] = 
 {
-1.375,  // Basic
+1.328,  // Basic
 0.244,  // Basic2
 0.574,  // Call
 0.969,  // Call2
@@ -64,18 +64,18 @@ double testTimesOrig2[NUM_TESTS] =
 0.704,  // Intf
 0.670,  // Mthd
 1.502,  // String
-0.665,  // String2
+0.647,  // String2
 0.912,  // StringPooled
-1.049,  // ThisProp
+0.599,  // ThisProp
 0.327,  // Vector3
-0.607,  // Assign.1
-0.970,  // Assign.2
+0.595,  // Assign.1
+0.815,  // Assign.2
 0.538,  // Assign.3
 0.761,  // Assign.4
 0.761,  // Assign.5
-1.526,  // Array.1
-1.222,  // Array.2
-0.635   // GlobalVar
+1.153,  // Array.1
+0.426,  // Array.2
+0.242   // GlobalVar
 };
 
 double testTimesBest[NUM_TESTS];

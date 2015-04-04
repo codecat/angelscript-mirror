@@ -25,18 +25,39 @@ static const char *script =
 "    array<int> a = {0};                       \n"
 "    for( uint i = 0; i < 2000000; i++ )       \n"
 "    {                                         \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
-"        a[0]++;                             \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
+"        a[0]++;                               \n"
 "    }                                         \n"
 "}                                             \n";
+
+// The same function in C++ for comparison
+void TestArray2(asIScriptEngine *engine)
+{
+	int val = 0;
+	CScriptArray *a = CScriptArray::Create(engine->GetObjectTypeByDecl("array<int>"), 1, &val);
+	for( asUINT i = 0; i < 2000000; i++ )
+	{
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+		(*(int*)a->At(0))++;
+	}
+	a->Release();
+}
 
 void Test(double *testTimes)
 {
@@ -54,9 +75,11 @@ void Test(double *testTimes)
 	ctx->Prepare(mod->GetFunctionByDecl("void TestArray()"));
 
 	double time = GetSystemTimer();
+	
+	int r = 0;
 
 	// Test mixed creation of array object and access of elements
-	int r = ctx->Execute();
+	r = ctx->Execute();
 
 	time = GetSystemTimer() - time;
 
@@ -80,6 +103,22 @@ void Test(double *testTimes)
 	time = GetSystemTimer();
 
 	// Test pure access of elements
+
+	// TODO: run-time optimize: By allowing the application to tell the compiler how a call can be inlined
+	//                          it would be possible to optimize this further. The inlined version of opIndex
+	//                          would look something like:
+	//
+	//                            ChkIdx   index, length        // Check if the index is valid
+	//                            ADDSi    v24                  // Move the this pointer to the internal buffer
+	//                            RDSPtr                        // Dereference pointer
+	//                            ADDSi    v8                   // Move the this pointer to the start of the array
+	//                            ADDSi    index, element size  // Move the this pointer to the correct element
+	//                            PopRPtr                       // Load the address of the reference into the register
+	//                            Pop      4                    // Remove the index argument from the stack
+	//
+	//                          Without JIT the above would be pretty much the same as the quick Thiscall1 instruction,
+	//                          but with JIT it would quite possibly be even faster.
+
 	r = ctx->Execute();
 
 	time = GetSystemTimer() - time;

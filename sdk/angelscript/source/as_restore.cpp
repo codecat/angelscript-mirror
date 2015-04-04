@@ -43,10 +43,6 @@
 
 BEGIN_AS_NAMESPACE
 
-#ifndef AS_EXPERIMENTAL
-const asBYTE asBC_Thiscall1 = 255;
-#endif
-
 asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
 {

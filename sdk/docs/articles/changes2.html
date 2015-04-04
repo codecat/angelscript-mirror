@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.1 WIP - 2015/03/22</h2>
+<h2>Version 2.30.1 WIP - 2015/04/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>It is now possible to register member properties as references if the member should be dereferenced before access (Thanks cvet)
+</ul>
+<li>Virtual machine
+<ul>
+<li>Implemented asBC_Thiscall1 for faster calls to class methods that take an int argument and return a reference
 </ul>
 <li>Add-ons
 <ul>

@@ -14078,8 +14078,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 			ctx->bc.Call(asBC_CALL    , descr->id, argSize);
 		else if( descr->funcType == asFUNC_SYSTEM )
 		{
-#ifdef AS_EXPERIMENTAL
-			// Check if we can use the faster asBC_Thiscall1 instruction
+			// Check if we can use the faster asBC_Thiscall1 instruction, i.e. one of
+			//    type &obj::func(int) 
+			//    type &obj::func(uint)
 			if( descr->GetObjectType() && descr->returnType.IsReference() && 
 				descr->parameterTypes.GetLength() == 1 && 
 				(descr->parameterTypes[0].IsIntegerType() || descr->parameterTypes[0].IsUnsignedType()) && 
@@ -14087,7 +14088,6 @@ void asCCompiler::PerformFunctionCall(int funcId, asSExprContext *ctx, bool isCo
 				!descr->parameterTypes[0].IsReference() )
 				ctx->bc.Call(asBC_Thiscall1, descr->id, argSize);
 			else
-#endif
 				ctx->bc.Call(asBC_CALLSYS , descr->id, argSize);
 		}
 		else if( descr->funcType == asFUNC_FUNCDEF )
