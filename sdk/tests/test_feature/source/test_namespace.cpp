@@ -11,6 +11,46 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// test name conflict between template and non-template in different namespaces
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetDefaultNamespace("A");
+		RegisterScriptArray(engine, false);
+		engine->SetDefaultNamespace("B");
+		engine->RegisterObjectType("array", 4, asOBJ_VALUE|asOBJ_POD);
+		engine->SetDefaultNamespace("");
+
+		// Positive
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"A::array<int> a; \n"
+			"B::array b; \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Negative
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"A::array a; \n"
+			"B::array<int> b; \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "test (1, 4) : Error   : Template 'array' expects 1 sub type(s)\n"
+		                   "test (2, 4) : Error   : Type 'array' is not a template type\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->Release();
+	}
+
 	// class in namespace referring to variable in global namespace
 	// http://www.gamedev.net/topic/666308-errors-produced-by-classes-in-namespaces-accessing-global-properties/
 	{
