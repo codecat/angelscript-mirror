@@ -7887,9 +7887,9 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 
 					// In case the options were to objects, it is necessary to dereference the pointer on 
 					// the stack so it will point to the actual object, instead of the variable
-					if( le.type.dataType.IsReference() && le.type.isVariable && le.type.dataType.IsObject() && !le.type.dataType.IsObjectHandle() )
+					if( le.type.dataType.IsReference() && le.type.dataType.IsObject() && !le.type.dataType.IsObjectHandle() )
 					{
-						asASSERT( re.type.dataType.IsReference() && re.type.isVariable && re.type.dataType.IsObject() && !re.type.dataType.IsObjectHandle() );
+						asASSERT( re.type.dataType.IsReference() && re.type.dataType.IsObject() && !re.type.dataType.IsObjectHandle() );
 
 						ctx->bc.Instr(asBC_RDSPtr);
 					}
