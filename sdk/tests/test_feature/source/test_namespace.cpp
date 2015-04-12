@@ -11,6 +11,36 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test bug with namespace
+	// http://www.gamedev.net/topic/667516-namespace-bug/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+
+		engine->SetDefaultNamespace("NSBugTest");
+		engine->RegisterObjectType("FooObj", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("FooObj", "int opIndex(int)", asFUNCTION(0), asCALL_THISCALL);
+		engine->RegisterObjectMethod("FooObj", "void test()", asFUNCTION(0), asCALL_THISCALL);
+		engine->SetDefaultNamespace("");
+
+		r = engine->RegisterGlobalProperty("NSBugTest::FooObj FooObj", (void*)1);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+				"void main() \n"
+				"{ \n"
+				"   FooObj.test();\n"
+				"   int num = FooObj[0];\n"
+				"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// test name conflict between template and non-template in different namespaces
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

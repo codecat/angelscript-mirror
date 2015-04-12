@@ -1285,13 +1285,15 @@ asCScriptNode *asCParser::ParseExprValue()
 			if( engine->IsTemplateType(tempString.AddressOf()) )
 				isTemplateType = true;
 		}
+
+		GetToken(&t2);
 		
 		// Rewind so the real parsing can be done, after deciding what to parse
 		RewindTo(&t1);
 
 		// Check if this is a construct call
 		if( isDataType && (t.type == ttOpenParanthesis ||  // type()
-			               t.type == ttOpenBracket) )      // type[]()
+			               (t.type == ttOpenBracket && t2.type == ttCloseBracket)) )      // type[]()
 			node->AddChildLast(ParseConstructCall());
 		else if( isTemplateType && t.type == ttLessThan )  // type<t>()
 			node->AddChildLast(ParseConstructCall());
