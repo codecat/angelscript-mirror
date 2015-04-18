@@ -3887,17 +3887,17 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 				WriteEncodedInt64(ot->templateSubTypes.GetLength());
 				for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
 				{
-					if( ot->templateSubTypes[0].IsObject() || ot->templateSubTypes[0].IsEnumType() )
+					if( ot->templateSubTypes[n].IsObject() || ot->templateSubTypes[n].IsEnumType() )
 					{
 						ch = 's';
 						WriteData(&ch, 1);
-						WriteDataType(&ot->templateSubTypes[0]);
+						WriteDataType(&ot->templateSubTypes[n]);
 					}
 					else
 					{
 						ch = 't';
 						WriteData(&ch, 1);
-						eTokenType t = ot->templateSubTypes[0].GetTokenType();
+						eTokenType t = ot->templateSubTypes[n].GetTokenType();
 						WriteEncodedInt64(t);
 					}
 				}

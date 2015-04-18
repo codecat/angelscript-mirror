@@ -342,6 +342,44 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test problem with saving/loading bytecode containing templates with multiple subtypes
+	// Reported by Phong Ba
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		r = engine->RegisterObjectType("dictionary<class K, class V>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_FACTORY, "dictionary<K, V>@ f(int&in)", NULL, asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_ADDREF, "void f()", NULL, asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_RELEASE, "void f()", NULL, asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("dictionary<K, V>", "int get_Count() const", NULL, asCALL_CDECL_OBJLAST); assert(r >= 0);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "void main(){ dictionary<int,int> d; int cnt = d.Count; }");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		CBytecodeStream stream(__FILE__"1");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test WriteConfigToStream/ConfigEngineFromStream with template types and dependencies
 	// http://www.gamedev.net/topic/664405-scripthelper-config-helpers-not-working-correctly/
 	{
