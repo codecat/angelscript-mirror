@@ -13,6 +13,7 @@ bool Test()
 
 	// Test bug with namespace
 	// http://www.gamedev.net/topic/667516-namespace-bug/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);

@@ -118,6 +118,9 @@ AS_API const char * asGetLibraryOptions()
 #ifdef WIP_16BYTE_ALIGN
 		"WIP_16BYTE_ALIGN "
 #endif
+#ifdef AS_BIG_ENDIAN
+		"AS_BIG_ENDIAN "
+#endif
 
 	// Target system
 #ifdef AS_WIN
@@ -4269,8 +4272,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int param1, asCScriptFu
 #endif
 	if( i->callConv == ICC_GENERIC_METHOD )
 	{
-		asASSERT(false); // TODO: Implement this
-		asCGeneric gen(const_cast<asCScriptEngine*>(this), func, obj, 0);
+		asCGeneric gen(const_cast<asCScriptEngine*>(this), func, obj, reinterpret_cast<asDWORD*>(&param1));
 		void (*f)(asIScriptGeneric *) = (void (*)(asIScriptGeneric *))(i->func);
 		f(&gen);
 		return *(void **)gen.GetReturnPointer();

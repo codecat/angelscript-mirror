@@ -586,6 +586,7 @@
 		#define AS_NO_MEMORY_H
 		#define AS_MIPS
 		#define AS_PSP
+		#define AS_USE_DOUBLE_AS_FLOAT
 	// PSVita
 	#elif defined(__psp2__)
 		#define AS_PSVITA
@@ -884,8 +885,8 @@
 
 		#elif defined(__mips__)
 			#define AS_MIPS
-			#define AS_BIG_ENDIAN
-			#define AS_USE_DOUBLE_AS_FLOAT
+			#undef STDCALL
+			#define STDCALL
 
 			// Native calling conventions for Linux/Mips do not work yet.
 			#define AS_MAX_PORTABILITY
@@ -936,6 +937,7 @@
 		// Support native calling conventions on MIPS architecture
 		#if (defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__)) && !defined(__LP64__)
 			#define AS_MIPS
+			#define AS_USE_DOUBLE_AS_FLOAT
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
@@ -1110,11 +1112,6 @@
 // X86, Intel, AMD, etc, i.e. most PCs
 #if defined(__i386__) || defined(_M_IX86)
 	// Nothing special here
-#endif
-
-// MIPS architecture (generally PS2 and PSP consoles, potentially supports N64 as well)
-#if defined(_MIPS_ARCH) || defined(_mips) || defined(__MIPSEL__) || defined(__PSP__) || defined(__psp__) || defined(_EE_) || defined(_PSP) || defined(_PS2)
-	#define AS_USE_DOUBLE_AS_FLOAT	// use 32bit floats instead of doubles
 #endif
 
 // PowerPC, e.g. Mac, GameCube, PS3, XBox 360, Wii

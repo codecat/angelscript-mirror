@@ -66,7 +66,7 @@ static void AssignStringGeneric(asIScriptGeneric *gen) {
   gen->SetReturnAddress(self);
 }
 
-static bool StringEquals(const std::string& lhs, const std::string& rhs)
+bool StringEquals(const std::string& lhs, const std::string& rhs)
 {
     return lhs == rhs;
 }
@@ -81,6 +81,7 @@ bool TestCondition()
 
 	// Test nested conditions returning global values
 	// Problem reported by Jonathan Sandusky
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

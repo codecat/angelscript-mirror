@@ -351,10 +351,10 @@ bool Test()
 		bout.buffer = "";
 
 		r = engine->RegisterObjectType("dictionary<class K, class V>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert(r >= 0);
-		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_FACTORY, "dictionary<K, V>@ f(int&in)", NULL, asCALL_CDECL); assert(r >= 0);
-		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_ADDREF, "void f()", NULL, asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_RELEASE, "void f()", NULL, asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("dictionary<K, V>", "int get_Count() const", NULL, asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_FACTORY, "dictionary<K, V>@ f(int&in)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("dictionary<K, V>", "int get_Count() const", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", "void main(){ dictionary<int,int> d; int cnt = d.Count; }");
