@@ -888,8 +888,18 @@
 			#undef STDCALL
 			#define STDCALL
 
-			// Native calling conventions for Linux/Mips do not work yet.
-			#define AS_MAX_PORTABILITY
+			#ifdef _ABIO32
+				#define AS_MIPS
+
+				// All structures are returned in memory regardless of size or complexity
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+				#define	THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+			#else
+				// For other ABIs the native calling convention is not available (yet)
+				#define AS_MAX_PORTABILITY
+			#endif
 		#else
 			#define AS_MAX_PORTABILITY
 		#endif
