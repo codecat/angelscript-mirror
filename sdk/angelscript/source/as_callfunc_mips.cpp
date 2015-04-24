@@ -69,7 +69,13 @@ BEGIN_AS_NAMESPACE
 // ref: MIPS Instruction Reference
 //      http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html
 
-extern "C" asQWORD mipsFunc(asUINT argSize, asDWORD *argBuffer, void *func);
+union SFloatRegs
+{
+	union { double d0; struct { float f0; asDWORD dummy0; };};
+	union { double d1; struct { float f1; asDWORD dummy1; };};
+} ;
+
+extern "C" asQWORD mipsFunc(asUINT argSize, asDWORD *argBuffer, void *func, SFloatRegs &floatRegs);
 asDWORD GetReturnedFloat();
 asQWORD GetReturnedDouble();
 
@@ -91,6 +97,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	
 	asDWORD argOffset = 0;
 	
+	SFloatRegs floatRegs;
+	asDWORD floatOffset = 0;
+	
 	// If the application function returns the value in memory then
 	// the first argument must be the pointer to that memory
 	if( sysFunc->hostReturnInMemory )
@@ -99,12 +108,20 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		argBuffer[argOffset++] = (asPWORD)retPointer;
 	}
 	
+	if( callConv == ICC_CDECL_OBJFIRST || callConv == ICC_CDECL_OBJFIRST_RETURNINMEM ||
+		callConv == ICC_THISCALL || callConv == ICC_THISCALL_RETURNINMEM )
+	{
+		// Add the object pointer as the first argument
+		argBuffer[argOffset++] = (asPWORD)obj;
+	}
+	
 	int spos = 0;
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
-		if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() && !descr->parameterTypes[n].IsReference() )
+		asCDataType &paramType = descr->parameterTypes[n];
+		if( paramType.IsObject() && !paramType.IsObjectHandle() && !paramType.IsReference() )
 		{
-			if( descr->parameterTypes[n].GetObjectType()->flags & COMPLEX_MASK )
+			if( paramType.GetObjectType()->flags & COMPLEX_MASK )
 			{
 				// The object is passed by reference
 				argBuffer[argOffset++] = args[spos++];
@@ -112,20 +129,55 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			else
 			{
 				// Copy the object's memory to the buffer
-				memcpy(&argBuffer[argOffset], *(void**)(args+spos), descr->parameterTypes[n].GetSizeInMemoryBytes());
+				memcpy(&argBuffer[argOffset], *(void**)(args+spos), paramType.GetSizeInMemoryBytes());
 				// Delete the original memory
 				engine->CallFree(*(char**)(args+spos));
 				spos++;
-				argOffset += descr->parameterTypes[n].GetSizeInMemoryDWords();
+				argOffset += paramType.GetSizeInMemoryDWords();
 			}
 		}
 		else
 		{
+			// The first 2 floats or doubles are loaded into the float registers.
+			// Actually this is only done if they are the first arguments to the function, 
+			// but it doesn't cause any harm to load them into the registers even if they 
+			// won't be used so we don't need to check if they really are the first args.
+			if( floatOffset == 0 )
+			{
+				if( paramType.GetTokenType() == ttFloat )
+					floatRegs.f0 = *reinterpret_cast<float*>(&args[spos]);
+				else if( paramType.GetTokenType() == ttDouble )
+					floatRegs.d0 = *reinterpret_cast<double*>(&args[spos]);
+				floatOffset++;
+			}
+			else if( floatOffset == 1 )
+			{
+				if( paramType.GetTokenType() == ttFloat )
+					floatRegs.f1 = *reinterpret_cast<float*>(&args[spos]);
+				else if( paramType.GetTokenType() == ttDouble )
+					floatRegs.d1 = *reinterpret_cast<double*>(&args[spos]);
+				floatOffset++;
+			}
+		
 			// Copy the value directly
-			argBuffer[argOffset++] = args[spos++];
-			if( descr->parameterTypes[n].GetSizeOnStackDWords() > 1 )
+			if( paramType.GetSizeOnStackDWords() > 1 )
+			{
+				// Make sure the argument is 8byte aligned
+				if( argOffset & 1 )
+					argOffset++;
+				*reinterpret_cast<asQWORD*>(&argBuffer[argOffset]) = *reinterpret_cast<asQWORD*>(&args[spos]);
+				argOffset += 2;
+				spos += 2;
+			}
+			else
 				argBuffer[argOffset++] = args[spos++];
 		}
+	}
+	
+	if( callConv == ICC_CDECL_OBJLAST || callConv == ICC_CDECL_OBJLAST_RETURNINMEM )
+	{
+		// Add the object pointer as the last argument
+		argBuffer[argOffset++] = (asPWORD)obj;
 	}
 
 	switch( callConv )
@@ -134,26 +186,21 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	case ICC_CDECL_RETURNINMEM:
 	case ICC_STDCALL:
 	case ICC_STDCALL_RETURNINMEM:
-		retQW = mipsFunc(argOffset, argBuffer, func);
-		break;
-/*	case ICC_THISCALL:
+	case ICC_CDECL_OBJLAST:
+	case ICC_CDECL_OBJLAST_RETURNINMEM:
+	case ICC_CDECL_OBJFIRST:
+	case ICC_CDECL_OBJFIRST_RETURNINMEM:
+	case ICC_THISCALL:
 	case ICC_THISCALL_RETURNINMEM:
-		retQW = CallThisCallFunction(obj, args, paramSize<<2, (asDWORD)func, hostFlags);
+		retQW = mipsFunc(argOffset*4, argBuffer, func, floatRegs);
 		break;
+/*
 	case ICC_VIRTUAL_THISCALL:
 	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		// Get virtual function table from the object pointer
 		vftable = *(asDWORD**)obj;
 		retQW = CallThisCallFunction(obj, args, paramSize<<2, vftable[asDWORD(func)>>2], hostFlags);
-		break;
-	case ICC_CDECL_OBJLAST:
-	case ICC_CDECL_OBJLAST_RETURNINMEM:
-		retQW = CallThisCallFunction_objLast(obj, args, paramSize<<2, (asDWORD)func, hostFlags);
-		break;
-	case ICC_CDECL_OBJFIRST:
-	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-		retQW = CallThisCallFunction(obj, args, paramSize<<2, (asDWORD)func, hostFlags);
-		break;*/
+		break; */
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 	}
@@ -188,8 +235,8 @@ asQWORD GetReturnedDouble()
 	return d;
 }
 
-// asQWORD mipsFunc(asUINT argSize, asDWORD *argBuffer, void *func);
-// $2,$3                   $4                $5               $6
+// asQWORD mipsFunc(asUINT argSize, asDWORD *argBuffer, void *func, SFloatRegs &floatRegs);
+// $2,$3                   $4                $5               $6                $7
 asm(
 "	.text\n"
 //"	.align 2\n"
@@ -223,6 +270,7 @@ asm(
 "	addiu	$2, $6, 0\n"		// v0 ($2) holds the function pointer
 "	addiu	$3, $4, 0\n"		// v1 ($3) holds the size of the argument buffer
 "	move	$15, $5\n"			// t7 ($15) holds the pointer to the argBuffer
+"	move	$14, $7\n"			// t6 ($14) holds the values for the float registers
 
 // load integer registers
 "	lw		$4, 0($15)\n"		// a0 ($4)
@@ -231,16 +279,17 @@ asm(
 "	lw		$7, 12($15)\n"		// a3 ($7)
 
 // load float registers
-"	ldc1	$f12, 0($15)\n"
-"	ldc1	$f14, 8($15)\n"
+"	ldc1	$f12, 8($14)\n"
+"	ldc1	$f14, 0($14)\n"
 
 // skip stack parameters if there are 4 or less as they are moved into the registers
-"	addi	$14, $3, -4\n"		// The first 4 args were already loaded into registers
+"	addi	$14, $3, -16\n"		// The first 4 args were already loaded into registers
 "	blez	$14, andCall\n"
+"   nop\n"
 
 // push stack parameters
 "pushArgs:\n"
-"	addi	$3, -1\n"
+"	addi	$3, -4\n"
 // load from $15 + stack bytes ($3)
 "	addu	$14, $15, $3\n"
 "	lw		$14, 0($14)\n"
@@ -273,7 +322,7 @@ asm(
 "	.size	mipsFunc, .-mipsFunc\n"
 );
 
-#else
+#else // !(defined(__linux__) && defined(_ABIO32))
 
 // The MIPS ABI used by PSP and PS2 is implemented here
 
