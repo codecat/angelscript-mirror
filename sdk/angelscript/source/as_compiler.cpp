@@ -9668,6 +9668,9 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 					// Push a reference to the temporary variable on the stack
 					ctx->bc.InstrSHORT(asBC_PSF, (short)returnOffset);
+
+					// Clean up arguments
+					ReleaseTemporaryVariable(args[0]->type, &ctx->bc);
 				}
 				else
 				{
