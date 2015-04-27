@@ -35,7 +35,9 @@
 // These functions handle the actual calling of system functions
 //
 // This version is MIPS specific and was originally written
-// by Manu Evans in April, 2006
+// by Manu Evans in April, 2006 for Playstation Portable (PSP)
+//
+// Support for Linux with MIPS was added by Andreas Jonsson in April, 2015
 //
 
 
@@ -89,8 +91,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 	asQWORD retQW = 0;
 
-	void    *func              = (void*)sysFunc->func;
-	asDWORD *vftable;
+	void *func = (void*)sysFunc->func;
+	void **vftable;
 
 	asDWORD argBuffer[128]; // Ought to be big enough
 	asASSERT( sysFunc->paramSize < 128 );
@@ -109,7 +111,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	}
 	
 	if( callConv == ICC_CDECL_OBJFIRST || callConv == ICC_CDECL_OBJFIRST_RETURNINMEM ||
-		callConv == ICC_THISCALL || callConv == ICC_THISCALL_RETURNINMEM )
+		callConv == ICC_THISCALL || callConv == ICC_THISCALL_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM )
 	{
 		// Add the object pointer as the first argument
 		argBuffer[argOffset++] = (asPWORD)obj;
@@ -128,6 +131,10 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			}
 			else
 			{
+				// Ensure 8byte alignment for classes that need it
+				if( (paramType.GetObjectType()->flags & asOBJ_APP_CLASS_ALIGN8) && (argOffset & 1) )
+					argOffset++;
+			
 				// Copy the object's memory to the buffer
 				memcpy(&argBuffer[argOffset], *(void**)(args+spos), paramType.GetSizeInMemoryBytes());
 				// Delete the original memory
@@ -194,13 +201,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	case ICC_THISCALL_RETURNINMEM:
 		retQW = mipsFunc(argOffset*4, argBuffer, func, floatRegs);
 		break;
-/*
+
 	case ICC_VIRTUAL_THISCALL:
 	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 		// Get virtual function table from the object pointer
-		vftable = *(asDWORD**)obj;
-		retQW = CallThisCallFunction(obj, args, paramSize<<2, vftable[asDWORD(func)>>2], hostFlags);
-		break; */
+		vftable = *(void***)obj;
+		retQW = mipsFunc(argOffset*4, argBuffer, vftable[asPWORD(func)>>2], floatRegs);
+		break;
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);
 	}
@@ -285,7 +292,7 @@ asm(
 // skip stack parameters if there are 4 or less as they are moved into the registers
 "	addi	$14, $3, -16\n"		// The first 4 args were already loaded into registers
 "	blez	$14, andCall\n"
-"   nop\n"
+"	nop\n"
 
 // push stack parameters
 "pushArgs:\n"
