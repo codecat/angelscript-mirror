@@ -825,6 +825,12 @@ int CallSystemFunction(int id, asCContext *context)
 	if( cleanCount )
 	{
 		args = context->m_regs.stackPointer;
+
+		// Skip the hidden argument for the return pointer
+		if( descr->DoesReturnOnStack() )
+			args += AS_PTR_SIZE;
+
+		// Skip the object pointer
 		if( callConv >= ICC_THISCALL )
 			args += AS_PTR_SIZE;
 

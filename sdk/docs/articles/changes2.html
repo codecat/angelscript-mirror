@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.1 WIP - 2015/04/25</h2>
+<h2>Version 2.30.1 WIP - 2015/04/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug with opIndex when global variable had same name as datatype in a different namespace (Thanks dkrusu)
 <li>Saving bytecode that used templates with multiple subtypes is now working properly (Thanks Phong Ba)
 <li>Fixed assert failure in compiler when creating delegate from temporary object (Thanks Solokiller)
+<li>Fixed crash on Win64 when calling native function that takes object by value that requires clean-up after call and the function also return an object by value (Thanks Jason Goepel)
 </ul>
 <li>Library
 <ul>
