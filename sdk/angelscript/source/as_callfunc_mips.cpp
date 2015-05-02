@@ -81,7 +81,7 @@ extern "C" asQWORD mipsFunc(asUINT argSize, asDWORD *argBuffer, void *func, SFlo
 asDWORD GetReturnedFloat();
 asQWORD GetReturnedDouble();
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void */*secondObject*/)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
 	asCScriptEngine *engine = context->m_engine;
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
@@ -112,10 +112,21 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	
 	if( callConv == ICC_CDECL_OBJFIRST || callConv == ICC_CDECL_OBJFIRST_RETURNINMEM ||
 		callConv == ICC_THISCALL || callConv == ICC_THISCALL_RETURNINMEM ||
-		callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM )
+		callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM ||
+		callConv == ICC_THISCALL_OBJFIRST || callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
+		callConv == ICC_THISCALL_OBJFIRST_RETURNINMEM || callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM || 
+		callConv == ICC_THISCALL_OBJLAST || callConv == ICC_VIRTUAL_THISCALL_OBJLAST ||
+		callConv == ICC_THISCALL_OBJLAST_RETURNINMEM || callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM )
 	{
 		// Add the object pointer as the first argument
 		argBuffer[argOffset++] = (asPWORD)obj;
+	}
+	
+	if( callConv == ICC_THISCALL_OBJFIRST || callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
+		callConv == ICC_THISCALL_OBJFIRST_RETURNINMEM || callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM )
+	{
+		// Add the second object pointer 
+		argBuffer[argOffset++] = (asPWORD)secondObject;
 	}
 	
 	int spos = 0;
@@ -187,6 +198,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		argBuffer[argOffset++] = (asPWORD)obj;
 	}
 
+	if( callConv == ICC_THISCALL_OBJLAST || callConv == ICC_VIRTUAL_THISCALL_OBJLAST ||
+		callConv == ICC_THISCALL_OBJLAST_RETURNINMEM || callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM )
+	{
+		// Add the second object pointer 
+		argBuffer[argOffset++] = (asPWORD)secondObject;
+	}
+
 	switch( callConv )
 	{
 	case ICC_CDECL:
@@ -199,11 +217,19 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	case ICC_CDECL_OBJFIRST_RETURNINMEM:
 	case ICC_THISCALL:
 	case ICC_THISCALL_RETURNINMEM:
+	case ICC_THISCALL_OBJFIRST:
+	case ICC_THISCALL_OBJFIRST_RETURNINMEM:
+	case ICC_THISCALL_OBJLAST:
+	case ICC_THISCALL_OBJLAST_RETURNINMEM:
 		retQW = mipsFunc(argOffset*4, argBuffer, func, floatRegs);
 		break;
 
 	case ICC_VIRTUAL_THISCALL:
 	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
+	case ICC_VIRTUAL_THISCALL_OBJFIRST:
+	case ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM:
+	case ICC_VIRTUAL_THISCALL_OBJLAST:
+	case ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM:
 		// Get virtual function table from the object pointer
 		vftable = *(void***)obj;
 		retQW = mipsFunc(argOffset*4, argBuffer, vftable[asPWORD(func)>>2], floatRegs);

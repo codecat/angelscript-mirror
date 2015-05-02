@@ -904,6 +904,9 @@
 				#define	THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
 				#define CDECL_RETURN_SIMPLE_IN_MEMORY
 				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+				#undef AS_NO_THISCALL_FUNCTOR_METHOD
 			#else
 				// For other ABIs the native calling convention is not available (yet)
 				#define AS_MAX_PORTABILITY
