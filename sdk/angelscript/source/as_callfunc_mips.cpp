@@ -154,6 +154,12 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 				argOffset += paramType.GetSizeInMemoryDWords();
 			}
 		}
+		else if( paramType.GetTokenType() == ttQuestion )
+		{
+			// Copy both pointer and type id
+			argBuffer[argOffset++] = args[spos++];
+			argBuffer[argOffset++] = args[spos++];
+		}
 		else
 		{
 			// The first 2 floats or doubles are loaded into the float registers.
@@ -292,15 +298,18 @@ asm(
 "	addiu	$13, $12, 24\n"		// t5 = t4 + 24. t5 ($13) holds the total size of the stack frame (including return pointer)
 // save the s0 register (so we can use it to remember where our return pointer is lives)
 "	sw		$16, -4($sp)\n"		// store the s0 register (so we can use it to remember how big our stack frame is)
+"	.cfi_offset 16, -4\n"
 // store the return pointer
 "	sw		$31, -8($sp)\n"
+"	.cfi_offset 31, -8\n"
 // keep original stack pointer
 "	move	$16, $sp\n"
+"	.cfi_def_cfa_register 16\n"
 // push the stack
 "	subu	$sp, $sp, $13\n"
 
 // store the argument in temporary registers
-"	addiu	$2, $6, 0\n"		// v0 ($2) holds the function pointer
+"	addiu	$25, $6, 0\n"		// t9 ($25) holds the function pointer (must be t9 for position independent code)
 "	addiu	$3, $4, 0\n"		// v1 ($3) holds the size of the argument buffer
 "	move	$15, $5\n"			// t7 ($15) holds the pointer to the argBuffer
 "	move	$14, $7\n"			// t6 ($14) holds the values for the float registers
@@ -335,11 +344,11 @@ asm(
 
 // and call the function
 "andCall:\n"
-"	jalr		$2\n"
+"	jalr	$25\n"
 "	nop\n"
 
 // restore original stack pointer
-"	move		$sp, $16\n"
+"	move	$sp, $16\n"
 // restore the return pointer
 "	lw		$31, -8($sp)\n"
 // restore the original value of $16
