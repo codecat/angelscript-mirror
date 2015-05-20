@@ -699,5 +699,6 @@ nomoreargsarmFuncR0R1:
 
 #endif /* arm */
 
-#endif /* !AS_MAX_PORTABILITY
+#endif /* !AS_MAX_PORTABILITY */
+
 
