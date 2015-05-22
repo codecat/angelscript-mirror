@@ -1036,6 +1036,26 @@
 			#define THISCALL_PASS_OBJECT_POINTER_ON_THE_STACK
 			#define AS_X86
 			#undef AS_NO_THISCALL_FUNCTOR_METHOD
+		#elif defined(__mips__)
+			#define AS_MIPS
+			#undef STDCALL
+			#define STDCALL
+
+			#ifdef _ABIO32
+				#define AS_MIPS
+
+				// All structures are returned in memory regardless of size or complexity
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+				#define	THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 0
+				#undef AS_NO_THISCALL_FUNCTOR_METHOD
+			#else
+				// For other ABIs the native calling convention is not available (yet)
+				#define AS_MAX_PORTABILITY
+			#endif
 		#endif
 
 	// Haiku OS

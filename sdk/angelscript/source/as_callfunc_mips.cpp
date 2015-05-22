@@ -54,7 +54,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#if !defined(AS_ANDROID)
 #include <regdef.h>
+#endif
 
 BEGIN_AS_NAMESPACE
 
