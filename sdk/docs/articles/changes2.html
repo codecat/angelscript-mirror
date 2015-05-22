@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash on Win64 when calling native function that takes object by value that requires clean-up after call and the function also return an object by value (Thanks Jason Goepel)
 <li>Fixed a bug with native calling conventions on Win32 when using Clang with MinGW 4.7+ (Thanks Joshua Cearley)
 <li>XBox 360 now supports 64bit integer arguments in native functions (Thanks Anthony Clark)
+<li>Fixed a null pointer access failure that could happen in asGetActiveContext (Thanks Gwinnell)
 </ul>
 <li>Library
 <ul>
