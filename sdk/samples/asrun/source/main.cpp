@@ -345,8 +345,14 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 	engine->GarbageCollect();
 
 	// Release all contexts that have been allocated
+#if AS_CAN_USE_CPP11
 	for( auto ctx : g_ctxPool )
 		ctx->Release();
+#else
+	for( size_t n = 0; n < g_ctxPool.size(); n++ )
+		g_ctxPool[n]->Release();
+#endif
+
 	g_ctxPool.clear();
 
 	// Destroy debugger

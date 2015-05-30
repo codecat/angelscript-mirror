@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.1 WIP - 2015/05/25</h2>
+<h2>Version 2.30.1 WIP - 2015/05/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,13 +37,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library
 <ul>
 <li>It is now possible to register member properties as references if the member should be dereferenced before access (Thanks cvet)
-<li>Added supported for native calling conventions on Linux with MIPS
+<li>Added supported for native calling conventions on Linux and Android with MIPS
 </ul>
 <li>Virtual machine
 <ul>
 <li>Implemented asBC_Thiscall1 for faster calls to class methods that take an int argument and return a reference
 </ul>
-<li>Add-ons
+<li>Add-ons &amp; Samples
 <ul>
 <li>Fixed memory leak in serializer when using extra objects
 <li>Fixed bug in serializer with incorrect refcount on registered types when restoring the script object that references them
@@ -53,6 +53,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added formatUInt for strings (Thanks iraxef)
 <li>Included asserts in CScriptAny to detect improper usage from application (Thanks Solokiller)
 <li>Script array is now constructed even if the current script context has a script exception set (Thanks iraxef)
+<li>Fixed a compiler problem in asrun when C++11 support is not available (Thanks Anthony Clark)
 </ul>
 <li>Project
 <ul>
