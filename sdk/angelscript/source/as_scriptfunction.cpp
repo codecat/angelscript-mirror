@@ -1299,7 +1299,11 @@ void asCScriptFunction::ReleaseReferences()
 					if( group != 0 ) group->Release();
 
 					if( funcId )
-						engine->scriptFunctions[funcId]->ReleaseInternal();
+					{
+						asCScriptFunction *fptr = engine->scriptFunctions[funcId];
+						if( fptr )
+							fptr->ReleaseInternal();
+					}
 				}
 				break;
 

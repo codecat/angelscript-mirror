@@ -1631,7 +1631,7 @@ asCScriptNode *asCParser::ParseCondition()
 	return node;
 }
 
-// BNF: EXPR ::= (TYPE '=' INILIST) | (EXPRTERM {EXPROP EXPRTERM})
+// BNF: EXPR ::= (TYPE '=' INITLIST) | (EXPRTERM {EXPROP EXPRTERM})
 asCScriptNode *asCParser::ParseExpression()
 {
 	asCScriptNode *node = CreateNode(snExpression);
