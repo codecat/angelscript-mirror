@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.1 WIP - 2015/06/09</h2>
+<h2>Version 2.30.1 WIP - 2015/06/11</h2>
 
 <ul>
 <li>Bug fixes
@@ -56,6 +56,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Included asserts in CScriptAny to detect improper usage from application (Thanks Solokiller)
 <li>Script array is now constructed even if the current script context has a script exception set (Thanks iraxef)
 <li>Fixed a compiler problem in asrun when C++11 support is not available (Thanks Anthony Clark)
+<li>Implemented GetAddressOfValue in the dictionary value and iterator to simplify inspecting the content with the debugger
+<li>Added a Set/GetEngine to the CDebugger to hold an engine pointer that can be used by the callbacks
+<li>The debugger's ToString method and Callbacks now take a expand members recursively
+<li>Implemented DictionaryToString debugger callback in asrun sample (Thanks Anthony Clark)
 </ul>
 <li>Project
 <ul>

@@ -59,6 +59,9 @@ public:
 	bool Get(asIScriptEngine *engine, asINT64 &value) const;
 	bool Get(asIScriptEngine *engine, double &value) const;
 
+	// Returns the address of the stored value for inspection
+	const void *GetAddressOfValue() const;
+
 	// Returns the type id of the stored value
 	int  GetTypeId() const;
 
@@ -149,6 +152,7 @@ public:
 		bool               GetValue(asINT64 &value) const;
 		bool               GetValue(double &value) const;
 		bool               GetValue(void *value, int typeId) const;
+		const void *       GetAddressOfValue() const;
 
 	protected:
 		friend class CScriptDictionary;

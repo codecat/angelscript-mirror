@@ -768,6 +768,18 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 	return false;
 }
 
+const void * CScriptDictValue::GetAddressOfValue() const
+{
+	if( (m_typeId & asTYPEID_MASK_OBJECT) && !(m_typeId & asTYPEID_OBJHANDLE) )
+	{
+		// Return the address to the object directly
+		return m_valueObj;
+	}
+	
+	// Return the address of the primitive or the pointer to the object
+	return reinterpret_cast<const void*>(&m_valueObj);
+}
+
 bool CScriptDictValue::Get(asIScriptEngine *engine, asINT64 &value) const
 {
 	return Get(engine, &value, asTYPEID_INT64);
@@ -1126,6 +1138,11 @@ bool CScriptDictionary::CIterator::GetValue(double &value) const
 bool CScriptDictionary::CIterator::GetValue(void *value, int typeId) const
 { 
 	return m_it->second.Get(m_dict.engine, value, typeId); 
+}
+
+const void *CScriptDictionary::CIterator::GetAddressOfValue() const
+{
+	return m_it->second.GetAddressOfValue();
 }
 
 END_AS_NAMESPACE

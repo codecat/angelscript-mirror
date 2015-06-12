@@ -190,7 +190,10 @@ public:
   virtual ~CDebugger();
 
   // Register callbacks to handle to-string conversions of application types
-  typedef std::string (*ToStringCallback)(void *obj, bool expandMembers, CDebugger *dbg);
+  // The expandMembersLevel is a counter for how many recursive levels the members should be expanded.
+  // If the object that is being converted to a string has members of its own the callback should call
+  // the debugger's ToString passing in expandMembersLevel - 1.
+  typedef std::string (*ToStringCallback)(void *obj, int expandMembersLevel, CDebugger *dbg);
   virtual void RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback);
   
   // User interaction
@@ -215,7 +218,12 @@ public:
   // Helpers
   virtual bool InterpretCommand(const std::string &cmd, asIScriptContext *ctx);
   virtual bool CheckBreakPoint(asIScriptContext *ctx);
-  virtual std::string ToString(void *value, asUINT typeId, bool expandMembers, asIScriptEngine *engine);
+  virtual std::string ToString(void *value, asUINT typeId, int expandMembersLevel, asIScriptEngine *engine);
+  
+  // Optionally set the engine pointer in the debugger so it can be retrieved
+  // by callbacks that need it. This will hold a reference to the engine.
+  virtual void SetEngine(asIScriptEngine *engine);
+  virtual asIScriptEngine *GetEngine();
 };
 \endcode
 
