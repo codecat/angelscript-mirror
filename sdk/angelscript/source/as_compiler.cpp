@@ -4109,13 +4109,14 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 	}
 
 	//---------------------------
-	// Compile the increment statement
+	// Compile the increment statement(s)
 	asCByteCode nextBC(engine);
-	asCScriptNode *third = second->next;
-	if( third->nodeType == snExpressionStatement )
+	asCScriptNode *cnode = second->next;
+	while( cnode && cnode->nodeType == snExpressionStatement && cnode != fnode->lastChild )
 	{
-		LineInstr(&nextBC, third->tokenPos);
-		CompileExpressionStatement(third, &nextBC);
+		LineInstr(&nextBC, cnode->tokenPos);
+		CompileExpressionStatement(cnode, &nextBC);
+		cnode = cnode->next;
 	}
 
 	//------------------------------

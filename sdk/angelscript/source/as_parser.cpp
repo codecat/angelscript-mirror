@@ -3885,7 +3885,7 @@ asCScriptNode *asCParser::ParseIf()
 	return node;
 }
 
-// BNF: FOR ::= 'for' '(' (VAR | EXPRSTAT) EXPRSTAT [ASSIGN] ')' STATEMENT
+// BNF: FOR ::= 'for' '(' (VAR | EXPRSTAT) EXPRSTAT [ASSIGN {',' ASSIGN}] ')' STATEMENT
 asCScriptNode *asCParser::ParseFor()
 {
 	asCScriptNode *node = CreateNode(snFor);
@@ -3924,18 +3924,27 @@ asCScriptNode *asCParser::ParseFor()
 	{
 		RewindTo(&t);
 
-		asCScriptNode *n = CreateNode(snExpressionStatement);
-		if( n == 0 ) return 0;
-		node->AddChildLast(n);
-		n->AddChildLast(ParseAssignment());
-		if( isSyntaxError ) return node;
-
-		GetToken(&t);
-		if( t.type != ttCloseParanthesis )
+		// Parse N increment statements separated by ,
+		for(;;)
 		{
-			Error(ExpectedToken(")"), &t);
-			Error(InsteadFound(t), &t);
-			return node;
+			asCScriptNode *n = CreateNode(snExpressionStatement);
+			if( n == 0 ) return 0;
+			node->AddChildLast(n);
+			n->AddChildLast(ParseAssignment());
+			if( isSyntaxError ) return node;
+
+			GetToken(&t);
+			if( t.type == ttListSeparator )
+				continue;
+			else if( t.type == ttCloseParanthesis )
+				break;
+			else
+			{
+				const char *tokens[] = {",", ")"};
+				Error(ExpectedOneOf(tokens, 2), &t);
+				Error(InsteadFound(t), &t);
+				return node;
+			}
 		}
 	}
 
