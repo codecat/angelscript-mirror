@@ -6344,6 +6344,11 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 					asCArray<asSExprContext *> args;
 					asSExprContext arg(engine);
 					arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
+
+					// If this an object on the heap, the pointer must be dereferenced
+					if( IsVariableOnHeap(stackOffset) )
+						arg.bc.Instr(asBC_RDSPtr);
+
 					// Don't mark the variable as temporary, so it won't be freed too early
 					arg.type.SetVariable(toRef, stackOffset, false);
 					arg.type.isLValue = true;
