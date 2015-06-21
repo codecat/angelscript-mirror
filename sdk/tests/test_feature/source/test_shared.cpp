@@ -313,12 +313,11 @@ bool Test()
 						   "a (15, 5) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (17, 11) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
 						   "a (18, 5) : Error   : Shared code cannot use non-shared type 'nonShared'\n"
-						   "a (18, 5) : Error   : Shared code cannot call non-shared function 'nonShared@ nonShared()'\n"
 						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"
 						   "a (28, 3) : Info    : Compiling T::T(int)\n"
-		                   "a (30, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n"
+						   "a (30, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n"
 						   "a (43, 1) : Info    : Compiling void sfunc()\n"
-		                   "a (45, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
+						   "a (45, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

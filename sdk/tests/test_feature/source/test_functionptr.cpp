@@ -28,6 +28,35 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test to make sure it is not possible to convert class method to primitive
+	// http://www.gamedev.net/topic/669352-can-cast-object-method-to-uint/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("name",
+			"class T { uint length() { return 42; } } \n"
+			"void func() { \n"
+			"   T t; \n"
+			"   uint a = uint( t.length ); \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "name (2, 1) : Info    : Compiling void func()\n"
+						   "name (4, 13) : Error   : Invalid operation on method\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
+
 	// Test assert failure with taking address of method on temporary object
 	// http://www.gamedev.net/topic/667853-assertion-failure-in-compiler-when-using-delegate/
 	{

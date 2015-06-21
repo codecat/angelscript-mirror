@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -212,8 +212,8 @@ protected:
 	int  CompileExpressionPostOp(asCScriptNode *node, asSExprContext *out);
 	int  CompileExpressionValue(asCScriptNode *node, asSExprContext *out);
 	int  CompileFunctionCall(asCScriptNode *node, asSExprContext *out, asCObjectType *objectType, bool objIsConst, const asCString &scope = "");
-	void CompileConstructCall(asCScriptNode *node, asSExprContext *out);
-	void CompileConversion(asCScriptNode *node, asSExprContext *out);
+	int  CompileConstructCall(asCScriptNode *node, asSExprContext *out);
+	int  CompileConversion(asCScriptNode *node, asSExprContext *out);
 	int  CompileOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out, eTokenType opToken = ttUnrecognizedToken);
 	void CompileOperatorOnHandles(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out, eTokenType opToken = ttUnrecognizedToken);
 	void CompileMathOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out, eTokenType opToken = ttUnrecognizedToken);

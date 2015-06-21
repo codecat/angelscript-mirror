@@ -163,7 +163,7 @@ bool Test()
 			"dictionaryValue val = dict['foo']; \n"
 			"t = cast<string>(val); \n"
 			"assert( t == 'bar' ); \n"
-			"t = string(val); \n"
+			"t = string(val); \n"               // TODO: runtime optimize: This expression makes unecessary copies of the string
 			"assert( t == 'bar' ); \n"
 			"string s = string(dict['foo']);\n"
 			"assert( s == 'bar' ); \n" 

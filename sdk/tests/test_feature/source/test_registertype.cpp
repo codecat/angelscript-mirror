@@ -1051,8 +1051,7 @@ bool Test()
 		               "script (1, 1) : Error   : Return type can't be 'ref'\n"
 					   "script (1, 1) : Error   : Parameter type can't be 'ref', because the type cannot be instantiated.\n"
 					   "script (1, 23) : Error   : Data type can't be 'ref'\n"
-					   "script (1, 34) : Error   : Data type can't be 'ref'\n"
-					   "script (1, 34) : Error   : Can't implicitly convert from 'const int' to 'ref'.\n" )
+					   "script (1, 34) : Error   : Data type can't be 'ref'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

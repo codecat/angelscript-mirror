@@ -362,8 +362,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (3, 16) : Info    : Compiling array<string>@ s1\n"
-		                   "test (3, 21) : Error   : Can't construct handle 'array<string>@'. Use ref cast instead\n"
-		                   "test (3, 21) : Error   : Can't implicitly convert from 'const int' to 'array<string>@&'.\n" )
+		                   "test (3, 21) : Error   : Can't construct handle 'array<string>@'. Use ref cast instead\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -843,8 +842,7 @@ bool Test()
 			TEST_FAILED;
 		
 		if( bout.buffer != "Test (1, 1) : Info    : Compiling void main()\n"
-						   "Test (2, 24) : Error   : No conversion from 'void' to 'ParticleEmitter@' available.\n"
-						   "Test (2, 24) : Error   : Can't implicitly convert from 'const int' to 'ParticleEmitter@&'.\n" )
+						   "Test (2, 24) : Error   : No conversion from 'void' to 'ParticleEmitter@' available.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

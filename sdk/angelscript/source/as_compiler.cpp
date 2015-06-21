@@ -8894,7 +8894,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	}
 	else if( vnode->nodeType == snConstructCall )
 	{
-		CompileConstructCall(vnode, ctx);
+		return CompileConstructCall(vnode, ctx);
 	}
 	else if( vnode->nodeType == snAssignment )
 	{
@@ -8910,7 +8910,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snCast )
 	{
 		// Implement the cast operator
-		CompileConversion(vnode, ctx);
+		return CompileConversion(vnode, ctx);
 	}
 	else if( vnode->nodeType == snUndefined && vnode->tokenType == ttVoid )
 	{
@@ -9171,7 +9171,7 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *no
 	str = tmp;
 }
 
-void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
+int asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 {
 	asSExprContext expr(engine);
 	asCDataType to;
@@ -9243,7 +9243,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	{
 		// Assume that the error can be fixed and allow the compilation to continue
 		ctx->type.SetConstantDW(to, 0);
-		return;
+		return -1;
 	}
 
 	ProcessPropertyGetAccessor(&expr, node);
@@ -9252,7 +9252,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	if( expr.IsClassMethod() )
 	{
 		Error(TXT_INVALID_OP_ON_METHOD, node);
-		return;
+		return -1;
 	}
 
 	// We don't want a reference for conversion casts
@@ -9274,7 +9274,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		// This will keep information about constant type
 		MergeExprBytecode(ctx, &expr);
 		ctx->type = expr.type;
-		return;
+		return 0;
 	}
 
 	if( to.IsEqualExceptRefAndConst(expr.type.dataType) && to.IsPrimitive() )
@@ -9282,7 +9282,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 		MergeExprBytecode(ctx, &expr);
 		ctx->type = expr.type;
 		ctx->type.dataType.MakeReadOnly(true);
-		return;
+		return 0;
 	}
 
 	// The implicit conversion already does most of the conversions permitted,
@@ -9306,7 +9306,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	}
 
 	if( conversionOK )
-		return;
+		return 0;
 
 	// Conversion not available
 	ctx->type.SetDummy();
@@ -9320,6 +9320,7 @@ void asCCompiler::CompileConversion(asCScriptNode *node, asSExprContext *ctx)
 	msg.Format(TXT_NO_CONVERSION_s_TO_s, strFrom.AddressOf(), strTo.AddressOf());
 
 	Error(msg, node);
+	return -1;
 }
 
 void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args, asSExprContext *ctx, bool deferAll)
@@ -9468,13 +9469,14 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 }
 
 
-void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
+int asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 {
 	// The first node is a datatype node
 	asCString name;
 	asCTypeInfo tempObj;
 	bool onHeap = true;
 	asCArray<int> funcs;
+	bool error = false;
 
 	// It is possible that the name is really a constructor
 	asCDataType dt;
@@ -9482,8 +9484,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 	if( dt.IsPrimitive() )
 	{
 		// This is a cast to a primitive type
-		CompileConversion(node, ctx);
-		return;
+		return CompileConversion(node, ctx);
 	}
 
 	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_IMPLICIT_HANDLE) )
@@ -9499,7 +9500,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		str.Format(TXT_CANT_CONSTRUCT_s_USE_REF_CAST, dt.Format(outFunc->nameSpace).AddressOf());
 		Error(str, node);
 		ctx->type.SetDummy();
-		return;
+		return -1;
 	}
 
 	if( !dt.CanBeInstantiated() )
@@ -9514,7 +9515,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format(outFunc->nameSpace).AddressOf());
 		Error(str, node);
 		ctx->type.SetDummy();
-		return;
+		return -1;
 	}
 
 	// Do not allow constructing non-shared types in shared functions
@@ -9524,6 +9525,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		asCString msg;
 		msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetObjectType()->name.AddressOf());
 		Error(msg, node);
+		return -1;
 	}
 
 	// Compile the arguments
@@ -9550,7 +9552,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 				asDELETE(args[0],asSExprContext);
 
-				return;
+				return 0;
 			}
 		}
 
@@ -9608,7 +9610,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 				// Push the reference on the stack
 				ctx->bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
-				return;
+				return 0;
 			}
 		}
 
@@ -9625,7 +9627,10 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 			// The delegate must be able to hold on to a reference to the object
 			if( !args[0]->type.dataType.SupportHandles() )
+			{
 				Error(TXT_CANNOT_CREATE_DELEGATE_FOR_NOREF_TYPES, node);
+				error = true;
+			}
 			else
 			{
 				// Filter the available object methods to find the one that matches the func def
@@ -9683,12 +9688,13 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 					asCString msg;
 					msg.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, dt.GetFuncDef()->GetDeclaration());
 					Error(msg.AddressOf(), node);
+					error = true;
 				}
 			}
 
 			// Clean-up arg
 			asDELETE(args[0],asSExprContext);
-			return;
+			return error ? -1 : 0;
 		}
 
 		MatchFunctions(funcs, args, node, name.AddressOf(), &namedArgs, 0, false);
@@ -9696,6 +9702,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		if( funcs.GetLength() != 1 )
 		{
 			// The error was reported by MatchFunctions()
+			error = true;
 
 			// Dummy value
 			ctx->type.SetDummy();
@@ -9751,12 +9758,15 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 					PerformFunctionCall(funcs[0], ctx, false, &args);
 				}
 			}
+			else
+				error = true;
 		}
 	}
 	else
 	{
 		// Failed to compile the argument list, set the result to the dummy type
 		ctx->type.SetDummy();
+		error = true;
 	}
 
 	// Cleanup
@@ -9770,6 +9780,8 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		{
 			asDELETE(namedArgs[n].ctx,asSExprContext);
 		}
+
+	return error ? -1 : 0;
 }
 
 
