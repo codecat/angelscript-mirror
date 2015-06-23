@@ -167,6 +167,34 @@ bool Test()
 		TEST_FAILED;
 #endif
 
+#ifdef _WIN32
+	// On Windows the file names are case insensitive so the script builder 
+	// must do caseless comparison for duplicate included files
+	// http://www.gamedev.net/topic/669353-script-builder-addon-does-not-detect-duplicate-scripts-on-windows/
+	{
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("test1","#include 'blah.as'\n");
+		builder.AddSectionFromMemory("test2","#include 'BLAH.AS'\n");
+		r = builder.BuildModule();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		// Should only get error for the first include
+		string error = GetCurrentDir() + "/blah.as (0, 0) : Error   : Failed to open script file '" + GetCurrentDir() + "/blah.as'\n"
+			           " (0, 0) : Error   : Nothing was built in the module\n";
+
+		if( bout.buffer != error )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+#endif
+
 	// Test proper error for missing include files
 	// http://www.gamedev.net/topic/661064-include-in-scriptbuilder-addon-may-report-wrong-path-on-error/
 	{
