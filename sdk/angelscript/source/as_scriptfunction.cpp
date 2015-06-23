@@ -1008,7 +1008,7 @@ void asCScriptFunction::ComputeSignatureId()
 // internal
 bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 {
-	if( !IsSignatureExceptNameEqual(func) || name != func->name ) return false;
+	if( name != func->name || !IsSignatureExceptNameEqual(func) ) return false;
 
 	return true;
 }
@@ -1043,9 +1043,9 @@ bool asCScriptFunction::IsSignatureExceptNameAndReturnTypeEqual(const asCScriptF
 bool asCScriptFunction::IsSignatureExceptNameAndReturnTypeEqual(const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &paramInOut, const asCObjectType *objType, bool readOnly) const
 {
 	if( this->isReadOnly        != readOnly       ) return false;
+	if( (this->objectType != 0) != (objType != 0) ) return false;
 	if( this->inOutFlags        != paramInOut     ) return false;
 	if( this->parameterTypes    != paramTypes     ) return false;
-	if( (this->objectType != 0) != (objType != 0) ) return false;
 
 	return true;
 }

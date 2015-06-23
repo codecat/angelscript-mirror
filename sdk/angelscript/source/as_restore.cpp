@@ -606,10 +606,10 @@ void asCReader::ReadUsedFunctions()
 					for( asUINT i = 0; i < module->bindInformations.GetLength(); i++ )
 					{
 						asCScriptFunction *f = module->bindInformations[i]->importedFunctionSignature;
-						if( !func.IsSignatureEqual(f) ||
-							func.objectType != f->objectType ||
+						if( func.objectType != f->objectType ||
 							func.funcType != f->funcType || 
-							func.nameSpace != f->nameSpace )
+							func.nameSpace != f->nameSpace ||
+							!func.IsSignatureEqual(f) )
 							continue;
 
 						usedFunctions[n] = f;
@@ -621,10 +621,10 @@ void asCReader::ReadUsedFunctions()
 					for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
 					{
 						asCScriptFunction *f = module->scriptFunctions[i];
-						if( !func.IsSignatureEqual(f) ||
-							func.objectType != f->objectType ||
+						if( func.objectType != f->objectType ||
 							func.funcType != f->funcType || 
-							func.nameSpace != f->nameSpace )
+							func.nameSpace != f->nameSpace ||
+							!func.IsSignatureEqual(f) )
 							continue;
 
 						usedFunctions[n] = f;
@@ -638,9 +638,9 @@ void asCReader::ReadUsedFunctions()
 				{
 					asCScriptFunction *f = engine->scriptFunctions[i];
 					if( f == 0 ||
-						!func.IsSignatureEqual(f) ||
 						func.objectType != f->objectType ||
-						func.nameSpace != f->nameSpace )
+						func.nameSpace != f->nameSpace ||
+						!func.IsSignatureEqual(f) )
 						continue;
 
 					usedFunctions[n] = f;
