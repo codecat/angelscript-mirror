@@ -30,7 +30,6 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure in compiler when creating delegate from temporary object (Thanks Solokiller)
 <li>Fixed crash on Win64 when calling native function that takes object by value that requires clean-up after call and the function also return an object by value (Thanks Jason Goepel)
 <li>Fixed a bug with native calling conventions on Win32 when using Clang with MinGW 4.7+ (Thanks Joshua Cearley)
-<li>XBox 360 now supports 64bit integer arguments in native functions (Thanks Anthony Clark)
 <li>Fixed a null pointer access failure that could happen in asGetActiveContext (Thanks Gwinnell)
 <li>Fixed compiler warnings in asGetTypeTraits on gnuc 5.1 (Thanks Boost113)
 <li>Fixed a possible null pointer access while releasing a script function (Thanks Andreas Fobian)
@@ -43,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>It is now possible to register member properties as references if the member should be dereferenced before access (Thanks cvet)
 <li>Added supported for native calling conventions on Linux and Android with MIPS
 <li>Improved performance for loading saved byte code (Thanks _Engine_)
+<li>XBox 360 now supports 64bit integer arguments in native functions (Thanks Anthony Clark)
 </ul>
 <li>Virtual machine
 <ul>

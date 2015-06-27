@@ -964,6 +964,7 @@ public:
     bool               GetValue(asINT64 &value) const;
     bool               GetValue(double &value) const;
     bool               GetValue(void *value, int typeId) const;
+    const void *       GetAddressOfValue() const;
   };
   
   CIterator begin() const;

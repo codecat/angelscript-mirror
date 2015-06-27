@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.30.0
-#define ANGELSCRIPT_VERSION        23000
-#define ANGELSCRIPT_VERSION_STRING "2.30.0"
+//! Version 2.30.1
+#define ANGELSCRIPT_VERSION        23001
+#define ANGELSCRIPT_VERSION_STRING "2.30.1"
 
 // Data types
 
@@ -958,21 +958,21 @@ BEGIN_AS_NAMESPACE
 template<typename T>
 asUINT asGetTypeTraits()
 {
-#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS)
-	// MSVC & XCode/Clang
+#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS) || (__GNUC__ >= 5)
+	// MSVC, XCode/Clang, and gnuc 5+
 	// C++11 compliant code
 	bool hasConstructor        = std::is_default_constructible<T>::value && !std::is_trivially_default_constructible<T>::value;
 	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
 	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::is_trivially_copy_assignable<T>::value;
 	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::is_trivially_copy_constructible<T>::value;
 #elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-	// gnuc 4.8+
-	// gnuc is using a mix of C++11 standard and pre-standard templates
+	// gnuc 4.8 is using a mix of C++11 standard and pre-standard templates
 	bool hasConstructor        = std::is_default_constructible<T>::value && !std::has_trivial_default_constructor<T>::value;
 	bool hasDestructor         = std::is_destructible<T>::value          && !std::is_trivially_destructible<T>::value;
 	bool hasAssignmentOperator = std::is_copy_assignable<T>::value       && !std::has_trivial_copy_assign<T>::value;
 	bool hasCopyConstructor    = std::is_copy_constructible<T>::value    && !std::has_trivial_copy_constructor<T>::value;
 #else
+	// All other compilers and versions are assumed to use non C++11 compliant code until proven otherwise
 	// Not fully C++11 compliant. The has_trivial checks were used while the standard was still
 	// being elaborated, but were then removed in favor of the above is_trivially checks
 	// http://stackoverflow.com/questions/12702103/writing-code-that-works-when-has-trivial-destructor-is-defined-instead-of-is
@@ -4464,8 +4464,10 @@ enum asEBCInstr
 	asBC_POWi64			= 198,
 	//! \brief Computes the power of for two uint64 values
 	asBC_POWu64			= 199,
+	//! \brief Call registered function with single 32bit integer argument. Suspend further execution if requested.
+	asBC_Thiscall1		= 200,
 
-	asBC_MAXBYTECODE	= 200,
+	asBC_MAXBYTECODE	= 201,
 
 	// Temporary tokens. Can't be output to the final program
 	asBC_VarDecl		= 251,
@@ -4795,8 +4797,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO(POWdi,		wW_rW_rW_ARG,	0),
 	asBCINFO(POWi64,	wW_rW_rW_ARG,	0),
 	asBCINFO(POWu64,	wW_rW_rW_ARG,	0),
+	asBCINFO(Thiscall1, DW_ARG,			-AS_PTR_SIZE-1),
 
-	asBCINFO_DUMMY(200),
 	asBCINFO_DUMMY(201),
 	asBCINFO_DUMMY(202),
 	asBCINFO_DUMMY(203),

@@ -466,6 +466,7 @@ a default transformation of the primitive to a string.
  - int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0)
  - double parseFloat(const string &in, uint &out byteCount = 0)
  - string formatInt(int64 val, const string &in options, uint width = 0)
+ - string formatUInt(uint64 val, const string &in options, uint width = 0)
  - string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0)
 
 The format functions takes a string that defines how the number should be formatted. The string
