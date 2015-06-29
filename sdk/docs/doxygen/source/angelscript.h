@@ -2627,12 +2627,18 @@ public:
 	//! \retval asERROR Invalid context object.
 	//!
 	//! Aborts the current execution of a script.
+	//!
+	//! If the call to Abort is done from within a function called by the
+	//! script, it will only take effect after that function returns.
 	virtual int             Abort() = 0;
 	//! \brief Suspends the execution, which can then be resumed by calling Execute again.
 	//! \return A negative value on error.
 	//! \retval asERROR Invalid context object.
 	//!
 	//! Suspends the current execution of a script. The execution can then be resumed by calling \ref Execute again.
+	//!
+	//! If the call to Suspend is done from within a function called by the 
+	//! script, it will only take effect after that function returns.
 	//!
 	//! \see \ref doc_call_script_func
 	virtual int             Suspend() = 0;
@@ -3626,6 +3632,9 @@ public:
 	//! \param[in] includeNamespace Indicates whether the namespace should be prepended to the function name
 	//! \param[in] includeParamNames Indicates whether parameter names should be added to the declaration
 	//! \return A null terminated string with the function declaration.
+	//!
+	//! The parameter names are not stored for \ref asFUNC_VIRTUAL "virtual methods". If you want to know the 
+	//! name of parameters to class methods, be sure to get the actual implementation rather than the virtual method.
 	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const = 0;
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only
@@ -3656,6 +3665,9 @@ public:
 	//! \param[out] defaultArg The default argument expression (or null if not defined).
 	//! \return A negative value on error.
 	//! \retval asINVALID_ARG The index is out of bounds.
+	//!
+	//! The parameter names are not stored for \ref asFUNC_VIRTUAL "virtual methods". If you want to know the 
+	//! name of parameters to class methods, be sure to get the actual implementation rather than the virtual method.
 	virtual int              GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.29.0, 2014-04-06
