@@ -89,8 +89,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	int callConv = sysFunc->callConv;
 
-	// TODO: Mips does not yet support THISCALL_OBJFIRST/LAST
-
 	asQWORD retQW = 0;
 
 	void *func = (void*)sysFunc->func;

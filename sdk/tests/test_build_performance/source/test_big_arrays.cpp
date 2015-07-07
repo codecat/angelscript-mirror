@@ -23,7 +23,7 @@ void Test()
 {
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.30.0 WIP:   1.09 secs\n");
+	printf("AngelScript 2.30.1: Build 0.950 secs, Save 0.0940 secs, Load 0.133 secs\n");
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -41,7 +41,7 @@ void Test()
 #ifdef _DEBUG
 	const int numElements = 10;
 #else
-	const int numElements = 100000;
+	const int numElements = 200000;
 #endif
 
 	string script;
