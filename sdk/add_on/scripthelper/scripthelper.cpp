@@ -690,6 +690,11 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			decl = decl.substr(1, decl.length() - 2);
 			in::ReplaceSlashQuote(decl);
 
+			// Remove the $ that the engine prefixes the behaviours with
+			int n = decl.find("$");
+			if( n != string::npos )
+				decl[n] = ' ';
+
 			asEBehaviours behave = static_cast<asEBehaviours>(atol(behaviour.c_str()));
 			if( behave == asBEHAVE_TEMPLATE_CALLBACK )
 			{

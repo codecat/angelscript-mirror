@@ -200,7 +200,7 @@ void RegisterScriptObject(asCScriptEngine *engine)
 	UNUSED_VAR(r); // It is only used in debug mode
 	engine->scriptTypeBehaviours.engine = engine;
 	engine->scriptTypeBehaviours.flags = asOBJ_SCRIPT_OBJECT | asOBJ_REF | asOBJ_GC;
-	engine->scriptTypeBehaviours.name = "_builtin_object_";
+	engine->scriptTypeBehaviours.name = "$obj";
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterBehaviourToObjectType(&engine->scriptTypeBehaviours, asBEHAVE_CONSTRUCT, "void f(int&in)", asFUNCTION(ScriptObject_Construct), asCALL_CDECL_OBJLAST, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->scriptTypeBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCScriptObject,AddRef), asCALL_THISCALL, 0); asASSERT( r >= 0 );

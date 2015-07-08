@@ -637,16 +637,107 @@ void asCReader::ReadUsedFunctions()
 			}
 			else
 			{
-#if 0
-				// TODO: optimize: Special functions, such as factstub, _beh_3_, _string_factory, etc should
-				//                 start with $ so that they can easily be identified and skipped. The names 
-				//                 can also be shortened, e.g. $fact, $beh3, $str to reduce size of bytecode.
-				if( func.funcType != asFUNC_FUNCDEF && 
-					func.objectType == 0 && 
-					func.name != "factstub" && 
-					func.name != "_beh_3_" && 
-					func.name != "_beh_4_" )
+				if( func.funcType == asFUNC_FUNCDEF )
 				{
+					// This is a funcdef (registered or shared)
+					const asCArray<asCScriptFunction *> &funcs = engine->funcDefs;
+					for( asUINT i = 0; i < funcs.GetLength(); i++ )
+					{
+						asCScriptFunction *f = funcs[i];
+						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+							continue;
+
+						// Funcdefs are always global so there is no need to compare object type
+						asASSERT( f->objectType == 0 );
+
+						usedFunctions[n] = f;
+						break;
+					}
+				}
+				else if( func.name[0] == '$' )
+				{
+					// This is a special function
+
+					// Check for string factory
+					if( func.name == "$str" && engine->stringFactory &&
+						func.IsSignatureExceptNameAndObjectTypeEqual(engine->stringFactory) )
+						usedFunctions[n] = engine->stringFactory;
+					else if( func.name == "$beh0" && func.objectType )
+					{
+						// This is a class constructor, so we can search directly in the object type's constructors
+						for( asUINT i = 0; i < func.objectType->beh.constructors.GetLength(); i++ )
+						{
+							asCScriptFunction *f = engine->scriptFunctions[func.objectType->beh.constructors[i]];
+							if( f == 0 ||
+								!func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+								continue;
+
+							usedFunctions[n] = f;
+							break;
+						}
+					}
+					else if( func.name == "$fact" || func.name == "$beh3" )
+					{
+						// This is a factory (or stub), so look for the function in the return type's factories
+						asCObjectType *objType = func.returnType.GetObjectType();
+						if( objType )
+						{
+							for( asUINT i = 0; i < objType->beh.factories.GetLength(); i++ )
+							{
+								asCScriptFunction *f = engine->scriptFunctions[objType->beh.factories[i]];
+								if( f == 0 ||
+									!func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+									continue;
+
+								usedFunctions[n] = f;
+								break;
+							}
+						}
+					}
+					else if( func.name == "$list" )
+					{
+						// listFactory is used for both factory is global and returns a handle and constructor that is a method
+						asCObjectType *objType = func.objectType ? func.objectType : func.returnType.GetObjectType();
+						if( objType )
+						{
+							asCScriptFunction *f = engine->scriptFunctions[objType->beh.listFactory];
+							if( f && func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+								usedFunctions[n] = f;
+						}
+					}
+					else if( func.name == "$beh2" )
+					{
+						// This is a destructor, so check the object type's destructor
+						asCObjectType *objType = func.objectType;
+						if( objType )
+						{
+							asCScriptFunction *f = engine->scriptFunctions[objType->beh.destruct];
+							if( f && func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+								usedFunctions[n] = f;
+						}
+					}
+					else if( func.name == "$beh4" )
+					{
+						// This is a list factory, so check the return type's list factory
+						asCObjectType *objType = func.returnType.GetObjectType();
+						if( objType )
+						{
+							asCScriptFunction *f = engine->scriptFunctions[objType->beh.listFactory];
+							if( f && func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+								usedFunctions[n] = f;
+						}
+					}
+					else if( func.name == "$dlgte" )
+					{
+						// This is the delegate factory
+						asCScriptFunction *f = engine->registeredGlobalFuncs.GetFirst(engine->nameSpaces[0], DELEGATE_FACTORY);
+						asASSERT( f && func.IsSignatureEqual(f) );
+						usedFunctions[n] = f;
+					}
+				}
+				else if( func.objectType == 0 )
+				{
+					// This is a global function
 					const asCArray<asUINT> &funcs = engine->registeredGlobalFuncs.GetIndexes(func.nameSpace, func.name);
 					for( asUINT i = 0; i < funcs.GetLength(); i++ )
 					{
@@ -658,67 +749,46 @@ void asCReader::ReadUsedFunctions()
 						usedFunctions[n] = f;
 						break;
 					}
-
-					if( usedFunctions[n] == 0 )
-					{
-						if( func.name == "_string_factory_" && engine->stringFactory &&
-							func.IsSignatureExceptNameAndObjectTypeEqual(engine->stringFactory) )
-							usedFunctions[n] = engine->stringFactory;
-					}
 				}
-				else
+				else if( func.objectType )
 				{
-					if( func.objectType )
+					// It is a class member, so we can search directly in the object type's members
+					// TODO: virtual function is different that implemented method
+					for( asUINT i = 0; i < func.objectType->methods.GetLength(); i++ )
 					{
-						// TODO: virtual function is different that implemented method
-						for( asUINT i = 0; i < func.objectType->methods.GetLength(); i++ )
-						{
-							asCScriptFunction *f = engine->scriptFunctions[func.objectType->methods[i]];
-							if( f == 0 ||
-								!func.IsSignatureEqual(f) )
-								continue;
+						asCScriptFunction *f = engine->scriptFunctions[func.objectType->methods[i]];
+						if( f == 0 ||
+							!func.IsSignatureEqual(f) )
+							continue;
 
-							usedFunctions[n] = f;
-							break;
-						}
-					}
-					
-					if( usedFunctions[n] == 0 )
-					{
-						// TODO: optimize: funcdefs should be searched for in engine->funcDefs 
-						
-						// TODO: optimize: We don't really want to do this, as it does a long linear search  
-						//                 over all the functions in the engine including script functions
-						for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
-						{
-							asCScriptFunction *f = engine->scriptFunctions[i];
-							if( f == 0 ||
-								func.objectType != f->objectType ||
-								func.nameSpace != f->nameSpace ||
-								!func.IsSignatureEqual(f) )
-								continue;
-
-							usedFunctions[n] = f;
-							break;
-						}
+						usedFunctions[n] = f;
+						break;
 					}
 				}
-#else
-				// TODO: optimize: We don't really want to do this, as it does a long linear search  
-				//                 over all the functions in the engine including script functions
-				for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
+
+				if( usedFunctions[n] == 0 )
 				{
-					asCScriptFunction *f = engine->scriptFunctions[i];
-					if( f == 0 ||
-						func.objectType != f->objectType ||
-						func.nameSpace != f->nameSpace ||
-						!func.IsSignatureEqual(f) )
-						continue;
+					// TODO: clean up: This part of the code should never happen. All functions should 
+					//                 be found in the above logic. The only valid reason to come here 
+					//                 is if the bytecode is wrong and the function doesn't exist anyway.
+					//                 This loop is kept temporarily until we can be certain all scenarios 
+					//                 are covered.
+					for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
+					{
+						asCScriptFunction *f = engine->scriptFunctions[i];
+						if( f == 0 ||
+							func.objectType != f->objectType ||
+							func.nameSpace != f->nameSpace ||
+							!func.IsSignatureEqual(f) )
+							continue;
 
-					usedFunctions[n] = f;
-					break;
+						usedFunctions[n] = f;
+						break;
+					}
+
+					// No function is expected to be found
+					asASSERT(usedFunctions[n] == 0);
 				}
-#endif
 			}
 
 			// Set the type to dummy so it won't try to release the id
@@ -1698,7 +1768,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 	ReadData(&bits, 1);
 
 	asCScriptFunction *funcDef = 0;
-	if( tokenType == ttIdentifier && objType && objType->name == "_builtin_function_" )
+	if( tokenType == ttIdentifier && objType && objType->name == "$func" )
 	{
 		asCScriptFunction func(engine, module, asFUNC_DUMMY);
 		ReadFunctionSignature(&func);
@@ -1863,7 +1933,7 @@ asCObjectType* asCReader::ReadObjectType()
 		ReadString(&ns);
 		asSNameSpace *nameSpace = engine->AddNameSpace(ns.AddressOf());
 
-		if( typeName.GetLength() && typeName != "_builtin_object_" && typeName != "_builtin_function_" )
+		if( typeName.GetLength() && typeName != "$obj" && typeName != "$func" )
 		{
 			// Find the object type
 			ot = module->GetObjectType(typeName.AddressOf(), nameSpace);
@@ -1879,11 +1949,11 @@ asCObjectType* asCReader::ReadObjectType()
 				return 0;
 			}
 		}
-		else if( typeName == "_builtin_object_" )
+		else if( typeName == "$obj" )
 		{
 			ot = &engine->scriptTypeBehaviours;
 		}
-		else if( typeName == "_builtin_function_" )
+		else if( typeName == "$func" )
 		{
 			ot = &engine->functionBehaviours;
 		}
@@ -3928,7 +3998,7 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	bits.isReadOnly      = dt->IsReadOnly();
 	WriteData(&bits, 1);
 
-	if( t == ttIdentifier && dt->GetObjectType()->name == "_builtin_function_" )
+	if( t == ttIdentifier && dt->GetObjectType()->name == "$func" )
 	{
 		WriteFunctionSignature(dt->GetFuncDef());
 	}

@@ -1979,7 +1979,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			listPattern->Destroy(this);
 		return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 	}
-	func.name.Format("_beh_%d_", behaviour);
+	func.name.Format("$beh%d", behaviour);
 
 	if( behaviour != asBEHAVE_FACTORY && behaviour != asBEHAVE_LIST_FACTORY )
 	{
@@ -3232,7 +3232,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 		return ConfigError(asOUT_OF_MEMORY, "RegisterStringFactory", datatype, 0);
 	}
 
-	func->name        = "_string_factory_";
+	func->name        = "$str";
 	func->sysFuncIntf = newInterface;
 
 	asCBuilder bld(this, 0);
@@ -3593,6 +3593,9 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	if( templateType->beh.listFactory )
 	{
 		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.listFactory);
+		
+		// Rename the function to easily identify it in LoadByteCode
+		func->name = "$list";
 
 		ot->beh.listFactory = func->id;
 	}
@@ -3790,7 +3793,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 	func->funcType         = asFUNC_SCRIPT;
 	func->AllocateScriptFunctionData();
-	func->name             = "factstub";
+	func->name             = "$fact";
 	func->id               = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 

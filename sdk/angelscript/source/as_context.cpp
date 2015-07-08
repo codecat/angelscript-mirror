@@ -4964,7 +4964,7 @@ int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 
 	if( sectionName )
 	{
-		// The section index can be -1 if the exception was raised in a generated function, e.g. factstub for templates
+		// The section index can be -1 if the exception was raised in a generated function, e.g. $fact for templates
 		if( m_exceptionSectionIdx >= 0 )
 			*sectionName = m_engine->scriptSectionNames[m_exceptionSectionIdx]->AddressOf();
 		else

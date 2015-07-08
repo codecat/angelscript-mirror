@@ -324,7 +324,7 @@ bool Test()
 							"type@& g = {XXXXXXXX}\n"
 							"string glob = (len=4) \"test\"\n"
 							"script:3; void func(int, const int&in, string, const string&in, type@, type&inout, type@&in)\n"
-							"{unnamed}:0; int[]@ factstub(int&in) { repeat int }\n"
+							"{unnamed}:0; int[]@ $list(int&in) { repeat int }\n"
 							"int a = 1\n"
 							"const int& b = 2\n"
 							"string c = (len=1) \"c\"\n"

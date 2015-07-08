@@ -15,6 +15,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.30.2 WIP - 2015/07/08</h2>
+
+<ul>
+<li>Library
+<ul>
+<li>Built-in function names and object types are now prefixed with $ to make it quicker to identify them while loading bytecode
+<li>Optimized logic for finding registered function/method in LoadByteCode (Thanks _Engine_)
+</ul>
+<li>Add-ons
+<ul>
+<li>ConfigEngineFromStream appropriately treats names of behaviour functions before registering them since they are now prefixed with $ in WriteConfigToStream
+</ul>
+</ul>
+
 <h2>Version 2.30.1 - 2015/07/03</h2>
 
 <ul>

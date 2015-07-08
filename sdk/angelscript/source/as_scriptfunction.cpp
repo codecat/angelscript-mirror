@@ -124,7 +124,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	UNUSED_VAR(r); // It is only used in debug mode
 	engine->functionBehaviours.engine = engine;
 	engine->functionBehaviours.flags = asOBJ_REF | asOBJ_GC | asOBJ_SCRIPT_FUNCTION;
-	engine->functionBehaviours.name = "_builtin_function_";
+	engine->functionBehaviours.name = "$func";
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_ADDREF, "void f()", asMETHOD(asCScriptFunction,AddRef), asCALL_THISCALL, 0); asASSERT( r >= 0 );
 	r = engine->RegisterBehaviourToObjectType(&engine->functionBehaviours, asBEHAVE_RELEASE, "void f()", asMETHOD(asCScriptFunction,Release), asCALL_THISCALL, 0); asASSERT( r >= 0 );
@@ -678,7 +678,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	if( !(returnType.GetTokenType() == ttVoid &&
 		  objectType &&
 		  (name == objectType->name || (name.GetLength() > 0 && name[0] == '~') ||
-		   name == "_beh_0_" || name == "_beh_2_")) )
+		   name == "$beh0" || name == "$beh2")) )
 	{
 		str = returnType.Format(nameSpace, includeNamespace);
 		str += " ";
@@ -699,13 +699,13 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 	}
 	if( name == "" )
 		str += "_unnamed_function_(";
-	else if( name.SubString(0,5) == "_beh_" && name.GetLength() == 7 )
+	else if( name.SubString(0,4) == "$beh" && name.GetLength() == 5 )
 	{
-		if( name[5] == '0' + asBEHAVE_CONSTRUCT )
+		if( name[4] == '0' + asBEHAVE_CONSTRUCT )
 			str += objectType->name + "(";
-		else if( name[5] == '0' + asBEHAVE_FACTORY )
+		else if( name[4] == '0' + asBEHAVE_FACTORY )
 			str += returnType.GetObjectType()->name + "(";
-		else if( name[5] == '0' + asBEHAVE_DESTRUCT )
+		else if( name[4] == '0' + asBEHAVE_DESTRUCT )
 			str += "~" + objectType->name + "(";
 		else
 			str += name + "(";
