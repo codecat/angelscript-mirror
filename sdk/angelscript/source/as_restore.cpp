@@ -1663,28 +1663,25 @@ asQWORD asCReader::ReadEncodedUInt64()
 
 void asCReader::ReadString(asCString* str) 
 {
-	char b;
-	ReadData(&b, 1);
-	if( b == '\0' )
+	asUINT len = ReadEncodedUInt();
+	if( len & 1 )
 	{
-		str->SetLength(0);
+		asUINT idx = len/2;
+		if( idx < savedStrings.GetLength() )
+			*str = savedStrings[idx];
+		else
+			Error(TXT_INVALID_BYTECODE_d);
 	}
-	else if( b == 'n' )
+	else if( len > 0 )
 	{
-		asUINT len = ReadEncodedUInt();
+		len /= 2;
 		str->SetLength(len);
 		stream->Read(str->AddressOf(), len);
 
 		savedStrings.PushLast(*str);
 	}
 	else
-	{
-		asUINT n = ReadEncodedUInt();
-		if( n < savedStrings.GetLength() )
-			*str = savedStrings[n];
-		else
-			Error(TXT_INVALID_BYTECODE_d);
-	}
+		str->SetLength(0);
 }
 
 void asCReader::ReadGlobalProperty() 
@@ -3902,39 +3899,28 @@ void asCWriter::WriteEncodedInt64(asINT64 i)
 
 void asCWriter::WriteString(asCString* str) 
 {
-	// TODO: All strings should be stored in a separate section, and when
-	//       they are used an offset into that section should be stored.
-	//       This will make it unnecessary to store the extra byte to 
-	//       identify new versus old strings.
-
-	if( str->GetLength() == 0 )
-	{
-		char z = '\0';
-		WriteData(&z, 1);
-		return;
-	}
-
 	// First check if the string hasn't been saved already
 	asSMapNode<asCStringPointer, int> *cursor = 0;
 	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str)))
 	{
 		// Save a reference to the existing string
-		char b = 'r';
-		WriteData(&b, 1);
-		WriteEncodedInt64(cursor->value);
+		// The lowest bit is set to 1 to indicate a reference
+		WriteEncodedInt64(cursor->value*2+1);
 		return;
 	}
 
 	// Save a new string
-	char b = 'n';
-	WriteData(&b, 1);
-
+	// The lowest bit is set to 0 to indicate a new string
 	asUINT len = (asUINT)str->GetLength();
-	WriteEncodedInt64(len);
-	stream->Write(str->AddressOf(), (asUINT)len);
+	WriteEncodedInt64(len*2);
 
-	savedStrings.PushLast(*str);
-	stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);
+	if( len > 0 )
+	{
+		stream->Write(str->AddressOf(), (asUINT)len);
+
+		savedStrings.PushLast(*str);
+		stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);
+	}
 }
 
 void asCWriter::WriteGlobalProperty(asCGlobalProperty* prop) 
