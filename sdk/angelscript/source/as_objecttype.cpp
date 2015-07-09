@@ -243,7 +243,8 @@ void asCObjectType::DestroyInternal()
 	userData.SetLength(0);
 
 	// Remove the type from the engine
-	engine->RemoveFromTypeIdMap(this);
+	if( typeId != -1 )
+		engine->RemoveFromTypeIdMap(this);
 
 	// Clear the engine pointer to mark the object type as invalid
 	engine = 0;
@@ -326,8 +327,6 @@ int asCObjectType::GetTypeId() const
 {
 	if( typeId == -1 )
 	{
-		// TODO: multithread: must make this thread safe
-
 		// We need a non const pointer to create the asCDataType object.
 		// We're not breaking anything here because this function is not
 		// modifying the object, so this const cast is safe.

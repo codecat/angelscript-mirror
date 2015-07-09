@@ -694,12 +694,8 @@ asCScriptEngine::~asCScriptEngine()
 	if( refCount.get() > 0 )
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ENGINE_REF_COUNT_ERROR_DURING_SHUTDOWN);
 
-	asSMapNode<int,asCDataType*> *cursor = 0;
-	while( mapTypeIdToDataType.MoveFirst(&cursor) )
-	{
-		asDELETE(mapTypeIdToDataType.GetValue(cursor),asCDataType);
-		mapTypeIdToDataType.Erase(cursor);
-	}
+	mapTypeIdToObjectType.EraseAll();
+	mapTypeIdToFunction.EraseAll();
 
 	// First remove what is not used, so that other groups can be deleted safely
 	defaultGroup.RemoveConfiguration(this, true);
@@ -4559,7 +4555,6 @@ void asCScriptEngine::GCEnumCallback(void *reference)
 }
 
 
-// TODO: multithread: The mapTypeIdToDataType must be protected with critical sections in all functions that access it
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
 	if( dtIn.IsNullHandle() ) return asTYPEID_VOID;
@@ -4588,72 +4583,65 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 		}
 	}
 
-	// First determine if the typeId has already been defined for this type
-	asCDataType dt(dtIn);
-	if( dt.GetObjectType() )
-		dt.MakeHandle(false);
-
 	int typeId = -1;
 	asCObjectType *ot = dtIn.GetObjectType();
 	if( ot != &functionBehaviours )
 	{
 		// Object's hold the typeId themselves
 		typeId = ot->typeId;
+
+		if( typeId == -1 )
+		{
+			ACQUIREEXCLUSIVE(engineRWLock);
+			// Make sure another thread didn't determine the typeId while we were waiting for the lock
+			if( ot->typeId == -1 )
+			{
+				typeId = typeIdSeqNbr++;
+				if( ot->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
+				else if( ot->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE;
+				else if( ot->flags & asOBJ_ENUM ) {} // TODO: Should we have a specific bit for this?
+				else typeId |= asTYPEID_APPOBJECT;
+
+				ot->typeId = typeId;
+
+				mapTypeIdToObjectType.Insert(typeId, ot);
+			}
+			RELEASEEXCLUSIVE(engineRWLock);
+		}
 	}
 	else
 	{
 		// This a funcdef, so we'll need to look in the map for the funcdef
 
-		// TODO: optimize: Should have a map with just funcdefs to typeIds for quicker access
+		// TODO: optimize: It shouldn't be necessary to exclusive lock when the typeId already exists
+		ACQUIREEXCLUSIVE(engineRWLock);
 
 		// Find the existing type id
-		asSMapNode<int,asCDataType*> *cursor = 0;
-		mapTypeIdToDataType.MoveFirst(&cursor);
+		asCScriptFunction *func = dtIn.GetFuncDef();
+		asASSERT(func);
+		asSMapNode<int,asCScriptFunction*> *cursor = 0;
+		mapTypeIdToFunction.MoveFirst(&cursor);
 		while( cursor )
 		{
-			if( mapTypeIdToDataType.GetValue(cursor)->IsEqualExceptRefAndConst(dt) )
+			if( mapTypeIdToFunction.GetValue(cursor) == func )
 			{
-				typeId = mapTypeIdToDataType.GetKey(cursor);
+				typeId = mapTypeIdToFunction.GetKey(cursor);
 				break;
 			}
 
-			mapTypeIdToDataType.MoveNext(&cursor, cursor);
+			mapTypeIdToFunction.MoveNext(&cursor, cursor);
 		}
-	}
 
-	// The type id doesn't exist, create it
-	if( typeId == -1 )
-	{
-		// Setup the basic type id
-		typeId = typeIdSeqNbr++;
-		if( dt.GetObjectType() )
+		// The type id doesn't exist, create it
+		if( typeId == -1 )
 		{
-			if( dt.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
-			else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE;
-			else if( dt.GetObjectType()->flags & asOBJ_ENUM ) {} // TODO: Should we have a specific bit for this?
-			else typeId |= asTYPEID_APPOBJECT;
+			// Setup the type id for the funcdef
+			typeId = typeIdSeqNbr++;
+			typeId |= asTYPEID_APPOBJECT;
+			mapTypeIdToFunction.Insert(typeId, func);
 		}
 
-		// Insert the basic object type
-		asCDataType *newDt = asNEW(asCDataType)(dt);
-		if( newDt == 0 )
-		{
-			// Out of memory
-			return 0;
-		}
-
-		newDt->MakeReference(false);
-		newDt->MakeReadOnly(false);
-		newDt->MakeHandle(false);
-
-		mapTypeIdToDataType.Insert(typeId, newDt);
-
-		// Store the typeId in the objectType for quick access
-		if( ot != &functionBehaviours )
-		{
-			// Object's hold the typeId themselves
-			ot->typeId = typeId;
-		}
+		RELEASEEXCLUSIVE(engineRWLock);
 	}
 
 	// Add flags according to the requested type
@@ -4680,14 +4668,41 @@ asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 		return asCDataType::CreatePrimitive(type[typeId], false);
 	}
 
-	asSMapNode<int,asCDataType*> *cursor = 0;
-	if( mapTypeIdToDataType.MoveTo(&cursor, baseId) )
+	// First check if the typeId is an object type
+	asCObjectType *ot = 0;
+	ACQUIRESHARED(engineRWLock);
+	asSMapNode<int,asCObjectType*> *cursor = 0;
+	if( mapTypeIdToObjectType.MoveTo(&cursor, baseId) )
+		ot = mapTypeIdToObjectType.GetValue(cursor);
+	RELEASESHARED(engineRWLock);
+
+	if( ot )
 	{
-		asCDataType dt(*mapTypeIdToDataType.GetValue(cursor));
+		asCDataType dt = asCDataType::CreateObject(ot, false);
 		if( typeId & asTYPEID_OBJHANDLE )
 			dt.MakeHandle(true, true);
 		if( typeId & asTYPEID_HANDLETOCONST )
 			dt.MakeHandleToConst(true);
+
+		return dt;
+	}
+
+	// Then check if it is a funcdef
+	asCScriptFunction *func = 0;
+	ACQUIRESHARED(engineRWLock);
+	asSMapNode<int,asCScriptFunction*> *cursor2 = 0;
+	if( mapTypeIdToFunction.MoveTo(&cursor2, baseId) )
+		func = mapTypeIdToFunction.GetValue(cursor2);
+	RELEASESHARED(engineRWLock);
+
+	if( func )
+	{
+		asCDataType dt = asCDataType::CreateFuncDef(func);
+		if( typeId & asTYPEID_OBJHANDLE )
+			dt.MakeHandle(true, true);
+		if( typeId & asTYPEID_HANDLETOCONST )
+			dt.MakeHandleToConst(true);
+
 		return dt;
 	}
 
@@ -4702,19 +4717,19 @@ asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId) const
 
 void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 {
-	asSMapNode<int,asCDataType*> *cursor = 0;
-	mapTypeIdToDataType.MoveFirst(&cursor);
+	ACQUIREEXCLUSIVE(engineRWLock);
+	asSMapNode<int,asCObjectType*> *cursor = 0;
+	mapTypeIdToObjectType.MoveFirst(&cursor);
 	while( cursor )
 	{
-		asCDataType *dt = mapTypeIdToDataType.GetValue(cursor);
-		asSMapNode<int,asCDataType*> *old = cursor;
-		mapTypeIdToDataType.MoveNext(&cursor, cursor);
-		if( dt->GetObjectType() == type )
+		if( mapTypeIdToObjectType.GetValue(cursor) == type )
 		{
-			asDELETE(dt,asCDataType);
-			mapTypeIdToDataType.Erase(old);
+			mapTypeIdToObjectType.Erase(cursor);
+			break;
 		}
+		mapTypeIdToObjectType.MoveNext(&cursor, cursor);
 	}
+	RELEASEEXCLUSIVE(engineRWLock);
 }
 
 // interface
