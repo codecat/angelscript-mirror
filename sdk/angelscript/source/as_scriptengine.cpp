@@ -587,21 +587,22 @@ asCScriptEngine::asCScriptEngine()
 	// Reserve function id 0 for no function
 	scriptFunctions.PushLast(0);
 
+	// Reserve the first typeIds for the primitive types
+	typeIdSeqNbr = asTYPEID_DOUBLE + 1;
+
 	// Make sure typeId for the built-in primitives are defined according to asETypeIdFlags
-	int id = 0;
-	UNUSED_VAR(id); // It is only used in debug mode
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttVoid,   false)); asASSERT( id == asTYPEID_VOID   );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttBool,   false)); asASSERT( id == asTYPEID_BOOL   );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt8,   false)); asASSERT( id == asTYPEID_INT8   );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt16,  false)); asASSERT( id == asTYPEID_INT16  );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt,    false)); asASSERT( id == asTYPEID_INT32  );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt64,  false)); asASSERT( id == asTYPEID_INT64  );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt8,  false)); asASSERT( id == asTYPEID_UINT8  );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt16, false)); asASSERT( id == asTYPEID_UINT16 );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt,   false)); asASSERT( id == asTYPEID_UINT32 );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt64, false)); asASSERT( id == asTYPEID_UINT64 );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttFloat,  false)); asASSERT( id == asTYPEID_FLOAT  );
-	id = GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttDouble, false)); asASSERT( id == asTYPEID_DOUBLE );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttVoid,   false)) == asTYPEID_VOID   );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttBool,   false)) == asTYPEID_BOOL   );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt8,   false)) == asTYPEID_INT8   );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt16,  false)) == asTYPEID_INT16  );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt,    false)) == asTYPEID_INT32  );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttInt64,  false)) == asTYPEID_INT64  );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt8,  false)) == asTYPEID_UINT8  );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt16, false)) == asTYPEID_UINT16 );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt,   false)) == asTYPEID_UINT32 );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttUInt64, false)) == asTYPEID_UINT64 );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttFloat,  false)) == asTYPEID_FLOAT  );
+	asASSERT( GetTypeIdFromDataType(asCDataType::CreatePrimitive(ttDouble, false)) == asTYPEID_DOUBLE );
 
 	defaultArrayObjectType = 0;
 
@@ -4561,70 +4562,123 @@ void asCScriptEngine::GCEnumCallback(void *reference)
 // TODO: multithread: The mapTypeIdToDataType must be protected with critical sections in all functions that access it
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
-	if( dtIn.IsNullHandle() ) return 0;
+	if( dtIn.IsNullHandle() ) return asTYPEID_VOID;
 
-	// Register the base form
+	if( dtIn.GetObjectType() == 0 )
+	{
+		// Primitives have pre-fixed typeIds
+		switch( dtIn.GetTokenType() )
+		{
+		case ttVoid:   return asTYPEID_VOID;
+		case ttBool:   return asTYPEID_BOOL;
+		case ttInt8:   return asTYPEID_INT8;
+		case ttInt16:  return asTYPEID_INT16;
+		case ttInt:    return asTYPEID_INT32;
+		case ttInt64:  return asTYPEID_INT64;
+		case ttUInt8:  return asTYPEID_UINT8;
+		case ttUInt16: return asTYPEID_UINT16;
+		case ttUInt:   return asTYPEID_UINT32;
+		case ttUInt64: return asTYPEID_UINT64;
+		case ttFloat:  return asTYPEID_FLOAT;
+		case ttDouble: return asTYPEID_DOUBLE;
+		default:
+			// All types should be covered by the above. The variable type is not really a type
+			asASSERT(dtIn.GetTokenType() == ttQuestion);
+			return -1;
+		}
+	}
+
+	// First determine if the typeId has already been defined for this type
 	asCDataType dt(dtIn);
 	if( dt.GetObjectType() )
 		dt.MakeHandle(false);
 
-	// Find the existing type id
-	asSMapNode<int,asCDataType*> *cursor = 0;
-	mapTypeIdToDataType.MoveFirst(&cursor);
-	while( cursor )
+	int typeId = -1;
+	asCObjectType *ot = dtIn.GetObjectType();
+	if( ot != &functionBehaviours )
 	{
-		if( mapTypeIdToDataType.GetValue(cursor)->IsEqualExceptRefAndConst(dt) )
+		// Object's hold the typeId themselves
+		typeId = ot->typeId;
+	}
+	else
+	{
+		// This a funcdef, so we'll need to look in the map for the funcdef
+
+		// TODO: optimize: Should have a map with just funcdefs to typeIds for quicker access
+
+		// Find the existing type id
+		asSMapNode<int,asCDataType*> *cursor = 0;
+		mapTypeIdToDataType.MoveFirst(&cursor);
+		while( cursor )
 		{
-			int typeId = mapTypeIdToDataType.GetKey(cursor);
-			if( dtIn.GetObjectType() && !(dtIn.GetObjectType()->flags & asOBJ_ASHANDLE) )
+			if( mapTypeIdToDataType.GetValue(cursor)->IsEqualExceptRefAndConst(dt) )
 			{
-				// The ASHANDLE types behave like handles, but are really
-				// value types so the typeId is never returned as a handle
-				if( dtIn.IsObjectHandle() )
-					typeId |= asTYPEID_OBJHANDLE;
-				if( dtIn.IsHandleToConst() )
-					typeId |= asTYPEID_HANDLETOCONST;
+				typeId = mapTypeIdToDataType.GetKey(cursor);
+				break;
 			}
 
-			return typeId;
+			mapTypeIdToDataType.MoveNext(&cursor, cursor);
 		}
-
-		mapTypeIdToDataType.MoveNext(&cursor, cursor);
 	}
 
 	// The type id doesn't exist, create it
-
-	// Setup the basic type id
-	int typeId = typeIdSeqNbr++;
-	if( dt.GetObjectType() )
+	if( typeId == -1 )
 	{
-		if( dt.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
-		else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE;
-		else if( dt.GetObjectType()->flags & asOBJ_ENUM ) {} // TODO: Should we have a specific bit for this?
-		else typeId |= asTYPEID_APPOBJECT;
+		// Setup the basic type id
+		typeId = typeIdSeqNbr++;
+		if( dt.GetObjectType() )
+		{
+			if( dt.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
+			else if( dt.GetObjectType()->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE;
+			else if( dt.GetObjectType()->flags & asOBJ_ENUM ) {} // TODO: Should we have a specific bit for this?
+			else typeId |= asTYPEID_APPOBJECT;
+		}
+
+		// Insert the basic object type
+		asCDataType *newDt = asNEW(asCDataType)(dt);
+		if( newDt == 0 )
+		{
+			// Out of memory
+			return 0;
+		}
+
+		newDt->MakeReference(false);
+		newDt->MakeReadOnly(false);
+		newDt->MakeHandle(false);
+
+		mapTypeIdToDataType.Insert(typeId, newDt);
+
+		// Store the typeId in the objectType for quick access
+		if( ot != &functionBehaviours )
+		{
+			// Object's hold the typeId themselves
+			ot->typeId = typeId;
+		}
 	}
 
-	// Insert the basic object type
-	asCDataType *newDt = asNEW(asCDataType)(dt);
-	if( newDt == 0 )
+	// Add flags according to the requested type
+	if( dtIn.GetObjectType() && !(dtIn.GetObjectType()->flags & asOBJ_ASHANDLE) )
 	{
-		// Out of memory
-		return 0;
+		// The ASHANDLE types behave like handles, but are really
+		// value types so the typeId is never returned as a handle
+		if( dtIn.IsObjectHandle() )
+			typeId |= asTYPEID_OBJHANDLE;
+		if( dtIn.IsHandleToConst() )
+			typeId |= asTYPEID_HANDLETOCONST;
 	}
 
-	newDt->MakeReference(false);
-	newDt->MakeReadOnly(false);
-	newDt->MakeHandle(false);
-
-	mapTypeIdToDataType.Insert(typeId, newDt);
-
-	// Call recursively to get the correct typeId
-	return GetTypeIdFromDataType(dtIn);
+	return typeId;
 }
 
 asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 {
 	int baseId = typeId & (asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR);
+
+	if( typeId <= asTYPEID_DOUBLE )
+	{
+		eTokenType type[] = {ttVoid, ttBool, ttInt8, ttInt16, ttInt, ttInt64, ttUInt8, ttUInt16, ttUInt, ttUInt64, ttFloat, ttDouble};
+		return asCDataType::CreatePrimitive(type[typeId], false);
+	}
 
 	asSMapNode<int,asCDataType*> *cursor = 0;
 	if( mapTypeIdToDataType.MoveTo(&cursor, baseId) )

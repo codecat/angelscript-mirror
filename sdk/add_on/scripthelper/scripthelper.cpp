@@ -691,7 +691,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			in::ReplaceSlashQuote(decl);
 
 			// Remove the $ that the engine prefixes the behaviours with
-			int n = decl.find("$");
+			size_t n = decl.find("$");
 			if( n != string::npos )
 				decl[n] = ' ';
 

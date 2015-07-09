@@ -15,14 +15,15 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/07/08</h2>
+<h2>Version 2.30.2 WIP - 2015/07/09</h2>
 
 <ul>
 <li>Library
 <ul>
 <li>Built-in function names and object types are now prefixed with $ to make it quicker to identify them while loading bytecode
 <li>Optimized logic for finding registered function/method in LoadByteCode (Thanks _Engine_)
-<li>Reduced size of pre-compiled bytecode by 5 to 10%
+<li>Reduced size of pre-compiled bytecode
+<li>Optimized logic for determining typeId for object types, which can improve compile time and LoadByteCode for applications with a lot of different object types
 </ul>
 <li>Add-ons
 <ul>

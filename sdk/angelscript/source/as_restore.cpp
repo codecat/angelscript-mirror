@@ -40,6 +40,7 @@
 #include "as_bytecode.h"
 #include "as_scriptobject.h"
 #include "as_texts.h"
+#include "as_debug.h"
 
 BEGIN_AS_NAMESPACE
 
@@ -65,6 +66,8 @@ void asCReader::ReadData(void *data, asUINT size)
 
 int asCReader::Read(bool *wasDebugInfoStripped)
 {
+	TimeIt("asCReader::Read");
+
 	// Before starting the load, make sure that 
 	// any existing resources have been freed
 	module->InternalReset();
@@ -124,6 +127,8 @@ int asCReader::Error(const char *msg)
 
 int asCReader::ReadInner() 
 {
+	TimeIt("asCReader::ReadInner");
+
 	// This function will load each entity one by one from the stream.
 	// If any error occurs, it will return to the caller who is 
 	// responsible for cleaning up the partially loaded entities.
@@ -549,6 +554,8 @@ int asCReader::ReadInner()
 
 void asCReader::ReadUsedStringConstants()
 {
+	TimeIt("asCReader::ReadUsedStringConstants");
+
 	asCString str;
 
 	asUINT count;
@@ -563,6 +570,8 @@ void asCReader::ReadUsedStringConstants()
 
 void asCReader::ReadUsedFunctions()
 {
+	TimeIt("asCReader::ReadUsedFunctions");
+
 	asUINT count;
 	count = ReadEncodedUInt();
 	usedFunctions.SetLength(count);
@@ -2213,6 +2222,8 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 
 void asCReader::ReadUsedTypeIds()
 {
+	TimeIt("asCReader::ReadUsedTypeIds");
+
 	asUINT count = ReadEncodedUInt();
 	usedTypeIds.Allocate(count, false);
 	for( asUINT n = 0; n < count; n++ )
@@ -2225,6 +2236,8 @@ void asCReader::ReadUsedTypeIds()
 
 void asCReader::ReadUsedGlobalProps()
 {
+	TimeIt("asCReader::ReadUsedGlobalProps");
+
 	int c = ReadEncodedUInt();
 
 	usedGlobalProperties.Allocate(c, false);
@@ -2264,6 +2277,8 @@ void asCReader::ReadUsedGlobalProps()
 
 void asCReader::ReadUsedObjectProps()
 {
+	TimeIt("asCReader::ReadUsedObjectProps");
+
 	asUINT c = ReadEncodedUInt();
 
 	usedObjectProperties.SetLength(c);
