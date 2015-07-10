@@ -3356,6 +3356,8 @@ void asCWriter::WriteData(const void *data, asUINT size)
 
 int asCWriter::Write() 
 {
+	TimeIt("asCWriter::Write");
+
 	unsigned long i, count;
 
 	// Store everything in the same order that the builder parses scripts
@@ -3366,101 +3368,149 @@ int asCWriter::Write()
 	WriteData(&stripDebugInfo, sizeof(stripDebugInfo));
 
 	// Store enums
-	count = (asUINT)module->enumTypes.GetLength();
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; i++ )
 	{
-		WriteObjectTypeDeclaration(module->enumTypes[i], 1);
-		WriteObjectTypeDeclaration(module->enumTypes[i], 2);
+		TimeIt("store enums");
+
+		count = (asUINT)module->enumTypes.GetLength();
+		WriteEncodedInt64(count);
+		for( i = 0; i < count; i++ )
+		{
+			WriteObjectTypeDeclaration(module->enumTypes[i], 1);
+			WriteObjectTypeDeclaration(module->enumTypes[i], 2);
+		}
 	}
 
 	// Store type declarations first
-	count = (asUINT)module->classTypes.GetLength();
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; i++ )
 	{
-		// Store only the name of the class/interface types
-		WriteObjectTypeDeclaration(module->classTypes[i], 1);
+		TimeIt("type declarations");
+
+		count = (asUINT)module->classTypes.GetLength();
+		WriteEncodedInt64(count);
+		for( i = 0; i < count; i++ )
+		{
+			// Store only the name of the class/interface types
+			WriteObjectTypeDeclaration(module->classTypes[i], 1);
+		}
 	}
 
 	// Store func defs
-	count = (asUINT)module->funcDefs.GetLength();
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; i++ )
-		WriteFunction(module->funcDefs[i]);
+	{
+		TimeIt("func defs");
+
+		count = (asUINT)module->funcDefs.GetLength();
+		WriteEncodedInt64(count);
+		for( i = 0; i < count; i++ )
+			WriteFunction(module->funcDefs[i]);
+	}
 
 	// Now store all interface methods
-	count = (asUINT)module->classTypes.GetLength();
-	for( i = 0; i < count; i++ )
 	{
-		if( module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], 2);
+		TimeIt("interface methods");
+
+		count = (asUINT)module->classTypes.GetLength();
+		for( i = 0; i < count; i++ )
+		{
+			if( module->classTypes[i]->IsInterface() )
+				WriteObjectTypeDeclaration(module->classTypes[i], 2);
+		}
 	}
 
 	// Then store the class methods and behaviours
-	for( i = 0; i < count; ++i )
 	{
-		if( !module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], 2);
+		TimeIt("class methods and behaviours");
+
+		for( i = 0; i < count; ++i )
+		{
+			if( !module->classTypes[i]->IsInterface() )
+				WriteObjectTypeDeclaration(module->classTypes[i], 2);
+		}
 	}
 
 	// Then store the class properties
-	for( i = 0; i < count; ++i )
 	{
-		if( !module->classTypes[i]->IsInterface() )
-			WriteObjectTypeDeclaration(module->classTypes[i], 3);
+		TimeIt("class properties");
+
+		for( i = 0; i < count; ++i )
+		{
+			if( !module->classTypes[i]->IsInterface() )
+				WriteObjectTypeDeclaration(module->classTypes[i], 3);
+		}
 	}
 
 	// Store typedefs
-	count = (asUINT)module->typeDefs.GetLength();
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; i++ )
 	{
-		WriteObjectTypeDeclaration(module->typeDefs[i], 1);
-		WriteObjectTypeDeclaration(module->typeDefs[i], 2);
+		TimeIt("type defs");
+
+		count = (asUINT)module->typeDefs.GetLength();
+		WriteEncodedInt64(count);
+		for( i = 0; i < count; i++ )
+		{
+			WriteObjectTypeDeclaration(module->typeDefs[i], 1);
+			WriteObjectTypeDeclaration(module->typeDefs[i], 2);
+		}
 	}
 
 	// scriptGlobals[]
-	count = (asUINT)module->scriptGlobals.GetSize();
-	WriteEncodedInt64(count);
-	asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
-	for( ; it; it++ )
-		WriteGlobalProperty(*it);
+	{
+		TimeIt("script globals");
+
+		count = (asUINT)module->scriptGlobals.GetSize();
+		WriteEncodedInt64(count);
+		asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
+		for( ; it; it++ )
+			WriteGlobalProperty(*it);
+	}
 
 	// scriptFunctions[]
-	count = 0;
-	for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
-		if( module->scriptFunctions[i]->objectType == 0 )
-			count++;
-	WriteEncodedInt64(count);
-	for( i = 0; i < module->scriptFunctions.GetLength(); ++i )
-		if( module->scriptFunctions[i]->objectType == 0 )
-			WriteFunction(module->scriptFunctions[i]);
+	{
+		TimeIt("scriptFunctions");
+
+		count = 0;
+		for( i = 0; i < module->scriptFunctions.GetLength(); i++ )
+			if( module->scriptFunctions[i]->objectType == 0 )
+				count++;
+		WriteEncodedInt64(count);
+		for( i = 0; i < module->scriptFunctions.GetLength(); ++i )
+			if( module->scriptFunctions[i]->objectType == 0 )
+				WriteFunction(module->scriptFunctions[i]);
+	}
 
 	// globalFunctions[]
-	count = (int)module->globalFunctions.GetSize();
-	asCSymbolTable<asCScriptFunction>::iterator funcIt = module->globalFunctions.List();
-	WriteEncodedInt64(count);
-	while( funcIt )
 	{
-		WriteFunction(*funcIt);
-		funcIt++;
+		TimeIt("globalFunctions");
+
+		count = (int)module->globalFunctions.GetSize();
+		asCSymbolTable<asCScriptFunction>::iterator funcIt = module->globalFunctions.List();
+		WriteEncodedInt64(count);
+		while( funcIt )
+		{
+			WriteFunction(*funcIt);
+			funcIt++;
+		}
 	}
 
 	// bindInformations[]
-	count = (asUINT)module->bindInformations.GetLength();
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; ++i )
 	{
-		WriteFunction(module->bindInformations[i]->importedFunctionSignature);
-		WriteString(&module->bindInformations[i]->importFromModule);
+		TimeIt("bindInformations");
+
+		count = (asUINT)module->bindInformations.GetLength();
+		WriteEncodedInt64(count);
+		for( i = 0; i < count; ++i )
+		{
+			WriteFunction(module->bindInformations[i]->importedFunctionSignature);
+			WriteString(&module->bindInformations[i]->importFromModule);
+		}
 	}
 
 	// usedTypes[]
-	count = (asUINT)usedTypes.GetLength();
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; ++i )
-		WriteObjectType(usedTypes[i]);
+	{
+		TimeIt("usedTypes");
+
+		count = (asUINT)usedTypes.GetLength();
+		WriteEncodedInt64(count);
+		for( i = 0; i < count; ++i )
+			WriteObjectType(usedTypes[i]);
+	}
 
 	// usedTypeIds[]
 	WriteUsedTypeIds();
@@ -3494,6 +3544,8 @@ int asCWriter::FindStringConstantIndex(int id)
 
 void asCWriter::WriteUsedStringConstants()
 {
+	TimeIt("asCWriter::WriteUsedStringConstants");
+
 	asUINT count = (asUINT)usedStringConstants.GetLength();
 	WriteEncodedInt64(count);
 	for( asUINT i = 0; i < count; ++i )
@@ -3502,6 +3554,8 @@ void asCWriter::WriteUsedStringConstants()
 
 void asCWriter::WriteUsedFunctions()
 {
+	TimeIt("asCWriter::WriteUsedFunctions");
+
 	asUINT count = (asUINT)usedFunctions.GetLength();
 	WriteEncodedInt64(count);
 
@@ -4922,6 +4976,8 @@ void asCWriter::SListAdjuster::SetNextType(int typeId)
 
 void asCWriter::WriteUsedTypeIds()
 {
+	TimeIt("asCWriter::WriteUsedTypeIds");
+
 	asUINT count = (asUINT)usedTypeIds.GetLength();
 	WriteEncodedInt64(count);
 	for( asUINT n = 0; n < count; n++ )
@@ -4942,6 +4998,8 @@ int asCWriter::FindGlobalPropPtrIndex(void *ptr)
 
 void asCWriter::WriteUsedGlobalProps()
 {
+	TimeIt("asCWriter::WriteUsedGlobalProps");
+	
 	int c = (int)usedGlobalProperties.GetLength();
 	WriteEncodedInt64(c);
 
@@ -4949,32 +5007,12 @@ void asCWriter::WriteUsedGlobalProps()
 	{
 		asPWORD *p = (asPWORD*)usedGlobalProperties[n];
 		
-		// First search for the global in the module
-		char moduleProp = 0;
+		// Find the property descriptor from the address
 		asCGlobalProperty *prop = 0;
-		asCSymbolTable<asCGlobalProperty>::iterator it = module->scriptGlobals.List();
-		for( ; it; it++ )
+		asSMapNode<void*, asCGlobalProperty*> *cursor;
+		if( engine->varAddressMap.MoveTo(&cursor, p) )
 		{
-			if( p == (*it)->GetAddressOfValue() )
-			{
-				prop = (*it);
-				moduleProp = 1;
-				break;
-			}
-		}
-
-		// If it is not in the module, it must be an application registered property
-		if( !prop )
-		{
-			asCSymbolTable<asCGlobalProperty>::iterator it = engine->registeredGlobalProps.List();
-			for( ; it; it++ )
-			{
-				if( it->GetAddressOfValue() == p )
-				{
-					prop = *it;
-					break;
-				}
-			}
+			prop = engine->varAddressMap.GetValue(cursor);
 		}
 
 		asASSERT(prop);
@@ -4985,12 +5023,17 @@ void asCWriter::WriteUsedGlobalProps()
 		WriteDataType(&prop->type);
 
 		// Also store whether the property is a module property or a registered property
+		char moduleProp = 0;
+		if( prop->realAddress == 0 )
+			moduleProp = 1;
 		WriteData(&moduleProp, 1);
 	}
 }
 
 void asCWriter::WriteUsedObjectProps()
 {
+	TimeIt("asCWriter::WriteUsedObjectProps");
+
 	int c = (int)usedObjectProperties.GetLength();
 	WriteEncodedInt64(c);
 

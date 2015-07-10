@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/07/09</h2>
+<h2>Version 2.30.2 WIP - 2015/07/10</h2>
 
 <ul>
 <li>Library
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Reduced size of pre-compiled bytecode
 <li>Optimized logic for determining typeId for object types, which can improve compile time and LoadByteCode for applications with a lot of different object types
 <li>Improved thread safety to support multiple threads querying typeIds simultaneously
+<li>Improved performance for saving bytecode that uses lots of global properties
 </ul>
 <li>Add-ons
 <ul>
