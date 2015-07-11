@@ -84,7 +84,7 @@ static asQWORD __attribute__((noinline)) X64_CallFunction(const asQWORD *args, i
 	// This should only be done if any optimization is done. If no optimization (-O0) is used,
 	// then the compiler already backups the rsp before entering the inline assembler code
 		" .cfi_def_cfa_register r15 \n"
-#else
+#endif
 
 	// Skip the first 128 bytes on the stack frame, called "red zone",  
 	// that might be used by the compiler to store temporary values
