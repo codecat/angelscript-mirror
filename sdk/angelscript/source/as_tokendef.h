@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2014 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -174,7 +174,8 @@ enum eTokenType
 	ttProtected,           // protected
 	ttNamespace,           // namespace
 	ttMixin,               // mixin
-	ttAuto                 // auto
+	ttAuto,                // auto
+	ttFunction             // function
 };
 
 struct sTokenWord
@@ -262,6 +263,7 @@ sTokenWord const tokenWords[] =
 	asTokenDef("float"     , ttFloat),
 	asTokenDef("for"       , ttFor),
 	asTokenDef("funcdef"   , ttFuncDef),
+	asTokenDef("function"  , ttFunction),
 	asTokenDef("if"        , ttIf),
 	asTokenDef("import"    , ttImport),
 	asTokenDef("in"        , ttIn),

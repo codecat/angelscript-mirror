@@ -15,12 +15,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/07/11</h2>
+<h2>Version 2.30.2 WIP - 2015/07/12</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
-<li>Throwing exception from application code would cause a crash if the library had been built without optimizations on 64bit GNUC (Thanks _Engine_)
+<li>Throwing exception from application code would cause a crash if the library had been built without optimizations on 64bit GNUC (Thanks dkrusu)
 </ul>
 <li>Library
 <ul>
@@ -30,6 +30,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Optimized logic for determining typeId for object types, which can improve compile time and LoadByteCode for applications with a lot of different object types
 <li>Improved thread safety to support multiple threads querying typeIds simultaneously
 <li>Improved performance for saving bytecode that uses lots of global properties
+</ul>
+<li>Script language
+<ul>
+<li>Added the reserved keyword 'function' that will be used to declare lambdas
 </ul>
 <li>Add-ons
 <ul>

@@ -610,7 +610,7 @@ asCScriptNode *asCParser::ParseIdentifier()
 	return node;
 }
 
-// BNF: PARAMLIST ::= '(' ('void' | (TYPE TYPEMOD [IDENTIFIER] ['=' EXPR] {',' TYPE TYPEMOD [IDENTIFIER] ['=' EXPR]}) ')'
+// BNF: PARAMLIST ::= '(' ['void' | (TYPE TYPEMOD [IDENTIFIER] ['=' EXPR] {',' TYPE TYPEMOD [IDENTIFIER] ['=' EXPR]})] ')'
 asCScriptNode *asCParser::ParseParameterList()
 {
 	asCScriptNode *node = CreateNode(snParameterList);
@@ -1243,7 +1243,7 @@ asCScriptNode *asCParser::ParseCast()
 	return node;
 }
 
-// BNF: EXPRVALUE ::= 'void' | CONSTRUCTCALL | FUNCCALL | VARACCESS | CAST | LITERAL | '(' ASSIGN ')'
+// BNF: EXPRVALUE ::= 'void' | CONSTRUCTCALL | FUNCCALL | VARACCESS | CAST | LITERAL | '(' ASSIGN ')' | LAMBDA
 asCScriptNode *asCParser::ParseExprValue()
 {
 	asCScriptNode *node = CreateNode(snExprValue);
@@ -1323,6 +1323,10 @@ asCScriptNode *asCParser::ParseExprValue()
 
 		node->UpdateSourcePos(t1.pos, t1.length);
 	}
+	else if( t1.type == ttFunction )
+	{
+		node->AddChildLast(ParseLambda());
+	}
 	else
 	{
 		Error(TXT_EXPECTED_EXPRESSION_VALUE, &t1);
@@ -1364,6 +1368,21 @@ asCScriptNode *asCParser::ParseConstant()
 		GetToken(&t);
 		RewindTo(&t);
 	}
+
+	return node;
+}
+
+// BNF: LAMBDA ::= 'function' '(' [IDENTIFIER {',' IDENTIFIER}] ')' STATBLOCK
+asCScriptNode *asCParser::ParseLambda()
+{
+	asCScriptNode *node = CreateNode(snFunction);
+	if( node == 0 ) return 0;
+
+	sToken t;
+	GetToken(&t);
+
+	// TODO: Implement this
+	Error("Lambdas are not yet supported", &t);
 
 	return node;
 }
