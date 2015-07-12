@@ -8917,6 +8917,12 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// This is a void expression
 		ctx->type.SetVoidExpression();
 	}
+	else if( vnode->nodeType == snFunction )
+	{
+		// This is an anonymous function
+		// TODO: Implement this
+		Error("Anonymous functions (lambdas) are not yet supported", vnode);
+	}
 	else
 		asASSERT(false);
 

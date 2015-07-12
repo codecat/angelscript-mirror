@@ -28,6 +28,46 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test lambdas
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("name",
+			"funcdef void CB0(); \n"
+			"funcdef void CB1(int); \n"
+			"funcdef void CB2(int, int); \n"
+			"void func() { \n"
+			"   CB0 @cb0 = function() {}; \n"
+			"   CB1 @cb1 = function(a) {}; \n"
+			"   CB2 @cb2 = function(a,b) {}; \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+
+		if( bout.buffer != "name (4, 1) : Info    : Compiling void func()\n"
+						   "name (5, 26) : Error   : Anonymous functions (lambdas) are not yet supported\n"
+						   "name (5, 26) : Error   : Can't implicitly convert from '<unrecognized token>' to 'CB0@&'.\n"
+						   "name (6, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n"
+						   "name (6, 24) : Error   : Can't implicitly convert from '<unrecognized token>' to 'CB1@&'.\n"
+						   "name (7, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n"
+						   "name (7, 24) : Error   : Can't implicitly convert from '<unrecognized token>' to 'CB2@&'.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// TODO: Test error when lambda doesn't have enough parameters for funcdef
+		// TODO: Test error when lambda isn't used, i.e. standalone lambda
+		// TODO: Test error when attempting to call lambda through opCall post operator
+
+		engine->Release();
+	}
+
 	// Test to make sure it is not possible to convert class method to primitive
 	// http://www.gamedev.net/topic/669352-can-cast-object-method-to-uint/
 	{

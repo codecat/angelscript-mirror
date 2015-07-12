@@ -1381,8 +1381,44 @@ asCScriptNode *asCParser::ParseLambda()
 	sToken t;
 	GetToken(&t);
 
-	// TODO: Implement this
-	Error("Lambdas are not yet supported", &t);
+	if( t.type != ttFunction )
+	{
+		Error(ExpectedToken("function"), &t);
+		return node;
+	}
+
+	GetToken(&t);
+	if( t.type != ttOpenParanthesis )
+	{
+		Error(ExpectedToken("("), &t);
+		return node;
+	}
+
+	GetToken(&t);
+	if( t.type == ttIdentifier )
+	{
+		RewindTo(&t);
+		node->AddChildLast(ParseIdentifier());
+
+		GetToken(&t);
+		while( t.type == ttListSeparator )
+		{
+			node->AddChildLast(ParseIdentifier());
+			if( isSyntaxError ) return node;
+
+			GetToken(&t);
+		}
+	}
+
+	if( t.type != ttCloseParanthesis )
+	{
+		Error(ExpectedToken(")"), &t);
+		return node;
+	}
+
+	// We should just find the end of the statement block here. The statements 
+	// will be parsed on request by the compiler once it starts the compilation.
+	node->AddChildLast(SuperficiallyParseStatementBlock());
 
 	return node;
 }
