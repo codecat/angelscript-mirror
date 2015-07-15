@@ -51,19 +51,21 @@ bool Test()
 
 		if( bout.buffer != "name (4, 1) : Info    : Compiling void func()\n"
 						   "name (5, 26) : Error   : Anonymous functions (lambdas) are not yet supported\n"
-						   "name (5, 26) : Error   : Can't implicitly convert from '<unrecognized token>' to 'CB0@&'.\n"
 						   "name (6, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n"
-						   "name (6, 24) : Error   : Can't implicitly convert from '<unrecognized token>' to 'CB1@&'.\n"
-						   "name (7, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n"
-						   "name (7, 24) : Error   : Can't implicitly convert from '<unrecognized token>' to 'CB2@&'.\n" )
+						   "name (7, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
+		// TODO: Test "cast<CB0>(function(){})"
+		// TODO: Test "call(function(){})" where call is a function that takes a funcdef
+		// TODO: Test calling lambda function
+		// TODO: Test compiler error within lambda
 		// TODO: Test error when lambda doesn't have enough parameters for funcdef
 		// TODO: Test error when lambda isn't used, i.e. standalone lambda
 		// TODO: Test error when attempting to call lambda through opCall post operator
+		// TODO: Test loading/saving bytecode with lambda
 
 		engine->Release();
 	}

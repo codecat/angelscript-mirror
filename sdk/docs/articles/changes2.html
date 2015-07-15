@@ -15,12 +15,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/07/12</h2>
+<h2>Version 2.30.2 WIP - 2015/07/14</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Throwing exception from application code would cause a crash if the library had been built without optimizations on 64bit GNUC (Thanks dkrusu)
+<li>Fixed crash with asCALL_THISCALL_ASGLOBAL and objects passed by value in argument (Thanks justin12343)
 </ul>
 <li>Library
 <ul>

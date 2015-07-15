@@ -827,11 +827,13 @@ int CallSystemFunction(int id, asCContext *context)
 		args = context->m_regs.stackPointer;
 
 		// Skip the hidden argument for the return pointer
+		// TODO: runtime optimize: This check and increment should have been done in PrepareSystemFunction
 		if( descr->DoesReturnOnStack() )
 			args += AS_PTR_SIZE;
 
-		// Skip the object pointer
-		if( callConv >= ICC_THISCALL )
+		// Skip the object pointer on the stack
+		// TODO: runtime optimize: This check and increment should have been done in PrepareSystemFunction
+		if( callConv >= ICC_THISCALL && sysFunc->objForThiscall == 0 )
 			args += AS_PTR_SIZE;
 
 		asSSystemFunctionInterface::SClean *clean = sysFunc->cleanArgs.AddressOf();

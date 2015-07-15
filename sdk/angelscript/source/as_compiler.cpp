@@ -8922,6 +8922,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// This is an anonymous function
 		// TODO: Implement this
 		Error("Anonymous functions (lambdas) are not yet supported", vnode);
+		return -1;
 	}
 	else
 		asASSERT(false);
