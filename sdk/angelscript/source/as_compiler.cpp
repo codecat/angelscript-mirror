@@ -5867,10 +5867,48 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 	return cost;
 }
 
+asUINT asCCompiler::ImplicitConvLambdaToFunc(asSExprContext *ctx, const asCDataType &to, asCScriptNode * /*node*/, EImplicitConv /*convType*/, bool generateCode)
+{
+	asASSERT( to.GetFuncDef() && ctx->IsLambda() );
+
+	// Check that the lambda has the correct amount of arguments
+	asUINT count = 0;
+	asCScriptNode *argNode = ctx->exprNode->firstChild;
+	while( argNode->nodeType == snIdentifier )
+	{
+		count++;
+		argNode = argNode->next;
+	}
+	asASSERT( argNode->nodeType == snStatementBlock );
+
+	asCScriptFunction *funcDef = to.GetFuncDef();
+	if( funcDef->parameterTypes.GetLength() != count )
+		return asCC_NO_CONV;
+
+	// The Lambda can be used as this funcdef
+	ctx->type.dataType = to;
+
+	if( generateCode )
+	{
+		// Register the lambda with the builder for later compilation
+		// TODO: Lambda: The name of the function should be the current function decl + '$' + a counter for when there are multiple lambdas
+		asCScriptFunction *func = builder->RegisterLambda(ctx->exprNode, funcDef, outFunc->GetDeclarationStr() + "$", outFunc->nameSpace);
+		asASSERT( funcDef->IsSignatureExceptNameEqual(func) );
+		ctx->bc.InstrPTR(asBC_FuncPtr, func);
+	}
+
+	return asCC_CONST_CONV;
+}
+
 asUINT asCCompiler::ImplicitConversion(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode, bool allowObjectConstruct)
 {
 	asASSERT( ctx->type.dataType.GetTokenType() != ttUnrecognizedToken ||
 		      ctx->type.dataType.IsNullHandle() );
+
+	if( to.GetFuncDef() && ctx->IsLambda() )
+	{
+		return ImplicitConvLambdaToFunc(ctx, to, node, convType, generateCode);
+	}
 
 	// No conversion from void to any other type
 	if( ctx->type.dataType.GetTokenType() == ttVoid )
@@ -8920,6 +8958,10 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snFunction )
 	{
 		// This is an anonymous function
+		// Defer the evaluation of the function until it known where it 
+		// will be used, which is where the signature will be defined
+		ctx->SetLambda(vnode);
+
 		// TODO: Implement this
 		Error("Anonymous functions (lambdas) are not yet supported", vnode);
 		return -1;

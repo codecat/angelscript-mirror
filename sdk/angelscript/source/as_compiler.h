@@ -119,6 +119,22 @@ struct asSExprContext
 		if( type.dataType.GetObjectType() != &type.dataType.GetObjectType()->engine->functionBehaviours ) return false;
 		return true;
 	}
+	void SetLambda(asCScriptNode *funcDecl)
+	{
+		asASSERT( funcDecl && funcDecl->nodeType == snFunction );
+		asASSERT( bc.GetLastInstr() == -1 );
+
+		Clear();
+		type.SetVoidExpression();
+		exprNode = funcDecl;
+	}
+	bool IsLambda()
+	{
+		if( type.IsVoidExpression() && exprNode && exprNode->nodeType == snFunction )
+			return true;
+
+		return false;
+	}
 
 	asCByteCode bc;
 	asCTypeInfo type;
@@ -288,6 +304,7 @@ protected:
 	asUINT ImplicitConvObjectValue(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode);
 	void   ImplicitConversionConstant(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType);
 	void   ImplicitConvObjectToBestMathType(asSExprContext *ctx, asCScriptNode *node);
+	asUINT ImplicitConvLambdaToFunc(asSExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv convType, bool generateCode = true);
 
 	void LineInstr(asCByteCode *bc, size_t pos);
 

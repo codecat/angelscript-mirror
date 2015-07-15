@@ -58,6 +58,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// TODO: The keyword 'function' should not be reserved. Test "int c = function(a,b);". Should work normally
 		// TODO: Test "cast<CB0>(function(){})"
 		// TODO: Test "call(function(){})" where call is a function that takes a funcdef
 		// TODO: Test calling lambda function
@@ -66,6 +67,7 @@ bool Test()
 		// TODO: Test error when lambda isn't used, i.e. standalone lambda
 		// TODO: Test error when attempting to call lambda through opCall post operator
 		// TODO: Test loading/saving bytecode with lambda
+		// TODO: Test using lambda functions in asIScriptModule::CompileFunction()
 
 		engine->Release();
 	}

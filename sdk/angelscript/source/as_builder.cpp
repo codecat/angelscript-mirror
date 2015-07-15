@@ -4129,6 +4129,16 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 	return RegisterScriptFunction(node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared);
 }
 
+asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode * /*node*/, asCScriptFunction *funcDef, const asCString & /*name*/, asSNameSpace * /*ns*/)
+{
+	// TODO: lambda: Implement this
+	//               The function should be registered with the signature of funcDef, but with the specified name and namespace
+	//               The name of the function arguments should be gotten from the node
+	//               The function should be included as a global function in the module
+	//               The function should be added to the declared functions so it will be compiled afterwards
+	return funcDef;
+}
+
 int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool isConstMethod, bool isConstructor, bool isDestructor, bool isPrivate, bool isProtected, bool isOverride, bool isFinal, bool isShared)
 {
 	// Determine default namespace if not specified
