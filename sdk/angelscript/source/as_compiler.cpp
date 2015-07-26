@@ -110,10 +110,13 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	m_isConstructor       = false;
 	m_isConstructorCalled = false;
 	m_classDecl           = 0;
+	m_globalVar           = 0;
 
 	nextLabel = 0;
 	breakLabels.SetLength(0);
 	continueLabels.SetLength(0);
+
+	numLambdas = 0;
 
 	byteCode.ClearAll();
 }
@@ -530,8 +533,8 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 	// We need to parse the statement block now
 	asCScriptNode *blockBegin;
 
-	// If the function signature was implicit, e.g. virtual property
-	// accessor, then the received node already is the statement block
+	// If the function signature was implicit, e.g. virtual property accessor or
+	// lambda function, then the received node already is the statement block
 	if( func->nodeType != snStatementBlock )
 		blockBegin = func->lastChild;
 	else
@@ -1187,6 +1190,7 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc)
 {
 	Reset(builder, script, outFunc);
+	m_globalVar = gvar;
 
 	// Add a variable scope (even though variables can't be declared)
 	AddVariableScope();
@@ -1423,7 +1427,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 		param.MakeHandle(ctx->type.isExplicitHandle || ctx->type.IsNullConstant());
 
 		// Treat the void expression like a null handle when working with var types
-		if( ctx->type.IsVoidExpression() )
+		if( ctx->IsVoidExpression() )
 			param = asCDataType::CreateNullHandle();
 
 		// If value assign is disabled for reference types, then make
@@ -2277,7 +2281,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 				if( desc->funcType == asFUNC_VIRTUAL )
 					desc = objectType->virtualFunctionTable[desc->vfTableIdx];
 
-				//Match every named argument to an argument in the function
+				// Match every named argument to an argument in the function
 				for( n = 0; n < namedArgs->GetLength(); ++n )
 					(*namedArgs)[n].match = asUINT(-1);
 
@@ -2318,7 +2322,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 					}
 				}
 
-				//Check that every named argument was matched
+				// Check that every named argument was matched
 				if( matchedAll )
 				{
 					for( n = 0; n < namedArgs->GetLength(); ++n )
@@ -4379,6 +4383,10 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 		if( expr.IsClassMethod() || expr.IsGlobalFunc() )
 			Error(TXT_INVALID_EXPRESSION_AMBIGUOUS_NAME, enode);
 
+		// Must not have unused anonymous functions
+		if( expr.IsLambda() )
+			Error(TXT_INVALID_EXPRESSION_LAMBDA, enode);
+
 		// If we get here and there is still an unprocessed property
 		// accessor, then process it as a get access. Don't call if there is
 		// already a compile error, or we might report an error that is not valid
@@ -5890,11 +5898,20 @@ asUINT asCCompiler::ImplicitConvLambdaToFunc(asSExprContext *ctx, const asCDataT
 
 	if( generateCode )
 	{
+		// Build a unique name for the anonymous function
+		asCString name;
+		if( m_globalVar )
+			name.Format("$%s$%d", m_globalVar->name.AddressOf(), numLambdas++);
+		else
+			name.Format("$%s$%d", outFunc->GetDeclaration(), numLambdas++);
+
 		// Register the lambda with the builder for later compilation
-		// TODO: Lambda: The name of the function should be the current function decl + '$' + a counter for when there are multiple lambdas
-		asCScriptFunction *func = builder->RegisterLambda(ctx->exprNode, funcDef, outFunc->GetDeclarationStr() + "$", outFunc->nameSpace);
-		asASSERT( funcDef->IsSignatureExceptNameEqual(func) );
+		asCScriptFunction *func = builder->RegisterLambda(ctx->exprNode, script, funcDef, name, outFunc->nameSpace);
+		asASSERT( func == 0 || funcDef->IsSignatureExceptNameEqual(func) );
 		ctx->bc.InstrPTR(asBC_FuncPtr, func);
+
+		// Clear the expression node as it is no longer valid
+		ctx->exprNode = 0;
 	}
 
 	return asCC_CONST_CONV;
@@ -8110,7 +8127,15 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 	}
 
 	// Convert to polish post fix, i.e: a+b => ab+
+	asCArray<asCScriptNode *> postfix;
+	ConvertToPostFix(expr, postfix);
 
+	// Compile the postfix formatted expression
+	return CompilePostFixExpression(&postfix, ctx);
+}
+
+void asCCompiler::ConvertToPostFix(asCScriptNode *expr, asCArray<asCScriptNode *> &postfix)
+{
 	// The algorithm that I've implemented here is similar to
 	// Djikstra's Shunting Yard algorithm, though I didn't know it at the time.
 	// ref: http://en.wikipedia.org/wiki/Shunting-yard_algorithm
@@ -8124,28 +8149,26 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asSExprContext *ctx)
 		node = node->next;
 	}
 
-	asCArray<asCScriptNode *> stack(count);
-	asCArray<asCScriptNode *> stack2(count);
+	asCArray<asCScriptNode *>  stackA(count);
+	asCArray<asCScriptNode *> &stackB = postfix;
+	stackB.Allocate(count, false);
 
 	node = expr->firstChild;
 	while( node )
 	{
 		int precedence = GetPrecedence(node);
 
-		while( stack.GetLength() > 0 &&
-			   precedence <= GetPrecedence(stack[stack.GetLength()-1]) )
-			stack2.PushLast(stack.PopLast());
+		while( stackA.GetLength() > 0 &&
+			   precedence <= GetPrecedence(stackA[stackA.GetLength()-1]) )
+			stackB.PushLast(stackA.PopLast());
 
-		stack.PushLast(node);
+		stackA.PushLast(node);
 
 		node = node->next;
 	}
 
-	while( stack.GetLength() > 0 )
-		stack2.PushLast(stack.PopLast());
-
-	// Compile the postfix formatted expression
-	return CompilePostFixExpression(&stack2, ctx);
+	while( stackA.GetLength() > 0 )
+		stackB.PushLast(stackA.PopLast());
 }
 
 int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, asSExprContext *ctx)
@@ -8953,7 +8976,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 	else if( vnode->nodeType == snUndefined && vnode->tokenType == ttVoid )
 	{
 		// This is a void expression
-		ctx->type.SetVoidExpression();
+		ctx->SetVoidExpression();
 	}
 	else if( vnode->nodeType == snFunction )
 	{
@@ -8961,10 +8984,6 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asSExprContext *ctx
 		// Defer the evaluation of the function until it known where it 
 		// will be used, which is where the signature will be defined
 		ctx->SetLambda(vnode);
-
-		// TODO: Implement this
-		Error("Anonymous functions (lambdas) are not yet supported", vnode);
-		return -1;
 	}
 	else
 		asASSERT(false);
@@ -9480,11 +9499,11 @@ void asCCompiler::ProcessDeferredParams(asSExprContext *ctx)
 			{
 				// We must still evaluate the expression
 				MergeExprBytecode(ctx, expr);
-				if( !expr->type.IsVoidExpression() && (!expr->type.isConstant || expr->type.IsNullConstant()) )
+				if( !expr->IsVoidExpression() && (!expr->type.isConstant || expr->type.IsNullConstant()) )
 					ctx->bc.Instr(asBC_PopPtr);
 
 				// Give an error, except if the argument is void, null or 0 which indicate the argument is explicitly to be ignored
-				if( !expr->type.IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
+				if( !expr->IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
 					Error(TXT_ARG_NOT_LVALUE, outParam.argNode);
 
 				ReleaseTemporaryVariable(outParam.argType, &ctx->bc);
@@ -10037,7 +10056,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 	if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 	{
 		// Special case: Allow calling func(void) with an expression that evaluates to no datatype, but isn't exactly 'void'
-		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) && !args[0]->type.IsVoidExpression() )
+		if( args.GetLength() == 1 && args[0]->type.IsVoid() && !args[0]->IsVoidExpression() )
 		{
 			// Evaluate the expression before the function call
 			MergeExprBytecode(ctx, args[0]);
@@ -10176,7 +10195,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asSExprContext *ctx
 	}
 
 	// Don't allow any operators on void expressions
-	if( ctx->type.IsVoidExpression() )
+	if( ctx->IsVoidExpression() )
 	{
 		Error(TXT_VOID_CANT_BE_OPERAND, node);
 		return -1;
@@ -11149,7 +11168,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 	}
 
 	// Don't allow any operators on void expressions
-	if( ctx->type.IsVoidExpression() )
+	if( ctx->IsVoidExpression() )
 	{
 		Error(TXT_VOID_CANT_BE_OPERAND, node);
 		return -1;
@@ -11758,7 +11777,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 int asCCompiler::MatchArgument(asCScriptFunction *desc, const asSExprContext *argExpr, int paramNum, bool allowObjectConstruct)
 {
 	// void expressions can match any out parameter, but nothing else
-	if( argExpr->type.IsVoidExpression() )
+	if( argExpr->IsVoidExpression() )
 	{
 		if( desc->inOutFlags[paramNum] == asTM_OUTREF )
 			return 0;
@@ -11770,6 +11789,7 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asSExprContext *ar
 	ti.type = argExpr->type;
 	ti.methodName = argExpr->methodName;
 	ti.enumValue = argExpr->enumValue;
+	ti.exprNode = argExpr->exprNode;
 	if( argExpr->type.dataType.IsPrimitive() )
 		ti.type.dataType.MakeReference(false);
 	int cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
@@ -12182,7 +12202,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 	return 0;
 }
 
-void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode * /*node*/, bool useVariable, int stackOffset, int funcPtrVar)
+void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset, int funcPtrVar)
 {
 	if( objectType )
 	{
@@ -12204,6 +12224,10 @@ void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectTyp
 			Information(engine->scriptFunctions[funcId]->GetDeclaration(), node);
 		}
 */	}
+
+	// Store the expression node for error reporting
+	if( ctx->exprNode == 0 )
+		ctx->exprNode = node;
 
 	asCByteCode objBC(engine);
 	objBC.AddCode(&ctx->bc);
@@ -12267,7 +12291,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 	}
 
 	// Don't allow any operators on void expressions
-	if( lctx->type.IsVoidExpression() || rctx->type.IsVoidExpression() )
+	if( lctx->IsVoidExpression() || rctx->IsVoidExpression() )
 	{
 		Error(TXT_VOID_CANT_BE_OPERAND, node);
 		return -1;
@@ -14318,16 +14342,17 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 {
 	MergeExprBytecode(before, after);
 
-	before->type            = after->type;
-	before->property_get    = after->property_get;
-	before->property_set    = after->property_set;
-	before->property_const  = after->property_const;
-	before->property_handle = after->property_handle;
-	before->property_ref    = after->property_ref;
-	before->property_arg    = after->property_arg;
-	before->exprNode        = after->exprNode;
-	before->methodName      = after->methodName;
-	before->enumValue       = after->enumValue;
+	before->type             = after->type;
+	before->property_get     = after->property_get;
+	before->property_set     = after->property_set;
+	before->property_const   = after->property_const;
+	before->property_handle  = after->property_handle;
+	before->property_ref     = after->property_ref;
+	before->property_arg     = after->property_arg;
+	before->exprNode         = after->exprNode;
+	before->methodName       = after->methodName;
+	before->enumValue        = after->enumValue;
+	before->isVoidExpression = after->isVoidExpression;
 
 	after->property_arg = 0;
 

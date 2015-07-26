@@ -263,31 +263,38 @@ int asCReader::ReadInner()
 		asCScriptFunction *func = ReadFunction(isNew, false, true);
 		if( func )
 		{
+			func->module = module;
 			module->funcDefs.PushLast(func);
 			engine->funcDefs.PushLast(func);
 
 			// TODO: clean up: This is also done by the builder. It should probably be moved to a method in the module
 			// Check if there is another identical funcdef from another module and if so reuse that instead
-			for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
+			if( func->isShared )
 			{
-				asCScriptFunction *f2 = engine->funcDefs[n];
-				if( f2 == 0 || func == f2 )
-					continue;
-
-				if( f2->name == func->name &&
-					f2->nameSpace == func->nameSpace &&
-					f2->IsSignatureExceptNameEqual(func) )
+				for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
 				{
-					// Replace our funcdef for the existing one
-					module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
-					f2->AddRefInternal();
+					asCScriptFunction *f2 = engine->funcDefs[n];
+					if( f2 == 0 || func == f2 )
+						continue;
 
-					engine->funcDefs.RemoveValue(func);
+					if( !f2->isShared )
+						continue;
 
-					savedFunctions[savedFunctions.IndexOf(func)] = f2;
+					if( f2->name == func->name &&
+						f2->nameSpace == func->nameSpace &&
+						f2->IsSignatureExceptNameEqual(func) )
+					{
+						// Replace our funcdef for the existing one
+						module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
+						f2->AddRefInternal();
 
-					func->ReleaseInternal();
-					break;
+						engine->funcDefs.RemoveValue(func);
+
+						savedFunctions[savedFunctions.IndexOf(func)] = f2;
+
+						func->ReleaseInternal();
+						break;
+					}
 				}
 			}
 		}
@@ -620,6 +627,22 @@ void asCReader::ReadUsedFunctions()
 							func.nameSpace != f->nameSpace ||
 							!func.IsSignatureEqual(f) )
 							continue;
+
+						usedFunctions[n] = f;
+						break;
+					}
+				}
+				else if( func.funcType == asFUNC_FUNCDEF )
+				{
+					const asCArray<asCScriptFunction *> &funcs = module->funcDefs;
+					for( asUINT i = 0; i < funcs.GetLength(); i++ )
+					{
+						asCScriptFunction *f = funcs[i];
+						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+							continue;
+
+						// Funcdefs are always global so there is no need to compare object type
+						asASSERT( f->objectType == 0 );
 
 						usedFunctions[n] = f;
 						break;
@@ -1124,6 +1147,13 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
 	{
 		func->vfTableIdx = ReadEncodedUInt();
+	}
+	else if( func->funcType == asFUNC_FUNCDEF )
+	{
+		asBYTE bits;
+		ReadData(&bits, 1);
+		if( bits )
+			func->isShared = true;
 	}
 
 	if( addToModule )
@@ -3784,6 +3814,12 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	{
 		// TODO: Do we really need to store this? It can probably be reconstructed by the reader
 		WriteEncodedInt64(func->vfTableIdx);
+	}
+	else if( func->funcType == asFUNC_FUNCDEF )
+	{
+		char bits = 0;
+		bits += func->isShared ? 1 : 0;
+		WriteData(&bits,1);
 	}
 }
 

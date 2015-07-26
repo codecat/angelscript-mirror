@@ -1261,46 +1261,54 @@ asCScriptNode *asCParser::ParseExprValue()
 		node->AddChildLast(ParseConstructCall());
 	else if( t1.type == ttIdentifier || t1.type == ttScope )
 	{
-		// Determine the last identifier in order to check if it is a type
-		sToken t;
-		if( t1.type == ttScope ) t = t2; else t = t1;
-		RewindTo(&t);
-		GetToken(&t2);
-		while( t.type == ttIdentifier )
+		// Check if the expression is an anonymous function
+		if( IsLambda() )
 		{
-			t2 = t;
-			GetToken(&t);
-			if( t.type == ttScope )
-				GetToken(&t);
-			else 
-				break;
+			node->AddChildLast(ParseLambda());
 		}
-
-		bool isDataType = IsDataType(t2);
-		bool isTemplateType = false;
-		if( isDataType )
-		{
-			// Is this a template type?
-			tempString.Assign(&script->code[t2.pos], t2.length);
-			if( engine->IsTemplateType(tempString.AddressOf()) )
-				isTemplateType = true;
-		}
-
-		GetToken(&t2);
-		
-		// Rewind so the real parsing can be done, after deciding what to parse
-		RewindTo(&t1);
-
-		// Check if this is a construct call
-		if( isDataType && (t.type == ttOpenParanthesis ||  // type()
-			               (t.type == ttOpenBracket && t2.type == ttCloseBracket)) )      // type[]()
-			node->AddChildLast(ParseConstructCall());
-		else if( isTemplateType && t.type == ttLessThan )  // type<t>()
-			node->AddChildLast(ParseConstructCall());
-		else if( IsFunctionCall() )
-			node->AddChildLast(ParseFunctionCall());
 		else
-			node->AddChildLast(ParseVariableAccess());
+		{
+			// Determine the last identifier in order to check if it is a type
+			sToken t;
+			if( t1.type == ttScope ) t = t2; else t = t1;
+			RewindTo(&t);
+			GetToken(&t2);
+			while( t.type == ttIdentifier )
+			{
+				t2 = t;
+				GetToken(&t);
+				if( t.type == ttScope )
+					GetToken(&t);
+				else 
+					break;
+			}
+
+			bool isDataType = IsDataType(t2);
+			bool isTemplateType = false;
+			if( isDataType )
+			{
+				// Is this a template type?
+				tempString.Assign(&script->code[t2.pos], t2.length);
+				if( engine->IsTemplateType(tempString.AddressOf()) )
+					isTemplateType = true;
+			}
+
+			GetToken(&t2);
+		
+			// Rewind so the real parsing can be done, after deciding what to parse
+			RewindTo(&t1);
+
+			// Check if this is a construct call
+			if( isDataType && (t.type == ttOpenParanthesis ||  // type()
+							   (t.type == ttOpenBracket && t2.type == ttCloseBracket)) )      // type[]()
+				node->AddChildLast(ParseConstructCall());
+			else if( isTemplateType && t.type == ttLessThan )  // type<t>()
+				node->AddChildLast(ParseConstructCall());
+			else if( IsFunctionCall() )
+				node->AddChildLast(ParseFunctionCall());
+			else
+				node->AddChildLast(ParseVariableAccess());
+		}
 	}
 	else if( t1.type == ttCast )
 		node->AddChildLast(ParseCast());
@@ -1322,10 +1330,6 @@ asCScriptNode *asCParser::ParseExprValue()
 		}
 
 		node->UpdateSourcePos(t1.pos, t1.length);
-	}
-	else if( t1.type == ttFunction )
-	{
-		node->AddChildLast(ParseLambda());
 	}
 	else
 	{
@@ -1372,6 +1376,32 @@ asCScriptNode *asCParser::ParseConstant()
 	return node;
 }
 
+bool asCParser::IsLambda()
+{
+	bool isLambda = false;
+	sToken t;
+	GetToken(&t);
+	if( t.type == ttIdentifier && IdentifierIs(t, FUNCTION_TOKEN) )
+	{
+		sToken t2;
+		GetToken(&t2);
+		if( t2.type == ttOpenParanthesis )
+		{
+			// Skip until )
+			while( t2.type != ttCloseParanthesis && t2.type != ttEnd )
+				GetToken(&t2);
+
+			// The next token must be a {
+			GetToken(&t2);
+			if( t2.type == ttStartStatementBlock )
+				isLambda = true;
+		}
+	}
+
+	RewindTo(&t);
+	return isLambda;
+}
+
 // BNF: LAMBDA ::= 'function' '(' [IDENTIFIER {',' IDENTIFIER}] ')' STATBLOCK
 asCScriptNode *asCParser::ParseLambda()
 {
@@ -1381,7 +1411,7 @@ asCScriptNode *asCParser::ParseLambda()
 	sToken t;
 	GetToken(&t);
 
-	if( t.type != ttFunction )
+	if( t.type != ttIdentifier || !IdentifierIs(t, FUNCTION_TOKEN) )
 	{
 		Error(ExpectedToken("function"), &t);
 		return node;
@@ -2527,7 +2557,22 @@ bool asCParser::IsVirtualPropertyDecl()
 	// as it may wrongly identify the statement as a non-declaration if the user typed
 	// the name incorrectly. The real type is validated in ParseDeclaration where a
 	// proper error message can be given.
-	if( !IsRealType(t1.type) && t1.type != ttIdentifier )
+	if( t1.type == ttScope )
+		GetToken(&t1);
+
+	if( t1.type == ttIdentifier )
+	{
+		sToken t2;
+		GetToken(&t2);
+		while( t1.type == ttIdentifier && t2.type == ttScope )
+		{
+			GetToken(&t1);
+			GetToken(&t2);
+		}
+
+		RewindTo(&t2);
+	}
+	else if( !IsRealType(t1.type) )
 	{
 		RewindTo(&t);
 		return false;
@@ -3269,61 +3314,37 @@ asCScriptNode *asCParser::SuperficiallyParseVarInit()
 	if( t.type == ttAssignment )
 	{
 		GetToken(&t);
-		if( t.type == ttStartStatementBlock )
+		sToken start = t;
+
+		// Find the end of the expression
+		int indentParan = 0;
+		int indentBrace = 0;
+		while( indentParan || indentBrace || (t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock) )
 		{
-			sToken start = t;
-
-			// Find the end of the initialization list
-			int indent = 1;
-			while( indent )
+			if( t.type == ttOpenParanthesis )
+				indentParan++;
+			else if( t.type == ttCloseParanthesis )
+				indentParan--;
+			else if( t.type == ttStartStatementBlock )
+				indentBrace++;
+			else if( t.type == ttEndStatementBlock )
+				indentBrace--;
+			else if( t.type == ttNonTerminatedStringConstant )
 			{
-				GetToken(&t);
-				if( t.type == ttStartStatementBlock )
-					indent++;
-				else if( t.type == ttEndStatementBlock )
-					indent--;
-				else if( t.type == ttNonTerminatedStringConstant )
-				{
-					Error(TXT_NONTERMINATED_STRING, &t);
-					break;
-				}
-				else if( t.type == ttEnd )
-				{
-					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
-					Info(TXT_WHILE_PARSING_INIT_LIST, &start);
-					break;
-				}
+				Error(TXT_NONTERMINATED_STRING, &t);
+				break;
 			}
-		}
-		else
-		{
-			sToken start = t;
-
-			// Find the end of the expression
-			int indent = 0;
-			while( indent || (t.type != ttListSeparator && t.type != ttEndStatement && t.type != ttEndStatementBlock) )
+			else if( t.type == ttEnd )
 			{
-				if( t.type == ttOpenParanthesis )
-					indent++;
-				else if( t.type == ttCloseParanthesis )
-					indent--;
-				else if( t.type == ttNonTerminatedStringConstant )
-				{
-					Error(TXT_NONTERMINATED_STRING, &t);
-					break;
-				}
-				else if( t.type == ttEnd )
-				{
-					Error(TXT_UNEXPECTED_END_OF_FILE, &t);
-					Info(TXT_WHILE_PARSING_EXPRESSION, &start);
-					break;
-				}
-				GetToken(&t);
+				Error(TXT_UNEXPECTED_END_OF_FILE, &t);
+				Info(TXT_WHILE_PARSING_EXPRESSION, &start);
+				break;
 			}
-
-			// Rewind so that the next token read is the list separator, end statement, or end statement block
-			RewindTo(&t);
+			GetToken(&t);
 		}
+
+		// Rewind so that the next token read is the list separator, end statement, or end statement block
+		RewindTo(&t);
 	}
 	else if( t.type == ttOpenParanthesis )
 	{

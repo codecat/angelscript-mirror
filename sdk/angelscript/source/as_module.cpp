@@ -1273,6 +1273,33 @@ int asCModule::AddScriptFunction(asCScriptFunction *func)
 	func->AddRefInternal();
 	engine->AddScriptFunction(func);
 
+	// If the function that is being added is an already compiled shared function
+	// then it is necessary to look for anonymous functions that may be declared
+	// within it and add those as well
+	if( func->isShared && func->funcType == asFUNC_SCRIPT )
+	{
+		// Loop through the byte code and check all the 
+		// asBC_FuncPtr instructions for anonymous functions
+		asDWORD *bc = func->scriptData->byteCode.AddressOf();
+		asUINT bcLength = (asUINT)func->scriptData->byteCode.GetLength();
+		for( asUINT n = 0; n < bcLength; )
+		{
+			int c = *(asBYTE*)&bc[n];
+			if( c == asBC_FuncPtr )
+			{
+				asCScriptFunction *f = reinterpret_cast<asCScriptFunction*>(asBC_PTRARG(&bc[n]));
+				// Anonymous functions start with $
+				// There are never two equal anonymous functions so it is not necessary to look for duplicates
+				if( f && f->name[0] == '$' )
+				{
+					AddScriptFunction(f);
+					globalFunctions.Put(f);
+				}
+			}
+			n += asBCTypeSize[asBCInfo[c].type];
+		}
+	}
+
 	return 0;
 }
 
@@ -1734,6 +1761,7 @@ int asCModule::AddFuncDef(const asCString &name, asSNameSpace *ns)
 
 	func->name      = name;
 	func->nameSpace = ns;
+	func->module    = this;
 
 	funcDefs.PushLast(func);
 

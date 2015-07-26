@@ -73,14 +73,9 @@ struct asSExprContext
 {
 	asSExprContext(asCScriptEngine *engine) : bc(engine) 
 	{
-		exprNode        = 0; 
-		origExpr        = 0; 
-		property_get    = 0; 
-		property_set    = 0; 
-		property_const  = false;
-		property_handle = false;
-		property_ref    = false;
-		property_arg    = 0;
+		property_arg     = 0;
+
+		Clear();
 	}
 	~asSExprContext() 
 	{
@@ -90,29 +85,30 @@ struct asSExprContext
 	void Clear()
 	{
 		bc.ClearAll();
-		type.SetDummy();
+		type.Set(asCDataType());
+		deferredParams.SetLength(0);
 		if( property_arg )
 			asDELETE(property_arg, asSExprContext);
-		property_arg = 0;
-		deferredParams.SetLength(0);
-		exprNode        = 0; 
-		origExpr        = 0; 
-		property_get    = 0; 
-		property_set    = 0; 
-		property_const  = false;
-		property_handle = false;
-		property_ref    = false;
-		methodName      = "";
-		enumValue       = "";
+		property_arg     = 0;
+		exprNode         = 0; 
+		origExpr         = 0; 
+		property_get     = 0; 
+		property_set     = 0; 
+		property_const   = false;
+		property_handle  = false;
+		property_ref     = false;
+		methodName       = "";
+		enumValue        = "";
+		isVoidExpression = false;
 	}
-	bool IsClassMethod()
+	bool IsClassMethod() const
 	{
 		if( type.dataType.GetObjectType() == 0 ) return false;
 		if( methodName == "" ) return false;
 		if( type.dataType.GetObjectType() == &type.dataType.GetObjectType()->engine->functionBehaviours ) return false;
 		return true;
 	}
-	bool IsGlobalFunc()
+	bool IsGlobalFunc() const
 	{
 		if( type.dataType.GetObjectType() == 0 ) return false;
 		if( methodName == "" ) return false;
@@ -125,12 +121,25 @@ struct asSExprContext
 		asASSERT( bc.GetLastInstr() == -1 );
 
 		Clear();
-		type.SetVoidExpression();
+		type.SetUndefinedFuncHandle(bc.GetEngine());
 		exprNode = funcDecl;
 	}
-	bool IsLambda()
+	bool IsLambda() const
 	{
-		if( type.IsVoidExpression() && exprNode && exprNode->nodeType == snFunction )
+		if( type.IsUndefinedFuncHandle() && exprNode && exprNode->nodeType == snFunction )
+			return true;
+
+		return false;
+	}
+	void SetVoidExpression()
+	{
+		Clear();
+		type.SetVoid();
+		isVoidExpression = true;
+	}
+	bool IsVoidExpression() const
+	{
+		if( isVoidExpression && type.IsVoid() && exprNode == 0 )
 			return true;
 
 		return false;
@@ -140,9 +149,10 @@ struct asSExprContext
 	asCTypeInfo type;
 	int  property_get;
 	int  property_set;
-	bool property_const;  // If the object that is being accessed through property accessor is read-only
-	bool property_handle; // If the property accessor is called on an object stored in a handle
-	bool property_ref;    // If the property accessor is called on a reference
+	bool property_const;   // If the object that is being accessed through property accessor is read-only
+	bool property_handle;  // If the property accessor is called on an object stored in a handle
+	bool property_ref;     // If the property accessor is called on a reference
+	bool isVoidExpression; // Set to true if the expression is an explicit 'void', e.g. used to ignore out parameters in func calls
 	asSExprContext *property_arg;
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
@@ -255,6 +265,7 @@ protected:
 	void CompileInitAsCopy(asCDataType &type, int offset, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool derefDestination);
 
 	// Helper functions
+	void ConvertToPostFix(asCScriptNode *expr, asCArray<asCScriptNode *> &postfix);
 	void ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode *node);
 	int  ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext *arg, asCScriptNode *node);
 	int  ProcessPropertyGetSetAccessor(asSExprContext *ctx, asSExprContext *lctx, asSExprContext *rctx, eTokenType op, asCScriptNode *errNode);
@@ -324,16 +335,18 @@ protected:
 	bool hasCompileErrors;
 
 	int nextLabel;
+	int numLambdas;
 
-	asCVariableScope *variables;
-	asCBuilder *builder;
-	asCScriptEngine *engine;
-	asCScriptCode *script;
+	asCVariableScope  *variables;
+	asCBuilder        *builder;
+	asCScriptEngine   *engine;
+	asCScriptCode     *script;
 	asCScriptFunction *outFunc;
 
-	bool               m_isConstructor;
-	bool               m_isConstructorCalled;
-	sClassDeclaration *m_classDecl;
+	bool                        m_isConstructor;
+	bool                        m_isConstructorCalled;
+	sClassDeclaration          *m_classDecl;
+	sGlobalVariableDescription *m_globalVar;
 
 	asCArray<int> breakLabels;
 	asCArray<int> continueLabels;
@@ -370,7 +383,7 @@ protected:
 
 	bool isCompilingDefaultArg;
 	bool isProcessingDeferredParams;
-	int noCodeOutput;
+	int  noCodeOutput;
 };
 
 END_AS_NAMESPACE

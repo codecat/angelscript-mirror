@@ -32,42 +32,183 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		bout.buffer = "";
 
+		// Success scenarios
+		//---------------------
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("name",
 			"funcdef void CB0(); \n"
-			"funcdef void CB1(int); \n"
+			"funcdef void CB1(bool); \n"
 			"funcdef void CB2(int, int); \n"
+			"bool called = false; \n"
 			"void func() { \n"
-			"   CB0 @cb0 = function() {}; \n"
+			"   CB0 @cb0 = function() {}; \n"          // The lambda takes on the signature of the funcdef it is assigned to
 			"   CB1 @cb1 = function(a) {}; \n"
 			"   CB2 @cb2 = function(a,b) {}; \n"
-			"} \n");
+			"   CB0 @a0 = cast<CB0>(function(){}); \n" // or if a cast to a funcdef
+			"   call(function(a) { called = a; }); \n" // or directly passed to a function expecting funcdef
+			"   assert( called ); \n"
+			"   call(function(a) { called = !a; }); \n"
+			"   assert( !called ); \n"
+			"} \n"
+			"void call(CB1@a) { a(true); } \n");
 		r = mod->Build();
-		if( r >= 0 )
+		if( r < 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "name (4, 1) : Info    : Compiling void func()\n"
-						   "name (5, 26) : Error   : Anonymous functions (lambdas) are not yet supported\n"
-						   "name (6, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n"
-						   "name (7, 24) : Error   : Anonymous functions (lambdas) are not yet supported\n" )
+		// Test calling lambda function
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Saving and loading should also work
+		CBytecodeStream stream(__FILE__"1");
+		r = mod->SaveByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = mod->LoadByteCode(&stream);
+		if( r < 0 )
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "func()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test using lambda functions in asIScriptModule::CompileFunction()
+		asUINT funcCount = mod->GetFunctionCount();
+		r = ExecuteString(engine, "called = false; \n call(function(a) { called = a; }); \n assert( called );\n", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		if( funcCount != mod->GetFunctionCount() )
+			TEST_FAILED;
+
+		// The keyword 'function' should not be reserved. Test "int c = function(a,b);". Should work normally
+		mod->AddScriptSection("test",
+			"int function(int,int) {return 0;}\n"
+			"void func() { \n"
+			"  int a = 0, b = 0; \n"
+			"  int c = function(a, b); \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+
+		// Test using lambda functions in shared functions (the lambda's should be shared too). 
+		// The shared lambda should be included in the module that compiles the shared function that declared the lambda
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"funcdef int CB1(int); \n"
+			"shared int sfunc(int a) { \n"
+			"  CB1 @c = function(a) {return a*a;}; \n"
+			"  return c(a); \n"
+			"} \n");
+		r = mod2->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+		mod->AddScriptSection("test",
+			"funcdef int CB1(int); \n"        // TODO: It shouldn't be necessary to declare this, but without it, it will not be saved with the bytecode, and thus the LoadByteCode will not be able to link the sfunc that uses it
+			"shared int sfunc(int a) {} \n"); // no need to implement it again
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "assert( sfunc(4) == 16 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Saving and loading should also work
+		CBytecodeStream stream2(__FILE__"1");
+		r = mod->SaveByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+		engine->DiscardModule("test2");
+		engine->DiscardModule("test");
+
+		mod = engine->GetModule("test3", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "assert( sfunc(4) == 16 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// Test lambda function in asIScriptModule::CompileGlobalVar()
+		r = mod->CompileGlobalVar("glob", "CB1 @g = function(a) {return a;};", 0);
+		if( r < 0 )
+			TEST_FAILED;
+		r = ExecuteString(engine, "assert( g(4) == 4 );", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+
+		// No messages should have been generated until now
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
-		// TODO: The keyword 'function' should not be reserved. Test "int c = function(a,b);". Should work normally
-		// TODO: Test "cast<CB0>(function(){})"
-		// TODO: Test "call(function(){})" where call is a function that takes a funcdef
-		// TODO: Test calling lambda function
-		// TODO: Test compiler error within lambda
-		// TODO: Test error when lambda doesn't have enough parameters for funcdef
-		// TODO: Test error when lambda isn't used, i.e. standalone lambda
-		// TODO: Test error when attempting to call lambda through opCall post operator
-		// TODO: Test loading/saving bytecode with lambda
-		// TODO: Test using lambda functions in asIScriptModule::CompileFunction()
+		// The global variable is holding a reference to the anonymous function,
+		// which is causing the module to believe it is still in use. So it is
+		// necessary to explicitly discard the module before reusing it
+		mod->Discard();
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+
+		// Error scenarios
+		//-------------------
+		// Test compiler error within lambda
+		bout.buffer = "";
+		mod->AddScriptSection("name", 
+			"funcdef void CB0(); \n"
+			"void func() { \n"
+			"  CB0 @c = function() { error }; \n"
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "name (3, 23) : Info    : Compiling void $void func()$0()\n"
+						   "name (3, 31) : Error   : Expected ';'\n"
+						   "name (3, 31) : Error   : Instead found '}'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Stand-alone lambda should generate appropriate error
+		bout.buffer = "";
+		r = ExecuteString(engine, "function(){};");
+		if( r >= 0 )
+			TEST_FAILED;
+		if( bout.buffer != "ExecuteString (1, 11) : Error   : Invalid expression: stand-alone anonymous function\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test error when lambda has wrong number of parameters for funcdef
+		// Test error when attempting to call lambda through opCall post operator
+		bout.buffer = "";
+		mod->AddScriptSection("name", 
+			"funcdef void CB1(int); \n"
+			"void func() { \n"
+			"  CB1 @c = function() {}; \n"    // too few arguments
+			"  CB1 @d = function(a,b) {}; \n" // too many arguments
+			"  function(){}(); \n"            // directly calling the lambda is not allowed
+			"} \n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		// TODO: The error messages should be more more explicit
+		if( bout.buffer != "name (2, 1) : Info    : Compiling void func()\n"
+						   "name (3, 23) : Error   : Can't implicitly convert from '$func@const' to 'CB1@&'.\n"
+						   "name (4, 21) : Error   : Can't implicitly convert from '$func@const' to 'CB1@&'.\n"
+						   "name (5, 15) : Error   : No matching signatures to '$func::opCall()'\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->Release();
 	}

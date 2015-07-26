@@ -15,13 +15,14 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/07/14</h2>
+<h2>Version 2.30.2 WIP - 2015/07/20</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Throwing exception from application code would cause a crash if the library had been built without optimizations on 64bit GNUC (Thanks dkrusu)
 <li>Fixed crash with asCALL_THISCALL_ASGLOBAL and objects passed by value in argument (Thanks justin12343)
+<li>Fixed bug in parser related to virtual properties and datatypes in namespaces (Thanks dkrusu)
 </ul>
 <li>Library
 <ul>
@@ -34,11 +35,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 </ul>
 <li>Script language
 <ul>
-<li>Added the reserved keyword 'function' that will be used to declare lambdas
+<li>Added the non-reserved keyword 'function' that will be used to declare anonymous functions
+<li>Anonymous functions can now be declared as part of expressions
 </ul>
 <li>Add-ons
 <ul>
 <li>ConfigEngineFromStream appropriately treats names of behaviour functions before registering them since they are now prefixed with $ in WriteConfigToStream
+<li>Fixed compiler error in as_scriptbuilder.h on MinGW (Thanks DarkPizzaX)
 </ul>
 </ul>
 

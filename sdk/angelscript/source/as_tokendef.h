@@ -174,8 +174,7 @@ enum eTokenType
 	ttProtected,           // protected
 	ttNamespace,           // namespace
 	ttMixin,               // mixin
-	ttAuto,                // auto
-	ttFunction             // function
+	ttAuto                 // auto
 };
 
 struct sTokenWord
@@ -263,7 +262,6 @@ sTokenWord const tokenWords[] =
 	asTokenDef("float"     , ttFloat),
 	asTokenDef("for"       , ttFor),
 	asTokenDef("funcdef"   , ttFuncDef),
-	asTokenDef("function"  , ttFunction),
 	asTokenDef("if"        , ttIf),
 	asTokenDef("import"    , ttImport),
 	asTokenDef("in"        , ttIn),
@@ -313,6 +311,7 @@ const char * const OVERRIDE_TOKEN = "override";
 const char * const GET_TOKEN      = "get";
 const char * const SET_TOKEN      = "set";
 const char * const ABSTRACT_TOKEN = "abstract";
+const char * const FUNCTION_TOKEN = "function";
 
 END_AS_NAMESPACE
 

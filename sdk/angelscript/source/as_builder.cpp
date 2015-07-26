@@ -363,8 +363,34 @@ int asCBuilder::CompileGlobalVar(const char *sectionName, const char *code, int 
 
 	CompileGlobalVariables();
 
+	// It is possible that the global variable initialization included anonymous functions that must be compiled too
+	for( asUINT n = 0; n < functions.GetLength(); n++ )
+	{
+		asCCompiler compiler(engine);
+		asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
+		int r = compiler.CompileFunction(this, functions[n]->script, func->parameterNames, functions[n]->node, func, 0);
+		if( r < 0 )
+			break;
+	}
+
 	if( numWarnings > 0 && engine->ep.compilerWarnings == 2 )
 		WriteError(TXT_WARNINGS_TREATED_AS_ERROR, 0, 0);
+
+	// None of the functions should be added to the module if any error occurred, 
+	// or it was requested that the functions wouldn't be added to the scope
+	if( numErrors > 0 )
+	{
+		for( asUINT n = 0; n < functions.GetLength(); n++ )
+		{
+			asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
+			if( module->globalFunctions.GetIndex(func) >= 0 )
+			{
+				module->globalFunctions.Erase(module->globalFunctions.GetIndex(func));
+				module->scriptFunctions.RemoveValue(func);
+				func->ReleaseInternal();
+			}
+		}
+	}
 
 	if( numErrors > 0 )
 	{
@@ -549,22 +575,38 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->paramNames        = func->parameterNames;
 	funcDesc->isExistingShared  = false;
 
-	asCCompiler compiler(engine);
-	compiler.CompileFunction(this, functions[0]->script, func->parameterNames, functions[0]->node, func, 0);
+	// This must be done in a loop, as it is possible that additional functions get declared as lambda's in the code
+	for( asUINT n = 0; n < functions.GetLength(); n++ )
+	{
+		asCCompiler compiler(engine);
+		asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
+		int r = compiler.CompileFunction(this, functions[n]->script, func->parameterNames, functions[n]->node, func, 0);
+		if( r < 0 )
+			break;
+	}
 
 	if( numWarnings > 0 && engine->ep.compilerWarnings == 2 )
 		WriteError(TXT_WARNINGS_TREATED_AS_ERROR, 0, 0);
 
+	// None of the functions should be added to the module if any error occurred, 
+	// or it was requested that the functions wouldn't be added to the scope
+	if( !(compileFlags & asCOMP_ADD_TO_MODULE) || numErrors > 0 )
+	{
+		for( asUINT n = 0; n < functions.GetLength(); n++ )
+		{
+			asCScriptFunction *func = engine->scriptFunctions[functions[n]->funcId];
+			if( module->globalFunctions.GetIndex(func) >= 0 )
+			{
+				module->globalFunctions.Erase(module->globalFunctions.GetIndex(func));
+				module->scriptFunctions.RemoveValue(func);
+				func->ReleaseInternal();
+			}
+		}
+	}
+
 	if( numErrors > 0 )
 	{
-		// If the function was added to the module then remove it again
-		if( compileFlags & asCOMP_ADD_TO_MODULE )
-		{
-			module->globalFunctions.Erase(module->globalFunctions.GetIndex(func));
-			module->scriptFunctions.RemoveValue(func);
-			func->ReleaseInternal();
-		}
-
+		// Release the function pointer that would otherwise be returned if no errors occured
 		func->ReleaseInternal();
 
 		return asERROR;
@@ -1521,6 +1563,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
 	asASSERT( func );
 
+	// TODO: It should be possible to declare funcdef as shared. In this case a compiler error will be given if any of the types it uses are not shared
 	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared, func->nameSpace);
 
 	// There should not be any defaultArgs, but if there are any we need to delete them to avoid leaks
@@ -1528,27 +1571,47 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 		if( defaultArgs[n] )
 			asDELETE(defaultArgs[n], asCString);
 
-	// TODO: Should we force the use of 'shared' for this check to be done?
-	// Check if there is another identical funcdef from another module and if so reuse that instead
-	for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
+	// All funcdefs are shared, unless one of the parameter types or return type is not shared
+	isShared = true;
+	if( func->returnType.GetObjectType() && !func->returnType.GetObjectType()->IsShared() )
+		isShared = false;
+	if( func->returnType.GetFuncDef() && !func->returnType.GetFuncDef()->IsShared() )
+		isShared = false;
+	for( asUINT n = 0; isShared && n < func->parameterTypes.GetLength(); n++ )
 	{
-		asCScriptFunction *f2 = engine->funcDefs[n];
-		if( f2 == 0 || func == f2 )
-			continue;
+		if( func->parameterTypes[n].GetObjectType() && !func->parameterTypes[n].GetObjectType()->IsShared() )
+			isShared = false;
+		if( func->parameterTypes[n].GetFuncDef() && !func->parameterTypes[n].GetFuncDef()->IsShared() )
+			isShared = false;
+	}
+	func->isShared = isShared;
 
-		if( f2->name == func->name &&
-			f2->nameSpace == func->nameSpace &&
-			f2->IsSignatureExceptNameEqual(func) )
+	// Check if there is another identical funcdef from another module and if so reuse that instead
+	if( func->isShared )
+	{
+		for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
 		{
-			// Replace our funcdef for the existing one
-			funcDef->idx = f2->id;
-			module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
-			f2->AddRefInternal();
+			asCScriptFunction *f2 = engine->funcDefs[n];
+			if( f2 == 0 || func == f2 )
+				continue;
 
-			engine->funcDefs.RemoveValue(func);
+			if( !f2->isShared )
+				continue;
 
-			func->ReleaseInternal();
-			break;
+			if( f2->name == func->name &&
+				f2->nameSpace == func->nameSpace &&
+				f2->IsSignatureExceptNameEqual(func) )
+			{
+				// Replace our funcdef for the existing one
+				funcDef->idx = f2->id;
+				module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
+				f2->AddRefInternal();
+
+				engine->funcDefs.RemoveValue(func);
+
+				func->ReleaseInternal();
+				break;
+			}
 		}
 	}
 }
@@ -4129,14 +4192,32 @@ int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCod
 	return RegisterScriptFunction(node, file, objType, isInterface, isGlobalFunction, ns, isExistingShared, isMixin, name, returnType, parameterNames, parameterTypes, inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared);
 }
 
-asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode * /*node*/, asCScriptFunction *funcDef, const asCString & /*name*/, asSNameSpace * /*ns*/)
+asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode *file, asCScriptFunction *funcDef, const asCString &name, asSNameSpace *ns)
 {
-	// TODO: lambda: Implement this
-	//               The function should be registered with the signature of funcDef, but with the specified name and namespace
-	//               The name of the function arguments should be gotten from the node
-	//               The function should be included as a global function in the module
-	//               The function should be added to the declared functions so it will be compiled afterwards
-	return funcDef;
+	// Get the parameter names from the node
+	asCArray<asCString> parameterNames;
+	asCArray<asCString*> defaultArgs;
+	asCScriptNode *args = node->firstChild;
+	while( args && args->nodeType == snIdentifier )
+	{
+		asCString argName;
+		argName.Assign(&file->code[args->tokenPos], args->tokenLength);
+		parameterNames.PushLast(argName);
+		defaultArgs.PushLast(0);
+		args = args->next;
+	}
+
+	// The statement block for the function must be disconnected, as the builder is going to be the owner of it
+	args->DisconnectParent();
+
+	// Get the return and parameter types from the funcDef
+	asCString funcName = name;
+	int r = RegisterScriptFunction(args, file, 0, 0, true, ns, false, false, funcName, funcDef->returnType, parameterNames, funcDef->parameterTypes, funcDef->inOutFlags, defaultArgs, false, false, false, false, false, false, false, false);
+	if( r < 0 )
+		return 0;
+
+	// Return the function that was just created (but that will be compiled later)
+	return engine->scriptFunctions[functions[functions.GetLength()-1]->funcId];
 }
 
 int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin, asCString &name, asCDataType &returnType, asCArray<asCString> &parameterNames, asCArray<asCDataType> &parameterTypes, asCArray<asETypeModifiers> &inOutFlags, asCArray<asCString *> &defaultArgs, bool isConstMethod, bool isConstructor, bool isDestructor, bool isPrivate, bool isProtected, bool isOverride, bool isFinal, bool isShared)

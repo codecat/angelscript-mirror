@@ -133,6 +133,8 @@ protected:
 	bool IsVarDecl();
 	bool IsVirtualPropertyDecl();
 	bool IsFuncDecl(bool isMethod);
+	bool IsLambda();
+	bool IsFunctionCall();
 
 	// Expressions
 	asCScriptNode *ParseAssignment();
@@ -158,7 +160,6 @@ protected:
 	bool IsPreOperator(int tokenType);
 	bool IsPostOperator(int tokenType);
 	bool IsAssignOperator(int tokenType);
-	bool IsFunctionCall();
 
 	bool CheckTemplateType(sToken &t);
 #endif
