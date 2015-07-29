@@ -220,12 +220,7 @@ CScriptDictionary &CScriptDictionary::operator =(const CScriptDictionary &other)
 CScriptDictValue *CScriptDictionary::operator[](const string &key)
 {
 	// Return the existing value if it exists, else insert an empty value
-	map<string, CScriptDictValue>::iterator it;
-	it = dict.find(key);
-	if( it == dict.end() )
-		it = dict.insert(map<string, CScriptDictValue>::value_type(key, CScriptDictValue())).first;
-	
-	return &it->second;
+	return &dict[key];
 }
 
 const CScriptDictValue *CScriptDictionary::operator[](const string &key) const
