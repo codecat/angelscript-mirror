@@ -255,7 +255,6 @@ asCObjectType::~asCObjectType()
 	if( engine == 0 )
 		return;
 
-	// TODO: 2.30.0: redesign: Shouldn't this have been done already?
 	DestroyInternal();
 }
 

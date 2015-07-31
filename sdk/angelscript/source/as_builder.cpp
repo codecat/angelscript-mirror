@@ -1505,9 +1505,9 @@ sMixinClass *asCBuilder::GetMixinClass(const char *name, asSNameSpace *ns)
 
 int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
-	// TODO: 2.30.0: redesign: Allow funcdefs to be explicitly declared as 'shared'. In this case
-	//                         an error should be given if any of the arguments/return type is not
-	//                         shared.
+	// TODO: redesign: Allow funcdefs to be explicitly declared as 'shared'. In this case
+	//                 an error should be given if any of the arguments/return type is not
+	//                 shared.
 
 	// Find the name
 	asASSERT( node->firstChild->nodeType == snDataType );
@@ -2531,7 +2531,7 @@ void asCBuilder::CompileInterfaces()
 		sClassDeclaration *intfDecl = interfaceDeclarations[n];
 		asCObjectType *intfType = intfDecl->objType;
 
-		// TODO: 2.28.1: Is this really at the correct place? Hasn't the vfTableIdx already been set here?
+		// TODO: Is this really at the correct place? Hasn't the vfTableIdx already been set here?
 		// Co-opt the vfTableIdx value in our own methods to indicate the
 		// index the function should have in the table chunk for this interface.
 		for( asUINT d = 0; d < intfType->methods.GetLength(); d++ )

@@ -463,7 +463,7 @@ bool Test()
 		RegisterStdString(engine);
 		r = engine->RegisterObjectMethod("type", "void opConv(?&out)", asFUNCTION(Type_castVar), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
-		// TODO: runtime optimize: This code produces a lot of unecessary bytecode
+		// TODO: runtime optimize: 2.30.2: This code produces a lot of unecessary bytecode
 		r = ExecuteString(engine, "type t; t.v = 5; string s = string(t); assert( s == '5' );");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;

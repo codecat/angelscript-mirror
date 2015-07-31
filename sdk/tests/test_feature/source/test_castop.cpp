@@ -140,9 +140,9 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 
-	// TODO: 2.30.0: What should the compiler do when the class has both a valid opCast method 
-	//               and a related class in a class hierarchy? Should prefer calling opCast, right?
-	//               How does C++ do it?
+	// TODO: What should the compiler do when the class has both a valid opCast method 
+	//       and a related class in a class hierarchy? Should prefer calling opCast, right?
+	//       How does C++ do it?
 
 	// Test using opImplConv on ref type stored in dictionary
 	// http://www.gamedev.net/topic/668972-getting-dictionary-addon-to-work-with-ref-counted-strings/
@@ -163,7 +163,7 @@ bool Test()
 			"dictionaryValue val = dict['foo']; \n"
 			"t = cast<string>(val); \n"
 			"assert( t == 'bar' ); \n"
-			"t = string(val); \n"               // TODO: runtime optimize: This expression makes unecessary copies of the string
+			"t = string(val); \n"               // TODO: runtime optimize: 2.30.2: This expression makes unecessary copies of the string
 			"assert( t == 'bar' ); \n"
 			"string s = string(dict['foo']);\n"
 			"assert( s == 'bar' ); \n" 

@@ -612,9 +612,9 @@ asCScriptEngine::asCScriptEngine()
 
 void asCScriptEngine::DeleteDiscardedModules()
 {
-	// TODO: 2.30.0: redesign: Prevent more than one thread from entering this function at the same time. 
-	//                         If a thread is already doing the work for the clean-up the other thread should
-	//                         simply return, as the first thread will continue.
+	// TODO: redesign: Prevent more than one thread from entering this function at the same time. 
+	//                 If a thread is already doing the work for the clean-up the other thread should
+	//                 simply return, as the first thread will continue.
 
 	ACQUIRESHARED(engineRWLock);
 	asUINT maxCount = discardedModules.GetLength();
@@ -650,7 +650,7 @@ void asCScriptEngine::DeleteDiscardedModules()
 
 asCScriptEngine::~asCScriptEngine()
 {
-	// TODO: 2.30.0: redesign: Clean up redundant code
+	// TODO: clean-up: Clean up redundant code
 
 	asUINT n = 0;
 	inDestructor = true;
@@ -5449,7 +5449,6 @@ void asCScriptEngine::RemoveScriptFunction(asCScriptFunction *func)
 // internal
 void asCScriptEngine::RemoveFuncdef(asCScriptFunction *funcdef)
 {
-	// TODO: 2.30.0: redesign: How to avoid removing a funcdef that is shared by multiple modules?
 	funcDefs.RemoveValue(funcdef);
 }
 

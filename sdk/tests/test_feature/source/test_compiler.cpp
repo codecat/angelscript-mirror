@@ -1148,6 +1148,10 @@ bool Test()
 			"void main() \n"
 			"{ \n"
 			"  dummy temp; \n"
+			// TODO: optimize: The temp string 'Return' is copied twice when calling alert. 
+			//                 This is because the function takes the string by value which currently 
+			//                 requires the object to be on the heap so it can be destroyed by the 
+			//                 called function. This will be modified in the future
 			"  alert('Return', test(temp)); \n"
 			"} \n"
 			"bool test(dummy x) \n"
@@ -1159,7 +1163,7 @@ bool Test()
 			"  assert( b == false ); \n"
 			"  assert( txt == 'Return' ); \n"
 			"} \n");
-		r = mod->Build(); // TODO: optimize: The temp string 'Return' is copied twice when calling alert
+		r = mod->Build(); 
 		if( r < 0 )
 			TEST_FAILED;
 		asIScriptContext *ctx = engine->CreateContext();

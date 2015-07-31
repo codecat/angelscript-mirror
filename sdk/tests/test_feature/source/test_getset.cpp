@@ -282,7 +282,7 @@ bool Test()
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 		
-		// TODO: 2.30.0: Test with ++ too
+		// TODO: Test with ++ too
 		// This shall be expanded to "set_prop(get_prop() + 1)"
 /*		r = ExecuteString(engine, "prop++; assert( g_var == 2 );", mod);
 		if( r != asEXECUTION_FINISHED )
