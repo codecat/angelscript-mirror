@@ -1015,6 +1015,21 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 				ChangeFirstDeleteNext(curr, asBC_PSF);
 				instr = GoForward(curr);
 			}
+			// VAR a, GETOBJREF 0 -> PshVPtr a
+			else if( curr->next && curr->next->op == asBC_GETOBJREF && curr->next->wArg[0] == 0 )
+			{
+				ChangeFirstDeleteNext(curr, asBC_PshVPtr);
+				instr = GoForward(curr);
+			}
+			// VAR, PSF, GETREF {PTR_SIZE} -> PSF, PSF
+			if( curr->next && curr->next->op == asBC_PSF &&
+				curr->next->next && curr->next->next->op == asBC_GETREF &&
+				curr->next->next->wArg[0] == AS_PTR_SIZE )
+			{
+				curr->op = asBC_PSF;
+				DeleteInstruction(curr->next->next);
+				instr = GoForward(curr);
+			}
 		}
 	}
 

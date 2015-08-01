@@ -1138,8 +1138,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-				// TODO: 2.30.2: runtime optimize: This bytecode sequence can be improved. VAR+GETOBJREF => PshVPtr
-				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_VAR,asBC_GETOBJREF,asBC_CALL,asBC_FREE,
+				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_PshVPtr,asBC_CALL,asBC_FREE,
 				asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
@@ -1162,7 +1161,6 @@ bool TestOptimize()
 		const char *script =
 			"void main() { \n"
 			"  string val = 'test'; \n" // initialization with a string constant
-			// TODO: 2.30.2: the sequence VAR, PSF, GETREF should become PSF, PSF
 			// TODO: optimize: The temporary string should only be destroyed after the call to assert,
 			//                 thus allowing the returned byte from == to be passed directly to the assert
 			//                 call.
@@ -1172,7 +1170,7 @@ bool TestOptimize()
 			//                 solution the benefit of the string pooling done by the string factory is
 			//                 often cancelled by the fact that the compiler is forced to make a copy of 
 			//                 the returned string reference anyway. In some cases the reference is used
-			//                 directly though, so the string pooling is not totally useless, e.g. in 
+			//                 directly though, so the string pooling is not totally useless, e.g. in
 			//                 assignment, or when something is concatenated with the string constant.
 			"  assert( val == 'test' ); \n" // comparison with a string constant
 			"} \n";
@@ -1187,7 +1185,7 @@ bool TestOptimize()
 		asBYTE expect[] = 
 			{
 				asBC_SUSPEND, asBC_STR, asBC_CALLSYS, asBC_PshRPtr, asBC_PSF, asBC_CALLSYS,  
-				asBC_SUSPEND, asBC_STR, asBC_CALLSYS, asBC_PshRPtr, asBC_PSF, asBC_CALLSYS, asBC_VAR, asBC_PSF, asBC_GETREF, asBC_CALLSYS, asBC_CpyRtoV4, asBC_PSF, asBC_CALLSYS, asBC_PshV4, asBC_CALLSYS,
+				asBC_SUSPEND, asBC_STR, asBC_CALLSYS, asBC_PshRPtr, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PSF, asBC_CALLSYS, asBC_CpyRtoV4, asBC_PSF, asBC_CALLSYS, asBC_PshV4, asBC_CALLSYS,
 				asBC_SUSPEND, asBC_PSF, asBC_CALLSYS, asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )

@@ -7,7 +7,6 @@
 #ifndef __psp2__
 	#include <locale.h> // setlocale()
 #endif
-#include <map>      // std::map
 
 using namespace std;
 
@@ -18,6 +17,16 @@ BEGIN_AS_NAMESPACE
 #define UNUSED_VAR(x) (void)(x)
 
 #if AS_USE_STRINGPOOL == 1
+
+#ifdef AS_CAN_USE_CPP11
+	// The string pool doesn't need to keep a specific order in the
+	// pool, so the unordered_map is faster than the ordinary map
+	#include <unordered_map>  // std::unordered_map
+	typedef unordered_map<const char *, string> map_t;
+#else
+	#include <map>      // std::map
+	typedef map<const char *, string> map_t;
+#endif
 
 // By keeping the literal strings in a pool the application
 // performance is improved as there are less string copies created.
@@ -49,22 +58,20 @@ static const string &StringFactory(asUINT length, const char *s)
 	}
 	asIScriptEngine *engine = ctx->GetEngine();
 
-	// TODO: runtime optimize: 2.30.2: Use unordered_map if C++11 is supported, i.e. MSVC10+, gcc 4.?+
-	map<const char *, string> *pool = reinterpret_cast< map<const char *, string>* >(engine->GetUserData(STRING_POOL));
-
+	map_t *pool = reinterpret_cast< map_t* >(engine->GetUserData(STRING_POOL));
 	if( !pool )
 	{
 		// The string pool hasn't been created yet, so we'll create it now
 		asAcquireExclusiveLock();
 
 		// Make sure the string pool wasn't created while we were waiting for the lock
-		pool = reinterpret_cast< map<const char *, string>* >(engine->GetUserData(STRING_POOL));
+		pool = reinterpret_cast< map_t* >(engine->GetUserData(STRING_POOL));
 		if( !pool )
 		{
 			#if defined(__S3E__)
-			pool = new map<const char *, string>;
+			pool = new map_t;
 			#else
-			pool = new (nothrow) map<const char *, string>;
+			pool = new (nothrow) map_t;
 			#endif
 			if( pool == 0 )
 			{
@@ -82,7 +89,7 @@ static const string &StringFactory(asUINT length, const char *s)
 	asAcquireSharedLock();
 
 	// First check if a string object hasn't been created already
-	map<const char *, string>::iterator it;
+	map_t::iterator it;
 	it = pool->find(s);
 	if( it != pool->end() )
 	{
@@ -100,7 +107,7 @@ static const string &StringFactory(asUINT length, const char *s)
 	if( it == pool->end() )
 	{
 		// Create a new string object
-		it = pool->insert(map<const char *, string>::value_type(s, string(s, length))).first;
+		it = pool->insert(map_t::value_type(s, string(s, length))).first;
 	}
 
 	asReleaseExclusiveLock();
@@ -109,7 +116,7 @@ static const string &StringFactory(asUINT length, const char *s)
 
 static void CleanupEngineStringPool(asIScriptEngine *engine)
 {
-	map<const char *, string> *pool = reinterpret_cast< map<const char *, string>* >(engine->GetUserData(STRING_POOL));
+	map_t *pool = reinterpret_cast< map_t* >(engine->GetUserData(STRING_POOL));
 	if( pool )
 		delete pool;
 }
