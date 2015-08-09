@@ -100,6 +100,7 @@ struct asSExprContext
 		methodName       = "";
 		enumValue        = "";
 		isVoidExpression = false;
+		isCleanArg       = false;
 	}
 	bool IsClassMethod() const
 	{
@@ -144,6 +145,25 @@ struct asSExprContext
 
 		return false;
 	}
+	void Merge(asSExprContext *after)
+	{
+		type             = after->type;
+		property_get     = after->property_get;
+		property_set     = after->property_set;
+		property_const   = after->property_const;
+		property_handle  = after->property_handle;
+		property_ref     = after->property_ref;
+		property_arg     = after->property_arg;
+		exprNode         = after->exprNode;
+		methodName       = after->methodName;
+		enumValue        = after->enumValue;
+		isVoidExpression = after->isVoidExpression;
+		isCleanArg       = after->isCleanArg;
+
+		after->property_arg = 0;
+
+		// Do not copy the origExpr member
+	}
 
 	asCByteCode bc;
 	asCTypeInfo type;
@@ -153,6 +173,7 @@ struct asSExprContext
 	bool property_handle;  // If the property accessor is called on an object stored in a handle
 	bool property_ref;     // If the property accessor is called on a reference
 	bool isVoidExpression; // Set to true if the expression is an explicit 'void', e.g. used to ignore out parameters in func calls
+	bool isCleanArg;       // Set to true if the expression has only been initialized with default constructor
 	asSExprContext *property_arg;
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;

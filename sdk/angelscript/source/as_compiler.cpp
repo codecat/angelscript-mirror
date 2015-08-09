@@ -1614,42 +1614,53 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				ctx->bc.AddCode(&tmpBC);
 			}
 
-			// Make sure the variable is not used in the expression
-			offset = AllocateVariableNotIn(dt, true, false, ctx);
-
-			if( dt.IsPrimitive() )
+			// If the expression is marked as clean, then it can be used directly
+			// without the need to allocate another temporary value as it is known
+			// that the argument has no other value than the default
+			if( ctx->isCleanArg )
 			{
-				ctx->type.SetVariable(dt, offset, true);
-				PushVariableOnStack(ctx, true);
+				// Must be a local variable
+				asASSERT( ctx->type.isVariable );
 			}
 			else
 			{
-				// TODO: Need to reserve variables, as the default constructor may need
-				//       to allocate temporary variables to compute default args
+				// Make sure the variable is not used in the expression
+				offset = AllocateVariableNotIn(dt, true, false, ctx);
 
-				// Allocate and construct the temporary object
-				asCByteCode tmpBC(engine);
-				CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
+				if( dt.IsPrimitive() )
+				{
+					ctx->type.SetVariable(dt, offset, true);
+					PushVariableOnStack(ctx, true);
+				}
+				else
+				{
+					// TODO: Need to reserve variables, as the default constructor may need
+					//       to allocate temporary variables to compute default args
 
-				// Insert the code before the expression code
-				tmpBC.AddCode(&ctx->bc);
-				ctx->bc.AddCode(&tmpBC);
+					// Allocate and construct the temporary object
+					asCByteCode tmpBC(engine);
+					CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
 
-				dt.MakeReference(!dt.IsObject() || dt.IsObjectHandle());
-				asCTypeInfo type;
-				type.Set(dt);
-				type.isTemporary = true;
-				type.stackOffset = (short)offset;
+					// Insert the code before the expression code
+					tmpBC.AddCode(&ctx->bc);
+					ctx->bc.AddCode(&tmpBC);
 
-				ctx->type = type;
+					dt.MakeReference(!dt.IsObject() || dt.IsObjectHandle());
+					asCTypeInfo type;
+					type.Set(dt);
+					type.isTemporary = true;
+					type.stackOffset = (short)offset;
 
-				ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-				if( dt.IsObject() && !dt.IsObjectHandle() )
-					ctx->bc.Instr(asBC_RDSPtr);
+					ctx->type = type;
+
+					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+					if( dt.IsObject() && !dt.IsObjectHandle() )
+						ctx->bc.Instr(asBC_RDSPtr);
+				}
+
+				// After the function returns the temporary variable will
+				// be assigned to the expression, if it is a valid lvalue
 			}
-
-			// After the function returns the temporary variable will
-			// be assigned to the expression, if it is a valid lvalue
 		}
 		else if( refType == asTM_INOUTREF )
 		{
@@ -6528,7 +6539,6 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 					// Pass the reference of that variable to the function as output parameter
 					asCDataType toRef(to);
 					toRef.MakeReference(false);
-					asCArray<asSExprContext *> args;
 					asSExprContext arg(engine);
 					arg.bc.InstrSHORT(asBC_PSF, (short)stackOffset);
 
@@ -6540,9 +6550,14 @@ asUINT asCCompiler::ImplicitConvObjectValue(asSExprContext *ctx, const asCDataTy
 					arg.type.SetVariable(toRef, stackOffset, false);
 					arg.type.isLValue = true;
 					arg.exprNode = node;
-					args.PushLast(&arg);
+
+					// Mark the argument as clean, so that MakeFunctionCall knows it 
+					// doesn't have to make a copy of it in order to protect the value
+					arg.isCleanArg = true;
 
 					// Call the behaviour method
+					asCArray<asSExprContext *> args;
+					args.PushLast(&arg);
 					MakeFunctionCall(ctx, funcs[0], ctx->type.dataType.GetObjectType(), args, node);
 
 					// Use the reference to the variable as the result of the expression
@@ -9537,12 +9552,12 @@ void asCCompiler::AfterFunctionCall(int funcID, asCArray<asSExprContext*> &args,
 	int n = (int)descr->parameterTypes.GetLength() - 1;
 	for( ; n >= 0; n-- )
 	{
-		// All &out arguments must be deferred
+		// All &out arguments must be deferred, except if the argument is clean, in which case the actual reference was passed in to the function
 		// If deferAll is set all objects passed by reference or handle must be deferred
-		if( (descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] & asTM_OUTREF)) ||
+		if( (descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] & asTM_OUTREF) && !args[n]->isCleanArg) ||
 			(descr->parameterTypes[n].IsObject() && deferAll && (descr->parameterTypes[n].IsReference() || descr->parameterTypes[n].IsObjectHandle())) )
 		{
-			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == asTM_OUTREF)) || args[n]->origExpr );
+			asASSERT( !(descr->parameterTypes[n].IsReference() && (descr->inOutFlags[n] == asTM_OUTREF) && !args[n]->isCleanArg) || args[n]->origExpr );
 
 			// For &inout, only store the argument if it is for a temporary variable
 			if( engine->ep.allowUnsafeReferences ||
@@ -11980,7 +11995,8 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asSExprContext *ar
 void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)
 {
 	// Reference parameters whose value won't be used don't evaluate the expression
-	if( paramType->IsReference() && !(refType & asTM_INREF) )
+	// Clean arguments (i.e. default value) will be passed in directly as there is nothing to protect
+	if( paramType->IsReference() && !(refType & asTM_INREF) && !arg->isCleanArg )
 	{
 		// Store the original bytecode so that it can be reused when processing the deferred output parameter
 		asSExprContext *orig = asNEW(asSExprContext)(engine);
@@ -12337,25 +12353,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 void asCCompiler::MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset, int funcPtrVar)
 {
 	if( objectType )
-	{
 		Dereference(ctx, true);
-
-		// This following warning was removed as there may be valid reasons
-		// for calling non-const methods on temporary objects, and we shouldn't
-		// warn when there is no way of removing the warning.
-/*
-		// Warn if the method is non-const and the object is temporary
-		// since the changes will be lost when the object is destroyed.
-		// If the object is accessed through a handle, then it is assumed
-		// the object is not temporary, even though the handle is.
-		if( ctx->type.isTemporary &&
-			!ctx->type.dataType.IsObjectHandle() &&
-			!engine->scriptFunctions[funcId]->isReadOnly )
-		{
-			Warning("A non-const method is called on temporary object. Changes to the object may be lost.", node);
-			Information(engine->scriptFunctions[funcId]->GetDeclaration(), node);
-		}
-*/	}
 
 	// Store the expression node for error reporting
 	if( ctx->exprNode == 0 )
@@ -14474,21 +14472,7 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 {
 	MergeExprBytecode(before, after);
 
-	before->type             = after->type;
-	before->property_get     = after->property_get;
-	before->property_set     = after->property_set;
-	before->property_const   = after->property_const;
-	before->property_handle  = after->property_handle;
-	before->property_ref     = after->property_ref;
-	before->property_arg     = after->property_arg;
-	before->exprNode         = after->exprNode;
-	before->methodName       = after->methodName;
-	before->enumValue        = after->enumValue;
-	before->isVoidExpression = after->isVoidExpression;
-
-	after->property_arg = 0;
-
-	// Do not copy the origExpr member
+	before->Merge(after);
 }
 
 void asCCompiler::FilterConst(asCArray<int> &funcs, bool removeConst)
