@@ -4830,11 +4830,15 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		// If searching with a scope informed, then the node and script must also be informed for potential error reporting
 		asASSERT( errNode && script );
 
-		// If the scope contains ::identifier, then use the last identifier as the class name and the rest of is as the namespace
+		// If the scope contains ::identifier, then use the last identifier as the class name and the rest of it as the namespace
 		int n = scope.FindLast("::");
 		asCString className = n >= 0 ? scope.SubString(n+2) : scope;
 		asCString nsName = n >= 0 ? scope.SubString(0, n) : "";
-		asSNameSpace *ns = GetNameSpaceByString(nsName, objectType->nameSpace, errNode, script);
+
+		// Check if the namespace actually exist, if not return silently as this cannot be the referring to a base class
+		asSNameSpace *ns = GetNameSpaceByString(nsName, objectType->nameSpace, errNode, script, false);
+		if( ns == 0 )
+			return;
 
 		// Find the base class with the specified scope
 		while( objectType && (objectType->name != className || objectType->nameSpace != ns) )
@@ -4990,7 +4994,7 @@ asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCod
 	return GetNameSpaceByString(scope, implicitNs, node, script);
 }
 
-asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script)
+asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script, bool isRequired)
 {
 	asSNameSpace *ns = implicitNs;
 	if( nsName == "::" )
@@ -4998,7 +5002,7 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 	else if( nsName != "" )
 	{
 		ns = engine->FindNameSpace(nsName.AddressOf());
-		if( ns == 0 )
+		if( ns == 0 && isRequired )
 		{
 			asCString msg;
 			msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, nsName.AddressOf());
