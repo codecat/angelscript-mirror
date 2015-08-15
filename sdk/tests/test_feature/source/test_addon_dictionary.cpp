@@ -498,6 +498,9 @@ bool Test()
 	// Test the STL iterator
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine); // Must register the dictionary so the cache is built
 		CScriptDictionary *dict = CScriptDictionary::Create(engine);
 		dict->Set("a", asINT64(1));
 		dict->Set("b", asINT64(2));

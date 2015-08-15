@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/08/13</h2>
+<h2>Version 2.30.2 WIP - 2015/08/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -48,6 +48,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Minor code changes to CScriptDictionary (Thanks Sir Ementaler)
 <li>The options argument in formatInt, UInt, and Float now has a default argument of an empty string
 <li>On C++11 enabled compilers the string pool is now using the unordered_map container for faster look-up
+<li>CScriptDictionary now uses a typedef for the key type to make it easier for applications that uses custom string types (Thanks Solokiller)
+<li>Changed to use std::unordered_map in CScriptDictionary when C++11 is used
+<li>The CScriptDictionary now caches its object type to avoid looking it up in the engine for each instance
 </ul>
 </ul>
 

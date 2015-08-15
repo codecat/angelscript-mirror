@@ -141,11 +141,6 @@ static void StringLengthGeneric(asIScriptGeneric * gen) {
   *static_cast<asUINT *>(gen->GetAddressOfReturnLocation()) = (asUINT)self->length();
 }
 
-static bool StringEquals(const std::string& lhs, const std::string& rhs)
-{
-    return lhs == rhs;
-}
-
 static void AddString2IntGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   int * b = static_cast<int *>(gen->GetAddressOfArg(0));
