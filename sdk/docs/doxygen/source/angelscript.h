@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.30.1
-#define ANGELSCRIPT_VERSION        23001
-#define ANGELSCRIPT_VERSION_STRING "2.30.1"
+//! Version 2.30.2
+#define ANGELSCRIPT_VERSION        23002
+#define ANGELSCRIPT_VERSION_STRING "2.30.2"
 
 // Data types
 
@@ -791,12 +791,18 @@ extern "C"
 	// Engine
 	//! \brief Creates the script engine.
 	//! \param[in] version The library version. Should always be \ref ANGELSCRIPT_VERSION.
-	//! \return A pointer to the script engine interface.
+	//! \return A pointer to the script engine interface, or null on error.
 	//!
 	//! Call this function to create a new script engine. When you're done with the
 	//! script engine, i.e. after you've executed all your scripts, you should call
-	//! \ref asIScriptEngine::Release "Release" on the pointer to free the engine object.
-	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version);
+	//! \ref asIScriptEngine::ShutDownAndRelease "ShutDownAndRelease" on the pointer
+	//! to cleanup any objects that may still be alive and free the engine object.
+	//!
+	//! The \a version argument is there to allow AngelScript to validate that the 
+	//! application has been compiled with the correct interface. This is especially
+	//! important when linking dynamically against the library. If the version is 
+	//! incorrect a null pointer is returned.
+	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version = ANGELSCRIPT_VERSION);
 	//! \brief Returns the version of the compiled library.
 	//! \return A null terminated string with the library version.
 	//!

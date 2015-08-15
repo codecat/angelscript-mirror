@@ -543,7 +543,7 @@ struct asSMessageInfo
 extern "C"
 {
 	// Engine
-	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version);
+	AS_API asIScriptEngine *asCreateScriptEngine(asDWORD version = ANGELSCRIPT_VERSION);
 	AS_API const char      *asGetLibraryVersion();
 	AS_API const char      *asGetLibraryOptions();
 

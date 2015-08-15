@@ -214,7 +214,7 @@ bool Test()
 
 	// Test that script class isn't marked as garbage collected needlessly
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
 
@@ -245,7 +245,7 @@ bool Test()
 	// Warn if inner scope re-declares variable from outer scope
 	// http://www.gamedev.net/topic/660746-problem-with-random-float-value-on-android/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		RegisterScriptArray(engine, false);
@@ -277,7 +277,7 @@ bool Test()
 	// Give error if &out arg is called with non-lvalue expr
 	// http://www.gamedev.net/topic/660363-retrieving-an-array-of-strings-from-a-dictionary/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		RegisterStdString(engine);
@@ -309,7 +309,7 @@ bool Test()
 	// Test identity comparison with output handle
 	// http://www.gamedev.net/topic/660025-inconsistent-behavior-with-ref-type-and-out-references-to-handle-params/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -342,7 +342,7 @@ bool Test()
 			"dictionary d1 = { {'arr', foo} };\n"
 			"array<string>@ s1 = array<string>@(d1['arr']);\n";
 
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
@@ -369,7 +369,7 @@ bool Test()
 	// Give proper error when declaring variable as only statement of an if
 	// http://www.gamedev.net/topic/653474-compile-error-in-if-statement-without-braces/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
@@ -397,7 +397,7 @@ bool Test()
 	// Test appropriate error when attempting to declare variable as reference
 	// http://www.gamedev.net/topic/657196-problem-returning-reference-to-internal-members/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
