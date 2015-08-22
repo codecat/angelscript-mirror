@@ -3134,8 +3134,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 {
 	// Check if the type supports initialization lists
 	if( var->dataType.GetObjectType() == 0 ||
-		var->dataType.GetBehaviour()->listFactory == 0 ||
-		var->dataType.IsObjectHandle() )
+		var->dataType.GetBehaviour()->listFactory == 0 )
 	{
 		asCString str;
 		str.Format(TXT_INIT_LIST_CANNOT_BE_USED_WITH_s, var->dataType.Format(outFunc->nameSpace).AddressOf());
