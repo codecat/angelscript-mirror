@@ -184,6 +184,7 @@ is defined, and a body where the implementation is declared.
 - \subpage doc_script_func_retref
 - \subpage doc_script_func_overload
 - \subpage doc_script_func_defarg
+- \subpage doc_script_anonfunc
 
 
 \page doc_global_class Script classes
