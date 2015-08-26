@@ -41,8 +41,9 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_compile_lib
  - \subpage doc_hello_world
  - \subpage doc_good_practice
+ - \subpage doc_versions
 
-\todo Add page with time line and major milestones. This page should also explain the version numbers
+
 
 
 
