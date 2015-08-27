@@ -342,6 +342,74 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test problem with scripts calling constructor with value type passed before reference
+	// http://www.gamedev.net/topic/671244-error-when-saving-bytecode-on-x64/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		// Turn off bytecode optimization to guarantee the scenario we're testing occurs
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
+
+		RegisterStdString(engine);
+
+		// Register additional constructor for test
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(int, const string& in)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+
+		// TODO: runtime optimize: This code produces unoptimal bytecode with VAR, PshC4, GETREF. Should be transformed to PSF, PshC4
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int main() \n"
+			"{ \n"
+			"  string s(1, ''); \n"
+			"  return 0; \n"
+			"} \n");
+		r = mod->Build();
+		if( r < 0 ) 
+			TEST_FAILED;
+
+		CBytecodeStream bc("blah");
+		r = mod->SaveByteCode(&bc);
+		if( r < 0 )
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("main");
+		asBYTE expect[] = 
+			{	
+				asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_STR,asBC_CALLSYS,asBC_JitEntry,asBC_PshRPtr,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_PopPtr,asBC_VAR,asBC_SetV4,asBC_PshV4,asBC_GETREF,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,
+				asBC_SUSPEND,asBC_JitEntry,asBC_SetV4,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_CpyVtoR4,asBC_JMP,asBC_RET
+			};
+		if( !ValidateByteCode(func, expect) )
+			TEST_FAILED;
+
+		// Make sure the asBC_GETREF instruction has the argument == 1
+		{
+			asUINT len;
+			asDWORD *bc = func->GetByteCode(&len);
+			if( asBC_WORDARG0(&bc[15+5*asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1 )
+				TEST_FAILED;
+		}
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc);
+		if( r < 0 )
+			TEST_FAILED;
+
+		func = mod->GetFunctionByName("main");
+		if( !ValidateByteCode(func, expect) )
+			TEST_FAILED;
+
+		// Make sure the asBC_GETREF instruction has the argument == 1
+		{
+			asUINT len;
+			asDWORD *bc = func->GetByteCode(&len);
+			if( asBC_WORDARG0(&bc[15+5*asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1 )
+				TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test problem with saving/loading bytecode containing templates with multiple subtypes
 	// Reported by Phong Ba
 	{

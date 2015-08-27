@@ -3273,6 +3273,7 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 
 	// Find out which function that will be called
 	asCScriptFunction *calledFunc = 0;
+	int stackDelta = 0;
 	for( asUINT n = programPos; func->scriptData->byteCode.GetLength(); )
 	{
 		asBYTE bc = *(asBYTE*)&func->scriptData->byteCode[n];
@@ -3295,6 +3296,10 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			return offset - (1 - AS_PTR_SIZE);
 		}
 
+		// Keep track of the stack size between the 
+		// instruction that needs to be adjusted and the call
+		stackDelta += asBCInfo[bc].stackInc;
+
 		n += asBCTypeSize[asBCInfo[bc].type];
 	}
 
@@ -3307,16 +3312,30 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 	// Count the number of pointers pushed on the stack above the 
 	// current offset, and then adjust the offset accordingly
 	asUINT numPtrs = 0;
-	int currOffset = 0;
+	int currOffset = -stackDelta;
 	if( offset > currOffset && calledFunc->GetObjectType() )
 	{
-		numPtrs++;
 		currOffset++;
+		if( currOffset > 0 )
+			numPtrs++;
+#if AS_PTR_SIZE == 2
+		// For 64bit platforms it is necessary to increment the currOffset by one more 
+		// DWORD since the stackDelta was counting the full 64bit size of the pointer
+		else if( stackDelta )
+			currOffset++;
+#endif
 	}
 	if( offset > currOffset && calledFunc->DoesReturnOnStack() )
 	{
-		numPtrs++;
 		currOffset++;
+		if( currOffset > 0 )
+			numPtrs++;
+#if AS_PTR_SIZE == 2
+		// For 64bit platforms it is necessary to increment the currOffset by one more 
+		// DWORD since the stackDelta was counting the full 64bit size of the pointer
+		else if( stackDelta )
+			currOffset++;
+#endif
 	}
 	for( asUINT p = 0; p < calledFunc->parameterTypes.GetLength(); p++ )
 	{
@@ -3325,8 +3344,15 @@ int asCReader::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 		if( !calledFunc->parameterTypes[p].IsPrimitive() ||
 			calledFunc->parameterTypes[p].IsReference() )
 		{
-			numPtrs++;
 			currOffset++;
+			if( currOffset > 0 )
+				numPtrs++;
+#if AS_PTR_SIZE == 2
+			// For 64bit platforms it is necessary to increment the currOffset by one more 
+			// DWORD since the stackDelta was counting the full 64bit size of the pointer
+			else if( stackDelta )
+				currOffset++;
+#endif
 
 			// The variable arg ? has an additiona 32bit integer with the typeid
 			if( calledFunc->parameterTypes[p].IsAnyType() )
@@ -4291,6 +4317,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 
 	// Find out which function that will be called
 	asCScriptFunction *calledFunc = 0;
+	int stackDelta = 0;
 	for( asUINT n = programPos; n < func->scriptData->byteCode.GetLength(); )
 	{
 		asBYTE bc = *(asBYTE*)&func->scriptData->byteCode[n];
@@ -4359,6 +4386,10 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			return offset + (1 - AS_PTR_SIZE);
 		}
 
+		// Keep track of the stack size between the 
+		// instruction that needs to be adjusted and the call
+		stackDelta += asBCInfo[bc].stackInc;
+
 		n += asBCTypeSize[asBCInfo[bc].type];
 	}
 
@@ -4367,16 +4398,18 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 	// Count the number of pointers pushed on the stack above the 
 	// current offset, and then adjust the offset accordingly
 	asUINT numPtrs = 0;
-	int currOffset = 0;
+	int currOffset = -stackDelta;
 	if( offset > currOffset && calledFunc->GetObjectType() )
 	{
-		numPtrs++;
 		currOffset += AS_PTR_SIZE;
+		if( currOffset > 0 )
+			numPtrs++;
 	}
 	if( offset > currOffset && calledFunc->DoesReturnOnStack() )
 	{
-		numPtrs++;
 		currOffset += AS_PTR_SIZE;
+		if( currOffset > 0 )
+			numPtrs++;
 	}
 	for( asUINT p = 0; p < calledFunc->parameterTypes.GetLength(); p++ )
 	{
@@ -4386,8 +4419,9 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			calledFunc->parameterTypes[p].IsReference() )
 		{
 			// objects and references are passed by pointer
-			numPtrs++;
 			currOffset += AS_PTR_SIZE;
+			if( currOffset > 0 )
+				numPtrs++;
 
 			// The variable arg ? has an additional 32bit int with the typeid
 			if( calledFunc->parameterTypes[p].IsAnyType() )

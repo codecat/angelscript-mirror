@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.30.2 WIP - 2015/08/22</h2>
+<h2>Version 2.30.2 WIP - 2015/08/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -24,6 +24,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash with asCALL_THISCALL_ASGLOBAL and objects passed by value in argument (Thanks justin12343)
 <li>Fixed bug in parser related to virtual properties and datatypes in namespaces (Thanks dkrusu)
 <li>Fixed compiler bug with nested namespaces, when the outer namespace has not been explicitly registered (Thanks BasicMind)
+<li>Fixed a bug with SaveByteCode on 64bit platforms when the script called constructor with primitive arg before object arg (Thanks Idarion)
 </ul>
 <li>Library
 <ul>
