@@ -13,6 +13,7 @@ bool Test()
 
 	// Test nested namespace from within class method
 	// http://www.gamedev.net/topic/670858-nested-namespaces/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
