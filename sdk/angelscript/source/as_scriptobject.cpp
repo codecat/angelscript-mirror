@@ -905,29 +905,29 @@ int asCScriptObject::CopyFrom(asIScriptObject *other)
 	return 0;
 }
 
-void *asCScriptObject::AllocateUninitializedObject(asCObjectType *objType, asCScriptEngine *engine)
+void *asCScriptObject::AllocateUninitializedObject(asCObjectType *in_objType, asCScriptEngine *engine)
 {
 	void *ptr = 0;
 
-	if( objType->flags & asOBJ_SCRIPT_OBJECT )
+	if( in_objType->flags & asOBJ_SCRIPT_OBJECT )
 	{
-		ptr = engine->CallAlloc(objType);
-		ScriptObject_ConstructUnitialized(objType, reinterpret_cast<asCScriptObject*>(ptr));
+		ptr = engine->CallAlloc(in_objType);
+		ScriptObject_ConstructUnitialized(in_objType, reinterpret_cast<asCScriptObject*>(ptr));
 	}
-	else if( objType->flags & asOBJ_TEMPLATE )
+	else if( in_objType->flags & asOBJ_TEMPLATE )
 	{
 		// Templates store the original factory that takes the object
 		// type as a hidden parameter in the construct behaviour
-		ptr = engine->CallGlobalFunctionRetPtr(objType->beh.construct, objType);
+		ptr = engine->CallGlobalFunctionRetPtr(in_objType->beh.construct, in_objType);
 	}
-	else if( objType->flags & asOBJ_REF )
+	else if( in_objType->flags & asOBJ_REF )
 	{
-		ptr = engine->CallGlobalFunctionRetPtr(objType->beh.factory);
+		ptr = engine->CallGlobalFunctionRetPtr(in_objType->beh.factory);
 	}
 	else
 	{
-		ptr = engine->CallAlloc(objType);
-		int funcIndex = objType->beh.construct;
+		ptr = engine->CallAlloc(in_objType);
+		int funcIndex = in_objType->beh.construct;
 		if( funcIndex )
 			engine->CallObjectMethod(ptr, funcIndex);
 	}
@@ -935,52 +935,52 @@ void *asCScriptObject::AllocateUninitializedObject(asCObjectType *objType, asCSc
 	return ptr;
 }
 
-void asCScriptObject::FreeObject(void *ptr, asCObjectType *objType, asCScriptEngine *engine)
+void asCScriptObject::FreeObject(void *ptr, asCObjectType *in_objType, asCScriptEngine *engine)
 {
-	if( objType->flags & asOBJ_REF )
+	if( in_objType->flags & asOBJ_REF )
 	{
-		asASSERT( (objType->flags & asOBJ_NOCOUNT) || objType->beh.release );
-		if( objType->beh.release )
-			engine->CallObjectMethod(ptr, objType->beh.release);
+		asASSERT( (in_objType->flags & asOBJ_NOCOUNT) || in_objType->beh.release );
+		if(in_objType->beh.release )
+			engine->CallObjectMethod(ptr, in_objType->beh.release);
 	}
 	else
 	{
-		if( objType->beh.destruct )
-			engine->CallObjectMethod(ptr, objType->beh.destruct);
+		if( in_objType->beh.destruct )
+			engine->CallObjectMethod(ptr, in_objType->beh.destruct);
 
 		engine->CallFree(ptr);
 	}
 }
 
-void asCScriptObject::CopyObject(void *src, void *dst, asCObjectType *objType, asCScriptEngine *engine)
+void asCScriptObject::CopyObject(void *src, void *dst, asCObjectType *in_objType, asCScriptEngine *engine)
 {
-	int funcIndex = objType->beh.copy;
+	int funcIndex = in_objType->beh.copy;
 	if( funcIndex )
 	{
-		asCScriptFunction *func = engine->scriptFunctions[objType->beh.copy];
+		asCScriptFunction *func = engine->scriptFunctions[in_objType->beh.copy];
 		if( func->funcType == asFUNC_SYSTEM )
 			engine->CallObjectMethod(dst, src, funcIndex);
 		else
 		{
 			// Call the script class' opAssign method
-			asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
+			asASSERT(in_objType->flags & asOBJ_SCRIPT_OBJECT );
 			reinterpret_cast<asCScriptObject*>(dst)->CopyFrom(reinterpret_cast<asCScriptObject*>(src));
 		}
 	}
-	else if( objType->size && (objType->flags & asOBJ_POD) )
-		memcpy(dst, src, objType->size);
+	else if( in_objType->size && (in_objType->flags & asOBJ_POD) )
+		memcpy(dst, src, in_objType->size);
 }
 
-void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *objType, asCScriptEngine *engine)
+void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *in_objType, asCScriptEngine *engine)
 {
 	// asOBJ_NOCOUNT doesn't have addref or release behaviours
-	asASSERT( (objType->flags & asOBJ_NOCOUNT) || (objType->beh.release && objType->beh.addref) );
+	asASSERT( (in_objType->flags & asOBJ_NOCOUNT) || (in_objType->beh.release && in_objType->beh.addref) );
 
-	if( *dst && objType->beh.release )
-		engine->CallObjectMethod(*(void**)dst, objType->beh.release);
+	if( *dst && in_objType->beh.release )
+		engine->CallObjectMethod(*(void**)dst, in_objType->beh.release);
 	*dst = *src;
-	if( *dst && objType->beh.addref )
-		engine->CallObjectMethod(*(void**)dst, objType->beh.addref);
+	if( *dst && in_objType->beh.addref )
+		engine->CallObjectMethod(*(void**)dst, in_objType->beh.addref);
 }
 
 // TODO: weak: Should move to its own file

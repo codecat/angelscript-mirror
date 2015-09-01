@@ -652,7 +652,6 @@ asCScriptEngine::~asCScriptEngine()
 {
 	// TODO: clean-up: Clean up redundant code
 
-	asUINT n = 0;
 	inDestructor = true;
 
 	asASSERT(refCount.get() == 0);
@@ -672,13 +671,13 @@ asCScriptEngine::~asCScriptEngine()
 	}
 
 	// Delete the functions for generated template types that may references object types
-	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
 		asCObjectType *templateType = templateInstanceTypes[n];
 		if( templateInstanceTypes[n] )
 			templateType->DestroyInternal();
 	}
-	for( n = 0; n < listPatternTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < listPatternTypes.GetLength(); n++ )
 	{
 		asCObjectType *type = listPatternTypes[n];
 		if( type )
@@ -713,7 +712,7 @@ asCScriptEngine::~asCScriptEngine()
 	defaultGroup.RemoveConfiguration(this);
 
 	// Any remaining objects in templateInstanceTypes is from generated template instances
-	for( n = 0; n < templateInstanceTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
 	{
 		asCObjectType *templateType = templateInstanceTypes[n];
 		if( templateInstanceTypes[n] )
@@ -729,7 +728,7 @@ asCScriptEngine::~asCScriptEngine()
 	}
 	registeredGlobalProps.Clear();
 
-	for( n = 0; n < templateSubTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < templateSubTypes.GetLength(); n++ )
 	{
 		if( templateSubTypes[n] )
 		{
@@ -750,7 +749,7 @@ asCScriptEngine::~asCScriptEngine()
 	scriptTypeBehaviours.ReleaseAllFunctions();
 	functionBehaviours.ReleaseAllFunctions();
 
-	for( n = 0; n < scriptFunctions.GetLength(); n++ )
+	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
 		if( scriptFunctions[n] )
 		{
 			scriptFunctions[n]->DestroyInternal();
@@ -766,7 +765,7 @@ asCScriptEngine::~asCScriptEngine()
 
 	// Destroy the funcdefs
 	// As funcdefs are shared between modules it shouldn't be a problem to keep the objects until the engine is released
-	for( n = 0; n < funcDefs.GetLength(); n++ )
+	for( asUINT n = 0; n < funcDefs.GetLength(); n++ )
 		if( funcDefs[n] )
 		{
 			funcDefs[n]->DestroyInternal();
@@ -786,18 +785,18 @@ asCScriptEngine::~asCScriptEngine()
 	}
 
 	// Free string constants
-	for( n = 0; n < stringConstants.GetLength(); n++ )
+	for( asUINT n = 0; n < stringConstants.GetLength(); n++ )
 		asDELETE(stringConstants[n],asCString);
 	stringConstants.SetLength(0);
 	stringToIdMap.EraseAll();
 
 	// Free the script section names
-	for( n = 0; n < scriptSectionNames.GetLength(); n++ )
+	for( asUINT n = 0; n < scriptSectionNames.GetLength(); n++ )
 		asDELETE(scriptSectionNames[n],asCString);
 	scriptSectionNames.SetLength(0);
 
 	// Clean the user data
-	for( n = 0; n < userData.GetLength(); n += 2 )
+	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
 	{
 		if( userData[n+1] )
 		{
@@ -808,7 +807,7 @@ asCScriptEngine::~asCScriptEngine()
 	}
 
 	// Free namespaces
-	for( n = 0; n < nameSpaces.GetLength(); n++ )
+	for( asUINT n = 0; n < nameSpaces.GetLength(); n++ )
 		asDELETE(nameSpaces[n], asSNameSpace);
 	nameSpaces.SetLength(0);
 
@@ -846,63 +845,63 @@ asIScriptContext *asCScriptEngine::RequestContext()
 }
 
 // internal
-asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCObjectType *type, asCModule *mod)
+asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCObjectType *in_type, asCModule *in_mod)
 {
-	asASSERT( type->IsShared() );
+	asASSERT( in_type->IsShared() );
 
-	if( type->module != mod )
-		return type->module;
+	if( in_type->module != in_mod)
+		return in_type->module;
 
 	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
 	{
 		// TODO: optimize: If the modules already stored the shared types separately, this would be quicker
 		int foundIdx = -1;
 		asCModule *mod = scriptModules[n];
-		if( mod == type->module ) continue;
-		if( type->flags & asOBJ_ENUM )
-			foundIdx = mod->enumTypes.IndexOf(type);
-		else if( type->flags & asOBJ_TYPEDEF )
-			foundIdx = mod->typeDefs.IndexOf(type);
+		if( mod == in_type->module ) continue;
+		if(in_type->flags & asOBJ_ENUM )
+			foundIdx = mod->enumTypes.IndexOf(in_type);
+		else if(in_type->flags & asOBJ_TYPEDEF )
+			foundIdx = mod->typeDefs.IndexOf(in_type);
 		else
-			foundIdx = mod->classTypes.IndexOf(type);
+			foundIdx = mod->classTypes.IndexOf(in_type);
 		
 		if( foundIdx >= 0 )
 		{
-			type->module = mod;
+			in_type->module = mod;
 			break;
 		}
 	}
 
-	return type->module;
+	return in_type->module;
 }
 
 // internal
-asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod)
+asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *in_func, asCModule *in_mod)
 {
-	asASSERT( func->IsShared() );
+	asASSERT( in_func->IsShared() );
 
-	if( func->module != mod )
-		return func->module;
+	if( in_func->module != in_mod)
+		return in_func->module;
 
 	for( asUINT n = 0; n < scriptModules.GetLength(); n++ )
 	{
 		// TODO: optimize: If the modules already stored the shared types separately, this would be quicker
 		int foundIdx = -1;
 		asCModule *mod = scriptModules[n];
-		if( mod == func->module ) continue;
-		if( func->funcType == asFUNC_FUNCDEF )
-			foundIdx = mod->funcDefs.IndexOf(func);
+		if( mod == in_func->module ) continue;
+		if(in_func->funcType == asFUNC_FUNCDEF )
+			foundIdx = mod->funcDefs.IndexOf(in_func);
 		else
-			foundIdx = mod->scriptFunctions.IndexOf(func);
+			foundIdx = mod->scriptFunctions.IndexOf(in_func);
 		
 		if( foundIdx >= 0 )
 		{
-			func->module = mod;
+			in_func->module = mod;
 			break;
 		}
 	}
 
-	return func->module;
+	return in_func->module;
 }
 
 // interface
@@ -1793,7 +1792,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			if( token != ttIdentifier || typeName.GetLength() != tokenLen )
 				return ConfigError(asINVALID_NAME, "RegisterObjectType", name, 0);
 
-			int r = bld.CheckNameConflict(name, 0, 0, defaultNamespace);
+			r = bld.CheckNameConflict(name, 0, 0, defaultNamespace);
 			if( r < 0 )
 				return ConfigError(asNAME_TAKEN, "RegisterObjectType", name, 0);
 
@@ -2148,7 +2147,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		beh->listFactory = func.id;
 
 		// Store the list pattern for this function
-		int r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
+		r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
 
 		if( listPattern )
 			listPattern->Destroy(this);
@@ -2245,7 +2244,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				beh->listFactory = func.id;
 
 				// Store the list pattern for this function
-				int r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
+				r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
 
 				if( listPattern )
 					listPattern->Destroy(this);
@@ -2800,11 +2799,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	}
 
 	// Check against duplicate methods
-	asUINT n;
 	if( func->name == "opConv" || func->name == "opImplConv" || func->name == "opCast" || func->name == "opImplCast" )
 	{
 		// opConv and opCast are special methods that the compiler differentiates between by the return type
-		for( n = 0; n < func->objectType->methods.GetLength(); n++ )
+		for( asUINT n = 0; n < func->objectType->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];
 			if( f->name == func->name &&
@@ -2818,7 +2816,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	}
 	else
 	{
-		for( n = 0; n < func->objectType->methods.GetLength(); n++ )
+		for( asUINT n = 0; n < func->objectType->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *f = scriptFunctions[func->objectType->methods[n]];
 			if( f->name == func->name &&
@@ -4884,9 +4882,9 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 			}
 
 			// Get the true type of the object so the explicit cast can evaluate all possibilities
-			asIObjectType *from = reinterpret_cast<asCScriptObject*>(obj)->GetObjectType();
-			if( from->DerivesFrom(toType) ||
-				from->Implements(toType) )
+			asIObjectType *trueType = reinterpret_cast<asCScriptObject*>(obj)->GetObjectType();
+			if( trueType->DerivesFrom(toType) ||
+				trueType->Implements(toType) )
 			{
 				*newPtr = obj;
 				reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();

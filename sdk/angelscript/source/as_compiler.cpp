@@ -98,12 +98,12 @@ asCCompiler::~asCCompiler()
 	}
 }
 
-void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFunction *outFunc)
+void asCCompiler::Reset(asCBuilder *in_builder, asCScriptCode *in_script, asCScriptFunction *in_outFunc)
 {
-	this->builder = builder;
-	this->engine = builder->engine;
-	this->script = script;
-	this->outFunc = outFunc;
+	this->builder = in_builder;
+	this->engine = in_builder->engine;
+	this->script = in_script;
+	this->outFunc = in_outFunc;
 
 	hasCompileErrors = false;
 
@@ -121,11 +121,11 @@ void asCCompiler::Reset(asCBuilder *builder, asCScriptCode *script, asCScriptFun
 	byteCode.ClearAll();
 }
 
-int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, asCScriptFunction *outFunc, sClassDeclaration *classDecl)
+int asCCompiler::CompileDefaultConstructor(asCBuilder *in_builder, asCScriptCode *in_script, asCScriptNode *in_node, asCScriptFunction *in_outFunc, sClassDeclaration *in_classDecl)
 {
-	Reset(builder, script, outFunc);
+	Reset(in_builder, in_script, in_outFunc);
 
-	m_classDecl = classDecl;
+	m_classDecl = in_classDecl;
 
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
@@ -144,7 +144,7 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 	{
 		// Make sure the base class really has a default constructor
 		if( outFunc->objectType->derivedFrom->beh.construct == 0 )
-			Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, node);
+			Error(TEXT_BASE_DOESNT_HAVE_DEF_CONSTR, in_node);
 
 		// Call the base class' default constructor
 		byteCode.InstrSHORT(asBC_PSF, 0);
@@ -172,15 +172,15 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *builder, asCScriptCode *s
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
-	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__defconstr.txt").AddressOf(), engine, outFunc);
+	byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + "__defconstr.txt").AddressOf(), in_outFunc);
 #endif
 
 	return 0;
 }
 
-int asCCompiler::CompileFactory(asCBuilder *builder, asCScriptCode *script, asCScriptFunction *outFunc)
+int asCCompiler::CompileFactory(asCBuilder *in_builder, asCScriptCode *in_script, asCScriptFunction *in_outFunc)
 {
-	Reset(builder, script, outFunc);
+	Reset(in_builder, in_script, in_outFunc);
 
 	// Insert a JitEntry at the start of the function for JIT compilers
 	byteCode.InstrPTR(asBC_JitEntry, 0);
@@ -413,7 +413,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	return stackPos;
 }
 
-void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDefaults)
+void asCCompiler::CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults)
 {
 	asASSERT( m_classDecl );
 
@@ -499,14 +499,14 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 			script = initScript;
 
 			// Add a line instruction with the position of the declaration
-			LineInstr(byteCode, declNode->tokenPos);
+			LineInstr(bc, declNode->tokenPos);
 
 			// Compile the initialization
 			asQWORD constantValue;
-			asCByteCode bc(engine);
-			CompileInitialization(initNode, &bc, prop->type, declNode, prop->byteOffset, &constantValue, 2);
-			bc.OptimizeLocally(tempVariableOffsets);
-			byteCode->AddCode(&bc);
+			asCByteCode bcInit(engine);
+			CompileInitialization(initNode, &bcInit, prop->type, declNode, prop->byteOffset, &constantValue, 2);
+			bcInit.OptimizeLocally(tempVariableOffsets);
+			bc->AddCode(&bcInit);
 
 			script = origScript;
 #endif
@@ -515,30 +515,30 @@ void asCCompiler::CompileMemberInitialization(asCByteCode *byteCode, bool onlyDe
 }
 
 // Entry
-int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asCArray<asCString> &parameterNames, asCScriptNode *func, asCScriptFunction *outFunc, sClassDeclaration *classDecl)
+int asCCompiler::CompileFunction(asCBuilder *in_builder, asCScriptCode *in_script, asCArray<asCString> &in_parameterNames, asCScriptNode *in_func, asCScriptFunction *in_outFunc, sClassDeclaration *in_classDecl)
 {
 	TimeIt("asCCompiler::CompileFunction");
 
-	Reset(builder, script, outFunc);
+	Reset(in_builder, in_script, in_outFunc);
 	int buildErrors = builder->numErrors;
 
-	int stackPos = SetupParametersAndReturnVariable(parameterNames, func);
+	int stackPos = SetupParametersAndReturnVariable(in_parameterNames, in_func);
 
 	//--------------------------------------------
 	// Compile the statement block
 
 	if( m_isConstructor )
-		m_classDecl = classDecl;
+		m_classDecl = in_classDecl;
 
 	// We need to parse the statement block now
 	asCScriptNode *blockBegin;
 
 	// If the function signature was implicit, e.g. virtual property accessor or
 	// lambda function, then the received node already is the statement block
-	if( func->nodeType != snStatementBlock )
-		blockBegin = func->lastChild;
+	if( in_func->nodeType != snStatementBlock )
+		blockBegin = in_func->lastChild;
 	else
-		blockBegin = func;
+		blockBegin = in_func;
 
 	// TODO: memory: We can parse the statement block one statement at a time, thus save even more memory
 	// TODO: optimize: For large functions, the parsing of the statement block can take a long time. Presumably because a lot of memory needs to be allocated
@@ -656,7 +656,7 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 
 	// Check if the number of labels in the functions isn't too many to be handled
 	if( nextLabel >= (1<<15) )
-		Error(TXT_TOO_MANY_JUMP_LABELS, func);
+		Error(TXT_TOO_MANY_JUMP_LABELS, in_func);
 
 	// If there are compile errors, there is no reason to build the final code
 	if( hasCompileErrors || builder->numErrors != buildErrors )
@@ -675,9 +675,9 @@ int asCCompiler::CompileFunction(asCBuilder *builder, asCScriptCode *script, asC
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
 	if( outFunc->objectType )
-		byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), engine, outFunc);
+		byteCode.DebugOutput(("__" + outFunc->objectType->name + "_" + outFunc->name + ".txt").AddressOf(), in_outFunc);
 	else
-		byteCode.DebugOutput(("__" + outFunc->name + ".txt").AddressOf(), engine, outFunc);
+		byteCode.DebugOutput(("__" + outFunc->name + ".txt").AddressOf(), in_outFunc);
 #endif
 
 	return 0;
@@ -959,9 +959,9 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 						if( derefDest )
 							bc->Instr(asBC_RDSPtr);
 
-						asSExprContext ctx(engine);
-						PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
-						bc->AddCode(&ctx.bc);
+						asSExprContext ctxCall(engine);
+						PerformFunctionCall(func, &ctxCall, false, 0, type.GetObjectType());
+						bc->AddCode(&ctxCall.bc);
 
 						// TODO: value on stack: This probably needs to be done in PerformFunctionCall
 						// Mark the object as initialized
@@ -980,9 +980,9 @@ int asCCompiler::CallDefaultConstructor(const asCDataType &type, int offset, boo
 						bc->Instr(asBC_RDSPtr);
 						bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 
-						asSExprContext ctx(engine);
-						PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
-						bc->AddCode(&ctx.bc);
+						asSExprContext ctxCall(engine);
+						PerformFunctionCall(func, &ctxCall, false, 0, type.GetObjectType());
+						bc->AddCode(&ctxCall.bc);
 					}
 				}
 				else
@@ -1187,47 +1187,47 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 }
 
 // Entry
-int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *script, asCScriptNode *node, sGlobalVariableDescription *gvar, asCScriptFunction *outFunc)
+int asCCompiler::CompileGlobalVariable(asCBuilder *in_builder, asCScriptCode *in_script, asCScriptNode *in_node, sGlobalVariableDescription *in_gvar, asCScriptFunction *in_outFunc)
 {
-	Reset(builder, script, outFunc);
-	m_globalVar = gvar;
+	Reset(in_builder, in_script, in_outFunc);
+	m_globalVar = in_gvar;
 
 	// Add a variable scope (even though variables can't be declared)
 	AddVariableScope();
 
-	gvar->isPureConstant = false;
+	in_gvar->isPureConstant = false;
 
 	// Parse the initialization nodes
 	asCParser parser(builder);
-	if( node )
+	if( in_node )
 	{
-		int r = parser.ParseVarInit(script, node);
+		int r = parser.ParseVarInit(in_script, in_node);
 		if( r < 0 )
 			return r;
 
-		node = parser.GetScriptNode();
+		in_node = parser.GetScriptNode();
 	}
 
 	asSExprContext compiledCtx(engine);
 	bool preCompiled = false;
-	if( gvar->datatype.IsAuto() )
-		preCompiled = CompileAutoType(gvar->datatype, compiledCtx, node, gvar->declaredAtNode);
-	if( gvar->property == 0 )
+	if( in_gvar->datatype.IsAuto() )
+		preCompiled = CompileAutoType(in_gvar->datatype, compiledCtx, in_node, in_gvar->declaredAtNode);
+	if( in_gvar->property == 0 )
 	{
-		gvar->property = builder->module->AllocateGlobalProperty(gvar->name.AddressOf(), gvar->datatype, gvar->ns);
-		gvar->index = gvar->property->id;
+		in_gvar->property = builder->module->AllocateGlobalProperty(in_gvar->name.AddressOf(), in_gvar->datatype, in_gvar->ns);
+		in_gvar->index = in_gvar->property->id;
 	}
 
 	// Compile the expression
 	asSExprContext ctx(engine);
 	asQWORD constantValue = 0;
-	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1, preCompiled ? &compiledCtx : 0) )
+	if( CompileInitialization(in_node, &ctx.bc, in_gvar->datatype, in_gvar->declaredAtNode, in_gvar->index, &constantValue, 1, preCompiled ? &compiledCtx : 0) )
 	{
 		// Should the variable be marked as pure constant?
-		if( gvar->datatype.IsPrimitive() && gvar->datatype.IsReadOnly() )
+		if( in_gvar->datatype.IsPrimitive() && in_gvar->datatype.IsReadOnly() )
 		{
-			gvar->isPureConstant = true;
-			gvar->constantValue = constantValue;
+			in_gvar->isPureConstant = true;
+			in_gvar->constantValue = constantValue;
 		}
 	}
 
@@ -1236,10 +1236,10 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// Add information on the line number for the global variable
 	size_t pos = 0;
-	if( gvar->declaredAtNode )
-		pos = gvar->declaredAtNode->tokenPos;
-	else if( gvar->initializationNode )
-		pos = gvar->initializationNode->tokenPos;
+	if( in_gvar->declaredAtNode )
+		pos = in_gvar->declaredAtNode->tokenPos;
+	else if( in_gvar->initializationNode )
+		pos = in_gvar->initializationNode->tokenPos;
 	LineInstr(&byteCode, pos);
 
 	// Reserve space for all local variables
@@ -1274,7 +1274,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 #ifdef AS_DEBUG
 	// DEBUG: output byte code
-	byteCode.DebugOutput(("___init_" + gvar->name + ".txt").AddressOf(), engine, outFunc);
+	byteCode.DebugOutput(("___init_" + in_gvar->name + ".txt").AddressOf(), outFunc);
 #endif
 
 	return 0;
@@ -1714,7 +1714,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 			{
 				// Store a handle to the object as local variable
 				asSExprContext tmp(engine);
-				asCDataType dt = ctx->type.dataType;
+				dt = ctx->type.dataType;
 				dt.MakeHandle(true);
 				dt.MakeReference(false);
 
@@ -2033,9 +2033,9 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 			namedArg.ctx = ctx;
 
 			// Error out when multiple arguments with the same name are passed
-			for( asUINT n = 0; n < namedArgs.GetLength(); ++n )
+			for( asUINT a = 0; a < namedArgs.GetLength(); ++a )
 			{
-				if( namedArgs[n].name == namedArg.name )
+				if( namedArgs[a].name == namedArg.name )
 				{
 					Error(TXT_DUPLICATE_NAMED_ARG, asgNode);
 					anyErrors = true;
@@ -2348,7 +2348,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 						}
 
 						// Add to the cost
-						asUINT cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct);
+						cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct);
 						if( cost == asUINT(-1) )
 						{
 							matchedAll = false;
@@ -2803,8 +2803,6 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 	}
 	else if( node && node->nodeType == snAssignment )
 	{
-		asSExprContext ctx(engine);
-
 		// Compile the expression
 		asSExprContext newExpr(engine);
 		asSExprContext* expr;
@@ -2855,7 +2853,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 			// TODO: clean-up: A large part of this is identical to the initalization with argList above
 
 			// Add the default values for arguments not explicitly supplied
-			int r = CompileDefaultAndNamedArgs(node, args, funcs[0], type.GetObjectType());
+			r = CompileDefaultAndNamedArgs(node, args, funcs[0], type.GetObjectType());
 
 			if( r == asSUCCESS )
 			{
@@ -2953,6 +2951,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		else
 		{
 			// Call the default constructur, then call the assignment operator
+			asSExprContext ctx(engine);
 
 			// Call the default constructor here
 			if( isVarGlobOrMem == 0 )
@@ -3289,7 +3288,7 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 	ReleaseTemporaryVariable(bufferVar, bc);
 }
 
-int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScriptNode *&valueNode, int bufferTypeId, short bufferVar, asUINT &bufferSize, asCByteCode &byteCode, int &elementsInSubList)
+int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScriptNode *&valueNode, int bufferTypeId, short bufferVar, asUINT &bufferSize, asCByteCode &bcInit, int &elementsInSubList)
 {
 	if( patternNode->type == asLPT_START )
 	{
@@ -3312,7 +3311,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 			}
 
 			asCScriptNode *errNode = node;
-			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, byteCode, elementsInSubList);
+			int r = CompileInitListElement(patternNode, node, bufferTypeId, bufferVar, bufferSize, bcInit, elementsInSubList);
 			if( r < 0 ) return r;
 
 			if( r == 1 )
@@ -3419,10 +3418,10 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 		}
 
 		// The first dword in the buffer will hold the number of elements
-		byteCode.InstrSHORT_DW_DW(asBC_SetListSize, bufferVar, currSize, countElements);
+		bcInit.InstrSHORT_DW_DW(asBC_SetListSize, bufferVar, currSize, countElements);
 
 		// Add the values
-		byteCode.AddCode(&ctx.bc);
+		bcInit.AddCode(&ctx.bc);
 	}
 	else if( patternNode->type == asLPT_TYPE )
 	{
@@ -3455,7 +3454,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 						bufferSize += 4 - (bufferSize & 0x3);
 
 					// Place the type id in the buffer
-					byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, engine->GetTypeIdFromDataType(dt));
+					bcInit.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, engine->GetTypeIdFromDataType(dt));
 					bufferSize += 4;
 				}
 			}
@@ -3537,11 +3536,11 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 				else if( func )
 				{
 					// Call the constructor as a normal function
-					byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+					bcInit.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
 
 					asSExprContext ctx(engine);
 					PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());
-					byteCode.AddCode(&ctx.bc);
+					bcInit.AddCode(&ctx.bc);
 				}
 			}
 
@@ -3565,7 +3564,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 
 				ProcessDeferredParams(&ctx);
 
-				byteCode.AddCode(&ctx.bc);
+				bcInit.AddCode(&ctx.bc);
 			}
 		}
 		else
@@ -3585,7 +3584,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 						bufferSize += 4 - (bufferSize & 0x3);
 
 					// Place the type id for a null handle in the buffer
-					byteCode.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, 0);
+					bcInit.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, 0);
 					bufferSize += 4;
 
 					dt = asCDataType::CreateNullHandle();
@@ -3615,11 +3614,11 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 							bufferSize += 4 - (bufferSize & 0x3);
 
 						// Call the constructor as a normal function
-						byteCode.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
+						bcInit.InstrSHORT_DW(asBC_PshListElmnt, bufferVar, bufferSize);
 
 						asSExprContext ctx(engine);
 						PerformFunctionCall(func, &ctx, false, 0, dt.GetObjectType());
-						byteCode.AddCode(&ctx.bc);
+						bcInit.AddCode(&ctx.bc);
 					}
 				}
 				else if( !dt.IsObjectHandle() && dt.GetObjectType() && dt.GetObjectType()->flags & asOBJ_REF )
@@ -3665,7 +3664,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 
 						ProcessDeferredParams(&ctx);
 
-						byteCode.AddCode(&ctx.bc);
+						bcInit.AddCode(&ctx.bc);
 					}
 				}
 			}
@@ -3944,9 +3943,9 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 
 			// Add the list of jumps to the correct labels (any holes, jump to default)
 			index = ranges[range];
-			for( int n = caseValues[index]; n <= maxRange; n++ )
+			for( int i = caseValues[index]; i <= maxRange; i++ )
 			{
-				if( caseValues[index] == n )
+				if( caseValues[index] == i )
 					expr.bc.InstrINT(asBC_JMP, caseLabels[index++]);
 				else
 					expr.bc.InstrINT(asBC_JMP, defaultLabel);
@@ -3957,13 +3956,12 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		else
 		{
 			// Simply make a comparison with each value
-			int n;
-			for( n = ranges[range]; n < index; ++n )
+			for( int i = ranges[range]; i < index; ++i )
 			{
 				tmpOffset = AllocateVariable(asCDataType::CreatePrimitive(ttInt, false), true);
-				expr.bc.InstrSHORT_DW(asBC_SetV4, (short)tmpOffset, caseValues[n]);
+				expr.bc.InstrSHORT_DW(asBC_SetV4, (short)tmpOffset, caseValues[i]);
 				expr.bc.InstrW_W(asBC_CMPi, offset, tmpOffset);
-				expr.bc.InstrDWORD(asBC_JZ, caseLabels[n]);
+				expr.bc.InstrDWORD(asBC_JZ, caseLabels[i]);
 				ReleaseTemporaryVariable(tmpOffset, &expr.bc);
 			}
 		}
@@ -5580,9 +5578,9 @@ bool asCCompiler::CompileRefCast(asSExprContext *ctx, const asCDataType &to, boo
 		// We need it to be a reference
 		if( !ctx->type.dataType.IsReference() )
 		{
-			asCDataType to = ctx->type.dataType;
-			to.MakeReference(true);
-			ImplicitConversion(ctx, to, 0, isExplicit ? asIC_EXPLICIT_REF_CAST : asIC_IMPLICIT_CONV, generateCode);
+			asCDataType toRef = ctx->type.dataType;
+			toRef.MakeReference(true);
+			ImplicitConversion(ctx, toRef, 0, isExplicit ? asIC_EXPLICIT_REF_CAST : asIC_IMPLICIT_CONV, generateCode);
 		}
 
 		if( isExplicit )
@@ -5766,7 +5764,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 			}
 
 			// Convert to smaller integer if necessary
-			int s = to.GetSizeInMemoryBytes();
+			s = to.GetSizeInMemoryBytes();
 			if( s < 4 )
 			{
 				ConvertToTempVariable(ctx);
@@ -5862,7 +5860,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 			}
 
 			// Convert to smaller integer if necessary
-			int s = to.GetSizeInMemoryBytes();
+			s = to.GetSizeInMemoryBytes();
 			if( s < 4 )
 			{
 				ConvertToTempVariable(ctx);
@@ -8794,9 +8792,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					nsScope = currScope.SubString(0, p);
 				}
 
-				asSNameSpace *ns = engine->FindNameSpace(nsScope.AddressOf());
-				if( ns )
-					scopeType = builder->GetObjectType(enumType.AddressOf(), ns);
+				asSNameSpace *nsEnum = engine->FindNameSpace(nsScope.AddressOf());
+				if(nsEnum)
+					scopeType = builder->GetObjectType(enumType.AddressOf(), nsEnum);
 			}
 
 			asDWORD value = 0;
@@ -8809,10 +8807,10 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			else if( !engine->ep.requireEnumScope )
 			{
 				// Look for the enum value without explicitly informing the enum type
-				asSNameSpace *ns = DetermineNameSpace(currScope);
+				asSNameSpace *nsEnum = DetermineNameSpace(currScope);
 				int e = 0;
-				if( ns )
-					e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
+				if(nsEnum)
+					e = builder->GetEnumValue(name.AddressOf(), dt, value, nsEnum);
 				if( e )
 				{
 					found = true;
@@ -8895,7 +8893,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF, true);
 
 			// Mark the variable as initialized so that the user will not be bother by it again
-			sVariable *v = variables->GetVariable(name.AddressOf());
+			v = variables->GetVariable(name.AddressOf());
 			asASSERT(v);
 			if( v ) v->isInitialized = true;
 		}
@@ -9808,7 +9806,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		// If none has been registered, just allocate the variable and push it on the stack.
 		if( args.GetLength() == 0 )
 		{
-			asSTypeBehaviour *beh = tempObj.dataType.GetBehaviour();
+			beh = tempObj.dataType.GetBehaviour();
 			if( beh && beh->construct == 0 && !(dt.GetObjectType()->flags & asOBJ_REF) )
 			{
 				// Call the default constructor
@@ -9880,10 +9878,10 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 					ctx->bc.InstrPTR(asBC_FuncPtr, bestMethod);
 
 					// Call the factory function for the delegate
-					asCArray<int> funcs;
-					builder->GetFunctionDescriptions(DELEGATE_FACTORY, funcs, engine->nameSpaces[0]);
-					asASSERT( funcs.GetLength() == 1 );
-					ctx->bc.Call(asBC_CALLSYS , funcs[0], 2*AS_PTR_SIZE);
+					asCArray<int> delegateFuncs;
+					builder->GetFunctionDescriptions(DELEGATE_FACTORY, delegateFuncs, engine->nameSpaces[0]);
+					asASSERT(delegateFuncs.GetLength() == 1 );
+					ctx->bc.Call(asBC_CALLSYS , delegateFuncs[0], 2*AS_PTR_SIZE);
 
 					// Store the returned delegate in a temporary variable
 					int returnOffset = AllocateVariable(dt, true, false);
@@ -11070,9 +11068,9 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 		if( ctx->property_const && !func->isReadOnly )
 		{
 			Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
-			asCArray<int> funcs;
-			funcs.PushLast(ctx->property_set);
-			PrintMatchingFuncs(funcs, node);
+			asCArray<int> funcCandidates;
+			funcCandidates.PushLast(ctx->property_set);
+			PrintMatchingFuncs(funcCandidates, node);
 		}
 	}
 
@@ -11280,9 +11278,9 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 		if( ctx->property_const && !func->isReadOnly )
 		{
 			Error(TXT_NON_CONST_METHOD_ON_CONST_OBJ, node);
-			asCArray<int> funcs;
-			funcs.PushLast(ctx->property_get);
-			PrintMatchingFuncs(funcs, node);
+			asCArray<int> funcCandidates;
+			funcCandidates.PushLast(ctx->property_get);
+			PrintMatchingFuncs(funcCandidates, node);
 		}
 	}
 
@@ -12305,7 +12303,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			asCArray<int> usedVars;
 			lctx->bc.GetVarsUsed(usedVars);
 			asUINT oldReservedVars = reservedVariables.GetLength();
-			for( asUINT n = 0; n < rctx->deferredParams.GetLength(); n++ )
+			for( n = 0; n < rctx->deferredParams.GetLength(); n++ )
 			{
 				if( rctx->deferredParams[n].argType.isTemporary && 
 					usedVars.Exists(rctx->deferredParams[n].argType.stackOffset) )
@@ -13118,7 +13116,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 			}
 			else if( op == ttStarStar )
 			{
-				v = pow(lctx->type.floatValue, rctx->type.floatValue);
+				v = powf(lctx->type.floatValue, rctx->type.floatValue);
 
 				if( v == HUGE_VAL )
 					Error(TXT_POW_OVERFLOW, node);
@@ -13336,15 +13334,15 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 		if( lctx->type.dataType.IsUnsignedType() &&
 			lctx->type.dataType.GetSizeInMemoryBytes() < 4 )
 		{
+			// Upgrade to 32bit
 			to = asCDataType::CreatePrimitive(ttUInt, false);
 		}
 		else if( !lctx->type.dataType.IsUnsignedType() )
 		{
-			asCDataType to;
-			if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-				to.SetTokenType(ttInt64);
+			if (lctx->type.dataType.GetSizeInMemoryDWords() == 2)
+				to = asCDataType::CreatePrimitive(ttInt64, false);
 			else
-				to.SetTokenType(ttInt);
+				to = asCDataType::CreatePrimitive(ttInt, false);
 		}
 
 		// Do the actual conversion
@@ -13516,22 +13514,22 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asSExprContext 
 	bool signMismatch = false;
 	for( int n = 0; !signMismatch && n < 2; n++ )
 	{
-		asSExprContext *op = n ? rctx : lctx;
+		asSExprContext *opCtx = n ? rctx : lctx;
 
-		if( op->type.dataType.IsUnsignedType() != to.IsUnsignedType() )
+		if( opCtx->type.dataType.IsUnsignedType() != to.IsUnsignedType() )
 		{
 			// We have a mismatch, unless the value is a literal constant and the conversion won't affect its value
 			signMismatch = true;
-			if( op->type.isConstant )
+			if( opCtx->type.isConstant )
 			{
-				if( op->type.dataType.GetTokenType() == ttUInt64 || op->type.dataType.GetTokenType() == ttInt64 )
+				if( opCtx->type.dataType.GetTokenType() == ttUInt64 || opCtx->type.dataType.GetTokenType() == ttInt64 )
 				{
-					if( !(op->type.qwordValue & (asQWORD(1)<<63)) )
+					if( !(opCtx->type.qwordValue & (asQWORD(1)<<63)) )
 						signMismatch = false;
 				}
 				else
 				{
-					if( !(op->type.dwordValue & (1<<31)) )
+					if( !(opCtx->type.dwordValue & (1<<31)) )
 						signMismatch = false;
 				}
 

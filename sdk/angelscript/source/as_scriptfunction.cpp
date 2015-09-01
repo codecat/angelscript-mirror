@@ -923,17 +923,17 @@ asUINT asCScriptFunction::GetVarCount() const
 }
 
 // interface
-int asCScriptFunction::GetVar(asUINT index, const char **name, int *typeId) const
+int asCScriptFunction::GetVar(asUINT index, const char **out_name, int *out_typeId) const
 {
 	if( scriptData == 0 )
 		return asNOT_SUPPORTED;
 	if( index >= scriptData->variables.GetLength() )
 		return asINVALID_ARG;
 
-	if( name )
-		*name = scriptData->variables[index]->name.AddressOf();
-	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(scriptData->variables[index]->type);
+	if( out_name )
+		*out_name = scriptData->variables[index]->name.AddressOf();
+	if( out_typeId )
+		*out_typeId = engine->GetTypeIdFromDataType(scriptData->variables[index]->type);
 
 	return asSUCCESS;
 }
@@ -952,7 +952,7 @@ const char *asCScriptFunction::GetVarDecl(asUINT index, bool includeNamespace) c
 }
 
 // internal
-void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stackOffset)
+void asCScriptFunction::AddVariable(asCString &in_name, asCDataType &in_type, int in_stackOffset)
 {
 	asASSERT( scriptData );
 	asSScriptVariable *var = asNEW(asSScriptVariable);
@@ -961,9 +961,9 @@ void asCScriptFunction::AddVariable(asCString &name, asCDataType &type, int stac
 		// Out of memory
 		return;
 	}
-	var->name                 = name;
-	var->type                 = type;
-	var->stackOffset          = stackOffset;
+	var->name                 = in_name;
+	var->type                 = in_type;
+	var->stackOffset          = in_stackOffset;
 	var->declaredAtProgramPos = 0;
 	scriptData->variables.PushLast(var);
 }
@@ -1376,35 +1376,35 @@ asUINT asCScriptFunction::GetParamCount() const
 }
 
 // interface
-int asCScriptFunction::GetParam(asUINT index, int *typeId, asDWORD *flags, const char **name, const char **defaultArg) const
+int asCScriptFunction::GetParam(asUINT index, int *out_typeId, asDWORD *out_flags, const char **out_name, const char **out_defaultArg) const
 {
 	if( index >= parameterTypes.GetLength() )
 		return asINVALID_ARG;
 
-	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(parameterTypes[index]);
+	if( out_typeId )
+		*out_typeId = engine->GetTypeIdFromDataType(parameterTypes[index]);
 
-	if( flags )
+	if( out_flags )
 	{
-		*flags = inOutFlags[index];
-		*flags |= parameterTypes[index].IsReadOnly() ? asTM_CONST : 0;
+		*out_flags = inOutFlags[index];
+		*out_flags |= parameterTypes[index].IsReadOnly() ? asTM_CONST : 0;
 	}
 
-	if( name )
+	if( out_name )
 	{
 		// The parameter names are not stored if loading from bytecode without debug information
 		if( index < parameterNames.GetLength() )
-			*name = parameterNames[index].AddressOf();
+			*out_name = parameterNames[index].AddressOf();
 		else
-			*name = 0;
+			*out_name = 0;
 	}
 
-	if( defaultArg )
+	if( out_defaultArg )
 	{
 		if( index < defaultArgs.GetLength() && defaultArgs[index] )
-			*defaultArg = defaultArgs[index]->AddressOf();
+			*out_defaultArg = defaultArgs[index]->AddressOf();
 		else
-			*defaultArg = 0;
+			*out_defaultArg = 0;
 	}
 
 	return asSUCCESS;

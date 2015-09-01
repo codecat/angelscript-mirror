@@ -437,12 +437,12 @@ asIScriptFunction *asCObjectType::GetMethodByIndex(asUINT index, bool getVirtual
 }
 
 // interface
-asIScriptFunction *asCObjectType::GetMethodByName(const char *name, bool getVirtual) const
+asIScriptFunction *asCObjectType::GetMethodByName(const char *in_name, bool in_getVirtual) const
 {
 	int id = -1;
 	for( asUINT n = 0; n < methods.GetLength(); n++ )
 	{
-		if( engine->scriptFunctions[methods[n]]->name == name )
+		if( engine->scriptFunctions[methods[n]]->name == in_name )
 		{
 			if( id == -1 )
 				id = methods[n];
@@ -454,7 +454,7 @@ asIScriptFunction *asCObjectType::GetMethodByName(const char *name, bool getVirt
 	if( id == -1 ) return 0;
 
 	asCScriptFunction *func = engine->scriptFunctions[id];
-	if( !getVirtual )
+	if( !in_getVirtual )
 	{
 		if( func && func->funcType == asFUNC_VIRTUAL )
 			return virtualFunctionTable[func->vfTableIdx];
@@ -497,26 +497,26 @@ asUINT asCObjectType::GetPropertyCount() const
 }
 
 // interface
-int asCObjectType::GetProperty(asUINT index, const char **name, int *typeId, bool *isPrivate, bool *isProtected, int *offset, bool *isReference, asDWORD *accessMask) const
+int asCObjectType::GetProperty(asUINT index, const char **out_name, int *out_typeId, bool *out_isPrivate, bool *out_isProtected, int *out_offset, bool *out_isReference, asDWORD *out_accessMask) const
 {
 	if( index >= properties.GetLength() )
 		return asINVALID_ARG;
 
 	asCObjectProperty *prop = properties[index];
-	if( name )
-		*name = prop->name.AddressOf();
-	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(prop->type);
-	if( isPrivate )
-		*isPrivate = prop->isPrivate;
-	if( isProtected )
-		*isProtected = prop->isProtected;
-	if( offset )
-		*offset = prop->byteOffset;
-	if( isReference )
-		*isReference = prop->type.IsReference();
-	if( accessMask )
-		*accessMask = prop->accessMask;
+	if( out_name )
+		*out_name = prop->name.AddressOf();
+	if( out_typeId )
+		*out_typeId = engine->GetTypeIdFromDataType(prop->type);
+	if( out_isPrivate )
+		*out_isPrivate = prop->isPrivate;
+	if( out_isProtected )
+		*out_isProtected = prop->isProtected;
+	if( out_offset )
+		*out_offset = prop->byteOffset;
+	if( out_isReference )
+		*out_isReference = prop->type.IsReference();
+	if( out_accessMask )
+		*out_accessMask = prop->accessMask;
 
 	return 0;
 }
@@ -678,7 +678,7 @@ asDWORD asCObjectType::GetAccessMask() const
 }
 
 // internal
-asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isProtected, bool isInherited)
+asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &propName, const asCDataType &dt, bool isPrivate, bool isProtected, bool isInherited)
 {
 	asASSERT( flags & asOBJ_SCRIPT_OBJECT );
 	asASSERT( dt.CanBeInstantiated() );
@@ -692,7 +692,7 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, cons
 		return 0;
 	}
 
-	prop->name        = name;
+	prop->name        = propName;
 	prop->type        = dt;
 	prop->isPrivate   = isPrivate;
 	prop->isProtected = isProtected;

@@ -70,13 +70,13 @@ void asCTypeInfo::Set(const asCDataType &dt)
 	isRefToLocal     = false;
 }
 
-void asCTypeInfo::SetVariable(const asCDataType &dt, int stackOffset, bool isTemporary)
+void asCTypeInfo::SetVariable(const asCDataType &in_dt, int in_stackOffset, bool in_isTemporary)
 {
-	Set(dt);
+	Set(in_dt);
 
 	this->isVariable  = true;
-	this->isTemporary = isTemporary;
-	this->stackOffset = (short)stackOffset;
+	this->isTemporary = in_isTemporary;
+	this->stackOffset = (short)in_stackOffset;
 }
 
 void asCTypeInfo::SetConstantQW(const asCDataType &dt, asQWORD value)

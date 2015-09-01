@@ -103,18 +103,18 @@ asCScriptNode *asCParser::GetScriptNode()
 	return scriptNode;
 }
 
-int asCParser::ParseFunctionDefinition(asCScriptCode *script, bool expectListPattern)
+int asCParser::ParseFunctionDefinition(asCScriptCode *in_script, bool in_expectListPattern)
 {
 	Reset();
 
 	// Set flag that permits ? as datatype for parameters
 	isParsingAppInterface = true;
 
-	this->script = script;
+	this->script = in_script;
 
 	scriptNode = ParseFunctionDefinition();
 
-	if( expectListPattern )
+	if( in_expectListPattern )
 		scriptNode->AddChildLast(ParseListPattern());
 
 	// The declaration should end after the definition
@@ -149,11 +149,11 @@ asCScriptNode *asCParser::CreateNode(eScriptNode type)
 	return new(ptr) asCScriptNode(type);
 }
 
-int asCParser::ParseDataType(asCScriptCode *script, bool isReturnType)
+int asCParser::ParseDataType(asCScriptCode *in_script, bool in_isReturnType)
 {
 	Reset();
 
-	this->script = script;
+	this->script = in_script;
 
 	scriptNode = CreateNode(snDataType);
 	if( scriptNode == 0 ) return -1;
@@ -161,7 +161,7 @@ int asCParser::ParseDataType(asCScriptCode *script, bool isReturnType)
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
 
-	if( isReturnType )
+	if( in_isReturnType )
 	{
 		scriptNode->AddChildLast(ParseTypeMod(false));
 		if( isSyntaxError ) return -1;
@@ -185,11 +185,11 @@ int asCParser::ParseDataType(asCScriptCode *script, bool isReturnType)
 
 
 // Parse a template declaration: IDENTIFIER '<' 'class'? IDENTIFIER '>'
-int asCParser::ParseTemplateDecl(asCScriptCode *script)
+int asCParser::ParseTemplateDecl(asCScriptCode *in_script)
 {
 	Reset();
 
-	this->script = script;
+	this->script = in_script;
 	scriptNode = CreateNode(snUndefined);
 	if( scriptNode == 0 ) return -1;
 
@@ -249,11 +249,11 @@ int asCParser::ParseTemplateDecl(asCScriptCode *script)
 	return 0;
 }
 
-int asCParser::ParsePropertyDeclaration(asCScriptCode *script)
+int asCParser::ParsePropertyDeclaration(asCScriptCode *in_script)
 {
 	Reset();
 
-	this->script = script;
+	this->script = in_script;
 
 	scriptNode = CreateNode(snDeclaration);
 	if( scriptNode == 0 ) return -1;
@@ -1750,7 +1750,6 @@ asCScriptNode *asCParser::ParseExpression()
 
 	for(;;)
 	{
-		sToken t;
 		GetToken(&t);
 		RewindTo(&t);
 
@@ -2012,11 +2011,11 @@ bool asCParser::IsConstant(int tokenType)
 	return false;
 }
 
-int asCParser::ParseScript(asCScriptCode *script)
+int asCParser::ParseScript(asCScriptCode *in_script)
 {
 	Reset();
 
-	this->script = script;
+	this->script = in_script;
 
 	scriptNode = ParseScript(false);
 
@@ -2037,11 +2036,11 @@ int asCParser::ParseScript(asCScriptCode *script)
 	return 0;
 }
 
-int asCParser::ParseExpression(asCScriptCode *script)
+int asCParser::ParseExpression(asCScriptCode *in_script)
 {
 	Reset();
 
-	this->script = script;
+	this->script = in_script;
 
 	checkValidTypes = true;
 
@@ -2269,7 +2268,7 @@ asCScriptNode *asCParser::ParseNamespace()
 	return node;
 }
 
-int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
+int asCParser::ParseStatementBlock(asCScriptCode *in_script, asCScriptNode *in_block)
 {
 	TimeIt("asCParser::ParseStatementBlock");
 
@@ -2278,8 +2277,8 @@ int asCParser::ParseStatementBlock(asCScriptCode *script, asCScriptNode *block)
 	// Tell the parser to validate the identifiers as valid types
 	checkValidTypes = true;
 
-	this->script = script;
-	sourcePos = block->tokenPos;
+	this->script = in_script;
+	sourcePos = in_block->tokenPos;
 
 	scriptNode = ParseStatementBlock();
 
@@ -3253,15 +3252,15 @@ asCScriptNode *asCParser::ParseClass()
 	return node;
 }
 
-int asCParser::ParseVarInit(asCScriptCode *script, asCScriptNode *init)
+int asCParser::ParseVarInit(asCScriptCode *in_script, asCScriptNode *in_init)
 {
 	Reset();
 
 	// Tell the parser to validate the identifiers as valid types
 	checkValidTypes = true;
 
-	this->script = script;
-	sourcePos = init->tokenPos;
+	this->script = in_script;
+	sourcePos = in_init->tokenPos;
 
 	// If next token is assignment, parse expression
 	sToken t;

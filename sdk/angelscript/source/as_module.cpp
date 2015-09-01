@@ -195,9 +195,9 @@ asIScriptEngine *asCModule::GetEngine() const
 }
 
 // interface
-void asCModule::SetName(const char *name)
+void asCModule::SetName(const char *in_name)
 {
-	this->name = name;
+	name = in_name;
 }
 
 // interface
@@ -248,13 +248,13 @@ int asCModule::SetDefaultNamespace(const char *nameSpace)
 }
 
 // interface
-int asCModule::AddScriptSection(const char *name, const char *code, size_t codeLength, int lineOffset)
+int asCModule::AddScriptSection(const char *in_name, const char *in_code, size_t in_codeLength, int in_lineOffset)
 {
 #ifdef AS_NO_COMPILER
-	UNUSED_VAR(name);
-	UNUSED_VAR(code);
-	UNUSED_VAR(codeLength);
-	UNUSED_VAR(lineOffset);
+	UNUSED_VAR(in_name);
+	UNUSED_VAR(in_code);
+	UNUSED_VAR(in_codeLength);
+	UNUSED_VAR(in_lineOffset);
 	return asNOT_SUPPORTED;
 #else
 	if( !builder )
@@ -264,7 +264,7 @@ int asCModule::AddScriptSection(const char *name, const char *code, size_t codeL
 			return asOUT_OF_MEMORY;
 	}
 
-	return builder->AddCode(name, code, (int)codeLength, lineOffset, (int)engine->GetScriptSectionNameIndex(name ? name : ""), engine->ep.copyScriptSections);
+	return builder->AddCode(in_name, in_code, (int)in_codeLength, in_lineOffset, (int)engine->GetScriptSectionNameIndex(in_name ? in_name : ""), engine->ep.copyScriptSections);
 #endif
 }
 
@@ -748,12 +748,12 @@ void asCModule::InternalReset()
 }
 
 // interface
-asIScriptFunction *asCModule::GetFunctionByName(const char *name) const
+asIScriptFunction *asCModule::GetFunctionByName(const char *in_name) const
 {
 	asSNameSpace *ns = defaultNamespace;
 	while( ns )
 	{
-		const asCArray<unsigned int> &idxs = globalFunctions.GetIndexes(ns, name);
+		const asCArray<unsigned int> &idxs = globalFunctions.GetIndexes(ns, in_name);
 		if( idxs.GetLength() != 1 )
 			return 0;
 
@@ -898,14 +898,14 @@ asUINT asCModule::GetGlobalVarCount() const
 }
 
 // interface
-int asCModule::GetGlobalVarIndexByName(const char *name) const
+int asCModule::GetGlobalVarIndexByName(const char *in_name) const
 {
 	asSNameSpace *ns = defaultNamespace;
 
 	// Find the global var id
 	while( ns )
 	{
-		int id = scriptGlobals.GetFirstIndex(ns, name);
+		int id = scriptGlobals.GetFirstIndex(ns, in_name);
 		if( id >= 0 ) return id;
 
 		// Recursively search parent namespaces
@@ -945,17 +945,17 @@ int asCModule::GetGlobalVarIndexByDecl(const char *decl) const
 	// Don't write parser errors to the message callback
 	bld.silent = true;
 
-	asCString name;
+	asCString declName;
 	asSNameSpace *nameSpace;
 	asCDataType dt;
-	int r = bld.ParseVariableDeclaration(decl, defaultNamespace, name, nameSpace, dt);
+	int r = bld.ParseVariableDeclaration(decl, defaultNamespace, declName, nameSpace, dt);
 	if( r < 0 )
 		return r;
 
 	// Search global variables for a match
 	while( nameSpace )
 	{
-		int id = scriptGlobals.GetFirstIndex(nameSpace, name, asCCompGlobPropType(dt));
+		int id = scriptGlobals.GetFirstIndex(nameSpace, declName, asCCompGlobPropType(dt));
 		if( id != -1 )
 			return id;
 
@@ -998,19 +998,19 @@ const char *asCModule::GetGlobalVarDeclaration(asUINT index, bool includeNamespa
 }
 
 // interface
-int asCModule::GetGlobalVar(asUINT index, const char **name, const char **nameSpace, int *typeId, bool *isConst) const
+int asCModule::GetGlobalVar(asUINT index, const char **out_name, const char **out_nameSpace, int *out_typeId, bool *out_isConst) const
 {
 	const asCGlobalProperty *prop = scriptGlobals.Get(index);
 	if (!prop) return 0;
 
-	if( name )
-		*name = prop->name.AddressOf();
-	if( nameSpace )
-		*nameSpace = prop->nameSpace->name.AddressOf();
-	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(prop->type);
-	if( isConst )
-		*isConst = prop->type.IsReadOnly();
+	if( out_name )
+		*out_name = prop->name.AddressOf();
+	if( out_nameSpace )
+		*out_nameSpace = prop->nameSpace->name.AddressOf();
+	if( out_typeId )
+		*out_typeId = engine->GetTypeIdFromDataType(prop->type);
+	if( out_isConst )
+		*out_isConst = prop->type.IsReadOnly();
 
 	return asSUCCESS;
 }
@@ -1031,7 +1031,7 @@ asIObjectType *asCModule::GetObjectTypeByIndex(asUINT index) const
 }
 
 // interface
-asIObjectType *asCModule::GetObjectTypeByName(const char *name) const
+asIObjectType *asCModule::GetObjectTypeByName(const char *in_name) const
 {
 	asSNameSpace *ns = defaultNamespace;
 	while( ns )
@@ -1039,7 +1039,7 @@ asIObjectType *asCModule::GetObjectTypeByName(const char *name) const
 		for( asUINT n = 0; n < classTypes.GetLength(); n++ )
 		{
 			if( classTypes[n] &&
-				classTypes[n]->name == name &&
+				classTypes[n]->name == in_name &&
 				classTypes[n]->nameSpace == ns )
 				return classTypes[n];
 		}
@@ -1170,7 +1170,7 @@ int asCModule::GetNextImportedFunctionId()
 
 #ifndef AS_NO_COMPILER
 // internal
-int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const asCString &name, const asCDataType &returnType, const asCArray<asCDataType> &params, const asCArray<asCString> &paramNames, const asCArray<asETypeModifiers> &inOutFlags, const asCArray<asCString *> &defaultArgs, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isProtected, bool isFinal, bool isOverride, bool isShared, asSNameSpace *ns)
+int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const asCString &funcName, const asCDataType &returnType, const asCArray<asCDataType> &params, const asCArray<asCString> &paramNames, const asCArray<asETypeModifiers> &inOutFlags, const asCArray<asCString *> &defaultArgs, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isProtected, bool isFinal, bool isOverride, bool isShared, asSNameSpace *ns)
 {
 	asASSERT(id >= 0);
 
@@ -1193,7 +1193,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const a
 	if( objType && objType->IsShared() )
 		isShared = true;
 
-	func->name             = name;
+	func->name             = funcName;
 	func->nameSpace        = ns;
 	func->id               = id;
 	func->returnType       = returnType;
@@ -1275,7 +1275,7 @@ int asCModule::AddScriptFunction(asCScriptFunction *func)
 }
 
 // internal
-int asCModule::AddImportedFunction(int id, const asCString &name, const asCDataType &returnType, const asCArray<asCDataType> &params, const asCArray<asETypeModifiers> &inOutFlags, const asCArray<asCString *> &defaultArgs, asSNameSpace *ns, const asCString &moduleName)
+int asCModule::AddImportedFunction(int id, const asCString &funcName, const asCDataType &returnType, const asCArray<asCDataType> &params, const asCArray<asETypeModifiers> &inOutFlags, const asCArray<asCString *> &defaultArgs, asSNameSpace *ns, const asCString &moduleName)
 {
 	asASSERT(id >= 0);
 
@@ -1291,7 +1291,7 @@ int asCModule::AddImportedFunction(int id, const asCString &name, const asCDataT
 		return asOUT_OF_MEMORY;
 	}
 
-	func->name           = name;
+	func->name           = funcName;
 	func->id             = id;
 	func->returnType     = returnType;
 	func->nameSpace      = ns;
@@ -1479,10 +1479,10 @@ asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns)
 }
 
 // internal
-asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *name, const asCDataType &dt, asSNameSpace *ns)
+asCGlobalProperty *asCModule::AllocateGlobalProperty(const char *propName, const asCDataType &dt, asSNameSpace *ns)
 {
 	asCGlobalProperty *prop = engine->AllocateGlobalProperty();
-	prop->name = name;
+	prop->name = propName;
 	prop->nameSpace = ns;
 
 	// Allocate the memory for this property based on its type
@@ -1601,9 +1601,9 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 	}
 
 	// Compile the global variable and add it to the module scope
-	asCBuilder builder(engine, this);
+	asCBuilder varBuilder(engine, this);
 	asCString str = code;
-	r = builder.CompileGlobalVar(sectionName, str.AddressOf(), lineOffset);
+	r = varBuilder.CompileGlobalVar(sectionName, str.AddressOf(), lineOffset);
 
 	engine->BuildCompleted();
 
@@ -1620,7 +1620,7 @@ int asCModule::CompileGlobalVar(const char *sectionName, const char *code, int l
 			{
 				// Call the init function for the global variable
 				asIScriptContext *ctx = 0;
-				int r = engine->CreateContext(&ctx, true);
+				r = engine->CreateContext(&ctx, true);
 				if( r < 0 )
 					return r;
 	
@@ -1673,10 +1673,10 @@ int asCModule::CompileFunction(const char *sectionName, const char *code, int li
 	}
 
 	// Compile the single function
-	asCBuilder builder(engine, this);
+	asCBuilder funcBuilder(engine, this);
 	asCString str = code;
 	asCScriptFunction *func = 0;
-	r = builder.CompileFunction(sectionName, str.AddressOf(), lineOffset, compileFlags, &func);
+	r = funcBuilder.CompileFunction(sectionName, str.AddressOf(), lineOffset, compileFlags, &func);
 
 	engine->BuildCompleted();
 
@@ -1714,13 +1714,13 @@ int asCModule::RemoveFunction(asIScriptFunction *func)
 
 #ifndef AS_NO_COMPILER
 // internal
-int asCModule::AddFuncDef(const asCString &name, asSNameSpace *ns)
+int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns)
 {
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, 0, asFUNC_FUNCDEF);
 	if( func == 0 )
 		return asOUT_OF_MEMORY;
 
-	func->name      = name;
+	func->name      = funcName;
 	func->nameSpace = ns;
 	func->module    = this;
 
