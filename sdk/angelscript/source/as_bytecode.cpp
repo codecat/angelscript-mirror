@@ -2075,7 +2075,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 	FILE *file;
 	fopen_s(&file, path.AddressOf(), "w");
 #else
-	FILE *file = fopen(str.AddressOf(), "w");
+	FILE *file = fopen(path.AddressOf(), "w");
 #endif
 
 #if !defined(AS_XENON) // XBox 360: When running in DVD Emu, no write is allowed
