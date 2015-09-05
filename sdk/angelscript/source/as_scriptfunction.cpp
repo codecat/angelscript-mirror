@@ -206,6 +206,15 @@ void asCScriptFunction::MakeDelegate(asCScriptFunction *func, void *obj)
 }
 
 // interface
+void *asCScriptFunction::GetAuxiliary() const
+{
+	if (sysFuncIntf)
+		return sysFuncIntf->auxiliary;
+
+	return 0;
+}
+
+// interface
 void *asCScriptFunction::GetDelegateObject() const
 {
 	return objForDelegate;

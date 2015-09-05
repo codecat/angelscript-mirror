@@ -1894,7 +1894,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 }
 
 // interface
-int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
+int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 	if( datatype == 0 ) return ConfigError(asINVALID_ARG, "RegisterObjectBehaviour", datatype, decl);
 
@@ -1920,11 +1920,11 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(type.GetObjectType()) )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
-	return RegisterBehaviourToObjectType(type.GetObjectType(), behaviour, decl, funcPointer, callConv, objForThiscall);
+	return RegisterBehaviourToObjectType(type.GetObjectType(), behaviour, decl, funcPointer, callConv, auxiliary);
 }
 
 // internal
-int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
+int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 #ifdef AS_MAX_PORTABILITY
 	if( callConv != asCALL_GENERIC )
@@ -1935,7 +1935,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	bool isMethod = !(behaviour == asBEHAVE_FACTORY ||
 		              behaviour == asBEHAVE_LIST_FACTORY ||
 		              behaviour == asBEHAVE_TEMPLATE_CALLBACK);
-	int r = DetectCallingConvention(isMethod, funcPointer, callConv, objForThiscall, &internal);
+	int r = DetectCallingConvention(isMethod, funcPointer, callConv, auxiliary, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
@@ -2411,7 +2411,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.parameterTypes.GetLength() )
 			decl += "?&out";
 		decl += ")";
-		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
+		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, auxiliary);
 	}
 	// Deprecated since 2.30.0, 2014-12-30
 	else if( behaviour == asBEHAVE_REF_CAST ||
@@ -2437,7 +2437,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.parameterTypes.GetLength() )
 			decl += "?&out";
 		decl += ")";
-		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, objForThiscall);
+		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, auxiliary);
 	}
 #endif
 	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
@@ -2702,7 +2702,7 @@ int asCScriptEngine::GetGlobalPropertyIndexByDecl(const char *decl) const
 }
 
 // interface
-int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
+int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 	if( obj == 0 )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
@@ -2726,11 +2726,11 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetObjectType()) )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectMethod", obj, declaration);
 
-	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv, objForThiscall);
+	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv, auxiliary);
 }
 
 // internal
-int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
+int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 #ifdef AS_MAX_PORTABILITY
 	if( callConv != asCALL_GENERIC )
@@ -2738,7 +2738,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 #endif
 
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(true, funcPointer, callConv, objForThiscall, &internal);
+	int r = DetectCallingConvention(true, funcPointer, callConv, auxiliary, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 
@@ -2889,7 +2889,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 }
 
 // interface
-int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
+int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 #ifdef AS_MAX_PORTABILITY
 	if( callConv != asCALL_GENERIC )
@@ -2897,7 +2897,7 @@ int asCScriptEngine::RegisterGlobalFunction(const char *declaration, const asSFu
 #endif
 
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(false, funcPointer, callConv, objForThiscall, &internal);
+	int r = DetectCallingConvention(false, funcPointer, callConv, auxiliary, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterGlobalFunction", declaration, 0);
 
@@ -3197,10 +3197,10 @@ int asCScriptEngine::GetDefaultArrayTypeId() const
 }
 
 // interface
-int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall)
+int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(false, funcPointer, callConv, objForThiscall, &internal);
+	int r = DetectCallingConvention(false, funcPointer, callConv, auxiliary, &internal);
 	if( r < 0 )
 		return ConfigError(r, "RegisterStringFactory", datatype, 0);
 

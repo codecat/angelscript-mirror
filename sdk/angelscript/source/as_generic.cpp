@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2015 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -60,6 +60,12 @@ asCGeneric::asCGeneric(asCScriptEngine *engine, asCScriptFunction *sysFunction, 
 // internal
 asCGeneric::~asCGeneric()
 {
+}
+
+// interface
+void *asCGeneric::GetAuxiliary() const
+{
+	return sysFunction->GetAuxiliary();
 }
 
 // interface

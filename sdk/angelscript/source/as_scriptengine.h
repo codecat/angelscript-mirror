@@ -86,7 +86,7 @@ public:
 	virtual asIJITCompiler *GetJITCompiler() const;
 
 	// Global functions
-	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
 	virtual asUINT             GetGlobalFunctionCount() const;
 	virtual asIScriptFunction *GetGlobalFunctionByIndex(asUINT index) const;
 	virtual asIScriptFunction *GetGlobalFunctionByDecl(const char *declaration) const;
@@ -101,8 +101,8 @@ public:
 	// Type registration
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags);
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset);
-	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
-	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
 	virtual int            RegisterInterface(const char *name);
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
 	virtual asUINT         GetObjectTypeCount() const;
@@ -111,7 +111,7 @@ public:
 	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const;
 
 	// String factory
-	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0);
+	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0);
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags) const;
 
 	// Default array type
@@ -219,8 +219,8 @@ public:
 	friend class asCByteCode;
 	friend int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *internal, asCScriptEngine *engine);
 
-	int RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
-	int RegisterBehaviourToObjectType(asCObjectType *objectType, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall);
+	int RegisterMethodToObjectType(asCObjectType *objectType, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
+	int RegisterBehaviourToObjectType(asCObjectType *objectType, asEBehaviours behaviour, const char *decl, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0);
 
 	int VerifyVarTypeNotInFunction(asCScriptFunction *func);
 

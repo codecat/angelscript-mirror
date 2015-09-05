@@ -129,6 +129,7 @@ public:
 	const char          *GetScriptSectionName() const;
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
+	void                *GetAuxiliary() const;
 
 	// Function signature
 	asIObjectType       *GetObjectType() const;

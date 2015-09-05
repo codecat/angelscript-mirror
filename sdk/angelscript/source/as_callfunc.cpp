@@ -53,12 +53,12 @@ BEGIN_AS_NAMESPACE
 //      describes the structure for class method pointers on Itanium and arm64 ABI
 //      http://clang.llvm.org/doxygen/CodeGen_2ItaniumCXXABI_8cpp_source.html#l00937
 
-int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, void *objForThiscall, asSSystemFunctionInterface *internal)
+int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, void *auxiliary, asSSystemFunctionInterface *internal)
 {
 	memset(internal, 0, sizeof(asSSystemFunctionInterface));
 
-	internal->func           = ptr.ptr.f.func;
-	internal->objForThiscall = 0;
+	internal->func      = ptr.ptr.f.func;
+	internal->auxiliary = 0;
 
 	// Was a compatible calling convention specified?
 	if( internal->func )
@@ -80,17 +80,22 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 			internal->callConv = ICC_STDCALL;
 		else if( base == asCALL_THISCALL_ASGLOBAL )
 		{
-			if( objForThiscall == 0 )
+			if(auxiliary == 0)
 				return asINVALID_ARG;
-			internal->objForThiscall = objForThiscall;
-			internal->callConv       = ICC_THISCALL;
+			internal->auxiliary = auxiliary;
+			internal->callConv  = ICC_THISCALL;
 
 			// This is really a thiscall, so it is necessary to check for virtual method pointers
 			base = asCALL_THISCALL;
 			isMethod = true;
 		}
-		else if( base == asCALL_GENERIC )
+		else if (base == asCALL_GENERIC)
+		{
 			internal->callConv = ICC_GENERIC_FUNC;
+
+			// The auxiliary object is optional for generic calling convention
+			internal->auxiliary = auxiliary;
+		}
 		else
 			return asNOT_SUPPORTED;
 	}
@@ -103,7 +108,7 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 			internalCallConv thisCallConv;
 			if( base == asCALL_THISCALL )
 			{
-				if( callConv != asCALL_THISCALL_ASGLOBAL && objForThiscall )
+				if(callConv != asCALL_THISCALL_ASGLOBAL && auxiliary)
 					return asINVALID_ARG;
 
 				thisCallConv = ICC_THISCALL;
@@ -113,10 +118,10 @@ int DetectCallingConvention(bool isMethod, const asSFuncPtr &ptr, int callConv, 
 #ifdef AS_NO_THISCALL_FUNCTOR_METHOD
 				return asNOT_SUPPORTED;
 #else
-				if( objForThiscall == 0 )
+				if(auxiliary == 0)
 					return asINVALID_ARG;
 
-				internal->objForThiscall = objForThiscall;
+				internal->auxiliary = auxiliary;
 				if( base == asCALL_THISCALL_OBJFIRST )
 					thisCallConv = ICC_THISCALL_OBJFIRST;
 				else //if( base == asCALL_THISCALL_OBJLAST )
@@ -559,10 +564,10 @@ int CallSystemFunction(int id, asCContext *context)
 
 	if( callConv >= ICC_THISCALL )
 	{
-		if( sysFunc->objForThiscall )
+		if(sysFunc->auxiliary)
 		{
 			// This class method is being called as if it is a global function
-			obj = sysFunc->objForThiscall;
+			obj = sysFunc->auxiliary;
 		}
 		else
 		{
@@ -608,15 +613,15 @@ int CallSystemFunction(int id, asCContext *context)
 
 		if( callConv >= ICC_THISCALL_OBJLAST )
 		{
-			asASSERT( sysFunc->objForThiscall != 0 );
-			// This class method is being called as object method (sysFunc->objForThiscall must be set).
-			obj = sysFunc->objForThiscall;
+			asASSERT( sysFunc->auxiliary != 0 );
+			// This class method is being called as object method (sysFunc->auxiliary must be set).
+			obj = sysFunc->auxiliary;
 			continueCheckIndex = 1;
 		}
-		else if( sysFunc->objForThiscall )
+		else if(sysFunc->auxiliary)
 		{
 			// This class method is being called as if it is a global function
-			obj = sysFunc->objForThiscall;
+			obj = sysFunc->auxiliary;
 			continueCheck = false;
 		}
 
@@ -833,7 +838,7 @@ int CallSystemFunction(int id, asCContext *context)
 
 		// Skip the object pointer on the stack
 		// TODO: runtime optimize: This check and increment should have been done in PrepareSystemFunction
-		if( callConv >= ICC_THISCALL && sysFunc->objForThiscall == 0 )
+		if( callConv >= ICC_THISCALL && sysFunc->auxiliary == 0 )
 			args += AS_PTR_SIZE;
 
 		asSSystemFunctionInterface::SClean *clean = sysFunc->cleanArgs.AddressOf();

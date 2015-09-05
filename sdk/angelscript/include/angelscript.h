@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        23002
-#define ANGELSCRIPT_VERSION_STRING "2.30.2"
+#define ANGELSCRIPT_VERSION        23100
+#define ANGELSCRIPT_VERSION_STRING "2.31.0 WIP"
 
 // Data types
 
@@ -665,7 +665,7 @@ public:
 	virtual asIJITCompiler *GetJITCompiler() const = 0;
 
 	// Global functions
-	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
+	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0) = 0;
 	virtual asUINT             GetGlobalFunctionCount() const = 0;
 	virtual asIScriptFunction *GetGlobalFunctionByIndex(asUINT index) const = 0;
 	virtual asIScriptFunction *GetGlobalFunctionByDecl(const char *declaration) const = 0;
@@ -680,8 +680,8 @@ public:
 	// Object types
 	virtual int            RegisterObjectType(const char *obj, int byteSize, asDWORD flags) = 0;
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
-	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
-	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0) = 0;
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0) = 0;
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0) = 0;
 	virtual int            RegisterInterface(const char *name) = 0;
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	virtual asUINT         GetObjectTypeCount() const = 0;
@@ -690,7 +690,7 @@ public:
 	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 
 	// String factory
-	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0) = 0;
+	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0) = 0;
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags = 0) const = 0;
 
 	// Default array type
@@ -948,6 +948,7 @@ public:
 	// Miscellaneous
 	virtual asIScriptEngine   *GetEngine() const = 0;
 	virtual asIScriptFunction *GetFunction() const = 0;
+	virtual void              *GetAuxiliary() const = 0;
 
 	// Object
 	virtual void   *GetObject() = 0;
@@ -1087,6 +1088,7 @@ public:
 	virtual const char      *GetScriptSectionName() const = 0;
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
+	virtual void            *GetAuxiliary() const = 0;
 
 	// Function signature
 	virtual asIObjectType   *GetObjectType() const = 0;
