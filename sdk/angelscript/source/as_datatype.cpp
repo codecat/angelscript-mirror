@@ -210,10 +210,7 @@ asCString asCDataType::Format(asSNameSpace *currNs, bool includeNamespace) const
 	}
 	else if( isAuto )
 	{
-		if( isObjectHandle )
-			str += "<auto@>";
-		else
-			str += "<auto>";
+		str += "<auto>";
 	}
 	else
 	{

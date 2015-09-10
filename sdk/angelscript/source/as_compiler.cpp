@@ -1199,10 +1199,10 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *in_builder, asCScriptCode *in
 
 	// Parse the initialization nodes
 	asCParser parser(builder);
-	if( in_node )
+	if (in_node)
 	{
 		int r = parser.ParseVarInit(in_script, in_node);
-		if( r < 0 )
+		if (r < 0)
 			return r;
 
 		in_node = parser.GetScriptNode();
@@ -1210,8 +1210,17 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *in_builder, asCScriptCode *in
 
 	asSExprContext compiledCtx(engine);
 	bool preCompiled = false;
-	if( in_gvar->datatype.IsAuto() )
+	if (in_gvar->datatype.IsAuto())
+	{
 		preCompiled = CompileAutoType(in_gvar->datatype, compiledCtx, in_node, in_gvar->declaredAtNode);
+		if (!preCompiled)
+		{
+			// If it wasn't possible to determine the type from the expression then there 
+			// is no need to continue with the initialization. The error was already reported
+			// in CompileAutoType.
+			return -1;
+		}
+	}
 	if( in_gvar->property == 0 )
 	{
 		in_gvar->property = builder->module->AllocateGlobalProperty(in_gvar->name.AddressOf(), in_gvar->datatype, in_gvar->ns);
@@ -2487,36 +2496,48 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx
 		int r = CompileAssignment(node, &compiledCtx);
 		if( r >= 0 )
 		{
+			// Must not have unused ambiguous names
+			if (compiledCtx.IsClassMethod() || compiledCtx.IsGlobalFunc())
+			{
+				// TODO: Should mention that the problem is the ambiguous name
+				Error(TXT_CANNOT_RESOLVE_AUTO, errNode);
+				return false;
+			}
+
+			// Must not have unused anonymous functions
+			if (compiledCtx.IsLambda())
+			{
+				// TODO: Should mention that the problem is the anonymous function
+				Error(TXT_CANNOT_RESOLVE_AUTO, errNode);
+				return false;
+			}
+
 			asCDataType newType = compiledCtx.type.dataType;
-			bool success = true;
 
 			// Handle const qualifier on auto
-			if( type.IsReadOnly() )
+			if (type.IsReadOnly())
 				newType.MakeReadOnly(true);
-			else if( newType.IsPrimitive() )
+			else if (newType.IsPrimitive())
 				newType.MakeReadOnly(false);
 
 			// Handle reference/value stuff
 			newType.MakeReference(false);
-			if( !newType.IsObjectHandle() )
+			if (!newType.IsObjectHandle())
 			{
 				// We got a value object or an object reference.
 				// Turn the variable into a handle if specified
 				// as auto@, otherwise make it a 'value'.
-				if( type.IsHandleToAuto() )
+				if (type.IsHandleToAuto())
 				{
-					if( newType.MakeHandle(true) < 0 )
+					if (newType.MakeHandle(true) < 0)
 					{
 						Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, errNode);
-						success = false;
+						return false;
 					}
 				}
 			}
 
-			if(success)
-				type = newType;
-			else
-				type = asCDataType::CreatePrimitive(ttInt, false);
+			type = newType;
 			return true;
 		}
 
@@ -2542,8 +2563,17 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		// If this is an auto type, we have to compile the assignment now to figure out the type
 		asSExprContext compiledCtx(engine);
 		bool preCompiled = false;
-		if( type.IsAuto() )
+		if (type.IsAuto())
+		{
 			preCompiled = CompileAutoType(type, compiledCtx, node->next, node);
+			if (!preCompiled)
+			{
+				// If it wasn't possible to determine the type from the expression then there 
+				// is no need to continue with the initialization. The error was already reported
+				// in CompileAutoType.
+				return;
+			}
+		}
 
 		// Is the type allowed?
 		if( !type.CanBeInstantiated() )
