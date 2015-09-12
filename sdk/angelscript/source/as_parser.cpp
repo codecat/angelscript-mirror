@@ -995,10 +995,13 @@ asCString asCParser::InsteadFound(sToken &t)
 	if( t.type == ttIdentifier )
 	{
 		asCString id(&script->code[t.pos], t.length);
-		str.Format(TXT_INSTEAD_FOUND_s, id.AddressOf());
+		str.Format(TXT_INSTEAD_FOUND_IDENTIFIER_s, id.AddressOf());
 	}
+	else if( t.type >= ttIf )
+		str.Format(TXT_INSTEAD_FOUND_KEYWORD_s, asCTokenizer::GetDefinition(t.type));
 	else
 		str.Format(TXT_INSTEAD_FOUND_s, asCTokenizer::GetDefinition(t.type));
+
 	return str;
 }
 

@@ -135,6 +135,8 @@
 #define TXT_INIT_LIST_CANNOT_BE_USED_WITH_s        "Initialization lists cannot be used with '%s'"
 #define TXT_INSTANCING_INVLD_TMPL_TYPE_s_s         "Attempting to instantiate invalid template type '%s<%s>'"
 #define TXT_INSTEAD_FOUND_s                        "Instead found '%s'"
+#define TXT_INSTEAD_FOUND_IDENTIFIER_s             "Instead found identifier '%s'"
+#define TXT_INSTEAD_FOUND_KEYWORD_s                "Instead found reserved keyword '%s'"
 #define TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED     "Interface '%s' cannot be instantiated"
 #define TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE "Interfaces can only implement other interfaces"
 #define TXT_INVALID_BREAK                          "Invalid 'break'"

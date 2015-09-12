@@ -1174,7 +1174,7 @@ bool Test()
 
 		// TODO: The 'Failed in call' message should show the return code too (and if possible the symbolic name, i.e. asINVALID_DECL)
 		if( bout.buffer != "Property (1, 10) : Error   : Expected identifier\n"
-						   "Property (1, 10) : Error   : Instead found 'int'\n"
+						   "Property (1, 10) : Error   : Instead found reserved keyword 'int'\n"
 		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'Npc' and 'unsigned int hp' (Code: -10)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

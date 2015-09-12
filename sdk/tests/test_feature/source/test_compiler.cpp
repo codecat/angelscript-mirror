@@ -2228,11 +2228,11 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "ExecuteString (1, 19) : Error   : Expected ',' or ';'\n"
-						   "ExecuteString (1, 19) : Error   : Instead found 'p'\n"
+						   "ExecuteString (1, 19) : Error   : Instead found identifier 'p'\n"
 						   "ExecuteString (2, 13) : Error   : Expected ';'\n"
-						   "ExecuteString (2, 13) : Error   : Instead found 'p'\n"
+						   "ExecuteString (2, 13) : Error   : Instead found identifier 'p'\n"
 						   "ExecuteString (3, 18) : Error   : Expected ')'\n"
-						   "ExecuteString (3, 18) : Error   : Instead found 'p'\n" )
+						   "ExecuteString (3, 18) : Error   : Instead found identifier 'p'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -2811,7 +2811,7 @@ bool Test()
 	r = ExecuteString(engine, "class XXX { int a; }; XXX b;");
 	if( r >= 0 ) TEST_FAILED;
 	if( bout.buffer != "ExecuteString (1, 1) : Error   : Expected expression value\n"
-					   "ExecuteString (1, 1) : Error   : Instead found 'class'\n"
+					   "ExecuteString (1, 1) : Error   : Instead found reserved keyword 'class'\n"
 	                   "ExecuteString (1, 23) : Error   : Identifier 'XXX' is not a data type\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
