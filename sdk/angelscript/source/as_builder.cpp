@@ -1901,6 +1901,23 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	// TODO: weak: Should not do this if the class has been declared with noweak
 	engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRefInternal();
 
+	// Skip to the content of the class
+	while (n && n->nodeType == snIdentifier)
+		n = n->next;
+
+	// Register possible child types
+	while (n)
+	{
+		node = n->next;
+		if (n->nodeType == snFuncDef)
+		{
+			// TODO: child funcdef: Create a pseudo namespace with the name of the class
+			n->DisconnectParent();
+			RegisterFuncDef(n, file, ns);
+		}
+		n = node;
+	}
+
 	return 0;
 }
 

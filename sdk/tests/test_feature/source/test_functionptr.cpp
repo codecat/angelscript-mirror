@@ -28,6 +28,44 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test declaring funcdefs as members of classes
+/*	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class MyObj { \n"
+			"  funcdef void Callback(); \n"            // Allow declaring funcdef as member
+			"  void Method(Callback@ cb) { cb(); } \n" // The class should see its own funcdef without need for scope
+			"} \n"
+			"bool called = false; \n"
+			"void main() { \n"
+			"  MyObj test; \n"
+			"  MyObj::Callback @cb = Function; \n"  // Using the class name as scope can be used to identify the funcdef
+			"  test.Method(cb); \n"
+			"  assert( called ); \n"
+			"} \n"
+			"void Function() { called = true; } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
+		// TODO: Test shared class with child funcdef. The funcdef must be shared automatically too
+
+		engine->ShutDownAndRelease();
+	} */
+
 	// Test lambdas
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

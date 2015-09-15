@@ -3144,7 +3144,7 @@ asCScriptNode *asCParser::ParseMixin()
 	return node;
 }
 
-// BNF: CLASS ::= {'shared' | 'abstract' | 'final'} 'class' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR} '}'
+// BNF: CLASS ::= {'shared' | 'abstract' | 'final'} 'class' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR | FUNCDEF} '}'
 asCScriptNode *asCParser::ParseClass()
 {
 	asCScriptNode *node = CreateNode(snClass);
@@ -3220,7 +3220,9 @@ asCScriptNode *asCParser::ParseClass()
 	while( t.type != ttEndStatementBlock && t.type != ttEnd )
 	{
 		// Is it a property or a method?
-		if( IsFuncDecl(true) )
+		if (t.type == ttFuncDef)
+			node->AddChildLast(ParseFuncDef());
+		else if( IsFuncDecl(true) )
 			node->AddChildLast(ParseFunction(true));
 		else if( IsVirtualPropertyDecl() )
 			node->AddChildLast(ParseVirtualPropertyDecl(true, false));
