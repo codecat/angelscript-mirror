@@ -178,7 +178,7 @@ protected:
 	asCString          GetScopeFromNode(asCScriptNode *n, asCScriptCode *script, asCScriptNode **next = 0);
 
 	asCObjectType     *GetObjectType(const char *type, asSNameSpace *ns);
-	asCScriptFunction *GetFuncDef(const char *type);
+	asCScriptFunction *GetFuncDef(const char *type, asSNameSpace *ns);
 	asCObjectType     *GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 	asCDataType        CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
 	asCDataType        ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);
@@ -212,7 +212,7 @@ protected:
 	int                RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
 	int                RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
-	int                RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns);
+	int                RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns, asCObjectType *parent);
 	asCScriptFunction *RegisterLambda(asCScriptNode *node, asCScriptCode *file, asCScriptFunction *funcDef, const asCString &name, asSNameSpace *ns);
 	void               CompleteFuncDef(sFuncDef *funcDef);
 	void               CompileInterfaces();

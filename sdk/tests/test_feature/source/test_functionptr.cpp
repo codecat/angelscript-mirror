@@ -40,12 +40,16 @@ bool Test()
 		mod->AddScriptSection("test",
 			"class MyObj { \n"
 			"  funcdef void Callback(); \n"            // Allow declaring funcdef as member
-			"  void Method(Callback@ cb) { cb(); } \n" // The class should see its own funcdef without need for scope
+			"  void Method(Callback@ cb) { \n"         // The class should see its own funcdef without need for scope
+			"    cb(); \n"
+			"    Callback @cb2 = cb; \n"               // The class should see its own funcdef without need for scope
+			"  } \n"
+			"  Callback @cb; \n"                       // The class should see its own funcdef without need for scope
 			"} \n"
 			"bool called = false; \n"
 			"void main() { \n"
 			"  MyObj test; \n"
-			"  MyObj::Callback @cb = Function; \n"  // Using the class name as scope can be used to identify the funcdef
+			"  MyObj::Callback @cb = Function; \n"     // Using the class name as scope can be used to identify the funcdef
 			"  test.Method(cb); \n"
 			"  assert( called ); \n"
 			"} \n"
@@ -62,9 +66,42 @@ bool Test()
 
 		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
 		// TODO: Test shared class with child funcdef. The funcdef must be shared automatically too
+		// TODO: Test registering funcdef as child of application type
+		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
+		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
+		// TODO: Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
+		// TODO: Test name conflict within class
+		// TODO: Test saving and loading bytecode with child funcdefs
 
 		engine->ShutDownAndRelease();
 	} */
+
+	// Test that funcdefs from other namespaces are not visible
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace foo { funcdef void bar(); } \n"
+			"void main() { \n"
+			"  bar @b; \n"        // not visible
+			"  foo::bar @c; \n"   // visible
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
+						   "test (3, 3) : Error   : Identifier 'bar' is not a data type in global namespace\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test lambdas
 	{

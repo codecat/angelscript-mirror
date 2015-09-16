@@ -171,12 +171,18 @@ asCString asCDataType::Format(asSNameSpace *currNs, bool includeNamespace) const
 
 	// If the type is not declared in the current namespace, then the namespace 
 	// must always be informed to guarantee that the correct type is informed
-	if( includeNamespace || (objectType && objectType->nameSpace != currNs) || (funcDef && funcDef->nameSpace != currNs) )
+	if (includeNamespace || (objectType && objectType->nameSpace != currNs) || (funcDef && funcDef->nameSpace != currNs))
 	{
-		if( objectType && objectType->nameSpace->name != "" )
+		if (objectType && objectType->nameSpace->name != "")
 			str += objectType->nameSpace->name + "::";
-		else if( funcDef && funcDef->nameSpace->name != "" )
+		else if (funcDef && funcDef->nameSpace && funcDef->nameSpace->name != "")
 			str += funcDef->nameSpace->name + "::";
+		else if (funcDef && funcDef->nameSpace == 0)
+		{
+			// TODO: child funcdef: If funcDef->nameSpace is null it means the funcDef was declared as member of 
+			//                      another type, in which case the scope should be built with the name of that type
+			str += "<class>::";
+		}
 	}
 
 	if( tokenType != ttIdentifier )

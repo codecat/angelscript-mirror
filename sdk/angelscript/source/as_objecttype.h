@@ -200,6 +200,9 @@ public:
 	asCObjectType *              derivedFrom;
 	asCArray<asCScriptFunction*> virtualFunctionTable;
 
+	// Used for funcdefs declared as members of class
+	asCArray<asCScriptFunction*> childFuncDefs;
+
 	asDWORD flags;
 	asDWORD accessMask;
 

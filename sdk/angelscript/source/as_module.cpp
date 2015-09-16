@@ -1714,8 +1714,11 @@ int asCModule::RemoveFunction(asIScriptFunction *func)
 
 #ifndef AS_NO_COMPILER
 // internal
-int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns)
+int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObjectType *parent)
 {
+	// namespace and parent are mutually exclusive
+	asASSERT((ns == 0 && parent) || (ns && parent == 0));
+	
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, 0, asFUNC_FUNCDEF);
 	if( func == 0 )
 		return asOUT_OF_MEMORY;
@@ -1729,6 +1732,9 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns)
 	engine->funcDefs.PushLast(func);
 	func->id = engine->GetNextScriptFunctionId();
 	engine->AddScriptFunction(func);
+
+	if (parent)
+		parent->childFuncDefs.PushLast(func);
 
 	return (int)funcDefs.GetLength()-1;
 }

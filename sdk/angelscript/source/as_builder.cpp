@@ -799,7 +799,7 @@ void asCBuilder::RegisterTypesFromScript(asCScriptNode *node, asCScriptCode *scr
 			else if( node->nodeType == snFuncDef )
 			{
 				node->DisconnectParent();
-				RegisterFuncDef(node, script, ns);
+				RegisterFuncDef(node, script, ns, 0);
 			}
 			else if( node->nodeType == snMixin )
 			{
@@ -1503,8 +1503,11 @@ sMixinClass *asCBuilder::GetMixinClass(const char *name, asSNameSpace *ns)
 	return 0;
 }
 
-int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
+int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns, asCObjectType *parent)
 {
+	// namespace and parent are exclusively mutual
+	asASSERT((ns == 0 && parent) || (ns && parent == 0));
+
 	// TODO: redesign: Allow funcdefs to be explicitly declared as 'shared'. In this case
 	//                 an error should be given if any of the arguments/return type is not
 	//                 shared.
@@ -1517,11 +1520,18 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 	name.Assign(&file->code[n->tokenPos], n->tokenLength);
 
 	// Check for name conflict with other types
-	int r = CheckNameConflict(name.AddressOf(), node, file, ns);
-	if( asSUCCESS != r )
+	if (ns)
 	{
-		node->Destroy(engine);
-		return r;
+		int r = CheckNameConflict(name.AddressOf(), node, file, ns);
+		if (asSUCCESS != r)
+		{
+			node->Destroy(engine);
+			return r;
+		}
+	}
+	else
+	{
+		// TODO: Check for name conflict within parent object
 	}
 
 	// The function definition should be stored as a asCScriptFunction so that the application
@@ -1541,7 +1551,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 	fd->name   = name;
 	fd->node   = node;
 	fd->script = file;
-	fd->idx    = module->AddFuncDef(name, ns);
+	fd->idx    = module->AddFuncDef(name, ns, parent);
 
 	funcDefs.PushLast(fd);
 
@@ -1911,9 +1921,9 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 		node = n->next;
 		if (n->nodeType == snFuncDef)
 		{
-			// TODO: child funcdef: Create a pseudo namespace with the name of the class
+			// TODO: child funcdef: The funcdef must be registered as child type of class. The funcdef must know the class is its owner
 			n->DisconnectParent();
-			RegisterFuncDef(n, file, ns);
+			RegisterFuncDef(n, file, 0, st);
 		}
 		n = node;
 	}
@@ -5046,6 +5056,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	}
 
 	// Determine namespace
+	// TODO: child funcdef: This function should return the object type if the scope defines an object type rather than a namespace
+	//                      This can be used for matching enum values too
 	asSNameSpace *ns = GetNameSpaceFromNode(n, file, implicitNamespace, &n);
 	if( ns == 0 )
 	{
@@ -5215,7 +5227,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			else if( ot == 0 )
 			{
 				// It can still be a function definition
-				asCScriptFunction *funcdef = GetFuncDef(str.AddressOf());
+				asCScriptFunction *funcdef = GetFuncDef(str.AddressOf(), ns);
 
 				if( funcdef )
 				{
@@ -5477,18 +5489,24 @@ asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type,
 	return found;
 }
 
-asCScriptFunction *asCBuilder::GetFuncDef(const char *type)
+asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns)
 {
-	for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
+	for (asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++)
+	{
+		asCScriptFunction *funcDef = engine->registeredFuncDefs[n];
 		// TODO: access: Only return the definitions that the module has access to
-		if( engine->registeredFuncDefs[n]->name == type )
-			return engine->registeredFuncDefs[n];
+		if (funcDef && funcDef->nameSpace == ns && funcDef->name == type)
+			return funcDef;
+	}
 
 	if( module )
 	{
-		for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
-			if( module->funcDefs[n]->name == type )
-				return module->funcDefs[n];
+		for (asUINT n = 0; n < module->funcDefs.GetLength(); n++)
+		{
+			asCScriptFunction *funcDef = module->funcDefs[n];
+			if (funcDef && funcDef->nameSpace == ns && funcDef->name == type)
+				return funcDef;
+		}
 	}
 
 	return 0;
