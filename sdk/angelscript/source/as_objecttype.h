@@ -200,7 +200,8 @@ public:
 	asCObjectType *              derivedFrom;
 	asCArray<asCScriptFunction*> virtualFunctionTable;
 
-	// Used for funcdefs declared as members of class
+	// Used for funcdefs declared as members of class.
+	// TODO: child funcdef: Should be possible to enumerate these from application
 	asCArray<asCScriptFunction*> childFuncDefs;
 
 	asDWORD flags;

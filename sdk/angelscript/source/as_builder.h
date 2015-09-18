@@ -173,12 +173,12 @@ protected:
 	int                ValidateDefaultArgs(asCScriptCode *script, asCScriptNode *node, asCScriptFunction *func);
 	asCString          GetCleanExpressionString(asCScriptNode *n, asCScriptCode *file);
 
-	asSNameSpace      *GetNameSpaceFromNode(asCScriptNode *node, asCScriptCode *script, asSNameSpace *implicitNs, asCScriptNode **next);
-	asSNameSpace      *GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script, bool isRequired = true);
+	asSNameSpace      *GetNameSpaceFromNode(asCScriptNode *node, asCScriptCode *script, asSNameSpace *implicitNs, asCScriptNode **next, asCObjectType **objType = 0);
+	asSNameSpace      *GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script, asCObjectType **objType = 0, bool isRequired = true);
 	asCString          GetScopeFromNode(asCScriptNode *n, asCScriptCode *script, asCScriptNode **next = 0);
 
 	asCObjectType     *GetObjectType(const char *type, asSNameSpace *ns);
-	asCScriptFunction *GetFuncDef(const char *type, asSNameSpace *ns);
+	asCScriptFunction *GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType);
 	asCObjectType     *GetObjectTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 	asCDataType        CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
 	asCDataType        ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);

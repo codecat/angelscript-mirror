@@ -214,6 +214,14 @@ void asCObjectType::DestroyInternal()
 	}
 	templateSubTypes.SetLength(0);
 
+	// Clear the child types
+	for (asUINT n = 0; n < childFuncDefs.GetLength(); n++)
+	{
+		if( childFuncDefs[n] )
+			childFuncDefs[n]->objectType = 0;
+	}
+	childFuncDefs.SetLength(0);
+
 	if( derivedFrom )
 		derivedFrom->ReleaseInternal();
 	derivedFrom = 0;

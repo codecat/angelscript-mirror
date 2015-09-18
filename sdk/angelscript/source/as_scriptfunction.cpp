@@ -377,6 +377,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	objForDelegate         = 0;
 	funcForDelegate        = 0;
 	listPattern            = 0;
+	parentClass            = 0;
 
 	if( funcType == asFUNC_SCRIPT )
 		AllocateScriptFunctionData();

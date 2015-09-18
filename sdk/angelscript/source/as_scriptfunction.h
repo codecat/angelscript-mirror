@@ -272,6 +272,10 @@ public:
 
 	asSNameSpace                *nameSpace;
 
+	// When a funcdef is declared as member this will be set instead of the nameSpace
+	// objectType is not used for this to avoid thinking this is a class method
+	asCObjectType               *parentClass;
+
 	// Used by asFUNC_DELEGATE
 	void              *objForDelegate;
 	asCScriptFunction *funcForDelegate;

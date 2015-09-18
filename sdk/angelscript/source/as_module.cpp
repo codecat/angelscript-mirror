@@ -1718,9 +1718,9 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 {
 	// namespace and parent are mutually exclusive
 	asASSERT((ns == 0 && parent) || (ns && parent == 0));
-	
+
 	asCScriptFunction *func = asNEW(asCScriptFunction)(engine, 0, asFUNC_FUNCDEF);
-	if( func == 0 )
+	if (func == 0)
 		return asOUT_OF_MEMORY;
 
 	func->name      = funcName;
@@ -1734,7 +1734,10 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 	engine->AddScriptFunction(func);
 
 	if (parent)
+	{
 		parent->childFuncDefs.PushLast(func);
+		func->parentClass = parent;
+	}
 
 	return (int)funcDefs.GetLength()-1;
 }
