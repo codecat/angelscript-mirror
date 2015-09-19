@@ -68,6 +68,20 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
+		// Saving and loading should also work
+		CBytecodeStream stream(__FILE__"1");
+		r = mod->SaveByteCode(&stream);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = mod->LoadByteCode(&stream);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
 		// Test name conflict within class (funcdef vs funcdef, funcdef vs property, funcdef vs method)
 		bout.buffer = "";
 		mod->AddScriptSection("test",
@@ -95,7 +109,6 @@ bool Test()
 		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
 		// TODO: Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
-		// TODO: Test saving and loading bytecode with child funcdefs
 		// TODO: Test appropriate error when the child type doesn't exist
 		// TODO: Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
 		// TODO: Test that the child funcdef can use as returntype or parameter other child funcdefs of the same class without informing scope

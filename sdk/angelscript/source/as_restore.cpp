@@ -941,9 +941,31 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	}
 	else
 	{
-		asCString ns;
-		ReadString(&ns);
-		func->nameSpace = engine->AddNameSpace(ns.AddressOf());
+		if (func->funcType == asFUNC_FUNCDEF)
+		{
+			asBYTE b;
+			ReadData(&b, 1);
+			if (b == 'n')
+			{
+				asCString ns;
+				ReadString(&ns);
+				func->nameSpace = engine->AddNameSpace(ns.AddressOf());
+			}
+			else if (b == 'o')
+			{
+				func->nameSpace = 0;
+				func->parentClass = ReadObjectType();
+				func->parentClass->childFuncDefs.PushLast(func);
+			}
+			else
+				error = true;
+		}
+		else
+		{
+			asCString ns;
+			ReadString(&ns);
+			func->nameSpace = engine->AddNameSpace(ns.AddressOf());
+		}
 	}
 }
 
@@ -3689,7 +3711,25 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 	}
 	else
 	{
-		WriteString(&func->nameSpace->name);
+		if (func->funcType == asFUNC_FUNCDEF)
+		{
+			if (func->nameSpace)
+			{
+				// This funcdef was declared as global entity
+				asBYTE b = 'n';
+				WriteData(&b, 1);
+				WriteString(&func->nameSpace->name);
+			}
+			else
+			{
+				// This funcdef was declared as class member
+				asBYTE b = 'o';
+				WriteData(&b, 1);
+				WriteObjectType(func->parentClass);
+			}
+		}
+		else
+			WriteString(&func->nameSpace->name);
 	}
 }
 
