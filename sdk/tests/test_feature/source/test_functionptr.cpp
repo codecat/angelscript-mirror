@@ -29,7 +29,7 @@ bool Test()
 	const char *script;
 
 	// Test declaring funcdefs as members of classes
-/*	{
+	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -64,6 +64,10 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
 		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
 		// TODO: Test shared class with child funcdef. The funcdef must be shared automatically too
 		// TODO: Test registering funcdef as child of application type
@@ -75,10 +79,11 @@ bool Test()
 		// TODO: Test appropriate error when the child type doesn't exist
 		// TODO: Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
 		// TODO: Test that the child funcdef can use as returntype or parameter other child funcdefs of the same class without informing scope
+		// TODO: Test inheriting from class with child funcdef
 
 
 		engine->ShutDownAndRelease();
-	} */
+	}
 
 	// Test that funcdefs from other namespaces are not visible
 	{

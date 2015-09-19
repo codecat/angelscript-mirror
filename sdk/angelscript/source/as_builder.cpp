@@ -2995,7 +2995,7 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 
 				// Determine the type of the property
 				asCScriptCode *file = decl->script;
-				asCDataType dt = CreateDataTypeFromNode(nd, file, decl->objType->nameSpace);
+				asCDataType dt = CreateDataTypeFromNode(nd, file, decl->objType->nameSpace, false, decl->objType);
 				if( decl->objType->IsShared() && dt.GetObjectType() && !dt.GetObjectType()->IsShared() )
 				{
 					asCString msg;
@@ -5111,26 +5111,41 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 		str.Assign(&file->code[n->tokenPos], n->tokenLength);
 
 		// Recursively search parent namespaces for matching type
-		// TODO: child funcdef: When no specific scope was given and the currentType is set the 
-		//                      the datatype must first be search for in the currentType, and only
-		//                      if not found the namespaces should be searched
 		asSNameSpace *origNs = ns;
 		asCObjectType *origParentType = parentType;
 		while( (ns || parentType) && !found )
 		{
 			asCObjectType *ot = 0;
 
-			// If this is for a template type, then we must first determine if the
-			// identifier matches any of the template subtypes
-			if( currentType && (currentType->flags & asOBJ_TEMPLATE) )
+			if (currentType)
 			{
-				for( asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
+				// If this is for a template type, then we must first determine if the
+				// identifier matches any of the template subtypes
+				if (currentType->flags & asOBJ_TEMPLATE)
 				{
-					asCObjectType *type = currentType->templateSubTypes[subtypeIndex].GetObjectType();
-					if( type && str == type->name )
+					for (asUINT subtypeIndex = 0; subtypeIndex < currentType->templateSubTypes.GetLength(); subtypeIndex++)
 					{
-						ot = type;
-						break;
+						asCObjectType *type = currentType->templateSubTypes[subtypeIndex].GetObjectType();
+						if (type && str == type->name)
+						{
+							ot = type;
+							break;
+						}
+					}
+				}
+
+				if (ot == 0)
+				{
+					// Check if the identifier matches any of the child types
+					for (asUINT childTypeIndex = 0; childTypeIndex < currentType->childFuncDefs.GetLength(); childTypeIndex++)
+					{
+						asCScriptFunction *funcDef = currentType->childFuncDefs[childTypeIndex];
+						if (funcDef && funcDef->name == str)
+						{
+							dt = asCDataType::CreateFuncDef(funcDef);
+							ot = dt.GetObjectType();
+							found = true;
+						}
 					}
 				}
 			}
@@ -5140,7 +5155,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			if( ot == 0 && !module && currentType )
 				ot = GetObjectTypeFromTypesKnownByObject(str.AddressOf(), currentType);
 
-			if( ot )
+			if( ot && !found )
 			{
 				found = true;
 

@@ -2554,7 +2554,7 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 {
 	// Get the data type
-	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, outFunc->nameSpace);
+	asCDataType type = builder->CreateDataTypeFromNode(decl->firstChild, script, outFunc->nameSpace, false, outFunc->objectType);
 
 	// Declare all variables in this declaration
 	asCScriptNode *node = decl->firstChild->next;
