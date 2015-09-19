@@ -1369,6 +1369,22 @@ int asCBuilder::CheckNameConflictMember(asCObjectType *t, const char *name, asCS
 		}
 	}
 
+	asCArray<asCScriptFunction*> &funcdefs = t->childFuncDefs;
+	for (asUINT n = 0; n < funcdefs.GetLength(); n++)
+	{
+		if (funcdefs[n]->name == name)
+		{
+			if (code)
+			{
+				asCString str;
+				str.Format(TXT_NAME_CONFLICT_s_IS_FUNCDEF, name);
+				WriteError(str, code, node);
+			}
+
+			return -1;
+		}
+	}
+
 	// Property names must be checked against method names
 	if( isProperty )
 	{
@@ -1532,7 +1548,12 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 	}
 	else
 	{
-		// TODO: child funcdef: Check for name conflict within parent object
+		int r = CheckNameConflictMember(parent, name.AddressOf(), node, file, false);
+		if (asSUCCESS != r)
+		{
+			node->Destroy(engine);
+			return r;
+		}
 	}
 
 	// The function definition should be stored as a asCScriptFunction so that the application

@@ -68,13 +68,33 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
+		// Test name conflict within class (funcdef vs funcdef, funcdef vs property, funcdef vs method)
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"class MyObj { \n"
+			"  funcdef void a(); \n"
+			"  int a; \n"              // conflicts with first funcdef
+			"  void b() {} \n"         // conflicts with next funcdef
+			"  funcdef void b(); \n"
+			"  funcdef void a(); \n"   // conflicts with first funcdef
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (6, 11) : Error   : Name conflict. 'a' is a funcdef.\n"
+						   "test (4, 3) : Error   : Name conflict. 'b' is a funcdef.\n"
+						   "test (3, 7) : Error   : Name conflict. 'a' is a funcdef.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
 		// TODO: Test shared class with child funcdef. The funcdef must be shared automatically too
 		// TODO: Test registering funcdef as child of application type
 		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
 		// TODO: Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
-		// TODO: Test name conflict within class (funcdef vs funcdef, funcdef vs property, funcdef vs method)
 		// TODO: Test saving and loading bytecode with child funcdefs
 		// TODO: Test appropriate error when the child type doesn't exist
 		// TODO: Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
