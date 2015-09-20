@@ -1854,6 +1854,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	decl->name             = name;
 	decl->script           = file;
 	decl->node             = node;
+	asCObjectType *st = 0;
 
 	// If this type is shared and there already exist another shared
 	// type of the same name, then that one should be used instead of
@@ -1862,7 +1863,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	{
 		for( asUINT i = 0; i < engine->sharedScriptTypes.GetLength(); i++ )
 		{
-			asCObjectType *st = engine->sharedScriptTypes[i];
+			st = engine->sharedScriptTypes[i];
 			if( st &&
 				st->IsShared() &&
 				st->name == name &&
@@ -1874,69 +1875,72 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 				decl->objType          = st;
 				module->classTypes.PushLast(st);
 				st->AddRefInternal();
-				return 0;
+				break;
 			}
 		}
 	}
 
-	// Create a new object type for this class
-	asCObjectType *st = asNEW(asCObjectType)(engine);
-	if( st == 0 )
-		return asOUT_OF_MEMORY;
-
-	// By default all script classes are marked as garbage collected.
-	// Only after the complete structure and relationship between classes
-	// is known, can the flag be cleared for those objects that truly cannot
-	// form circular references. This is important because a template
-	// callback may be called with a script class before the compilation
-	// completes, and until it is known, the callback must assume the class
-	// is garbage collected.
-	st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
-
-	if( isShared )
-		st->flags |= asOBJ_SHARED;
-
-	if( isFinal )
-		st->flags |= asOBJ_NOINHERIT;
-
-	if( isAbstract )
-		st->flags |= asOBJ_ABSTRACT;
-
-	if( node->tokenType == ttHandle )
-		st->flags |= asOBJ_IMPLICIT_HANDLE;
-
-	st->size      = sizeof(asCScriptObject);
-	st->name      = name;
-	st->nameSpace = ns;
-	st->module    = module;
-	module->classTypes.PushLast(st);
-	if( isShared )
+	if (!decl->isExistingShared)
 	{
-		engine->sharedScriptTypes.PushLast(st);
-		st->AddRefInternal();
+		// Create a new object type for this class
+		st = asNEW(asCObjectType)(engine);
+		if (st == 0)
+			return asOUT_OF_MEMORY;
+
+		// By default all script classes are marked as garbage collected.
+		// Only after the complete structure and relationship between classes
+		// is known, can the flag be cleared for those objects that truly cannot
+		// form circular references. This is important because a template
+		// callback may be called with a script class before the compilation
+		// completes, and until it is known, the callback must assume the class
+		// is garbage collected.
+		st->flags = asOBJ_REF | asOBJ_SCRIPT_OBJECT | asOBJ_GC;
+
+		if (isShared)
+			st->flags |= asOBJ_SHARED;
+
+		if (isFinal)
+			st->flags |= asOBJ_NOINHERIT;
+
+		if (isAbstract)
+			st->flags |= asOBJ_ABSTRACT;
+
+		if (node->tokenType == ttHandle)
+			st->flags |= asOBJ_IMPLICIT_HANDLE;
+
+		st->size = sizeof(asCScriptObject);
+		st->name = name;
+		st->nameSpace = ns;
+		st->module = module;
+		module->classTypes.PushLast(st);
+		if (isShared)
+		{
+			engine->sharedScriptTypes.PushLast(st);
+			st->AddRefInternal();
+		}
+		decl->objType = st;
+
+		// Use the default script class behaviours
+		st->beh = engine->scriptTypeBehaviours.beh;
+
+		// TODO: Move this to asCObjectType so that the asCRestore can reuse it
+		engine->scriptFunctions[st->beh.addref]->AddRefInternal();
+		engine->scriptFunctions[st->beh.release]->AddRefInternal();
+		engine->scriptFunctions[st->beh.gcEnumReferences]->AddRefInternal();
+		engine->scriptFunctions[st->beh.gcGetFlag]->AddRefInternal();
+		engine->scriptFunctions[st->beh.gcGetRefCount]->AddRefInternal();
+		engine->scriptFunctions[st->beh.gcReleaseAllReferences]->AddRefInternal();
+		engine->scriptFunctions[st->beh.gcSetFlag]->AddRefInternal();
+		engine->scriptFunctions[st->beh.copy]->AddRefInternal();
+		engine->scriptFunctions[st->beh.factory]->AddRefInternal();
+		engine->scriptFunctions[st->beh.construct]->AddRefInternal();
+		// TODO: weak: Should not do this if the class has been declared with noweak
+		engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRefInternal();
+
+		// Skip to the content of the class
+		while (n && n->nodeType == snIdentifier)
+			n = n->next;
 	}
-	decl->objType = st;
-
-	// Use the default script class behaviours
-	st->beh = engine->scriptTypeBehaviours.beh;
-
-	// TODO: Move this to asCObjectType so that the asCRestore can reuse it
-	engine->scriptFunctions[st->beh.addref]->AddRefInternal();
-	engine->scriptFunctions[st->beh.release]->AddRefInternal();
-	engine->scriptFunctions[st->beh.gcEnumReferences]->AddRefInternal();
-	engine->scriptFunctions[st->beh.gcGetFlag]->AddRefInternal();
-	engine->scriptFunctions[st->beh.gcGetRefCount]->AddRefInternal();
-	engine->scriptFunctions[st->beh.gcReleaseAllReferences]->AddRefInternal();
-	engine->scriptFunctions[st->beh.gcSetFlag]->AddRefInternal();
-	engine->scriptFunctions[st->beh.copy]->AddRefInternal();
-	engine->scriptFunctions[st->beh.factory]->AddRefInternal();
-	engine->scriptFunctions[st->beh.construct]->AddRefInternal();
-	// TODO: weak: Should not do this if the class has been declared with noweak
-	engine->scriptFunctions[st->beh.getWeakRefFlag]->AddRefInternal();
-
-	// Skip to the content of the class
-	while (n && n->nodeType == snIdentifier)
-		n = n->next;
 
 	// Register possible child types
 	while (n)
@@ -1945,7 +1949,14 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 		if (n->nodeType == snFuncDef)
 		{
 			n->DisconnectParent();
-			RegisterFuncDef(n, file, 0, st);
+			if (!decl->isExistingShared)
+				RegisterFuncDef(n, file, 0, st);
+			else
+			{
+				// Destroy the node, since it won't be used
+				// TODO: Should verify that the funcdef is identical to the one in the existing shared class
+				n->Destroy(engine);
+			}
 		}
 		n = node;
 	}

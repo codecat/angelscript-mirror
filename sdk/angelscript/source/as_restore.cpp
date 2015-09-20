@@ -282,6 +282,7 @@ int asCReader::ReadInner()
 
 					if( f2->name == funcDef->name &&
 						f2->nameSpace == funcDef->nameSpace &&
+						f2->parentClass == funcDef->parentClass &&
 						f2->IsSignatureExceptNameEqual(funcDef) )
 					{
 						// Replace our funcdef for the existing one
@@ -292,11 +293,24 @@ int asCReader::ReadInner()
 
 						savedFunctions[savedFunctions.IndexOf(funcDef)] = f2;
 
+						if (funcDef->parentClass)
+						{
+							// The real funcdef should already be in the object
+							asASSERT(funcDef->parentClass->childFuncDefs.IndexOf(f2) >= 0);
+
+							funcDef->parentClass = 0;
+						}
+
 						funcDef->ReleaseInternal();
+						funcDef = 0;
 						break;
 					}
 				}
 			}
+
+			// Add the funcdef to the parentClass if this is a child funcdef
+			if (funcDef && funcDef->parentClass)
+				funcDef->parentClass->childFuncDefs.PushLast(funcDef);
 		}
 		else
 			Error(TXT_INVALID_BYTECODE_d);
@@ -955,7 +969,6 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 			{
 				func->nameSpace = 0;
 				func->parentClass = ReadObjectType();
-				func->parentClass->childFuncDefs.PushLast(func);
 			}
 			else
 				error = true;

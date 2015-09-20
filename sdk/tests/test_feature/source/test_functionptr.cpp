@@ -103,8 +103,39 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// Test shared class with child funcdef. The funcdef must be shared automatically too
+		bout.buffer = "";
+		mod->AddScriptSection("test1",
+			"shared class MyObj { funcdef void CB(); } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test2",
+			"shared class MyObj { } \n"  // The shared class should automatically get the funcdef
+			"MyObj::CB @c; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"shared class MyObj { funcdef int CB(int); } \n"); // TODO: The compiler should detect that this is different
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
-		// TODO: Test shared class with child funcdef. The funcdef must be shared automatically too
 		// TODO: Test registering funcdef as child of application type
 		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
@@ -113,6 +144,7 @@ bool Test()
 		// TODO: Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
 		// TODO: Test that the child funcdef can use as returntype or parameter other child funcdefs of the same class without informing scope
 		// TODO: Test inheriting from class with child funcdef
+		// TODO: Test funcdef in mixin class
 
 
 		engine->ShutDownAndRelease();
