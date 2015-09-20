@@ -3786,21 +3786,22 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 		return 0;
 	}
 
-	func->funcType         = asFUNC_SCRIPT;
+	func->funcType = asFUNC_SCRIPT;
 	func->AllocateScriptFunctionData();
-	func->name             = "$fact";
-	func->id               = GetNextScriptFunctionId();
+	func->id = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 
-	func->isShared         = true;
+	func->isShared = true;
 	if( templateType->flags & asOBJ_REF )
 	{
-		func->returnType   = asCDataType::CreateObjectHandle(ot, false);
+		func->name = "$fact";
+		func->returnType = asCDataType::CreateObjectHandle(ot, false);
 	}
 	else
 	{
-		func->returnType   = factory->returnType; // constructors return nothing
-		func->objectType   = ot;
+		func->name = "$beh0";
+		func->returnType = factory->returnType; // constructors return nothing
+		func->objectType = ot;
 		func->objectType->AddRefInternal();
 	}
 
