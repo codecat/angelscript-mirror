@@ -135,6 +135,26 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// Test inheriting from class with child funcdef
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"class Base { funcdef void A(); } \n"
+			"class Derived : Base { \n"
+			"  A @GetCallback() { return a; } \n" // should see the funcdef declared in base class
+			"  A @a; \n"
+			"} \n"
+			"void main() { \n"
+			"  Derived::A @a; \n" // should see the funcdef declared in base class
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
 		// TODO: Test registering funcdef as child of application type
 		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
@@ -143,9 +163,9 @@ bool Test()
 		// TODO: Test appropriate error when the child type doesn't exist
 		// TODO: Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
 		// TODO: Test that the child funcdef can use as returntype or parameter other child funcdefs of the same class without informing scope
-		// TODO: Test inheriting from class with child funcdef
-		// TODO: Test funcdef in mixin class
-
+		// TODO: Test funcdef in mixin class (currently not supported)
+		// TODO: Test funcdef in interface (currently not supported)
+		// TODO: Test name conflict when derived class declares same funcdef as present in base class
 
 		engine->ShutDownAndRelease();
 	}

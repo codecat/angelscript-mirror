@@ -638,16 +638,20 @@ void asCBuilder::ParseScripts()
 		}
 	}
 
-	if( numErrors == 0 )
+	if (numErrors == 0)
 	{
 		// Find all type declarations
-		for( n = 0; n < scripts.GetLength(); n++ )
+		for (n = 0; n < scripts.GetLength(); n++)
 		{
 			asCScriptNode *node = parsers[n]->GetScriptNode();
 			RegisterTypesFromScript(node, scripts[n], engine->nameSpaces[0]);
 		}
 
-		// Register the complete function definitions
+		// Before moving forward the builder must establish the relationship between types
+		// so that a derived type can see the child types of the parent type.
+		DetermineTypeRelations();
+
+		// Complete function definitions (defining returntype and parameters)
 		for( n = 0; n < funcDefs.GetLength(); n++ )
 			CompleteFuncDef(funcDefs[n]);
 
@@ -2474,93 +2478,6 @@ void asCBuilder::AddInterfaceToClass(sClassDeclaration *decl, asCScriptNode *err
 void asCBuilder::CompileInterfaces()
 {
 	asUINT n;
-	for( n = 0; n < interfaceDeclarations.GetLength(); n++ )
-	{
-		sClassDeclaration *intfDecl = interfaceDeclarations[n];
-		asCObjectType *intfType = intfDecl->objType;
-
-		asCScriptNode *node = intfDecl->node;
-		asASSERT(node && node->nodeType == snInterface);
-		node = node->firstChild;
-
-		// Skip the 'shared' keyword
-		if( intfType->IsShared() )
-			node = node->next;
-
-		// Skip the name
-		node = node->next;
-
-		// Verify the inherited interfaces
-		while( node && node->nodeType == snIdentifier )
-		{
-			asSNameSpace *ns;
-			asCString name;
-			if( GetNamespaceAndNameFromNode(node, intfDecl->script, intfType->nameSpace, ns, name) < 0 )
-			{
-				node = node->next;
-				continue;
-			}
-
-			// Find the object type for the interface
-			asCObjectType *objType = 0;
-			while( ns )
-			{
-				objType = GetObjectType(name.AddressOf(), ns);
-				if( objType ) break;
-
-				ns = engine->GetParentNameSpace(ns);
-			}
-
-			// Check that the object type is an interface
-			bool ok = true;
-			if( objType && objType->IsInterface() )
-			{
-				// Check that the implemented interface is shared if the base interface is shared
-				if( intfType->IsShared() && !objType->IsShared() )
-				{
-					asCString str;
-					str.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->GetName());
-					WriteError(str, intfDecl->script, node);
-					ok = false;
-				}
-			}
-			else
-			{
-				WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
-				ok = false;
-			}
-
-			if( ok )
-			{
-				// Make sure none of the implemented interfaces implement from this one
-				asCObjectType *base = objType;
-				while( base != 0 )
-				{
-					if( base == intfType )
-					{
-						WriteError(TXT_CANNOT_IMPLEMENT_SELF, intfDecl->script, node);
-						ok = false;
-						break;
-					}
-
-					// At this point there is at most one implemented interface
-					if( base->interfaces.GetLength() )
-						base = base->interfaces[0];
-					else
-						break;
-				}
-			}
-
-			if( ok )
-				AddInterfaceToClass(intfDecl, node, objType);
-
-			// Remove the nodes so they aren't parsed again
-			asCScriptNode *delNode = node;
-			node = node->next;
-			delNode->DisconnectParent();
-			delNode->Destroy(engine);
-		}
-	}
 
 	// Order the interfaces with inheritances so that the inherited
 	// of inherited interfaces can be added properly
@@ -2641,14 +2558,99 @@ void asCBuilder::CompileInterfaces()
 	}
 }
 
-// numTempl is the number of template instances that existed in the engine before the build begun
-void asCBuilder::CompileClasses(asUINT numTempl)
+void asCBuilder::DetermineTypeRelations()
 {
-	asUINT n;
-	asCArray<sClassDeclaration*> toValidate((int)classDeclarations.GetLength());
+	// Determine inheritance between interfaces
+	for (asUINT n = 0; n < interfaceDeclarations.GetLength(); n++)
+	{
+		sClassDeclaration *intfDecl = interfaceDeclarations[n];
+		asCObjectType *intfType = intfDecl->objType;
+
+		asCScriptNode *node = intfDecl->node;
+		asASSERT(node && node->nodeType == snInterface);
+		node = node->firstChild;
+
+		// Skip the 'shared' keyword
+		if (intfType->IsShared())
+			node = node->next;
+
+		// Skip the name
+		node = node->next;
+
+		// Verify the inherited interfaces
+		while (node && node->nodeType == snIdentifier)
+		{
+			asSNameSpace *ns;
+			asCString name;
+			if (GetNamespaceAndNameFromNode(node, intfDecl->script, intfType->nameSpace, ns, name) < 0)
+			{
+				node = node->next;
+				continue;
+			}
+
+			// Find the object type for the interface
+			asCObjectType *objType = 0;
+			while (ns)
+			{
+				objType = GetObjectType(name.AddressOf(), ns);
+				if (objType) break;
+
+				ns = engine->GetParentNameSpace(ns);
+			}
+
+			// Check that the object type is an interface
+			bool ok = true;
+			if (objType && objType->IsInterface())
+			{
+				// Check that the implemented interface is shared if the base interface is shared
+				if (intfType->IsShared() && !objType->IsShared())
+				{
+					asCString str;
+					str.Format(TXT_SHARED_CANNOT_IMPLEMENT_NON_SHARED_s, objType->GetName());
+					WriteError(str, intfDecl->script, node);
+					ok = false;
+				}
+			}
+			else
+			{
+				WriteError(TXT_INTERFACE_CAN_ONLY_IMPLEMENT_INTERFACE, intfDecl->script, node);
+				ok = false;
+			}
+
+			if (ok)
+			{
+				// Make sure none of the implemented interfaces implement from this one
+				asCObjectType *base = objType;
+				while (base != 0)
+				{
+					if (base == intfType)
+					{
+						WriteError(TXT_CANNOT_IMPLEMENT_SELF, intfDecl->script, node);
+						ok = false;
+						break;
+					}
+
+					// At this point there is at most one implemented interface
+					if (base->interfaces.GetLength())
+						base = base->interfaces[0];
+					else
+						break;
+				}
+			}
+
+			if (ok)
+				AddInterfaceToClass(intfDecl, node, objType);
+
+			// Remove the nodes so they aren't parsed again
+			asCScriptNode *delNode = node;
+			node = node->next;
+			delNode->DisconnectParent();
+			delNode->Destroy(engine);
+		}
+	}
 
 	// Determine class inheritances and interfaces
-	for( n = 0; n < classDeclarations.GetLength(); n++ )
+	for (asUINT n = 0; n < classDeclarations.GetLength(); n++)
 	{
 		sClassDeclaration *decl = classDeclarations[n];
 		asCScriptCode *file = decl->script;
@@ -2657,9 +2659,9 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 		bool multipleInheritance = false;
 		asCScriptNode *node = decl->node->firstChild;
 
-		while( file->TokenEquals(node->tokenPos, node->tokenLength, FINAL_TOKEN) ||
-			   file->TokenEquals(node->tokenPos, node->tokenLength, SHARED_TOKEN) ||
-			   file->TokenEquals(node->tokenPos, node->tokenLength, ABSTRACT_TOKEN) )
+		while (file->TokenEquals(node->tokenPos, node->tokenLength, FINAL_TOKEN) ||
+			file->TokenEquals(node->tokenPos, node->tokenLength, SHARED_TOKEN) ||
+			file->TokenEquals(node->tokenPos, node->tokenLength, ABSTRACT_TOKEN))
 		{
 			node = node->next;
 		}
@@ -2668,11 +2670,11 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 		asASSERT(node->tokenType == ttIdentifier);
 		node = node->next;
 
-		while( node && node->nodeType == snIdentifier )
+		while (node && node->nodeType == snIdentifier)
 		{
 			asSNameSpace *ns;
 			asCString name;
-			if( GetNamespaceAndNameFromNode(node, file, decl->objType->nameSpace, ns, name) < 0 )
+			if (GetNamespaceAndNameFromNode(node, file, decl->objType->nameSpace, ns, name) < 0)
 			{
 				node = node->next;
 				continue;
@@ -2682,33 +2684,33 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 			asCObjectType *objType = 0;
 			sMixinClass *mixin = 0;
 			asSNameSpace *origNs = ns;
-			while( ns )
+			while (ns)
 			{
 				objType = GetObjectType(name.AddressOf(), ns);
-				if( objType == 0 )
+				if (objType == 0)
 					mixin = GetMixinClass(name.AddressOf(), ns);
 
-				if( objType || mixin )
+				if (objType || mixin)
 					break;
 
 				ns = engine->GetParentNameSpace(ns);
 			}
 
-			if( objType == 0 && mixin == 0 )
+			if (objType == 0 && mixin == 0)
 			{
 				asCString str;
-				if( origNs->name == "" )
+				if (origNs->name == "")
 					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, name.AddressOf());
 				else
 					str.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, name.AddressOf(), origNs->name.AddressOf());
 				WriteError(str, file, node);
 			}
-			else if( mixin )
+			else if (mixin)
 			{
 				AddInterfaceFromMixinToClass(decl, node, mixin);
 			}
-			else if( !(objType->flags & asOBJ_SCRIPT_OBJECT) ||
-					 (objType->flags & asOBJ_NOINHERIT) )
+			else if (!(objType->flags & asOBJ_SCRIPT_OBJECT) ||
+				(objType->flags & asOBJ_NOINHERIT))
 			{
 				// Either the class is not a script class or interface
 				// or the class has been declared as 'final'
@@ -2716,12 +2718,12 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 				str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
 				WriteError(str, file, node);
 			}
-			else if( objType->size != 0 )
+			else if (objType->size != 0)
 			{
 				// The class inherits from another script class
-				if( !decl->isExistingShared && decl->objType->derivedFrom != 0 )
+				if (!decl->isExistingShared && decl->objType->derivedFrom != 0)
 				{
-					if( !multipleInheritance )
+					if (!multipleInheritance)
 					{
 						WriteError(TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES, file, node);
 						multipleInheritance = true;
@@ -2732,9 +2734,9 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 					// Make sure none of the base classes inherit from this one
 					asCObjectType *base = objType;
 					bool error = false;
-					while( base != 0 )
+					while (base != 0)
 					{
-						if( base == decl->objType )
+						if (base == decl->objType)
 						{
 							WriteError(TXT_CANNOT_INHERIT_FROM_SELF, file, node);
 							error = true;
@@ -2744,10 +2746,10 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 						base = base->derivedFrom;
 					}
 
-					if( !error )
+					if (!error)
 					{
 						// A shared type may only inherit from other shared types
-						if( (decl->objType->IsShared()) && !(objType->IsShared()) )
+						if ((decl->objType->IsShared()) && !(objType->IsShared()))
 						{
 							asCString msg;
 							msg.Format(TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s, objType->name.AddressOf());
@@ -2756,12 +2758,12 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 						}
 					}
 
-					if( !error )
+					if (!error)
 					{
-						if( decl->isExistingShared )
+						if (decl->isExistingShared)
 						{
 							// Verify that the base class is the same as the original shared type
-							if( decl->objType->derivedFrom != objType )
+							if (decl->objType->derivedFrom != objType)
 							{
 								asCString str;
 								str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, decl->objType->GetName());
@@ -2786,6 +2788,14 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 			node = node->next;
 		}
 	}
+}
+
+// numTempl is the number of template instances that existed in the engine before the build begun
+void asCBuilder::CompileClasses(asUINT numTempl)
+{
+	asUINT n;
+	asCArray<sClassDeclaration*> toValidate((int)classDeclarations.GetLength());
+
 
 	// Order class declarations so that base classes are compiled before derived classes.
 	// This will allow the derived classes to copy properties and methods in the next step.
@@ -5168,16 +5178,13 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 				if (ot == 0)
 				{
-					// Check if the identifier matches any of the child types
-					for (asUINT childTypeIndex = 0; childTypeIndex < currentType->childFuncDefs.GetLength(); childTypeIndex++)
+					// Check if the type is a child type of the current type
+					asCScriptFunction *funcDef = GetFuncDef(str.AddressOf(), 0, currentType);
+					if (funcDef)
 					{
-						asCScriptFunction *funcDef = currentType->childFuncDefs[childTypeIndex];
-						if (funcDef && funcDef->name == str)
-						{
-							dt = asCDataType::CreateFuncDef(funcDef);
-							ot = dt.GetObjectType();
-							found = true;
-						}
+						dt = asCDataType::CreateFuncDef(funcDef);
+						ot = dt.GetObjectType();
+						found = true;
 					}
 				}
 			}
@@ -5610,11 +5617,17 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, as
 	}
 	else
 	{
-		for (asUINT n = 0; n < parentType->childFuncDefs.GetLength(); n++ )
+		// Recursively check base classes
+		asCObjectType *currType = parentType;
+		while (currType)
 		{
-			asCScriptFunction *funcDef = parentType->childFuncDefs[n];
-			if (funcDef && funcDef->name == type)
-				return funcDef;
+			for (asUINT n = 0; n < currType->childFuncDefs.GetLength(); n++)
+			{
+				asCScriptFunction *funcDef = currType->childFuncDefs[n];
+				if (funcDef && funcDef->name == type)
+					return funcDef;
+			}
+			currType = currType->derivedFrom;
 		}
 	}
 
