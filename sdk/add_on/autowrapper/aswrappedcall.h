@@ -28,7 +28,7 @@ template <typename T> struct ObjLast {};
 template <typename T> struct Constructor {};
 
 template <typename T>
-void destroy(asIScriptGeneric * gen) {
+void destroy(AS_NAMESPACE_QUALIFIER asIScriptGeneric * gen) {
   static_cast<T *>(gen->GetObject())->~T();
 }
 template <>
