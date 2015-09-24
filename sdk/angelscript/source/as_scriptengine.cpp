@@ -5847,7 +5847,7 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 }
 
 // interface
-asIScriptFunction *asCScriptEngine::GetFuncDefFromTypeId(int typeId) const
+asIScriptFunction *asCScriptEngine::GetFuncdefFromTypeId(int typeId) const
 {
 	return GetDataTypeFromTypeId(typeId).GetFuncDef();
 }

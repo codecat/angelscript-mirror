@@ -90,11 +90,28 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 #endif
 }
 
+// interface
+asUINT asCObjectType::GetChildFuncdefCount() const
+{
+	return childFuncDefs.GetLength();
+}
+
+// interface
+asIScriptFunction *asCObjectType::GetChildFuncdef(asUINT index) const
+{
+	if (index >= childFuncDefs.GetLength())
+		return 0;
+
+	return childFuncDefs[index];
+}
+
+// interface
 int asCObjectType::AddRef() const
 {
 	return externalRefCount.atomicInc();
 }
 
+// interface
 int asCObjectType::Release() const
 {
 	int r = externalRefCount.atomicDec();

@@ -160,6 +160,10 @@ public:
 	asUINT             GetBehaviourCount() const;
 	asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
 
+	// Child types
+	asUINT             GetChildFuncdefCount() const;
+	asIScriptFunction *GetChildFuncdef(asUINT index) const;
+
 	// User data
 	void *SetUserData(void *data, asPWORD type);
 	void *GetUserData(asPWORD type) const;

@@ -731,7 +731,7 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
-	virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const = 0;
+	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
@@ -1062,6 +1062,10 @@ public:
 	// Behaviours
 	virtual asUINT             GetBehaviourCount() const = 0;
 	virtual asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+
+	// Child types
+	virtual asUINT             GetChildFuncdefCount() const = 0;
+	virtual asIScriptFunction *GetChildFuncdef(asUINT index) const = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

@@ -158,6 +158,16 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
+		asIObjectType *ot = mod->GetObjectTypeByName("Base");
+		if (ot == 0 || ot->GetChildFuncdefCount() != 1 || 
+			ot->GetChildFuncdef(0) == 0 || 
+			std::string(ot->GetChildFuncdef(0)->GetDeclaration()) != "void Base::A()")
+			TEST_FAILED;
+		ot = mod->GetObjectTypeByName("Derived");
+		if (ot == 0 || ot->GetChildFuncdefCount() != 0)
+			TEST_FAILED;
+
 		// Test appropriate error when the child type doesn't exist
 		bout.buffer = "";
 		mod->AddScriptSection("test2",
@@ -265,11 +275,32 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// TODO: Test registering funcdef as child of application type
-		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
+		// Test name conflict when derived class declares same funcdef as present in base class
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test2",
+			"class Base { \n"
+			"  A @GetCalback() { return null; } \n"
+			"  funcdef void A(); \n"
+			"} \n"
+			"class Derived : Base { \n"
+			"  A @GetCallback() override { return a; } \n"
+			"  funcdef int A(int); \n"
+			"  A @a; \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test2 (5, 7) : Error   : Method 'Derived::A@ Derived::GetCallback()' marked as override but does not replace any base class or interface method\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// TODO: Test registering funcdef as child of application type: RegisterFuncdef("void MyObj::Callback()")
+		// TODO: Test registering funcdef as child of template type: RegisterFuncdef("T Array<T>::Callback(T)")
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
-		// TODO: Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
-		// TODO: Test name conflict when derived class declares same funcdef as present in base class
+		// TODO: Test GetTypeIdByDecl("void MyObj::Callback()")
 
 		engine->ShutDownAndRelease();
 	}
