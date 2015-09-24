@@ -134,9 +134,12 @@ bool Test()
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+		engine->DiscardModule("test1");
+		engine->DiscardModule("test2");
 
 		// Test inheriting from class with child funcdef
 		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test2",
 			"class Base { funcdef void A(); } \n"
 			"class Derived : Base { \n"
@@ -155,16 +158,117 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// TODO: Test private and protected funcdefs (currently not supported, but error message should be clear)
+		// Test appropriate error when the child type doesn't exist
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"class MyObj  { \n"
+			"  funcdef void A(); \n"
+			"} \n"
+			"void main() { \n"
+			"  MyObj::B @a; \n" // wrong child type
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test2 (4, 1) : Info    : Compiling void main()\n"
+						   "test2 (5, 10) : Error   : Identifier 'B' is not a data type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test private and protected funcdefs (currently not supported)
+		// TODO: The error message could be better
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"class MyObj  { \n"
+			"  private funcdef void A(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test2 (2, 3) : Error   : Expected method or property\n"
+						   "test2 (2, 3) : Error   : Instead found reserved keyword 'private'\n"
+						   "test2 (3, 1) : Error   : Unexpected token '}'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"namespace Boo { \n"
+			"class MyObj  { \n"
+			"  funcdef void A(); \n"
+			"} \n"
+			"} \n"
+			"Boo::MyObj::A @a; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test that the child funcdef can use as returntype or parameter other child funcdefs of the same class without informing scope
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"class MyObj  { \n"
+			"  funcdef A@ B(); \n"  // This should be able to see the A funcdef too
+			"  funcdef void A(); \n"
+			"} \n"
+			"MyObj::B @b; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test funcdef in mixin class (currently not supported)
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"mixin class MyMix  { \n"
+			"  funcdef void A(); \n"
+			"} \n"
+			"class MyObj : MyMix {}\n" );
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test2 (2, 11) : Error   : Mixin classes cannot have child types\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test funcdef in interface (currently not supported)
+		// TODO: Error message should be improved
+		bout.buffer = "";
+		mod->AddScriptSection("test2",
+			"interface MyMix  { \n"
+			"  funcdef void A(); \n"
+			"} \n"
+			"class MyObj : MyMix {}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test2 (2, 3) : Error   : Expected data type\n"
+						   "test2 (2, 3) : Error   : Instead found reserved keyword 'funcdef'\n"
+						   "test2 (3, 1) : Error   : Unexpected token '}'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// TODO: Test registering funcdef as child of application type
 		// TODO: Test registering funcdef as child of template type (pseudo namespace will be formed like template)
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
 		// TODO: Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
-		// TODO: Test appropriate error when the child type doesn't exist
-		// TODO: Test that it is possible to find the type MyObj::Callback when MyObj is not declared in global namespace
-		// TODO: Test that the child funcdef can use as returntype or parameter other child funcdefs of the same class without informing scope
-		// TODO: Test funcdef in mixin class (currently not supported)
-		// TODO: Test funcdef in interface (currently not supported)
 		// TODO: Test name conflict when derived class declares same funcdef as present in base class
 
 		engine->ShutDownAndRelease();

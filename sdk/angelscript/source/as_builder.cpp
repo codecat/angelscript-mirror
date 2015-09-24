@@ -1601,7 +1601,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 
 	// TODO: It should be possible to declare funcdef as shared. In this case a compiler error will be given if any of the types it uses are not shared
 	asSNameSpace *implicitNs = func->nameSpace ? func->nameSpace : func->parentClass->nameSpace;
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared, implicitNs);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, func->parentClass, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared, implicitNs);
 
 	// There should not be any defaultArgs, but if there are any we need to delete them to avoid leaks
 	for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
@@ -1777,6 +1777,19 @@ int asCBuilder::RegisterMixinClass(asCScriptNode *node, asCScriptCode *file, asS
 	// Clean up memory
 	cl->DisconnectParent();
 	node->Destroy(engine);
+
+	// Check that the mixin class doesn't contain any child types
+	// TODO: Add support for child types in mixin classes
+	n = cl->firstChild;
+	while (n)
+	{
+		if (n->nodeType == snFuncDef)
+		{
+			WriteError(TXT_MIXIN_CANNOT_HAVE_CHILD_TYPES, file, n);
+			break;
+		}
+		n = n->next;
+	}
 
 	return 0;
 }
