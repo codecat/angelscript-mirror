@@ -1174,7 +1174,9 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 		func->nameSpace = engine->nameSpaces[0];
 	else
 		func->nameSpace = engine->FindNameSpace(scope.AddressOf());
-	if( func->nameSpace == 0 )
+	if (func->nameSpace == 0 && func->funcType == asFUNC_FUNCDEF)
+		func->parentClass = reinterpret_cast<asCObjectType*>(engine->GetObjectTypeByDecl(scope.AddressOf()));
+	if( func->nameSpace == 0 && func->parentClass == 0 )
 		return asINVALID_DECLARATION;
 
 	// Find name

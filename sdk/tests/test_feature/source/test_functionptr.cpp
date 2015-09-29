@@ -297,10 +297,31 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// TODO: Test registering funcdef as child of application type: RegisterFuncdef("void MyObj::Callback()")
+		// Test registering funcdef as child of application type: RegisterFuncdef("void MyObj::Callback()")
+		bout.buffer = "";
+		engine->RegisterObjectType("MyType", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterFuncdef("void MyType::Callback()");
+		engine->RegisterObjectMethod("MyType", "void SetCallback(Callback @)", asFUNCTION(0), asCALL_GENERIC);
+		mod->AddScriptSection("test", "MyType::Callback @cb;\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test GetTypeIdByDecl
+		int typeId = engine->GetTypeIdByDecl("MyType::Callback");
+		if (typeId < 0)
+			TEST_FAILED;
+		if (std::string(engine->GetTypeDeclaration(typeId)) != "MyType::Callback")
+			TEST_FAILED;
+
+		// TODO: Test WriteConfigToStream (try configurations with depency between types)
 		// TODO: Test registering funcdef as child of template type: RegisterFuncdef("T Array<T>::Callback(T)")
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
-		// TODO: Test GetTypeIdByDecl("void MyObj::Callback()")
 
 		engine->ShutDownAndRelease();
 	}

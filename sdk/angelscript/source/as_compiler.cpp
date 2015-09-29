@@ -1463,7 +1463,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 		dt.MakeReadOnly(false);
 
 		int offset;
-		if( refType == 1 ) // &in
+		if( refType == asTM_INREF )
 		{
 			ProcessPropertyGetAccessor(ctx, node);
 
@@ -1608,7 +1608,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 				}
 			}
 		}
-		else if( refType == 2 ) // &out
+		else if( refType == asTM_OUTREF )
 		{
 			// Add the type id as hidden arg if the parameter is a ? type
 			if( paramType->GetTokenType() == ttQuestion )
@@ -1838,7 +1838,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, as
 	if( param.IsReference() || (param.IsObject() && !param.IsNullHandle()) )
 	{
 		// &inout parameter may leave the reference on the stack already
-		if( refType != 3 )
+		if( refType != asTM_INOUTREF )
 		{
 			asASSERT( ctx->type.isVariable || ctx->type.isTemporary || isMakingCopy );
 

@@ -5486,6 +5486,8 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	func->AddRefInternal();
 	registeredFuncDefs.PushLast(func);
 	currentGroup->funcDefs.PushLast(func);
+	if (func->parentClass)
+		func->parentClass->childFuncDefs.PushLast(func);
 
 	// If parameter type from other groups are used, add references
 	currentGroup->AddReferencesForFunc(this, func);
