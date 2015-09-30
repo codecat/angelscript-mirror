@@ -467,6 +467,12 @@ void asCScriptFunction::DestroyInternal()
 	}
 	userData.SetLength(0);
 
+	if (funcType == asFUNC_FUNCDEF && parentClass)
+	{
+		parentClass->childFuncDefs.RemoveValue(this);
+		parentClass = 0;
+	}
+
 	// Release all references the function holds to other objects
 	ReleaseReferences();
 	parameterTypes.SetLength(0);
@@ -627,7 +633,10 @@ const char *asCScriptFunction::GetName() const
 // interface
 const char *asCScriptFunction::GetNamespace() const
 {
-	return nameSpace->name.AddressOf();
+	if (nameSpace)
+		return nameSpace->name.AddressOf();
+
+	return 0;
 }
 
 // interface

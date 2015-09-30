@@ -3631,13 +3631,13 @@ public:
 	//! \return A null terminated string with the name of the function.
 	virtual const char      *GetName() const = 0;
 	//! \brief Returns the namespace of the function.
-	//! \return The namespace of the function.
+	//! \return The namespace of the function, or null if not defined.
 	virtual const char      *GetNamespace() const = 0;
 	//! \brief Returns the function declaration
 	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
 	//! \param[in] includeNamespace Indicates whether the namespace should be prepended to the function name
 	//! \param[in] includeParamNames Indicates whether parameter names should be added to the declaration
-	//! \return A null terminated string with the function declaration.
+	//! \return A null terminated string with the function declaration. 
 	//!
 	//! The parameter names are not stored for \ref asFUNC_VIRTUAL "virtual methods". If you want to know the 
 	//! name of parameters to class methods, be sure to get the actual implementation rather than the virtual method.

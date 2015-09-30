@@ -1,4 +1,6 @@
 #include "utils.h"
+#include <strstream>
+#include "../../../add_on/scripthelper/scripthelper.h"
 
 namespace TestFunctionPtr
 {
@@ -319,7 +321,31 @@ bool Test()
 		if (std::string(engine->GetTypeDeclaration(typeId)) != "MyType::Callback")
 			TEST_FAILED;
 
-		// TODO: Test WriteConfigToStream (try configurations with depency between types)
+		// Test WriteConfigToStream (try configurations with depency between types)
+		bout.buffer = "";
+		engine->RegisterObjectType("MyType2", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectType("MyType3", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterFuncdef("void MyType2::Callback(MyType3 @)");
+		engine->RegisterFuncdef("void MyType3::F(MyType2::Callback @)");
+		std::stringstream s;
+		WriteConfigToStream(engine, s);
+
+		asIScriptEngine *engine2 = asCreateScriptEngine();
+		engine2->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = ConfigEngineFromStream(engine2, s);
+		if (r < 0)
+			TEST_FAILED;
+		typeId = engine->GetTypeIdByDecl("MyType3::F");
+		asIScriptFunction *f = engine->GetFuncdefFromTypeId(typeId);
+		if (std::string(f->GetDeclaration()) != "void MyType3::F(MyType2::Callback@)")
+			TEST_FAILED;
+		engine2->ShutDownAndRelease();
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// TODO: Test registering funcdef as child of template type: RegisterFuncdef("T Array<T>::Callback(T)")
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
 

@@ -364,7 +364,8 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		asIScriptFunction *funcDef = engine->GetFuncdefByIndex(n);
 		asDWORD accessMask = funcDef->GetAccessMask();
 		const char *nameSpace = funcDef->GetNamespace();
-		if( nameSpace != currNamespace )
+		// Child funcdefs do not have any namespace, as they belong to the parent object
+		if( nameSpace && nameSpace != currNamespace )
 		{
 			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
