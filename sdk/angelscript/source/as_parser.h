@@ -90,6 +90,7 @@ protected:
 	asCScriptNode *ParseRealType();
 	asCScriptNode *ParseDataType(bool allowVariableType = false, bool allowAuto = false);
 	asCScriptNode *ParseIdentifier();
+	bool           ParseTemplTypeList(asCScriptNode *node, bool required = true);
 
 	asCScriptNode *ParseListPattern();
 

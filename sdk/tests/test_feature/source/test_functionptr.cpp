@@ -346,8 +346,21 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		// TODO: Test registering funcdef as child of template type: RegisterFuncdef("T Array<T>::Callback(T)")
+		// Test registering funcdef as child of template type: RegisterFuncdef("T Array<T>::Callback(T)")
+/*		bout.buffer = "";
+		RegisterScriptArray(engine, false);
+		r = engine->RegisterFuncdef("void array<T>::MyCallback(const T&in)");
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		} */
+
+		// TODO: Test RegisterFuncdef("void array<@>::CB()"); should give appropriate parser error
 		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
+		// TODO: It must be possible to query the parent type of a child funcdef, e.g. GetParentType()
 
 		engine->ShutDownAndRelease();
 	}

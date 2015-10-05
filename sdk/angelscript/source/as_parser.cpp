@@ -287,28 +287,79 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *in_script)
 	return 0;
 }
 
-// BNF: SCOPE ::= [[IDENTIFIER] '::' {IDENTIFIER '::'}]
+// BNF: SCOPE ::= ['::'] {IDENTIFIER '::'} [IDENTIFIER ['<' TYPE {',' TYPE} '>'] '::']
 void asCParser::ParseOptionalScope(asCScriptNode *node)
 {
+	asCScriptNode *scope = CreateNode(snScope);
+
 	sToken t1, t2;
 	GetToken(&t1);
 	GetToken(&t2);
 	if( t1.type == ttScope )
 	{
 		RewindTo(&t1);
-		node->AddChildLast(ParseToken(ttScope));
+		scope->AddChildLast(ParseToken(ttScope));
 		GetToken(&t1);
 		GetToken(&t2);
 	}
 	while( t1.type == ttIdentifier && t2.type == ttScope )
 	{
 		RewindTo(&t1);
-		node->AddChildLast(ParseIdentifier());
-		node->AddChildLast(ParseToken(ttScope));
+		scope->AddChildLast(ParseIdentifier());
+		scope->AddChildLast(ParseToken(ttScope));
 		GetToken(&t1);
 		GetToken(&t2);
 	}
+
+	// The innermost scope may be a template type
+	if( t1.type == ttIdentifier && t2.type == ttLessThan )
+	{
+		tempString.Assign(&script->code[t1.pos], t1.length);
+		if (engine->IsTemplateType(tempString.AddressOf()))
+		{
+			RewindTo(&t1);
+			asCScriptNode *restore = scope->lastChild;
+			scope->AddChildLast(ParseIdentifier());
+			if (ParseTemplTypeList(scope, false))
+			{
+				GetToken(&t2);
+				if (t2.type == ttScope)
+				{
+					// Template type is part of the scope
+					// Nothing more needs to be done
+					node->AddChildLast(scope);
+					return;
+				}
+				else
+				{
+					// The template type is not part of the scope
+					// Rewind to the template type and end the scope
+					RewindTo(&t1);
+
+					// Restore the previously parsed node
+					while (scope->lastChild != restore)
+					{
+						asCScriptNode *last = scope->lastChild;
+						last->DisconnectParent();
+						last->Destroy(engine);
+					}
+					if( scope->lastChild )
+						node->AddChildLast(scope);
+					else
+						scope->Destroy(engine);
+					return;
+				}
+			}
+		}
+	}
+
+	// The identifier is not part of the scope
 	RewindTo(&t1);
+
+	if (scope->lastChild)
+		node->AddChildLast(scope);
+	else
+		scope->Destroy(engine);
 }
 
 asCScriptNode *asCParser::ParseFunctionDefinition()
@@ -414,41 +465,8 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, boo
 	tempString.Assign(&script->code[type->tokenPos], type->tokenLength);
 	if( engine->IsTemplateType(tempString.AddressOf()) && t.type == ttLessThan )
 	{
-		GetToken(&t);
-		if( t.type != ttLessThan )
-		{
-			Error(ExpectedToken(asCTokenizer::GetDefinition(ttLessThan)), &t);
-			Error(InsteadFound(t), &t);
-			return node;
-		}
-
-		node->AddChildLast(ParseType(true, false));
-		if( isSyntaxError ) return node;
-
-		GetToken(&t);
-
-		// Parse template types by list separator
-		while(t.type == ttListSeparator)
-		{
-			node->AddChildLast(ParseType(true, false));
-
-			if( isSyntaxError ) return node;
-			GetToken(&t);
-		}
-
-		// Accept >> and >>> tokens too. But then force the tokenizer to move 
-		// only 1 character ahead (thus splitting the token in two).
-		if( script->code[t.pos] != '>' )
-		{
-			Error(ExpectedToken(asCTokenizer::GetDefinition(ttGreaterThan)), &t);
-			Error(InsteadFound(t), &t);
-			return node;
-		}
-		else
-		{
-			// Break the token so that only the first > is parsed
-			SetPos(t.pos + 1);
-		}
+		ParseTemplTypeList(node);
+		if (isSyntaxError) return node;
 	}
 
 	// Parse [] and @
@@ -480,6 +498,82 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, boo
 	}
 
 	return node;
+}
+
+// This parses a template type list, e.g. <type, type, type>
+// If 'required' is false, and the template type list is not valid,
+// then no change will be done and the function returns false. This 
+// can be used as do an optional parsing
+bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
+{
+	sToken t;
+	bool isValid = true;
+
+	// Remember the last child, so we can restore the state if needed
+	asCScriptNode *last = node->lastChild;
+
+	// Starts with '<'
+	GetToken(&t);
+	if (t.type != ttLessThan)
+	{
+		if (required)
+		{
+			Error(ExpectedToken(asCTokenizer::GetDefinition(ttLessThan)), &t);
+			Error(InsteadFound(t), &t);
+		}
+		return false;
+	}
+
+	// At least one type
+	// TODO: child funcdef: Make this work with !required
+	node->AddChildLast(ParseType(true, false));
+	if (isSyntaxError) return false;
+
+	GetToken(&t);
+
+	// Parse template types by list separator
+	while (t.type == ttListSeparator)
+	{
+		// TODO: child funcdef: Make this work with !required
+		node->AddChildLast(ParseType(true, false));
+		if (isSyntaxError) return false;
+		GetToken(&t);
+	}
+
+	// End with '>'
+	// Accept >> and >>> tokens too. But then force the tokenizer to move 
+	// only 1 character ahead (thus splitting the token in two).
+	if (script->code[t.pos] != '>')
+	{
+		if (required)
+		{
+			Error(ExpectedToken(asCTokenizer::GetDefinition(ttGreaterThan)), &t);
+			Error(InsteadFound(t), &t);
+		}
+		else
+			isValid = false;
+	}
+	else
+	{
+		// Break the token so that only the first > is parsed
+		SetPos(t.pos + 1);
+	}
+
+	if (!required && !isValid)
+	{
+		// Restore the original state before returning
+		while (node->lastChild != last)
+		{
+			asCScriptNode *n = node->lastChild;
+			n->DisconnectParent();
+			n->Destroy(engine);
+		}
+
+		return false;
+	}
+
+	// The template type list was parsed OK
+	return true;
 }
 
 asCScriptNode *asCParser::ParseToken(int token)
