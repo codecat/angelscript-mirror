@@ -1183,7 +1183,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	bool autoHandle;
 
 	// Scoped reference types are allowed to use handle when returned from application functions
-	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, objType ? objType->nameSpace : ns, true, objType);
+	func->returnType = CreateDataTypeFromNode(node->firstChild, &source, objType ? objType->nameSpace : ns, true, parentClass ? parentClass : objType);
 	func->returnType = ModifyDataTypeFromNode(func->returnType, node->firstChild->next, &source, 0, &autoHandle);
 	if( autoHandle && (!func->returnType.IsObjectHandle() || func->returnType.IsReference()) )
 		return asINVALID_DECLARATION;
@@ -1224,7 +1224,7 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	while( n )
 	{
 		asETypeModifiers inOutFlags;
-		asCDataType type = CreateDataTypeFromNode(n, &source, objType ? objType->nameSpace : ns, false, objType);
+		asCDataType type = CreateDataTypeFromNode(n, &source, objType ? objType->nameSpace : ns, false, parentClass ? parentClass : objType);
 		type = ModifyDataTypeFromNode(type, n->next, &source, &inOutFlags, &autoHandle);
 
 		// Reference types cannot be passed by value to system functions
@@ -5356,7 +5356,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			else
 			{
 				// TODO: child funcdef: Message should explain that the identifier is not a type of the parent type
-				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), origParentType->name.AddressOf());
+				asCDataType pt = asCDataType::CreateObject(origParentType, false);
+				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), pt.Format(origParentType->nameSpace, false).AddressOf());
 			}
 			WriteError(msg, file, n);
 

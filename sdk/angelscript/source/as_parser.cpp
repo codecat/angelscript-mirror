@@ -1203,76 +1203,77 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 // This function will return true if the current token is not a template, or if it is and 
 // the following has a valid syntax for a template type. The source position will be left 
 // at the first token after the type in case of success
-bool asCParser::CheckTemplateType(sToken &t)
+bool asCParser::CheckTemplateType(const sToken &t)
 {
 	// Is this a template type?
 	tempString.Assign(&script->code[t.pos], t.length);
 	if( engine->IsTemplateType(tempString.AddressOf()) )
 	{
 		// If the next token is a < then parse the sub-type too
-		GetToken(&t);
-		if( t.type != ttLessThan )
+		sToken t1;
+		GetToken(&t1);
+		if( t1.type != ttLessThan )
 		{
-			RewindTo(&t);
+			RewindTo(&t1);
 			return true;
 		}
 
 		for(;;)
 		{
 			// There might optionally be a 'const'
-			GetToken(&t);
-			if( t.type == ttConst )
-				GetToken(&t);
+			GetToken(&t1);
+			if( t1.type == ttConst )
+				GetToken(&t1);
 
 			// The type may be initiated with the scope operator
-			if( t.type == ttScope )
-				GetToken(&t);
+			if( t1.type == ttScope )
+				GetToken(&t1);
 
 			// There may be multiple levels of scope operators
 			sToken t2;
 			GetToken(&t2);
-			while( t.type == ttIdentifier && t2.type == ttScope )
+			while( t1.type == ttIdentifier && t2.type == ttScope )
 			{
-				GetToken(&t);
+				GetToken(&t1);
 				GetToken(&t2);
 			}
 			RewindTo(&t2);
 
 			// Now there must be a data type
-			if( !IsDataType(t) )
+			if( !IsDataType(t1) )
 				return false;
 
-			if( !CheckTemplateType(t) )
+			if( !CheckTemplateType(t1) )
 				return false;
 
-			GetToken(&t);
+			GetToken(&t1);
 
 			// Is it a handle or array?
-			while( t.type == ttHandle || t.type == ttOpenBracket )
+			while( t1.type == ttHandle || t1.type == ttOpenBracket )
 			{
-				if( t.type == ttOpenBracket )
+				if( t1.type == ttOpenBracket )
 				{
-					GetToken(&t);
-					if( t.type != ttCloseBracket )
+					GetToken(&t1);
+					if( t1.type != ttCloseBracket )
 						return false;
 				}
 
-				GetToken(&t);
+				GetToken(&t1);
 			}
 
 			// Was this the last template subtype?
-			if( t.type != ttListSeparator )
+			if( t1.type != ttListSeparator )
 				break;
 		}
 
 		// Accept >> and >>> tokens too. But then force the tokenizer to move 
 		// only 1 character ahead (thus splitting the token in two).
-		if( script->code[t.pos] != '>' )
+		if( script->code[t1.pos] != '>' )
 			return false;
-		else if( t.length != 1 )
+		else if( t1.length != 1 )
 		{
 			// We need to break the token, so that only the first character is parsed
-			SetPos(t.pos + 1);
+			SetPos(t1.pos + 1);
 		}
 	}
 
@@ -2537,10 +2538,32 @@ bool asCParser::IsVarDecl()
 
 		// The type may be preceeded with a multilevel scope
 		GetToken(&t2);
-		while( t1.type == ttIdentifier && t2.type == ttScope )
+		while( t1.type == ttIdentifier )
 		{
-			GetToken(&t1);
-			GetToken(&t2);
+			if (t2.type == ttScope)
+			{
+				GetToken(&t1);
+				GetToken(&t2);
+				continue;
+			}
+			else if(t2.type == ttLessThan)
+			{
+				// Template types can also be used as scope identifiers
+				RewindTo(&t2);
+				if (CheckTemplateType(t1))
+				{
+					sToken t3;
+					GetToken(&t3);
+					if (t3.type == ttScope)
+					{
+						GetToken(&t1);
+						GetToken(&t2);
+						continue;
+					}
+				}
+			}
+
+			break;
 		}
 		RewindTo(&t2);
 	}

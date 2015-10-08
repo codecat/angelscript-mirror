@@ -162,7 +162,7 @@ protected:
 	bool IsPostOperator(int tokenType);
 	bool IsAssignOperator(int tokenType);
 
-	bool CheckTemplateType(sToken &t);
+	bool CheckTemplateType(const sToken &t);
 #endif
 
 	asCScriptNode *ParseToken(int token);

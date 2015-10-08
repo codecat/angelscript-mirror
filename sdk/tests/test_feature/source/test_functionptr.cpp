@@ -98,8 +98,8 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "test (6, 11) : Error   : Name conflict. 'a' is a funcdef.\n"
-						   "test (4, 3) : Error   : Name conflict. 'b' is a funcdef.\n"
-						   "test (3, 7) : Error   : Name conflict. 'a' is a funcdef.\n")
+			"test (4, 3) : Error   : Name conflict. 'b' is a funcdef.\n"
+			"test (3, 7) : Error   : Name conflict. 'a' is a funcdef.\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -162,8 +162,8 @@ bool Test()
 
 		// Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
 		asIObjectType *ot = mod->GetObjectTypeByName("Base");
-		if (ot == 0 || ot->GetChildFuncdefCount() != 1 || 
-			ot->GetChildFuncdef(0) == 0 || 
+		if (ot == 0 || ot->GetChildFuncdefCount() != 1 ||
+			ot->GetChildFuncdef(0) == 0 ||
 			std::string(ot->GetChildFuncdef(0)->GetDeclaration()) != "void Base::A()")
 			TEST_FAILED;
 		ot = mod->GetObjectTypeByName("Derived");
@@ -183,7 +183,7 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "test2 (4, 1) : Info    : Compiling void main()\n"
-						   "test2 (5, 10) : Error   : Identifier 'B' is not a data type\n")
+			"test2 (5, 10) : Error   : Identifier 'B' is not a data type\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -200,8 +200,8 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "test2 (2, 3) : Error   : Expected method or property\n"
-						   "test2 (2, 3) : Error   : Instead found reserved keyword 'private'\n"
-						   "test2 (3, 1) : Error   : Unexpected token '}'\n")
+			"test2 (2, 3) : Error   : Instead found reserved keyword 'private'\n"
+			"test2 (3, 1) : Error   : Unexpected token '}'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -248,7 +248,7 @@ bool Test()
 			"mixin class MyMix  { \n"
 			"  funcdef void A(); \n"
 			"} \n"
-			"class MyObj : MyMix {}\n" );
+			"class MyObj : MyMix {}\n");
 		r = mod->Build();
 		if (r >= 0)
 			TEST_FAILED;
@@ -270,8 +270,8 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "test2 (2, 3) : Error   : Expected data type\n"
-						   "test2 (2, 3) : Error   : Instead found reserved keyword 'funcdef'\n"
-						   "test2 (3, 1) : Error   : Unexpected token '}'\n")
+			"test2 (2, 3) : Error   : Instead found reserved keyword 'funcdef'\n"
+			"test2 (3, 1) : Error   : Unexpected token '}'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -347,19 +347,31 @@ bool Test()
 		}
 
 		// Test registering funcdef as child of template type: RegisterFuncdef("T Array<T>::Callback(T)")
+		// The template instance must create new funcdefs
 /*		bout.buffer = "";
 		RegisterScriptArray(engine, false);
-		r = engine->RegisterFuncdef("void array<T>::MyCallback(const T&in)");
+		r = engine->RegisterFuncdef("T array<T>::MyCallback(const T&in)");
+		if (r < 0)
+			TEST_FAILED;
+		mod->AddScriptSection("name",
+			"int func(const int &in a) { return a; }"
+			"void main() \n"
+			"{ \n"
+			"  array<int>::MyCallback @cb = func; \n"
+			"  int val = 34; \n"
+			"  assert( 34 == cb(val) ); \n"
+			"} \n");
+		r = mod->Build();
 		if (r < 0)
 			TEST_FAILED;
 		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
-		} */
-
+		}
+		*/
 		// TODO: Test RegisterFuncdef("void array<@>::CB()"); should give appropriate parser error
-		// TODO: Test registering funcdef using template subtypes (template instance must create new funcdefs)
+		// TODO: Test 'array<int>::MyCallback @cb;' should give appropriate error when MyCallback is not child of array type
 		// TODO: It must be possible to query the parent type of a child funcdef, e.g. GetParentType()
 
 		engine->ShutDownAndRelease();
