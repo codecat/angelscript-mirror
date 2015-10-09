@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include "utils.h"
+#include "../../../add_on/autowrapper/aswrappedcall.h"
 
 namespace TestImplicitCast
 {
@@ -1079,6 +1080,7 @@ static bool Test3()
 	engine->RegisterObjectMethod("MovieClip", "DisplayObject @opImplCast()", asFUNCTIONPR((refCast<MovieClip, DisplayObject>),(MovieClip*),DisplayObject*), asCALL_CDECL_OBJLAST);
  #else
 	engine->RegisterObjectMethod("MovieClip", "DisplayObject @opImplCast()", asFUNCTION((refCast<MovieClip, DisplayObject>)), asCALL_CDECL_OBJLAST);
+//	engine->RegisterObjectMethod("MovieClip", "DisplayObject @opImplCast()", WRAP_OBJ_LAST((refCast<MovieClip, DisplayObject>)), asCALL_GENERIC);
  #endif
 #endif
 

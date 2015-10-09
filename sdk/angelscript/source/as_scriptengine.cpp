@@ -3645,6 +3645,14 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 			prop->type.GetObjectType()->AddRefInternal();
 	}
 
+	// Any child funcdefs must also be copied to the template instance (with adjustments in case of template subtypes)
+	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
+	{
+		asCScriptFunction *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
+		funcdef->parentClass = ot;
+		ot->childFuncDefs.PushLast(funcdef);
+	}
+
 	return ot;
 }
 
@@ -3960,6 +3968,41 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	*newFunc = func2;
 
 	return true;
+}
+
+asCScriptFunction *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *ot, asCScriptFunction *func)
+{
+	asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcType);
+	if (func2 == 0)
+	{
+		// Out of memory
+		return 0;
+	}
+
+	func2->name = func->name;
+
+	func2->returnType = DetermineTypeForTemplate(func->returnType, templateType, ot);
+	func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
+	for (asUINT p = 0; p < func->parameterTypes.GetLength(); p++)
+		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType, ot);
+
+	// TODO: template: Must be careful when instantiating templates for garbage collected types
+	//                 If the template hasn't been registered with the behaviours, it shouldn't
+	//                 permit instantiation of garbage collected types that in turn may refer to
+	//                 this instance.
+
+	func2->inOutFlags = func->inOutFlags;
+	func2->isReadOnly = func->isReadOnly;
+	asASSERT(func->objectType == 0);
+	asASSERT(func->sysFuncIntf == 0);
+
+	func2->id = GetNextScriptFunctionId();
+	AddScriptFunction(func2);
+
+	funcDefs.PushLast(func2); // don't increase refCount as the constructor already set it to 1
+
+	// Return the new function
+	return func2;
 }
 
 void asCScriptEngine::CallObjectMethod(void *obj, int func) const
@@ -5482,9 +5525,11 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	func->id = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 
-	funcDefs.PushLast(func);
+	funcDefs.PushLast(func); // constructor already set the ref count to 1
+
 	func->AddRefInternal();
 	registeredFuncDefs.PushLast(func);
+
 	currentGroup->funcDefs.PushLast(func);
 	if (func->parentClass)
 		func->parentClass->childFuncDefs.PushLast(func);

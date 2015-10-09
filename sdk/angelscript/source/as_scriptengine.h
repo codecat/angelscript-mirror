@@ -296,6 +296,7 @@ public:
 	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes, asCModule *requestingModule);
 	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
+	asCScriptFunction *GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFuncdef);
 	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
 	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
 
@@ -335,7 +336,7 @@ public:
 	asCArray<asCObjectType *>         registeredEnums;
 	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // increases ref count // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
-	asCArray<asCScriptFunction *>     registeredFuncDefs;
+	asCArray<asCScriptFunction *>     registeredFuncDefs; // increases ref count
 	asCArray<asCObjectType *>         registeredTemplateTypes;
 	asCScriptFunction                *stringFactory;
 	bool configFailed;
@@ -403,7 +404,7 @@ public:
 	// Stores the funcdefs
 	// TODO: redesign: Only shared funcdefs should be stored here
 	//                 a funcdef becomes shared if all arguments and the return type are shared (or application registered)
-	asCArray<asCScriptFunction *> funcDefs; // doesn't increase ref count
+	asCArray<asCScriptFunction *> funcDefs; // increases ref count
 
 	// Stores the names of the script sections for debugging purposes
 	asCArray<asCString *> scriptSectionNames;
