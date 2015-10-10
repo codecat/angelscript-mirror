@@ -1983,40 +1983,12 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		func.objectType->AddRefInternal();
 	}
 
-	// TODO: cleanup: This is identical to what is in RegisterMethodToObjectType
 	// Check if the method restricts that use of the template to value types or reference types
 	if( objectType->flags & asOBJ_TEMPLATE )
 	{
-		for( asUINT subTypeIdx = 0; subTypeIdx < objectType->templateSubTypes.GetLength(); subTypeIdx++ )
-		{
-			if( func.returnType.GetObjectType() == objectType->templateSubTypes[subTypeIdx].GetObjectType() )
-			{
-				if( func.returnType.IsObjectHandle() )
-					objectType->acceptValueSubType = false;
-				else if( !func.returnType.IsReference() )
-					objectType->acceptRefSubType = false;
-
-				// Can't support template subtypes by value, since each type is treated differently in the ABI
-				if( !func.returnType.IsObjectHandle() && !func.returnType.IsReference() )
-					return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), decl);
-			}
-
-			for( asUINT n = 0; n < func.parameterTypes.GetLength(); n++ )
-			{
-				if( func.parameterTypes[n].GetObjectType() == objectType->templateSubTypes[subTypeIdx].GetObjectType() )
-				{
-					// TODO: If unsafe references are allowed, then inout references allow value types
-					if( func.parameterTypes[n].IsObjectHandle() || (func.parameterTypes[n].IsReference() && func.inOutFlags[n] == asTM_INOUTREF) )
-						objectType->acceptValueSubType = false;
-					else if( !func.parameterTypes[n].IsReference() )
-						objectType->acceptRefSubType = false;
-
-					// Can't support template subtypes by value, since each type is treated differently in the ABI
-					if( !func.parameterTypes[n].IsObjectHandle() && !func.parameterTypes[n].IsReference() )
-						return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), decl);
-				}
-			}
-		}
+		r = SetTemplateRestrictions(objectType, &func, "RegisterObjectBehaviour", decl);
+		if (r < 0)
+			return r;
 	}
 
 	if( behaviour == asBEHAVE_CONSTRUCT )
@@ -2483,6 +2455,43 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 	return func.id;
 }
 
+int asCScriptEngine::SetTemplateRestrictions(asCObjectType *templateType, asCScriptFunction *func, const char *caller, const char *decl)
+{
+	asASSERT(templateType->flags && asOBJ_TEMPLATE);
+
+	for (asUINT subTypeIdx = 0; subTypeIdx < templateType->templateSubTypes.GetLength(); subTypeIdx++)
+	{
+		if (func->returnType.GetObjectType() == templateType->templateSubTypes[subTypeIdx].GetObjectType())
+		{
+			if (func->returnType.IsObjectHandle())
+				templateType->acceptValueSubType = false;
+			else if (!func->returnType.IsReference())
+				templateType->acceptRefSubType = false;
+
+			// Can't support template subtypes by value, since each type is treated differently in the ABI
+			if (!func->returnType.IsObjectHandle() && !func->returnType.IsReference())
+				return ConfigError(asNOT_SUPPORTED, caller, templateType->name.AddressOf(), decl);
+		}
+
+		for (asUINT n = 0; n < func->parameterTypes.GetLength(); n++)
+		{
+			if (func->parameterTypes[n].GetObjectType() == templateType->templateSubTypes[subTypeIdx].GetObjectType())
+			{
+				// TODO: If unsafe references are allowed, then inout references allow value types
+				if (func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF))
+					templateType->acceptValueSubType = false;
+				else if (!func->parameterTypes[n].IsReference())
+					templateType->acceptRefSubType = false;
+
+				// Can't support template subtypes by value, since each type is treated differently in the ABI
+				if (!func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference())
+					return ConfigError(asNOT_SUPPORTED, caller, templateType->name.AddressOf(), decl);
+			}
+		}
+	}
+
+	return asSUCCESS;
+}
 
 int asCScriptEngine::VerifyVarTypeNotInFunction(asCScriptFunction *func)
 {
@@ -2840,36 +2849,9 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	// Check if the method restricts that use of the template to value types or reference types
 	if( func->objectType->flags & asOBJ_TEMPLATE )
 	{
-		for( asUINT subTypeIdx = 0; subTypeIdx < func->objectType->templateSubTypes.GetLength(); subTypeIdx++ )
-		{
-			if( func->returnType.GetObjectType() == func->objectType->templateSubTypes[subTypeIdx].GetObjectType() )
-			{
-				if( func->returnType.IsObjectHandle() )
-					func->objectType->acceptValueSubType = false;
-				else if( !func->returnType.IsReference() )
-					func->objectType->acceptRefSubType = false;
-
-				// Can't support template subtypes by value, since each type is treated differently in the ABI
-				if( !func->returnType.IsObjectHandle() && !func->returnType.IsReference() )
-					return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
-			}
-
-			for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
-			{
-				if( func->parameterTypes[n].GetObjectType() == func->objectType->templateSubTypes[subTypeIdx].GetObjectType() )
-				{
-					// TODO: If unsafe references are allowed, then inout references allow value types
-					if( func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF) )
-						func->objectType->acceptValueSubType = false;
-					else if( !func->parameterTypes[n].IsReference() )
-						func->objectType->acceptRefSubType = false;
-
-					// Can't support template subtypes by value, since each type is treated differently in the ABI
-					if( !func->parameterTypes[n].IsObjectHandle() && !func->parameterTypes[n].IsReference() )
-						return ConfigError(asNOT_SUPPORTED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
-				}
-			}
-		}
+		r = SetTemplateRestrictions(func->objectType, func, "RegisterObjectMethod", declaration);
+		if (r < 0)
+			return r;
 	}
 
 	// TODO: beh.copy member will be removed, so this is not necessary
@@ -3688,6 +3670,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 				if( orig.IsObjectHandle() && !ot->templateSubTypes[n].IsObjectHandle() )
 				{
 					dt.MakeHandle(true, true);
+					asASSERT(dt.IsObjectHandle());
 					if( orig.IsHandleToConst() )
 						dt.MakeHandleToConst(true);
 					dt.MakeReference(orig.IsReference());
@@ -5532,7 +5515,17 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 
 	currentGroup->funcDefs.PushLast(func);
 	if (func->parentClass)
+	{
 		func->parentClass->childFuncDefs.PushLast(func);
+
+		// Check if the method restricts that use of the template to value types or reference types
+		if (func->parentClass->flags & asOBJ_TEMPLATE)
+		{
+			r = SetTemplateRestrictions(func->parentClass, func, "RegisterFuncdef", decl);
+			if (r < 0)
+				return r;
+		}
+	}
 
 	// If parameter type from other groups are used, add references
 	currentGroup->AddReferencesForFunc(this, func);

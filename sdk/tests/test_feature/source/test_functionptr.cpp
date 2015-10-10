@@ -350,11 +350,12 @@ bool Test()
 		// The template instance must create new funcdefs
 		bout.buffer = "";
 		RegisterScriptArray(engine, false);
-		r = engine->RegisterFuncdef("T array<T>::MyCallback(const T&in)");
+		r = engine->RegisterFuncdef("T &array<T>::MyCallback(const T&in)");
 		if (r < 0)
 			TEST_FAILED;
 		mod->AddScriptSection("name",
-			"int func(const int &in a) { return a; }"
+			"int retval; \n"
+			"int &func(const int &in a) { retval = a; return retval; } \n"
 			"void main() \n"
 			"{ \n"
 			"  array<int>::MyCallback @cb = func; \n"
@@ -373,10 +374,45 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
-		// TODO: Test RegisterFuncdef("void array<@>::CB()"); should give appropriate parser error
-		// TODO: Test 'array<int>::MyCallback @cb;' should give appropriate error when MyCallback is not child of array type
+		// Test 'array<int>::MyCallback @cb;' should give appropriate error when MyCallback is not child of array type
+		bout.buffer = "";
+		r = ExecuteString(engine, "array<int>::MyCallback2 @cb;");
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 13) : Error   : Identifier 'MyCallback2' is not a data type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test child funcdef in template where funcdef takes template subtype by @. Should fail when trying to instance template with value type
+		bout.buffer = "";
+		r = engine->RegisterFuncdef("T @array<T>::MyCallback2(T@)");
+		if (r < 0)
+			TEST_FAILED;
+		r = ExecuteString(engine, "array<float>::MyCallback2 @cb;");
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 7) : Error   : Attempting to instantiate invalid template type 'array<float>'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test RegisterFuncdef("void array<@>::CB()"); should give appropriate parser error
+		bout.buffer = "";
+		r = engine->RegisterFuncdef("void array<@>::CB()");
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "System function (1, 12) : Error   : Expected data type\n"
+						   "System function (1, 12) : Error   : Instead found '@'\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterFuncdef' with 'void array<@>::CB()' (Code: -10)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// TODO: It must be possible to query the parent type of a child funcdef, e.g. GetParentType()
-		// TODO: Test child funcdef in template where funcdef takes template subtype by @. Should fail when trying to instance template with value type
 
 		engine->ShutDownAndRelease();
 	}
