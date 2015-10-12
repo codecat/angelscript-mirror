@@ -505,6 +505,12 @@ void asCScriptFunction::DestroyInternal()
 }
 
 // interface
+asIObjectType *asCScriptFunction::GetParentType() const
+{
+	return parentClass;
+}
+
+// interface
 int asCScriptFunction::GetId() const
 {
 	return id;

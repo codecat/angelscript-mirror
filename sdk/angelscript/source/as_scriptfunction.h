@@ -130,6 +130,7 @@ public:
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
 	void                *GetAuxiliary() const;
+	asIObjectType       *GetParentType() const;
 
 	// Function signature
 	asIObjectType       *GetObjectType() const;

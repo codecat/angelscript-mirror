@@ -1093,6 +1093,7 @@ public:
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
 	virtual void            *GetAuxiliary() const = 0;
+	virtual asIObjectType   *GetParentType() const = 0;
 
 	// Function signature
 	virtual asIObjectType   *GetObjectType() const = 0;

@@ -339,6 +339,8 @@ bool Test()
 		asIScriptFunction *f = engine->GetFuncdefFromTypeId(typeId);
 		if (std::string(f->GetDeclaration()) != "void MyType3::F(MyType2::Callback@)")
 			TEST_FAILED;
+		if (f->GetParentType() == 0 || std::string(f->GetParentType()->GetName()) != "MyType3")
+			TEST_FAILED;
 		engine2->ShutDownAndRelease();
 		if (bout.buffer != "")
 		{
@@ -411,8 +413,6 @@ bool Test()
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-
-		// TODO: It must be possible to query the parent type of a child funcdef, e.g. GetParentType()
 
 		engine->ShutDownAndRelease();
 	}
