@@ -7988,10 +7988,14 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 		asSExprContext le(engine);
 		int lr = CompileAssignment(cexpr->next, &le);
 
+		// Resolve any function names already
+		DetermineSingleFunc(&le, cexpr->next);
+
 		//-------------------------------
 		// Compile the right expression
 		asSExprContext re(engine);
 		int rr = CompileAssignment(cexpr->next->next, &re);
+		DetermineSingleFunc(&re, cexpr->next->next);
 
 		if( lr >= 0 && rr >= 0 )
 		{

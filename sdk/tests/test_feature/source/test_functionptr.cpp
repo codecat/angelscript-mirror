@@ -30,6 +30,72 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test function pointers in ternary conditions
+	// http://www.gamedev.net/topic/672565-conditional-operator-is-unusable-with-functions/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef fd@ fd();\n"
+			"fd@ f() {\n"
+			"	return true ? f : f;\n" // should work
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"int g(int) {\n"
+			"return 0;\n"
+			"}\n"
+			"void f() {\n"
+			"	true ? f : g;\n" // must detect that the signature differs
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (4, 1) : Info    : Compiling void f()\n"
+						   "test (5, 9) : Error   : Can't implicitly convert from 'g@' to 'f@&'.\n"
+						   "test (5, 2) : Error   : Both expressions must have the same type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"int f(int) {\n"
+			"return 0;\n"
+			"}\n"
+			"void f() {\n"
+			"	true ? f : f;\n" // must detect that there are multiple matches for f
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (4, 1) : Info    : Compiling void f()\n"
+						   "test (5, 9) : Error   : Multiple matching signatures to '::f'\n"
+						   "test (5, 13) : Error   : Multiple matching signatures to '::f'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test declaring funcdefs as members of classes
 	{
 		engine = asCreateScriptEngine();
