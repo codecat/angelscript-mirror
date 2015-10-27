@@ -19,7 +19,7 @@
 # I still _miss_ the rotary telephone!
 
 LIBNAME=libangelscript
-SHLIB=$(LIBNAME)_s.so
+SHLIB=$(LIBNAME).so
 ARLIB=$(LIBNAME).a
 
 ifeq ($(PREFIX),)
@@ -122,7 +122,12 @@ all: $(OBJDIR) $(LIBDIR) $(OBJ)
 	$(MAKE) $(OBJDIR) $(LIBDIR) $(OBJ)
 	$(AR) r $(LIBDIR)/$(ARLIB) $(OBJ)
 	$(RANLIB) $(LIBDIR)/$(ARLIB)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIBRARYDEST)$(LIBNAME)_s.so -o $(LIBDIR)/$(SHLIB) $(OBJ)
+	# Get the ABI version from angelscript.h file
+	@ver=`awk -F\" '/#define ANGELSCRIPT_VERSION_STRING/{print $$2}' ../../include/angelscript.h | cut -d" " -f1`; \
+	if [ "$$ver" = "" ]; then \
+		echo "Couldn't determine the library version from ../../include/angelscript.h"; \
+	fi ;
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,$(LIBNAME).so.$$ver -o $(LIBDIR)/$(SHLIB) $(OBJ)
 	@echo -------------------------------------------------------------------
 	@echo Done. As root, type 'make install' to install the library.
 
@@ -146,9 +151,9 @@ install_shared:
 	if [ "$$ver" = "" ]; then \
 		echo "Skipping creation of symbolic links..."; \
 	else \
-		( install -Dm 755 $(LIBDIR)/$(SHLIB) $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so && \
-		ln -fs $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so $(LIBRARYDEST)$(SHLIB) && \
-		ln -fs $(LIBRARYDEST)$(LIBNAME)_s-$$ver.so $(LIBRARYDEST)$(SHLIB).$$ver ) \
+		( install -Dm 755 $(LIBDIR)/$(SHLIB) $(LIBRARYDEST)$(LIBNAME).so.$$ver && \
+		ln -fs $(LIBRARYDEST)$(LIBNAME).so.$$ver $(LIBRARYDEST)$(SHLIB) && \
+		ln -fs $(LIBRARYDEST)$(LIBNAME).so.$$ver $(LIBRARYDEST)$(SHLIB).$$ver ) \
 	fi ;
 
 
