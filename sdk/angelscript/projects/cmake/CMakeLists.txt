@@ -132,6 +132,7 @@ else()
     set(ANGELSCRIPT_LIBRARY_NAME Angelscript) # OS X frameworks should have capitalized name
     set(BUILD_SHARED_LIBS TRUE)
 endif()
+set(ANGELSCRIPT_LIBRARY_NAME ${ANGELSCRIPT_LIBRARY_NAME} CACHE STRING "" FORCE)
 
 add_library(${ANGELSCRIPT_LIBRARY_NAME} ${ANGELSCRIPT_SOURCE} ${ANGELSCRIPT_HEADERS})
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../lib)
@@ -157,5 +158,4 @@ endif()
 
 set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin)
 
-add_subdirectory(../../../samples/game/projects/cmake/ ./game)
 
