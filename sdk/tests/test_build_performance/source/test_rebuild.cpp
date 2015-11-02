@@ -19,8 +19,7 @@ void Test()
 
 	printf("---------------------------------------------\n");
 	printf("%s\n\n", TESTNAME);
-	printf("AngelScript 2.30.1: 0.771 secs\n");
-	printf("AngelScript 2.30.2: no change\n");
+	printf("AngelScript 2.31.0: 0.844 secs\n");
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 

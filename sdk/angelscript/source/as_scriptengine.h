@@ -506,6 +506,7 @@ public:
 		bool   disallowEmptyListElements;
 		// TODO: 3.0.0: Remove the privatePropAsProtected
 		bool   privatePropAsProtected;
+		bool   allowUnicodeIdentifiers;
 	} ep;
 
 	// This flag is to allow a quicker shutdown when releasing the engine

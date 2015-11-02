@@ -212,6 +212,24 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test unicode identifiers
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_ALLOW_UNICODE_IDENTIFIERS, true);
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Jönsson {} \n"
+			"Jönsson jönsson; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test that script class isn't marked as garbage collected needlessly
 	{
 		engine = asCreateScriptEngine();

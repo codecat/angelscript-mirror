@@ -401,6 +401,10 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.privatePropAsProtected = value ? true : false;
 		break;
 
+	case asEP_ALLOW_UNICODE_IDENTIFIERS:
+		ep.allowUnicodeIdentifiers = value ? true : false;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -485,6 +489,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_PRIVATE_PROP_AS_PROTECTED:
 		return ep.privatePropAsProtected;
 
+	case asEP_ALLOW_UNICODE_IDENTIFIERS:
+		return ep.allowUnicodeIdentifiers;
+
 	default:
 		return 0;
 	}
@@ -547,6 +554,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.disableIntegerDivision        = false;
 		ep.disallowEmptyListElements     = false;
 		ep.privatePropAsProtected        = false;
+		ep.allowUnicodeIdentifiers       = false;
 	}
 
 	gc.engine = this;
