@@ -2542,6 +2542,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	f->isReadOnly     = func.isReadOnly;
 	f->accessMask     = defaultAccessMask;
 	f->parameterTypes = func.parameterTypes;
+	f->parameterNames = func.parameterNames;
 	f->inOutFlags     = func.inOutFlags;
 	for( n = 0; n < func.defaultArgs.GetLength(); n++ )
 		if( func.defaultArgs[n] )
@@ -3806,11 +3807,15 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 	// Skip the first parameter as this is the object type pointer that the stub will add
 	func->parameterTypes.SetLength(factory->parameterTypes.GetLength()-1);
+	func->parameterNames.SetLength(factory->parameterNames.GetLength()-1);
 	func->inOutFlags.SetLength(factory->inOutFlags.GetLength()-1);
+	func->defaultArgs.SetLength(factory->defaultArgs.GetLength()-1);
 	for( asUINT p = 1; p < factory->parameterTypes.GetLength(); p++ )
 	{
 		func->parameterTypes[p-1] = factory->parameterTypes[p];
+		func->parameterNames[p-1] = factory->parameterNames[p];
 		func->inOutFlags[p-1] = factory->inOutFlags[p];
+		func->defaultArgs[p-1] = factory->defaultArgs[p] ? asNEW(asCString)(*factory->defaultArgs[p]) : 0;
 	}
 	func->scriptData->objVariablesOnHeap = 0;
 	
@@ -3931,14 +3936,21 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	func2->returnType = DetermineTypeForTemplate(func->returnType, templateType, ot);
 	func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
-	for( asUINT p = 0; p < func->parameterTypes.GetLength(); p++ )
+	for (asUINT p = 0; p < func->parameterTypes.GetLength(); p++)
 		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType, ot);
+
+	for (asUINT n = 0; n < func->defaultArgs.GetLength(); n++)
+		if (func->defaultArgs[n])
+			func2->defaultArgs.PushLast(asNEW(asCString)(*func->defaultArgs[n]));
+		else
+			func2->defaultArgs.PushLast(0);
 
 	// TODO: template: Must be careful when instantiating templates for garbage collected types
 	//                 If the template hasn't been registered with the behaviours, it shouldn't
 	//                 permit instantiation of garbage collected types that in turn may refer to
 	//                 this instance.
 
+	func2->parameterNames = func->parameterNames;
 	func2->inOutFlags = func->inOutFlags;
 	func2->isReadOnly = func->isReadOnly;
 	func2->objectType = ot;

@@ -151,7 +151,7 @@ bool TestVector3()
 					   "ExecuteString (1, 13) : Info    : Candidates are:\n"
 					   "ExecuteString (1, 13) : Info    : vector3::vector3()\n"
 					   "ExecuteString (1, 13) : Info    : vector3::vector3(const vector3&in)\n"
-					   "ExecuteString (1, 13) : Info    : vector3::vector3(float, float = 0, float = 0)\n" )
+					   "ExecuteString (1, 13) : Info    : vector3::vector3(float, float y = 0, float z = 0)\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
