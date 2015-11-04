@@ -52,7 +52,7 @@ class asCScriptFunction;
 class asCModule;
 struct asSNameSpace;
 
-// TODO: refactor: Reference should not be part of the datatype. This should be stored separately, e.g. in asCTypeInfo
+// TODO: refactor: Reference should not be part of the datatype. This should be stored separately, e.g. in asCExprValue
 //                 MakeReference, MakeReadOnly, IsReference, IsReadOnly should be removed
 
 class asCDataType

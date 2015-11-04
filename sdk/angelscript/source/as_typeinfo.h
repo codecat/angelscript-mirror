@@ -32,8 +32,6 @@
 //
 // as_typeinfo.h
 //
-// This class holds extra type info for the compiler
-//
 
 
 
@@ -44,50 +42,9 @@
 
 #ifndef AS_NO_COMPILER
 
-#include "as_datatype.h"
-
 BEGIN_AS_NAMESPACE
 
-struct asCTypeInfo
-{
-	asCTypeInfo();
-	void Set(const asCDataType &dataType);
 
-	void SetVariable(const asCDataType &dataType, int stackOffset, bool isTemporary);
-	void SetConstantB(const asCDataType &dataType, asBYTE value);
-	void SetConstantQW(const asCDataType &dataType, asQWORD value);
-	void SetConstantDW(const asCDataType &dataType, asDWORD value);
-	void SetConstantF(const asCDataType &dataType, float value);
-	void SetConstantD(const asCDataType &dataType, double value);
-	void SetNullConstant();
-	void SetUndefinedFuncHandle(asCScriptEngine *engine);
-	void SetVoid();
-	void SetDummy();
-
-	bool IsUndefinedFuncHandle() const;
-	bool IsNullConstant() const;
-	bool IsVoid() const;
-
-	asCDataType dataType;
-	bool  isLValue         :  1; // Can this value be updated in assignment, or increment operators, etc
-	bool  isTemporary      :  1;
-	bool  isConstant       :  1;
-	bool  isVariable       :  1;
-	bool  isExplicitHandle :  1;
-	bool  isRefToLocal     :  1; // The reference may be to a local variable
-	short dummy            :  10;
-	short stackOffset;
-	union
-	{
-		asQWORD qwordValue;
-		double  doubleValue;
-		asDWORD dwordValue;
-		float   floatValue;
-		int     intValue;
-		asWORD  wordValue;
-		asBYTE  byteValue;
-	};
-};
 
 END_AS_NAMESPACE
 
