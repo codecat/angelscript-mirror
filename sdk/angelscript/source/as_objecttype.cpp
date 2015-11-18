@@ -45,46 +45,25 @@
 
 BEGIN_AS_NAMESPACE
 
-asCObjectType::asCObjectType() 
+asCObjectType::asCObjectType() : asCTypeInfo()
 {
-	externalRefCount.set(0); 
-	internalRefCount.set(1); // start with one internal ref-count
-	engine      = 0; 
-	module      = 0;
 	derivedFrom = 0;
-	size        = 0;
-	typeId      = -1; // start as -1 to signal that it hasn't been defined
 
 	acceptValueSubType = true;
 	acceptRefSubType   = true;
 
-	scriptSectionIdx = -1;
-	declaredAt       = 0;
-
-	accessMask = 0xFFFFFFFF;
-	nameSpace  = 0;
 #ifdef WIP_16BYTE_ALIGN
 	alignment  = 4;
 #endif
 }
 
-asCObjectType::asCObjectType(asCScriptEngine *engine) 
+asCObjectType::asCObjectType(asCScriptEngine *in_engine) : asCTypeInfo(in_engine)
 {
-	externalRefCount.set(0); 
-	internalRefCount.set(1); // start with one internal ref count
-	this->engine = engine; 
-	module       = 0;
 	derivedFrom  = 0;
-	typeId      = -1; // start as -1 to signal that it hasn't been defined
 
 	acceptValueSubType = true;
-	acceptRefSubType   = true;
+	acceptRefSubType = true;
 
-	scriptSectionIdx = -1;
-	declaredAt       = 0;
-
-	accessMask = 0xFFFFFFFF;
-	nameSpace  = engine->nameSpaces[0];
 #ifdef WIP_16BYTE_ALIGN
 	alignment  = 4;
 #endif
@@ -105,111 +84,8 @@ asIScriptFunction *asCObjectType::GetChildFuncdef(asUINT index) const
 	return childFuncDefs[index];
 }
 
-// interface
-int asCObjectType::AddRef() const
-{
-	return externalRefCount.atomicInc();
-}
 
-// interface
-int asCObjectType::Release() const
-{
-	int r = externalRefCount.atomicDec();
 
-	if( r == 0 )
-	{
-		// There are no more external references, if there are also no
-		// internal references then it is time to delete the object type
-		if( internalRefCount.get() == 0 )
-		{
-			// If the engine is no longer set, then it has already been 
-			// released and we must take care of the deletion ourselves
-			asDELETE(const_cast<asCObjectType*>(this), asCObjectType);
-		}
-	}
-
-	return r;
-}
-
-int asCObjectType::AddRefInternal()
-{
-	return internalRefCount.atomicInc();
-}
-
-int asCObjectType::ReleaseInternal()
-{
-	int r = internalRefCount.atomicDec();
-
-	if( r == 0 )
-	{
-		// There are no more internal references, if there are also no
-		// external references then it is time to delete the object type
-		if( externalRefCount.get() == 0 )
-		{
-			// If the engine is no longer set, then it has already been 
-			// released and we must take care of the deletion ourselves
-			asDELETE(const_cast<asCObjectType*>(this), asCObjectType);
-		}
-	}
-
-	return r;
-}
-
-// interface
-asIScriptModule *asCObjectType::GetModule() const
-{
-	return module;
-}
-
-void *asCObjectType::SetUserData(void *data, asPWORD type)
-{
-	// As a thread might add a new new user data at the same time as another
-	// it is necessary to protect both read and write access to the userData member
-	ACQUIREEXCLUSIVE(engine->engineRWLock);
-
-	// It is not intended to store a lot of different types of userdata,
-	// so a more complex structure like a associative map would just have
-	// more overhead than a simple array.
-	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
-	{
-		if( userData[n] == type )
-		{
-			void *oldData = reinterpret_cast<void*>(userData[n+1]);
-			userData[n+1] = reinterpret_cast<asPWORD>(data);
-
-			RELEASEEXCLUSIVE(engine->engineRWLock);
-
-			return oldData;
-		}
-	}
-
-	userData.PushLast(type);
-	userData.PushLast(reinterpret_cast<asPWORD>(data));
-
-	RELEASEEXCLUSIVE(engine->engineRWLock);
-
-	return 0;
-}
-
-void *asCObjectType::GetUserData(asPWORD type) const
-{
-	// There may be multiple threads reading, but when  
-	// setting the user data nobody must be reading.
-	ACQUIRESHARED(engine->engineRWLock);
-
-	for( asUINT n = 0; n < userData.GetLength(); n += 2 )
-	{
-		if( userData[n] == type )
-		{
-			RELEASESHARED(engine->engineRWLock);
-			return reinterpret_cast<void*>(userData[n+1]);
-		}
-	}
-
-	RELEASESHARED(engine->engineRWLock);
-
-	return 0;
-}
 
 void asCObjectType::DestroyInternal()
 {
@@ -226,8 +102,8 @@ void asCObjectType::DestroyInternal()
 	// Release the object types held by the templateSubTypes
 	for( asUINT subtypeIndex = 0; subtypeIndex < templateSubTypes.GetLength(); subtypeIndex++ )
 	{
-		if( templateSubTypes[subtypeIndex].GetObjectType() )
-			templateSubTypes[subtypeIndex].GetObjectType()->ReleaseInternal();
+		if( templateSubTypes[subtypeIndex].GetTypeInfo() )
+			templateSubTypes[subtypeIndex].GetTypeInfo()->ReleaseInternal();
 	}
 	templateSubTypes.SetLength(0);
 
@@ -247,25 +123,7 @@ void asCObjectType::DestroyInternal()
 
 	ReleaseAllFunctions();
 
-	asUINT n;
-	for( n = 0; n < enumValues.GetLength(); n++ )
-	{
-		if( enumValues[n] )
-			asDELETE(enumValues[n],asSEnumValue);
-	}
-	enumValues.SetLength(0);
-
-	// Clean the user data
-	for( n = 0; n < userData.GetLength(); n += 2 )
-	{
-		if( userData[n+1] )
-		{
-			for( asUINT c = 0; c < engine->cleanObjectTypeFuncs.GetLength(); c++ )
-				if( engine->cleanObjectTypeFuncs[c].type == userData[n] )
-					engine->cleanObjectTypeFuncs[c].cleanFunc(this);
-		}
-	}
-	userData.SetLength(0);
+	CleanUserData();
 
 	// Remove the type from the engine
 	if( typeId != -1 )
@@ -313,56 +171,6 @@ bool asCObjectType::DerivesFrom(const asIObjectType *objType) const
 	return false;
 }
 
-bool asCObjectType::IsShared() const
-{
-	// Objects that can be declared by scripts need to have the explicit flag asOBJ_SHARED
-	if( flags & (asOBJ_SCRIPT_OBJECT|asOBJ_ENUM) ) return flags & asOBJ_SHARED ? true : false;
-
-	// Otherwise we assume the object to be shared
-	return true;
-}
-
-// interface
-const char *asCObjectType::GetName() const
-{
-	return name.AddressOf();
-}
-
-// interface
-const char *asCObjectType::GetNamespace() const
-{
-	return nameSpace->name.AddressOf();
-}
-
-// interface
-asDWORD asCObjectType::GetFlags() const
-{
-	return flags;
-}
-
-// interface
-asUINT asCObjectType::GetSize() const
-{
-	return size;
-}
-
-// interface
-int asCObjectType::GetTypeId() const
-{
-	if( typeId == -1 )
-	{
-		// We need a non const pointer to create the asCDataType object.
-		// We're not breaking anything here because this function is not
-		// modifying the object, so this const cast is safe.
-		asCObjectType *ot = const_cast<asCObjectType*>(this);
-
-		// The engine will define the typeId for this object type
-		engine->GetTypeIdFromDataType(asCDataType::CreateObject(ot, false));
-	}
-
-	return typeId;
-}
-
 // interface
 int asCObjectType::GetSubTypeId(asUINT subtypeIndex) const
 {
@@ -382,7 +190,7 @@ asIObjectType *asCObjectType::GetSubType(asUINT subtypeIndex) const
 	if( subtypeIndex >= templateSubTypes.GetLength() )
 		return 0;
 
-	return templateSubTypes[subtypeIndex].GetObjectType();
+	return templateSubTypes[subtypeIndex].GetTypeInfo();
 }
 
 asUINT asCObjectType::GetSubTypeCount() const
@@ -407,11 +215,6 @@ bool asCObjectType::IsInterface() const
 		return true;
 
 	return false;
-}
-
-asIScriptEngine *asCObjectType::GetEngine() const
-{
-	return engine;
 }
 
 // interface
@@ -686,22 +489,6 @@ asIScriptFunction *asCObjectType::GetBehaviourByIndex(asUINT index, asEBehaviour
 	return 0;
 }
 
-// interface
-const char *asCObjectType::GetConfigGroup() const
-{
-	asCConfigGroup *group = engine->FindConfigGroupForObjectType(this);
-	if( group == 0 )
-		return 0;
-
-	return group->groupName.AddressOf();
-}
-
-// interface
-asDWORD asCObjectType::GetAccessMask() const
-{
-	return accessMask;
-}
-
 // internal
 asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &propName, const asCDataType &dt, bool isPrivate, bool isProtected, bool isInherited)
 {
@@ -730,7 +517,7 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &propName, 
 		// because there is a risk that the script might
 		// try to access the content without knowing that
 		// it hasn't been initialized yet.
-		if( dt.GetObjectType()->flags & asOBJ_POD )
+		if( dt.GetTypeInfo()->flags & asOBJ_POD )
 			propSize = dt.GetSizeInMemoryBytes();
 		else
 		{
@@ -763,11 +550,11 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &propName, 
 	properties.PushLast(prop);
 
 	// Make sure the struct holds a reference to the config group where the object is registered
-	asCConfigGroup *group = engine->FindConfigGroupForObjectType(prop->type.GetObjectType());
+	asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(prop->type.GetTypeInfo());
 	if( group != 0 ) group->AddRef();
 
 	// Add reference to object types
-	asCObjectType *type = prop->type.GetObjectType();
+	asCTypeInfo *type = prop->type.GetTypeInfo();
 	if( type )
 		type->AddRefInternal();
 
@@ -784,18 +571,18 @@ void asCObjectType::ReleaseAllProperties()
 			if( flags & asOBJ_SCRIPT_OBJECT )
 			{
 				// Release the config group for script classes that are being destroyed
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(properties[n]->type.GetObjectType());
+				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(properties[n]->type.GetTypeInfo());
 				if( group != 0 ) group->Release();
 
 				// Release references to objects types
-				asCObjectType *type = properties[n]->type.GetObjectType();
+				asCTypeInfo *type = properties[n]->type.GetTypeInfo();
 				if( type )
 					type->ReleaseInternal();
 			}
 			else
 			{
 				// Release template instance types (ref increased by RegisterObjectProperty)
-				asCObjectType *type = properties[n]->type.GetObjectType();
+				asCTypeInfo *type = properties[n]->type.GetTypeInfo();
 				if( type )
 					type->ReleaseInternal();
 			}

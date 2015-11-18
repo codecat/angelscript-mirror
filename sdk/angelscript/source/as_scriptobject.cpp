@@ -271,13 +271,13 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 			asCObjectProperty *prop = objType->properties[n];
 			if( prop->type.IsObject() && !prop->type.IsObjectHandle() )
 			{
-				if( prop->type.IsReference() || prop->type.GetObjectType()->flags & asOBJ_REF )
+				if( prop->type.IsReference() || prop->type.GetTypeInfo()->flags & asOBJ_REF )
 				{
 					asPWORD *ptr = reinterpret_cast<asPWORD*>(reinterpret_cast<asBYTE*>(this) + prop->byteOffset);
-					if( prop->type.GetObjectType()->flags & asOBJ_SCRIPT_OBJECT )
-						*ptr = (asPWORD)ScriptObjectFactory(prop->type.GetObjectType(), ot->engine);
+					if( prop->type.GetTypeInfo()->flags & asOBJ_SCRIPT_OBJECT )
+						*ptr = (asPWORD)ScriptObjectFactory(prop->type.GetTypeInfo(), ot->engine);
 					else
-						*ptr = (asPWORD)AllocateUninitializedObject(prop->type.GetObjectType(), ot->engine);
+						*ptr = (asPWORD)AllocateUninitializedObject(prop->type.GetTypeInfo(), ot->engine);
 				}
 			}
 		}
@@ -292,10 +292,10 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 			asCObjectProperty *prop = objType->properties[n];
 			if( prop->type.IsObject() && !prop->type.IsObjectHandle() )
 			{
-				if( prop->type.IsReference() || (prop->type.GetObjectType()->flags & asOBJ_REF) )
+				if( prop->type.IsReference() || (prop->type.GetTypeInfo()->flags & asOBJ_REF) )
 				{
 					asPWORD *ptr = reinterpret_cast<asPWORD*>(reinterpret_cast<asBYTE*>(this) + prop->byteOffset);
-					*ptr = (asPWORD)AllocateUninitializedObject(prop->type.GetObjectType(), engine);
+					*ptr = (asPWORD)AllocateUninitializedObject(prop->type.GetTypeInfo()->CastToObjectType(), engine);
 				}
 			}
 		}
@@ -359,7 +359,7 @@ asCScriptObject::~asCScriptObject()
 		if( prop->type.IsObject() )
 		{
 			// Destroy the object
-			asCObjectType *propType = prop->type.GetObjectType();
+			asCObjectType *propType = prop->type.GetTypeInfo()->CastToObjectType();
 			if( prop->type.IsReference() || propType->flags & asOBJ_REF )
 			{
 				void **ptr = (void**)(((char*)this) + prop->byteOffset);
@@ -670,7 +670,7 @@ bool asCScriptObject::GetFlag()
 // interface
 int asCScriptObject::GetTypeId() const
 {
-	asCDataType dt = asCDataType::CreateObject(objType, false);
+	asCDataType dt = asCDataType::CreateType(objType, false);
 	return objType->engine->GetTypeIdFromDataType(dt);
 }
 
@@ -703,7 +703,7 @@ void *asCScriptObject::GetAddressOfProperty(asUINT prop)
 	// Objects are stored by reference, so this must be dereferenced
 	asCDataType *dt = &objType->properties[prop]->type;
 	if( dt->IsObject() && !dt->IsObjectHandle() &&
-		(dt->IsReference() || dt->GetObjectType()->flags & asOBJ_REF) )
+		(dt->IsReference() || dt->GetTypeInfo()->flags & asOBJ_REF) )
 		return *(void**)(((char*)this) + objType->properties[prop]->byteOffset);
 
 	return (void*)(((char*)this) + objType->properties[prop]->byteOffset);
@@ -720,7 +720,7 @@ void asCScriptObject::EnumReferences(asIScriptEngine *engine)
 			// TODO: gc: The members of the value type needs to be enumerated
 			//           too, since the value type may be holding a reference.
 			void *ptr;
-			if( prop->type.IsReference() || (prop->type.GetObjectType()->flags & asOBJ_REF) )
+			if( prop->type.IsReference() || (prop->type.GetTypeInfo()->flags & asOBJ_REF) )
 				ptr = *(void**)(((char*)this) + prop->byteOffset);
 			else
 				ptr = (void*)(((char*)this) + prop->byteOffset);
@@ -745,7 +745,7 @@ void asCScriptObject::ReleaseAllHandles(asIScriptEngine *engine)
 			void **ptr = (void**)(((char*)this) + prop->byteOffset);
 			if( *ptr )
 			{
-				asASSERT( (prop->type.GetObjectType()->flags & asOBJ_NOCOUNT) || prop->type.GetBehaviour()->release );
+				asASSERT( (prop->type.GetTypeInfo()->flags & asOBJ_NOCOUNT) || prop->type.GetBehaviour()->release );
 				if( prop->type.GetBehaviour()->release )
 					((asCScriptEngine*)engine)->CallObjectMethod(*ptr, prop->type.GetBehaviour()->release);
 				*ptr = 0;
@@ -787,13 +787,13 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 					void **src = (void**)(((char*)&other) + prop->byteOffset);
 					if( !prop->type.IsObjectHandle() )
 					{
-						if( prop->type.IsReference() || (prop->type.GetObjectType()->flags & asOBJ_REF) )
-							CopyObject(*src, *dst, prop->type.GetObjectType(), engine);
+						if( prop->type.IsReference() || (prop->type.GetTypeInfo()->flags & asOBJ_REF) )
+							CopyObject(*src, *dst, prop->type.GetTypeInfo()->CastToObjectType(), engine);
 						else
-							CopyObject(src, dst, prop->type.GetObjectType(), engine);
+							CopyObject(src, dst, prop->type.GetTypeInfo()->CastToObjectType(), engine);
 					}
 					else
-						CopyHandle((asPWORD*)src, (asPWORD*)dst, prop->type.GetObjectType(), engine);
+						CopyHandle((asPWORD*)src, (asPWORD*)dst, prop->type.GetTypeInfo()->CastToObjectType(), engine);
 				}
 				else
 				{

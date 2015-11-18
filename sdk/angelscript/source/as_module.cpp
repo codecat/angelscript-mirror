@@ -467,7 +467,7 @@ void asCModule::CallExit()
 			void **obj = (void**)(*it)->GetAddressOfValue();
 			if( *obj )
 			{
-				asCObjectType *ot = (*it)->type.GetObjectType();
+				asCObjectType *ot = (*it)->type.GetTypeInfo()->CastToObjectType();
 
 				if( ot->flags & asOBJ_REF )
 				{
@@ -650,7 +650,7 @@ void asCModule::InternalReset()
 	classTypes.SetLength(0);
 	for( n = 0; n < enumTypes.GetLength(); n++ )
 	{
-		asCObjectType *type = enumTypes[n];
+		asCEnumType *type = enumTypes[n];
 		if( type->IsShared() )
 		{
 			// The type is shared, so transfer ownership to another module that also uses it
@@ -661,9 +661,6 @@ void asCModule::InternalReset()
 				continue;
 			}
 		}
-
-		// The type should be destroyed now
-		type->DestroyInternal();
 
 		// Remove the type from the engine
 		if( type->IsShared() )
@@ -1084,7 +1081,7 @@ asIObjectType *asCModule::GetObjectTypeByDecl(const char *decl) const
 	if( r < 0 )
 		return 0;
 
-	return dt.GetObjectType();
+	return dt.GetTypeInfo();
 }
 
 // interface
@@ -1100,7 +1097,7 @@ const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId, const char 
 		return 0;
 
 	if( enumTypeId )
-		*enumTypeId = engine->GetTypeIdFromDataType(asCDataType::CreateObject(enumTypes[index], false));
+		*enumTypeId = engine->GetTypeIdFromDataType(asCDataType::CreateType(enumTypes[index], false));
 
 	if( nameSpace )
 		*nameSpace = enumTypes[index]->nameSpace->name.AddressOf();
@@ -1112,8 +1109,8 @@ const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId, const char 
 int asCModule::GetEnumValueCount(int enumTypeId) const
 {
 	asCDataType dt = engine->GetDataTypeFromTypeId(enumTypeId);
-	asCObjectType *t = dt.GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
+	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
+	if( t == 0 ) 
 		return asINVALID_TYPE;
 
 	return (int)t->enumValues.GetLength();
@@ -1123,8 +1120,8 @@ int asCModule::GetEnumValueCount(int enumTypeId) const
 const char *asCModule::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const
 {
 	asCDataType dt = engine->GetDataTypeFromTypeId(enumTypeId);
-	asCObjectType *t = dt.GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) ) 
+	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
+	if( t == 0 ) 
 		return 0;
 
 	if( index >= t->enumValues.GetLength() )
@@ -1455,6 +1452,30 @@ int asCModule::UnbindAllImportedFunctions()
 }
 
 // internal
+asCTypeInfo *asCModule::GetType(const char *type, asSNameSpace *ns)
+{
+	asUINT n;
+
+	// TODO: optimize: Improve linear search
+	for (n = 0; n < classTypes.GetLength(); n++)
+		if (classTypes[n]->name == type &&
+			classTypes[n]->nameSpace == ns)
+			return classTypes[n];
+
+	for (n = 0; n < enumTypes.GetLength(); n++)
+		if (enumTypes[n]->name == type &&
+			enumTypes[n]->nameSpace == ns)
+			return enumTypes[n];
+
+	for (n = 0; n < typeDefs.GetLength(); n++)
+		if (typeDefs[n]->name == type &&
+			typeDefs[n]->nameSpace == ns)
+			return typeDefs[n];
+
+	return 0;
+}
+
+// internal
 asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns)
 {
 	asUINT n;
@@ -1465,11 +1486,7 @@ asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns)
 			classTypes[n]->nameSpace == ns )
 			return classTypes[n];
 
-	for( n = 0; n < enumTypes.GetLength(); n++ )
-		if( enumTypes[n]->name == type && 
-			enumTypes[n]->nameSpace == ns )
-			return enumTypes[n];
-
+	// TODO: type: typedefs shouldn't be considered as objectTypes
 	for( n = 0; n < typeDefs.GetLength(); n++ )
 		if( typeDefs[n]->name == type && 
 			typeDefs[n]->nameSpace == ns )

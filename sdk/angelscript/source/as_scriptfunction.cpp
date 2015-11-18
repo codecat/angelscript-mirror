@@ -163,7 +163,7 @@ void RegisterScriptFunction(asCScriptEngine *engine)
 	engine->registeredGlobalFuncs.Put(engine->scriptFunctions[r]);
 
 	// Change the return type so the VM will know the function really returns a handle
-	engine->scriptFunctions[r]->returnType = asCDataType::CreateObject(&engine->functionBehaviours, false);
+	engine->scriptFunctions[r]->returnType = asCDataType::CreateType(&engine->functionBehaviours, false);
 	engine->scriptFunctions[r]->returnType.MakeHandle(true);
 }
 
@@ -306,7 +306,7 @@ int asCScriptFunction::ParseListPattern(asSListPatternNode *&target, const char 
 			asCBuilder builder(engine, 0);
 			asCScriptCode code;
 			code.SetCode("", decl, 0, false);
-			dt = builder.CreateDataTypeFromNode(listNodes, &code, engine->defaultNamespace, false, returnType.GetObjectType());
+			dt = builder.CreateDataTypeFromNode(listNodes, &code, engine->defaultNamespace, false, returnType.GetTypeInfo()->CastToObjectType());
 
 			node->next = asNEW(asSListPatternDataTypeNode)(dt);
 			node = node->next;
@@ -683,8 +683,8 @@ int asCScriptFunction::GetSpaceNeededForReturnValue()
 // internal
 bool asCScriptFunction::DoesReturnOnStack() const
 {
-	if( returnType.GetObjectType() &&
-		(returnType.GetObjectType()->flags & asOBJ_VALUE) &&
+	if( returnType.GetTypeInfo() &&
+		(returnType.GetTypeInfo()->flags & asOBJ_VALUE) &&
 		!returnType.IsReference() )
 		return true;
 
@@ -738,7 +738,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		if( name[4] == '0' + asBEHAVE_CONSTRUCT )
 			str += objectType->name + "(";
 		else if( name[4] == '0' + asBEHAVE_FACTORY )
-			str += returnType.GetObjectType()->name + "(";
+			str += returnType.GetTypeInfo()->name + "(";
 		else if( name[4] == '0' + asBEHAVE_DESTRUCT )
 			str += "~" + objectType->name + "(";
 		else
@@ -1097,20 +1097,20 @@ void asCScriptFunction::AddReferences()
 	// Only count references if there is any bytecode
 	if( scriptData && scriptData->byteCode.GetLength() )
 	{
-		if( returnType.GetObjectType() )
+		if( returnType.GetTypeInfo() )
 		{
-			returnType.GetObjectType()->AddRefInternal();
+			returnType.GetTypeInfo()->AddRefInternal();
 
-			asCConfigGroup *group = engine->FindConfigGroupForObjectType(returnType.GetObjectType());
+			asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(returnType.GetTypeInfo());
 			if( group != 0 ) group->AddRef();
 		}
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
-			if( parameterTypes[p].GetObjectType() )
+			if( parameterTypes[p].GetTypeInfo() )
 			{
-				parameterTypes[p].GetObjectType()->AddRefInternal();
+				parameterTypes[p].GetTypeInfo()->AddRefInternal();
 
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(parameterTypes[p].GetObjectType());
+				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(parameterTypes[p].GetTypeInfo());
 				if( group != 0 ) group->AddRef();
 			}
 
@@ -1119,7 +1119,7 @@ void asCScriptFunction::AddReferences()
 			{
 				scriptData->objVariableTypes[v]->AddRefInternal();
 
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(scriptData->objVariableTypes[v]);
+				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(scriptData->objVariableTypes[v]);
 				if( group != 0 ) group->AddRef();
 			}
 
@@ -1230,20 +1230,20 @@ void asCScriptFunction::ReleaseReferences()
 	// Only count references if there is any bytecode
 	if( scriptData && scriptData->byteCode.GetLength() )
 	{
-		if( returnType.GetObjectType() )
+		if( returnType.GetTypeInfo() )
 		{
-			returnType.GetObjectType()->ReleaseInternal();
+			returnType.GetTypeInfo()->ReleaseInternal();
 
-			asCConfigGroup *group = engine->FindConfigGroupForObjectType(returnType.GetObjectType());
+			asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(returnType.GetTypeInfo());
 			if( group != 0 ) group->Release();
 		}
 
 		for( asUINT p = 0; p < parameterTypes.GetLength(); p++ )
-			if( parameterTypes[p].GetObjectType() )
+			if( parameterTypes[p].GetTypeInfo() )
 			{
-				parameterTypes[p].GetObjectType()->ReleaseInternal();
+				parameterTypes[p].GetTypeInfo()->ReleaseInternal();
 
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(parameterTypes[p].GetObjectType());
+				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(parameterTypes[p].GetTypeInfo());
 				if( group != 0 ) group->Release();
 			}
 
@@ -1252,7 +1252,7 @@ void asCScriptFunction::ReleaseReferences()
 			{
 				scriptData->objVariableTypes[v]->ReleaseInternal();
 
-				asCConfigGroup *group = engine->FindConfigGroupForObjectType(scriptData->objVariableTypes[v]);
+				asCConfigGroup *group = engine->FindConfigGroupForTypeInfo(scriptData->objVariableTypes[v]);
 				if( group != 0 ) group->Release();
 			}
 

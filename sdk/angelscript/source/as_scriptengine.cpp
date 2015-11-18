@@ -701,7 +701,7 @@ asCScriptEngine::~asCScriptEngine()
 	if( refCount.get() > 0 )
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ENGINE_REF_COUNT_ERROR_DURING_SHUTDOWN);
 
-	mapTypeIdToObjectType.EraseAll();
+	mapTypeIdToTypeInfo.EraseAll();
 	mapTypeIdToFunction.EraseAll();
 
 	// First remove what is not used, so that other groups can be deleted safely
@@ -853,7 +853,7 @@ asIScriptContext *asCScriptEngine::RequestContext()
 }
 
 // internal
-asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCObjectType *in_type, asCModule *in_mod)
+asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCTypeInfo *in_type, asCModule *in_mod)
 {
 	asASSERT( in_type->IsShared() );
 
@@ -867,11 +867,11 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCObjectType *in_type, as
 		asCModule *mod = scriptModules[n];
 		if( mod == in_type->module ) continue;
 		if(in_type->flags & asOBJ_ENUM )
-			foundIdx = mod->enumTypes.IndexOf(in_type);
+			foundIdx = mod->enumTypes.IndexOf(in_type->CastToEnumType());
 		else if(in_type->flags & asOBJ_TYPEDEF )
-			foundIdx = mod->typeDefs.IndexOf(in_type);
+			foundIdx = mod->typeDefs.IndexOf(in_type->CastToObjectType());
 		else
-			foundIdx = mod->classTypes.IndexOf(in_type);
+			foundIdx = mod->classTypes.IndexOf(in_type->CastToObjectType());
 		
 		if( foundIdx >= 0 )
 		{
@@ -1268,31 +1268,6 @@ asIScriptModule *asCScriptEngine::GetModuleByIndex(asUINT index) const
 	return mod;
 }
 
-// Internal
-void asCScriptEngine::RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot)
-{
-	// Remove the type from the list
-	asSMapNode<asCObjectType*,char>* node;
-	if( !types.MoveTo(&node, ot) )
-		return;
-
-	types.Erase(node);
-
-	// If the type is an template type then remove all sub types as well
-	for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
-	{
-		if( ot->templateSubTypes[n].GetObjectType() )
-			RemoveTypeAndRelatedFromList(types, ot->templateSubTypes[n].GetObjectType());
-	}
-
-	// If the type is a class then remove all properties types as well
-	if( ot->properties.GetLength() )
-	{
-		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
-			RemoveTypeAndRelatedFromList(types, ot->properties[n]->type.GetObjectType());
-	}
-}
-
 // internal
 int asCScriptEngine::GetFactoryIdByDecl(const asCObjectType *ot, const char *decl)
 {
@@ -1422,11 +1397,11 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 		return ConfigError(r, "RegisterObjectProperty", obj, declaration);
 
 	// Don't allow modifying generated template instances
-	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetObjectType()) )
+	if( dt.GetTypeInfo() && (dt.GetTypeInfo()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetTypeInfo()->CastToObjectType()) )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectProperty", obj, declaration);
 
 	// Verify that the correct config group is used
-	if( currentGroup->FindType(dt.GetObjectType()->name.AddressOf()) == 0 )
+	if( currentGroup->FindType(dt.GetTypeInfo()->name.AddressOf()) == 0 )
 		return ConfigError(asWRONG_CONFIG_GROUP, "RegisterObjectProperty", obj, declaration);
 
 	asCDataType type;
@@ -1436,7 +1411,7 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 		return ConfigError(r, "RegisterObjectProperty", obj, declaration);
 
 	// Store the property info
-	if( dt.GetObjectType() == 0 || dt.IsObjectHandle() )
+	if( dt.GetTypeInfo() == 0 || dt.IsObjectHandle() )
 		return ConfigError(asINVALID_OBJECT, "RegisterObjectProperty", obj, declaration);
 
 	// The VM currently only supports 16bit offsets
@@ -1458,19 +1433,19 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	prop->isProtected = false;
 	prop->accessMask  = defaultAccessMask;
 
-	dt.GetObjectType()->properties.PushLast(prop);
+	dt.GetTypeInfo()->CastToObjectType()->properties.PushLast(prop);
 
 	// Add references to types so they are not released too early
-	if( type.GetObjectType() )
+	if( type.GetTypeInfo() )
 	{
-		type.GetObjectType()->AddRefInternal();
+		type.GetTypeInfo()->AddRefInternal();
 
 		// Add template instances to the config group
-		if( (type.GetObjectType()->flags & asOBJ_TEMPLATE) && !currentGroup->objTypes.Exists(type.GetObjectType()) )
-			currentGroup->objTypes.PushLast(type.GetObjectType());
+		if( (type.GetTypeInfo()->flags & asOBJ_TEMPLATE) && !currentGroup->types.Exists(type.GetTypeInfo()) )
+			currentGroup->types.PushLast(type.GetTypeInfo());
 	}
 
-	currentGroup->AddReferencesForType(this, type.GetObjectType());
+	currentGroup->AddReferencesForType(this, type.GetTypeInfo());
 
 	return asSUCCESS;
 }
@@ -1481,7 +1456,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	if( name == 0 ) return ConfigError(asINVALID_NAME, "RegisterInterface", 0, 0);
 
 	// Verify if the name has been registered as a type already
-	if( GetRegisteredObjectType(name, defaultNamespace) )
+	if( GetRegisteredType(name, defaultNamespace) )
 		return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
@@ -1494,7 +1469,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	{
 		// If it is not in the defaultNamespace then the type was successfully parsed because
 		// it is declared in a parent namespace which shouldn't be treated as an error
-		if( dt.GetObjectType() && dt.GetObjectType()->nameSpace == defaultNamespace )
+		if( dt.GetTypeInfo() && dt.GetTypeInfo()->nameSpace == defaultNamespace )
 			return ConfigError(asERROR, "RegisterInterface", name, 0);
 	}
 
@@ -1532,7 +1507,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 	allRegisteredTypes.Insert(asSNameSpaceNamePair(st->nameSpace, st->name), st);
 	registeredObjTypes.PushLast(st);
 
-	currentGroup->objTypes.PushLast(st);
+	currentGroup->types.PushLast(st);
 
 	return asSUCCESS;
 }
@@ -1554,7 +1529,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	if( func == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterInterfaceMethod", intf, declaration);
 
-	func->objectType = dt.GetObjectType();
+	func->objectType = dt.GetTypeInfo()->CastToObjectType();
 	func->objectType->AddRefInternal();
 
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, false);
@@ -1566,7 +1541,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	}
 
 	// Check name conflicts
-	r = bld.CheckNameConflictMember(dt.GetObjectType(), func->name.AddressOf(), 0, 0, false);
+	r = bld.CheckNameConflictMember(dt.GetTypeInfo(), func->name.AddressOf(), 0, 0, false);
 	if( r < 0 )
 	{
 		func->funcType = asFUNC_DUMMY;
@@ -1704,7 +1679,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			return ConfigError(r, "RegisterObjectType", name, 0);
 
 		// Verify that the template name hasn't been registered as a type already
-		if( GetRegisteredObjectType(typeName, defaultNamespace) )
+		if( GetRegisteredType(typeName, defaultNamespace) )
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
 
@@ -1724,7 +1699,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		// Store it in the object types
 		allRegisteredTypes.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
-		currentGroup->objTypes.PushLast(type);
+		currentGroup->types.PushLast(type);
 		registeredObjTypes.PushLast(type);
 		registeredTemplateTypes.PushLast(type);
 
@@ -1755,7 +1730,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
 				templateSubTypes.PushLast(subtype);
 			}
-			type->templateSubTypes.PushLast(asCDataType::CreateObject(subtype, false));
+			type->templateSubTypes.PushLast(asCDataType::CreateType(subtype, false));
 			subtype->AddRefInternal();
 		}
 	}
@@ -1764,7 +1739,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		typeName = name;
 
 		// Verify if the name has been registered as a type already
-		if( GetRegisteredObjectType(typeName, defaultNamespace) )
+		if( GetRegisteredType(typeName, defaultNamespace) )
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
 
@@ -1792,7 +1767,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 		// If the builder fails or the namespace is different than the default
 		// namespace, then the type name is new and it should be registered
-		if( r < 0 || dt.GetObjectType()->nameSpace != defaultNamespace )
+		if( r < 0 || dt.GetTypeInfo()->nameSpace != defaultNamespace )
 		{
 			// Make sure the name is not a reserved keyword
 			size_t tokenLen;
@@ -1825,7 +1800,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			allRegisteredTypes.Insert(asSNameSpaceNamePair(type->nameSpace, type->name), type);
 			registeredObjTypes.PushLast(type);
 
-			currentGroup->objTypes.PushLast(type);
+			currentGroup->types.PushLast(type);
 		}
 		else
 		{
@@ -1843,7 +1818,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 				return ConfigError(asINVALID_TYPE, "RegisterObjectType", name, 0);
 
 			// Was the template instance type generated before?
-			if( generatedTemplateTypes.Exists(dt.GetObjectType()) &&
+			if( generatedTemplateTypes.Exists(dt.GetTypeInfo()->CastToObjectType()) &&
 				generatedTemplateTypes[generatedTemplateTypes.GetLength()-1] == mostRecentTemplateInstanceType )
 			{
 				asCString str;
@@ -1854,12 +1829,12 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			// If this is not a generated template instance type, then it means it is an
 			// already registered template specialization
-			if( !generatedTemplateTypes.Exists(dt.GetObjectType()) )
+			if( !generatedTemplateTypes.Exists(dt.GetTypeInfo()->CastToObjectType()) )
 				return ConfigError(asALREADY_REGISTERED, "RegisterObjectType", name, 0);
 
 			// TODO: Add this again. The type is used by the factory stubs so we need to discount that
 			// Is the template instance type already being used?
-//			if( dt.GetObjectType()->GetRefCount() > 1 )
+//			if( dt.GetTypeInfo()->GetRefCount() > 1 )
 //				return ConfigError(asNOT_SUPPORTED, "RegisterObjectType", name, 0);
 
 			// Put the data type in the list
@@ -1867,13 +1842,13 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			if( type == 0 )
 				return ConfigError(asOUT_OF_MEMORY, "RegisterObjectType", name, 0);
 
-			type->name       = dt.GetObjectType()->name;
+			type->name       = dt.GetTypeInfo()->name;
 			// The namespace will be the same as the original template type
-			type->nameSpace  = dt.GetObjectType()->nameSpace;
+			type->nameSpace  = dt.GetTypeInfo()->nameSpace;
 			type->templateSubTypes.PushLast(dt.GetSubType());
 			for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
-				if( type->templateSubTypes[s].GetObjectType() ) 
-					type->templateSubTypes[s].GetObjectType()->AddRefInternal();
+				if( type->templateSubTypes[s].GetTypeInfo() )
+					type->templateSubTypes[s].GetTypeInfo()->AddRefInternal();
 			type->size       = byteSize;
 #ifdef WIP_16BYTE_ALIGN
 			// TODO: Types smaller than 4 don't need to be aligned to 4 byte boundaries
@@ -1884,7 +1859,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 
 			templateInstanceTypes.PushLast(type);
 
-			currentGroup->objTypes.PushLast(type);
+			currentGroup->types.PushLast(type);
 
 			// Remove the template instance type, which will no longer be used.
 			// It is possible that multiple template instances are generated if
@@ -1913,22 +1888,22 @@ int asCScriptEngine::RegisterObjectBehaviour(const char *datatype, asEBehaviours
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectBehaviour", datatype, decl);
 
-	if( type.GetObjectType() == 0 || type.IsObjectHandle()  )
+	if( type.GetTypeInfo() == 0 || type.IsObjectHandle()  )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
 	// Don't allow application to modify built-in types
-	if( type.GetObjectType() == &functionBehaviours ||
-		type.GetObjectType() == &scriptTypeBehaviours )
+	if( type.GetTypeInfo() == &functionBehaviours ||
+		type.GetTypeInfo() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
 	if( type.IsReadOnly() || type.IsReference() )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
 	// Don't allow modifying generated template instances
-	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(type.GetObjectType()) )
+	if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(type.GetTypeInfo()->CastToObjectType()) )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectBehaviour", datatype, decl);
 
-	return RegisterBehaviourToObjectType(type.GetObjectType(), behaviour, decl, funcPointer, callConv, auxiliary);
+	return RegisterBehaviourToObjectType(type.GetTypeInfo()->CastToObjectType(), behaviour, decl, funcPointer, callConv, auxiliary);
 }
 
 // internal
@@ -1956,10 +1931,10 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			asCObjectType *tmpl = generatedTemplateTypes[n];
 			if( tmpl->name == objectType->name &&
 				tmpl->nameSpace == objectType->nameSpace &&
-				!(tmpl->templateSubTypes[0].GetObjectType() && (tmpl->templateSubTypes[0].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE)) )
+				!(tmpl->templateSubTypes[0].GetTypeInfo() && (tmpl->templateSubTypes[0].GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE)) )
 			{
 				asCString msg;
-				msg.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, asCDataType::CreateObject(tmpl, false).Format(tmpl->nameSpace).AddressOf());
+				msg.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, asCDataType::CreateType(tmpl, false).Format(tmpl->nameSpace).AddressOf());
 				WriteMessage("",0,0, asMSGTYPE_ERROR, msg.AddressOf());
 				return ConfigError(asERROR, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 			}
@@ -2053,7 +2028,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 				// If the parameter is object, and const reference for input or inout,
 				// and same type as this class, then this is a copy constructor.
 				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() &&
-					(func.inOutFlags[0] & asTM_INREF) && paramType.GetObjectType() == objectType )
+					(func.inOutFlags[0] & asTM_INREF) && paramType.GetTypeInfo() == objectType )
 					beh->copyconstruct = func.id;
 			}
 		}
@@ -2239,7 +2214,7 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 
 				// If the parameter is object, and const reference for input,
 				// and same type as this class, then this is a copy constructor.
-				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[func.parameterTypes.GetLength()-1] == asTM_INREF && paramType.GetObjectType() == objectType )
+				if( paramType.IsObject() && paramType.IsReference() && paramType.IsReadOnly() && func.inOutFlags[func.parameterTypes.GetLength()-1] == asTM_INREF && paramType.GetTypeInfo() == objectType )
 					beh->copyfactory = func.id;
 			}
 		}
@@ -2469,7 +2444,7 @@ int asCScriptEngine::SetTemplateRestrictions(asCObjectType *templateType, asCScr
 
 	for (asUINT subTypeIdx = 0; subTypeIdx < templateType->templateSubTypes.GetLength(); subTypeIdx++)
 	{
-		if (func->returnType.GetObjectType() == templateType->templateSubTypes[subTypeIdx].GetObjectType())
+		if (func->returnType.GetTypeInfo() == templateType->templateSubTypes[subTypeIdx].GetTypeInfo())
 		{
 			if (func->returnType.IsObjectHandle())
 				templateType->acceptValueSubType = false;
@@ -2483,7 +2458,7 @@ int asCScriptEngine::SetTemplateRestrictions(asCObjectType *templateType, asCScr
 
 		for (asUINT n = 0; n < func->parameterTypes.GetLength(); n++)
 		{
-			if (func->parameterTypes[n].GetObjectType() == templateType->templateSubTypes[subTypeIdx].GetObjectType())
+			if (func->parameterTypes[n].GetTypeInfo() == templateType->templateSubTypes[subTypeIdx].GetTypeInfo())
 			{
 				// TODO: If unsafe references are allowed, then inout references allow value types
 				if (func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF))
@@ -2591,7 +2566,7 @@ int asCScriptEngine::RegisterGlobalProperty(const char *declaration, void *point
 	prop->AddRef();
 	currentGroup->globalProps.PushLast(prop);
 
-	currentGroup->AddReferencesForType(this, type.GetObjectType());
+	currentGroup->AddReferencesForType(this, type.GetTypeInfo());
 
 	return asSUCCESS;
 }
@@ -2732,19 +2707,19 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", obj, declaration);
 
-	if( dt.GetObjectType() == 0 || dt.IsObjectHandle() )
+	if( dt.GetTypeInfo() == 0 || dt.IsObjectHandle() )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
 	// Don't allow application to modify built-in types
-	if( dt.GetObjectType() == &functionBehaviours ||
-		dt.GetObjectType() == &scriptTypeBehaviours )
+	if( dt.GetTypeInfo() == &functionBehaviours ||
+		dt.GetTypeInfo() == &scriptTypeBehaviours )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
 	// Don't allow modifying generated template instances
-	if( dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetObjectType()) )
+	if( dt.GetTypeInfo() && (dt.GetTypeInfo()->flags & asOBJ_TEMPLATE) && generatedTemplateTypes.Exists(dt.GetTypeInfo()->CastToObjectType()) )
 		return ConfigError(asINVALID_TYPE, "RegisterObjectMethod", obj, declaration);
 
-	return RegisterMethodToObjectType(dt.GetObjectType(), declaration, funcPointer, callConv, auxiliary);
+	return RegisterMethodToObjectType(dt.GetTypeInfo()->CastToObjectType(), declaration, funcPointer, callConv, auxiliary);
 }
 
 // internal
@@ -2769,10 +2744,10 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 			asCObjectType *tmpl = generatedTemplateTypes[n];
 			if( tmpl->name == objectType->name &&
 				tmpl->nameSpace == objectType->nameSpace &&
-				!(tmpl->templateSubTypes[0].GetObjectType() && (tmpl->templateSubTypes[0].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE)) )
+				!(tmpl->templateSubTypes[0].GetTypeInfo() && (tmpl->templateSubTypes[0].GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE)) )
 			{
 				asCString msg;
-				msg.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, asCDataType::CreateObject(tmpl, false).Format(tmpl->nameSpace).AddressOf());
+				msg.Format(TXT_TEMPLATE_s_ALREADY_GENERATED_CANT_REGISTER, asCDataType::CreateType(tmpl, false).Format(tmpl->nameSpace).AddressOf());
 				WriteMessage("",0,0, asMSGTYPE_ERROR, msg.AddressOf());
 				return ConfigError(asERROR, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
 			}
@@ -2866,7 +2841,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 	// TODO: beh.copy member will be removed, so this is not necessary
 	// Is this the default copy behaviour?
 	if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 && func->isReadOnly == false &&
-		((objectType->flags & asOBJ_SCRIPT_OBJECT) || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateObject(func->objectType, false))) )
+		((objectType->flags & asOBJ_SCRIPT_OBJECT) || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateType(func->objectType, false))) )
 	{
 		if( func->objectType->beh.copy != 0 )
 			return ConfigError(asALREADY_REGISTERED, "RegisterObjectMethod", objectType->name.AddressOf(), declaration);
@@ -3037,9 +3012,9 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 }
 
 
-asCObjectType *asCScriptEngine::GetRegisteredObjectType(const asCString &type, asSNameSpace *ns) const
+asCTypeInfo *asCScriptEngine::GetRegisteredType(const asCString &type, asSNameSpace *ns) const
 {
-	asSMapNode<asSNameSpaceNamePair, asCObjectType *> *cursor;
+	asSMapNode<asSNameSpaceNamePair, asCTypeInfo *> *cursor;
 	if( allRegisteredTypes.MoveTo(&cursor, asSNameSpaceNamePair(ns, type)) )
 		return cursor->value;
 
@@ -3168,11 +3143,11 @@ int asCScriptEngine::RegisterDefaultArrayType(const char *type)
 	int r = bld.ParseDataType(type, &dt, defaultNamespace);
 	if( r < 0 ) return r;
 
-	if( dt.GetObjectType() == 0 ||
-		!(dt.GetObjectType()->GetFlags() & asOBJ_TEMPLATE) )
+	if( dt.GetTypeInfo() == 0 ||
+		!(dt.GetTypeInfo()->GetFlags() & asOBJ_TEMPLATE) )
 		return asINVALID_TYPE;
 
-	defaultArrayObjectType = dt.GetObjectType();
+	defaultArrayObjectType = dt.GetTypeInfo()->CastToObjectType();
 	defaultArrayObjectType->AddRefInternal();
 
 	return 0;
@@ -3182,7 +3157,7 @@ int asCScriptEngine::RegisterDefaultArrayType(const char *type)
 int asCScriptEngine::GetDefaultArrayTypeId() const
 {
 	if( defaultArrayObjectType )
-		return GetTypeIdFromDataType(asCDataType::CreateObject(defaultArrayObjectType, false));
+		return GetTypeIdFromDataType(asCDataType::CreateType(defaultArrayObjectType, false));
 
 	return asINVALID_TYPE;
 }
@@ -3245,9 +3220,9 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 
 	stringFactory = func;
 
-	if( func->returnType.GetObjectType() )
+	if( func->returnType.GetTypeInfo() )
 	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(func->returnType.GetObjectType());
+		asCConfigGroup *group = FindConfigGroupForTypeInfo(func->returnType.GetTypeInfo());
 		if( group == 0 ) group = &defaultGroup;
 		group->scriptFunctions.PushLast(func);
 	}
@@ -3411,10 +3386,10 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Make sure this template supports the subtype
 	for( n = 0; n < subTypes.GetLength(); n++ )
 	{
-		if( !templateType->acceptValueSubType && (subTypes[n].IsPrimitive() || (subTypes[n].GetObjectType()->flags & asOBJ_VALUE)) )
+		if( !templateType->acceptValueSubType && (subTypes[n].IsPrimitive() || (subTypes[n].GetTypeInfo()->flags & asOBJ_VALUE)) )
 			return 0;
 
-		if( !templateType->acceptRefSubType && (subTypes[n].IsObject() && (subTypes[n].GetObjectType()->flags & asOBJ_REF)) )
+		if( !templateType->acceptRefSubType && (subTypes[n].IsObject() && (subTypes[n].GetTypeInfo()->flags & asOBJ_REF)) )
 			return 0;
 	}
 
@@ -3448,9 +3423,9 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		// engine at any time (unless the application holds an external reference).
 		for( n = 0; n < subTypes.GetLength(); n++ )
 		{
-			if( subTypes[n].GetObjectType() )
+			if( subTypes[n].GetTypeInfo() )
 			{
-				ot->module = subTypes[n].GetObjectType()->module;
+				ot->module = subTypes[n].GetTypeInfo()->module;
 				if( ot->module )
 				{
 					ot->module->templateInstances.PushLast(ot);
@@ -3624,16 +3599,16 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 
 	// Increase ref counter for sub type if it is an object type
 	for( n = 0; n < ot->templateSubTypes.GetLength(); n++ )
-		if( ot->templateSubTypes[n].GetObjectType() )
-			ot->templateSubTypes[n].GetObjectType()->AddRefInternal();
+		if( ot->templateSubTypes[n].GetTypeInfo() )
+			ot->templateSubTypes[n].GetTypeInfo()->AddRefInternal();
 
 	// Copy the properties to the template instance
 	for( n = 0; n < templateType->properties.GetLength(); n++ )
 	{
 		asCObjectProperty *prop = templateType->properties[n];
 		ot->properties.PushLast(asNEW(asCObjectProperty)(*prop));
-		if( prop->type.GetObjectType() )
-			prop->type.GetObjectType()->AddRefInternal();
+		if( prop->type.GetTypeInfo() )
+			prop->type.GetTypeInfo()->AddRefInternal();
 	}
 
 	// Any child funcdefs must also be copied to the template instance (with adjustments in case of template subtypes)
@@ -3667,12 +3642,12 @@ asILockableSharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, 
 asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot)
 {
 	asCDataType dt;
-	if( orig.GetObjectType() && (orig.GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
+	if( orig.GetTypeInfo() && (orig.GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE) )
 	{
 		bool found = false;
 		for( asUINT n = 0; n < tmpl->templateSubTypes.GetLength(); n++ )
 		{
-			if( orig.GetObjectType() == tmpl->templateSubTypes[n].GetObjectType() )
+			if( orig.GetTypeInfo() == tmpl->templateSubTypes[n].GetTypeInfo() )
 			{
 				found = true;
 				dt = ot->templateSubTypes[n];
@@ -3696,28 +3671,28 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 		asASSERT( found );
 		UNUSED_VAR( found );
 	}
-	else if( orig.GetObjectType() == tmpl )
+	else if( orig.GetTypeInfo() == tmpl )
 	{
 		if( orig.IsObjectHandle() )
 			dt = asCDataType::CreateObjectHandle(ot, false);
 		else
-			dt = asCDataType::CreateObject(ot, false);
+			dt = asCDataType::CreateType(ot, false);
 
 		dt.MakeReference(orig.IsReference());
 		dt.MakeReadOnly(orig.IsReadOnly());
 	}
-	else if( orig.GetObjectType() && (orig.GetObjectType()->flags & asOBJ_TEMPLATE) )
+	else if( orig.GetTypeInfo() && (orig.GetTypeInfo()->flags & asOBJ_TEMPLATE) )
 	{
 		// The type is itself a template, so it is necessary to find the correct template instance type
 		asCArray<asCDataType> tmplSubTypes;
-		asCObjectType *origType = orig.GetObjectType();
+		asCObjectType *origType = orig.GetTypeInfo()->CastToObjectType();
 		bool needInstance = true;
 
 		// Find the matching replacements for the subtypes
 		for( asUINT n = 0; n < origType->templateSubTypes.GetLength(); n++ )
 		{
-			if( origType->templateSubTypes[n].GetObjectType() == 0 || 
-				!(origType->templateSubTypes[n].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) )
+			if( origType->templateSubTypes[n].GetTypeInfo() == 0 ||
+				!(origType->templateSubTypes[n].GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE) )
 			{
 				// The template is already an instance so we shouldn't attempt to create another instance
 				needInstance = false;
@@ -3725,7 +3700,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 			}
 
 			for( asUINT m = 0; m < tmpl->templateSubTypes.GetLength(); m++ )
-				if( origType->templateSubTypes[n].GetObjectType() == tmpl->templateSubTypes[m].GetObjectType() )
+				if( origType->templateSubTypes[n].GetTypeInfo() == tmpl->templateSubTypes[m].GetTypeInfo() )
 					tmplSubTypes.PushLast(ot->templateSubTypes[m]);
 
 			if( tmplSubTypes.GetLength() != n+1 )
@@ -3759,7 +3734,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 		if( orig.IsObjectHandle() )
 			dt = asCDataType::CreateObjectHandle(ntype, false);
 		else
-			dt = asCDataType::CreateObject(ntype, false);
+			dt = asCDataType::CreateType(ntype, false);
 
 		dt.MakeReference(orig.IsReference());
 		dt.MakeReadOnly(orig.IsReadOnly());
@@ -3892,13 +3867,14 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 
 bool asCScriptEngine::RequireTypeReplacement(asCDataType &type, asCObjectType *templateType)
 {
-	if( type.GetObjectType() == templateType ) return true;
-	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE) ) return true;
-	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+	if( type.GetTypeInfo() == templateType ) return true;
+	if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE) ) return true;
+	if( type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_TEMPLATE) )
 	{
-		for( asUINT n = 0; n < type.GetObjectType()->templateSubTypes.GetLength(); n++ )
-			if( type.GetObjectType()->templateSubTypes[n].GetObjectType() &&
-				type.GetObjectType()->templateSubTypes[n].GetObjectType()->flags & asOBJ_TEMPLATE_SUBTYPE )
+		asCObjectType *ot = type.GetTypeInfo()->CastToObjectType();
+		for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
+			if( ot->templateSubTypes[n].GetTypeInfo() &&
+				ot->templateSubTypes[n].GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE )
 				return true;
 	}
 
@@ -4604,7 +4580,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
 	if( dtIn.IsNullHandle() ) return asTYPEID_VOID;
 
-	if( dtIn.GetObjectType() == 0 )
+	if( dtIn.GetTypeInfo() == 0 )
 	{
 		// Primitives have pre-fixed typeIds
 		switch( dtIn.GetTokenType() )
@@ -4629,7 +4605,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 	}
 
 	int typeId = -1;
-	asCObjectType *ot = dtIn.GetObjectType();
+	asCTypeInfo *ot = dtIn.GetTypeInfo();
 	if( ot != &functionBehaviours )
 	{
 		// Object's hold the typeId themselves
@@ -4649,7 +4625,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 
 				ot->typeId = typeId;
 
-				mapTypeIdToObjectType.Insert(typeId, ot);
+				mapTypeIdToTypeInfo.Insert(typeId, ot);
 			}
 			RELEASEEXCLUSIVE(engineRWLock);
 		}
@@ -4690,7 +4666,7 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 	}
 
 	// Add flags according to the requested type
-	if( dtIn.GetObjectType() && !(dtIn.GetObjectType()->flags & asOBJ_ASHANDLE) )
+	if( dtIn.GetTypeInfo() && !(dtIn.GetTypeInfo()->flags & asOBJ_ASHANDLE) )
 	{
 		// The ASHANDLE types behave like handles, but are really
 		// value types so the typeId is never returned as a handle
@@ -4714,16 +4690,16 @@ asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 	}
 
 	// First check if the typeId is an object type
-	asCObjectType *ot = 0;
+	asCTypeInfo *ot = 0;
 	ACQUIRESHARED(engineRWLock);
-	asSMapNode<int,asCObjectType*> *cursor = 0;
-	if( mapTypeIdToObjectType.MoveTo(&cursor, baseId) )
-		ot = mapTypeIdToObjectType.GetValue(cursor);
+	asSMapNode<int,asCTypeInfo*> *cursor = 0;
+	if( mapTypeIdToTypeInfo.MoveTo(&cursor, baseId) )
+		ot = mapTypeIdToTypeInfo.GetValue(cursor);
 	RELEASESHARED(engineRWLock);
 
 	if( ot )
 	{
-		asCDataType dt = asCDataType::CreateObject(ot, false);
+		asCDataType dt = asCDataType::CreateType(ot, false);
 		if( typeId & asTYPEID_OBJHANDLE )
 			dt.MakeHandle(true, true);
 		if( typeId & asTYPEID_HANDLETOCONST )
@@ -4757,22 +4733,22 @@ asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId) const
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
-	return dt.GetObjectType();
+	return dt.GetTypeInfo()->CastToObjectType();
 }
 
 void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 {
 	ACQUIREEXCLUSIVE(engineRWLock);
-	asSMapNode<int,asCObjectType*> *cursor = 0;
-	mapTypeIdToObjectType.MoveFirst(&cursor);
+	asSMapNode<int,asCTypeInfo*> *cursor = 0;
+	mapTypeIdToTypeInfo.MoveFirst(&cursor);
 	while( cursor )
 	{
-		if( mapTypeIdToObjectType.GetValue(cursor) == type )
+		if(mapTypeIdToTypeInfo.GetValue(cursor) == type )
 		{
-			mapTypeIdToObjectType.Erase(cursor);
+			mapTypeIdToTypeInfo.Erase(cursor);
 			break;
 		}
-		mapTypeIdToObjectType.MoveNext(&cursor, cursor);
+		mapTypeIdToTypeInfo.MoveNext(&cursor, cursor);
 	}
 	RELEASEEXCLUSIVE(engineRWLock);
 }
@@ -4791,7 +4767,7 @@ asIObjectType *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
 	if( r < 0 )
 		return 0;
 
-	return dt.GetObjectType();
+	return dt.GetTypeInfo();
 }
 
 // interface
@@ -4863,7 +4839,7 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 		if( func->name == "opImplCast" ||
 			(!useOnlyImplicitCast && func->name == "opCast") )
 		{
-			if( func->returnType.GetObjectType() == toType )
+			if( func->returnType.GetTypeInfo() == toType )
 			{
 				*newPtr = CallObjectMethodRetPtr(obj, func->id);
 				// The ref cast behaviour returns a handle with incremented
@@ -5228,7 +5204,7 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 	if( objDt.IsHandleToConst() && !hdlDt.IsHandleToConst() )
 		return false;
 
-	if( objDt.GetObjectType() == hdlDt.GetObjectType() )
+	if( objDt.GetTypeInfo() == hdlDt.GetTypeInfo() )
 	{
 		// The object type is equal
 		return true;
@@ -5240,8 +5216,8 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 
 		// Check if the object implements the interface, or derives from the base class
 		// This will also return true, if the requested handle type is an exact match for the object type
-		if( objType->Implements(hdlDt.GetObjectType()) ||
-		    objType->DerivesFrom(hdlDt.GetObjectType()) )
+		if( objType->Implements(hdlDt.GetTypeInfo()) ||
+		    objType->DerivesFrom(hdlDt.GetTypeInfo()) )
 			return true;
 	}
 
@@ -5365,13 +5341,13 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForGlobalVar(int gvarId) const
 	return 0;
 }
 
-asCConfigGroup *asCScriptEngine::FindConfigGroupForObjectType(const asCObjectType *objType) const
+asCConfigGroup *asCScriptEngine::FindConfigGroupForTypeInfo(const asCTypeInfo *objType) const
 {
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
-		for( asUINT m = 0; m < configGroups[n]->objTypes.GetLength(); m++ )
+		for( asUINT m = 0; m < configGroups[n]->types.GetLength(); m++ )
 		{
-			if( configGroups[n]->objTypes[m] == objType )
+			if( configGroups[n]->types[m] == objType )
 				return configGroups[n];
 		}
 	}
@@ -5577,7 +5553,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 
 	// Verify if the name has been registered as a type already
 	// TODO: Must check against registered funcdefs too
-	if( GetRegisteredObjectType(type, defaultNamespace) )
+	if( GetRegisteredType(type, defaultNamespace) )
 		// Let the application recover from this error, for example if the same typedef is registered twice
 		return asALREADY_REGISTERED;
 
@@ -5627,6 +5603,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	// types as they are allowed to use the names
 
 	// Put the data type in the list
+	// TODO: type: typedefs should be stored as asCTypedefType
 	asCObjectType *object = asNEW(asCObjectType)(this);
 	if( object == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterTypedef", type, decl);
@@ -5640,7 +5617,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	allRegisteredTypes.Insert(asSNameSpaceNamePair(object->nameSpace, object->name), object);
 	registeredTypeDefs.PushLast(object);
 
-	currentGroup->objTypes.PushLast(object);
+	currentGroup->types.PushLast(object);
 
 	return asSUCCESS;
 }
@@ -5662,7 +5639,7 @@ const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const 
 
 	if( configGroup )
 	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(registeredTypeDefs[index]);
+		asCConfigGroup *group = FindConfigGroupForTypeInfo(registeredTypeDefs[index]);
 		if( group )
 			*configGroup = group->groupName.AddressOf();
 		else
@@ -5686,7 +5663,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 		return ConfigError(asINVALID_NAME, "RegisterEnum", name, 0);
 
 	// Verify if the name has been registered as a type already
-	if( GetRegisteredObjectType(name, defaultNamespace) )
+	if( GetRegisteredType(name, defaultNamespace) )
 		return asALREADY_REGISTERED;
 
 	// Use builder to parse the datatype
@@ -5699,7 +5676,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	{
 		// If it is not in the defaultNamespace then the type was successfully parsed because
 		// it is declared in a parent namespace which shouldn't be treated as an error
-		if( dt.GetObjectType() && dt.GetObjectType()->nameSpace == defaultNamespace )
+		if( dt.GetTypeInfo() && dt.GetTypeInfo()->nameSpace == defaultNamespace )
 			return ConfigError(asERROR, "RegisterEnum", name, 0);
 	}
 
@@ -5713,7 +5690,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	if( r < 0 )
 		return ConfigError(asNAME_TAKEN, "RegisterEnum", name, 0);
 
-	asCObjectType *st = asNEW(asCObjectType)(this);
+	asCEnumType *st = asNEW(asCEnumType)(this);
 	if( st == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterEnum", name, 0);
 
@@ -5728,7 +5705,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 	allRegisteredTypes.Insert(asSNameSpaceNamePair(st->nameSpace, st->name), st);
 	registeredEnums.PushLast(st);
 
-	currentGroup->objTypes.PushLast(st);
+	currentGroup->types.PushLast(st);
 
 	return asSUCCESS;
 }
@@ -5748,8 +5725,8 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 		return ConfigError(r, "RegisterEnumValue", typeName, valueName);
 
 	// Store the enum value
-	asCObjectType *ot = dt.GetObjectType();
-	if( ot == 0 || !(ot->flags & asOBJ_ENUM) )
+	asCEnumType *ot = dt.GetTypeInfo()->CastToEnumType();
+	if( ot == 0 )
 		return ConfigError(asINVALID_TYPE, "RegisterEnumValue", typeName, valueName);
 
 	if( NULL == valueName )
@@ -5792,7 +5769,7 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 
 	if( configGroup )
 	{
-		asCConfigGroup *group = FindConfigGroupForObjectType(registeredEnums[index]);
+		asCConfigGroup *group = FindConfigGroupForTypeInfo(registeredEnums[index]);
 		if( group )
 			*configGroup = group->groupName.AddressOf();
 		else
@@ -5803,7 +5780,7 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 		*accessMask = registeredEnums[index]->accessMask;
 
 	if( enumTypeId )
-		*enumTypeId = GetTypeIdFromDataType(asCDataType::CreateObject(registeredEnums[index], false));
+		*enumTypeId = GetTypeIdFromDataType(asCDataType::CreateType(registeredEnums[index], false));
 
 	if( nameSpace )
 		*nameSpace = registeredEnums[index]->nameSpace->name.AddressOf();
@@ -5815,7 +5792,7 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
 {
 	asCDataType dt = GetDataTypeFromTypeId(enumTypeId);
-	asCObjectType *t = dt.GetObjectType();
+	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
 	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
 		return asINVALID_TYPE;
 
@@ -5827,8 +5804,8 @@ const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, i
 {
 	// TODO: This same function is implemented in as_module.cpp as well. Perhaps it should be moved to asCObjectType?
 	asCDataType dt = GetDataTypeFromTypeId(enumTypeId);
-	asCObjectType *t = dt.GetObjectType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
+	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
+	if( t == 0 )
 		return 0;
 
 	if( index >= t->enumValues.GetLength() )
@@ -5894,10 +5871,10 @@ asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId) const
 	if( !dt.IsValid() ) return 0;
 
 	// Enum types are not objects, so we shouldn't return an object type for them
-	if( dt.GetObjectType() && dt.GetObjectType()->GetFlags() & asOBJ_ENUM )
+	if( dt.GetTypeInfo() && dt.GetTypeInfo()->GetFlags() & asOBJ_ENUM )
 		return 0;
 
-	return dt.GetObjectType();
+	return dt.GetTypeInfo();
 }
 
 // interface
@@ -6131,19 +6108,19 @@ asCObjectType *asCScriptEngine::GetListPatternType(int listPatternFuncId)
 	// or from the factory's return type for reference types
 	asCObjectType *ot = scriptFunctions[listPatternFuncId]->objectType;
 	if( ot == 0 )
-		ot = scriptFunctions[listPatternFuncId]->returnType.GetObjectType();
+		ot = scriptFunctions[listPatternFuncId]->returnType.GetTypeInfo()->CastToObjectType();
 	asASSERT( ot );
 
 	// Check if this object type already has a list pattern type
 	for( asUINT n = 0; n < listPatternTypes.GetLength(); n++ )
 	{
-		if( listPatternTypes[n]->templateSubTypes[0].GetObjectType() == ot )
+		if( listPatternTypes[n]->templateSubTypes[0].GetTypeInfo() == ot )
 			return listPatternTypes[n];
 	}
 
 	// Create a new list pattern type for the given object type
 	asCObjectType *lpt = asNEW(asCObjectType)(this);
-	lpt->templateSubTypes.PushLast(asCDataType::CreateObject(ot, false));
+	lpt->templateSubTypes.PushLast(asCDataType::CreateType(ot, false));
 	lpt->flags = asOBJ_LIST_PATTERN;
 	listPatternTypes.PushLast(lpt);
 
@@ -6158,7 +6135,7 @@ void asCScriptEngine::DestroyList(asBYTE *buffer, const asCObjectType *listPatte
 	// Get the list pattern from the listFactory function
 	// TODO: runtime optimize: Store the used list factory in the listPatternType itself
 	// TODO: runtime optimize: Keep a flag to indicate if there is really a need to free anything
-	asCObjectType *ot = listPatternType->templateSubTypes[0].GetObjectType();
+	asCObjectType *ot = listPatternType->templateSubTypes[0].GetTypeInfo()->CastToObjectType();
 	asCScriptFunction *listFactory = scriptFunctions[ot->beh.listFactory];
 	asASSERT( listFactory );
 
@@ -6230,7 +6207,7 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 					dt = GetDataTypeFromTypeId(typeId);
 				}
 
-				asCObjectType *ot = dt.GetObjectType();
+				asCObjectType *ot = dt.GetTypeInfo()->CastToObjectType();
 				if( ot && (ot->flags & asOBJ_ENUM) == 0 )
 				{
 					// Free all instances of this type

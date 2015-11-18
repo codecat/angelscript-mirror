@@ -247,11 +247,10 @@ public:
 	void DeleteDiscardedModules();
 
 	void RemoveTemplateInstanceType(asCObjectType *t);
-	void RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot);
 
 	asCConfigGroup *FindConfigGroupForFunction(int funcId) const;
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId) const;
-	asCConfigGroup *FindConfigGroupForObjectType(const asCObjectType *type) const;
+	asCConfigGroup *FindConfigGroupForTypeInfo(const asCTypeInfo *type) const;
 	asCConfigGroup *FindConfigGroupForFuncDef(const asCScriptFunction *funcDef) const;
 
 	int  RequestBuild();
@@ -262,7 +261,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetRegisteredObjectType(const asCString &name, asSNameSpace *ns) const;
+	asCTypeInfo *GetRegisteredType(const asCString &name, asSNameSpace *ns) const;
 
 	asCObjectType *GetListPatternType(int listPatternFuncId);
 	void DestroyList(asBYTE *buffer, const asCObjectType *listPatternType);
@@ -301,7 +300,7 @@ public:
 	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
 	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
 
-	asCModule         *FindNewOwnerForSharedType(asCObjectType *type, asCModule *mod);
+	asCModule         *FindNewOwnerForSharedType(asCTypeInfo *type, asCModule *mod);
 	asCModule         *FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod);
 
 	// String constants
@@ -334,7 +333,7 @@ public:
 	// Registered interface
 	asCArray<asCObjectType *>         registeredObjTypes;
 	asCArray<asCObjectType *>         registeredTypeDefs;
-	asCArray<asCObjectType *>         registeredEnums;
+	asCArray<asCEnumType *>           registeredEnums;
 	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // increases ref count // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
 	asCArray<asCScriptFunction *>     registeredFuncDefs; // increases ref count
@@ -343,7 +342,7 @@ public:
 	bool configFailed;
 
 	// Stores all registered types except funcdefs
-	asCMap<asSNameSpaceNamePair, asCObjectType*> allRegisteredTypes; // increases ref count
+	asCMap<asSNameSpaceNamePair, asCTypeInfo*> allRegisteredTypes; // increases ref count
 
 	// Dummy types used to name the subtypes in the template objects 
 	asCArray<asCObjectType *>      templateSubTypes;
@@ -399,7 +398,7 @@ public:
 	asCTokenizer tok;
 
 	// Stores shared script declared types (classes, interfaces, enums)
-	asCArray<asCObjectType *> sharedScriptTypes; // increases ref count
+	asCArray<asCTypeInfo *> sharedScriptTypes; // increases ref count
 	// This array stores the template instances types that have been automatically generated from template types
 	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs
@@ -412,7 +411,7 @@ public:
 
 	// Type identifiers
 	mutable int                             typeIdSeqNbr;
-	mutable asCMap<int, asCObjectType*>     mapTypeIdToObjectType;
+	mutable asCMap<int, asCTypeInfo*>       mapTypeIdToTypeInfo;
 	mutable asCMap<int, asCScriptFunction*> mapTypeIdToFunction;
 
 	// Garbage collector

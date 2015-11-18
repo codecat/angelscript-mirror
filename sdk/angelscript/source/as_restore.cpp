@@ -145,30 +145,30 @@ int asCReader::ReadInner()
 	module->enumTypes.Allocate(count, false);
 	for( i = 0; i < count && !error; i++ )
 	{
-		asCObjectType *ot = asNEW(asCObjectType)(engine);
-		if( ot == 0 )
+		asCEnumType *et = asNEW(asCEnumType)(engine);
+		if( et == 0 )
 		{
 			error = true;
 			return asOUT_OF_MEMORY;
 		}
 
-		ReadObjectTypeDeclaration(ot, 1);
+		ReadTypeDeclaration(et, 1);
 
 		// If the type is shared then we should use the original if it exists
 		bool sharedExists = false;
-		if( ot->IsShared() )
+		if( et->IsShared() )
 		{
 			for( asUINT n = 0; n < engine->sharedScriptTypes.GetLength(); n++ )
 			{
-				asCObjectType *t = engine->sharedScriptTypes[n];
+				asCTypeInfo *t = engine->sharedScriptTypes[n];
 				if( t && 
 					t->IsShared() &&
-					t->name == ot->name &&
-					t->nameSpace == ot->nameSpace &&
+					t->name == et->name &&
+					t->nameSpace == et->nameSpace &&
 					(t->flags & asOBJ_ENUM) )
 				{
-					asDELETE(ot, asCObjectType);
-					ot = t;
+					asDELETE(et, asCEnumType);
+					et = t->CastToEnumType();
 					sharedExists = true;
 					break;
 				}
@@ -177,22 +177,22 @@ int asCReader::ReadInner()
 
 		if( sharedExists )
 		{
-			existingShared.Insert(ot, true);
-			ot->AddRefInternal();
+			existingShared.Insert(et, true);
+			et->AddRefInternal();
 		}
 		else
 		{
-			if( ot->IsShared() )
+			if( et->IsShared() )
 			{
-				engine->sharedScriptTypes.PushLast(ot);
-				ot->AddRefInternal();
+				engine->sharedScriptTypes.PushLast(et);
+				et->AddRefInternal();
 			}
 
 			// Set this module as the owner
-			ot->module = module;
+			et->module = module;
 		}
-		module->enumTypes.PushLast(ot);
-		ReadObjectTypeDeclaration(ot, 2);
+		module->enumTypes.PushLast(et);
+		ReadTypeDeclaration(et, 2);
 	}
 
 	if( error ) return asERROR;
@@ -210,7 +210,7 @@ int asCReader::ReadInner()
 			return asOUT_OF_MEMORY;
 		}
 
-		ReadObjectTypeDeclaration(ot, 1);
+		ReadTypeDeclaration(ot, 1);
 
 		// If the type is shared, then we should use the original if it exists
 		bool sharedExists = false;
@@ -218,7 +218,8 @@ int asCReader::ReadInner()
 		{
 			for( asUINT n = 0; n < engine->sharedScriptTypes.GetLength(); n++ )
 			{
-				asCObjectType *t = engine->sharedScriptTypes[n];
+				asCTypeInfo *ti = engine->sharedScriptTypes[n];
+				asCObjectType *t = ti ? ti->CastToObjectType() : 0;
 				if( t &&
 					t->IsShared() &&
 					t->name == ot->name &&
@@ -226,7 +227,7 @@ int asCReader::ReadInner()
 					t->IsInterface() == ot->IsInterface() )
 				{
 					asDELETE(ot, asCObjectType);
-					ot = t;
+					ot = t->CastToObjectType();
 					sharedExists = true;
 					break;
 				}
@@ -320,21 +321,21 @@ int asCReader::ReadInner()
 	for( i = 0; i < module->classTypes.GetLength() && !error; i++ )
 	{
 		if( module->classTypes[i]->IsInterface() )
-			ReadObjectTypeDeclaration(module->classTypes[i], 2);
+			ReadTypeDeclaration(module->classTypes[i], 2);
 	}
 
 	// Read class methods and behaviours
 	for( i = 0; i < module->classTypes.GetLength() && !error; ++i )
 	{
 		if( !module->classTypes[i]->IsInterface() )
-			ReadObjectTypeDeclaration(module->classTypes[i], 2);
+			ReadTypeDeclaration(module->classTypes[i], 2);
 	}
 
 	// Read class properties
 	for( i = 0; i < module->classTypes.GetLength() && !error; ++i )
 	{
 		if( !module->classTypes[i]->IsInterface() )
-			ReadObjectTypeDeclaration(module->classTypes[i], 3);
+			ReadTypeDeclaration(module->classTypes[i], 3);
 	}
 
 	if( error ) return asERROR;
@@ -351,10 +352,10 @@ int asCReader::ReadInner()
 			return asOUT_OF_MEMORY;
 		}
 
-		ReadObjectTypeDeclaration(ot, 1);
+		ReadTypeDeclaration(ot, 1);
 		ot->module = module;
 		module->typeDefs.PushLast(ot);
-		ReadObjectTypeDeclaration(ot, 2);
+		ReadTypeDeclaration(ot, 2);
 	}
 
 	if( error ) return asERROR;
@@ -480,8 +481,8 @@ int asCReader::ReadInner()
 	usedTypes.Allocate(count, false);
 	for( i = 0; i < count && !error; ++i )
 	{
-		asCObjectType *ot = ReadObjectType();
-		usedTypes.PushLast(ot);
+		asCTypeInfo *ti = ReadTypeInfo();
+		usedTypes.PushLast(ti);
 	}
 
 	// usedTypeIds[]
@@ -509,22 +510,24 @@ int asCReader::ReadInner()
 	{
 		for( i = 0; i < usedTypes.GetLength() && !error; i++ )
 		{
-			if( !(usedTypes[i]->flags & asOBJ_TEMPLATE) || 
-				!usedTypes[i]->beh.templateCallback )
+			asCObjectType *ot = usedTypes[i]->CastToObjectType();
+			if( !ot ||
+				!(ot->flags & asOBJ_TEMPLATE) || 
+				!ot->beh.templateCallback )
 				continue;
 			
 			bool dontGarbageCollect = false;
-			asCScriptFunction *callback = engine->scriptFunctions[usedTypes[i]->beh.templateCallback];
-			if( !engine->CallGlobalFunctionRetBool(usedTypes[i], &dontGarbageCollect, callback->sysFuncIntf, callback) )
+			asCScriptFunction *callback = engine->scriptFunctions[ot->beh.templateCallback];
+			if( !engine->CallGlobalFunctionRetBool(ot, &dontGarbageCollect, callback->sysFuncIntf, callback) )
 			{
-				asCString sub = usedTypes[i]->templateSubTypes[0].Format(usedTypes[i]->nameSpace);
-				for( asUINT n = 1; n < usedTypes[i]->templateSubTypes.GetLength(); n++ )
+				asCString sub = ot->templateSubTypes[0].Format(ot->nameSpace);
+				for( asUINT n = 1; n < ot->templateSubTypes.GetLength(); n++ )
 				{
 					sub += ",";
-					sub += usedTypes[i]->templateSubTypes[n].Format(usedTypes[i]->nameSpace);
+					sub += ot->templateSubTypes[n].Format(ot->nameSpace);
 				}
 				asCString str;
-				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, usedTypes[i]->name.AddressOf(), sub.AddressOf());
+				str.Format(TXT_INSTANCING_INVLD_TMPL_TYPE_s_s, ot->name.AddressOf(), sub.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 				Error(TXT_INVALID_BYTECODE_d);
 			}
@@ -532,7 +535,7 @@ int asCReader::ReadInner()
 			{
 				// If the callback said this template instance won't be garbage collected then remove the flag
 				if( dontGarbageCollect )
-					usedTypes[i]->flags &= ~asOBJ_GC;
+					ot->flags &= ~asOBJ_GC;
 			}
 		}
 	}
@@ -725,7 +728,7 @@ void asCReader::ReadUsedFunctions()
 					else if( func.name == "$fact" || func.name == "$beh3" )
 					{
 						// This is a factory (or stub), so look for the function in the return type's factories
-						asCObjectType *objType = func.returnType.GetObjectType();
+						asCObjectType *objType = func.returnType.GetTypeInfo()->CastToObjectType();
 						if( objType )
 						{
 							for( asUINT i = 0; i < objType->beh.factories.GetLength(); i++ )
@@ -743,7 +746,7 @@ void asCReader::ReadUsedFunctions()
 					else if( func.name == "$list" )
 					{
 						// listFactory is used for both factory is global and returns a handle and constructor that is a method
-						asCObjectType *objType = func.objectType ? func.objectType : func.returnType.GetObjectType();
+						asCObjectType *objType = func.objectType ? func.objectType : func.returnType.GetTypeInfo()->CastToObjectType();
 						if( objType )
 						{
 							asCScriptFunction *f = engine->scriptFunctions[objType->beh.listFactory];
@@ -765,7 +768,7 @@ void asCReader::ReadUsedFunctions()
 					else if( func.name == "$beh4" )
 					{
 						// This is a list factory, so check the return type's list factory
-						asCObjectType *objType = func.returnType.GetObjectType();
+						asCObjectType *objType = func.returnType.GetTypeInfo()->CastToObjectType();
 						if( objType )
 						{
 							asCScriptFunction *f = engine->scriptFunctions[objType->beh.listFactory];
@@ -941,7 +944,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 		}
 	}
 	
-	func->objectType = ReadObjectType();
+	func->objectType = ReadTypeInfo()->CastToObjectType();
 	if( func->objectType )
 	{
 		func->objectType->AddRefInternal();
@@ -968,7 +971,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 			else if (b == 'o')
 			{
 				func->nameSpace = 0;
-				func->parentClass = ReadObjectType();
+				func->parentClass = ReadTypeInfo()->CastToObjectType();
 			}
 			else
 				error = true;
@@ -1055,7 +1058,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		func->scriptData->funcVariableTypes.Allocate(count, false);
 		for( i = 0; i < count; ++i )
 		{
-			func->scriptData->objVariableTypes.PushLast(ReadObjectType());
+			func->scriptData->objVariableTypes.PushLast(ReadTypeInfo()->CastToObjectType());
 			asUINT idx = ReadEncodedUInt();
 			func->scriptData->funcVariableTypes.PushLast((asCScriptFunction*)(asPWORD)idx);
 			num = ReadEncodedUInt();
@@ -1208,8 +1211,10 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	return func;
 }
 
-void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
+void asCReader::ReadTypeDeclaration(asCTypeInfo *ot, int phase)
 {
+	// TODO: type: Rename the parameter to 'type', so that the local variable can be called 'ot' when cast to objecttype
+
 	if( phase == 1 )
 	{
 		// Read the initial attributes
@@ -1220,36 +1225,43 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 		ReadString(&ns);
 		ot->nameSpace = engine->AddNameSpace(ns.AddressOf());
 
+		// TODO: type: Add check to verify if the flags match the asCTypeInfo
+
 		// Reset the size of script classes, since it will be recalculated as properties are added
 		if( (ot->flags & asOBJ_SCRIPT_OBJECT) && ot->size != 0 )
 			ot->size = sizeof(asCScriptObject);
 
-		// Use the default script class behaviours
-		ot->beh = engine->scriptTypeBehaviours.beh;
-		ot->beh.construct = 0;
-		ot->beh.factory = 0;
-		ot->beh.constructors.PopLast(); // These will be read from the file
-		ot->beh.factories.PopLast(); // These will be read from the file
-		engine->scriptFunctions[ot->beh.addref]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.release]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.gcEnumReferences]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.gcGetFlag]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.gcGetRefCount]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.gcReleaseAllReferences]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.gcSetFlag]->AddRefInternal();
-		engine->scriptFunctions[ot->beh.copy]->AddRefInternal();
-		// TODO: weak: Should not do this if the class has been declared with 'noweak'
-		engine->scriptFunctions[ot->beh.getWeakRefFlag]->AddRefInternal();
+		asCObjectType *ot2 = ot->CastToObjectType();
+		if (ot2)
+		{
+			// Use the default script class behaviours
+			ot2->beh = engine->scriptTypeBehaviours.beh;
+			ot2->beh.construct = 0;
+			ot2->beh.factory = 0;
+			ot2->beh.constructors.PopLast(); // These will be read from the file
+			ot2->beh.factories.PopLast(); // These will be read from the file
+			engine->scriptFunctions[ot2->beh.addref]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.release]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.gcEnumReferences]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.gcGetFlag]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.gcGetRefCount]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.gcReleaseAllReferences]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.gcSetFlag]->AddRefInternal();
+			engine->scriptFunctions[ot2->beh.copy]->AddRefInternal();
+			// TODO: weak: Should not do this if the class has been declared with 'noweak'
+			engine->scriptFunctions[ot2->beh.getWeakRefFlag]->AddRefInternal();
+		}
 	}
 	else if( phase == 2 )
 	{
 		if( ot->flags & asOBJ_ENUM )
 		{
+			asCEnumType *t = ot->CastToEnumType();
 			int count = ReadEncodedUInt();
 			bool sharedExists = existingShared.MoveTo(0, ot);
 			if( !sharedExists )
 			{
-				ot->enumValues.Allocate(count, false);
+				t->enumValues.Allocate(count, false);
 				for( int n = 0; n < count; n++ )
 				{
 					asSEnumValue *e = asNEW(asSEnumValue);
@@ -1261,7 +1273,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					ReadString(&e->name);
 					ReadData(&e->value, 4); // TODO: Should be encoded
-					ot->enumValues.PushLast(e);
+					t->enumValues.PushLast(e);
 				}
 			}
 			else
@@ -1274,10 +1286,10 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					ReadString(&name);
 					ReadData(&value, 4); // TODO: Should be encoded
 					bool found = false;
-					for( asUINT e = 0; e < ot->enumValues.GetLength(); e++ )
+					for( asUINT e = 0; e < t->enumValues.GetLength(); e++ )
 					{
-						if( ot->enumValues[e]->name == name &&
-							ot->enumValues[e]->value == value )
+						if( t->enumValues[e]->name == name &&
+							t->enumValues[e]->value == value )
 						{
 							found = true;
 							break;
@@ -1295,18 +1307,23 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
+			asCObjectType *ot2 = ot->CastToObjectType();
+			asASSERT(ot2);
 			eTokenType t = (eTokenType)ReadEncodedUInt();
-			ot->templateSubTypes.PushLast(asCDataType::CreatePrimitive(t, false));
+			ot2->templateSubTypes.PushLast(asCDataType::CreatePrimitive(t, false));
 		}
 		else
 		{
+			asCObjectType *ot2 = ot->CastToObjectType();
+			asASSERT(ot2);
+
 			// If the type is shared and pre-existing, we should just 
 			// validate that the loaded methods match the original 
 			bool sharedExists = existingShared.MoveTo(0, ot);
 			if( sharedExists )
 			{
-				asCObjectType *dt = ReadObjectType();
-				if( ot->derivedFrom != dt )
+				asCObjectType *dt = ReadTypeInfo()->CastToObjectType();
+				if( ot2->derivedFrom != dt )
 				{
 					asCString str;
 					str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
@@ -1316,9 +1333,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 			else
 			{
-				ot->derivedFrom = ReadObjectType();
-				if( ot->derivedFrom )
-					ot->derivedFrom->AddRefInternal();
+				ot2->derivedFrom = ReadTypeInfo()->CastToObjectType();
+				if( ot2->derivedFrom )
+					ot2->derivedFrom->AddRefInternal();
 			}
 
 			// interfaces[] / interfaceVFTOffsets[]
@@ -1327,7 +1344,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			{
 				for( int n = 0; n < size; n++ )
 				{
-					asCObjectType *intf = ReadObjectType();
+					asCObjectType *intf = ReadTypeInfo()->CastToObjectType();
 					ReadEncodedUInt();
 
 					if( !ot->Implements(intf) )
@@ -1341,27 +1358,27 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 			else
 			{
-				ot->interfaces.Allocate(size, false);
-				ot->interfaceVFTOffsets.Allocate(size, false);
+				ot2->interfaces.Allocate(size, false);
+				ot2->interfaceVFTOffsets.Allocate(size, false);
 				for( int n = 0; n < size; n++ )
 				{
-					asCObjectType *intf = ReadObjectType();
-					ot->interfaces.PushLast(intf);
+					asCObjectType *intf = ReadTypeInfo()->CastToObjectType();
+					ot2->interfaces.PushLast(intf);
 
 					asUINT offset = ReadEncodedUInt();
-					ot->interfaceVFTOffsets.PushLast(offset);
+					ot2->interfaceVFTOffsets.PushLast(offset);
 				}
 			}
 
 			// behaviours
-			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
+			if( !ot2->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
 				bool isNew;
 				asCScriptFunction *func = ReadFunction(isNew, !sharedExists, !sharedExists, !sharedExists);
 				if( sharedExists )
 				{
 					// Find the real function in the object, and update the savedFunctions array
-					asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.destruct);
+					asCScriptFunction *realFunc = engine->GetScriptFunction(ot2->beh.destruct);
 					if( (realFunc == 0 && func == 0) || realFunc->IsSignatureEqual(func) )
 					{
 						// If the function is not the last, then the substitution has already occurred before
@@ -1393,11 +1410,11 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 				{
 					if( func )
 					{
-						ot->beh.destruct = func->id;
+						ot2->beh.destruct = func->id;
 						func->AddRefInternal();
 					}
 					else
-						ot->beh.destruct = 0;
+						ot2->beh.destruct = 0;
 				}
 
 				size = ReadEncodedUInt();
@@ -1410,9 +1427,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						{
 							// Find the real function in the object, and update the savedFunctions array
 							bool found = false;
-							for( asUINT f = 0; f < ot->beh.constructors.GetLength(); f++ )
+							for( asUINT f = 0; f < ot2->beh.constructors.GetLength(); f++ )
 							{
-								asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.constructors[f]);
+								asCScriptFunction *realFunc = engine->GetScriptFunction(ot2->beh.constructors[f]);
 								if( realFunc->IsSignatureEqual(func) )
 								{
 									// If the function is not the last, then the substitution has already occurred before
@@ -1442,11 +1459,11 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						}
 						else
 						{
-							ot->beh.constructors.PushLast(func->id);
+							ot2->beh.constructors.PushLast(func->id);
 							func->AddRefInternal();
 
 							if( func->parameterTypes.GetLength() == 0 )
-								ot->beh.construct = func->id;
+								ot2->beh.construct = func->id;
 						}
 					}
 					else
@@ -1461,9 +1478,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						{
 							// Find the real function in the object, and update the savedFunctions array
 							bool found = false;
-							for( asUINT f = 0; f < ot->beh.factories.GetLength(); f++ )
+							for( asUINT f = 0; f < ot2->beh.factories.GetLength(); f++ )
 							{
-								asCScriptFunction *realFunc = engine->GetScriptFunction(ot->beh.factories[f]);
+								asCScriptFunction *realFunc = engine->GetScriptFunction(ot2->beh.factories[f]);
 								if( realFunc->IsSignatureEqual(func) )
 								{
 									// If the function is not the last, then the substitution has already occurred before
@@ -1493,11 +1510,11 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 						}
 						else
 						{
-							ot->beh.factories.PushLast(func->id);
+							ot2->beh.factories.PushLast(func->id);
 							func->AddRefInternal();
 
 							if( func->parameterTypes.GetLength() == 0 )
-								ot->beh.factory = func->id;
+								ot2->beh.factory = func->id;
 						}
 					}
 					else
@@ -1520,9 +1537,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					{
 						// Find the real function in the object, and update the savedFunctions array
 						bool found = false;
-						for( asUINT f = 0; f < ot->methods.GetLength(); f++ )
+						for( asUINT f = 0; f < ot2->methods.GetLength(); f++ )
 						{
-							asCScriptFunction *realFunc = engine->GetScriptFunction(ot->methods[f]);
+							asCScriptFunction *realFunc = engine->GetScriptFunction(ot2->methods[f]);
 							if( realFunc->IsSignatureEqual(func) )
 							{
 								// If the function is not the last, then the substitution has already occurred before
@@ -1555,15 +1572,15 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					{
 						// If the method is the assignment operator we need to replace the default implementation
 						if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 &&
-							func->parameterTypes[0].GetObjectType() == func->objectType &&
+							func->parameterTypes[0].GetTypeInfo() == func->objectType &&
 							(func->inOutFlags[0] & asTM_INREF) )
 						{
-							engine->scriptFunctions[ot->beh.copy]->ReleaseInternal();
-							ot->beh.copy = func->id;
+							engine->scriptFunctions[ot2->beh.copy]->ReleaseInternal();
+							ot2->beh.copy = func->id;
 							func->AddRefInternal();
 						}
 						
-						ot->methods.PushLast(func->id);
+						ot2->methods.PushLast(func->id);
 						func->AddRefInternal();
 					}
 				}
@@ -1585,9 +1602,9 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					{
 						// Find the real function in the object, and update the savedFunctions array
 						bool found = false;
-						for( asUINT f = 0; f < ot->virtualFunctionTable.GetLength(); f++ )
+						for( asUINT f = 0; f < ot2->virtualFunctionTable.GetLength(); f++ )
 						{
-							asCScriptFunction *realFunc = ot->virtualFunctionTable[f];
+							asCScriptFunction *realFunc = ot2->virtualFunctionTable[f];
 							if( realFunc->IsSignatureEqual(func) )
 							{
 								// If the function is not the last, then the substitution has already occurred before
@@ -1618,7 +1635,7 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					}
 					else
 					{
-						ot->virtualFunctionTable.PushLast(func);
+						ot2->virtualFunctionTable.PushLast(func);
 						func->AddRefInternal();
 					}
 				}
@@ -1631,10 +1648,15 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 	}
 	else if( phase == 3 )
 	{
+		asCObjectType *ot2 = ot->CastToObjectType();
+
+		// This is only done for object types
+		asASSERT(ot2);
+
 		// properties[]
 		asUINT size = ReadEncodedUInt();
 		for( asUINT n = 0; n < size; n++ )
-			ReadObjectProperty(ot);
+			ReadObjectProperty(ot2);
 	}
 }
 
@@ -1823,9 +1845,9 @@ void asCReader::ReadDataType(asCDataType *dt)
 	savedDataTypes.PushLast(asCDataType());
 
 	// Read the datatype for the first time
-	asCObjectType *objType = 0;
+	asCTypeInfo *objType = 0;
 	if( tokenType == ttIdentifier )
-		objType = ReadObjectType();
+		objType = ReadTypeInfo();
 
 	struct
 	{
@@ -1874,7 +1896,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 	if( funcDef )
 		*dt = asCDataType::CreateFuncDef(funcDef);
 	else if( tokenType == ttIdentifier )
-		*dt = asCDataType::CreateObject(objType, false);
+		*dt = asCDataType::CreateType(objType, false);
 	else
 		*dt = asCDataType::CreatePrimitive(tokenType, false);
 	if( bits.isObjectHandle )
@@ -1892,9 +1914,9 @@ void asCReader::ReadDataType(asCDataType *dt)
 	savedDataTypes[saveSlot] = *dt;
 }
 
-asCObjectType* asCReader::ReadObjectType() 
+asCTypeInfo* asCReader::ReadTypeInfo() 
 {
-	asCObjectType *ot = 0;
+	asCTypeInfo *ot = 0;
 	char ch;
 	ReadData(&ch, 1);
 	if( ch == 'a' )
@@ -1905,7 +1927,8 @@ asCObjectType* asCReader::ReadObjectType()
 		ReadString(&ns);
 		asSNameSpace *nameSpace = engine->AddNameSpace(ns.AddressOf());
 
-		asCObjectType *tmpl = engine->GetRegisteredObjectType(typeName.AddressOf(), nameSpace);
+		asCTypeInfo *tmp = engine->GetRegisteredType(typeName.AddressOf(), nameSpace);
+		asCObjectType *tmpl = tmp ? tmp->CastToObjectType() : 0;
 		if( tmpl == 0 )
 		{
 			asCString str;
@@ -1961,7 +1984,7 @@ asCObjectType* asCReader::ReadObjectType()
 	}
 	else if( ch == 'l' )
 	{
-		asCObjectType *st = ReadObjectType();
+		asCObjectType *st = ReadTypeInfo()->CastToObjectType();
 		if( st == 0 || st->beh.listFactory == 0 )
 		{
 			Error(TXT_INVALID_BYTECODE_d);
@@ -2006,9 +2029,9 @@ asCObjectType* asCReader::ReadObjectType()
 		if( typeName.GetLength() && typeName != "$obj" && typeName != "$func" )
 		{
 			// Find the object type
-			ot = module->GetObjectType(typeName.AddressOf(), nameSpace);
-			if( !ot )
-				ot = engine->GetRegisteredObjectType(typeName.AddressOf(), nameSpace);
+			ot = module->GetType(typeName.AddressOf(), nameSpace);
+			if (!ot)
+				ot = engine->GetRegisteredType(typeName.AddressOf(), nameSpace);
 			
 			if( ot == 0 )
 			{
@@ -2348,7 +2371,7 @@ void asCReader::ReadUsedObjectProps()
 	usedObjectProperties.SetLength(c);
 	for( asUINT n = 0; n < c; n++ )
 	{
-		asCObjectType *objType = ReadObjectType();
+		asCObjectType *objType = ReadTypeInfo()->CastToObjectType();
 		if( objType == 0 )
 		{
 			Error(TXT_INVALID_BYTECODE_d);
@@ -2438,7 +2461,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the true object type
 			asPWORD *ot = (asPWORD*)&bc[n+1];
-			*(asCObjectType**)ot = FindObjectType(*(int*)ot);
+			*(asCObjectType**)ot = FindType(*(int*)ot)->CastToObjectType();
 		}
 		else if( c == asBC_TYPEID ||
 			     c == asBC_Cast )
@@ -2536,7 +2559,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the true object type
 			asPWORD *arg = (asPWORD*)&bc[n+1];
-			*(asCObjectType**)arg = FindObjectType(*(int*)arg);
+			*(asCObjectType**)arg = FindType(*(int*)arg)->CastToObjectType();
 
 			// The constructor function id must be translated, unless it is zero
 			int *fid = (int*)&bc[n+1+AS_PTR_SIZE];
@@ -2647,7 +2670,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the true object type
 			asPWORD *pot = (asPWORD*)&bc[n+1];
-			*(asCObjectType**)pot = FindObjectType(*(int*)pot);
+			*(asCObjectType**)pot = FindType(*(int*)pot)->CastToObjectType();
 
 			asCObjectType *ot = *(asCObjectType**)pot;
 			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
@@ -2853,7 +2876,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 
 				asCDataType nextdt = patternType->engine->GetDataTypeFromTypeId(nextTypeId);
 				asUINT size;
-				if(nextdt.IsObjectHandle() || (nextdt.GetObjectType() && (nextdt.GetObjectType()->flags & asOBJ_REF)) )
+				if(nextdt.IsObjectHandle() || (nextdt.GetTypeInfo() && (nextdt.GetTypeInfo()->flags & asOBJ_REF)) )
 					size = AS_PTR_SIZE*4;
 				else
 					size = nextdt.GetSizeInMemoryBytes();
@@ -2894,7 +2917,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 		{
 			// Determine the size of the element
 			asUINT size;
-			if( dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_REF)) )
+			if( dt.IsObjectHandle() || (dt.GetTypeInfo() && (dt.GetTypeInfo()->flags & asOBJ_REF)) )
 				size = AS_PTR_SIZE*4;
 			else
 				size = dt.GetSizeInMemoryBytes();
@@ -3413,7 +3436,7 @@ int asCReader::FindTypeId(int idx)
 	}
 }
 
-asCObjectType *asCReader::FindObjectType(int idx)
+asCTypeInfo *asCReader::FindType(int idx)
 {
 	if( idx < 0 || idx >= (int)usedTypes.GetLength() )
 	{
@@ -3464,8 +3487,8 @@ int asCWriter::Write()
 		WriteEncodedInt64(count);
 		for( i = 0; i < count; i++ )
 		{
-			WriteObjectTypeDeclaration(module->enumTypes[i], 1);
-			WriteObjectTypeDeclaration(module->enumTypes[i], 2);
+			WriteTypeDeclaration(module->enumTypes[i], 1);
+			WriteTypeDeclaration(module->enumTypes[i], 2);
 		}
 	}
 
@@ -3478,7 +3501,7 @@ int asCWriter::Write()
 		for( i = 0; i < count; i++ )
 		{
 			// Store only the name of the class/interface types
-			WriteObjectTypeDeclaration(module->classTypes[i], 1);
+			WriteTypeDeclaration(module->classTypes[i], 1);
 		}
 	}
 
@@ -3500,7 +3523,7 @@ int asCWriter::Write()
 		for( i = 0; i < count; i++ )
 		{
 			if( module->classTypes[i]->IsInterface() )
-				WriteObjectTypeDeclaration(module->classTypes[i], 2);
+				WriteTypeDeclaration(module->classTypes[i], 2);
 		}
 	}
 
@@ -3511,7 +3534,7 @@ int asCWriter::Write()
 		for( i = 0; i < count; ++i )
 		{
 			if( !module->classTypes[i]->IsInterface() )
-				WriteObjectTypeDeclaration(module->classTypes[i], 2);
+				WriteTypeDeclaration(module->classTypes[i], 2);
 		}
 	}
 
@@ -3522,7 +3545,7 @@ int asCWriter::Write()
 		for( i = 0; i < count; ++i )
 		{
 			if( !module->classTypes[i]->IsInterface() )
-				WriteObjectTypeDeclaration(module->classTypes[i], 3);
+				WriteTypeDeclaration(module->classTypes[i], 3);
 		}
 	}
 
@@ -3534,8 +3557,8 @@ int asCWriter::Write()
 		WriteEncodedInt64(count);
 		for( i = 0; i < count; i++ )
 		{
-			WriteObjectTypeDeclaration(module->typeDefs[i], 1);
-			WriteObjectTypeDeclaration(module->typeDefs[i], 2);
+			WriteTypeDeclaration(module->typeDefs[i], 1);
+			WriteTypeDeclaration(module->typeDefs[i], 2);
 		}
 	}
 
@@ -3598,7 +3621,7 @@ int asCWriter::Write()
 		count = (asUINT)usedTypes.GetLength();
 		WriteEncodedInt64(count);
 		for( i = 0; i < count; ++i )
-			WriteObjectType(usedTypes[i]);
+			WriteTypeInfo(usedTypes[i]);
 	}
 
 	// usedTypeIds[]
@@ -3712,7 +3735,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		if( func->defaultArgs[i] )
 			WriteString(func->defaultArgs[i]);
 
-	WriteObjectType(func->objectType);
+	WriteTypeInfo(func->objectType);
 
 	if( func->objectType )
 	{
@@ -3738,7 +3761,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 				// This funcdef was declared as class member
 				asBYTE b = 'o';
 				WriteData(&b, 1);
-				WriteObjectType(func->parentClass);
+				WriteTypeInfo(func->parentClass);
 			}
 		}
 		else
@@ -3794,7 +3817,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		WriteEncodedInt64(count);
 		for( i = 0; i < count; ++i )
 		{
-			WriteObjectType(func->scriptData->objVariableTypes[i]);
+			WriteTypeInfo(func->scriptData->objVariableTypes[i]);
 			// TODO: Only write this if the object type is the builtin function type
 			WriteEncodedInt64(FindFunctionIndex(func->scriptData->funcVariableTypes[i]));
 			WriteEncodedInt64(AdjustStackPosition(func->scriptData->objVariablePos[i]));
@@ -3900,7 +3923,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	}
 }
 
-void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
+void asCWriter::WriteTypeDeclaration(asCTypeInfo *ot, int phase)
 {
 	if( phase == 1 )
 	{
@@ -3933,79 +3956,87 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		if( ot->flags & asOBJ_ENUM )
 		{
 			// enumValues[]
-			int size = (int)ot->enumValues.GetLength();
+			asCEnumType *t = ot->CastToEnumType();
+			int size = (int)t->enumValues.GetLength();
 			WriteEncodedInt64(size);
 
 			for( int n = 0; n < size; n++ )
 			{
-				WriteString(&ot->enumValues[n]->name);
-				WriteData(&ot->enumValues[n]->value, 4);
+				WriteString(&t->enumValues[n]->name);
+				WriteData(&t->enumValues[n]->value, 4);
 			}
 		}
 		else if( ot->flags & asOBJ_TYPEDEF )
 		{
-			eTokenType t = ot->templateSubTypes[0].GetTokenType();
+			asCObjectType *td = ot->CastToObjectType();
+			eTokenType t = td->templateSubTypes[0].GetTokenType();
 			WriteEncodedInt64(t);
 		}
 		else
 		{
-			WriteObjectType(ot->derivedFrom);
+			asCObjectType *t = ot->CastToObjectType();
+			WriteTypeInfo(t->derivedFrom);
 
 			// interfaces[] / interfaceVFTOffsets[]
 			// TOOD: Is it really necessary to store the VFTOffsets? Can't the reader calculate those?
-			int size = (asUINT)ot->interfaces.GetLength();
+			int size = (asUINT)t->interfaces.GetLength();
 			WriteEncodedInt64(size);
 			asUINT n;
-			asASSERT( ot->interfaces.GetLength() == ot->interfaceVFTOffsets.GetLength() );
-			for( n = 0; n < ot->interfaces.GetLength(); n++ )
+			asASSERT( t->interfaces.GetLength() == t->interfaceVFTOffsets.GetLength() );
+			for( n = 0; n < t->interfaces.GetLength(); n++ )
 			{
-				WriteObjectType(ot->interfaces[n]);
-				WriteEncodedInt64(ot->interfaceVFTOffsets[n]);
+				WriteTypeInfo(t->interfaces[n]);
+				WriteEncodedInt64(t->interfaceVFTOffsets[n]);
 			}
 
 			// behaviours
 			// TODO: Default behaviours should just be stored as a indicator  
 			//       to avoid storing the actual function object
-			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
+			if( !t->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
-				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
-				size = (int)ot->beh.constructors.GetLength();
+				WriteFunction(engine->scriptFunctions[t->beh.destruct]);
+				size = (int)t->beh.constructors.GetLength();
 				WriteEncodedInt64(size);
-				for( n = 0; n < ot->beh.constructors.GetLength(); n++ )
+				for( n = 0; n < t->beh.constructors.GetLength(); n++ )
 				{
-					WriteFunction(engine->scriptFunctions[ot->beh.constructors[n]]);
-					WriteFunction(engine->scriptFunctions[ot->beh.factories[n]]);
+					WriteFunction(engine->scriptFunctions[t->beh.constructors[n]]);
+					WriteFunction(engine->scriptFunctions[t->beh.factories[n]]);
 				}
 			}
 
 			// methods[]
 			// TODO: Avoid storing inherited methods in interfaces, as the reader
 			//       can add those directly from the base interface
-			size = (int)ot->methods.GetLength();
+			size = (int)t->methods.GetLength();
 			WriteEncodedInt64(size);
-			for( n = 0; n < ot->methods.GetLength(); n++ )
+			for( n = 0; n < t->methods.GetLength(); n++ )
 			{
-				WriteFunction(engine->scriptFunctions[ot->methods[n]]);
+				WriteFunction(engine->scriptFunctions[t->methods[n]]);
 			}
 
 			// virtualFunctionTable[]
 			// TODO: Is it really necessary to store this? Can't it be easily rebuilt by the reader
-			size = (int)ot->virtualFunctionTable.GetLength();
+			size = (int)t->virtualFunctionTable.GetLength();
 			WriteEncodedInt64(size);
 			for( n = 0; n < (asUINT)size; n++ )
 			{
-				WriteFunction(ot->virtualFunctionTable[n]);
+				WriteFunction(t->virtualFunctionTable[n]);
 			}
 		}
 	}
 	else if( phase == 3 )
 	{
 		// properties[]
-		asUINT size = (asUINT)ot->properties.GetLength();
+		asCObjectType *t = ot->CastToObjectType();
+
+		// This is only done for object types
+		asASSERT(t);
+
+		asUINT size = (asUINT)t->properties.GetLength();
 		WriteEncodedInt64(size);
-		for( asUINT n = 0; n < ot->properties.GetLength(); n++ )
+		for (asUINT n = 0; n < t->properties.GetLength(); n++)
 		{
-			WriteObjectProperty(ot->properties[n]);
+			WriteObjectProperty(t->properties[n]);
 		}
 	}
 }
@@ -4150,7 +4181,7 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	int t = dt->GetTokenType();
 	WriteEncodedInt64(t);
 	if( t == ttIdentifier )
-		WriteObjectType(dt->GetObjectType());
+		WriteTypeInfo(dt->GetTypeInfo());
 
 	struct
 	{
@@ -4166,27 +4197,28 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	bits.isReadOnly      = dt->IsReadOnly();
 	WriteData(&bits, 1);
 
-	if( t == ttIdentifier && dt->GetObjectType()->name == "$func" )
+	if( t == ttIdentifier && dt->GetTypeInfo()->name == "$func" )
 	{
 		WriteFunctionSignature(dt->GetFuncDef());
 	}
 }
 
-void asCWriter::WriteObjectType(asCObjectType* ot) 
+void asCWriter::WriteTypeInfo(asCTypeInfo* ti) 
 {
 	char ch;
 
-	if( ot )
+	if( ti )
 	{
 		// Check for template instances/specializations
-		if( ot->templateSubTypes.GetLength() )
+		asCObjectType *ot = ti->CastToObjectType();
+		if( ot && ot->templateSubTypes.GetLength() )
 		{
 			// Check for list pattern type or template type
 			if( ot->flags & asOBJ_LIST_PATTERN )
 			{
 				ch = 'l';
 				WriteData(&ch, 1);
-				WriteObjectType(ot->templateSubTypes[0].GetObjectType());
+				WriteTypeInfo(ot->templateSubTypes[0].GetTypeInfo());
 			}
 			else
 			{
@@ -4214,7 +4246,7 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 				}
 			}
 		}
-		else if( ot->flags & asOBJ_TEMPLATE_SUBTYPE )
+		else if( ot && ot->flags & asOBJ_TEMPLATE_SUBTYPE )
 		{
 			ch = 's';
 			WriteData(&ch, 1);
@@ -4224,8 +4256,8 @@ void asCWriter::WriteObjectType(asCObjectType* ot)
 		{
 			ch = 'o';
 			WriteData(&ch, 1);
-			WriteString(&ot->name);
-			WriteString(&ot->nameSpace->name);
+			WriteString(&ti->name);
+			WriteString(&ti->nameSpace->name);
 		}
 	}
 	else
@@ -4515,7 +4547,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		{
 			// Translate the object type 
 			asCObjectType *ot = *(asCObjectType**)(tmpBC+1);
-			*(asPWORD*)(tmpBC+1) = FindObjectTypeIdx(ot);
+			*(asPWORD*)(tmpBC+1) = FindTypeInfoIdx(ot);
 
 			// Translate the constructor func id, unless it is 0
 			if( *(int*)&tmpBC[1+AS_PTR_SIZE] != 0 )
@@ -4529,7 +4561,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				 c == asBC_OBJTYPE )  // PTR_ARG
 		{
 			// Translate object type pointers into indices
-			*(asPWORD*)(tmpBC+1) = FindObjectTypeIdx(*(asCObjectType**)(tmpBC+1));
+			*(asPWORD*)(tmpBC+1) = FindTypeInfoIdx(*(asCObjectType**)(tmpBC+1));
 		}
 		else if( c == asBC_JitEntry ) // PTR_ARG
 		{
@@ -4672,7 +4704,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 		{
 			// Translate object type pointers into indices
 			asCObjectType *ot = *(asCObjectType**)(tmpBC+1);
-			*(asPWORD*)(tmpBC+1) = FindObjectTypeIdx(ot);
+			*(asPWORD*)(tmpBC+1) = FindTypeInfoIdx(ot);
 
 			// Pop and destroy the list adjuster helper that was created with asBC_AllocMem
 			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
@@ -5006,7 +5038,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 			{
 				// Was any value skipped?
 				asUINT size;
-				if( dt.IsObjectHandle() || (dt.GetObjectType() && (dt.GetObjectType()->flags & asOBJ_REF)) )
+				if( dt.IsObjectHandle() || (dt.GetTypeInfo() && (dt.GetTypeInfo()->flags & asOBJ_REF)) )
 					size = AS_PTR_SIZE*4;
 				else
 					size = dt.GetSizeInMemoryBytes();
@@ -5161,7 +5193,7 @@ void asCWriter::WriteUsedObjectProps()
 	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
 	{
 		asCObjectType *objType = usedObjectProperties[n].objType;
-		WriteObjectType(objType);
+		WriteTypeInfo(objType);
 
 		// Find the property name
 		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
@@ -5215,7 +5247,7 @@ int asCWriter::FindTypeIdIdx(int typeId)
 	return (int)usedTypeIds.GetLength() - 1;
 }
 
-int asCWriter::FindObjectTypeIdx(asCObjectType *obj)
+int asCWriter::FindTypeInfoIdx(asCTypeInfo *obj)
 {
 	asUINT n;
 	for( n = 0; n < usedTypes.GetLength(); n++ )

@@ -89,7 +89,7 @@ void *asCGeneric::GetObject()
 // interface
 int asCGeneric::GetObjectTypeId() const
 {
-	asCDataType dt = asCDataType::CreateObject(sysFunction->objectType, false);
+	asCDataType dt = asCDataType::CreateType(sysFunction->objectType, false);
 	return engine->GetTypeIdFromDataType(dt);
 }
 
@@ -459,7 +459,7 @@ int asCGeneric::SetReturnObject(void *obj)
 	if( dt->IsObjectHandle() )
 	{
 		// Increase the reference counter
-		asSTypeBehaviour *beh = &dt->GetObjectType()->beh;
+		asSTypeBehaviour *beh = &dt->GetTypeInfo()->CastToObjectType()->beh;
 		if( obj && beh->addref )
 			engine->CallObjectMethod(obj, beh->addref);
 	}
@@ -469,7 +469,7 @@ int asCGeneric::SetReturnObject(void *obj)
 		// Here we should just initialize that memory by calling the copy constructor
 		// or the default constructor followed by the assignment operator
 		void *mem = (void*)*(asPWORD*)&stackPointer[-AS_PTR_SIZE];
-		engine->ConstructScriptObjectCopy(mem, obj, dt->GetObjectType());
+		engine->ConstructScriptObjectCopy(mem, obj, dt->GetTypeInfo()->CastToObjectType());
 		return 0;
 	}
 
