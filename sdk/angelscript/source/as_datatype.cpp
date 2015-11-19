@@ -529,7 +529,7 @@ bool asCDataType::IsPrimitive() const
 	if( typeInfo || funcDef )
 		return false;
 
-	// Null handle doesn't have an objectType, but it is not a primitive
+	// Null handle doesn't have a typeInfo, but it is not a primitive
 	if( tokenType == ttUnrecognizedToken )
 		return false;
 
@@ -602,7 +602,8 @@ bool asCDataType::IsObject() const
 	if( typeInfo == 0 )
 		return IsNullHandle();
 
-	return true;
+	// Template subtypes shouldn't be considered objects
+	return typeInfo->CastToObjectType() ? true : false;
 }
 
 int asCDataType::GetSizeInMemoryBytes() const

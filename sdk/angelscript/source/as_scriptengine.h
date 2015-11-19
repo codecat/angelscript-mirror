@@ -106,9 +106,9 @@ public:
 	virtual int            RegisterInterface(const char *name);
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
 	virtual asUINT         GetObjectTypeCount() const;
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
-	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
-	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const;
+	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const;
+	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const;
+	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const;
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0);
@@ -156,26 +156,26 @@ public:
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const;
 
 	// Type identification
-	virtual asIObjectType *GetObjectTypeById(int typeId) const;
+	virtual asITypeInfo   *GetObjectTypeById(int typeId) const;
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const;
 
 	// Script execution
 	virtual asIScriptContext      *CreateContext();
-	virtual void                  *CreateScriptObject(const asIObjectType *type);
-	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type);
-	virtual void                  *CreateUninitializedScriptObject(const asIObjectType *type);
+	virtual void                  *CreateScriptObject(const asITypeInfo *type);
+	virtual void                  *CreateScriptObjectCopy(void *obj, const asITypeInfo *type);
+	virtual void                  *CreateUninitializedScriptObject(const asITypeInfo *type);
 	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj);
-	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type);
-	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type);
-	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type);
-	virtual int                    RefCastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast = false);
+	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asITypeInfo *type);
+	virtual void                   ReleaseScriptObject(void *obj, const asITypeInfo *type);
+	virtual void                   AddRefScriptObject(void *obj, const asITypeInfo *type);
+	virtual int                    RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo *toType, void **newPtr, bool useOnlyImplicitCast = false);
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.30.0, 2014-11-04
 	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const;
 #endif
-	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const;
+	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asITypeInfo *type) const;
 
 	// Context pooling
 	virtual asIScriptContext *RequestContext();
@@ -188,8 +188,8 @@ public:
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE, asUINT numIterations = 1);
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const;
-	virtual int  NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type);
-	virtual int  GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj = 0, asIObjectType **type = 0);
+	virtual int  NotifyGarbageCollectorOfNewObject(void *obj, asITypeInfo *type);
+	virtual int  GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj = 0, asITypeInfo **type = 0);
 	virtual void GCEnumCallback(void *reference);
 
 	// User data
@@ -199,7 +199,7 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type);
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type);
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type);
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type);
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type);
 
 //===========================================================
@@ -345,7 +345,7 @@ public:
 	asCMap<asSNameSpaceNamePair, asCTypeInfo*> allRegisteredTypes; // increases ref count
 
 	// Dummy types used to name the subtypes in the template objects 
-	asCArray<asCObjectType *>      templateSubTypes;
+	asCArray<asCTypeInfo *>        templateSubTypes;
 
 	// Store information about template types
 	// This list will contain all instances of templates, both registered specialized 
@@ -460,16 +460,16 @@ public:
 	// User data
 	asCArray<asPWORD>       userData;
 
-	struct SEngineClean    { asPWORD type; asCLEANENGINEFUNC_t      cleanFunc; };
+	struct SEngineClean    { asPWORD type; asCLEANENGINEFUNC_t       cleanFunc; };
 	asCArray<SEngineClean>    cleanEngineFuncs;
-	struct SModuleClean    { asPWORD type; asCLEANMODULEFUNC_t      cleanFunc; };
+	struct SModuleClean    { asPWORD type; asCLEANMODULEFUNC_t       cleanFunc; };
 	asCArray<SModuleClean>    cleanModuleFuncs;
-	struct SContextClean   { asPWORD type; asCLEANCONTEXTFUNC_t     cleanFunc; };
+	struct SContextClean   { asPWORD type; asCLEANCONTEXTFUNC_t      cleanFunc; };
 	asCArray<SContextClean>   cleanContextFuncs;
-	struct SFunctionClean  { asPWORD type; asCLEANFUNCTIONFUNC_t    cleanFunc; };
+	struct SFunctionClean  { asPWORD type; asCLEANFUNCTIONFUNC_t     cleanFunc; };
 	asCArray<SFunctionClean>  cleanFunctionFuncs;
-	struct SObjTypeClean   { asPWORD type; asCLEANOBJECTTYPEFUNC_t  cleanFunc; };
-	asCArray<SObjTypeClean>   cleanObjectTypeFuncs;
+	struct STypeInfoClean  { asPWORD type; asCLEANTYPEINFOFUNC_t     cleanFunc; };
+	asCArray<STypeInfoClean>  cleanTypeInfoFuncs;
 	struct SScriptObjClean { asPWORD type; asCLEANSCRIPTOBJECTFUNC_t cleanFunc; };
 	asCArray<SScriptObjClean> cleanScriptObjectFuncs;
 

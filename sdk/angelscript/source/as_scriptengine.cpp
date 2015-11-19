@@ -506,7 +506,7 @@ asIScriptFunction *asCScriptEngine::CreateDelegate(asIScriptFunction *func, void
 		return 0;
 
 	// The function must be a class method
-	asIObjectType *type = func->GetObjectType();
+	asITypeInfo *type = func->GetObjectType();
 	if( type == 0 )
 		return 0;
 
@@ -1706,7 +1706,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		// Define the template subtypes
 		for( asUINT subTypeIdx = 0; subTypeIdx < subtypeNames.GetLength(); subTypeIdx++ )
 		{
-			asCObjectType *subtype = 0;
+			asCTypeInfo *subtype = 0;
 			for( asUINT n = 0; n < templateSubTypes.GetLength(); n++ )
 			{
 				if( templateSubTypes[n]->name == subtypeNames[subTypeIdx] )
@@ -1718,15 +1718,12 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			if( subtype == 0 )
 			{
 				// Create the new subtype if not already existing
-				subtype = asNEW(asCObjectType)(this);
+				subtype = asNEW(asCTypeInfo)(this);
 				if( subtype == 0 )
 					return ConfigError(asOUT_OF_MEMORY, "RegisterObjectType", name, 0);
 
 				subtype->name      = subtypeNames[subTypeIdx];
 				subtype->size      = 0;
-#ifdef WIP_16BYTE_ALIGN
-				type->alignment    = 0; // template subtypes cannot be instantiated and don't need alignment
-#endif
 				subtype->flags     = asOBJ_TEMPLATE_SUBTYPE;
 				templateSubTypes.PushLast(subtype);
 			}
@@ -3623,7 +3620,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 }
 
 // interface
-asILockableSharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const
+asILockableSharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, const asITypeInfo *type) const
 {
 	// Make sure it is not a null pointer
 	if( obj == 0 || type == 0 ) return 0;
@@ -4537,13 +4534,13 @@ void asCScriptEngine::CallFree(void *obj) const
 }
 
 // interface
-int asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type)
+int asCScriptEngine::NotifyGarbageCollectorOfNewObject(void *obj, asITypeInfo *type)
 {
 	return gc.AddScriptObjectToGC(obj, static_cast<asCObjectType*>(type));
 }
 
 // interface
-int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIObjectType **type)
+int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asITypeInfo **type)
 {
 	return gc.GetObjectInGC(idx, seqNbr, obj, type);
 }
@@ -4754,7 +4751,7 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCTypeInfo *type)
 }
 
 // interface
-asIObjectType *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
+asITypeInfo *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
 {
 	asCDataType dt;
 	// This cast is ok, because we are not changing anything in the engine
@@ -4808,7 +4805,7 @@ int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 }
 
 // interface
-int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast)
+int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo *toType, void **newPtr, bool useOnlyImplicitCast)
 {
 	if( newPtr == 0 ) return asINVALID_ARG;
 	*newPtr = 0;
@@ -4905,7 +4902,7 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 			}
 
 			// Get the true type of the object so the explicit cast can evaluate all possibilities
-			asIObjectType *trueType = reinterpret_cast<asCScriptObject*>(obj)->GetObjectType();
+			asITypeInfo *trueType = reinterpret_cast<asCScriptObject*>(obj)->GetObjectType();
 			if( trueType->DerivesFrom(toType) ||
 				trueType->Implements(toType) )
 			{
@@ -4921,7 +4918,7 @@ int asCScriptEngine::RefCastObject(void *obj, asIObjectType *fromType, asIObject
 }
 
 // interface
-void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
+void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 {
 	if( type == 0 ) return 0;
 
@@ -5021,7 +5018,7 @@ void *asCScriptEngine::CreateScriptObject(const asIObjectType *type)
 }
 
 // interface
-void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type)
+void *asCScriptEngine::CreateUninitializedScriptObject(const asITypeInfo *type)
 {
 	// This function only works for script classes. Registered types cannot be created this way.
 	if( type == 0 || !(type->GetFlags() & asOBJ_SCRIPT_OBJECT) )
@@ -5040,7 +5037,7 @@ void *asCScriptEngine::CreateUninitializedScriptObject(const asIObjectType *type
 }
 
 // interface
-void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asIObjectType *type)
+void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asITypeInfo *type)
 {
 	if( origObj == 0 || type == 0 ) return 0;
 
@@ -5108,7 +5105,7 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 }
 
 // interface
-int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type)
+int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asITypeInfo *type)
 {
 	// TODO: Warn about invalid call in message stream
 	// TODO: Should a script exception be set in case a context is active?
@@ -5142,7 +5139,7 @@ int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asIObj
 }
 
 // interface
-void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
+void asCScriptEngine::AddRefScriptObject(void *obj, const asITypeInfo *type)
 {
 	// Make sure it is not a null pointer
 	if( obj == 0 || type == 0 ) return;
@@ -5156,7 +5153,7 @@ void asCScriptEngine::AddRefScriptObject(void *obj, const asIObjectType *type)
 }
 
 // interface
-void asCScriptEngine::ReleaseScriptObject(void *obj, const asIObjectType *type)
+void asCScriptEngine::ReleaseScriptObject(void *obj, const asITypeInfo *type)
 {
 	// Make sure it is not a null pointer
 	if( obj == 0 || type == 0 ) return;
@@ -5823,7 +5820,7 @@ asUINT asCScriptEngine::GetObjectTypeCount() const
 }
 
 // interface
-asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
+asITypeInfo *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 {
 	if( index >= registeredObjTypes.GetLength() )
 		return 0;
@@ -5832,7 +5829,7 @@ asIObjectType *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 }
 
 // interface
-asIObjectType *asCScriptEngine::GetObjectTypeByName(const char *name) const
+asITypeInfo *asCScriptEngine::GetObjectTypeByName(const char *name) const
 {
 	asSNameSpace *ns = defaultNamespace;
 	while( ns )
@@ -5862,7 +5859,7 @@ asIObjectType *asCScriptEngine::GetObjectTypeByName(const char *name) const
 }
 
 // interface
-asIObjectType *asCScriptEngine::GetObjectTypeById(int typeId) const
+asITypeInfo *asCScriptEngine::GetObjectTypeById(int typeId) const
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
@@ -6057,23 +6054,23 @@ void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t c
 }
 
 // interface
-void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type)
+void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)
 {
 	ACQUIREEXCLUSIVE(engineRWLock);
 
-	for( asUINT n = 0; n < cleanObjectTypeFuncs.GetLength(); n++ )
+	for( asUINT n = 0; n < cleanTypeInfoFuncs.GetLength(); n++ )
 	{
-		if( cleanObjectTypeFuncs[n].type == type )
+		if( cleanTypeInfoFuncs[n].type == type )
 		{
-			cleanObjectTypeFuncs[n].cleanFunc = callback;
+			cleanTypeInfoFuncs[n].cleanFunc = callback;
 
 			RELEASEEXCLUSIVE(engineRWLock);
 
 			return;
 		}
 	}
-	SObjTypeClean otc = {type, callback};
-	cleanObjectTypeFuncs.PushLast(otc);
+	STypeInfoClean otc = {type, callback};
+	cleanTypeInfoFuncs.PushLast(otc);
 
 	RELEASEEXCLUSIVE(engineRWLock);
 }

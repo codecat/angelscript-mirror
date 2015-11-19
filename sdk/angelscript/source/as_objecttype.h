@@ -101,14 +101,14 @@ struct asSNameSpace;
 class asCObjectType : public asCTypeInfo
 {
 public:
-	asIObjectType     *GetBaseType() const;
-	bool               DerivesFrom(const asIObjectType *objType) const;
+	asITypeInfo       *GetBaseType() const;
+	bool               DerivesFrom(const asITypeInfo *objType) const;
 	int                GetSubTypeId(asUINT subtypeIndex = 0) const;
-	asIObjectType     *GetSubType(asUINT subtypeIndex = 0) const;
+	asITypeInfo       *GetSubType(asUINT subtypeIndex = 0) const;
 	asUINT             GetSubTypeCount() const;
 	asUINT             GetInterfaceCount() const;
-	asIObjectType     *GetInterface(asUINT index) const;
-	bool               Implements(const asIObjectType *objType) const;
+	asITypeInfo       *GetInterface(asUINT index) const;
+	bool               Implements(const asITypeInfo *objType) const;
 	asUINT             GetFactoryCount() const;
 	asIScriptFunction *GetFactoryByIndex(asUINT index) const;
 	asIScriptFunction *GetFactoryByDecl(const char *decl) const;
@@ -141,6 +141,8 @@ public:
 #endif
 	asCArray<asCObjectProperty*> properties;
 	asCArray<int>                methods;
+
+	// TODO: These are not used by template types. Should perhaps create a derived class to save memory on ordinary object types
 	asCArray<asCObjectType*>     interfaces;
 	asCArray<asUINT>             interfaceVFTOffsets;
 	asCObjectType *              derivedFrom;

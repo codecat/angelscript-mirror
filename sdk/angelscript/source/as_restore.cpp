@@ -4228,7 +4228,7 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 				WriteEncodedInt64(ot->templateSubTypes.GetLength());
 				for( asUINT n = 0; n < ot->templateSubTypes.GetLength(); n++ )
 				{
-					if( ot->templateSubTypes[n].IsObject() || ot->templateSubTypes[n].IsEnumType() )
+					if( !ot->templateSubTypes[n].IsPrimitive() || ot->templateSubTypes[n].IsEnumType() )
 					{
 						ch = 's';
 						WriteData(&ch, 1);
@@ -4244,11 +4244,11 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 				}
 			}
 		}
-		else if( ot && ot->flags & asOBJ_TEMPLATE_SUBTYPE )
+		else if( ti->flags & asOBJ_TEMPLATE_SUBTYPE )
 		{
 			ch = 's';
 			WriteData(&ch, 1);
-			WriteString(&ot->name);
+			WriteString(&ti->name);
 		}
 		else
 		{

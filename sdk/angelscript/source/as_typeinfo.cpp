@@ -268,7 +268,7 @@ asCObjectType *asCTypeInfo::CastToObjectType()
 	if (this == 0) return 0;
 
 	// TODO: type: Should List pattern have its own type class?
-	if (flags & (asOBJ_VALUE | asOBJ_REF | asOBJ_TEMPLATE_SUBTYPE | asOBJ_LIST_PATTERN))
+	if (flags & (asOBJ_VALUE | asOBJ_REF | asOBJ_LIST_PATTERN))
 		return reinterpret_cast<asCObjectType*>(this);
 
 	return 0;
@@ -294,6 +294,8 @@ asCTypedefType *asCTypeInfo::CastToTypedefType()
 
 	if (flags & (asOBJ_TYPEDEF))
 		return reinterpret_cast<asCTypedefType*>(this);
+
+	return 0;
 }
 
 // internal
@@ -304,9 +306,9 @@ void asCTypeInfo::CleanUserData()
 	{
 		if (userData[n + 1])
 		{
-			for (asUINT c = 0; c < engine->cleanObjectTypeFuncs.GetLength(); c++)
-				if (engine->cleanObjectTypeFuncs[c].type == userData[n])
-					engine->cleanObjectTypeFuncs[c].cleanFunc(this);
+			for (asUINT c = 0; c < engine->cleanTypeInfoFuncs.GetLength(); c++)
+				if (engine->cleanTypeInfoFuncs[c].type == userData[n])
+					engine->cleanTypeInfoFuncs[c].cleanFunc(this);
 		}
 	}
 	userData.SetLength(0);

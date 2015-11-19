@@ -60,8 +60,7 @@ struct asSNameSpace;
 //             asCPrimitiveType shall be implemented to represent primitives (void, int, double, etc)
 //             All classes except asCObjectType will be in this file
 
-// TODO: type: asIObjectType shall be renamed to asITypeInfo
-class asCTypeInfo : public asIObjectType
+class asCTypeInfo : public asITypeInfo
 {
 public:
 	//=====================================
@@ -79,19 +78,19 @@ public:
 	// Type info
 	const char      *GetName() const;
 	const char      *GetNamespace() const;
-	asIObjectType   *GetBaseType() const { return 0; }
-	bool             DerivesFrom(const asIObjectType *objType) const { UNUSED_VAR(objType); return 0; }
+	asITypeInfo     *GetBaseType() const { return 0; }
+	bool             DerivesFrom(const asITypeInfo *objType) const { UNUSED_VAR(objType); return 0; }
 	asDWORD          GetFlags() const;
 	asUINT           GetSize() const;
 	int              GetTypeId() const;
 	int              GetSubTypeId(asUINT subtypeIndex = 0) const { UNUSED_VAR(subtypeIndex); return -1; }
-	asIObjectType   *GetSubType(asUINT subtypeIndex = 0) const { UNUSED_VAR(subtypeIndex); return 0; }
+	asITypeInfo     *GetSubType(asUINT subtypeIndex = 0) const { UNUSED_VAR(subtypeIndex); return 0; }
 	asUINT           GetSubTypeCount() const { return 0; }
 
 	// Interfaces
 	asUINT           GetInterfaceCount() const { return 0; }
-	asIObjectType   *GetInterface(asUINT index) const { UNUSED_VAR(index); return 0; }
-	bool             Implements(const asIObjectType *objType) const { UNUSED_VAR(objType); return false; }
+	asITypeInfo     *GetInterface(asUINT index) const { UNUSED_VAR(index); return 0; }
+	bool             Implements(const asITypeInfo *objType) const { UNUSED_VAR(objType); return false; }
 
 	// Factories
 	asUINT             GetFactoryCount() const { return 0; }

@@ -137,7 +137,7 @@ asCObjectType::~asCObjectType()
 }
 
 // interface
-bool asCObjectType::Implements(const asIObjectType *objType) const
+bool asCObjectType::Implements(const asITypeInfo *objType) const
 {
 	if( this == objType )
 		return true;
@@ -149,7 +149,7 @@ bool asCObjectType::Implements(const asIObjectType *objType) const
 }
 
 // interface
-bool asCObjectType::DerivesFrom(const asIObjectType *objType) const
+bool asCObjectType::DerivesFrom(const asITypeInfo *objType) const
 {
 	if( this == objType )
 		return true;
@@ -180,7 +180,7 @@ int asCObjectType::GetSubTypeId(asUINT subtypeIndex) const
 }
 
 // interface
-asIObjectType *asCObjectType::GetSubType(asUINT subtypeIndex) const
+asITypeInfo *asCObjectType::GetSubType(asUINT subtypeIndex) const
 {
 	if( subtypeIndex >= templateSubTypes.GetLength() )
 		return 0;
@@ -198,7 +198,7 @@ asUINT asCObjectType::GetInterfaceCount() const
 	return asUINT(interfaces.GetLength());
 }
 
-asIObjectType *asCObjectType::GetInterface(asUINT index) const
+asITypeInfo *asCObjectType::GetInterface(asUINT index) const
 {
 	return interfaces[index];
 }
@@ -364,7 +364,7 @@ const char *asCObjectType::GetPropertyDeclaration(asUINT index, bool includeName
 	return tempString->AddressOf();
 }
 
-asIObjectType *asCObjectType::GetBaseType() const
+asITypeInfo *asCObjectType::GetBaseType() const
 {
 	return derivedFrom; 
 }

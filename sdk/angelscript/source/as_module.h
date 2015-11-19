@@ -131,9 +131,9 @@ public:
 
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const;
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
-	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
-	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const;
+	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const;
+	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const;
+	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const;
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 
 	// Enums

@@ -1019,7 +1019,7 @@ asUINT asCModule::GetObjectTypeCount() const
 }
 
 // interface 
-asIObjectType *asCModule::GetObjectTypeByIndex(asUINT index) const
+asITypeInfo *asCModule::GetObjectTypeByIndex(asUINT index) const
 {
 	if( index >= classTypes.GetLength() ) 
 		return 0;
@@ -1028,7 +1028,7 @@ asIObjectType *asCModule::GetObjectTypeByIndex(asUINT index) const
 }
 
 // interface
-asIObjectType *asCModule::GetObjectTypeByName(const char *in_name) const
+asITypeInfo *asCModule::GetObjectTypeByName(const char *in_name) const
 {
 	asSNameSpace *ns = defaultNamespace;
 	while( ns )
@@ -1067,7 +1067,7 @@ int asCModule::GetTypeIdByDecl(const char *decl) const
 }
 
 // interface
-asIObjectType *asCModule::GetObjectTypeByDecl(const char *decl) const
+asITypeInfo *asCModule::GetObjectTypeByDecl(const char *decl) const
 {
 	asCDataType dt;
 

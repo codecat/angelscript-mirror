@@ -221,7 +221,7 @@ void *asCScriptFunction::GetDelegateObject() const
 }
 
 // interface
-asIObjectType *asCScriptFunction::GetDelegateObjectType() const
+asITypeInfo *asCScriptFunction::GetDelegateObjectType() const
 {
 	if( objForDelegate == 0 || funcForDelegate == 0 )
 		return 0;
@@ -505,7 +505,7 @@ void asCScriptFunction::DestroyInternal()
 }
 
 // interface
-asIObjectType *asCScriptFunction::GetParentType() const
+asITypeInfo *asCScriptFunction::GetParentType() const
 {
 	return parentClass;
 }
@@ -616,7 +616,7 @@ asIScriptModule *asCScriptFunction::GetModule() const
 }
 
 // interface
-asIObjectType *asCScriptFunction::GetObjectType() const
+asITypeInfo *asCScriptFunction::GetObjectType() const
 {
 	return objectType;
 }

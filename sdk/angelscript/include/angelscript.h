@@ -68,7 +68,12 @@ class asIScriptModule;
 class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptObject;
-class asIObjectType;
+class asITypeInfo;
+// TODO: type: deprecate asIObjectType
+//#ifdef AS_DEPRECATED
+// deprecated since 2.31.0 - 2015/11/18
+typedef asITypeInfo asIObjectType;
+//#endif
 class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
@@ -398,7 +403,11 @@ typedef void (*asCLEANENGINEFUNC_t)(asIScriptEngine *);
 typedef void (*asCLEANMODULEFUNC_t)(asIScriptModule *);
 typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
-typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
+typedef void (*asCLEANTYPEINFOFUNC_t)(asITypeInfo *);
+#ifdef AS_DEPRECATED
+// deprecated since 2.31.0 - 2015/11/18
+typedef asCLEANTYPEINFOFUNC_t asCLEANOBJECTTYPEFUNC_t;
+#endif
 typedef void (*asCLEANSCRIPTOBJECTFUNC_t)(asIScriptObject *);
 typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
@@ -686,9 +695,10 @@ public:
 	virtual int            RegisterInterface(const char *name) = 0;
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	virtual asUINT         GetObjectTypeCount() const = 0;
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
-	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
-	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
+	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
+	// TODO: type: These should be deprecated, instead GetTypeInfoByName and GetTypeInfoByDecl should be provided
+	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
+	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0) = 0;
@@ -702,7 +712,9 @@ public:
 	virtual int         RegisterEnum(const char *type) = 0;
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
 	virtual asUINT      GetEnumCount() const = 0;
+	// TODO: type: Should return asITypeInfo
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
+	// TODO: type: These should be made members of asITypeInfo
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
@@ -714,6 +726,7 @@ public:
 	// Typedefs
 	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
 	virtual asUINT      GetTypedefCount() const = 0;
+	// TODO: type: Should return asITypeInfo
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
 
 	// Configuration groups
@@ -735,26 +748,27 @@ public:
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
 
 	// Type identification
-	virtual asIObjectType *GetObjectTypeById(int typeId) const = 0;
+	// TODO: type: Should be renamed to GetTypeInfoById
+	virtual asITypeInfo   *GetObjectTypeById(int typeId) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
 
 	// Script execution
 	virtual asIScriptContext      *CreateContext() = 0;
-	virtual void                  *CreateScriptObject(const asIObjectType *type) = 0;
-	virtual void                  *CreateScriptObjectCopy(void *obj, const asIObjectType *type) = 0;
-	virtual void                  *CreateUninitializedScriptObject(const asIObjectType *type) = 0;
+	virtual void                  *CreateScriptObject(const asITypeInfo *type) = 0;
+	virtual void                  *CreateScriptObjectCopy(void *obj, const asITypeInfo *type) = 0;
+	virtual void                  *CreateUninitializedScriptObject(const asITypeInfo *type) = 0;
 	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
-	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asIObjectType *type) = 0;
-	virtual void                   ReleaseScriptObject(void *obj, const asIObjectType *type) = 0;
-	virtual void                   AddRefScriptObject(void *obj, const asIObjectType *type) = 0;
-	virtual int                    RefCastObject(void *obj, asIObjectType *fromType, asIObjectType *toType, void **newPtr, bool useOnlyImplicitCast = false) = 0;
+	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asITypeInfo *type) = 0;
+	virtual void                   ReleaseScriptObject(void *obj, const asITypeInfo *type) = 0;
+	virtual void                   AddRefScriptObject(void *obj, const asITypeInfo *type) = 0;
+	virtual int                    RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo *toType, void **newPtr, bool useOnlyImplicitCast = false) = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.30.0, 2014-11-04
 	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
 #endif
-	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asIObjectType *type) const = 0;
+	virtual asILockableSharedBool *GetWeakRefFlagOfScriptObject(void *obj, const asITypeInfo *type) const = 0;
 
 	// Context pooling
 	virtual asIScriptContext      *RequestContext() = 0;
@@ -767,8 +781,8 @@ public:
 	// Garbage collection
 	virtual int  GarbageCollect(asDWORD flags = asGC_FULL_CYCLE, asUINT numIterations = 1) = 0;
 	virtual void GetGCStatistics(asUINT *currentSize, asUINT *totalDestroyed = 0, asUINT *totalDetected = 0, asUINT *newObjects = 0, asUINT *totalNewDestroyed = 0) const = 0;
-	virtual int  NotifyGarbageCollectorOfNewObject(void *obj, asIObjectType *type) = 0;
-	virtual int  GetObjectInGC(asUINT idx, asUINT *seqNbr = 0, void **obj = 0, asIObjectType **type = 0) = 0;
+	virtual int  NotifyGarbageCollectorOfNewObject(void *obj, asITypeInfo *type) = 0;
+	virtual int  GetObjectInGC(asUINT idx, asUINT *seqNbr = 0, void **obj = 0, asITypeInfo **type = 0) = 0;
 	virtual void GCEnumCallback(void *reference) = 0;
 
 	// User data
@@ -778,7 +792,8 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type = 0) = 0;
+	// TODO: type: Rename to SetTypeInfoUserDataCleanupCallback
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
 
 protected:
@@ -827,19 +842,23 @@ public:
 
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const = 0;
-	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
-	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
-	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
+	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
+	// TODO: type: Rename to GetTypeInfoByName/Decl
+	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
+	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 
 	// Enums
 	virtual asUINT      GetEnumCount() const = 0;
+	// TODO: type: Should return asITypeInfo
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0) const = 0;
+	// TODO: type: These will be available from asITypeInfo
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 
 	// Typedefs
 	virtual asUINT      GetTypedefCount() const = 0;
+	// TODO: type: Return asITypeInfo
 	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0) const = 0;
 
 	// Dynamic binding between modules
@@ -994,7 +1013,7 @@ public:
 
 	// Type info
 	virtual int            GetTypeId() const = 0;
-	virtual asIObjectType *GetObjectType() const = 0;
+	virtual asITypeInfo   *GetObjectType() const = 0;
 
 	// Class properties
 	virtual asUINT      GetPropertyCount() const = 0;
@@ -1014,7 +1033,8 @@ protected:
 	virtual ~asIScriptObject() {}
 };
 
-class asIObjectType
+// TODO: type: Add methods for enumerating enum values
+class asITypeInfo
 {
 public:
 	// Miscellaneous
@@ -1030,19 +1050,19 @@ public:
 	// Type info
 	virtual const char      *GetName() const = 0;
 	virtual	const char      *GetNamespace() const = 0;
-	virtual asIObjectType   *GetBaseType() const = 0;
-	virtual bool             DerivesFrom(const asIObjectType *objType) const = 0;
+	virtual asITypeInfo     *GetBaseType() const = 0;
+	virtual bool             DerivesFrom(const asITypeInfo *objType) const = 0;
 	virtual asDWORD          GetFlags() const = 0;
 	virtual asUINT           GetSize() const = 0;
 	virtual int              GetTypeId() const = 0;
 	virtual int              GetSubTypeId(asUINT subTypeIndex = 0) const = 0;
-	virtual asIObjectType   *GetSubType(asUINT subTypeIndex = 0) const = 0;
+	virtual asITypeInfo     *GetSubType(asUINT subTypeIndex = 0) const = 0;
 	virtual asUINT           GetSubTypeCount() const = 0;
 
 	// Interfaces
 	virtual asUINT           GetInterfaceCount() const = 0;
-	virtual asIObjectType   *GetInterface(asUINT index) const = 0;
-	virtual bool             Implements(const asIObjectType *objType) const = 0;
+	virtual asITypeInfo     *GetInterface(asUINT index) const = 0;
+	virtual bool             Implements(const asITypeInfo *objType) const = 0;
 
 	// Factories
 	virtual asUINT             GetFactoryCount() const = 0;
@@ -1073,7 +1093,7 @@ public:
 	virtual void *GetUserData(asPWORD type = 0) const = 0;
 
 protected:
-	virtual ~asIObjectType() {}
+	virtual ~asITypeInfo() {}
 };
 
 class asIScriptFunction
@@ -1094,10 +1114,10 @@ public:
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
 	virtual void            *GetAuxiliary() const = 0;
-	virtual asIObjectType   *GetParentType() const = 0;
+	virtual asITypeInfo     *GetParentType() const = 0;
 
 	// Function signature
-	virtual asIObjectType   *GetObjectType() const = 0;
+	virtual asITypeInfo     *GetObjectType() const = 0;
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
 	virtual const char      *GetNamespace() const = 0;
@@ -1122,7 +1142,7 @@ public:
 
 	// Delegates
 	virtual void              *GetDelegateObject() const = 0;
-	virtual asIObjectType     *GetDelegateObjectType() const = 0;
+	virtual asITypeInfo       *GetDelegateObjectType() const = 0;
 	virtual asIScriptFunction *GetDelegateFunction() const = 0;
 
 	// Debug information
@@ -1345,7 +1365,7 @@ struct asSVMRegisters
 	asDWORD          *stackPointer;       // top of stack (grows downward)
 	asQWORD           valueRegister;      // temp register for primitives
 	void             *objectRegister;     // temp register for objects and handles
-	asIObjectType    *objectType;         // type of object held in object register
+	asITypeInfo      *objectType;         // type of object held in object register
 	bool              doProcessSuspend;   // whether or not the JIT should break out when it encounters a suspend instruction
 	asIScriptContext *ctx;                // the active context
 };

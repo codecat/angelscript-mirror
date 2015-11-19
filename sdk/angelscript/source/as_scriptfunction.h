@@ -130,10 +130,10 @@ public:
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
 	void                *GetAuxiliary() const;
-	asIObjectType       *GetParentType() const;
+	asITypeInfo         *GetParentType() const;
 
 	// Function signature
-	asIObjectType       *GetObjectType() const;
+	asITypeInfo         *GetObjectType() const;
 	const char          *GetObjectName() const;
 	const char          *GetName() const;
 	const char          *GetNamespace() const;
@@ -158,7 +158,7 @@ public:
 
 	// Delegates
 	void                *GetDelegateObject() const;
-	asIObjectType       *GetDelegateObjectType() const;
+	asITypeInfo         *GetDelegateObjectType() const;
 	asIScriptFunction   *GetDelegateFunction() const;
 
 	// Debug information

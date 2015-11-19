@@ -1426,7 +1426,7 @@ int asCContext::PopState()
 	m_regs.valueRegister   = asQWORD(asDWORD(tmp[5]));
 	m_regs.valueRegister  |= asQWORD(tmp[6])<<32;
 	m_regs.objectRegister  = (void*)tmp[7];
-	m_regs.objectType      = (asIObjectType*)tmp[8];
+	m_regs.objectType      = (asITypeInfo*)tmp[8];
 
 	// Calculate the returnValueSize
 	if( m_initialFunction->DoesReturnOnStack() )

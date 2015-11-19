@@ -647,7 +647,7 @@ void asCScriptObject::CallDestructor()
 	}
 }
 
-asIObjectType *asCScriptObject::GetObjectType() const
+asITypeInfo *asCScriptObject::GetObjectType() const
 {
 	return objType;
 }
