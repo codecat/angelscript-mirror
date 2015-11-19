@@ -84,9 +84,7 @@ asIScriptFunction *asCObjectType::GetChildFuncdef(asUINT index) const
 	return childFuncDefs[index];
 }
 
-
-
-
+// internal
 void asCObjectType::DestroyInternal()
 {
 	if( engine == 0 ) return;
@@ -135,9 +133,6 @@ void asCObjectType::DestroyInternal()
 
 asCObjectType::~asCObjectType()
 {
-	if( engine == 0 )
-		return;
-
 	DestroyInternal();
 }
 

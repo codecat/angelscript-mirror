@@ -676,7 +676,7 @@ void asCModule::InternalReset()
 	enumTypes.SetLength(0);
 	for( n = 0; n < typeDefs.GetLength(); n++ )
 	{
-		asCObjectType *type = typeDefs[n];
+		asCTypedefType *type = typeDefs[n];
 
 		// The type should be destroyed now
 		type->DestroyInternal();
@@ -1146,7 +1146,7 @@ const char *asCModule::GetTypedefByIndex(asUINT index, int *typeId, const char *
 		return 0;
 
 	if( typeId )
-		*typeId = engine->GetTypeIdFromDataType(typeDefs[index]->templateSubTypes[0]); 
+		*typeId = engine->GetTypeIdFromDataType(typeDefs[index]->aliasForType);
 
 	if( nameSpace )
 		*nameSpace = typeDefs[index]->nameSpace->name.AddressOf();
@@ -1485,12 +1485,6 @@ asCObjectType *asCModule::GetObjectType(const char *type, asSNameSpace *ns)
 		if( classTypes[n]->name == type &&
 			classTypes[n]->nameSpace == ns )
 			return classTypes[n];
-
-	// TODO: type: typedefs shouldn't be considered as objectTypes
-	for( n = 0; n < typeDefs.GetLength(); n++ )
-		if( typeDefs[n]->name == type && 
-			typeDefs[n]->nameSpace == ns )
-			return typeDefs[n];
 
 	return 0;
 }

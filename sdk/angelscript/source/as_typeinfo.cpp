@@ -264,11 +264,11 @@ int asCTypeInfo::GetProperty(asUINT index, const char **out_name, int *out_typeI
 // internal
 asCObjectType *asCTypeInfo::CastToObjectType()
 {
+	// Allow call on null pointer
 	if (this == 0) return 0;
 
 	// TODO: type: Should List pattern have its own type class?
-	// TODO: type: typedefs should have their own class
-	if (flags & (asOBJ_VALUE | asOBJ_REF | asOBJ_TEMPLATE_SUBTYPE | asOBJ_LIST_PATTERN | asOBJ_TYPEDEF))
+	if (flags & (asOBJ_VALUE | asOBJ_REF | asOBJ_TEMPLATE_SUBTYPE | asOBJ_LIST_PATTERN))
 		return reinterpret_cast<asCObjectType*>(this);
 
 	return 0;
@@ -277,12 +277,23 @@ asCObjectType *asCTypeInfo::CastToObjectType()
 // internal
 asCEnumType *asCTypeInfo::CastToEnumType()
 {
+	// Allow call on null pointer
 	if (this == 0) return 0;
 
 	if (flags & (asOBJ_ENUM))
 		return reinterpret_cast<asCEnumType*>(this);
 
 	return 0;
+}
+
+// internal
+asCTypedefType *asCTypeInfo::CastToTypedefType()
+{
+	// Allow call on null pointer
+	if (this == 0) return 0;
+
+	if (flags & (asOBJ_TYPEDEF))
+		return reinterpret_cast<asCTypedefType*>(this);
 }
 
 // internal
@@ -322,6 +333,33 @@ asCEnumType::~asCEnumType()
 			asDELETE(enumValues[n], asSEnumValue);
 	}
 	enumValues.SetLength(0);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+asCTypedefType::~asCTypedefType()
+{
+	DestroyInternal();
+}
+
+void asCTypedefType::DestroyInternal()
+{
+	if (engine == 0) return;
+
+	// Release the object types held by the alias
+	if (aliasForType.GetTypeInfo())
+			aliasForType.GetTypeInfo()->ReleaseInternal();
+	
+	aliasForType = asCDataType::CreatePrimitive(ttVoid, false);
+
+	CleanUserData();
+
+	// Remove the type from the engine
+	if (typeId != -1)
+		engine->RemoveFromTypeIdMap(this);
+
+	// Clear the engine pointer to mark the object type as invalid
+	engine = 0;
 }
 
 END_AS_NAMESPACE

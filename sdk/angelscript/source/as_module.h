@@ -58,6 +58,7 @@ class asCCompiler;
 class asCBuilder;
 class asCContext;
 class asCConfigGroup;
+class asCTypedefType;
 struct asSNameSpace;
 
 struct sBindInfo
@@ -226,7 +227,7 @@ public:
 	// This array holds enum types
 	asCArray<asCEnumType*>         enumTypes; // increases ref count
 	// This array holds typedefs
-	asCArray<asCObjectType*>       typeDefs; // increases ref count
+	asCArray<asCTypedefType*>      typeDefs; // increases ref count
 	// This array holds the funcdefs declared in the module
 	asCArray<asCScriptFunction*>   funcDefs; // increases ref count
 };

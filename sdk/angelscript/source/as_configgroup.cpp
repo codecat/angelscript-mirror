@@ -182,7 +182,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 					engine->defaultArrayObjectType = 0;
 
 				if( t->flags & asOBJ_TYPEDEF )
-					engine->registeredTypeDefs.RemoveValue(t->CastToObjectType());
+					engine->registeredTypeDefs.RemoveValue(t->CastToTypedefType());
 				else if( t->flags & asOBJ_ENUM )
 					engine->registeredEnums.RemoveValue(t->CastToEnumType());
 				else if( t->flags & asOBJ_TEMPLATE )
@@ -190,9 +190,7 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 				else
 					engine->registeredObjTypes.RemoveValue(t->CastToObjectType());
 
-				asCObjectType *ot = t->CastToObjectType();
-				if (ot)
-					ot->DestroyInternal();
+				t->DestroyInternal();
 				t->ReleaseInternal();
 			}
 			else

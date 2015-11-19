@@ -4030,11 +4030,11 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 	// If the name is not already in use add it
  	int r = CheckNameConflict(name.AddressOf(), tmp, file, ns);
 
-	asCObjectType *st = 0;
+	asCTypedefType *st = 0;
 	if( asSUCCESS == r )
 	{
 		// Create the new type
-		st = asNEW(asCObjectType)(engine);
+		st = asNEW(asCTypedefType)(engine);
 		if( st == 0 )
 			r = asOUT_OF_MEMORY;
 	}
@@ -4045,7 +4045,7 @@ int asCBuilder::RegisterTypedef(asCScriptNode *node, asCScriptCode *file, asSNam
 		st->size            = dataType.GetSizeInMemoryBytes();
 		st->name            = name;
 		st->nameSpace       = ns;
-		st->templateSubTypes.PushLast(dataType);
+		st->aliasForType    = dataType;
 		st->module          = module;
 
 		module->typeDefs.PushLast(st);
@@ -5298,8 +5298,7 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 					{
 						// TODO: typedef: A typedef should be considered different from the original type (though with implicit conversions between the two)
 						// Create primitive data type based on object flags
-						// TODO: type: typedefs should be cast to asCTypeDefs
-						dt = ti->CastToObjectType()->templateSubTypes[0];
+						dt = ti->CastToTypedefType()->aliasForType;
 						dt.MakeReadOnly(isConst);
 					}
 					else

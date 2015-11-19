@@ -289,7 +289,7 @@ public:
 	int                GetTypeIdFromDataType(const asCDataType &dt) const;
 	asCDataType        GetDataTypeFromTypeId(int typeId) const;
 	asCObjectType     *GetObjectTypeFromTypeId(int typeId) const;
-	void               RemoveFromTypeIdMap(asCObjectType *type);
+	void               RemoveFromTypeIdMap(asCTypeInfo *type);
 
 	bool               IsTemplateType(const char *name) const;
 	int                SetTemplateRestrictions(asCObjectType *templateType, asCScriptFunction *func, const char *caller, const char *decl);
@@ -332,7 +332,7 @@ public:
 
 	// Registered interface
 	asCArray<asCObjectType *>         registeredObjTypes;
-	asCArray<asCObjectType *>         registeredTypeDefs;
+	asCArray<asCTypedefType *>        registeredTypeDefs;
 	asCArray<asCEnumType *>           registeredEnums;
 	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // increases ref count // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;

@@ -869,7 +869,7 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCTypeInfo *in_type, asCM
 		if(in_type->flags & asOBJ_ENUM )
 			foundIdx = mod->enumTypes.IndexOf(in_type->CastToEnumType());
 		else if(in_type->flags & asOBJ_TYPEDEF )
-			foundIdx = mod->typeDefs.IndexOf(in_type->CastToObjectType());
+			foundIdx = mod->typeDefs.IndexOf(in_type->CastToTypedefType());
 		else
 			foundIdx = mod->classTypes.IndexOf(in_type->CastToObjectType());
 		
@@ -4736,7 +4736,7 @@ asCObjectType *asCScriptEngine::GetObjectTypeFromTypeId(int typeId) const
 	return dt.GetTypeInfo()->CastToObjectType();
 }
 
-void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
+void asCScriptEngine::RemoveFromTypeIdMap(asCTypeInfo *type)
 {
 	ACQUIREEXCLUSIVE(engineRWLock);
 	asSMapNode<int,asCTypeInfo*> *cursor = 0;
@@ -5603,21 +5603,20 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 	// types as they are allowed to use the names
 
 	// Put the data type in the list
-	// TODO: type: typedefs should be stored as asCTypedefType
-	asCObjectType *object = asNEW(asCObjectType)(this);
-	if( object == 0 )
+	asCTypedefType *td = asNEW(asCTypedefType)(this);
+	if( td == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterTypedef", type, decl);
 
-	object->flags           = asOBJ_TYPEDEF;
-	object->size            = dataType.GetSizeInMemoryBytes();
-	object->name            = type;
-	object->nameSpace       = defaultNamespace;
-	object->templateSubTypes.PushLast(dataType);
+	td->flags           = asOBJ_TYPEDEF;
+	td->size            = dataType.GetSizeInMemoryBytes();
+	td->name            = type;
+	td->nameSpace       = defaultNamespace;
+	td->aliasForType    = dataType;
 
-	allRegisteredTypes.Insert(asSNameSpaceNamePair(object->nameSpace, object->name), object);
-	registeredTypeDefs.PushLast(object);
+	allRegisteredTypes.Insert(asSNameSpaceNamePair(td->nameSpace, td->name), td);
+	registeredTypeDefs.PushLast(td);
 
-	currentGroup->types.PushLast(object);
+	currentGroup->types.PushLast(td);
 
 	return asSUCCESS;
 }
@@ -5635,7 +5634,7 @@ const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const 
 		return 0;
 
 	if( typeId )
-		*typeId = GetTypeIdFromDataType(registeredTypeDefs[index]->templateSubTypes[0]);
+		*typeId = GetTypeIdFromDataType(registeredTypeDefs[index]->aliasForType);
 
 	if( configGroup )
 	{

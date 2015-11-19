@@ -41,6 +41,7 @@
 #include "as_config.h"
 #include "as_string.h"
 #include "as_atomic.h"
+#include "as_datatype.h"
 
 #ifndef AS_NO_COMPILER
 
@@ -50,16 +51,10 @@ class asCScriptEngine;
 class asCModule;
 class asCObjectType;
 class asCEnumType;
+class asCTypedefType;
 struct asSNameSpace;
 
 // TODO: type: This is where the new asCTypeInfo will be implemented
-//             asCTypeInfo should implement the asITypeInfo interface with dummy classes
-//               only the name, flags, and some other basic members shall be in this class
-//             asCObjectType will inherit from asCTypeInfo instead of directly implementing asITypeInfo
-//             asCEnumType shall be implemented to represent enums
-//               the enum value list shall be in this class
-//             asCTypeDefType shall be implemented to represent typedefs
-//               the aliased data type shall be in this class
 //             asCFundDefType shall be implemented to represent funcdefs
 //               a pointer to the asCScriptFunction describing the func def shall be in this class
 //             asCPrimitiveType shall be implemented to represent primitives (void, int, double, etc)
@@ -138,13 +133,16 @@ public:
 	virtual int AddRefInternal();
 	virtual int ReleaseInternal();
 
+	virtual void DestroyInternal() {}
+
 	void CleanUserData();
 
 	bool IsShared() const;
 
 	// These can be safely used on null pointers (which will return null)
-	asCObjectType *CastToObjectType();
-	asCEnumType   *CastToEnumType();
+	asCObjectType  *CastToObjectType();
+	asCEnumType    *CastToEnumType();
+	asCTypedefType *CastToTypedefType();
 
 
 	asCString                    name;
@@ -189,6 +187,20 @@ public:
 
 protected:
 	asCEnumType() : asCTypeInfo() {}
+};
+
+class asCTypedefType : public asCTypeInfo
+{
+public:
+	asCTypedefType(asCScriptEngine *engine) : asCTypeInfo(engine) {}
+	~asCTypedefType();
+
+	void DestroyInternal();
+
+	asCDataType aliasForType; // increase refCount for typeinfo inside datatype
+
+protected:
+	asCTypedefType() : asCTypeInfo() {}
 };
 
 END_AS_NAMESPACE
