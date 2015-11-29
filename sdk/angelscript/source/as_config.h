@@ -1169,7 +1169,7 @@
 #endif
 
 // PowerPC, e.g. Mac, GameCube, PS3, XBox 360, Wii
-#if defined(__PPC__) || defined(__ppc__) || defined(_PPC_) || defined(EPPC)
+#if !defined(_LITTLE_ENDIAN) && (defined(__PPC__) || defined(__ppc__) || defined(_PPC_) || defined(EPPC) || defined(__PP64__))
 	#define AS_BIG_ENDIAN
 
 	// Gamecube
