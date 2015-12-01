@@ -574,7 +574,7 @@ asCScriptEngine::asCScriptEngine()
 
 	typeIdSeqNbr      = 0;
 	currentGroup      = &defaultGroup;
-	defaultAccessMask = 1;
+	defaultAccessMask = 0xFFFFFFFF; // All bits set so that built-in functions/types will be available to all modules
 
 	msgCallback = 0;
 	jitCompiler = 0;

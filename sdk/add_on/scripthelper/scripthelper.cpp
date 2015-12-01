@@ -662,7 +662,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 		{
 			string maskStr;
 			in::GetToken(engine, maskStr, config, pos);
-			asDWORD mask = strtol(maskStr.c_str(), 0, 16);
+			asDWORD mask = strtoul(maskStr.c_str(), 0, 16);
 			engine->SetDefaultAccessMask(mask);
 		}
 		else if( token == "objtype" )

@@ -552,7 +552,7 @@ bool Test()
 					"// Enums\n"
 					"\n"
 					"// Types\n"
-					"access 1\n"
+					"access ffffffff\n"
 					"namespace \"test::sub\"\n"
 					"objtype \"foo\" 262145\n"
 					"\n"

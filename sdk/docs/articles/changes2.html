@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.0 WIP - 2015/11/29</h2>
+<h2>Version 2.31.0 WIP - 2015/11/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -36,7 +36,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>It is now possible to register child funcdefs with RegisterFuncdef too
 <li>Added GetParentType to asIScriptFunction to allow querying the parent type for child funcdefs
 <li>Renamed asIObjectType to asITypeInfo 
-<li>Renamed asCLEANOBJECTTYPEFUNC_t to asCLEANTYPEINFOFUNC_t 
+<li>Renamed asCLEANOBJECTTYPEFUNC_t to asCLEANTYPEINFOFUNC_t
 </ul>
 <li>Library
 <ul>
@@ -44,6 +44,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Improved parser error message when finding unexpected token to inform if the token is reserved or not (Thanks Solokiller)
 <li>Implemented asEP_ALLOW_UNICODE_IDENTIFIERS (Thanks Alexander Orefkov)
 <li>Added configuration in as_config.h to identify GNUC+Linux+PPC64 (Thanks Rafael Fonseca)
+<li>Access mask in the engine now defaults to all bits set to make sure built-in functions are available to all modules (Thanks Solokiller)
 </ul>
 <li>Script language
 <ul>
