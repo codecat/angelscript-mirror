@@ -11,6 +11,42 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Partial namespace specialization of enum in namespace
+	// http://www.gamedev.net/topic/673284-namespace-auto-detection-fail/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace A\n"
+			"{\n"
+			"	enum B { b1 }\n"
+			"	void main()\n"
+			"	{\n"
+			"		B b1 = B::b1; \n"		// Partial namespace specialization
+			"		B b2 = b1; \n"			// Implicit namespace
+			"		A::B b3 = A::B::b1; \n"	// Complete namespace specialization
+			"		::C c1 = ::C::c1; \n"	// Complete namespace specialization
+			"		C c2 = c1; \n"			// Implicit namespace
+			"		C c3 = C::c1; \n"		// Partial namespace specialization
+			"	}\n"
+			"} \n"
+			"enum C { c1 }\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test bug with namespace
 	// http://www.gamedev.net/topic/672251-unknown-datatype-when-using-class-in-namespace/
 	{

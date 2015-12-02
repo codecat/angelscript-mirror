@@ -277,9 +277,10 @@ bool Test()
 		bout.buffer = "";
 		mod->AddScriptSection("test2",
 			"namespace Boo { \n"
-			"class MyObj  { \n"
-			"  funcdef void A(); \n"
-			"} \n"
+			"  class MyObj  { \n"
+			"    funcdef void A(); \n"
+			"  } \n"
+			"  MyObj::A @b; \n"
 			"} \n"
 			"Boo::MyObj::A @a; \n");
 		r = mod->Build();

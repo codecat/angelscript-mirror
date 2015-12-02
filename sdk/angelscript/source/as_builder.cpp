@@ -5173,19 +5173,24 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 
 			// Split the scope with at the inner most ::
 			int pos = nsName.FindLast("::");
+			bool recursive = false;
 			if (pos >= 0)
 			{
+				// Fully qualified namespace
 				typeName = nsName.SubString(pos + 2);
 				searchNs = nsName.SubString(0, pos);
 			}
 			else
 			{
+				// Partially qualified, use the implicit namespace and then search recursively for the type
 				typeName = nsName;
-				searchNs = "::";
+				searchNs = implicitNs->name;
+				recursive = true;
 			}
 
 			asSNameSpace *nsTmp = searchNs == "::" ? engine->nameSpaces[0] : engine->FindNameSpace(searchNs.AddressOf());
-			if (nsTmp)
+			asCObjectType *ot = 0;
+			while( !ot && nsTmp )
 			{
 				// Check if the typeName is an existing type in the namespace
 				asCObjectType *ot = GetObjectType(typeName.AddressOf(), nsTmp);
@@ -5195,6 +5200,7 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 					*objType = ot;
 					return 0;
 				}
+				nsTmp = recursive ? engine->GetParentNameSpace(nsTmp) : 0;
 			}
 		}
 
