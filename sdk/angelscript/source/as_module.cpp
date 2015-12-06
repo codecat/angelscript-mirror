@@ -1030,15 +1030,38 @@ asITypeInfo *asCModule::GetObjectTypeByIndex(asUINT index) const
 // interface
 asITypeInfo *asCModule::GetObjectTypeByName(const char *in_name) const
 {
+	asITypeInfo *ti = GetTypeInfoByName(in_name);
+	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+}
+
+// interface
+asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
+{
 	asSNameSpace *ns = defaultNamespace;
-	while( ns )
+	while (ns)
 	{
-		for( asUINT n = 0; n < classTypes.GetLength(); n++ )
+		for (asUINT n = 0; n < classTypes.GetLength(); n++)
 		{
-			if( classTypes[n] &&
+			if (classTypes[n] &&
 				classTypes[n]->name == in_name &&
-				classTypes[n]->nameSpace == ns )
+				classTypes[n]->nameSpace == ns)
 				return classTypes[n];
+		}
+
+		for (asUINT n = 0; n < enumTypes.GetLength(); n++)
+		{
+			if (enumTypes[n] &&
+				enumTypes[n]->name == in_name &&
+				enumTypes[n]->nameSpace == ns)
+				return enumTypes[n];
+		}
+
+		for (asUINT n = 0; n < typeDefs.GetLength(); n++)
+		{
+			if (typeDefs[n] &&
+				typeDefs[n]->name == in_name &&
+				typeDefs[n]->nameSpace == ns)
+				return typeDefs[n];
 		}
 
 		// Recursively search parent namespace
@@ -1069,6 +1092,13 @@ int asCModule::GetTypeIdByDecl(const char *decl) const
 // interface
 asITypeInfo *asCModule::GetObjectTypeByDecl(const char *decl) const
 {
+	asITypeInfo *ti = GetTypeInfoByDecl(decl);
+	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+}
+
+// interface
+asITypeInfo *asCModule::GetTypeInfoByDecl(const char *decl) const
+{
 	asCDataType dt;
 
 	// This const cast is safe since we know the engine won't be modified
@@ -1078,7 +1108,7 @@ asITypeInfo *asCModule::GetObjectTypeByDecl(const char *decl) const
 	bld.silent = true;
 
 	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
-	if( r < 0 )
+	if (r < 0)
 		return 0;
 
 	return dt.GetTypeInfo();

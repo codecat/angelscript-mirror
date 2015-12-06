@@ -4753,6 +4753,13 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCTypeInfo *type)
 // interface
 asITypeInfo *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
 {
+	asITypeInfo *ti = GetTypeInfoByDecl(decl);
+	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+}
+
+// interface
+asITypeInfo *asCScriptEngine::GetTypeInfoByDecl(const char *decl) const
+{
 	asCDataType dt;
 	// This cast is ok, because we are not changing anything in the engine
 	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
@@ -4761,7 +4768,7 @@ asITypeInfo *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
 	bld.silent = true;
 
 	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
-	if( r < 0 )
+	if (r < 0)
 		return 0;
 
 	return dt.GetTypeInfo();
@@ -5831,24 +5838,47 @@ asITypeInfo *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 // interface
 asITypeInfo *asCScriptEngine::GetObjectTypeByName(const char *name) const
 {
+	asITypeInfo *ti = GetTypeInfoByName(name);
+	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+}
+
+// interface
+asITypeInfo *asCScriptEngine::GetTypeInfoByName(const char *name) const
+{
 	asSNameSpace *ns = defaultNamespace;
-	while( ns )
+	while (ns)
 	{
 		// Check the object types
-		for( asUINT n = 0; n < registeredObjTypes.GetLength(); n++ )
+		for (asUINT n = 0; n < registeredObjTypes.GetLength(); n++)
 		{
-			if( registeredObjTypes[n]->name == name &&
-				registeredObjTypes[n]->nameSpace == ns )
+			if (registeredObjTypes[n]->name == name &&
+				registeredObjTypes[n]->nameSpace == ns)
 				return registeredObjTypes[n];
 		}
 
 		// Perhaps it is a template type? In this case
 		// the returned type will be the generic type
-		for( asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++ )
+		for (asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++)
 		{
-			if( registeredTemplateTypes[n]->name == name &&
-				registeredTemplateTypes[n]->nameSpace == ns )
+			if (registeredTemplateTypes[n]->name == name &&
+				registeredTemplateTypes[n]->nameSpace == ns)
 				return registeredTemplateTypes[n];
+		}
+
+		// Check the enum types
+		for (asUINT n = 0; n < registeredEnums.GetLength(); n++)
+		{
+			if (registeredEnums[n]->name == name &&
+				registeredEnums[n]->nameSpace == ns)
+				return registeredEnums[n];
+		}
+
+		// Check the typedefs
+		for (asUINT n = 0; n < registeredTypeDefs.GetLength();n++)
+		{
+			if (registeredTypeDefs[n]->name == name &&
+				registeredTypeDefs[n]->nameSpace == ns)
+				return registeredTypeDefs[n];
 		}
 
 		// Recursively search parent namespace
@@ -5861,14 +5891,17 @@ asITypeInfo *asCScriptEngine::GetObjectTypeByName(const char *name) const
 // interface
 asITypeInfo *asCScriptEngine::GetObjectTypeById(int typeId) const
 {
+	asITypeInfo *ti = GetTypeInfoById(typeId);
+	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+}
+
+// interface
+asITypeInfo *asCScriptEngine::GetTypeInfoById(int typeId) const
+{
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
 
 	// Is the type id valid?
-	if( !dt.IsValid() ) return 0;
-
-	// Enum types are not objects, so we shouldn't return an object type for them
-	if( dt.GetTypeInfo() && dt.GetTypeInfo()->GetFlags() & asOBJ_ENUM )
-		return 0;
+	if (!dt.IsValid()) return 0;
 
 	return dt.GetTypeInfo();
 }
@@ -6055,6 +6088,12 @@ void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t c
 
 // interface
 void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)
+{
+	SetTypeInfoUserDataCleanupCallback(callback, type);
+}
+
+// interface
+void asCScriptEngine::SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)
 {
 	ACQUIREEXCLUSIVE(engineRWLock);
 

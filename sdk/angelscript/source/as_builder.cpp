@@ -5152,13 +5152,17 @@ asSNameSpace *asCBuilder::GetNameSpaceFromNode(asCScriptNode *node, asCScriptCod
 		}
 	}
 
-	return GetNameSpaceByString(scope, implicitNs ? implicitNs : engine->nameSpaces[0], node, script, objType);
+	asCTypeInfo *ti = 0;
+	asSNameSpace *ns = GetNameSpaceByString(scope, implicitNs ? implicitNs : engine->nameSpaces[0], node, script, &ti);
+	if (ti && objType)
+		*objType = ti->CastToObjectType();
+	return ns;
 }
 
-asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script, asCObjectType **objType, bool isRequired)
+asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script, asCTypeInfo **scopeType, bool isRequired)
 {
-	if( objType )
-		*objType = 0;
+	if( scopeType )
+		*scopeType = 0;
 
 	asSNameSpace *ns = implicitNs;
 	if( nsName == "::" )
@@ -5166,7 +5170,7 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 	else if( nsName != "" )
 	{
 		ns = engine->FindNameSpace(nsName.AddressOf());
-		if (ns == 0 && objType)
+		if (ns == 0 && scopeType)
 		{
 			asCString typeName;
 			asCString searchNs;
@@ -5189,15 +5193,15 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 			}
 
 			asSNameSpace *nsTmp = searchNs == "::" ? engine->nameSpaces[0] : engine->FindNameSpace(searchNs.AddressOf());
-			asCObjectType *ot = 0;
-			while( !ot && nsTmp )
+			asCTypeInfo *ti = 0;
+			while( !ti && nsTmp )
 			{
 				// Check if the typeName is an existing type in the namespace
-				asCObjectType *ot = GetObjectType(typeName.AddressOf(), nsTmp);
-				if (ot)
+				ti = GetType(typeName.AddressOf(), nsTmp);
+				if (ti)
 				{
-					// The informed scope is not a namespace, but it does match an object type
-					*objType = ot;
+					// The informed scope is not a namespace, but it does match a type
+					*scopeType = ti;
 					return 0;
 				}
 				nsTmp = recursive ? engine->GetParentNameSpace(nsTmp) : 0;

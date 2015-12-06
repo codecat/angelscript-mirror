@@ -410,7 +410,7 @@ bool asCTokenizer::IsIdentifier(const char *source, size_t sourceLength, size_t 
 
 		for( size_t n = 1; n < sourceLength; n++ )
 		{
-			signed char c = source[n];
+			c = source[n];
 			if( (c >= 'a' && c <= 'z') ||
 				(c >= 'A' && c <= 'Z') ||
 				(c >= '0' && c <= '9') ||

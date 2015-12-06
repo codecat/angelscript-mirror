@@ -160,6 +160,9 @@ public:
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const;
+	virtual asITypeInfo   *GetTypeInfoById(int typeId) const;
+	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const;
+	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const;
 
 	// Script execution
 	virtual asIScriptContext      *CreateContext();
@@ -200,6 +203,7 @@ public:
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type);
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type);
+	virtual void  SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type);
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type);
 
 //===========================================================

@@ -135,6 +135,8 @@ public:
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const;
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const;
 	virtual int            GetTypeIdByDecl(const char *decl) const;
+	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const;
+	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const;
 
 	// Enums
 	virtual asUINT      GetEnumCount() const;

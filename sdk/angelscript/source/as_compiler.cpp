@@ -8812,40 +8812,13 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		// Is it an enum value?
 		if( !found )
 		{
-			// TODO: cleanup: This should use builder->GetNameSpaceByString to reuse the same logic for finding the type in the namespace
-			//                GetNameSpaceByString should be modified to return asCTypeInfo so it can support both object types and enum types
-
 			// The enum type may be declared in a namespace too
 			asCTypeInfo *scopeType = 0;
 			if( currScope != "" && currScope != "::" )
 			{
-				// Use the last scope name as the enum type
-				asCString enumType = currScope;
-				asCString nsScope;
-				int p = currScope.FindLast("::");
-				if( p != -1 )
-				{
-					// The namespace is fully qualified
-					enumType = currScope.SubString(p+2);
-					nsScope = currScope.SubString(0, p);
-
-					asSNameSpace *nsEnum = engine->FindNameSpace(nsScope.AddressOf());
-					if (nsEnum)
-						scopeType = builder->GetType(enumType.AddressOf(), nsEnum);
-				}
-				else
-				{
-					// Only the enum type was informed, so we need to use the namespace from the current function
-					asSNameSpace *nsEnum = outFunc->objectType ? outFunc->objectType->nameSpace : outFunc->nameSpace;
-					
-					// Recursively search parent namespaces
-					while (scopeType == 0 && nsEnum)
-					{
-						scopeType = builder->GetType(enumType.AddressOf(), nsEnum);
-						if (scopeType == 0)
-							nsEnum = engine->GetParentNameSpace(nsEnum);
-					}
-				}
+				builder->GetNameSpaceByString(currScope, outFunc->objectType ? outFunc->objectType->nameSpace : outFunc->nameSpace, errNode, script, &scopeType, false);
+				if (scopeType->CastToEnumType() == 0)
+					scopeType = 0;
 			}
 
 			asDWORD value = 0;

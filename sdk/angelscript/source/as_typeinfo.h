@@ -54,8 +54,7 @@ class asCEnumType;
 class asCTypedefType;
 struct asSNameSpace;
 
-// TODO: type: This is where the new asCTypeInfo will be implemented
-//             asCFundDefType shall be implemented to represent funcdefs
+// TODO: type: asCFundDefType shall be implemented to represent funcdefs
 //               a pointer to the asCScriptFunction describing the func def shall be in this class
 //             asCPrimitiveType shall be implemented to represent primitives (void, int, double, etc)
 //             All classes except asCObjectType will be in this file

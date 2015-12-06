@@ -696,7 +696,7 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
-	// TODO: type: These should be deprecated, instead GetTypeInfoByName and GetTypeInfoByDecl should be provided
+	// TODO: type: These should be deprecated
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
 
@@ -748,11 +748,14 @@ public:
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
 
 	// Type identification
-	// TODO: type: Should be renamed to GetTypeInfoById
+	// TODO: type: Should be deprecated
 	virtual asITypeInfo   *GetObjectTypeById(int typeId) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
+	virtual asITypeInfo   *GetTypeInfoById(int typeId) const = 0;
+	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const = 0;
+	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const = 0;
 
 	// Script execution
 	virtual asIScriptContext      *CreateContext() = 0;
@@ -792,8 +795,9 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
-	// TODO: type: Rename to SetTypeInfoUserDataCleanupCallback
+	// TODO: type: Deprecate this
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
+	virtual void  SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
 
 protected:
@@ -843,10 +847,12 @@ public:
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
-	// TODO: type: Rename to GetTypeInfoByName/Decl
+	// TODO: type: These should be deprecated
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
+	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const = 0;
+	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const = 0;
 
 	// Enums
 	virtual asUINT      GetEnumCount() const = 0;
