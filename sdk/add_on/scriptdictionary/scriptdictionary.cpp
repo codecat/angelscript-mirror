@@ -20,8 +20,8 @@ const asPWORD DICTIONARY_CACHE = 1003;
 // is created.
 struct SDictionaryCache
 {
-	asIObjectType *dictType;
-	asIObjectType *arrayType;
+	asITypeInfo *dictType;
+	asITypeInfo *arrayType;
 
 	// This is called from RegisterScriptDictionary
 	static void Setup(asIScriptEngine *engine)
@@ -33,8 +33,8 @@ struct SDictionaryCache
 			engine->SetUserData(cache, DICTIONARY_CACHE);
 			engine->SetEngineUserDataCleanupCallback(SDictionaryCache::Cleanup, DICTIONARY_CACHE);
 
-			cache->dictType = engine->GetObjectTypeByName("dictionary");
-			cache->arrayType = engine->GetObjectTypeByDecl("array<string>");
+			cache->dictType = engine->GetTypeInfoByName("dictionary");
+			cache->arrayType = engine->GetTypeInfoByDecl("array<string>");
 		}
 	}
 
@@ -146,7 +146,7 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 		{
 			if( (typeId & asTYPEID_MASK_OBJECT) && 
 				!(typeId & asTYPEID_OBJHANDLE) && 
-				(engine->GetObjectTypeById(typeId)->GetFlags() & asOBJ_REF) )
+				(engine->GetTypeInfoById(typeId)->GetFlags() & asOBJ_REF) )
 			{
 				// Dereference the pointer to get the reference to the actual object
 				ref = *(void**)ref;
@@ -158,9 +158,9 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 		// Advance the buffer pointer with the size of the value
 		if( typeId & asTYPEID_MASK_OBJECT )
 		{
-			asIObjectType *ot = engine->GetObjectTypeById(typeId);
-			if( ot->GetFlags() & asOBJ_VALUE )
-				buffer += ot->GetSize();
+			asITypeInfo *ti = engine->GetTypeInfoById(typeId);
+			if( ti->GetFlags() & asOBJ_VALUE )
+				buffer += ti->GetSize();
 			else
 				buffer += sizeof(void*);
 		}
@@ -390,10 +390,10 @@ CScriptArray* CScriptDictionary::GetKeys() const
 {
 	// Retrieve the object type for the array<string> from the cache
 	SDictionaryCache *cache = reinterpret_cast<SDictionaryCache*>(engine->GetUserData(DICTIONARY_CACHE));
-	asIObjectType *ot = cache->arrayType;
+	asITypeInfo *ti = cache->arrayType;
 
 	// Create the array object
-	CScriptArray *array = CScriptArray::Create(ot, asUINT(dict.size()));
+	CScriptArray *array = CScriptArray::Create(ti, asUINT(dict.size()));
 	long current = -1;
 	dictMap_t::const_iterator it;
 	for( it = dict.begin(); it != dict.end(); it++ )
@@ -605,7 +605,7 @@ void CScriptDictValue::FreeValue(asIScriptEngine *engine)
 	if( m_typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Let the engine release the object
-		engine->ReleaseScriptObject(m_valueObj, engine->GetObjectTypeById(m_typeId));
+		engine->ReleaseScriptObject(m_valueObj, engine->GetTypeInfoById(m_typeId));
 		m_valueObj = 0;
 		m_typeId = 0;
 	}
@@ -622,12 +622,12 @@ void CScriptDictValue::Set(asIScriptEngine *engine, void *value, int typeId)
 	{
 		// We're receiving a reference to the handle, so we need to dereference it
 		m_valueObj = *(void**)value;
-		engine->AddRefScriptObject(m_valueObj, engine->GetObjectTypeById(typeId));
+		engine->AddRefScriptObject(m_valueObj, engine->GetTypeInfoById(typeId));
 	}
 	else if( typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		m_valueObj = engine->CreateScriptObjectCopy(value, engine->GetObjectTypeById(typeId));
+		m_valueObj = engine->CreateScriptObjectCopy(value, engine->GetTypeInfoById(typeId));
 	}
 	else
 	{
@@ -680,7 +680,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			if( (m_typeId & asTYPEID_HANDLETOCONST) && !(typeId & asTYPEID_HANDLETOCONST) )
 				return false;
 
-			asIObjectType *currType = engine->GetObjectTypeById(m_typeId);
+			asITypeInfo *currType = engine->GetTypeInfoById(m_typeId);
 			if( currType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
 			{
 				// For function pointers it is necessary to check if they have the same signature
@@ -694,7 +694,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			else
 			{
 				// RefCastObject will increment the refcount if successful
-				engine->RefCastObject(m_valueObj, currType, engine->GetObjectTypeById(typeId), reinterpret_cast<void**>(value));
+				engine->RefCastObject(m_valueObj, currType, engine->GetTypeInfoById(typeId), reinterpret_cast<void**>(value));
 			}
 
 			return true;
@@ -712,7 +712,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 		// Copy the object into the given reference
 		if( isCompatible )
 		{
-			engine->AssignScriptObject(value, m_valueObj, engine->GetObjectTypeById(typeId));
+			engine->AssignScriptObject(value, m_valueObj, engine->GetTypeInfoById(typeId));
 
 			return true;
 		}
@@ -976,7 +976,7 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	int r;
 
 	// The array<string> type must be available
-	assert( engine->GetObjectTypeByDecl("array<string>") );
+	assert( engine->GetTypeInfoByDecl("array<string>") );
 
 #if AS_CAN_USE_CPP11
 	// With C++11 it is possible to use asGetTypeTraits to automatically determine the correct flags that represents the C++ class

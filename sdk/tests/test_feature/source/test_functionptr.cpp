@@ -227,12 +227,12 @@ bool Test()
 		}
 
 		// Test enumerating child types of MyObj (it must be possible to find the Callback. The declaration of the funcdef must be void MyObj::Callback())
-		asIObjectType *ot = mod->GetObjectTypeByName("Base");
+		asITypeInfo *ot = mod->GetTypeInfoByName("Base");
 		if (ot == 0 || ot->GetChildFuncdefCount() != 1 ||
 			ot->GetChildFuncdef(0) == 0 ||
 			std::string(ot->GetChildFuncdef(0)->GetDeclaration()) != "void Base::A()")
 			TEST_FAILED;
-		ot = mod->GetObjectTypeByName("Derived");
+		ot = mod->GetTypeInfoByName("Derived");
 		if (ot == 0 || ot->GetChildFuncdefCount() != 0)
 			TEST_FAILED;
 

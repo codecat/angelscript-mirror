@@ -3364,7 +3364,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 				if( type->module == 0 )
 				{
 					// Set the ownership of this template type
-					// It may be without ownership if it was previously created from application with for example GetObjectTypeByDecl
+					// It may be without ownership if it was previously created from application with for example GetTypeInfoByDecl
 					type->module = requestingModule;
 				}
 				if( !requestingModule->templateInstances.Exists(type) )
@@ -4750,12 +4750,15 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCTypeInfo *type)
 	RELEASEEXCLUSIVE(engineRWLock);
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 asITypeInfo *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
 {
 	asITypeInfo *ti = GetTypeInfoByDecl(decl);
 	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
 }
+#endif
 
 // interface
 asITypeInfo *asCScriptEngine::GetTypeInfoByDecl(const char *decl) const
@@ -5791,34 +5794,33 @@ const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const
 	return registeredEnums[index]->name.AddressOf();
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
 {
-	asCDataType dt = GetDataTypeFromTypeId(enumTypeId);
-	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
-	if( t == 0 || !(t->GetFlags() & asOBJ_ENUM) )
+	asITypeInfo *ti = GetTypeInfoById(enumTypeId);
+	asCEnumType *e = reinterpret_cast<asCTypeInfo*>(ti)->CastToEnumType();
+	if (e == 0)
 		return asINVALID_TYPE;
 
-	return (int)t->enumValues.GetLength();
+	return e->GetEnumValueCount();
 }
+#endif
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const
 {
-	// TODO: This same function is implemented in as_module.cpp as well. Perhaps it should be moved to asCObjectType?
-	asCDataType dt = GetDataTypeFromTypeId(enumTypeId);
-	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
-	if( t == 0 )
+	asITypeInfo *ti = GetTypeInfoById(enumTypeId);
+	asCEnumType *e = reinterpret_cast<asCTypeInfo*>(ti)->CastToEnumType();
+	if (e == 0)
 		return 0;
 
-	if( index >= t->enumValues.GetLength() )
-		return 0;
-
-	if( outValue )
-		*outValue = t->enumValues[index]->value;
-
-	return t->enumValues[index]->name.AddressOf();
+	return e->GetEnumValueByIndex(index, outValue);
 }
+#endif
 
 // interface
 asUINT asCScriptEngine::GetObjectTypeCount() const
@@ -5835,12 +5837,15 @@ asITypeInfo *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 	return registeredObjTypes[index];
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 asITypeInfo *asCScriptEngine::GetObjectTypeByName(const char *name) const
 {
 	asITypeInfo *ti = GetTypeInfoByName(name);
 	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
 }
+#endif
 
 // interface
 asITypeInfo *asCScriptEngine::GetTypeInfoByName(const char *name) const
@@ -5888,12 +5893,15 @@ asITypeInfo *asCScriptEngine::GetTypeInfoByName(const char *name) const
 	return 0;
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 asITypeInfo *asCScriptEngine::GetObjectTypeById(int typeId) const
 {
 	asITypeInfo *ti = GetTypeInfoById(typeId);
 	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
 }
+#endif
 
 // interface
 asITypeInfo *asCScriptEngine::GetTypeInfoById(int typeId) const
@@ -6086,11 +6094,14 @@ void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t c
 	RELEASEEXCLUSIVE(engineRWLock);
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)
 {
 	SetTypeInfoUserDataCleanupCallback(callback, type);
 }
+#endif
 
 // interface
 void asCScriptEngine::SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)

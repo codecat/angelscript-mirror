@@ -191,7 +191,7 @@ asIScriptEngine *ConfigureEngine(int version)
 	RegisterStdString(engine);
 
 	// Register a property with the built-in array type
-	GlobalCharArray = (CScriptArray*)engine->CreateScriptObject(engine->GetObjectTypeById(engine->GetTypeIdByDecl("uint8[]")));
+	GlobalCharArray = (CScriptArray*)engine->CreateScriptObject(engine->GetTypeInfoById(engine->GetTypeIdByDecl("uint8[]")));
 	int r = engine->RegisterGlobalProperty("uint8[] GlobalCharArray", GlobalCharArray); assert( r >= 0 );
 
 	// Register function that use the built-in array type
@@ -240,11 +240,11 @@ void TestScripts(asIScriptEngine *engine)
 	}
 
 	// Call an interface method on a class that implements the interface
-	asIObjectType *type = engine->GetModule(0)->GetObjectTypeByName("MyClass");
+	asITypeInfo *type = engine->GetModule(0)->GetTypeInfoByName("MyClass");
 	asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(type);
 
 	int intfTypeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
-	type = engine->GetObjectTypeById(intfTypeId);
+	type = engine->GetTypeInfoById(intfTypeId);
 	if( type == 0 )
 		TEST_FAILED;
 	else
@@ -325,8 +325,8 @@ public:
 	Tmpl() {refCount = 1;}
 	void AddRef() {refCount++;}
 	void Release() {if( --refCount == 0 ) delete this;}
-	static Tmpl *TmplFactory(asIObjectType*) {return new Tmpl;}
-	static bool TmplCallback(asIObjectType * /*ot*/, bool & /*dontGC*/) {return false;}
+	static Tmpl *TmplFactory(asITypeInfo*) {return new Tmpl;}
+	static bool TmplCallback(asITypeInfo * /*ot*/, bool & /*dontGC*/) {return false;}
 	int refCount;
 };
 
@@ -2028,11 +2028,11 @@ bool Test()
 
 		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
-		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asITypeInfo*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
 #else
-		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", WRAP_FN_PR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", WRAP_FN_PR(Tmpl::TmplFactory, (asITypeInfo*), Tmpl*), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Tmpl,AddRef), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Tmpl,Release), asCALL_GENERIC); assert( r >= 0 );
 #endif
@@ -2053,12 +2053,12 @@ bool Test()
 
 		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
-		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", asFUNCTIONPR(Tmpl::TmplFactory, (asITypeInfo*), Tmpl*), asCALL_CDECL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(Tmpl,AddRef), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(Tmpl,Release), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", asFUNCTION(Tmpl::TmplCallback), asCALL_CDECL); assert( r >= 0 );
 #else
-		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", WRAP_FN_PR(Tmpl::TmplFactory, (asIObjectType*), Tmpl*), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_FACTORY, "tmpl<T>@ f(int&in)", WRAP_FN_PR(Tmpl::TmplFactory, (asITypeInfo*), Tmpl*), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_ADDREF, "void f()", WRAP_MFN(Tmpl,AddRef), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Tmpl,Release), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("tmpl<T>", asBEHAVE_TEMPLATE_CALLBACK, "bool f(int&in, bool&out)", WRAP_FN(Tmpl::TmplCallback), asCALL_GENERIC); assert( r >= 0 );

@@ -406,8 +406,8 @@ static bool TestEnum()
 	const char *ename = mod->GetEnumByIndex(0, &eid);
 	if( eid < 0 || ename == 0 )
 		TEST_FAILED;
-	asIObjectType *eot = engine->GetObjectTypeById(eid);
-	if( eot )
+	asITypeInfo *eot = engine->GetTypeInfoById(eid);
+	if( !eot || !(eot->GetFlags() & asOBJ_ENUM) )
 		TEST_FAILED;
 
 	// enum must allow negate and binary complement operators

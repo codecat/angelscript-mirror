@@ -247,13 +247,13 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIObjectType *type = mod->GetObjectTypeByName("A");
+		asITypeInfo *type = mod->GetTypeInfoByName("A");
 		if( type == 0 || (type->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
-		type = mod->GetObjectTypeByName("B");
+		type = mod->GetTypeInfoByName("B");
 		if( type == 0 || (type->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
-		type = mod->GetObjectTypeByName("C");
+		type = mod->GetTypeInfoByName("C");
 		if( type == 0 || (type->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
 

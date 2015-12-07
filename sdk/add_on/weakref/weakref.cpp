@@ -8,12 +8,12 @@
 
 BEGIN_AS_NAMESPACE
 
-static void ScriptWeakRefConstruct(asIObjectType *type, void *mem)
+static void ScriptWeakRefConstruct(asITypeInfo *type, void *mem)
 {
 	new(mem) CScriptWeakRef(type);
 }
 
-static void ScriptWeakRefConstruct2(asIObjectType *type, void *ref, void *mem)
+static void ScriptWeakRefConstruct2(asITypeInfo *type, void *ref, void *mem)
 {
 	new(mem) CScriptWeakRef(ref, type);
 
@@ -29,16 +29,16 @@ static void ScriptWeakRefDestruct(CScriptWeakRef *obj)
 	obj->~CScriptWeakRef();
 }
 
-static bool ScriptWeakRefTemplateCallback(asIObjectType *ot, bool &/*dontGarbageCollect*/)
+static bool ScriptWeakRefTemplateCallback(asITypeInfo *ti, bool &/*dontGarbageCollect*/)
 {
-	asIObjectType *subType = ot->GetSubType();
+	asITypeInfo *subType = ti->GetSubType();
 
 	// Weak references only work for reference types
 	if( subType == 0 ) return false;
 	if( !(subType->GetFlags() & asOBJ_REF) ) return false;
 
 	// The subtype shouldn't be a handle
-	if( ot->GetSubTypeId() & asTYPEID_OBJHANDLE )
+	if( ti->GetSubTypeId() & asTYPEID_OBJHANDLE )
 		return false;
 
 	// Make sure the type really supports weak references
@@ -51,11 +51,11 @@ static bool ScriptWeakRefTemplateCallback(asIObjectType *ot, bool &/*dontGarbage
 			return true;
 	}
 
-	ot->GetEngine()->WriteMessage("weakref", 0, 0, asMSGTYPE_ERROR, "The subtype doesn't support weak references");
+	ti->GetEngine()->WriteMessage("weakref", 0, 0, asMSGTYPE_ERROR, "The subtype doesn't support weak references");
 	return false;
 }
 
-CScriptWeakRef::CScriptWeakRef(asIObjectType *type)
+CScriptWeakRef::CScriptWeakRef(asITypeInfo *type)
 {
 	m_ref  = 0;
 	m_type = type;
@@ -73,7 +73,7 @@ CScriptWeakRef::CScriptWeakRef(const CScriptWeakRef &other)
 		m_weakRefFlag->AddRef();
 }
 
-CScriptWeakRef::CScriptWeakRef(void *ref, asIObjectType *type)
+CScriptWeakRef::CScriptWeakRef(void *ref, asITypeInfo *type)
 {
 	m_ref  = ref;
 	m_type = type;
@@ -150,7 +150,7 @@ CScriptWeakRef &CScriptWeakRef::Set(void *newRef)
 	return *this;
 }
 
-asIObjectType *CScriptWeakRef::GetRefType() const
+asITypeInfo *CScriptWeakRef::GetRefType() const
 {
 	return m_type->GetSubType();
 }
@@ -246,17 +246,17 @@ void RegisterScriptWeakRef_Native(asIScriptEngine *engine)
 
 static void ScriptWeakRefConstruct_Generic(asIScriptGeneric *gen)
 {
-	asIObjectType *ot = *reinterpret_cast<asIObjectType**>(gen->GetAddressOfArg(0));
+	asITypeInfo *ti = *reinterpret_cast<asITypeInfo**>(gen->GetAddressOfArg(0));
 
-	ScriptWeakRefConstruct(ot, gen->GetObject());
+	ScriptWeakRefConstruct(ti, gen->GetObject());
 }
 
 static void ScriptWeakRefConstruct2_Generic(asIScriptGeneric *gen)
 {
-	asIObjectType *ot = *reinterpret_cast<asIObjectType**>(gen->GetAddressOfArg(0));
+	asITypeInfo *ti = *reinterpret_cast<asITypeInfo**>(gen->GetAddressOfArg(0));
 	void *ref = gen->GetArgAddress(1);
 
-	ScriptWeakRefConstruct2(ot, ref, gen->GetObject());
+	ScriptWeakRefConstruct2(ti, ref, gen->GetObject());
 }
 
 static void ScriptWeakRefDestruct_Generic(asIScriptGeneric *gen)
@@ -315,9 +315,9 @@ void CScriptWeakRef_Equals2_Generic(asIScriptGeneric *gen)
 
 static void ScriptWeakRefTemplateCallback_Generic(asIScriptGeneric *gen)
 {
-	asIObjectType *ot = *reinterpret_cast<asIObjectType**>(gen->GetAddressOfArg(0));
+	asITypeInfo *ti = *reinterpret_cast<asITypeInfo**>(gen->GetAddressOfArg(0));
 	bool *dontGarbageCollect = *reinterpret_cast<bool**>(gen->GetAddressOfArg(1));
-	*reinterpret_cast<bool*>(gen->GetAddressOfReturnLocation()) = ScriptWeakRefTemplateCallback(ot, *dontGarbageCollect);
+	*reinterpret_cast<bool*>(gen->GetAddressOfReturnLocation()) = ScriptWeakRefTemplateCallback(ti, *dontGarbageCollect);
 }
 
 void RegisterScriptWeakRef_Generic(asIScriptEngine *engine)

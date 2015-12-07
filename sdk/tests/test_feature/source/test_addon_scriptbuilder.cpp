@@ -138,7 +138,7 @@ bool Test()
 	if( metadata != " edit,c " )
 		TEST_FAILED;
 
-	asIObjectType *type = engine->GetObjectTypeById(typeId);
+	asITypeInfo *type = engine->GetTypeInfoById(typeId);
 	if( type == 0 )
 		TEST_FAILED;
 	else

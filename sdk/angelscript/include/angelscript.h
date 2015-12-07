@@ -69,11 +69,10 @@ class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptObject;
 class asITypeInfo;
-// TODO: type: deprecate asIObjectType
-//#ifdef AS_DEPRECATED
+#ifdef AS_DEPRECATED
 // deprecated since 2.31.0 - 2015/11/18
 typedef asITypeInfo asIObjectType;
-//#endif
+#endif
 class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
@@ -696,9 +695,11 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration) = 0;
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
-	// TODO: type: These should be deprecated
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
+#endif
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0) = 0;
@@ -714,9 +715,11 @@ public:
 	virtual asUINT      GetEnumCount() const = 0;
 	// TODO: type: Should return asITypeInfo
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
-	// TODO: type: These should be made members of asITypeInfo
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
+#endif
 
 	// Funcdefs
 	virtual int                RegisterFuncdef(const char *decl) = 0;
@@ -748,8 +751,10 @@ public:
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
 
 	// Type identification
-	// TODO: type: Should be deprecated
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual asITypeInfo   *GetObjectTypeById(int typeId) const = 0;
+#endif
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const = 0;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
@@ -795,8 +800,10 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
-	// TODO: type: Deprecate this
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
+#endif
 	virtual void  SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
 
@@ -847,9 +854,11 @@ public:
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
-	// TODO: type: These should be deprecated
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
+#endif
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const = 0;
 	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const = 0;
@@ -858,9 +867,11 @@ public:
 	virtual asUINT      GetEnumCount() const = 0;
 	// TODO: type: Should return asITypeInfo
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0) const = 0;
-	// TODO: type: These will be available from asITypeInfo
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
+#endif
 
 	// Typedefs
 	virtual asUINT      GetTypedefCount() const = 0;
@@ -1039,7 +1050,6 @@ protected:
 	virtual ~asIScriptObject() {}
 };
 
-// TODO: type: Add methods for enumerating enum values
 class asITypeInfo
 {
 public:
@@ -1093,6 +1103,10 @@ public:
 	// Child types
 	virtual asUINT             GetChildFuncdefCount() const = 0;
 	virtual asIScriptFunction *GetChildFuncdef(asUINT index) const = 0;
+
+	// Enums
+	virtual asUINT      GetEnumValueCount() const = 0;
+	virtual const char *GetEnumValueByIndex(asUINT index, int *outValue) const = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

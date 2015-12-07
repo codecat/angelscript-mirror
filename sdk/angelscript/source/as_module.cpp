@@ -1027,12 +1027,15 @@ asITypeInfo *asCModule::GetObjectTypeByIndex(asUINT index) const
 	return classTypes[index];
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 asITypeInfo *asCModule::GetObjectTypeByName(const char *in_name) const
 {
 	asITypeInfo *ti = GetTypeInfoByName(in_name);
 	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
 }
+#endif
 
 // interface
 asITypeInfo *asCModule::GetTypeInfoByName(const char *in_name) const
@@ -1089,12 +1092,15 @@ int asCModule::GetTypeIdByDecl(const char *decl) const
 	return engine->GetTypeIdFromDataType(dt);
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 asITypeInfo *asCModule::GetObjectTypeByDecl(const char *decl) const
 {
 	asITypeInfo *ti = GetTypeInfoByDecl(decl);
 	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
 }
+#endif
 
 // interface
 asITypeInfo *asCModule::GetTypeInfoByDecl(const char *decl) const
@@ -1135,33 +1141,33 @@ const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId, const char 
 	return enumTypes[index]->name.AddressOf();
 }
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 int asCModule::GetEnumValueCount(int enumTypeId) const
 {
-	asCDataType dt = engine->GetDataTypeFromTypeId(enumTypeId);
-	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
-	if( t == 0 ) 
+	asITypeInfo *ti = engine->GetTypeInfoById(enumTypeId);
+	asCEnumType *e = reinterpret_cast<asCTypeInfo*>(ti)->CastToEnumType();
+	if (e == 0)
 		return asINVALID_TYPE;
 
-	return (int)t->enumValues.GetLength();
+	return e->GetEnumValueCount();
 }
+#endif
 
+#ifdef AS_DEPRECATED
+// Deprecated since 2.31.0, 2015-12-06
 // interface
 const char *asCModule::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const
 {
-	asCDataType dt = engine->GetDataTypeFromTypeId(enumTypeId);
-	asCEnumType *t = dt.GetTypeInfo()->CastToEnumType();
-	if( t == 0 ) 
+	asITypeInfo *ti = engine->GetTypeInfoById(enumTypeId);
+	asCEnumType *e = reinterpret_cast<asCTypeInfo*>(ti)->CastToEnumType();
+	if (e == 0)
 		return 0;
 
-	if( index >= t->enumValues.GetLength() )
-		return 0;
-
-	if( outValue )
-		*outValue = t->enumValues[index]->value;
-
-	return t->enumValues[index]->name.AddressOf();
+	return e->GetEnumValueByIndex(index, outValue);
 }
+#endif
 
 // interface
 asUINT asCModule::GetTypedefCount() const

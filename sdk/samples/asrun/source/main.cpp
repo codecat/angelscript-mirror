@@ -257,9 +257,9 @@ void InitializeDebugger(asIScriptEngine *engine)
 	g_dbg->SetEngine(engine);
 
 	// Register the to-string callbacks so the user can see the contents of strings
-	g_dbg->RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
-	g_dbg->RegisterToStringCallback(engine->GetObjectTypeByName("array"), ArrayToString);
-	g_dbg->RegisterToStringCallback(engine->GetObjectTypeByName("dictionary"), DictionaryToString);
+	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("string"), StringToString);
+	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("array"), ArrayToString);
+	g_dbg->RegisterToStringCallback(engine->GetTypeInfoByName("dictionary"), DictionaryToString);
 
 	// Allow the user to initialize the debugging before moving on
 	cout << "Debugging, waiting for commands. Type 'h' for help." << endl;
@@ -470,7 +470,7 @@ CScriptArray *GetCommandLineArgs()
 	asIScriptEngine *engine = ctx->GetEngine();
 
 	// Create the array object
-	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
+	asITypeInfo *arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
 	g_commandLineArgs = CScriptArray::Create(arrayType, (asUINT)0);
 
 	// Find the existence of the delimiter in the input string

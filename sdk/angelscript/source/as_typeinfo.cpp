@@ -337,6 +337,28 @@ asCEnumType::~asCEnumType()
 	enumValues.SetLength(0);
 }
 
+// interface
+asUINT asCEnumType::GetEnumValueCount() const
+{ 
+	return enumValues.GetLength(); 
+}
+
+// interface
+const char *asCEnumType::GetEnumValueByIndex(asUINT index, int *outValue) const
+{ 
+	if (outValue)
+		*outValue = 0;
+
+	if (index >= enumValues.GetLength())
+		return 0;
+
+	if (outValue)
+		*outValue = enumValues[index]->value;
+
+	return enumValues[index]->name.AddressOf();
+}
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 asCTypedefType::~asCTypedefType()

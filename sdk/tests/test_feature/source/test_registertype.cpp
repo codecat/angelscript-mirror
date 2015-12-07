@@ -67,8 +67,8 @@ public:
 		assert( outTypeId & asTYPEID_OBJHANDLE );
 
 		// Compare the type id of the actual object
-		asIObjectType *wantedType = m_engine->GetObjectTypeById(outTypeId);
-		asIObjectType *heldType = m_engine->GetObjectTypeById(m_typeId);
+		asITypeInfo *wantedType = m_engine->GetTypeInfoById(outTypeId);
+		asITypeInfo *heldType = m_engine->GetTypeInfoById(m_typeId);
 
 		*outRef = 0;
 
@@ -90,7 +90,7 @@ public:
 		else if( heldType->GetFlags() & asOBJ_SCRIPT_OBJECT )
 		{
 			// Attempt a dynamic cast of the stored handle to the requested handle type
-			m_engine->RefCastObject(m_valueObj, heldType, m_engine->GetObjectTypeById(outTypeId), outRef);
+			m_engine->RefCastObject(m_valueObj, heldType, m_engine->GetTypeInfoById(outTypeId), outRef);
 		}
 		else
 		{
@@ -111,7 +111,7 @@ public:
 			// or if the stored type is an object that implements the interface that the handle refer to.
 			if( (m_typeId & asTYPEID_MASK_OBJECT) )
 			{
-				m_engine->RefCastObject(m_valueObj, m_engine->GetObjectTypeById(m_typeId), m_engine->GetObjectTypeById(outTypeId), (void**)outRef);
+				m_engine->RefCastObject(m_valueObj, m_engine->GetTypeInfoById(m_typeId), m_engine->GetTypeInfoById(outTypeId), (void**)outRef);
 
 				return;
 			}
@@ -126,7 +126,7 @@ public:
 			// Copy the object into the given reference
 			if( isCompatible )
 			{
-				m_engine->AssignScriptObject(outRef, m_valueObj, m_engine->GetObjectTypeById(outTypeId));
+				m_engine->AssignScriptObject(outRef, m_valueObj, m_engine->GetTypeInfoById(outTypeId));
 
 				return;
 			}
@@ -162,12 +162,12 @@ public:
 		{
 			// We're receiving a reference to the handle, so we need to dereference it
 			m_valueObj = *(void**)value;
-			m_engine->AddRefScriptObject(m_valueObj, m_engine->GetObjectTypeById(typeId));
+			m_engine->AddRefScriptObject(m_valueObj, m_engine->GetTypeInfoById(typeId));
 		}
 		else if( typeId & asTYPEID_MASK_OBJECT )
 		{
 			// Create a copy of the object
-			m_valueObj = m_engine->CreateScriptObjectCopy(value, m_engine->GetObjectTypeById(typeId));
+			m_valueObj = m_engine->CreateScriptObjectCopy(value, m_engine->GetTypeInfoById(typeId));
 		}
 		else
 		{
@@ -184,7 +184,7 @@ public:
 		if( m_typeId & asTYPEID_MASK_OBJECT )
 		{
 			// Let the engine release the object
-			m_engine->ReleaseScriptObject(m_valueObj, m_engine->GetObjectTypeById(m_typeId));
+			m_engine->ReleaseScriptObject(m_valueObj, m_engine->GetTypeInfoById(m_typeId));
 		}
 
 		m_typeId = 0;
@@ -279,7 +279,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIObjectType *type = engine->GetObjectTypeByName("type");
+		asITypeInfo *type = engine->GetTypeInfoByName("type");
 		if( type == 0 )
 			TEST_FAILED;
 		else
@@ -398,7 +398,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIObjectType *type = engine->GetObjectTypeById(engine->GetTypeIdByDecl("Array<String>"));
+		asITypeInfo *type = engine->GetTypeInfoById(engine->GetTypeIdByDecl("Array<String>"));
 		if( type == 0 )
 			TEST_FAILED;
 
@@ -1272,7 +1272,7 @@ bool TestRefScoped()
 #endif
 
 	// Enumerate the objects behaviours
-	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("scoped"));
+	asITypeInfo *ot = engine->GetTypeInfoById(engine->GetTypeIdByDecl("scoped"));
 	if( ot->GetBehaviourCount() != 1 )
 		TEST_FAILED;
 	asEBehaviours beh;
@@ -1673,7 +1673,7 @@ public:
 			typeId &= ~asTYPEID_OBJHANDLE;
 		}
 
-		m_ref    = m_engine->CreateScriptObjectCopy(ref, m_engine->GetObjectTypeById(typeId));
+		m_ref    = m_engine->CreateScriptObjectCopy(ref, m_engine->GetTypeInfoById(typeId));
 		m_typeId = typeId;
 
 		return *this;
@@ -1740,7 +1740,7 @@ public:
 	{
 		if( m_ref )
 		{
-			m_engine->ReleaseScriptObject(m_ref, m_engine->GetObjectTypeById(m_typeId));
+			m_engine->ReleaseScriptObject(m_ref, m_engine->GetTypeInfoById(m_typeId));
 
 			m_ref = 0;
 			m_typeId = 0;
@@ -1751,7 +1751,7 @@ public:
 	{
 		if( m_ref )
 		{
-			m_engine->AddRefScriptObject(m_ref, m_engine->GetObjectTypeById(m_typeId));
+			m_engine->AddRefScriptObject(m_ref, m_engine->GetTypeInfoById(m_typeId));
 		}
 	}
 

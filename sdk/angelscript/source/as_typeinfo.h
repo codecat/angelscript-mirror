@@ -115,6 +115,10 @@ public:
 	asUINT             GetChildFuncdefCount() const { return 0; }
 	asIScriptFunction *GetChildFuncdef(asUINT index) const { UNUSED_VAR(index); return 0; }
 
+	// Enums
+	virtual asUINT      GetEnumValueCount() const { return 0; }
+	virtual const char *GetEnumValueByIndex(asUINT index, int *outValue) const { UNUSED_VAR(index); if (outValue) *outValue = 0; return 0; }
+
 	// User data
 	void *SetUserData(void *data, asPWORD type);
 	void *GetUserData(asPWORD type) const;
@@ -182,6 +186,9 @@ public:
 	~asCEnumType();
 
 	asCArray<asSEnumValue*> enumValues;
+
+	asUINT      GetEnumValueCount() const;
+	const char *GetEnumValueByIndex(asUINT index, int *outValue) const;
 
 protected:
 	asCEnumType() : asCTypeInfo() {}

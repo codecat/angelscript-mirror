@@ -169,7 +169,7 @@ CScriptArray *CreateArrayOfStrings()
 	if( ctx )
 	{
 		asIScriptEngine* engine = ctx->GetEngine();
-		asIObjectType* t = engine->GetObjectTypeByDecl("array<string@>");
+		asITypeInfo* t = engine->GetTypeInfoByDecl("array<string@>");
 		CScriptArray* arr = CScriptArray::Create(t, 3);
 		for( asUINT i = 0; i < arr->GetSize(); i++ )
 		{
@@ -257,7 +257,7 @@ bool Test()
 
 		RegisterScriptArray(engine, false);
 
-		CScriptArray *arr = CScriptArray::Create(engine->GetObjectTypeByDecl("array<int>"));
+		CScriptArray *arr = CScriptArray::Create(engine->GetTypeInfoByDecl("array<int>"));
 		
 		engine->Release();
 
@@ -702,7 +702,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetObjectTypeByName("MyTest"));
+		asIScriptObject *obj = (asIScriptObject*)engine->CreateScriptObject(mod->GetTypeInfoByName("MyTest"));
 		obj->Release();
 
 		engine->Release();
@@ -1292,8 +1292,8 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIObjectType *arrAType = mod->GetObjectTypeByDecl("array<A@>");
-		asIObjectType *arrBType = mod->GetObjectTypeByDecl("array<B@>");
+		asITypeInfo *arrAType = mod->GetTypeInfoByDecl("array<A@>");
+		asITypeInfo *arrBType = mod->GetTypeInfoByDecl("array<B@>");
 
 		// array<A@> must be garbage collected since it is not possible to know that 
 		// array can't hold a handle to a type derived from A that might cause circular 

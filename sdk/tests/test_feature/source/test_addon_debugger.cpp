@@ -236,9 +236,9 @@ bool Test()
 
 		CMyDebugger2 debug;
 		debug.SetEngine(engine);
-		debug.RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
-		debug.RegisterToStringCallback(engine->GetObjectTypeByName("array"), ArrayToString);
-		debug.RegisterToStringCallback(engine->GetObjectTypeByName("dictionary"), DictionaryToString);
+		debug.RegisterToStringCallback(engine->GetTypeInfoByName("string"), StringToString);
+		debug.RegisterToStringCallback(engine->GetTypeInfoByName("array"), ArrayToString);
+		debug.RegisterToStringCallback(engine->GetTypeInfoByName("dictionary"), DictionaryToString);
 
 		ctx = engine->CreateContext();
 		ctx->SetLineCallback(asMETHOD(CMyDebugger, LineCallback), &debug, asCALL_THISCALL);
@@ -272,8 +272,8 @@ bool Test()
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);
 
-		debug.RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
-		debug.RegisterToStringCallback(engine->GetObjectTypeByName("array"), ArrayToString);
+		debug.RegisterToStringCallback(engine->GetTypeInfoByName("string"), StringToString);
+		debug.RegisterToStringCallback(engine->GetTypeInfoByName("array"), ArrayToString);
 
 		const char *script = 
 			"void func(int a, const int &in b, string c, const string &in d, type @e, type &f, type @&in g) \n"

@@ -107,8 +107,11 @@ public:
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const;
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const;
+#endif
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0);
@@ -123,8 +126,11 @@ public:
 	virtual int         RegisterEnumValue(const char *type, const char *name, int value);
 	virtual asUINT      GetEnumCount() const;
 	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace, const char **configGroup = 0, asDWORD *accessMask = 0) const;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual int         GetEnumValueCount(int enumTypeId) const;
 	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
+#endif
 
 	// Funcdefs
 	virtual int                RegisterFuncdef(const char *decl);
@@ -156,7 +162,10 @@ public:
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const;
 
 	// Type identification
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual asITypeInfo   *GetObjectTypeById(int typeId) const;
+#endif
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 	virtual const char    *GetTypeDeclaration(int typeId, bool includeNamespace = false) const;
 	virtual int            GetSizeOfPrimitiveType(int typeId) const;
@@ -202,7 +211,10 @@ public:
 	virtual void  SetModuleUserDataCleanupCallback(asCLEANMODULEFUNC_t callback, asPWORD type);
 	virtual void  SetContextUserDataCleanupCallback(asCLEANCONTEXTFUNC_t callback, asPWORD type);
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type);
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.31.0, 2015-12-06
 	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type);
+#endif
 	virtual void  SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type);
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type);
 

@@ -221,7 +221,7 @@ bool Test()
 
 		RegisterStdString(engine);
 
-		asIObjectType *t = engine->GetObjectTypeByName("wrong decl");
+		asITypeInfo *t = engine->GetTypeInfoByName("wrong decl");
 		if( t != 0 ) TEST_FAILED;
 		int i = engine->GetTypeIdByDecl("wrong decl");
 		if( i >= 0 ) TEST_FAILED;
@@ -298,7 +298,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIObjectType *type = mod->GetObjectTypeByName("ssNode");
+		asITypeInfo *type = mod->GetTypeInfoByName("ssNode");
 		asEBehaviours behave;
 		asUINT behaveCount = type->GetBehaviourCount();
 		if( behaveCount != 9 )

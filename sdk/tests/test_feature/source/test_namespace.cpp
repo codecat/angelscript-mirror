@@ -449,7 +449,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Fully specify the namespace to get the correct object
-		asIObjectType *type = mod->GetObjectTypeByDecl("net::room::kernel");
+		asITypeInfo *type = mod->GetTypeInfoByDecl("net::room::kernel");
 		std::string str = engine->GetTypeDeclaration(type->GetTypeId(), true);
 		if( str != "net::room::kernel" )
 		{
@@ -459,7 +459,7 @@ bool Test()
 
 		// Also possible to get it by setting the default namespace
 		mod->SetDefaultNamespace("net::room");
-		type = mod->GetObjectTypeByDecl("kernel");
+		type = mod->GetTypeInfoByDecl("kernel");
 		str = engine->GetTypeDeclaration(type->GetTypeId(), true);
 		if( str != "net::room::kernel" )
 		{
@@ -865,9 +865,9 @@ bool Test()
 		if( r != asALREADY_REGISTERED ) TEST_FAILED;
 
 		engine->SetDefaultNamespace("");
-		asIObjectType *o1 = engine->GetObjectTypeByName("TestObj");
+		asITypeInfo *o1 = engine->GetTypeInfoByName("TestObj");
 		engine->SetDefaultNamespace("A");
-		asIObjectType *o2 = engine->GetObjectTypeByName("TestObj");
+		asITypeInfo *o2 = engine->GetTypeInfoByName("TestObj");
 		if( o1 == 0 || o2 == 0 )
 			TEST_FAILED;
 		if( o1 == o2 )
@@ -949,15 +949,15 @@ bool Test()
 		if( r < 0 ) 
 			TEST_FAILED;
 
-		asIObjectType *type = mod->GetObjectTypeByName("b");
+		asITypeInfo *type = mod->GetTypeInfoByName("b");
 		if( type == 0 )
 			TEST_FAILED;
 		else
 		{
 			mod->SetDefaultNamespace("A");
-			if( !type->DerivesFrom(mod->GetObjectTypeByName("a")) )
+			if( !type->DerivesFrom(mod->GetTypeInfoByName("a")) )
 				TEST_FAILED;
-			if( !type->Implements(mod->GetObjectTypeByName("i")) )
+			if( !type->Implements(mod->GetTypeInfoByName("i")) )
 				TEST_FAILED;
 		}
 

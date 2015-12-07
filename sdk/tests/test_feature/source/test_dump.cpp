@@ -79,7 +79,7 @@ bool Test()
 	return fail;
 }
 
-void DumpObjectType(stringstream &s, asIObjectType *objType)
+void DumpObjectType(stringstream &s, asITypeInfo *objType)
 {
 	if( objType->GetFlags() & asOBJ_SCRIPT_OBJECT )
 	{
@@ -185,10 +185,11 @@ void DumpModule(asIScriptModule *mod)
 		s << "enum: " << ename << endl;
 
 		// List enum values
-		for( int e = 0; e < mod->GetEnumValueCount(eid); e++ )
+		asITypeInfo *t = engine->GetTypeInfoById(eid);
+		for( asUINT e = 0; e < t->GetEnumValueCount(); e++ )
 		{
 			int value;
-			const char *name = mod->GetEnumValueByIndex(eid, e, &value);
+			const char *name = t->GetEnumValueByIndex(e, &value);
 			s << " " << name << " = " << value << endl;
 		}
 	}
@@ -257,10 +258,11 @@ void DumpModule(asIScriptModule *mod)
 		s << "reg enum: " << ename << endl;
 
 		// List enum values
-		for( int e = 0; e < engine->GetEnumValueCount(eid); e++ )
+		asITypeInfo *t = engine->GetTypeInfoById(eid);
+		for( asUINT e = 0; e < t->GetEnumValueCount(); e++ )
 		{
 			int value;
-			const char *name = engine->GetEnumValueByIndex(eid, e, &value);
+			const char *name = t->GetEnumValueByIndex(e, &value);
 			s << " " << name << " = " << value << endl;
 		}
 	}
