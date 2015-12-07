@@ -984,22 +984,20 @@ bool Test()
 			TEST_FAILED;
 
 		// Make sure it's possible to retrieve the enum again
-		int typeId;
-		const char *ns;
-		const char *e = engine->GetEnumByIndex(0, &typeId, &ns);
-		if( std::string(e) != "ETest" )
+		asITypeInfo *ti = engine->GetEnumByIndex(0);
+		if( std::string(ti->GetName()) != "ETest" )
 			TEST_FAILED;
-		if( std::string(ns) != "A" )
+		if( std::string(ti->GetNamespace()) != "A" )
 			TEST_FAILED;
-		if( typeId != engine->GetTypeIdByDecl("ETest") )
+		if( ti->GetTypeId() != engine->GetTypeIdByDecl("ETest") )
 			TEST_FAILED;
 		engine->SetDefaultNamespace("");
-		e = engine->GetEnumByIndex(0, &typeId, &ns);
-		if( std::string(e) != "ETest" )
+		ti = engine->GetEnumByIndex(0);
+		if( std::string(ti->GetName()) != "ETest" )
 			TEST_FAILED;
-		if( std::string(ns) != "A" )
+		if( std::string(ti->GetNamespace()) != "A" )
 			TEST_FAILED;
-		if( typeId != engine->GetTypeIdByDecl("A::ETest") )
+		if( ti->GetTypeId() != engine->GetTypeIdByDecl("A::ETest") )
 			TEST_FAILED;
 
 		engine->Release();

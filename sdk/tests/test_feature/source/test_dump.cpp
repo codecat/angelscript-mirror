@@ -179,17 +179,15 @@ void DumpModule(asIScriptModule *mod)
 	c = mod->GetEnumCount();
 	for( n = 0; n < c; n++ )
 	{
-		int eid;
-		const char *ename = mod->GetEnumByIndex(n, &eid);
+		asITypeInfo *ti = mod->GetEnumByIndex(n);
 
-		s << "enum: " << ename << endl;
+		s << "enum: " << ti->GetName() << endl;
 
 		// List enum values
-		asITypeInfo *t = engine->GetTypeInfoById(eid);
-		for( asUINT e = 0; e < t->GetEnumValueCount(); e++ )
+		for( asUINT e = 0; e < ti->GetEnumValueCount(); e++ )
 		{
 			int value;
-			const char *name = t->GetEnumValueByIndex(e, &value);
+			const char *name = ti->GetEnumValueByIndex(e, &value);
 			s << " " << name << " = " << value << endl;
 		}
 	}
@@ -252,17 +250,15 @@ void DumpModule(asIScriptModule *mod)
 	c = engine->GetEnumCount();
 	for( n = 0; n < c; n++ )
 	{
-		int eid;
-		const char *ename = engine->GetEnumByIndex(n, &eid);
+		asITypeInfo *ti = engine->GetEnumByIndex(n);
 
-		s << "reg enum: " << ename << endl;
+		s << "reg enum: " << ti->GetName() << endl;
 
 		// List enum values
-		asITypeInfo *t = engine->GetTypeInfoById(eid);
-		for( asUINT e = 0; e < t->GetEnumValueCount(); e++ )
+		for( asUINT e = 0; e < ti->GetEnumValueCount(); e++ )
 		{
 			int value;
-			const char *name = t->GetEnumValueByIndex(e, &value);
+			const char *name = ti->GetEnumValueByIndex(e, &value);
 			s << " " << name << " = " << value << endl;
 		}
 	}

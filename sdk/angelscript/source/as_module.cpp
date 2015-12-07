@@ -1123,22 +1123,16 @@ asITypeInfo *asCModule::GetTypeInfoByDecl(const char *decl) const
 // interface
 asUINT asCModule::GetEnumCount() const
 {
-	return (asUINT)enumTypes.GetLength();
+	return enumTypes.GetLength();
 }
 
 // interface
-const char *asCModule::GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace) const
+asITypeInfo *asCModule::GetEnumByIndex(asUINT index) const
 {
 	if( index >= enumTypes.GetLength() )
 		return 0;
 
-	if( enumTypeId )
-		*enumTypeId = engine->GetTypeIdFromDataType(asCDataType::CreateType(enumTypes[index], false));
-
-	if( nameSpace )
-		*nameSpace = enumTypes[index]->nameSpace->name.AddressOf();
-
-	return enumTypes[index]->name.AddressOf();
+	return enumTypes[index];
 }
 
 #ifdef AS_DEPRECATED

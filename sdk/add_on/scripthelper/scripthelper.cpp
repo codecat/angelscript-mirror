@@ -269,23 +269,22 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	c = engine->GetEnumCount();
 	for( n = 0; n < c; n++ )
 	{
-		int typeId;
-		asDWORD accessMask;
-		const char *nameSpace;
-		const char *enumName = engine->GetEnumByIndex(n, &typeId, &nameSpace, 0, &accessMask);
+		asITypeInfo *ti = engine->GetEnumByIndex(n);
+		asDWORD accessMask = ti->GetAccessMask();
 		if( accessMask != currAccessMask )
 		{
 			strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 			currAccessMask = accessMask;
 		}
+		const char *nameSpace = ti->GetNamespace();
 		if( nameSpace != currNamespace )
 		{
 			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
+		const char *enumName = ti->GetName();
 		strm << "enum " << enumName << "\n";
-		asITypeInfo *ti = engine->GetTypeInfoById(typeId);
 		for( asUINT m = 0; m < ti->GetEnumValueCount(); m++ )
 		{
 			const char *valName;

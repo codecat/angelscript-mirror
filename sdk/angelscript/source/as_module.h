@@ -142,12 +142,12 @@ public:
 	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const;
 
 	// Enums
-	virtual asUINT      GetEnumCount() const;
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace) const;
+	virtual asUINT       GetEnumCount() const;
+	virtual asITypeInfo *GetEnumByIndex(asUINT index) const;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
-	virtual int         GetEnumValueCount(int enumTypeId) const;
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
+	virtual int          GetEnumValueCount(int enumTypeId) const;
+	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
 #endif
 
 	// Typedefs

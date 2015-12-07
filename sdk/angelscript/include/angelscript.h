@@ -710,15 +710,14 @@ public:
 	virtual int GetDefaultArrayTypeId() const = 0;
 
 	// Enums
-	virtual int         RegisterEnum(const char *type) = 0;
-	virtual int         RegisterEnumValue(const char *type, const char *name, int value) = 0;
-	virtual asUINT      GetEnumCount() const = 0;
-	// TODO: type: Should return asITypeInfo
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
+	virtual int          RegisterEnum(const char *type) = 0;
+	virtual int          RegisterEnumValue(const char *type, const char *name, int value) = 0;
+	virtual asUINT       GetEnumCount() const = 0;
+	virtual asITypeInfo *GetEnumByIndex(asUINT index) const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
-	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
+	virtual int          GetEnumValueCount(int enumTypeId) const = 0;
+	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 #endif
 
 	// Funcdefs
@@ -864,13 +863,12 @@ public:
 	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const = 0;
 
 	// Enums
-	virtual asUINT      GetEnumCount() const = 0;
-	// TODO: type: Should return asITypeInfo
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace = 0) const = 0;
+	virtual asUINT       GetEnumCount() const = 0;
+	virtual asITypeInfo *GetEnumByIndex(asUINT index) const = 0;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
-	virtual int         GetEnumValueCount(int enumTypeId) const = 0;
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
+	virtual int          GetEnumValueCount(int enumTypeId) const = 0;
+	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 #endif
 
 	// Typedefs
@@ -1050,6 +1048,7 @@ protected:
 	virtual ~asIScriptObject() {}
 };
 
+// TODO: type: Add method for returning the typeId for a typedef
 class asITypeInfo
 {
 public:

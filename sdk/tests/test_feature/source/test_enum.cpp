@@ -402,12 +402,10 @@ static bool TestEnum()
 		TEST_FAILED;
 
 	// Enums are not object types
-	int eid;
-	const char *ename = mod->GetEnumByIndex(0, &eid);
-	if( eid < 0 || ename == 0 )
+	asITypeInfo *ti = mod->GetEnumByIndex(0);
+	if( ti == 0 )
 		TEST_FAILED;
-	asITypeInfo *eot = engine->GetTypeInfoById(eid);
-	if( !eot || !(eot->GetFlags() & asOBJ_ENUM) )
+	if( !(ti->GetFlags() & asOBJ_ENUM) )
 		TEST_FAILED;
 
 	// enum must allow negate and binary complement operators

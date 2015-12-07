@@ -122,14 +122,14 @@ public:
 	virtual int GetDefaultArrayTypeId() const;
 
 	// Enums
-	virtual int         RegisterEnum(const char *type);
-	virtual int         RegisterEnumValue(const char *type, const char *name, int value);
-	virtual asUINT      GetEnumCount() const;
-	virtual const char *GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace, const char **configGroup = 0, asDWORD *accessMask = 0) const;
+	virtual int          RegisterEnum(const char *type);
+	virtual int          RegisterEnumValue(const char *type, const char *name, int value);
+	virtual asUINT       GetEnumCount() const;
+	virtual asITypeInfo *GetEnumByIndex(asUINT index) const;
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
-	virtual int         GetEnumValueCount(int enumTypeId) const;
-	virtual const char *GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
+	virtual int          GetEnumValueCount(int enumTypeId) const;
+	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
 #endif
 
 	// Funcdefs

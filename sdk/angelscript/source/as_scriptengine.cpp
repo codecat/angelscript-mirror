@@ -5764,34 +5764,16 @@ int asCScriptEngine::RegisterEnumValue(const char *typeName, const char *valueNa
 // interface
 asUINT asCScriptEngine::GetEnumCount() const
 {
-	return asUINT(registeredEnums.GetLength());
+	return registeredEnums.GetLength();
 }
 
 // interface
-const char *asCScriptEngine::GetEnumByIndex(asUINT index, int *enumTypeId, const char **nameSpace, const char **configGroup, asDWORD *accessMask) const
+asITypeInfo *asCScriptEngine::GetEnumByIndex(asUINT index) const
 {
 	if( index >= registeredEnums.GetLength() )
 		return 0;
 
-	if( configGroup )
-	{
-		asCConfigGroup *group = FindConfigGroupForTypeInfo(registeredEnums[index]);
-		if( group )
-			*configGroup = group->groupName.AddressOf();
-		else
-			*configGroup = 0;
-	}
-
-	if( accessMask )
-		*accessMask = registeredEnums[index]->accessMask;
-
-	if( enumTypeId )
-		*enumTypeId = GetTypeIdFromDataType(asCDataType::CreateType(registeredEnums[index], false));
-
-	if( nameSpace )
-		*nameSpace = registeredEnums[index]->nameSpace->name.AddressOf();
-
-	return registeredEnums[index]->name.AddressOf();
+	return registeredEnums[index];
 }
 
 #ifdef AS_DEPRECATED
