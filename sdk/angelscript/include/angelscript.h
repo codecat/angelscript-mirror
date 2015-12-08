@@ -726,10 +726,9 @@ public:
 	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const = 0;
 
 	// Typedefs
-	virtual int         RegisterTypedef(const char *type, const char *decl) = 0;
-	virtual asUINT      GetTypedefCount() const = 0;
-	// TODO: type: Should return asITypeInfo
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0, const char **configGroup = 0, asDWORD *accessMask = 0) const = 0;
+	virtual int          RegisterTypedef(const char *type, const char *decl) = 0;
+	virtual asUINT       GetTypedefCount() const = 0;
+	virtual asITypeInfo *GetTypedefByIndex(asUINT index) const = 0;
 
 	// Configuration groups
 	virtual int         BeginConfigGroup(const char *groupName) = 0;
@@ -872,9 +871,8 @@ public:
 #endif
 
 	// Typedefs
-	virtual asUINT      GetTypedefCount() const = 0;
-	// TODO: type: Return asITypeInfo
-	virtual const char *GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace = 0) const = 0;
+	virtual asUINT       GetTypedefCount() const = 0;
+	virtual asITypeInfo *GetTypedefByIndex(asUINT index) const = 0;
 
 	// Dynamic binding between modules
 	virtual asUINT      GetImportedFunctionCount() const = 0;
@@ -1048,7 +1046,6 @@ protected:
 	virtual ~asIScriptObject() {}
 };
 
-// TODO: type: Add method for returning the typeId for a typedef
 class asITypeInfo
 {
 public:
@@ -1106,6 +1103,9 @@ public:
 	// Enums
 	virtual asUINT      GetEnumValueCount() const = 0;
 	virtual const char *GetEnumValueByIndex(asUINT index, int *outValue) const = 0;
+
+	// Typedef
+	virtual int GetTypedefTypeId() const = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

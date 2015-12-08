@@ -119,6 +119,9 @@ public:
 	virtual asUINT      GetEnumValueCount() const { return 0; }
 	virtual const char *GetEnumValueByIndex(asUINT index, int *outValue) const { UNUSED_VAR(index); if (outValue) *outValue = 0; return 0; }
 
+	// Typedef
+	virtual int GetTypedefTypeId() const { return asERROR; }
+
 	// User data
 	void *SetUserData(void *data, asPWORD type);
 	void *GetUserData(asPWORD type) const;
@@ -203,6 +206,8 @@ public:
 	void DestroyInternal();
 
 	asCDataType aliasForType; // increase refCount for typeinfo inside datatype
+
+	int GetTypedefTypeId() const;
 
 protected:
 	asCTypedefType() : asCTypeInfo() {}

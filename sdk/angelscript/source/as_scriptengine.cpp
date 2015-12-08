@@ -5635,30 +5635,12 @@ asUINT asCScriptEngine::GetTypedefCount() const
 }
 
 // interface
-const char *asCScriptEngine::GetTypedefByIndex(asUINT index, int *typeId, const char **nameSpace, const char **configGroup, asDWORD *accessMask) const
+asITypeInfo *asCScriptEngine::GetTypedefByIndex(asUINT index) const
 {
 	if( index >= registeredTypeDefs.GetLength() )
 		return 0;
 
-	if( typeId )
-		*typeId = GetTypeIdFromDataType(registeredTypeDefs[index]->aliasForType);
-
-	if( configGroup )
-	{
-		asCConfigGroup *group = FindConfigGroupForTypeInfo(registeredTypeDefs[index]);
-		if( group )
-			*configGroup = group->groupName.AddressOf();
-		else
-			*configGroup = 0;
-	}
-
-	if( accessMask )
-		*accessMask = registeredTypeDefs[index]->accessMask;
-
-	if( nameSpace )
-		*nameSpace = registeredTypeDefs[index]->nameSpace->name.AddressOf();
-
-	return registeredTypeDefs[index]->name.AddressOf();
+	return registeredTypeDefs[index];
 }
 
 // interface

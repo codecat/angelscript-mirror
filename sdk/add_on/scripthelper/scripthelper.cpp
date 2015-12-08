@@ -340,22 +340,21 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	c = engine->GetTypedefCount();
 	for( n = 0; n < c; n++ )
 	{
-		int typeId;
-		asDWORD accessMask;
-		const char *nameSpace;
-		const char *typeDef = engine->GetTypedefByIndex(n, &typeId, &nameSpace, 0, &accessMask);
+		asITypeInfo *ti = engine->GetTypedefByIndex(n);
+		const char *nameSpace = ti->GetNamespace();
 		if( nameSpace != currNamespace )
 		{
 			strm << "namespace \"" << nameSpace << "\"\n";
 			currNamespace = nameSpace;
 			engine->SetDefaultNamespace(currNamespace.c_str());
 		}
+		asDWORD accessMask = ti->GetAccessMask();
 		if( accessMask != currAccessMask )
 		{
 			strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 			currAccessMask = accessMask;
 		}
-		strm << "typedef " << typeDef << " \"" << engine->GetTypeDeclaration(typeId) << "\"\n";
+		strm << "typedef " << ti->GetName() << " \"" << engine->GetTypeDeclaration(ti->GetTypedefTypeId()) << "\"\n";
 	}
 
 	c = engine->GetFuncdefCount();

@@ -386,6 +386,12 @@ void asCTypedefType::DestroyInternal()
 	engine = 0;
 }
 
+// interface
+int asCTypedefType::GetTypedefTypeId() const
+{ 
+	return engine->GetTypeIdFromDataType(aliasForType); 
+}
+
 END_AS_NAMESPACE
 
 #endif // AS_NO_COMPILER
