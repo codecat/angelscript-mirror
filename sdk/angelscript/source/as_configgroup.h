@@ -73,7 +73,7 @@ public:
 	asCArray<asCScriptFunction*> scriptFunctions;
 	asCArray<asCGlobalProperty*> globalProps;
 	asCArray<asCConfigGroup*>    referencedConfigGroups;
-	asCArray<asCScriptFunction*> funcDefs;
+	asCArray<asCFuncdefType*>    funcDefs;
 
 	// This array holds the generated template instances that are used 
 	// by the config group as part of function signature or property

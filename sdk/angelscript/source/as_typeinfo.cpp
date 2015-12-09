@@ -50,6 +50,7 @@ asCTypeInfo::asCTypeInfo()
 	engine = 0;
 	module = 0;
 	size = 0;
+	flags = 0;
 	typeId = -1; // start as -1 to signal that it hasn't been defined
 
 	scriptSectionIdx = -1;
@@ -65,6 +66,8 @@ asCTypeInfo::asCTypeInfo(asCScriptEngine *in_engine)
 	internalRefCount.set(1); // start with one internal ref count
 	engine = in_engine;
 	module = 0;
+	size = 0;
+	flags = 0;
 	typeId = -1; // start as -1 to signal that it hasn't been defined
 
 	scriptSectionIdx = -1;
@@ -299,6 +302,18 @@ asCTypedefType *asCTypeInfo::CastToTypedefType()
 }
 
 // internal
+asCFuncdefType *asCTypeInfo::CastToFuncdefType()
+{
+	// Allow call on null pointer
+	if (this == 0) return 0;
+
+	if (flags & (asOBJ_FUNCDEF))
+		return reinterpret_cast<asCFuncdefType*>(this);
+
+	return 0;
+}
+
+// internal
 void asCTypeInfo::CleanUserData()
 {
 	asASSERT(engine);
@@ -358,7 +373,6 @@ const char *asCEnumType::GetEnumValueByIndex(asUINT index, int *outValue) const
 	return enumValues[index]->name.AddressOf();
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 
 asCTypedefType::~asCTypedefType()
@@ -390,6 +404,32 @@ void asCTypedefType::DestroyInternal()
 int asCTypedefType::GetTypedefTypeId() const
 { 
 	return engine->GetTypeIdFromDataType(aliasForType); 
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+asCFuncdefType::~asCFuncdefType()
+{
+	DestroyInternal();
+}
+
+void asCFuncdefType::DestroyInternal()
+{
+	if (engine == 0) return;
+
+	// Release the funcdef
+	if( funcdef )
+		funcdef->ReleaseInternal();
+	funcdef = 0;
+
+	CleanUserData();
+
+	// Remove the type from the engine
+	if (typeId != -1)
+		engine->RemoveFromTypeIdMap(this);
+
+	// Clear the engine pointer to mark the object type as invalid
+	engine = 0;
 }
 
 END_AS_NAMESPACE

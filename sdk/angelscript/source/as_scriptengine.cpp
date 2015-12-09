@@ -866,10 +866,12 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCTypeInfo *in_type, asCM
 		int foundIdx = -1;
 		asCModule *mod = scriptModules[n];
 		if( mod == in_type->module ) continue;
-		if(in_type->flags & asOBJ_ENUM )
+		if( in_type->flags & asOBJ_ENUM )
 			foundIdx = mod->enumTypes.IndexOf(in_type->CastToEnumType());
-		else if(in_type->flags & asOBJ_TYPEDEF )
+		else if (in_type->flags & asOBJ_TYPEDEF)
 			foundIdx = mod->typeDefs.IndexOf(in_type->CastToTypedefType());
+		else if (in_type->flags & asOBJ_FUNCDEF)
+			foundIdx = mod->funcDefs.IndexOf(in_type->CastToFuncdefType());
 		else
 			foundIdx = mod->classTypes.IndexOf(in_type->CastToObjectType());
 		
@@ -887,6 +889,7 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCTypeInfo *in_type, asCM
 asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *in_func, asCModule *in_mod)
 {
 	asASSERT( in_func->IsShared() );
+	asASSERT(!(in_func->funcType & asFUNC_FUNCDEF));
 
 	if( in_func->module != in_mod)
 		return in_func->module;
@@ -897,10 +900,7 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *in_func
 		int foundIdx = -1;
 		asCModule *mod = scriptModules[n];
 		if( mod == in_func->module ) continue;
-		if(in_func->funcType == asFUNC_FUNCDEF )
-			foundIdx = mod->funcDefs.IndexOf(in_func);
-		else
-			foundIdx = mod->scriptFunctions.IndexOf(in_func);
+		foundIdx = mod->scriptFunctions.IndexOf(in_func);
 		
 		if( foundIdx >= 0 )
 		{
@@ -3611,8 +3611,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// Any child funcdefs must also be copied to the template instance (with adjustments in case of template subtypes)
 	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
 	{
-		asCScriptFunction *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
-		funcdef->parentClass = ot;
+		asCFuncdefType *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
+		funcdef->funcdef->parentClass = ot;
 		ot->childFuncDefs.PushLast(funcdef);
 	}
 
@@ -3946,9 +3946,9 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	return true;
 }
 
-asCScriptFunction *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *ot, asCScriptFunction *func)
+asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *ot, asCFuncdefType *func)
 {
-	asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcType);
+	asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcdef->funcType);
 	if (func2 == 0)
 	{
 		// Out of memory
@@ -3957,28 +3957,38 @@ asCScriptFunction *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *te
 
 	func2->name = func->name;
 
-	func2->returnType = DetermineTypeForTemplate(func->returnType, templateType, ot);
-	func2->parameterTypes.SetLength(func->parameterTypes.GetLength());
-	for (asUINT p = 0; p < func->parameterTypes.GetLength(); p++)
-		func2->parameterTypes[p] = DetermineTypeForTemplate(func->parameterTypes[p], templateType, ot);
+	func2->returnType = DetermineTypeForTemplate(func->funcdef->returnType, templateType, ot);
+	func2->parameterTypes.SetLength(func->funcdef->parameterTypes.GetLength());
+	for (asUINT p = 0; p < func->funcdef->parameterTypes.GetLength(); p++)
+		func2->parameterTypes[p] = DetermineTypeForTemplate(func->funcdef->parameterTypes[p], templateType, ot);
 
 	// TODO: template: Must be careful when instantiating templates for garbage collected types
 	//                 If the template hasn't been registered with the behaviours, it shouldn't
 	//                 permit instantiation of garbage collected types that in turn may refer to
 	//                 this instance.
 
-	func2->inOutFlags = func->inOutFlags;
-	func2->isReadOnly = func->isReadOnly;
-	asASSERT(func->objectType == 0);
-	asASSERT(func->sysFuncIntf == 0);
+	func2->inOutFlags = func->funcdef->inOutFlags;
+	func2->isReadOnly = func->funcdef->isReadOnly;
+	asASSERT(func->funcdef->objectType == 0);
+	asASSERT(func->funcdef->sysFuncIntf == 0);
 
 	func2->id = GetNextScriptFunctionId();
 	AddScriptFunction(func2);
 
-	funcDefs.PushLast(func2); // don't increase refCount as the constructor already set it to 1
+	asCFuncdefType *fdt2 = asNEW(asCFuncdefType)(this);
+	// TODO: type: This should be done by asCFuncdefType constructor
+	fdt2->funcdef    = func2;
+	fdt2->name       = func2->name;
+	fdt2->nameSpace  = func2->nameSpace;
+	fdt2->module     = func2->module;
+	fdt2->accessMask = func2->accessMask;
+	fdt2->flags      = func->flags;
+	func2->funcdefType = fdt2;
+
+	funcDefs.PushLast(fdt2); // don't increase refCount as the constructor already set it to 1
 
 	// Return the new function
-	return func2;
+	return fdt2;
 }
 
 void asCScriptEngine::CallObjectMethod(void *obj, int func) const
@@ -5362,11 +5372,11 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForTypeInfo(const asCTypeInfo *o
 	return 0;
 }
 
-asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(const asCScriptFunction *funcDef) const
+asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(const asCFuncdefType *funcDef) const
 {
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
-		asCScriptFunction *f = const_cast<asCScriptFunction*>(funcDef);
+		asCFuncdefType *f = const_cast<asCFuncdefType*>(funcDef);
 		if( configGroups[n]->funcDefs.Exists(f) )
 			return configGroups[n];
 	}
@@ -5475,7 +5485,7 @@ void asCScriptEngine::RemoveScriptFunction(asCScriptFunction *func)
 }
 
 // internal
-void asCScriptEngine::RemoveFuncdef(asCScriptFunction *funcdef)
+void asCScriptEngine::RemoveFuncdef(asCFuncdefType *funcdef)
 {
 	funcDefs.RemoveValue(funcdef);
 }
@@ -5511,15 +5521,23 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	func->id = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 
-	funcDefs.PushLast(func); // constructor already set the ref count to 1
+	asCFuncdefType *fdt = asNEW(asCFuncdefType)(this);
+	// TODO: type: This should be done by asCFuncdefType constructor
+	fdt->flags      = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
+	fdt->funcdef    = func; // constructor already set the ref count to 1
+	fdt->name       = func->name;
+	fdt->nameSpace  = func->nameSpace;
+	fdt->accessMask = func->accessMask;
+	func->funcdefType = fdt;
+	funcDefs.PushLast(fdt); // constructor already set the ref count to 1
 
-	func->AddRefInternal();
-	registeredFuncDefs.PushLast(func);
+	fdt->AddRefInternal();
+	registeredFuncDefs.PushLast(fdt);
 
-	currentGroup->funcDefs.PushLast(func);
+	currentGroup->funcDefs.PushLast(fdt);
 	if (func->parentClass)
 	{
-		func->parentClass->childFuncDefs.PushLast(func);
+		func->parentClass->childFuncDefs.PushLast(fdt);
 
 		// Check if the method restricts that use of the template to value types or reference types
 		if (func->parentClass->flags & asOBJ_TEMPLATE)
@@ -5544,12 +5562,13 @@ asUINT asCScriptEngine::GetFuncdefCount() const
 }
 
 // interface
+// TODO: type: Should return asCFuncdefType
 asIScriptFunction *asCScriptEngine::GetFuncdefByIndex(asUINT index) const
 {
 	if( index >= registeredFuncDefs.GetLength() )
 		return 0;
 
-	return registeredFuncDefs[index];
+	return registeredFuncDefs[index]->funcdef;
 }
 
 // interface

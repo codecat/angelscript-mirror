@@ -150,7 +150,7 @@ public:
 
 	// Used for funcdefs declared as members of class.
 	// TODO: child funcdef: Should be possible to enumerate these from application
-	asCArray<asCScriptFunction*> childFuncDefs;
+	asCArray<asCFuncdefType*> childFuncDefs;
 
 	asSTypeBehaviour beh;
 

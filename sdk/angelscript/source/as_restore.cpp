@@ -265,8 +265,12 @@ int asCReader::ReadInner()
 		if(funcDef)
 		{
 			funcDef->module = module;
-			module->funcDefs.PushLast(funcDef);
-			engine->funcDefs.PushLast(funcDef);
+
+			asCFuncdefType *fdt = funcDef->funcdefType;
+			fdt->module = module;
+
+			module->funcDefs.PushLast(fdt);
+			engine->funcDefs.PushLast(fdt);
 
 			// TODO: clean up: This is also done by the builder. It should probably be moved to a method in the module
 			// Check if there is another identical funcdef from another module and if so reuse that instead
@@ -274,25 +278,25 @@ int asCReader::ReadInner()
 			{
 				for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
 				{
-					asCScriptFunction *f2 = engine->funcDefs[n];
-					if( f2 == 0 || funcDef == f2 )
+					asCFuncdefType *f2 = engine->funcDefs[n];
+					if( f2 == 0 || fdt == f2 )
 						continue;
 
-					if( !f2->isShared )
+					if( !f2->funcdef->isShared )
 						continue;
 
 					if( f2->name == funcDef->name &&
 						f2->nameSpace == funcDef->nameSpace &&
-						f2->parentClass == funcDef->parentClass &&
-						f2->IsSignatureExceptNameEqual(funcDef) )
+						f2->funcdef->parentClass == funcDef->parentClass &&
+						f2->funcdef->IsSignatureExceptNameEqual(funcDef) )
 					{
 						// Replace our funcdef for the existing one
-						module->funcDefs[module->funcDefs.IndexOf(funcDef)] = f2;
+						module->funcDefs[module->funcDefs.IndexOf(fdt)] = f2;
 						f2->AddRefInternal();
 
-						engine->funcDefs.RemoveValue(funcDef);
+						engine->funcDefs.RemoveValue(fdt);
 
-						savedFunctions[savedFunctions.IndexOf(funcDef)] = f2;
+						savedFunctions[savedFunctions.IndexOf(funcDef)] = f2->funcdef;
 
 						if (funcDef->parentClass)
 						{
@@ -302,7 +306,7 @@ int asCReader::ReadInner()
 							funcDef->parentClass = 0;
 						}
 
-						funcDef->ReleaseInternal();
+						fdt->ReleaseInternal();
 						funcDef = 0;
 						break;
 					}
@@ -311,7 +315,7 @@ int asCReader::ReadInner()
 
 			// Add the funcdef to the parentClass if this is a child funcdef
 			if (funcDef && funcDef->parentClass)
-				funcDef->parentClass->childFuncDefs.PushLast(funcDef);
+				funcDef->parentClass->childFuncDefs.PushLast(fdt);
 		}
 		else
 			Error(TXT_INVALID_BYTECODE_d);
@@ -651,10 +655,10 @@ void asCReader::ReadUsedFunctions()
 				}
 				else if( func.funcType == asFUNC_FUNCDEF )
 				{
-					const asCArray<asCScriptFunction *> &funcs = module->funcDefs;
+					const asCArray<asCFuncdefType *> &funcs = module->funcDefs;
 					for( asUINT i = 0; i < funcs.GetLength(); i++ )
 					{
-						asCScriptFunction *f = funcs[i];
+						asCScriptFunction *f = funcs[i]->funcdef;
 						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) )
 							continue;
 
@@ -689,10 +693,10 @@ void asCReader::ReadUsedFunctions()
 				if( func.funcType == asFUNC_FUNCDEF )
 				{
 					// This is a funcdef (registered or shared)
-					const asCArray<asCScriptFunction *> &funcs = engine->funcDefs;
+					const asCArray<asCFuncdefType *> &funcs = engine->funcDefs;
 					for( asUINT i = 0; i < funcs.GetLength(); i++ )
 					{
-						asCScriptFunction *f = funcs[i];
+						asCScriptFunction *f = funcs[i]->funcdef;
 						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) )
 							continue;
 
@@ -1192,6 +1196,16 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		ReadData(&bits, 1);
 		if( bits )
 			func->isShared = true;
+
+		asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine);
+		// TODO: type: This should be done by asCFuncdefType constructor
+		fdt->flags = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
+		fdt->name = func->name;
+		fdt->nameSpace = func->nameSpace;
+		fdt->module = func->module;
+		fdt->accessMask = func->accessMask;
+		fdt->funcdef = func;
+		func->funcdefType = fdt;
 	}
 
 	if( addToModule )
@@ -1869,7 +1883,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 			if( engine->registeredFuncDefs[n]->name == func.name &&
 				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace )
 			{
-				funcDef = engine->registeredFuncDefs[n];
+				funcDef = engine->registeredFuncDefs[n]->funcdef;
 				break;
 			}
 		}
@@ -1881,7 +1895,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 				if( module->funcDefs[n]->name == func.name &&
 					module->funcDefs[n]->nameSpace == func.nameSpace )
 				{
-					funcDef = module->funcDefs[n];
+					funcDef = module->funcDefs[n]->funcdef;
 					break;
 				}
 			}
@@ -3510,7 +3524,7 @@ int asCWriter::Write()
 		count = (asUINT)module->funcDefs.GetLength();
 		WriteEncodedInt64(count);
 		for( i = 0; i < count; i++ )
-			WriteFunction(module->funcDefs[i]);
+			WriteFunction(module->funcDefs[i]->funcdef);
 	}
 
 	// Now store all interface methods

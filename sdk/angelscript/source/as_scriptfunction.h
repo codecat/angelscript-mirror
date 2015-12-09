@@ -53,6 +53,7 @@ class asCModule;
 class asCConfigGroup;
 class asCGlobalProperty;
 class asCScriptNode;
+class asCFuncdefType;
 struct asSNameSpace;
 
 struct asSScriptVariable
@@ -275,7 +276,9 @@ public:
 
 	// When a funcdef is declared as member this will be set instead of the nameSpace
 	// objectType is not used for this to avoid thinking this is a class method
+	// TODO: type: parentClass should possibly be moved to funcdefType
 	asCObjectType               *parentClass;
+	asCFuncdefType              *funcdefType;
 
 	// Used by asFUNC_DELEGATE
 	void              *objForDelegate;

@@ -542,7 +542,7 @@ bool asCModule::HasExternalReferences(bool shuttingDown)
 				msg.Format(TXT_EXTRNL_REF_TO_MODULE_s, name.AddressOf());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_WARNING, msg.AddressOf());
 
-				msg.Format(TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d, funcDefs[n]->GetName(), funcDefs[n]->GetFuncType());
+				msg.Format(TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d, funcDefs[n]->GetName(), funcDefs[n]->funcdef->GetFuncType());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, msg.AddressOf());
 			}
 		}
@@ -690,13 +690,13 @@ void asCModule::InternalReset()
 	// Free funcdefs
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 	{
-		asCScriptFunction *func = funcDefs[n];
-		if( func->IsShared() )
+		asCFuncdefType *func = funcDefs[n];
+		if( func->funcdef->IsShared() )
 		{
-			// The func is shared, so transfer ownership to another module that also uses it
-			if( engine->FindNewOwnerForSharedFunc(func, this) != this )
+			// The funcdef is shared, so transfer ownership to another module that also uses it
+			if( engine->FindNewOwnerForSharedType(func, this) != this )
 			{
-				// The func is owned by another module, just release our reference
+				// The funcdef is owned by another module, just release our reference
 				func->ReleaseInternal();
 				continue;
 			}
@@ -1761,15 +1761,25 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 	func->nameSpace = ns;
 	func->module    = this;
 
-	funcDefs.PushLast(func);
+	asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine);
+	// TODO: type: This should be done by asCFuncdefType constructor
+	fdt->flags      = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
+	fdt->name       = func->name;
+	fdt->nameSpace  = func->nameSpace;
+	fdt->module     = func->module;
+	fdt->accessMask = func->accessMask;
+	fdt->funcdef    = func; // reference already counted by the constructor
+	func->funcdefType = fdt;
 
-	engine->funcDefs.PushLast(func);
+	funcDefs.PushLast(fdt);
+
+	engine->funcDefs.PushLast(fdt);
 	func->id = engine->GetNextScriptFunctionId();
 	engine->AddScriptFunction(func);
 
 	if (parent)
 	{
-		parent->childFuncDefs.PushLast(func);
+		parent->childFuncDefs.PushLast(fdt);
 		func->parentClass = parent;
 	}
 

@@ -59,6 +59,7 @@ class asCBuilder;
 class asCContext;
 class asCConfigGroup;
 class asCTypedefType;
+class asCFuncdefType;
 struct asSNameSpace;
 
 struct sBindInfo
@@ -237,7 +238,7 @@ public:
 	// This array holds typedefs
 	asCArray<asCTypedefType*>      typeDefs; // increases ref count
 	// This array holds the funcdefs declared in the module
-	asCArray<asCScriptFunction*>   funcDefs; // increases ref count
+	asCArray<asCFuncdefType*>      funcDefs; // increases ref count
 };
 
 END_AS_NAMESPACE

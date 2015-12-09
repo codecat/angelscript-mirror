@@ -378,6 +378,7 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	funcForDelegate        = 0;
 	listPattern            = 0;
 	parentClass            = 0;
+	funcdefType            = 0;
 
 	if( funcType == asFUNC_SCRIPT )
 		AllocateScriptFunctionData();
@@ -469,7 +470,7 @@ void asCScriptFunction::DestroyInternal()
 
 	if (funcType == asFUNC_FUNCDEF && parentClass)
 	{
-		parentClass->childFuncDefs.RemoveValue(this);
+		parentClass->childFuncDefs.RemoveValue(funcdefType);
 		parentClass = 0;
 	}
 
@@ -1492,7 +1493,7 @@ const char *asCScriptFunction::GetConfigGroup() const
 	if( funcType != asFUNC_FUNCDEF )
 		group = engine->FindConfigGroupForFunction(id);
 	else
-		group = engine->FindConfigGroupForFuncDef(this);
+		group = engine->FindConfigGroupForFuncDef(this->funcdefType);
 
 	if( group == 0 )
 		return 0;

@@ -76,12 +76,13 @@ asUINT asCObjectType::GetChildFuncdefCount() const
 }
 
 // interface
+// TODO: type: Should return asCFuncdefType
 asIScriptFunction *asCObjectType::GetChildFuncdef(asUINT index) const
 {
 	if (index >= childFuncDefs.GetLength())
 		return 0;
 
-	return childFuncDefs[index];
+	return childFuncDefs[index]->funcdef;
 }
 
 // internal
@@ -109,7 +110,7 @@ void asCObjectType::DestroyInternal()
 	for (asUINT n = 0; n < childFuncDefs.GetLength(); n++)
 	{
 		if( childFuncDefs[n] )
-			childFuncDefs[n]->parentClass = 0;
+			childFuncDefs[n]->funcdef->parentClass = 0;
 	}
 	childFuncDefs.SetLength(0);
 

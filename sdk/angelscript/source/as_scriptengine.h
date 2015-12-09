@@ -267,7 +267,7 @@ public:
 	asCConfigGroup *FindConfigGroupForFunction(int funcId) const;
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId) const;
 	asCConfigGroup *FindConfigGroupForTypeInfo(const asCTypeInfo *type) const;
-	asCConfigGroup *FindConfigGroupForFuncDef(const asCScriptFunction *funcDef) const;
+	asCConfigGroup *FindConfigGroupForFuncDef(const asCFuncdefType *funcDef) const;
 
 	int  RequestBuild();
 	void BuildCompleted();
@@ -298,7 +298,7 @@ public:
 	int  GetNextScriptFunctionId();
 	void AddScriptFunction(asCScriptFunction *func);
 	void RemoveScriptFunction(asCScriptFunction *func);
-	void RemoveFuncdef(asCScriptFunction *func);
+	void RemoveFuncdef(asCFuncdefType *func);
 
 	int ConfigError(int err, const char *funcName, const char *arg1, const char *arg2);
 
@@ -312,7 +312,7 @@ public:
 	asCObjectType     *GetTemplateInstanceType(asCObjectType *templateType, asCArray<asCDataType> &subTypes, asCModule *requestingModule);
 	asCScriptFunction *GenerateTemplateFactoryStub(asCObjectType *templateType, asCObjectType *templateInstanceType, int origFactoryId);
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
-	asCScriptFunction *GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFuncdef);
+	asCFuncdefType    *GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *templateInstanceType, asCFuncdefType *templateFuncdef);
 	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
 	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
 
@@ -352,7 +352,7 @@ public:
 	asCArray<asCEnumType *>           registeredEnums;
 	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // increases ref count // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
-	asCArray<asCScriptFunction *>     registeredFuncDefs; // increases ref count
+	asCArray<asCFuncdefType *>        registeredFuncDefs; // increases ref count
 	asCArray<asCObjectType *>         registeredTemplateTypes;
 	asCScriptFunction                *stringFactory;
 	bool configFailed;
@@ -420,7 +420,7 @@ public:
 	// Stores the funcdefs
 	// TODO: redesign: Only shared funcdefs should be stored here
 	//                 a funcdef becomes shared if all arguments and the return type are shared (or application registered)
-	asCArray<asCScriptFunction *> funcDefs; // increases ref count
+	asCArray<asCFuncdefType *> funcDefs; // increases ref count
 
 	// Stores the names of the script sections for debugging purposes
 	asCArray<asCString *> scriptSectionNames;

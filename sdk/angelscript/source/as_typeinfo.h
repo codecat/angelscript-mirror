@@ -52,12 +52,10 @@ class asCModule;
 class asCObjectType;
 class asCEnumType;
 class asCTypedefType;
+class asCFuncdefType;
 struct asSNameSpace;
 
-// TODO: type: asCFundDefType shall be implemented to represent funcdefs
-//               a pointer to the asCScriptFunction describing the func def shall be in this class
-//             asCPrimitiveType shall be implemented to represent primitives (void, int, double, etc)
-//             All classes except asCObjectType will be in this file
+// TODO: type: asCPrimitiveType shall be implemented to represent primitives (void, int, double, etc)
 
 class asCTypeInfo : public asITypeInfo
 {
@@ -148,6 +146,7 @@ public:
 	asCObjectType  *CastToObjectType();
 	asCEnumType    *CastToEnumType();
 	asCTypedefType *CastToTypedefType();
+	asCFuncdefType *CastToFuncdefType();
 
 
 	asCString                    name;
@@ -211,6 +210,19 @@ public:
 
 protected:
 	asCTypedefType() : asCTypeInfo() {}
+};
+
+class asCFuncdefType : public asCTypeInfo
+{
+public:
+	asCFuncdefType(asCScriptEngine *engine) : asCTypeInfo(engine), funcdef(0) {}
+	~asCFuncdefType();
+
+	void DestroyInternal();
+	asCScriptFunction *funcdef; // increases refCount
+
+protected:
+	asCFuncdefType() : asCTypeInfo(), funcdef(0) {}
 };
 
 END_AS_NAMESPACE

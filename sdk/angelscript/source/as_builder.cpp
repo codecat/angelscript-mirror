@@ -1377,7 +1377,7 @@ int asCBuilder::CheckNameConflictMember(asCTypeInfo *t, const char *name, asCScr
 		}
 	}
 
-	asCArray<asCScriptFunction*> &funcdefs = ot->childFuncDefs;
+	asCArray<asCFuncdefType*> &funcdefs = ot->childFuncDefs;
 	for (asUINT n = 0; n < funcdefs.GetLength(); n++)
 	{
 		if (funcdefs[n]->name == name)
@@ -1600,8 +1600,9 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	bool                       isFinal;
 	bool                       isShared;
 
-	asCScriptFunction *func = module->funcDefs[funcDef->idx];
-	asASSERT( func );
+	asCFuncdefType *fdt = module->funcDefs[funcDef->idx];
+	asASSERT( fdt );
+	asCScriptFunction *func = fdt->funcdef;
 
 	// TODO: It should be possible to declare funcdef as shared. In this case a compiler error will be given if any of the types it uses are not shared
 	asSNameSpace *implicitNs = func->nameSpace ? func->nameSpace : func->parentClass->nameSpace;
@@ -1632,25 +1633,25 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	{
 		for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
 		{
-			asCScriptFunction *f2 = engine->funcDefs[n];
-			if( f2 == 0 || func == f2 )
+			asCFuncdefType *fdt2 = engine->funcDefs[n];
+			if( fdt2 == 0 || fdt == fdt2 )
 				continue;
 
-			if( !f2->isShared )
+			if( !fdt2->funcdef->isShared )
 				continue;
 
-			if( f2->name == func->name &&
-				f2->nameSpace == func->nameSpace &&
-				f2->IsSignatureExceptNameEqual(func) )
+			if( fdt2->name == fdt->name &&
+				fdt2->nameSpace == fdt->nameSpace &&
+				fdt2->funcdef->IsSignatureExceptNameEqual(func) )
 			{
 				// Replace our funcdef for the existing one
-				funcDef->idx = f2->id;
-				module->funcDefs[module->funcDefs.IndexOf(func)] = f2;
-				f2->AddRefInternal();
+				funcDef->idx = fdt2->funcdef->id;
+				module->funcDefs[module->funcDefs.IndexOf(fdt)] = fdt2;
+				fdt2->AddRefInternal();
 
-				engine->funcDefs.RemoveValue(func);
+				engine->funcDefs.RemoveValue(fdt);
 
-				func->ReleaseInternal();
+				fdt->ReleaseInternal();
 				break;
 			}
 		}
@@ -5713,6 +5714,7 @@ asCTypeInfo *asCBuilder::GetTypeFromTypesKnownByObject(const char *type, asCObje
 	return found;
 }
 
+// TODO: type: Should probably return asCFuncdefType
 asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType)
 {
 	asASSERT((ns == 0 && parentType) || (ns && parentType == 0));
@@ -5721,19 +5723,19 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, as
 	{
 		for (asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++)
 		{
-			asCScriptFunction *funcDef = engine->registeredFuncDefs[n];
+			asCFuncdefType *funcDef = engine->registeredFuncDefs[n];
 			// TODO: access: Only return the definitions that the module has access to
 			if (funcDef && funcDef->nameSpace == ns && funcDef->name == type)
-				return funcDef;
+				return funcDef->funcdef;
 		}
 
 		if (module)
 		{
 			for (asUINT n = 0; n < module->funcDefs.GetLength(); n++)
 			{
-				asCScriptFunction *funcDef = module->funcDefs[n];
+				asCFuncdefType *funcDef = module->funcDefs[n];
 				if (funcDef && funcDef->nameSpace == ns && funcDef->name == type)
-					return funcDef;
+					return funcDef->funcdef;
 			}
 		}
 	}
@@ -5745,9 +5747,9 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, as
 		{
 			for (asUINT n = 0; n < currType->childFuncDefs.GetLength(); n++)
 			{
-				asCScriptFunction *funcDef = currType->childFuncDefs[n];
+				asCFuncdefType *funcDef = currType->childFuncDefs[n];
 				if (funcDef && funcDef->name == type)
-					return funcDef;
+					return funcDef->funcdef;
 			}
 			currType = currType->derivedFrom;
 		}

@@ -144,6 +144,7 @@ protected:
 
 	// Behaviour type
 	asCTypeInfo *typeInfo;
+	// TODO: type: This pointer is no longer needed as typeInfo can hold the funcdef signature
 	asCScriptFunction *funcDef;
 
 	// Top level
