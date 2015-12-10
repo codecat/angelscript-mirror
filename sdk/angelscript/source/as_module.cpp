@@ -1761,16 +1761,7 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 	func->nameSpace = ns;
 	func->module    = this;
 
-	asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine);
-	// TODO: type: This should be done by asCFuncdefType constructor
-	fdt->flags      = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
-	fdt->name       = func->name;
-	fdt->nameSpace  = func->nameSpace;
-	fdt->module     = func->module;
-	fdt->accessMask = func->accessMask;
-	fdt->funcdef    = func; // reference already counted by the constructor
-	func->funcdefType = fdt;
-
+	asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine, func);
 	funcDefs.PushLast(fdt);
 
 	engine->funcDefs.PushLast(fdt);
@@ -1780,7 +1771,7 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 	if (parent)
 	{
 		parent->childFuncDefs.PushLast(fdt);
-		func->parentClass = parent;
+		fdt->parentClass = parent;
 	}
 
 	return (int)funcDefs.GetLength()-1;

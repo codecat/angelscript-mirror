@@ -110,7 +110,7 @@ void asCObjectType::DestroyInternal()
 	for (asUINT n = 0; n < childFuncDefs.GetLength(); n++)
 	{
 		if( childFuncDefs[n] )
-			childFuncDefs[n]->funcdef->parentClass = 0;
+			childFuncDefs[n]->parentClass = 0;
 	}
 	childFuncDefs.SetLength(0);
 

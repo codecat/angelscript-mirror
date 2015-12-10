@@ -272,13 +272,12 @@ public:
 	asDWORD                      accessMask;
 	bool                         isShared;
 
+	// Namespace will be null for funcdefs that are declared as child funcdefs 
+	// of a class. In this case the namespace shall be taken from the parentClass 
+	// in the funcdefType
 	asSNameSpace                *nameSpace;
 
-	// When a funcdef is declared as member this will be set instead of the nameSpace
-	// objectType is not used for this to avoid thinking this is a class method
-	// TODO: type: parentClass should possibly be moved to funcdefType
-	asCObjectType               *parentClass;
-	asCFuncdefType              *funcdefType;
+	asCFuncdefType              *funcdefType; // Doesn't increase refCount
 
 	// Used by asFUNC_DELEGATE
 	void              *objForDelegate;

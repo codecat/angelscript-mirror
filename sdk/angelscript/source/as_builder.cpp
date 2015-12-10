@@ -1150,9 +1150,14 @@ asCGlobalProperty *asCBuilder::GetGlobalProperty(const char *prop, asSNameSpace 
 	return 0;
 }
 
-int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle, asSNameSpace *ns, asCScriptNode **listPattern)
+int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *decl, asCScriptFunction *func, bool isSystemFunction, asCArray<bool> *paramAutoHandles, bool *returnAutoHandle, asSNameSpace *ns, asCScriptNode **listPattern, asCObjectType **outParentClass)
 {
 	asASSERT( objType || ns );
+
+	if (listPattern)
+		*listPattern = 0;
+	if (outParentClass)
+		*outParentClass = 0;
 
 	// TODO: Can't we use GetParsedFunctionDetails to do most of what is done in this function?
 
@@ -1170,12 +1175,15 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 	// Determine scope
 	asCScriptNode *n = node->firstChild->next->next;
-	asCObjectType *parentClass;
+	asCObjectType *parentClass = 0;
 	func->nameSpace = GetNameSpaceFromNode(n, &source, ns, &n, &parentClass);
-	if (func->nameSpace == 0 && func->funcType == asFUNC_FUNCDEF)
-		func->parentClass = parentClass;
-	if( func->nameSpace == 0 && func->parentClass == 0 )
+	if( func->nameSpace == 0 && parentClass == 0 )
 		return asINVALID_DECLARATION;
+	if (parentClass && func->funcType != asFUNC_FUNCDEF)
+		return asINVALID_DECLARATION;
+
+	if (outParentClass)
+		*outParentClass = parentClass;
 
 	// Find name
 	func->name.Assign(&source.code[n->tokenPos], n->tokenLength);
@@ -1605,8 +1613,8 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	asCScriptFunction *func = fdt->funcdef;
 
 	// TODO: It should be possible to declare funcdef as shared. In this case a compiler error will be given if any of the types it uses are not shared
-	asSNameSpace *implicitNs = func->nameSpace ? func->nameSpace : func->parentClass->nameSpace;
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, func->parentClass, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared, implicitNs);
+	asSNameSpace *implicitNs = func->nameSpace ? func->nameSpace : fdt->parentClass->nameSpace;
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, fdt->parentClass, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared, implicitNs);
 
 	// There should not be any defaultArgs, but if there are any we need to delete them to avoid leaks
 	for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )

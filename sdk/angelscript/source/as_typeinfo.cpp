@@ -408,6 +408,22 @@ int asCTypedefType::GetTypedefTypeId() const
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+asCFuncdefType::asCFuncdefType(asCScriptEngine *en, asCScriptFunction *func) : asCTypeInfo(en)
+{
+	asASSERT(func->funcType == asFUNC_FUNCDEF);
+	asASSERT(func->funcdefType == 0);
+
+	flags       = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
+	name        = func->name;
+	nameSpace   = func->nameSpace;
+	module      = func->module;
+	accessMask  = func->accessMask;
+	funcdef     = func; // reference already counted by the asCScriptFunction constructor
+	parentClass = 0;
+
+	func->funcdefType = this;
+}
+
 asCFuncdefType::~asCFuncdefType()
 {
 	DestroyInternal();
@@ -421,6 +437,13 @@ void asCFuncdefType::DestroyInternal()
 	if( funcdef )
 		funcdef->ReleaseInternal();
 	funcdef = 0;
+
+	// Detach from parent class
+	if (parentClass)
+	{
+		parentClass->childFuncDefs.RemoveValue(this);
+		parentClass = 0;
+	}
 
 	CleanUserData();
 

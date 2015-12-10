@@ -202,6 +202,7 @@ enum asEObjTypeFlags
 	asOBJ_IMPLICIT_HANDLE            = (1<<20),
 	asOBJ_MASK_VALID_FLAGS           = 0x1FFFFF,
 	// Internal flags
+	// TODO: type: Separate the object type flags from the type info flags
 	asOBJ_SCRIPT_OBJECT              = (1<<21),
 	asOBJ_SHARED                     = (1<<22),
 	asOBJ_NOINHERIT                  = (1<<23),

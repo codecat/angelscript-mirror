@@ -184,7 +184,7 @@ asCString asCDataType::Format(asSNameSpace *currNs, bool includeNamespace) const
 		{
 			// If funcDef->nameSpace is null it means the funcDef was declared as member of 
 			// another type, in which case the scope should be built with the name of that type
-			str += funcDef->parentClass->name + "::";
+			str += funcDef->funcdefType->parentClass->name + "::";
 		}
 	}
 

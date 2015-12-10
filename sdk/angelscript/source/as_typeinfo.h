@@ -215,14 +215,15 @@ protected:
 class asCFuncdefType : public asCTypeInfo
 {
 public:
-	asCFuncdefType(asCScriptEngine *engine) : asCTypeInfo(engine), funcdef(0) {}
+	asCFuncdefType(asCScriptEngine *engine, asCScriptFunction *func);
 	~asCFuncdefType();
 
 	void DestroyInternal();
-	asCScriptFunction *funcdef; // increases refCount
+	asCScriptFunction *funcdef;     // increases refCount
+	asCObjectType     *parentClass; // doesn't increase refCount
 
 protected:
-	asCFuncdefType() : asCTypeInfo(), funcdef(0) {}
+	asCFuncdefType() : asCTypeInfo(), funcdef(0), parentClass(0) {}
 };
 
 END_AS_NAMESPACE

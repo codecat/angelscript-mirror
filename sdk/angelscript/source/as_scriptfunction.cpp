@@ -377,7 +377,6 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	objForDelegate         = 0;
 	funcForDelegate        = 0;
 	listPattern            = 0;
-	parentClass            = 0;
 	funcdefType            = 0;
 
 	if( funcType == asFUNC_SCRIPT )
@@ -468,12 +467,6 @@ void asCScriptFunction::DestroyInternal()
 	}
 	userData.SetLength(0);
 
-	if (funcType == asFUNC_FUNCDEF && parentClass)
-	{
-		parentClass->childFuncDefs.RemoveValue(funcdefType);
-		parentClass = 0;
-	}
-
 	// Release all references the function holds to other objects
 	ReleaseReferences();
 	parameterTypes.SetLength(0);
@@ -506,9 +499,13 @@ void asCScriptFunction::DestroyInternal()
 }
 
 // interface
+// TODO: type: This should be moved to asITypeInfo
 asITypeInfo *asCScriptFunction::GetParentType() const
 {
-	return parentClass;
+	if (funcdefType)
+		return funcdefType->parentClass;
+
+	return 0;
 }
 
 // interface
@@ -718,13 +715,13 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 		else
 			str += "_unnamed_type_::";
 	}
-	else if (parentClass && includeObjectName)
+	else if (funcdefType && funcdefType->parentClass && includeObjectName)
 	{
-		if (includeNamespace && parentClass->nameSpace->name != "")
-			str += parentClass->nameSpace->name + "::";
+		if (includeNamespace && funcdefType->parentClass->nameSpace->name != "")
+			str += funcdefType->parentClass->nameSpace->name + "::";
 
-		if (parentClass->name != "")
-			str += parentClass->name + "::";
+		if (funcdefType->parentClass->name != "")
+			str += funcdefType->parentClass->name + "::";
 		else
 			str += "_unnamed_type_::";
 	}

@@ -285,9 +285,9 @@ int asCReader::ReadInner()
 					if( !f2->funcdef->isShared )
 						continue;
 
-					if( f2->name == funcDef->name &&
-						f2->nameSpace == funcDef->nameSpace &&
-						f2->funcdef->parentClass == funcDef->parentClass &&
+					if( f2->name == fdt->name &&
+						f2->nameSpace == fdt->nameSpace &&
+						f2->parentClass == fdt->parentClass &&
 						f2->funcdef->IsSignatureExceptNameEqual(funcDef) )
 					{
 						// Replace our funcdef for the existing one
@@ -298,12 +298,12 @@ int asCReader::ReadInner()
 
 						savedFunctions[savedFunctions.IndexOf(funcDef)] = f2->funcdef;
 
-						if (funcDef->parentClass)
+						if (fdt->parentClass)
 						{
 							// The real funcdef should already be in the object
-							asASSERT(funcDef->parentClass->childFuncDefs.IndexOf(f2) >= 0);
+							asASSERT(fdt->parentClass->childFuncDefs.IndexOf(f2) >= 0);
 
-							funcDef->parentClass = 0;
+							fdt->parentClass = 0;
 						}
 
 						fdt->ReleaseInternal();
@@ -314,8 +314,8 @@ int asCReader::ReadInner()
 			}
 
 			// Add the funcdef to the parentClass if this is a child funcdef
-			if (funcDef && funcDef->parentClass)
-				funcDef->parentClass->childFuncDefs.PushLast(fdt);
+			if (funcDef && fdt->parentClass)
+				fdt->parentClass->childFuncDefs.PushLast(fdt);
 		}
 		else
 			Error(TXT_INVALID_BYTECODE_d);
@@ -628,7 +628,8 @@ void asCReader::ReadUsedFunctions()
 		else
 		{
 			asCScriptFunction func(engine, c == 'm' ? module : 0, asFUNC_DUMMY);
-			ReadFunctionSignature(&func);
+			asCObjectType *parentClass = 0;
+			ReadFunctionSignature(&func, &parentClass);
 			if( error )
 			{
 				func.funcType = asFUNC_DUMMY;
@@ -659,10 +660,9 @@ void asCReader::ReadUsedFunctions()
 					for( asUINT i = 0; i < funcs.GetLength(); i++ )
 					{
 						asCScriptFunction *f = funcs[i]->funcdef;
-						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) || funcs[i]->parentClass != parentClass )
 							continue;
 
-						// Funcdefs are always global so there is no need to compare object type
 						asASSERT( f->objectType == 0 );
 
 						usedFunctions[n] = f;
@@ -697,10 +697,9 @@ void asCReader::ReadUsedFunctions()
 					for( asUINT i = 0; i < funcs.GetLength(); i++ )
 					{
 						asCScriptFunction *f = funcs[i]->funcdef;
-						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) )
+						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) || funcs[i]->parentClass != parentClass )
 							continue;
 
-						// Funcdefs are always global so there is no need to compare object type
 						asASSERT( f->objectType == 0 );
 
 						usedFunctions[n] = f;
@@ -856,7 +855,7 @@ void asCReader::ReadUsedFunctions()
 	}
 }
 
-void asCReader::ReadFunctionSignature(asCScriptFunction *func)
+void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **parentClass)
 {
 	asUINT i, count;
 	asCDataType dt;
@@ -975,7 +974,10 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 			else if (b == 'o')
 			{
 				func->nameSpace = 0;
-				func->parentClass = ReadTypeInfo()->CastToObjectType();
+				if (parentClass)
+					*parentClass = ReadTypeInfo()->CastToObjectType();
+				else
+					error = true;
 			}
 			else
 				error = true;
@@ -1031,7 +1033,8 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	asCDataType dt;
 	int num;
 
-	ReadFunctionSignature(func);
+	asCObjectType *parentClass = 0;
+	ReadFunctionSignature(func, &parentClass);
 	if( error )
 	{
 		func->DestroyHalfCreated();
@@ -1197,15 +1200,9 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		if( bits )
 			func->isShared = true;
 
-		asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine);
-		// TODO: type: This should be done by asCFuncdefType constructor
-		fdt->flags = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
-		fdt->name = func->name;
-		fdt->nameSpace = func->nameSpace;
-		fdt->module = func->module;
-		fdt->accessMask = func->accessMask;
-		fdt->funcdef = func;
-		func->funcdefType = fdt;
+		// The asCFuncdefType constructor adds itself to the func->funcdefType member
+		asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine, func);
+		fdt->parentClass = parentClass;
 	}
 
 	if( addToModule )
@@ -1875,13 +1872,20 @@ void asCReader::ReadDataType(asCDataType *dt)
 	if( tokenType == ttIdentifier && objType && objType->name == "$func" )
 	{
 		asCScriptFunction func(engine, module, asFUNC_DUMMY);
-		ReadFunctionSignature(&func);
-		if( error ) return;
+		asCObjectType *parentClass = 0;
+		ReadFunctionSignature(&func, &parentClass);
+		if (error)
+		{
+			// Set the function type to dummy to allow it to be destroyed
+			func.funcType = asFUNC_DUMMY;
+			return;
+		}
 		for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
 		{
 			// TODO: access: Only return the definitions that the module has access to
 			if( engine->registeredFuncDefs[n]->name == func.name &&
-				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace )
+				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace &&
+				engine->registeredFuncDefs[n]->parentClass == parentClass )
 			{
 				funcDef = engine->registeredFuncDefs[n]->funcdef;
 				break;
@@ -3773,7 +3777,7 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 				// This funcdef was declared as class member
 				asBYTE b = 'o';
 				WriteData(&b, 1);
-				WriteTypeInfo(func->parentClass);
+				WriteTypeInfo(func->funcdefType->parentClass);
 			}
 		}
 		else

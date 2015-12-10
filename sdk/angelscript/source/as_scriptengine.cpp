@@ -3612,7 +3612,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
 	{
 		asCFuncdefType *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
-		funcdef->funcdef->parentClass = ot;
+		funcdef->parentClass = ot;
 		ot->childFuncDefs.PushLast(funcdef);
 	}
 
@@ -3975,16 +3975,7 @@ asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templ
 	func2->id = GetNextScriptFunctionId();
 	AddScriptFunction(func2);
 
-	asCFuncdefType *fdt2 = asNEW(asCFuncdefType)(this);
-	// TODO: type: This should be done by asCFuncdefType constructor
-	fdt2->funcdef    = func2;
-	fdt2->name       = func2->name;
-	fdt2->nameSpace  = func2->nameSpace;
-	fdt2->module     = func2->module;
-	fdt2->accessMask = func2->accessMask;
-	fdt2->flags      = func->flags;
-	func2->funcdefType = fdt2;
-
+	asCFuncdefType *fdt2 = asNEW(asCFuncdefType)(this, func2);
 	funcDefs.PushLast(fdt2); // don't increase refCount as the constructor already set it to 1
 
 	// Return the new function
@@ -5501,7 +5492,8 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 		return ConfigError(asOUT_OF_MEMORY, "RegisterFuncdef", decl, 0);
 
 	asCBuilder bld(this, 0);
-	int r = bld.ParseFunctionDeclaration(0, decl, func, false, 0, 0, defaultNamespace);
+	asCObjectType *parentClass = 0;
+	int r = bld.ParseFunctionDeclaration(0, decl, func, false, 0, 0, defaultNamespace, 0, &parentClass);
 	if( r < 0 )
 	{
 		// Set as dummy function before deleting
@@ -5521,28 +5513,22 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	func->id = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 
-	asCFuncdefType *fdt = asNEW(asCFuncdefType)(this);
-	// TODO: type: This should be done by asCFuncdefType constructor
-	fdt->flags      = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
-	fdt->funcdef    = func; // constructor already set the ref count to 1
-	fdt->name       = func->name;
-	fdt->nameSpace  = func->nameSpace;
-	fdt->accessMask = func->accessMask;
-	func->funcdefType = fdt;
+	asCFuncdefType *fdt = asNEW(asCFuncdefType)(this, func);
 	funcDefs.PushLast(fdt); // constructor already set the ref count to 1
 
 	fdt->AddRefInternal();
 	registeredFuncDefs.PushLast(fdt);
 
 	currentGroup->funcDefs.PushLast(fdt);
-	if (func->parentClass)
+	if (parentClass)
 	{
-		func->parentClass->childFuncDefs.PushLast(fdt);
+		parentClass->childFuncDefs.PushLast(fdt);
+		fdt->parentClass = parentClass;
 
 		// Check if the method restricts that use of the template to value types or reference types
-		if (func->parentClass->flags & asOBJ_TEMPLATE)
+		if (parentClass->flags & asOBJ_TEMPLATE)
 		{
-			r = SetTemplateRestrictions(func->parentClass, func, "RegisterFuncdef", decl);
+			r = SetTemplateRestrictions(parentClass, func, "RegisterFuncdef", decl);
 			if (r < 0)
 				return r;
 		}
