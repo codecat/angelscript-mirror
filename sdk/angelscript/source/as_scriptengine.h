@@ -319,6 +319,8 @@ public:
 	asCModule         *FindNewOwnerForSharedType(asCTypeInfo *type, asCModule *mod);
 	asCModule         *FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod);
 
+	asCFuncdefType    *FindMatchingFuncdef(asCScriptFunction *func);
+
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked
 	int              AddConstantString(const char *str, size_t length);
@@ -347,17 +349,18 @@ public:
 	asCObjectType    functionBehaviours;
 
 	// Registered interface
-	asCArray<asCObjectType *>         registeredObjTypes;
-	asCArray<asCTypedefType *>        registeredTypeDefs;
-	asCArray<asCEnumType *>           registeredEnums;
-	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // increases ref count // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
+	asCArray<asCObjectType *>         registeredObjTypes;      // doesn't increase ref count
+	asCArray<asCTypedefType *>        registeredTypeDefs;      // doesn't increase ref count
+	asCArray<asCEnumType *>           registeredEnums;         // doesn't increase ref count
+	// TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used for global props
+	asCSymbolTable<asCGlobalProperty> registeredGlobalProps;   // increases ref count
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
-	asCArray<asCFuncdefType *>        registeredFuncDefs; // increases ref count
-	asCArray<asCObjectType *>         registeredTemplateTypes;
+	asCArray<asCFuncdefType *>        registeredFuncDefs;      // doesn't increase ref count
+	asCArray<asCObjectType *>         registeredTemplateTypes; // doesn't increase ref count
 	asCScriptFunction                *stringFactory;
 	bool configFailed;
 
-	// Stores all registered types except funcdefs
+	// Stores all registered types
 	asCMap<asSNameSpaceNamePair, asCTypeInfo*> allRegisteredTypes; // increases ref count
 
 	// Dummy types used to name the subtypes in the template objects 
@@ -420,7 +423,7 @@ public:
 	// Stores the funcdefs
 	// TODO: redesign: Only shared funcdefs should be stored here
 	//                 a funcdef becomes shared if all arguments and the return type are shared (or application registered)
-	asCArray<asCFuncdefType *> funcDefs; // increases ref count
+	asCArray<asCFuncdefType *> funcDefs; // doesn't increases ref count
 
 	// Stores the names of the script sections for debugging purposes
 	asCArray<asCString *> scriptSectionNames;
@@ -428,7 +431,6 @@ public:
 	// Type identifiers
 	mutable int                             typeIdSeqNbr;
 	mutable asCMap<int, asCTypeInfo*>       mapTypeIdToTypeInfo;
-	mutable asCMap<int, asCScriptFunction*> mapTypeIdToFunction;
 
 	// Garbage collector
 	asCGarbageCollector gc;

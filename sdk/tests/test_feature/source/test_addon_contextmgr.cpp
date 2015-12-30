@@ -50,6 +50,7 @@ bool Test()
 		}
 
 		ctxMgr.AddContext(engine, mod->GetFunctionByName("main"));
+		// TODO: type: should execute until ExecuteScripts() return 0
 		ctxMgr.ExecuteScripts();
 
 		engine->Release();

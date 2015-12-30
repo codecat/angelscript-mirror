@@ -213,6 +213,7 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 
 	*outRef = 0;
 
+	// TODO: type: Funcdefs are no longer represented as asOBJ_SCRIPT_FUNCTION
 	if( type == m_type )
 	{
 		// If the requested type is a script function it is 

@@ -702,7 +702,6 @@ asCScriptEngine::~asCScriptEngine()
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_ENGINE_REF_COUNT_ERROR_DURING_SHUTDOWN);
 
 	mapTypeIdToTypeInfo.EraseAll();
-	mapTypeIdToFunction.EraseAll();
 
 	// First remove what is not used, so that other groups can be deleted safely
 	defaultGroup.RemoveConfiguration(this, true);
@@ -2704,12 +2703,14 @@ int asCScriptEngine::RegisterObjectMethod(const char *obj, const char *declarati
 	if( r < 0 )
 		return ConfigError(r, "RegisterObjectMethod", obj, declaration);
 
+	// Don't allow application to modify primitives or handles
 	if( dt.GetTypeInfo() == 0 || dt.IsObjectHandle() )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
-	// Don't allow application to modify built-in types
+	// Don't allow application to modify built-in types or funcdefs
 	if( dt.GetTypeInfo() == &functionBehaviours ||
-		dt.GetTypeInfo() == &scriptTypeBehaviours )
+		dt.GetTypeInfo() == &scriptTypeBehaviours ||
+		dt.GetTypeInfo()->CastToFuncdefType() )
 		return ConfigError(asINVALID_ARG, "RegisterObjectMethod", obj, declaration);
 
 	// Don't allow modifying generated template instances
@@ -4604,62 +4605,26 @@ int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 
 	int typeId = -1;
 	asCTypeInfo *ot = dtIn.GetTypeInfo();
-	if( ot != &functionBehaviours )
+	asASSERT(ot != &functionBehaviours);
+	// Object's hold the typeId themselves
+	typeId = ot->typeId;
+
+	if( typeId == -1 )
 	{
-		// Object's hold the typeId themselves
-		typeId = ot->typeId;
-
-		if( typeId == -1 )
-		{
-			ACQUIREEXCLUSIVE(engineRWLock);
-			// Make sure another thread didn't determine the typeId while we were waiting for the lock
-			if( ot->typeId == -1 )
-			{
-				typeId = typeIdSeqNbr++;
-				if( ot->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
-				else if( ot->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE;
-				else if( ot->flags & asOBJ_ENUM ) {} // TODO: Should we have a specific bit for this?
-				else typeId |= asTYPEID_APPOBJECT;
-
-				ot->typeId = typeId;
-
-				mapTypeIdToTypeInfo.Insert(typeId, ot);
-			}
-			RELEASEEXCLUSIVE(engineRWLock);
-		}
-	}
-	else
-	{
-		// This a funcdef, so we'll need to look in the map for the funcdef
-
-		// TODO: optimize: It shouldn't be necessary to exclusive lock when the typeId already exists
 		ACQUIREEXCLUSIVE(engineRWLock);
-
-		// Find the existing type id
-		asCScriptFunction *func = dtIn.GetFuncDef();
-		asASSERT(func);
-		asSMapNode<int,asCScriptFunction*> *cursor = 0;
-		mapTypeIdToFunction.MoveFirst(&cursor);
-		while( cursor )
+		// Make sure another thread didn't determine the typeId while we were waiting for the lock
+		if( ot->typeId == -1 )
 		{
-			if( mapTypeIdToFunction.GetValue(cursor) == func )
-			{
-				typeId = mapTypeIdToFunction.GetKey(cursor);
-				break;
-			}
-
-			mapTypeIdToFunction.MoveNext(&cursor, cursor);
-		}
-
-		// The type id doesn't exist, create it
-		if( typeId == -1 )
-		{
-			// Setup the type id for the funcdef
 			typeId = typeIdSeqNbr++;
-			typeId |= asTYPEID_APPOBJECT;
-			mapTypeIdToFunction.Insert(typeId, func);
-		}
+			if( ot->flags & asOBJ_SCRIPT_OBJECT ) typeId |= asTYPEID_SCRIPTOBJECT;
+			else if( ot->flags & asOBJ_TEMPLATE ) typeId |= asTYPEID_TEMPLATE;
+			else if( ot->flags & asOBJ_ENUM ) {} // TODO: Should we have a specific bit for this?
+			else typeId |= asTYPEID_APPOBJECT;
 
+			ot->typeId = typeId;
+
+			mapTypeIdToTypeInfo.Insert(typeId, ot);
+		}
 		RELEASEEXCLUSIVE(engineRWLock);
 	}
 
@@ -4698,25 +4663,6 @@ asCDataType asCScriptEngine::GetDataTypeFromTypeId(int typeId) const
 	if( ot )
 	{
 		asCDataType dt = asCDataType::CreateType(ot, false);
-		if( typeId & asTYPEID_OBJHANDLE )
-			dt.MakeHandle(true, true);
-		if( typeId & asTYPEID_HANDLETOCONST )
-			dt.MakeHandleToConst(true);
-
-		return dt;
-	}
-
-	// Then check if it is a funcdef
-	asCScriptFunction *func = 0;
-	ACQUIRESHARED(engineRWLock);
-	asSMapNode<int,asCScriptFunction*> *cursor2 = 0;
-	if( mapTypeIdToFunction.MoveTo(&cursor2, baseId) )
-		func = mapTypeIdToFunction.GetValue(cursor2);
-	RELEASESHARED(engineRWLock);
-
-	if( func )
-	{
-		asCDataType dt = asCDataType::CreateFuncDef(func);
 		if( typeId & asTYPEID_OBJHANDLE )
 			dt.MakeHandle(true, true);
 		if( typeId & asTYPEID_HANDLETOCONST )
@@ -4828,6 +4774,7 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 		return asSUCCESS;
 
 	// This method doesn't support casting function pointers, since they cannot be described with just an object type
+	// TODO: type: asOBJ_SCRIPT_FUNCTION will no longer exist
 	if( fromType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
 		return asNOT_SUPPORTED;
 
@@ -4835,6 +4782,22 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 	{
 		*newPtr = obj;
 		AddRefScriptObject(*newPtr, toType);
+		return asSUCCESS;
+	}
+
+	// Check for funcdefs
+	if ((fromType->GetFlags() & asOBJ_FUNCDEF) && (toType->GetFlags() & asOBJ_FUNCDEF))
+	{
+		asCFuncdefType *fromFunc = reinterpret_cast<asCTypeInfo*>(fromType)->CastToFuncdefType();
+		asCFuncdefType *toFunc = reinterpret_cast<asCTypeInfo*>(toType)->CastToFuncdefType();
+
+		if (fromFunc && toFunc && fromFunc->funcdef->IsSignatureExceptNameEqual(toFunc->funcdef))
+		{
+			*newPtr = obj;
+			AddRefScriptObject(*newPtr, toType);
+			return asSUCCESS;
+		}
+		
 		return asSUCCESS;
 	}
 
@@ -5155,11 +5118,19 @@ void asCScriptEngine::AddRefScriptObject(void *obj, const asITypeInfo *type)
 	// Make sure it is not a null pointer
 	if( obj == 0 || type == 0 ) return;
 
-	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
-	if( objType->beh.addref )
+	const asCTypeInfo *ti = static_cast<const asCTypeInfo*>(type);
+	if (ti->flags & asOBJ_FUNCDEF)
 	{
-		// Call the addref behaviour
-		CallObjectMethod(obj, objType->beh.addref);
+		CallObjectMethod(obj, functionBehaviours.beh.addref);
+	}
+	else
+	{
+		asCObjectType *objType = const_cast<asCTypeInfo*>(ti)->CastToObjectType();
+		if (objType && objType->beh.addref)
+		{
+			// Call the addref behaviour
+			CallObjectMethod(obj, objType->beh.addref);
+		}
 	}
 }
 
@@ -5169,29 +5140,37 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asITypeInfo *type)
 	// Make sure it is not a null pointer
 	if( obj == 0 || type == 0 ) return;
 
-	const asCObjectType *objType = static_cast<const asCObjectType *>(type);
-	if( objType->flags & asOBJ_REF )
+	const asCTypeInfo *ti = static_cast<const asCTypeInfo*>(type);
+	if (ti->flags & asOBJ_FUNCDEF)
 	{
-		asASSERT( (objType->flags & asOBJ_NOCOUNT) || objType->beh.release );
-		if( objType->beh.release )
-		{
-			// Call the release behaviour
-			CallObjectMethod(obj, objType->beh.release);
-		}
+		CallObjectMethod(obj, functionBehaviours.beh.release);
 	}
 	else
 	{
-		// Call the destructor
-		if( objType->beh.destruct )
-			CallObjectMethod(obj, objType->beh.destruct);
-		else if( objType->flags & asOBJ_LIST_PATTERN )
-			DestroyList((asBYTE*)obj, objType);
+		asCObjectType *objType = const_cast<asCTypeInfo*>(ti)->CastToObjectType();
+		if (objType && objType->flags & asOBJ_REF)
+		{
+			asASSERT((objType->flags & asOBJ_NOCOUNT) || objType->beh.release);
+			if (objType->beh.release)
+			{
+				// Call the release behaviour
+				CallObjectMethod(obj, objType->beh.release);
+			}
+		}
+		else if( objType )
+		{
+			// Call the destructor
+			if (objType->beh.destruct)
+				CallObjectMethod(obj, objType->beh.destruct);
+			else if (objType->flags & asOBJ_LIST_PATTERN)
+				DestroyList((asBYTE*)obj, objType);
 
-		// We'll have to trust that the memory for the object was allocated with CallAlloc.
-		// This is true if the object was created in the context, or with CreateScriptObject.
+			// We'll have to trust that the memory for the object was allocated with CallAlloc.
+			// This is true if the object was created in the context, or with CreateScriptObject.
 
-		// Then free the memory
-		CallFree(obj);
+			// Then free the memory
+			CallFree(obj);
+		}
 	}
 }
 
@@ -5368,7 +5347,7 @@ asCConfigGroup *asCScriptEngine::FindConfigGroupForFuncDef(const asCFuncdefType 
 	for( asUINT n = 0; n < configGroups.GetLength(); n++ )
 	{
 		asCFuncdefType *f = const_cast<asCFuncdefType*>(funcDef);
-		if( configGroups[n]->funcDefs.Exists(f) )
+		if( configGroups[n]->types.Exists(f) )
 			return configGroups[n];
 	}
 
@@ -5514,12 +5493,11 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	AddScriptFunction(func);
 
 	asCFuncdefType *fdt = asNEW(asCFuncdefType)(this, func);
-	funcDefs.PushLast(fdt); // constructor already set the ref count to 1
+	funcDefs.PushLast(fdt); // doesn't increase refcount
+	registeredFuncDefs.PushLast(fdt); // doesn't increase refcount
+	allRegisteredTypes.Insert(asSNameSpaceNamePair(fdt->nameSpace, fdt->name), fdt); // constructor already set the ref count to 1
 
-	fdt->AddRefInternal();
-	registeredFuncDefs.PushLast(fdt);
-
-	currentGroup->funcDefs.PushLast(fdt);
+	currentGroup->types.PushLast(fdt);
 	if (parentClass)
 	{
 		parentClass->childFuncDefs.PushLast(fdt);
@@ -5555,6 +5533,41 @@ asIScriptFunction *asCScriptEngine::GetFuncdefByIndex(asUINT index) const
 		return 0;
 
 	return registeredFuncDefs[index]->funcdef;
+}
+
+// internal
+asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func)
+{
+	if (func->funcdefType)
+		return func->funcdefType;
+
+	for (asUINT n = 0; n < funcDefs.GetLength(); n++)
+	{
+		if (funcDefs[n]->funcdef->IsSignatureExceptNameEqual(func))
+		{
+			if (func->isShared && !funcDefs[n]->funcdef->isShared)
+				continue;
+			return funcDefs[n];
+		}
+	}
+
+	// Create a matching funcdef
+	asCScriptFunction *fd = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
+	fd->name = func->name;
+	fd->nameSpace = func->nameSpace;
+	fd->isShared = func->isShared;
+
+	fd->returnType = func->returnType;
+	fd->parameterTypes = func->parameterTypes;
+	fd->inOutFlags = func->inOutFlags;
+
+	asCFuncdefType *fdt = asNEW(asCFuncdefType)(this, fd);
+	funcDefs.PushLast(fdt);
+
+	fd->id = GetNextScriptFunctionId();
+	AddScriptFunction(fd);
+
+	return fdt;
 }
 
 // interface
@@ -5890,9 +5903,13 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 }
 
 // interface
+// TODO: type: Deprecate this
 asIScriptFunction *asCScriptEngine::GetFuncdefFromTypeId(int typeId) const
 {
-	return GetDataTypeFromTypeId(typeId).GetFuncDef();
+	asCFuncdefType *t = GetDataTypeFromTypeId(typeId).GetTypeInfo()->CastToFuncdefType();
+	if (t)
+		return t->funcdef;
+	return 0;
 }
 
 // internal

@@ -572,7 +572,7 @@ int asCScriptFunction::ReleaseInternal()
 int asCScriptFunction::GetTypeId() const
 {
 	// This const cast is ok, the object won't be modified
-	asCDataType dt = asCDataType::CreateFuncDef(const_cast<asCScriptFunction*>(this));
+	asCDataType dt = asCDataType::CreateType(engine->FindMatchingFuncdef(const_cast<asCScriptFunction*>(this)), false);
 	return engine->GetTypeIdFromDataType(dt);
 }
 
@@ -582,10 +582,10 @@ bool asCScriptFunction::IsCompatibleWithTypeId(int typeId) const
 	asCDataType dt = engine->GetDataTypeFromTypeId(typeId);
 
 	// Make sure the type is a function
-	asCScriptFunction *func = dt.GetFuncDef();
-	if( func == 0 )
+	if (!dt.IsFuncdef())
 		return false;
 
+	asCScriptFunction *func = dt.GetTypeInfo()->CastToFuncdefType()->funcdef;
 	if( !IsSignatureExceptNameEqual(func) )
 		return false;
 

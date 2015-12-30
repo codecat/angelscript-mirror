@@ -522,6 +522,12 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &propName, 
 				prop->type.MakeReference(true);
 		}
 	}
+	else if (dt.IsFuncdef())
+	{
+		// Funcdefs don't have a size, as they must always be stored as handles
+		asASSERT(dt.IsObjectHandle());
+		propSize = AS_PTR_SIZE * 4;
+	}
 	else
 		propSize = dt.GetSizeInMemoryBytes();
 

@@ -177,9 +177,9 @@ protected:
 	asSNameSpace      *GetNameSpaceByString(const asCString &nsName, asSNameSpace *implicitNs, asCScriptNode *errNode, asCScriptCode *script, asCTypeInfo **scopeType = 0, bool isRequired = true);
 	asCString          GetScopeFromNode(asCScriptNode *n, asCScriptCode *script, asCScriptNode **next = 0);
 
-	asCTypeInfo       *GetType(const char *type, asSNameSpace *ns);
+	asCTypeInfo       *GetType(const char *type, asSNameSpace *ns, asCObjectType *parentType);
 	asCObjectType     *GetObjectType(const char *type, asSNameSpace *ns);
-	asCScriptFunction *GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType);
+	asCFuncdefType    *GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType);
 	asCTypeInfo       *GetTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
 	asCDataType        CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
 	asCObjectType     *GetTemplateInstanceFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *templateType, asSNameSpace *implicitNamespace, asCObjectType *currentType, asCScriptNode **next = 0);

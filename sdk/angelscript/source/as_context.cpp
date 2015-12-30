@@ -4795,7 +4795,8 @@ void asCContext::CleanArgsOnStack()
 			{
 				if( var == paramPos )
 				{
-					func = m_currentFunction->parameterTypes[v].GetFuncDef();
+					if (m_currentFunction->parameterTypes[v].IsFuncdef())
+						func = m_currentFunction->parameterTypes[v].GetTypeInfo()->CastToFuncdefType()->funcdef;
 					break;
 				}
 				paramPos -= m_currentFunction->parameterTypes[v].GetSizeOnStackDWords();
@@ -4815,19 +4816,23 @@ void asCContext::CleanArgsOnStack()
 		offset += AS_PTR_SIZE;
 	for( asUINT n = 0; n < func->parameterTypes.GetLength(); n++ )
 	{
-		if( func->parameterTypes[n].IsObject() && !func->parameterTypes[n].IsReference() )
+		if( (func->parameterTypes[n].IsObject() || func->parameterTypes[n].IsFuncdef()) && !func->parameterTypes[n].IsReference() )
 		{
+			// TODO: cleanup: This logic is repeated twice in CleanStackFrame too. Should create a common function to share the code
 			if( *(asPWORD*)&m_regs.stackPointer[offset] )
 			{
 				// Call the object's destructor
 				asSTypeBehaviour *beh = func->parameterTypes[n].GetBehaviour();
-				if( func->parameterTypes[n].GetTypeInfo()->flags & asOBJ_REF )
+				if (func->parameterTypes[n].GetTypeInfo()->flags & asOBJ_FUNCDEF)
+				{
+					((asCScriptFunction*)m_regs.stackPointer[offset])->Release();
+				}
+				else if( func->parameterTypes[n].GetTypeInfo()->flags & asOBJ_REF )
 				{
 					asASSERT( (func->parameterTypes[n].GetTypeInfo()->flags & asOBJ_NOCOUNT) || beh->release );
 
 					if( beh->release )
 						m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackPointer[offset], beh->release);
-					*(asPWORD*)&m_regs.stackPointer[offset] = 0;
 				}
 				else
 				{
@@ -4836,8 +4841,8 @@ void asCContext::CleanArgsOnStack()
 
 					// Free the memory
 					m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackPointer[offset]);
-					*(asPWORD*)&m_regs.stackPointer[offset] = 0;
 				}
+				*(asPWORD*)&m_regs.stackPointer[offset] = 0;
 			}
 		}
 
@@ -4876,12 +4881,15 @@ void asCContext::CleanStackFrame()
 				{
 					// Call the object's destructor
 					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->beh;
-					if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_REF )
+					if (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_FUNCDEF)
+					{
+						((asCScriptFunction*)m_regs.stackFramePointer[-pos])->Release();
+					}
+					else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_REF )
 					{
 						asASSERT( (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_NOCOUNT) || beh->release );
 						if( beh->release )
 							m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->release);
-						*(asPWORD*)&m_regs.stackFramePointer[-pos] = 0;
 					}
 					else
 					{
@@ -4892,8 +4900,8 @@ void asCContext::CleanStackFrame()
 
 						// Free the memory
 						m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos]);
-						*(asPWORD*)&m_regs.stackFramePointer[-pos] = 0;
 					}
+					*(asPWORD*)&m_regs.stackFramePointer[-pos] = 0;
 				}
 			}
 			else
@@ -4925,19 +4933,22 @@ void asCContext::CleanStackFrame()
 		offset += AS_PTR_SIZE;
 	for( asUINT n = 0; n < m_currentFunction->parameterTypes.GetLength(); n++ )
 	{
-		if( m_currentFunction->parameterTypes[n].IsObject() && !m_currentFunction->parameterTypes[n].IsReference() )
+		if( (m_currentFunction->parameterTypes[n].IsObject() ||m_currentFunction->parameterTypes[n].IsFuncdef()) && !m_currentFunction->parameterTypes[n].IsReference() )
 		{
 			if( *(asPWORD*)&m_regs.stackFramePointer[offset] )
 			{
 				// Call the object's destructor
 				asSTypeBehaviour *beh = m_currentFunction->parameterTypes[n].GetBehaviour();
-				if( m_currentFunction->parameterTypes[n].GetTypeInfo()->flags & asOBJ_REF )
+				if (m_currentFunction->parameterTypes[n].GetTypeInfo()->flags & asOBJ_FUNCDEF)
+				{
+					((asCScriptFunction*)m_regs.stackFramePointer[offset])->Release();
+				}
+				else if( m_currentFunction->parameterTypes[n].GetTypeInfo()->flags & asOBJ_REF )
 				{
 					asASSERT( (m_currentFunction->parameterTypes[n].GetTypeInfo()->flags & asOBJ_NOCOUNT) || beh->release );
 
 					if( beh->release )
 						m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[offset], beh->release);
-					*(asPWORD*)&m_regs.stackFramePointer[offset] = 0;
 				}
 				else
 				{
@@ -4946,8 +4957,8 @@ void asCContext::CleanStackFrame()
 
 					// Free the memory
 					m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackFramePointer[offset]);
-					*(asPWORD*)&m_regs.stackFramePointer[offset] = 0;
 				}
+				*(asPWORD*)&m_regs.stackFramePointer[offset] = 0;
 			}
 		}
 

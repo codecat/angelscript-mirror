@@ -1854,9 +1854,9 @@ void asCReader::ReadDataType(asCDataType *dt)
 	savedDataTypes.PushLast(asCDataType());
 
 	// Read the datatype for the first time
-	asCTypeInfo *objType = 0;
+	asCTypeInfo *ti = 0;
 	if( tokenType == ttIdentifier )
-		objType = ReadTypeInfo();
+		ti = ReadTypeInfo();
 
 	struct
 	{
@@ -1869,7 +1869,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 	ReadData(&bits, 1);
 
 	asCScriptFunction *funcDef = 0;
-	if( tokenType == ttIdentifier && objType && objType->name == "$func" )
+	if( tokenType == ttIdentifier && ti && (ti->flags & asOBJ_FUNCDEF) )
 	{
 		asCScriptFunction func(engine, module, asFUNC_DUMMY);
 		asCObjectType *parentClass = 0;
@@ -1899,7 +1899,7 @@ void asCReader::ReadDataType(asCDataType *dt)
 				if( module->funcDefs[n]->name == func.name &&
 					module->funcDefs[n]->nameSpace == func.nameSpace )
 				{
-					funcDef = module->funcDefs[n]->funcdef;
+					ti = module->funcDefs[n];
 					break;
 				}
 			}
@@ -1909,10 +1909,8 @@ void asCReader::ReadDataType(asCDataType *dt)
 		func.funcType = asFUNC_DUMMY;
 	}
 
-	if( funcDef )
-		*dt = asCDataType::CreateFuncDef(funcDef);
-	else if( tokenType == ttIdentifier )
-		*dt = asCDataType::CreateType(objType, false);
+	if( tokenType == ttIdentifier )
+		*dt = asCDataType::CreateType(ti, false);
 	else
 		*dt = asCDataType::CreatePrimitive(tokenType, false);
 	if( bits.isObjectHandle )
@@ -2068,6 +2066,36 @@ asCTypeInfo* asCReader::ReadTypeInfo()
 		}
 		else
 			asASSERT( false );
+	}
+	else if (ch == 'c')
+	{
+		// Read the object type name
+		asCString typeName, ns;
+		ReadString(&typeName);
+
+		// Read the parent class
+		asCObjectType *parentClass = ReadTypeInfo()->CastToObjectType();
+		if (parentClass == 0)
+		{
+			Error(TXT_INVALID_BYTECODE_d);
+			return 0;
+		}
+
+		// Find the child type in the parentClass
+		for (asUINT n = 0; n < parentClass->childFuncDefs.GetLength(); n++)
+		{
+			if (parentClass->childFuncDefs[n]->name == typeName)
+				ot = parentClass->childFuncDefs[n];
+		}
+
+		if (ot == 0)
+		{
+			asCString str;
+			str.Format(TXT_OBJECT_TYPE_s_DOESNT_EXIST, typeName.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			Error(TXT_INVALID_BYTECODE_d);
+			return 0;
+		}
 	}
 	else
 	{
@@ -3326,8 +3354,16 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 			paramPos -= AS_PTR_SIZE;
 		for( v = 0; v < func->parameterTypes.GetLength(); v++ )
 		{
-			if( var == paramPos )
-				return func->parameterTypes[v].GetFuncDef();
+			if (var == paramPos)
+			{
+				if (func->parameterTypes[v].IsFuncdef())
+					return func->parameterTypes[v].GetTypeInfo()->CastToFuncdefType()->funcdef;
+				else
+				{
+					error = true;
+					return 0;
+				}
+			}
 			paramPos -= func->parameterTypes[v].GetSizeOnStackDWords();
 		}
 	}
@@ -4213,9 +4249,10 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	bits.isReadOnly      = dt->IsReadOnly();
 	WriteData(&bits, 1);
 
-	if( t == ttIdentifier && dt->GetTypeInfo()->name == "$func" )
+	// TODO: type: This is probably not needed anymore since funcdefs are now treated as types
+	if( t == ttIdentifier && (dt->GetTypeInfo()->flags & asOBJ_FUNCDEF) )
 	{
-		WriteFunctionSignature(dt->GetFuncDef());
+		WriteFunctionSignature(dt->GetTypeInfo()->CastToFuncdefType()->funcdef);
 	}
 }
 
@@ -4232,13 +4269,13 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 			// Check for list pattern type or template type
 			if( ot->flags & asOBJ_LIST_PATTERN )
 			{
-				ch = 'l';
+				ch = 'l'; // list
 				WriteData(&ch, 1);
 				WriteTypeInfo(ot->templateSubTypes[0].GetTypeInfo());
 			}
 			else
 			{
-				ch = 'a';
+				ch = 'a'; // array
 				WriteData(&ch, 1);
 				WriteString(&ot->name);
 				WriteString(&ot->nameSpace->name);
@@ -4248,13 +4285,13 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 				{
 					if( !ot->templateSubTypes[n].IsPrimitive() || ot->templateSubTypes[n].IsEnumType() )
 					{
-						ch = 's';
+						ch = 's'; // sub type
 						WriteData(&ch, 1);
 						WriteDataType(&ot->templateSubTypes[n]);
 					}
 					else
 					{
-						ch = 't';
+						ch = 't'; // token
 						WriteData(&ch, 1);
 						eTokenType t = ot->templateSubTypes[n].GetTokenType();
 						WriteEncodedInt64(t);
@@ -4264,16 +4301,25 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 		}
 		else if( ti->flags & asOBJ_TEMPLATE_SUBTYPE )
 		{
-			ch = 's';
+			ch = 's'; // sub type
 			WriteData(&ch, 1);
 			WriteString(&ti->name);
 		}
-		else
+		else if( ti->nameSpace )
 		{
-			ch = 'o';
+			ch = 'o'; // object
 			WriteData(&ch, 1);
 			WriteString(&ti->name);
 			WriteString(&ti->nameSpace->name);
+		}
+		else
+		{
+			asASSERT(ti->flags & asOBJ_FUNCDEF);
+
+			ch = 'c'; // child type
+			WriteData(&ch, 1);
+			WriteString(&ti->name);
+			WriteTypeInfo(ti->CastToFuncdefType()->parentClass);
 		}
 	}
 	else
@@ -4469,7 +4515,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 				{
 					if( var == paramPos )
 					{
-						calledFunc = func->parameterTypes[v].GetFuncDef();
+						calledFunc = func->parameterTypes[v].GetTypeInfo()->CastToFuncdefType()->funcdef;
 						break;
 					}
 					paramPos -= func->parameterTypes[v].GetSizeOnStackDWords();

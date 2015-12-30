@@ -297,6 +297,7 @@ public:
 
 		// These hold information on objects and function pointers, including temporary
 		// variables used by exception handler and when saving bytecode
+		// TODO: type: These two can be merged into a single array of asCTypeInfo*
 		asCArray<asCObjectType*>        objVariableTypes;
 		asCArray<asCScriptFunction*>    funcVariableTypes;
 		asCArray<int>                   objVariablePos;

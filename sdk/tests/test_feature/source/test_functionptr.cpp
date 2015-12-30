@@ -619,6 +619,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Test lambda function in asIScriptModule::CompileGlobalVar()
+		// TODO: type: Test this without having declared the funcdef first
 		r = mod->CompileGlobalVar("glob", "CB1 @g = function(a) {return a;};", 0);
 		if( r < 0 )
 			TEST_FAILED;
@@ -1266,6 +1267,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Must be possible to call delegate from application
+		bout.buffer = "";
 		mod->AddScriptSection("test",
 			"funcdef void CALL(); \n"
 			"class Test { \n"
@@ -1277,6 +1279,11 @@ bool Test()
 		r = mod->Build();
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		int idx = mod->GetGlobalVarIndexByDecl("CALL @callback");
 		if( idx < 0 )
@@ -1465,8 +1472,7 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
-		if( bout.buffer != "script (2, 10) : Info    : Compiling functype myFunc\n"
-						   "script (2, 10) : Error   : No default constructor for object of type 'functype'.\n" )
+		if( bout.buffer != "script (2, 1) : Error   : Data type can't be 'functype'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1593,11 +1599,12 @@ bool Test()
 		if( !receivedFuncPtrIsOK )
 			TEST_FAILED;
 
-		mod->SaveByteCode(&bytecode);
+		CBytecodeStream bytecode2(__FILE__"2");
+		mod->SaveByteCode(&bytecode2);
 		{
 			receivedFuncPtrIsOK = false;
 			asIScriptModule *mod2 = engine->GetModule("mod2", asGM_ALWAYS_CREATE);
-			mod2->LoadByteCode(&bytecode);
+			mod2->LoadByteCode(&bytecode2);
 			r = ExecuteString(engine, "main()", mod2);
 			if( r != asEXECUTION_FINISHED )
 				TEST_FAILED;

@@ -487,6 +487,15 @@ void asCModule::CallExit()
 				*obj = 0;
 			}
 		}
+		else if ((*it)->type.IsFuncdef())
+		{
+			asCScriptFunction **func = (asCScriptFunction**)(*it)->GetAddressOfValue();
+			if (*func)
+			{
+				(*func)->Release();
+				*func = 0;
+			}
+		}
 		it++;
 	}
 
@@ -1495,6 +1504,11 @@ asCTypeInfo *asCModule::GetType(const char *type, asSNameSpace *ns)
 			typeDefs[n]->nameSpace == ns)
 			return typeDefs[n];
 
+	for (n = 0; n < funcDefs.GetLength(); n++)
+		if (funcDefs[n]->name == type &&
+			funcDefs[n]->nameSpace == ns)
+			return funcDefs[n];
+
 	return 0;
 }
 
@@ -1762,9 +1776,9 @@ int asCModule::AddFuncDef(const asCString &funcName, asSNameSpace *ns, asCObject
 	func->module    = this;
 
 	asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine, func);
-	funcDefs.PushLast(fdt);
+	funcDefs.PushLast(fdt); // The constructor set the refcount to 1
 
-	engine->funcDefs.PushLast(fdt);
+	engine->funcDefs.PushLast(fdt); // doesn't increase refcount
 	func->id = engine->GetNextScriptFunctionId();
 	engine->AddScriptFunction(func);
 

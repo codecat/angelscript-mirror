@@ -487,7 +487,10 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 		{
 			asSSystemFunctionInterface::SClean clean;
 			clean.op  = 0; // call release
-			clean.ot  = dt.GetTypeInfo()->CastToObjectType();
+			if (dt.IsFuncdef())
+				clean.ot = &engine->functionBehaviours;
+			else
+				clean.ot  = dt.GetTypeInfo()->CastToObjectType();
 			clean.off = short(offset);
 			internal->cleanArgs.PushLast(clean);
 		}

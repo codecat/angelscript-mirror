@@ -57,6 +57,11 @@ struct asSNameSpace;
 
 // TODO: type: asCPrimitiveType shall be implemented to represent primitives (void, int, double, etc)
 
+// TODO: type: asCTypeInfo should have an internal virtual method GetBehaviours. For asCObjectType it 
+//             should return the beh member. For asCFuncdefType it should return the beh member of 
+//             engine->functionBehaviours. This will allow the code that needs the behaviour to handle 
+//             both object types and funcdefs the same way
+
 class asCTypeInfo : public asITypeInfo
 {
 public:

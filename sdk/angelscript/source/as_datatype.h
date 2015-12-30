@@ -72,7 +72,6 @@ public:
 	static asCDataType CreateType(asCTypeInfo *ti, bool isConst);
 	static asCDataType CreateAuto(bool isConst);
 	static asCDataType CreateObjectHandle(asCTypeInfo *ot, bool isConst);
-	static asCDataType CreateFuncDef(asCScriptFunction *ot);
 	static asCDataType CreateNullHandle();
 
 	int MakeHandle(bool b, bool acceptHandleForScope = false);
@@ -103,6 +102,7 @@ public:
 	bool IsHandleToAsHandleType() const {return isHandleToAsHandleType;}
 	bool IsAbstractClass()        const;
 	bool IsInterface()            const;
+	bool IsFuncdef()              const;
 
 	bool IsObjectConst()    const;
 
@@ -121,7 +121,6 @@ public:
 	asCDataType        GetSubType(asUINT subtypeIndex = 0)    const;
 	eTokenType         GetTokenType()  const {return tokenType;}
 	asCTypeInfo       *GetTypeInfo() const { return typeInfo; }
-	asCScriptFunction *GetFuncDef()    const {return funcDef;}
 
 	int  GetSizeOnStackDWords()  const;
 	int  GetSizeInMemoryBytes()  const;
@@ -132,7 +131,6 @@ public:
 
 	void SetTokenType(eTokenType tt)         {tokenType = tt;}
 	void SetTypeInfo(asCTypeInfo *ti)       {typeInfo = ti;}
-	void SetFuncDef(asCScriptFunction *func) {asASSERT(funcDef); funcDef = func;}
 
 	asCDataType &operator =(const asCDataType &);
 
@@ -144,8 +142,6 @@ protected:
 
 	// Behaviour type
 	asCTypeInfo *typeInfo;
-	// TODO: type: This pointer is no longer needed as typeInfo can hold the funcdef signature
-	asCScriptFunction *funcDef;
 
 	// Top level
 	bool isReference:1;

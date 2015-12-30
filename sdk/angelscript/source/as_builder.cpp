@@ -1030,7 +1030,7 @@ int asCBuilder::VerifyProperty(asCDataType *dt, const char *decl, asCString &nam
 	// Validate that the type really can be a registered property
 	// We cannot use CanBeInstantiated, as it is allowed to register
 	// properties of type that cannot otherwise be instantiated
-	if( type.GetFuncDef() && !type.IsObjectHandle() )
+	if( type.IsFuncdef() && !type.IsObjectHandle() )
 	{
 		// Function definitions must always be handles
 		return asINVALID_DECLARATION;
@@ -1625,15 +1625,9 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	isShared = true;
 	if( func->returnType.GetTypeInfo() && !func->returnType.GetTypeInfo()->IsShared() )
 		isShared = false;
-	if( func->returnType.GetFuncDef() && !func->returnType.GetFuncDef()->IsShared() )
-		isShared = false;
 	for( asUINT n = 0; isShared && n < func->parameterTypes.GetLength(); n++ )
-	{
 		if( func->parameterTypes[n].GetTypeInfo() && !func->parameterTypes[n].GetTypeInfo()->IsShared() )
 			isShared = false;
-		if( func->parameterTypes[n].GetFuncDef() && !func->parameterTypes[n].GetFuncDef()->IsShared() )
-			isShared = false;
-	}
 	func->isShared = isShared;
 
 	// Check if there is another identical funcdef from another module and if so reuse that instead
@@ -3347,6 +3341,24 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 		for( asUINT p = 0; p < type->properties.GetLength(); p++ )
 		{
 			asCDataType dt = type->properties[p]->type;
+
+			if (dt.IsFuncdef())
+			{
+				// If a class holds a function pointer as member then the class must be garbage collected as the 
+				// function pointer can form circular references with the class through use of a delegate. Example:
+				//
+				//   class A { B @b; void f(); }
+				//   class B { F @f; }
+				//   funcdef void F();
+				//
+				//   A a;
+				//   @a.b = B();       // instance of A refers to instance of B
+				//   @a.b.f = F(a.f);  // instance of B refers to delegate that refers to instance of A
+				//
+				gc = true;
+				break;
+			}
+
 			if( !dt.IsObject() )
 				continue;
 
@@ -5206,7 +5218,7 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 			while( !ti && nsTmp )
 			{
 				// Check if the typeName is an existing type in the namespace
-				ti = GetType(typeName.AddressOf(), nsTmp);
+				ti = GetType(typeName.AddressOf(), nsTmp, 0);
 				if (ti)
 				{
 					// The informed scope is not a namespace, but it does match a type
@@ -5288,18 +5300,17 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				if (ti == 0)
 				{
 					// Check if the type is a child type of the current type
-					asCScriptFunction *funcDef = GetFuncDef(str.AddressOf(), 0, currentType);
-					if (funcDef)
+					ti = GetFuncDef(str.AddressOf(), 0, currentType);
+					if (ti)
 					{
-						dt = asCDataType::CreateFuncDef(funcDef);
-						ti = dt.GetTypeInfo();
+						dt = asCDataType::CreateType(ti, false);
 						found = true;
 					}
 				}
 			}
 
-			if( ti == 0 && ns )
-				ti = GetType(str.AddressOf(), ns);
+			if( ti == 0 )
+				ti = GetType(str.AddressOf(), ns, parentType);
 			if( ti == 0 && !module && currentType )
 				ti = GetTypeFromTypesKnownByObject(str.AddressOf(), currentType);
 
@@ -5352,17 +5363,6 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 					WriteError(msg, file, n);
 
 					dt.SetTokenType(ttInt);
-				}
-			}
-			else if( ti == 0 )
-			{
-				// It can still be a function definition
-				asCScriptFunction *funcdef = GetFuncDef(str.AddressOf(), ns, parentType);
-
-				if( funcdef )
-				{
-					dt = asCDataType::CreateFuncDef(funcdef);
-					found = true;
 				}
 			}
 
@@ -5609,18 +5609,39 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 	return dt;
 }
 
-asCTypeInfo *asCBuilder::GetType(const char *type, asSNameSpace *ns)
+asCTypeInfo *asCBuilder::GetType(const char *type, asSNameSpace *ns, asCObjectType *parentType)
 {
-	asCTypeInfo *ti = engine->GetRegisteredType(type, ns);
-	if (!ti && module)
-		ti = module->GetType(type, ns);
+	asASSERT((ns == 0 && parentType) || (ns && parentType == 0));
 
-	return ti;
+	if (ns)
+	{
+		asCTypeInfo *ti = engine->GetRegisteredType(type, ns);
+		if (!ti && module)
+			ti = module->GetType(type, ns);
+		return ti;
+	}
+	else
+	{
+		// Recursively check base classes
+		asCObjectType *currType = parentType;
+		while (currType)
+		{
+			for (asUINT n = 0; n < currType->childFuncDefs.GetLength(); n++)
+			{
+				asCFuncdefType *funcDef = currType->childFuncDefs[n];
+				if (funcDef && funcDef->name == type)
+					return funcDef;
+			}
+			currType = currType->derivedFrom;
+		}
+	}
+
+	return 0;
 }
 
 asCObjectType *asCBuilder::GetObjectType(const char *type, asSNameSpace *ns)
 {
-	return GetType(type, ns)->CastToObjectType();
+	return GetType(type, ns, 0)->CastToObjectType();
 }
 
 #ifndef AS_NO_COMPILER
@@ -5639,7 +5660,7 @@ bool asCBuilder::DoesTypeExist(const asCString &type)
 		// Only do this once
 		hasCachedKnownTypes = true;
 
-		// Add registered object types
+		// Add registered types
 		asSMapNode<asSNameSpaceNamePair, asCTypeInfo*> *cursor;
 		engine->allRegisteredTypes.MoveFirst(&cursor);
 		while( cursor )
@@ -5650,11 +5671,6 @@ bool asCBuilder::DoesTypeExist(const asCString &type)
 			engine->allRegisteredTypes.MoveNext(&cursor, cursor);
 		}
 
-		// Add registered funcdefs
-		for (n = 0; n < engine->registeredFuncDefs.GetLength(); n++)
-			if (!knownTypes.MoveTo(0, engine->registeredFuncDefs[n]->name))
-				knownTypes.Insert(engine->registeredFuncDefs[n]->name, true);
-		
 		if (module)
 		{
 			// Add script classes and interfaces
@@ -5722,8 +5738,7 @@ asCTypeInfo *asCBuilder::GetTypeFromTypesKnownByObject(const char *type, asCObje
 	return found;
 }
 
-// TODO: type: Should probably return asCFuncdefType
-asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType)
+asCFuncdefType *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType)
 {
 	asASSERT((ns == 0 && parentType) || (ns && parentType == 0));
 
@@ -5734,7 +5749,7 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, as
 			asCFuncdefType *funcDef = engine->registeredFuncDefs[n];
 			// TODO: access: Only return the definitions that the module has access to
 			if (funcDef && funcDef->nameSpace == ns && funcDef->name == type)
-				return funcDef->funcdef;
+				return funcDef;
 		}
 
 		if (module)
@@ -5743,7 +5758,7 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, as
 			{
 				asCFuncdefType *funcDef = module->funcDefs[n];
 				if (funcDef && funcDef->nameSpace == ns && funcDef->name == type)
-					return funcDef->funcdef;
+					return funcDef;
 			}
 		}
 	}
@@ -5757,7 +5772,7 @@ asCScriptFunction *asCBuilder::GetFuncDef(const char *type, asSNameSpace *ns, as
 			{
 				asCFuncdefType *funcDef = currType->childFuncDefs[n];
 				if (funcDef && funcDef->name == type)
-					return funcDef->funcdef;
+					return funcDef;
 			}
 			currType = currType->derivedFrom;
 		}
