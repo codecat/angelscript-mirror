@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -5133,7 +5133,22 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 	asCGeneric gen(m_engine, descr, currentObject, args);
 
 	m_callingSystemFunction = descr;
+#ifdef AS_NO_EXCEPTIONS
 	func(&gen);
+#else
+	// This try/catch block is to catch potential exception that may 
+	// be thrown by the registered function. 
+	try
+	{
+		func(&gen);
+	}
+	catch (...)
+	{
+		// Convert the exception to a script exception so the VM can 
+		// properly report the error to the application and then clean up
+		SetException(TXT_EXCEPTION_CAUGHT);
+	}
+#endif
 	m_callingSystemFunction = 0;
 
 	m_regs.valueRegister = gen.returnVal;
