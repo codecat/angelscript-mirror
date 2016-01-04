@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -6984,7 +6984,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 				// A reference to a non-const can be converted to a reference to a const
 				if( to.IsReadOnly() )
 					ctx->type.dataType.MakeReadOnly(true);
-				else if( ctx->type.dataType.IsReadOnly() )
+				else if( ctx->type.dataType.IsReadOnly() && allowObjectConstruct )
 				{
 					// A reference to a const can be converted to a reference to a
 					// non-const by copying the object to a temporary variable
@@ -8510,7 +8510,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			else
 				ctx->type.SetVariable(v->type, v->stackOffset, false);
 
-			ctx->type.isLValue = true;
+			// Set as lvalue unless it is a const variable
+			if( !v->type.IsReadOnly() )
+				ctx->type.isLValue = true;
 		}
 		else
 		{
@@ -8525,7 +8527,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
 				ctx->bc.Instr(asBC_RDSPtr);
 
-			ctx->type.isLValue = true;
+			// Set as lvalue unless it is a const variable
+			if (!v->type.IsReadOnly())
+				ctx->type.isLValue = true;
 		}
 	}
 
@@ -11998,6 +12002,11 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 	ti.exprNode = argExpr->exprNode;
 	if( argExpr->type.dataType.IsPrimitive() )
 		ti.type.dataType.MakeReference(false);
+
+	// Don't allow the implicit conversion to make a copy in case the argument is expecting a reference to the true value
+	if (desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] == asTM_INOUTREF)
+		allowObjectConstruct = false;
+
 	int cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
 
 	// If the function parameter is an inout-reference then it must not be possible to call the

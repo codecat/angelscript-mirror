@@ -212,6 +212,35 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test const correctness with parameters
+	// http://www.gamedev.net/topic/673892-const-broken/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {} \n"
+			"void foo(const A& a) { foo2(a); } \n" // foo2 call must fail as foo2 is expecting a const reference
+			"void foo2(A& a) {}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (2, 1) : Info    : Compiling void foo(const A&inout)\n"
+						   "test (2, 24) : Error   : No matching signatures to 'foo2(const A&)'\n"
+						   "test (2, 24) : Info    : Candidates are:\n"
+						   "test (2, 24) : Info    : void foo2(A&inout a)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test unicode identifiers
 	{
 		engine = asCreateScriptEngine();
