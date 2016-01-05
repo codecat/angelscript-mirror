@@ -30,6 +30,66 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test function pointers in array
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void FD (void);\n"
+			"void f(void)\n"
+			"{\n"
+			"}\n"
+			"void main1(void)\n"
+			"{\n"
+			"	array<FD @> a;\n"
+			"	a.insertLast(f);\n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main1()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"funcdef void FD (void);\n"
+			"void f(void)\n"
+			"{\n"
+			"}\n"
+			"void main2(void)\n"
+			"{\n"
+			"	array<FD> a;\n" // shouldn't be allowed as it would mean value copies of functions
+			"	a.insertLast(f);\n"
+			"}\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (5, 1) : Info    : Compiling void main2()\n"
+						   "array (0, 0) : Error   : The subtype has no default factory\n"
+						   "test (7, 8) : Error   : Attempting to instantiate invalid template type 'array<FD>'\n"
+						   "test (8, 3) : Warning : 'a' is not initialized.\n"
+						   "test (8, 3) : Error   : Illegal operation on 'int'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test function pointers in ternary conditions
 	// http://www.gamedev.net/topic/672565-conditional-operator-is-unusable-with-functions/
 	{

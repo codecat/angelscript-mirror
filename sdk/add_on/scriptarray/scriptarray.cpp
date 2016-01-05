@@ -159,6 +159,7 @@ static bool ScriptArrayTemplateCallback(asITypeInfo *ti, bool &dontGarbageCollec
 			if( !found )
 			{
 				// There is no default constructor
+				// TODO: Should format the message to give the name of the subtype for better understanding
 				ti->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default constructor");
 				return false;
 			}
@@ -187,6 +188,7 @@ static bool ScriptArrayTemplateCallback(asITypeInfo *ti, bool &dontGarbageCollec
 			if( !found )
 			{
 				// No default factory
+				// TODO: Should format the message to give the name of the subtype for better understanding
 				ti->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default factory");
 				return false;
 			}

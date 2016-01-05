@@ -1945,15 +1945,11 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 	{
 		if( descr->parameterTypes[n].IsReference() )
 		{
-			asASSERT(!descr->parameterTypes[n].IsFuncdef());
-
-			if( descr->parameterTypes[n].IsObject() && !descr->parameterTypes[n].IsObjectHandle() )
+			if( (descr->parameterTypes[n].IsObject() || descr->parameterTypes[n].IsFuncdef()) && !descr->parameterTypes[n].IsObjectHandle() )
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
 				{
-#ifdef AS_DEBUG
 					asASSERT( args[n]->type.isVariable || args[n]->type.isTemporary || makingCopy );
-#endif
 
 					if( (args[n]->type.isVariable || args[n]->type.isTemporary) )
 					{
@@ -1971,7 +1967,8 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 			else if( descr->inOutFlags[n] != asTM_INOUTREF )
 			{
 				if( descr->parameterTypes[n].GetTokenType() == ttQuestion &&
-					args[n]->type.dataType.IsObject() && !args[n]->type.dataType.IsObjectHandle() )
+					(args[n]->type.dataType.IsObject() || args[n]->type.dataType.IsFuncdef()) && 
+					!args[n]->type.dataType.IsObjectHandle() )
 				{
 					// Send the object as a reference to the object,
 					// and not to the variable holding the object

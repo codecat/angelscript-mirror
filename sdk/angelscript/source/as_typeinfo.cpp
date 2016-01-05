@@ -271,7 +271,7 @@ asCObjectType *asCTypeInfo::CastToObjectType()
 	if (this == 0) return 0;
 
 	// TODO: type: Should List pattern have its own type class?
-	if (flags & (asOBJ_VALUE | asOBJ_REF | asOBJ_LIST_PATTERN))
+	if ((flags & (asOBJ_VALUE | asOBJ_REF | asOBJ_LIST_PATTERN)) && !(flags & asOBJ_FUNCDEF))
 		return reinterpret_cast<asCObjectType*>(this);
 
 	return 0;
@@ -413,7 +413,8 @@ asCFuncdefType::asCFuncdefType(asCScriptEngine *en, asCScriptFunction *func) : a
 	asASSERT(func->funcType == asFUNC_FUNCDEF);
 	asASSERT(func->funcdefType == 0);
 
-	flags       = asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
+	// A function pointer is special kind of reference type
+	flags       = asOBJ_REF | asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
 	name        = func->name;
 	nameSpace   = func->nameSpace;
 	module      = func->module;
