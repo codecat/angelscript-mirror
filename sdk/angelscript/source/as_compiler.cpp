@@ -1949,7 +1949,10 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 			{
 				if( descr->inOutFlags[n] != asTM_INOUTREF )
 				{
+#ifdef AS_DEBUG
+					// This assert is inside AS_DEBUG because of the variable makingCopy which is only defined in debug mode
 					asASSERT( args[n]->type.isVariable || args[n]->type.isTemporary || makingCopy );
+#endif
 
 					if( (args[n]->type.isVariable || args[n]->type.isTemporary) )
 					{
