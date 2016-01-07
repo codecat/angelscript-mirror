@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -43,6 +43,10 @@
 #include "as_debug.h"
 
 BEGIN_AS_NAMESPACE
+
+// Macros for doing endianess agnostic bitmask serialization
+#define SAVE_TO_BIT(dst, val, bit) ((dst) |= ((val) << (bit)))
+#define LOAD_FROM_BIT(dst, val, bit) ((dst) = ((val) >> (bit)) & 1)
 
 asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine)
  : module(_module), stream(_stream), engine(_engine)
@@ -1858,15 +1862,15 @@ void asCReader::ReadDataType(asCDataType *dt)
 	if( tokenType == ttIdentifier )
 		ti = ReadTypeInfo();
 
-	struct
-	{
-		char isObjectHandle :1;
-		char isHandleToConst:1;
-		char isReference    :1;
-		char isReadOnly     :1;
-	} bits = {0};
-	asASSERT( sizeof(bits) == 1 );
-	ReadData(&bits, 1);
+	// Read type flags as a bitmask
+	// Endian-safe code
+	bool isObjectHandle, isHandleToConst, isReference, isReadOnly;
+	char b = 0;
+	ReadData(&b, 1);
+	LOAD_FROM_BIT(isObjectHandle, b, 0);
+	LOAD_FROM_BIT(isHandleToConst, b, 1);
+	LOAD_FROM_BIT(isReference, b, 2);
+	LOAD_FROM_BIT(isReadOnly, b, 3);
 
 	asCScriptFunction *funcDef = 0;
 	if( tokenType == ttIdentifier && ti && (ti->flags & asOBJ_FUNCDEF) )
@@ -1913,16 +1917,16 @@ void asCReader::ReadDataType(asCDataType *dt)
 		*dt = asCDataType::CreateType(ti, false);
 	else
 		*dt = asCDataType::CreatePrimitive(tokenType, false);
-	if( bits.isObjectHandle )
+	if( isObjectHandle )
 	{
-		dt->MakeReadOnly(bits.isHandleToConst ? true : false);
+		dt->MakeReadOnly(isHandleToConst ? true : false);
 		
 		// Here we must allow a scoped type to be a handle 
 		// e.g. if the datatype is for a system function
 		dt->MakeHandle(true, true);
 	}
-	dt->MakeReadOnly(bits.isReadOnly ? true : false);
-	dt->MakeReference(bits.isReference ? true : false);
+	dt->MakeReadOnly(isReadOnly ? true : false);
+	dt->MakeReference(isReference ? true : false);
 
 	// Update the previously saved slot
 	savedDataTypes[saveSlot] = *dt;
@@ -2505,7 +2509,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the true object type
 			asPWORD *ot = (asPWORD*)&bc[n+1];
-			*(asCObjectType**)ot = FindType(*(int*)ot)->CastToObjectType();
+			*(asCObjectType**)ot = FindType(int(*ot))->CastToObjectType();
 		}
 		else if( c == asBC_TYPEID ||
 			     c == asBC_Cast )
@@ -2597,13 +2601,13 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the func pointer
 			asPWORD *fid = (asPWORD*)&bc[n+1];
-			*fid = (asPWORD)FindFunction((int)*fid);
+			*fid = (asPWORD)FindFunction(int(*fid));
 		}
 		else if( c == asBC_ALLOC )
 		{
 			// Translate the index to the true object type
 			asPWORD *arg = (asPWORD*)&bc[n+1];
-			*(asCObjectType**)arg = FindType(*(int*)arg)->CastToObjectType();
+			*(asCObjectType**)arg = FindType(int(*arg))->CastToObjectType();
 
 			// The constructor function id must be translated, unless it is zero
 			int *fid = (int*)&bc[n+1+AS_PTR_SIZE];
@@ -2665,8 +2669,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the global var index to pointer
 			asPWORD *index = (asPWORD*)&bc[n+1];
-			if( *(asUINT*)index < usedGlobalProperties.GetLength() )
-				*(void**)index = usedGlobalProperties[*(asUINT*)index];
+			if( asUINT(*index) < usedGlobalProperties.GetLength() )
+				*(void**)index = usedGlobalProperties[asUINT(*index)];
 			else
 			{
 				Error(TXT_INVALID_BYTECODE_d);
@@ -2714,7 +2718,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Translate the index to the true object type
 			asPWORD *pot = (asPWORD*)&bc[n+1];
-			*(asCObjectType**)pot = FindType(*(int*)pot)->CastToObjectType();
+			*(asCObjectType**)pot = FindType(int(*pot))->CastToObjectType();
 
 			asCObjectType *ot = *(asCObjectType**)pot;
 			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
@@ -4235,18 +4239,12 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	if( t == ttIdentifier )
 		WriteTypeInfo(dt->GetTypeInfo());
 
-	struct
-	{
-		char isObjectHandle :1;
-		char isHandleToConst:1;
-		char isReference    :1;
-		char isReadOnly     :1;
-	} bits = {0};
-
-	bits.isObjectHandle  = dt->IsObjectHandle();
-	bits.isHandleToConst = dt->IsHandleToConst();
-	bits.isReference     = dt->IsReference();
-	bits.isReadOnly      = dt->IsReadOnly();
+	// Endianess safe bitmask 
+	char bits = 0;
+	SAVE_TO_BIT(bits, dt->IsObjectHandle(), 0);
+	SAVE_TO_BIT(bits, dt->IsHandleToConst(), 1);
+	SAVE_TO_BIT(bits, dt->IsReference(), 2);
+	SAVE_TO_BIT(bits, dt->IsReadOnly(), 3);
 	WriteData(&bits, 1);
 
 	// TODO: type: This is probably not needed anymore since funcdefs are now treated as types

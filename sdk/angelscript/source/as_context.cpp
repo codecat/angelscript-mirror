@@ -2803,7 +2803,7 @@ void asCContext::ExecuteNext()
 		{
 			// Read variable index from location on stack
 			asPWORD *a = (asPWORD*)(l_sp + asBC_WORDARG0(l_bc));
-			asDWORD offset = *(asDWORD*)a;
+			asPWORD offset = *a;
 			// Move pointer from variable to the same location on the stack
 			asPWORD *v = (asPWORD*)(l_fp - offset);
 			*a = *v;
@@ -4825,7 +4825,7 @@ void asCContext::CleanArgsOnStack()
 				asSTypeBehaviour *beh = func->parameterTypes[n].GetBehaviour();
 				if (func->parameterTypes[n].GetTypeInfo()->flags & asOBJ_FUNCDEF)
 				{
-					((asCScriptFunction*)m_regs.stackPointer[offset])->Release();
+					(*(asCScriptFunction**)&m_regs.stackPointer[offset])->Release();
 				}
 				else if( func->parameterTypes[n].GetTypeInfo()->flags & asOBJ_REF )
 				{
@@ -4883,7 +4883,7 @@ void asCContext::CleanStackFrame()
 					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->beh;
 					if (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_FUNCDEF)
 					{
-						((asCScriptFunction*)m_regs.stackFramePointer[-pos])->Release();
+						(*(asCScriptFunction**)&m_regs.stackFramePointer[-pos])->Release();
 					}
 					else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_REF )
 					{
@@ -4941,7 +4941,7 @@ void asCContext::CleanStackFrame()
 				asSTypeBehaviour *beh = m_currentFunction->parameterTypes[n].GetBehaviour();
 				if (m_currentFunction->parameterTypes[n].GetTypeInfo()->flags & asOBJ_FUNCDEF)
 				{
-					((asCScriptFunction*)m_regs.stackFramePointer[offset])->Release();
+					(*(asCScriptFunction**)&m_regs.stackFramePointer[offset])->Release();
 				}
 				else if( m_currentFunction->parameterTypes[n].GetTypeInfo()->flags & asOBJ_REF )
 				{
