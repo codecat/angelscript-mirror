@@ -108,12 +108,6 @@ int CScriptHandle::GetTypeId() const
 {
 	if( m_type == 0 ) return 0;
 
-	if( m_type->GetFlags() & asOBJ_SCRIPT_FUNCTION )
-	{
-		asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(m_ref);
-		return func->GetTypeId() | asTYPEID_OBJHANDLE;
-	}
-
 	return m_type->GetTypeId() | asTYPEID_OBJHANDLE;
 }
 
@@ -213,27 +207,8 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 
 	*outRef = 0;
 
-	// TODO: type: Funcdefs are no longer represented as asOBJ_SCRIPT_FUNCTION
-	if( type == m_type )
-	{
-		// If the requested type is a script function it is 
-		// necessary to check if the functions are compatible too
-		if( m_type->GetFlags() & asOBJ_SCRIPT_FUNCTION )
-		{
-			asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(m_ref);
-			if( !func->IsCompatibleWithTypeId(typeId) )
-				return;
-		}
-
-		// Must increase the ref count as we're returning a new reference to the object
-		engine->AddRefScriptObject(m_ref, m_type);
-		*outRef = m_ref;
-	}
-	else 
-	{
-		// RefCastObject will increment the refCount of the returned object if successful
-		engine->RefCastObject(m_ref, m_type, type, outRef);
-	}
+	// RefCastObject will increment the refCount of the returned object if successful
+	engine->RefCastObject(m_ref, m_type, type, outRef);
 }
 
 

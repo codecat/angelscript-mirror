@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4772,11 +4772,6 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 	// A null-pointer can always be cast to another type, so it will always be successful
 	if( obj == 0 )
 		return asSUCCESS;
-
-	// This method doesn't support casting function pointers, since they cannot be described with just an object type
-	// TODO: type: asOBJ_SCRIPT_FUNCTION will no longer exist
-	if( fromType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
-		return asNOT_SUPPORTED;
 
 	if( fromType == toType )
 	{

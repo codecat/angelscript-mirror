@@ -72,33 +72,8 @@ public:
 
 		*outRef = 0;
 
-		if( wantedType == heldType )
-		{
-			// If the requested type is a script function it is
-			// necessary to check if the functions are compatible too
-			if( heldType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
-			{
-				asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(m_valueObj);
-				if( !func->IsCompatibleWithTypeId(outTypeId) )
-					return;
-			}
-
-			// Must increase the ref count as we're returning a new reference to the object
-			m_engine->AddRefScriptObject(m_valueObj, heldType);
-			*outRef = m_valueObj;
-		}
-		else if( heldType->GetFlags() & asOBJ_SCRIPT_OBJECT )
-		{
-			// Attempt a dynamic cast of the stored handle to the requested handle type
-			m_engine->RefCastObject(m_valueObj, heldType, m_engine->GetTypeInfoById(outTypeId), outRef);
-		}
-		else
-		{
-			// TODO: Check for the existance of a reference cast behaviour.
-			//       Both implicit and explicit casts may be used
-			//       Calling the reference cast behaviour may change the actual
-			//       pointer so the AddRef must be called on the new pointer
-		}
+		// Attempt a dynamic cast of the stored handle to the requested handle type
+		m_engine->RefCastObject(m_valueObj, heldType, m_engine->GetTypeInfoById(outTypeId), outRef);
 	}
 
 	// AngelScript: used as int(var)

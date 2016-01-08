@@ -469,7 +469,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Retrieve the function
-		if( hndl.GetType()->GetFlags() & asOBJ_SCRIPT_FUNCTION )
+		if( hndl.GetType()->GetFlags() & asOBJ_FUNCDEF )
 		{
 			hndl.Cast((void**)&func, hndl.GetTypeId());
 

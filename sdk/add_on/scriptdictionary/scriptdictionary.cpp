@@ -680,22 +680,8 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			if( (m_typeId & asTYPEID_HANDLETOCONST) && !(typeId & asTYPEID_HANDLETOCONST) )
 				return false;
 
-			asITypeInfo *currType = engine->GetTypeInfoById(m_typeId);
-			if( currType->GetFlags() & asOBJ_SCRIPT_FUNCTION )
-			{
-				// For function pointers it is necessary to check if they have the same signature
-				asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(m_valueObj);
-				if( !func->IsCompatibleWithTypeId(typeId) )
-					return false;
-
-				func->AddRef();
-				*reinterpret_cast<asIScriptFunction**>(value) = func;
-			}
-			else
-			{
-				// RefCastObject will increment the refcount if successful
-				engine->RefCastObject(m_valueObj, currType, engine->GetTypeInfoById(typeId), reinterpret_cast<void**>(value));
-			}
+			// RefCastObject will increment the refcount if successful
+			engine->RefCastObject(m_valueObj, engine->GetTypeInfoById(m_typeId), engine->GetTypeInfoById(typeId), reinterpret_cast<void**>(value));
 
 			return true;
 		}

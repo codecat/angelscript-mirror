@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -206,14 +206,13 @@ enum asEObjTypeFlags
 	asOBJ_SCRIPT_OBJECT              = (1<<21),
 	asOBJ_SHARED                     = (1<<22),
 	asOBJ_NOINHERIT                  = (1<<23),
-	asOBJ_SCRIPT_FUNCTION            = (1<<24),
+	asOBJ_FUNCDEF                    = (1<<24),
 	asOBJ_LIST_PATTERN               = (1<<25),
 	asOBJ_ENUM                       = (1<<26),
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
 	asOBJ_TYPEDEF                    = (1<<28),
 	asOBJ_ABSTRACT                   = (1<<29),
-	asOBJ_APP_ALIGN16                = (1<<30),
-	asOBJ_FUNCDEF                    = (1<<31)
+	asOBJ_APP_ALIGN16                = (1<<30)
 };
 
 // Behaviours

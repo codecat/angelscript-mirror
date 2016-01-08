@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -64,8 +64,8 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! Version 2.30.2
-#define ANGELSCRIPT_VERSION        23002
-#define ANGELSCRIPT_VERSION_STRING "2.30.2"
+#define ANGELSCRIPT_VERSION        23100
+#define ANGELSCRIPT_VERSION_STRING "2.31.0"
 
 // Data types
 
@@ -1799,7 +1799,6 @@ public:
 	//! \param[in] useOnlyImplicitCast If only the implicit reference cast operators should be used.
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG A null pointer was supplied
-	//! \retval asNOT_SUPPORTED The type of the object is a function pointer.
 	//!
 	//! This method is used to cast an object pointer to a different type. While both the new 
 	//! and old pointers are expected to refer to the same object instance, the address of the 

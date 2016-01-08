@@ -385,14 +385,14 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 	return false;
 }
 
-bool CScriptAny::Retrieve(asINT64 &value) const
+bool CScriptAny::Retrieve(asINT64 &outValue) const
 {
-	return Retrieve(&value, asTYPEID_INT64);
+	return Retrieve(&outValue, asTYPEID_INT64);
 }
 
-bool CScriptAny::Retrieve(double &value) const
+bool CScriptAny::Retrieve(double &outValue) const
 {
-	return Retrieve(&value, asTYPEID_DOUBLE);
+	return Retrieve(&outValue, asTYPEID_DOUBLE);
 }
 
 int CScriptAny::GetTypeId() const

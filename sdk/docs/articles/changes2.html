@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.0 WIP - 2016/01/06</h2>
+<h2>Version 2.31.0 WIP - 2016/01/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -58,6 +58,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added configuration in as_config.h to identify GNUC+Linux+PPC64 (Thanks Rafael Fonseca)
 <li>Access mask in the engine now defaults to all bits set to make sure built-in functions are available to all modules (Thanks Solokiller)
 <li>Included the asOBJ_FUNCDEF value to allow asITypeInfo to represent funcdefs too
+<li>asOBJ_SCRIPT_FUNCTION has been removed
+<li>RefCastObject can now be used for function pointers too
 </ul>
 <li>Script language
 <ul>
@@ -70,6 +72,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compiler error in aswrappedcall.h when using AS_USE_NAMESPACE
 <li>WriteConfigToStream and ConfigEngineFromStream is properly handling child funcdefs
 <li>Fixed problem in CScriptAny with constructing any object from primitive (Thanks gjl)
+<li>ScriptHandle and Dictionary no longer need special code for function pointers
 </ul>
 <li>Project
 <ul>
