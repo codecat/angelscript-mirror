@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -76,13 +76,12 @@ asUINT asCObjectType::GetChildFuncdefCount() const
 }
 
 // interface
-// TODO: type: Should return asCFuncdefType
-asIScriptFunction *asCObjectType::GetChildFuncdef(asUINT index) const
+asITypeInfo *asCObjectType::GetChildFuncdef(asUINT index) const
 {
 	if (index >= childFuncDefs.GetLength())
 		return 0;
 
-	return childFuncDefs[index]->funcdef;
+	return childFuncDefs[index];
 }
 
 // internal

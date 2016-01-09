@@ -37,12 +37,12 @@ void CScriptBuilder::SetIncludeCallback(INCLUDECALLBACK_t callback, void *userPa
 	callbackParam   = userParam;
 }
 
-int CScriptBuilder::StartNewModule(asIScriptEngine *engine, const char *moduleName)
+int CScriptBuilder::StartNewModule(asIScriptEngine *inEngine, const char *moduleName)
 {
-	if( engine == 0 ) return -1;
+	if(inEngine == 0 ) return -1;
 
-	this->engine = engine;
-	module = engine->GetModule(moduleName, asGM_ALWAYS_CREATE);
+	engine = inEngine;
+	module = inEngine->GetModule(moduleName, asGM_ALWAYS_CREATE);
 	if( module == 0 )
 		return -1;
 
@@ -230,7 +230,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 			int start = pos++;
 
 			// Is this an #if directive?
-			asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 
 			string token;
 			token.assign(&modifiedScript[pos], len);
@@ -421,7 +421,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 		{
 			int start = pos++;
 
-			asETokenClass t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 			if( t == asTC_IDENTIFIER )
 			{
 				string token;

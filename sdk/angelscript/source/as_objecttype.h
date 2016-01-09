@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -122,7 +122,7 @@ public:
 	asUINT             GetBehaviourCount() const;
 	asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const;
 	asUINT             GetChildFuncdefCount() const;
-	asIScriptFunction *GetChildFuncdef(asUINT index) const;
+	asITypeInfo       *GetChildFuncdef(asUINT index) const;
 
 public:
 	asCObjectType(asCScriptEngine *engine);

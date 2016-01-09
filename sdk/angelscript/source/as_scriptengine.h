@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -133,9 +133,9 @@ public:
 #endif
 
 	// Funcdefs
-	virtual int                RegisterFuncdef(const char *decl);
-	virtual asUINT             GetFuncdefCount() const;
-	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const;
+	virtual int          RegisterFuncdef(const char *decl);
+	virtual asUINT       GetFuncdefCount() const;
+	virtual asITypeInfo *GetFuncdefByIndex(asUINT index) const;
 
 	// Typedefs
 	// TODO: interface: Should perhaps rename this to Alias, since it doesn't really create a new type
@@ -159,7 +159,10 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;
+#ifdef AS_DEPRECATED
+	// deprecated since 2.31.0, 2016-01-01
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const;
+#endif
 
 	// Type identification
 #ifdef AS_DEPRECATED

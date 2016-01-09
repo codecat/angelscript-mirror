@@ -369,41 +369,40 @@ void CSerializedValue::Restore(void *ref, int typeId)
 		// if need create objects
 		if( m_children.size() == 1 )
 		{
-			asITypeInfo *type = m_children[0]->GetType();
+			asITypeInfo *ctype = m_children[0]->GetType();
 
-			if( type->GetFactoryCount() == 0 )
+			if( ctype->GetFactoryCount() == 0 )
 			{
 				// There are no factories, so assume the same pointer is going to be used
 				m_children[0]->m_restorePtr = m_handlePtr;
 
 				// Increase the refCount for the object as it will be released upon clean-up
-				m_serializer->m_engine->AddRefScriptObject(m_handlePtr, type);
+				m_serializer->m_engine->AddRefScriptObject(m_handlePtr, ctype);
 			}
 			else
 			{
 				// Create a new script object, but don't call its constructor as we will initialize the members. 
 				// Calling the constructor may have unwanted side effects if for example the constructor changes
 				// any outside entities, such as setting global variables to point to new objects, etc.
-				void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(type);
-				m_children[0]->Restore(newObject, type->GetTypeId());
+				void *newObject = m_serializer->m_engine->CreateUninitializedScriptObject(ctype);
+				m_children[0]->Restore(newObject, ctype->GetTypeId());
 			}
 		}
 	}
 	else if( m_typeId & asTYPEID_SCRIPTOBJECT )
 	{
 		asIScriptObject *obj = (asIScriptObject *)ref;
-		asITypeInfo *type = GetType();
 
 		// Retrieve children
 		for( asUINT i = 0; i < type->GetPropertyCount() ; i++ )
 		{	
 			const char *nameProperty;
-			int typeId;
-			type->GetProperty(i, &nameProperty, &typeId);
+			int ptypeId;
+			type->GetProperty(i, &nameProperty, &ptypeId);
 			
 			CSerializedValue *var = FindByName(nameProperty, "");
 			if( var )
-				var->Restore(obj->GetAddressOfProperty(i), typeId);
+				var->Restore(obj->GetAddressOfProperty(i), ptypeId);
 		}
 	}
 	else

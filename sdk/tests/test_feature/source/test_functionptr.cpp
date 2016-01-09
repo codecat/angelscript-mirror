@@ -290,7 +290,7 @@ bool Test()
 		asITypeInfo *ot = mod->GetTypeInfoByName("Base");
 		if (ot == 0 || ot->GetChildFuncdefCount() != 1 ||
 			ot->GetChildFuncdef(0) == 0 ||
-			std::string(ot->GetChildFuncdef(0)->GetDeclaration()) != "void Base::A()")
+			std::string(ot->GetChildFuncdef(0)->GetFuncdefSignature()->GetDeclaration()) != "void Base::A()")
 			TEST_FAILED;
 		ot = mod->GetTypeInfoByName("Derived");
 		if (ot == 0 || ot->GetChildFuncdefCount() != 0)
@@ -463,7 +463,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 		typeId = engine->GetTypeIdByDecl("MyType3::F");
-		asIScriptFunction *f = engine->GetFuncdefFromTypeId(typeId);
+		asIScriptFunction *f = engine->GetTypeInfoById(typeId)->GetFuncdefSignature();
 		if (std::string(f->GetDeclaration()) != "void MyType3::F(MyType2::Callback@)")
 			TEST_FAILED;
 		if (f->GetParentType() == 0 || std::string(f->GetParentType()->GetName()) != "MyType3")

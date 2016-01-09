@@ -421,17 +421,17 @@ void CScriptAny::FreeObject()
 }
 
 
-void CScriptAny::EnumReferences(asIScriptEngine *engine)
+void CScriptAny::EnumReferences(asIScriptEngine *inEngine)
 {
 	// If we're holding a reference, we'll notify the garbage collector of it
 	if( value.valueObj && (value.typeId & asTYPEID_MASK_OBJECT) )
 	{
-		engine->GCEnumCallback(value.valueObj);
+		inEngine->GCEnumCallback(value.valueObj);
 
 		// The object type itself is also garbage collected
-		asITypeInfo *ti = engine->GetTypeInfoById(value.typeId);
+		asITypeInfo *ti = inEngine->GetTypeInfoById(value.typeId);
 		if( ti )
-			engine->GCEnumCallback(ti);
+			inEngine->GCEnumCallback(ti);
 	}
 }
 

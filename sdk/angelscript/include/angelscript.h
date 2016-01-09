@@ -202,7 +202,6 @@ enum asEObjTypeFlags
 	asOBJ_IMPLICIT_HANDLE            = (1<<20),
 	asOBJ_MASK_VALID_FLAGS           = 0x1FFFFF,
 	// Internal flags
-	// TODO: type: Separate the object type flags from the type info flags
 	asOBJ_SCRIPT_OBJECT              = (1<<21),
 	asOBJ_SHARED                     = (1<<22),
 	asOBJ_NOINHERIT                  = (1<<23),
@@ -722,9 +721,9 @@ public:
 #endif
 
 	// Funcdefs
-	virtual int                RegisterFuncdef(const char *decl) = 0;
-	virtual asUINT             GetFuncdefCount() const = 0;
-	virtual asIScriptFunction *GetFuncdefByIndex(asUINT index) const = 0;
+	virtual int          RegisterFuncdef(const char *decl) = 0;
+	virtual asUINT       GetFuncdefCount() const = 0;
+	virtual asITypeInfo *GetFuncdefByIndex(asUINT index) const = 0;
 
 	// Typedefs
 	virtual int          RegisterTypedef(const char *type, const char *decl) = 0;
@@ -747,7 +746,10 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
+#ifdef AS_DEPRECATED
+	// deprecated since 2.31.0, 2016-01-01
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
+#endif
 
 	// Type identification
 #ifdef AS_DEPRECATED
@@ -1098,8 +1100,8 @@ public:
 	virtual asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 
 	// Child types
-	virtual asUINT             GetChildFuncdefCount() const = 0;
-	virtual asIScriptFunction *GetChildFuncdef(asUINT index) const = 0;
+	virtual asUINT       GetChildFuncdefCount() const = 0;
+	virtual asITypeInfo *GetChildFuncdef(asUINT index) const = 0;
 
 	// Enums
 	virtual asUINT      GetEnumValueCount() const = 0;
@@ -1107,6 +1109,9 @@ public:
 
 	// Typedef
 	virtual int GetTypedefTypeId() const = 0;
+
+	// Funcdef
+	virtual asIScriptFunction *GetFuncdefSignature() const = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

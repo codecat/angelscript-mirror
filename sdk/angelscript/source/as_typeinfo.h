@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -115,8 +115,8 @@ public:
 	asIScriptFunction *GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const { UNUSED_VAR(index); UNUSED_VAR(outBehaviour); return 0; }
 
 	// Child types
-	asUINT             GetChildFuncdefCount() const { return 0; }
-	asIScriptFunction *GetChildFuncdef(asUINT index) const { UNUSED_VAR(index); return 0; }
+	asUINT       GetChildFuncdefCount() const { return 0; }
+	asITypeInfo *GetChildFuncdef(asUINT index) const { UNUSED_VAR(index); return 0; }
 
 	// Enums
 	virtual asUINT      GetEnumValueCount() const { return 0; }
@@ -124,6 +124,9 @@ public:
 
 	// Typedef
 	virtual int GetTypedefTypeId() const { return asERROR; }
+
+	// Funcdef
+	virtual asIScriptFunction *GetFuncdefSignature() const { return 0; }
 
 	// User data
 	void *SetUserData(void *data, asPWORD type);
@@ -222,6 +225,8 @@ class asCFuncdefType : public asCTypeInfo
 public:
 	asCFuncdefType(asCScriptEngine *engine, asCScriptFunction *func);
 	~asCFuncdefType();
+
+	asIScriptFunction *GetFuncdefSignature() const;
 
 	void DestroyInternal();
 	asCScriptFunction *funcdef;     // increases refCount

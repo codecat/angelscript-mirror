@@ -6425,8 +6425,6 @@ asUINT asCCompiler::ImplicitConvObjectRef(asCExprContext *ctx, const asCDataType
 			if( toFunc->IsSignatureExceptNameEqual(fromFunc) )
 			{
 				ctx->type.dataType.SetTypeInfo(to.GetTypeInfo());
-				// TODO: type: Must not directly set as handle, as the function poiinter must be copied to a local variable
-				//ctx->type.dataType.MakeHandle(true);
 				return asCC_REF_CONV;
 			}
 		}
@@ -6478,8 +6476,6 @@ asUINT asCCompiler::ImplicitConvObjectRef(asCExprContext *ctx, const asCDataType
 					}
 
 					ctx->type.dataType = asCDataType::CreateType(to.GetTypeInfo(), false);
-					// TODO: type: Must not directly set as handle, as the function poiinter must be copied to a local variable
-					//ctx->type.dataType.MakeHandle(true);
 					return asCC_REF_CONV;
 				}
 			}

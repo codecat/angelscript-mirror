@@ -5521,13 +5521,12 @@ asUINT asCScriptEngine::GetFuncdefCount() const
 }
 
 // interface
-// TODO: type: Should return asCFuncdefType
-asIScriptFunction *asCScriptEngine::GetFuncdefByIndex(asUINT index) const
+asITypeInfo *asCScriptEngine::GetFuncdefByIndex(asUINT index) const
 {
 	if( index >= registeredFuncDefs.GetLength() )
 		return 0;
 
-	return registeredFuncDefs[index]->funcdef;
+	return registeredFuncDefs[index];
 }
 
 // internal
@@ -5897,8 +5896,9 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 	return GetScriptFunction(funcId);
 }
 
+#ifdef AS_DEPRECATED
+// deprecated since 2.31.0, 2016-01-01
 // interface
-// TODO: type: Deprecate this
 asIScriptFunction *asCScriptEngine::GetFuncdefFromTypeId(int typeId) const
 {
 	asCFuncdefType *t = GetDataTypeFromTypeId(typeId).GetTypeInfo()->CastToFuncdefType();
@@ -5906,6 +5906,7 @@ asIScriptFunction *asCScriptEngine::GetFuncdefFromTypeId(int typeId) const
 		return t->funcdef;
 	return 0;
 }
+#endif
 
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const

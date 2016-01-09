@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -196,7 +196,10 @@ const char *asCTypeInfo::GetName() const
 // interface
 const char *asCTypeInfo::GetNamespace() const
 {
-	return nameSpace->name.AddressOf();
+	if( nameSpace )
+		return nameSpace->name.AddressOf();
+
+	return 0;
 }
 
 // interface
@@ -454,6 +457,12 @@ void asCFuncdefType::DestroyInternal()
 
 	// Clear the engine pointer to mark the object type as invalid
 	engine = 0;
+}
+
+// interface
+asIScriptFunction *asCFuncdefType::GetFuncdefSignature() const
+{ 
+	return funcdef; 
 }
 
 END_AS_NAMESPACE

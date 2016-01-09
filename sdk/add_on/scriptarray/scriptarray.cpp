@@ -1279,17 +1279,17 @@ void *CScriptArray::GetArrayItemPointer(int index)
 
 // internal
 // Return pointer to data in buffer (object or primitive)
-void *CScriptArray::GetDataPointer(void *buffer)
+void *CScriptArray::GetDataPointer(void *buf)
 {
 	if ((subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
 		// Real address of object
-		return reinterpret_cast<void*>(*(size_t*)buffer);
+		return reinterpret_cast<void*>(*(size_t*)buf);
 	}
 	else
 	{
 		// Primitive is just a raw data
-		return buffer;
+		return buf;
 	}
 }
 

@@ -3374,8 +3374,10 @@ public:
 	//! \brief Returns a temporary pointer to the name of the datatype.
 	//! \return A null terminated string with the name of the object type.
 	virtual const char      *GetName() const = 0;
-	//! \brief Return the namespace of the object type.
-	//! \returns The namespace of the object type.
+	//! \brief Return the namespace of the type.
+	//! \returns The namespace of the type, or null if not defined.
+	//!
+	//! If the namespace is not defined it means that this is a child type.
 	virtual	const char      *GetNamespace() const = 0;
 	//! \brief Returns the object type that this type derives from.
 	//! \return A pointer to the object type that this type derives from.

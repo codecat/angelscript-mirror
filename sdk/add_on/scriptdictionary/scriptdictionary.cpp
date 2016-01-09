@@ -215,7 +215,7 @@ bool CScriptDictionary::GetGCFlag()
 	return gcFlag;
 }
 
-void CScriptDictionary::EnumReferences(asIScriptEngine *engine)
+void CScriptDictionary::EnumReferences(asIScriptEngine *inEngine)
 {
 	// TODO: If garbage collection can be done from a separate thread, then this method must be
 	//       protected so that it doesn't get lost during the iteration if the dictionary is modified
@@ -225,7 +225,7 @@ void CScriptDictionary::EnumReferences(asIScriptEngine *engine)
 	for( it = dict.begin(); it != dict.end(); it++ )
 	{
 		if( it->second.m_typeId & asTYPEID_MASK_OBJECT )
-			engine->GCEnumCallback(it->second.m_valueObj);
+			inEngine->GCEnumCallback(it->second.m_valueObj);
 	}
 }
 

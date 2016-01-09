@@ -360,7 +360,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	c = engine->GetFuncdefCount();
 	for( n = 0; n < c; n++ )
 	{
-		asIScriptFunction *funcDef = engine->GetFuncdefByIndex(n);
+		asITypeInfo *funcDef = engine->GetFuncdefByIndex(n);
 		asDWORD accessMask = funcDef->GetAccessMask();
 		const char *nameSpace = funcDef->GetNamespace();
 		// Child funcdefs do not have any namespace, as they belong to the parent object
@@ -375,7 +375,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 			strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 			currAccessMask = accessMask;
 		}
-		strm << "funcdef \"" << funcDef->GetDeclaration() << "\"\n";
+		strm << "funcdef \"" << funcDef->GetFuncdefSignature()->GetDeclaration() << "\"\n";
 	}
 
 	// A helper for writing object type members

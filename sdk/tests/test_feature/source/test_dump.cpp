@@ -265,9 +265,9 @@ void DumpModule(asIScriptModule *mod)
 	c = engine->GetFuncdefCount();
 	for( n = 0; n < c; n++ )
 	{
-		asIScriptFunction *funcdef = engine->GetFuncdefByIndex(n);
+		asITypeInfo *funcdef = engine->GetFuncdefByIndex(n);
 
-		s << "reg funcdef: " << funcdef->GetDeclaration() << endl;
+		s << "reg funcdef: " << funcdef->GetFuncdefSignature()->GetDeclaration() << endl;
 	}
 
 	// Get the string factory return type
