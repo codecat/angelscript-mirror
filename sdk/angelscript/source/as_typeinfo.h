@@ -117,6 +117,7 @@ public:
 	// Child types
 	asUINT       GetChildFuncdefCount() const { return 0; }
 	asITypeInfo *GetChildFuncdef(asUINT index) const { UNUSED_VAR(index); return 0; }
+	asITypeInfo *GetParentType() const { return 0; }
 
 	// Enums
 	virtual asUINT      GetEnumValueCount() const { return 0; }
@@ -227,6 +228,7 @@ public:
 	~asCFuncdefType();
 
 	asIScriptFunction *GetFuncdefSignature() const;
+	asITypeInfo       *GetParentType() const;
 
 	void DestroyInternal();
 	asCScriptFunction *funcdef;     // increases refCount

@@ -462,11 +462,11 @@ bool Test()
 		r = ConfigEngineFromStream(engine2, s);
 		if (r < 0)
 			TEST_FAILED;
-		typeId = engine->GetTypeIdByDecl("MyType3::F");
-		asIScriptFunction *f = engine->GetTypeInfoById(typeId)->GetFuncdefSignature();
+		asITypeInfo *type = engine->GetTypeInfoByDecl("MyType3::F");
+		asIScriptFunction *f = type->GetFuncdefSignature();
 		if (std::string(f->GetDeclaration()) != "void MyType3::F(MyType2::Callback@)")
 			TEST_FAILED;
-		if (f->GetParentType() == 0 || std::string(f->GetParentType()->GetName()) != "MyType3")
+		if (type->GetParentType() == 0 || std::string(type->GetParentType()->GetName()) != "MyType3")
 			TEST_FAILED;
 		engine2->ShutDownAndRelease();
 		if (bout.buffer != "")

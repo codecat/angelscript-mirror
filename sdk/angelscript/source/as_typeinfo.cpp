@@ -465,6 +465,12 @@ asIScriptFunction *asCFuncdefType::GetFuncdefSignature() const
 	return funcdef; 
 }
 
+// interface
+asITypeInfo *asCFuncdefType::GetParentType() const
+{
+	return parentClass;
+}
+
 END_AS_NAMESPACE
 
 #endif // AS_NO_COMPILER

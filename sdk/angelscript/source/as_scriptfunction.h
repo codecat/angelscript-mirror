@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -131,7 +131,10 @@ public:
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
 	void                *GetAuxiliary() const;
+#ifdef AS_DEPRECATED
+	// deprecated since 2.31.0, 2016-01-10
 	asITypeInfo         *GetParentType() const;
+#endif
 
 	// Function signature
 	asITypeInfo         *GetObjectType() const;
