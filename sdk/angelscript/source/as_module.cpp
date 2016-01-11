@@ -937,8 +937,8 @@ int asCModule::RemoveGlobalVar(asUINT index)
 		engine->RemoveGlobalProperty(prop);
 
 	// Remove the global variable from the module
-	prop->Release();
 	scriptGlobals.Erase(index);
+	prop->Release();
 
 	return 0;
 }

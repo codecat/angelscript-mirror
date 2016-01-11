@@ -679,7 +679,6 @@ bool Test()
 			TEST_FAILED;
 
 		// Test lambda function in asIScriptModule::CompileGlobalVar()
-		// TODO: type: Test this without having declared the funcdef first
 		r = mod->CompileGlobalVar("glob", "CB1 @g = function(a) {return a;};", 0);
 		if( r < 0 )
 			TEST_FAILED;
@@ -702,6 +701,19 @@ bool Test()
 
 		// Error scenarios
 		//-------------------
+		// Test assigning lambda to a funcdef that hasn't been declared
+		bout.buffer = "";
+		r = mod->CompileGlobalVar("glob", "NotDeclared @nd = function(a) {return a;};", 0);
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "glob (1, 1) : Error   : Identifier 'NotDeclared' is not a data type in global namespace\n"
+						   "glob (1, 14) : Info    : Compiling int nd\n"
+						   "glob (1, 28) : Error   : Can't implicitly convert from '$func@const' to 'int&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		// Test compiler error within lambda
 		bout.buffer = "";
 		mod->AddScriptSection("name", 
