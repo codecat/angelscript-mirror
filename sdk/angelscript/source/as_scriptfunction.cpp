@@ -1004,7 +1004,7 @@ void asCScriptFunction::AddVariable(asCString &in_name, asCDataType &in_type, in
 }
 
 // internal
-asCObjectType *asCScriptFunction::GetObjectTypeOfLocalVar(short varOffset)
+asCTypeInfo *asCScriptFunction::GetTypeInfoOfLocalVar(short varOffset)
 {
 	asASSERT( scriptData );
 

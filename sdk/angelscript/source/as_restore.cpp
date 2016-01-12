@@ -1066,12 +1066,9 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		count = ReadEncodedUInt();
 		func->scriptData->objVariablePos.Allocate(count, false);
 		func->scriptData->objVariableTypes.Allocate(count, false);
-		func->scriptData->funcVariableTypes.Allocate(count, false);
 		for( i = 0; i < count; ++i )
 		{
-			func->scriptData->objVariableTypes.PushLast(ReadTypeInfo()->CastToObjectType());
-			asUINT idx = ReadEncodedUInt();
-			func->scriptData->funcVariableTypes.PushLast((asCScriptFunction*)(asPWORD)idx);
+			func->scriptData->objVariableTypes.PushLast(ReadTypeInfo());
 			num = ReadEncodedUInt();
 			func->scriptData->objVariablePos.PushLast(num);
 
@@ -1886,48 +1883,6 @@ void asCReader::ReadDataType(asCDataType *dt)
 	LOAD_FROM_BIT(isReference, b, 2);
 	LOAD_FROM_BIT(isReadOnly, b, 3);
 
-	asCScriptFunction *funcDef = 0;
-	if( tokenType == ttIdentifier && ti && (ti->flags & asOBJ_FUNCDEF) )
-	{
-		asCScriptFunction func(engine, module, asFUNC_DUMMY);
-		asCObjectType *parentClass = 0;
-		ReadFunctionSignature(&func, &parentClass);
-		if (error)
-		{
-			// Set the function type to dummy to allow it to be destroyed
-			func.funcType = asFUNC_DUMMY;
-			return;
-		}
-		for( asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++ )
-		{
-			// TODO: access: Only return the definitions that the module has access to
-			if( engine->registeredFuncDefs[n]->name == func.name &&
-				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace &&
-				engine->registeredFuncDefs[n]->parentClass == parentClass )
-			{
-				funcDef = engine->registeredFuncDefs[n]->funcdef;
-				break;
-			}
-		}
-
-		if( !funcDef && module )
-		{
-			for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
-			{
-				if( module->funcDefs[n]->name == func.name &&
-					module->funcDefs[n]->nameSpace == func.nameSpace &&
-					module->funcDefs[n]->parentClass == parentClass )
-				{
-					ti = module->funcDefs[n];
-					break;
-				}
-			}
-		}
-
-		// Set to dummy to avoid unwanted release of resources
-		func.funcType = asFUNC_DUMMY;
-	}
-
 	if( tokenType == ttIdentifier )
 		*dt = asCDataType::CreateType(ti, false);
 	else
@@ -2121,6 +2076,55 @@ asCTypeInfo* asCReader::ReadTypeInfo()
 		// No object type
 		asASSERT( ch == '\0' || error );
 		ot = 0;
+	}
+
+	if (ot && ot->flags & asOBJ_FUNCDEF)
+	{
+		asCFuncdefType *funcDef = 0;
+
+		asCScriptFunction func(engine, module, asFUNC_DUMMY);
+		asCObjectType *parentClass = 0;
+		ReadFunctionSignature(&func, &parentClass);
+		if (error)
+		{
+			// Set the function type to dummy to allow it to be destroyed
+			func.funcType = asFUNC_DUMMY;
+			return 0;
+		}
+		for (asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++)
+		{
+			// TODO: access: Only return the definitions that the module has access to
+			if (engine->registeredFuncDefs[n]->name == func.name &&
+				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace &&
+				engine->registeredFuncDefs[n]->parentClass == parentClass)
+			{
+				funcDef = engine->registeredFuncDefs[n];
+				break;
+			}
+		}
+
+		if (!funcDef && module)
+		{
+			for (asUINT n = 0; n < module->funcDefs.GetLength(); n++)
+			{
+				if (module->funcDefs[n]->name == func.name &&
+					module->funcDefs[n]->nameSpace == func.nameSpace &&
+					module->funcDefs[n]->parentClass == parentClass)
+				{
+					funcDef = module->funcDefs[n];
+					break;
+				}
+			}
+		}
+
+		// Set to dummy to avoid unwanted release of resources
+		func.funcType = asFUNC_DUMMY;
+		
+		if (ot != funcDef)
+		{
+			// Use the funcDef instead
+			ot = funcDef;
+		}
 	}
 
 	return ot;
@@ -2726,7 +2730,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			// corresponding asBC_FREE is encountered
 
 			// The adjuster also needs to know the list type so it can know the type of the elements
-			asCObjectType *ot = func->GetObjectTypeOfLocalVar(asBC_SWORDARG0(&bc[n]));
+			asCObjectType *ot = func->GetTypeInfoOfLocalVar(asBC_SWORDARG0(&bc[n]))->CastToObjectType();
 			listAdjusters.PushLast(asNEW(SListAdjuster)(this, &bc[n], ot));
 		}
 		else if( c == asBC_FREE )
@@ -2842,10 +2846,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 	// objVariablePos
 	for( n = 0; n < func->scriptData->objVariablePos.GetLength(); n++ )
-	{
 		func->scriptData->objVariablePos[n] = AdjustStackPosition(func->scriptData->objVariablePos[n]);
-		func->scriptData->funcVariableTypes[n] = FindFunction((int)(asPWORD)func->scriptData->funcVariableTypes[n]);
-	}
 
 	// Adjust the get offsets. This must be done in the second iteration because
 	// it relies on the function ids and variable position already being correct in the 
@@ -3363,7 +3364,7 @@ asCScriptFunction *asCReader::GetCalledFunction(asCScriptFunction *func, asDWORD
 		// Find the funcdef from the local variable
 		for( v = 0; v < func->scriptData->objVariablePos.GetLength(); v++ )
 			if( func->scriptData->objVariablePos[v] == var )
-				return func->scriptData->funcVariableTypes[v];
+				return func->scriptData->objVariableTypes[v]->CastToFuncdefType()->funcdef;
 
 		// Look in parameters
 		int paramPos = 0;
@@ -3889,8 +3890,6 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 		for( i = 0; i < count; ++i )
 		{
 			WriteTypeInfo(func->scriptData->objVariableTypes[i]);
-			// TODO: Only write this if the object type is the builtin function type
-			WriteEncodedInt64(FindFunctionIndex(func->scriptData->funcVariableTypes[i]));
 			WriteEncodedInt64(AdjustStackPosition(func->scriptData->objVariablePos[i]));
 		}
 		if( count > 0 )
@@ -4261,14 +4260,6 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	SAVE_TO_BIT(bits, dt->IsReference(), 2);
 	SAVE_TO_BIT(bits, dt->IsReadOnly(), 3);
 	WriteData(&bits, 1);
-
-	// As the name of the funcdef is not enough to identify a single funcdef (e.g. if 
-	// the funcdef has been created implicitly by taking the address of a function)
-	// it is necessary to store the actual function signature too
-	if( t == ttIdentifier && (dt->GetTypeInfo()->flags & asOBJ_FUNCDEF) )
-	{
-		WriteFunctionSignature(dt->GetTypeInfo()->CastToFuncdefType()->funcdef);
-	}
 }
 
 void asCWriter::WriteTypeInfo(asCTypeInfo* ti) 
@@ -4341,6 +4332,17 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 	{
 		ch = '\0';
 		WriteData(&ch, 1);
+	}
+
+	if (ti && (ti->flags & asOBJ_FUNCDEF))
+	{
+		// As the name of the funcdef is not enough to identify a single funcdef (e.g. if 
+		// the funcdef has been created implicitly by taking the address of a function)
+		// it is necessary to store the actual function signature too
+		// TODO: Can we make it so that that the name+namespace+parentClass is guaranteed to
+		//       uniquely identify a funcdef, and as such avoid the need to store the actual 
+		//       function signature here?
+		WriteFunctionSignature(ti->CastToFuncdefType()->funcdef);
 	}
 }
 
@@ -4514,7 +4516,7 @@ int asCWriter::AdjustGetOffset(int offset, asCScriptFunction *func, asDWORD prog
 			{
 				if( func->scriptData->objVariablePos[v] == var )
 				{
-					calledFunc = func->scriptData->funcVariableTypes[v];
+					calledFunc = func->scriptData->objVariableTypes[v]->CastToFuncdefType()->funcdef;
 					break;
 				}
 			}
@@ -4772,7 +4774,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 
 			// Determine the type of the list pattern from the variable
 			short var = asBC_WORDARG0(tmpBC);
-			asCObjectType *ot = func->GetObjectTypeOfLocalVar(var);
+			asCObjectType *ot = func->GetTypeInfoOfLocalVar(var)->CastToObjectType();
 
 			// Create this helper object to adjust the offset of the elements accessed in the buffer
 			listAdjusters.PushLast(asNEW(SListAdjuster)(ot));

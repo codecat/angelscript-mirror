@@ -216,7 +216,7 @@ public:
 	bool      IsSignatureExceptNameAndReturnTypeEqual(const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &inOutFlags, const asCObjectType *type, bool isReadOnly) const;
 	bool      IsSignatureExceptNameAndObjectTypeEqual(const asCScriptFunction *func) const;
 
-	asCObjectType *GetObjectTypeOfLocalVar(short varOffset);
+	asCTypeInfo *GetTypeInfoOfLocalVar(short varOffset);
 
 	void      MakeDelegate(asCScriptFunction *func, void *obj);
 
@@ -300,9 +300,7 @@ public:
 
 		// These hold information on objects and function pointers, including temporary
 		// variables used by exception handler and when saving bytecode
-		// TODO: type: These two can be merged into a single array of asCTypeInfo*
-		asCArray<asCObjectType*>        objVariableTypes;
-		asCArray<asCScriptFunction*>    funcVariableTypes;
+		asCArray<asCTypeInfo*>          objVariableTypes;
 		asCArray<int>                   objVariablePos;
 
 		// The first variables in above array are allocated on the heap, the rest on the stack.

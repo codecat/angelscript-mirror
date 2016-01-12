@@ -273,16 +273,7 @@ void asCCompiler::FinalizeFunction()
 		{
 			if( variableIsOnHeap[n] )
 			{
-				if (variableAllocations[n].IsFuncdef())
-				{
-					outFunc->scriptData->objVariableTypes.PushLast(&engine->functionBehaviours);
-					outFunc->scriptData->funcVariableTypes.PushLast(variableAllocations[n].GetTypeInfo()->CastToFuncdefType()->funcdef);
-				}
-				else
-				{
-					outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetTypeInfo()->CastToObjectType());
-					outFunc->scriptData->funcVariableTypes.PushLast(0);
-				}
+				outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetTypeInfo());
 				outFunc->scriptData->objVariablePos.PushLast(GetVariableOffset(n));
 			}
 		}
@@ -294,16 +285,7 @@ void asCCompiler::FinalizeFunction()
 		{
 			if( !variableIsOnHeap[n] )
 			{
-				if (variableAllocations[n].IsFuncdef())
-				{
-					outFunc->scriptData->objVariableTypes.PushLast(&engine->functionBehaviours);
-					outFunc->scriptData->funcVariableTypes.PushLast(variableAllocations[n].GetTypeInfo()->CastToFuncdefType()->funcdef);
-				}
-				else
-				{
-					outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetTypeInfo()->CastToObjectType());
-					outFunc->scriptData->funcVariableTypes.PushLast(0);
-				}
+				outFunc->scriptData->objVariableTypes.PushLast(variableAllocations[n].GetTypeInfo());
 				outFunc->scriptData->objVariablePos.PushLast(GetVariableOffset(n));
 			}
 		}

@@ -4779,7 +4779,7 @@ void asCContext::CleanArgsOnStack()
 		for( v = 0; v < m_currentFunction->scriptData->objVariablePos.GetLength(); v++ )
 			if( m_currentFunction->scriptData->objVariablePos[v] == var )
 			{
-				func = m_currentFunction->scriptData->funcVariableTypes[v];
+				func = m_currentFunction->scriptData->objVariableTypes[v]->CastToFuncdefType()->funcdef;
 				break;
 			}
 
@@ -4880,23 +4880,24 @@ void asCContext::CleanStackFrame()
 				if( *(asPWORD*)&m_regs.stackFramePointer[-pos] )
 				{
 					// Call the object's destructor
-					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->beh;
 					if (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_FUNCDEF)
 					{
 						(*(asCScriptFunction**)&m_regs.stackFramePointer[-pos])->Release();
 					}
 					else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_REF )
 					{
+						asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType()->beh;
 						asASSERT( (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_NOCOUNT) || beh->release );
 						if( beh->release )
 							m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->release);
 					}
 					else
 					{
+						asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType()->beh;
 						if( beh->destruct )
 							m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
 						else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_LIST_PATTERN )
-							m_engine->DestroyList((asBYTE*)*(asPWORD*)&m_regs.stackFramePointer[-pos], m_currentFunction->scriptData->objVariableTypes[n]);
+							m_engine->DestroyList((asBYTE*)*(asPWORD*)&m_regs.stackFramePointer[-pos], m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType());
 
 						// Free the memory
 						m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos]);
@@ -4911,7 +4912,7 @@ void asCContext::CleanStackFrame()
 				// Only destroy the object if it is truly alive
 				if( liveObjects[n] > 0 )
 				{
-					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->beh;
+					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType()->beh;
 					if( beh->destruct )
 						m_engine->CallObjectMethod((void*)(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
 				}
