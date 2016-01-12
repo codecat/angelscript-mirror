@@ -1093,7 +1093,14 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		{
 			func->scriptData->objVariableInfo[i].programPos     = ReadEncodedUInt();
 			func->scriptData->objVariableInfo[i].variableOffset = ReadEncodedUInt();
-			func->scriptData->objVariableInfo[i].option         = ReadEncodedUInt();
+			asEObjVarInfoOption option = (asEObjVarInfoOption)ReadEncodedUInt();
+			func->scriptData->objVariableInfo[i].option         = option;
+			if (option != asOBJ_INIT && option != asOBJ_UNINIT && option != asBLOCK_BEGIN && option != asBLOCK_END)
+			{
+				error = true;
+				func->DestroyHalfCreated();
+				return 0;
+			}
 		}
 
 		if( !noDebugInfo )
@@ -1238,7 +1245,14 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase)
 		ReadString(&ns);
 		type->nameSpace = engine->AddNameSpace(ns.AddressOf());
 
-		// TODO: type: Add check to verify if the flags match the asCTypeInfo
+		// Verify that the flags match the asCTypeInfo
+		if (type->CastToEnumType() && !(type->flags & asOBJ_ENUM) ||
+			type->CastToFuncdefType() && !(type->flags & asOBJ_FUNCDEF) ||
+			type->CastToObjectType() && !(type->flags & (asOBJ_REF | asOBJ_VALUE)))
+		{
+			error = true;
+			return;
+		}
 
 		// Reset the size of script classes, since it will be recalculated as properties are added
 		if( (type->flags & asOBJ_SCRIPT_OBJECT) && type->size != 0 )
@@ -1901,7 +1915,8 @@ void asCReader::ReadDataType(asCDataType *dt)
 			for( asUINT n = 0; n < module->funcDefs.GetLength(); n++ )
 			{
 				if( module->funcDefs[n]->name == func.name &&
-					module->funcDefs[n]->nameSpace == func.nameSpace )
+					module->funcDefs[n]->nameSpace == func.nameSpace &&
+					module->funcDefs[n]->parentClass == parentClass )
 				{
 					ti = module->funcDefs[n];
 					break;
@@ -4247,7 +4262,9 @@ void asCWriter::WriteDataType(const asCDataType *dt)
 	SAVE_TO_BIT(bits, dt->IsReadOnly(), 3);
 	WriteData(&bits, 1);
 
-	// TODO: type: This is probably not needed anymore since funcdefs are now treated as types
+	// As the name of the funcdef is not enough to identify a single funcdef (e.g. if 
+	// the funcdef has been created implicitly by taking the address of a function)
+	// it is necessary to store the actual function signature too
 	if( t == ttIdentifier && (dt->GetTypeInfo()->flags & asOBJ_FUNCDEF) )
 	{
 		WriteFunctionSignature(dt->GetTypeInfo()->CastToFuncdefType()->funcdef);

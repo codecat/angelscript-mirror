@@ -1846,7 +1846,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 					// Local variables doesn't need to be copied into
 					// a temp if we're already compiling an assignment
 					if( !isMakingCopy || !ctx->type.dataType.IsObjectHandle() || !ctx->type.isVariable )
-						PrepareTemporaryObject(node, ctx, true);
+						PrepareTemporaryVariable(node, ctx, true);
 
 					// The implicit conversion shouldn't convert the object to
 					// non-reference yet. It will be dereferenced just before the call.
@@ -4605,9 +4605,11 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 	}
 }
 
-// TODO: type: This method should be called PrepareTemporaryVariable as it operates on objects, funcdefs, and handles
-void asCCompiler::PrepareTemporaryObject(asCScriptNode *node, asCExprContext *ctx, bool forceOnHeap)
+void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *ctx, bool forceOnHeap)
 {
+	// The input can be either an object or funcdef, either as handle or reference
+	asASSERT(ctx->type.dataType.IsObject() || ctx->type.dataType.IsFuncdef());
+
 	// If the object already is stored in temporary variable then nothing needs to be done
 	// Note, a type can be temporary without being a variable, in which case it is holding off
 	// on releasing a previously used object.
@@ -6867,7 +6869,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 
 				// If the object already is a temporary variable, then the copy
 				// doesn't have to be made as it is already a unique object
-				PrepareTemporaryObject(node, ctx);
+				PrepareTemporaryVariable(node, ctx);
 
 				ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
 				ctx->type.isExplicitHandle = isExplicitHandle;
@@ -6923,7 +6925,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 					if( generateCode )
 					{
 						// Make a temporary object with the copy
-						PrepareTemporaryObject(node, ctx);
+						PrepareTemporaryVariable(node, ctx);
 					}
 
 					// In case the object was already in a temporary variable, then the function
@@ -6990,7 +6992,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 					{
 						// If the object already is a temporary variable, then the copy
 						// doesn't have to be made as it is already a unique object
-						PrepareTemporaryObject(node, ctx);
+						PrepareTemporaryVariable(node, ctx);
 					}
 
 					// Add the cost for the copy
@@ -7044,7 +7046,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 
 						// If the object already is a temporary variable, then the copy
 						// doesn't have to be made as it is already a unique object
-						PrepareTemporaryObject(node, ctx);
+						PrepareTemporaryVariable(node, ctx);
 
 						ctx->type.dataType.MakeReadOnly(typeIsReadOnly);
 
@@ -8200,7 +8202,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 
 					temp.SetVariable(temp.dataType, offset, true);
 
-					// TODO: copy: Use copy constructor if available. See PrepareTemporaryObject()
+					// TODO: copy: Use copy constructor if available. See PrepareTemporaryVariable()
 
 					CallDefaultConstructor(temp.dataType, offset, IsVariableOnHeap(offset), &ctx->bc, expr);
 

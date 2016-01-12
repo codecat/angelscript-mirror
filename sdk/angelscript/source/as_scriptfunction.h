@@ -99,9 +99,9 @@ enum asEObjVarInfoOption
 
 struct asSObjectVariableInfo
 {
-	asUINT programPos;
-	int    variableOffset;
-	asUINT option;
+	asUINT              programPos;
+	int                 variableOffset;
+	asEObjVarInfoOption option;
 };
 
 struct asSSystemFunctionInterface;
