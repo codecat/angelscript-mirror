@@ -574,7 +574,7 @@ int asCScriptFunction::ReleaseInternal()
 int asCScriptFunction::GetTypeId() const
 {
 	// This const cast is ok, the object won't be modified
-	asCDataType dt = asCDataType::CreateType(engine->FindMatchingFuncdef(const_cast<asCScriptFunction*>(this)), false);
+	asCDataType dt = asCDataType::CreateType(engine->FindMatchingFuncdef(const_cast<asCScriptFunction*>(this), 0), false);
 	return engine->GetTypeIdFromDataType(dt);
 }
 

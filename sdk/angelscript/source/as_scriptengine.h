@@ -322,7 +322,7 @@ public:
 	asCModule         *FindNewOwnerForSharedType(asCTypeInfo *type, asCModule *mod);
 	asCModule         *FindNewOwnerForSharedFunc(asCScriptFunction *func, asCModule *mod);
 
-	asCFuncdefType    *FindMatchingFuncdef(asCScriptFunction *func);
+	asCFuncdefType    *FindMatchingFuncdef(asCScriptFunction *func, asCModule *mod);
 
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked

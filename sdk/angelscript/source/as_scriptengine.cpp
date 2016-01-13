@@ -5530,38 +5530,72 @@ asITypeInfo *asCScriptEngine::GetFuncdefByIndex(asUINT index) const
 }
 
 // internal
-asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func)
+asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, asCModule *module)
 {
-	if (func->funcdefType)
-		return func->funcdefType;
+	asCFuncdefType *funcDef = func->funcdefType;
 
-	for (asUINT n = 0; n < funcDefs.GetLength(); n++)
+	if (funcDef == 0)
 	{
-		if (funcDefs[n]->funcdef->IsSignatureExceptNameEqual(func))
+		// Check if there is any matching funcdefs already in the engine that can be reused
+		for (asUINT n = 0; n < funcDefs.GetLength(); n++)
 		{
-			if (func->isShared && !funcDefs[n]->funcdef->isShared)
-				continue;
-			return funcDefs[n];
+			if (funcDefs[n]->funcdef->IsSignatureExceptNameEqual(func))
+			{
+				if (func->isShared && !funcDefs[n]->funcdef->isShared)
+					continue;
+				funcDef = funcDefs[n];
+				break;
+			}
 		}
 	}
 
-	// Create a matching funcdef
-	asCScriptFunction *fd = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
-	fd->name = func->name;
-	fd->nameSpace = func->nameSpace;
-	fd->isShared = func->isShared;
+	if (funcDef == 0)
+	{
+		// Create a matching funcdef
+		asCScriptFunction *fd = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
+		fd->name = func->name;
+		fd->nameSpace = func->nameSpace;
+		fd->isShared = func->isShared;
 
-	fd->returnType = func->returnType;
-	fd->parameterTypes = func->parameterTypes;
-	fd->inOutFlags = func->inOutFlags;
+		fd->returnType = func->returnType;
+		fd->parameterTypes = func->parameterTypes;
+		fd->inOutFlags = func->inOutFlags;
 
-	asCFuncdefType *fdt = asNEW(asCFuncdefType)(this, fd);
-	funcDefs.PushLast(fdt);
+		funcDef = asNEW(asCFuncdefType)(this, fd);
+		funcDefs.PushLast(funcDef); // doesn't increase the refCount
 
-	fd->id = GetNextScriptFunctionId();
-	AddScriptFunction(fd);
+		fd->id = GetNextScriptFunctionId();
+		AddScriptFunction(fd);
 
-	return fdt;
+		if (module)
+		{
+			// Add the new funcdef to the module so it will 
+			// be available when saving the bytecode
+			funcDef->module = module;
+			module->funcDefs.PushLast(funcDef); // the refCount was already accounted for in the constructor
+		}
+
+		// Observe, if the funcdef is created without informing a module a reference will be stored in the
+		// engine's funcDefs array, but it will not be owned by any module. This means that it will live on
+		// until the engine is released.
+	}
+
+	if (funcDef && module && funcDef->module && funcDef->module != module)
+	{
+		// Unless this is a registered funcDef the returned funcDef must 
+		// be stored as part of the module for saving/loading bytecode
+		if (!module->funcDefs.Exists(funcDef))
+		{
+			module->funcDefs.PushLast(funcDef);
+			funcDef->AddRefInternal();
+		}
+		else
+		{
+			asASSERT(funcDef->IsShared());
+		}
+	}
+
+	return funcDef;
 }
 
 // interface

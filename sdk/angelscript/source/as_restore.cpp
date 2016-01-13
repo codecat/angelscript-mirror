@@ -2078,55 +2078,6 @@ asCTypeInfo* asCReader::ReadTypeInfo()
 		ot = 0;
 	}
 
-	if (ot && ot->flags & asOBJ_FUNCDEF)
-	{
-		asCFuncdefType *funcDef = 0;
-
-		asCScriptFunction func(engine, module, asFUNC_DUMMY);
-		asCObjectType *parentClass = 0;
-		ReadFunctionSignature(&func, &parentClass);
-		if (error)
-		{
-			// Set the function type to dummy to allow it to be destroyed
-			func.funcType = asFUNC_DUMMY;
-			return 0;
-		}
-		for (asUINT n = 0; n < engine->registeredFuncDefs.GetLength(); n++)
-		{
-			// TODO: access: Only return the definitions that the module has access to
-			if (engine->registeredFuncDefs[n]->name == func.name &&
-				engine->registeredFuncDefs[n]->nameSpace == func.nameSpace &&
-				engine->registeredFuncDefs[n]->parentClass == parentClass)
-			{
-				funcDef = engine->registeredFuncDefs[n];
-				break;
-			}
-		}
-
-		if (!funcDef && module)
-		{
-			for (asUINT n = 0; n < module->funcDefs.GetLength(); n++)
-			{
-				if (module->funcDefs[n]->name == func.name &&
-					module->funcDefs[n]->nameSpace == func.nameSpace &&
-					module->funcDefs[n]->parentClass == parentClass)
-				{
-					funcDef = module->funcDefs[n];
-					break;
-				}
-			}
-		}
-
-		// Set to dummy to avoid unwanted release of resources
-		func.funcType = asFUNC_DUMMY;
-		
-		if (ot != funcDef)
-		{
-			// Use the funcDef instead
-			ot = funcDef;
-		}
-	}
-
 	return ot;
 }
 
@@ -4332,17 +4283,6 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 	{
 		ch = '\0';
 		WriteData(&ch, 1);
-	}
-
-	if (ti && (ti->flags & asOBJ_FUNCDEF))
-	{
-		// As the name of the funcdef is not enough to identify a single funcdef (e.g. if 
-		// the funcdef has been created implicitly by taking the address of a function)
-		// it is necessary to store the actual function signature too
-		// TODO: Can we make it so that that the name+namespace+parentClass is guaranteed to
-		//       uniquely identify a funcdef, and as such avoid the need to store the actual 
-		//       function signature here?
-		WriteFunctionSignature(ti->CastToFuncdefType()->funcdef);
 	}
 }
 

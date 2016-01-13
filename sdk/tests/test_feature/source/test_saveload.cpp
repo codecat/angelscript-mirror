@@ -8,6 +8,7 @@
 #include <vector>
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 
 namespace TestSaveLoad
@@ -341,6 +342,38 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
+
+	// Test saving bytecode where indirectly defined funcdefs are used
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptHandle(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace A { void func() {} }\n"
+			"namespace B { int func(int) { return 0; } }\n"
+			"void main() \n"
+			"{ \n"
+			"  ref @r1 = A::func; \n"
+			"  ref @r2 = B::func; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc("blah");
+		r = mod->SaveByteCode(&bc);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = mod->LoadByteCode(&bc);
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test problem with scripts calling constructor with value type passed before reference
 	// http://www.gamedev.net/topic/671244-error-when-saving-bytecode-on-x64/
@@ -1147,23 +1180,23 @@ bool Test()
 		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-		if( stream.buffer.size() != 2279 )
+		if( stream.buffer.size() != 2243 )
 			PRINTF("The saved byte code is not of the expected size. It is %d bytes\n", stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
-		if( zeroes != 583 )
+		if( zeroes != 571 )
 		{
 			PRINTF("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-		if( crc32 != 0x3FCB7604)
+		if( crc32 != 0xFC06D5F3 )
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 
 		// Without debug info
-		if( stream2.buffer.size() != 1910 )
+		if( stream2.buffer.size() != 1886 )
 			PRINTF("The saved byte code without debug info is not of the expected size. It is %d bytes\n", stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
-		if( zeroes != 469 )
+		if( zeroes != 461 )
 			PRINTF("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
