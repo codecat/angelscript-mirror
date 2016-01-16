@@ -1243,9 +1243,9 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase)
 		type->nameSpace = engine->AddNameSpace(ns.AddressOf());
 
 		// Verify that the flags match the asCTypeInfo
-		if (type->CastToEnumType() && !(type->flags & asOBJ_ENUM) ||
-			type->CastToFuncdefType() && !(type->flags & asOBJ_FUNCDEF) ||
-			type->CastToObjectType() && !(type->flags & (asOBJ_REF | asOBJ_VALUE)))
+		if ((type->CastToEnumType() && !(type->flags & asOBJ_ENUM)) ||
+			(type->CastToFuncdefType() && !(type->flags & asOBJ_FUNCDEF)) ||
+			(type->CastToObjectType() && !(type->flags & (asOBJ_REF | asOBJ_VALUE))))
 		{
 			error = true;
 			return;

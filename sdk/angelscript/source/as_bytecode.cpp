@@ -2361,7 +2361,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 			{
 				asCObjectType *ot = *(asCObjectType**)ARG_QW(instr->arg);
 				asCScriptFunction *f = engine->scriptFunctions[instr->wArg[0]];
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(_MSC_VER)
 #ifdef AS_64BIT_PTR
 				fprintf(file, "   %-8s 0x%lx, %d             (type:%s, %s)\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName(), f ? f->GetDeclaration() : "{no func}");
 #else
@@ -2372,7 +2372,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 #endif
 			}
 			else
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(_MSC_VER)
 #ifdef AS_64BIT_PTR
 				fprintf(file, "   %-8s %lu, %d\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2));
 #else

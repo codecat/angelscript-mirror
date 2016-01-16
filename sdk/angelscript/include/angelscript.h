@@ -364,26 +364,26 @@ enum asEFuncType
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;
-#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(__S3E__)
+#if (defined(_MSC_VER) && _MSC_VER <= 1200) || defined(__S3E__) || (defined(_MSC_VER) && defined(__clang__))
 	// size_t is not really correct, since it only guaranteed to be large enough to hold the segment size.
 	// For example, on 16bit systems the size_t may be 16bits only even if pointers are 32bit. But nobody
 	// is likely to use MSVC6 to compile for 16bit systems anymore, so this should be ok.
-	typedef size_t	       asPWORD;
+	typedef size_t         asPWORD;
 #else
 	typedef uintptr_t      asPWORD;
 #endif
 #ifdef __LP64__
-    typedef unsigned int  asDWORD;
-    typedef unsigned long asQWORD;
-    typedef long asINT64;
+	typedef unsigned int  asDWORD;
+	typedef unsigned long asQWORD;
+	typedef long asINT64;
 #else
-    typedef unsigned long asDWORD;
-  #if defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__)
-    typedef uint64_t asQWORD;
-    typedef int64_t asINT64;
+	typedef unsigned long asDWORD;
+  #if !defined(_MSC_VER) && (defined(__GNUC__) || defined(__MWERKS__) || defined(__SUNPRO_CC) || defined(__psp2__))
+	typedef uint64_t asQWORD;
+	typedef int64_t asINT64;
   #else
-    typedef unsigned __int64 asQWORD;
-    typedef __int64 asINT64;
+	typedef unsigned __int64 asQWORD;
+	typedef __int64 asINT64;
   #endif
 #endif
 

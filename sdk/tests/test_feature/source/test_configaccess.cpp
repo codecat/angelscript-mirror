@@ -2,8 +2,6 @@
 
 namespace TestConfigAccess
 {
-          
-const char * const TESTNAME = "TestConfigAccess";
 
 static void Func(asIScriptGeneric *)
 {

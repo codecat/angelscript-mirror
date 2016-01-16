@@ -5,8 +5,6 @@
 namespace Test_Addon_ScriptGrid
 {
 
-static const char *TESTNAME = "Test_Addon_ScriptGrid";
-
 bool Test()
 {
 	RET_ON_MAX_PORT

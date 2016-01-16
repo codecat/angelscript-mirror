@@ -5,11 +5,6 @@
 namespace TestDebug
 {
 
-static const char * const TESTNAME = "TestDebug";
-
-
-
-
 static const char *script1 =
 "import void Test2() from \"Module2\";  \n"
 "funcdef void func_t();                 \n"
