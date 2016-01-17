@@ -1140,10 +1140,6 @@ public:
 	virtual const char      *GetConfigGroup() const = 0;
 	virtual asDWORD          GetAccessMask() const = 0;
 	virtual void            *GetAuxiliary() const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2.31.0, 2016-01-10
-	virtual asITypeInfo     *GetParentType() const = 0;
-#endif
 
 	// Function signature
 	virtual asITypeInfo     *GetObjectType() const = 0;

@@ -38,7 +38,6 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added GetChildFuncdefCount and GetChildFuncdef to asIObjectType
 <li>Renamed GetFuncDefFromTypeId to GetFuncdefFromTypeId for consistency
 <li>It is now possible to register child funcdefs with RegisterFuncdef too
-<li>Added GetParentType to asIScriptFunction to allow querying the parent type for child funcdefs
 <li>Renamed asIObjectType to asITypeInfo 
 <li>Renamed asCLEANOBJECTTYPEFUNC_t to asCLEANTYPEINFOFUNC_t
 <li>Implemented GetTypeInfoByDecl, GetTypeInfoByName, and GetTypeInfoById
@@ -52,8 +51,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetChildFuncdef now returns an asITypeInfo instead of asIScriptFunction
 <li>Added GetFuncdefSignature to asITypeInfo
 <li>Deprecated GetFuncdefFromTypeId
-<li>Implemented GetParentType in asITypeInfo
-<li>Deprecated GetParentType in asIScriptFunction
+<li>Implemented GetParentType in asITypeInfo to allow querying the parent type for child funcdefs
 </ul>
 <li>Library
 <ul>

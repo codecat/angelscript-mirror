@@ -131,10 +131,6 @@ public:
 	const char          *GetConfigGroup() const;
 	asDWORD              GetAccessMask() const;
 	void                *GetAuxiliary() const;
-#ifdef AS_DEPRECATED
-	// deprecated since 2.31.0, 2016-01-10
-	asITypeInfo         *GetParentType() const;
-#endif
 
 	// Function signature
 	asITypeInfo         *GetObjectType() const;

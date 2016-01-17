@@ -498,18 +498,6 @@ void asCScriptFunction::DestroyInternal()
 	}
 }
 
-#ifdef AS_DEPRECATED
-// deprecated since 2.31.0, 2016-01-10
-// interface
-asITypeInfo *asCScriptFunction::GetParentType() const
-{
-	if (funcdefType)
-		return funcdefType->parentClass;
-
-	return 0;
-}
-#endif
-
 // interface
 int asCScriptFunction::GetId() const
 {
