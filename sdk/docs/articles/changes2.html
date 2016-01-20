@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.0 WIP - 2016/01/15</h2>
+<h2>Version 2.31.0 WIP - 2016/01/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -78,6 +78,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>WriteConfigToStream and ConfigEngineFromStream is properly handling child funcdefs
 <li>Fixed problem in CScriptAny with constructing any object from primitive (Thanks gjl)
 <li>ScriptHandle and Dictionary no longer need special code for function pointers
+<li>Implemented CScriptDictionary::find for easier lookup of key/value pairs from application side
+<li>dictionary::delete now returns a bool to indicate if the delete was successful or not
 </ul>
 <li>Project
 <ul>

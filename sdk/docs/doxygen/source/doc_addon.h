@@ -942,7 +942,7 @@ public:
   asUINT GetSize() const;
   
   // Deletes the key
-  void Delete(const dictKey &key);
+  bool Delete(const dictKey &key);
   
   // Deletes all keys
   void DeleteAll();
@@ -971,6 +971,7 @@ public:
   
   CIterator begin() const;
   CIterator end() const;
+  CIterator find(const dictKey &key) const;
 };
 \endcode
 

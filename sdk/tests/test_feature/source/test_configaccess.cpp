@@ -34,7 +34,7 @@ bool Test()
 		RegisterScriptArray(engine, true);
 		RegisterStdString(engine);
 
-		engine->RegisterGlobalFunction("void Print(const string& in s)", asFUNCTION(0), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void Print(const string& in s)", asFUNCTION(0), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->SetAccessMask(2);

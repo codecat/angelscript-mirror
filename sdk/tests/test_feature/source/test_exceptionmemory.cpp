@@ -256,6 +256,7 @@ bool Test()
 	RET_ON_MAX_PORT
 
 	// Test calling a function that throws an exception
+	// TODO: This fails with SegV on Linux 32bit
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 

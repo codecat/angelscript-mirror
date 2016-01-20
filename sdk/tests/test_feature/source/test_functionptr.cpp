@@ -1,5 +1,5 @@
 #include "utils.h"
-#include <strstream>
+#include <sstream>
 #include "../../../add_on/scripthelper/scripthelper.h"
 
 namespace TestFunctionPtr

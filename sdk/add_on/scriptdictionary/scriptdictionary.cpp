@@ -366,7 +366,7 @@ asUINT CScriptDictionary::GetSize() const
 	return asUINT(dict.size());
 }
 
-void CScriptDictionary::Delete(const dictKey_t &key)
+bool CScriptDictionary::Delete(const dictKey_t &key)
 {
 	dictMap_t::iterator it;
 	it = dict.find(key);
@@ -374,7 +374,10 @@ void CScriptDictionary::Delete(const dictKey_t &key)
 	{
 		it->second.FreeValue(engine);
 		dict.erase(it);
+		return true;
 	}
+
+	return false;
 }
 
 void CScriptDictionary::DeleteAll()
@@ -515,7 +518,7 @@ void ScriptDictionaryDelete_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
 	dictKey_t *key = *(dictKey_t**)gen->GetAddressOfArg(0);
-	dict->Delete(*key);
+	*(bool*)gen->GetAddressOfReturnLocation() = dict->Delete(*key);
 }
 
 void ScriptDictionaryDeleteAll_Generic(asIScriptGeneric *gen)
@@ -1003,7 +1006,7 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in) const", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool isEmpty() const", asMETHOD(CScriptDictionary, IsEmpty), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "uint getSize() const", asMETHOD(CScriptDictionary, GetSize), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asMETHOD(CScriptDictionary,Delete), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "bool delete(const string &in)", asMETHOD(CScriptDictionary,Delete), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asMETHOD(CScriptDictionary,DeleteAll), asCALL_THISCALL); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("dictionary", "array<string> @getKeys() const", asMETHOD(CScriptDictionary,GetKeys), asCALL_THISCALL); assert( r >= 0 );
@@ -1078,7 +1081,7 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in) const", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool isEmpty() const", asFUNCTION(ScriptDictionaryIsEmpty_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "uint getSize() const", asFUNCTION(ScriptDictionaryGetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("dictionary", "void delete(const string &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "bool delete(const string &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("dictionary", "array<string> @getKeys() const", asFUNCTION(CScriptDictionaryGetKeys_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -1108,6 +1111,11 @@ CScriptDictionary::CIterator CScriptDictionary::begin() const
 CScriptDictionary::CIterator CScriptDictionary::end() const
 {
 	return CIterator(*this, dict.end());
+}
+
+CScriptDictionary::CIterator CScriptDictionary::find(const dictKey_t &key) const
+{
+	return CIterator(*this, dict.find(key));
 }
 
 CScriptDictionary::CIterator::CIterator(

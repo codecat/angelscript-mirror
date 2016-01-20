@@ -157,10 +157,22 @@ to use handles to the array object when passing it around to avoid costly copies
 \subsection doc_datatypes_array_addon_ops Operators
 
  - =       assignment
+
+The assignment operator performs a shallow copy of the content.
+ 
  - []      index operator
+
+The index operator returns the reference of an element allowing it to be 
+inspected or modified. If the index is out of range, then an exception will be raised.
+ 
  - ==, !=  equality
+ 
+Performs a value comparison on each of the elements in the two arrays 
+and returns true if all match the used operator.
 
 \subsection doc_datatypes_array_addon_mthd Methods
+
+\todo describe each of the methods
 
   - uint length() const
   - void resize(uint)
@@ -251,28 +263,53 @@ to use handles to the dictionary object when passing it around to avoid costly c
 \subsection doc_datatypes_dictionary_addon_ops Operators
 
  - =       assignment
- - []      index operator
- 
+
 The assignment operator performs a shallow copy of the content.
 
+ - []      index operator
+ 
 The index operator takes a string for the key, and returns a reference to the value.
-If the key/value pair doesn't exist, it will be inserted with a null value.
+If the key/value pair doesn't exist it will be inserted with a null value.
 
 \subsection doc_datatypes_dictionary_addon_mthd Methods
 
  - void set(const string &in key, ? &in value)
  - void set(const string &in key, int64 &in value)
  - void set(const string &in key, double &in value)
+
+Sets a key/value pair in the dictionary. If the key already exists, the value will be changed.
+
  - bool get(const string &in key, ? &out value) const
  - bool get(const string &in key, int64 &out value) const
  - bool get(const string &in key, double &out value) const
+ 
+Retrieves the value corresponding to the key. The methods return false if the key is not 
+found, and in this case the value will maintain its default value based on the type.
+ 
  - array<string> \@getKeys() const
+ 
+This method returns an array with all of the existing keys in the dictionary. 
+The order of the keys in the array is undefined.
+ 
  - bool exists(const string &in key) const
- - void delete(const string &in key)
+ 
+Returns true if the key exists in the dictionary.
+ 
+ - bool delete(const string &in key)
+
+Removes the key and the corresponding value from the dictionary. Returns false if the key wasn't found.
+ 
  - void deleteAll()
+
+Removes all entries in the dictionary.
+ 
  - bool isEmpty() const
+
+Returns true if the dictionary doesn't hold any entries.
+
  - uint getSize() const
 
+Returns the number of keys in the dictionary.
 
 
 
@@ -440,6 +477,8 @@ global functions to facilitate the manipulation of strings.
 
 \subsection doc_datatypes_strings_addon_ops Operators
 
+\todo describe each of the operators
+
  - =            assignment
  - +, +=        concatenation
  - ==, !=       equality
@@ -451,6 +490,8 @@ a default transformation of the primitive to a string.
  
 \subsection doc_datatypes_strings_addon_mthd Methods
 
+\todo describe each of the methods
+
  - uint           length() const
  - void           resize(uint)
  - bool           isEmpty() const
@@ -460,6 +501,8 @@ a default transformation of the primitive to a string.
  - array<string>@ split(const string &in delimiter) const
 
 \subsection doc_datatypes_strings_addon_funcs Functions
+
+\todo describe each of the functions
 
  - string join(const array<string> &in arr, const string &in delimiter)
  - int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0)
@@ -543,6 +586,8 @@ The ref object supports only a few operators as it is just a place holder for ha
 
 \subsection doc_datatypes_ref_addon_ops Operators
 
+\todo describe each of the operators
+
  - \@=          handle assignment
  - is, !is      identity operator
  - cast<type>   cast operator
@@ -588,11 +633,15 @@ can be used in place of the handle where the reference to the object is needed b
 
 \subsection doc_datatypes_weakref_addon_ops Operators
 
+\todo describe each of the operators
+
  - \@=          handle assignment
  - is, !is      identity operator
  - cast<type>   cast operator
 
 \subsection doc_datatypes_array_addon_mthd Methods
+
+\todo describe the method
 
  - T@ get() const
 

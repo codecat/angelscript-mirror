@@ -42,6 +42,9 @@ bool Test()
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
+		// TOOD: MyCoRoutine leaks when the test is executed with AS_MAX_PORTABILITY
+		PRINTF("Fix memory leak with AS_MAX_PORTABILITY\n");
+		TEST_FAILED;
 		r = mod->Build();
 		if( r < 0 )
 		{
