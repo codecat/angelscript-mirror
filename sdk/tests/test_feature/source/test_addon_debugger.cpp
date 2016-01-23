@@ -175,7 +175,7 @@ std::string ArrayToString(void *obj, int expandMembers, CDebugger *dbg)
 }
 
 //#ifndef AS_CAN_USE_CPP11
-static bool cmp(string &a, string &b) { return a > b; }
+static bool cmp(const string &a, const string &b) { return a > b; }
 //#endif
 
 std::string DictionaryToString(void *obj, int expandMembers, CDebugger *dbg)

@@ -385,12 +385,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -399,6 +393,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -509,12 +508,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -523,6 +516,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -633,12 +631,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -647,6 +639,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -770,12 +767,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -784,6 +775,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -900,12 +896,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -914,6 +904,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -1035,12 +1030,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -1049,6 +1038,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -1151,12 +1145,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -1165,6 +1153,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -1292,12 +1285,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp            \n"
 		"popl  %%ebx            \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -1306,6 +1293,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
@@ -1453,12 +1445,6 @@ endcopy:
 		// Pop the alignment bytes
 		"popl  %%esp           \n"
 		"popl  %%ebx           \n"
-
-		// Copy EAX:EDX to retQW. As the stack pointer has been
-		// restored it is now safe to access the local variable
-		"leal  %1, %%ecx        \n"
-		"movl  %%eax, 0(%%ecx)  \n"
-		"movl  %%edx, 4(%%ecx)  \n"
 #ifdef __OPTIMIZE__
 		// Epilogue
 		"movl %%ebp, %%esp         \n"
@@ -1467,6 +1453,11 @@ endcopy:
 		".cfi_adjust_cfa_offset -4 \n"
 		".cfi_restore ebp          \n"
 #endif
+		// Copy EAX:EDX to retQW. As the stack pointer has been
+		// restored it is now safe to access the local variable
+		"leal  %1, %%ecx        \n"
+		"movl  %%eax, 0(%%ecx)  \n"
+		"movl  %%edx, 4(%%ecx)  \n"
 		:                           // output
 		: "d"(a), "m"(retQW)        // input - pass pointer of args in edx, pass pointer of retQW in memory argument
 		: "%eax", "%ecx"            // clobber
