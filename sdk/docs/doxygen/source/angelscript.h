@@ -1392,22 +1392,8 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
 	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoByName instead.
-	//! \brief Returns a matching object type by name.
-	//! \param[in] name The name of the type.
-	//! \return The object type or null if no match is found.
-	//! \todo remove description
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
 	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoByDecl instead.
-	//! \brief Returns an object type by declaration.
-	//! \param[in] decl The declaration of the type.
-	//! \return The object type or null on error.
-	//!
-	//! Translates a type declaration into the object type. The returned object type is valid for as 
-	//! long as the type is valid, so you can safely store it for later use to avoid potential overhead from 
-	//! calling this function each time. Just remember to update the object type, any time the type is 
-	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
-	//! engine configuration.
-	//! \todo remove description
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
 #endif
 	//! \}
@@ -1507,18 +1493,8 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
 	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueCount instead.
-	//! \brief Returns the number of enum values for the enum type.
-	//! \param[in] enumTypeId The type id of the enum type.
-	//! \return The number of enum values for the enum type.
-	//! \todo remove description
 	virtual int          GetEnumValueCount(int enumTypeId) const = 0;
 	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueByIndex instead.
-	//! \brief Returns the name and value of the enum value for the enum type.
-	//! \param[in] enumTypeId The type id of the enum type.
-	//! \param[in] index The index of the enum value.
-	//! \param[out] outValue Receives the value of the enum value.
-	//! \return The name of the enum value.
-	//! \todo remove description
 	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 #endif
 	//! \}
@@ -1682,12 +1658,6 @@ public:
 #ifdef AS_DEPRECATED
 	// deprecated since 2.31.0, 2016-01-01
 	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoById instead.
-	//! \brief Returns the function description for the funcdef.
-	//! \param[in] typeId The type id for the funcdef.
-	//! \return A pointer to the function description interface, or null if not found.
-	//!
-	//! This does not increment the reference count of the returned function interface.
-	//! \todo Remove description
 	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
 #endif
 	//! \}
@@ -1699,12 +1669,6 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
 	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoById instead.
-	//! \brief Returns the object type interface for type.
-	//! \param[in] typeId The type id of the type.
-	//! \return The object type interface for the type, or null if not found.
-	//!
-	//! This does not increment the reference count of the returned object type.
-	//! \todo Remove description
 	virtual asITypeInfo   *GetObjectTypeById(int typeId) const = 0;
 #endif
 	//! \brief Returns a type id by declaration.
@@ -1742,11 +1706,27 @@ public:
 	//! This method can be used to return the size of any built-in primitive type,
 	//! and also for script declared or application registered enums.
 	virtual int            GetSizeOfPrimitiveType(int typeId) const = 0;
-	//! \todo Add description
+	//! \brief Returns the type interface for type.
+	//! \param[in] typeId The type id of the type.
+	//! \return The type interface for the type, or null if not found.
+	//!
+	//! This does not increment the reference count of the returned type.
 	virtual asITypeInfo   *GetTypeInfoById(int typeId) const = 0;
-	//! \todo Add description
+	//! \brief Returns the type interface by name.
+	//! \param[in] name The name of the type.
+	//! \return The type interface for the type, or null if not found.
+	//!
+	//! This does not increase the reference count of the returned type info.
 	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const = 0;
-	//! \todo Add description
+	//! \brief Returns a type by declaration.
+	//! \param[in] decl The declaration of the type.
+	//! \return The type or null on error.
+	//!
+	//! Translates a type declaration into the type info. The returned type is valid for as 
+	//! long as the type is valid, so you can safely store it for later use to avoid potential overhead from 
+	//! calling this function each time. Just remember to update the type info pointer any time the type is 
+	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
+	//! engine configuration.
 	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const = 0;
 	//! \}
 
@@ -2375,24 +2355,8 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
 	//! \deprecated Since 2.31.0. Use \ref asIScriptModule::GetTypeInfoByName instead.
-	//! \brief Returns the object type interface by name.
-	//! \param[in] name The name of the type.
-	//! \return The object type interface for the type, or null if not found.
-	//!
-	//! This does not increase the reference count of the returned object.
-	//! \todo remove description
 	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
 	//! \deprecated Since 2.31.0. Use \ref asIScriptModule::GetTypeInfoByDecl instead.
-	//! \brief Returns a type by declaration.
-	//! \param[in] decl The declaration of the type.
-	//! \return The object type or null on error.
-	//!
-	//! Translates a type declaration into the object type. The returned object type is valid for as 
-	//! long as the type is valid, so you can safely store it for later use to avoid potential overhead from 
-	//! calling this function each time. Just remember to update the object type, any time the type is 
-	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
-	//! engine configuration.
-	//! \todo remove description
 	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
 #endif
 	//! \brief Returns a type id by declaration.
@@ -2414,9 +2378,21 @@ public:
 	//! const is for the subtype then the type id is different, e.g. string@ isn't the same as const 
 	//! string@ but string is the same as const string. 
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
-	//! \todo add description
+	//! \brief Returns the type interface by name.
+	//! \param[in] name The name of the type.
+	//! \return The type interface for the type, or null if not found.
+	//!
+	//! This does not increase the reference count of the returned type info.
 	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const = 0;
-	//! \todo add description
+	//! \brief Returns a type by declaration.
+	//! \param[in] decl The declaration of the type.
+	//! \return The type or null on error.
+	//!
+	//! Translates a type declaration into the type info. The returned type is valid for as 
+	//! long as the type is valid, so you can safely store it for later use to avoid potential overhead from 
+	//! calling this function each time. Just remember to update the type info pointer any time the type is 
+	//! changed within the engine, e.g. when recompiling script declared classes, or changing the 
+	//! engine configuration.
 	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const = 0;
 	//! \}
 
@@ -2434,19 +2410,8 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
 	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueCount instead.
-	//! \brief Returns the number of values defined for the enum type.
-	//! \param[in] enumTypeId The type id of the enum type.
-	//! \return The number of enum values or a negative value on error.
-	//! \retval asINVALID_ARG \a enumTypeId is not an enum type.
-	//! \todo remove description
 	virtual int          GetEnumValueCount(int enumTypeId) const = 0;
 	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueByIndex instead.
-	//! \brief Returns the name and value of the enum value.
-	//! \param[in] enumTypeId The type id of the enum type.
-	//! \param[in] index The index of the enum value.
-	//! \param[out] outValue Receives the numeric value.
-	//! \return The name of the enum value.
-	//! \todo remove description
 	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
 #endif
 	//! \}
@@ -3620,11 +3585,14 @@ public:
 	//! \name Child types
 	//! \{
 
-	//! \todo add description
+	//! \brief Returns the number of child funcdefs declared in the class.
+	//! \return The number of child funcdefs declared in the class.
 	virtual asUINT       GetChildFuncdefCount() const = 0;
-	//! \todo add description
+	//! \brief Returns a child funcdef by index.
+	//! \return The child funcdef matching the index.
 	virtual asITypeInfo *GetChildFuncdef(asUINT index) const = 0;
-	//! \todo add description
+	//! \brief Returns the parent type if this is a child type.
+	//! \return The parent type if this is a child type.
 	virtual asITypeInfo *GetParentType() const = 0;
 	//! \}
 
@@ -3632,9 +3600,13 @@ public:
 	//! \name Enums
 	//! \{
 
-	//! \todo add description
+	//! \brief Returns the number of values defined for the enum type.
+	//! \return The number of enum values.
 	virtual asUINT      GetEnumValueCount() const = 0;
-	//! \todo add description
+	//! \brief Returns the name and value of the enum value for the enum type.
+	//! \param[in] index The index of the enum value.
+	//! \param[out] outValue Receives the value of the enum value.
+	//! \return The name of the enum value.
 	virtual const char *GetEnumValueByIndex(asUINT index, int *outValue) const = 0;
 	//! \}
 
@@ -3642,7 +3614,8 @@ public:
 	//! \name Typedef
 	//! \{
 
-	//! \todo add description
+	//! \brief Returns the type id that the typedef represents.
+	//! \return The type id that the typedef represents.
 	virtual int GetTypedefTypeId() const = 0;
 	//! \}
 
@@ -3650,7 +3623,10 @@ public:
 	//! \name Funcdef
 	//! \{
 
-	//! \todo add description
+	//! \brief Returns the function description for the funcdef type.
+	//! \return A pointer to the function description interface, or null if not a funcdef type.
+	//!
+	//! This does not increment the reference count of the returned function interface.
 	virtual asIScriptFunction *GetFuncdefSignature() const = 0;
 	//! \}
 
@@ -3732,7 +3708,8 @@ public:
 	//! \brief Returns the access mast of the function.
 	//! \return The access mask of the function.
 	virtual asDWORD          GetAccessMask() const = 0;
-	//! \todo add description
+	//! \brief Returns the auxiliary object registered with the function.
+	//! \return The auxiliary object registered with the function.
 	virtual void            *GetAuxiliary() const = 0;
 	//! \}
 
