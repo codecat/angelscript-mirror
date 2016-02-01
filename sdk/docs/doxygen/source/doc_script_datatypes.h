@@ -477,36 +477,78 @@ global functions to facilitate the manipulation of strings.
 
 \subsection doc_datatypes_strings_addon_ops Operators
 
-\todo describe each of the operators
-
  - =            assignment
+
+The assignment operator copies the content of the right hand string into the left hand string. 
+
+Assignment of primitive types is allowed, which will do a default transformation of the primitive to a string.
+
  - +, +=        concatenation
+
+The concatenation operator appends the content of the right hand string to the end of the left hand string.
+
+Concatenation of primitives types is allowed, which will do a default transformation of the primitive to a string.
+ 
  - ==, !=       equality
+ 
+Compares the content of the two strings.
+ 
  - <, >, <=, >= comparison
+
+Compares the content of the two strings. The comparison is done on the byte values in the strings, which 
+may not correspond to alphabetical comparisons for some languages.
+
  - []           index operator
 
-Concatenation or assignment with primitives is allowed, and will then do
-a default transformation of the primitive to a string.
+The index operator gives access to a single byte in the string.
  
 \subsection doc_datatypes_strings_addon_mthd Methods
 
-\todo describe each of the methods
-
  - uint           length() const
+
+Returns the length of the string.
+ 
  - void           resize(uint)
+
+Sets the length of the string.
+ 
  - bool           isEmpty() const
+
+Returns true if the string is empty, i.e. the length is zero.
+ 
  - string         substr(uint start = 0, int count = -1) const
+
+Returns a string with the content starting at \a start and the number of bytes given by count. The default arguments will return the whole string as the new string.
+
  - int            findFirst(const string &in str, uint start = 0) const
+
+Find the first occurrence of the value \a str in the string, starting at \a start. If no occurrence is found a negative value will be returned.
+ 
  - int            findLast(const string &in str, int start = -1) const
+
+Find the last occurrence of the value \a str in the string. If \a start is informed the search will begin at that position, i.e. any potential occurrence after that position will not be searched. If no occurrence is found a negative value will be returned.
+ 
  - array<string>@ split(const string &in delimiter) const
 
+Splits the string in smaller strings where the delimiter is found.
+ 
 \subsection doc_datatypes_strings_addon_funcs Functions
 
-\todo describe each of the functions
-
  - string join(const array<string> &in arr, const string &in delimiter)
- - int64  parseInt(const string &in, uint base = 10, uint &out byteCount = 0)
+
+Concatenates the strings in the array into a large string, separated by the delimiter.
+ 
+ - int64  parseInt(const string &in str, uint base = 10, uint &out byteCount = 0)
+
+Parses the string for an integer value. The \a base can be 10 or 16 to support decimal numbers or 
+hexadecimal numbers. If \a byteCount is provided it will be set to the number of bytes that were 
+considered as part of the integer value.
+
  - double parseFloat(const string &in, uint &out byteCount = 0)
+
+Parses the string for a floating point value. If \a byteCount is provided it will be set to the 
+number of bytes that were considered as part of the value.
+
  - string formatInt(int64 val, const string &in options = '', uint width = 0)
  - string formatUInt(uint64 val, const string &in options = '', uint width = 0)
  - string formatFloat(double val, const string &in options = '', uint width = 0, uint precision = 0)
@@ -518,10 +560,10 @@ is a combination of the following characters:
   - 0 = pad with zeroes
   - + = always include the sign, even if positive
   - space = add a space in case of positive number
-  - h = hexadecimal integer small letters
-  - H = hexadecimal integer capital letters
-  - e = exponent character with small e
-  - E = exponent character with capital E
+  - h = hexadecimal integer small letters (not valid for formatFloat)
+  - H = hexadecimal integer capital letters (not valid for formatFloat)
+  - e = exponent character with small e (only valid for formatFloat)
+  - E = exponent character with capital E (only valid for formatFloat)
 
 Examples:
 
