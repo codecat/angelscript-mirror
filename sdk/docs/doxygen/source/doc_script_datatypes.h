@@ -172,28 +172,67 @@ and returns true if all match the used operator.
 
 \subsection doc_datatypes_array_addon_mthd Methods
 
-\todo describe each of the methods
-
-  - uint length() const
-  - void resize(uint)
-  - void reverse()
-  - void insertAt(uint index, const T& in)
-  - void insertLast(const T& in)
-  - void removeAt(uint index)
-  - void removeLast()
-  - void sortAsc()
-  - void sortAsc(uint startAt, uint count)
-  - void sortDesc()
-  - void sortDesc(uint startAt, uint count)
-  - int  find(const T& in)
-  - int  find(uint startAt, const T& in)
-  - int  findByRef(const T& in)
-  - int  findByRef(uint startAt, const T& in)
-
-The T represents the type of the array elements.
+ - uint length() const
   
-Script example:
+Returns the length of the array.
+  
+ - void resize(uint)
+ 
+Sets the new length of the array.
+ 
+ - void reverse()
 
+Reverses the order of the elements in the array.
+ 
+ - void insertAt(uint index, const T& in)
+
+Inserts a new element into the array at the specified index. 
+All elements starting at that position will be pushed up one position.
+ 
+ - void insertLast(const T& in)
+
+Appends an element at the end of the array.
+ 
+ - void removeAt(uint index)
+
+Removes the element at the specified index.
+ 
+ - void removeLast()
+
+Removes the last element of the array.
+ 
+ - void sortAsc()
+ - void sortAsc(uint startAt, uint count)
+
+Sorts the elements in the array in ascending order. For object types, this will use the type's opCmp method.
+
+The second variant will sort only the elements starting at index \a startAt and the following \a count elements.
+ 
+ - void sortDesc()
+ - void sortDesc(uint startAt, uint count)
+
+These does the same thing as sortAsc except sorts the elements in descending order.
+ 
+ - int  find(const T& in)
+ - int  find(uint startAt, const T& in)
+
+These will return the index of the first element that has the same value as the wanted value.
+
+For object types, this will use the type's opEquals or opCmp method to compare the value. 
+For arrays of handles any null handle will be skipped.
+
+If no match is found the methods will return a negative value.
+ 
+ - int  findByRef(const T& in)
+ - int  findByRef(uint startAt, const T& in)
+
+These will search for a matching address. These are especially useful for arrays of handles where
+specific instances of objects are desired, and not just objects that happen to have equal value.
+
+If no match is found the methods will return a negative value.
+
+\subsection doc_datatypes_array_addon_example Script example
+  
 <pre>
   int main()
   {
@@ -328,11 +367,11 @@ with the application's documentation for more information about the registered t
 
 Reference types are allocated on the memory heap, and may outlive the initial variable that allocates
 them if another reference to the instance is kept. All \ref doc_script_class "script declared classes" are reference types. 
-\ref doc_global_interface "Interfaces" are a special form of reference types, that cannot be instanciated, but can be used to access
+\ref doc_global_interface "Interfaces" are a special form of reference types, that cannot be instantiated, but can be used to access
 the objects that implement the interfaces without knowing exactly what type of object it is.
 
 <pre>
-  obj o;      // An object is instanciated
+  obj o;      // An object is instantiated
   o = obj();  // A temporary instance is created whose 
               // value is assigned to the variable
 </pre>
@@ -628,12 +667,18 @@ The ref object supports only a few operators as it is just a place holder for ha
 
 \subsection doc_datatypes_ref_addon_ops Operators
 
-\todo describe each of the operators
-
  - \@=          handle assignment
+ 
+The handle assignment operator is used to set the object that the referred to by the ref type.
+ 
  - is, !is      identity operator
+ 
+The identity operators are used to compare the address of the object referred to by the ref type.
+ 
  - cast<type>   cast operator
 
+The cast operator is used to perform a dynamic cast to the desired type. 
+If the type is not compatible with the object referred to by the ref type this will return null.
 
 
  
@@ -675,19 +720,27 @@ can be used in place of the handle where the reference to the object is needed b
 
 \subsection doc_datatypes_weakref_addon_ops Operators
 
-\todo describe each of the operators
-
  - \@=          handle assignment
+ 
+The handle assignment operator is used to set the object that the referred to by the ref type.
+
  - is, !is      identity operator
- - cast<type>   cast operator
+ 
+The identity operators are used to compare the address of the object referred to by the ref type.
 
+ - cast<type>   implicit cast operator
+
+The implicit cast operator is used to cast the weak ref type to strong reference of the type.
+If the object referred to by the weakref is already dead this operator will return null.
+
+
+ 
 \subsection doc_datatypes_array_addon_mthd Methods
-
-\todo describe the method
 
  - T@ get() const
 
-
+This does the exact same thing as the implicit cast operator. It is just a more explicit way of 
+writing it.
 
  
  

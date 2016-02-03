@@ -212,6 +212,37 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test implicit conversion to handle
+	// Make sure no incorrect warning message is given
+	// http://www.gamedev.net/topic/661910-template-containers-angelscript-addon-library-release/page-2#entry5273466
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { \n"
+			"  A@&opIndex(A@&in) { return g_a; } \n"
+			"} \n"
+			"A @g_a; \n"
+			"void main() { \n"
+			"  if( @g_a[@g_a] == null ) {} \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test const correctness with parameters
 	// http://www.gamedev.net/topic/673892-const-broken/
 	{
