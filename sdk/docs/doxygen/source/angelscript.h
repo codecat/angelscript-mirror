@@ -1514,6 +1514,8 @@ public:
 	//! function pointers. If the application is going to receive function pointers
 	//! from scripts, it is necessary to first register the funcdef before registering
 	//! the function or property that will be used to receive it.
+	//! 
+	//! \todo Explain that funcdefs can be registered as child types of classes.
 	virtual int          RegisterFuncdef(const char *decl) = 0;
 	//! \brief Returns the number of registered function definitions.
 	//! \return The number of registered funcdefs.
@@ -2037,7 +2039,7 @@ public:
 	//! \param[in] type An identifier specifying which user data the callback is to be used with.
 	//!
 	//! The function given with this call will be invoked when a type info
-	//! is destroyed if any \ref asIObjectType::SetUserData "user data" has been registered with the type.
+	//! is destroyed if any \ref asITypeInfo::SetUserData "user data" has been registered with the type.
 	//!
 	//! The function is called from within the type info destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
@@ -3644,7 +3646,7 @@ public:
 	//!
 	//! The user data types identifiers between 1000 and 1999 are reserved for use by official add-ons.
 	//!
-	//! Optionally, a callback function can be \ref asIScriptEngine::SetObjectTypeUserDataCleanupCallback "registered" 
+	//! Optionally, a callback function can be \ref asIScriptEngine::SetTypeInfoUserDataCleanupCallback "registered" 
 	//! to clean up the user data when the object type is destroyed.
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;
 	//! \brief Returns the address of the previously registered user data.

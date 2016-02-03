@@ -194,7 +194,7 @@ public:
   // If the object that is being converted to a string has members of its own the callback should call
   // the debugger's ToString passing in expandMembersLevel - 1.
   typedef std::string (*ToStringCallback)(void *obj, int expandMembersLevel, CDebugger *dbg);
-  virtual void RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback);
+  virtual void RegisterToStringCallback(const asITypeInfo *type, ToStringCallback callback);
   
   // User interaction
   virtual void TakeCommands(asIScriptContext *ctx);
@@ -370,17 +370,17 @@ public:
   static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
   // Factory functions
-  static CScriptArray *Create(asIObjectType *ot);
-  static CScriptArray *Create(asIObjectType *ot, asUINT length);
-  static CScriptArray *Create(asIObjectType *ot, asUINT length, void *defaultValue);
-  static CScriptArray *Create(asIObjectType *ot, void *listBuffer);
+  static CScriptArray *Create(asITypeInfo *arrayType);
+  static CScriptArray *Create(asITypeInfo *arrayType, asUINT length);
+  static CScriptArray *Create(asITypeInfo *arrayType, asUINT length, void *defaultValue);
+  static CScriptArray *Create(asITypeInfo *arrayType, void *listBuffer);
 
   // Memory management
   void AddRef() const;
   void Release() const;
 
   // Type information
-  asIObjectType *GetArrayObjectType() const;
+  asITypeInfo   *GetArrayObjectType() const;
   int            GetArrayTypeId() const;
   int            GetElementTypeId() const;
 
@@ -456,7 +456,7 @@ CScriptArray *CreateArrayOfStrings()
     // The script array needs to know its type to properly handle the elements.
     // Note that the object type should be cached to avoid performance issues
     // if the function is called frequently.
-    asIObjectType* t = engine->GetObjectTypeByDecl("array<string>");
+    asITypeInfo* t = engine->GetTypeInfoByDecl("array<string>");
 
     // Create an array with the initial size of 3 elements
     CScriptArray* arr = CScriptArray::Create(t, 3);
@@ -504,17 +504,17 @@ public:
   static void SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
 
   // Factory functions
-  static CScriptGrid *Create(asIObjectType *ot);
-  static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height);
-  static CScriptGrid *Create(asIObjectType *ot, asUINT width, asUINT height, void *defaultValue);
-  static CScriptGrid *Create(asIObjectType *ot, void *listBuffer);
+  static CScriptGrid *Create(asITypeInfo *gridType);
+  static CScriptGrid *Create(asITypeInfo *gridType, asUINT width, asUINT height);
+  static CScriptGrid *Create(asITypeInfo *gridType, asUINT width, asUINT height, void *defaultValue);
+  static CScriptGrid *Create(asITypeInfo *gridType, void *listBuffer);
 
   // Memory management
   void AddRef() const;
   void Release() const;
 
   // Type information
-  asIObjectType *GetGridObjectType() const;
+  asITypeInfo   *GetGridObjectType() const;
   int            GetGridTypeId() const;
   int            GetElementTypeId() const;
 
@@ -717,7 +717,7 @@ public:
   CScriptHandle &operator=(const CScriptHandle &other);
   
   // Set the reference
-  void Set(void *ref, asIObjectType *type);
+  void Set(void *ref, asITypeInfo *type);
 
   // Compare equalness
   bool operator==(const CScriptHandle &o) const;
@@ -728,7 +728,7 @@ public:
   void Cast(void **outRef, int typeId);
 
   // Returns the type of the reference held
-  asIObjectType *GetType() const;
+  asITypeInfo   *GetType() const;
   int            GetTypeId() const;
   
   // Returns the reference
@@ -799,9 +799,9 @@ class CScriptWeakRef
 {
 public:
   // Constructors
-  CScriptWeakRef(asIObjectType *type);
+  CScriptWeakRef(asITypeInfo *type);
   CScriptWeakRef(const CScriptWeakRef &other);
-  CScriptWeakRef(void *ref, asIObjectType *type);
+  CScriptWeakRef(void *ref, asITypeInfo *type);
 
   ~CScriptWeakRef();
 
@@ -823,7 +823,7 @@ public:
   bool Equals(void *ref) const;
   
   // Returns the type of the reference held
-  asIObjectType *GetRefType() const;
+  asITypeInfo *GetRefType() const;
 };
 \endcode
 

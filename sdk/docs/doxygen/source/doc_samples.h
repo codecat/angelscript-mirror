@@ -189,7 +189,7 @@ breakpoints, stepping through the code, examining variables, etc.
  modules. 
  
  - \ref asIScriptModule
- - \ref asIObjectType::SetUserData
+ - \ref asITypeInfo::SetUserData
  - \ref doc_global_interface
  - \ref doc_script_class
  - \ref doc_addon_build
