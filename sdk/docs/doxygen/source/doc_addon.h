@@ -28,10 +28,17 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_filesystem
  - \subpage doc_addon_math
  - \subpage doc_addon_grid
+ - \subpage doc_addon_datetime
 
 
- 
- 
+
+\page doc_addon_datetime datetime object
+
+\todo Document the datetime add-on
+
+
+
+
 \page doc_addon_serializer Serializer
 
 <b>Path:</b> /sdk/add_on/serializer/

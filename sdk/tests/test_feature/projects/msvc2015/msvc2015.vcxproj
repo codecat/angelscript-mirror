@@ -418,6 +418,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\add_on\datetime\datetime.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptgrid\scriptgrid.cpp" />
     <ClCompile Include="..\..\..\..\add_on\weakref\weakref.cpp" />
@@ -429,6 +430,7 @@
     <ClCompile Include="..\..\source\test2modules.cpp" />
     <ClCompile Include="..\..\source\test_2func.cpp" />
     <ClCompile Include="..\..\source\test_addon_contextmgr.cpp" />
+    <ClCompile Include="..\..\source\test_addon_datetime.cpp" />
     <ClCompile Include="..\..\source\test_addon_debugger.cpp" />
     <ClCompile Include="..\..\source\test_addon_dictionary.cpp" />
     <ClCompile Include="..\..\source\test_addon_scriptarray.cpp" />
@@ -593,6 +595,7 @@
     <ClCompile Include="..\..\..\..\add_on\serializer\serializer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\add_on\datetime\datetime.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptfile\scriptfilesystem.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptgrid\scriptgrid.h" />
     <ClInclude Include="..\..\..\..\add_on\weakref\weakref.h" />
