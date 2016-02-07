@@ -176,7 +176,26 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref asIScriptEngine::SetContextCallbacks
  - Passing commandline arguments to script
  - Executing system commands from script
+ 
+\section doc_samples_asrun_funcs Global functions available to scripts
 
+Besides the add-ons listed above, the following functions are also exposed to the scripts.
+
+ - void print(const string &in line)
+
+Prints a line to the standard output.
+ 
+ - string getInput()
+
+Gets a line from the standard input.
+ 
+ - array<string> \@getCommandLineArgs()
+
+Gets the command line arguments as an array.
+ 
+ - int exec(const string &in)
+
+Executes a system command.
 
 
 

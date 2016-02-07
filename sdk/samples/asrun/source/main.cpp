@@ -36,6 +36,7 @@ void              MessageCallback(const asSMessageInfo *msg, void *param);
 asIScriptContext *RequestContextCallback(asIScriptEngine *engine, void *param);
 void              ReturnContextCallback(asIScriptEngine *engine, asIScriptContext *ctx, void *param);
 void              PrintString(const string &str);
+string            GetInput();
 int               ExecSystemCmd(const string &cmd);
 CScriptArray     *GetCommandLineArgs();
 
@@ -152,6 +153,7 @@ int ConfigureEngine(asIScriptEngine *engine)
 
 	// Register a couple of extra functions for the scripts
 	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("string getInput()", asFUNCTION(GetInput), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("array<string> @getCommandLineArgs()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTION(ExecSystemCmd), asCALL_CDECL); assert( r >= 0 );
 
@@ -431,6 +433,14 @@ void PrintString(const string &str)
 #else
 	cout << str;
 #endif
+}
+
+// Retrieve a line from stdin
+string GetInput()
+{
+	string line;
+	getline(cin, line);
+	return line;
 }
 
 // TODO: Perhaps it might be interesting to implement pipes so that the script can receive input from stdin, 
