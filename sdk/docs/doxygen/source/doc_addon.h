@@ -34,7 +34,91 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
 
 \page doc_addon_datetime datetime object
 
-\todo Document the datetime add-on
+<b>Path:</b> /sdk/add_on/datetime/
+
+The <code>CDateTime</code> class provides a way for scripts to get the system date and time.
+
+Register the type with the <code>RegisterScriptDateTime(asIScriptEngine*)</code> function.
+
+\note This class requires C++11 or later to compile.
+
+\section doc_addon_array_1 Public C++ interface
+
+\code
+class CDateTime
+{
+public:
+	// Constructors
+	CDateTime();
+	CDateTime(const CDateTime &other);
+
+	// Copy the stored value from another any object
+	CDateTime &operator=(const CDateTime &other);
+
+	// Accessors
+	asUINT getYear() const;
+	asUINT getMonth() const;
+	asUINT getDay() const;
+	asUINT getHour() const;
+	asUINT getMinute() const;
+	asUINT getSecond() const;
+};
+\endcode
+
+\section doc_addon_array_2 Public script interface
+
+<pre>
+  class datetime
+  {
+    datetime();
+    datetime(const datetime &in other);
+
+    datetime &opAssign(const datetime &in other);
+
+    uint get_year() const;
+    uint get_month() const;
+    uint get_day() const;
+    uint get_hour() const;
+    uint get_minute() const;
+    uint get_second() const;
+  }
+</pre>
+
+<b>datetime()</b><br>
+<b>datetime(const datetime &in other)</b>
+ 
+The default constructor initializes the object with the current system time.
+
+The copy constructor copíes the content of the other object.
+
+<b>datetime &opAssign(const datetime &in other)</b>
+ 
+The assignment operator copies the content of the other object.
+
+<b>uint get_year() const</b>
+
+Returns the year of the date stored in the object. 
+
+<b>uint get_month() const</b>
+
+Returns the month of the date stored in the object. The range is 1 to 12, i.e. 1 is January, 12 is December, and so on.
+ 
+<b>uint get_day() const</b>
+
+Returns the day of the month of the date stored in the object.
+ 
+<b>uint get_hour() const</b>
+
+Returns the hour of the time stored in the object. The range is 0 to 23.
+ 
+<b>uint get_minute() const</b>
+
+Returns the minute of the time stored in the object. The range is 0 to 59.
+
+<b>uint get_second() const</b>
+ 
+Returns the second of the time stored in the object. The range is 0 to 59.
+
 
 
 
@@ -341,12 +425,30 @@ public:
 };
 \endcode
 
+\section doc_addon_ctxmgr_2 Public script interface
 
+<pre>
+  funcdef void coroutine(dictionary@);
+  void createCoRoutine(coroutine @, dictionary @);
+  void yield();
+</pre>
 
+<b>funcdef void coroutine(dictionary@)</b><br>
+<b>void createCoRoutine(coroutine @, dictionary @)</b>
 
+This function is used to create a co-routine. The co-routine will initiate in a 
+yielded state, i.e. it will only begin execution once the control is given to it
+by the current thread. 
 
+Multiple co-routines can be created, and they will each take turn to execute in 
+round-robin fashion.
 
+<b>void yield()</b>
 
+Yields control of the execution for the next co-routine in the queue. 
+
+When a co-routine receives control it will resume execution from the last call to
+yield, or the entry point if this is the first time the co-routine is allowed to execute.
 
 
 
@@ -560,6 +662,29 @@ public:
   }
 </pre>
 
+<b>grid()</b><br>
+<b>grid(uint width, uint height)</b><br>
+<b>grid(uint width, height, const T &in fillValue)</b><br>
+
+The constructors initializes the grid object. The default constructor will create an zero sized grid.
+
+<b>uint width() const</b><br>
+<b>uint height() const</b><br>
+
+Returns the width and height of the grid.
+
+<b>void resize(uint w, uint h)</b>
+
+Resizes the grid to the new dimension. The elements that still fit in the grid will keep their values.
+
+<b>T &opIndex(uint x, uint y)</b><br>
+<b>const T &opIndex(uint x, uint y) const</b><br>
+
+The index operator returns a reference to one of the elements. If the index is out of bounds a script
+exception will be raised.
+
+
+
 \section doc_addon_grid_3 Example usage in script
 
 <pre>
@@ -659,6 +784,8 @@ public:
     bool retrieve(double &out value) const;
   }
 </pre>
+
+\todo Document the interface
 
 \section doc_addon_any_3 Example usage
 
@@ -1094,6 +1221,8 @@ public:
   }
 </pre>
 
+\todo Document the interface
+
 \section doc_addon_file_3 Script example
 
 <pre>
@@ -1158,7 +1287,7 @@ public:
   }
 </pre>
 
-
+\todo Document the interface
 
 
 
@@ -1264,7 +1393,7 @@ represents a complex number, i.e. a number with real and imaginary parts.
   }
 </pre>
 
-
+\todo Document the interface
 
 
 

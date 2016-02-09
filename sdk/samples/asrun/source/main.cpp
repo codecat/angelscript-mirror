@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdlib.h>  // system()
 #include <stdio.h>
+#include <direct.h>  // _chdir()
 #include <sstream>   // stringstream
 #include <angelscript.h>
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
@@ -39,6 +40,7 @@ void              PrintString(const string &str);
 string            GetInput();
 int               ExecSystemCmd(const string &cmd);
 CScriptArray     *GetCommandLineArgs();
+void              SetWorkDir(const string &file);
 
 // The command line arguments
 CScriptArray *g_commandLineArgs = 0;
@@ -106,6 +108,9 @@ int main(int argc, char **argv)
 	int scriptArg = debug ? 2 : 1;
 	g_argc = argc - (scriptArg + 1);
 	g_argv = argv + (scriptArg + 1);
+
+	// Set the current work dir according to the script's location
+	SetWorkDir(argv[scriptArg]);
 
 	// Compile the script code
 	r = CompileScript(engine, argv[scriptArg]);
@@ -536,5 +541,10 @@ void ReturnContextCallback(asIScriptEngine *engine, asIScriptContext *ctx, void 
 
 	// Unprepare the context to free any objects it may still hold (e.g. return value)
 	ctx->Unprepare();
+}
+
+void SetWorkDir(const string &file)
+{
+	_chdir(file.c_str());
 }
 
