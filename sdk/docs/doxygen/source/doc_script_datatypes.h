@@ -301,54 +301,52 @@ to use handles to the dictionary object when passing it around to avoid costly c
 
 \subsection doc_datatypes_dictionary_addon_ops Operators
 
-\todo Update the style
-
- - =       assignment
+<b>=       assignment</b><br>
 
 The assignment operator performs a shallow copy of the content.
 
- - []      index operator
+<b>[]      index operator</b><br>
  
 The index operator takes a string for the key, and returns a reference to the value.
 If the key/value pair doesn't exist it will be inserted with a null value.
 
 \subsection doc_datatypes_dictionary_addon_mthd Methods
 
- - void set(const string &in key, ? &in value)
- - void set(const string &in key, int64 &in value)
- - void set(const string &in key, double &in value)
+<b>void set(const string &in key, ? &in value)</b><br>
+<b>void set(const string &in key, int64 &in value)</b><br>
+<b>void set(const string &in key, double &in value)</b><br>
 
 Sets a key/value pair in the dictionary. If the key already exists, the value will be changed.
 
- - bool get(const string &in key, ? &out value) const
- - bool get(const string &in key, int64 &out value) const
- - bool get(const string &in key, double &out value) const
+<b>bool get(const string &in key, ? &out value) const</b><br>
+<b>bool get(const string &in key, int64 &out value) const</b><br>
+<b>bool get(const string &in key, double &out value) const</b><br>
  
 Retrieves the value corresponding to the key. The methods return false if the key is not 
 found, and in this case the value will maintain its default value based on the type.
  
- - array<string> \@getKeys() const
+<b>array<string> \@getKeys() const</b><br>
  
 This method returns an array with all of the existing keys in the dictionary. 
 The order of the keys in the array is undefined.
  
- - bool exists(const string &in key) const
+<b>bool exists(const string &in key) const</b><br>
  
 Returns true if the key exists in the dictionary.
  
- - bool delete(const string &in key)
+<b>bool delete(const string &in key)</b><br>
 
 Removes the key and the corresponding value from the dictionary. Returns false if the key wasn't found.
  
- - void deleteAll()
+<b>void deleteAll()</b><br>
 
 Removes all entries in the dictionary.
  
- - bool isEmpty() const
+<b>bool isEmpty() const</b><br>
 
 Returns true if the dictionary doesn't hold any entries.
 
- - uint getSize() const
+<b>uint getSize() const</b><br>
 
 Returns the number of keys in the dictionary.
 
@@ -518,83 +516,81 @@ global functions to facilitate the manipulation of strings.
 
 \subsection doc_datatypes_strings_addon_ops Operators
 
-\todo Update the style
-
- - =            assignment
+<b>=            assignment</b><br>
 
 The assignment operator copies the content of the right hand string into the left hand string. 
 
 Assignment of primitive types is allowed, which will do a default transformation of the primitive to a string.
 
- - +, +=        concatenation
+<b>+, +=        concatenation</b><br>
 
 The concatenation operator appends the content of the right hand string to the end of the left hand string.
 
 Concatenation of primitives types is allowed, which will do a default transformation of the primitive to a string.
  
- - ==, !=       equality
+<b>==, !=       equality</b><br>
  
 Compares the content of the two strings.
  
- - <, >, <=, >= comparison
+<b><, >, <=, >= comparison</b><br>
 
 Compares the content of the two strings. The comparison is done on the byte values in the strings, which 
 may not correspond to alphabetical comparisons for some languages.
 
- - []           index operator
+<b>[]           index operator</b><br>
 
 The index operator gives access to a single byte in the string.
  
 \subsection doc_datatypes_strings_addon_mthd Methods
 
- - uint           length() const
+<b>uint           length() const</b><br>
 
 Returns the length of the string.
  
- - void           resize(uint)
+<b>void           resize(uint)</b><br>
 
 Sets the length of the string.
  
- - bool           isEmpty() const
+<b>bool           isEmpty() const</b><br>
 
 Returns true if the string is empty, i.e. the length is zero.
  
- - string         substr(uint start = 0, int count = -1) const
+<b>string         substr(uint start = 0, int count = -1) const</b><br>
 
 Returns a string with the content starting at \a start and the number of bytes given by count. The default arguments will return the whole string as the new string.
 
- - int            findFirst(const string &in str, uint start = 0) const
+<b>int            findFirst(const string &in str, uint start = 0) const</b><br>
 
 Find the first occurrence of the value \a str in the string, starting at \a start. If no occurrence is found a negative value will be returned.
  
- - int            findLast(const string &in str, int start = -1) const
+<b>int            findLast(const string &in str, int start = -1) const</b><br>
 
 Find the last occurrence of the value \a str in the string. If \a start is informed the search will begin at that position, i.e. any potential occurrence after that position will not be searched. If no occurrence is found a negative value will be returned.
  
- - array<string>@ split(const string &in delimiter) const
+<b>array<string>@ split(const string &in delimiter) const</b><br>
 
 Splits the string in smaller strings where the delimiter is found.
  
 \subsection doc_datatypes_strings_addon_funcs Functions
 
- - string join(const array<string> &in arr, const string &in delimiter)
+<b>string join(const array<string> &in arr, const string &in delimiter)</b><br>
 
 Concatenates the strings in the array into a large string, separated by the delimiter.
  
- - int64  parseInt(const string &in str, uint base = 10, uint &out byteCount = 0)
+<b>int64  parseInt(const string &in str, uint base = 10, uint &out byteCount = 0)</b><br>
 
 Parses the string for an integer value. The \a base can be 10 or 16 to support decimal numbers or 
 hexadecimal numbers. If \a byteCount is provided it will be set to the number of bytes that were 
 considered as part of the integer value.
 
- - double parseFloat(const string &in, uint &out byteCount = 0)
+<b>double parseFloat(const string &in, uint &out byteCount = 0)</b><br>
 
 Parses the string for a floating point value. If \a byteCount is provided it will be set to the 
 number of bytes that were considered as part of the value.
 
- - string formatInt(int64 val, const string &in options = '', uint width = 0)
- - string formatUInt(uint64 val, const string &in options = '', uint width = 0)
- - string formatFloat(double val, const string &in options = '', uint width = 0, uint precision = 0)
+<b>string formatInt(int64 val, const string &in options = '', uint width = 0)</b><br>
+<b>string formatUInt(uint64 val, const string &in options = '', uint width = 0)</b><br>
+<b>string formatFloat(double val, const string &in options = '', uint width = 0, uint precision = 0)</b><br>
 
 The format functions takes a string that defines how the number should be formatted. The string
 is a combination of the following characters:
@@ -671,17 +667,15 @@ The ref object supports only a few operators as it is just a place holder for ha
 
 \subsection doc_datatypes_ref_addon_ops Operators
 
-\todo Update the style
-
- - \@=          handle assignment
+<b>\@=          handle assignment</b><br>
  
 The handle assignment operator is used to set the object that the referred to by the ref type.
  
- - is, !is      identity operator
+<b>is, !is      identity operator</b><br>
  
 The identity operators are used to compare the address of the object referred to by the ref type.
  
- - cast<type>   cast operator
+<b>cast<type>   cast operator</b><br>
 
 The cast operator is used to perform a dynamic cast to the desired type. 
 If the type is not compatible with the object referred to by the ref type this will return null.
@@ -726,17 +720,15 @@ can be used in place of the handle where the reference to the object is needed b
 
 \subsection doc_datatypes_weakref_addon_ops Operators
 
-\todo Update the style
-
- - \@=          handle assignment
+<b>\@=          handle assignment</b><br>
  
 The handle assignment operator is used to set the object that the referred to by the ref type.
 
- - is, !is      identity operator
+<b>is, !is      identity operator</b><br>
  
 The identity operators are used to compare the address of the object referred to by the ref type.
 
- - cast<type>   implicit cast operator
+<b>cast<type>   implicit cast operator</b><br>
 
 The implicit cast operator is used to cast the weak ref type to strong reference of the type.
 If the object referred to by the weakref is already dead this operator will return null.
@@ -745,7 +737,7 @@ If the object referred to by the weakref is already dead this operator will retu
  
 \subsection doc_datatypes_array_addon_mthd Methods
 
- - T@ get() const
+<b>T@ get() const</b><br>
 
 This does the exact same thing as the implicit cast operator. It is just a more explicit way of 
 writing it.

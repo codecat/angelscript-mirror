@@ -774,6 +774,10 @@ public:
   {
     any();
     any(? &in value);
+    any(int64 &in value);
+    any(double &in value);
+
+    any &opAssign(const any &in other);
   
     void store(? &in value);
     void store(int64 &in value);
@@ -785,7 +789,34 @@ public:
   }
 </pre>
 
-\todo Document the interface
+<b>any()</b><br>
+<b>any(? &in value)</b><br>
+<b>any(int64 &in value)</b><br>
+<b>any(double &in value)</b><br>
+
+The default constructor creates an empty object, and the second initializes the object with the provided value.
+
+The int64 and double overloads make sure that all numbers are converted to 64bit before being stored in the object.
+
+<b>any &opAssign(const any &in other)</b><br>
+
+The assignment operator will copy the contained value from the other object.
+
+<b>void store(? &in value)</b><br>
+<b>void store(int64 &in value)</b><br>
+<b>void store(double &in value)</b><br>
+
+These methods sets the value in the object.
+
+The int64 and double overloads make sure that all numbers are converted to 64bit before being stored in the object.
+
+<b>bool retrieve(? &out value) const</b><br>
+<b>bool retrieve(int64 &out value) const</b><br>
+<b>bool retrieve(double &out value) const</b><br>
+
+These methods retrieve the value stored in the object. The methods will return true if the stored value is 
+compatible with the requested type.
+
 
 \section doc_addon_any_3 Example usage
 
@@ -1209,7 +1240,7 @@ public:
     uint64   readUInt(uint bytes);
     float    readFloat();
     double   readDouble();
-    int      writeString(const string &in string);
+    int      writeString(const string &in str);
     int      writeInt(int64 value, uint bytes);
     int      writeUInt(uint64 value, uint bytes);
     int      writeFloat(float value);
@@ -1221,7 +1252,97 @@ public:
   }
 </pre>
 
-\todo Document the interface
+<b>int open(const string &in filename, const string &in mode)</b><br>
+
+Opens a file. The mode can be "r" for reading, "w" for writing, or "a" for appending.
+
+If the file couldn't be opened, a negative value is returned.
+
+<b>int close()</b><br>
+
+Closes the file.
+
+If no file is open, a negative value is returned.
+
+<b>int getSize() const</b><br>
+
+Returns the size of the file, or a negative value if no file is open.
+
+<b>bool isEndOfFile() const</b><br>
+
+Returns true if the current position is at the end of the file.
+
+<b>string readString(uint length)</b><br>
+
+Reads \a length bytes into a string and returns it.
+
+<b>string readLine()</b><br>
+
+Reads until a new line character, e.g. '\n', or end-of-file and returns the string. The new line character is also returned in the string.
+
+<b>int64 readInt(uint bytes)</b><br>
+
+Reads \a bytes as a signed integer number.
+
+<b>uint64 readUInt(uint bytes)</b><br>
+
+Reads \a bytes as an unsigned integer number.
+
+<b>float readFloat()</b><br>
+
+Reads 4 bytes as a float number.
+
+<b>double readDouble()</b><br>
+
+Reads 8 bytes as a double number.
+
+<b>int writeString(const string &in str)</b><br>
+
+Writes the bytes of the string into the file. 
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeInt(int64 value, uint bytes)</b><br>
+
+Writes \a bytes as a signed integer value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeUInt(uint64 value, uint bytes)</b><br>
+
+Writes \a bytes as an unsigned integer value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeFloat(float value)</b><br>
+
+Writes 4 bytes as a float value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeDouble(double value)</b><br>
+
+Writes 8 bytes as a double value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int getPos() const</b><br>
+
+Returns the current position in the file, or a negative value on error.
+
+<b>int setPos(int pos)</b><br>
+
+Sets the current position in the file. Returns the previous position or a negative value on error.
+
+<b>int movePos(int delta)</b><br>
+
+Moves the position \a delta bytes relative to the current position. Returns the previous position or a negative value on error.
+
+<b>bool mostSignificantByteFirst</b><br>
+
+This property should be set to true if the most significant bit should be read or written first in the methods that reads/writes numbers.
+
+It is set to false by default, which is the standard on most platforms.
 
 \section doc_addon_file_3 Script example
 
@@ -1287,7 +1408,29 @@ public:
   }
 </pre>
 
-\todo Document the interface
+<b>bool changeCurrentPath(const string &in path)</b>
+
+This changes the current directory used by the filesystem object. It will return true if the given path is valid.
+
+It doesn't change the application' working directory.
+
+<b>string getCurrentPath() const</b>
+
+Returns the current path used by the filesystem object.
+
+<b>array<string> \@getDirs()</b>
+
+Returns a list with the names of all directories in the current path.
+
+<b>array<string> \@getFiles()</b>
+
+Returns a list with the names of all files in the current path.
+
+<b>bool isDir(const string &in path)</b>
+
+Returns true if the given path is a directory.
+
+
 
 
 
