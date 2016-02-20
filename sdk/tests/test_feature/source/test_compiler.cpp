@@ -212,6 +212,47 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test assert failure in compiler
+	// http://www.gamedev.net/topic/676120-compiler-assert-hit-in-deallocatevariable/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		bout.buffer = "";
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { \n"
+			"  A() { value = 42; } \n"
+			"  A(A@ other) { value = other.value*2; } \n"
+			"  int value; \n"
+			"}; \n"
+			"void func(A@ a) {\n"
+			"  A x(a); \n" // make a copy of the object
+			"  assert( a.value == 42 ); \n" // original object must still be available through handle
+			"  assert( x.value == 84 ); \n"
+			"}; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "A a; func(a)", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (r == asEXECUTION_EXCEPTION)
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
+		ctx->Release();
+		
+		engine->ShutDownAndRelease();
+	}
+
 	// Test implicit conversion to handle
 	// Make sure no incorrect warning message is given
 	// http://www.gamedev.net/topic/661910-template-containers-angelscript-addon-library-release/page-2#entry5273466

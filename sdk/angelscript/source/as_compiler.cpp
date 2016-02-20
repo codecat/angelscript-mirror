@@ -1811,36 +1811,22 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			if( dt.IsObjectHandle() )
 				ctx->type.isExplicitHandle = true;
 
-			if( (dt.IsObject() || dt.IsFuncdef()) && !dt.IsNullHandle() )
+			if( (dt.IsObject() || dt.IsFuncdef()) && !dt.IsNullHandle() && !dt.IsReference() )
 			{
-				if( !dt.IsReference() )
-				{
-					// Objects passed by value must be placed in temporary variables
-					// so that they are guaranteed to not be referenced anywhere else.
-					// The object must also be allocated on the heap, as the memory will
-					// be deleted by in as_callfunc_xxx.
+				// Objects passed by value must be placed in temporary variables
+				// so that they are guaranteed to not be referenced anywhere else.
+				// The object must also be allocated on the heap, as the memory will
+				// be deleted by the called function.
 
-					// Handles passed by value must also be placed in a temporary variable
-					// to guarantee that the object referred to isn't freed too early.
+				// Handles passed by value must also be placed in a temporary variable
+				// to guarantee that the object referred to isn't freed too early.
 
-					// TODO: value on stack: How can we avoid this unnecessary allocation?
+				// TODO: value on stack: How can we avoid this unnecessary allocation?
 
-					// Local variables doesn't need to be copied into
-					// a temp if we're already compiling an assignment
-					if( !isMakingCopy || !ctx->type.dataType.IsObjectHandle() || !ctx->type.isVariable )
-						PrepareTemporaryVariable(node, ctx, true);
-
-					// The implicit conversion shouldn't convert the object to
-					// non-reference yet. It will be dereferenced just before the call.
-					// Otherwise the object might be missed by the exception handler.
-					dt.MakeReference(true);
-				}
-				else
-				{
-					// An object passed by reference should place the pointer to
-					// the object on the stack.
-					dt.MakeReference(false);
-				}
+				// Don't make temporary copies of handles if it is going to be used 
+				// for handle assignment anyway, i.e. REFCPY.
+				if( !(!isFunction && isMakingCopy && ctx->type.dataType.IsObjectHandle() && ctx->type.isVariable) )
+					PrepareTemporaryVariable(node, ctx, true);
 			}
 		}
 	}
@@ -1976,9 +1962,11 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 			// The object must be allocated on the heap, because this memory will be deleted in as_callfunc_xxx
 			asASSERT(IsVariableOnHeap(args[n]->type.stackOffset));
 
+			// The pointer in the variable will be moved to the stack
 			bc->InstrWORD(asBC_GETOBJ, (asWORD)offset);
 
-			// The temporary variable must not be freed as it will no longer hold an object
+			// Deallocate the variable slot so it can be reused, but do not attempt to
+			// free the content of the variable since it was moved to the stack for the call
 			DeallocateVariable(args[n]->type.stackOffset);
 			args[n]->type.isTemporary = false;
 		}
@@ -5133,6 +5121,7 @@ void asCCompiler::DeallocateVariable(int offset)
 		}
 	}
 
+	// Mark the variable slot available for new allocations
 	n = GetVariableSlot(offset);
 	if( n != -1 )
 	{
@@ -5141,7 +5130,7 @@ void asCCompiler::DeallocateVariable(int offset)
 	}
 
 	// We might get here if the variable was implicitly declared
-	// because it was use before a formal declaration, in this case
+	// because it was used before a formal declaration, in this case
 	// the offset is 0x7FFF
 
 	asASSERT(offset == 0x7FFF);
@@ -7821,7 +7810,7 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(false);
 
-			PrepareArgument(&dt, rctx, rexpr, true, asTM_INREF , true);
+			PrepareArgument(&dt, rctx, rexpr, false, asTM_INREF , true);
 			if( !dt.IsEqualExceptRefAndConst(rctx->type.dataType) )
 			{
 				asCString str;
