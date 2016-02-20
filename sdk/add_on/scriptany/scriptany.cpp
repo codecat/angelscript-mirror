@@ -201,7 +201,7 @@ void RegisterScriptAny_Generic(asIScriptEngine *engine)
 CScriptAny &CScriptAny::operator=(const CScriptAny &other)
 {
 	// Hold on to the object type reference so it isn't destroyed too early
-	if( other.value.valueObj && (other.value.typeId & asTYPEID_MASK_OBJECT) )
+	if( (other.value.typeId & asTYPEID_MASK_OBJECT) )
 	{
 		asITypeInfo *ti = engine->GetTypeInfoById(other.value.typeId);
 		if( ti )
@@ -279,7 +279,7 @@ void CScriptAny::Store(void *ref, int refTypeId)
 	assert( refTypeId > asTYPEID_DOUBLE || refTypeId == asTYPEID_VOID || refTypeId == asTYPEID_BOOL || refTypeId == asTYPEID_INT64 || refTypeId == asTYPEID_DOUBLE );
 
 	// Hold on to the object type reference so it isn't destroyed too early
-	if( *(void**)ref && (refTypeId & asTYPEID_MASK_OBJECT) )
+	if( (refTypeId & asTYPEID_MASK_OBJECT) )
 	{
 		asITypeInfo *ti = engine->GetTypeInfoById(refTypeId);
 		if( ti )
