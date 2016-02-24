@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4938,6 +4938,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 	}
 }
 
+// scope is only informed when looking for a base class' method
 void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope, asCScriptNode *errNode, asCScriptCode *script)
 {
 	if( scope != "" )
@@ -4951,61 +4952,54 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 		asCString className = n >= 0 ? scope.SubString(n+2) : scope;
 		asCString nsName = n >= 0 ? scope.SubString(0, n) : "";
 
-		// Check if the namespace actually exist, if not return silently as this cannot be the referring to a base class
-		asSNameSpace *ns = GetNameSpaceByString(nsName, objectType->nameSpace, errNode, script, 0, false);
-		if( ns == 0 )
-			return;
+		// If a namespace was specifically defined, then this must be used
+		asSNameSpace *ns = 0;
+		if (n >= 0)
+		{
+			if (nsName == "")
+				ns = engine->nameSpaces[0];
+			else
+				ns = GetNameSpaceByString(nsName, objectType->nameSpace, errNode, script, 0, false);
+			
+			// If the namespace isn't found return silently and let the calling 
+			// function report the error if it cannot resolve the symbol
+			if (ns == 0)
+				return;
+		}
 
 		// Find the base class with the specified scope
-		while( objectType && (objectType->name != className || objectType->nameSpace != ns) )
+		while (objectType)
+		{
+			// If the name and namespace matches it is the correct class. If no
+			// specific namespace was given, then don't compare the namespace
+			if (objectType->name == className && (ns == 0 || objectType->nameSpace == ns))
+				break;
+
 			objectType = objectType->derivedFrom;
+		}
 
 		// If the scope is not any of the base classes, then return no methods
 		if( objectType == 0 )
 			return;
 	}
 
+	// Find the methods in the object that match the name
 	// TODO: optimize: Improve linear search
-	if( objIsConst )
+	for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
 	{
-		// Only add const methods to the list
-		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
+		asCScriptFunction *func = engine->scriptFunctions[objectType->methods[n]];
+		if( func->name == name &&
+			(!objIsConst || func->isReadOnly) &&
+			(func->accessMask & module->accessMask) )
 		{
-			asCScriptFunction *func = engine->scriptFunctions[objectType->methods[n]];
-			if( func->name == name &&
-				func->isReadOnly &&
-				(func->accessMask & module->accessMask) )
+			// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
+			if( scope == "" )
+				methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
+			else
 			{
-				// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
-				if( scope == "" )
-					methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
-				else
-				{
-					asCScriptFunction *virtFunc = engine->scriptFunctions[objectType->methods[n]];
-					asCScriptFunction *realFunc = objectType->virtualFunctionTable[virtFunc->vfTableIdx];
-					methods.PushLast(realFunc->id);
-				}
-			}
-		}
-	}
-	else
-	{
-		// TODO: Prefer non-const over const
-		for( asUINT n = 0; n < objectType->methods.GetLength(); n++ )
-		{
-			asCScriptFunction *func = engine->scriptFunctions[objectType->methods[n]];
-			if( func->name == name &&
-				(func->accessMask & module->accessMask) )
-			{
-				// When the scope is defined the returned methods should be the true methods, not the virtual method stubs
-				if( scope == "" )
-					methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
-				else
-				{
-					asCScriptFunction *virtFunc = engine->scriptFunctions[objectType->methods[n]];
-					asCScriptFunction *realFunc = objectType->virtualFunctionTable[virtFunc->vfTableIdx];
-					methods.PushLast(realFunc->id);
-				}
+				asCScriptFunction *virtFunc = engine->scriptFunctions[objectType->methods[n]];
+				asCScriptFunction *realFunc = objectType->virtualFunctionTable[virtFunc->vfTableIdx];
+				methods.PushLast(realFunc->id);
 			}
 		}
 	}

@@ -11,6 +11,46 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Calling base class method from overridden method when base class is declared in a different namespace
+	// http://www.gamedev.net/topic/675631-unable-to-call-base-function-on-class-outside-of-namespace/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace Test \n"
+			"{ \n"
+			"	class Bar : Foo \n"
+			"	{ \n"
+			"		void Stuff() override \n"
+			"		{ \n"
+			"			Foo::Stuff();  \n"
+			"			::Foo::Stuff();  \n"
+			"		} \n"
+			"	} \n"
+			"} \n"
+			"class Foo \n"
+			"{ \n"
+			"	void Stuff() \n"
+			"	{ \n"
+			"		// do stuff \n"
+			"	} \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Partial namespace specialization of enum in namespace
 	// http://www.gamedev.net/topic/673284-namespace-auto-detection-fail/
 	{
