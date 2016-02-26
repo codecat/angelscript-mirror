@@ -1515,7 +1515,9 @@ public:
 	//! from scripts, it is necessary to first register the funcdef before registering
 	//! the function or property that will be used to receive it.
 	//! 
-	//! \todo Explain that funcdefs can be registered as child types of classes.
+	//! Funcdefs are usually registered as global entities, but can also be registered
+	//! as a child of a class. To do this simply prefix the name of the funcdef with the 
+	//! name of the class and the scope operator to specify which class should be the owner.
 	virtual int          RegisterFuncdef(const char *decl) = 0;
 	//! \brief Returns the number of registered function definitions.
 	//! \return The number of registered funcdefs.

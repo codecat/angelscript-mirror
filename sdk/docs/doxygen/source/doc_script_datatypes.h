@@ -754,7 +754,8 @@ used for callbacks, i.e. where a piece of code must be able to call back to some
 conditions, but the code that needs to be called is not known at compile time.
 
 To use function handles it is first necessary to \ref doc_global_funcdef "define the function signature" 
-that will be used at the global scope. Once that is done the variables can be declared using that definition.
+that will be used at the global scope or as a member of a class. Once that is done the variables can be 
+declared using that definition.
 
 Here's an example that shows the syntax for using function handles
 
