@@ -43,8 +43,6 @@
 #include "as_atomic.h"
 #include "as_datatype.h"
 
-#ifndef AS_NO_COMPILER
-
 BEGIN_AS_NAMESPACE
 
 class asCScriptEngine;
@@ -239,7 +237,5 @@ protected:
 };
 
 END_AS_NAMESPACE
-
-#endif // AS_NO_COMPILER
 
 #endif

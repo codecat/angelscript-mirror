@@ -35,9 +35,6 @@
 
 
 #include "as_config.h"
-
-#ifndef AS_NO_COMPILER
-
 #include "as_typeinfo.h"
 #include "as_scriptengine.h"
 
@@ -473,4 +470,4 @@ asITypeInfo *asCFuncdefType::GetParentType() const
 
 END_AS_NAMESPACE
 
-#endif // AS_NO_COMPILER
+
