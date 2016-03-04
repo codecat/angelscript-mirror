@@ -7046,7 +7046,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asCExprContext *ctx, const asC
 	// Reference types currently don't allow implicit conversion from primitive to object
 	// TODO: Allow implicit conversion to scoped reference types as they are supposed to appear like ordinary value types
 	asCObjectType *objType = to.GetTypeInfo()->CastToObjectType();
-	asASSERT( objType );
+	asASSERT( objType || to.GetTypeInfo()->CastToFuncdefType() );
 	if( !objType || (objType->flags & asOBJ_REF) )
 		return asCC_NO_CONV;
 

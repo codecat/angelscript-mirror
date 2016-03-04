@@ -30,6 +30,44 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test function overloads and function pointers
+	// http://www.gamedev.net/topic/676565-assert-failure-during-overload-resolution/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void f();\n"
+			"class foo {\n"
+			"  void opAssign(f@) {}\n"
+			"  void opAssign(int) { correct = true; }\n"
+			"  bool correct = false; \n"
+			"}\n"
+			"void main() {\n"
+			"  foo bar = 1;\n"
+			"  assert( bar.correct ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test function pointers in array
 	{
 		engine = asCreateScriptEngine();
