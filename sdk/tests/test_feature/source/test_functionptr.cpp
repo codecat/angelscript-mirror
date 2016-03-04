@@ -30,6 +30,43 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test passing function pointer by reference
+	// http://www.gamedev.net/topic/676566-assert-failure-when-passing-function-handle-by-reference/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void f(); \n"
+			"class foo { \n"
+			"	void opAssign(f@ &in) { correct = true; } \n"
+			"   bool correct = false; \n"
+			"} \n"
+			"void main() { \n"
+			"	foo bar = main; \n"
+			"   assert( bar.correct ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test function overloads and function pointers
 	// http://www.gamedev.net/topic/676565-assert-failure-during-overload-resolution/
 	{

@@ -1547,12 +1547,14 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 					// the function as it is, since the local variable will stay alive, and since it
 					// is temporary there is no side effect if the function modifies it.
 
-					// If the parameter is read-only and therefor guaranteed not to be modified by the
+					// If the parameter is read-only and therefore guaranteed not to be modified by the
 					// function, then it is enough that the variable is local to guarantee the lifetime.
 					if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
 					{
-						if( (ctx->type.dataType.IsFuncdef() || (ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF)) && param.IsReadOnly() && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_SCOPED) )
+						if( ctx->type.dataType.IsFuncdef() || ((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && param.IsReadOnly() && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_SCOPED)) )
 						{
+							// Funcdefs only need an extra handle to guarantee the lifetime.
+
 							// If the object is a reference type (except scoped reference types), and the
 							// parameter is a const reference, then it is not necessary to make a copy of the
 							// object. The compiler just needs to hold a handle to guarantee the lifetime.
@@ -1578,6 +1580,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 						}
 						else
 						{
+							// Make a copy of the object to guarantee that the original isn't modified
 							asASSERT(!dt.IsFuncdef());
 
 							// Allocate and initialize a temporary local object
