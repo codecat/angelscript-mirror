@@ -128,59 +128,111 @@ void Generic_Functor(asIScriptGeneric *gen)
 
 bool Test2();
 
+int counter = 0;
+void DoNothingTest(asIScriptGeneric *gen)
+{
+	if (size_t(gen->GetAuxiliary()) == 123)
+		counter++;
+}
+
+void ConstructorTest(asIScriptGeneric *gen)
+{
+	if (size_t(gen->GetAuxiliary()) == 123)
+		counter++;
+}
+
+void DestructorTest(asIScriptGeneric *gen)
+{
+	if (size_t(gen->GetAuxiliary()) == 123)
+		counter++;
+}
+
 bool Test()
 {
 	bool fail = Test2();
 
 	int r;
+	asIScriptEngine *engine;
 
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	// Test auxiliary pointer with generic functions
+	{
+		engine = asCreateScriptEngine();
 
-	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(GenericString_Construct), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(GenericString_Destruct), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAssign(string &in)", asFUNCTION(GenericString_Assignment), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterStringFactory("string", asFUNCTION(GenericString_Factory), asCALL_GENERIC); assert( r >= 0 );
+		asIScriptModule *module = engine->GetModule("testAuxiliary", asGM_ALWAYS_CREATE);
+		asIScriptContext *context = engine->CreateContext();
 
-	r = engine->RegisterGlobalFunction("void test(double)", asFUNCTION(TestDouble), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void test(string)", asFUNCTION(TestString), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("void DoNothing()", asFUNCTION(DoNothingTest), asCALL_GENERIC, (void *)123); assert(r >= 0);
+		r = engine->RegisterObjectType("dummy", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CD); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dummy", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructorTest), asCALL_GENERIC, (void *)123); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("dummy", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructorTest), asCALL_GENERIC, (void *)123); assert(r >= 0);
 
-	r = engine->RegisterGlobalFunction("double func1(int, double, string)", asFUNCTION(GenFunc1), asCALL_GENERIC); assert( r >= 0 );
+		counter = 0;
+		r = module->AddScriptSection("test", "void main(){   DoNothing();  dummy d;    }");
+		r = module->Build();
 
-	r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("obj", "string mthd1(int, double)", asFUNCTION(GenMethod1), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("obj", "obj &opAssign(obj &in)", asFUNCTION(GenAssign), asCALL_GENERIC); assert( r >= 0 );
+		r = context->Prepare(module->GetFunctionByName("main"));
+		r = context->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (counter != 3)
+			TEST_FAILED;
 
-	r = engine->RegisterGlobalProperty("obj o", &obj);
+		context->Release();
+		module->Discard();
 
-	r = engine->RegisterInterface("intf");
-	r = engine->RegisterGlobalFunction("intf @nullPtr(intf @)", asFUNCTION(nullPtr), asCALL_GENERIC); assert( r >= 0 );
+		engine->ShutDownAndRelease();
+	}
+	
+	// Standard test
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	r = engine->RegisterGlobalFunction("void functor()", asFUNCTION(Generic_Functor), asCALL_GENERIC, &extraValue); assert(r >= 0);
+		r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(GenericString_Construct), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(GenericString_Destruct), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string &opAssign(string &in)", asFUNCTION(GenericString_Assignment), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterStringFactory("string", asFUNCTION(GenericString_Factory), asCALL_GENERIC); assert(r >= 0);
 
-	COutStream out;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = ExecuteString(engine, "test(func1(23, 23, \"test\"))");
-	if(r != asEXECUTION_FINISHED)
-		TEST_FAILED;
+		r = engine->RegisterGlobalFunction("void test(double)", asFUNCTION(TestDouble), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void test(string)", asFUNCTION(TestString), asCALL_GENERIC); assert(r >= 0);
 
-	r = ExecuteString(engine, "test(o.mthd1(23, 23))");
-	if(r != asEXECUTION_FINISHED)
-		TEST_FAILED;
+		r = engine->RegisterGlobalFunction("double func1(int, double, string)", asFUNCTION(GenFunc1), asCALL_GENERIC); assert(r >= 0);
 
-	r = ExecuteString(engine, "o = o");
-	if(r != asEXECUTION_FINISHED)
-		TEST_FAILED;
+		r = engine->RegisterObjectType("obj", 4, asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert(r >= 0);
+		r = engine->RegisterObjectMethod("obj", "string mthd1(int, double)", asFUNCTION(GenMethod1), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("obj", "obj &opAssign(obj &in)", asFUNCTION(GenAssign), asCALL_GENERIC); assert(r >= 0);
 
-	r = ExecuteString(engine, "nullPtr(null)");
-	if(r != asEXECUTION_FINISHED)
-		TEST_FAILED;
+		r = engine->RegisterGlobalProperty("obj o", &obj);
 
-	r = ExecuteString(engine, "functor()");
-	if(r != asEXECUTION_FINISHED || extraValue != 24)
-		TEST_FAILED;
+		r = engine->RegisterInterface("intf");
+		r = engine->RegisterGlobalFunction("intf @nullPtr(intf @)", asFUNCTION(nullPtr), asCALL_GENERIC); assert(r >= 0);
 
-	engine->Release();
+		r = engine->RegisterGlobalFunction("void functor()", asFUNCTION(Generic_Functor), asCALL_GENERIC, &extraValue); assert(r >= 0);
+
+		COutStream out;
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		r = ExecuteString(engine, "test(func1(23, 23, \"test\"))");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "test(o.mthd1(23, 23))");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "o = o");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "nullPtr(null)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "functor()");
+		if (r != asEXECUTION_FINISHED || extraValue != 24)
+			TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// Success
 	return fail;

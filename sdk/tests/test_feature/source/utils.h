@@ -192,6 +192,7 @@ void InstallMemoryManager();
 void RemoveMemoryManager();
 int  GetNumAllocs();
 int  GetAllocedMem();
+void PrintLocationCounters();
 
 // Returns true if bytecode is as expected
 bool ValidateByteCode(asIScriptFunction *func, asBYTE *expectBC);
