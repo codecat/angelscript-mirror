@@ -4255,6 +4255,7 @@ void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int func) const
 
 void *asCScriptEngine::CallObjectMethodRetPtr(void *obj, int param1, asCScriptFunction *func) const
 {
+	asASSERT( obj != 0 );
 	asASSERT( func != 0 );
 	asSSystemFunctionInterface *i = func->sysFuncIntf;
 

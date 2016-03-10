@@ -4339,17 +4339,24 @@ void asCContext::ExecuteNext()
 
 			// Pop the thispointer from the stack
 			void *obj = *(void**)l_sp;
-			l_sp += AS_PTR_SIZE;
+			if (obj == 0)
+				SetInternalException(TXT_NULL_POINTER_ACCESS);
+			else
+			{
+				// Only update the stack pointer if all is OK so the 
+				// exception handler can properly clean up the stack
+				l_sp += AS_PTR_SIZE;
 
-			// Pop the int arg from the stack
-			int arg = *(int*)l_sp;
-			l_sp++;
+				// Pop the int arg from the stack
+				int arg = *(int*)l_sp;
+				l_sp++;
 
-			// Call the method
-			m_callingSystemFunction = m_engine->scriptFunctions[i];
-			void *ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
-			m_callingSystemFunction = 0;
-			*(asPWORD*)&m_regs.valueRegister = (asPWORD)ptr;
+				// Call the method
+				m_callingSystemFunction = m_engine->scriptFunctions[i];
+				void *ptr = m_engine->CallObjectMethodRetPtr(obj, arg, m_callingSystemFunction);
+				m_callingSystemFunction = 0;
+				*(asPWORD*)&m_regs.valueRegister = (asPWORD)ptr;
+			}
 
 			// Update the program position after the call so that line number is correct
 			l_bc += 2;
