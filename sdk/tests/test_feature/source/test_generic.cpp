@@ -147,12 +147,68 @@ void DestructorTest(asIScriptGeneric *gen)
 		counter++;
 }
 
+asIScriptFunction *callback = NULL;
+void SetCallback(asIScriptGeneric *gen)
+{
+	callback = (asIScriptFunction *)gen->GetArgAddress(0);
+	callback->AddRef();
+}
+
+void GetCallback(asIScriptGeneric *gen)
+{
+	//gen->SetReturnAddress(callback);                           // <== If using this line it will work as expected
+	*(void **)gen->GetAddressOfReturnLocation() = callback;      // <== I expect this line would work same as the above line, but it's not.
+	callback->AddRef();
+}
+
 bool Test()
 {
 	bool fail = Test2();
 
 	int r;
 	asIScriptEngine *engine;
+
+	// Test passing and returning funcdefs in generic functions
+	{
+		engine = asCreateScriptEngine();
+
+		asIScriptModule *module = engine->GetModule("testCallback", asGM_ALWAYS_CREATE);
+		asIScriptContext *context = engine->CreateContext();
+
+		r = engine->RegisterFuncdef("int Callback()");assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void SetCallback(Callback@ cb)", asFUNCTION(SetCallback), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("Callback@ GetCallback()", asFUNCTION(GetCallback), asCALL_GENERIC); assert(r >= 0);
+
+		r = module->AddScriptSection("test", "int main(){ \n"
+											 "  SetCallback(@testCB); \n"
+											 "  Callback@ cb = GetCallback(); \n"
+											 "  return cb(); \n"
+											 "} \n"
+											 "int testCB(){ \n"
+											 "  return 123; \n"
+											 "}");assert(r >= 0);
+		r = module->Build();assert(r >= 0);
+
+		r = context->Prepare(module->GetFunctionByName("main"));assert(r >= 0);
+
+		if (context->Execute() != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (context->GetReturnDWord() != 123)
+			TEST_FAILED;
+
+		context->Release();
+		module->Discard();
+
+		if (callback)
+		{
+			callback->Release();
+			callback = 0;
+		}
+		else
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test auxiliary pointer with generic functions
 	{
