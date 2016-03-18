@@ -202,6 +202,10 @@ public:
 	}
 };
 
+void DoNothing(asIScriptGeneric *gen)
+{
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -211,6 +215,68 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptModule *mod;
+
+	// Test funcdefs, property accessors, anonymous functions, and wrong syntax
+	{
+		engine = asCreateScriptEngine();
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		asIScriptModule *module = engine->GetModule("testCallback", asGM_ALWAYS_CREATE);
+		asIScriptContext *context = engine->CreateContext();
+
+		r = engine->RegisterFuncdef("int Callback()"); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void set_TestCallback(Callback@ cb)", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("Callback@ get_TestCallback()", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
+
+		r = module->AddScriptSection("test", "void main(){ Callback@ cb = function() {return 123;}; TestCallback = cb; }"); assert(r >= 0);
+		r = module->Build(); // <== Crash Here
+		if (r >= 0)
+			TEST_FAILED;
+
+		r = module->AddScriptSection("test", "void main(){ Callback@ cb = test; TestCallback = cb; } int test() {return 123;}"); assert(r >= 0);
+		r = module->Build(); // <== Crash Here
+		if (r >= 0)
+			TEST_FAILED;
+
+		r = module->AddScriptSection("test", "void main(){ TestCallback = function() {return 123;}; }"); assert(r >= 0);
+		r = module->Build(); // <== Crash Here
+		if (r >= 0)
+			TEST_FAILED;
+
+		r = module->AddScriptSection("test", "void main(){ Callback@ cb = function() {return 123;}; @TestCallback = cb; }"); assert(r >= 0);
+		r = module->Build(); 
+		if (r < 0)
+			TEST_FAILED;
+
+		r = module->AddScriptSection("test", "void main(){ @TestCallback = function(){return 123;}; }"); assert(r >= 0);
+		r = module->Build(); 
+		if (r < 0)
+			TEST_FAILED;
+
+		r = context->Prepare(module->GetFunctionByName("main")); 
+		if (r < 0)
+			TEST_FAILED;
+
+		if (context->Execute() != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		context->Release();
+		module->Discard();
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (1, 68) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n"
+						   "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (1, 48) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n"
+						   "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (1, 27) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test assert failure in compiler
 	// http://www.gamedev.net/topic/676120-compiler-assert-hit-in-deallocatevariable/

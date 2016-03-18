@@ -5372,7 +5372,7 @@ int asCCompiler::PerformAssignment(asCExprValue *lvalue, asCExprValue *rvalue, a
 		bc->AddCode(&ctx.bc);
 
 		asSTypeBehaviour *beh = lvalue->dataType.GetBehaviour();
-		if( beh->copy && beh->copy != engine->scriptTypeBehaviours.beh.copy )
+		if( beh && beh->copy && beh->copy != engine->scriptTypeBehaviours.beh.copy )
 		{
 			asCExprContext res(engine);
 			PerformFunctionCall(beh->copy, &res, false, 0, lvalue->dataType.GetTypeInfo()->CastToObjectType());
@@ -5380,7 +5380,7 @@ int asCCompiler::PerformAssignment(asCExprValue *lvalue, asCExprValue *rvalue, a
 			bc->AddCode(&res.bc);
 			*lvalue = res.type;
 		}
-		else if( beh->copy == engine->scriptTypeBehaviours.beh.copy )
+		else if( beh && beh->copy == engine->scriptTypeBehaviours.beh.copy )
 		{
 			// Call the default copy operator for script classes
 			// This is done differently because the default copy operator
