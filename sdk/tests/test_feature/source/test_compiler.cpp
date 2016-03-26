@@ -216,6 +216,37 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test void &, which should fail with appropriate error message
+	// http://www.gamedev.net/topic/677273-various-unexpected-behaviors-of-angelscript-2310/
+	{
+		engine = asCreateScriptEngine();
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void &func1() {} \n"
+			"void func2(void &, void &in, void &out) {} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 6) : Error   : Type 'void' cannot be a reference\n"
+						   "test (2, 17) : Error   : Type 'void' cannot be a reference\n"
+						   "test (2, 25) : Error   : Type 'void' cannot be a reference\n"
+						   "test (2, 35) : Error   : Type 'void' cannot be a reference\n"
+						   "test (2, 1) : Info    : Compiling void func2(void, void, void)\n"
+						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n"
+						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n"
+						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test funcdefs, property accessors, anonymous functions, and wrong syntax
 	{
 		engine = asCreateScriptEngine();

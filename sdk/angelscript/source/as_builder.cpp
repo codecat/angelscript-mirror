@@ -5553,6 +5553,14 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 	asCScriptNode *n = node->firstChild;
 	if( n && n->tokenType == ttAmp )
 	{
+		if (dt.GetTokenType() == ttVoid)
+		{
+			asCString msg;
+			msg.Format(TXT_TYPE_s_CANNOT_BE_REFERENCE, type.Format(0).AddressOf());
+			WriteError(msg, file, node->firstChild);
+			return dt;
+		}
+
 		dt.MakeReference(true);
 		n = n->next;
 
