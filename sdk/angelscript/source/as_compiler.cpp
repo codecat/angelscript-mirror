@@ -8077,6 +8077,24 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 				// Set the type of the result
 				ctx->type = le.type;
 			}
+			else if (le.type.IsNullConstant() && re.type.IsNullConstant())
+			{
+				// Special case for when both results are 'null'
+				// TODO: Other expressions where both results are identical literal constants can probably also be handled this way
+
+				// Put the code for the condition expression on the output
+				MergeExprBytecode(ctx, &e);
+
+				// Load the result into the register, but ignore the value since both paths give the same response
+				ctx->type = e.type;
+				ConvertToVariable(ctx);
+				ctx->bc.InstrSHORT(asBC_CpyVtoR4, ctx->type.stackOffset);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+
+				// Return a null constant
+				ctx->bc.Instr(asBC_PshNull);
+				ctx->type.SetNullConstant();
+			}
 			else
 			{
 				// Allow "(a ? b : c) = d;" and "return (a ? b : c);" (where the latter returns the reference)

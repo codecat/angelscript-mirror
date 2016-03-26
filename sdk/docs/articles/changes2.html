@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.1 WIP - 2016/03/17</h2>
+<h2>Version 2.31.1 WIP - 2016/03/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed null pointer access crash in asBC_Thiscall1 when calling opIndex on a null pointer (Thanks gjl)
 <li>The generic calling convention wasn't properly handling funcdefs in arguments or return type (Thanks Phong Ba)
 <li>Fixed null pointer access crash in compiler when compiling invalid script with value assign of function pointer (Thanks Phong Ba)
+<li>Expressions like (expr ? null : null) is now compiled correctly (Thanks Sir Ementaler)
 </ul>
 </ul>
 
