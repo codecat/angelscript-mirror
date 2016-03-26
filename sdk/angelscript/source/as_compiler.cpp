@@ -2592,8 +2592,9 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 				str.Format(TXT_DATA_TYPE_CANT_BE_s, type.Format(outFunc->nameSpace).AddressOf());
 			Error(str, node);
 
-			// Use int instead to avoid further problems
-			type = asCDataType::CreatePrimitive(ttInt, false);
+			// Don't continue, as it will most likely lead to further 
+			// errors that may just mislead the script writer
+			return;
 		}
 
 		// A shared object may not declare variables of non-shared types

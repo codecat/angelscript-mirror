@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2016 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -345,6 +345,9 @@ bool asCDataType::CanBeInstantiated() const
 
 	if( !IsObject() && !IsFuncdef() ) // Primitives
 		return true; 
+
+	if (IsNullHandle()) // null
+		return false;
 
 	if( IsObjectHandle() && !(typeInfo->flags & asOBJ_NOHANDLE) ) // Handles
 		return true;
