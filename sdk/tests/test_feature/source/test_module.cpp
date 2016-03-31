@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../../add_on/scriptbuilder/scriptbuilder.h"
 
 namespace TestModule
 {
@@ -10,6 +11,44 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
 	asIScriptContext *ctx;
+
+	// Test discarding module right after compiling
+	// http://www.gamedev.net/topic/677465-refcount-mismatch-when-discarding-module/
+	{
+		class Dummy
+		{
+		public:
+			static asIScriptContext* requestScriptContext(asIScriptEngine* engine, void* param)
+			{
+				return static_cast<asIScriptContext*>(param);
+			}
+
+			static void returnScriptContext(asIScriptEngine* engine, asIScriptContext* context, void* param)
+			{
+				// Nothing to do...
+			}
+		};
+
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptContext* ctxt = engine->CreateContext();
+		engine->SetContextCallbacks(Dummy::requestScriptContext, Dummy::returnScriptContext, ctxt);
+
+		CScriptBuilder b;
+		b.StartNewModule(engine, "test");
+		b.AddSectionFromMemory("test", "float test = 0.0f;");
+		r = b.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod = b.GetModule();
+		mod->Discard();
+
+		ctxt->Release();
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test a problematic script for cleaning up a module
 	// Reported by Polyak Istvan

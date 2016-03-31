@@ -508,6 +508,29 @@ bool asCModule::HasExternalReferences(bool shuttingDown)
 	// Check all entiteis in the module for any external references.
 	// If there are any external references the module cannot be deleted yet.
 	
+	asCSymbolTableIterator<asCGlobalProperty> it = scriptGlobals.List();
+	while (it)
+	{
+		asCGlobalProperty *desc = *it;
+		if (desc->GetInitFunc() && desc->GetInitFunc()->externalRefCount.get())
+		{
+			if( !shuttingDown )
+				return true;
+			else
+			{
+				asCString msg;
+				msg.Format(TXT_EXTRNL_REF_TO_MODULE_s, name.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_WARNING, msg.AddressOf());
+
+				// TODO: Use a better error message
+				asCString name = "init " + desc->name;
+				msg.Format(TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d, name.AddressOf(), desc->GetInitFunc()->GetFuncType());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, msg.AddressOf());
+			}
+		}
+		it++;
+	}
+
 	for( asUINT n = 0; n < scriptFunctions.GetLength(); n++ )
 		if( scriptFunctions[n] && scriptFunctions[n]->externalRefCount.get() )
 		{

@@ -617,9 +617,8 @@ void CScriptArray::Reserve(asUINT maxElements)
 		return;
 	}
 
-	// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
-	//       This should really be using the objects copy/move constructor to copy each object
-	//       to the new location. It would most likely be a hit on the performance though.
+	// As objects in arrays of objects are not stored inline, it is safe to use memcpy here
+	// since we're just copying the pointers to objects and not the actual objects.
 	memcpy(newBuffer->data, buffer->data, buffer->numElements*elementSize);
 
 	// Release the old buffer
@@ -676,9 +675,8 @@ void CScriptArray::Resize(int delta, asUINT at)
 			return;
 		}
 
-		// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy/move constructor to copy each object
-		//       to the new location. It would most likely be a hit on the performance though.
+		// As objects in arrays of objects are not stored inline, it is safe to use memcpy here
+		// since we're just copying the pointers to objects and not the actual objects.
 		memcpy(newBuffer->data, buffer->data, at*elementSize);
 		if( at < buffer->numElements )
 			memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);
@@ -694,17 +692,15 @@ void CScriptArray::Resize(int delta, asUINT at)
 	else if( delta < 0 )
 	{
 		Destruct(buffer, at, at-delta);
-		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy/move constructor to copy each object
-		//       to the new location. It would most likely be a hit on the performance though.
+		// As objects in arrays of objects are not stored inline, it is safe to use memmove here
+		// since we're just copying the pointers to objects and not the actual objects.
 		memmove(buffer->data + at*elementSize, buffer->data + (at-delta)*elementSize, (buffer->numElements - (at-delta))*elementSize);
 		buffer->numElements += delta;
 	}
 	else
 	{
-		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy/move constructor to copy each object
-		//       to the new location. It would most likely be a hit on the performance though.
+		// As objects in arrays of objects are not stored inline, it is safe to use memmove here
+		// since we're just copying the pointers to objects and not the actual objects.
 		memmove(buffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements - at)*elementSize);
 		Construct(buffer, at, at+delta);
 		buffer->numElements += delta;
@@ -1264,6 +1260,8 @@ int CScriptArray::Find(asUINT startAt, void *value) const
 
 // internal
 // Copy object handle or primitive value
+// Even in arrays of objects the objects are allocated on 
+// the heap and the array stores the pointers to the objects
 void CScriptArray::Copy(void *dst, void *src)
 {
 	memcpy(dst, src, elementSize);
