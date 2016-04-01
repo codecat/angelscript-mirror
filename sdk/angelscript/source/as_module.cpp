@@ -523,8 +523,8 @@ bool asCModule::HasExternalReferences(bool shuttingDown)
 				engine->WriteMessage("", 0, 0, asMSGTYPE_WARNING, msg.AddressOf());
 
 				// TODO: Use a better error message
-				asCString name = "init " + desc->name;
-				msg.Format(TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d, name.AddressOf(), desc->GetInitFunc()->GetFuncType());
+				asCString tmpName = "init " + desc->name;
+				msg.Format(TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d, tmpName.AddressOf(), desc->GetInitFunc()->GetFuncType());
 				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, msg.AddressOf());
 			}
 		}

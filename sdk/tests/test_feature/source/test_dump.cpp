@@ -315,6 +315,7 @@ void DumpModule(asIScriptModule *mod)
 		"reg func: string formatUInt(uint64, const string&in = \"\", uint = 0) group: <null>\n"
 		"reg func: string formatFloat(double, const string&in = \"\", uint = 0, uint = 0) group: <null>\n"
 		"reg func: int64 parseInt(const string&in, uint = 10, uint&out = 0) group: <null>\n"
+		"reg func: uint64 parseUInt(const string&in, uint = 10, uint&out = 0) group: <null>\n"
 		"reg func: double parseFloat(const string&in, uint&out = 0) group: <null>\n"
 		"reg func: void func(int&in) group: <null>\n"
 		"reg func: void func2(const string&in = \"\") group: test\n"

@@ -345,7 +345,7 @@ bool TestStdString()
 		RegisterStdStringUtils(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		r = ExecuteString(engine, 
+		r = ExecuteString(engine,
 			"  string str = 'hello world'; \n"
 			"  assert( str.substr(6, 5) == 'world' ); \n"
 			"  assert( str.findFirst('o') == 4 ); \n"
@@ -359,8 +359,11 @@ bool TestStdString()
 			"  assert( join(arr, ';') == 'A;B;;D' ); \n"
 			"  assert( formatInt(123456789012345, 'l', 20).length() == 20 ); \n"
 			"  assert( formatFloat(123.456, '', 20, 10).length() == 20 ); \n"
-		    "  assert( parseInt('1234') == 1234 ); \n"
+			"  assert( parseInt('1234') == 1234 ); \n"
+			"  assert( parseInt('-123') == -123 ); \n"
 			"  assert( parseFloat('123.456') == 123.456 ); \n"
+			"  assert( parseUInt('-1') == 0 ); \n"
+			"  assert( parseUInt('ABC', 16) == 0xABC ); \n"
 			"  assert( '12345'.length == 5 ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
