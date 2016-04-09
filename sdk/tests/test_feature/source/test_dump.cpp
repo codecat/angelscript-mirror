@@ -398,7 +398,13 @@ void DumpModule(asIScriptModule *mod)
 		" string opAdd_r(bool) const\n"
 		" string substr(uint = 0, int = - 1) const\n"
 		" int findFirst(const string&in, uint = 0) const\n"
+		" int findFirstOf(const string&in, uint = 0) const\n"
+		" int findFirstNotOf(const string&in, uint = 0) const\n"
 		" int findLast(const string&in, int = - 1) const\n"
+		" int findLastOf(const string&in, int = - 1) const\n"
+		" int findLastNotOf(const string&in, int = - 1) const\n"
+		" void insert(uint, const string&in)\n"
+		" void erase(uint, int = - 1)\n"
 		"type: interface MyIntf\n"
 		" void func() const\n" )
 	{

@@ -428,6 +428,7 @@
     <ClCompile Include="..\..\source\scriptstring.cpp" />
     <ClCompile Include="..\..\source\scriptstring_utils.cpp" />
     <ClCompile Include="..\..\source\test2modules.cpp" />
+    <ClCompile Include="..\..\source\teststdstring.cpp" />
     <ClCompile Include="..\..\source\test_2func.cpp" />
     <ClCompile Include="..\..\source\test_addon_contextmgr.cpp" />
     <ClCompile Include="..\..\source\test_addon_datetime.cpp" />
@@ -573,7 +574,7 @@
     <ClCompile Include="..\..\source\testoutput.cpp" />
     <ClCompile Include="..\..\source\teststack.cpp" />
     <ClCompile Include="..\..\source\teststdcall4args.cpp" />
-    <ClCompile Include="..\..\source\teststdstring.cpp" />
+    <ClCompile Include="..\..\source\test_addon_stdstring.cpp" />
     <ClCompile Include="..\..\source\testswitch.cpp" />
     <ClCompile Include="..\..\source\testtempvar.cpp" />
     <ClCompile Include="..\..\source\testvirtualinheritance.cpp" />

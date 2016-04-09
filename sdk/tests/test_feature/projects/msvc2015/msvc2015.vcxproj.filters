@@ -503,9 +503,6 @@
     <ClCompile Include="..\..\source\teststdcall4args.cpp">
       <Filter>tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\teststdstring.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\testswitch.cpp">
       <Filter>tests</Filter>
     </ClCompile>
@@ -522,6 +519,12 @@
       <Filter>add-ons</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\test_addon_datetime.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\test_addon_stdstring.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\teststdstring.cpp">
       <Filter>tests</Filter>
     </ClCompile>
   </ItemGroup>

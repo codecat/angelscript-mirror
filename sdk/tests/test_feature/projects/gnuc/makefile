@@ -25,6 +25,7 @@ SRCNAMES = \
   test_addon_dictionary.cpp \
   test_addon_debugger.cpp \
   test_addon_weakref.cpp \
+  test_addon_stdstring.cpp \
   test_any.cpp \
   test_argref.cpp \
   test_array.cpp \
