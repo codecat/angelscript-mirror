@@ -73,9 +73,10 @@ public:
 
 	// Array manipulation
 	void InsertAt(asUINT index, void *value);
-	void RemoveAt(asUINT index);
 	void InsertLast(void *value);
+	void RemoveAt(asUINT index);
 	void RemoveLast();
+	void RemoveRange(asUINT start, asUINT count);
 	void SortAsc();
 	void SortDesc();
 	void SortAsc(asUINT startAt, asUINT count);

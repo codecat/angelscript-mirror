@@ -47,6 +47,18 @@ namespace Test_Addon_StdString
 			"assert( a.findLastNotOf('fox') == 33); \n");
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
+		// Test insert and erase
+		r = ExecuteString(engine,
+			"string a; \n"
+			"a.insert(5, 'hello'); \n");  // attempt to insert beyond the size of the string
+		if (r != asEXECUTION_EXCEPTION) TEST_FAILED;
+
+		r = ExecuteString(engine,
+			"string a; \n"
+			"a.insert(0, 'hello'); \n" // at index 1 beyond the last it is allowed
+			"a.erase(2,2); \n"
+			"assert( a == 'heo' ); \n"); 
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 		engine->ShutDownAndRelease();
 
