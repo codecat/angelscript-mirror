@@ -335,6 +335,30 @@ bool TestAndrewPrice();
 
 static asIScriptFunction *g_func = 0;
 
+class NGUIWidget
+{
+public:
+	float alpha;
+
+	NGUIWidget()
+	{
+		alpha = 0;
+	};
+};
+
+class NGUISymbol : public NGUIWidget
+{
+};
+
+void NGUIWidgetCastGeneric(asIScriptGeneric *gen)
+{
+	NGUIWidget* wgt = (NGUIWidget*)gen->GetObject();
+
+	gen->SetReturnAddress(wgt);
+}
+
+NGUISymbol symbol_inst;
+
 bool Test()
 {
 	int r;
@@ -342,6 +366,65 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
+
+	// Test saving/loading bytecode with asBC_ClrVPtr when the variable is a null pointer
+	// http://www.gamedev.net/topic/677759-crash-on-ios-arm64/
+	{
+		engine = asCreateScriptEngine();
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("NGUIWidget", sizeof(NGUIWidget), asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectProperty("NGUIWidget", "float alpha", asOFFSET(NGUIWidget, alpha));
+
+
+		engine->RegisterObjectType("NGUISymbol", sizeof(NGUISymbol), asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("NGUISymbol", "NGUIWidget@ opImplCast()", asFUNCTION(NGUIWidgetCastGeneric), asCALL_GENERIC);
+		engine->RegisterObjectProperty("NGUISymbol", "float alpha", asOFFSET(NGUISymbol, alpha));
+
+
+		engine->RegisterGlobalProperty("NGUISymbol inst", &symbol_inst);
+
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"	NGUIWidget@ wgt = @inst; \n"
+			"	wgt.alpha = 0.58f; \n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		CBytecodeStream bc("blah");
+		r = mod->SaveByteCode(&bc);
+		if (r < 0)
+			TEST_FAILED;
+
+		asDWORD crc = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
+		if (crc != 2772594532u)
+		{
+			PRINTF("Wrong checksum. Got %u\n", crc);
+			TEST_FAILED;
+		}
+
+		r = mod->LoadByteCode(&bc);
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test saving bytecode where indirectly defined funcdefs are used
 	{

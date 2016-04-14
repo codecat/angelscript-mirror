@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.1 WIP - 2016/04/11</h2>
+<h2>Version 2.31.1 WIP - 2016/04/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -30,6 +30,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>auto var = null; no longer causes a crash in the compiler (Thanks Sir Ementaler)
 <li>Compiler wasn't giving an error on 'void &' (Thanks Sir Ementaler)
 <li>Fixed error when discarding a module if a context was still holding a reference to global var (Thanks GuyWithBeard)
+<li>Offset for bytecode ClrVPtr wasn't adjusted correctly when saving/loading bytecode when the referred to variable was a null pointer (Thanks _Engine_)
 </ul>
 <li>Add-ons
 <ul>

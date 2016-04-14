@@ -3223,29 +3223,29 @@ void asCReader::CalculateAdjustmentByPos(asCScriptFunction *func)
 	int highestPos = 0;
 	for( n = 0; n < func->scriptData->objVariableTypes.GetLength(); n++ )
 	{
-		if( func->scriptData->objVariableTypes[n] )
+		// Determine the size the variable currently occupies on the stack
+		int size = AS_PTR_SIZE;
+
+		// objVariableTypes is null if the type is a null pointer
+		if( func->scriptData->objVariableTypes[n] &&
+			(func->scriptData->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
+			n >= func->scriptData->objVariablesOnHeap )
 		{
-			// Determine the size the variable currently occupies on the stack
-			int size = AS_PTR_SIZE;
-			if( (func->scriptData->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
-				n >= func->scriptData->objVariablesOnHeap )
-			{
-				size = func->scriptData->objVariableTypes[n]->GetSize();
-				if( size < 4 ) 
-					size = 1; 
-				else 
-					size /= 4;
-			}
+			size = func->scriptData->objVariableTypes[n]->GetSize();
+			if( size < 4 ) 
+				size = 1; 
+			else 
+				size /= 4;
+		}
 
-			// Check if type has a different size than stored
-			if( size > 1 )
-			{
-				if( func->scriptData->objVariablePos[n] > highestPos )
-					highestPos = func->scriptData->objVariablePos[n];
+		// Check if type has a different size than stored
+		if( size > 1 )
+		{
+			if( func->scriptData->objVariablePos[n] > highestPos )
+				highestPos = func->scriptData->objVariablePos[n];
 
-				adjustments.PushLast(func->scriptData->objVariablePos[n]);
-				adjustments.PushLast(size-1);
-			}
+			adjustments.PushLast(func->scriptData->objVariablePos[n]);
+			adjustments.PushLast(size-1);
 		}
 	}
 
@@ -4337,27 +4337,27 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 	adjustments.SetLength(0);
 	for( n = 0; n < func->scriptData->objVariableTypes.GetLength(); n++ )
 	{
-		if( func->scriptData->objVariableTypes[n] )
-		{
-			// Determine the size the variable currently occupies on the stack
-			int size = AS_PTR_SIZE;
-			if( (func->scriptData->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
-				n >= func->scriptData->objVariablesOnHeap )
-			{
-				size = func->scriptData->objVariableTypes[n]->GetSize();
-				if( size < 4 ) 
-					size = 1; 
-				else 
-					size /= 4;
-			}
+		// Determine the size the variable currently occupies on the stack
+		int size = AS_PTR_SIZE;
 
-			// If larger than 1 dword, adjust the offsets accordingly
-			if( size > 1 )
-			{
-				// How much needs to be adjusted?
-				adjustments.PushLast(func->scriptData->objVariablePos[n]);
-				adjustments.PushLast(-(size-1));
-			}
+		// objVariableTypes is null if the variable type is a null pointer
+		if( func->scriptData->objVariableTypes[n] &&
+			(func->scriptData->objVariableTypes[n]->GetFlags() & asOBJ_VALUE) &&
+			n >= func->scriptData->objVariablesOnHeap )
+		{
+			size = func->scriptData->objVariableTypes[n]->GetSize();
+			if( size < 4 ) 
+				size = 1; 
+			else 
+				size /= 4;
+		}
+
+		// If larger than 1 dword, adjust the offsets accordingly
+		if (size > 1)
+		{
+			// How much needs to be adjusted?
+			adjustments.PushLast(func->scriptData->objVariablePos[n]);
+			adjustments.PushLast(-(size - 1));
 		}
 	}
 
