@@ -2071,6 +2071,11 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 	asCString path = "AS_DEBUG/";
 	path += name;
 
+	// Anonymous functions created from within class methods will contain :: as part of the name
+	// Replace :: with __ to avoid error when creating the file for debug output
+	for (asUINT n = 0; n < path.GetLength(); n++)
+		if (path[n] == ':') path[n] = '_';
+
 #if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 	FILE *file;
 	fopen_s(&file, path.AddressOf(), "w");

@@ -30,6 +30,51 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Create anonymous function from within class method
+	// This caused error in asCByteCode::DebugOutput
+	// Problem reported by Phong Ba
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+
+		asIScriptModule *module = engine->GetModule("testCallback", asGM_ALWAYS_CREATE);
+		asIScriptContext *context = engine->CreateContext();
+
+		r = module->AddScriptSection("test",
+			"funcdef void CALLBACK();"
+
+			"class Test {"
+			"	void set_Callback(CALLBACK@ handler)"
+			"	{"
+			"	}"
+			"}"
+
+			"class ErrHere {"
+			"	Test@ obj = null;"
+			"	ErrHere()"
+			"	{"
+			"		@obj = Test();"
+			"		@obj.Callback = function() {};" //<== Assertion failed: file, file ..\..\source\as_bytecode.cpp, line 2082
+			"	}"
+			"}"
+
+			"void main(){ErrHere@ err = ErrHere();}"
+			);
+		assert(r >= 0);
+
+		r = module->Build(); 
+		if (r < 0)
+			TEST_FAILED;
+		r = context->Prepare(module->GetFunctionByName("main")); assert(r >= 0);
+		r = context->Execute(); 
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		context->Release();
+		module->Discard();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test passing function pointer by reference
 	// http://www.gamedev.net/topic/676566-assert-failure-when-passing-function-handle-by-reference/
 	{
