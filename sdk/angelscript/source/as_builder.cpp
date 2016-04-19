@@ -4941,6 +4941,8 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 // scope is only informed when looking for a base class' method
 void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope, asCScriptNode *errNode, asCScriptCode *script)
 {
+	asASSERT(objectType);
+
 	if( scope != "" )
 	{
 		// If searching with a scope informed, then the node and script must also be informed for potential error reporting

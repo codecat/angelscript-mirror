@@ -216,6 +216,33 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test attempt to use null as a function
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() \n"
+			"{ \n"
+			"  null(); \n" // give a proper error message
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+						   "test (3, 7) : Error   : Expression doesn't evaluate to a function\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test void &, which should fail with appropriate error message
 	// http://www.gamedev.net/topic/677273-various-unexpected-behaviors-of-angelscript-2310/
 	{
