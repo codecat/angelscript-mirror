@@ -173,13 +173,15 @@ enum EConvCost
 {
 	asCC_NO_CONV               = 0,
 	asCC_CONST_CONV            = 1,
-	asCC_PRIMITIVE_SIZE_CONV   = 2,
-	asCC_SIGNED_CONV           = 3,
-	asCC_INT_FLOAT_CONV        = 4,
-	asCC_REF_CONV              = 5,
-	asCC_OBJ_TO_PRIMITIVE_CONV = 6,
-	asCC_TO_OBJECT_CONV        = 7,
-	asCC_VARIABLE_CONV         = 8
+	asCC_ENUM_SAME_SIZE_CONV   = 2,
+	asCC_ENUM_DIFF_SIZE_CONV   = 3,
+	asCC_PRIMITIVE_SIZE_CONV   = 4,
+	asCC_SIGNED_CONV           = 5,
+	asCC_INT_FLOAT_CONV        = 6,
+	asCC_REF_CONV              = 7,
+	asCC_OBJ_TO_PRIMITIVE_CONV = 8,
+	asCC_TO_OBJECT_CONV        = 9,
+	asCC_VARIABLE_CONV         = 10
 };
 
 class asCCompiler

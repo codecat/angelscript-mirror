@@ -1225,6 +1225,17 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// Don't warn 
+		bout.buffer = "";
+		r = ExecuteString(engine, "const int64 i64 = -9223372036854775808; assert( uint64(i64) == 0x8000000000000000 ); ");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 

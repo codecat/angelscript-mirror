@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.1 WIP - 2016/04/18</h2>
+<h2>Version 2.31.1 WIP - 2016/04/23</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Offset for bytecode ClrVPtr wasn't adjusted correctly when saving/loading bytecode when the referred to variable was a null pointer (Thanks _Engine_)
 <li>Fixed assert failure in compiler with AS_DEBUG when compiling anonymous function from class method (Thanks Phong Ba)
 <li>Fixed crash in compiler when compiling 'null();' (Thanks Nikola Stojsic)
+</ul>
+<li>Script language
+<ul>
+<li>Enum to int32 conversion is now preferred over enum to int of other sizes in function overload resolution (Thanks Sir Ementaler)
 </ul>
 <li>Add-ons
 <ul>
