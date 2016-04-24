@@ -797,7 +797,7 @@ bool Test()
 		RegisterScriptString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		r = ExecuteString(engine, 
+		r = ExecuteString(engine,
 			"array<string> arr = {'1','2','3'}; \n"
 			"arr.insertAt(1, 'test'); \n"
 			"assert( arr[1] == 'test' );\n"
@@ -807,7 +807,13 @@ bool Test()
 			"assert( arr[0] == 'test' );\n"
 			"assert( arr[3] == '4' );\n"
 			"arr.removeRange(1, 2); \n"
-			"assert( arr == (array<string> = {'test', '4'}) ); \n");
+			"assert( arr == (array<string> = {'test', '4'}) ); \n"
+			"arr.insertAt(1, array<string> = {'1','2','3'}); \n"
+			"assert( arr == (array<string> = {'test', '1','2','3','4'}) ); \n"
+			// insertAt on itself
+			"arr = (array<string> = {'1','2'}); \n"
+			"arr.insertAt(1, arr); \n"
+			"assert( arr == (array<string> = {'1','1','2','2'}) ); \n");
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

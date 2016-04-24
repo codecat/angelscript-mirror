@@ -73,6 +73,7 @@ public:
 
 	// Array manipulation
 	void InsertAt(asUINT index, void *value);
+	void InsertAt(asUINT index, const CScriptArray &arr);
 	void InsertLast(void *value);
 	void RemoveAt(asUINT index);
 	void RemoveLast();

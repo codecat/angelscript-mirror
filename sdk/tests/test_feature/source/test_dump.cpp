@@ -341,6 +341,7 @@ void DumpModule(asIScriptModule *mod)
 		" const T& opIndex(uint) const\n"
 		" T[]& opAssign(const T[]&in)\n"
 		" void insertAt(uint, const T&in)\n"
+		" void insertAt(uint, const T[]&inout)\n"
 		" void insertLast(const T&in)\n"
 		" void removeAt(uint)\n"
 		" void removeLast()\n"

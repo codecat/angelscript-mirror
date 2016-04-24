@@ -291,9 +291,9 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asMETHOD(CScriptArray, operator=), asCALL_THISCALL); assert( r >= 0 );
 
 	// Other methods
-	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const T&in value)", asMETHOD(CScriptArray, InsertAt), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const T&in value)", asMETHODPR(CScriptArray, InsertAt, (asUINT, void *), void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const array<T>& arr)", asMETHODPR(CScriptArray, InsertAt, (asUINT, const CScriptArray &), void), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "void insertLast(const T&in value)", asMETHOD(CScriptArray, InsertLast), asCALL_THISCALL); assert(r >= 0);
-	// TODO: void insertAt(uint index, const array<T> &in arr)
 	r = engine->RegisterObjectMethod("array<T>", "void removeAt(uint index)", asMETHOD(CScriptArray, RemoveAt), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "void removeLast()", asMETHOD(CScriptArray, RemoveLast), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void removeRange(uint start, uint count)", asMETHOD(CScriptArray, RemoveRange), asCALL_THISCALL); assert(r >= 0);
@@ -793,6 +793,61 @@ void CScriptArray::InsertAt(asUINT index, void *value)
 
 	// Set the value of the new element
 	SetValue(index, value);
+}
+
+void CScriptArray::InsertAt(asUINT index, const CScriptArray &arr)
+{
+	if (index > buffer->numElements)
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if (ctx)
+			ctx->SetException("Index out of bounds");
+		return;
+	}
+
+	if (objType != arr.objType)
+	{
+		// This shouldn't really be possible to happen when
+		// called from a script, but let's check for it anyway
+		asIScriptContext *ctx = asGetActiveContext();
+		if (ctx)
+			ctx->SetException("Mismatching array types");
+		return;
+	}
+
+	asUINT elements = arr.GetSize();
+	Resize(elements, index);
+	if (&arr != this)
+	{
+		for (asUINT n = 0; n < arr.GetSize(); n++)
+		{
+			// This const cast is allowed, since we know the
+			// value will only be used to make a copy of it
+			void *value = const_cast<void*>(arr.At(n));
+			SetValue(index + n, value);
+		}
+	}
+	else
+	{
+		// The array that is being inserted is the same as this one.
+		// So we should iterate over the elements before the index,
+		// and then the elements after
+		for (asUINT n = 0; n < index; n++)
+		{
+			// This const cast is allowed, since we know the
+			// value will only be used to make a copy of it
+			void *value = const_cast<void*>(arr.At(n));
+			SetValue(index + n, value);
+		}
+
+		for (asUINT n = index + elements, m = 0; n < arr.GetSize(); n++, m++)
+		{
+			// This const cast is allowed, since we know the
+			// value will only be used to make a copy of it
+			void *value = const_cast<void*>(arr.At(n));
+			SetValue(index + index + m, value);
+		}
+	}
 }
 
 void CScriptArray::InsertLast(void *value)
@@ -1800,6 +1855,14 @@ static void ScriptArrayInsertAt_Generic(asIScriptGeneric *gen)
 	self->InsertAt(index, value);
 }
 
+static void ScriptArrayInsertAtArray_Generic(asIScriptGeneric *gen)
+{
+	asUINT index = gen->GetArgDWord(0);
+	CScriptArray *array = (CScriptArray*)gen->GetArgAddress(1);
+	CScriptArray *self = (CScriptArray*)gen->GetObject();
+	self->InsertAt(index, *array);
+}
+
 static void ScriptArrayRemoveAt_Generic(asIScriptGeneric *gen)
 {
 	asUINT index = gen->GetArgDWord(0);
@@ -1955,6 +2018,7 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asFUNCTION(ScriptArrayAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const T&in value)", asFUNCTION(ScriptArrayInsertAt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void insertAt(uint index, const array<T>& arr)", asFUNCTION(ScriptArrayInsertAtArray_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "void insertLast(const T&in value)", asFUNCTION(ScriptArrayInsertLast_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("array<T>", "void removeAt(uint index)", asFUNCTION(ScriptArrayRemoveAt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void removeLast()", asFUNCTION(ScriptArrayRemoveLast_Generic), asCALL_GENERIC); assert( r >= 0 );
