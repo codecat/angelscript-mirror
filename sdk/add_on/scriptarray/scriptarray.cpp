@@ -336,7 +336,8 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	// Same as removeLast
 	r = engine->RegisterObjectMethod("array<T>", "void pop_back()", asMETHOD(CScriptArray, RemoveLast), asCALL_THISCALL); assert( r >= 0 );
 	// Same as insertAt
-	r = engine->RegisterObjectMethod("array<T>", "void insert(uint, const T&in)", asMETHOD(CScriptArray, InsertAt), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void insert(uint index, const T&in value)", asMETHODPR(CScriptArray, InsertAt, (asUINT, void *), void), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("array<T>", "void insert(uint index, const array<T>& arr)", asMETHODPR(CScriptArray, InsertAt, (asUINT, const CScriptArray &), void), asCALL_THISCALL); assert(r >= 0);
 	// Same as removeAt
 	r = engine->RegisterObjectMethod("array<T>", "void erase(uint)", asMETHOD(CScriptArray, RemoveAt), asCALL_THISCALL); assert( r >= 0 );
 #endif
