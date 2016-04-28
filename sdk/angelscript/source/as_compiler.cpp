@@ -2882,6 +2882,14 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 			asCString str = type.Format(outFunc->nameSpace);
 			args.PushLast(expr);
 			MatchFunctions(funcs, args, node, str.AddressOf(), 0, 0, 0, true);
+
+			// Make sure the argument is of the right type (and not just compatible with the expression)
+			if (funcs.GetLength() == 1)
+			{
+				asCScriptFunction *f = engine->scriptFunctions[funcs[0]];
+				if (!f->parameterTypes[0].IsEqualExceptRefAndConst(expr->type.dataType))
+					funcs.PopLast();
+			}
 		}
 
 		if( funcs.GetLength() == 1 )
