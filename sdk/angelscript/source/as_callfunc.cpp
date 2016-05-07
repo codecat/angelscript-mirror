@@ -723,7 +723,7 @@ int CallSystemFunction(int id, asCContext *context)
 	context->m_callingSystemFunction = 0;
 
 	// Store the returned value in our stack
-	if( descr->returnType.IsObject() && !descr->returnType.IsReference() )
+	if( (descr->returnType.IsObject() || descr->returnType.IsFuncdef()) && !descr->returnType.IsReference() )
 	{
 		if( descr->returnType.IsObjectHandle() )
 		{

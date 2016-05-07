@@ -17,6 +17,20 @@ void ReceiveFuncPtr(asIScriptFunction *funcPtr)
 	funcPtr->Release();
 }
 
+class Obj
+{
+public:
+	Obj() { func = 0; }
+	~Obj() { if (func) func->Release(); }
+	asIScriptFunction *opCast() 
+	{
+		if (func) func->AddRef();
+		return func;
+	}
+
+	asIScriptFunction *func;
+};
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -29,6 +43,46 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 	const char *script;
+
+	// Test returning function pointer from registered class method
+	// http://www.gamedev.net/topic/678317-incorrect-results-from-functions-returning-function-handles/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterFuncdef("void func()");
+		engine->RegisterObjectType("Object", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("Object", "func @opCast()", asMETHOD(Obj, opCast), asCALL_THISCALL);
+		engine->RegisterObjectProperty("Object", "func @f", asOFFSET(Obj, func));
+
+		Obj o;
+		engine->RegisterGlobalProperty("Object obj", &o);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"	assert( cast<func@>(obj) is null ); \n"
+			"   @obj.f = main; \n"
+			"	assert( cast<func@>(obj) !is null ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// Release the function before the engine to avoid complaints from GC
+		if (o.func)
+		{
+			o.func->Release();
+			o.func = 0;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Create anonymous function from within class method
 	// This caused error in asCByteCode::DebugOutput
