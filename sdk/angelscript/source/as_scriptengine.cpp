@@ -6270,19 +6270,20 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 					dt = GetDataTypeFromTypeId(typeId);
 				}
 
-				asCObjectType *ot = dt.GetTypeInfo()->CastToObjectType();
-				if( ot && (ot->flags & asOBJ_ENUM) == 0 )
+				asCTypeInfo *ti = dt.GetTypeInfo();
+				if( ti && (ti->flags & asOBJ_ENUM) == 0 )
 				{
 					// Free all instances of this type
-					if( ot->flags & asOBJ_VALUE )
+					if( ti->flags & asOBJ_VALUE )
 					{
-						asUINT size = ot->GetSize();
+						asUINT size = ti->GetSize();
 
 						// Align the offset to 4 bytes boundary
 						if( size >= 4 && (asPWORD(buffer) & 0x3) )
 							buffer += 4 - (asPWORD(buffer) & 0x3);
 
-						if( ot->beh.destruct )
+						asCObjectType *ot = ti->CastToObjectType();
+						if( ot && ot->beh.destruct )
 						{
 							// Only call the destructor if the object has been created
 							// We'll assume the object has been created if any byte in
@@ -6316,7 +6317,7 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 						// Call the release behaviour
 						void *ptr = *(void**)buffer;
 						if( ptr )
-							ReleaseScriptObject(ptr, ot);
+							ReleaseScriptObject(ptr, ti);
 						buffer += AS_PTR_SIZE*4;
 					}
 				}

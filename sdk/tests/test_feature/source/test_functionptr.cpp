@@ -1,6 +1,9 @@
 #include "utils.h"
 #include <sstream>
 #include "../../../add_on/scripthelper/scripthelper.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
+#include "../../../add_on/scriptarray/scriptarray.h"
+#include "../../../add_on/scriptdictionary/scriptdictionary.h"
 
 namespace TestFunctionPtr
 {
@@ -43,6 +46,50 @@ bool Test()
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
 	const char *script;
+
+	// Test function pointers in initialization lists
+	// http://www.gamedev.net/topic/678333-access-violation-when-passing-function-to-generic-initialization-list/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef bool Callback(int, int); \n"
+			"bool myGreaterThan(int a, int b) { \n"
+			"	return a > b; \n"
+			"} \n"
+			"bool myEquals(int a, int b) { \n"
+			"	return a == b; \n"
+			"} \n"
+			"bool myLessThan(int a, int b) { \n"
+			"	return a < b; \n"
+			"} \n"
+			"dictionary ops = { \n"
+			"  { 'gt', @myGreaterThan}, \n"
+			"  { 'lt', @myLessThan}, \n"
+			"  { 'eq', @myEquals} \n"
+			"}; \n"
+			"dictionary ops2 = { \n"
+			"  { 'gt', cast<Callback>(myGreaterThan) }, \n"
+			"  { 'lt', cast<Callback>(myLessThan) }, \n"
+			"  { 'eq', cast<Callback>(myEquals) } \n"
+			"}; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( cast<Callback>(ops['gt']) is myGreaterThan );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test returning function pointer from registered class method
 	// http://www.gamedev.net/topic/678317-incorrect-results-from-functions-returning-function-handles/

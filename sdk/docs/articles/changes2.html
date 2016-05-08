@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.1 WIP - 2016/05/07</h2>
+<h2>Version 2.31.1 WIP - 2016/05/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,6 +35,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in compiler when compiling 'null();' (Thanks Nikola Stojsic)
 <li>Incorrect constructor could be used when declaring variable of object type and the initialization expression was of the same type but type had no copy constructor (Thanks loboWu)
 <li>Returning a function pointer from a registered function wasn't working properly (Thanks Sir Ementaler)
+<li>Function pointers in initialization lists would crash the application (Thanks Sir Ementaler)
 </ul>
 <li>Script language
 <ul>

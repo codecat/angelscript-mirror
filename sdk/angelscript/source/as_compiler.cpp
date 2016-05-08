@@ -3496,6 +3496,9 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 
 				if( dt.GetTokenType() == ttQuestion )
 				{
+					// Make sure the type is not ambiguous
+					DetermineSingleFunc(&rctx, valueNode);
+
 					// We now know the type
 					dt = rctx.type.dataType;
 					dt.MakeReadOnly(false);
