@@ -2516,6 +2516,14 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asCExprContext &compiledCtx
 				return false;
 			}
 
+			// Must not be a null handle
+			if (compiledCtx.type.dataType.IsNullHandle())
+			{
+				// TODO: Should mention that the problem is the null pointer
+				Error(TXT_CANNOT_RESOLVE_AUTO, errNode);
+				return false;
+			}
+
 			asCDataType newType = compiledCtx.type.dataType;
 
 			// Handle const qualifier on auto
@@ -3105,7 +3113,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					// and a simple assignment.
 					bool assigned = false;
 					// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
-					if( (lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef()) && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE)) )
+					if( (lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef()) && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetTypeInfo() && (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))) )
 					{
 						bool useHndlAssign = lexpr.type.dataType.IsHandleToAsHandleType();
 						assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx, useHndlAssign);
