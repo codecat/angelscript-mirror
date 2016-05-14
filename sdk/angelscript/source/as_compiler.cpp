@@ -8319,46 +8319,6 @@ int asCCompiler::CompileExpression(asCScriptNode *expr, asCExprContext *ctx)
 {
 	asASSERT(expr->nodeType == snExpression);
 
-	// Check if this is an initialization of a temp object with an initialization list
-	if( expr->firstChild && expr->firstChild->nodeType == snDataType )
-	{
-		// TODO: It should be possible to infer the type of the object from where the
-		//       expression will be used. The compilation of the initialization list
-		//       should be deferred until it is known for what it will be used. It will
-		//       then for example be possible to write expressions like:
-		//
-		//       @dict = {{'key', 'value'}};
-		//       funcTakingArrayOfInt({1,2,3,4});
-
-		// Determine the type of the temporary object
-		asCDataType dt = builder->CreateDataTypeFromNode(expr->firstChild, script, outFunc->nameSpace);
-
-		// Do not allow constructing non-shared types in shared functions
-		if( outFunc->IsShared() &&
-			dt.GetTypeInfo() && !dt.GetTypeInfo()->IsShared() )
-		{
-			asCString msg;
-			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetTypeInfo()->name.AddressOf());
-			Error(msg, expr);
-		}
-
-		// Allocate and initialize the temporary object
-		int offset = AllocateVariable(dt, true);
-		CompileInitialization(expr->lastChild, &ctx->bc, dt, expr, offset, 0, 0);
-
-		// Push the reference to the object on the stack
-		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
-		ctx->type.SetVariable(dt, offset, true);
-		ctx->type.isLValue = false;
-
-		// If the variable is allocated on the heap we have a reference,
-		// otherwise the actual object pointer is pushed on the stack.
-		if( IsVariableOnHeap(offset) )
-			ctx->type.dataType.MakeReference(true);
-
-		return 0;
-	}
-
 	// Convert to polish post fix, i.e: a+b => ab+
 	asCArray<asCScriptNode *> postfix;
 	ConvertToPostFix(expr, postfix);
@@ -8467,6 +8427,46 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asCExprContext *ctx)
 {
 	// Shouldn't send any byte code
 	asASSERT(ctx->bc.GetLastInstr() == -1);
+
+	// Check if this is an initialization of a temp object with an initialization list
+	if (node->firstChild && node->firstChild->nodeType == snDataType)
+	{
+		// TODO: It should be possible to infer the type of the object from where the
+		//       expression will be used. The compilation of the initialization list
+		//       should be deferred until it is known for what it will be used. It will
+		//       then for example be possible to write expressions like:
+		//
+		//       @dict = {{'key', 'value'}};
+		//       funcTakingArrayOfInt({1,2,3,4});
+
+		// Determine the type of the temporary object
+		asCDataType dt = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace);
+
+		// Do not allow constructing non-shared types in shared functions
+		if (outFunc->IsShared() &&
+			dt.GetTypeInfo() && !dt.GetTypeInfo()->IsShared())
+		{
+			asCString msg;
+			msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetTypeInfo()->name.AddressOf());
+			Error(msg, node);
+		}
+
+		// Allocate and initialize the temporary object
+		int offset = AllocateVariable(dt, true);
+		CompileInitialization(node->lastChild, &ctx->bc, dt, node, offset, 0, 0);
+
+		// Push the reference to the object on the stack
+		ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+		ctx->type.SetVariable(dt, offset, true);
+		ctx->type.isLValue = false;
+
+		// If the variable is allocated on the heap we have a reference,
+		// otherwise the actual object pointer is pushed on the stack.
+		if (IsVariableOnHeap(offset))
+			ctx->type.dataType.MakeReference(true);
+
+		return 0;
+	}
 
 	// Set the type as a dummy by default, in case of any compiler errors
 	ctx->type.SetDummy();

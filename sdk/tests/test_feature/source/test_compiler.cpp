@@ -243,6 +243,40 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
+	// Test anonymous array objects in expressions
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() \n"
+			"{ \n"
+			" array<int> arr; \n"
+			" if(arr == array<int> = { 1, 2 }) \n"
+			"   arr.resize(0);\n"
+		// TODO: This should work with the old style of array types too
+		//	" if(arr == int[] = {1, 2}) \n"
+		//	"   arr.resize(1);\n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->ShutDownAndRelease();
+	}
+
+
 	// Test void &, which should fail with appropriate error message
 	// http://www.gamedev.net/topic/677273-various-unexpected-behaviors-of-angelscript-2310/
 	{
