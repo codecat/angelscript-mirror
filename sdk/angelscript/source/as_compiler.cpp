@@ -5505,13 +5505,13 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			//                         functions with 1 parameter, even though they should still be
 			//                         registered with RegisterObjectBehaviour()
 
-			if( ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF )
+			if( (ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_NOHANDLE))
 			{
 				// Add code to avoid calling the cast behaviour if the handle is already null,
 				// because that will raise a null pointer exception due to the cast behaviour
 				// being a class method, and the this pointer cannot be null.
 
-				if( !ctx->type.isVariable )
+				if (!ctx->type.isVariable)
 				{
 					Dereference(ctx, true);
 					ConvertToVariable(ctx);
@@ -5553,7 +5553,11 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			}
 			else
 			{
-				// Value types cannot be null, so there is no need to check for this
+				// Value types cannot be null, so there is no need to check for this.
+
+				// Likewise for reference types that are registered with asOBJ_NOHANDLE
+				// as those are only expected as registered global properties that cannot
+				// be modified anyway.
 
 				// Call the cast operator
 				asCArray<asCExprContext *> args;

@@ -47,6 +47,45 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Allow a type registered with asOBJ_NOHANDLE to register opCast methods 
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterFuncdef("void func()");
+		engine->RegisterObjectType("Object", 0, asOBJ_REF | asOBJ_NOHANDLE);
+		engine->RegisterObjectMethod("Object", "func @opCast()", asMETHOD(Obj, opCast), asCALL_THISCALL);
+		engine->RegisterObjectProperty("Object", "func @f", asOFFSET(Obj, func));
+
+		Obj o;
+		engine->RegisterGlobalProperty("Object obj", &o);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+		"void main() { \n"
+		"	assert( cast<func@>(obj) is null ); \n"
+		"   @obj.f = main; \n"
+		"	assert( cast<func@>(obj) !is null ); \n"
+		"} \n");
+		r = mod->Build();
+		if (r < 0)
+		TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+		TEST_FAILED;
+
+		// Release the function before the engine to avoid complaints from GC
+		if (o.func)
+		{
+			o.func->Release();
+			o.func = 0;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test function pointers in initialization lists
 	// http://www.gamedev.net/topic/678333-access-violation-when-passing-function-to-generic-initialization-list/
 	{
