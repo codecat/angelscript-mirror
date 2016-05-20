@@ -9414,11 +9414,14 @@ asUINT asCCompiler::ProcessStringConstant(asCString &cstr, asCScriptNode *node, 
 void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *node)
 {
 	// Remove first line if it only contains whitespace
+	bool isMultiline = false;
 	int start;
 	for( start = 0; start < (int)str.GetLength(); start++ )
 	{
 		if( str[start] == '\n' )
 		{
+			isMultiline = true;
+
 			// Remove the linebreak as well
 			start++;
 			break;
@@ -9458,8 +9461,16 @@ void asCCompiler::ProcessHeredocStringConstant(asCString &str, asCScriptNode *no
 	if( end < 0 ) end = 0;
 
 	asCString tmp;
-	if( end > start )
-		tmp.Assign(&str[start], end-start);
+	if (end > start || engine->ep.heredocTrimMode != 2 )
+	{
+		// if heredocTrimMode == 0 the string shouldn't be trimmed
+		// if heredocTrimMode == 1 the string should only be trimmed if it is multiline
+		// if heredocTrimMode == 2 the string should always be trimmed
+		if (engine->ep.heredocTrimMode == 2 || (isMultiline && engine->ep.heredocTrimMode == 1))
+			tmp.Assign(&str[start], end - start);
+		else
+			tmp = str;
+	}
 
 	ProcessStringConstant(tmp, node, false);
 

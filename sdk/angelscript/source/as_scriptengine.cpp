@@ -405,6 +405,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		ep.allowUnicodeIdentifiers = value ? true : false;
 		break;
 
+	case asEP_HEREDOC_TRIM_MODE:
+		if (value <= 2)
+			ep.heredocTrimMode = (int)value;
+		else
+			return asINVALID_ARG;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -492,6 +499,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_ALLOW_UNICODE_IDENTIFIERS:
 		return ep.allowUnicodeIdentifiers;
 
+	case asEP_HEREDOC_TRIM_MODE:
+		return ep.heredocTrimMode;
+
 	default:
 		return 0;
 	}
@@ -555,6 +565,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.disallowEmptyListElements     = false;
 		ep.privatePropAsProtected        = false;
 		ep.allowUnicodeIdentifiers       = false;
+		ep.heredocTrimMode               = 1;         // 0 = never trim, 1 = don't trim on single line, 2 = trim initial and final empty line
 	}
 
 	gc.engine = this;

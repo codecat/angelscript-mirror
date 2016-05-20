@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        23100
-#define ANGELSCRIPT_VERSION_STRING "2.31.0"
+#define ANGELSCRIPT_VERSION        23101
+#define ANGELSCRIPT_VERSION_STRING "2.31.1 WIP"
 
 // Data types
 
@@ -143,6 +143,7 @@ enum asEEngineProp
 	asEP_DISALLOW_EMPTY_LIST_ELEMENTS       = 23,
 	asEP_PRIVATE_PROP_AS_PROTECTED          = 24,
 	asEP_ALLOW_UNICODE_IDENTIFIERS          = 25,
+	asEP_HEREDOC_TRIM_MODE                  = 26,
 
 	asEP_LAST_PROPERTY
 };
