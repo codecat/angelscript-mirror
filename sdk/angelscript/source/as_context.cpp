@@ -552,7 +552,7 @@ asBYTE asCContext::GetReturnByte()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( dt->IsObject() || dt->IsReference() ) return 0;
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() ) return 0;
 
 	return *(asBYTE*)&m_regs.valueRegister;
 }
@@ -563,7 +563,7 @@ asWORD asCContext::GetReturnWord()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( dt->IsObject() || dt->IsReference() ) return 0;
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() ) return 0;
 
 	return *(asWORD*)&m_regs.valueRegister;
 }
@@ -574,7 +574,7 @@ asDWORD asCContext::GetReturnDWord()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( dt->IsObject() || dt->IsReference() ) return 0;
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() ) return 0;
 
 	return *(asDWORD*)&m_regs.valueRegister;
 }
@@ -585,7 +585,7 @@ asQWORD asCContext::GetReturnQWord()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( dt->IsObject() || dt->IsReference() ) return 0;
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() ) return 0;
 
 	return m_regs.valueRegister;
 }
@@ -596,7 +596,7 @@ float asCContext::GetReturnFloat()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( dt->IsObject() || dt->IsReference() ) return 0;
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() ) return 0;
 
 	return *(float*)&m_regs.valueRegister;
 }
@@ -607,7 +607,7 @@ double asCContext::GetReturnDouble()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( dt->IsObject() || dt->IsReference() ) return 0;
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() ) return 0;
 
 	return *(double*)&m_regs.valueRegister;
 }
@@ -620,7 +620,7 @@ void *asCContext::GetReturnAddress()
 
 	if( dt->IsReference() )
 		return *(void**)&m_regs.valueRegister;
-	else if( dt->IsObject() )
+	else if( dt->IsObject() || dt->IsFuncdef() )
 	{
 		if( m_initialFunction->DoesReturnOnStack() )
 		{
@@ -644,7 +644,7 @@ void *asCContext::GetReturnObject()
 
 	asCDataType *dt = &m_initialFunction->returnType;
 
-	if( !dt->IsObject() ) return 0;
+	if( !dt->IsObject() && !dt->IsFuncdef() ) return 0;
 
 	if( dt->IsReference() )
 		return *(void**)(asPWORD)m_regs.valueRegister;
@@ -671,7 +671,7 @@ void *asCContext::GetAddressOfReturnValue()
 	asCDataType *dt = &m_initialFunction->returnType;
 
 	// An object is stored in the objectRegister
-	if( !dt->IsReference() && dt->IsObject() )
+	if( !dt->IsReference() && (dt->IsObject() || dt->IsFuncdef()) )
 	{
 		// Need to dereference objects
 		if( !dt->IsObjectHandle() )
@@ -731,7 +731,7 @@ int asCContext::SetArgByte(asUINT arg, asBYTE value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() )
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -774,7 +774,7 @@ int asCContext::SetArgWord(asUINT arg, asWORD value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() )
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -817,7 +817,7 @@ int asCContext::SetArgDWord(asUINT arg, asDWORD value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() )
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -860,7 +860,7 @@ int asCContext::SetArgQWord(asUINT arg, asQWORD value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() )
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -903,7 +903,7 @@ int asCContext::SetArgFloat(asUINT arg, float value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() )
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -946,7 +946,7 @@ int asCContext::SetArgDouble(asUINT arg, double value)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( dt->IsObject() || dt->IsReference() )
+	if( dt->IsObject() || dt->IsFuncdef() || dt->IsReference() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -1026,7 +1026,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 
 	// Verify the type of the argument
 	asCDataType *dt = &m_initialFunction->parameterTypes[arg];
-	if( !dt->IsObject() )
+	if( !dt->IsObject() && !dt->IsFuncdef() )
 	{
 		m_status = asEXECUTION_ERROR;
 		return asINVALID_TYPE;
@@ -1038,9 +1038,14 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 		if( dt->IsObjectHandle() )
 		{
 			// Increase the reference counter
-			asSTypeBehaviour *beh = &dt->GetTypeInfo()->CastToObjectType()->beh;
-			if( obj && beh->addref )
-				m_engine->CallObjectMethod(obj, beh->addref);
+			if (obj && dt->IsFuncdef())
+				((asIScriptFunction*)obj)->AddRef();
+			else
+			{
+				asSTypeBehaviour *beh = &dt->GetTypeInfo()->CastToObjectType()->beh;
+				if (obj && beh->addref)
+					m_engine->CallObjectMethod(obj, beh->addref);
+			}
 		}
 		else
 		{
@@ -4529,25 +4534,34 @@ void asCContext::CleanReturnObject()
 
 	if( m_regs.objectType )
 	{
-		// Call the destructor on the object
-		asSTypeBehaviour *beh = &((asCObjectType*)m_regs.objectType)->beh;
-		if( m_regs.objectType->GetFlags() & asOBJ_REF )
+		if (m_regs.objectType->GetFlags() & asOBJ_FUNCDEF)
 		{
-			asASSERT( beh->release || (m_regs.objectType->GetFlags() & asOBJ_NOCOUNT) );
-
-			if( beh->release )
-				m_engine->CallObjectMethod(m_regs.objectRegister, beh->release);
-
+			// Release the function pointer
+			reinterpret_cast<asIScriptFunction*>(m_regs.objectRegister)->Release();
 			m_regs.objectRegister = 0;
 		}
 		else
 		{
-			if( beh->destruct )
-				m_engine->CallObjectMethod(m_regs.objectRegister, beh->destruct);
+			// Call the destructor on the object
+			asSTypeBehaviour *beh = &(reinterpret_cast<asCTypeInfo*>(m_regs.objectType)->CastToObjectType()->beh);
+			if (m_regs.objectType->GetFlags() & asOBJ_REF)
+			{
+				asASSERT(beh->release || (m_regs.objectType->GetFlags() & asOBJ_NOCOUNT));
 
-			// Free the memory
-			m_engine->CallFree(m_regs.objectRegister);
-			m_regs.objectRegister = 0;
+				if (beh->release)
+					m_engine->CallObjectMethod(m_regs.objectRegister, beh->release);
+
+				m_regs.objectRegister = 0;
+			}
+			else
+			{
+				if (beh->destruct)
+					m_engine->CallObjectMethod(m_regs.objectRegister, beh->destruct);
+
+				// Free the memory
+				m_engine->CallFree(m_regs.objectRegister);
+				m_regs.objectRegister = 0;
+			}
 		}
 	}
 }

@@ -47,6 +47,97 @@ bool Test()
 	CBufferedOutStream bout;
 	const char *script;
 
+	// Test passing function pointer to script function, and returning function pointer from script function
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterFuncdef("void FUNC()");
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() {} \n"
+			"FUNC @foo(int a, FUNC @b) \n"
+			"{ \n"
+			"  assert( a == 42 ); \n"
+			"  assert( b is func ); \n"
+			"  return b; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("foo"));
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+
+		// ctx->SetArgDWord should fail, since the argument is a funcdef
+		r = ctx->SetArgDWord(1, 42);
+		if (r != asINVALID_TYPE)
+			TEST_FAILED;
+
+		ctx->Prepare(mod->GetFunctionByName("foo"));
+
+		// SetArgAddress should fail when the argument is not an object or funcdef
+		r = ctx->SetArgAddress(0, func);
+		if (r != asINVALID_TYPE)
+			TEST_FAILED;
+
+		ctx->Prepare(mod->GetFunctionByName("foo"));
+
+		r = ctx->SetArgDWord(0, 42);
+		if (r != 0)
+			TEST_FAILED;
+
+		// SetArgAddress doesn't increment the refcount
+		r = ctx->SetArgAddress(1, func);
+		if (r != 0)
+			TEST_FAILED;
+
+		// Make sure GetAddressOfArg works, and that SetArgAddress really set the value
+		if (*((asIScriptFunction**)ctx->GetAddressOfArg(1)) != func)
+			TEST_FAILED;
+
+		// Clear the value to test SetArgObject
+		*((asIScriptFunction**)ctx->GetAddressOfArg(1)) = 0;
+
+		// SetArgObject increments the refcount
+		r = ctx->SetArgObject(1, func);
+		if (r != 0)
+			TEST_FAILED;
+
+		if (*((asIScriptFunction**)ctx->GetAddressOfArg(1)) != func)
+			TEST_FAILED;
+
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// ctx->GetAddressOfReturnValue should work
+		if (*((asIScriptFunction**)ctx->GetAddressOfReturnValue()) != func)
+			TEST_FAILED;
+
+		// ctx->GetReturnDWord should fail, since the return value is a funcdef
+		r = (int)ctx->GetReturnDWord();
+		if (r != 0)
+			TEST_FAILED;
+
+		// ctx->GetReturnAddress should work
+		if (((asIScriptFunction*)ctx->GetReturnAddress()) != func)
+			TEST_FAILED;
+
+		// ctx->GetReturnObject should work
+		if (((asIScriptFunction*)ctx->GetReturnObject()) != func)
+			TEST_FAILED;
+		
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Allow a type registered with asOBJ_NOHANDLE to register opCast methods 
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
