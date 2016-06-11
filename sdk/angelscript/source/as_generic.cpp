@@ -265,7 +265,7 @@ void *asCGeneric::GetArgObject(asUINT arg)
 
 	// Verify that the type is correct
 	asCDataType *dt = &sysFunction->parameterTypes[arg];
-	if( !dt->IsObject() )
+	if( !dt->IsObject() && !dt->IsFuncdef() )
 		return 0;
 
 	// Determine the position of the argument
@@ -447,7 +447,7 @@ int asCGeneric::SetReturnAddress(void *val)
 int asCGeneric::SetReturnObject(void *obj)
 {
 	asCDataType *dt = &sysFunction->returnType;
-	if( !dt->IsObject() )
+	if( !dt->IsObject() && !dt->IsFuncdef() )
 		return asINVALID_TYPE;
 
 	if( dt->IsReference() )
@@ -459,9 +459,17 @@ int asCGeneric::SetReturnObject(void *obj)
 	if( dt->IsObjectHandle() )
 	{
 		// Increase the reference counter
-		asSTypeBehaviour *beh = &dt->GetTypeInfo()->CastToObjectType()->beh;
-		if( obj && beh->addref )
-			engine->CallObjectMethod(obj, beh->addref);
+		if (dt->IsFuncdef())
+		{
+			if (obj)
+				reinterpret_cast<asIScriptFunction*>(obj)->AddRef();
+		}
+		else
+		{
+			asSTypeBehaviour *beh = &dt->GetTypeInfo()->CastToObjectType()->beh;
+			if (obj && beh && beh->addref)
+				engine->CallObjectMethod(obj, beh->addref);
+		}
 	}
 	else
 	{

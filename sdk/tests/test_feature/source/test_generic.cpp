@@ -152,11 +152,25 @@ void SetCallback(asIScriptGeneric *gen)
 {
 	callback = (asIScriptFunction *)gen->GetArgAddress(0);
 	callback->AddRef();
+
+	asIScriptFunction *f1 = (asIScriptFunction*)gen->GetArgObject(0);
+	assert(f1 == callback);
+
+	asIScriptFunction *f2 = *((asIScriptFunction**)gen->GetAddressOfArg(0));
+	assert(f2 == callback);
 }
 
 void GetCallback(asIScriptGeneric *gen)
 {
-	//gen->SetReturnAddress(callback);                           // <== If using this line it will work as expected
+	gen->SetReturnAddress(callback);                           // <== If using this line it will work as expected
+	assert(*(void **)gen->GetAddressOfReturnLocation() == callback);
+	*(void **)gen->GetAddressOfReturnLocation() = 0;
+
+	gen->SetReturnObject(callback);
+	assert(*(void **)gen->GetAddressOfReturnLocation() == callback);
+	*(void **)gen->GetAddressOfReturnLocation() = 0;
+	callback->Release(); // SetReturnObject will increase the reference counter
+
 	*(void **)gen->GetAddressOfReturnLocation() = callback;      // <== I expect this line would work same as the above line, but it's not.
 	callback->AddRef();
 }
