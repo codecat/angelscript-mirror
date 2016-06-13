@@ -65,8 +65,25 @@ struct asCExprValue
 	void SetConstantB(const asCDataType &dataType, asBYTE value);
 	void SetConstantQW(const asCDataType &dataType, asQWORD value);
 	void SetConstantDW(const asCDataType &dataType, asDWORD value);
+	void SetConstantW(const asCDataType &dataType, asWORD value);
 	void SetConstantF(const asCDataType &dataType, float value);
 	void SetConstantD(const asCDataType &dataType, double value);
+	void SetConstantB(asBYTE value);
+	void SetConstantW(asWORD value);
+	void SetConstantQW(asQWORD value);
+	void SetConstantDW(asDWORD value);
+	void SetConstantF(float value);
+	void SetConstantD(double value);
+	asBYTE  GetConstantB();
+	asWORD  GetConstantW();
+	asQWORD GetConstantQW();
+	asDWORD GetConstantDW();
+	float   GetConstantF();
+	double  GetConstantD();
+
+	void SetConstantData(const asCDataType &dataType, asQWORD value);
+	asQWORD GetConstantData();
+
 	void SetNullConstant();
 	void SetUndefinedFuncHandle(asCScriptEngine *engine);
 	void SetVoid();
@@ -85,13 +102,16 @@ struct asCExprValue
 	bool  isRefToLocal : 1; // The reference may be to a local variable
 	short dummy : 10;
 	short stackOffset;
+
+private:
+	// These values must not be accessed directly, in order to avoid problems with endianess. 
+	// Use the appropriate accessor methods instead
 	union
 	{
 		asQWORD qwordValue;
 		double  doubleValue;
 		asDWORD dwordValue;
 		float   floatValue;
-		int     intValue;
 		asWORD  wordValue;
 		asBYTE  byteValue;
 	};

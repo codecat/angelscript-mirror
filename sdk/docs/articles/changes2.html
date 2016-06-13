@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.1 WIP - 2016/06/11</h2>
+<h2>Version 2.31.1 WIP - 2016/06/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Function pointers in initialization lists would crash the application (Thanks Sir Ementaler)
 <li>opCast can now be used on types registered with asOBJ_NOHANDLE too without crashing
 <li>Function pointers wasn't properly handled in context's SetArg and GetReturn methods
+<li>Fixed some big endian compatibility issues in compiler (Thanks rfonseca)
 </ul>
 <li>Script language
 <ul>
@@ -53,6 +54,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented parseUInt, findFirstOf, findLastOf, findFirstNotOf, findLastNotOf, insert, and erase for the string add-on
 <li>Implemented removeRange for the array add-on
 <li>Implemented insertAt for the array add-on that inserts all the elements from another array
+<li>Fixed big endian compatility problems in script dictionary (Thanks rfonseca)
 </ul>
 </ul>
 

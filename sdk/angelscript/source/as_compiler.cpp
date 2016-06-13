@@ -3028,7 +3028,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 
 						// Tell caller that the expression is a constant so it can mark the variable as pure constant
 						isConstantExpression = true;
-						*constantValue = expr->type.qwordValue;
+						*constantValue = expr->type.GetConstantData();
 					}
 
 					asCExprContext lctx(engine);
@@ -3141,7 +3141,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 						if( type.IsReadOnly() && expr->type.isConstant )
 						{
 							isConstantExpression = true;
-							*constantValue = expr->type.qwordValue;
+							*constantValue = expr->type.GetConstantQW();
 						}
 
 						// Add expression code to bytecode
@@ -3863,7 +3863,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 			ImplicitConversion(&c, to, cnode->firstChild, asIC_IMPLICIT_CONV, true);
 
 			// Has this case been declared already?
-			if( caseValues.IndexOf(c.type.intValue) >= 0 )
+			if( caseValues.IndexOf(c.type.GetConstantDW()) >= 0 )
 			{
 				Error(TXT_DUPLICATE_SWITCH_CASE, cnode->firstChild);
 			}
@@ -3871,7 +3871,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 			// TODO: Optimize: We can insert the numbers sorted already
 
 			// Store constant for later use
-			caseValues.PushLast(c.type.intValue);
+			caseValues.PushLast(c.type.GetConstantDW());
 
 			// Reserve label for this case
 			caseLabels.PushLast(nextLabel++);
@@ -4145,7 +4145,11 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 				expr.bc.OptimizeLocally(tempVariableOffsets);
 				bc->AddCode(&expr.bc);
 			}
-			else if( expr.type.dwordValue == 0 )
+#if AS_SIZEOF_BOOL == 1
+			else if( expr.type.GetConstantB() == 0 )
+#else
+			else if (expr.type.GetConstantDW() == 0)
+#endif
 			{
 				// Jump to the else case
 				bc->InstrINT(asBC_JMP, afterLabel);
@@ -7198,11 +7202,17 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			from->type.dataType.IsUnsignedType() ||
 			from->type.dataType.IsIntegerType() )
 		{
+			asCDataType targetDt;
+			if (to.IsEnumType())
+				targetDt = to;
+			else
+				targetDt = asCDataType::CreatePrimitive(ttInt, true);
+
 			// Transform the value
 			// Float constants can be implicitly converted to int
 			if( from->type.dataType.IsFloatType() )
 			{
-				float fc = from->type.floatValue;
+				float fc = from->type.GetConstantF();
 				int ic = int(fc);
 
 				if( float(ic) != fc )
@@ -7210,12 +7220,12 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 				}
 
-				from->type.intValue = ic;
+				from->type.SetConstantDW(targetDt, ic);
 			}
 			// Double constants can be implicitly converted to int
 			else if( from->type.dataType.IsDoubleType() )
 			{
-				double fc = from->type.doubleValue;
+				double fc = from->type.GetConstantD();
 				int ic = int(fc);
 
 				if( double(ic) != fc )
@@ -7223,42 +7233,39 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 				}
 
-				from->type.intValue = ic;
+				from->type.SetConstantDW(targetDt, ic);
 			}
 			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
 				// Verify that it is possible to convert to signed without getting negative
-				if( from->type.intValue < 0 )
+				if( int(from->type.GetConstantDW()) < 0 )
 				{
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
 				}
 
 				// Convert to 32bit
 				if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-					from->type.intValue = from->type.byteValue;
+					from->type.SetConstantDW(targetDt, from->type.GetConstantB());
 				else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-					from->type.intValue = from->type.wordValue;
+					from->type.SetConstantDW(targetDt, from->type.GetConstantW());
 			}
 			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
 				// Convert to 32bit
-				from->type.intValue = int(from->type.qwordValue);
+				from->type.SetConstantDW(targetDt, int(from->type.GetConstantQW()));
 			}
-			else if( from->type.dataType.IsIntegerType() &&
-					from->type.dataType.GetSizeInMemoryBytes() < 4 )
+			else if (from->type.dataType.IsIntegerType() &&
+				from->type.dataType.GetSizeInMemoryBytes() < 4)
 			{
 				// Convert to 32bit
-				if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-					from->type.intValue = (signed char)from->type.byteValue;
-				else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-					from->type.intValue = (short)from->type.wordValue;
+				if (from->type.dataType.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantDW(targetDt, (signed char)from->type.GetConstantB());
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantDW(targetDt, (short)from->type.GetConstantW());
 			}
-
-			// Set the resulting type
-			if( to.IsEnumType() )
-				from->type.dataType = to;
-			else
-				from->type.dataType = asCDataType::CreatePrimitive(ttInt, true);
+			
+			// Make sure the type was set
+			from->type.dataType = targetDt;
 		}
 
 		// Check if a downsize is necessary
@@ -7269,20 +7276,18 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			// Verify if it is possible
 			if( to.GetSizeInMemoryBytes() == 1 )
 			{
-				if( char(from->type.intValue) != from->type.intValue )
+				if( asBYTE(from->type.GetConstantDW()) != from->type.GetConstantDW() )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.byteValue = char(from->type.intValue);
+				from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), char(from->type.GetConstantDW()));
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
-				if( short(from->type.intValue) != from->type.intValue )
+				if( asWORD(from->type.GetConstantDW()) != from->type.GetConstantDW())
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.wordValue = short(from->type.intValue);
+				from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), short(from->type.GetConstantDW()));
 			}
-
-			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 		}
 	}
 	else if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
@@ -7290,7 +7295,7 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 		// Float constants can be implicitly converted to int
 		if( from->type.dataType.IsFloatType() )
 		{
-			float fc = from->type.floatValue;
+			float fc = from->type.GetConstantF();
 			asINT64 ic = asINT64(fc);
 
 			if( float(ic) != fc )
@@ -7299,12 +7304,12 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
-			from->type.qwordValue = ic;
+			from->type.SetConstantQW(ic);
 		}
 		// Double constants can be implicitly converted to int
 		else if( from->type.dataType.IsDoubleType() )
 		{
-			double fc = from->type.doubleValue;
+			double fc = from->type.GetConstantD();
 			asINT64 ic = asINT64(fc);
 
 			if( double(ic) != fc )
@@ -7313,20 +7318,20 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
-			from->type.qwordValue = ic;
+			from->type.SetConstantQW(ic);
 		}
 		else if( from->type.dataType.IsUnsignedType() )
 		{
 			// Convert to 64bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.qwordValue = from->type.byteValue;
+				from->type.SetConstantQW(from->type.GetConstantB());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.qwordValue = from->type.wordValue;
+				from->type.SetConstantQW(from->type.GetConstantW());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 4 )
-				from->type.qwordValue = from->type.dwordValue;
+				from->type.SetConstantQW(from->type.GetConstantDW());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 8 )
 			{
-				if( asINT64(from->type.qwordValue) < 0 )
+				if( asINT64(from->type.GetConstantQW()) < 0 )
 				{
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
 				}
@@ -7338,20 +7343,18 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 		{
 			// Convert to 64bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.qwordValue = (signed char)from->type.byteValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttInt64, true), (signed char)from->type.GetConstantB());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.qwordValue = (short)from->type.wordValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttInt64, true), (short)from->type.GetConstantW());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 4 )
-				from->type.qwordValue = from->type.intValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttInt64, true);
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttInt64, true), (int)from->type.GetConstantDW());
 		}
 	}
 	else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1 )
 	{
 		if( from->type.dataType.IsFloatType() )
 		{
-			float fc = from->type.floatValue;
+			float fc = from->type.GetConstantF();
 			// Some compilers set the value to 0 when converting a negative float to unsigned int.
 			// To maintain a consistent behaviour across compilers we convert to int first.
 			asUINT uic = asUINT(int(fc));
@@ -7362,14 +7365,14 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
-			from->type.intValue = uic;
+			from->type.SetConstantDW(uic);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, convType);
 		}
 		else if( from->type.dataType.IsDoubleType() )
 		{
-			double fc = from->type.doubleValue;
+			double fc = from->type.GetConstantD();
 			// Some compilers set the value to 0 when converting a negative double to unsigned int.
 			// To maintain a consistent behaviour across compilers we convert to int first.
 			asUINT uic = asUINT(int(fc));
@@ -7380,7 +7383,7 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
-			from->type.intValue = uic;
+			from->type.SetConstantDW(uic);
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, convType);
@@ -7388,25 +7391,29 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 		else if( from->type.dataType.IsIntegerType() )
 		{
 			// Verify that it is possible to convert to unsigned without loosing negative
-			if( (from->type.dataType.GetSizeInMemoryBytes() > 4 && asINT64(from->type.qwordValue) < 0) ||
-				(from->type.dataType.GetSizeInMemoryBytes() <= 4 && from->type.intValue < 0) )
+			if( (from->type.dataType.GetSizeInMemoryBytes() > 4 && asINT64(from->type.GetConstantQW()) < 0) ||
+				(from->type.dataType.GetSizeInMemoryBytes() == 4 && int(from->type.GetConstantDW()) < 0) ||
+				(from->type.dataType.GetSizeInMemoryBytes() == 2 && short(from->type.GetConstantW()) < 0) ||
+				(from->type.dataType.GetSizeInMemoryBytes() == 1 && char(from->type.GetConstantB()) < 0))
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
 			}
 
 			// Check if any data is lost
-			if( from->type.dataType.GetSizeInMemoryBytes() > 4 && (from->type.qwordValue >> 32) != 0 && (from->type.qwordValue >> 32) != 0xFFFFFFFF )
+			if( from->type.dataType.GetSizeInMemoryBytes() > 4 && (from->type.GetConstantQW() >> 32) != 0 && (from->type.GetConstantQW() >> 32) != 0xFFFFFFFF )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 			}
 
 			// Convert to 32bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.intValue = (signed char)from->type.byteValue;
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), (signed char)from->type.GetConstantB());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.intValue = (short)from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), (short)from->type.GetConstantW());
+			else if (from->type.dataType.GetSizeInMemoryBytes() == 4 )
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), (int)from->type.GetConstantDW());
+			else
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), (int)(asINT64)from->type.GetConstantQW());
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, convType);
@@ -7416,11 +7423,9 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 		{
 			// Convert to 32bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.dwordValue = from->type.byteValue;
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), from->type.GetConstantB());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.dwordValue = from->type.wordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttUInt, true);
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(ttUInt, true), from->type.GetConstantW());
 
 			// Try once more, in case of a smaller type
 			ImplicitConversionConstant(from, to, node, convType);
@@ -7431,27 +7436,25 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			// Verify if it is possible
 			if( to.GetSizeInMemoryBytes() == 1 )
 			{
-				if( asBYTE(from->type.dwordValue) != from->type.dwordValue )
+				if( asBYTE(from->type.GetConstantDW()) != from->type.GetConstantDW() )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.byteValue = asBYTE(from->type.dwordValue);
+				from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantDW()));
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
-				if( asWORD(from->type.dwordValue) != from->type.dwordValue )
+				if( asWORD(from->type.GetConstantDW()) != from->type.GetConstantDW())
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.wordValue = asWORD(from->type.dwordValue);
+				from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantDW()));
 			}
-
-			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
 		}
 	}
 	else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
 	{
 		if( from->type.dataType.IsFloatType() )
 		{
-			float fc = from->type.floatValue;
+			float fc = from->type.GetConstantF();
 			// Convert first to int64 then to uint64 to avoid negative float becoming 0 on gnuc base compilers
 			asQWORD uic = asQWORD(asINT64(fc));
 
@@ -7464,11 +7467,11 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 #endif
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
-			from->type.qwordValue = uic;
+			from->type.SetConstantQW(uic);
 		}
 		else if( from->type.dataType.IsDoubleType() )
 		{
-			double fc = from->type.doubleValue;
+			double fc = from->type.GetConstantD();
 			// Convert first to int64 then to uint64 to avoid negative float becoming 0 on gnuc base compilers
 			asQWORD uic = asQWORD(asINT64(fc));
 
@@ -7481,20 +7484,20 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 #endif
 
 			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
-			from->type.qwordValue = uic;
+			from->type.SetConstantQW(uic);
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Convert to 64bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.qwordValue = (asINT64)(signed char)from->type.byteValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), (asINT64)(signed char)from->type.GetConstantB());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.qwordValue = (asINT64)(short)from->type.wordValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), (asINT64)(short)from->type.GetConstantW());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 4 )
-				from->type.qwordValue = (asINT64)from->type.intValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), (asINT64)(int)from->type.GetConstantDW());
 
 			// Verify that it is possible to convert to unsigned without loosing negative
-			if( asINT64(from->type.qwordValue) < 0 )
+			if( asINT64(from->type.GetConstantQW()) < 0 )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
 			}
@@ -7504,7 +7507,7 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
 			// Verify that it is possible to convert to unsigned without loosing negative
-			if( asINT64(from->type.qwordValue) < 0 )
+			if( asINT64(from->type.GetConstantQW()) < 0 )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
 			}
@@ -7515,35 +7518,33 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 		{
 			// Convert to 64bit
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				from->type.qwordValue = from->type.byteValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), from->type.GetConstantB());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				from->type.qwordValue = from->type.wordValue;
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), from->type.GetConstantW());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 4 )
-				from->type.qwordValue = from->type.dwordValue;
-
-			from->type.dataType = asCDataType::CreatePrimitive(ttUInt64, true);
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), from->type.GetConstantDW());
 		}
 	}
 	else if( to.IsFloatType() )
 	{
 		if( from->type.dataType.IsDoubleType() )
 		{
-			double ic = from->type.doubleValue;
+			double ic = from->type.GetConstantD();
 			float fc = float(ic);
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.floatValue = fc;
+			from->type.SetConstantF(fc);
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Must properly convert value in case the from value is smaller
 			int ic;
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				ic = (signed char)from->type.byteValue;
+				ic = (signed char)from->type.GetConstantB();
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				ic = (short)from->type.wordValue;
+				ic = (short)from->type.GetConstantW();
 			else
-				ic = from->type.intValue;
+				ic = (int)from->type.GetConstantDW();
 			float fc = float(ic);
 
 			if( int(fc) != ic )
@@ -7552,29 +7553,29 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.floatValue = fc;
+			from->type.SetConstantF(fc);
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			float fc = float(asINT64(from->type.qwordValue));
-			if( asINT64(fc) != asINT64(from->type.qwordValue) )
+			float fc = float(asINT64(from->type.GetConstantQW()));
+			if( asINT64(fc) != asINT64(from->type.GetConstantQW()) )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.floatValue = fc;
+			from->type.SetConstantF(fc);
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Must properly convert value in case the from value is smaller
 			unsigned int uic;
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				uic = from->type.byteValue;
+				uic = from->type.GetConstantB();
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				uic = from->type.wordValue;
+				uic = from->type.GetConstantW();
 			else
-				uic = from->type.dwordValue;
+				uic = from->type.GetConstantDW();
 			float fc = float(uic);
 
 			if( (unsigned int)(fc) != uic )
@@ -7583,41 +7584,41 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.floatValue = fc;
+			from->type.SetConstantF(fc);
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			float fc = float((asINT64)from->type.qwordValue);
+			float fc = float((asINT64)from->type.GetConstantQW());
 
-			if( asQWORD(fc) != from->type.qwordValue )
+			if( asQWORD(fc) != from->type.GetConstantQW())
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.floatValue = fc;
+			from->type.SetConstantF(fc);
 		}
 	}
 	else if( to.IsDoubleType() )
 	{
 		if( from->type.dataType.IsFloatType() )
 		{
-			float ic = from->type.floatValue;
+			float ic = from->type.GetConstantF();
 			double fc = double(ic);
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.doubleValue = fc;
+			from->type.SetConstantD(fc);
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Must properly convert value in case the from value is smaller
 			int ic;
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				ic = (signed char)from->type.byteValue;
+				ic = (signed char)from->type.GetConstantB();
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				ic = (short)from->type.wordValue;
+				ic = (short)from->type.GetConstantW();
 			else
-				ic = from->type.intValue;
+				ic = (int)from->type.GetConstantDW();
 			double fc = double(ic);
 
 			if( int(fc) != ic )
@@ -7626,30 +7627,30 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.doubleValue = fc;
+			from->type.SetConstantD(fc);
 		}
 		else if( from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			double fc = double(asINT64(from->type.qwordValue));
+			double fc = double(asINT64(from->type.GetConstantQW()));
 
-			if( asINT64(fc) != asINT64(from->type.qwordValue) )
+			if( asINT64(fc) != asINT64(from->type.GetConstantQW()) )
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.doubleValue = fc;
+			from->type.SetConstantD(fc);
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 		{
 			// Must properly convert value in case the from value is smaller
 			unsigned int uic;
 			if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
-				uic = from->type.byteValue;
+				uic = from->type.GetConstantB();
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-				uic = from->type.wordValue;
+				uic = from->type.GetConstantW();
 			else
-				uic = from->type.dwordValue;
+				uic = from->type.GetConstantDW();
 			double fc = double(uic);
 
 			if( (unsigned int)(fc) != uic )
@@ -7658,19 +7659,19 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.doubleValue = fc;
+			from->type.SetConstantD(fc);
 		}
 		else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 		{
-			double fc = double((asINT64)from->type.qwordValue);
+			double fc = double((asINT64)from->type.GetConstantQW());
 
-			if( asQWORD(fc) != from->type.qwordValue )
+			if( asQWORD(fc) != from->type.GetConstantQW())
 			{
 				if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
 			}
 
 			from->type.dataType = asCDataType::CreatePrimitive(to.GetTokenType(), true);
-			from->type.doubleValue = fc;
+			from->type.SetConstantD(fc);
 		}
 	}
 }
@@ -8049,7 +8050,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 			bool isExplicitHandle = le.type.isExplicitHandle || re.type.isExplicitHandle;
 
 			// Allow a 0 or null in the first case to be implicitly converted to the second type
-			if( le.type.isConstant && le.type.intValue == 0 && le.type.dataType.IsIntegerType() )
+			if( le.type.isConstant && le.type.GetConstantData() == 0 && le.type.dataType.IsIntegerType() )
 			{
 				asCDataType to = re.type.dataType;
 				to.MakeReference(false);
@@ -8515,7 +8516,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 		found = true;
 
 		if( v->isPureConstant )
-			ctx->type.SetConstantQW(v->type, v->constantValue);
+			ctx->type.SetConstantData(v->type, v->constantValue);
 		else if( v->type.IsPrimitive() )
 		{
 			if( v->type.IsReference() )
@@ -8776,8 +8777,8 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 						// we can allow the compiler to optimize it. Pure
 						// constants are global constant variables that were
 						// initialized by literal constants.
-						if( isPureConstant )
-							ctx->type.SetConstantQW(prop->type, constantValue);
+						if (isPureConstant)
+							ctx->type.SetConstantData(prop->type, constantValue);
 						else
 						{
 							// A shared type must not access global vars, unless they
@@ -9548,7 +9549,7 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 	if( anyErrors )
 	{
 		// Assume that the error can be fixed and allow the compilation to continue
-		ctx->type.SetConstantDW(to, 0);
+		ctx->type.Set(to);
 		return -1;
 	}
 
@@ -9741,7 +9742,7 @@ void asCCompiler::ProcessDeferredParams(asCExprContext *ctx)
 					ctx->bc.Instr(asBC_PopPtr);
 
 				// Give an error, except if the argument is void, null or 0 which indicate the argument is explicitly to be ignored
-				if( !expr->IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.qwordValue == 0) )
+				if( !expr->IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.GetConstantData() == 0) )
 					Error(TXT_ARG_NOT_LVALUE, outParam.argNode);
 
 				ReleaseTemporaryVariable(outParam.argType, &ctx->bc);
@@ -10645,13 +10646,13 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 			if( op == ttMinus )
 			{
 				if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-					ctx->type.intValue = -ctx->type.intValue;
+					ctx->type.SetConstantDW(-(int)ctx->type.GetConstantDW());
 				else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-					ctx->type.qwordValue = -(asINT64)ctx->type.qwordValue;
+					ctx->type.SetConstantQW(-(asINT64)ctx->type.GetConstantQW());
 				else if( ctx->type.dataType.IsFloatType() )
-					ctx->type.floatValue = -ctx->type.floatValue;
+					ctx->type.SetConstantF(-ctx->type.GetConstantF());
 				else if( ctx->type.dataType.IsDoubleType() )
-					ctx->type.doubleValue = -ctx->type.doubleValue;
+					ctx->type.SetConstantD(-ctx->type.GetConstantD());
 				else
 				{
 					Error(TXT_ILLEGAL_OPERATION, node);
@@ -10672,7 +10673,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 		{
 			if( ctx->type.isConstant )
 			{
-				ctx->type.dwordValue = (ctx->type.dwordValue == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+				ctx->type.SetConstantDW(ctx->type.GetConstantDW() == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
 				return 0;
 			}
 
@@ -10719,7 +10720,14 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 		{
 			if( ctx->type.isConstant )
 			{
-				ctx->type.qwordValue = ~ctx->type.qwordValue;
+				if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
+					ctx->type.SetConstantB(~ctx->type.GetConstantB());
+				else if (ctx->type.dataType.GetSizeInMemoryBytes() == 2)
+					ctx->type.SetConstantW(~ctx->type.GetConstantW());
+				else if (ctx->type.dataType.GetSizeInMemoryBytes() == 4)
+					ctx->type.SetConstantDW(~ctx->type.GetConstantDW());
+				else
+					ctx->type.SetConstantQW(~ctx->type.GetConstantQW());
 				return 0;
 			}
 
@@ -12219,7 +12227,11 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprCont
 		else if( r < 0 )
 		{
 			// Compiler error, don't continue
-			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+			#if AS_SIZEOF_BOOL == 1
+				ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+			#else
+				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+			#endif
 			return true;
 		}
 	}
@@ -12697,13 +12709,13 @@ void asCCompiler::ConvertToVariable(asCExprContext *ctx)
 		{
 			offset = AllocateVariable(ctx->type.dataType, true);
 			if( ctx->type.dataType.GetSizeInMemoryBytes() == 1 )
-				ctx->bc.InstrSHORT_B(asBC_SetV1, (short)offset, ctx->type.byteValue);
+				ctx->bc.InstrSHORT_B(asBC_SetV1, (short)offset, ctx->type.GetConstantB());
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 2 )
-				ctx->bc.InstrSHORT_W(asBC_SetV2, (short)offset, ctx->type.wordValue);
+				ctx->bc.InstrSHORT_W(asBC_SetV2, (short)offset, ctx->type.GetConstantW());
 			else if( ctx->type.dataType.GetSizeInMemoryBytes() == 4 )
-				ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, ctx->type.dwordValue);
+				ctx->bc.InstrSHORT_DW(asBC_SetV4, (short)offset, ctx->type.GetConstantDW());
 			else
-				ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, ctx->type.qwordValue);
+				ctx->bc.InstrSHORT_QW(asBC_SetV8, (short)offset, ctx->type.GetConstantQW());
 
 			ctx->type.SetVariable(ctx->type.dataType, offset, true);
 			return;
@@ -12934,9 +12946,13 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 	bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
 
 	// Verify if we are dividing with a constant zero
-	if( rctx->type.isConstant && rctx->type.qwordValue == 0 &&
+	if( rctx->type.isConstant && 
 		(op == ttSlash   || op == ttDivAssign ||
-		 op == ttPercent || op == ttModAssign) )
+		 op == ttPercent || op == ttModAssign) &&
+		((rctx->type.dataType.GetSizeInMemoryBytes() == 4 && rctx->type.GetConstantDW() == 0) || 
+		 (rctx->type.dataType.GetSizeInMemoryBytes() == 8 && rctx->type.GetConstantQW() == 0) ||
+		 (rctx->type.dataType.GetSizeInMemoryBytes() == 1 && rctx->type.GetConstantB() == 0) ||
+		 (rctx->type.dataType.GetSizeInMemoryBytes() == 2 && rctx->type.GetConstantW() == 0)) )
 	{
 		Error(TXT_DIVIDE_BY_ZERO, node);
 	}
@@ -13099,40 +13115,40 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 			{
 				int v = 0;
 				if( op == ttPlus )
-					v = lctx->type.intValue + rctx->type.intValue;
+					v = int(lctx->type.GetConstantDW()) + int(rctx->type.GetConstantDW());
 				else if( op == ttMinus )
-					v = lctx->type.intValue - rctx->type.intValue;
+					v = int(lctx->type.GetConstantDW()) - int(rctx->type.GetConstantDW());
 				else if( op == ttStar )
-					v = lctx->type.intValue * rctx->type.intValue;
+					v = int(lctx->type.GetConstantDW()) * int(rctx->type.GetConstantDW());
 				else if( op == ttSlash )
 				{
 					// TODO: Should probably report an error, rather than silently convert the value to 0
-					if( rctx->type.intValue == 0 || (rctx->type.intValue == -1 && lctx->type.dwordValue == 0x80000000) )
+					if( rctx->type.GetConstantDW() == 0 || (int(rctx->type.GetConstantDW()) == -1 && lctx->type.GetConstantDW() == 0x80000000) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
-							v = lctx->type.intValue / rctx->type.intValue;
+							v = int(lctx->type.GetConstantDW()) / int(rctx->type.GetConstantDW());
 						else
-							v = lctx->type.dwordValue / rctx->type.dwordValue;
+							v = lctx->type.GetConstantDW() / rctx->type.GetConstantDW();
 				}
 				else if( op == ttPercent )
 				{
 					// TODO: Should probably report an error, rather than silently convert the value to 0
-					if( rctx->type.intValue == 0 || (rctx->type.intValue == -1 && lctx->type.dwordValue == 0x80000000) )
+					if( rctx->type.GetConstantDW() == 0 || (int(rctx->type.GetConstantDW()) == -1 && lctx->type.GetConstantDW() == 0x80000000) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
-							v = lctx->type.intValue % rctx->type.intValue;
+							v = int(lctx->type.GetConstantDW()) % int(rctx->type.GetConstantDW());
 						else
-							v = lctx->type.dwordValue % rctx->type.dwordValue;
+							v = lctx->type.GetConstantDW() % rctx->type.GetConstantDW();
 				}
 				else if( op == ttStarStar )
 				{
 					bool isOverflow;
 					if( lctx->type.dataType.IsIntegerType() )
-						v = as_powi(lctx->type.intValue, rctx->type.intValue, isOverflow);
+						v = as_powi(int(lctx->type.GetConstantDW()), int(rctx->type.GetConstantDW()), isOverflow);
 					else
-						v = as_powu(lctx->type.dwordValue, rctx->type.dwordValue, isOverflow);
+						v = as_powu(lctx->type.GetConstantDW(), rctx->type.GetConstantDW(), isOverflow);
 
 					if( isOverflow )
 						Error(TXT_POW_OVERFLOW, node);
@@ -13141,47 +13157,47 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
 
 				// If the right value is greater than the left value in a minus operation, then we need to convert the type to int
-				if( lctx->type.dataType.GetTokenType() == ttUInt && op == ttMinus && lctx->type.intValue < rctx->type.intValue )
+				if( lctx->type.dataType.GetTokenType() == ttUInt && op == ttMinus && lctx->type.GetConstantDW() < rctx->type.GetConstantDW())
 					ctx->type.dataType.SetTokenType(ttInt);
 			}
 			else
 			{
 				asQWORD v = 0;
 				if( op == ttPlus )
-					v = lctx->type.qwordValue + rctx->type.qwordValue;
+					v = asINT64(lctx->type.GetConstantQW()) + asINT64(rctx->type.GetConstantQW());
 				else if( op == ttMinus )
-					v = lctx->type.qwordValue - rctx->type.qwordValue;
+					v = asINT64(lctx->type.GetConstantQW()) - asINT64(rctx->type.GetConstantQW());
 				else if( op == ttStar )
-					v = lctx->type.qwordValue * rctx->type.qwordValue;
+					v = asINT64(lctx->type.GetConstantQW()) * asINT64(rctx->type.GetConstantQW());
 				else if( op == ttSlash )
 				{
 					// TODO: Should probably report an error, rather than silently convert the value to 0
-					if( rctx->type.qwordValue == 0 || (rctx->type.qwordValue == asQWORD(-1) && lctx->type.qwordValue == (asQWORD(1)<<63)) )
+					if( rctx->type.GetConstantQW() == 0 || (rctx->type.GetConstantQW() == asQWORD(-1) && lctx->type.GetConstantQW() == (asQWORD(1)<<63)) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
-							v = asINT64(lctx->type.qwordValue) / asINT64(rctx->type.qwordValue);
+							v = asINT64(lctx->type.GetConstantQW()) / asINT64(rctx->type.GetConstantQW());
 						else
-							v = lctx->type.qwordValue / rctx->type.qwordValue;
+							v = lctx->type.GetConstantQW() / rctx->type.GetConstantQW();
 				}
 				else if( op == ttPercent )
 				{
 				    // TODO: Should probably report an error, rather than silently convert the value to 0
-					if( rctx->type.qwordValue == 0 || (rctx->type.qwordValue == asQWORD(-1) && lctx->type.qwordValue == (asQWORD(1)<<63)) )
+					if( rctx->type.GetConstantQW() == 0 || (rctx->type.GetConstantQW() == asQWORD(-1) && lctx->type.GetConstantQW() == (asQWORD(1)<<63)) )
 						v = 0;
 					else
 						if( lctx->type.dataType.IsIntegerType() )
-							v = asINT64(lctx->type.qwordValue) % asINT64(rctx->type.qwordValue);
+							v = asINT64(lctx->type.GetConstantQW()) % asINT64(rctx->type.GetConstantQW());
 						else
-							v = lctx->type.qwordValue % rctx->type.qwordValue;
+							v = lctx->type.GetConstantQW() % rctx->type.GetConstantQW();
 				}
 				else if( op == ttStarStar )
 				{
 					bool isOverflow;
 					if( lctx->type.dataType.IsIntegerType() )
-						v = as_powi64(asINT64(lctx->type.qwordValue), asINT64(rctx->type.qwordValue), isOverflow);
+						v = as_powi64(asINT64(lctx->type.GetConstantQW()), asINT64(rctx->type.GetConstantQW()), isOverflow);
 					else
-						v = as_powu64(lctx->type.qwordValue, rctx->type.qwordValue, isOverflow);
+						v = as_powu64(lctx->type.GetConstantQW(), rctx->type.GetConstantQW(), isOverflow);
 
 					if( isOverflow )
 						Error(TXT_POW_OVERFLOW, node);
@@ -13190,7 +13206,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
 
 				// If the right value is greater than the left value in a minus operation, then we need to convert the type to int
-				if( lctx->type.dataType.GetTokenType() == ttUInt64 && op == ttMinus && lctx->type.qwordValue < rctx->type.qwordValue )
+				if( lctx->type.dataType.GetTokenType() == ttUInt64 && op == ttMinus && lctx->type.GetConstantQW() < rctx->type.GetConstantQW())
 					ctx->type.dataType.SetTokenType(ttInt64);
 			}
 		}
@@ -13198,28 +13214,28 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 		{
 			float v = 0.0f;
 			if( op == ttPlus )
-				v = lctx->type.floatValue + rctx->type.floatValue;
+				v = lctx->type.GetConstantF() + rctx->type.GetConstantF();
 			else if( op == ttMinus )
-				v = lctx->type.floatValue - rctx->type.floatValue;
+				v = lctx->type.GetConstantF() - rctx->type.GetConstantF();
 			else if( op == ttStar )
-				v = lctx->type.floatValue * rctx->type.floatValue;
+				v = lctx->type.GetConstantF() * rctx->type.GetConstantF();
 			else if( op == ttSlash )
 			{
-				if( rctx->type.floatValue == 0 )
+				if( rctx->type.GetConstantF() == 0 )
 					v = 0;
 				else
-					v = lctx->type.floatValue / rctx->type.floatValue;
+					v = lctx->type.GetConstantF() / rctx->type.GetConstantF();
 			}
 			else if( op == ttPercent )
 			{
-				if( rctx->type.floatValue == 0 )
+				if( rctx->type.GetConstantF() == 0 )
 					v = 0;
 				else
-					v = fmodf(lctx->type.floatValue, rctx->type.floatValue);
+					v = fmodf(lctx->type.GetConstantF(), rctx->type.GetConstantF());
 			}
 			else if( op == ttStarStar )
 			{
-				v = powf(lctx->type.floatValue, rctx->type.floatValue);
+				v = powf(lctx->type.GetConstantF(), rctx->type.GetConstantF());
 
 				if( v == HUGE_VAL )
 					Error(TXT_POW_OVERFLOW, node);
@@ -13236,7 +13252,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 
 				if( op == ttStarStar || op == ttPowAssign )
 				{
-					v = pow(lctx->type.doubleValue, rctx->type.intValue);
+					v = pow(lctx->type.GetConstantD(), int(rctx->type.GetConstantDW()));
 					if( v == HUGE_VAL )
 						Error(TXT_POW_OVERFLOW, node);
 				}
@@ -13246,28 +13262,28 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asCExprContext *lctx,
 			else
 			{
 				if( op == ttPlus )
-					v = lctx->type.doubleValue + rctx->type.doubleValue;
+					v = lctx->type.GetConstantD() + rctx->type.GetConstantD();
 				else if( op == ttMinus )
-					v = lctx->type.doubleValue - rctx->type.doubleValue;
+					v = lctx->type.GetConstantD() - rctx->type.GetConstantD();
 				else if( op == ttStar )
-					v = lctx->type.doubleValue * rctx->type.doubleValue;
+					v = lctx->type.GetConstantD() * rctx->type.GetConstantD();
 				else if( op == ttSlash )
 				{
-					if( rctx->type.doubleValue == 0 )
+					if( rctx->type.GetConstantD() == 0 )
 						v = 0;
 					else
-						v = lctx->type.doubleValue / rctx->type.doubleValue;
+						v = lctx->type.GetConstantD() / rctx->type.GetConstantD();
 				}
 				else if( op == ttPercent )
 				{
-					if( rctx->type.doubleValue == 0 )
+					if( rctx->type.GetConstantD() == 0 )
 						v = 0;
 					else
-						v = fmod(lctx->type.doubleValue, rctx->type.doubleValue);
+						v = fmod(lctx->type.GetConstantD(), rctx->type.GetConstantD());
 				}
 				else if( op == ttStarStar )
 				{
-					v = pow(lctx->type.doubleValue, rctx->type.doubleValue);
+					v = pow(lctx->type.GetConstantD(), rctx->type.GetConstantD());
 					if( v == HUGE_VAL )
 						Error(TXT_POW_OVERFLOW, node);
 				}
@@ -13392,11 +13408,11 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			{
 				asQWORD v = 0;
 				if( op == ttAmp )
-					v = lctx->type.qwordValue & rctx->type.qwordValue;
+					v = lctx->type.GetConstantQW() & rctx->type.GetConstantQW();
 				else if( op == ttBitOr )
-					v = lctx->type.qwordValue | rctx->type.qwordValue;
+					v = lctx->type.GetConstantQW() | rctx->type.GetConstantQW();
 				else if( op == ttBitXor )
-					v = lctx->type.qwordValue ^ rctx->type.qwordValue;
+					v = lctx->type.GetConstantQW() ^ rctx->type.GetConstantQW();
 
 				// Remember the result
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
@@ -13405,11 +13421,11 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			{
 				asDWORD v = 0;
 				if( op == ttAmp )
-					v = lctx->type.dwordValue & rctx->type.dwordValue;
+					v = lctx->type.GetConstantDW() & rctx->type.GetConstantDW();
 				else if( op == ttBitOr )
-					v = lctx->type.dwordValue | rctx->type.dwordValue;
+					v = lctx->type.GetConstantDW() | rctx->type.GetConstantDW();
 				else if( op == ttBitXor )
-					v = lctx->type.dwordValue ^ rctx->type.dwordValue;
+					v = lctx->type.GetConstantDW() ^ rctx->type.GetConstantDW();
 
 				// Remember the result
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
@@ -13531,11 +13547,11 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			{
 				asDWORD v = 0;
 				if( op == ttBitShiftLeft )
-					v = lctx->type.dwordValue << rctx->type.dwordValue;
+					v = lctx->type.GetConstantDW() << rctx->type.GetConstantDW();
 				else if( op == ttBitShiftRight )
-					v = lctx->type.dwordValue >> rctx->type.dwordValue;
+					v = lctx->type.GetConstantDW() >> rctx->type.GetConstantDW();
 				else if( op == ttBitShiftRightArith )
-					v = lctx->type.intValue >> rctx->type.dwordValue;
+					v = int(lctx->type.GetConstantDW()) >> rctx->type.GetConstantDW();
 
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
 			}
@@ -13543,11 +13559,11 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			{
 				asQWORD v = 0;
 				if( op == ttBitShiftLeft )
-					v = lctx->type.qwordValue << rctx->type.dwordValue;
+					v = lctx->type.GetConstantQW() << rctx->type.GetConstantDW();
 				else if( op == ttBitShiftRight )
-					v = lctx->type.qwordValue >> rctx->type.dwordValue;
+					v = lctx->type.GetConstantQW() >> rctx->type.GetConstantDW();
 				else if( op == ttBitShiftRightArith )
-					v = asINT64(lctx->type.qwordValue) >> rctx->type.dwordValue;
+					v = asINT64(lctx->type.GetConstantQW()) >> rctx->type.GetConstantDW();
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
 			}
@@ -13627,12 +13643,12 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 			{
 				if( opCtx->type.dataType.GetTokenType() == ttUInt64 || opCtx->type.dataType.GetTokenType() == ttInt64 )
 				{
-					if( !(opCtx->type.qwordValue & (asQWORD(1)<<63)) )
+					if( !(opCtx->type.GetConstantQW() & (asQWORD(1)<<63)) )
 						signMismatch = false;
 				}
 				else
 				{
-					if( !(opCtx->type.dwordValue & (1<<31)) )
+					if( !(opCtx->type.GetConstantDW() & (1<<31)) )
 						signMismatch = false;
 				}
 
@@ -13687,7 +13703,11 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 	{
 		// It wasn't possible to get two valid operands, so we just return
 		// a boolean result and let the compiler continue.
+#if AS_SIZEOF_BOOL == 1
+		ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+#else
 		ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+#endif
 		return;
 	}
 
@@ -13739,7 +13759,11 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 			{
 				// TODO: Use TXT_ILLEGAL_OPERATION_ON
 				Error(TXT_ILLEGAL_OPERATION, node);
+#if AS_SIZEOF_BOOL == 1
+				ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), 0);
+#else
 				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), 0);
+#endif
 			}
 		}
 		else
@@ -13801,22 +13825,26 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 			if( op == ttEqual || op == ttNotEqual )
 			{
 				// Make sure they are equal if not false
-				if( lctx->type.dwordValue != 0 ) lctx->type.dwordValue = VALUE_OF_BOOLEAN_TRUE;
-				if( rctx->type.dwordValue != 0 ) rctx->type.dwordValue = VALUE_OF_BOOLEAN_TRUE;
+				if( lctx->type.GetConstantDW() != 0 ) lctx->type.SetConstantDW(VALUE_OF_BOOLEAN_TRUE);
+				if( rctx->type.GetConstantDW() != 0 ) rctx->type.SetConstantDW(VALUE_OF_BOOLEAN_TRUE);
 
 				asDWORD v = 0;
 				if( op == ttEqual )
 				{
-					v = lctx->type.intValue - rctx->type.intValue;
+					v = int(lctx->type.GetConstantDW()) - int(rctx->type.GetConstantDW());
 					if( v == 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
 				}
 				else if( op == ttNotEqual )
 				{
-					v = lctx->type.intValue - rctx->type.intValue;
+					v = int(lctx->type.GetConstantDW()) - int(rctx->type.GetConstantDW());
 					if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
 				}
 
-				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), v);
+				#if AS_SIZEOF_BOOL == 1
+					ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), (asBYTE)v);
+				#else
+					ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), v);
+				#endif
 			}
 			else
 			{
@@ -13829,39 +13857,39 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 			int i = 0;
 			if( lctx->type.dataType.IsIntegerType() && lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
-				int v = lctx->type.intValue - rctx->type.intValue;
+				int v = int(lctx->type.GetConstantDW()) - int(rctx->type.GetConstantDW());
 				if( v < 0 ) i = -1;
 				if( v > 0 ) i = 1;
 			}
 			else if( lctx->type.dataType.IsUnsignedType() && lctx->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
-				asDWORD v1 = lctx->type.dwordValue;
-				asDWORD v2 = rctx->type.dwordValue;
+				asDWORD v1 = lctx->type.GetConstantDW();
+				asDWORD v2 = rctx->type.GetConstantDW();
 				if( v1 < v2 ) i = -1;
 				if( v1 > v2 ) i = 1;
 			}
 			else if( lctx->type.dataType.IsIntegerType() && lctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				asINT64 v = asINT64(lctx->type.qwordValue) - asINT64(rctx->type.qwordValue);
+				asINT64 v = asINT64(lctx->type.GetConstantQW()) - asINT64(rctx->type.GetConstantQW());
 				if( v < 0 ) i = -1;
 				if( v > 0 ) i = 1;
 			}
 			else if( lctx->type.dataType.IsUnsignedType() && lctx->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				asQWORD v1 = lctx->type.qwordValue;
-				asQWORD v2 = rctx->type.qwordValue;
+				asQWORD v1 = lctx->type.GetConstantQW();
+				asQWORD v2 = rctx->type.GetConstantQW();
 				if( v1 < v2 ) i = -1;
 				if( v1 > v2 ) i = 1;
 			}
 			else if( lctx->type.dataType.IsFloatType() )
 			{
-				float v = lctx->type.floatValue - rctx->type.floatValue;
+				float v = lctx->type.GetConstantF() - rctx->type.GetConstantF();
 				if( v < 0 ) i = -1;
 				if( v > 0 ) i = 1;
 			}
 			else if( lctx->type.dataType.IsDoubleType() )
 			{
-				double v = lctx->type.doubleValue - rctx->type.doubleValue;
+				double v = lctx->type.GetConstantD() - rctx->type.GetConstantD();
 				if( v < 0 ) i = -1;
 				if( v > 0 ) i = 1;
 			}
@@ -13880,7 +13908,11 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 			else if( op == ttGreaterThanOrEqual )
 				i = (i >= 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
 
-			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), i);
+			#if AS_SIZEOF_BOOL == 1
+				ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), (asBYTE)i);
+			#else
+				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), i);
+			#endif
 		}
 	}
 }
@@ -13976,25 +14008,25 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asCExprContext *lc
 		{
 			// Make sure they are equal if not false
 #if AS_SIZEOF_BOOL == 1
-			if( lctx->type.byteValue != 0 ) lctx->type.byteValue = VALUE_OF_BOOLEAN_TRUE;
-			if( rctx->type.byteValue != 0 ) rctx->type.byteValue = VALUE_OF_BOOLEAN_TRUE;
+			if( lctx->type.GetConstantB() != 0 ) lctx->type.SetConstantB(VALUE_OF_BOOLEAN_TRUE);
+			if( rctx->type.GetConstantB() != 0 ) rctx->type.SetConstantB(VALUE_OF_BOOLEAN_TRUE);
 
 			asBYTE v = 0;
-			v = lctx->type.byteValue - rctx->type.byteValue;
+			v = lctx->type.GetConstantB() - rctx->type.GetConstantB();
 			if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
 
 			ctx->type.isConstant = true;
-			ctx->type.byteValue = v;
+			ctx->type.SetConstantB(v);
 #else
-			if( lctx->type.dwordValue != 0 ) lctx->type.dwordValue = VALUE_OF_BOOLEAN_TRUE;
-			if( rctx->type.dwordValue != 0 ) rctx->type.dwordValue = VALUE_OF_BOOLEAN_TRUE;
+			if( lctx->type.GetConstantDW() != 0 ) lctx->type.SetConstantDW(VALUE_OF_BOOLEAN_TRUE);
+			if( rctx->type.GetConstantDW() != 0 ) rctx->type.GetConstantDW(VALUE_OF_BOOLEAN_TRUE);
 
 			asDWORD v = 0;
-			v = lctx->type.intValue - rctx->type.intValue;
+			v = lctx->type.GetConstantDW() - rctx->type.GetConstantDW();
 			if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
 
 			ctx->type.isConstant = true;
-			ctx->type.dwordValue = v;
+			ctx->type.SetConstantDW(v);
 #endif
 		}
 	}
@@ -14047,23 +14079,23 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asCExprContext *lc
 #if AS_SIZEOF_BOOL == 1
 			asBYTE v = 0;
 			if( op == ttAnd )
-				v = lctx->type.byteValue && rctx->type.byteValue;
+				v = lctx->type.GetConstantB() && rctx->type.GetConstantB();
 			else if( op == ttOr )
-				v = lctx->type.byteValue || rctx->type.byteValue;
+				v = lctx->type.GetConstantB() || rctx->type.GetConstantB();
 
 			// Remember the result
 			ctx->type.isConstant = true;
-			ctx->type.byteValue = v;
+			ctx->type.SetConstantB(v);
 #else
 			asDWORD v = 0;
 			if( op == ttAnd )
-				v = lctx->type.dwordValue && rctx->type.dwordValue;
+				v = lctx->type.GetConstantDW() && rctx->type.GetConstantDW();
 			else if( op == ttOr )
-				v = lctx->type.dwordValue || rctx->type.dwordValue;
+				v = lctx->type.GetConstantDW() || rctx->type.GetConstantDW();
 
 			// Remember the result
 			ctx->type.isConstant = true;
-			ctx->type.dwordValue = v;
+			ctx->type.SetConstantDW(v);
 #endif
 		}
 	}
@@ -14169,7 +14201,11 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asCExprContext *
 	{
 		// Compiler error, don't continue
 		Error(TXT_OPERANDS_MUST_BE_HANDLES, node);
+#if AS_SIZEOF_BOOL == 1
+		ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+#else
 		ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+#endif
 		return;
 	}
 
@@ -14657,7 +14693,7 @@ void asCExprValue::SetConstantQW(const asCDataType &dt, asQWORD value)
 	Set(dt);
 
 	isConstant = true;
-	qwordValue = value;
+	SetConstantQW(value);
 }
 
 void asCExprValue::SetConstantDW(const asCDataType &dt, asDWORD value)
@@ -14665,7 +14701,7 @@ void asCExprValue::SetConstantDW(const asCDataType &dt, asDWORD value)
 	Set(dt);
 
 	isConstant = true;
-	dwordValue = value;
+	SetConstantDW(value);
 }
 
 void asCExprValue::SetConstantB(const asCDataType &dt, asBYTE value)
@@ -14673,7 +14709,15 @@ void asCExprValue::SetConstantB(const asCDataType &dt, asBYTE value)
 	Set(dt);
 
 	isConstant = true;
-	byteValue = value;
+	SetConstantB(value);
+}
+
+void asCExprValue::SetConstantW(const asCDataType &dt, asWORD value)
+{
+	Set(dt);
+
+	isConstant = true;
+	SetConstantW(value);
 }
 
 void asCExprValue::SetConstantF(const asCDataType &dt, float value)
@@ -14681,7 +14725,7 @@ void asCExprValue::SetConstantF(const asCDataType &dt, float value)
 	Set(dt);
 
 	isConstant = true;
-	floatValue = value;
+	SetConstantF(value);
 }
 
 void asCExprValue::SetConstantD(const asCDataType &dt, double value)
@@ -14689,7 +14733,113 @@ void asCExprValue::SetConstantD(const asCDataType &dt, double value)
 	Set(dt);
 
 	isConstant = true;
+	SetConstantD(value);
+}
+
+void asCExprValue::SetConstantQW(asQWORD value)
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 8);
+	qwordValue = value;
+}
+
+void asCExprValue::SetConstantDW(asDWORD value)
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 4);
+	dwordValue = value;
+}
+
+void asCExprValue::SetConstantW(asWORD value)
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 2);
+	wordValue = value;
+}
+
+void asCExprValue::SetConstantB(asBYTE value)
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 1);
+	byteValue = value;
+}
+
+void asCExprValue::SetConstantF(float value)
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 4);
+	floatValue = value;
+}
+
+void asCExprValue::SetConstantD(double value)
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 8);
 	doubleValue = value;
+}
+
+asQWORD asCExprValue::GetConstantQW()
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 8);
+	return qwordValue;
+}
+
+asDWORD asCExprValue::GetConstantDW()
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 4);
+	return dwordValue;
+}
+
+asWORD asCExprValue::GetConstantW()
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 2);
+	return wordValue;
+}
+
+asBYTE asCExprValue::GetConstantB()
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 1);
+	return byteValue;
+}
+
+float asCExprValue::GetConstantF()
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 4);
+	return floatValue;
+}
+
+double asCExprValue::GetConstantD()
+{
+	asASSERT(dataType.GetSizeInMemoryBytes() == 8);
+	return doubleValue;
+}
+
+void asCExprValue::SetConstantData(const asCDataType &dt, asQWORD qw)
+{
+	Set(dt);
+
+	isConstant = true;
+	
+	// This code is necessary to guarantee that the code 
+	// works on both big endian and little endian CPUs.
+	if (dataType.GetSizeInMemoryBytes() == 1)
+		byteValue = (asBYTE)qw;
+	if (dataType.GetSizeInMemoryBytes() == 2)
+		wordValue = (asWORD)qw;
+	if (dataType.GetSizeInMemoryBytes() == 4)
+		dwordValue = (asDWORD)qw;
+	else
+		qwordValue = qw;
+}
+
+asQWORD asCExprValue::GetConstantData()
+{
+	asQWORD qw = 0;
+	// This code is necessary to guarantee that the code 
+	// works on both big endian and little endian CPUs.
+	if (dataType.GetSizeInMemoryBytes() == 1)
+		qw = byteValue;
+	if (dataType.GetSizeInMemoryBytes() == 2)
+		qw = wordValue;
+	if (dataType.GetSizeInMemoryBytes() == 4)
+		qw = dwordValue;
+	else
+		qw = qwordValue;
+	return qw;
 }
 
 void asCExprValue::SetUndefinedFuncHandle(asCScriptEngine *engine)
@@ -14753,7 +14903,7 @@ bool asCExprValue::IsVoid() const
 
 void asCExprValue::SetDummy()
 {
-	SetConstantQW(asCDataType::CreatePrimitive(ttInt, true), 0);
+	SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

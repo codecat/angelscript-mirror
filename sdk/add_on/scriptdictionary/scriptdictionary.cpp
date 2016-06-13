@@ -716,14 +716,25 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 		}
 
 		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
+		// Only bool and enums needs to be treated separately
 		if( typeId == asTYPEID_DOUBLE )
 		{
 			if( m_typeId == asTYPEID_INT64 )
 				*(double*)value = double(m_valueInt);
-			else if( m_typeId == asTYPEID_BOOL )
-				*(double*)value = char(m_valueInt) ? 1.0 : 0.0;
-			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
-				*(double*)value = double(int(m_valueInt)); // enums are 32bit
+			else if (m_typeId == asTYPEID_BOOL)
+			{
+				// Use memcpy instead of type cast to make sure the code is endianess agnostic
+				char localValue;
+				memcpy(&localValue, &m_valueInt, sizeof(char));
+				*(double*)value = localValue ? 1.0 : 0.0;
+			}
+			else if (m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0)
+			{
+				// Use memcpy instead of type cast to make sure the code is endianess agnostic
+				int localValue;
+				memcpy(&localValue, &m_valueInt, sizeof(int));
+				*(double*)value = double(localValue); // enums are 32bit
+			}
 			else
 			{
 				// The stored type is an object
@@ -736,10 +747,20 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 		{
 			if( m_typeId == asTYPEID_DOUBLE )
 				*(asINT64*)value = asINT64(m_valueFlt);
-			else if( m_typeId == asTYPEID_BOOL )
-				*(asINT64*)value = char(m_valueInt) ? 1 : 0;
-			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
-				*(asINT64*)value = int(m_valueInt); // enums are 32bit
+			else if (m_typeId == asTYPEID_BOOL)
+			{
+				// Use memcpy instead of type cast to make sure the code is endianess agnostic
+				char localValue;
+				memcpy(&localValue, &m_valueInt, sizeof(char));
+				*(asINT64*)value = localValue ? 1 : 0;
+			}
+			else if (m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0)
+			{
+				// Use memcpy instead of type cast to make sure the code is endianess agnostic
+				int localValue;
+				memcpy(&localValue, &m_valueInt, sizeof(int));
+				*(asINT64*)value = localValue; // enums are 32bit
+			}
 			else
 			{
 				// The stored type is an object
@@ -755,10 +776,20 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 				*(int*)value = int(m_valueFlt);
 			else if( m_typeId == asTYPEID_INT64 )
 				*(int*)value = int(m_valueInt);
-			else if( m_typeId == asTYPEID_BOOL )
-				*(int*)value = char(m_valueInt) ? 1 : 0;
-			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
-				*(int*)value = int(m_valueInt);
+			else if (m_typeId == asTYPEID_BOOL)
+			{
+				// Use memcpy instead of type cast to make sure the code is endianess agnostic
+				char localValue;
+				memcpy(&localValue, &m_valueInt, sizeof(char));
+				*(int*)value = localValue ? 1 : 0;
+			}
+			else if (m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0)
+			{
+				// Use memcpy instead of type cast to make sure the code is endianess agnostic
+				int localValue;
+				memcpy(&localValue, &m_valueInt, sizeof(int));
+				*(int*)value = localValue; // enums are 32bit
+			}
 			else
 			{
 				// The stored type is an object
@@ -768,8 +799,11 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 		}
 		else if( typeId == asTYPEID_BOOL )
 		{
-			if( m_typeId & asTYPEID_OBJHANDLE )
+			if (m_typeId & asTYPEID_OBJHANDLE)
+			{
+				// TODO: Check if the object has a conversion operator to a primitive value
 				*(bool*)value = m_valueObj ? true : false;
+			}
 			else if( m_typeId & asTYPEID_MASK_OBJECT )
 			{
 				// TODO: Check if the object has a conversion operator to a primitive value
@@ -777,6 +811,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			}
 			else
 			{
+				// Compare only the bytes that were actually set
 				asQWORD zero = 0;
 				int size = engine->GetSizeOfPrimitiveType(typeId);
 				*(bool*)value = memcmp(&m_valueInt, &zero, size) == 0 ? false : true;
