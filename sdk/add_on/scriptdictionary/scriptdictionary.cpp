@@ -813,7 +813,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 			{
 				// Compare only the bytes that were actually set
 				asQWORD zero = 0;
-				int size = engine->GetSizeOfPrimitiveType(typeId);
+				int size = engine->GetSizeOfPrimitiveType(m_typeId);
 				*(bool*)value = memcmp(&m_valueInt, &zero, size) == 0 ? false : true;
 			}
 		}
