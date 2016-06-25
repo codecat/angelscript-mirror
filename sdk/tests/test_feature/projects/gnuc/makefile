@@ -15,6 +15,7 @@ SRCNAMES = \
   main.cpp \
   test_2func.cpp \
   test_addon_contextmgr.cpp \
+  test_addon_datetime.cpp \
   test_addon_scriptarray.cpp \
   test_addon_scriptbuilder.cpp \
   test_addon_scriptfile.cpp \
@@ -188,6 +189,7 @@ OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.cpp=.o))) \
   obj/debugger.o \
   obj/weakref.o \
   obj/contextmgr.o \
+  obj/datetime.o 
 
 
 BIN = ../../bin/testgnuc
@@ -252,6 +254,9 @@ obj/weakref.o: ../../../../add_on/weakref/weakref.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 obj/contextmgr.o: ../../../../add_on/contextmgr/contextmgr.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+obj/datetime.o: ../../../../add_on/datetime/datetime.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:

@@ -10,7 +10,7 @@ namespace Test_Addon_DateTime
 bool Test()
 {
 #if !defined(AS_CAN_USE_CPP11)
-	PRINTF("Skipped due to lack of C++11 support\n);
+	PRINTF("Skipped due to lack of C++11 support\n");
 	return false;
 #endif
 

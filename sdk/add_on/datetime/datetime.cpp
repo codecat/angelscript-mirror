@@ -1,4 +1,5 @@
 #include "datetime.h"
+#include <string.h>
 #include <assert.h>
 #include <new>
 
