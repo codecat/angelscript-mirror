@@ -12,7 +12,7 @@ bool Test()
 #if !defined(AS_CAN_USE_CPP11)
 	PRINTF("Skipped due to lack of C++11 support\n");
 	return false;
-#endif
+#else
 
 	bool fail = false;
 	int r;
@@ -43,6 +43,7 @@ bool Test()
 
 	// Success
 	return fail;
+#endif
 }
 
 

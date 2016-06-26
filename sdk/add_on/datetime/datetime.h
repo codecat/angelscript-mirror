@@ -9,7 +9,7 @@
 #ifdef AS_CAN_USE_CPP11
 #include <chrono>
 #else
-#error Sorry, this requires C++11 which your compiler doesn't appear to support
+#error Sorry, this requires C++11 which your compiler doesnt appear to support
 #endif
 
 BEGIN_AS_NAMESPACE
