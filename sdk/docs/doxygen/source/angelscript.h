@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.31.0
-#define ANGELSCRIPT_VERSION        23100
-#define ANGELSCRIPT_VERSION_STRING "2.31.0"
+//! Version 2.31.1
+#define ANGELSCRIPT_VERSION        23101
+#define ANGELSCRIPT_VERSION_STRING "2.31.1"
 
 // Data types
 
@@ -200,10 +200,14 @@ enum asEEngineProp
 	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
 	//! When true, the / and /= operators will perform floating-point division (i.e. 1/2 = 0.5 instead of 0). Default: false
 	asEP_DISABLE_INTEGER_DIVISION           = 22,
-	//! When true, the initialization lists may not contain empty elements
+	//! When true, the initialization lists may not contain empty elements. Default: false
 	asEP_DISALLOW_EMPTY_LIST_ELEMENTS       = 23,
-	//! When true, private properties behave like protected properties
+	//! When true, private properties behave like protected properties. Default: false
 	asEP_PRIVATE_PROP_AS_PROTECTED          = 24,
+	//! When true, the compiler will not give an error if identifiers contain characters with byte value above 127, thus permit identifiers to contain international characters. Default: false
+	asEP_ALLOW_UNICODE_IDENTIFIERS          = 25,
+	//! Define how heredoc strings will be trimmed by the compiler: 0 - never trim, 1 - trim if multiple lines, 2 - always trim. Default: 1
+	asEP_HEREDOC_TRIM_MODE                  = 26,
 
 	asEP_LAST_PROPERTY
 };
@@ -2034,7 +2038,7 @@ public:
 #ifdef AS_DEPRECATED
 	// Deprecated since 2.31.0, 2015-12-06
 	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::SetTypeInfoUserDataCleanupCallback instead.
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANOBJECTTYPEFUNC_t callback, asPWORD type = 0) = 0;
+	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
 #endif
 	//! \brief Set the function that should be called when a type info is destroyed
 	//! \param[in] callback A pointer to the function

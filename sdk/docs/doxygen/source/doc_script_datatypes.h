@@ -184,10 +184,10 @@ Sets the new length of the array.
 
 Reverses the order of the elements in the array.
  
-<b>void insertAt(uint index, const T& in)</b>
+<b>void insertAt(uint index, const T& in value)</b><br>
+<b>void insertAt(uint index, const array<T>& arr)</b><br>
 
-Inserts a new element into the array at the specified index. 
-All elements starting at that position will be pushed up one position.
+Inserts a new element, or another array of elements, into the array at the specified index. 
  
 <b>void insertLast(const T& in)</b>
 
@@ -200,7 +200,11 @@ Removes the element at the specified index.
 <b>void removeLast()</b>
 
 Removes the last element of the array.
- 
+
+<b>void removeRange(uint start, uint count)</b>
+
+Removes \a count elements starting from \a start.
+
 <b>void sortAsc()</b><br>
 <b>void sortAsc(uint startAt, uint count)</b><br>
 
@@ -559,6 +563,14 @@ Returns true if the string is empty, i.e. the length is zero.
 
 Returns a string with the content starting at \a start and the number of bytes given by count. The default arguments will return the whole string as the new string.
 
+<b>void insert(uint pos, const string &in other)</b><br>
+
+Inserts another string \a other at position \a pos in the original string. 
+
+<b>void erase(uint pos, int count = -1)</b><br>
+
+Erases a range of characters from the string, starting at position \a pos and counting \a count characters.
+
 <b>int            findFirst(const string &in str, uint start = 0) const</b><br>
 
 Find the first occurrence of the value \a str in the string, starting at \a start. If no occurrence is found a negative value will be returned.
@@ -567,6 +579,17 @@ Find the first occurrence of the value \a str in the string, starting at \a star
 
 Find the last occurrence of the value \a str in the string. If \a start is informed the search will begin at that position, i.e. any potential occurrence after that position will not be searched. If no occurrence is found a negative value will be returned.
  
+<b>int            findFirstOf(const string &in chars, int start = 0) const</b><br>
+<b>int            findFirstNotOf(const string &in chars, int start = 0) const</b><br>
+<b>int            findLastOf(const string &in chars, int start = -1) const</b><br>
+<b>int            findLastNotOf(const string &in chars, int start = -1) const</b><br>
+
+The first variant finds the first character in the string that matches on of the characters in \a chars, starting at \a start. If no occurrence is found a negative value will be returned.
+
+The second variant finds the first character that doesn't match any of those in \a chars. The third and last variant are the same except they start the search from the end of the string.
+
+\note These functions work on the individual bytes in the strings. They do not attempt to understand encoded characters, e.g. UTF-8 encoded characters that can take up to 4 bytes.
+
 <b>array<string>@ split(const string &in delimiter) const</b><br>
 
 Splits the string in smaller strings where the delimiter is found.
@@ -578,6 +601,7 @@ Splits the string in smaller strings where the delimiter is found.
 Concatenates the strings in the array into a large string, separated by the delimiter.
  
 <b>int64  parseInt(const string &in str, uint base = 10, uint &out byteCount = 0)</b><br>
+<b>uint64 parseUInt(const string &in str, uint base = 10, uint &out byteCount = 0)</b><br>
 
 Parses the string for an integer value. The \a base can be 10 or 16 to support decimal numbers or 
 hexadecimal numbers. If \a byteCount is provided it will be set to the number of bytes that were 
