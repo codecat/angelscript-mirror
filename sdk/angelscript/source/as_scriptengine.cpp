@@ -4921,7 +4921,7 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		// Call the script class' default factory with a context
 		ptr = ScriptObjectFactory(objType, this);
 	}
-	else if( objType->flags & asOBJ_TEMPLATE )
+	else if( (objType->flags & asOBJ_TEMPLATE) && (objType->flags & asOBJ_REF) )
 	{
 		// The registered factory that takes the object type is moved
 		// to the construct behaviour when the type is instantiated
@@ -4932,10 +4932,10 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		{
 			ptr = CallGlobalFunctionRetPtr(objType->beh.construct, objType);
 		}
-		catch(...)
+		catch (...)
 		{
 			asIScriptContext *ctx = asGetActiveContext();
-			if( ctx )
+			if (ctx)
 				ctx->SetException(TXT_EXCEPTION_CAUGHT);
 		}
 #endif
@@ -4972,30 +4972,123 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		// Manually allocate the memory, then call the default constructor
 		ptr = CallAlloc(objType);
 		int funcIndex = objType->beh.construct;
-		if( funcIndex )
+		if (funcIndex)
 		{
+			if (objType->flags & asOBJ_TEMPLATE)
+			{
+				// Templates of value types create script functions as the constructors
+				CallScriptObjectMethod(ptr, funcIndex);
+			}
+			else
+			{
 #ifdef AS_NO_EXCEPTIONS
-			CallObjectMethod(ptr, funcIndex);
-#else
-			try
-			{
 				CallObjectMethod(ptr, funcIndex);
-			}
-			catch(...)
-			{
-				asIScriptContext *ctx = asGetActiveContext();
-				if( ctx )
-					ctx->SetException(TXT_EXCEPTION_CAUGHT);
+#else
+				try
+				{
+					CallObjectMethod(ptr, funcIndex);
+				}
+				catch (...)
+				{
+					asIScriptContext *ctx = asGetActiveContext();
+					if (ctx)
+						ctx->SetException(TXT_EXCEPTION_CAUGHT);
 
-				// Free the memory
-				CallFree(ptr);
-				ptr = 0;
-			}
+					// Free the memory
+					CallFree(ptr);
+					ptr = 0;
+				}
 #endif
+			}
 		}
 	}
 
 	return ptr;
+}
+
+// internal
+int asCScriptEngine::CallScriptObjectMethod(void *obj, int funcId)
+{
+	asIScriptContext *ctx = 0;
+	int r = 0;
+	bool isNested = false;
+
+	// Use nested call in the context if there is an active context
+	ctx = asGetActiveContext();
+	if (ctx)
+	{
+		// It may not always be possible to reuse the current context, 
+		// in which case we'll have to create a new one any way.
+		if (ctx->GetEngine() == this && ctx->PushState() == asSUCCESS)
+			isNested = true;
+		else
+			ctx = 0;
+	}
+
+	if (ctx == 0)
+	{
+		// Request a context from the engine
+		ctx = RequestContext();
+		if (ctx == 0)
+		{
+			// TODO: How to best report this failure?
+			return asERROR;
+		}
+	}
+
+	r = ctx->Prepare(scriptFunctions[funcId]);
+	if (r < 0)
+	{
+		if (isNested)
+			ctx->PopState();
+		else
+			ReturnContext(ctx);
+		// TODO: How to best report this failure?
+		return asERROR;
+	}
+
+	// Set the object
+	ctx->SetObject(obj);
+
+	for (;;)
+	{
+		r = ctx->Execute();
+
+		// We can't allow this execution to be suspended 
+		// so resume the execution immediately
+		if (r != asEXECUTION_SUSPENDED)
+			break;
+	}
+
+	if (r != asEXECUTION_FINISHED)
+	{
+		if (isNested)
+		{
+			ctx->PopState();
+
+			// If the execution was aborted or an exception occurred,
+			// then we should forward that to the outer execution.
+			if (r == asEXECUTION_EXCEPTION)
+			{
+				// TODO: How to improve this exception
+				ctx->SetException(TXT_EXCEPTION_IN_NESTED_CALL);
+			}
+			else if (r == asEXECUTION_ABORTED)
+				ctx->Abort();
+		}
+		else
+			ReturnContext(ctx);
+		
+		// TODO: How to best report the error?
+		return asERROR;
+	}
+
+	if (isNested)
+		ctx->PopState();
+	else
+		ReturnContext(ctx);
+
+	return asSUCCESS;
 }
 
 // interface

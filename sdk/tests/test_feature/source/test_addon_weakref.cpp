@@ -116,6 +116,35 @@ bool Test()
 		engine->Release();
 	}
 
+	// CreateScriptObject with Weakref
+	// http://www.gamedev.net/topic/680788-crash-when-trying-to-store-weakref-in-an-array/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterScriptWeakRef(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "class Foo {}");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asITypeInfo *type = mod->GetTypeInfoByDecl("weakref<Foo>");
+		CScriptWeakRef *weakRef = (CScriptWeakRef*)engine->CreateScriptObject(type);
+		if (weakRef == 0 || weakRef->GetRefType() == 0 || std::string(weakRef->GetRefType()->GetName()) != "Foo")
+			TEST_FAILED;
+
+		CScriptWeakRef *weakRef2 = (CScriptWeakRef*)engine->CreateScriptObjectCopy(weakRef, type);
+		if (weakRef2 == 0 || weakRef2->GetRefType() == 0 || std::string(weakRef2->GetRefType()->GetName()) != "Foo")
+			TEST_FAILED;
+
+		engine->ReleaseScriptObject(weakRef, type);
+		engine->ReleaseScriptObject(weakRef2, type);
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Weakref as member of script class
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
