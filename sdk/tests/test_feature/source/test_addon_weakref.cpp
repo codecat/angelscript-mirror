@@ -116,6 +116,46 @@ bool Test()
 		engine->Release();
 	}
 
+	// value assignment for weakref
+	// http://www.gamedev.net/topic/680611-passing-this-as-argument-in/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterScriptWeakRef(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo {} \n"
+			"void main() \n"
+			"{ \n"
+			"  weakref<Foo> a = Foo(); \n"
+			"  weakref<Foo> b; \n"
+			"  b = a; \n"
+			"  assert( a.get() is b.get() ); \n"
+			"  weakref<Foo> c(b); \n"
+			"  assert( c.get() is b.get() ); \n"
+			"  func(a); \n"
+			"} \n"
+			"void func(weakref<Foo> f) {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// CreateScriptObject with Weakref
 	// http://www.gamedev.net/topic/680788-crash-when-trying-to-store-weakref-in-an-array/
 	{
