@@ -723,7 +723,8 @@ void asCModule::InternalReset()
 	for( n = 0; n < funcDefs.GetLength(); n++ )
 	{
 		asCFuncdefType *func = funcDefs[n];
-		if( func->funcdef->IsShared() )
+		asASSERT(func);
+		if( func->funcdef && func->funcdef->IsShared() )
 		{
 			// The funcdef is shared, so transfer ownership to another module that also uses it
 			if( engine->FindNewOwnerForSharedType(func, this) != this )
