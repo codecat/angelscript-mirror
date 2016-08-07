@@ -3648,6 +3648,9 @@ asILockableSharedBool *asCScriptEngine::GetWeakRefFlagOfScriptObject(void *obj, 
 }
 
 // internal
+// orig is the parameter type that is to be replaced
+// tmpl is the registered template. Used to find which subtype is being replaced
+// ot is the new template instance that is being created. Used to find the target type
 asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot)
 {
 	asCDataType dt;
@@ -3671,6 +3674,12 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 				}
 				else
 				{
+					// The target type is a handle, then check if the application 
+					// wants this handle to be to a const object. This is done by
+					// flagging the type with 'if_handle_then_const' in the declaration.
+					if (dt.IsObjectHandle() && orig.HasIfHandleThenConst())
+						dt.MakeHandleToConst(true);
+
 					dt.MakeReference(orig.IsReference());
 					dt.MakeReadOnly(ot->templateSubTypes[n].IsReadOnly() || orig.IsReadOnly());
 				}

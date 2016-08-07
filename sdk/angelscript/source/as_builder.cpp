@@ -5608,6 +5608,21 @@ asCDataType asCBuilder::ModifyDataTypeFromNode(const asCDataType &type, asCScrip
 		if( autoHandle ) *autoHandle = true;
 	}
 
+	if (n && n->tokenType == ttIdentifier)
+	{
+		asCString str;
+		str.Assign(&file->code[n->tokenPos], n->tokenLength);
+		if (str == IF_HANDLE_TOKEN)
+			dt.SetIfHandleThenConst(true);
+		else
+		{
+			// TODO: Should give error if not currently parsing template registration
+			asCString msg;
+			msg.Format(TXT_UNEXPECTED_TOKEN_s, str.AddressOf());
+			WriteError(msg, file, node->firstChild);
+		}
+	}
+
 	return dt;
 }
 
