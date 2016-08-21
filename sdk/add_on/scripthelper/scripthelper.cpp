@@ -607,7 +607,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 		strm.getline(buffer, 1000);
 		config += buffer;
 		config += "\n";
-	} while( !strm.eof() );
+	} while( !strm.eof() && strm.good() );
 
 	// Process the configuration file and register each entity
 	asUINT pos  = 0;
