@@ -3857,24 +3857,24 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 				Error(TXT_SWITCH_CASE_MUST_BE_CONSTANT, cnode->firstChild);
 
 			// Verify that the result is an integral number
-			if( !c.type.dataType.IsIntegerType() && !c.type.dataType.IsUnsignedType() )
+			if (!c.type.dataType.IsIntegerType() && !c.type.dataType.IsUnsignedType())
 				Error(TXT_SWITCH_MUST_BE_INTEGRAL, cnode->firstChild);
-
-			ImplicitConversion(&c, to, cnode->firstChild, asIC_IMPLICIT_CONV, true);
-
-			// Has this case been declared already?
-			if( caseValues.IndexOf(c.type.GetConstantDW()) >= 0 )
+			else
 			{
-				Error(TXT_DUPLICATE_SWITCH_CASE, cnode->firstChild);
+				ImplicitConversion(&c, to, cnode->firstChild, asIC_IMPLICIT_CONV, true);
+
+				// Has this case been declared already?
+				if (caseValues.IndexOf(c.type.GetConstantDW()) >= 0)
+					Error(TXT_DUPLICATE_SWITCH_CASE, cnode->firstChild);
+
+				// TODO: Optimize: We can insert the numbers sorted already
+
+				// Store constant for later use
+				caseValues.PushLast(c.type.GetConstantDW());
+
+				// Reserve label for this case
+				caseLabels.PushLast(nextLabel++);
 			}
-
-			// TODO: Optimize: We can insert the numbers sorted already
-
-			// Store constant for later use
-			caseValues.PushLast(c.type.GetConstantDW());
-
-			// Reserve label for this case
-			caseLabels.PushLast(nextLabel++);
 		}
 		else
 		{
@@ -3893,7 +3893,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		cnode = cnode->next;
 	}
 
-    // check for empty switch
+	// check for empty switch
 	if (caseValues.GetLength() == 0)
 	{
 		Error(TXT_EMPTY_SWITCH, snode);
@@ -3904,7 +3904,7 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		defaultLabel = breakLabel;
 
 	//---------------------------------
-    // Output the optimized case comparisons
+	// Output the optimized case comparisons
 	// with jumps to the case code
 	//------------------------------------
 
