@@ -1955,7 +1955,13 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 				}
 				else
 				{
-					bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					// If the variable is really an argument of @& type, then it is necessary
+					// to use asBC_GETOBJREF so the pointer is correctly dereferenced.
+					sVariable *var = variables->GetVariableByOffset(args[n]->type.stackOffset);
+					if (var == 0 || !var->type.IsReference())
+						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					else
+						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
 				}
 			}
 		}
