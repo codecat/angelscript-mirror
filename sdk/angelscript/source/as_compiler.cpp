@@ -9858,6 +9858,9 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 			// is done and the scipt wants a new value to be constructed
 			if( conv.type.dataType.IsEqualExceptRef(dt) && cost > 0 )
 			{
+				// Make sure any property accessor is already evaluated
+				ProcessPropertyGetAccessor(args[0], args[0]->exprNode);
+
 				ImplicitConversion(args[0], dt, node->lastChild, asIC_EXPLICIT_VAL_CAST);
 
 				ctx->bc.AddCode(&args[0]->bc);
