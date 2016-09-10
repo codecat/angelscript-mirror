@@ -216,6 +216,29 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test 8bit and 16bit integers
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"const int8 INT8_MIN = -1; \n"
+			"const int16 INT16_MIN = -32768; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test boolean constants
 	{
 		engine = asCreateScriptEngine();

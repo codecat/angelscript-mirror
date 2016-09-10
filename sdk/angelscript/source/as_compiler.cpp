@@ -7296,14 +7296,14 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			// Verify if it is possible
 			if( to.GetSizeInMemoryBytes() == 1 )
 			{
-				if( asBYTE(from->type.GetConstantDW()) != from->type.GetConstantDW() )
+				if( char(from->type.GetConstantDW()) != int(from->type.GetConstantDW()) )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
 				from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), char(from->type.GetConstantDW()));
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
-				if( asWORD(from->type.GetConstantDW()) != from->type.GetConstantDW())
+				if( short(from->type.GetConstantDW()) != int(from->type.GetConstantDW()) )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
 				from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), short(from->type.GetConstantDW()));
