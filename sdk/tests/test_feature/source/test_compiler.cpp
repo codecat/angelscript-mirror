@@ -216,6 +216,31 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test boolean constants
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"	const bool value = true; \n"
+			"	if (!value) {} \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test attempt to use null as a function
 	{
 		engine = asCreateScriptEngine();

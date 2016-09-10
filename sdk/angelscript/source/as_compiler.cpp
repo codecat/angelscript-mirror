@@ -10679,7 +10679,11 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 		{
 			if( ctx->type.isConstant )
 			{
-				ctx->type.SetConstantDW(ctx->type.GetConstantDW() == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+				#if AS_SIZEOF_BOOL == 1
+					ctx->type.SetConstantB(ctx->type.GetConstantB() == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+				#else
+					ctx->type.SetConstantDW(ctx->type.GetConstantDW() == 0 ? VALUE_OF_BOOLEAN_TRUE : 0);
+				#endif
 				return 0;
 			}
 
