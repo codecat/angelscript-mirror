@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.2 WIP - 2016/09/10</h2>
+<h2>Version 2.31.2 WIP - 2016/09/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -32,10 +32,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed bug when compiling get property accessor returning a registered type that is then implicitly converted to another (Thanks Phong Ba)
 <li>Fixed assert failure when compiling boolean not operator on constant (Thanks gkfkdk404)
 <li>Fixed incorrect compiler warning about too large value when assigning negative value to const int8/int16 (Thanks gkfkdk404)
+<li>Compiler emits warnings if 64bit integer constants cannot fit when implicitly converted to smaller types (Thanks Sir Ementaler)
+<li>Compiler didn't support implicitly converting constant uint64 values to uint32 values
 </ul>
 <li>Library
 <ul>
 <li>Introduced a new keyword 'if_handle_then_const' that is used to tell template that a handle should be to const object
+<li>Compiler now emits an error if an integer constant is larger than 2^64-1
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

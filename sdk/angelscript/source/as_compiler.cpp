@@ -7259,11 +7259,17 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
+				if (int(from->type.GetConstantQW()) != asQWORD(from->type.GetConstantQW()))
+					if (convType != asIC_EXPLICIT_VAL_CAST && node) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
+
 				// Convert to 32bit
 				from->type.SetConstantDW(targetDt, int(from->type.GetConstantQW()));
 			}
 			else if (from->type.dataType.IsIntegerType() && from->type.dataType.GetSizeInMemoryDWords() == 2)
 			{
+				if (int(from->type.GetConstantQW()) != asINT64(from->type.GetConstantQW()))
+					if (convType != asIC_EXPLICIT_VAL_CAST && node) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
+
 				// Convert to 32bit
 				from->type.SetConstantDW(targetDt, int(from->type.GetConstantQW()));
 			}
@@ -7462,6 +7468,13 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
 				from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantDW()));
+			}
+			else if (to.GetSizeInMemoryBytes() == 4)
+			{
+				if( asDWORD(from->type.GetConstantQW()) != from->type.GetConstantQW())
+					if (convType != asIC_EXPLICIT_VAL_CAST && node) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
+
+				from->type.SetConstantDW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asDWORD(from->type.GetConstantQW()));
 			}
 		}
 	}
@@ -9016,7 +9029,17 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 		{
 			asCString value(&script->code[vnode->tokenPos], vnode->tokenLength);
 
-			asQWORD val = asStringScanUInt64(value.AddressOf(), 10, 0);
+			bool overflow = false;
+			asQWORD val = asStringScanUInt64(value.AddressOf(), 10, 0, &overflow);
+
+			// Is the number bigger than a 64bit word?
+			if (overflow)
+			{
+				Error(TXT_VALUE_TOO_LARGE_FOR_TYPE, vnode);
+
+				// Set the value to zero to avoid further warnings
+				val = 0;
+			}
 
 			// Do we need 64 bits?
 			// If the 31st bit is set we'll treat the value as a signed 64bit number to avoid
@@ -9037,8 +9060,17 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 			asCString value(&script->code[vnode->tokenPos], vnode->tokenLength);
 
 			// Let the function determine the radix from the prefix 0x = 16, 0d = 10, 0o = 8, or 0b = 2
-			// TODO: Check for overflow
-			asQWORD val = asStringScanUInt64(value.AddressOf(), 0, 0);
+			bool overflow = false;
+			asQWORD val = asStringScanUInt64(value.AddressOf(), 0, 0, &overflow);
+
+			// Is the number bigger than a 64bit word?
+			if (overflow)
+			{
+				Error(TXT_VALUE_TOO_LARGE_FOR_TYPE, vnode);
+
+				// Set the value to zero to avoid further warnings
+				val = 0;
+			}
 
 			// Do we need 64 bits?
 			if( val>>32 )
