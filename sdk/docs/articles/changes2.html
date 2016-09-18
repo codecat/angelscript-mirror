@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.2 WIP - 2016/09/15</h2>
+<h2>Version 2.31.2 WIP - 2016/09/18</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Introduced a new keyword 'if_handle_then_const' that is used to tell template that a handle should be to const object
 <li>Compiler now emits an error if an integer constant is larger than 2^64-1
+<li>Non-pod value types are now allowed to be registered without default constructor, as long as at least one constructor is registered (Thanks Phong Ba)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

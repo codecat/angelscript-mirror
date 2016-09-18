@@ -3101,7 +3101,7 @@ void asCScriptEngine::PrepareEngine()
 			else if( (type->flags & asOBJ_VALUE) &&
 				     !(type->flags & asOBJ_POD) )
 			{
-				if( type->beh.construct == 0 ||
+				if( type->beh.constructors.GetLength() == 0 ||
 					type->beh.destruct  == 0 )
 				{
 					infoMsg = TXT_NON_POD_REQUIRE_CONSTR_DESTR_BEHAVIOUR;
