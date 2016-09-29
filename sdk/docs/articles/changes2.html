@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.2 WIP - 2016/09/18</h2>
+<h2>Version 2.31.2 WIP - 2016/09/29</h2>
 
 <ul>
 <li>Bug fixes
@@ -34,6 +34,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed incorrect compiler warning about too large value when assigning negative value to const int8/int16 (Thanks gkfkdk404)
 <li>Compiler emits warnings if 64bit integer constants cannot fit when implicitly converted to smaller types (Thanks Sir Ementaler)
 <li>Compiler didn't support implicitly converting constant uint64 values to uint32 values
+<li>Fixed compiler error on Linux with non-x86 64bit platforms, e.g. arm64, mips, and s390x architectures (Thanks deveee)
 </ul>
 <li>Library
 <ul>
