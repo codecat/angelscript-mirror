@@ -13866,21 +13866,24 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 		{
 			if( op == ttEqual || op == ttNotEqual )
 			{
-				// Make sure they are equal if not false
-				if( lctx->type.GetConstantDW() != 0 ) lctx->type.SetConstantDW(VALUE_OF_BOOLEAN_TRUE);
-				if( rctx->type.GetConstantDW() != 0 ) rctx->type.SetConstantDW(VALUE_OF_BOOLEAN_TRUE);
+				asDWORD l, r;
+				#if AS_SIZEOF_BOOL == 1
+					l = lctx->type.GetConstantB();
+					r = rctx->type.GetConstantB();
+				#else
+					l = lctx->type.GetConstantDW();
+					r = rctx->type.GetConstantDW();
+				#endif
 
-				asDWORD v = 0;
-				if( op == ttEqual )
-				{
-					v = int(lctx->type.GetConstantDW()) - int(rctx->type.GetConstantDW());
-					if( v == 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
-				}
-				else if( op == ttNotEqual )
-				{
-					v = int(lctx->type.GetConstantDW()) - int(rctx->type.GetConstantDW());
-					if( v != 0 ) v = VALUE_OF_BOOLEAN_TRUE; else v = 0;
-				}
+				// Make sure they are equal if not false
+				if (l != 0) l = VALUE_OF_BOOLEAN_TRUE;
+				if (r != 0) r = VALUE_OF_BOOLEAN_TRUE;
+
+				asDWORD v;
+				if (op == ttEqual)
+					v = (l == r) ? VALUE_OF_BOOLEAN_TRUE : 0;
+				else if (op == ttNotEqual)
+					v = (l != r) ? VALUE_OF_BOOLEAN_TRUE : 0;
 
 				#if AS_SIZEOF_BOOL == 1
 					ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), (asBYTE)v);

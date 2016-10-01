@@ -288,6 +288,7 @@ bool Test()
 	}
 
 	// Test boolean constants
+	// http://www.gamedev.net/topic/682759-assert-failure-when-evaluating-const-bool-as-false-in-if-statement/
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -298,6 +299,10 @@ bool Test()
 			"void func() { \n"
 			"	const bool value = true; \n"
 			"	if (!value) {} \n"
+			"} \n"
+			"void Init() { \n"
+			"  const bool show_invisible = false; \n"
+			"  if (show_invisible == false) {} \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)
