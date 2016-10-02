@@ -33,6 +33,7 @@
 
 #include <string.h>     // some compilers declare memcpy() here
 #include <math.h>       // pow()
+#include <stdint.h>     // UINT64_MAX
 
 #if !defined(AS_NO_MEMORY_H)
 #include <memory.h>
@@ -185,7 +186,7 @@ asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned, boo
 	{
 		while( *end >= '0' && *end <= '9' )
 		{
-			if( overflow && ((res > MAXUINT64 / 10) || ((*end - '0') > (MAXUINT64 - (MAXUINT64 / 10) * 10)) && res == MAXUINT64 / 10) )
+			if( overflow && ((res > UINT64_MAX / 10) || ((*end - '0') > (UINT64_MAX - (UINT64_MAX / 10) * 10)) && res == UINT64_MAX / 10) )
 				*overflow = true;
 			res *= 10;
 			res += *end++ - '0';
@@ -212,7 +213,7 @@ asQWORD asStringScanUInt64(const char *string, int base, size_t *numScanned, boo
 		{
 			for (int nbr; (nbr = asCharToNbr(*end, base)) >= 0; end++)
 			{
-				if (overflow && ((res > MAXUINT64 / base) || (nbr > (MAXUINT64 - (MAXUINT64 / base) * base)) && res == MAXUINT64 / base) )
+				if (overflow && ((res > UINT64_MAX / base) || (nbr > (UINT64_MAX - (UINT64_MAX / base) * base)) && res == UINT64_MAX / base) )
 					*overflow = true;
 
 				res = res * base + nbr;
