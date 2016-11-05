@@ -8562,6 +8562,11 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			if( v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()) )
 				ctx->bc.Instr(asBC_RDSPtr);
 
+			// Mark the object as safe for access unless it is a handle, as the 
+			// life time of the object is guaranteed throughout the scope.
+			if( !v->type.IsObjectHandle() )
+				ctx->type.isHandleSafe = true;
+
 			// Set as lvalue unless it is a const variable
 			if (!v->type.IsReadOnly())
 				ctx->type.isLValue = true;
@@ -8581,6 +8586,9 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			ctx->type.SetVariable(dt, 0, false);
 			ctx->type.dataType.MakeReference(true);
 			ctx->type.isLValue = true;
+
+			// The 'this' handle is always considered safe (i.e. life time guaranteed)
+			ctx->type.isHandleSafe = true;
 
 			found = true;
 		}
@@ -8685,6 +8693,16 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				{
 					// Objects that are members are not references
 					ctx->type.dataType.MakeReference(false);
+
+					// Objects that are members but not handles are safe as long as the parent object is safe
+					if (!objType || ctx->type.isHandleSafe)
+						ctx->type.isHandleSafe = true;
+				}
+				else if (ctx->type.dataType.IsObjectHandle())
+				{
+					// Objects accessed through handles cannot be considered safe 
+					// as the handle can be cleared at any time
+					ctx->type.isHandleSafe = false;
 				}
 
 				// If the object reference is const, the property will also be const
@@ -11695,6 +11713,14 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 					{
 						// Objects that are members are not references
 						ctx->type.dataType.MakeReference(false);
+
+						// The object is safe (life time guaranteed) if the parent object is also safe
+					}
+					else if (ctx->type.dataType.IsObjectHandle())
+					{
+						// A object accessed through a handle cannot be considered safe, 
+						// as it can be cleared at any time
+						ctx->type.isHandleSafe = false;
 					}
 
 					ctx->type.dataType.MakeReadOnly(isConst ? true : prop->type.IsReadOnly());
@@ -14364,8 +14390,9 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 	// alive throughout the call by holding on to a reference in a local variable. This must
 	// be done for any methods that return references, and any calls on script objects.
 	// Application registered objects are assumed to know to keep themselves alive even
-	// if the method doesn't return a refernce.
-	if( descr->objectType &&
+	// if the method doesn't return a reference.
+	if( !ctx->type.isHandleSafe &&
+		descr->objectType &&
 		(ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
 		(descr->returnType.IsReference() || (ctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_SCRIPT_OBJECT)) &&
 		!(ctx->type.isVariable || ctx->type.isTemporary) &&
@@ -14377,8 +14404,6 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 		//                         should be stored in the variable scope so that the compiler can find it. For loops and 
 		//                         scopes that will always be executed, i.e. non-if scopes the alias should be stored in the 
 		//                         higher scope to increase the probability of re-use.
-
-		// TODO: runtime optimize: This can be avoided for local variables (non-handles) as they have a well defined life time
 
 		int tempRef = AllocateVariable(ctx->type.dataType, true);
 		ctx->bc.InstrSHORT(asBC_PSF, (short)tempRef);
@@ -14708,6 +14733,7 @@ asCExprValue::asCExprValue()
 	qwordValue = 0;
 	isLValue = false;
 	isRefToLocal = false;
+	isHandleSafe = false;
 }
 
 void asCExprValue::Set(const asCDataType &dt)
@@ -14722,6 +14748,7 @@ void asCExprValue::Set(const asCDataType &dt)
 	qwordValue = 0;
 	isLValue = false;
 	isRefToLocal = false;
+	isHandleSafe = false;
 }
 
 void asCExprValue::SetVariable(const asCDataType &in_dt, int in_stackOffset, bool in_isTemporary)

@@ -75,6 +75,9 @@
     <ClCompile Include="..\..\..\..\add_on\scriptarray\scriptarray.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\test_classprop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h">

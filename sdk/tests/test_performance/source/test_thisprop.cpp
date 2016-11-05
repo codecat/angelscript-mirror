@@ -18,7 +18,7 @@ static const char *script =
 "class Test                             \n"
 "{                                      \n"
 "  float a;                             \n"
-"  float b;                             \n" 
+"  float b;                             \n"
 "  float c;                             \n"
 "  int i;                               \n"
 "  void Run()                           \n"
@@ -59,7 +59,7 @@ void Test(double *testTime)
 
 	if( r != asEXECUTION_FINISHED )
 	{
-		printf("Execution didn't terminate with asEXECUTION_FINISHED\n", TESTNAME);
+		printf("Execution didn't terminate with asEXECUTION_FINISHED\n");
 		if( r == asEXECUTION_EXCEPTION )
 		{
 			printf("Script exception\n");

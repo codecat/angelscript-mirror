@@ -100,11 +100,12 @@ struct asCExprValue
 	bool  isVariable : 1;
 	bool  isExplicitHandle : 1;
 	bool  isRefToLocal : 1; // The reference may be to a local variable
-	short dummy : 10;
+	bool  isHandleSafe : 1; // the life-time of the handle is guaranteed for the duration of the access
+	short dummy : 9;
 	short stackOffset;
 
 private:
-	// These values must not be accessed directly, in order to avoid problems with endianess. 
+	// These values must not be accessed directly in order to avoid problems with endianess. 
 	// Use the appropriate accessor methods instead
 	union
 	{

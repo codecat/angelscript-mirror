@@ -160,6 +160,79 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptContext *ctx;
 
+	// Make sure unnecessary use of addref and release is minimized
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class TestClass { \n"
+			"  array<int> a(10); \n"
+			"  array<int> @b; \n"
+			"  void TestAccessToMemberOfMember() { \n"
+			"    int r = a[0]; \n"  // no need to call addref/release on a, since 'this' is already guaranteed to stay alive
+			"    r += b[0]; \n"     // must call addref/release on b to guarantee that the object will stay alive
+			"  } \n"
+			"} \n"
+			"void TestGlobalAccessToMemberOfMember() { \n"
+			"  TestClass c; \n"
+			"  int r = c.a[0]; \n"  // no need to call addref/release on a, since c is already guaranteed to stay alive
+			"  r += c.b[0]; \n"     // must call addref/release on b to guarantee that the object will stay alive
+			"} \n"
+			"void TestHandleAccessToMemberOfMember() { \n"
+			"  TestClass @c; \n"
+			"  int r = c.a[0]; \n"  // must call addref/release on a, since c is not guaranteed to stay alive
+			"  r += c.b[0]; \n"     // must call addref/release on b to guarantee that the object will stay alive
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptFunction *func = mod->GetTypeInfoByName("TestClass")->GetMethodByName("TestAccessToMemberOfMember", false);
+		asBYTE expect[] =
+		{
+			asBC_SUSPEND,asBC_PshC4,asBC_PshVPtr,asBC_ADDSi,asBC_RDSPtr,asBC_Thiscall1,asBC_RDR4,asBC_CpyVtoV4,
+			asBC_SUSPEND,asBC_PshC4,asBC_PshVPtr,asBC_ADDSi,asBC_RDSPtr,asBC_RefCpyV,asBC_Thiscall1,asBC_RDR4,asBC_ADDi,asBC_FREE,
+			asBC_SUSPEND,asBC_RET
+		};
+		if (!ValidateByteCode(func, expect))
+			TEST_FAILED;
+
+		func = mod->GetFunctionByName("TestGlobalAccessToMemberOfMember");
+		asBYTE expect2[] =
+		{
+			asBC_SUSPEND,asBC_CALL,asBC_STOREOBJ,
+			asBC_SUSPEND,asBC_PshC4,asBC_PshVPtr,asBC_ADDSi,asBC_RDSPtr,asBC_Thiscall1,asBC_RDR4,asBC_CpyVtoV4,
+			asBC_SUSPEND,asBC_PshC4,asBC_PshVPtr,asBC_ADDSi,asBC_RDSPtr,asBC_RefCpyV,asBC_Thiscall1,asBC_RDR4,asBC_ADDi,asBC_FREE,
+			asBC_SUSPEND,asBC_FREE,asBC_RET
+		};
+		if (!ValidateByteCode(func, expect2))
+			TEST_FAILED;
+
+		func = mod->GetFunctionByName("TestHandleAccessToMemberOfMember");
+		asBYTE expect3[] =
+		{
+			asBC_SUSPEND,
+			asBC_SUSPEND,asBC_PshC4,asBC_PshVPtr,asBC_ADDSi,asBC_RDSPtr,asBC_RefCpyV,asBC_Thiscall1,asBC_RDR4,asBC_CpyVtoV4,asBC_FREE,
+			asBC_SUSPEND,asBC_PshC4,asBC_PshVPtr,asBC_ADDSi,asBC_RDSPtr,asBC_RefCpyV,asBC_Thiscall1,asBC_RDR4,asBC_ADDi,asBC_FREE,
+			asBC_SUSPEND,asBC_FREE,asBC_RET
+		};
+		if (!ValidateByteCode(func, expect3))
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test passing @& argument to a function
 	// http://www.gamedev.net/topic/681790-problem-in-arrayinterface/
 	{

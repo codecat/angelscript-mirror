@@ -172,6 +172,7 @@
     <ClCompile Include="..\..\source\test_basic2.cpp" />
     <ClCompile Include="..\..\source\test_call.cpp" />
     <ClCompile Include="..\..\source\test_call2.cpp" />
+    <ClCompile Include="..\..\source\test_classprop.cpp" />
     <ClCompile Include="..\..\source\test_fib.cpp" />
     <ClCompile Include="..\..\source\test_globalvar.cpp" />
     <ClCompile Include="..\..\source\test_int.cpp" />
