@@ -183,7 +183,7 @@ bool Test()
 	// Verify order of calculations
  	output = "";
 	ExecuteString(engine, "a_str() + b_str()", mod);
-	if( output != "ba" ) TEST_FAILED;
+	if( output != "ab" ) TEST_FAILED;
 
 	output = "";
 	ExecuteString(engine, "b_strref() = a_str()", mod);

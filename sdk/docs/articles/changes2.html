@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.31.2 WIP - 2016/11/05</h2>
+<h2>Version 2.31.2 WIP - 2016/11/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -45,6 +45,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler now emits an error if an integer constant is larger than 2^64-1
 <li>Non-pod value types are now allowed to be registered without default constructor, as long as at least one constructor is registered (Thanks Phong Ba)
 <li>Reduced the number of calls to addref and release that the compiler includes in the bytecode in some cases (Thanks Thomas Grip)
+<li>Non-assignment dual operators, e.g. +, now evaluates left to right even when using overloaded operators (Thanks Scott Bean)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

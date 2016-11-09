@@ -3122,7 +3122,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					if( (lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef()) && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetTypeInfo() && (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))) )
 					{
 						bool useHndlAssign = lexpr.type.dataType.IsHandleToAsHandleType();
-						assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx, useHndlAssign);
+						assigned = CompileOverloadedDualOperator(node, &lexpr, expr, false, &ctx, useHndlAssign);
 						if( assigned )
 						{
 							// Pop the resulting value
@@ -7841,7 +7841,7 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 				}
 			}
 
-			if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx, true) )
+			if( CompileOverloadedDualOperator(opNode, lctx, rctx, false, ctx, true) )
 			{
 				// An overloaded assignment operator was found (or a compilation error occured)
 				return 0;
@@ -7898,7 +7898,7 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 		}
 
 		// Check for overloaded assignment operator
-		if( CompileOverloadedDualOperator(opNode, lctx, rctx, ctx) )
+		if( CompileOverloadedDualOperator(opNode, lctx, rctx, false, ctx) )
 		{
 			// An overloaded assignment operator was found (or a compilation error occured)
 			return 0;
@@ -11373,7 +11373,7 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asCExprContext *ctx, asCExprConte
 	llctx.property_set    = lctx->property_set;
 
 	// Compile the dual operator using the get accessor
-	CompileOperator(errNode, lctx, rctx, ctx, op);
+	CompileOperator(errNode, lctx, rctx, ctx, op, false);
 
 	// If we made a local variable to hold the reference it must be reused
 	if( before.type.stackOffset )
@@ -12188,7 +12188,7 @@ void asCCompiler::PrepareArgument2(asCExprContext *ctx, asCExprContext *arg, asC
 	ctx->bc.AddCode(&arg->bc);
 }
 
-bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, asCExprContext *ctx, bool isHandle, eTokenType token)
+bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, bool leftToRight, asCExprContext *ctx, bool isHandle, eTokenType token)
 {
 	DetermineSingleFunc(lctx, node);
 	DetermineSingleFunc(rctx, node);
@@ -12218,11 +12218,11 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprCont
 	{
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching opEquals method
-		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, leftToRight, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		if( r == 0 )
 		{
 			// Try again by switching the order of the operands
-			r = CompileOverloadedDualOperator2(node, "opEquals", rctx, lctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+			r = CompileOverloadedDualOperator2(node, "opEquals", rctx, lctx, !leftToRight, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		}
 
 		if( r == 1 )
@@ -12252,12 +12252,12 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprCont
 
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching opCmp method
-		int r = CompileOverloadedDualOperator2(node, "opCmp", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
+		int r = CompileOverloadedDualOperator2(node, "opCmp", lctx, rctx, leftToRight, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
 		if( r == 0 )
 		{
 			// Try again by switching the order of the operands
 			swappedOrder = true;
-			r = CompileOverloadedDualOperator2(node, "opCmp", rctx, lctx, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
+			r = CompileOverloadedDualOperator2(node, "opCmp", rctx, lctx, !leftToRight, ctx, true, asCDataType::CreatePrimitive(ttInt, false));
 		}
 
 		if( r == 1 )
@@ -12328,11 +12328,11 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprCont
 	{
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching operator method
-		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, ctx);
+		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, leftToRight, ctx);
 		if( r == 0 )
 		{
 			// Try again by switching the order of the operands, and using the reversed operator
-			r = CompileOverloadedDualOperator2(node, op_r, rctx, lctx, ctx);
+			r = CompileOverloadedDualOperator2(node, op_r, rctx, lctx, !leftToRight, ctx);
 		}
 
 		if( r == 1 )
@@ -12397,7 +12397,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprCont
 		// TODO: Shouldn't accept const lvalue with the assignment operators
 
 		// Find the matching operator method
-		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, ctx);
+		int r = CompileOverloadedDualOperator2(node, op, lctx, rctx, false, ctx);
 		if( r == 1 )
 		{
 			// Success, don't continue
@@ -12418,7 +12418,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprCont
 // Returns negative on compile error
 //         zero on no matching operator
 //         one on matching operator
-int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char *methodName, asCExprContext *lctx, asCExprContext *rctx, asCExprContext *ctx, bool specificReturn, const asCDataType &returnType)
+int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char *methodName, asCExprContext *lctx, asCExprContext *rctx, bool leftToRight, asCExprContext *ctx, bool specificReturn, const asCDataType &returnType)
 {
 	// Find the matching method
 	if( lctx->type.dataType.IsObject() &&
@@ -12478,28 +12478,57 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			// Process the lctx expression as get accessor
 			ProcessPropertyGetAccessor(lctx, node);
 
-			// Make sure the rvalue doesn't have deferred temporary variables that are also used in the lvalue,
-			// since that would cause the VM to overwrite the variable while executing the bytecode for the lvalue.
-			asCArray<int> usedVars;
-			lctx->bc.GetVarsUsed(usedVars);
-			asUINT oldReservedVars = reservedVariables.GetLength();
-			for( n = 0; n < rctx->deferredParams.GetLength(); n++ )
+			asCExprContext tmpCtx(engine);
+			if (leftToRight)
 			{
-				if( rctx->deferredParams[n].argType.isTemporary && 
-					usedVars.Exists(rctx->deferredParams[n].argType.stackOffset) )
+				// Make sure lctx is in fact a variable. If it is a reference there is no 
+				// guarantee that the reference will stay alive throughout the evaluation of rctx
+				if (!lctx->type.isVariable)
 				{
-					if( reservedVariables.GetLength() == oldReservedVars )
-						reservedVariables.Concatenate(usedVars);
-
-					// Allocate a new variable for the deferred argument
-					int offset = AllocateVariableNotIn(rctx->deferredParams[n].argType.dataType, true, false, rctx);
-					int oldVar = rctx->deferredParams[n].argType.stackOffset;
-					rctx->deferredParams[n].argType.stackOffset = short(offset);
-					rctx->bc.ExchangeVar(oldVar, offset);
-					ReleaseTemporaryVariable(oldVar, 0);
+					if (lctx->type.dataType.SupportHandles())
+						lctx->type.dataType.MakeHandle(true);
+					PrepareTemporaryVariable(node, lctx);
 				}
+
+				// Move the bytecode for the left operand to a temporary context
+				// so we can later make sure this is computed first
+				tmpCtx.bc.AddCode(&lctx->bc);
+				tmpCtx.bc.Instr(asBC_PopPtr);
+
+				// Add bytecode to push the object pointer computed in the left operand on the stack as the this pointer
+				// This will be placed after rctx by MakeFunctionCall below
+				lctx->bc.InstrWORD(asBC_PSF, lctx->type.stackOffset);
+
+				// Implicitly dereference handle parameters sent by reference
+				sVariable *v = variables->GetVariableByOffset(lctx->type.stackOffset);
+				if (v && v->type.IsReference() && (!v->type.IsObject() || v->type.IsObjectHandle()))
+					lctx->bc.Instr(asBC_RDSPtr);
 			}
-			reservedVariables.SetLength(oldReservedVars);
+			else
+			{
+				// Make sure the rvalue doesn't have deferred temporary variables that are also used in the lvalue,
+				// since that would cause the VM to overwrite the variable while executing the bytecode for the lvalue.
+				asCArray<int> usedVars;
+				lctx->bc.GetVarsUsed(usedVars);
+				asUINT oldReservedVars = reservedVariables.GetLength();
+				for (n = 0; n < rctx->deferredParams.GetLength(); n++)
+				{
+					if (rctx->deferredParams[n].argType.isTemporary &&
+						usedVars.Exists(rctx->deferredParams[n].argType.stackOffset))
+					{
+						if (reservedVariables.GetLength() == oldReservedVars)
+							reservedVariables.Concatenate(usedVars);
+
+						// Allocate a new variable for the deferred argument
+						int offset = AllocateVariableNotIn(rctx->deferredParams[n].argType.dataType, true, false, rctx);
+						int oldVar = rctx->deferredParams[n].argType.stackOffset;
+						rctx->deferredParams[n].argType.stackOffset = short(offset);
+						rctx->bc.ExchangeVar(oldVar, offset);
+						ReleaseTemporaryVariable(oldVar, 0);
+					}
+				}
+				reservedVariables.SetLength(oldReservedVars);
+			}
 
 			// Merge the bytecode so that it forms lvalue.methodName(rvalue)
 			asCArray<asCExprContext *> args;
@@ -12507,6 +12536,13 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			MergeExprBytecode(ctx, lctx);
 			ctx->type = lctx->type;
 			MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetTypeInfo()->CastToObjectType(), args, node);
+
+			// Rearrange the bytecode so the left argument is computed first
+			if (leftToRight)
+			{
+				tmpCtx.bc.AddCode(&ctx->bc);
+				ctx->bc.AddCode(&tmpCtx.bc);
+			}
 
 			// Found matching operator
 			return 1;
@@ -12588,7 +12624,7 @@ void asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectTyp
 	PerformFunctionCall(funcId, ctx, false, &args, 0, useVariable, stackOffset, funcPtrVar);
 }
 
-int asCCompiler::CompileOperator(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, asCExprContext *ctx, eTokenType op)
+int asCCompiler::CompileOperator(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, asCExprContext *ctx, eTokenType op, bool leftToRight)
 {
 	// Don't allow any operators on expressions that take address of class method, but allow it on global functions
 	if( (lctx->IsClassMethod()) || (rctx->IsClassMethod()) )
@@ -12620,7 +12656,7 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asCExprContext *lctx, asCE
 	else
 	{
 		// Compile an overloaded operator for the two operands
-		if( CompileOverloadedDualOperator(node, lctx, rctx, ctx, false, op) )
+		if( CompileOverloadedDualOperator(node, lctx, rctx, leftToRight, ctx, false, op) )
 			return 0;
 
 		// If both operands are objects, then we shouldn't continue
@@ -14210,11 +14246,11 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asCExprContext *
 	{
 		// TODO: Should evaluate which of the two have the best match. If both have equal match, the first version should be used
 		// Find the matching opEquals method
-		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+		int r = CompileOverloadedDualOperator2(node, "opEquals", lctx, rctx, true, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		if( r == 0 )
 		{
 			// Try again by switching the order of the operands
-			r = CompileOverloadedDualOperator2(node, "opEquals", rctx, lctx, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
+			r = CompileOverloadedDualOperator2(node, "opEquals", rctx, lctx, false, ctx, true, asCDataType::CreatePrimitive(ttBool, false));
 		}
 
 		if( r == 1 )

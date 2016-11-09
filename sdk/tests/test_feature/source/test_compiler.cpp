@@ -216,6 +216,52 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test order of evaluation for operands
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"bool funcAIsCalled = false; \n"
+			"bool funcBIsCalled = false; \n"
+			"string funcA() { \n"
+			"  funcAIsCalled = true; \n"
+			"  assert( funcBIsCalled == false ); \n"
+			"  return 'A'; \n"
+			"} \n"
+			"string funcB() { \n"
+			"  funcBIsCalled = true; \n"
+			"  assert( funcAIsCalled == true ); \n"
+			"  return 'B'; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "string r = funcA() + funcB(); assert( r == 'AB' );", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			TEST_FAILED;
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+		}
+		ctx->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test constant values
 	// http://www.gamedev.net/topic/682120-warning-value-is-too-large-for-data-type-incorrect/
 	{
