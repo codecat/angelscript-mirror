@@ -7244,10 +7244,11 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
 				// Verify that it is possible to convert to signed without getting negative
-				if( int(from->type.GetConstantDW()) < 0 )
-				{
-					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_CHANGE_SIGN, node);
-				}
+				if( from->type.dataType.GetSizeInMemoryBytes() == 4 && 
+					int(from->type.GetConstantDW()) < 0 &&
+					convType != asIC_EXPLICIT_VAL_CAST && 
+					node != 0 )
+					Warning(TXT_CHANGE_SIGN, node);
 
 				// Convert to 32bit
 				if( from->type.dataType.GetSizeInMemoryBytes() == 1 )

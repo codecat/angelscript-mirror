@@ -310,6 +310,36 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
+	// Test 8bit and 16bit uint constants 
+	// http://www.gamedev.net/topic/683658-uint8-and-uint16-constants-cause-compile-time-assertion-failure-on-type-conversion-to-signed-types/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"const uint8 foo = 0; \n"
+			"int bar = foo;  \n");
+		mod->AddScriptSection("test2",
+			"const uint16 foo2 = 0; \n"
+			"void bar2(int16) {} \n"
+			"void main() { \n"
+			"	bar2(foo2); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test 8bit and 16bit integers
 	{
 		engine = asCreateScriptEngine();
