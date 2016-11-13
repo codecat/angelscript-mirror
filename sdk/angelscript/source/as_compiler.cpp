@@ -5611,6 +5611,41 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			{
 				asASSERT(to.IsObjectHandle());
 
+				int afterLabel = 0;
+				bool doNullCheck = false;
+				asCExprContext tmp(engine);
+				if ((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_NOHANDLE))
+				{
+					tmp.bc.AddCode(&ctx->bc);
+					tmp.Merge(ctx);
+
+					// Add code to avoid calling the cast behaviour if the handle is already null,
+					// because that will raise a null pointer exception due to the cast behaviour
+					// being a class method, and the this pointer cannot be null.
+					doNullCheck = true;
+					if (!ctx->type.isVariable)
+					{
+						Dereference(&tmp, true);
+						ConvertToVariable(&tmp);
+					}
+
+					// The reference on the stack will not be used
+					tmp.bc.Instr(asBC_PopPtr);
+
+					// TODO: runtime optimize: should have immediate comparison for null pointer
+					int offset = AllocateVariable(asCDataType::CreateNullHandle(), true);
+					// TODO: runtime optimize: ClrVPtr is not necessary, because the VM should initialize the variable to null anyway (it is currently not done for null pointers though)
+					tmp.bc.InstrSHORT(asBC_ClrVPtr, (asWORD)offset);
+					tmp.bc.InstrW_W(asBC_CmpPtr, tmp.type.stackOffset, offset);
+					DeallocateVariable(offset);
+
+					afterLabel = nextLabel++;
+					tmp.bc.InstrDWORD(asBC_JZ, afterLabel);
+
+					// Place the object pointer on the stack
+					ctx->bc.InstrSHORT(asBC_PSF, (short)tmp.type.stackOffset);
+				}
+
 				// Allocate a temporary variable of the requested handle type
 				int stackOffset = AllocateVariableNotIn(to, true, false, ctx);
 
@@ -5628,6 +5663,22 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 
 				// Call the behaviour method
 				MakeFunctionCall(ctx, ops[0], ctx->type.dataType.GetTypeInfo()->CastToObjectType(), args, node);
+
+				if (doNullCheck)
+				{
+					// Add the call after the null check
+					tmp.bc.AddCode(&ctx->bc);
+					ctx->bc.AddCode(&tmp.bc);
+
+					int endLabel = nextLabel++;
+
+					ctx->bc.InstrINT(asBC_JMP, endLabel);
+					ctx->bc.Label((short)afterLabel);
+
+					// Make a NULL pointer
+					ctx->bc.InstrSHORT(asBC_ClrVPtr, (short)stackOffset);
+					ctx->bc.Label((short)endLabel);
+				}
 
 				// Use the reference to the variable as the result of the expression
 				// Now we can mark the variable as temporary

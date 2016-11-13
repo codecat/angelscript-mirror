@@ -144,6 +144,33 @@ bool Test()
 	//       and a related class in a class hierarchy? Should prefer calling opCast, right?
 	//       How does C++ do it?
 
+	// Test opCast(?&out) on null handle (should be allowed)
+	// http://www.gamedev.net/topic/683804-void-opcastout-on-null-handle/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterObjectType("test", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectMethod("test", "void opCast(?&out) const", asFUNCTION(0), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {} \n");
+		mod->Build();
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "test @t; A @a = cast<A>(t);", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			TEST_FAILED;
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test using opImplConv on ref type stored in dictionary
 	// http://www.gamedev.net/topic/668972-getting-dictionary-addon-to-work-with-ref-counted-strings/
 	{

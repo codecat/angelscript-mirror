@@ -46,10 +46,6 @@ r = engine->RegisterObjectMethod("derived", "base@ opImplCast()", asFUNCTION((re
 Note that it may be necessary to add extra parenthesis to the <tt>asFUNCTION</tt> macro so that the preprocessor 
 doesn't interpret the <tt>,</tt> in the template declaration as the argument separator in the macro.
 
-Remember that it is legal for the script to attempt a cast on a null pointer, in which case the result is 
-also a null pointer. This means that the reference cast behaviour must not be implemented as a virtual class
-method, because then the call will crash if the object pointer is null.
-
 \section doc_adv_class_hierarchy_2 Inherited methods and properties
 
 Just as relationships cannot be determined, there is also no way to automatically let AngelScript
