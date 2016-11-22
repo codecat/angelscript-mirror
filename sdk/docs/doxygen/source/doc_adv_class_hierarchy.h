@@ -41,6 +41,10 @@ B* refCast(A* a)
 // Example registration of the behaviour
 r = engine->RegisterObjectMethod("base", "derived@ opCast()", asFUNCTION((refCast<base,derived>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 r = engine->RegisterObjectMethod("derived", "base@ opImplCast()", asFUNCTION((refCast<derived,base>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+// Also register the const overloads so the cast works also when the handle is read only 
+r = engine->RegisterObjectMethod("base", "const derived@ opCast() const", asFUNCTION((refCast<base,derived>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+r = engine->RegisterObjectMethod("derived", "const base@ opImplCast() const", asFUNCTION((refCast<derived,base>)), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 \endcode
 
 Note that it may be necessary to add extra parenthesis to the <tt>asFUNCTION</tt> macro so that the preprocessor 

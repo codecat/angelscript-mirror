@@ -275,8 +275,6 @@ for more details.
 The dictionary stores key-value pairs, where the key is a string, and the value can be of any type. Key-value
 pairs can be added or removed dynamically, making the dictionary a good general purpose container object.
 
-\todo Reformat content to separate text and code in blocks for easier readier. Similar to \ref doc_datatypes_arrays.
-
 <pre>
   obj object;
   obj \@handle;
@@ -295,25 +293,37 @@ pairs can be added or removed dynamically, making the dictionary a good general 
       dict.set('value', 1);
     }
   }
+</pre>
+
+Dictionary values can also be accessed or added by using the index operator.
   
-  // ... or through index operators
+<pre>
+  // Read and modify an integer value
   int val = int(dict['value']);
   dict['value'] = val + 1;
+  
+  // Read and modify a handle to an object instance
   \@handle = cast<obj>(dict['handle']);
   if( handle is null )
     \@dict['handle'] = object;
+</pre>
   
-  // Delete everything with a single call
-  dict.deleteAll();
-  
-  // Create a dictionary of dictionaries
+Dictionaries can also be created and initialized within expressions as \ref anonobj "anonymous objects". 
+
+<pre>
+  // Call a function that expects a dictionary as input
+  foo(dictionary = {{'a', 1},{'b', 2}});
+</pre>
+
+Dictionaries of dictionaries are created using \ref anonobj "anonymous objects" as well.
+
+<pre>
   dictionary d2 = {{'a', dictionary = {{'aa', 1}, {'ab', 2}}}, 
                    {'b', dictionary = {{'ba', 1}, {'bb', 2}}}};
 </pre>
 
-\section doc_datatypes_dictionary_addon Supporting dictionary object and functions
 
-\todo Explain the dictValue subtype too
+\section doc_datatypes_dictionary_addon Supporting dictionary object and functions
 
 The dictionary object is a \ref doc_datatypes_obj "reference type", so it's possible
 to use handles to the dictionary object when passing it around to avoid costly copies.
@@ -326,7 +336,7 @@ The assignment operator performs a shallow copy of the content.
 
 <b>[]      index operator</b><br>
  
-The index operator takes a string for the key, and returns a reference to the value.
+The index operator takes a string for the key, and returns a reference to the \ref doc_datatypes_dictionaryValue_addon "value".
 If the key/value pair doesn't exist it will be inserted with a null value.
 
 \subsection doc_datatypes_dictionary_addon_mthd Methods
@@ -369,6 +379,36 @@ Returns true if the dictionary doesn't hold any entries.
 
 Returns the number of keys in the dictionary.
 
+
+
+\section doc_datatypes_dictionaryValue_addon Supporting dictionaryValue object and functions
+
+The dictionaryValue type is how the \ref doc_datatypes_dictionary_addon "dictionary" object stores the 
+values. When accessing the values through the dictionary index operator a reference to a dictionaryValue is returned.
+
+The dictionaryValue type itself is a value type, i.e. no handles to it can be held, but it can hold handles
+to other objects as well as values of any type.
+
+\subsection doc_datatypes_dictionaryValue_addon_ops Operators
+
+<b>=       assignment</b><br>
+
+The value assignment operator should be used to copy a value into the dictionaryValue.
+
+<b>\@=     handle assignment</b><br>
+
+The handle assignment operator should be used to set the dictionaryValue to refer to an object instance.
+
+<b>cast<type>  cast operator</b><br>
+
+The cast operator is used to dynamically cast the handle held in the dictionaryValue to the desired type. 
+If the dictionaryValue doesn't hold a handle, or the handle is not compatible with the desired type, the 
+cast operator will return a null handle.
+
+<b>type()      conversion operator</b><br>
+
+The conversion operator is used to return a new value of the desired type. If no value conversion is found,
+an uninitialized value of the desired type is returned.
 
 
 

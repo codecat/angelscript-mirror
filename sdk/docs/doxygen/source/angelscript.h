@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.31.1
-#define ANGELSCRIPT_VERSION        23101
-#define ANGELSCRIPT_VERSION_STRING "2.31.1"
+//! Version 2.31.2
+#define ANGELSCRIPT_VERSION        23102
+#define ANGELSCRIPT_VERSION_STRING "2.31.2"
 
 // Data types
 
@@ -981,7 +981,7 @@ BEGIN_AS_NAMESPACE
 template<typename T>
 asUINT asGetTypeTraits()
 {
-#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS) || (__GNUC__ >= 5)
+#if defined(_MSC_VER) || defined(_LIBCPP_TYPE_TRAITS) || (__GNUC__ >= 5) || defined(__clang__)
 	// MSVC, XCode/Clang, and gnuc 5+
 	// C++11 compliant code
 	bool hasConstructor        = std::is_default_constructible<T>::value && !std::is_trivially_default_constructible<T>::value;

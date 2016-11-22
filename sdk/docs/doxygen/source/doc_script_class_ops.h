@@ -200,6 +200,8 @@ opImplCast can be implemented instead if the reference cast is allowed to be per
     MyObjC \@objC;
     MyObjB \@opCast() { return objB; }
     MyObjC \@opImplCast() { return objC; }
+    const MyObjB \@opCast() const { return objB; }
+    const MyObjC \@opImplCast() const { return objC; }
   }
 </pre>
 

@@ -75,6 +75,45 @@ of this type.
 
 \see \ref doc_addon_array
 
+\subsection doc_adv_template_1_1 On subtype replacement for template instances
+
+When a template type is instanced in a declaration, e.g. a variable, the compiler enumerates all the members
+of the template type to verify if any subtype is used which requires replacement. In most cases the replacement
+is a direct one-to-one mapping, but in cases where the subtype is used as a const parameter reference, then
+an additional instruction may be needed to get the expected behaviour.
+
+The following shows a method registered to take the subtype T as a const ref. 
+
+\code
+r = engine->RegisterObjectMethod("array<T>", "int find(const T&in value) const", ...); 
+\endcode
+
+If this template is instantiated with a handle as a subtype, e.g. <tt>array<Obj\@></tt>, then the method will become:
+
+<pre>
+  int find(Obj \@const &in value) const
+</pre>
+
+This means that that the parameter takes the handle to a non-read only Obj. The actual handle cannot be 
+modified, but the object the handle refers to can still be modified by the method. This in turn makes it
+impossible for a script to call the method if the handle the script has is read only. 
+
+To allow the application developer to say that the method should allow handles to read only objects, a special
+keyword <tt>if_handle_then_const</tt> should be used.
+
+\code
+r = engine->RegisterObjectMethod("array<T>", "int find(const T&in if_handle_then_const value) const", ...); 
+\endcode
+
+Now this becomes:
+
+<pre>
+  int find(const Obj \@const &in value) const
+</pre>
+
+This means that the parameter takes a const handle to a read only Obj, i.e. both the handle itself and the 
+object instance it refers to cannot be modified by the method. Now the script will be able to call the method
+both with read only handles and non-read only handles.
 
 
 
