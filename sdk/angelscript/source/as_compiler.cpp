@@ -7311,7 +7311,7 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 			}
 			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 2 )
 			{
-				if (int(from->type.GetConstantQW()) != asQWORD(from->type.GetConstantQW()))
+				if (asQWORD(from->type.GetConstantQW()) >> 31)
 					if (convType != asIC_EXPLICIT_VAL_CAST && node) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
 				// Convert to 32bit
