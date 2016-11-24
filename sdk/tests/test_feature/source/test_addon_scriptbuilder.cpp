@@ -167,6 +167,50 @@ bool Test()
 		TEST_FAILED;
 #endif
 
+#if AS_PROCESS_METADATA == 1
+	// Test metadata on class methods with default arguments
+	// Bug reported by Thomas Grip
+	{
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("test1",
+			"class test { \n"
+			"  [some meta data for func] \n"
+			"  void func(int a, int b = 0) {} \n"
+			"} \n"
+			"[some meta data for global] \n"
+			"void glob(int a, int b = 0) {} \n");
+
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asITypeInfo *type = engine->GetModule("mod")->GetTypeInfoByName("test");
+		if (type == 0)
+			TEST_FAILED;
+		else
+		{
+			int typeId = type->GetTypeId();
+			metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("func"));
+			if (metadata != "some meta data for func")
+				TEST_FAILED;
+		}
+
+		metadata = builder.GetMetadataStringForFunc(engine->GetModule("mod")->GetFunctionByName("glob"));
+		if (metadata != "some meta data for global")
+			TEST_FAILED;
+	}
+#endif
+
 #ifdef _WIN32
 	// On Windows the file names are case insensitive so the script builder 
 	// must do caseless comparison for duplicate included files
