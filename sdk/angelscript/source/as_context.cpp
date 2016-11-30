@@ -1042,7 +1042,7 @@ int asCContext::SetArgObject(asUINT arg, void *obj)
 				((asIScriptFunction*)obj)->AddRef();
 			else
 			{
-				asSTypeBehaviour *beh = &dt->GetTypeInfo()->CastToObjectType()->beh;
+				asSTypeBehaviour *beh = &CastToObjectType(dt->GetTypeInfo())->beh;
 				if (obj && beh->addref)
 					m_engine->CallObjectMethod(obj, beh->addref);
 			}
@@ -4522,8 +4522,8 @@ void asCContext::CleanReturnObject()
 	if( m_initialFunction && m_initialFunction->DoesReturnOnStack() && m_status == asEXECUTION_FINISHED )
 	{
 		// If function returns on stack we need to call the destructor on the returned object
-		if( m_initialFunction->returnType.GetTypeInfo()->CastToObjectType()->beh.destruct )
-			m_engine->CallObjectMethod(GetReturnObject(), m_initialFunction->returnType.GetTypeInfo()->CastToObjectType()->beh.destruct);
+		if(CastToObjectType(m_initialFunction->returnType.GetTypeInfo())->beh.destruct )
+			m_engine->CallObjectMethod(GetReturnObject(), CastToObjectType(m_initialFunction->returnType.GetTypeInfo())->beh.destruct);
 
 		return;
 	}
@@ -4543,7 +4543,7 @@ void asCContext::CleanReturnObject()
 		else
 		{
 			// Call the destructor on the object
-			asSTypeBehaviour *beh = &(reinterpret_cast<asCTypeInfo*>(m_regs.objectType)->CastToObjectType()->beh);
+			asSTypeBehaviour *beh = &(CastToObjectType(reinterpret_cast<asCTypeInfo*>(m_regs.objectType))->beh);
 			if (m_regs.objectType->GetFlags() & asOBJ_REF)
 			{
 				asASSERT(beh->release || (m_regs.objectType->GetFlags() & asOBJ_NOCOUNT));
@@ -4800,7 +4800,7 @@ void asCContext::CleanArgsOnStack()
 		for( v = 0; v < m_currentFunction->scriptData->objVariablePos.GetLength(); v++ )
 			if( m_currentFunction->scriptData->objVariablePos[v] == var )
 			{
-				func = m_currentFunction->scriptData->objVariableTypes[v]->CastToFuncdefType()->funcdef;
+				func = CastToFuncdefType(m_currentFunction->scriptData->objVariableTypes[v])->funcdef;
 				break;
 			}
 
@@ -4817,7 +4817,7 @@ void asCContext::CleanArgsOnStack()
 				if( var == paramPos )
 				{
 					if (m_currentFunction->parameterTypes[v].IsFuncdef())
-						func = m_currentFunction->parameterTypes[v].GetTypeInfo()->CastToFuncdefType()->funcdef;
+						func = CastToFuncdefType(m_currentFunction->parameterTypes[v].GetTypeInfo())->funcdef;
 					break;
 				}
 				paramPos -= m_currentFunction->parameterTypes[v].GetSizeOnStackDWords();
@@ -4907,18 +4907,18 @@ void asCContext::CleanStackFrame()
 					}
 					else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_REF )
 					{
-						asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType()->beh;
+						asSTypeBehaviour *beh = &CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n])->beh;
 						asASSERT( (m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_NOCOUNT) || beh->release );
 						if( beh->release )
 							m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->release);
 					}
 					else
 					{
-						asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType()->beh;
+						asSTypeBehaviour *beh = &CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n])->beh;
 						if( beh->destruct )
 							m_engine->CallObjectMethod((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
 						else if( m_currentFunction->scriptData->objVariableTypes[n]->flags & asOBJ_LIST_PATTERN )
-							m_engine->DestroyList((asBYTE*)*(asPWORD*)&m_regs.stackFramePointer[-pos], m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType());
+							m_engine->DestroyList((asBYTE*)*(asPWORD*)&m_regs.stackFramePointer[-pos], CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n]));
 
 						// Free the memory
 						m_engine->CallFree((void*)*(asPWORD*)&m_regs.stackFramePointer[-pos]);
@@ -4933,7 +4933,7 @@ void asCContext::CleanStackFrame()
 				// Only destroy the object if it is truly alive
 				if( liveObjects[n] > 0 )
 				{
-					asSTypeBehaviour *beh = &m_currentFunction->scriptData->objVariableTypes[n]->CastToObjectType()->beh;
+					asSTypeBehaviour *beh = &CastToObjectType(m_currentFunction->scriptData->objVariableTypes[n])->beh;
 					if( beh->destruct )
 						m_engine->CallObjectMethod((void*)(asPWORD*)&m_regs.stackFramePointer[-pos], beh->destruct);
 				}

@@ -467,7 +467,7 @@ void asCModule::CallExit()
 			void **obj = (void**)(*it)->GetAddressOfValue();
 			if( *obj )
 			{
-				asCObjectType *ot = (*it)->type.GetTypeInfo()->CastToObjectType();
+				asCObjectType *ot = CastToObjectType((*it)->type.GetTypeInfo());
 
 				if( ot->flags & asOBJ_REF )
 				{
