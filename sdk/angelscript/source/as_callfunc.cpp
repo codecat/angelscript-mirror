@@ -476,7 +476,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 #endif
 		if( needFree &&
 			dt.IsObject() &&
-			!dt.IsObjectHandle() && 
+			!dt.IsObjectHandle() &&
 			!dt.IsReference() )
 		{
 			asSSystemFunctionInterface::SClean clean;
@@ -486,7 +486,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 
 #ifndef AS_CALLEE_DESTROY_OBJ_BY_VAL
 			// If the called function doesn't destroy objects passed by value we must do so here
-			asSTypeBehaviour *beh = &dt.GetTypeInfo()->CastToObjectType()->beh;
+			asSTypeBehaviour *beh = &CastToObjectType(dt.GetTypeInfo())->beh;
 			if( beh->destruct )
 				clean.op = 2; // call destruct, then free
 #endif

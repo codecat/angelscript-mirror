@@ -4723,7 +4723,7 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCTypeInfo *type)
 asITypeInfo *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
 {
 	asITypeInfo *ti = GetTypeInfoByDecl(decl);
-	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+	return CastToObjectType(reinterpret_cast<asCTypeInfo*>(ti));
 }
 #endif
 
@@ -5923,7 +5923,7 @@ asITypeInfo *asCScriptEngine::GetEnumByIndex(asUINT index) const
 int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
 {
 	asITypeInfo *ti = GetTypeInfoById(enumTypeId);
-	asCEnumType *e = reinterpret_cast<asCTypeInfo*>(ti)->CastToEnumType();
+	asCEnumType *e = CastToEnumType(reinterpret_cast<asCTypeInfo*>(ti));
 	if (e == 0)
 		return asINVALID_TYPE;
 
@@ -5937,7 +5937,7 @@ int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
 const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const
 {
 	asITypeInfo *ti = GetTypeInfoById(enumTypeId);
-	asCEnumType *e = reinterpret_cast<asCTypeInfo*>(ti)->CastToEnumType();
+	asCEnumType *e = CastToEnumType(reinterpret_cast<asCTypeInfo*>(ti));
 	if (e == 0)
 		return 0;
 
@@ -5966,7 +5966,7 @@ asITypeInfo *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 asITypeInfo *asCScriptEngine::GetObjectTypeByName(const char *name) const
 {
 	asITypeInfo *ti = GetTypeInfoByName(name);
-	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+	return CastToObjectType(reinterpret_cast<asCTypeInfo*>(ti));
 }
 #endif
 
@@ -6022,7 +6022,7 @@ asITypeInfo *asCScriptEngine::GetTypeInfoByName(const char *name) const
 asITypeInfo *asCScriptEngine::GetObjectTypeById(int typeId) const
 {
 	asITypeInfo *ti = GetTypeInfoById(typeId);
-	return reinterpret_cast<asCTypeInfo*>(ti)->CastToObjectType();
+	return CastToObjectType(reinterpret_cast<asCTypeInfo*>(ti));
 }
 #endif
 
@@ -6048,7 +6048,7 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 // interface
 asIScriptFunction *asCScriptEngine::GetFuncdefFromTypeId(int typeId) const
 {
-	asCFuncdefType *t = GetDataTypeFromTypeId(typeId).GetTypeInfo()->CastToFuncdefType();
+	asCFuncdefType *t = CastToFuncdefType(GetDataTypeFromTypeId(typeId).GetTypeInfo());
 	if (t)
 		return t->funcdef;
 	return 0;
