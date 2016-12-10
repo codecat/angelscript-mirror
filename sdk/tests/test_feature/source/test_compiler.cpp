@@ -216,6 +216,54 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test string operators
+	// http://www.gamedev.net/topic/684124-weird-string-behavior-when-using/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Button { string m_func; string GetScenario() { return 'bar'; } } \n");
+
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, 
+			"Button but; but.m_func = 'scenario bar'; int result = 0; \n"
+			"if( but.m_func == 'scenario ' + but.GetScenario() ) result = 1; \n"
+			"assert( result == 1 ); \n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine,
+			"Button but; but.m_func = 'scenario bar'; string id = 'bar'; int result = 0; \n"
+			"if( but.m_func == 'scenario ' + id ) result = 1; \n"
+			"assert( result == 1 ); \n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine,
+			"Button but; but.m_func = 'scenario bar'; string id = 'scenario ' + but.GetScenario(); int result = 0; \n"
+			"if( but.m_func == id ) result = 1; \n"
+			"assert( result == 1 ); \n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test order of evaluation for operands
 	{
 		engine = asCreateScriptEngine();

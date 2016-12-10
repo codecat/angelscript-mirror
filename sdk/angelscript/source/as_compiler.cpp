@@ -12537,9 +12537,16 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 				// guarantee that the reference will stay alive throughout the evaluation of rctx
 				if (!lctx->type.isVariable)
 				{
+					// Reserve the variables used in the right expression so the new temporary
+					// variable allocated for the left operand isn't accidentally overwritten.
+					int l = int(reservedVariables.GetLength());
+					rctx->bc.GetVarsUsed(reservedVariables);
+
 					if (lctx->type.dataType.SupportHandles())
 						lctx->type.dataType.MakeHandle(true);
 					PrepareTemporaryVariable(node, lctx);
+
+					reservedVariables.SetLength(l);
 				}
 
 				// Move the bytecode for the left operand to a temporary context

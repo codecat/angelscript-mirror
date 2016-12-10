@@ -50,8 +50,8 @@ static void ConstructStringGeneric(asIScriptGeneric * gen) {
 }
 
 static void CopyConstructStringGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgObject(0));
-  new (gen->GetObject()) string(*a);
+  string *tmp = static_cast<string *>(gen->GetArgObject(0));
+  new (gen->GetObject()) string(*tmp);
 }
 
 static void DestructStringGeneric(asIScriptGeneric * gen) {
@@ -60,9 +60,9 @@ static void DestructStringGeneric(asIScriptGeneric * gen) {
 }
 
 static void AssignStringGeneric(asIScriptGeneric *gen) {
-  string * a = static_cast<string *>(gen->GetArgObject(0));
+  string * tmp = static_cast<string *>(gen->GetArgObject(0));
   string * self = static_cast<string *>(gen->GetObject());
-  *self = *a;
+  *self = *tmp;
   gen->SetReturnAddress(self);
 }
 
@@ -78,6 +78,40 @@ bool TestCondition()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+
+	// Test condition with std string
+	// http://www.gamedev.net/topic/684124-weird-string-behavior-when-using/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "string foo = 'foo' + (true ? string('bar') : 'bar'); assert( foo == 'foobar' );", 0, ctx);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "string foo = 'foo' + (false ? 'bar' : string('bar')); assert( foo == 'foobar' );", 0, ctx);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "string foo = 'foo' + (true ? 'bar' : 'bar'); assert( foo == 'foobar' );", 0, ctx);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test condition where both cases return null
 	// http://www.gamedev.net/topic/677273-various-unexpected-behaviors-of-angelscript-2310/
@@ -520,7 +554,7 @@ bool TestCondition()
 	}
 
 	{
-		CBufferedOutStream bout;
+		bout.buffer = "";
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
