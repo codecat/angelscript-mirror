@@ -10,6 +10,34 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Test using a registered funcdef in a shared function
+	// https://www.gamedev.net/topic/685120-application-registered-funcdefs-arent-shared/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterFuncdef("void voidFunc()");
+
+		asIScriptModule *mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test", 
+			"shared void call(voidFunc@ f) { \n"
+			"  f(); \n"
+			"} \n");
+		r = mod1->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test memory management with shared functions calling shared functions
 	// http://www.gamedev.net/topic/638334-assertion-failed-on-exit-with-shared-func/
 	{
