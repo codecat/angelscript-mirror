@@ -184,6 +184,33 @@ bool Test()
 		engine->Release();
 	} */
 
+	// Test implicit conv/cast when function is expecting &in  (ref arg, but as input only, thus allow object to be transformed)
+	// problem reported by Thomas Grip
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class cIDSet {} \n"
+			"class cID : cIDSet {} \n"
+			"class cID2 { \n"
+			"  cIDSet opImplConv() const { return cIDSet(); } \n"
+			"} \n"
+			"void func(const cIDSet &in ) {} \n"
+			"void main() { \n"
+			"  cID id; \n"
+			"  func(id); \n"  // should be allowed
+			"  cID2 id2; \n"
+			"  func(id2); \n" // should be allowed
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test bug fix for implicit conv and math operations
 	// http://www.gamedev.net/topic/661765-implicit-convert-math-bug/
 	{
