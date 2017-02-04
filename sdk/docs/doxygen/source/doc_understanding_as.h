@@ -17,9 +17,11 @@ when passing objects between AngelScript and C++.
  - \subpage doc_arrays
  - \subpage doc_obj_handle
  - \subpage doc_memory
+ - \subpage doc_cpp_exceptions
 
 \todo Add article on the calling conventions used by AngelScript
 
+\todo Add article on sandboxing
 
 
 */
