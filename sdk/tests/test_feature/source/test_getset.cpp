@@ -92,6 +92,59 @@ std::string CharToStr(char & me)
 	return result;
 }
 
+static void StringFactory(asIScriptGeneric *gen)
+{
+	asUINT length = gen->GetArgDWord(0);
+	const char *s = (const char*)gen->GetArgAddress(1);
+
+	// Return a string value
+	new (gen->GetAddressOfReturnLocation()) string(s, length);
+}
+
+void StringConstruct(asIScriptGeneric *gen)
+{
+	new (gen->GetObject()) string();
+}
+
+void StringCopyConstruct(asIScriptGeneric *gen)
+{
+	std::string *s = (std::string*)gen->GetArgAddress(0);
+	new (gen->GetObject()) string(*s);
+}
+
+void StringDestruct(asIScriptGeneric *gen)
+{
+	((std::string*)gen->GetObject())->~string();
+}
+
+void StringAdd(asIScriptGeneric *gen)
+{
+	std::string *s = (std::string*)gen->GetArgAddress(0);
+	std::string *o = (std::string*)gen->GetObject();
+	new (gen->GetAddressOfReturnLocation()) string(*o + *s);
+}
+
+void StringAssign(asIScriptGeneric *gen)
+{
+	string * a = static_cast<string *>(gen->GetArgObject(0));
+	string * self = static_cast<string *>(gen->GetObject());
+	*self = *a;
+	gen->SetReturnAddress(self);
+}
+
+static void StringEqualsGeneric(asIScriptGeneric * gen)
+{
+	string * a = static_cast<string *>(gen->GetObject());
+	string * b = static_cast<string *>(gen->GetArgAddress(0));
+	*(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
+}
+
+void StringReplace(asIScriptGeneric *gen)
+{
+	string s = "foo";
+	gen->SetReturnObject(&s);
+}
+
 bool Test()
 {
 	RET_ON_MAX_PORT
@@ -102,6 +155,64 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
+
+	// Test complex expression with get property accessor and temporary variables
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("string", sizeof(std::string), asOBJ_VALUE | asGetTypeTraits<std::string>());
+		engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(StringDestruct), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(StringCopyConstruct), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(StringConstruct), asCALL_GENERIC);
+		engine->RegisterObjectMethod("string", "string Replace(const string, const string) const", asFUNCTION(StringReplace), asCALL_GENERIC);
+		engine->RegisterObjectMethod("string", "string opAdd(const string&in) const", asFUNCTION(StringAdd), asCALL_GENERIC);
+		engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(StringAssign), asCALL_GENERIC);
+		engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTION(StringEqualsGeneric), asCALL_GENERIC);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("test",
+			"class TMatch { string Value { get const { return v; } } string v; }"
+			"string QuotedReplacer(TMatch &in match) \n"
+			"{ \n"
+			"  string source = 'c';  \n"
+			"  return match.Value + source.Replace('a', 'z');  \n"
+			"} \n"
+			"string QuotedReplacer2(TMatch &in match) \n"
+			"{ \n"
+			"  string source = 'c';  \n"
+			"  return match.get_Value() + source.Replace('a', 'z');  \n"
+			"} \n"); assert(r >= 0);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "TMatch t; t.v = 'bar'; string s = QuotedReplacer(t); assert(s == 'barfoo');", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "TMatch t; t.v = 'bar'; string s = QuotedReplacer2(t); assert(s == 'barfoo');", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = engine->ShutDownAndRelease();
+	}
 
 	// Test global property with conversion to string
 	// Reported by Phong Ba
