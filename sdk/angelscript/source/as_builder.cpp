@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -5234,13 +5234,21 @@ asSNameSpace *asCBuilder::GetNameSpaceByString(const asCString &nsName, asSNameS
 	return ns;
 }
 
-asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType)
+asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope, asCObjectType *currentType, bool reportError, bool *isValid)
 {
-	asASSERT(node->nodeType == snDataType);
+	asASSERT(node->nodeType == snDataType || node->nodeType == snIdentifier || node->nodeType == snScope );
 
 	asCDataType dt;
 
 	asCScriptNode *n = node->firstChild;
+
+	if (isValid)
+		*isValid = true;
+
+	// If the informed node is an identifier or scope, then the 
+	// datatype should be identified directly from that
+	if (node->nodeType != snDataType)
+		n = node;
 
 	bool isConst = false;
 	bool isImplicitHandle = false;
@@ -5257,6 +5265,8 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	{
 		// The namespace and parent type doesn't exist. Return a dummy type instead.
 		dt = asCDataType::CreatePrimitive(ttInt, false);
+		if (isValid)
+			*isValid = false;
 		return dt;
 	}
 
@@ -5332,15 +5342,23 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							ti = GetTemplateInstanceFromNode(n, file, CastToObjectType(ti), implicitNamespace, currentType, &n);
 							if (ti == 0)
 							{
+								if (isValid)
+									*isValid = false;
+
 								// Return a dummy
 								return asCDataType::CreatePrimitive(ttInt, false);
 							}
 						}
 						else if( n && n->next && n->next->nodeType == snDataType )
 						{
-							asCString msg;
-							msg.Format(TXT_TYPE_s_NOT_TEMPLATE, ti->name.AddressOf());
-							WriteError(msg, file, n);
+							if (reportError)
+							{
+								asCString msg;
+								msg.Format(TXT_TYPE_s_NOT_TEMPLATE, ti->name.AddressOf());
+								WriteError(msg, file, n);
+							}
+							if (isValid)
+								*isValid = false;
 						}
 
 						// Create object data type
@@ -5352,11 +5370,16 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 				}
 				else
 				{
-					asCString msg;
-					msg.Format(TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE, (const char *)str.AddressOf());
-					WriteError(msg, file, n);
+					if (reportError)
+					{
+						asCString msg;
+						msg.Format(TXT_TYPE_s_NOT_AVAILABLE_FOR_MODULE, (const char *)str.AddressOf());
+						WriteError(msg, file, n);
+					}
 
 					dt.SetTokenType(ttInt);
+					if (isValid)
+						*isValid = false;
 				}
 			}
 
@@ -5372,20 +5395,25 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 
 		if( !found )
 		{
-			asCString msg;
-			if( origNs && origNs->name == "" )
-				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, str.AddressOf());
-			else if (origNs)
-				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), origNs->name.AddressOf());
-			else
+			if (reportError)
 			{
-				// TODO: child funcdef: Message should explain that the identifier is not a type of the parent type
-				asCDataType pt = asCDataType::CreateType(origParentType, false);
-				msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), pt.Format(origParentType->nameSpace, false).AddressOf());
+				asCString msg;
+				if (origNs && origNs->name == "")
+					msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS, str.AddressOf());
+				else if (origNs)
+					msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), origNs->name.AddressOf());
+				else
+				{
+					// TODO: child funcdef: Message should explain that the identifier is not a type of the parent type
+					asCDataType pt = asCDataType::CreateType(origParentType, false);
+					msg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s, str.AddressOf(), pt.Format(origParentType->nameSpace, false).AddressOf());
+				}
+				WriteError(msg, file, n);
 			}
-			WriteError(msg, file, n);
 
 			dt = asCDataType::CreatePrimitive(ttInt, isConst);
+			if (isValid)
+				*isValid = false;
 			return dt;
 		}
 	}
@@ -5408,22 +5436,30 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			// Make sure the sub type can be instantiated
 			if( !dt.CanBeInstantiated() )
 			{
-				asCString str;
-				if( dt.IsAbstractClass() )
-					str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format(ns).AddressOf());
-				else if( dt.IsInterface() )
-					str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format(ns).AddressOf());
-				else
-					// TODO: Improve error message to explain why
-					str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format(ns).AddressOf());
+				if (reportError)
+				{
+					asCString str;
+					if (dt.IsAbstractClass())
+						str.Format(TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED, dt.Format(ns).AddressOf());
+					else if (dt.IsInterface())
+						str.Format(TXT_INTERFACE_s_CANNOT_BE_INSTANTIATED, dt.Format(ns).AddressOf());
+					else
+						// TODO: Improve error message to explain why
+						str.Format(TXT_DATA_TYPE_CANT_BE_s, dt.Format(ns).AddressOf());
 
-				WriteError(str, file, n);
+					WriteError(str, file, n);
+				}
+				if (isValid)
+					*isValid = false;
 			}
 
 			// Make the type an array (or multidimensional array)
 			if( dt.MakeArray(engine, module) < 0 )
 			{
-				WriteError(TXT_NO_DEFAULT_ARRAY_TYPE, file, n);
+				if( reportError )
+					WriteError(TXT_NO_DEFAULT_ARRAY_TYPE, file, n);
+				if (isValid)
+					*isValid = false;
 				break;
 			}
 		}
@@ -5432,12 +5468,18 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			// Make the type a handle
 			if( dt.IsObjectHandle() )
 			{
-				WriteError(TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED, file, n);
+				if( reportError )
+					WriteError(TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED, file, n);
+				if (isValid)
+					*isValid = false;
 				break;
 			}
 			else if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
 			{
-				WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
+				if( reportError )
+					WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
+				if (isValid)
+					*isValid = false;
 				break;
 			}
 		}
@@ -5447,8 +5489,13 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 	if( isImplicitHandle )
 	{
 		// Make the type a handle
-		if( dt.MakeHandle(true, acceptHandleForScope) < 0 )
-			WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
+		if (dt.MakeHandle(true, acceptHandleForScope) < 0)
+		{
+			if( reportError )
+				WriteError(TXT_OBJECT_HANDLE_NOT_SUPPORTED, file, n);
+			if (isValid)
+				*isValid = false;
+		}
 	}
 
 	return dt;

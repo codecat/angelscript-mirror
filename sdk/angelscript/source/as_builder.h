@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -181,7 +181,7 @@ protected:
 	asCObjectType     *GetObjectType(const char *type, asSNameSpace *ns);
 	asCFuncdefType    *GetFuncDef(const char *type, asSNameSpace *ns, asCObjectType *parentType);
 	asCTypeInfo       *GetTypeFromTypesKnownByObject(const char *type, asCObjectType *currentType);
-	asCDataType        CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0);
+	asCDataType        CreateDataTypeFromNode(asCScriptNode *node, asCScriptCode *file, asSNameSpace *implicitNamespace, bool acceptHandleForScope = false, asCObjectType *currentType = 0, bool reportError = true, bool *isValid = 0);
 	asCObjectType     *GetTemplateInstanceFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *templateType, asSNameSpace *implicitNamespace, asCObjectType *currentType, asCScriptNode **next = 0);
 	asCDataType        ModifyDataTypeFromNode(const asCDataType &type, asCScriptNode *node, asCScriptCode *file, asETypeModifiers *inOutFlag, bool *autoHandle);
 

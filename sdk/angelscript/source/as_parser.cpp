@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1406,8 +1406,9 @@ asCScriptNode *asCParser::ParseExprValue()
 			RewindTo(&t1);
 
 			// Check if this is a construct call
-			if( isDataType && (t.type == ttOpenParanthesis ||  // type()
-							   (t.type == ttOpenBracket && t2.type == ttCloseBracket)) )      // type[]()
+			// Just 'type()' isn't considered a construct call, because type may just be a function/method name.
+			// The compiler will have to sort this out, since the parser doesn't have enough information.
+			if( isDataType && (t.type == ttOpenBracket && t2.type == ttCloseBracket) )      // type[]()
 				node->AddChildLast(ParseConstructCall());
 			else if( isTemplateType && t.type == ttLessThan )  // type<t>()
 				node->AddChildLast(ParseConstructCall());
@@ -1749,7 +1750,11 @@ bool asCParser::IsFunctionCall()
 	}
 
 	// A function call starts with an identifier followed by an argument list
-	if( t1.type != ttIdentifier || IsDataType(t1) )
+	// The parser doesn't have enough information about scope to determine if the 
+	// identifier is a datatype, so even if it happens to be the parser will
+	// identify the expression as a function call rather than a construct call.
+	// The compiler will sort this out later
+	if( t1.type != ttIdentifier )
 	{
 		RewindTo(&s);
 		return false;

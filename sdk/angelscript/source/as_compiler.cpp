@@ -9589,7 +9589,7 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 	asCDataType to;
 	bool anyErrors = false;
 	EImplicitConv convType;
-	if( node->nodeType == snConstructCall )
+	if( node->nodeType == snConstructCall || node->nodeType == snFunctionCall )
 	{
 		convType = asIC_EXPLICIT_VAL_CAST;
 
@@ -10396,6 +10396,15 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 
 			builder->GetObjectMethodDescriptions("opCall", CastToObjectType(funcExpr.type.dataType.GetTypeInfo()), funcs, objIsConst);
 		}
+	}
+
+	// If at this point no functions have been identified, then this may be a construct call
+	if (funcs.GetLength() == 0)
+	{
+		bool isValid = false;
+		asCDataType dt = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace, false, 0, false, &isValid);
+		if (isValid)
+			return CompileConstructCall(node, ctx);
 	}
 
 	// Compile the arguments

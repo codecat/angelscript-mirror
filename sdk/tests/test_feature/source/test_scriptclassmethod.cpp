@@ -131,9 +131,9 @@ static const char *script6 =
 "   {                  \n"
 "      int a = 0;      \n"
        // Call class method
-"      this.Set(a);    \n"  // TODO: This should be just 'Set(a)'. Requires change in the way the parser handles types
+"      Set(a);         \n"
        // Call Set constructor
-"      Set(a);         \n"  // TODO: This should be '::Set(a)'. Requires change in the way the parser handles types
+"      ::Set(a);       \n"
 "   }                  \n"
 "}                     \n";
 
@@ -158,8 +158,58 @@ bool Test()
 {
 	bool fail = false;
 	int r;
+	asIScriptEngine *engine;
+	COutStream out;
+	CBufferedOutStream bout;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	// Test conflicting method name and class name with scoping
+	// https://www.gamedev.net/topic/679898-cant-call-base-function-if-the-function-name-is-the-same-as-a-class-name/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Cat \n"
+			"{ \n"
+			"} \n"
+			"class Foo \n"
+			"{ \n"
+			"	int Cat() \n"				// Method has the same name as another class
+			"	{ \n"
+			"		return 0; \n"
+			"	} \n"
+			"	int Dog() \n"				// No name conflict
+			"	{ \n"
+			"		return 0; \n"
+			"	} \n"
+			"} \n"
+			"class Bar : Foo \n"
+			"{ \n"
+			"	int Cat() override \n"
+			"	{ \n"
+			"		return Foo::Cat(); \n" // Calling method 'Cat' on parent class 'Foo'
+			"	} \n"
+			"	int Dog() override \n"
+			"	{ \n"
+			"		return Foo::Dog(); \n" // OK
+			"	} \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 	RegisterScriptString_Generic(engine);
 	RegisterScriptAny(engine);
@@ -168,8 +218,6 @@ bool Test()
 	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("void Analyze(any &inout)", asFUNCTION(Analyze), asCALL_GENERIC);
 
-	COutStream out;
-	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
