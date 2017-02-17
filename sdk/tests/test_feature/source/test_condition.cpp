@@ -138,11 +138,9 @@ bool TestCondition()
 			TEST_FAILED;
 		}
 
-		// TODO: optimize: The bytecode optimizer should see that asBC_SetV1, asBC_CpyVtoR4 doesn't have any effect and remove these
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] =
 		{
-			asBC_SUSPEND,asBC_SetV1,asBC_CpyVtoR4,asBC_FREE,
 			asBC_SUSPEND,asBC_FREE,asBC_RET
 		};
 		if (!ValidateByteCode(func, expect))

@@ -2870,6 +2870,11 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 			r = CompileAssignment(node, expr);
 		}
 
+		// handles initialized with null doesn't need any bytecode
+		// since handles will be initialized to null by default anyway
+		if (type.IsObjectHandle() && expr->type.IsNullConstant() && expr->bc.IsSimpleExpression() )
+			return false;
+
 		// Look for appropriate constructor
 		asCArray<int> funcs;
 		asCArray<asCExprContext *> args;

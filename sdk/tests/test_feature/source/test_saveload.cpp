@@ -448,7 +448,7 @@ bool Test()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] =
 		{
-			asBC_SUSPEND,asBC_SUSPEND,asBC_PshVPtr,asBC_PshVPtr,asBC_ChkNullS,asBC_ChkNullS,asBC_CALL,asBC_SUSPEND,asBC_FREE, asBC_RET
+			asBC_SUSPEND,asBC_PshVPtr,asBC_PshVPtr,asBC_ChkNullS,asBC_ChkNullS,asBC_CALL,asBC_SUSPEND,asBC_FREE, asBC_RET
 		};
 		if (!ValidateByteCode(func, expect))
 			TEST_FAILED;
@@ -459,7 +459,7 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc32 = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-		if (crc32 != 0x213093ea)
+		if (crc32 != 0xA77B5E2)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;

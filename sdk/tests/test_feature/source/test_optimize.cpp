@@ -1241,7 +1241,33 @@ bool TestOptimize()
 		engine->Release();
 	}
 
+	// Local handle variable initialized with null shall not generate any bytecode
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class T {} \n"
+			"void func() { \n"
+			"	T @t = null; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asBYTE expect[] =
+		{
+			asBC_SUSPEND,
+			asBC_FREE,    // TODO: this can be removed as well if the compiler can determine that the variable is never used
+			asBC_RET
+		};
+		if (!ValidateByteCode(func, expect))
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Success
 	return fail;
