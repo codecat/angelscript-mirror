@@ -367,6 +367,85 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test saving and loading modules that have shared functions 
+	// that use other shared functions not declared in the module
+	// Reported by Phong Ba
+	{
+		int r = 0;
+		asIScriptEngine *engine = asCreateScriptEngine();
+
+		CBytecodeStream bc1(__FILE__"1");
+		CBytecodeStream bc2(__FILE__"2");
+
+		{
+			asIScriptModule *mod1 = NULL;
+			asIScriptModule *mod2 = NULL;
+
+			asIScriptContext *ctx = NULL;
+
+			char* script1 =
+				"shared int func1() {return 1;}\n"
+				"shared int func2(int p){return p + func1();}\n";
+
+			char* script2 =
+				//"shared int func1() {}\n" // <== Commented it will cause LoadByteCode fail.
+				"shared int func2(int p) {}\n"
+				"int main() {return func2(2);}";
+
+			mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE); assert(mod1 != NULL);
+			mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE); assert(mod2 != NULL);
+
+			r = mod1->AddScriptSection("main", script1); assert(r >= 0);
+			r = mod1->Build(); assert(r >= 0);
+
+			r = mod2->AddScriptSection("main", script2); assert(r >= 0);
+			r = mod2->Build(); assert(r >= 0);
+
+			r = mod1->SaveByteCode(&bc1);
+			if (r < 0)
+				TEST_FAILED;
+			r = mod2->SaveByteCode(&bc2);
+			if (r < 0)
+				TEST_FAILED;
+
+			ctx = engine->CreateContext(); assert(ctx != NULL);
+			r = ctx->Prepare(mod2->GetFunctionByDecl("int main()")); assert(r >= 0);
+			r = ctx->Execute(); assert(r >= 0);
+			r = ctx->GetReturnDWord();
+			if (r != 3)
+				TEST_FAILED;
+			r = ctx->Release(); assert(r >= 0);
+
+			mod1->Discard();
+			mod2->Discard();
+		}  // <== The script run (directly) correctly with or without redeclare of func1
+
+		{  // <== The second module won't load the bytecode when we save the bytecode without redeclare of func1 (caused by the func2 call the func1, it won't happen if func2 is not calling the func1)
+			asIScriptModule *mod1 = NULL;
+			asIScriptModule *mod2 = NULL;
+
+			mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE); assert(mod1 != NULL);
+			mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE); assert(mod2 != NULL);
+
+			r = mod1->LoadByteCode(&bc1);
+			if (r < 0)
+				TEST_FAILED;
+			r = mod2->LoadByteCode(&bc2);
+			if (r < 0)
+				TEST_FAILED;
+
+			asIScriptContext *ctx = engine->CreateContext(); assert(ctx != NULL);
+			r = ctx->Prepare(mod2->GetFunctionByDecl("int main()")); assert(r >= 0);
+			r = ctx->Execute(); assert(r >= 0);
+			r = ctx->GetReturnDWord(); 
+			if (r != 3)
+				TEST_FAILED;
+			r = ctx->Release(); assert(r >= 0);
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test adjustement of pointers in call to constructor with asBC_ALLOC instruction
 	// http://www.gamedev.net/topic/682729-assert-failure-when-saving-bytecode-in-adjustgetoffset-linux-amd64/
 	{

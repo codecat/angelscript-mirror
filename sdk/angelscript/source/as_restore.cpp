@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -3712,8 +3712,20 @@ void asCWriter::WriteUsedFunctions()
 		{
 			// Is the function from the module or the application?
 			c = usedFunctions[n]->module ? 'm' : 'a';
-			WriteData(&c, 1);
-			WriteFunctionSignature(usedFunctions[n]);
+
+			if (c == 'm' && usedFunctions[n]->IsShared() && module->scriptFunctions.IndexOf(usedFunctions[n]) < 0 )
+			{
+				// Shared functions that are not declared in the module, don't have to be 
+				// written to the file. They won't be needed when reloading the bytecode
+				// as the true shared function must already exist in another module.
+				c = 'n';
+				WriteData(&c, 1);
+			}
+			else
+			{
+				WriteData(&c, 1);
+				WriteFunctionSignature(usedFunctions[n]);
+			}
 		}
 		else
 		{
