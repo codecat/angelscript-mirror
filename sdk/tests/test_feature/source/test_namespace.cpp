@@ -11,6 +11,36 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Use of nested namespaces when registering types
+	// Reported by Polyák István
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetDefaultNamespace("XXX::YYY");
+		engine->RegisterObjectType("CCC", 4, asOBJ_VALUE | asOBJ_POD);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { \n"
+			"  XXX::YYY::CCC a; \n"
+			"  func2(XXX::YYY::CCC()); \n"
+			"} \n"
+			"void func2( const XXX::YYY::CCC &in ) {} ");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Calling base class method from overridden method when base class is declared in a different namespace
 	// http://www.gamedev.net/topic/675631-unable-to-call-base-function-on-class-outside-of-namespace/
 	{

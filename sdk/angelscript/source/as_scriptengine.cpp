@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1057,6 +1057,10 @@ int asCScriptEngine::SetDefaultNamespace(const char *nameSpace)
 			t = tok.GetToken(ns.AddressOf() + pos, ns.GetLength() - pos, &len);
 			if( (expectIdentifier && t != ttIdentifier) || (!expectIdentifier && t != ttScope) )
 				return ConfigError(asINVALID_DECLARATION, "SetDefaultNamespace", nameSpace, 0);
+
+			// Make sure parent namespaces are registred in case of nested namespaces
+			if (expectIdentifier)
+				AddNameSpace(ns.SubString(0, pos + len).AddressOf());
 
 			expectIdentifier = !expectIdentifier;
 		}
