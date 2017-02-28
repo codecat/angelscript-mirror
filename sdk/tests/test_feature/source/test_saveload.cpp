@@ -367,6 +367,80 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test saving and loading modules that have shared classes where the
+	// content of the shared class was inherited from the other module
+	// Reported by Phong Ba
+	{
+		int r = 0;
+		asIScriptEngine *engine = asCreateScriptEngine();
+		asIScriptContext *ctx = NULL;
+
+		CBytecodeStream bc1(__FILE__"1");
+		CBytecodeStream bc2(__FILE__"2");
+
+		{
+			asIScriptModule *mod1 = NULL;
+			asIScriptModule *mod2 = NULL;
+
+			char* script1 =
+				//"shared int func1() {return 1;}\n"
+				//"shared class Cls {int method() {return 1 + func1();} };\n"
+				"shared class Cls {int method() {return 2;} };\n"
+				;
+
+			char* script2 =
+				"shared class Cls {};\n"
+				"int main() {Cls c; return 1 + c.method();}"
+				;
+
+			mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE); assert(mod1 != NULL);
+			mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE); assert(mod2 != NULL);
+
+			r = mod1->AddScriptSection("main", script1); assert(r >= 0);
+			r = mod1->Build(); assert(r >= 0);
+
+			r = mod2->AddScriptSection("main", script2); assert(r >= 0);
+			r = mod2->Build(); assert(r >= 0);
+
+			r = mod1->SaveByteCode(&bc1); assert(r >= 0);
+			r = mod2->SaveByteCode(&bc2); assert(r >= 0);
+
+			ctx = engine->CreateContext(); assert(ctx != NULL);
+			r = ctx->Prepare(mod2->GetFunctionByDecl("int main()"));assert(r >= 0);
+			r = ctx->Execute(); assert(r >= 0);
+			r = ctx->GetReturnDWord();assert(r == 3);
+			r = ctx->Release(); assert(r >= 0);
+
+			mod1->Discard();
+			mod2->Discard();
+		}
+
+		{ // <== The bytecode won't load even Cls using func1 or not.
+			asIScriptModule *mod1 = NULL;
+			asIScriptModule *mod2 = NULL;
+
+			mod1 = engine->GetModule("1", asGM_ALWAYS_CREATE); assert(mod1 != NULL);
+			mod2 = engine->GetModule("2", asGM_ALWAYS_CREATE); assert(mod2 != NULL);
+
+			r = mod1->LoadByteCode(&bc1);
+			if (r < 0)
+				TEST_FAILED;
+			r = mod2->LoadByteCode(&bc2);
+			if (r < 0)
+				TEST_FAILED;
+
+			ctx = engine->CreateContext(); assert(ctx != NULL);
+			r = ctx->Prepare(mod2->GetFunctionByDecl("int main()"));assert(r >= 0);
+			r = ctx->Execute(); assert(r >= 0);
+			r = ctx->GetReturnDWord();
+			if (r != 3)
+				TEST_FAILED;
+			r = ctx->Release(); assert(r >= 0);
+		}
+
+		r = engine->ShutDownAndRelease(); assert(r >= 0);
+	}
+
 	// Test saving and loading modules that have shared functions 
 	// that use other shared functions not declared in the module
 	// Reported by Phong Ba

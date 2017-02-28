@@ -649,7 +649,7 @@ void asCReader::ReadUsedFunctions()
 					{
 						asCScriptFunction *f = module->bindInformations[i]->importedFunctionSignature;
 						if( func.objectType != f->objectType ||
-							func.funcType != f->funcType || 
+							func.funcType != f->funcType ||
 							func.nameSpace != f->nameSpace ||
 							!func.IsSignatureEqual(f) )
 							continue;
@@ -664,7 +664,10 @@ void asCReader::ReadUsedFunctions()
 					for( asUINT i = 0; i < funcs.GetLength(); i++ )
 					{
 						asCScriptFunction *f = funcs[i]->funcdef;
-						if( f == 0 || func.name != f->name || !func.IsSignatureExceptNameAndObjectTypeEqual(f) || funcs[i]->parentClass != parentClass )
+						if( f == 0 || 
+							func.name != f->name || 
+							!func.IsSignatureExceptNameAndObjectTypeEqual(f) || 
+							funcs[i]->parentClass != parentClass )
 							continue;
 
 						asASSERT( f->objectType == 0 );
@@ -682,7 +685,7 @@ void asCReader::ReadUsedFunctions()
 					{
 						asCScriptFunction *f = module->scriptFunctions[i];
 						if( func.objectType != f->objectType ||
-							func.funcType != f->funcType || 
+							func.funcType != f->funcType ||
 							func.nameSpace != f->nameSpace ||
 							!func.IsSignatureEqual(f) )
 							continue;
@@ -692,8 +695,49 @@ void asCReader::ReadUsedFunctions()
 					}
 				}
 			}
+			else if (c == 's')
+			{
+				// Look for shared entities in the engine, as they may not necessarily be part
+				// of the scope of the module if they have been inhereted from other modules.
+				if (func.funcType == asFUNC_FUNCDEF)
+				{
+					const asCArray<asCFuncdefType *> &funcs = engine->funcDefs;
+					for (asUINT i = 0; i < funcs.GetLength(); i++)
+					{
+						asCScriptFunction *f = funcs[i]->funcdef;
+						if (f == 0 || 
+							func.name != f->name || 
+							!func.IsSignatureExceptNameAndObjectTypeEqual(f) || 
+							funcs[i]->parentClass != parentClass)
+							continue;
+
+						asASSERT(f->objectType == 0);
+
+						usedFunctions[n] = f;
+						break;
+					}
+				}
+				else
+				{
+					for (asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++)
+					{
+						asCScriptFunction *f = engine->scriptFunctions[i];
+						if (f == 0 || !f->IsShared() ||
+							func.objectType != f->objectType ||
+							func.funcType != f->funcType ||
+							func.nameSpace != f->nameSpace ||
+							!func.IsSignatureEqual(f))
+							continue;
+
+						usedFunctions[n] = f;
+						break;
+					}
+				}
+			}
 			else
 			{
+				asASSERT(c == 'a');
+
 				if( func.funcType == asFUNC_FUNCDEF )
 				{
 					// This is a funcdef (registered or shared)
@@ -824,10 +868,10 @@ void asCReader::ReadUsedFunctions()
 
 				if( usedFunctions[n] == 0 )
 				{
-					// TODO: clean up: This part of the code should never happen. All functions should 
-					//                 be found in the above logic. The only valid reason to come here 
+					// TODO: clean up: This part of the code should never happen. All functions should
+					//                 be found in the above logic. The only valid reason to come here
 					//                 is if the bytecode is wrong and the function doesn't exist anyway.
-					//                 This loop is kept temporarily until we can be certain all scenarios 
+					//                 This loop is kept temporarily until we can be certain all scenarios
 					//                 are covered.
 					for( asUINT i = 0; i < engine->scriptFunctions.GetLength(); i++ )
 					{
@@ -3707,25 +3751,19 @@ void asCWriter::WriteUsedFunctions()
 		char c;
 
 		// Write enough data to be able to uniquely identify the function upon load
-
-		if( usedFunctions[n] )
+		asCScriptFunction *func = usedFunctions[n];
+		if(func)
 		{
 			// Is the function from the module or the application?
-			c = usedFunctions[n]->module ? 'm' : 'a';
+			c = func->module ? 'm' : 'a';
 
-			if (c == 'm' && usedFunctions[n]->IsShared() && module->scriptFunctions.IndexOf(usedFunctions[n]) < 0 )
-			{
-				// Shared functions that are not declared in the module, don't have to be 
-				// written to the file. They won't be needed when reloading the bytecode
-				// as the true shared function must already exist in another module.
-				c = 'n';
-				WriteData(&c, 1);
-			}
-			else
-			{
-				WriteData(&c, 1);
-				WriteFunctionSignature(usedFunctions[n]);
-			}
+			// Functions and methods that are shared and not owned by the module can be 
+			// stored as 's' to tell the reader that these are received from other modules.
+			if (c == 'm' && func->IsShared() && module->scriptFunctions.IndexOf(func) < 0 )
+				c = 's';
+
+			WriteData(&c, 1);
+			WriteFunctionSignature(func);
 		}
 		else
 		{
