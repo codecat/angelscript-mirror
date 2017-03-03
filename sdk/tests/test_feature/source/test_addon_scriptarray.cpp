@@ -192,6 +192,62 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test array with object handles and insertLast
+	// https://www.gamedev.net/topic/686912-array-with-objects-handles/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"interface IFoo {} \n"
+			"class CFoo : IFoo {} \n"
+			"array<IFoo@> arr; \n"
+			"void func(IFoo &f) { arr.insertLast(f); } \n"
+			"void main() \n"
+			"{ \n"
+			"	CFoo foo(); \n"
+			"	func(foo); \n"
+			"	assert( arr.length() == 1 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		asIScriptFunction *func = mod->GetFunctionByName("func");
+		asBYTE expect[] =
+		{
+			asBC_SUSPEND,
+			asBC_VAR,        // Push offset to the f arg on stack
+			asBC_PshGPtr,
+			asBC_CHKREF,
+			asBC_GETREF,     // Put the reference to the f arg on the stack to form the @&
+			asBC_CALLSYS,
+			asBC_SUSPEND,
+			asBC_RET
+		};
+		if (!ValidateByteCode(func, expect))
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test array with weakref
 	// http://www.gamedev.net/topic/680788-crash-when-trying-to-store-weakref-in-an-array/
 	{
@@ -789,7 +845,7 @@ bool Test()
 	// Test potential memory leak situation with circular reference between types
 	{
 		// Create the script engine
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	 
 		// Register array class
 		RegisterScriptArray(engine, false);
@@ -816,7 +872,7 @@ bool Test()
 	{
 		SKIP_ON_MAX_PORT
 		{
-			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			RegisterScriptArray(engine, false);
 			RegisterScriptString(engine);
 		
@@ -833,7 +889,7 @@ bool Test()
 
 	// Test insertAt, removeAt, removeRange
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
 		RegisterScriptString(engine);
@@ -864,7 +920,7 @@ bool Test()
 
 	// This test was failing on XBOX 360
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterScriptArray(engine, true);
@@ -898,7 +954,7 @@ bool Test()
 
 	// Array should call subtypes' opAssign when it exists
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -930,7 +986,7 @@ bool Test()
 
 	// test sorting
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -961,7 +1017,7 @@ bool Test()
 
 	// Test 
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -1089,7 +1145,7 @@ bool Test()
 
 	// Test array, with objects that don't have default constructor/factory
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -1118,7 +1174,7 @@ bool Test()
 	}	
 
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
@@ -1161,7 +1217,7 @@ bool Test()
 			"  assert( index == 1 ); \n"
 			"} \n";
 
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -1201,7 +1257,7 @@ bool Test()
 			"  int index = ocean.find(nemo); \n"
 			"} \n";
 
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
@@ -1245,7 +1301,7 @@ bool Test()
 			"  int index = ocean.find(nemo); \n"
 			"} \n";
 
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
@@ -1278,7 +1334,7 @@ bool Test()
 			"for( uint n = 0; n < a.length(); n++ ) \n"
 			"  assert( a[n] == n ); \n";
 
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -1298,7 +1354,7 @@ bool Test()
 			"array<Obj> oa = {Obj(), Obj()}; \n"
 			"array<Obj@> ha = {Obj(), Obj()}; \n";
 
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
