@@ -11955,29 +11955,31 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 			{
 				if( args.GetLength() != 1 )
 				{
-					// TODO: opIndex: Implement this
-					Error("Property accessor with index only support 1 index argument for now", node);
+					// TODO: opIndex: Implement support for multiple index arguments in set_opIndex too
+					Error(TXT_PROP_ACCESS_WITH_INDEX_ONE_ARG, node);
 					isOK = false;
 				}
-
-				Dereference(ctx, true);
-				asCExprContext lctx(engine);
-				MergeExprBytecodeAndType(&lctx, ctx);
-
-				// Check for accessors methods for the opIndex, either as get/set_opIndex or as get/set with the property name
-				int r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, args[0], node, ns);
-				if( r == 0 )
+				else
 				{
-					asCString str;
-					str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format(outFunc->nameSpace).AddressOf());
-					Error(str, node);
-					isOK = false;
-				}
-				else if( r < 0 )
-					isOK = false;
+					Dereference(ctx, true);
+					asCExprContext lctx(engine);
+					MergeExprBytecodeAndType(&lctx, ctx);
 
-				if( isOK )
-					MergeExprBytecodeAndType(ctx, &lctx);
+					// Check for accessors methods for the opIndex, either as get/set_opIndex or as get/set with the property name
+					int r = FindPropertyAccessor(propertyName == "" ? "opIndex" : propertyName.AddressOf(), &lctx, args[0], node, ns);
+					if (r == 0)
+					{
+						asCString str;
+						str.Format(TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP, ctx->type.dataType.Format(outFunc->nameSpace).AddressOf());
+						Error(str, node);
+						isOK = false;
+					}
+					else if (r < 0)
+						isOK = false;
+
+					if (isOK)
+						MergeExprBytecodeAndType(ctx, &lctx);
+				}
 			}
 		}
 		else

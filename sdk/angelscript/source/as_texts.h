@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -223,6 +223,7 @@
 #define TXT_PRIVATE_PROP_ACCESS_s                 "Illegal access to private property '%s'"
 #define TXT_PROTECTED_METHOD_CALL_s               "Illegal call to protected method '%s'"
 #define TXT_PROTECTED_PROP_ACCESS_s               "Illegal access to protected property '%s'"
+#define TXT_PROP_ACCESS_WITH_INDEX_ONE_ARG        "Property accessor with index must have 1 and only 1 index argument"
 #define TXT_PROPERTY_ACCESSOR_DISABLED            "Property accessors have been disabled by the application"
 #define TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED "Property accessor must be implemented"
 #define TXT_PROPERTY_CANT_BE_CONST                "Class properties cannot be declared as const"

@@ -2886,6 +2886,25 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// This script must show a compiler error
+		// Reported by Aaron Baker
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"	string str; \n"
+			"	string t = str[]; \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (4, 16) : Error   : Property accessor with index must have 1 and only 1 index argument\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 
