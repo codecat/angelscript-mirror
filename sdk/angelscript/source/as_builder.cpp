@@ -1538,6 +1538,8 @@ sMixinClass *asCBuilder::GetMixinClass(const char *name, asSNameSpace *ns)
 
 int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns, asCObjectType *parent)
 {
+	// TODO: external: add optional 'external' keyword to import shared declaration.
+
 	// namespace and parent are exclusively mutual
 	asASSERT((ns == 0 && parent) || (ns && parent == 0));
 
@@ -1808,6 +1810,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	bool isShared = false;
 	bool isAbstract = false;
 
+	// TODO: external: add optional 'external' keyword to import shared declaration.
+
 	// Check the class modifiers
 	while( n->tokenType == ttIdentifier )
 	{
@@ -1990,6 +1994,8 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 
 int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
+	// TODO: external: add optional 'external' keyword to import shared declaration.
+
 	asCScriptNode *n = node->firstChild;
 	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
@@ -3856,11 +3862,17 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 {
 	// Is it a shared enum?
 	bool isShared = false;
+	bool isExternal = false;
 	asCEnumType *existingSharedType = 0;
 	asCScriptNode *tmp = node->firstChild;
-	if( tmp->nodeType == snIdentifier && file->TokenEquals(tmp->tokenPos, tmp->tokenLength, SHARED_TOKEN) )
+	while( tmp->nodeType == snIdentifier )
 	{
-		isShared = true;
+		if (file->TokenEquals(tmp->tokenPos, tmp->tokenLength, SHARED_TOKEN))
+			isShared = true;
+		else if (file->TokenEquals(tmp->tokenPos, tmp->tokenLength, EXTERNAL_TOKEN))
+			isExternal = true;
+		else
+			break;
 		tmp = tmp->next;
 	}
 
@@ -3886,6 +3898,14 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				break;
 			}
 		}
+	}
+
+	// If the enum was declared as external then it must have been compiled in a different module first
+	if (isExternal && existingSharedType == 0)
+	{
+		asCString str;
+		str.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, name.AddressOf());
+		WriteError(str, file, tmp);
 	}
 
 	// Check the name and add the enum
@@ -3933,6 +3953,14 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 
 		asCDataType type = CreateDataTypeFromNode(tmp, file, ns);
 		asASSERT(!type.IsReference());
+
+		// External shared enums must not redeclare the enum values
+		if (isExternal && tmp->next)
+		{
+			asCString str;
+			str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
+			WriteError(str, file, tmp);
+		}
 
 		// Register the enum values
 		tmp = tmp->next;
@@ -4274,6 +4302,8 @@ asCString asCBuilder::GetCleanExpressionString(asCScriptNode *node, asCScriptCod
 #ifndef AS_NO_COMPILER
 int asCBuilder::RegisterScriptFunctionFromNode(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared, bool isMixin)
 {
+	// TODO: external: add optional 'external' keyword to import shared declaration.
+
 	asCString                  name;
 	asCDataType                returnType;
 	asCArray<asCString>        parameterNames;

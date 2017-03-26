@@ -2237,7 +2237,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 	if( node == 0 ) return 0;
 
 	// Determine type of node
-	sToken t1, t2;
+	sToken t1, t2, t3;
 
 	for(;;)
 	{
@@ -2245,11 +2245,14 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 		{
 			GetToken(&t1);
 			GetToken(&t2);
+			GetToken(&t3);
 			RewindTo(&t1);
 
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
-			else if( t1.type == ttEnum || (IdentifierIs(t1, SHARED_TOKEN) && t2.type == ttEnum) )
+			else if( t1.type == ttEnum ||
+					 (t2.type == ttEnum && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN))) ||
+					 (t3.type == ttEnum && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN)) && (IdentifierIs(t2, SHARED_TOKEN) || IdentifierIs(t2, EXTERNAL_TOKEN))) )
 				node->AddChildLast(ParseEnumeration());	// Handle enumerations
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		// Handle primitive typedefs
@@ -2399,7 +2402,7 @@ int asCParser::ParseStatementBlock(asCScriptCode *in_script, asCScriptNode *in_b
 	return 0;
 }
 
-// BNF: ENUM ::= ['shared'] 'enum' IDENTIFIER '{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'
+// BNF: ENUM ::= {'shared' | 'external'} 'enum' IDENTIFIER (';' | ('{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'))
 asCScriptNode *asCParser::ParseEnumeration()
 {
 	asCScriptNode *ident;
@@ -2408,12 +2411,13 @@ asCScriptNode *asCParser::ParseEnumeration()
 	asCScriptNode *node = CreateNode(snEnum);
 	if( node == 0 ) return 0;
 
-	sToken	token;
+	sToken token;
 
-	// Optional 'shared' token
+	// Optional 'shared' and 'external' token
 	GetToken(&token);
-	if( IdentifierIs(token, SHARED_TOKEN) )
-	{	
+	while( IdentifierIs(token, SHARED_TOKEN) ||
+		   IdentifierIs(token, EXTERNAL_TOKEN) )
+	{
 		RewindTo(&token);
 		node->AddChildLast(ParseIdentifier());
 		if( isSyntaxError ) return node;
@@ -2442,23 +2446,28 @@ asCScriptNode *asCParser::ParseEnumeration()
 	}
 
 	dataType = CreateNode(snDataType);
-	if( dataType == 0 ) return 0;
+	if( dataType == 0 ) return node;
 
 	node->AddChildLast(dataType);
 
 	ident = CreateNode(snIdentifier);
-	if( ident == 0 ) return 0;
+	if( ident == 0 ) return node;
 
 	ident->SetToken(&token);
 	ident->UpdateSourcePos(token.pos, token.length);
 	dataType->AddChildLast(ident);
 
-	// check for the start of the declaration block
+	// External shared declarations are ended with ';'
 	GetToken(&token);
+	if (token.type == ttEndStatement)
+		return node;
+
+	// check for the start of the declaration block
 	if( token.type != ttStartStatementBlock ) 
 	{
 		RewindTo(&token);
-		Error(ExpectedToken(asCTokenizer::GetDefinition(token.type)), &token);
+		int tokens[] = { ttStartStatementBlock, ttEndStatement };
+		Error(ExpectedOneOf(tokens, 2), &token);
 		Error(InsteadFound(token), &token);
 		return node;
 	}
@@ -2480,9 +2489,9 @@ asCScriptNode *asCParser::ParseEnumeration()
 			return node;
 		}
 
-		//	Add the enum element
+		// Add the enum element
 		ident = CreateNode(snIdentifier);
-		if( ident == 0 ) return 0;
+		if( ident == 0 ) return node;
 
 		ident->SetToken(&token);
 		ident->UpdateSourcePos(token.pos, token.length);
@@ -2510,7 +2519,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 		}
 	}
 
-	//	check for the end of the declaration block
+	// check for the end of the declaration block
 	GetToken(&token);
 	if( token.type != ttEndStatementBlock ) 
 	{
@@ -2520,7 +2529,6 @@ asCScriptNode *asCParser::ParseEnumeration()
 		return node;
 	}
 
-	//	Parse the declarations
 	return node;
 }
 
@@ -2900,6 +2908,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	return false;
 }
 
+// TODO: external: add optional 'external' keyword to import shared declaration. Also allow funcdef to be declared as 'shared'
 // BNF: FUNCDEF ::= 'funcdef' TYPE ['&'] IDENTIFIER PARAMLIST ';'
 asCScriptNode *asCParser::ParseFuncDef()
 {
@@ -2941,6 +2950,7 @@ asCScriptNode *asCParser::ParseFuncDef()
 	return node;
 }
 
+// TODO: external: add optional 'external' keyword to import shared declaration.
 // BNF: FUNC ::= ['private' | 'protected' | 'shared'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} STATBLOCK 
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
@@ -3153,6 +3163,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 	return node;
 }
 
+// TODO: external: add optional 'external' keyword to import shared declaration.
 // BNF: INTERFACE ::= ['shared'] 'interface' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'
 asCScriptNode *asCParser::ParseInterface()
 {
@@ -3274,6 +3285,7 @@ asCScriptNode *asCParser::ParseMixin()
 	return node;
 }
 
+// TODO: external: add optional 'external' keyword to import shared declaration.
 // BNF: CLASS ::= {'shared' | 'abstract' | 'final'} 'class' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR | FUNCDEF} '}'
 asCScriptNode *asCParser::ParseClass()
 {

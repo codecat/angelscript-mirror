@@ -10,6 +10,57 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
+
+	// Test external shared enums
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum TEST1; \n"
+			"shared enum TEST2; \n"
+			"external shared enum TEST3; \n" // builder should report error due to not finding TEST3
+			"shared external enum TEST4 { val }; \n" // builder should report error due to not finding TEST4. Cannot redefine original 
+			);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (3, 22) : Error   : External shared entity 'TEST3' not found\n"
+						   "test (4, 22) : Error   : External shared entity 'TEST4' not found\n"
+						   "test (4, 22) : Error   : External shared entity 'TEST4' cannot redefine the original entity\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"shared enum TEST { val = 1 }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"external shared enum TEST; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test using a registered funcdef in a shared function
 	// https://www.gamedev.net/topic/685120-application-registered-funcdefs-arent-shared/
 	{
