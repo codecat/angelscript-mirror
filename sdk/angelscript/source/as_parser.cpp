@@ -2262,7 +2262,9 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttMixin )
 				node->AddChildLast(ParseMixin());
-			else if( t1.type == ttInterface || (t1.type == ttIdentifier && t2.type == ttInterface) )
+			else if( t1.type == ttInterface ||
+				     (t2.type == ttInterface && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN))) || 
+				     (t3.type == ttInterface && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN)) && (IdentifierIs(t2, SHARED_TOKEN) || IdentifierIs(t2, EXTERNAL_TOKEN))) )
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttFuncDef )
 				node->AddChildLast(ParseFuncDef());
@@ -3163,29 +3165,23 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 	return node;
 }
 
-// TODO: external: add optional 'external' keyword to import shared declaration.
-// BNF: INTERFACE ::= ['shared'] 'interface' IDENTIFIER [':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'
+// BNF: INTERFACE ::= {'external' | 'shared'} 'interface' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'))
 asCScriptNode *asCParser::ParseInterface()
 {
 	asCScriptNode *node = CreateNode(snInterface);
 	if( node == 0 ) return 0;
 
 	sToken t;
+
+	// Allow keywords 'external' and 'shared' before 'interface'
 	GetToken(&t);
-
-	// Allow keyword 'shared' before 'interface'
-	if( t.type == ttIdentifier )
+	while( IdentifierIs(t, SHARED_TOKEN) ||
+		   IdentifierIs(t, EXTERNAL_TOKEN) )
 	{
-		tempString.Assign(&script->code[t.pos], t.length);
-		if( tempString != SHARED_TOKEN )
-		{
-			Error(ExpectedToken(SHARED_TOKEN), &t);
-			Error(InsteadFound(t), &t);
-			return node;
-		}
-
 		RewindTo(&t);
 		node->AddChildLast(ParseIdentifier());
+		if (isSyntaxError) return node;
+
 		GetToken(&t);
 	}
 
@@ -3197,11 +3193,14 @@ asCScriptNode *asCParser::ParseInterface()
 	}
 
 	node->SetToken(&t);
-
 	node->AddChildLast(ParseIdentifier());
 
-	// Can optionally have a list of interfaces that are inherited
+	// External shared declarations are ended with ';'
 	GetToken(&t);
+	if (t.type == ttEndStatement)
+		return node;
+
+	// Can optionally have a list of interfaces that are inherited
 	if( t.type == ttColon )
 	{
 		asCScriptNode *inherit = CreateNode(snIdentifier);

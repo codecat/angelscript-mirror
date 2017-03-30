@@ -12,6 +12,55 @@ bool Test()
 
 	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
 
+	// Test external shared interface
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"interface A; \n"
+			"shared interface B; \n"
+			"external shared interface C; \n" // builder should report error due to not finding C
+			"shared external interface D { int func(); }; \n" // builder should report error due to not finding C. Cannot redefine original 
+			);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (3, 27) : Error   : External shared entity 'C' not found\n"
+						   "test (4, 27) : Error   : External shared entity 'D' cannot redefine the original entity\n"
+						   "test (4, 27) : Error   : External shared entity 'D' not found\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"shared interface TEST { int func(); }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"external shared interface TEST; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test external shared enums
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

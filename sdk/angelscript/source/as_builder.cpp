@@ -1994,23 +1994,26 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 
 int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
 {
-	// TODO: external: add optional 'external' keyword to import shared declaration.
-
 	asCScriptNode *n = node->firstChild;
-	asCString name(&file->code[n->tokenPos], n->tokenLength);
 
 	bool isShared = false;
-	if( name == SHARED_TOKEN )
+	bool isExternal = false;
+	while( n->nodeType == snIdentifier )
 	{
-		isShared = true;
-
+		if (file->TokenEquals(n->tokenPos, n->tokenLength, SHARED_TOKEN))
+			isShared = true;
+		else if (file->TokenEquals(n->tokenPos, n->tokenLength, EXTERNAL_TOKEN))
+			isExternal = true;
+		else
+			break;
 		n = n->next;
-		name.Assign(&file->code[n->tokenPos], n->tokenLength);
 	}
 
 	int r, c;
 	file->ConvertPosToRowCol(n->tokenPos, &r, &c);
 
+	asCString name;
+	name.Assign(&file->code[n->tokenPos], n->tokenLength);
 	CheckNameConflict(name.AddressOf(), n, file, ns);
 
 	sClassDeclaration *decl = asNEW(sClassDeclaration);
@@ -2024,6 +2027,14 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	decl->name             = name;
 	decl->script           = file;
 	decl->node             = node;
+
+	// External shared interfaces must not try to redefine the interface
+	if (isExternal && n->next)
+	{
+		asCString str;
+		str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
+		WriteError(str, file, n);
+	}
 
 	// If this type is shared and there already exist another shared
 	// type of the same name, then that one should be used instead of
@@ -2047,6 +2058,14 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 				return 0;
 			}
 		}
+	}
+
+	// If the enum was declared as external then it must have been compiled in a different module first
+	if (isExternal)
+	{
+		asCString str;
+		str.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, name.AddressOf());
+		WriteError(str, file, n);
 	}
 
 	// Register the object type for the interface
@@ -2595,8 +2614,10 @@ void asCBuilder::DetermineTypeRelations()
 		asASSERT(node && node->nodeType == snInterface);
 		node = node->firstChild;
 
-		// Skip the 'shared' keyword
-		if (intfType->IsShared())
+		// Skip the 'shared' & 'external' keywords
+		while( node->nodeType == snIdentifier && 
+			   (intfDecl->script->TokenEquals(node->tokenPos, node->tokenLength, SHARED_TOKEN) ||
+				intfDecl->script->TokenEquals(node->tokenPos, node->tokenLength, EXTERNAL_TOKEN)) )
 			node = node->next;
 
 		// Skip the name
