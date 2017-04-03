@@ -160,6 +160,7 @@
 #define TXT_METHOD_s_DOES_NOT_OVERRIDE              "Method '%s' marked as override but does not replace any base class or interface method"
 #define TXT_METHOD_s_s_HAS_NO_RETURN_TYPE           "Method '%s::%s' is missing the return type, nor is it the same name as object to be a constructor"
 #define TXT_MISSING_IMPLEMENTATION_OF_s             "Missing implementation of '%s'"
+#define TXT_MISSING_DEFINITION_OF_s                 "Missing definition of '%s'"
 #define TXT_MIXIN_CANNOT_BE_DECLARED_AS_s           "Mixin class cannot be declared as '%s'"
 #define TXT_MIXIN_CANNOT_HAVE_CONSTRUCTOR           "Mixin classes cannot have constructors or destructors"
 #define TXT_MIXIN_CLASS_CANNOT_INHERIT              "Mixin class cannot inherit from classes"

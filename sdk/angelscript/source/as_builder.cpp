@@ -1809,8 +1809,7 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	bool isFinal = false;
 	bool isShared = false;
 	bool isAbstract = false;
-
-	// TODO: external: add optional 'external' keyword to import shared declaration.
+	bool isExternal = false;
 
 	// Check the class modifiers
 	while( n->tokenType == ttIdentifier )
@@ -1839,6 +1838,16 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 				WriteWarning(msg, file, n);
 			}
 			isShared = true;
+		}
+		else if (file->TokenEquals(n->tokenPos, n->tokenLength, EXTERNAL_TOKEN))
+		{
+			if (isExternal)
+			{
+				asCString msg;
+				msg.Format(TXT_ATTR_s_INFORMED_MULTIPLE_TIMES, asCString(&file->code[n->tokenPos], n->tokenLength).AddressOf());
+				WriteWarning(msg, file, n);
+			}
+			isExternal = true;
 		}
 		else if( file->TokenEquals(n->tokenPos, n->tokenLength, ABSTRACT_TOKEN) )
 		{
@@ -1882,11 +1891,25 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 	decl->name             = name;
 	decl->script           = file;
 	decl->node             = node;
-	asCObjectType *st = 0;
+
+	// External shared interfaces must not try to redefine the interface
+	if (isExternal && (n->next == 0 || n->next->tokenType != ttEndStatement))
+	{
+		asCString str;
+		str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
+		WriteError(str, file, n);
+	}
+	else if (!isExternal && n->next && n->next->tokenType == ttEndStatement)
+	{
+		asCString str;
+		str.Format(TXT_MISSING_DEFINITION_OF_s, name.AddressOf());
+		WriteError(str, file, n);
+	}
 
 	// If this type is shared and there already exist another shared
 	// type of the same name, then that one should be used instead of
 	// creating a new one.
+	asCObjectType *st = 0;
 	if( isShared )
 	{
 		for( asUINT i = 0; i < engine->sharedScriptTypes.GetLength(); i++ )
@@ -1906,6 +1929,14 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 				break;
 			}
 		}
+	}
+
+	// If the class was declared as external then it must have been compiled in a different module first
+	if (isExternal && decl->typeInfo == 0)
+	{
+		asCString str;
+		str.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, name.AddressOf());
+		WriteError(str, file, n);
 	}
 
 	if (!decl->isExistingShared)
@@ -2029,10 +2060,16 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 	decl->node             = node;
 
 	// External shared interfaces must not try to redefine the interface
-	if (isExternal && n->next)
+	if (isExternal && (n->next == 0 || n->next->tokenType != ttEndStatement) )
 	{
 		asCString str;
 		str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
+		WriteError(str, file, n);
+	}
+	else if (!isExternal && n->next && n->next->tokenType == ttEndStatement)
+	{
+		asCString str;
+		str.Format(TXT_MISSING_DEFINITION_OF_s, name.AddressOf());
 		WriteError(str, file, n);
 	}
 
@@ -2060,7 +2097,7 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 		}
 	}
 
-	// If the enum was declared as external then it must have been compiled in a different module first
+	// If the interface was declared as external then it must have been compiled in a different module first
 	if (isExternal)
 	{
 		asCString str;
@@ -2707,7 +2744,8 @@ void asCBuilder::DetermineTypeRelations()
 
 		while (file->TokenEquals(node->tokenPos, node->tokenLength, FINAL_TOKEN) ||
 			file->TokenEquals(node->tokenPos, node->tokenLength, SHARED_TOKEN) ||
-			file->TokenEquals(node->tokenPos, node->tokenLength, ABSTRACT_TOKEN))
+			file->TokenEquals(node->tokenPos, node->tokenLength, ABSTRACT_TOKEN) ||
+			file->TokenEquals(node->tokenPos, node->tokenLength, EXTERNAL_TOKEN))
 		{
 			node = node->next;
 		}
@@ -3063,82 +3101,77 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 		while( node && node->nodeType == snIdentifier )
 			node = node->next;
 
-		while( node )
+		while( node && node->nodeType == snDeclaration )
 		{
-			if( node->nodeType == snDeclaration )
+			asCScriptNode *nd = node->firstChild;
+
+			// Is the property declared as private or protected?
+			bool isPrivate = false, isProtected = false;
+			if( nd && nd->tokenType == ttPrivate )
 			{
-				asCScriptNode *nd = node->firstChild;
-
-				// Is the property declared as private or protected?
-				bool isPrivate = false, isProtected = false;
-				if( nd && nd->tokenType == ttPrivate )
-				{
-					isPrivate = true;
-					nd = nd->next;
-				}
-				else if( nd && nd->tokenType == ttProtected )
-				{
-					isProtected = true;
-					nd = nd->next;
-				}
-
-				// Determine the type of the property
-				asCScriptCode *file = decl->script;
-				asCDataType dt = CreateDataTypeFromNode(nd, file, ot->nameSpace, false, ot);
-				if( ot->IsShared() && dt.GetTypeInfo() && !dt.GetTypeInfo()->IsShared() )
-				{
-					asCString msg;
-					msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetTypeInfo()->name.AddressOf());
-					WriteError(msg, file, node);
-				}
-
-				if( dt.IsReadOnly() )
-					WriteError(TXT_PROPERTY_CANT_BE_CONST, file, node);
-
-				// Multiple properties can be declared separated by ,
+				isPrivate = true;
 				nd = nd->next;
-				while( nd )
-				{
-					asCString name(&file->code[nd->tokenPos], nd->tokenLength);
-
-					if( !decl->isExistingShared )
-					{
-						CheckNameConflictMember(ot, name.AddressOf(), nd, file, true);
-						AddPropertyToClass(decl, name, dt, isPrivate, isProtected, false, file, nd);
-					}
-					else
-					{
-						// Verify that the property exists in the original declaration
-						bool found = false;
-						for( asUINT p = 0; p < ot->properties.GetLength(); p++ )
-						{
-							asCObjectProperty *prop = ot->properties[p];
-							if( prop->isPrivate == isPrivate &&
-								prop->isProtected == isProtected &&
-								prop->name == name &&
-								prop->type.IsEqualExceptRef(dt) )
-							{
-								found = true;
-								break;
-							}
-						}
-						if( !found )
-						{
-							asCString str;
-							str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
-							WriteError(str, file, nd);
-						}
-					}
-
-					// Skip the initialization node
-					if( nd->next && nd->next->nodeType != snIdentifier )
-						nd = nd->next;
-
-					nd = nd->next;
-				}
 			}
-			else
-				asASSERT(false);
+			else if( nd && nd->tokenType == ttProtected )
+			{
+				isProtected = true;
+				nd = nd->next;
+			}
+
+			// Determine the type of the property
+			asCScriptCode *file = decl->script;
+			asCDataType dt = CreateDataTypeFromNode(nd, file, ot->nameSpace, false, ot);
+			if( ot->IsShared() && dt.GetTypeInfo() && !dt.GetTypeInfo()->IsShared() )
+			{
+				asCString msg;
+				msg.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, dt.GetTypeInfo()->name.AddressOf());
+				WriteError(msg, file, node);
+			}
+
+			if( dt.IsReadOnly() )
+				WriteError(TXT_PROPERTY_CANT_BE_CONST, file, node);
+
+			// Multiple properties can be declared separated by ,
+			nd = nd->next;
+			while( nd )
+			{
+				asCString name(&file->code[nd->tokenPos], nd->tokenLength);
+
+				if( !decl->isExistingShared )
+				{
+					CheckNameConflictMember(ot, name.AddressOf(), nd, file, true);
+					AddPropertyToClass(decl, name, dt, isPrivate, isProtected, false, file, nd);
+				}
+				else
+				{
+					// Verify that the property exists in the original declaration
+					bool found = false;
+					for( asUINT p = 0; p < ot->properties.GetLength(); p++ )
+					{
+						asCObjectProperty *prop = ot->properties[p];
+						if( prop->isPrivate == isPrivate &&
+							prop->isProtected == isProtected &&
+							prop->name == name &&
+							prop->type.IsEqualExceptRef(dt) )
+						{
+							found = true;
+							break;
+						}
+					}
+					if( !found )
+					{
+						asCString str;
+						str.Format(TXT_SHARED_s_DOESNT_MATCH_ORIGINAL, ot->GetName());
+						WriteError(str, file, nd);
+					}
+				}
+
+				// Skip the initialization node
+				if( nd->next && nd->next->nodeType != snIdentifier )
+					nd = nd->next;
+
+				nd = nd->next;
+			}
 
 			node = node->next;
 		}
@@ -3976,19 +4009,23 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 		asASSERT(!type.IsReference());
 
 		// External shared enums must not redeclare the enum values
-		if (isExternal && tmp->next)
+		if (isExternal && (tmp->next == 0 || tmp->next->tokenType != ttEndStatement) )
 		{
 			asCString str;
 			str.Format(TXT_EXTERNAL_SHARED_s_CANNOT_REDEF, name.AddressOf());
 			WriteError(str, file, tmp);
 		}
+		else if (!isExternal && tmp->next && tmp->next->tokenType == ttEndStatement)
+		{
+			asCString str;
+			str.Format(TXT_MISSING_DEFINITION_OF_s, name.AddressOf());
+			WriteError(str, file, tmp);
+		}
 
 		// Register the enum values
 		tmp = tmp->next;
-		while( tmp )
+		while( tmp && tmp->nodeType == snIdentifier )
 		{
-			asASSERT(snIdentifier == tmp->nodeType);
-
 			name.Assign(&file->code[tmp->tokenPos], tmp->tokenLength);
 
 			if( existingSharedType )

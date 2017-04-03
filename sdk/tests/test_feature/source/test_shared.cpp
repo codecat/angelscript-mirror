@@ -12,6 +12,57 @@ bool Test()
 
 	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
 
+	// Test external shared class
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A; \n" // missing definition
+			"shared class B; \n" // missing definition
+			"external shared class C; \n" // builder should report error due to not finding C
+			"shared external class D { void func() {} }; \n" // builder should report error due to not finding C. Cannot redefine original 
+			);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 7) : Error   : Missing definition of 'A'\n"
+			"test (2, 14) : Error   : Missing definition of 'B'\n"
+			"test (3, 23) : Error   : External shared entity 'C' not found\n"
+			"test (4, 23) : Error   : External shared entity 'D' cannot redefine the original entity\n"
+			"test (4, 23) : Error   : External shared entity 'D' not found\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"shared class TEST { void func() {} }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"external shared class TEST; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test external shared interface
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -21,8 +72,8 @@ bool Test()
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
-			"interface A; \n"
-			"shared interface B; \n"
+			"interface A; \n" // missing definition
+			"shared interface B; \n" // missing definition
 			"external shared interface C; \n" // builder should report error due to not finding C
 			"shared external interface D { int func(); }; \n" // builder should report error due to not finding C. Cannot redefine original 
 			);
@@ -30,7 +81,9 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 
-		if (bout.buffer != "test (3, 27) : Error   : External shared entity 'C' not found\n"
+		if (bout.buffer != "test (1, 11) : Error   : Missing definition of 'A'\n"
+						   "test (2, 18) : Error   : Missing definition of 'B'\n"
+						   "test (3, 27) : Error   : External shared entity 'C' not found\n"
 						   "test (4, 27) : Error   : External shared entity 'D' cannot redefine the original entity\n"
 						   "test (4, 27) : Error   : External shared entity 'D' not found\n")
 		{
@@ -70,8 +123,8 @@ bool Test()
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
-			"enum TEST1; \n"
-			"shared enum TEST2; \n"
+			"enum TEST1; \n" // missing definition
+			"shared enum TEST2; \n" // missing definition
 			"external shared enum TEST3; \n" // builder should report error due to not finding TEST3
 			"shared external enum TEST4 { val }; \n" // builder should report error due to not finding TEST4. Cannot redefine original 
 			);
@@ -79,7 +132,9 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 
-		if (bout.buffer != "test (3, 22) : Error   : External shared entity 'TEST3' not found\n"
+		if (bout.buffer != "test (1, 6) : Error   : Missing definition of 'TEST1'\n"
+						   "test (2, 13) : Error   : Missing definition of 'TEST2'\n"
+						   "test (3, 22) : Error   : External shared entity 'TEST3' not found\n"
 						   "test (4, 22) : Error   : External shared entity 'TEST4' not found\n"
 						   "test (4, 22) : Error   : External shared entity 'TEST4' cannot redefine the original entity\n")
 		{
