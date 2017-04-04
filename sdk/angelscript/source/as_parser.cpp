@@ -2959,33 +2959,52 @@ asCScriptNode *asCParser::ParseFuncDef()
 	return node;
 }
 
-// TODO: external: add optional 'external' keyword to import shared declaration.
-// BNF: FUNC ::= ['private' | 'protected' | 'shared'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} STATBLOCK 
+// BNF: FUNC ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} (';' | STATBLOCK) 
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = CreateNode(snFunction);
 	if( node == 0 ) return 0;
 
-	sToken t1,t2;
+	sToken t1;
 	GetToken(&t1);
-	GetToken(&t2);
-	RewindTo(&t1);
-
-	// A class method can start with 'private' or 'protected'
-	if( isMethod && t1.type == ttPrivate )
-		node->AddChildLast(ParseToken(ttPrivate));
-	else if( isMethod && t1.type == ttProtected )
-		node->AddChildLast(ParseToken(ttProtected));
-	if( isSyntaxError ) return node;
-
-	// A global function can be marked as shared
-	if( !isMethod && IdentifierIs(t1, SHARED_TOKEN) )
+	if (!isMethod)
 	{
-		node->AddChildLast(ParseIdentifier());
-		if( isSyntaxError ) return node;
+		// A global function can be marked as shared and external
+		while (t1.type == ttIdentifier)
+		{
+			if (IdentifierIs(t1, SHARED_TOKEN) ||
+				IdentifierIs(t1, EXTERNAL_TOKEN))
+			{
+				RewindTo(&t1);
+				node->AddChildLast(ParseIdentifier());
+				if (isSyntaxError) return node;
+			}
+			else
+				break;
+
+			GetToken(&t1);
+		}
 	}
 
+	// A class method can start with 'private' or 'protected'
+	if (isMethod && t1.type == ttPrivate)
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseToken(ttPrivate));
+		GetToken(&t1);
+	}
+	else if (isMethod && t1.type == ttProtected)
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseToken(ttProtected));
+		GetToken(&t1);
+	}
+	if( isSyntaxError ) return node;
+
 	// If it is a global function, or a method, except constructor and destructor, then the return type is parsed
+	sToken t2;
+	GetToken(&t2);
+	RewindTo(&t1);
 	if( !isMethod || (t1.type != ttBitNot && t2.type != ttOpenParanthesis) )
 	{
 		node->AddChildLast(ParseType(true));
@@ -3020,6 +3039,15 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 		// TODO: Should support abstract methods, in which case no statement block should be provided
 		ParseMethodOverrideBehaviors(node);
 		if( isSyntaxError ) return node;
+	}
+
+	// External shared functions must be ended with ';'
+	GetToken(&t1);
+	RewindTo(&t1);
+	if (t1.type == ttEndStatement)
+	{
+		node->AddChildLast(ParseToken(ttEndStatement));
+		return node;
 	}
 
 	// We should just find the end of the statement block here. The statements 

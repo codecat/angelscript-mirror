@@ -11,6 +11,61 @@ bool Test()
 	int r;
 
 	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
+	// TODO: external: script builder add-on must also be able to understand the 'external' keyword for metadata
+
+	// Test external shared function
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void A(); \n" // looks like a variable declaration
+			"shared void B(); \n" // missing definition
+			"external shared void C(); \n" // builder should report error due to not finding C
+			"shared external void D() {  }; \n" // builder should report error due to not finding C. Cannot redefine original 
+			);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Error   : Data type can't be 'void'\n"
+						   "test (2, 1) : Error   : Missing definition of 'B'\n"
+						   "test (3, 1) : Error   : External shared entity 'C' not found\n"
+						   "test (4, 1) : Error   : External shared entity 'D' not found\n"
+						   "test (4, 1) : Error   : External shared entity 'D' cannot redefine the original entity\n"
+						// TODO: Shouldn't try to compile the variable since the declaration had errors
+						   "test (1, 6) : Info    : Compiling void A\n"
+						   "test (1, 7) : Error   : Only objects have constructors\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"shared void TEST() {  }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"external shared void TEST(); \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test external shared class
 	{
