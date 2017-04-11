@@ -13,6 +13,54 @@ bool Test()
 	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
 	// TODO: external: script builder add-on must also be able to understand the 'external' keyword for metadata
 
+	// Test external shared funcdef
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void A(); \n" // ok
+			"shared funcdef void B(); \n" // ok
+			"external shared funcdef void C(); \n" // builder should report error due to not finding C
+			"shared external funcdef void D(); \n" // builder should report error due to not finding D
+			);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (3, 1) : Error   : External shared entity 'C' not found\n"
+						   "test (4, 1) : Error   : External shared entity 'D' not found\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection("test",
+			"shared funcdef void TEST();");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"external shared funcdef void TEST(); \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test external shared function
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -212,6 +260,30 @@ bool Test()
 			TEST_FAILED;
 
 		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test declaring a shared funcdef that use a non-shared type
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"class A {} \n"
+			"shared funcdef void F(A@); \n");
+		r = mod1->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (2, 1) : Error   : Shared code cannot use non-shared type 'A'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

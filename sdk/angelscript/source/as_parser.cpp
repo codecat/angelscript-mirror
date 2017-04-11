@@ -2237,37 +2237,33 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 	if( node == 0 ) return 0;
 
 	// Determine type of node
-	sToken t1, t2, t3;
-
 	for(;;)
 	{
 		while( !isSyntaxError )
 		{
-			GetToken(&t1);
-			GetToken(&t2);
-			GetToken(&t3);
-			RewindTo(&t1);
+			sToken tStart;
+			GetToken(&tStart);
 
-			// TODO: external: optimize by skipping tokens 'shared', 'external', 'final', 'abstract' so they don't have to be checked in every condition
+			// Optimize by skipping tokens 'shared', 'external', 'final', 'abstract' so they don't have to be checked in every condition
+			sToken t1 = tStart;
+			while (IdentifierIs(t1, SHARED_TOKEN) ||
+				IdentifierIs(t1, EXTERNAL_TOKEN) ||
+				IdentifierIs(t1, FINAL_TOKEN) ||
+				IdentifierIs(t1, ABSTRACT_TOKEN))
+				GetToken(&t1);
+			RewindTo(&tStart);
 
 			if( t1.type == ttImport )
 				node->AddChildLast(ParseImport());
-			else if( t1.type == ttEnum ||
-					 (t2.type == ttEnum && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN))) ||
-					 (t3.type == ttEnum && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN)) && (IdentifierIs(t2, SHARED_TOKEN) || IdentifierIs(t2, EXTERNAL_TOKEN))) )
+			else if( t1.type == ttEnum )
 				node->AddChildLast(ParseEnumeration());	// Handle enumerations
 			else if( t1.type == ttTypedef )
 				node->AddChildLast(ParseTypedef());		// Handle primitive typedefs
-			else if( t1.type == ttClass || 
-					(t2.type == ttClass && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, ABSTRACT_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN))) ||
-					(t3.type == ttClass && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, ABSTRACT_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN)) && (IdentifierIs(t2, SHARED_TOKEN) || IdentifierIs(t2, FINAL_TOKEN) || IdentifierIs(t2, ABSTRACT_TOKEN) || IdentifierIs(t2, EXTERNAL_TOKEN))) ||
-					((IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, ABSTRACT_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN)) && (IdentifierIs(t2, SHARED_TOKEN) || IdentifierIs(t2, FINAL_TOKEN) || IdentifierIs(t2, ABSTRACT_TOKEN) || IdentifierIs(t2, EXTERNAL_TOKEN)) && (IdentifierIs(t3, SHARED_TOKEN) || IdentifierIs(t3, FINAL_TOKEN) || IdentifierIs(t3, ABSTRACT_TOKEN) || IdentifierIs(t3, EXTERNAL_TOKEN))) )
+			else if( t1.type == ttClass )
 				node->AddChildLast(ParseClass());
 			else if( t1.type == ttMixin )
 				node->AddChildLast(ParseMixin());
-			else if( t1.type == ttInterface ||
-				     (t2.type == ttInterface && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN))) || 
-				     (t3.type == ttInterface && (IdentifierIs(t1, SHARED_TOKEN) || IdentifierIs(t1, EXTERNAL_TOKEN)) && (IdentifierIs(t2, SHARED_TOKEN) || IdentifierIs(t2, EXTERNAL_TOKEN))) )
+			else if( t1.type == ttInterface )
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttFuncDef )
 				node->AddChildLast(ParseFuncDef());
@@ -2306,6 +2302,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 		if( isSyntaxError )
 		{
 			// Search for either ';' or '{' or end
+			sToken t1;
 			GetToken(&t1);
 			while( t1.type != ttEndStatement && t1.type != ttEnd &&
 				   t1.type != ttStartStatementBlock )
@@ -2917,15 +2914,25 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	return false;
 }
 
-// TODO: external: add optional 'external' keyword to import shared declaration. Also allow funcdef to be declared as 'shared'
-// BNF: FUNCDEF ::= 'funcdef' TYPE ['&'] IDENTIFIER PARAMLIST ';'
+// BNF: FUNCDEF ::= {'external' | 'shared'} 'funcdef' TYPE ['&'] IDENTIFIER PARAMLIST ';'
 asCScriptNode *asCParser::ParseFuncDef()
 {
 	asCScriptNode *node = CreateNode(snFuncDef);
 	if( node == 0 ) return 0;
 
+	// Allow keywords 'external' and 'shared' before 'interface'
 	sToken t1;
 	GetToken(&t1);
+	while (IdentifierIs(t1, SHARED_TOKEN) ||
+		   IdentifierIs(t1, EXTERNAL_TOKEN))
+	{
+		RewindTo(&t1);
+		node->AddChildLast(ParseIdentifier());
+		if (isSyntaxError) return node;
+
+		GetToken(&t1);
+	}
+
 	if( t1.type != ttFuncDef )
 	{
 		Error(asCTokenizer::GetDefinition(ttFuncDef), &t1);

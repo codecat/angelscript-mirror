@@ -1542,18 +1542,17 @@ sMixinClass *asCBuilder::GetMixinClass(const char *name, asSNameSpace *ns)
 
 int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns, asCObjectType *parent)
 {
-	// TODO: external: add optional 'external' keyword to import shared declaration.
-
 	// namespace and parent are exclusively mutual
 	asASSERT((ns == 0 && parent) || (ns && parent == 0));
 
-	// TODO: redesign: Allow funcdefs to be explicitly declared as 'shared'. In this case
-	//                 an error should be given if any of the arguments/return type is not
-	//                 shared.
+	// Skip leading 'shared' and 'external' keywords
+	asCScriptNode *n = node->firstChild;
+	while (n->nodeType == snIdentifier)
+		n = n->next;
 
 	// Find the name
-	asASSERT( node->firstChild->nodeType == snDataType );
-	asCScriptNode *n = node->firstChild->next->next;
+	asASSERT( n->nodeType == snDataType );
+	n = n->next->next;
 
 	asCString name;
 	name.Assign(&file->code[n->tokenPos], n->tokenLength);
@@ -1619,7 +1618,6 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	asASSERT( fdt );
 	asCScriptFunction *func = fdt->funcdef;
 
-	// TODO: It should be possible to declare funcdef as shared. In this case a compiler error will be given if any of the types it uses are not shared
 	asSNameSpace *implicitNs = func->nameSpace ? func->nameSpace : fdt->parentClass->nameSpace;
 	GetParsedFunctionDetails(funcDef->node, funcDef->script, fdt->parentClass, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isProtected, isOverride, isFinal, isShared, isExternal, implicitNs);
 
@@ -1629,15 +1627,33 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 			asDELETE(defaultArgs[n], asCString);
 
 	// All funcdefs are shared, unless one of the parameter types or return type is not shared
+	bool declaredShared = isShared;
 	isShared = true;
-	if( func->returnType.GetTypeInfo() && !func->returnType.GetTypeInfo()->IsShared() )
+	if (func->returnType.GetTypeInfo() && !func->returnType.GetTypeInfo()->IsShared())
+	{
+		if (declaredShared)
+		{
+			asCString s;
+			s.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, func->returnType.GetTypeInfo()->name.AddressOf());
+			WriteError(s.AddressOf(), funcDef->script, funcDef->node);
+		}
 		isShared = false;
+	}
 	for( asUINT n = 0; isShared && n < func->parameterTypes.GetLength(); n++ )
-		if( func->parameterTypes[n].GetTypeInfo() && !func->parameterTypes[n].GetTypeInfo()->IsShared() )
+		if (func->parameterTypes[n].GetTypeInfo() && !func->parameterTypes[n].GetTypeInfo()->IsShared())
+		{
+			if (declaredShared)
+			{
+				asCString s;
+				s.Format(TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s, func->parameterTypes[n].GetTypeInfo()->name.AddressOf());
+				WriteError(s.AddressOf(), funcDef->script, funcDef->node);
+			}
 			isShared = false;
+		}
 	func->isShared = isShared;
 
 	// Check if there is another identical funcdef from another module and if so reuse that instead
+	bool found = false;
 	if( func->isShared )
 	{
 		for( asUINT n = 0; n < engine->funcDefs.GetLength(); n++ )
@@ -1661,9 +1677,18 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 				engine->funcDefs.RemoveValue(fdt);
 
 				fdt->ReleaseInternal();
+				found = true;
 				break;
 			}
 		}
+	}
+
+	// If the funcdef was declared as external then the existing shared declaration must have been found
+	if (isExternal && !found)
+	{
+		asCString str;
+		str.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, funcDef->name.AddressOf());
+		WriteError(str, funcDef->script, funcDef->node);
 	}
 }
 
