@@ -11,7 +11,6 @@ bool Test()
 	int r;
 
 	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
-	// TODO: external: script builder add-on must also be able to understand the 'external' keyword for metadata
 
 	// Test external shared funcdef
 	{

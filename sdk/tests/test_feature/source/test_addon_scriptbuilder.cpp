@@ -168,6 +168,69 @@ bool Test()
 #endif
 
 #if AS_PROCESS_METADATA == 1
+	// Test metadata on external shared entities
+	{
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"shared class test {} \n"
+			"shared interface intf {} \n"
+			"shared enum boo {} \n"
+			"shared void func() {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, "mod");
+		builder.AddSectionFromMemory("test1",
+			"[external test] \n"
+			"external shared class test; \n"
+			"[external intf] \n"
+			"external shared interface intf; \n"
+			"[external boo] \n"
+			"external shared enum boo; \n"
+			"[external func] \n"
+			"external shared void func(); \n");
+
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asITypeInfo *type = engine->GetModule("mod")->GetTypeInfoByName("test");
+		if (type == 0)
+			TEST_FAILED;
+		else
+		{
+			int typeId = type->GetTypeId();
+			metadata = builder.GetMetadataStringForType(typeId);
+			if (metadata != "external test")
+				TEST_FAILED;
+		}
+
+		metadata = builder.GetMetadataStringForFunc(engine->GetModule("mod")->GetFunctionByName("func"));
+		if (metadata != "external func")
+			TEST_FAILED;
+
+		metadata = builder.GetMetadataStringForType(engine->GetModule("mod")->GetTypeInfoByName("boo")->GetTypeId());
+		if (metadata != "external boo")
+			TEST_FAILED;
+
+		metadata = builder.GetMetadataStringForType(engine->GetModule("mod")->GetTypeInfoByName("intf")->GetTypeId());
+		if (metadata != "external intf")
+			TEST_FAILED;
+	}
+#endif
+
+#if AS_PROCESS_METADATA == 1
 	// Test metadata on class methods with default arguments
 	// Bug reported by Thomas Grip
 	{
