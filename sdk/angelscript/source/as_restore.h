@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -72,7 +72,7 @@ protected:
 	void               ReadObjectProperty(asCObjectType *ot);
 	void               ReadDataType(asCDataType *dt);
 	asCTypeInfo       *ReadTypeInfo();
-	void               ReadTypeDeclaration(asCTypeInfo *ot, int phase);
+	void               ReadTypeDeclaration(asCTypeInfo *ot, int phase, bool *isExternal = 0);
 	void               ReadByteCode(asCScriptFunction *func);
 	asWORD             ReadEncodedUInt16();
 	asUINT             ReadEncodedUInt();

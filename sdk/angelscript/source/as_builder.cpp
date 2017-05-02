@@ -1690,6 +1690,10 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 		str.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, funcDef->name.AddressOf());
 		WriteError(str, funcDef->script, funcDef->node);
 	}
+
+	// Remember if the type was declared as external so the saved bytecode can be flagged accordingly
+	if (isExternal && found)
+		module->externalTypes.PushLast(engine->scriptFunctions[funcDef->idx]->funcdefType);
 }
 
 int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSNameSpace *ns)
@@ -1969,6 +1973,10 @@ int asCBuilder::RegisterClass(asCScriptNode *node, asCScriptCode *file, asSNameS
 		WriteError(str, file, n);
 	}
 
+	// Remember if the class was declared as external so the saved bytecode can be flagged accordingly
+	if (isExternal)
+		module->externalTypes.PushLast(st);
+
 	if (!decl->isExistingShared)
 	{
 		// Create a new object type for this class
@@ -2122,6 +2130,11 @@ int asCBuilder::RegisterInterface(asCScriptNode *node, asCScriptCode *file, asSN
 				decl->typeInfo = st;
 				module->classTypes.PushLast(st);
 				st->AddRefInternal();
+
+				// Remember if the interface was declared as external so the saved bytecode can be flagged accordingly
+				if (isExternal)
+					module->externalTypes.PushLast(st);
+
 				return 0;
 			}
 		}
@@ -3992,6 +4005,10 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 		WriteError(str, file, tmp);
 	}
 
+	// Remember if the type was declared as external so the saved bytecode can be flagged accordingly
+	if (isExternal && existingSharedType)
+		module->externalTypes.PushLast(existingSharedType);
+
 	// Check the name and add the enum
 	int r = CheckNameConflict(name.AddressOf(), tmp->firstChild, file, ns);
 	if( asSUCCESS == r )
@@ -4598,6 +4615,10 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 				}
 			}
 		}
+
+		// Remember if the function was declared as external so the saved bytecode can be flagged accordingly
+		if (isExternal && func->isExistingShared)
+			module->externalFunctions.PushLast(engine->scriptFunctions[func->funcId]);
 
 		if (isExternal && !func->isExistingShared)
 		{

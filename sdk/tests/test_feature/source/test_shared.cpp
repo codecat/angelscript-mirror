@@ -10,7 +10,74 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
-	// TODO: external: external shared entities should be saved specifically as external in bytecode to avoid increase in file
+	// external shared entities should be saved specifically as external in bytecode to avoid increase in file size
+	// TODO: as_restore should store the external shared functions only by function signature
+	// TODO: as_restore should store the external shared funcdefs only by function signature (or maybe just the name)
+	// TODO: as_restore should verify that the exteranl shared entity really exists when loading
+	// TODO: as_restore should only populate externalTypes externalFunctions if not def AS_NO_COMPILER
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod1 = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod1->AddScriptSection("test",
+			"shared funcdef void A(); \n"
+			"shared void B() {} \n"
+			"shared interface C { void foo(); } \n"
+			"shared enum D { a, b, c } \n"
+			"shared class E : C { void foo() {} } \n");
+		r = mod1->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test2",
+			"external shared funcdef void A(); \n"
+			"external shared void B(); \n"
+			"external shared interface C; \n"
+			"external shared enum D; \n"
+			"external shared class E; \n");
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc1(__FILE__"1");
+		CBytecodeStream bc2(__FILE__"2");
+		r = mod1->SaveByteCode(&bc1); assert(r >= 0);
+		r = mod2->SaveByteCode(&bc2); assert(r >= 0);
+
+		if (bc1.buffer.size() <= bc2.buffer.size())
+			TEST_FAILED;
+
+		asDWORD crc32 = ComputeCRC32(&bc1.buffer[0], asUINT(bc1.buffer.size()));
+		if (crc32 != 0x361B59E2)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+
+		crc32 = ComputeCRC32(&bc2.buffer[0], asUINT(bc2.buffer.size()));
+		if (crc32 != 0x3EA2920E)
+		{
+			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
+			TEST_FAILED;
+		}
+
+		asIScriptModule *mod3 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod3->LoadByteCode(&bc2);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test external shared funcdef
 	{

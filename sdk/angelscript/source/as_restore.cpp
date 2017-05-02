@@ -156,7 +156,8 @@ int asCReader::ReadInner()
 			return asOUT_OF_MEMORY;
 		}
 
-		ReadTypeDeclaration(et, 1);
+		bool isExternal = false;
+		ReadTypeDeclaration(et, 1, &isExternal);
 
 		// If the type is shared then we should use the original if it exists
 		bool sharedExists = false;
@@ -179,6 +180,14 @@ int asCReader::ReadInner()
 			}
 		}
 
+		if (isExternal && !sharedExists)
+		{
+			// TODO: external: Write message
+			asDELETE(et, asCEnumType);
+			error = true;
+			return asERROR;
+		}
+
 		if( sharedExists )
 		{
 			existingShared.Insert(et, true);
@@ -196,6 +205,10 @@ int asCReader::ReadInner()
 			et->module = module;
 		}
 		module->enumTypes.PushLast(et);
+
+		if (isExternal)
+			module->externalTypes.PushLast(et);
+
 		ReadTypeDeclaration(et, 2);
 	}
 
@@ -214,7 +227,8 @@ int asCReader::ReadInner()
 			return asOUT_OF_MEMORY;
 		}
 
-		ReadTypeDeclaration(ot, 1);
+		bool isExternal = false;
+		ReadTypeDeclaration(ot, 1, &isExternal);
 
 		// If the type is shared, then we should use the original if it exists
 		bool sharedExists = false;
@@ -238,6 +252,14 @@ int asCReader::ReadInner()
 			}
 		}
 
+		if (isExternal && !sharedExists)
+		{
+			// TODO: external: Write message
+			asDELETE(ot, asCObjectType);
+			error = true;
+			return asERROR;
+		}
+
 		if( sharedExists )
 		{
 			existingShared.Insert(ot, true);
@@ -255,6 +277,9 @@ int asCReader::ReadInner()
 			ot->module = module;
 		}
 		module->classTypes.PushLast(ot);
+
+		if (isExternal)
+			module->externalTypes.PushLast(ot);
 	}
 
 	if( error ) return asERROR;
@@ -360,7 +385,8 @@ int asCReader::ReadInner()
 			return asOUT_OF_MEMORY;
 		}
 
-		ReadTypeDeclaration(td, 1);
+		bool isExternal = false;
+		ReadTypeDeclaration(td, 1, &isExternal);
 		td->module = module;
 		module->typeDefs.PushLast(td);
 		ReadTypeDeclaration(td, 2);
@@ -1274,10 +1300,14 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	return func;
 }
 
-void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase)
+void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase, bool *isExternal)
 {
 	if( phase == 1 )
 	{
+		asASSERT(isExternal);
+		if (isExternal)
+			*isExternal = false;
+
 		// Read the initial attributes
 		ReadString(&type->name);
 		ReadData(&type->flags, 4);
@@ -1319,9 +1349,27 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase)
 			// TODO: weak: Should not do this if the class has been declared with 'noweak'
 			engine->scriptFunctions[ot->beh.getWeakRefFlag]->AddRefInternal();
 		}
+
+		// external shared flag
+		if (type->flags & asOBJ_SHARED)
+		{
+			char c;
+			ReadData(&c, 1);
+			if (c == 'e')
+				*isExternal = true;
+			else if (c != ' ')
+			{
+				error = true;
+				return;
+			}
+		}
 	}
 	else if( phase == 2 )
 	{
+		// external shared types doesn't store this
+		if ((type->flags & asOBJ_SHARED) && module->externalTypes.IndexOf(type) >= 0)
+			return;
+
 		if( type->flags & asOBJ_ENUM )
 		{
 			asCEnumType *t = CastToEnumType(type);
@@ -1716,6 +1764,10 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase)
 	}
 	else if( phase == 3 )
 	{
+		// external shared types doesn't store this
+		if ((type->flags & asOBJ_SHARED) && module->externalTypes.IndexOf(type) >= 0)
+			return;
+
 		asCObjectType *ot = CastToObjectType(type);
 
 		// This is only done for object types
@@ -4029,9 +4081,22 @@ void asCWriter::WriteTypeDeclaration(asCTypeInfo *type, int phase)
 
 		// namespace
 		WriteString(&type->nameSpace->name);
+
+		// external shared flag
+		if ((type->flags & asOBJ_SHARED))
+		{
+			char c = ' ';
+			if (module->externalTypes.IndexOf(type) >= 0)
+				c = 'e';
+			WriteData(&c, 1);
+		}
 	}
 	else if( phase == 2 )
 	{
+		// external shared types doesn't need to save this
+		if ((type->flags & asOBJ_SHARED) && module->externalTypes.IndexOf(type) >= 0)
+			return;
+
 		if(type->flags & asOBJ_ENUM )
 		{
 			// enumValues[]
@@ -4105,6 +4170,10 @@ void asCWriter::WriteTypeDeclaration(asCTypeInfo *type, int phase)
 	}
 	else if( phase == 3 )
 	{
+		// external shared types doesn't need to save this
+		if ((type->flags & asOBJ_SHARED) && module->externalTypes.IndexOf(type) >= 0)
+			return;
+
 		// properties[]
 		asCObjectType *t = CastToObjectType(type);
 
