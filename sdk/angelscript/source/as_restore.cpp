@@ -289,8 +289,8 @@ int asCReader::ReadInner()
 	module->funcDefs.Allocate(count, false);
 	for( i = 0; i < count && !error; i++ )
 	{
-		bool isNew;
-		asCScriptFunction *funcDef = ReadFunction(isNew, false, true);
+		bool isNew, isExternal;
+		asCScriptFunction *funcDef = ReadFunction(isNew, false, true, true, &isExternal);
 		if(funcDef)
 		{
 			funcDef->module = module;
@@ -323,6 +323,9 @@ int asCReader::ReadInner()
 						module->funcDefs[module->funcDefs.IndexOf(fdt)] = f2;
 						f2->AddRefInternal();
 
+						if (isExternal)
+							module->externalTypes.PushLast(f2);
+
 						engine->funcDefs.RemoveValue(fdt);
 
 						savedFunctions[savedFunctions.IndexOf(funcDef)] = f2->funcdef;
@@ -345,6 +348,14 @@ int asCReader::ReadInner()
 			// Add the funcdef to the parentClass if this is a child funcdef
 			if (funcDef && fdt->parentClass)
 				fdt->parentClass->childFuncDefs.PushLast(fdt);
+
+			// Check if an external shared funcdef was really found
+			if (isExternal && funcDef)
+			{
+				// TODO: external: Write message
+				error = true;
+				return asERROR;
+			}
 		}
 		else
 			Error(TXT_INVALID_BYTECODE_d);
@@ -412,8 +423,8 @@ int asCReader::ReadInner()
 	for( i = 0; i < count && !error; ++i ) 
 	{
 		size_t len = module->scriptFunctions.GetLength();
-		bool isNew;
-		func = ReadFunction(isNew);
+		bool isNew, isExternal;
+		func = ReadFunction(isNew, true, true, true, &isExternal);
 		if( func == 0 )
 		{
 			Error(TXT_INVALID_BYTECODE_d);
@@ -442,13 +453,26 @@ int asCReader::ReadInner()
 					// Insert the function in the dontTranslate array
 					dontTranslate.Insert(realFunc, true);
 
+					if (isExternal)
+						module->externalFunctions.PushLast(realFunc);
+
 					// Release the function, but make sure nothing else is released
 					func->id = 0;
-					func->scriptData->byteCode.SetLength(0);
+					if( func->scriptData )
+						func->scriptData->byteCode.SetLength(0);
 					func->ReleaseInternal();
+					func = 0;
 					break;
 				}
 			}
+		}
+
+		// Check if an external shared func was really found
+		if (isExternal && func)
+		{
+			// TODO: external: Write message
+			error = true;
+			return asERROR;
 		}
 	}
 
@@ -1065,9 +1089,10 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 	}
 }
 
-asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool addToEngine, bool addToGC) 
+asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool addToEngine, bool addToGC, bool *isExternal) 
 {
 	isNew = false;
+	if (isExternal) *isExternal = false;
 	if( error ) return 0;
 
 	char c;
@@ -1117,154 +1142,160 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 
 	if( func->funcType == asFUNC_SCRIPT )
 	{
-		func->AllocateScriptFunctionData();
-		if( func->scriptData == 0 )
+		char bits;
+		ReadData(&bits, 1);
+		func->isShared = bits & 1 ? true : false;
+		func->dontCleanUpOnException = bits & 2 ? true : false;
+		if ((bits & 4) && isExternal)
+			*isExternal = true;
+
+		// for external shared functions the rest is not needed
+		if (!(bits & 4))
 		{
-			// Out of memory
-			error = true;
-			func->DestroyHalfCreated();
-			return 0;
-		}
-
-		if( addToGC && !addToModule )
-			engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
-		
-		ReadByteCode(func);
-
-		func->scriptData->variableSpace = ReadEncodedUInt();
-
-		count = ReadEncodedUInt();
-		func->scriptData->objVariablePos.Allocate(count, false);
-		func->scriptData->objVariableTypes.Allocate(count, false);
-		for( i = 0; i < count; ++i )
-		{
-			func->scriptData->objVariableTypes.PushLast(ReadTypeInfo());
-			num = ReadEncodedUInt();
-			func->scriptData->objVariablePos.PushLast(num);
-
-			if( error )
-			{
-				// No need to continue (the error has already been reported before)
-				func->DestroyHalfCreated();
-				return 0;
-			}
-		}
-		if( count > 0 )
-			func->scriptData->objVariablesOnHeap = ReadEncodedUInt();
-		else
-			func->scriptData->objVariablesOnHeap = 0;
-
-		int length = ReadEncodedUInt();
-		func->scriptData->objVariableInfo.SetLength(length);
-		for( i = 0; i < length; ++i )
-		{
-			func->scriptData->objVariableInfo[i].programPos     = ReadEncodedUInt();
-			func->scriptData->objVariableInfo[i].variableOffset = ReadEncodedUInt();
-			asEObjVarInfoOption option = (asEObjVarInfoOption)ReadEncodedUInt();
-			func->scriptData->objVariableInfo[i].option         = option;
-			if (option != asOBJ_INIT && option != asOBJ_UNINIT && option != asBLOCK_BEGIN && option != asBLOCK_END)
-			{
-				error = true;
-				func->DestroyHalfCreated();
-				return 0;
-			}
-		}
-
-		if( !noDebugInfo )
-		{
-			length = ReadEncodedUInt();
-			func->scriptData->lineNumbers.SetLength(length);
-			if( int(func->scriptData->lineNumbers.GetLength()) != length )
+			func->AllocateScriptFunctionData();
+			if (func->scriptData == 0)
 			{
 				// Out of memory
 				error = true;
 				func->DestroyHalfCreated();
 				return 0;
 			}
-			for( i = 0; i < length; ++i )
-				func->scriptData->lineNumbers[i] = ReadEncodedUInt();
 
-			// Read the array of script sections 
-			length = ReadEncodedUInt();
-			func->scriptData->sectionIdxs.SetLength(length);
-			if( int(func->scriptData->sectionIdxs.GetLength()) != length )
+			if (addToGC && !addToModule)
+				engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
+
+			ReadByteCode(func);
+
+			func->scriptData->variableSpace = ReadEncodedUInt();
+
+			count = ReadEncodedUInt();
+			func->scriptData->objVariablePos.Allocate(count, false);
+			func->scriptData->objVariableTypes.Allocate(count, false);
+			for (i = 0; i < count; ++i)
 			{
-				// Out of memory
-				error = true;
-				func->DestroyHalfCreated();
-				return 0;
-			}
-			for( i = 0; i < length; ++i )
-			{
-				if( (i & 1) == 0 )
-					func->scriptData->sectionIdxs[i] = ReadEncodedUInt();
-				else
-				{
-					asCString str;
-					ReadString(&str);
-					func->scriptData->sectionIdxs[i] = engine->GetScriptSectionNameIndex(str.AddressOf());
-				}
-			}
-		}
+				func->scriptData->objVariableTypes.PushLast(ReadTypeInfo());
+				num = ReadEncodedUInt();
+				func->scriptData->objVariablePos.PushLast(num);
 
-		// Read the variable information
-		if( !noDebugInfo )
-		{
-			length = ReadEncodedUInt();
-			func->scriptData->variables.Allocate(length, false);
-			for( i = 0; i < length; i++ )
-			{
-				asSScriptVariable *var = asNEW(asSScriptVariable);
-				if( var == 0 )
-				{
-					// Out of memory
-					error = true;
-					func->DestroyHalfCreated();
-					return 0;
-				}
-				func->scriptData->variables.PushLast(var);
-
-				var->declaredAtProgramPos = ReadEncodedUInt();
-				var->stackOffset = ReadEncodedUInt();
-				ReadString(&var->name);
-				ReadDataType(&var->type);
-
-				if( error )
+				if (error)
 				{
 					// No need to continue (the error has already been reported before)
 					func->DestroyHalfCreated();
 					return 0;
 				}
 			}
-		}
+			if (count > 0)
+				func->scriptData->objVariablesOnHeap = ReadEncodedUInt();
+			else
+				func->scriptData->objVariablesOnHeap = 0;
 
-		char bits;
-		ReadData(&bits, 1);
-		func->isShared               = bits & 1 ? true : false;
-		func->dontCleanUpOnException = bits & 2 ? true : false;
-
-		// Read script section name
-		if( !noDebugInfo )
-		{
-			asCString name;
-			ReadString(&name);
-			func->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
-			func->scriptData->declaredAt = ReadEncodedUInt();
-		}
-
-		// Read parameter names
-		if( !noDebugInfo )
-		{
-			asUINT countParam = asUINT(ReadEncodedUInt64());
-			if( countParam > func->parameterTypes.GetLength() )
+			int length = ReadEncodedUInt();
+			func->scriptData->objVariableInfo.SetLength(length);
+			for (i = 0; i < length; ++i)
 			{
-				error = true;
-				func->DestroyHalfCreated();
-				return 0;
+				func->scriptData->objVariableInfo[i].programPos = ReadEncodedUInt();
+				func->scriptData->objVariableInfo[i].variableOffset = ReadEncodedUInt();
+				asEObjVarInfoOption option = (asEObjVarInfoOption)ReadEncodedUInt();
+				func->scriptData->objVariableInfo[i].option = option;
+				if (option != asOBJ_INIT && option != asOBJ_UNINIT && option != asBLOCK_BEGIN && option != asBLOCK_END)
+				{
+					error = true;
+					func->DestroyHalfCreated();
+					return 0;
+				}
 			}
-			func->parameterNames.SetLength(countParam);
-			for( asUINT n = 0; n < countParam; n++ )
-				ReadString(&func->parameterNames[n]);
+
+			if (!noDebugInfo)
+			{
+				length = ReadEncodedUInt();
+				func->scriptData->lineNumbers.SetLength(length);
+				if (int(func->scriptData->lineNumbers.GetLength()) != length)
+				{
+					// Out of memory
+					error = true;
+					func->DestroyHalfCreated();
+					return 0;
+				}
+				for (i = 0; i < length; ++i)
+					func->scriptData->lineNumbers[i] = ReadEncodedUInt();
+
+				// Read the array of script sections 
+				length = ReadEncodedUInt();
+				func->scriptData->sectionIdxs.SetLength(length);
+				if (int(func->scriptData->sectionIdxs.GetLength()) != length)
+				{
+					// Out of memory
+					error = true;
+					func->DestroyHalfCreated();
+					return 0;
+				}
+				for (i = 0; i < length; ++i)
+				{
+					if ((i & 1) == 0)
+						func->scriptData->sectionIdxs[i] = ReadEncodedUInt();
+					else
+					{
+						asCString str;
+						ReadString(&str);
+						func->scriptData->sectionIdxs[i] = engine->GetScriptSectionNameIndex(str.AddressOf());
+					}
+				}
+			}
+
+			// Read the variable information
+			if (!noDebugInfo)
+			{
+				length = ReadEncodedUInt();
+				func->scriptData->variables.Allocate(length, false);
+				for (i = 0; i < length; i++)
+				{
+					asSScriptVariable *var = asNEW(asSScriptVariable);
+					if (var == 0)
+					{
+						// Out of memory
+						error = true;
+						func->DestroyHalfCreated();
+						return 0;
+					}
+					func->scriptData->variables.PushLast(var);
+
+					var->declaredAtProgramPos = ReadEncodedUInt();
+					var->stackOffset = ReadEncodedUInt();
+					ReadString(&var->name);
+					ReadDataType(&var->type);
+
+					if (error)
+					{
+						// No need to continue (the error has already been reported before)
+						func->DestroyHalfCreated();
+						return 0;
+					}
+				}
+			}
+
+			// Read script section name
+			if (!noDebugInfo)
+			{
+				asCString name;
+				ReadString(&name);
+				func->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
+				func->scriptData->declaredAt = ReadEncodedUInt();
+			}
+
+			// Read parameter names
+			if (!noDebugInfo)
+			{
+				asUINT countParam = asUINT(ReadEncodedUInt64());
+				if (countParam > func->parameterTypes.GetLength())
+				{
+					error = true;
+					func->DestroyHalfCreated();
+					return 0;
+				}
+				func->parameterNames.SetLength(countParam);
+				for (asUINT n = 0; n < countParam; n++)
+					ReadString(&func->parameterNames[n]);
+			}
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
@@ -1275,9 +1306,11 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	{
 		asBYTE bits;
 		ReadData(&bits, 1);
-		if( bits )
+		if( bits & 1 )
 			func->isShared = true;
-
+		if ((bits & 2) && isExternal)
+			*isExternal = true;
+		
 		// The asCFuncdefType constructor adds itself to the func->funcdefType member
 		asCFuncdefType *fdt = asNEW(asCFuncdefType)(engine, func);
 		fdt->parentClass = parentClass;
@@ -3938,6 +3971,17 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 
 	if( func->funcType == asFUNC_SCRIPT )
 	{
+		char bits = 0;
+		bits += func->isShared ? 1 : 0;
+		bits += func->dontCleanUpOnException ? 2 : 0;
+		if (module->externalFunctions.IndexOf(func) >= 0)
+			bits += 4;
+		WriteData(&bits, 1);
+
+		// For external shared functions the rest is not needed
+		if (bits & 4)
+			return;
+
 		// Calculate the adjustment by position lookup table
 		CalculateAdjustmentByPos(func);
 
@@ -4014,11 +4058,6 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			}
 		}
 
-		char bits = 0;
-		bits += func->isShared ? 1 : 0;
-		bits += func->dontCleanUpOnException ? 2 : 0;
-		WriteData(&bits,1);
-
 		// Store script section name
 		if( !stripDebugInfo )
 		{
@@ -4050,6 +4089,8 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 	{
 		char bits = 0;
 		bits += func->isShared ? 1 : 0;
+		if (module->externalTypes.IndexOf(func->funcdefType) >= 0)
+			bits += 2;
 		WriteData(&bits,1);
 	}
 }

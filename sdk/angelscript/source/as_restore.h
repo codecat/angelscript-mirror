@@ -66,7 +66,7 @@ protected:
 
 	void               ReadData(void *data, asUINT size);
 	void               ReadString(asCString *str);
-	asCScriptFunction *ReadFunction(bool &isNew, bool addToModule = true, bool addToEngine = true, bool addToGC = true);
+	asCScriptFunction *ReadFunction(bool &isNew, bool addToModule = true, bool addToEngine = true, bool addToGC = true, bool *isExternal = 0);
 	void               ReadFunctionSignature(asCScriptFunction *func, asCObjectType **parentClass = 0);
 	void               ReadGlobalProperty();
 	void               ReadObjectProperty(asCObjectType *ot);

@@ -11,8 +11,6 @@ bool Test()
 	int r;
 
 	// external shared entities should be saved specifically as external in bytecode to avoid increase in file size
-	// TODO: as_restore should store the external shared functions only by function signature
-	// TODO: as_restore should store the external shared funcdefs only by function signature (or maybe just the name)
 	// TODO: as_restore should verify that the exteranl shared entity really exists when loading
 	// TODO: as_restore should only populate externalTypes externalFunctions if not def AS_NO_COMPILER
 	{
@@ -52,14 +50,14 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc32 = ComputeCRC32(&bc1.buffer[0], asUINT(bc1.buffer.size()));
-		if (crc32 != 0x361B59E2)
+		if (crc32 != 0x283B95BD)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
 		}
 
 		crc32 = ComputeCRC32(&bc2.buffer[0], asUINT(bc2.buffer.size()));
-		if (crc32 != 0x3EA2920E)
+		if (crc32 != 0xDCC2E57D)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
