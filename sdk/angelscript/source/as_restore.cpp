@@ -182,7 +182,9 @@ int asCReader::ReadInner()
 
 		if (isExternal && !sharedExists)
 		{
-			// TODO: external: Write message
+			asCString msg;
+			msg.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, et->name.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 			asDELETE(et, asCEnumType);
 			error = true;
 			return asERROR;
@@ -254,7 +256,9 @@ int asCReader::ReadInner()
 
 		if (isExternal && !sharedExists)
 		{
-			// TODO: external: Write message
+			asCString msg;
+			msg.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, ot->name.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 			asDELETE(ot, asCObjectType);
 			error = true;
 			return asERROR;
@@ -352,7 +356,9 @@ int asCReader::ReadInner()
 			// Check if an external shared funcdef was really found
 			if (isExternal && funcDef)
 			{
-				// TODO: external: Write message
+				asCString msg;
+				msg.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, funcDef->name.AddressOf());
+				engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 				error = true;
 				return asERROR;
 			}
@@ -470,7 +476,9 @@ int asCReader::ReadInner()
 		// Check if an external shared func was really found
 		if (isExternal && func)
 		{
-			// TODO: external: Write message
+			asCString msg;
+			msg.Format(TXT_EXTERNAL_SHARED_s_NOT_FOUND, func->name.AddressOf());
+			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, msg.AddressOf());
 			error = true;
 			return asERROR;
 		}
