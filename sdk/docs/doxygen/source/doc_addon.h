@@ -1600,7 +1600,7 @@ public:
   unsigned int GetSectionCount() const;
   string       GetSectionName(unsigned int idx) const;
   
-  // Get metadata declared for class types and interfaces
+  // Get metadata declared for classes, interfaces, and enums
   const char *GetMetadataStringForType(int typeId);
 
   // Get metadata declared for functions
@@ -1610,7 +1610,7 @@ public:
   const char *GetMetadataStringForVar(int varIdx);
 
   // Get metadata declared for a class method
-  const char *GetMetadataStringForTypeMethod(int typeId, int mthdIdx);
+  const char *GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
 
   // Get metadata declared for a class property
   const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);

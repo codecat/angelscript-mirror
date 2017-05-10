@@ -26,6 +26,7 @@ do<br>
 double<br>
 else<br>
 enum<br>
+external*<br>
 false<br>
 final*<br>
 float<br>
@@ -34,9 +35,9 @@ from*<br>
 funcdef<br>
 function*<br>
 get*<br>
-if<br>
 </code></td>
 <td width=100 valign=top><code>
+if<br>
 import<br>
 in<br>
 inout<br>
@@ -48,9 +49,9 @@ int32<br>
 int64<br>
 is<br>
 mixin<br>
-namespace<br>
 </code></td>
 <td width=100 valign=top><code>
+namespace<br>
 not<br>
 null<br>
 or<br>
@@ -62,9 +63,9 @@ return<br>
 set*<br>
 shared*<br>
 super*<br>
-switch<br>
 </code></td>
 <td width=100 valign=top><code>
+switch<br>
 this*<br>
 true<br>
 typedef<br>

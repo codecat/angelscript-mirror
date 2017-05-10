@@ -89,7 +89,7 @@ public:
 	std::string  GetSectionName(unsigned int idx) const;
 
 #if AS_PROCESS_METADATA == 1
-	// Get metadata declared for class types and interfaces
+	// Get metadata declared for classes, interfaces, and enums
 	const char *GetMetadataStringForType(int typeId);
 
 	// Get metadata declared for functions
@@ -101,7 +101,7 @@ public:
 	// Get metadata declared for class variables
 	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 
-	// Get metadata declared for class functions
+	// Get metadata declared for class methods
 	const char *GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
 #endif
 

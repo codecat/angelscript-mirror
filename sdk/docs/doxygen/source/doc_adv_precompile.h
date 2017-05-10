@@ -69,7 +69,12 @@ protected:
  - To reduce the size of the saved bytecode you can strip the debug information from the code. This will skip
    saving information that is not necessary for executing the scripts, such as the name of script sections,
    line numbers, and the name and type of local variables. 
-   
+
+ - If the scripts use \ref doc_script_shared "shared entities" then the size of the saved bytecode can be further
+   reduced if the entities are declared as \ref doc_script_shared_external "external". To allow the offline compiler
+   to compile scripts with external shared entities, the offline compiler must first build another module with all the 
+   shared entities that should be allowed to be declared as external.
+
  - The saved bytecode is platform independent with only a couple of exceptions that is unlikely to affect 
    application developers. The exceptions are 1) difference in size of primitive types (e.g. bool on older
    Mac PPC platforms) and 2) CPU floating point representation (i.e. IEEE 754 versus non-IEEE 754). Differences

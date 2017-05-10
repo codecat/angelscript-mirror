@@ -11,8 +11,7 @@ bool Test()
 	int r;
 
 	// external shared entities should be saved specifically as external in bytecode to avoid increase in file size
-	// TODO: as_restore should verify that the exteranl shared entity really exists when loading
-	// TODO: as_restore should only populate externalTypes externalFunctions if not def AS_NO_COMPILER
+	// TODO: as_restore should only populate externalTypes and externalFunctions if not def AS_NO_COMPILER
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
