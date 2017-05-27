@@ -142,7 +142,8 @@ int asCReader::ReadInner()
 	unsigned long i, count;
 	asCScriptFunction* func;
 
-	ReadData(&noDebugInfo, 1);
+	// TODO: This should read only 1 byte even on platforms with 4byte booleans
+	ReadData(&noDebugInfo, sizeof(noDebugInfo));
 
 	// Read enums
 	count = ReadEncodedUInt();
@@ -3645,6 +3646,7 @@ int asCWriter::Write()
 	// TODO: Should be possible to skip saving the enum values. They are usually not needed after the script is compiled anyway
 	// TODO: Should be possible to skip saving the typedefs. They are usually not needed after the script is compiled anyway
 	// TODO: Should be possible to skip saving constants. They are usually not needed after the script is compiled anyway
+	// TODO: This should write only 1 byte even on platforms with 4byte booleans
 	WriteData(&stripDebugInfo, sizeof(stripDebugInfo));
 
 	// Store enums
