@@ -245,7 +245,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 
 	asDWORD currAccessMask = 0;
 	string currNamespace = "";
-	engine->SetDefaultNamespace(currNamespace.c_str());
+	engine->SetDefaultNamespace("");
 
 	// Export the engine version, just for info
 	strm << "// AngelScript " << asGetLibraryVersion() << "\n";
@@ -524,10 +524,17 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 		strm << "prop \"" << (isConst ? "const " : "") << engine->GetTypeDeclaration(typeId) << " " << name << "\"\n";
 	}
 
-	engine->SetDefaultNamespace("");
-
 	// Write string factory
 	strm << "\n// String factory\n";
+
+	// Reset the namespace for the string factory and default array type
+	if ("" != currNamespace)
+	{
+		strm << "namespace \"\"\n";
+		currNamespace = "";
+		engine->SetDefaultNamespace("");
+	}
+
 	asDWORD flags = 0;
 	int typeId = engine->GetStringFactoryReturnTypeId(&flags);
 	if( typeId > 0 )
