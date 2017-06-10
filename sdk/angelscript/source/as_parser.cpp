@@ -1855,7 +1855,7 @@ asCScriptNode *asCParser::ParseExpression()
 	UNREACHABLE_RETURN;
 }
 
-// BNF: EXPRTERM ::= (TYPE '=' INITLIST) | ({EXPRPREOP} EXPRVALUE {EXPRPOSTOP})
+// BNF: EXPRTERM ::= ([TYPE '='] INITLIST) | ({EXPRPREOP} EXPRVALUE {EXPRPOSTOP})
 asCScriptNode *asCParser::ParseExprTerm()
 {
 	asCScriptNode *node = CreateNode(snExprTerm);
@@ -1879,6 +1879,13 @@ asCScriptNode *asCParser::ParseExprTerm()
 			node->AddChildLast(ParseInitList());
 			return node;
 		}
+	}
+	// Or an anonymous init list, i.e. {...}
+	else if( t.type == ttStartStatementBlock )
+	{
+		RewindTo(&t);
+		node->AddChildLast(ParseInitList());
+		return node;
 	}
 
 	// It wasn't an initialization, so it must be an ordinary expression term

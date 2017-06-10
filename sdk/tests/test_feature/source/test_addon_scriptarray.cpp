@@ -192,6 +192,45 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test anonymous init lists
+	// TODO: Make sure the error message is clear when there is no matching function
+	// TODO: Make sure the error message is clear when there are multiple matching functions
+	// TODO: Test providing an init list for a different type
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"array<int> a; \n"
+			"void func(array<int> @a) { assert( a.length() == 3 ); } \n"
+			"void main() \n"
+			"{ \n"
+			"  a = {1,2,3}; \n" // same as 'a = array<int> = {1,2,3};'
+			"  assert( a.length() == 3 ); \n"
+			"  func({1,2,3}); \n" // same as 'func(array<int> = {1,2,3});'
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test array with object handles and insertLast
 	// https://www.gamedev.net/topic/686912-array-with-objects-handles/
 	{
