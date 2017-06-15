@@ -2669,8 +2669,11 @@ bool asCParser::IsVarDecl()
 			GetToken(&t2);
 		}
 
-		if( t2.type == ttEnd )
+		if (t2.type == ttEnd)
+		{
+			RewindTo(&t);
 			return false;
+		}
 		else
 		{
 			GetToken(&t1);
@@ -2680,7 +2683,6 @@ bool asCParser::IsVarDecl()
 		}
 
 		RewindTo(&t);
-
 		return true;
 	}
 

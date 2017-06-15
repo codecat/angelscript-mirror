@@ -216,6 +216,29 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test parser error message
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void Test(() {}");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 11) : Error   : Expected data type\n"
+						   "test (1, 11) : Error   : Instead found '('\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test string operators
 	// http://www.gamedev.net/topic/684124-weird-string-behavior-when-using/
 	{
