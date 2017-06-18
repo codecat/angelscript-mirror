@@ -37,6 +37,8 @@ runtime choices about several different behaviours in the engine.
 
 The following modify the script language in one way or the other:
 
+\todo Document asEP_DISALLOW_EMPTY_LIST_ELEMENTS
+
 \ref asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
 
 By turning on this the compiler will no longer allow the use of value assignment operators on reference types. 

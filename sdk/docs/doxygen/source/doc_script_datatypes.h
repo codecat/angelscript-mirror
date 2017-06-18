@@ -147,6 +147,8 @@ When the array stores \ref doc_script_handle "handles" the elements are assigned
 
 Arrays can also be created and initialized within expressions as \ref anonobj "anonymous objects". 
 
+\todo Show that anonymous arrays can be used without explicitly giving the type
+
 <pre>
   // Call a function that expects an array of integers as input
   foo(array<int> = {1,2,3,4});
@@ -309,6 +311,8 @@ Dictionary values can also be accessed or added by using the index operator.
 </pre>
   
 Dictionaries can also be created and initialized within expressions as \ref anonobj "anonymous objects". 
+
+\todo Show that anonymous dictionaries can be used without explicitly giving the type
 
 <pre>
   // Call a function that expects a dictionary as input

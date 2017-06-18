@@ -2435,6 +2435,10 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 				}
 				str += args[n]->methodName;
 			}
+			else if (args[n]->IsAnonymousInitList())
+			{
+				str += "{...}";
+			}
 			else
 				str += args[n]->type.dataType.Format(outFunc->nameSpace);
 		}
@@ -3233,7 +3237,12 @@ void asCCompiler::CompileInitList(asCExprValue *var, asCScriptNode *node, asCByt
 	int elementsInSubList = -1;
 	int r = CompileInitListElement(patternNode, el, engine->GetTypeIdFromDataType(asCDataType::CreateType(listPatternType, false)), short(bufferVar), bufferSize, valueExpr.bc, elementsInSubList);
 	asASSERT( r || patternNode == 0 );
-	UNUSED_VAR(r);
+	if (r < 0)
+	{
+		asCString msg;
+		msg.Format(TXT_PREV_ERROR_WHILE_COMP_LIST_FOR_TYPE_s, var->dataType.Format(outFunc->nameSpace).AddressOf());
+		Error(msg, node);
+	}
 
 	// After all values have been evaluated we know the final size of the buffer
 	asCExprContext allocExpr(engine);

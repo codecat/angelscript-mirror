@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "../../../add_on/scriptarray/scriptarray.h"
 #include "../../../add_on/weakref/weakref.h"
+#include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/scriptstdstring/scriptstdstring.h"
 
 namespace Test_Addon_ScriptArray
 {
@@ -193,9 +195,6 @@ bool Test()
 	asIScriptEngine *engine;
 
 	// Test anonymous init lists
-	// TODO: Make sure the error message is clear when there is no matching function
-	// TODO: Make sure the error message is clear when there are multiple matching functions
-	// TODO: Test providing an init list for a different type
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -203,6 +202,8 @@ bool Test()
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterScriptArray(engine, false);
+		RegisterStdString(engine);
+		RegisterScriptDictionary(engine);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
@@ -227,6 +228,40 @@ bool Test()
 		r = ExecuteString(engine, "main()", mod);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
+
+		// Make sure the error message is clear when there is no matching function
+		// Make sure the error message is clear when there are multiple matching functions
+		// Test providing an init list for a different type
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(int a) { } \n"
+			"void func2(array<int> @a) { } \n"
+			"void func2(dictionary @d) { } \n"
+			"void func3(dictionary @d) { } \n"
+			"void main() \n"
+			"{ \n"
+			"  func({1,2,3}); \n"
+			"  func2({1,2,3}); \n"
+			"  func3({1,2,3}); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (5, 1) : Info    : Compiling void main()\n"
+						   "test (7, 3) : Error   : No matching signatures to 'func({...})'\n"
+						   "test (7, 3) : Info    : Candidates are:\n"
+						   "test (7, 3) : Info    : void func(int a)\n"
+						   "test (8, 3) : Error   : Multiple matching signatures to 'func2({...})'\n"
+						   "test (8, 3) : Info    : void func2(array<int>@ a)\n"
+						   "test (8, 3) : Info    : void func2(dictionary@ d)\n"
+						   "test (9, 10) : Error   : Expected a list enclosed by { } to match pattern\n"
+						   "test (9, 9) : Error   : Previous error occurred while attempting to compile initialization list for type 'dictionary@'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->ShutDownAndRelease();
 	}

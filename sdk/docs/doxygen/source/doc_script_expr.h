@@ -422,6 +422,8 @@ like this.
 
 For types that support it, the anonymous objects can also be initialized with initialization lists.
 
+\todo Show that anonymous objects can be used without explicitly giving the type
+
 <pre>
   // Call the function with a dictionary
   func(dictionary = {{'banana',1}, {'apple',2}, {'orange',3}});

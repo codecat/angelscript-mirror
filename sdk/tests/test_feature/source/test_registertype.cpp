@@ -503,7 +503,9 @@ bool Test()
 
 		if( bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
 						   "test (4, 21) : Error   : Too many values to match pattern\n"
-						   "test (5, 23) : Error   : Not enough values to match pattern\n" )
+						   "test (4, 13) : Error   : Previous error occurred while attempting to compile initialization list for type 'rect'\n"
+						   "test (5, 23) : Error   : Not enough values to match pattern\n"
+						   "test (5, 13) : Error   : Previous error occurred while attempting to compile initialization list for type 'rect'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
