@@ -5510,9 +5510,22 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 	// Filter the list by constness to remove const methods if there are matching non-const methods
 	FilterConst(ops, !isConst);
 
-	// It shouldn't be possible to have more than one
-	// TODO: Should be allowed to have different behaviours for const and non-const references
-	asASSERT( ops.GetLength() <= 1 );
+	// Give an error more than one opCast methods were found
+	if (ops.GetLength() > 1)
+	{
+		if (isExplicit && generateCode)
+		{
+			asCString str;
+			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, "opCast");
+			Error(str, node);
+
+			PrintMatchingFuncs(ops, node, ot);
+		}
+		// Return that the conversion was done to avoid further complaints
+		conversionDone = true;
+		ctx->type.Set(to);
+		return conversionDone;
+	}
 
 	// Should only have one behaviour for each output type
 	if( ops.GetLength() == 1 )

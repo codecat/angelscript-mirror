@@ -146,57 +146,152 @@ static const char* script =
 "};\n";
 
 
+class hash
+{
+	int ref;
+public:
+	hash();
+	virtual ~hash();
+	void addRef() {}
+	void release() {}
+	virtual void reset() = 0;
+	virtual void update(std::string& data) = 0;
+	virtual std::string compute() = 0;
+};
+class sha512 :public hash
+{
+	//private members removed.
+public:
+	static sha512* factory() {
+		return 0;
+	}
+	sha512();
+	void update(std::string& data);
+	std::string compute();
+	void reset();
+};
 
+template<class A, class B>
+B* scriptRefCast(A* a)
+{
+	// If the handle already is a null handle, then just return the null handle
+	if (!a) return 0;
+	// Now try to dynamically cast the pointer to the wanted type
+	B* b = dynamic_cast<B*>(a);
+	if (b != 0)
+	{
+		// Since the cast was made, we need to increase the ref counter for the returned handle
+		b->addRef();
+	}
+	return b;
+}
 
 bool Test()
 {
 	bool fail = false;
 	int r = 0;
 	COutStream out;
-	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+	CBufferedOutStream bout;
 
-
-	RegisterA(engine);
-	RegisterB(engine);
-
-
-	asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection("test", script, strlen(script));
-	r = mod->Build();
-
-	asITypeInfo *objType = engine->GetModule("test")->GetTypeInfoByName("CTest");
-	asIScriptObject* testClassObj = (asIScriptObject*)engine->CreateScriptObject(objType);
-
-	typeA* a = new typeB();
-
-	if (testClassObj)
+	// Test error message when registering multiple cast operators for the same target type
 	{
-		asIScriptFunction *method = testClassObj->GetObjectType()->GetMethodByName("dont_work");
-		asIScriptContext* ctx = engine->CreateContext();
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
-		r = ctx->Prepare(method);
-		r = ctx->SetObject(testClassObj);
-		r = ctx->SetArgObject(0, a);
-		r = ctx->Execute();
+		RegisterStdString(engine);
 
-		ctx->Release();
-		testClassObj->Release();
+		//Hashing.
+		//Base class.
+		r = engine->RegisterObjectType("hash", 0, asOBJ_REF); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("hash", asBEHAVE_ADDREF, "void a()", asMETHOD(hash, addRef), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("hash", asBEHAVE_RELEASE, "void b()", asMETHOD(hash, release), asCALL_THISCALL); assert(r >= 0);
+
+		r = engine->RegisterObjectMethod("hash", "void update(string& in data)", asMETHOD(hash, update), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("hash", "string compute()", asMETHOD(hash, compute), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("hash", "void reset()", asMETHOD(hash, reset), asCALL_THISCALL); assert(r >= 0);
+
+		r = engine->RegisterObjectType("sha512", 0, asOBJ_REF); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("sha512", asBEHAVE_FACTORY, "sha512@ a()", asFUNCTION(sha512::factory), asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("sha512", asBEHAVE_ADDREF, "void b()", asMETHOD(hash, addRef), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("sha512", asBEHAVE_RELEASE, "void c()", asMETHOD(hash, release), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("sha512", "void update(string&in data)", asMETHOD(hash, update), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("sha512", "string compute()", asMETHOD(hash, compute), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("sha512", "void reset()", asMETHOD(hash, reset), asCALL_THISCALL); assert(r >= 0);
+		//casts.
+		r = engine->RegisterObjectMethod("sha512", "hash@ opCast()", asFUNCTION((scriptRefCast<sha512, hash>)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("sha512", "hash@ opImplCast()", asFUNCTION((scriptRefCast<sha512, hash>)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("hash", "sha512@ opCast()", asFUNCTION((scriptRefCast<hash, sha512>)), asCALL_CDECL_OBJLAST); assert(r >= 0);
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"sha512 a; \n"
+			"hash@b = cast <hash>(@a);");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (2, 6) : Info    : Compiling hash@ b\n"
+			"test (2, 10) : Error   : Multiple matching signatures to 'opCast'\n"
+			"test (2, 10) : Info    : hash@ sha512::opCast()\n"
+			"test (2, 10) : Info    : hash@ sha512::opImplCast()\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
 	}
 
-	typeB* b = 0;
-	r = engine->RefCastObject(a, engine->GetTypeInfoByName("typeA"), engine->GetTypeInfoByName("typeB"), (void**)&b);
-	if( r != asSUCCESS )
-		TEST_FAILED;
-	if( b == 0 )
-		TEST_FAILED;
-	if( b->iRef != 2 )
-		TEST_FAILED;
-	b->Release();
+	// Test simple ref cast
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-	a->Release();
 
-	engine->Release();
+		RegisterA(engine);
+		RegisterB(engine);
+
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("test", script, strlen(script));
+		r = mod->Build();
+
+		asITypeInfo *objType = engine->GetModule("test")->GetTypeInfoByName("CTest");
+		asIScriptObject* testClassObj = (asIScriptObject*)engine->CreateScriptObject(objType);
+
+		typeA* a = new typeB();
+
+		if (testClassObj)
+		{
+			asIScriptFunction *method = testClassObj->GetObjectType()->GetMethodByName("dont_work");
+			asIScriptContext* ctx = engine->CreateContext();
+
+			r = ctx->Prepare(method);
+			r = ctx->SetObject(testClassObj);
+			r = ctx->SetArgObject(0, a);
+			r = ctx->Execute();
+
+			ctx->Release();
+			testClassObj->Release();
+		}
+
+		typeB* b = 0;
+		r = engine->RefCastObject(a, engine->GetTypeInfoByName("typeA"), engine->GetTypeInfoByName("typeB"), (void**)&b);
+		if (r != asSUCCESS)
+			TEST_FAILED;
+		if (b == 0)
+			TEST_FAILED;
+		if (b->iRef != 2)
+			TEST_FAILED;
+		b->Release();
+
+		a->Release();
+
+		engine->Release();
+	}
+
 	return fail;
 }
 
