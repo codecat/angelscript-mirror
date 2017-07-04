@@ -3972,6 +3972,12 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templateType, asCObjectType *ot, asCFuncdefType *func)
 {
+	// TODO: Only generate the new funcdef if it used the template subtypes.
+	//       Remember to also update the clean up in asCObjectType::DestroyInternal so it doesn't delete
+	//       child funcdefs that have not been created specificially for the template instance.
+	//       Perhaps a new funcdef is always needed, since the funcdef will have a reference to the 
+	//       parent class (in this case the template instance).
+
 	asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcdef->funcType);
 	if (func2 == 0)
 	{

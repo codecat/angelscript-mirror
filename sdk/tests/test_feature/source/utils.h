@@ -123,7 +123,11 @@ public:
 		{
 			if (f)
 				fclose(f);
+#ifdef _MSC_VER
+			fopen_s(&f, name.c_str(), "wb");
+#else
 			f = fopen(name.c_str(), "wb");
+#endif
 			isReading = false;
 		}
 		fwrite(ptr, size, 1, f);
@@ -137,7 +141,11 @@ public:
 		{
 			if (f)
 				fclose(f);
+#ifdef _MSC_VER
+			fopen_s(&f, name.c_str(), "rb");
+#else
 			f = fopen(name.c_str(), "rb");
+#endif
 			isReading = true;
 		}
 		fread(ptr, size, 1, f);
