@@ -3510,6 +3510,15 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	// The object types in templateInstanceTypes that are not also in generatedTemplateTypes are registered template specializations
 	generatedTemplateTypes.PushLast(ot);
 
+	// Any child funcdefs must be copied to the template instance (with adjustments in case of template subtypes)
+	// This must be done before resolving other methods, to make sure the other methods that may refer to the 
+	// templated funcdef will resolve to the new funcdef
+	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
+	{
+		asCFuncdefType *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
+		funcdef->parentClass = ot;
+		ot->childFuncDefs.PushLast(funcdef);
+	}
 
 	// As the new template type is instantiated the engine should
 	// generate new functions to substitute the ones with the template subtype.
@@ -3621,14 +3630,6 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 		ot->properties.PushLast(asNEW(asCObjectProperty)(*prop));
 		if( prop->type.GetTypeInfo() )
 			prop->type.GetTypeInfo()->AddRefInternal();
-	}
-
-	// Any child funcdefs must also be copied to the template instance (with adjustments in case of template subtypes)
-	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
-	{
-		asCFuncdefType *funcdef = GenerateNewTemplateFuncdef(templateType, ot, templateType->childFuncDefs[n]);
-		funcdef->parentClass = ot;
-		ot->childFuncDefs.PushLast(funcdef);
 	}
 
 	return ot;
@@ -3759,6 +3760,18 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 
 		dt.MakeReference(orig.IsReference());
 		dt.MakeReadOnly(orig.IsReadOnly());
+	}
+	else if (orig.GetTypeInfo() && (orig.GetTypeInfo()->flags & asOBJ_FUNCDEF) && CastToFuncdefType(orig.GetTypeInfo())->parentClass == tmpl)
+	{
+		// The type is a child funcdef. Find the corresponding child funcdef in the template instance
+		for (asUINT n = 0; n < ot->childFuncDefs.GetLength(); n++)
+		{
+			if (ot->childFuncDefs[n]->name == orig.GetTypeInfo()->name)
+			{
+				dt = orig;
+				dt.SetTypeInfo(ot->childFuncDefs[n]);
+			}
+		}
 	}
 	else
 		dt = orig;
@@ -3898,6 +3911,8 @@ bool asCScriptEngine::RequireTypeReplacement(asCDataType &type, asCObjectType *t
 				ot->templateSubTypes[n].GetTypeInfo()->flags & asOBJ_TEMPLATE_SUBTYPE )
 				return true;
 	}
+	if (type.GetTypeInfo() && (type.GetTypeInfo()->flags & asOBJ_FUNCDEF) && CastToFuncdefType(type.GetTypeInfo())->parentClass == templateType)
+		return true;
 
 	return false;
 }
