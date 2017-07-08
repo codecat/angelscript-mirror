@@ -225,6 +225,8 @@ The second variant will sort only the elements starting at index \a startAt and 
 <b>void sortDesc(uint startAt, uint count)</b><br>
 
 These does the same thing as sortAsc except sorts the elements in descending order.
+
+\todo document the sort method with callback
  
 <b>int  find(const T& in)</b><br>
 <b>int  find(uint startAt, const T& in)</b><br>
