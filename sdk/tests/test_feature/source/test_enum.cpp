@@ -116,6 +116,12 @@ static bool TestEnum()
 		r = engine->RegisterEnum("myenum");
 		if( r < 0 )
 			TEST_FAILED;
+
+		// The returned value is the type id
+		std::string str = engine->GetTypeDeclaration(r);
+		if (str != "myenum")
+			TEST_FAILED;
+
 		r = engine->RegisterEnumValue("myenum", "value", 1);
 		if( r < 0 )
 			TEST_FAILED;

@@ -2315,7 +2315,13 @@ bool Test()
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-		engine->RegisterFuncdef("bool fun(bool)");
+		r = engine->RegisterFuncdef("bool fun(bool)");
+
+		// The returned value is the type id for the funcdef
+		std::string str = engine->GetTypeDeclaration(r);
+		if (str != "fun")
+			TEST_FAILED;
+
 		engine->RegisterGlobalFunction("bool assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		r = ExecuteString(engine, "fun @f = assert; f(true);");

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -64,8 +64,8 @@ BEGIN_AS_NAMESPACE
 // AngelScript version
 
 //! Version 2.31.2
-#define ANGELSCRIPT_VERSION        23102
-#define ANGELSCRIPT_VERSION_STRING "2.31.2"
+#define ANGELSCRIPT_VERSION        23200
+#define ANGELSCRIPT_VERSION_STRING "2.32.0"
 
 // Data types
 
@@ -1373,6 +1373,7 @@ public:
 	//! can register functions and methods that receives an \ref asIScriptObject and still be sure that the 
 	//! class implements certain methods needed by the application. 
 	//!
+	//! \todo Returns type id on success
 	//! \see \ref doc_use_script_class_3
 	virtual int            RegisterInterface(const char *name) = 0;
 	//! \brief Registers a script interface method.
@@ -1473,6 +1474,7 @@ public:
 	//! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
 	//! \retval asNAME_TAKEN The type name is already taken.
 	//!
+	//! \todo Returns type id on success
 	//! This method registers an enum type in the engine. The enum values should then be registered 
 	//! with \ref RegisterEnumValue.
 	virtual int          RegisterEnum(const char *type) = 0;
@@ -1519,6 +1521,7 @@ public:
 	//! from scripts, it is necessary to first register the funcdef before registering
 	//! the function or property that will be used to receive it.
 	//! 
+	//! \todo Returns type id on success
 	//! Funcdefs are usually registered as global entities, but can also be registered
 	//! as a child of a class. To do this simply prefix the name of the funcdef with the 
 	//! name of the class and the scope operator to specify which class should be the owner.
@@ -1550,6 +1553,7 @@ public:
 	//!
 	//! This method registers an alias for a data type.
 	//!
+	//! \todo Returns type id on success
 	//! Currently typedefs can only be registered for built-in primitive types.
 	virtual int          RegisterTypedef(const char *type, const char *decl) = 0;
 	//! \brief Returns the number of registered typedefs.

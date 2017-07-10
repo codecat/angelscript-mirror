@@ -1522,7 +1522,7 @@ int asCScriptEngine::RegisterInterface(const char *name)
 
 	currentGroup->types.PushLast(st);
 
-	return asSUCCESS;
+	return GetTypeIdByDecl(name);
 }
 
 // interface
@@ -5648,8 +5648,8 @@ int asCScriptEngine::RegisterFuncdef(const char *decl)
 	// If parameter type from other groups are used, add references
 	currentGroup->AddReferencesForFunc(this, func);
 
-	// Return the function id as success
-	return func->id;
+	// Return the type id as success
+	return GetTypeIdFromDataType(asCDataType::CreateType(fdt, false));
 }
 
 // interface
@@ -5809,7 +5809,7 @@ int asCScriptEngine::RegisterTypedef(const char *type, const char *decl)
 
 	currentGroup->types.PushLast(td);
 
-	return asSUCCESS;
+	return GetTypeIdByDecl(type);
 }
 
 // interface
@@ -5879,7 +5879,7 @@ int asCScriptEngine::RegisterEnum(const char *name)
 
 	currentGroup->types.PushLast(st);
 
-	return asSUCCESS;
+	return GetTypeIdByDecl(name);
 }
 
 // interface

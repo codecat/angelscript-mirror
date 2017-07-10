@@ -93,6 +93,12 @@ bool Test()
 
 	// Register an interface from the application
 	r = engine->RegisterInterface("appintf"); assert( r >= 0 );
+
+	// The returned value is the type id
+	std::string str = engine->GetTypeDeclaration(r);
+	if (str != "appintf")
+		TEST_FAILED;
+
 	r = engine->RegisterInterfaceMethod("appintf", "void test()"); assert( r >= 0 );
 
 	// Registered interfaces do not belong to any module
