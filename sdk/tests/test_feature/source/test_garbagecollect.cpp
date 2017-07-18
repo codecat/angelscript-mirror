@@ -19,8 +19,8 @@ void PrintString_Generic(asIScriptGeneric *gen)
 
 
 class CFoo 
-{ 
-public:     
+{
+public:
 	CFoo() : m_Ref(1) { m_pObject = 0; }
 	~CFoo() { if( m_pObject ) m_pObject->Release(); }
 	void SetScriptObject(asIScriptObject* _pObject) { m_pObject = _pObject; }
@@ -53,79 +53,131 @@ void GCLineCallback(asIScriptContext *ctx)
 	engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
 }
 
+void ExceptionCallback(asIScriptContext *ctx, int *numExceptions)
+{
+	(*numExceptions)++;
+}
+
 bool Test()
 {
 	bool fail = false;
 	COutStream out;
 	int r;
 
-    // Create the script engine
-    asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
- 
-    // Register Function
-    RegisterScriptString(engine);
-    engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC);
- 
-    // Compile
-    asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-    mod->AddScriptSection("script", 
-        "class Obj{};"
-        "class Hoge"
-        "{"
-        "    Hoge(){ Print('ctor\\n'); }"
-        "    ~Hoge(){ Print('dtor\\n'); }"
-        "    Obj@ obj;"
-        "};"
-        "void main()"
-        "{"
-        "    Hoge hoge;"
-        "};"
-        , 0);
-    mod->Build();
- 
-    // Context Create
-    asIScriptContext *ctx = engine->CreateContext();
- 
-    // Loop
-    for( asUINT n = 0; n < 3; n++ )
-    {
-        // Execute
-        //PRINTF("----- execute\n");
-        ctx->Prepare(mod->GetFunctionByDecl("void main()"));
-        ctx->Execute();
- 
-        // GC
-        const int GC_STEP_COUNT_PER_FRAME = 100;
-        for ( int i = 0; i < GC_STEP_COUNT_PER_FRAME; ++i )
-        {
-            engine->GarbageCollect(asGC_ONE_STEP);
-        }
-        
-        // Check status
-        {
-            asUINT currentSize = asUINT();
-            asUINT totalDestroyed = asUINT();
-            asUINT totalDetected = asUINT();
-            engine->GetGCStatistics(&currentSize , &totalDestroyed , &totalDetected );
-			if( currentSize    != 0 ||
-				totalDestroyed != n+1 ||
-				totalDetected  != 0 )
-				TEST_FAILED;
-            //PRINTF("(%lu,%lu,%lu)\n" , currentSize , totalDestroyed , totalDetected );
-        }
-    }
+	// Test situation when script object destructor creates instance of script class
+	// This creates an infinite recursive loop, that fills up the applications call stack
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-    // Release 
-    ctx->Release();
-    engine->Release();
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class test \n"
+			"{ \n"
+			"  ~test() \n"
+			"  {	\n"
+			"    fail(); \n"
+			"  } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  fail(); \n"
+			"} \n"
+			"void fail() \n"
+			"{ \n"
+			"  test myTest; \n" //object destructor fires, calls this function and a new instance is created. On my machine the application segfaults after about 5000 iterations.
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		int numExceptions = 0;
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), (void*)&numExceptions, asCALL_CDECL);
+
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		ctx->Release();
+
+		if (numExceptions != 1)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
+
+	// Test basic garbage collection
+	{
+		// Create the script engine
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		// Register Function
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC);
+
+		// Compile
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class Obj{};"
+			"class Hoge"
+			"{"
+			"    Hoge(){ Print('ctor\\n'); }"
+			"    ~Hoge(){ Print('dtor\\n'); }"
+			"    Obj@ obj;"
+			"};"
+			"void main()"
+			"{"
+			"    Hoge hoge;"
+			"};"
+			, 0);
+		mod->Build();
+
+		// Context Create
+		asIScriptContext *ctx = engine->CreateContext();
+
+		// Loop
+		for (asUINT n = 0; n < 3; n++)
+		{
+			// Execute
+			//PRINTF("----- execute\n");
+			ctx->Prepare(mod->GetFunctionByDecl("void main()"));
+			ctx->Execute();
+
+			// GC
+			const int GC_STEP_COUNT_PER_FRAME = 100;
+			for (int i = 0; i < GC_STEP_COUNT_PER_FRAME; ++i)
+			{
+				engine->GarbageCollect(asGC_ONE_STEP);
+			}
+
+			// Check status
+			{
+				asUINT currentSize = asUINT();
+				asUINT totalDestroyed = asUINT();
+				asUINT totalDetected = asUINT();
+				engine->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
+				if (currentSize != 0 ||
+					totalDestroyed != n + 1 ||
+					totalDetected != 0)
+					TEST_FAILED;
+				//PRINTF("(%lu,%lu,%lu)\n" , currentSize , totalDestroyed , totalDetected );
+			}
+		}
+
+		// Release 
+		ctx->Release();
+		engine->Release();
+	}
 
 	// Test that script class destructor is called before gc releases handles
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, 
 			"class Counter { int cnt = 0; } \n"
 			"Counter cnt; \n"
@@ -179,12 +231,12 @@ bool Test()
 
 	// Test GC flag for array
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterScriptArray(engine, false);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, 
 			"class F { F @f; } \n"
 			"array<F> arr; \n");
@@ -202,12 +254,10 @@ bool Test()
 
 	// Test GC flag for classes with different relationships
 	{
-		COutStream out;
-		int r;
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, 
 			"final class F { F @f; } \n"
 			"final class D { int a; } \n"
@@ -278,13 +328,10 @@ bool Test()
 
 	// Test problem reported by Polyák István
 	{	
-		COutStream out;
-		int r;
-
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, 
 			"class C1 \n"
 			"{ \n"
@@ -324,14 +371,11 @@ bool Test()
 
 	// Test 
 	{	
-		COutStream out;
-		int r;
-
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, 
 			"interface ITest\n"
 			"{\n"
@@ -368,16 +412,13 @@ bool Test()
 
 	// Test attempted access of global variable after it has been destroyed
 	{	
-		COutStream out;
-		int r;
-
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void Log(const string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, 
 			"class Big \n"
 			"{ \n"
@@ -468,10 +509,7 @@ bool Test()
 			"  dummy[] dummy_list(number_of_instances); \n"
 			"} \n";
 
-		COutStream out;
-		int r;
-
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 		RegisterStdString(engine);
@@ -484,7 +522,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void exit()", WRAP_FN(Exit), asCALL_GENERIC);
 #endif
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(0, script);
 		r = mod->Build();
 		if( r < 0 )
@@ -514,9 +552,7 @@ bool Test()
 	// This test is to validate that object types are not destroyed while there are live
 	// objects in the garbage collector, even if the module has been destroyed.
 	{
-		COutStream out;
-		int r;
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -554,8 +590,6 @@ bool Test()
 
 	// Test circular reference between script object and template instance type
 	{
-		COutStream out;
-		int r;
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 

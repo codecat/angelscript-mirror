@@ -126,6 +126,8 @@ can be encoded in UTF-8 format and compiler normally.
 
 There are also several options in \ref asIScriptEngine::SetEngineProperty "SetEngineProperty" for modifying the way the engine behaves.
 
+\todo Document asEP_MAX_NESTED_CALLS
+
 \ref asEP_OPTIMIZE_BYTECODE
 
 Normally this option is only used for testing the library, but should you find that the compilation time takes too long, then
@@ -133,7 +135,7 @@ it may be of interest to turn off the bytecode optimization pass by setting this
  
 \ref asEP_COPY_SCRIPT_SECTIONS
  
-If wan't to spare some dynamic memory and the script sections passed to the engine is already stored somewhere in memory then you
+If you want to spare some dynamic memory and the script sections passed to the engine is already stored somewhere in memory then you
 can turn off this options. If you do you'll need to be careful not to modify or deallocate the script sections until module has been built.
  
 \ref asEP_MAX_STACK_SIZE

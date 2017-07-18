@@ -412,6 +412,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 			return asINVALID_ARG;
 		break;
 
+	case asEP_MAX_NESTED_CALLS:
+		if (value > 0xFFFFFFFF)
+			ep.maxNestedCalls = (asUINT)value;
+		else
+			ep.maxNestedCalls = (asUINT)value;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -502,6 +509,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_HEREDOC_TRIM_MODE:
 		return ep.heredocTrimMode;
 
+	case asEP_MAX_NESTED_CALLS:
+		return ep.maxNestedCalls;
+
 	default:
 		return 0;
 	}
@@ -566,6 +576,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.privatePropAsProtected        = false;
 		ep.allowUnicodeIdentifiers       = false;
 		ep.heredocTrimMode               = 1;         // 0 = never trim, 1 = don't trim on single line, 2 = trim initial and final empty line
+		ep.maxNestedCalls                = 100;
 	}
 
 	gc.engine = this;

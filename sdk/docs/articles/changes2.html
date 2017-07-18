@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.0 WIP - 2017/07/10</h2>
+<h2>Version 2.32.0 WIP - 2017/07/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -37,11 +37,13 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library interface
 <ul>
 <li>RegisterFuncdef, RegisterInterface, RegisterTypedef, RegisterEnum now returns the type id on success
+<li>Added asEP_MAX_NESTED_CALLS to control the maximum number of nested calls that should be allowed
 </ul>
 <li>Library
 <ul>
 <li>Handles explicitly initialized with null in declarations no longer produce any bytecode (Thanks Solokiller)
 <li>Saved bytecode now takes advantage of shared entities declared as external and includes less bytes
+<li>The VM now raises an exception when application performs too many nested calls (Thanks Jordan Verner)
 </ul>
 <li>Script language
 <ul>
