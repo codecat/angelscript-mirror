@@ -23,6 +23,39 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// default arg with funcdef referring to global function
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void callback_definition(int x); \n"
+			"void my_function(callback_definition@ callback = @default_callback) \n"
+			"{ \n"
+			"} \n"
+			"void default_callback(int x) \n"
+			"{ \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	my_function(); \n"
+			"	my_function(@default_callback); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// problem default args and string concatenation
 	// The problem was that the default arg used a temporary variable that was also used to evaluate the first argument
 	// http://www.gamedev.net/topic/663922-problem-with-default-arguments/

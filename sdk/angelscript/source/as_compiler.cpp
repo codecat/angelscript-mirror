@@ -2164,7 +2164,7 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 		outFunc->nameSpace = origNameSpace;
 
 		// Don't allow address of class method
-		if( expr.methodName != "" )
+		if( expr.IsClassMethod() )
 		{
 			// TODO: Improve error message
 			Error(TXT_DEF_ARG_TYPE_DOESNT_MATCH, arg);
