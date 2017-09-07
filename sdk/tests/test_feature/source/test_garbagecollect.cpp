@@ -58,11 +58,62 @@ void ExceptionCallback(asIScriptContext *ctx, int *numExceptions)
 	(*numExceptions)++;
 }
 
+void ExitScript()
+{
+	asGetActiveContext()->Abort();
+}
+
 bool Test()
 {
 	bool fail = false;
 	COutStream out;
 	int r;
+
+	// Test scenario where class destructor aborts the context
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void exit()", asFUNCTION(ExitScript), asCALL_CDECL); assert(r >= 0);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class testclass \n"
+			"{ \n"
+			"	~testclass() \n"
+			"	{  \n"
+			"		exit();  \n" // just looks up active context and aborts it.
+			"	} \n"
+			"} \n"
+			"void runATest() \n"
+			"{ \n"
+			"	testclass theTest; \n"
+			"} \n"
+			"void main(string[]@ args) \n"
+			"{ \n"
+			"	runATest(); \n"
+			"	assert(false); \n" // doesn't fire, since the script is aborted
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		ctx->Prepare(mod->GetFunctionByName("main"));
+		CScriptArray *arr = CScriptArray::Create(engine->GetTypeInfoByDecl("array<string>"));
+		ctx->SetArgObject(0, arr);
+		r = ctx->Execute();
+		if (r != asEXECUTION_ABORTED)
+			TEST_FAILED;
+		ctx->Release();
+		arr->Release();
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test situation when script object destructor creates instance of script class
 	// This creates an infinite recursive loop, that fills up the applications call stack

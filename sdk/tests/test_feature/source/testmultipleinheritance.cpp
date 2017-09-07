@@ -47,12 +47,14 @@ public:
 static CDerivedMultiple d;
 
 bool TestMultipleInheritance2();
+bool TestMultipleInheritance3();
 
 bool TestMultipleInheritance()
 {
 	RET_ON_MAX_PORT
 
 	bool fail = TestMultipleInheritance2();
+	fail |= TestMultipleInheritance3();
 	int r;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -210,6 +212,95 @@ bool TestMultipleInheritance2()
 	fail = Exec(engine, cc) || fail;
 
 	if( addOverlayCalled == false )
+		TEST_FAILED;
+
+	engine->Release();
+
+	return fail;
+}
+
+//------------------------------------------------------------
+
+// Problem with registering classes using templated registration code
+// Reported by Patrick Jeeves
+
+class iCountable
+{
+	mutable int refCount;
+
+public:
+	iCountable() : refCount(1) { }
+	virtual ~iCountable() {}
+	iCountable(const iCountable & obj) = delete;
+	iCountable(iCountable && obj) = delete;
+
+	iCountable & operator=(const iCountable & obj) { return *this; };
+	iCountable & operator=(iCountable && obj) { return *this; };
+
+	bool operator==(const iCountable && obj) { return true; };
+
+	void AddRef() const { ++refCount; }
+	void Release() { if (--refCount == 0) delete this; }
+
+	template<class kType>
+	static void asRegister(asIScriptEngine * engine, const char * kClass)
+	{
+		int r;
+		r = engine->RegisterObjectBehaviour(kClass, asBEHAVE_ADDREF, "void f()", asMETHODPR(kType, AddRef, () const, void), asCALL_THISCALL); assert( r >= 0);
+		r = engine->RegisterObjectBehaviour(kClass, asBEHAVE_RELEASE, "void f()", asMETHODPR(kType, Release, (), void), asCALL_THISCALL); assert( r >= 0);
+	}
+};
+
+class Bar
+{
+	int bar;
+
+public:
+	Bar() : bar(0) {}
+	int get_bar() const { return bar; }
+	void set_bar(int v) { bar = v; }
+
+	template<class kType>
+	static void asRegister(asIScriptEngine * engine, const char * kClass)
+	{
+		int r;
+		r = engine->RegisterObjectMethod(kClass, "int  get_bar() const", asMETHODPR(kType, get_bar, () const, int), asCALL_THISCALL); assert( r >= 0);
+		r = engine->RegisterObjectMethod(kClass, "void set_bar(int)", asMETHODPR(kType, set_bar, (int), void), asCALL_THISCALL); assert( r >= 0);
+	}
+};
+
+class BarObject : public Bar, public iCountable
+{
+public:
+	static BarObject * factory() { return new BarObject(); }
+
+	static void asRegister(asIScriptEngine * engine, const char * kClass)
+	{
+		iCountable::asRegister<BarObject>(engine, kClass);
+		Bar::asRegister<BarObject>(engine, kClass);
+	}
+
+	static void asRegisterObject(asIScriptEngine * engine)
+	{
+		int r;
+		r = engine->RegisterObjectType("BarObject", sizeof(BarObject), asOBJ_REF); assert( r >= 0);
+		r = engine->RegisterObjectBehaviour("BarObject", asBEHAVE_FACTORY, "BarObject@ f()", asFUNCTION(BarObject::factory), asCALL_CDECL); assert( r >= 0);
+		asRegister(engine, "BarObject");
+	}
+};
+
+bool TestMultipleInheritance3()
+{
+	bool fail = false;
+	int r;
+
+	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+	BarObject::asRegisterObject(engine);
+
+	r = ExecuteString(engine, "BarObject b; b.bar = 42; assert( b.bar == 42 );");
+	if (r != asEXECUTION_FINISHED)
 		TEST_FAILED;
 
 	engine->Release();
