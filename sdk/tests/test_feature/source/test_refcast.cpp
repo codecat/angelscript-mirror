@@ -151,7 +151,7 @@ class hash
 	int ref;
 public:
 	hash();
-	virtual ~hash();
+	virtual ~hash() {} // must implement virtual method for rtti to work on gnuc
 	void addRef() {}
 	void release() {}
 	virtual void reset() = 0;
@@ -165,10 +165,10 @@ public:
 	static sha512* factory() {
 		return 0;
 	}
-	sha512();
-	void update(std::string& data);
-	std::string compute();
-	void reset();
+	sha512() {}
+	void update(std::string& data) {}
+	std::string compute() {return "";}
+	void reset() {}
 };
 
 template<class A, class B>
