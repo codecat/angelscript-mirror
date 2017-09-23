@@ -90,6 +90,25 @@ bool TestGlobalVar()
 	COutStream out;
 	int r;
 
+	// Test removing a global variable from a module before discarding the module
+	{
+		engine = asCreateScriptEngine();
+
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", "array<int> a(100000); \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = mod->RemoveGlobalVar(0);
+		if (r < 0)
+			TEST_FAILED;
+		
+		engine->ShutDownAndRelease();
+	}
+
 	g_str = new CScriptString("test");
 
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

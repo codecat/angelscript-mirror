@@ -207,6 +207,7 @@ public:
 	asCTypeInfo       *GetType(const char *type, asSNameSpace *ns);
 	asCObjectType     *GetObjectType(const char *type, asSNameSpace *ns);
 	asCGlobalProperty *AllocateGlobalProperty(const char *name, const asCDataType &dt, asSNameSpace *ns);
+	void               UninitializeGlobalProp(asCGlobalProperty *prop);
 
 	asCString name;
 
