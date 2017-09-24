@@ -68,6 +68,11 @@ const char *script2 =
 "class C { dictionary dict; }                \n"
 "void f() { C c; c.dict.set(\"self\", @c); } \n"; 
 
+void Print(const std::string &i)
+{
+	PRINTF("%s", i.c_str());
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -77,6 +82,72 @@ bool Test()
 	asIScriptEngine *engine = 0;
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
+
+	// Another test for bool in dictionary
+	// Temporary variable was incorrectly being reused.
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class foo \n"
+			"{ \n"
+			"	bool bar; \n"
+			"	foo() \n"
+			"	{ \n"
+			"		bar = false; \n"
+			"	} \n"
+			"} \n"
+			"foo[] foos(98); \n"
+			"foo@ get_foo(int idx) \n"
+			"{ \n"
+			"	return @foos[idx]; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	dictionary d; \n"
+			"	d.set('foos.bar', foos[96].bar); \n"
+			"	string num = '96'; \n"
+			"	d.get('foos.bar', get_foo(digitfunc(num)).bar); \n" // the bug was in this expression
+			"	alert('Value of foos[96].bar', 'Value should be false, but is ' + foos[96].bar); \n"
+			"} \n"
+			"int digitfunc(string str) \n"
+			"{ \n"
+			"	// In the real world usecase, this would convert the string to a \n"
+			"	// number, but for simplicities sake, we just return 96. \n"
+			"		return 96; \n"
+			"} \n"
+			"void alert(const string &in a, const string &in b) \n"
+			"{ \n"
+//			"	print(b);\n"
+			"	assert(b == 'Value should be false, but is false'); \n"
+			"} \n");
+
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			TEST_FAILED;
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx, true).c_str());
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test bool in dictionary
 	{

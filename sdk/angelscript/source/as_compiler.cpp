@@ -1876,9 +1876,9 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asCE
 	for( int n = (int)args.GetLength()-1; n >= 0; n-- )
 	{
 		// Make sure PrepareArgument doesn't use any variable that is already
-		// being used by any of the following argument expressions
+		// being used by the argument or any of the following argument expressions
 		int l = int(reservedVariables.GetLength());
-		for( int m = n-1; m >= 0; m-- )
+		for( int m = n; m >= 0; m-- )
 			args[m]->bc.GetVarsUsed(reservedVariables);
 
 		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n], makingCopy);
