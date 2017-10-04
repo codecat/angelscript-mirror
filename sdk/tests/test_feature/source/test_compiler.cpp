@@ -3042,7 +3042,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void f()\n"
-		                   "TestCompiler (3, 3) : Error   : Expression doesn't form a function call. 'a' is a variable of a non-function type\n" )
+		                   "TestCompiler (3, 3) : Error   : Expression doesn't form a function call. 'a' evaluates to the non-function type 'int'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4604,7 +4604,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
-                           "script (5, 3) : Error   : Expression doesn't form a function call. 'name' is a variable of a non-function type\n" )
+                           "script (5, 3) : Error   : Expression doesn't form a function call. 'name' evaluates to the non-function type 'uint8'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

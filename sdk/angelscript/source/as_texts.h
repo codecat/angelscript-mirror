@@ -198,7 +198,7 @@
 #define TXT_NO_MATCHING_OP_FOUND_FOR_TYPES_s_AND_s "No matching operator that takes the types '%s' and '%s' found"
 #define TXT_NON_CONST_METHOD_ON_CONST_OBJ          "Non-const method call on read-only object reference"
 #define TXT_NONTERMINATED_STRING                   "Non-terminated string literal"
-#define TXT_NOT_A_FUNC_s_IS_VAR                    "Expression doesn't form a function call. '%s' is a variable of a non-function type"
+#define TXT_NOT_A_FUNC_s_IS_TYPE_s                 "Expression doesn't form a function call. '%s' evaluates to the non-function type '%s'"
 #define TXT_NOT_ALL_PATHS_RETURN                   "Not all paths return a value"
 #define TXT_NOT_ENOUGH_VALUES_FOR_LIST             "Not enough values to match pattern"
 #define TXT_s_NOT_DECLARED                         "'%s' is not declared"

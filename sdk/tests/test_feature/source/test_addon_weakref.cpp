@@ -73,7 +73,7 @@ bool Test()
 	// Ordinary tests
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptWeakRef(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -103,14 +103,14 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 		{
 			TEST_FAILED;
 			PRINTF("%s: Failed to compile the script\n", TESTNAME);
 		}
 
 		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->Release();
@@ -188,7 +188,7 @@ bool Test()
 	// Weakref as member of script class
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		RegisterScriptWeakRef(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -206,31 +206,31 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
-		if( bout.buffer != "" )
+		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
 		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		CBytecodeStream stream("test");
 		r = mod->SaveByteCode(&stream);
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		asIScriptModule *mod2 = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		r = mod2->LoadByteCode(&stream);
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod2);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		if (bout.buffer != "")
@@ -245,7 +245,7 @@ bool Test()
 	// It shouldn't be possible to instantiate the weakref for types that do not support it
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		RegisterScriptWeakRef(engine);
 		RegisterStdString(engine);
@@ -264,21 +264,60 @@ bool Test()
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script);
 		r = mod->Build();
-		if( r >= 0 )
+		if (r >= 0)
 			TEST_FAILED;
 
-		if( bout.buffer != "Test_Addon_WeakRef (2, 1) : Info    : Compiling void main()\n"
-						   "Test_Addon_WeakRef (3, 11) : Error   : Attempting to instantiate invalid template type 'weakref<int>'\n"
-						   "Test_Addon_WeakRef (4, 11) : Error   : Attempting to instantiate invalid template type 'weakref<string>'\n"
-						   "Test_Addon_WeakRef (5, 11) : Error   : Attempting to instantiate invalid template type 'weakref<Test@>'\n"
-						   "weakref (0, 0) : Error   : The subtype doesn't support weak references\n"
-						   "Test_Addon_WeakRef (6, 11) : Error   : Attempting to instantiate invalid template type 'weakref<array<Test>>'\n" )
+		if (bout.buffer != "Test_Addon_WeakRef (2, 1) : Info    : Compiling void main()\n"
+			"Test_Addon_WeakRef (3, 11) : Error   : Attempting to instantiate invalid template type 'weakref<int>'\n"
+			"Test_Addon_WeakRef (4, 11) : Error   : Attempting to instantiate invalid template type 'weakref<string>'\n"
+			"Test_Addon_WeakRef (5, 11) : Error   : Attempting to instantiate invalid template type 'weakref<Test@>'\n"
+			"weakref (0, 0) : Error   : The subtype doesn't support weak references\n"
+			"Test_Addon_WeakRef (6, 11) : Error   : Attempting to instantiate invalid template type 'weakref<array<Test>>'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 
 		engine->Release();
+	}
+
+	// Chained assignment with weak-ref
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptWeakRef(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("MyClass", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_FACTORY, "MyClass @f()", asFUNCTION(MyClass::Factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_ADDREF, "void f()", asMETHOD(MyClass, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_RELEASE, "void f()", asMETHOD(MyClass, Release), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyClass", asBEHAVE_GET_WEAKREF_FLAG, "int &f()", asMETHOD(MyClass, GetWeakRefFlag), asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"weakref<MyClass> sm_fireDB; \n"
+			"MyClass@ GetFireDB() \n"
+			"{ \n"
+			"	MyClass@ db; \n"
+			"	@db = sm_fireDB.get(); \n"
+			"	if (db !is null) return db; \n"
+			"	@sm_fireDB = @db = MyClass(); \n"   // this produces the correct result, since the db holds the strong reference to the temporary object
+			"	assert( db !is null && db is sm_fireDB.get() ); \n"
+			"	@db = @sm_fireDB = MyClass(); \n"   // this produced a null pointer, since the temporary object is destroyed as soon as the weakref has finished assigning it (since it doesn't hold a strong ref)
+			"	assert( db is null && db is sm_fireDB.get() ); \n"
+			"	return db; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "GetFireDB()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
 	}
 
 	// Test registering app type with weak ref

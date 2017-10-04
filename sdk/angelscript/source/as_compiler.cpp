@@ -10275,7 +10275,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		{
 			// The variable is not a function or object with opCall
 			asCString msg;
-			msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+			msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), funcExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
 			Error(msg, node);
 			return -1;
 		}
@@ -10337,7 +10337,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 				{
 					// The variable is not a function
 					asCString msg;
-					msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+					msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), funcExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
 					Error(msg, node);
 					return -1;
 				}
@@ -10387,7 +10387,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 						{
 							// The variable is not a function
 							asCString msg;
-							msg.Format(TXT_NOT_A_FUNC_s_IS_VAR, name.AddressOf());
+							msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), funcExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
 							Error(msg, node);
 							return -1;
 						}
