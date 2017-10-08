@@ -1138,7 +1138,8 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_PshVPtr,asBC_CALL,asBC_FREE,
+				// TODO: optimize: ChkNullS shouldn't be necessary
+				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_PshVPtr,asBC_ChkNullS,asBC_CALL,asBC_FREE,
 				asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )

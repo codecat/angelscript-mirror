@@ -569,32 +569,32 @@ bool Test()
 		r = engine->RegisterGlobalFunction("void set_TestCallback(Callback@ cb)", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("Callback@ get_TestCallback()", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
 
-		r = module->AddScriptSection("test", "void main(){ Callback@ cb = function() {return 123;}; TestCallback = cb; }"); assert(r >= 0);
+		r = module->AddScriptSection("test", "void main1(){ Callback@ cb = function() {return 123;}; TestCallback = cb; }"); assert(r >= 0);
 		r = module->Build(); // <== Crash Here
 		if (r >= 0)
 			TEST_FAILED;
 
-		r = module->AddScriptSection("test", "void main(){ Callback@ cb = test; TestCallback = cb; } int test() {return 123;}"); assert(r >= 0);
+		r = module->AddScriptSection("test", "void main2(){ Callback@ cb = test; TestCallback = cb; } int test() {return 123;}"); assert(r >= 0);
 		r = module->Build(); // <== Crash Here
 		if (r >= 0)
 			TEST_FAILED;
 
-		r = module->AddScriptSection("test", "void main(){ TestCallback = function() {return 123;}; }"); assert(r >= 0);
+		r = module->AddScriptSection("test", "void main3(){ TestCallback = function() {return 123;}; }"); assert(r >= 0);
 		r = module->Build(); // <== Crash Here
 		if (r >= 0)
 			TEST_FAILED;
 
-		r = module->AddScriptSection("test", "void main(){ Callback@ cb = function() {return 123;}; @TestCallback = cb; }"); assert(r >= 0);
+		r = module->AddScriptSection("test", "void main4(){ Callback@ cb = function() {return 123;}; @TestCallback = cb; }"); assert(r >= 0);
 		r = module->Build(); 
 		if (r < 0)
 			TEST_FAILED;
 
-		r = module->AddScriptSection("test", "void main(){ @TestCallback = function(){return 123;}; }"); assert(r >= 0);
+		r = module->AddScriptSection("test", "void main5(){ @TestCallback = function(){return 123;}; }"); assert(r >= 0);
 		r = module->Build(); 
 		if (r < 0)
 			TEST_FAILED;
 
-		r = context->Prepare(module->GetFunctionByName("main")); 
+		r = context->Prepare(module->GetFunctionByName("main5")); 
 		if (r < 0)
 			TEST_FAILED;
 
@@ -604,12 +604,12 @@ bool Test()
 		context->Release();
 		module->Discard();
 
-		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
-						   "test (1, 68) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n"
-						   "test (1, 1) : Info    : Compiling void main()\n"
-						   "test (1, 48) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n"
-						   "test (1, 1) : Info    : Compiling void main()\n"
-						   "test (1, 27) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n")
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void main1()\n"
+						   "test (1, 69) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n"
+						   "test (1, 1) : Info    : Compiling void main2()\n"
+						   "test (1, 49) : Error   : No appropriate opAssign method found in 'Callback' for value assignment\n"
+						   "test (1, 1) : Info    : Compiling void main3()\n"
+						   "test (1, 41) : Error   : Can't implicitly convert from 'const Callback@&' to 'Callback&'.\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

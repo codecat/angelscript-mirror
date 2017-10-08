@@ -1518,6 +1518,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 				ctx->bc.InstrWORD(asBC_PSF, (short)offset);
 
 				ctx->type.SetVariable(dt, offset, true);
+				ctx->type.isExplicitHandle = true;
 			}
 			else
 			{
@@ -1576,7 +1577,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 							// The type should be set to the param type instead of dt to guarantee
 							// that the expression keeps the correct type for variable ? args. Otherwise
 							// MoveArgsToStack will use the wrong bytecode to move the arg to the stack
+							bool isExplicitHandle = ctx->type.isExplicitHandle;
 							ctx->type.SetVariable(param, offset, true);
+							ctx->type.dataType.MakeHandle(true);
+							ctx->type.isExplicitHandle = isExplicitHandle;
 						}
 						else
 						{
@@ -1601,6 +1605,37 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 							ctx->type.dataType.MakeReference(false);
 							if( paramType->IsReadOnly() )
 								ctx->type.dataType.MakeReadOnly(true);
+						}
+					}
+
+					// When calling a function expecting a var arg with a parameter received as reference to handle
+					// then it is necessary to copy the handle to a local variable, otherwise MoveArgsToStack will
+					// not be able to do the correct double dereference to put the reference to the object on the stack.
+					if (paramType->GetTokenType() == ttQuestion && !param.IsObjectHandle() && ctx->type.isVariable)
+					{
+						sVariable *var = variables->GetVariableByOffset(ctx->type.stackOffset);
+						if (var && var->type.IsReference() && var->type.IsObjectHandle())
+						{
+							// Copy the handle to local variable
+
+							// Allocate a handle variable
+							dt.MakeHandle(true);
+							offset = AllocateVariableNotIn(dt, true, false, ctx);
+
+							// Copy the handle
+							Dereference(ctx, true);
+							ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
+							if (ctx->type.dataType.IsFuncdef())
+								ctx->bc.InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
+							else
+								ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetTypeInfo());
+							ctx->bc.Instr(asBC_PopPtr);
+							ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
+
+							// The type should be set to the param type instead of dt to guarantee
+							// that the expression keeps the correct type for variable ? args. Otherwise
+							// MoveArgsToStack will use the wrong bytecode to move the arg to the stack
+							ctx->type.SetVariable(param, offset, true);
 						}
 					}
 				}
@@ -1639,6 +1674,11 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			}
 			else
 			{
+				// Null handles and void expressions must be marked as explicit 
+				// handles for correct treatement in MoveArgsToStack
+				if (dt.IsNullHandle())
+					ctx->type.isExplicitHandle = true;
+
 				// Make sure the variable is not used in the expression
 				offset = AllocateVariableNotIn(dt, true, false, ctx);
 
@@ -1649,9 +1689,6 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 				}
 				else
 				{
-					// TODO: Need to reserve variables, as the default constructor may need
-					//       to allocate temporary variables to compute default args
-
 					// Allocate and construct the temporary object
 					asCByteCode tmpBC(engine);
 					CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
@@ -1666,6 +1703,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 					type.isTemporary = true;
 					type.stackOffset = (short)offset;
 
+					type.isExplicitHandle = ctx->type.isExplicitHandle;
 					ctx->type = type;
 
 					ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
@@ -1950,6 +1988,19 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 						// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
 						//                         as the value allocated on the stack is guaranteed to be safe
 						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					else
+						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+				}
+				else if (descr->parameterTypes[n].GetTokenType() == ttQuestion &&
+					args[n]->type.dataType.IsObjectHandle() && !args[n]->type.isExplicitHandle)
+				{
+					// The object handle is being passed as an object, so dereference it before
+					// the call so the reference will be to the object rather than to the handle
+					if (engine->ep.disallowValueAssignForRefType )
+					{
+						// With disallow value assign all ref type objects are always passed by handle
+						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+					}
 					else
 						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
 				}
@@ -7931,6 +7982,11 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 						return -1;
 					}
 				}
+
+				// Mark the right hand expression as explicit handle even if the user didn't do it, otherwise
+				// the code for moving the argument to the stack may not know to correctly handle the argument type
+				// in case of variable parameter type.
+				rctx->type.isExplicitHandle = true;
 			}
 
 			if( CompileOverloadedDualOperator(opNode, lctx, rctx, false, ctx, true) )

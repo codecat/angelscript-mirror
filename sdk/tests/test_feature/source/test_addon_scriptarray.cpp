@@ -184,6 +184,22 @@ CScriptArray *CreateArrayOfStrings()
 	return 0;
 }
 
+static std::stringstream printResult;
+static void print(void* ptr, int typeId) {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* ti = engine->GetTypeInfoById(typeId);
+	asIScriptFunction* func = ti->GetMethodByName("get_value");
+	ctx->PushState();
+	ctx->Prepare(func);
+	if (typeId & asTYPEID_OBJHANDLE)
+		ptr = *(void**)ptr;
+	ctx->SetObject(ptr); //##Crash!
+	ctx->Execute();
+	printResult << ctx->GetReturnDWord() << "\n";
+	ctx->PopState();
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -213,6 +229,66 @@ bool Test()
 		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test sort through callback with objects
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptArray(engine, false);
+
+		engine->RegisterGlobalFunction("void print(const?&in)", asFUNCTION(print), asCALL_CDECL);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Test { \n"
+			"	int x; \n"
+			"	Test() { x = 0; } \n"
+			"	Test(int x1) { x = x1; } \n"
+			"	int get_value() const { return x + 10; } \n"
+			"} \n"
+			"void main() { \n"
+			"	array<Test@> a = { \n"
+			"		Test(8), \n"
+			"		Test(4), \n"
+			"		Test(5), \n"
+			"		Test(), \n"
+			"		Test(7), \n"
+			"		Test(1) \n"
+			"	}; \n"
+			"	print(a[0]); \n"
+			"	print(Test(9)); \n"
+			"	a.sort(function(a, b) { \n"
+			"		print(a); \n"
+			"		return a.value<b.value; \n"
+			"	}); \n"
+			"	print(a[0]); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		if (printResult.str() != "18\n19\n14\n15\n15\n10\n10\n10\n17\n17\n11\n11\n11\n11\n11\n10\n")
+		{
+			PRINTF("Wrong result, got: \n");
+			PRINTF("%s", printResult.str().c_str());
 			TEST_FAILED;
 		}
 
