@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.0 WIP - 2017/10/08</h2>
+<h2>Version 2.32.0 WIP - 2017/10/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed memory leak in RemoveGlobalProperty as the property wasn't uninitialized before it was removed (Thanks Quentin Cosendey)
 <li>Fixed bug in compiler that would in complex expressions overwrite a temporary variable before it was used (Thanks Aaron Baker)
 <li>Handles received by reference is now properly treated when passed to function expecting variant type (Thanks Quentin Cosendey)
+<li>Fixed compiler error in deprecated IsHandleCompatibleWithObject when using AS_DEPRECATED (Thanks Asu)
 </ul>
 <li>Library interface
 <ul>

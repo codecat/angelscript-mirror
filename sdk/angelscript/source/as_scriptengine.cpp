@@ -2381,13 +2381,13 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) )
 			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
-		asCString decl;
-		decl += func.returnType.Format(defaultNamespace);
-		decl += behaviour == asBEHAVE_VALUE_CAST ? " opConv(" : " opImplConv(";
+		asCString declTmp;
+		declTmp += func.returnType.Format(defaultNamespace);
+		declTmp += behaviour == asBEHAVE_VALUE_CAST ? " opConv(" : " opImplConv(";
 		if( func.parameterTypes.GetLength() )
-			decl += "?&out";
-		decl += ")";
-		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, auxiliary);
+			declTmp += "?&out";
+		declTmp += ")";
+		func.id = RegisterMethodToObjectType(objectType, declTmp.AddressOf(), funcPointer, callConv, auxiliary);
 	}
 	// Deprecated since 2.30.0, 2014-12-30
 	else if( behaviour == asBEHAVE_REF_CAST ||
@@ -2405,15 +2405,15 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		if( func.IsReadOnly() )
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 
-		asCString decl;
-		decl += func.returnType.Format(defaultNamespace);
+		asCString declTmp;
+		declTmp += func.returnType.Format(defaultNamespace);
 		if( internal.returnAutoHandle )
-			decl += "+";
-		decl += behaviour == asBEHAVE_REF_CAST ? " opCast(" : " opImplCast(";
+			declTmp += "+";
+		declTmp += behaviour == asBEHAVE_REF_CAST ? " opCast(" : " opImplCast(";
 		if( func.parameterTypes.GetLength() )
-			decl += "?&out";
-		decl += ")";
-		func.id = RegisterMethodToObjectType(objectType, decl.AddressOf(), funcPointer, callConv, auxiliary);
+			declTmp += "?&out";
+		declTmp += ")";
+		func.id = RegisterMethodToObjectType(objectType, declTmp.AddressOf(), funcPointer, callConv, auxiliary);
 	}
 #endif
 	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
@@ -5343,7 +5343,7 @@ bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int
 	else if( objDt.IsScriptObject() && obj )
 	{
 		// Get the true type from the object instance
-		asCObjectType *objType = ((asCScriptObject*)obj)->objType;
+		asITypeInfo *objType = ((asCScriptObject*)obj)->GetObjectType();
 
 		// Check if the object implements the interface, or derives from the base class
 		// This will also return true, if the requested handle type is an exact match for the object type
