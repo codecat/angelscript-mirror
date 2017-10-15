@@ -24,36 +24,40 @@ bool Test()
 	asIScriptEngine *engine;
 	CBufferedOutStream bout;
 
- 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "TestParser (3, 1) : Error   : Expected '}'\n"
-		               "TestParser (3, 1) : Error   : Instead found '<end of file>'\n" )
+	// Test parser errors
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
-	bout.buffer = "";
-	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	// TODO: The } token isn't unexpected, the parser is just not understanding that it is still inside the object declaration
-	if( bout.buffer != "TestParser (3, 17) : Error   : Expected ')' or ','\n"
-		               "TestParser (3, 17) : Error   : Instead found reserved keyword 'int'\n"
-					   "TestParser (4, 1) : Error   : Unexpected token '}'\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "TestParser (3, 1) : Error   : Expected '}'\n"
+			"TestParser (3, 1) : Error   : Instead found '<end of file>'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
-	engine->Release();
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		// TODO: The } token isn't unexpected, the parser is just not understanding that it is still inside the object declaration
+		if (bout.buffer != "TestParser (3, 17) : Error   : Expected ')' or ','\n"
+			"TestParser (3, 17) : Error   : Instead found reserved keyword 'int'\n"
+			"TestParser (4, 1) : Error   : Unexpected token '}'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+	}
 
 	// Success
  	return fail;

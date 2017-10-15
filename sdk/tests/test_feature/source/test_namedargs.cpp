@@ -15,6 +15,59 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test invalid use of named args
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int a = int(a:0);\n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (1, 5) : Info    : Compiling int a\n"
+			"test (1, 12) : Error   : Invalid use of named arguments\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test when named args isn't in the function signature
+	{
+		const char *script =
+			"void func(int a) {\n"
+			"}\n"
+			"void test() {"
+			"  func(b:4);\n"
+			"}\n";
+
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
+						   "test (3, 16) : Error   : No matching signatures to 'func(b: const int)'\n"
+						   "test (3, 16) : Info    : Candidates are:\n"
+						   "test (3, 16) : Info    : void func(int a)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
+
+	}
+
 	// Test named args with registered object behaviours
 	// http://www.gamedev.net/topic/672959-problem-with-named-parameters-and-object-behaviors/
 	{
@@ -280,7 +333,7 @@ bool Test()
 		//the name of the positional argument may vary between different
 		//possible matches.
 		if( bout.buffer != "test (5, 1) : Info    : Compiling void test()\n"
-						   "test (5, 16) : Error   : No matching signatures to 'func(const int, a=const int)'\n"
+						   "test (5, 16) : Error   : No matching signatures to 'func(const int, a: const int)'\n"
 						   "test (5, 16) : Info    : Candidates are:\n"
 						   "test (5, 16) : Info    : bool func(int a, int b, int c)\n"
 						   )

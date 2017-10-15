@@ -154,6 +154,7 @@
 #define TXT_INVALID_UNICODE_FORMAT_EXPECTED_d      "Invalid unicode escape sequence, expected %d hex digits"
 #define TXT_INVALID_UNICODE_VALUE                  "Invalid unicode code point"
 #define TXT_INVALID_UNICODE_SEQUENCE_IN_SRC        "Invalid unicode sequence in source"
+#define TXT_INVALID_USE_OF_NAMED_ARGS              "Invalid use of named arguments"
 
 #define TXT_METHOD_CANNOT_OVERRIDE_s                "Method '%s' declared as final and cannot be overridden"
 #define TXT_METHOD_CANT_HAVE_NAME_OF_CLASS          "The method cannot be named with the class name"

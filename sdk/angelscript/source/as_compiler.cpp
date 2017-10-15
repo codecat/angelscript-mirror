@@ -2502,7 +2502,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 
 				asSNamedArgument &named = (*namedArgs)[n];
 				str += named.name;
-				str += "=";
+				str += ": ";
 				if( named.ctx->methodName != "" )
 					str += named.ctx->methodName;
 				else
@@ -8135,6 +8135,8 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 
 int asCCompiler::CompileAssignment(asCScriptNode *expr, asCExprContext *ctx)
 {
+	asASSERT(expr->nodeType == snAssignment);
+
 	asCScriptNode *lexpr = expr->firstChild;
 	if( lexpr->next )
 	{
@@ -9703,6 +9705,13 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 			node->lastChild->firstChild != node->lastChild->lastChild )
 		{
 			Error(TXT_ONLY_ONE_ARGUMENT_IN_CAST, node->lastChild);
+			expr.type.SetDummy();
+			anyErrors = true;
+		}
+		else if (node->lastChild->firstChild && 
+			node->lastChild->firstChild->nodeType == snNamedArgument)
+		{
+			Error(TXT_INVALID_USE_OF_NAMED_ARGS, node->lastChild);
 			expr.type.SetDummy();
 			anyErrors = true;
 		}
