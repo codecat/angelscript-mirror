@@ -216,6 +216,39 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test assert failure on implicit conversion of primitive types
+	// https://www.gamedev.net/forums/topic/692729-assert-failure-in-ascexprvaluegetconstantdw/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"const uint16 FREQUENCY = 2000; \n"
+			"void onTick(CBlob@ blob) \n"
+			"{ \n"
+			"	if (blob.getTickSinceCreated() < FREQUENCY) return; \n"
+			"} \n"
+			"class CBlob { int getTickSinceCreated() { return 0; } } \n"
+			"const uint8 COIN_COST = 60; \n"
+			"void blah(CBlob @player) \n"
+			"{ \n"
+			"	if ( player.getTickSinceCreated() < COIN_COST) { } \n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test parser error message
 	{
 		engine = asCreateScriptEngine();

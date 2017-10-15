@@ -13950,9 +13950,19 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 					if( !(opCtx->type.GetConstantQW() & (asQWORD(1)<<63)) )
 						signMismatch = false;
 				}
-				else
+				else if(opCtx->type.dataType.GetTokenType() == ttUInt || opCtx->type.dataType.GetTokenType() == ttInt || opCtx->type.dataType.IsEnumType() )
 				{
 					if( !(opCtx->type.GetConstantDW() & (1<<31)) )
+						signMismatch = false;
+				}
+				else if (opCtx->type.dataType.GetTokenType() == ttUInt16 || opCtx->type.dataType.GetTokenType() == ttInt16)
+				{
+					if (!(opCtx->type.GetConstantW() & (1 << 15)))
+						signMismatch = false;
+				}
+				else if (opCtx->type.dataType.GetTokenType() == ttUInt8 || opCtx->type.dataType.GetTokenType() == ttInt8)
+				{
+					if (!(opCtx->type.GetConstantB() & (1 << 7)))
 						signMismatch = false;
 				}
 
