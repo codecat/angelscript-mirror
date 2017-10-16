@@ -235,6 +235,11 @@ bool Test()
 			"void blah(CBlob @player) \n"
 			"{ \n"
 			"	if ( player.getTickSinceCreated() < COIN_COST) { } \n"
+			"}\n"
+			"const uint8 constant = 5; \n"
+			"void foo() \n"
+			"{ \n"
+			"	-constant; \n"
 			"}\n");
 		r = mod->Build();
 		if (r < 0)

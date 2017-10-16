@@ -10876,10 +10876,17 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 		{
 			if( op == ttMinus )
 			{
-				if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 1 )
-					ctx->type.SetConstantDW(-(int)ctx->type.GetConstantDW());
-				else if( ctx->type.dataType.IsIntegerType() && ctx->type.dataType.GetSizeInMemoryDWords() == 2 )
-					ctx->type.SetConstantQW(-(asINT64)ctx->type.GetConstantQW());
+				if (ctx->type.dataType.IsIntegerType())
+				{
+					if (ctx->type.dataType.GetSizeInMemoryBytes() == 4)
+						ctx->type.SetConstantDW(-(int)ctx->type.GetConstantDW());
+					else if (ctx->type.dataType.GetSizeInMemoryBytes() == 2)
+						ctx->type.SetConstantW(-(short)ctx->type.GetConstantW());
+					else if (ctx->type.dataType.GetSizeInMemoryBytes() == 1)
+						ctx->type.SetConstantB(-(char)ctx->type.GetConstantB());
+					else if (ctx->type.dataType.GetSizeInMemoryBytes() == 8)
+						ctx->type.SetConstantQW(-(asINT64)ctx->type.GetConstantQW());
+				}
 				else if( ctx->type.dataType.IsFloatType() )
 					ctx->type.SetConstantF(-ctx->type.GetConstantF());
 				else if( ctx->type.dataType.IsDoubleType() )
