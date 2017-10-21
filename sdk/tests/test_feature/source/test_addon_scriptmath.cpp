@@ -239,6 +239,34 @@ bool Test()
 
 	engine->Release();
 
+	// Test use of anonymous list construct
+	{
+		bout.buffer = "";
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterScriptMathComplex(engine);
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"addAttachment({1, 1});"
+			"} \n"
+			"void addAttachment(complex) {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	return fail;
 }
 

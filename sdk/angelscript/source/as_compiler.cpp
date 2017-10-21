@@ -4711,7 +4711,14 @@ void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *
 	lvalue.isExplicitHandle = ctx->type.isExplicitHandle;
 	bool isExplicitHandle = ctx->type.isExplicitHandle;
 
+	bool prevIsTemp = ctx->type.isTemporary;
+	int prevStackOffset = ctx->type.stackOffset;
+
 	CompileInitAsCopy(dt, offset, &ctx->bc, ctx, node, false);
+
+	// Release the previous temporary variable if it hasn't already been released
+	if( prevIsTemp && tempVariables.Exists(prevStackOffset) )
+		ReleaseTemporaryVariable(prevStackOffset, &ctx->bc);
 
 	// Push the reference to the temporary variable on the stack
 	ctx->bc.InstrSHORT(asBC_PSF, (short)offset);
