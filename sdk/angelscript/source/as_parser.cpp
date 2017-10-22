@@ -2,23 +2,23 @@
    AngelCode Scripting Library
    Copyright (c) 2003-2017 Andreas Jonsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -35,7 +35,7 @@
 // This class parses the script code and builds a tree for compilation
 //
 //
-// I've documented the syntax in Extended BNF. You'll find it by doing a search in 
+// I've documented the syntax in Extended BNF. You'll find it by doing a search in
 // this file by "BNF:". The starting point for the script language is SCRIPT ::=.
 //
 // Ref: http://matt.might.net/articles/grammars-bnf-ebnf/
@@ -157,7 +157,7 @@ int asCParser::ParseDataType(asCScriptCode *in_script, bool in_isReturnType)
 
 	scriptNode = CreateNode(snDataType);
 	if( scriptNode == 0 ) return -1;
-		
+
 	scriptNode->AddChildLast(ParseType(true));
 	if( isSyntaxError ) return -1;
 
@@ -420,7 +420,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 		}
 	}
 
-	// Parse possible + token 
+	// Parse possible + token
 	GetToken(&t);
 	RewindTo(&t);
 	if( t.type == ttPlus )
@@ -511,7 +511,7 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, boo
 
 // This parses a template type list, e.g. <type, type, type>
 // If 'required' is false, and the template type list is not valid,
-// then no change will be done and the function returns false. This 
+// then no change will be done and the function returns false. This
 // can be used as do an optional parsing
 bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 {
@@ -550,7 +550,7 @@ bool asCParser::ParseTemplTypeList(asCScriptNode *node, bool required)
 	}
 
 	// End with '>'
-	// Accept >> and >>> tokens too. But then force the tokenizer to move 
+	// Accept >> and >>> tokens too. But then force the tokenizer to move
 	// only 1 character ahead (thus splitting the token in two).
 	if (script->code[t.pos] != '>')
 	{
@@ -811,7 +811,7 @@ asCScriptNode *asCParser::SuperficiallyParseExpression()
 	asCScriptNode *node = CreateNode(snExpression);
 	if( node == 0 ) return 0;
 
-	// Simply parse everything until the first , or ), whichever comes first. 
+	// Simply parse everything until the first , or ), whichever comes first.
 	// Keeping in mind that () and {} can group expressions.
 
 	sToken start;
@@ -942,7 +942,7 @@ void asCParser::GetToken(sToken *token)
 		sourcePos += token->length;
 	}
 	// Filter out whitespace and comments
-	while( token->type == ttWhiteSpace || 
+	while( token->type == ttWhiteSpace ||
 	       token->type == ttOnelineComment ||
 	       token->type == ttMultilineComment );
 }
@@ -955,8 +955,8 @@ void asCParser::SetPos(size_t pos)
 
 void asCParser::RewindTo(const sToken *token)
 {
-	// TODO: optimize: Perhaps we can optimize this further by having the parser 
-	//                 set an explicit return point, after which each token will 
+	// TODO: optimize: Perhaps we can optimize this further by having the parser
+	//                 set an explicit return point, after which each token will
 	//                 be stored. That way not just one token will be reused but
 	//                 no token will have to be tokenized more than once.
 
@@ -1201,7 +1201,7 @@ asCScriptNode *asCParser::ParseListPattern()
 
 bool asCParser::IdentifierIs(const sToken &t, const char *str)
 {
-	if( t.type != ttIdentifier ) 
+	if( t.type != ttIdentifier )
 		return false;
 
 	return script->TokenEquals(t.pos, t.length, str);
@@ -1209,8 +1209,8 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 
 #ifndef AS_NO_COMPILER
 
-// This function will return true if the current token is not a template, or if it is and 
-// the following has a valid syntax for a template type. The source position will be left 
+// This function will return true if the current token is not a template, or if it is and
+// the following has a valid syntax for a template type. The source position will be left
 // at the first token after the type in case of success
 bool asCParser::CheckTemplateType(const sToken &t)
 {
@@ -1275,7 +1275,7 @@ bool asCParser::CheckTemplateType(const sToken &t)
 				break;
 		}
 
-		// Accept >> and >>> tokens too. But then force the tokenizer to move 
+		// Accept >> and >>> tokens too. But then force the tokenizer to move
 		// only 1 character ahead (thus splitting the token in two).
 		if( script->code[t1.pos] != '>' )
 			return false;
@@ -1386,7 +1386,7 @@ asCScriptNode *asCParser::ParseExprValue()
 				GetToken(&t);
 				if( t.type == ttScope )
 					GetToken(&t);
-				else 
+				else
 					break;
 			}
 
@@ -1401,7 +1401,7 @@ asCScriptNode *asCParser::ParseExprValue()
 			}
 
 			GetToken(&t2);
-		
+
 			// Rewind so the real parsing can be done, after deciding what to parse
 			RewindTo(&t1);
 
@@ -1554,7 +1554,7 @@ asCScriptNode *asCParser::ParseLambda()
 		return node;
 	}
 
-	// We should just find the end of the statement block here. The statements 
+	// We should just find the end of the statement block here. The statements
 	// will be parsed on request by the compiler once it starts the compilation.
 	node->AddChildLast(SuperficiallyParseStatementBlock());
 
@@ -1721,7 +1721,7 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 						Error(InsteadFound(t1), &t1);
 					}
 				}
-				else 
+				else
 					RewindTo(&t1);
 
 				return node;
@@ -1750,7 +1750,7 @@ bool asCParser::IsFunctionCall()
 	}
 
 	// A function call starts with an identifier followed by an argument list
-	// The parser doesn't have enough information about scope to determine if the 
+	// The parser doesn't have enough information about scope to determine if the
 	// identifier is a datatype, so even if it happens to be the parser will
 	// identify the expression as a function call rather than a construct call.
 	// The compiler will sort this out later
@@ -1905,7 +1905,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 	node->AddChildLast(ParseExprValue());
 	if( isSyntaxError ) return node;
 
-	
+
 	for(;;)
 	{
 		GetToken(&t);
@@ -2017,7 +2017,7 @@ asCScriptNode *asCParser::ParseExprOperator()
 	return node;
 }
 
-// BNF: ASSIGNOP ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>=' 
+// BNF: ASSIGNOP ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>='
 asCScriptNode *asCParser::ParseAssignOperator()
 {
 	asCScriptNode *node = CreateNode(snExprOperator);
@@ -2140,7 +2140,7 @@ int asCParser::ParseScript(asCScriptCode *in_script)
 	if( errorWhileParsing )
 		return -1;
 
-	// TODO: Should allow application to request this warning to be generated. 
+	// TODO: Should allow application to request this warning to be generated.
 	//       It should be off by default, since pre-processor may remove all
 	//       code from a section while still being meant as valid code
 /*
@@ -2447,7 +2447,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 
 	// Get the identifier
 	GetToken(&token);
-	if(ttIdentifier != token.type) 
+	if(ttIdentifier != token.type)
 	{
 		Error(TXT_EXPECTED_IDENTIFIER, &token);
 		Error(InsteadFound(token), &token);
@@ -2476,7 +2476,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 	}
 
 	// check for the start of the declaration block
-	if( token.type != ttStartStatementBlock ) 
+	if( token.type != ttStartStatementBlock )
 	{
 		RewindTo(&token);
 		int tokens[] = { ttStartStatementBlock, ttEndStatement };
@@ -2485,17 +2485,17 @@ asCScriptNode *asCParser::ParseEnumeration()
 		return node;
 	}
 
-	while(ttEnd != token.type) 
+	while(ttEnd != token.type)
 	{
 		GetToken(&token);
 
-		if( ttEndStatementBlock == token.type ) 
+		if( ttEndStatementBlock == token.type )
 		{
 			RewindTo(&token);
 			break;
 		}
 
-		if(ttIdentifier != token.type) 
+		if(ttIdentifier != token.type)
 		{
 			Error(TXT_EXPECTED_IDENTIFIER, &token);
 			Error(InsteadFound(token), &token);
@@ -2525,7 +2525,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 			GetToken(&token);
 		}
 
-		if(ttListSeparator != token.type) 
+		if(ttListSeparator != token.type)
 		{
 			RewindTo(&token);
 			break;
@@ -2534,7 +2534,7 @@ asCScriptNode *asCParser::ParseEnumeration()
 
 	// check for the end of the declaration block
 	GetToken(&token);
-	if( token.type != ttEndStatementBlock ) 
+	if( token.type != ttEndStatementBlock )
 	{
 		RewindTo(&token);
 		Error(ExpectedToken("}"), &token);
@@ -2619,7 +2619,7 @@ bool asCParser::IsVarDecl()
 	}
 
 	// Object handles can be interleaved with the array brackets
-	// Even though declaring variables with & is invalid we'll accept 
+	// Even though declaring variables with & is invalid we'll accept
 	// it here to give an appropriate error message later
 	GetToken(&t2);
 	while( t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket )
@@ -2649,9 +2649,9 @@ bool asCParser::IsVarDecl()
 		RewindTo(&t);
 		return true;
 	}
-	if( t2.type == ttOpenParanthesis ) 
-	{	
-		// If the closing paranthesis is followed by a statement 
+	if( t2.type == ttOpenParanthesis )
+	{
+		// If the closing paranthesis is followed by a statement
 		// block or end-of-file, then treat it as a function. A
 		// function decl may have nested paranthesis so we need to
 		// check for this too.
@@ -2868,10 +2868,10 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	}
 
 	GetToken(&t2);
-	if( t2.type == ttOpenParanthesis ) 
-	{	
-		// If the closing parenthesis is not followed by a  
-		// statement block then it is not a function. 
+	if( t2.type == ttOpenParanthesis )
+	{
+		// If the closing parenthesis is not followed by a
+		// statement block then it is not a function.
 		// It's possible that there are nested parenthesis due to default
 		// arguments so this should be checked for.
 		int nest = 0;
@@ -2896,7 +2896,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 				GetToken(&t1);
 				if( t1.type != ttConst )
 					RewindTo(&t1);
-				
+
 				// A class method may also have any number of additional inheritance behavior specifiers
 				for( ; ; )
 				{
@@ -2975,7 +2975,7 @@ asCScriptNode *asCParser::ParseFuncDef()
 	return node;
 }
 
-// BNF: FUNC ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} (';' | STATBLOCK) 
+// BNF: FUNC ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} (';' | STATBLOCK)
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -3066,7 +3066,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 		return node;
 	}
 
-	// We should just find the end of the statement block here. The statements 
+	// We should just find the end of the statement block here. The statements
 	// will be parsed on request by the compiler once it starts the compilation.
 	node->AddChildLast(SuperficiallyParseStatementBlock());
 
@@ -3160,7 +3160,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 
 			RewindTo(&t1);
 			accessorNode->AddChildLast(ParseIdentifier());
-			
+
 			if( isMethod )
 			{
 				GetToken(&t1);
@@ -3297,7 +3297,7 @@ asCScriptNode *asCParser::ParseInterface()
 			node->AddChildLast(ParseInterfaceMethod());
 
 		if( isSyntaxError ) return node;
-		
+
 		GetToken(&t);
 		RewindTo(&t);
 	}
@@ -3372,7 +3372,7 @@ asCScriptNode *asCParser::ParseClass()
 	{
 		// Parse 'implicit handle class' construct
 		GetToken(&t);
-		
+
 		if ( t.type == ttHandle )
 			node->SetToken(&t);
 		else
@@ -3434,7 +3434,7 @@ asCScriptNode *asCParser::ParseClass()
 		else if( t.type == ttEndStatement )
 			// Skip empty declarations
 			GetToken(&t);
-		else 
+		else
 		{
 			Error(TXT_EXPECTED_METHOD_OR_PROPERTY, &t);
 			Error(InsteadFound(t), &t);
@@ -3482,7 +3482,7 @@ int asCParser::ParseVarInit(asCScriptCode *in_script, asCScriptNode *in_init)
 		else
 			scriptNode = ParseAssignment();
 	}
-	else if( t.type == ttOpenParanthesis ) 
+	else if( t.type == ttOpenParanthesis )
 	{
 		RewindTo(&t);
 		scriptNode = ParseArgList();
@@ -3752,10 +3752,10 @@ asCScriptNode *asCParser::ParseInitList()
 			GetToken(&t1);
 			if( t1.type == ttListSeparator )
 			{
-				// No expression 
+				// No expression
 				node->AddChildLast(CreateNode(snUndefined));
 				node->lastChild->UpdateSourcePos(t1.pos, 1);
-				
+
 				GetToken(&t1);
 				if( t1.type == ttEndStatementBlock )
 				{
@@ -3769,7 +3769,7 @@ asCScriptNode *asCParser::ParseInitList()
 			}
 			else if( t1.type == ttEndStatementBlock )
 			{
-				// No expression 
+				// No expression
 				node->AddChildLast(CreateNode(snUndefined));
 				node->lastChild->UpdateSourcePos(t1.pos, 1);
 				node->UpdateSourcePos(t1.pos, t1.length);
@@ -3844,7 +3844,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 		node->AddChildLast(ParseToken(ttPrivate));
 	else if( t.type == ttProtected && isClassProp )
 		node->AddChildLast(ParseToken(ttProtected));
-	
+
 	// Parse data type
 	node->AddChildLast(ParseType(true, false, !isClassProp));
 	if( isSyntaxError ) return node;
@@ -4028,11 +4028,11 @@ asCScriptNode *asCParser::ParseSwitch()
 		Error(InsteadFound(t), &t);
 		return node;
 	}
-	
+
 	while( !isSyntaxError )
 	{
 		GetToken(&t);
-		
+
 		if( t.type == ttEndStatementBlock )
 			break;
 
@@ -4093,9 +4093,9 @@ asCScriptNode *asCParser::ParseCase()
 	// Parse statements until we find either of }, case, default, and break
 	GetToken(&t);
 	RewindTo(&t);
-	while( t.type != ttCase && 
-		   t.type != ttDefault && 
-		   t.type != ttEndStatementBlock && 
+	while( t.type != ttCase &&
+		   t.type != ttDefault &&
+		   t.type != ttEndStatementBlock &&
 		   t.type != ttBreak )
 	{
 		if( IsVarDecl() )
@@ -4232,7 +4232,7 @@ asCScriptNode *asCParser::ParseFor()
 	}
 
 	node->AddChildLast(ParseStatement());
-	
+
 	return node;
 }
 
@@ -4453,7 +4453,7 @@ asCScriptNode *asCParser::ParseTypedef()
 		Error(InsteadFound(token), &token);
 		return node;
 	}
-	
+
 	node->SetToken(&token);
 	node->UpdateSourcePos(token.pos, token.length);
 
@@ -4475,7 +4475,7 @@ asCScriptNode *asCParser::ParseTypedef()
 
 	// Check for the end of the typedef
 	GetToken(&token);
-	if( token.type != ttEndStatement ) 
+	if( token.type != ttEndStatement )
 	{
 		RewindTo(&token);
 		Error(ExpectedToken(asCTokenizer::GetDefinition(token.type)), &token);

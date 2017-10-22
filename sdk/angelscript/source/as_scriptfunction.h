@@ -1,24 +1,24 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -106,8 +106,8 @@ struct asSObjectVariableInfo
 
 struct asSSystemFunctionInterface;
 
-// TODO: Might be interesting to allow enumeration of accessed global variables, and 
-//       also functions/methods that are being called. This could be used to build a 
+// TODO: Might be interesting to allow enumeration of accessed global variables, and
+//       also functions/methods that are being called. This could be used to build a
 //       code database with call graphs, etc.
 
 void RegisterScriptFunction(asCScriptEngine *engine);
@@ -152,7 +152,7 @@ public:
 #endif
 	int                  GetReturnTypeId(asDWORD *flags = 0) const;
 
-	// Type id for function pointers 
+	// Type id for function pointers
 	int                  GetTypeId() const;
 	bool                 IsCompatibleWithTypeId(int typeId) const;
 
@@ -181,7 +181,7 @@ public:
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);
 	~asCScriptFunction();
 
-	// Keep an internal reference counter to separate references coming from 
+	// Keep an internal reference counter to separate references coming from
 	// application or script objects and references coming from the script code
 	int AddRefInternal();
 	int ReleaseInternal();
@@ -271,8 +271,8 @@ public:
 	asDWORD                      accessMask;
 	bool                         isShared;
 
-	// Namespace will be null for funcdefs that are declared as child funcdefs 
-	// of a class. In this case the namespace shall be taken from the parentClass 
+	// Namespace will be null for funcdefs that are declared as child funcdefs
+	// of a class. In this case the namespace shall be taken from the parentClass
 	// in the funcdefType
 	asSNameSpace                *nameSpace;
 

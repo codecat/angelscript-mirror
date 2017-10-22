@@ -789,7 +789,7 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 
 	str += ")";
 
-	if( isReadOnly )
+	if( IsReadOnly() )
 		str += " const";
 
 	// Add the declaration of the list pattern
@@ -1038,7 +1038,7 @@ bool asCScriptFunction::IsSignatureEqual(const asCScriptFunction *func) const
 // internal
 bool asCScriptFunction::IsSignatureExceptNameEqual(const asCScriptFunction *func) const
 {
-	return IsSignatureExceptNameEqual(func->returnType, func->parameterTypes, func->inOutFlags, func->objectType, func->isReadOnly);
+	return IsSignatureExceptNameEqual(func->returnType, func->parameterTypes, func->inOutFlags, func->objectType, func->IsReadOnly());
 }
 
 // internal
@@ -1052,19 +1052,19 @@ bool asCScriptFunction::IsSignatureExceptNameEqual(const asCDataType &retType, c
 // internal
 bool asCScriptFunction::IsSignatureExceptNameAndObjectTypeEqual(const asCScriptFunction *func) const
 {
-	return IsSignatureExceptNameEqual(func->returnType, func->parameterTypes, func->inOutFlags, objectType, isReadOnly);
+	return IsSignatureExceptNameEqual(func->returnType, func->parameterTypes, func->inOutFlags, objectType, IsReadOnly());
 }
 
 // internal
 bool asCScriptFunction::IsSignatureExceptNameAndReturnTypeEqual(const asCScriptFunction *func) const
 {
-	return IsSignatureExceptNameAndReturnTypeEqual(func->parameterTypes, func->inOutFlags, func->objectType, func->isReadOnly);
+	return IsSignatureExceptNameAndReturnTypeEqual(func->parameterTypes, func->inOutFlags, func->objectType, func->IsReadOnly());
 }
 
 // internal
 bool asCScriptFunction::IsSignatureExceptNameAndReturnTypeEqual(const asCArray<asCDataType> &paramTypes, const asCArray<asETypeModifiers> &paramInOut, const asCObjectType *objType, bool readOnly) const
 {
-	if( this->isReadOnly        != readOnly       ) return false;
+	if( this->IsReadOnly()      != readOnly       ) return false;
 	if( (this->objectType != 0) != (objType != 0) ) return false;
 	if( this->inOutFlags        != paramInOut     ) return false;
 	if( this->parameterTypes    != paramTypes     ) return false;

@@ -642,7 +642,7 @@ asCScriptEngine::asCScriptEngine()
 
 void asCScriptEngine::DeleteDiscardedModules()
 {
-	// TODO: redesign: Prevent more than one thread from entering this function at the same time. 
+	// TODO: redesign: Prevent more than one thread from entering this function at the same time.
 	//                 If a thread is already doing the work for the clean-up the other thread should
 	//                 simply return, as the first thread will continue.
 
@@ -895,7 +895,7 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCTypeInfo *in_type, asCM
 			foundIdx = mod->funcDefs.IndexOf(CastToFuncdefType(in_type));
 		else
 			foundIdx = mod->classTypes.IndexOf(CastToObjectType(in_type));
-		
+
 		if( foundIdx >= 0 )
 		{
 			in_type->module = mod;
@@ -922,7 +922,7 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedFunc(asCScriptFunction *in_func
 		asCModule *mod = scriptModules[n];
 		if( mod == in_func->module ) continue;
 		foundIdx = mod->scriptFunctions.IndexOf(in_func);
-		
+
 		if( foundIdx >= 0 )
 		{
 			in_func->module = mod;
@@ -2535,7 +2535,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	if( f->objectType )
 		f->objectType->AddRefInternal();
 	f->id             = id;
-	f->isReadOnly     = func.isReadOnly;
+	f->isReadOnly     = func.IsReadOnly();
 	f->accessMask     = defaultAccessMask;
 	f->parameterTypes = func.parameterTypes;
 	f->parameterNames = func.parameterNames;
@@ -2676,7 +2676,7 @@ int asCScriptEngine::GetGlobalPropertyIndexByName(const char *name) const
 	while( ns )
 	{
 		int id = registeredGlobalProps.GetFirstIndex(ns, name);
-		if( id >= 0 ) 
+		if( id >= 0 )
 			return id;
 
 		// Recursively search parent namespace
@@ -2863,7 +2863,7 @@ int asCScriptEngine::RegisterMethodToObjectType(asCObjectType *objectType, const
 
 	// TODO: beh.copy member will be removed, so this is not necessary
 	// Is this the default copy behaviour?
-	if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 && func->isReadOnly == false &&
+	if( func->name == "opAssign" && func->parameterTypes.GetLength() == 1 && !func->IsReadOnly() &&
 		((objectType->flags & asOBJ_SCRIPT_OBJECT) || func->parameterTypes[0].IsEqualExceptRefAndConst(asCDataType::CreateType(func->objectType, false))) )
 	{
 		if( func->objectType->beh.copy != 0 )
@@ -3522,7 +3522,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	generatedTemplateTypes.PushLast(ot);
 
 	// Any child funcdefs must be copied to the template instance (with adjustments in case of template subtypes)
-	// This must be done before resolving other methods, to make sure the other methods that may refer to the 
+	// This must be done before resolving other methods, to make sure the other methods that may refer to the
 	// templated funcdef will resolve to the new funcdef
 	for (n = 0; n < templateType->childFuncDefs.GetLength(); n++)
 	{
@@ -3586,7 +3586,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	if( templateType->beh.listFactory )
 	{
 		asCScriptFunction *func = GenerateTemplateFactoryStub(templateType, ot, templateType->beh.listFactory);
-		
+
 		// Rename the function to easily identify it in LoadByteCode
 		func->name = "$list";
 
@@ -3689,7 +3689,7 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 				}
 				else
 				{
-					// The target type is a handle, then check if the application 
+					// The target type is a handle, then check if the application
 					// wants this handle to be to a const object. This is done by
 					// flagging the type with 'if_handle_then_const' in the declaration.
 					if (dt.IsObjectHandle() && orig.HasIfHandleThenConst())
@@ -3838,7 +3838,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 		func->defaultArgs[p-1] = factory->defaultArgs[p] ? asNEW(asCString)(*factory->defaultArgs[p]) : 0;
 	}
 	func->scriptData->objVariablesOnHeap = 0;
-	
+
 	// Generate the bytecode for the factory stub
 	asUINT bcLength = asBCTypeSize[asBCInfo[asBC_OBJTYPE].type] +
 	                  asBCTypeSize[asBCInfo[asBC_CALLSYS].type] +
@@ -3975,7 +3975,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	func2->parameterNames = func->parameterNames;
 	func2->inOutFlags = func->inOutFlags;
-	func2->isReadOnly = func->isReadOnly;
+	func2->isReadOnly = func->IsReadOnly();
 	func2->objectType = ot;
 	func2->objectType->AddRefInternal();
 	func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
@@ -4001,7 +4001,7 @@ asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templ
 	// TODO: Only generate the new funcdef if it used the template subtypes.
 	//       Remember to also update the clean up in asCObjectType::DestroyInternal so it doesn't delete
 	//       child funcdefs that have not been created specificially for the template instance.
-	//       Perhaps a new funcdef is always needed, since the funcdef will have a reference to the 
+	//       Perhaps a new funcdef is always needed, since the funcdef will have a reference to the
 	//       parent class (in this case the template instance).
 
 	asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcdef->funcType);
@@ -4024,7 +4024,7 @@ asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templ
 	//                 this instance.
 
 	func2->inOutFlags = func->funcdef->inOutFlags;
-	func2->isReadOnly = func->funcdef->isReadOnly;
+	func2->isReadOnly = func->funcdef->IsReadOnly();
 	asASSERT(func->funcdef->objectType == 0);
 	asASSERT(func->funcdef->sysFuncIntf == 0);
 
@@ -4848,7 +4848,7 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 			AddRefScriptObject(*newPtr, toType);
 			return asSUCCESS;
 		}
-		
+
 		return asSUCCESS;
 	}
 
@@ -4873,8 +4873,8 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 			}
 			else
 			{
-				asASSERT( func->returnType.GetTokenType() == ttVoid && 
-						  func->parameterTypes.GetLength() == 1 && 
+				asASSERT( func->returnType.GetTokenType() == ttVoid &&
+						  func->parameterTypes.GetLength() == 1 &&
 						  func->parameterTypes[0].GetTokenType() == ttQuestion );
 				universalCastFunc = func;
 			}
@@ -4918,7 +4918,7 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 		// Down casts to derived class or from interface can only be done explicitly
 		if( !useOnlyImplicitCast )
 		{
-			if( toType->Implements(fromType) || 
+			if( toType->Implements(fromType) ||
 				toType->DerivesFrom(fromType) )
 			{
 				*newPtr = obj;
@@ -5061,7 +5061,7 @@ int asCScriptEngine::CallScriptObjectMethod(void *obj, int funcId)
 	ctx = asGetActiveContext();
 	if (ctx)
 	{
-		// It may not always be possible to reuse the current context, 
+		// It may not always be possible to reuse the current context,
 		// in which case we'll have to create a new one any way.
 		if (ctx->GetEngine() == this && ctx->PushState() == asSUCCESS)
 			isNested = true;
@@ -5098,7 +5098,7 @@ int asCScriptEngine::CallScriptObjectMethod(void *obj, int funcId)
 	{
 		r = ctx->Execute();
 
-		// We can't allow this execution to be suspended 
+		// We can't allow this execution to be suspended
 		// so resume the execution immediately
 		if (r != asEXECUTION_SUSPENDED)
 			break;
@@ -5122,7 +5122,7 @@ int asCScriptEngine::CallScriptObjectMethod(void *obj, int funcId)
 		}
 		else
 			ReturnContext(ctx);
-		
+
 		// TODO: How to best report the error?
 		return asERROR;
 	}
@@ -5411,7 +5411,7 @@ int asCScriptEngine::RemoveConfigGroup(const char *groupName)
 		{
 			asCConfigGroup *group = configGroups[n];
 
-			// Remove any unused generated template instances 
+			// Remove any unused generated template instances
 			// before verifying if the config group is still in use.
 			// RemoveTemplateInstanceType() checks if the instance is in use
 			for( asUINT g = generatedTemplateTypes.GetLength(); g-- > 0; )
@@ -5690,7 +5690,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 		{
 			if (funcDefs[n]->funcdef->IsSignatureExceptNameEqual(func))
 			{
-				if (func->isShared && !funcDefs[n]->funcdef->isShared)
+				if (func->IsShared() && !funcDefs[n]->funcdef->IsShared())
 					continue;
 				funcDef = funcDefs[n];
 				break;
@@ -5704,7 +5704,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 		asCScriptFunction *fd = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
 		fd->name = func->name;
 		fd->nameSpace = func->nameSpace;
-		fd->isShared = func->isShared;
+		fd->isShared = func->IsShared();
 
 		fd->returnType = func->returnType;
 		fd->parameterTypes = func->parameterTypes;
@@ -5718,7 +5718,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 
 		if (module)
 		{
-			// Add the new funcdef to the module so it will 
+			// Add the new funcdef to the module so it will
 			// be available when saving the bytecode
 			funcDef->module = module;
 			module->funcDefs.PushLast(funcDef); // the refCount was already accounted for in the constructor
@@ -5731,7 +5731,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 
 	if (funcDef && module && funcDef->module && funcDef->module != module)
 	{
-		// Unless this is a registered funcDef the returned funcDef must 
+		// Unless this is a registered funcDef the returned funcDef must
 		// be stored as part of the module for saving/loading bytecode
 		if (!module->funcDefs.Exists(funcDef))
 		{

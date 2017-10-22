@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -95,7 +95,7 @@ int asCTypeInfo::Release() const
 		// internal references then it is time to delete the object type
 		if (internalRefCount.get() == 0)
 		{
-			// If the engine is no longer set, then it has already been 
+			// If the engine is no longer set, then it has already been
 			// released and we must take care of the deletion ourselves
 			asDELETE(const_cast<asCTypeInfo*>(this), asCTypeInfo);
 		}
@@ -119,7 +119,7 @@ int asCTypeInfo::ReleaseInternal()
 		// external references then it is time to delete the object type
 		if (externalRefCount.get() == 0)
 		{
-			// If the engine is no longer set, then it has already been 
+			// If the engine is no longer set, then it has already been
 			// released and we must take care of the deletion ourselves
 			asDELETE(const_cast<asCTypeInfo*>(this), asCTypeInfo);
 		}
@@ -166,7 +166,7 @@ void *asCTypeInfo::SetUserData(void *data, asPWORD type)
 
 void *asCTypeInfo::GetUserData(asPWORD type) const
 {
-	// There may be multiple threads reading, but when  
+	// There may be multiple threads reading, but when
 	// setting the user data nobody must be reading.
 	ACQUIRESHARED(engine->engineRWLock);
 
@@ -354,13 +354,13 @@ asCEnumType::~asCEnumType()
 
 // interface
 asUINT asCEnumType::GetEnumValueCount() const
-{ 
-	return enumValues.GetLength(); 
+{
+	return enumValues.GetLength();
 }
 
 // interface
 const char *asCEnumType::GetEnumValueByIndex(asUINT index, int *outValue) const
-{ 
+{
 	if (outValue)
 		*outValue = 0;
 
@@ -387,7 +387,7 @@ void asCTypedefType::DestroyInternal()
 	// Release the object types held by the alias
 	if (aliasForType.GetTypeInfo())
 			aliasForType.GetTypeInfo()->ReleaseInternal();
-	
+
 	aliasForType = asCDataType::CreatePrimitive(ttVoid, false);
 
 	CleanUserData();
@@ -402,8 +402,8 @@ void asCTypedefType::DestroyInternal()
 
 // interface
 int asCTypedefType::GetTypedefTypeId() const
-{ 
-	return engine->GetTypeIdFromDataType(aliasForType); 
+{
+	return engine->GetTypeIdFromDataType(aliasForType);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -414,7 +414,7 @@ asCFuncdefType::asCFuncdefType(asCScriptEngine *en, asCScriptFunction *func) : a
 	asASSERT(func->funcdefType == 0);
 
 	// A function pointer is special kind of reference type
-	flags       = asOBJ_REF | asOBJ_FUNCDEF | (func->isShared ? asOBJ_SHARED : 0);
+	flags       = asOBJ_REF | asOBJ_FUNCDEF | (func->IsShared() ? asOBJ_SHARED : 0);
 	name        = func->name;
 	nameSpace   = func->nameSpace;
 	module      = func->module;
@@ -458,8 +458,8 @@ void asCFuncdefType::DestroyInternal()
 
 // interface
 asIScriptFunction *asCFuncdefType::GetFuncdefSignature() const
-{ 
-	return funcdef; 
+{
+	return funcdef;
 }
 
 // interface
