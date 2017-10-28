@@ -359,11 +359,6 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	module                 = mod;
 	objectType             = 0;
 	name                   = "";
-	isReadOnly             = false;
-	isPrivate              = false;
-	isProtected            = false;
-	isFinal                = false;
-	isOverride             = false;
 	sysFuncIntf            = 0;
 	signatureId            = 0;
 	dontCleanUpOnException = false;
@@ -372,7 +367,6 @@ asCScriptFunction::asCScriptFunction(asCScriptEngine *engine, asCModule *mod, as
 	userData               = 0;
 	id                     = 0;
 	accessMask             = 0xFFFFFFFF;
-	isShared               = false;
 	nameSpace              = engine->nameSpaces[0];
 	objForDelegate         = 0;
 	funcForDelegate        = 0;
@@ -636,19 +630,19 @@ const char *asCScriptFunction::GetNamespace() const
 // interface
 bool asCScriptFunction::IsReadOnly() const
 {
-	return isReadOnly;
+	return traits.GetTrait(asTRAIT_CONST);
 }
 
 // interface
 bool asCScriptFunction::IsPrivate() const
 {
-	return isPrivate;
+	return traits.GetTrait(asTRAIT_PRIVATE);
 }
 
 // interface
 bool asCScriptFunction::IsProtected() const
 {
-	return isProtected;
+	return traits.GetTrait(asTRAIT_PROTECTED);
 }
 
 // internal
@@ -1682,19 +1676,19 @@ bool asCScriptFunction::IsShared() const
 	if (funcType == asFUNC_FUNCDEF && module == 0) return true;
 
 	// Functions that have been specifically marked as shared are shared
-	return isShared;
+	return traits.GetTrait(asTRAIT_SHARED);
 }
 
 // internal
 bool asCScriptFunction::IsFinal() const
 {
-	return isFinal;
+	return traits.GetTrait(asTRAIT_FINAL);
 }
 
 // internal
 bool asCScriptFunction::IsOverride() const
 {
-	return isOverride;
+	return traits.GetTrait(asTRAIT_OVERRIDE);
 }
 
 END_AS_NAMESPACE

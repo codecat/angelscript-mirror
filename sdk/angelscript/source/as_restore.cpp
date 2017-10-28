@@ -1061,9 +1061,9 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 
 		asBYTE b;
 		ReadData(&b, 1);
-		func->isReadOnly = (b & 1) ? true : false;
-		func->isPrivate  = (b & 2) ? true : false;
-		func->isProtected = (b & 4) ? true : false;
+		func->SetReadOnly((b & 1) ? true : false);
+		func->SetPrivate((b & 2) ? true : false);
+		func->SetProtected((b & 4) ? true : false);
 		func->nameSpace = engine->nameSpaces[0];
 	}
 	else
@@ -1153,8 +1153,8 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	{
 		char bits;
 		ReadData(&bits, 1);
-		func->isShared = bits & 1 ? true : false;
-		func->dontCleanUpOnException = bits & 2 ? true : false;
+		func->SetShared((bits & 1) ? true : false);
+		func->dontCleanUpOnException = (bits & 2) ? true : false;
 		if ((bits & 4) && isExternal)
 			*isExternal = true;
 
@@ -1316,7 +1316,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		asBYTE bits;
 		ReadData(&bits, 1);
 		if( bits & 1 )
-			func->isShared = true;
+			func->SetShared(true);
 		if ((bits & 2) && isExternal)
 			*isExternal = true;
 

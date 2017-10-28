@@ -166,6 +166,7 @@ asCThreadLocalData *asPushActiveContext(asIScriptContext *ctx)
 // internal
 void asPopActiveContext(asCThreadLocalData *tld, asIScriptContext *ctx)
 {
+	UNUSED_VAR(ctx);
 	asASSERT(tld && tld->activeContexts[tld->activeContexts.GetLength() - 1] == ctx);
 	if (tld)
 		tld->activeContexts.PopLast();

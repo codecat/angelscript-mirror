@@ -97,6 +97,28 @@ enum asEObjVarInfoOption
 	asBLOCK_END
 };
 
+enum asEFuncTrait
+{
+	asTRAIT_CONSTRUCTOR = 1,
+	asTRAIT_DESTRUCTOR  = 2,
+	asTRAIT_CONST       = 4,
+	asTRAIT_PRIVATE     = 8,
+	asTRAIT_PROTECTED   = 16,
+	asTRAIT_FINAL       = 32,
+	asTRAIT_OVERRIDE    = 64,
+	asTRAIT_SHARED      = 128,
+	asTRAIT_EXTERNAL    = 256
+};
+
+struct asSFunctionTraits
+{
+	asSFunctionTraits() : traits(0) {}
+	void SetTrait(asEFuncTrait trait, bool set) { if (set) traits |= trait; else traits &= ~trait; }
+	bool GetTrait(asEFuncTrait trait) const { return (traits & trait) ? true : false; }
+protected:
+	asDWORD traits;
+};
+
 struct asSObjectVariableInfo
 {
 	asUINT              programPos;
@@ -178,6 +200,13 @@ public:
 	//-----------------------------------
 	// Internal methods
 
+	void SetShared(bool set) {traits.SetTrait(asTRAIT_SHARED, set);}
+	void SetReadOnly(bool set) { traits.SetTrait(asTRAIT_CONST, set); }
+	void SetFinal(bool set) { traits.SetTrait(asTRAIT_FINAL, set); }
+	void SetOverride(bool set) { traits.SetTrait(asTRAIT_OVERRIDE, set); }
+	void SetProtected(bool set) { traits.SetTrait(asTRAIT_PROTECTED, set); }
+	void SetPrivate(bool set) { traits.SetTrait(asTRAIT_PRIVATE, set); }
+
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);
 	~asCScriptFunction();
 
@@ -257,11 +286,7 @@ public:
 	asCArray<asCString>          parameterNames;
 	asCArray<asETypeModifiers>   inOutFlags;
 	asCArray<asCString *>        defaultArgs;
-	bool                         isReadOnly;
-	bool                         isPrivate;
-	bool                         isProtected;
-	bool                         isFinal;
-	bool                         isOverride;
+	asSFunctionTraits            traits;
 	asCObjectType               *objectType;
 	int                          signatureId;
 
@@ -269,7 +294,6 @@ public:
 
 	asEFuncType                  funcType;
 	asDWORD                      accessMask;
-	bool                         isShared;
 
 	// Namespace will be null for funcdefs that are declared as child funcdefs
 	// of a class. In this case the namespace shall be taken from the parentClass

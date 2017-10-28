@@ -2535,7 +2535,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	if( f->objectType )
 		f->objectType->AddRefInternal();
 	f->id             = id;
-	f->isReadOnly     = func.IsReadOnly();
+	f->SetReadOnly(func.IsReadOnly());
 	f->accessMask     = defaultAccessMask;
 	f->parameterTypes = func.parameterTypes;
 	f->parameterNames = func.parameterNames;
@@ -3811,7 +3811,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->id = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 
-	func->isShared = true;
+	func->SetShared(true);
 	if( templateType->flags & asOBJ_REF )
 	{
 		func->name = "$fact";
@@ -3975,7 +3975,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	func2->parameterNames = func->parameterNames;
 	func2->inOutFlags = func->inOutFlags;
-	func2->isReadOnly = func->IsReadOnly();
+	func2->SetReadOnly(func->IsReadOnly());
 	func2->objectType = ot;
 	func2->objectType->AddRefInternal();
 	func2->sysFuncIntf = asNEW(asSSystemFunctionInterface)(*func->sysFuncIntf);
@@ -4024,7 +4024,7 @@ asCFuncdefType *asCScriptEngine::GenerateNewTemplateFuncdef(asCObjectType *templ
 	//                 this instance.
 
 	func2->inOutFlags = func->funcdef->inOutFlags;
-	func2->isReadOnly = func->funcdef->IsReadOnly();
+	func2->SetReadOnly(func->funcdef->IsReadOnly());
 	asASSERT(func->funcdef->objectType == 0);
 	asASSERT(func->funcdef->sysFuncIntf == 0);
 
@@ -5704,7 +5704,7 @@ asCFuncdefType *asCScriptEngine::FindMatchingFuncdef(asCScriptFunction *func, as
 		asCScriptFunction *fd = asNEW(asCScriptFunction)(this, 0, asFUNC_FUNCDEF);
 		fd->name = func->name;
 		fd->nameSpace = func->nameSpace;
-		fd->isShared = func->IsShared();
+		fd->SetShared(func->IsShared());
 
 		fd->returnType = func->returnType;
 		fd->parameterTypes = func->parameterTypes;

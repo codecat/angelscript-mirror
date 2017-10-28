@@ -1237,7 +1237,7 @@ int asCModule::GetNextImportedFunctionId()
 
 #ifndef AS_NO_COMPILER
 // internal
-int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const asCString &funcName, const asCDataType &returnType, const asCArray<asCDataType> &params, const asCArray<asCString> &paramNames, const asCArray<asETypeModifiers> &inOutFlags, const asCArray<asCString *> &defaultArgs, bool isInterface, asCObjectType *objType, bool isConstMethod, bool isGlobalFunction, bool isPrivate, bool isProtected, bool isFinal, bool isOverride, bool isShared, asSNameSpace *ns)
+int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const asCString &funcName, const asCDataType &returnType, const asCArray<asCDataType> &params, const asCArray<asCString> &paramNames, const asCArray<asETypeModifiers> &inOutFlags, const asCArray<asCString *> &defaultArgs, bool isInterface, asCObjectType *objType, bool isGlobalFunction, asSFunctionTraits funcTraits, asSNameSpace *ns)
 {
 	asASSERT(id >= 0);
 
@@ -1258,7 +1258,7 @@ int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const a
 
 	// All methods of shared objects are also shared
 	if( objType && objType->IsShared() )
-		isShared = true;
+		funcTraits.SetTrait(asTRAIT_SHARED, true);
 
 	func->name             = funcName;
 	func->nameSpace        = ns;
@@ -1276,18 +1276,13 @@ int asCModule::AddScriptFunction(int sectionIdx, int declaredAt, int id, const a
 	func->objectType       = objType;
 	if( objType )
 		objType->AddRefInternal();
-	func->isReadOnly       = isConstMethod;
-	func->isPrivate        = isPrivate;
-	func->isProtected      = isProtected;
-	func->isFinal          = isFinal;
-	func->isOverride       = isOverride;
-	func->isShared         = isShared;
+	func->traits           = funcTraits;
 
 	asASSERT( params.GetLength() == inOutFlags.GetLength() && params.GetLength() == defaultArgs.GetLength() );
 
 	// Verify that we are not assigning either the final or override specifier(s) if we are registering a non-member function
-	asASSERT( !(!objType && isFinal) );
-	asASSERT( !(!objType && isOverride) );
+	asASSERT( !(!objType && funcTraits.GetTrait(asTRAIT_FINAL)) );
+	asASSERT( !(!objType && funcTraits.GetTrait(asTRAIT_OVERRIDE)) );
 
 	// The internal ref count was already set by the constructor
 	scriptFunctions.PushLast(func);
