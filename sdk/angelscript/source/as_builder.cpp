@@ -4867,11 +4867,11 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		WriteError(TXT_PROPERTY_WITHOUT_ACCESSOR, file, node);
 
 	node = node->next;
-	while( node )
+	while (node)
 	{
-		asCScriptNode             *next        = node->next;
-		asCScriptNode             *funcNode    = 0;
-		bool                       success     = false;
+		asCScriptNode             *next = node->next;
+		asCScriptNode             *funcNode = 0;
+		bool                       success = false;
 		asSFunctionTraits          funcTraits;
 		asCDataType                returnType;
 		asCArray<asCString>        paramNames;
@@ -4886,30 +4886,38 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 		// TODO: getset: Allow private for individual property accessors
 		// TODO: getset: If the accessor uses its own name, then the property should be automatically declared
 
-		if( node->firstChild->nodeType == snIdentifier && file->TokenEquals(node->firstChild->tokenPos, node->firstChild->tokenLength, GET_TOKEN) )
-		{
-			funcNode  = node->firstChild->next;
+		if (node->firstChild->nodeType == snIdentifier && file->TokenEquals(node->firstChild->tokenPos, node->firstChild->tokenLength, GET_TOKEN))
+			name = "get_";
+		else if (node->firstChild->nodeType == snIdentifier && file->TokenEquals(node->firstChild->tokenPos, node->firstChild->tokenLength, SET_TOKEN))
+			name = "set_";
+		else
+			WriteError(TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE, file, node);
 
-			if( funcNode && funcNode->tokenType == ttConst )
+		if (name != "")
+		{
+			success = true;
+			funcNode = node->firstChild->next;
+
+			if (funcNode && funcNode->tokenType == ttConst)
 			{
 				funcTraits.SetTrait(asTRAIT_CONST, true);
 				funcNode = funcNode->next;
 			}
 
-			while( funcNode && funcNode->nodeType != snStatementBlock )
+			while (funcNode && funcNode->nodeType != snStatementBlock)
 			{
-				if( funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, FINAL_TOKEN) )
+				if (funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, FINAL_TOKEN))
 					funcTraits.SetTrait(asTRAIT_FINAL, true);
-				else if( funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, OVERRIDE_TOKEN) )
+				else if (funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, OVERRIDE_TOKEN))
 					funcTraits.SetTrait(asTRAIT_OVERRIDE, true);
 
 				funcNode = funcNode->next;
 			}
 
-			if( funcNode )
+			if (funcNode)
 				funcNode->DisconnectParent();
 
-			if( funcNode == 0 && (objType == 0 || !objType->IsInterface()) )
+			if (funcNode == 0 && (objType == 0 || !objType->IsInterface()))
 			{
 				// TODO: getset: If no implementation is supplied the builder should provide an automatically generated implementation
 				//               The compiler needs to be able to handle the different types, primitive, value type, and handle
@@ -4917,48 +4925,23 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 				WriteError(TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, file, node);
 			}
 
-			// Setup the signature for the get accessor method
-			returnType = emulatedType;
-			name       = "get_" + emulatedName;
-			success    = true;
-		}
-		else if( node->firstChild->nodeType == snIdentifier && file->TokenEquals(node->firstChild->tokenPos, node->firstChild->tokenLength, SET_TOKEN) )
-		{
-			funcNode  = node->firstChild->next;
-
-			if( funcNode && funcNode->tokenType == ttConst )
+			if (name == "get_")
 			{
-				funcTraits.SetTrait(asTRAIT_CONST, true);
-				funcNode = funcNode->next;
+				// Setup the signature for the get accessor method
+				returnType = emulatedType;
+				name = "get_" + emulatedName;
 			}
-
-			while( funcNode && funcNode->nodeType != snStatementBlock )
+			else if (name == "set_")
 			{
-				if( funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, FINAL_TOKEN) )
-					funcTraits.SetTrait(asTRAIT_FINAL, true);
-				else if( funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, OVERRIDE_TOKEN) )
-					funcTraits.SetTrait(asTRAIT_OVERRIDE, true);
-
-				funcNode = funcNode->next;
+				// Setup the signature for the set accessor method
+				returnType = asCDataType::CreatePrimitive(ttVoid, false);
+				paramModifiers.PushLast(asTM_NONE);
+				paramNames.PushLast("value");
+				paramTypes.PushLast(emulatedType);
+				defaultArgs.PushLast(0);
+				name = "set_" + emulatedName;
 			}
-
-			if( funcNode )
-				funcNode->DisconnectParent();
-
-			if( funcNode == 0 && (objType == 0 || !objType->IsInterface()) )
-				WriteError(TXT_PROPERTY_ACCESSOR_MUST_BE_IMPLEMENTED, file, node);
-
-			// Setup the signature for the set accessor method
-			returnType = asCDataType::CreatePrimitive(ttVoid, false);
-			paramModifiers.PushLast(asTM_NONE);
-			paramNames.PushLast("value");
-			paramTypes.PushLast(emulatedType);
-			defaultArgs.PushLast(0);
-			name = "set_" + emulatedName;
-			success = true;
 		}
-		else
-			WriteError(TXT_UNRECOGNIZED_VIRTUAL_PROPERTY_NODE, file, node);
 
 		if( success )
 		{
