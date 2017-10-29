@@ -1192,8 +1192,8 @@ protected:
 class asIBinaryStream
 {
 public:
-	virtual void Read(void *ptr, asUINT size) = 0;
-	virtual void Write(const void *ptr, asUINT size) = 0;
+	virtual int Read(void *ptr, asUINT size) = 0;
+	virtual int Write(const void *ptr, asUINT size) = 0;
 
 public:
 	virtual ~asIBinaryStream() {}

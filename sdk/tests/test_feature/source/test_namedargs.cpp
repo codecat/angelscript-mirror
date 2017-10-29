@@ -20,7 +20,7 @@ bool Test()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"int a = int(a:0);\n");
 		r = mod->Build();

@@ -132,7 +132,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
@@ -162,7 +162,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "func()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;

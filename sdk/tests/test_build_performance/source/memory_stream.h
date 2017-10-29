@@ -14,9 +14,9 @@ class CBytecodeStream : public asIBinaryStream
 public:
 	CBytecodeStream(const char *name) {wpointer = 0;rpointer = 0;}
 
-	void Write(const void *ptr, asUINT size) 
+	int Write(const void *ptr, asUINT size) 
 	{
-		if( size == 0 ) return; 
+		if( size == 0 ) return 0; 
 		buffer.resize(buffer.size() + size);
 		memcpy(&buffer[wpointer], ptr, size); 
 		wpointer += size;
@@ -27,12 +27,15 @@ public:
 				n = n; // <== Set break point here
 				break;
 			}
+		return 0;
 	}
-	void Read(void *ptr, asUINT size) 
+	int Read(void *ptr, asUINT size) 
 	{
-		assert( rpointer + size <= buffer.size() );
+		if (rpointer + size > buffer.size())
+			return -1;
 		memcpy(ptr, &buffer[rpointer], size); 
 		rpointer += size;
+		return 0;
 	}
 	void Restart() {rpointer = 0;}
 

@@ -481,7 +481,7 @@ bool Test()
 		r = engine->RegisterObjectType("obj", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("obj", "string @fmt(const string &in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in, ?&in)", asFUNCTION(testFuncSI_generic), asCALL_GENERIC); assert( r >= 0 );
 
-		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", 
 			"class App {\n"
 			"	int Run() {\n"

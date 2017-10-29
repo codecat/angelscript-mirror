@@ -240,7 +240,7 @@ bool TestGlobalVar()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", 
 			"class foo \n"
 			"{ \n"
@@ -292,7 +292,7 @@ bool TestGlobalVar()
 			"b @h = @a;         \n"
 			"b@[] v = {@a, @h}; \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -313,7 +313,7 @@ bool TestGlobalVar()
 		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-		int r = engine->RegisterGlobalProperty("const int value = 3345;", (void*)1);
+		r = engine->RegisterGlobalProperty("const int value = 3345;", (void*)1);
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "Property (1, 17) : Error   : Expected '<end of file>'\n"
@@ -329,13 +329,12 @@ bool TestGlobalVar()
 	//-------------
 	// It is possible to access global variables through scope operator if local variables have the same name
 	{
-		COutStream out;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); 
 		const char *script = 
 			"float g = 0; \n";
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		mod->Build();
 		r = ExecuteString(engine, "float g = 0; g = 1; ::g = 2; assert( g == 1 ); assert( ::g == 2 );", mod);
@@ -358,7 +357,7 @@ bool TestGlobalVar()
 		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
 		const char *script = "object o;";
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -379,7 +378,7 @@ bool TestGlobalVar()
 							 "MyObj obj(); \n"         // obj should be compiled last
 							 "int g_b = 42; \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -409,7 +408,7 @@ bool TestGlobalVar()
 							 "B g_b; \n" // g_b accesses both g_a and g_c
 							 "A g_c; \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r >= 0 )
@@ -433,7 +432,7 @@ bool TestGlobalVar()
 		
 		engine->SetEngineProperty(asEP_DISALLOW_GLOBAL_VARS, true);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("", "int var;");
 		r = mod->Build();
 		if( r >= 0 )
@@ -481,7 +480,7 @@ bool TestGlobalVar()
 		
 		RegisterStdString(engine);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("", script);
 		r = mod->Build();
 		if( r < 0 )

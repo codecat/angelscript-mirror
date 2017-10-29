@@ -156,7 +156,7 @@ bool TestConstructor()
 			"   vector3 pos; \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )

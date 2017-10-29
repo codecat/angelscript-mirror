@@ -9355,8 +9355,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 				}
 
 				// Call the string factory function to create a string object
-				asCScriptFunction *descr = engine->stringFactory;
-				if( descr == 0 )
+				if(engine->stringFactory == 0 )
 				{
 					// Error
 					Error(TXT_STRINGS_NOT_RECOGNIZED, vnode);
@@ -9367,6 +9366,8 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 				}
 				else
 				{
+					asCScriptFunction *descr = engine->stringFactory;
+
 					// Register the constant string with the engine
 					int id = engine->AddConstantString(str.AddressOf(), str.GetLength());
 					ctx->bc.InstrWORD(asBC_STR, (asWORD)id);

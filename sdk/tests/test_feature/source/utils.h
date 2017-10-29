@@ -116,9 +116,9 @@ public:
 	CBytecodeFileStream(const char *name) { this->name = name; f = 0; isReading = false; position = 0; }
 	~CBytecodeFileStream() { if (f) fclose(f); }
 
-	void Write(const void *ptr, asUINT size)
+	int Write(const void *ptr, asUINT size)
 	{
-		if (size == 0) return;
+		if (size == 0) return 0;
 		if (f == 0 || isReading)
 		{
 			if (f)
@@ -130,13 +130,16 @@ public:
 #endif
 			isReading = false;
 		}
-		fwrite(ptr, size, 1, f);
+		size_t r = fwrite(ptr, size, 1, f);
 		fflush(f);
 		position += size;
+		if (r != 1)
+			return -1;
+		return 0;
 	}
-	void Read(void *ptr, asUINT size)
+	int Read(void *ptr, asUINT size)
 	{
-		if (size == 0) return;
+		if (size == 0) return 0;
 		if (f == 0 || !isReading)
 		{
 			if (f)
@@ -148,8 +151,11 @@ public:
 #endif
 			isReading = true;
 		}
-		fread(ptr, size, 1, f);
+		size_t r = fread(ptr, size, 1, f);
 		position += size;
+		if (r != 1)
+			return -1;
+		return 0;
 	}
 	void Restart() { if (f) { fclose(f); f = 0; } position = 0; }
 
@@ -165,12 +171,13 @@ class CBytecodeStream : public asIBinaryStream
 public:
 	CBytecodeStream(const char * /*name*/) {wpointer = 0;rpointer = 0;}
 
-	void Write(const void *ptr, asUINT size) 
+	int Write(const void *ptr, asUINT size) 
 	{
-		if( size == 0 ) return; 
+		if( size == 0 ) return 0; 
 		buffer.resize(buffer.size() + size);
 		memcpy(&buffer[wpointer], ptr, size); 
 		wpointer += size;
+		return 0;
 /*		// Are we writing zeroes?
 		for( asUINT n = 0; n < size; n++ )
 			if( *(asBYTE*)ptr == 0 )
@@ -179,11 +186,13 @@ public:
 				break;
 			}
 */	}
-	void Read(void *ptr, asUINT size) 
+	int Read(void *ptr, asUINT size) 
 	{
-		assert( rpointer + size <= buffer.size() );
+		if (rpointer + size > buffer.size())
+			return -1;
 		memcpy(ptr, &buffer[rpointer], size); 
 		rpointer += size;
+		return 0;
 	}
 	void Restart() {rpointer = 0;}
 

@@ -159,12 +159,13 @@ public:
 		if( f == 0 ) return -1;
 		return 0;
 	}
-	void Write(const void *ptr, asUINT size) 
+	int Write(const void *ptr, asUINT size) 
 	{
-		if( size == 0 || f == 0 ) return; 
+		if( size == 0 || f == 0 ) return 0; 
 		fwrite(ptr, size, 1, f); 
+		return 0;
 	}
-	void Read(void *, asUINT ) {}
+	int Read(void *, asUINT) { return -1; }
 
 protected:
 	FILE *f;

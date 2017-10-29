@@ -153,10 +153,10 @@ bool Test()
 	{
 		if( r == asEXECUTION_EXCEPTION )
 		{
-			int c;
-			int row = ctx->GetExceptionLineNumber(&c);
+			int col;
+			int row = ctx->GetExceptionLineNumber(&col);
 			PRINTF("Exception\n");
-			PRINTF("line: %d, %d\n", row, c);
+			PRINTF("line: %d, %d\n", row, col);
 			PRINTF("desc: %s\n", ctx->GetExceptionString());
 		}
 
@@ -416,10 +416,10 @@ bool TestHandleMemberCalling(void)
 	{
 		if( r == asEXECUTION_EXCEPTION )
 		{
-			int c;
-			int row = ctx->GetExceptionLineNumber(&c);
+			int col;
+			int row = ctx->GetExceptionLineNumber(&col);
 			PRINTF("Exception\n");
-			PRINTF("line: %d, %d\n", row, c);
+			PRINTF("line: %d, %d\n", row, col);
 			PRINTF("desc: %s\n", ctx->GetExceptionString());
 		}		
 		PRINTF("%s: Execution failed\n", TESTNAME);

@@ -23,7 +23,7 @@ CObject *Factory()
 	return new CObject();
 }
 
-CObject obj;
+CObject g_obj;
 
 CObject *CreateObject()
 {
@@ -53,7 +53,7 @@ bool Test()
 	engine->RegisterObjectMethod("Object", "int Get()", asMETHOD(CObject, Get), asCALL_THISCALL);
 	engine->RegisterObjectProperty("Object", "int val", asOFFSET(CObject, val));
 
-	engine->RegisterGlobalProperty("Object obj", &obj);
+	engine->RegisterGlobalProperty("Object obj", &g_obj);
 	engine->RegisterGlobalFunction("Object @CreateObject()", asFUNCTION(CreateObject), asCALL_CDECL);
 
 	COutStream out;

@@ -147,7 +147,7 @@ bool Test()
 // Reported by jkhax0r
 bool Test2()
 {
-	const char *script = 
+	script = 
 	"uint16 Z1; \n"
 	"uint8 b1 = 2; \n"
 	"uint8 b2 = 2; \n"

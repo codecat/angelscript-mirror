@@ -87,7 +87,7 @@ bool Test()
 	// Test bug
 	// http://www.gamedev.net/topic/657960-tempvariables-assertion-with-indexed-unsafe-reference/
 	{
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
@@ -138,12 +138,12 @@ bool Test()
 
 	// Test value class with unsafe ref
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterScriptMath3D(engine);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class Good \n"
 			"{ \n"
@@ -185,11 +185,11 @@ bool Test()
 	// Test ref to primitives
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"void func(){ \n"
 			"  float a; \n"
@@ -219,12 +219,12 @@ bool Test()
 	// Passing an inout reference to a handle to a function wasn't working properly
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class T { int a; } \n"
 			"void f(T@& p) { \n"
@@ -253,12 +253,12 @@ bool Test()
 	// http://www.gamedev.net/topic/624722-bug-with/
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class T { T() { val = 123; } int val; } \n"
 			"T g_t; \n"
@@ -292,12 +292,12 @@ bool Test()
 	// http://www.gamedev.net/topic/624722-bug-with/
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class T { T() { val = 123; } int val; } \n"
 			"T g_t; \n"
@@ -320,7 +320,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "func()", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
@@ -336,7 +336,7 @@ bool Test()
 	// http://www.gamedev.net/topic/636443-there-is-no-copy-operator-for-the-type-val-available/
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -347,7 +347,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f(const Val &)", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("Val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"Val GetVal() \n"
 			"{ \n"
@@ -372,14 +372,14 @@ bool Test()
 	// http://www.gamedev.net/topic/653394-global-references/
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		engine->RegisterGlobalFunction("void func(const int &)", asFUNCTION(0), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"const int value = 42; \n"
 			"void main() { \n"
@@ -404,7 +404,7 @@ bool Test()
 	SKIP_ON_MAX_PORT
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
@@ -418,7 +418,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Str::StringDestruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
 			"void startGame( ) \n"
@@ -447,7 +447,7 @@ bool Test()
 	SKIP_ON_MAX_PORT
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
@@ -461,7 +461,7 @@ bool Test()
 		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &)", asMETHOD(Str, opAssign), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
 			"void startGame( ) \n"

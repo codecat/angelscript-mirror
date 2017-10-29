@@ -142,12 +142,11 @@ bool Test()
 	// Test cleaning up while context is suspended
 	// http://www.gamedev.net/topic/618821-crash-while-closing-application-with-the-suspended-context/
 	{
- 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_GENERIC);
 
-		COutStream out;
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(":1", 
 			"class Test { \n"
 			"  void method() { \n"
@@ -174,12 +173,11 @@ bool Test()
 
 	// Test cleaning up while context is suspended
 	{
- 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+ 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void Suspend()", asFUNCTION(Suspend), asCALL_GENERIC);
 
-		COutStream out;
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(":1", 
 			"void func() \n"
 			"{ \n"

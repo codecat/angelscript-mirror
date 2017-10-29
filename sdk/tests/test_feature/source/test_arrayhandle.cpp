@@ -144,7 +144,7 @@ bool Test()
 		}
 		else
 		{
-			asIScriptContext *ctx = engine->CreateContext();
+			ctx = engine->CreateContext();
 			r = ExecuteString(engine, "Node n; \n"
 				                      "n.subNodes.resize(1); \n"
 									  "@n.subNodes[0] = @Node(); \n"

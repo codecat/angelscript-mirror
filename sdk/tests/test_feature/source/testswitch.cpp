@@ -163,7 +163,7 @@ bool TestSwitch()
 	// Default case in the middle
 	{
 		bout.buffer = "";
-		const char *script =
+		script =
 			"int func(int d) { \n"
 			"  switch (d) \n"
 			"  { \n"
@@ -180,7 +180,7 @@ bool TestSwitch()
 			"  return 0; \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("name", script);
 		r = mod->Build();
 		if( r >= 0 )
@@ -197,7 +197,7 @@ bool TestSwitch()
 	// A switch case must not have duplicate cases
 	{
 		bout.buffer = "";
-		const char *script = "switch( 1 ) { case 1: case 1: }";
+		script = "switch( 1 ) { case 1: case 1: }";
 		r = ExecuteString(engine, script, mod);
 		if( r >= 0 )
 			TEST_FAILED;
@@ -212,7 +212,7 @@ bool TestSwitch()
 	// Test to make sure assert is not failing
 	{
 		bout.buffer = "";
-		const char *script = 
+		script = 
 			"class Test \n"
 			"{ \n"
 			"	int8 State; \n"
@@ -239,7 +239,7 @@ bool TestSwitch()
 	// Test to make sure the error message is appropriate when declaring variable in case
 	{
 		bout.buffer = "";
-		const char *script = 
+		script = 
 			"	void test() \n"
 			"	{ \n"
 			"		switch (0) \n"
@@ -264,7 +264,7 @@ bool TestSwitch()
 	// Test error message for switch cases where the cases are strings
 	{
 		bout.buffer = "";
-		const char *script = 
+		script = 
 			"void func() { \n"
 			"  int test; \n"
 			"  switch (undeclaredString) \n"

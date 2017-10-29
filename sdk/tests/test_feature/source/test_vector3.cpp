@@ -166,7 +166,7 @@ bool TestVector3()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", "void func() { vector3 v; v.x = 1; assert( v.x == 1 ); assert( v.y == 0 ); }");
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -203,7 +203,7 @@ bool TestVector3()
 
 	// Test passing value type by value
 	{
-		const char *script =
+		script =
 			"void testR(const vector3&in position) \n"
 			"{ \n"
 			"	assert( position.x == 1 ); \n"
@@ -233,7 +233,7 @@ bool TestVector3()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		// TODO: optimize: When calling the get_position method, a ref copy of the local object is done. 
 		//                 This can be avoided since the local object cannot die before the returned reference is used.
@@ -252,7 +252,7 @@ bool TestVector3()
 
 	// Test use of the copy constructor
 	{
-		const char *script = 
+		script = 
 			"class Camera \n"
 			"{ \n"
 			"  const vector3 &get_lookAt() const { return lookat; } \n"
@@ -275,7 +275,7 @@ bool TestVector3()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -288,7 +288,7 @@ bool TestVector3()
 
 	// Test use of the value types in condition
 	{
-		const char *script = 
+		script = 
 			"void main() \n"
 			"{ \n"
 			"  vector3 test = true ? vector3(1,2,3) : vector3(); \n"
@@ -302,7 +302,7 @@ bool TestVector3()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -318,7 +318,7 @@ bool TestVector3()
 
 	//
 	{
-		const char *script = 
+		script = 
 			"bool alert(string &in, string &in) {return true;} \n"
 			"void main() \n"
 			"{ \n"
@@ -334,7 +334,7 @@ bool TestVector3()
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;

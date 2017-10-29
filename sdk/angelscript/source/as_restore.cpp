@@ -55,17 +55,21 @@ asCReader::asCReader(asCModule* _module, asIBinaryStream* _stream, asCScriptEngi
 	bytesRead = 0;
 }
 
-void asCReader::ReadData(void *data, asUINT size)
+int asCReader::ReadData(void *data, asUINT size)
 {
 	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
+	int ret = 0;
 #if defined(AS_BIG_ENDIAN)
-	for( asUINT n = 0; n < size; n++ )
-		stream->Read(((asBYTE*)data)+n, 1);
+	for( asUINT n = 0; ret >= 0 && n < size; n++ )
+		ret = stream->Read(((asBYTE*)data)+n, 1);
 #else
-	for( int n = size-1; n >= 0; n-- )
-		stream->Read(((asBYTE*)data)+n, 1);
+	for( int n = size-1; ret >= 0 && n >= 0; n-- )
+		ret = stream->Read(((asBYTE*)data)+n, 1);
 #endif
+	if (ret < 0)
+		Error(TXT_UNEXPECTED_END_OF_FILE);
 	bytesRead += size;
+	return ret;
 }
 
 int asCReader::Read(bool *wasDebugInfoStripped)
@@ -1933,7 +1937,9 @@ void asCReader::ReadString(asCString* str)
 	{
 		len /= 2;
 		str->SetLength(len);
-		stream->Read(str->AddressOf(), len);
+		int r = stream->Read(str->AddressOf(), len);
+		if (r < 0)
+			Error(TXT_UNEXPECTED_END_OF_FILE);
 
 		savedStrings.PushLast(*str);
 	}
@@ -3619,20 +3625,39 @@ asCTypeInfo *asCReader::FindType(int idx)
 #ifndef AS_NO_COMPILER
 
 asCWriter::asCWriter(asCModule* _module, asIBinaryStream* _stream, asCScriptEngine* _engine, bool _stripDebug)
- : module(_module), stream(_stream), engine(_engine), stripDebugInfo(_stripDebug)
+	: module(_module), stream(_stream), engine(_engine), stripDebugInfo(_stripDebug), error(false), bytesWritten(0)
 {
 }
 
-void asCWriter::WriteData(const void *data, asUINT size)
+int asCWriter::Error(const char *msg)
+{
+	// Don't write if it has already been reported an error earlier
+	if (!error)
+	{
+		asCString str;
+		str.Format(msg, bytesWritten);
+		engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		error = true;
+	}
+
+	return asERROR;
+}
+
+int asCWriter::WriteData(const void *data, asUINT size)
 {
 	asASSERT(size == 1 || size == 2 || size == 4 || size == 8);
+	int ret = 0;
 #if defined(AS_BIG_ENDIAN)
-	for( asUINT n = 0; n < size; n++ )
-		stream->Write(((asBYTE*)data)+n, 1);
+	for( asUINT n = 0; ret >= 0 && n < size; n++ )
+		ret = stream->Write(((asBYTE*)data)+n, 1);
 #else
-	for( int n = size-1; n >= 0; n-- )
-		stream->Write(((asBYTE*)data)+n, 1);
+	for( int n = size-1; ret >= 0 && n >= 0; n-- )
+		ret = stream->Write(((asBYTE*)data)+n, 1);
 #endif
+	if (ret < 0)
+		Error(TXT_UNEXPECTED_END_OF_FILE);
+	bytesWritten += size;
+	return ret;
 }
 
 int asCWriter::Write()
@@ -3810,7 +3835,7 @@ int asCWriter::Write()
 	// usedObjectProperties[]
 	WriteUsedObjectProps();
 
-	return asSUCCESS;
+	return error ? asERROR : asSUCCESS;
 }
 
 int asCWriter::FindStringConstantIndex(int id)
@@ -4330,6 +4355,7 @@ void asCWriter::WriteString(asCString* str)
 	if( len > 0 )
 	{
 		stream->Write(str->AddressOf(), (asUINT)len);
+		bytesWritten += len;
 
 		savedStrings.PushLast(*str);
 		stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);

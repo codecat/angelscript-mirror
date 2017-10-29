@@ -102,7 +102,7 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	const char *script1 =
+	script1 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"int choice; \n"
@@ -124,7 +124,7 @@ bool Test2()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
-	const char *script2 =
+	script2 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"int choice; \n"

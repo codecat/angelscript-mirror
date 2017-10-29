@@ -93,7 +93,7 @@ bool Test()
 	// It should be possible to register types with asOBJ_IMPLICIT_HANDLE when the engine property is turned on
 	// http://www.gamedev.net/topic/679183-asep-allow-implicit-handle-types-asobj-implicit-handle/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 

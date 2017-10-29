@@ -210,7 +210,7 @@ bool Test()
 			"  @t.callback = func; \n"
 			"} \n");
 
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 

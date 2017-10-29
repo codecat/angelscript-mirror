@@ -27,10 +27,10 @@ static void ObjectFunction(ObjectInstance *)
 
 }
 
-ObjectInstance obj;
+ObjectInstance g_obj;
 static ObjectInstance *CreateObjectInstance(ObjectType *)
 {
-	return &obj;
+	return &g_obj;
 }
 
 ObjectType type;

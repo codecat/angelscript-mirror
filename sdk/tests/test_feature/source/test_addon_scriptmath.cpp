@@ -248,7 +248,7 @@ bool Test()
 		RegisterScriptMathComplex(engine);
 		RegisterStdString(engine);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void main() { \n"
 			"addAttachment({1, 1});"

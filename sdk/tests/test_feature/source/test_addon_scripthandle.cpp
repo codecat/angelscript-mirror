@@ -436,7 +436,7 @@ bool Test()
 		ref.Set(obj, type);
 
 		asIScriptFunction *func = mod->GetFunctionByName("func");
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		ctx->Prepare(func);
 		ctx->SetArgObject(0, &ref);
 		r = ctx->Execute();

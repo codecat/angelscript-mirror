@@ -64,7 +64,7 @@ protected:
 
 	int                ReadInner();
 
-	void               ReadData(void *data, asUINT size);
+	int                ReadData(void *data, asUINT size);
 	void               ReadString(asCString *str);
 	asCScriptFunction *ReadFunction(bool &isNew, bool addToModule = true, bool addToEngine = true, bool addToGC = true, bool *isExternal = 0);
 	void               ReadFunctionSignature(asCScriptFunction *func, asCObjectType **parentClass = 0);
@@ -165,8 +165,12 @@ protected:
 	asIBinaryStream *stream;
 	asCScriptEngine *engine;
 	bool             stripDebugInfo;
+	bool             error;
+	asUINT           bytesWritten;
 
-	void WriteData(const void *data, asUINT size);
+	int              Error(const char *msg);
+
+	int  WriteData(const void *data, asUINT size);
 
 	void WriteString(asCString *str);
 	void WriteFunction(asCScriptFunction *func);
