@@ -159,7 +159,7 @@ void MyFreeWithStats(void *address)
 	numFrees++;
 
 	// Remove the memory block from the list of allocated blocks
-	int allocSize = 0;
+	size_t allocSize = 0;
 	map<void*,size_t>::iterator i = memSize.find(address);
 	if( i != memSize.end() )
 	{
