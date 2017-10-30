@@ -2,17 +2,6 @@
 
 static const char * const TESTNAME = "TestFuncOverload";
 
-static const char *script1 =
-"void Test()                               \n"
-"{                                         \n"
-"  TX.Set(\"user\", TX.Value());           \n"
-"}                                         \n";
-
-static const char *script2 =
-"void ScriptFunc(void m)                   \n"
-"{                                         \n"
-"}                                         \n";
-
 class Obj
 {
 public:
@@ -57,6 +46,11 @@ bool TestFuncOverload()
 	engine->RegisterGlobalFunction("void func(int)", asFUNCTION(FuncInt), asCALL_CDECL);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script1 =
+		"void Test()                               \n"
+		"{                                         \n"
+		"  TX.Set(\"user\", TX.Value());           \n"
+		"}                                         \n";
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	int r = mod->Build();
 	if( r < 0 )
@@ -67,6 +61,10 @@ bool TestFuncOverload()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script2 =
+		"void ScriptFunc(void m)                   \n"
+		"{                                         \n"
+		"}                                         \n";
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r >= 0 )
@@ -102,7 +100,7 @@ bool Test2()
 	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-	script1 =
+	const char *script1 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"int choice; \n"
@@ -124,7 +122,7 @@ bool Test2()
 	if( r != asEXECUTION_FINISHED )
 		TEST_FAILED;
 
-	script2 =
+	const char *script2 =
 		"class A{}  \n"
 		"class B{}  \n"
 		"int choice; \n"

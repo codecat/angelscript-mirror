@@ -59,6 +59,7 @@ std::string StringFactory(unsigned int length, const char *s)
 bool Test()
 {
 	RET_ON_MAX_PORT
+	bool fail = false;
 
 	asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
@@ -88,7 +89,7 @@ bool Test()
 		asBEHAVE_CONSTRUCT,
 		"void constructor(const Foo&)",
 		asFUNCTION(CopyConstructFoo),
-		asCALL_CDECL_OBJLAST);	assert( r >=0 );				
+		asCALL_CDECL_OBJLAST);	assert( r >=0 );
 
 	r = engine->RegisterObjectType("string",sizeof(std::string),asOBJ_VALUE | asOBJ_APP_CLASS_CDA);assert( r >=0 );
 
@@ -113,7 +114,7 @@ bool Test()
 		asBEHAVE_CONSTRUCT,
 		"void constructor(const string&)",
 		asFUNCTION(CopyConstructString),
-		asCALL_CDECL_OBJLAST);		assert( r >=0 );			
+		asCALL_CDECL_OBJLAST);		assert( r >=0 );
 
 	r = engine->RegisterStringFactory("string",
 		asFUNCTION(StringFactory),
@@ -139,22 +140,22 @@ bool Test()
 	mod->AddScriptSection("test",script.c_str(),script.length());
 	
 	r = mod->Build();
-	if (r < 0) std::cout << "Error: " << r;
+	if (r < 0) TEST_FAILED;
 
 	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("test");
-	if (func == 0) std::cout << r;
+	if (func == 0) TEST_FAILED;
 
 	asIScriptContext* ctx = engine->CreateContext();
 	r = ctx->Prepare(func);
-	if (r < 0) std::cout << "Error: " << r;
+	if (r < 0) TEST_FAILED;
 
 	Foo f;
 
 	r = ctx->SetArgObject(0,&f);
-	if (r < 0) std::cout << "Error: " << r;
+	if (r < 0) TEST_FAILED;
 
 	r = ctx->Execute();
-	if (r != asEXECUTION_FINISHED) std::cout << "Error: " << r;
+	if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	ctx->Release();
 
@@ -165,20 +166,20 @@ bool Test()
 	mod->AddScriptSection("test", script.c_str(), script.length());
 
 	r = mod->Build();
-	if( r < 0 ) std::cout << "Error: " << r;
+	if( r < 0 ) TEST_FAILED;
 
 	func = engine->GetModule(0)->GetFunctionByName("test");
-	if( func == 0 ) std::cout << r;
+	if( func == 0 ) TEST_FAILED;
 
 	ctx = engine->CreateContext();
 	r = ctx->Prepare(func);
-	if( r < 0 ) std::cout << "Error: " << r;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ctx->SetArgObject(0,&f);
-	if( r < 0 ) std::cout << "Error: " << r;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ctx->Execute();
-	if( r != asEXECUTION_FINISHED) std::cout << "Error: " << r;
+	if( r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	ctx->Release();
 
@@ -188,24 +189,24 @@ bool Test()
 	mod->AddScriptSection("test", script.c_str(), script.length());
 
 	r = mod->Build();
-	if( r < 0 ) std::cout << "Error: " << r;
+	if( r < 0 ) TEST_FAILED;
 
 	func = engine->GetModule(0)->GetFunctionByName("test");
-	if( func == 0 ) std::cout << r;
+	if( func == 0 ) TEST_FAILED;
 
 	ctx = engine->CreateContext();
 	r = ctx->Prepare(func);
-	if( r < 0 ) std::cout << "Error: " << r;
+	if( r < 0 ) TEST_FAILED;
 
 	r = ctx->Execute();
-	if( r != asEXECUTION_FINISHED) std::cout << "Error: " << r;
+	if( r != asEXECUTION_FINISHED) TEST_FAILED;
 
 	ctx->Release();
 
 	engine->Release();
 	
 
-	return 0;
+	return fail;
 }
 
 

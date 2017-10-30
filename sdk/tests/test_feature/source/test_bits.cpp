@@ -3,34 +3,6 @@
 namespace TestBits
 {
 
-static const char *script = "\n\
-const uint8	mask0=1;         \n\
-const uint8	mask1=1<<1;      \n\
-const uint8	mask2=1<<2;      \n\
-const uint8	mask3=1<<3;      \n\
-const uint8	mask4=1<<4;      \n\
-const uint8	mask5=1<<5;      \n\
-                             \n\
-void BitsTest(uint8 b)       \n\
-{                            \n\
-  Assert((b&mask4) == 0);    \n\
-}                            \n";
-
-static const char *script2 =
-"uint8 gb;              \n"
-"uint16 gw;             \n"
-"void Test()            \n"
-"{                      \n"
-"  gb = ReturnByte(1);  \n"
-"  Assert(gb == 1);     \n"
-"  gb = ReturnByte(0);  \n"
-"  Assert(gb == 0);     \n"
-"  gw = ReturnWord(1);  \n"
-"  Assert(gw == 1);     \n"
-"  gw = ReturnWord(0);  \n"
-"  Assert(gw == 0);     \n"
-"}                      \n";  
-
 // uint8 ReturnByte(uint8)
 void ReturnByte(asIScriptGeneric *gen)
 {
@@ -83,6 +55,17 @@ bool Test()
 	engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script = 
+		"const uint8	mask0=1;      \n"
+		"const uint8	mask1=1<<1;   \n"
+		"const uint8	mask2=1<<2;   \n"
+		"const uint8	mask3=1<<3;   \n"
+		"const uint8	mask4=1<<4;   \n"
+		"const uint8	mask5=1<<5;   \n"
+		"void BitsTest(uint8 b)       \n"
+		"{                            \n"
+		"  Assert((b&mask4) == 0);    \n"
+		"}                            \n";
 	mod->AddScriptSection("script", script, strlen(script));
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
@@ -114,6 +97,20 @@ bool Test()
 	engine->RegisterGlobalFunction("uint8 ReturnByte(uint8)", asFUNCTION(ReturnByte), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("uint16 ReturnWord(uint16)", asFUNCTION(ReturnWord), asCALL_GENERIC);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script2 =
+		"uint8 gb;              \n"
+		"uint16 gw;             \n"
+		"void Test()            \n"
+		"{                      \n"
+		"  gb = ReturnByte(1);  \n"
+		"  Assert(gb == 1);     \n"
+		"  gb = ReturnByte(0);  \n"
+		"  Assert(gb == 0);     \n"
+		"  gw = ReturnWord(1);  \n"
+		"  Assert(gw == 1);     \n"
+		"  gw = ReturnWord(0);  \n"
+		"  Assert(gw == 0);     \n"
+		"}                      \n";
 	mod->AddScriptSection("script", script2, strlen(script2));
 	engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 	r = mod->Build();
@@ -147,7 +144,7 @@ bool Test()
 // Reported by jkhax0r
 bool Test2()
 {
-	script = 
+	const char *script = 
 	"uint16 Z1; \n"
 	"uint8 b1 = 2; \n"
 	"uint8 b2 = 2; \n"

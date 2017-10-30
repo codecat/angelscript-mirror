@@ -20,7 +20,7 @@ static const char * const TESTNAME = "TestSaveLoad";
 
 
 
-static const char *script1 =
+static const char * const g_script1 =
 "import void Test() from 'DynamicModule';     \n"
 "OBJ g_obj;                                   \n"
 "array<A@> g_a = {A(),A()};                   \n"
@@ -74,7 +74,7 @@ static const char *script1 =
 "  void test() {number = sum;}                \n"
 "}                                            \n";
 
-static const char *script2 =
+static const char * const g_script2 =
 "void Test()                               \n"
 "{                                         \n"
 "  int[] a(3);                             \n"
@@ -85,11 +85,11 @@ static const char *script2 =
 "    number = 1234567890;                  \n"
 "}                                         \n";
 
-static const char *script3 = 
+static const char * const g_script3 =
 "float[] f(5);       \n"
 "void Test(int a) {} \n";
 
-static const char *script4 = 
+static const char * const g_script4 =
 "class CheckCollision                          \n"
 "{                                             \n"
 "	Actor@[] _list1;                           \n"
@@ -138,7 +138,7 @@ static const char *script4 =
 "}											   \n";
 
 // Make sure the handle can be explicitly taken for class properties, array members, and global variables
-static const char *script5 =
+static const char * const g_script5 =
 "IsoMap      _iso;                                      \n"
 "IsoSprite[] _sprite;                                   \n"
 "                                                       \n"
@@ -167,7 +167,6 @@ static const char *script5 =
 bool fail = false;
 int number = 0;
 int number2 = 0;
-COutStream out;
 CScriptArray* GlobalCharArray = 0;
 
 void print(const string &)
@@ -187,6 +186,7 @@ void ArrayToHexStr(asIScriptGeneric *gen)
 asIScriptEngine *ConfigureEngine(int version)
 {
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 	RegisterScriptArray(engine, true);
 	RegisterStdString(engine);
@@ -371,8 +371,8 @@ bool Test()
 	// content of the shared class was inherited from the other module
 	// Reported by Phong Ba
 	{
-		int r = 0;
-		asIScriptEngine *engine = asCreateScriptEngine();
+		r = 0;
+		engine = asCreateScriptEngine();
 		asIScriptContext *ctx = NULL;
 
 		CBytecodeStream bc1(__FILE__"1");
@@ -382,13 +382,13 @@ bool Test()
 			asIScriptModule *mod1 = NULL;
 			asIScriptModule *mod2 = NULL;
 
-			char* script1 =
+			const char *script1 =
 				//"shared int func1() {return 1;}\n"
 				//"shared class Cls {int method() {return 1 + func1();} };\n"
 				"shared class Cls {int method() {return 2;} };\n"
 				;
 
-			char* script2 =
+			const char *script2 =
 				"shared class Cls {};\n"
 				"int main() {Cls c; return 1 + c.method();}"
 				;
@@ -445,8 +445,8 @@ bool Test()
 	// that use other shared functions not declared in the module
 	// Reported by Phong Ba
 	{
-		int r = 0;
-		asIScriptEngine *engine = asCreateScriptEngine();
+		r = 0;
+		engine = asCreateScriptEngine();
 
 		CBytecodeStream bc1(__FILE__"1");
 		CBytecodeStream bc2(__FILE__"2");
@@ -457,11 +457,11 @@ bool Test()
 
 			asIScriptContext *ctx = NULL;
 
-			char* script1 =
+			const char *script1 =
 				"shared int func1() {return 1;}\n"
 				"shared int func2(int p){return p + func1();}\n";
 
-			char* script2 =
+			const char *script2 =
 				//"shared int func1() {}\n" // <== Commented it will cause LoadByteCode fail.
 				"shared int func2(int p) {}\n"
 				"int main() {return func2(2);}";
@@ -693,12 +693,12 @@ bool Test()
 
 	// Test saving bytecode where indirectly defined funcdefs are used
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterScriptHandle(engine);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"namespace A { void func() {} }\n"
 			"namespace B { int func(int) { return 0; } }\n"
@@ -726,7 +726,7 @@ bool Test()
 	// Test problem with scripts calling constructor with value type passed before reference
 	// http://www.gamedev.net/topic/671244-error-when-saving-bytecode-on-x64/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		// Turn off bytecode optimization to guarantee the scenario we're testing occurs
@@ -738,7 +738,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(int, const string& in)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 
 		// TODO: runtime optimize: This code produces unoptimal bytecode with VAR, PshC4, GETREF. Should be transformed to PSF, PshC4
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"int main() \n"
 			"{ \n"
@@ -749,8 +749,8 @@ bool Test()
 		if( r < 0 ) 
 			TEST_FAILED;
 
-		CBytecodeStream bc("blah");
-		r = mod->SaveByteCode(&bc);
+		CBytecodeStream bcStream("blah");
+		r = mod->SaveByteCode(&bcStream);
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -772,7 +772,7 @@ bool Test()
 		}
 
 		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
-		r = mod->LoadByteCode(&bc);
+		r = mod->LoadByteCode(&bcStream);
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -794,7 +794,7 @@ bool Test()
 	// Test problem with saving/loading bytecode containing templates with multiple subtypes
 	// Reported by Phong Ba
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		bout.buffer = "";
@@ -805,7 +805,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectMethod("dictionary<K, V>", "int get_Count() const", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", "void main(){ dictionary<int,int> d; int cnt = d.Count; }");
 		r = mod->Build();
 		if( r < 0 )
@@ -832,7 +832,7 @@ bool Test()
 	// Test WriteConfigToStream/ConfigEngineFromStream with template types and dependencies
 	// http://www.gamedev.net/topic/664405-scripthelper-config-helpers-not-working-correctly/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
 		bout.buffer = "";
@@ -857,7 +857,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"void main() { \n"
 			"  array<int> a = {1,2,3}; \n"
@@ -880,7 +880,7 @@ bool Test()
 	// Test WriteConfigToStream/ConfigEngineFromStream with namespaces
 	// http://www.gamedev.net/topic/664405-scripthelper-config-helpers-not-working-correctly/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		r = engine->SetDefaultNamespace("test::sub"); assert( r >= 0 );
@@ -994,7 +994,7 @@ bool Test()
 	// http://www.gamedev.net/topic/657621-using-global-funcdef-setter-with-imported-function-gives-assert-or-invalid-bytecode/
 	SKIP_ON_MAX_PORT
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		struct T
@@ -1063,7 +1063,7 @@ bool Test()
 	// Test saving and loading with template in a namespace
 	// http://www.gamedev.net/topic/658862-loading-bytecode-bug/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->SetDefaultNamespace( "reflection" );
@@ -1073,7 +1073,7 @@ bool Test()
 		engine->RegisterObjectMethod("typeof<T>", "type opImplConv()", asFUNCTION(0), asCALL_GENERIC);
 		engine->SetDefaultNamespace( "" );
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class A {} \n"
 			"void func() { \n"
@@ -1096,7 +1096,7 @@ bool Test()
 	// This test is designed to fail loading when loading the bytecode for 
 	// the a function, thus testing that the clean up is appropriate
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->SetDefaultNamespace( "reflection" );
@@ -1106,7 +1106,7 @@ bool Test()
 		engine->RegisterObjectMethod("typeof<T>", "type opImplConv()", asFUNCTION(0), asCALL_GENERIC);
 		engine->SetDefaultNamespace( "" );
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class A {} \n"
 			"void func() { \n"
@@ -1150,7 +1150,7 @@ bool Test()
 	// Test saving and loading script with string literal
 	{
 		// Write the configuration to stream
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
 		stringstream strm;
@@ -1196,7 +1196,7 @@ bool Test()
 	// Test saving and loading script with array of classes initialized from initialization list
 	if( !strstr(asGetLibraryOptions(), "AS_NO_MEMBER_INIT") )
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
@@ -1505,7 +1505,7 @@ bool Test()
 		engine = ConfigureEngine(0);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(":1", script1, strlen(script1), 0);
+		mod->AddScriptSection(":1", g_script1);
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -1515,7 +1515,7 @@ bool Test()
 			TEST_FAILED;
 
 		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->AddScriptSection(":2", g_script2);
 		mod->Build();
 
 		TestScripts(engine);
@@ -1569,7 +1569,7 @@ bool Test()
 			TEST_FAILED;
 
 		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->AddScriptSection(":2", g_script2);
 		mod->Build();
 
 		TestScripts(engine);
@@ -1594,7 +1594,7 @@ bool Test()
 			TEST_FAILED;
 
 		mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(":2", script2, strlen(script2), 0);
+		mod->AddScriptSection(":2", g_script2);
 		mod->Build();
 
 		TestScripts(engine);
@@ -1707,7 +1707,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script3", script3, strlen(script3));
+		mod->AddScriptSection("script3", g_script3);
 		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
@@ -1724,7 +1724,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterScriptArray(engine, true);
-		int r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert(r >= 0);
+		r = engine->RegisterObjectType("float[]", sizeof(vector<float>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert(r >= 0);
 #ifndef AS_MAX_PORTABILITY
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(ConstructFloatArray, (vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("float[]", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTIONPR(ConstructFloatArray, (int, vector<float> *), void), asCALL_CDECL_OBJLAST); assert(r >= 0);
@@ -1742,7 +1742,7 @@ bool Test()
 #endif
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script3", script3, strlen(script3));
+		mod->AddScriptSection("script3", g_script3);
 		mod->Build();
 		
 		CBytecodeStream stream3(__FILE__"3");
@@ -1760,10 +1760,9 @@ bool Test()
 	// http://www.gamedev.net/topic/623170-crash-on-bytecode-loading/
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		COutStream out;
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule("0", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("0", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("0",
 			"shared class T\n"
 			"{\n"
@@ -1812,7 +1811,7 @@ bool Test()
 		RegisterScriptArray(engine, true);
 		RegisterScriptString(engine);
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", script4, strlen(script4));
+		mod->AddScriptSection("script", g_script4);
 		r = mod->Build();
 		if( r < 0 ) 
 			TEST_FAILED;
@@ -1871,7 +1870,7 @@ bool Test()
 		r = engine->RegisterObjectMethod("IsoMap", "bool Load(const string &in)", asFUNCTION(Dummy), asCALL_GENERIC); assert( r >= 0 );
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", script5, strlen(script5));
+		mod->AddScriptSection("script", g_script5);
 		r = mod->Build();
 		if( r < 0 ) 
 			TEST_FAILED;
@@ -2435,8 +2434,8 @@ bool Test()
 		engine->Release();
 
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		r = engine->RegisterObjectType("tmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); assert( r >= 0 );
 #ifndef AS_MAX_PORTABILITY
@@ -2528,9 +2527,8 @@ bool Test()
 			"    print(\"a\" + \"b\");"
 			"}";
 
-		int r;
 		asIScriptContext* ctx;
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterStdString(engine);
 #ifndef AS_MAX_PORTABILITY
 		engine->RegisterGlobalFunction("void print(const string& in)", asFUNCTION(print), asCALL_CDECL);
@@ -2542,7 +2540,7 @@ bool Test()
 		
 		ctx = engine->CreateContext();
 		
-		asIScriptModule* mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->AddScriptSection(":1", script1, strlen(script1), 0); assert (r >= 0);
 		r = mod->Build(); 
 		if( r < 0 )
@@ -2592,11 +2590,11 @@ bool Test()
 	// Test problem on 64bit
 	// http://www.gamedev.net/topic/628452-linux-x86-64-not-loading-or-saving-bytecode-correctly/
 	{
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert( bool )", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"enum TestEnum \n"
 			"{ \n"
@@ -2619,7 +2617,7 @@ bool Test()
 			"  Foo( 1, TestEnum_A, o ); \n"
 			"} \n");
 
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 

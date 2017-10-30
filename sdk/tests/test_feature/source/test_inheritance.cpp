@@ -633,7 +633,7 @@ bool TestModule(const char *module, asIScriptEngine *engine)
 	{
 		TEST_FAILED;
 	}
-	if( printResult != "C2:Fun" )
+	else if( printResult != "C2:Fun" )
 	{
 		PRINTF("%s\n", printResult.c_str());
 		TEST_FAILED;

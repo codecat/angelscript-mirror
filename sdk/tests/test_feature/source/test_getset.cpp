@@ -92,53 +92,6 @@ std::string CharToStr(char & me)
 	return result;
 }
 
-static void StringFactory(asIScriptGeneric *gen)
-{
-	asUINT length = gen->GetArgDWord(0);
-	const char *s = (const char*)gen->GetArgAddress(1);
-
-	// Return a string value
-	new (gen->GetAddressOfReturnLocation()) string(s, length);
-}
-
-void StringConstruct(asIScriptGeneric *gen)
-{
-	new (gen->GetObject()) string();
-}
-
-void StringCopyConstruct(asIScriptGeneric *gen)
-{
-	std::string *s = (std::string*)gen->GetArgAddress(0);
-	new (gen->GetObject()) string(*s);
-}
-
-void StringDestruct(asIScriptGeneric *gen)
-{
-	((std::string*)gen->GetObject())->~string();
-}
-
-void StringAdd(asIScriptGeneric *gen)
-{
-	std::string *s = (std::string*)gen->GetArgAddress(0);
-	std::string *o = (std::string*)gen->GetObject();
-	new (gen->GetAddressOfReturnLocation()) string(*o + *s);
-}
-
-void StringAssign(asIScriptGeneric *gen)
-{
-	string * a = static_cast<string *>(gen->GetArgObject(0));
-	string * self = static_cast<string *>(gen->GetObject());
-	*self = *a;
-	gen->SetReturnAddress(self);
-}
-
-static void StringEqualsGeneric(asIScriptGeneric * gen)
-{
-	string * a = static_cast<string *>(gen->GetObject());
-	string * b = static_cast<string *>(gen->GetArgAddress(0));
-	*(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
-}
-
 void StringReplace(asIScriptGeneric *gen)
 {
 	string s = "foo";
@@ -165,15 +118,8 @@ bool Test()
 		
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		engine->RegisterObjectType("string", sizeof(std::string), asOBJ_VALUE | asGetTypeTraits<std::string>());
-		engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(StringDestruct), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(StringCopyConstruct), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(StringConstruct), asCALL_GENERIC);
+		RegisterStdString(engine);
 		engine->RegisterObjectMethod("string", "string Replace(const string, const string) const", asFUNCTION(StringReplace), asCALL_GENERIC);
-		engine->RegisterObjectMethod("string", "string opAdd(const string&in) const", asFUNCTION(StringAdd), asCALL_GENERIC);
-		engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(StringAssign), asCALL_GENERIC);
-		engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTION(StringEqualsGeneric), asCALL_GENERIC);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
 		r = mod->AddScriptSection("test",
@@ -257,7 +203,7 @@ bool Test()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"namespace nsTest {\n"
 			"   class Foo {\n"
@@ -311,7 +257,7 @@ bool Test()
 
 		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -334,7 +280,7 @@ bool Test()
 	// Test get/set with handle
 	// http://www.gamedev.net/topic/665609-with-handle-properies-doesnt-work/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
@@ -352,7 +298,7 @@ bool Test()
 
 		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -367,7 +313,7 @@ bool Test()
 
 	// Test compound assignment with virtual properties
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterStdString(engine);
@@ -379,7 +325,7 @@ bool Test()
 			"string sprop { get { return g_svar; } set { g_svar = value; } } \n"
 			"string g_svar = 'foo'; \n";
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -493,7 +439,7 @@ bool Test()
 	// Test memory leak with shared classes and virtual properties
 	// http://www.gamedev.net/topic/644919-memory-leak-in-virtual-properties/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
  
 		const char *script1 = "shared class Test { \n"
 			" int mProp { \n"
@@ -503,7 +449,7 @@ bool Test()
 			" } \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script1);
 		r = mod->Build();
 		if( r < 0 )
@@ -521,13 +467,13 @@ bool Test()
 	// http://www.gamedev.net/topic/639046-assert-in-as-compilercpp-temp-variables/
 	{
 		bout.buffer = "";
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		RegisterStdString(engine);
  
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class RayQueryResult { \n"
 			"  Drawable @get_drawable() const { return Drawable(); } \n"
@@ -567,7 +513,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"int some_val{ }");
 		r = mod->Build();
@@ -595,7 +541,7 @@ bool Test()
 		r = engine->RegisterObjectMethod ("Container", "Container_Real& get_Payload()", asFUNCTION(0), asCALL_THISCALL) ; assert (r > 0) ;
 		r = engine->RegisterGlobalFunction ("Container Get_Container()", asFUNCTION(0), asCALL_CDECL) ; assert (r > 0) ;
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void Trip_Assert () { Get_Container().Payload; }" // This was causing an assert failure
 			"void Dont_Trip_Assert ()	{ Get_Container().get_Payload(); }"); // This should give the exact same bytecode as the above
@@ -618,7 +564,7 @@ bool Test()
 		r = engine->RegisterObjectType("TestClass", 0, asOBJ_REF | asOBJ_NOCOUNT); 
 		r = engine->RegisterObjectMethod("TestClass", "float get_OffsetVars(uint)", asMETHOD(TestClass, get_OffsetVars), asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection("test",
 			"void main( TestClass@ a ) \n"
@@ -1436,7 +1382,7 @@ bool Test()
 			"        } \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1462,7 +1408,7 @@ bool Test()
 		const char *script = "class Obj { void set_opacity(float v) {} }\n"
 			                 "Obj @GetObject() { return @Obj(); } \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1490,7 +1436,7 @@ bool Test()
 			"  float get_rotation() const {return rot;} \n"
 			"  float rot; } \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1518,7 +1464,7 @@ bool Test()
 			"int get_s() { return _s; } \n"
 			"void set_s(int v) { _s = v; } \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1570,7 +1516,7 @@ bool Test()
 		const char *script = 
 			"class MyObj { bool get_Active() { return true; } } \n";
 			
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1610,7 +1556,7 @@ bool Test()
 			"    vec = h.foo(); \n" // runtime exception
 			"} \n";
 			
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1642,7 +1588,7 @@ bool Test()
 			"} \n";
 
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1674,7 +1620,7 @@ bool Test()
 			"} \n";
 
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1723,7 +1669,7 @@ bool Test()
 			"} \n";
 
 		bout.buffer = "";
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1793,7 +1739,7 @@ bool Test()
 			"  assert( arr[1] == 24 ); \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1839,7 +1785,7 @@ bool Test()
 			"  s.test(); \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1871,7 +1817,7 @@ bool Test()
 			"  for( t.vol = 0; t.vol < 10; t.vol++ ); \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r >= 0 )
@@ -1964,7 +1910,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptMathComplex(engine);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class T \n"
 			"{ \n"
@@ -2005,7 +1951,7 @@ bool Test()
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class Test {} \n"
 			"Test get_test(int a) { \n"
@@ -2035,7 +1981,7 @@ bool Test()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"vector3 global; \n"
 			"vector3 get_global_accessor() { return vector3(1,1,1); } \n"
@@ -2068,7 +2014,7 @@ bool Test()
 		RegisterScriptMath3D(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class Index { \n"
 			"	uint opIndex(uint i) { \n"
@@ -2110,7 +2056,7 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"interface Intf { \n"
 			"	int prop { get; set; } \n"
