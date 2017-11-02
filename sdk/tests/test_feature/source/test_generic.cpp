@@ -3,6 +3,9 @@
 #include "utils.h"
 #include <sstream>
 
+// From the scriptstdstring add-on
+extern void RegisterStdString_Generic(asIScriptEngine *engine);
+
 using std::string;
 
 namespace TestGeneric
@@ -257,11 +260,7 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-		r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert(r >= 0);
-		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(GenericString_Construct), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(GenericString_Destruct), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "string &opAssign(string &in)", asFUNCTION(GenericString_Assignment), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterStringFactory("string", asFUNCTION(GenericString_Factory), asCALL_GENERIC); assert(r >= 0);
+		RegisterStdString_Generic(engine);
 
 		r = engine->RegisterGlobalFunction("void test(double)", asFUNCTION(TestDouble), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("void test(string)", asFUNCTION(TestString), asCALL_GENERIC); assert(r >= 0);

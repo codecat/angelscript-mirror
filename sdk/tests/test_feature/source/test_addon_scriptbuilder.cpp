@@ -78,94 +78,95 @@ bool Test()
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptArray(engine, true);
-
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		RegisterScriptMathComplex(engine);
-	else
-		engine->RegisterObjectType("complex", 4, asOBJ_VALUE | asOBJ_POD);
-
-	// Test the parse token method
-	asETokenClass t = engine->ParseToken("!is");
-	if( t != asTC_KEYWORD )
-		TEST_FAILED;
-
-	// Compile a script with meta data strings
-	CScriptBuilder builder;
-	builder.DefineWord("COMPILE");
-	r = builder.StartNewModule(engine, 0);
-	r = builder.AddSectionFromMemory("", script);
-	r = builder.BuildModule();
-#if AS_PROCESS_METADATA == 1
-	if( r < 0 )
-		TEST_FAILED;
-
-	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("func1");
-	string metadata = builder.GetMetadataStringForFunc(func);
-	if( metadata != " my meta data test " )
-		TEST_FAILED;
-
-	func = engine->GetModule(0)->GetFunctionByName("func2");
-	metadata = builder.GetMetadataStringForFunc(func);
-	if( metadata != " test['hello'] " )
-		TEST_FAILED;
-
-	engine->GetModule(0)->SetDefaultNamespace("NS");
-	func = engine->GetModule(0)->GetFunctionByName("func");
-	metadata = builder.GetMetadataStringForFunc(func);
-	if( metadata != "func" )
-		TEST_FAILED;
-	engine->GetModule(0)->SetDefaultNamespace("");
-
-	int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
-	metadata = builder.GetMetadataStringForType(typeId);
-	if( metadata != " myclass " )
-		TEST_FAILED;
-
-	typeId = engine->GetModule(0)->GetTypeIdByDecl("NS::Class");
-	metadata = builder.GetMetadataStringForType(typeId);
-	if( metadata != "class" )
-		TEST_FAILED;
-
-	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass2");
-	metadata = builder.GetMetadataStringForTypeProperty(typeId, 0);
-	if( metadata != " edit " )
-		TEST_FAILED;
-	metadata = builder.GetMetadataStringForTypeProperty(typeId, 1);
-	if( metadata != " noedit " )
-		TEST_FAILED;
-	metadata = builder.GetMetadataStringForTypeProperty(typeId, 2);
-	if( metadata != " edit,c " )
-		TEST_FAILED;
-
-	asITypeInfo *type = engine->GetTypeInfoById(typeId);
-	if( type == 0 )
-		TEST_FAILED;
-	else
 	{
-		metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("get_prop"));
-		if( metadata != " prop " )
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		if (!strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
+			RegisterScriptMathComplex(engine);
+		else
+			engine->RegisterObjectType("complex", 4, asOBJ_VALUE | asOBJ_POD);
+
+		// Test the parse token method
+		asETokenClass t = engine->ParseToken("!is");
+		if (t != asTC_KEYWORD)
 			TEST_FAILED;
-		metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("set_prop"));
-		if( metadata != " prop " )
+
+		// Compile a script with meta data strings
+		CScriptBuilder builder;
+		builder.DefineWord("COMPILE");
+		r = builder.StartNewModule(engine, 0);
+		r = builder.AddSectionFromMemory("", script);
+		r = builder.BuildModule();
+#if AS_PROCESS_METADATA == 1
+		if (r < 0)
 			TEST_FAILED;
-	}
 
-	typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
-	metadata = builder.GetMetadataStringForType(typeId);
-	if( metadata != " myintf " )
-		TEST_FAILED;
+		asIScriptFunction *func = engine->GetModule(0)->GetFunctionByName("func1");
+		string metadata = builder.GetMetadataStringForFunc(func);
+		if (metadata != " my meta data test ")
+			TEST_FAILED;
 
-	int varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_var");
-	metadata = builder.GetMetadataStringForVar(varIdx);
-	if( metadata != " init " )
-		TEST_FAILED;
+		func = engine->GetModule(0)->GetFunctionByName("func2");
+		metadata = builder.GetMetadataStringForFunc(func);
+		if (metadata != " test['hello'] ")
+			TEST_FAILED;
 
-	varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_obj");
-	metadata = builder.GetMetadataStringForVar(varIdx);
-	if( metadata != " var of type myclass " )
-		TEST_FAILED;
+		engine->GetModule(0)->SetDefaultNamespace("NS");
+		func = engine->GetModule(0)->GetFunctionByName("func");
+		metadata = builder.GetMetadataStringForFunc(func);
+		if (metadata != "func")
+			TEST_FAILED;
+		engine->GetModule(0)->SetDefaultNamespace("");
+
+		int typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass");
+		metadata = builder.GetMetadataStringForType(typeId);
+		if (metadata != " myclass ")
+			TEST_FAILED;
+
+		typeId = engine->GetModule(0)->GetTypeIdByDecl("NS::Class");
+		metadata = builder.GetMetadataStringForType(typeId);
+		if (metadata != "class")
+			TEST_FAILED;
+
+		typeId = engine->GetModule(0)->GetTypeIdByDecl("MyClass2");
+		metadata = builder.GetMetadataStringForTypeProperty(typeId, 0);
+		if (metadata != " edit ")
+			TEST_FAILED;
+		metadata = builder.GetMetadataStringForTypeProperty(typeId, 1);
+		if (metadata != " noedit ")
+			TEST_FAILED;
+		metadata = builder.GetMetadataStringForTypeProperty(typeId, 2);
+		if (metadata != " edit,c ")
+			TEST_FAILED;
+
+		asITypeInfo *type = engine->GetTypeInfoById(typeId);
+		if (type == 0)
+			TEST_FAILED;
+		else
+		{
+			metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("get_prop"));
+			if (metadata != " prop ")
+				TEST_FAILED;
+			metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("set_prop"));
+			if (metadata != " prop ")
+				TEST_FAILED;
+		}
+
+		typeId = engine->GetModule(0)->GetTypeIdByDecl("MyIntf");
+		metadata = builder.GetMetadataStringForType(typeId);
+		if (metadata != " myintf ")
+			TEST_FAILED;
+
+		int varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_var");
+		metadata = builder.GetMetadataStringForVar(varIdx);
+		if (metadata != " init ")
+			TEST_FAILED;
+
+		varIdx = engine->GetModule(0)->GetGlobalVarIndexByName("g_obj");
+		metadata = builder.GetMetadataStringForVar(varIdx);
+		if (metadata != " var of type myclass ")
+			TEST_FAILED;
 #endif
+	}
 
 #if AS_PROCESS_METADATA == 1
 	// Test metadata on external shared entities
@@ -211,12 +212,12 @@ bool Test()
 		else
 		{
 			int typeId = type->GetTypeId();
-			metadata = builder.GetMetadataStringForType(typeId);
+			string metadata = builder.GetMetadataStringForType(typeId);
 			if (metadata != "external test")
 				TEST_FAILED;
 		}
 
-		metadata = builder.GetMetadataStringForFunc(engine->GetModule("mod")->GetFunctionByName("func"));
+		string metadata = builder.GetMetadataStringForFunc(engine->GetModule("mod")->GetFunctionByName("func"));
 		if (metadata != "external func")
 			TEST_FAILED;
 
@@ -263,12 +264,12 @@ bool Test()
 		else
 		{
 			int typeId = type->GetTypeId();
-			metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("func"));
+			string metadata = builder.GetMetadataStringForTypeMethod(typeId, type->GetMethodByName("func"));
 			if (metadata != "some meta data for func")
 				TEST_FAILED;
 		}
 
-		metadata = builder.GetMetadataStringForFunc(engine->GetModule("mod")->GetFunctionByName("glob"));
+		string metadata = builder.GetMetadataStringForFunc(engine->GetModule("mod")->GetFunctionByName("glob"));
 		if (metadata != "some meta data for global")
 			TEST_FAILED;
 	}

@@ -186,7 +186,7 @@ bool Test()
 	{
 		CBufferedOutStream dout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &dout, asCALL_THISCALL);
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -201,8 +201,8 @@ bool Test()
 	// Test error message when registering a value type as &inout (or just &)
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		r = engine->RegisterGlobalFunction("void func(float &)", asFUNCTION(0), asCALL_GENERIC);
 		if( r >= 0 )
@@ -223,12 +223,12 @@ bool Test()
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		const char *script = 
 			"void f(float &out d) {}";
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 
 		r = mod->Build();
@@ -247,12 +247,12 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
 
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		const char *script = 
 			"void f(int & d) {d = 1;}";
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 
 		r = mod->Build();

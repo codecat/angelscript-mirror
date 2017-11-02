@@ -8,37 +8,6 @@ namespace TestEnum
 #define TESTMODULE		"TestEnum"
 
 
-// Script for testing attributes
-static const char *const script =
-"enum TEST2_ENUM  									\n"
-"{													\n"
-"	TEST_1 = -1,									\n"
-"	TEST1 = 1,										\n"
-"	TEST2,											\n"
-"	TEST1200 = 300 * 4,								\n"
-"	TEST1201 = TEST1200 + 1,						\n"
-"	TEST1202,										\n"
-"	TEST1203,										\n"
-"	TEST1205 = TEST1201 + 4,						\n"
-"	TEST1_0 = TEST_1 + 1, 							\n"
-"	TEST1_1 = TEST_1 + 2 							\n"
-"}													\n"
-"													\n"
-"TEST2_ENUM Test1()									\n"
-"{													\n"
-"   output(TEST_1);                                 \n"
-"   output(TEST1);                                  \n"
-"   output(TEST2);                                  \n"
-"   output(TEST1200);                               \n"
-"   output(TEST1201);                               \n"
-"   output(TEST1202);                               \n"
-"   output(TEST1203);                               \n"
-"   output(TEST1205);                               \n"
-"   output(TEST1_0);                                \n"
-"   output(TEST1_1);                                \n"
-"   output(TEST2_ENUM::TEST2);                      \n"
-"	return TEST2;									\n"
-"}													\n";
 
 enum TEST_ENUM
 {
@@ -175,390 +144,421 @@ static bool TestEnum()
 	}
 
 
- 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-
-	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
-	// Register the enum value
-	r = engine->RegisterEnum("TEST_ENUM"); assert(r >= 0);
-	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM1", ENUM1); assert(r >= 0);
-	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM2", ENUM2); assert(r >= 0);
-	r = engine->RegisterEnumValue("TEST_ENUM", "ENUM3", ENUM3); assert(r >= 0);
-
-	r = engine->RegisterGlobalFunction("void funce(TEST_ENUM)", asFUNCTION(func), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction("void output(int val1)", asFUNCTION(scriptOutput), asCALL_CDECL); assert(r >= 0);
-
-	// Test calling generic function with enum value
-	r = ExecuteString(engine, "funce(ENUM1);");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	r = ExecuteString(engine, "funce(TEST_ENUM::ENUM3);");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	// Test using the registered enum values
-	r = ExecuteString(engine, "output(ENUM1); output(ENUM2)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "1\n10\n" )
-		TEST_FAILED;
-
-	// Test script that declare an enum
-	// enum value can be given as expression of constants
-	// enum can be implicitly cast to number
-	buffer = "";
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection(NULL, script, strlen(script), 0);
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	r = ExecuteString(engine, "Test1()", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n2\n" )
 	{
-		TEST_FAILED;
-		PRINTF("%s", buffer.c_str());
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		// Register the enum value
+		r = engine->RegisterEnum("TEST_ENUM"); assert(r >= 0);
+		r = engine->RegisterEnumValue("TEST_ENUM", "ENUM1", ENUM1); assert(r >= 0);
+		r = engine->RegisterEnumValue("TEST_ENUM", "ENUM2", ENUM2); assert(r >= 0);
+		r = engine->RegisterEnumValue("TEST_ENUM", "ENUM3", ENUM3); assert(r >= 0);
+
+		r = engine->RegisterGlobalFunction("void funce(TEST_ENUM)", asFUNCTION(func), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void output(int val1)", asFUNCTION(scriptOutput), asCALL_CDECL); assert(r >= 0);
+
+		// Test calling generic function with enum value
+		r = ExecuteString(engine, "funce(ENUM1);");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		r = ExecuteString(engine, "funce(TEST_ENUM::ENUM3);");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// Test using the registered enum values
+		r = ExecuteString(engine, "output(ENUM1); output(ENUM2)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "1\n10\n")
+			TEST_FAILED;
+
+		// Test script that declare an enum
+		// enum value can be given as expression of constants
+		// enum can be implicitly cast to number
+		buffer = "";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *const script =
+			"enum TEST2_ENUM  									\n"
+			"{													\n"
+			"	TEST_1 = -1,									\n"
+			"	TEST1 = 1,										\n"
+			"	TEST2,											\n"
+			"	TEST1200 = 300 * 4,								\n"
+			"	TEST1201 = TEST1200 + 1,						\n"
+			"	TEST1202,										\n"
+			"	TEST1203,										\n"
+			"	TEST1205 = TEST1201 + 4,						\n"
+			"	TEST1_0 = TEST_1 + 1, 							\n"
+			"	TEST1_1 = TEST_1 + 2 							\n"
+			"}													\n"
+			"													\n"
+			"TEST2_ENUM Test1()									\n"
+			"{													\n"
+			"   output(TEST_1);                                 \n"
+			"   output(TEST1);                                  \n"
+			"   output(TEST2);                                  \n"
+			"   output(TEST1200);                               \n"
+			"   output(TEST1201);                               \n"
+			"   output(TEST1202);                               \n"
+			"   output(TEST1203);                               \n"
+			"   output(TEST1205);                               \n"
+			"   output(TEST1_0);                                \n"
+			"   output(TEST1_1);                                \n"
+			"   output(TEST2_ENUM::TEST2);                      \n"
+			"	return TEST2;									\n"
+			"}													\n";
+		r = mod->AddScriptSection(NULL, script, strlen(script), 0);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Test1()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "-1\n1\n2\n1200\n1201\n1202\n1203\n1205\n0\n1\n2\n")
+		{
+			TEST_FAILED;
+			PRINTF("%s", buffer.c_str());
+		}
+
+		// Registered enums are literal constants
+		// variable of enum type can be implictly cast to primitive
+		buffer = "";
+		r = ExecuteString(engine, "TEST_ENUM e = ENUM1; switch( e ) { case ENUM1: output(e); }");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "1\n")
+			TEST_FAILED;
+
+		// Script declared enums behave the same
+		buffer = "";
+		r = ExecuteString(engine, "TEST2_ENUM e = TEST_1; switch( e ) {case TEST_1: output(e); }", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "-1\n")
+			TEST_FAILED;
+
+		// Different enum types can declare the same enum value
+		mod->AddScriptSection(NULL,
+			"enum ENUMA { VALUE = 1 } \n"
+			"enum ENUMB { VALUE = 2 } \n"
+			"enum ENUMC { VAL = 3 } \n"
+			"int a = VALUE; \n" // fails with ambiguity
+			"int b = ENUMA::VALUE; \n" // ok
+			"int c = ENUMB::VALUE; \n" // ok
+			"ENUMC d = VALUE; \n"); // fails with ambiguity
+		bout.buffer = "";
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != " (4, 5) : Info    : Compiling int a\n"
+			" (4, 9) : Error   : Found multiple matching enum values\n"
+			" (7, 7) : Info    : Compiling ENUMC d\n"
+			" (7, 11) : Error   : Found multiple matching enum values\n"
+			" (7, 11) : Error   : Can't implicitly convert from 'int' to 'ENUMC&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Automatically resolving ambiguous enums if possible
+		bout.buffer = "";
+		mod->AddScriptSection(NULL,
+			"enum ENUMA { VALUE = 1 } \n"
+			"enum ENUMB { VALUE = 2 } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		r = ExecuteString(engine, "ENUMA a = VALUE; assert( a == 1 );\n"
+			"ENUMB b = VALUE; assert( b == 2 );\n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// enum values can't be declared with expressions including subsequent values
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		const char *script2 = "enum TEST_ERR { ERR1 = ERR2, ERR2 }";
+		mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("error", script2, strlen(script2));
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "error (1, 17) : Info    : Compiling TEST_ERR ERR1\n"
+			"error (1, 24) : Error   : 'ERR2' is not declared\n"
+			"error (1, 30) : Info    : Compiling TEST_ERR ERR2\n"
+			"error (1, 30) : Error   : Use of uninitialized global variable 'ERR1'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// enum type name can't be overloaded with variable name in another scope
+		bout.buffer = "";
+		r = ExecuteString(engine, "int TEST_ENUM = 999");
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 5) : Error   : Illegal variable name 'TEST_ENUM'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// enum value name can be overloaded with variable name in another scope
+		buffer = "";
+		r = ExecuteString(engine, "int ENUM1 = 999; output(ENUM1)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "999\n")
+			TEST_FAILED;
+
+		// number cannot be implicitly cast to enum type
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = ExecuteString(engine, "TEST_ENUM val = 1");
+		if (r >= 0)
+			TEST_FAILED;
+		r = ExecuteString(engine, "float f = 1.2f; TEST_ENUM val = f");
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'int' to 'TEST_ENUM'.\n"
+			"ExecuteString (1, 33) : Error   : Can't implicitly convert from 'float' to 'TEST_ENUM'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// constant number can be explicitly cast to enum type
+		r = ExecuteString(engine, "TEST_ENUM val = TEST_ENUM(1)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// primitive value can be explicitly cast to enum type
+		r = ExecuteString(engine, "float f = 1.2f; TEST_ENUM val = TEST_ENUM(f)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// math operator with enums
+		buffer = "";
+		r = ExecuteString(engine, "int a = ENUM2 * 10; output(a); output(ENUM2 + ENUM1)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "100\n11\n")
+			TEST_FAILED;
+
+		// comparison operator with enums
+		buffer = "";
+		r = ExecuteString(engine, "if( ENUM2 > ENUM1 ) output(1);");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "1\n")
+			TEST_FAILED;
+
+		// bitwise operators with enums
+		buffer = "";
+		r = ExecuteString(engine, "output( ENUM2 << ENUM1 )");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "20\n")
+			TEST_FAILED;
+
+		// circular reference between enum and global variable are
+		// allowed if they can be resolved
+		const char *script3 =
+			"enum TEST_EN                \n"
+			"{                           \n"
+			"  EN1,                      \n"
+			"  EN2 = gvar,               \n"
+			"  EN3,                      \n"
+			"}                           \n"
+			"const int gvar = EN1 + 10;  \n";
+		mod = engine->GetModule("en", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("en", script3, strlen(script3));
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		buffer = "";
+		r = ExecuteString(engine, "output(EN2); output(EN3)", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "10\n11\n")
+			TEST_FAILED;
+
+		// functions can be overloaded for parameters with enum type
+		bout.buffer = "";
+		const char *script4 =
+			"void func(TEST_ENUM) { output(1); } \n"
+			"void func(int) { output(2); } \n";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script4, strlen(script4));
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		buffer = "";
+		r = ExecuteString(engine, "func(1); func(1.0f); TEST_ENUM e = ENUM1; func(e)", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "2\n2\n1\n")
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Using registered enum type in a script
+		engine->RegisterEnum("game_type_t");
+		const char *script5 =
+			"game_type_t random_game_type;\n"
+			"void foo(game_type_t game_type)\n"
+			"{\n"
+			"   random_game_type = game_type;\n"
+			"};\n";
+		r = mod->AddScriptSection("script", script5, strlen(script5));
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		// enum with assignment without comma
+		const char *script6 = "enum test_wo_comma { value = 0 }";
+		r = mod->AddScriptSection("script", script6, strlen(script6));
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		// Enums are not object types
+		asITypeInfo *ti = mod->GetEnumByIndex(0);
+		if (ti == 0)
+			TEST_FAILED;
+		if (!(ti->GetFlags() & asOBJ_ENUM))
+			TEST_FAILED;
+
+		// enum must allow negate and binary complement operators
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = ExecuteString(engine, "int a = -ENUM1; int b = ~ENUM1;");
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test specifying an unknown enum type name
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		const char *script7 = "void f() { funce(UNKNOWN_ENUM::ENUM1); }";
+		mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("error", script7, strlen(script7));
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
+			"error (1, 18) : Error   : Unknown scope 'UNKNOWN_ENUM'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test specifying a non enum type name before the scope
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		const char *script8 =
+			"class SomeClass\n"
+			"{\n"
+			"  int SOMEVALUE;\n"
+			"}\n"
+			"void f() { funce(SomeClass::SOMEVALUE); }";
+		mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("error", script8, strlen(script8));
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
+			"error (5, 18) : Error   : Unknown scope 'SomeClass'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		// Test engine property
+		r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1);
+		if (r != 0)
+			TEST_FAILED;
+
+		bout.buffer = "";
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		const char *script9 = "void f() { funce(ENUM1); }";
+		mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
+		r = mod->AddScriptSection("error", script9, strlen(script9));
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
+			"error (1, 18) : Error   : 'ENUM1' is not declared\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		buffer = "";
+		r = ExecuteString(engine, "output(TEST_ENUM::ENUM1);");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (buffer != "1\n")
+			TEST_FAILED;
+
+		// Test enum in param to class method
+		assert(sizeof(TEST_ENUM) == 4);
+		r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 0);
+		r = engine->RegisterObjectType("Obj", 0, asOBJ_REF | asOBJ_NOHANDLE); assert(r >= 0);
+		r = engine->RegisterObjectMethod("Obj", "bool TestEnum(TEST_ENUM)", asMETHOD(CTestObject, TestEnum), asCALL_THISCALL); assert(r >= 0);
+
+		CTestObject obj;
+		obj.val = ENUM1;
+
+		r = engine->RegisterGlobalProperty("Obj obj", &obj); assert(r >= 0);
+
+		bout.buffer = "";
+		r = ExecuteString(engine, "if( !obj.TestEnum(ENUM2) ) assert(false); ");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		if (obj.val != ENUM2)
+			TEST_FAILED;
+
+		// Repeated enum values would enter an infinit loop
+		bout.buffer = "";
+		const char *script10 = "enum Infinite { inf, inf }";
+		mod->AddScriptSection("test", script10);
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (1, 22) : Error   : Name conflict. 'inf' is already used.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->Release();
 	}
 
-	// Registered enums are literal constants
-	// variable of enum type can be implictly cast to primitive
-	buffer = "";
-	r = ExecuteString(engine, "TEST_ENUM e = ENUM1; switch( e ) { case ENUM1: output(e); }");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "1\n" )
-		TEST_FAILED;
-
-	// Script declared enums behave the same
-	buffer = "";
-	r = ExecuteString(engine, "TEST2_ENUM e = TEST_1; switch( e ) {case TEST_1: output(e); }", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "-1\n" )
-		TEST_FAILED;
-
-	// Different enum types can declare the same enum value
-	mod->AddScriptSection(NULL, 
-		"enum ENUMA { VALUE = 1 } \n"
-		"enum ENUMB { VALUE = 2 } \n"
-		"enum ENUMC { VAL = 3 } \n"
-		"int a = VALUE; \n" // fails with ambiguity
-		"int b = ENUMA::VALUE; \n" // ok
-		"int c = ENUMB::VALUE; \n" // ok
-		"ENUMC d = VALUE; \n"); // fails with ambiguity
-	bout.buffer = "";
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != " (4, 5) : Info    : Compiling int a\n"
-	                   " (4, 9) : Error   : Found multiple matching enum values\n"
-					   " (7, 7) : Info    : Compiling ENUMC d\n"
-					   " (7, 11) : Error   : Found multiple matching enum values\n"
-					   " (7, 11) : Error   : Can't implicitly convert from 'int' to 'ENUMC&'.\n" )
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// Automatically resolving ambiguous enums if possible
-	bout.buffer = "";
-	mod->AddScriptSection(NULL, 
-		"enum ENUMA { VALUE = 1 } \n"
-		"enum ENUMB { VALUE = 2 } \n");
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	r = ExecuteString(engine, "ENUMA a = VALUE; assert( a == 1 );\n"
-							  "ENUMB b = VALUE; assert( b == 2 );\n", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( bout.buffer != "" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// enum values can't be declared with expressions including subsequent values
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	const char *script2 = "enum TEST_ERR { ERR1 = ERR2, ERR2 }";
-	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection("error", script2, strlen(script2));
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "error (1, 17) : Info    : Compiling TEST_ERR ERR1\n"
-					   "error (1, 24) : Error   : 'ERR2' is not declared\n"
-					   "error (1, 30) : Info    : Compiling TEST_ERR ERR2\n"
-                       "error (1, 30) : Error   : Use of uninitialized global variable 'ERR1'.\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// enum type name can't be overloaded with variable name in another scope
-	bout.buffer = "";
-	r = ExecuteString(engine, "int TEST_ENUM = 999");
-	if( r >= 0  )
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 5) : Error   : Illegal variable name 'TEST_ENUM'.\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-
-	// enum value name can be overloaded with variable name in another scope
-	buffer = "";
-	r = ExecuteString(engine, "int ENUM1 = 999; output(ENUM1)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "999\n" )
-		TEST_FAILED;
-
-	// number cannot be implicitly cast to enum type
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = ExecuteString(engine, "TEST_ENUM val = 1");
-	if( r >= 0 )
-		TEST_FAILED;
-	r = ExecuteString(engine, "float f = 1.2f; TEST_ENUM val = f");
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 17) : Error   : Can't implicitly convert from 'int' to 'TEST_ENUM'.\n"
-                       "ExecuteString (1, 33) : Error   : Can't implicitly convert from 'float' to 'TEST_ENUM'.\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-
-	// constant number can be explicitly cast to enum type
-	r = ExecuteString(engine, "TEST_ENUM val = TEST_ENUM(1)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	// primitive value can be explicitly cast to enum type
-	r = ExecuteString(engine, "float f = 1.2f; TEST_ENUM val = TEST_ENUM(f)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	// math operator with enums
-	buffer = "";
-	r = ExecuteString(engine, "int a = ENUM2 * 10; output(a); output(ENUM2 + ENUM1)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "100\n11\n" )
-		TEST_FAILED;
-
-	// comparison operator with enums
-	buffer = "";
-	r = ExecuteString(engine, "if( ENUM2 > ENUM1 ) output(1);");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "1\n" )
-		TEST_FAILED;
-
-	// bitwise operators with enums
-	buffer = "";
-	r = ExecuteString(engine, "output( ENUM2 << ENUM1 )");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "20\n" )
-		TEST_FAILED;
-
-	// circular reference between enum and global variable are
-	// allowed if they can be resolved
-	const char *script3 =
-	"enum TEST_EN                \n"
-	"{                           \n"
-	"  EN1,                      \n"
-	"  EN2 = gvar,               \n"
-	"  EN3,                      \n"
-	"}                           \n"
-	"const int gvar = EN1 + 10;  \n";
-	mod = engine->GetModule("en", asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("en", script3, strlen(script3));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	buffer = "";
-	r = ExecuteString(engine, "output(EN2); output(EN3)", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "10\n11\n" )
-		TEST_FAILED;
-
-	// functions can be overloaded for parameters with enum type
-	bout.buffer = "";
-	const char *script4 =
-	"void func(TEST_ENUM) { output(1); } \n"
-	"void func(int) { output(2); } \n";
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script4, strlen(script4));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-	buffer = "";
-	r = ExecuteString(engine, "func(1); func(1.0f); TEST_ENUM e = ENUM1; func(e)", mod);
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "2\n2\n1\n" )
-		TEST_FAILED;
-	if (bout.buffer != "")
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// Using registered enum type in a script
-	engine->RegisterEnum("game_type_t");
-	const char *script5 =
-	"game_type_t random_game_type;\n"
-	"void foo(game_type_t game_type)\n"
-	"{\n"
-	"   random_game_type = game_type;\n"
-	"};\n";
-	r = mod->AddScriptSection("script", script5, strlen(script5));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	// enum with assignment without comma
-	const char *script6 = "enum test_wo_comma { value = 0 }";
-	r = mod->AddScriptSection("script", script6, strlen(script6));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	// Enums are not object types
-	asITypeInfo *ti = mod->GetEnumByIndex(0);
-	if( ti == 0 )
-		TEST_FAILED;
-	if( !(ti->GetFlags() & asOBJ_ENUM) )
-		TEST_FAILED;
-
-	// enum must allow negate and binary complement operators
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = ExecuteString(engine, "int a = -ENUM1; int b = ~ENUM1;");
-	if( r < 0 )
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 25) : Warning : Implicit conversion changed sign of value\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// Test specifying an unknown enum type name
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	const char *script7 = "void f() { funce(UNKNOWN_ENUM::ENUM1); }";
-	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection("error", script7, strlen(script7));
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
-                       "error (1, 18) : Error   : Unknown scope 'UNKNOWN_ENUM'\n")
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// Test specifying a non enum type name before the scope
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	const char *script8 =
-	"class SomeClass\n"
-	"{\n"
-	"  int SOMEVALUE;\n"
-	"}\n"
-	"void f() { funce(SomeClass::SOMEVALUE); }";
-	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection("error", script8, strlen(script8));
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
-		               "error (5, 18) : Error   : Unknown scope 'SomeClass'\n")
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	// Test engine property
-	r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1);
-	if( r != 0 )
-		TEST_FAILED;
-
-	bout.buffer = "";
-	r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	const char *script9 = "void f() { funce(ENUM1); }";
-	mod = engine->GetModule("error", asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection("error", script9, strlen(script9));
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
-		               "error (1, 18) : Error   : 'ENUM1' is not declared\n")
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	buffer = "";
-	r = ExecuteString(engine, "output(TEST_ENUM::ENUM1);");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( buffer != "1\n" )
-		TEST_FAILED;
-
-	// Test enum in param to class method
-	assert( sizeof(TEST_ENUM) == 4 );
-	r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 0);
-	r = engine->RegisterObjectType("Obj", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("Obj", "bool TestEnum(TEST_ENUM)", asMETHOD(CTestObject, TestEnum), asCALL_THISCALL); assert( r >= 0 );
-	
-	CTestObject obj;
-	obj.val = ENUM1;
-
-	r = engine->RegisterGlobalProperty("Obj obj", &obj); assert( r >= 0 );
-
-	bout.buffer = "";
-	r = ExecuteString(engine, "if( !obj.TestEnum(ENUM2) ) assert(false); ");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( bout.buffer != "" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-	if( obj.val != ENUM2 )
-		TEST_FAILED;
-
-	// Repeated enum values would enter an infinit loop
-	bout.buffer = "";
-	const char *script10 = "enum Infinite { inf, inf }";
-	mod->AddScriptSection("test", script10);
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "test (1, 22) : Error   : Name conflict. 'inf' is already used.\n" )
-	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
-
-	engine->Release();
-
-	{
-		COutStream out;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
@@ -593,7 +593,6 @@ static bool TestEnum()
 
 	//paste at the end of TestEnum()
 	{    
-		COutStream out;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = engine->SetEngineProperty(asEP_REQUIRE_ENUM_SCOPE, 1); assert(r >= 0);

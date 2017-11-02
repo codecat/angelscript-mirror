@@ -178,7 +178,7 @@ bool Test()
 		"  return a; \n"
 		"} \n";
 		mod->AddScriptSection("s", script);
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 

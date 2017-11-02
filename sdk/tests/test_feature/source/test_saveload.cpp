@@ -1296,7 +1296,7 @@ bool Test()
 		{
 			for( size_t b = 0; b < stream4.buffer.size(); ++b )
 				if( stream4.buffer[b] != stream2.buffer[b] )
-					PRINTF("streams differ on byte %d\n", b);
+					PRINTF("streams differ on byte %d\n", (int)b);
 		}
 		else
 			PRINTF("streams differ in size\n");

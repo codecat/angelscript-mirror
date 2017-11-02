@@ -527,7 +527,7 @@ bool Test()
 		const char *script = "string test() { const string s = 'hello'; return s; }";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 		{
 			TEST_FAILED;
@@ -548,7 +548,7 @@ bool Test()
 		const char *script = "string test() { const string s = 'hello'; return s; }";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 		{
 			TEST_FAILED;
@@ -578,7 +578,7 @@ bool Test()
 			"} \n";
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
-		int r = mod->Build();
+		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
 
@@ -594,8 +594,7 @@ bool Test()
 
 	// Test comparison of objects at different hierarchy levels
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		COutStream out;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -687,7 +686,7 @@ bool Test()
 			TEST_FAILED;
 
 		// Doing a ref cast on a null pointer must not throw an exception
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "A@ a;\n B@ b;\n @b = cast<B>(a);\n @a = @b;\n", 0, ctx);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;

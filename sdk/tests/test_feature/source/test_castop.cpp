@@ -147,7 +147,7 @@ bool Test()
 	// Test opCast(?&out) on null handle (should be allowed)
 	// http://www.gamedev.net/topic/683804-void-opcastout-on-null-handle/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterObjectType("test", 0, asOBJ_REF | asOBJ_NOCOUNT);
@@ -174,14 +174,14 @@ bool Test()
 	// Test using opImplConv on ref type stored in dictionary
 	// http://www.gamedev.net/topic/668972-getting-dictionary-addon-to-work-with-ref-counted-strings/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptString(engine);
 		RegisterScriptArray(engine, false);
 		RegisterScriptDictionary(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		int r = ExecuteString(engine, 
+		r = ExecuteString(engine, 
 			"dictionary dict; \n"
 			"@dict['foo'] = 'bar';\n"
 			"string t; \n"
@@ -203,7 +203,7 @@ bool Test()
 
 	// The cast op can be overloaded in script classes by implementing opCast and opImplCast
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 

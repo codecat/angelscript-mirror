@@ -236,7 +236,6 @@ bool Test()
 	CBufferedOutStream bout;
 	COutStream out;
  	asIScriptEngine *engine;
-	const char *script;
 
 	// Using a registered non-pod value type without default constructor
 	// Reported by Phong Ba through e-mail on March 23rd, 2016
@@ -1039,85 +1038,97 @@ bool Test()
 	}
 
 	// Ref types without default factory must not be allowed to be initialized, nor must it be allowed to be passed by value in parameters or returned by value
-	bout.buffer = "";
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	script = "ref func(ref r) { ref r2; return ref(); }";
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
-		               "script (1, 1) : Error   : Return type can't be 'ref'\n"
-					   "script (1, 1) : Error   : Parameter type can't be 'ref', because the type cannot be instantiated.\n"
-					   "script (1, 23) : Error   : Data type can't be 'ref'\n"
-					   "script (1, 34) : Error   : Data type can't be 'ref'\n" )
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+		const char *script = "ref func(ref r) { ref r2; return ref(); }";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "script (1, 1) : Info    : Compiling ref func(ref)\n"
+			"script (1, 1) : Error   : Return type can't be 'ref'\n"
+			"script (1, 1) : Error   : Parameter type can't be 'ref', because the type cannot be instantiated.\n"
+			"script (1, 23) : Error   : Data type can't be 'ref'\n"
+			"script (1, 34) : Error   : Data type can't be 'ref'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		engine->Release();
 	}
-	engine->Release();
 
 	// Ref types without default constructor must not be allowed to be passed by in/out reference, but must be allowed to be passed by inout reference
-	bout.buffer = "";
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
-	script = "void func(ref &in r1, ref &out r2, ref &inout r3) { }";
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "script (1, 1) : Info    : Compiling void func(ref&in, ref&out, ref&inout)\n"
-		               "script (1, 1) : Error   : Parameter type can't be 'ref&in', because the type cannot be instantiated.\n"
-					   "script (1, 1) : Error   : Parameter type can't be 'ref&out', because the type cannot be instantiated.\n" )
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = engine->RegisterObjectType("ref", 0, asOBJ_REF); assert(r >= 0);
+		r = engine->RegisterObjectBehaviour("ref", asBEHAVE_ADDREF, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("ref", asBEHAVE_RELEASE, "void f()", asFUNCTION(DummyFunc), asCALL_GENERIC);
+		const char *script = "void func(ref &in r1, ref &out r2, ref &inout r3) { }";
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "script (1, 1) : Info    : Compiling void func(ref&in, ref&out, ref&inout)\n"
+			"script (1, 1) : Error   : Parameter type can't be 'ref&in', because the type cannot be instantiated.\n"
+			"script (1, 1) : Error   : Parameter type can't be 'ref&out', because the type cannot be instantiated.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		int t1 = engine->GetTypeIdByDecl("ref");
+		int t2 = engine->GetTypeIdByDecl("ref@") & ~asTYPEID_OBJHANDLE;
+		if (t1 != t2)
+			TEST_FAILED;
+
+		engine->Release();
 	}
-
-	int t1 = engine->GetTypeIdByDecl("ref");
-	int t2 = engine->GetTypeIdByDecl("ref@") & ~asTYPEID_OBJHANDLE;
-	if( t1 != t2 )
-		TEST_FAILED;
-
-	engine->Release();
 
 	// It must not be possible to register functions that take handles of types with asOBJ_HANDLE
-	bout.buffer = "";
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
-	r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
-	r = ExecuteString(engine, "ref @r");
-	if( r >= 0 )
-		TEST_FAILED;
-	r = engine->RegisterGlobalFunction("ref@ func()", asFUNCTION(0), asCALL_GENERIC);
-	if( r >= 0 )
-		TEST_FAILED;
-	if( bout.buffer != "ExecuteString (1, 5) : Error   : Object handle is not supported for this type\n"
-	                   "ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
-	                   "System function (1, 4) : Error   : Object handle is not supported for this type\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()' (Code: -10)\n" )
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
-	}
+		bout.buffer = "";
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = engine->RegisterObjectType("ref", 0, asOBJ_REF | asOBJ_NOHANDLE); assert(r >= 0);
+		r = ExecuteString(engine, "ref @r");
+		if (r >= 0)
+			TEST_FAILED;
+		r = engine->RegisterGlobalFunction("ref@ func()", asFUNCTION(0), asCALL_GENERIC);
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "ExecuteString (1, 5) : Error   : Object handle is not supported for this type\n"
+			"ExecuteString (1, 6) : Error   : Data type can't be 'ref'\n"
+			"System function (1, 4) : Error   : Object handle is not supported for this type\n"
+			" (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'ref@ func()' (Code: -10)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
-	// Must be possible to register float types
-	r = engine->RegisterObjectType("real", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT); assert( r >= 0 );
+		// Must be possible to register float types
+		r = engine->RegisterObjectType("real", sizeof(float), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_FLOAT); assert(r >= 0);
+
+		// It must not be possible to register a value type without defining the application type
+		r = engine->RegisterObjectType("test2", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CONSTRUCTOR);
+		if (r >= 0) TEST_FAILED;
+
+		engine->Release();
+	}
 
 	// It should be allowed to register the type without specifying the application type,
 	// if the engine won't use it (i.e. no native functions take or return the type by value)
 	SKIP_ON_MAX_PORT
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		r = engine->RegisterObjectType("test1", 4, asOBJ_VALUE | asOBJ_POD);
@@ -1148,12 +1159,6 @@ bool Test()
 		}
 		engine->Release();
 	}
-
-	// It must not be possible to register a value type without defining the application type
-	r = engine->RegisterObjectType("test2", 4, asOBJ_VALUE | asOBJ_APP_CLASS_CONSTRUCTOR);
-	if( r >= 0 ) TEST_FAILED;
-
-	engine->Release();
 
 	// REF+SCOPED
 	if( !fail ) fail = TestRefScoped();

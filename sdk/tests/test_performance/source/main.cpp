@@ -54,31 +54,31 @@ double testTimesOrig[NUM_TESTS] =
 0.315   // ClassProp
 };
 
-// Times for 2.31.2 WIP (64bit, Intel i7) (localized optimizations)
+// Times for 2.32.0 WIP (64bit, Intel i7) (localized optimizations)
 double testTimesOrig2[NUM_TESTS] = 
 {
-	0.557,  // Basic
-	0.145,  // Basic2
-	0.316,  // Call
-	0.431,  // Call2
-	0.860,  // Fib
-	0.117,  // Int
-	0.333,  // Intf
-	0.325,  // Mthd
-	0.704,  // String
-	0.330,  // String2
+	0.533,  // Basic
+	0.143,  // Basic2
+	0.304,  // Call
+	0.420,  // Call2
+	0.863,  // Fib
+	0.111,  // Int
+	0.392,  // Intf
+	0.378,  // Mthd
+	0.694,  // String
+	0.323,  // String2
 	0.358,  // StringPooled
-	0.296,  // ThisProp
-	0.158,  // Vector3
-	0.188,  // Assign.1
-	0.436,  // Assign.2
-	0.234,  // Assign.3
-	0.288,  // Assign.4
-	0.288,  // Assign.5
-	0.549,  // Array.1
-	0.231,  // Array.2
-	0.141,  // GlobalVar
-	0.208   // ClassProp
+	0.289,  // ThisProp
+	0.156,  // Vector3
+	0.182,  // Assign.1
+	0.430,  // Assign.2
+	0.227,  // Assign.3
+	0.279,  // Assign.4
+	0.279,  // Assign.5
+	0.541,  // Array.1
+	0.232,  // Array.2
+	0.137,  // GlobalVar
+	0.204   // ClassProp
 };
 
 double testTimesBest[NUM_TESTS];

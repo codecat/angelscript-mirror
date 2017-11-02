@@ -181,19 +181,7 @@ bool Test1()
  	return fail;
 }
 
-const char *script2 = "\n"
-"MyGame @global;       \n"
-"class MyGame          \n"
-"{                     \n"
-"}                     \n"
-"any@ CreateInstance() \n"
-"{                     \n"
-"  any res;            \n"
-"  MyGame obj;         \n"
-"  @global = @obj;     \n"
-"  res.store(@obj);    \n"
-"  return res;         \n"
-"}                     \n";
+
 
 
 bool Test2()
@@ -211,6 +199,19 @@ bool Test2()
 	RegisterScriptAny(engine);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script2 = "\n"
+		"MyGame @global;       \n"
+		"class MyGame          \n"
+		"{                     \n"
+		"}                     \n"
+		"any@ CreateInstance() \n"
+		"{                     \n"
+		"  any res;            \n"
+		"  MyGame obj;         \n"
+		"  @global = @obj;     \n"
+		"  res.store(@obj);    \n"
+		"  return res;         \n"
+		"}                     \n";
 	mod->AddScriptSection("script", script2, strlen(script2));
 	r = mod->Build();
 	if( r < 0 )

@@ -398,7 +398,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		ctx->Prepare(mod->GetFunctionByName("main"));
 		r = ctx->Execute();
 		if (r != asEXECUTION_FINISHED)
@@ -454,7 +454,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		ctx->Prepare(mod->GetFunctionByName("main"));
 		r = ctx->Execute();
 		if (r != asEXECUTION_FINISHED)
@@ -566,7 +566,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("Except", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(ClassExceptionInConstructor::Destruct), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectMethod("Except", "Except &opAssign(const Except &in)", asMETHOD(ClassExceptionInConstructor, operator=), asCALL_THISCALL);
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "array<Except> arr(2);", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -1540,7 +1540,7 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "assert( ia.findByRef(ia[1]) == -1 ); \n"
 								  "Obj @obj = oa[1]; \n"
 								  "assert( oa.findByRef(obj) == 1 ); \n"

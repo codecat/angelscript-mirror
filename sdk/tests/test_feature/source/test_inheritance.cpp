@@ -133,7 +133,7 @@ bool Test()
 
 		engine->RegisterGlobalFunction("bool Test(FooScripted_t @)", asFUNCTION(FooScripted::Test), asCALL_CDECL);
 
-		asIScriptModule *mod = engine->GetModule("Foo", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Foo", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("Foo",
 			"shared abstract class FooScripted { \n"
 			"  FooScripted() { \n"
@@ -414,11 +414,11 @@ bool Test()
 
 	// Test final and override
 	{
-		CBufferedOutStream bout;
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection("test", 
 			"final class CFin1 {} \n" // Don't allow inheritance
@@ -435,7 +435,7 @@ bool Test()
 			"  void overrideFunc(int) override {} \n" // must override
 			"} \n");
 
-		int r = mod->Build();
+		r = mod->Build();
 		if( r >= 0 )
 			TEST_FAILED;
 

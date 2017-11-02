@@ -364,11 +364,11 @@ bool Test()
 	// Test circular reference between types
 	{
 		// Create the script engine
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterScriptArray(engine, true);
 
 		// Compile
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", 
 			"class Hoge"
 			"{"
@@ -389,7 +389,7 @@ bool Test()
 	// Test multidimensional array initialization
 	{
 		// Create the script engine
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterScriptArray(engine, true);
 
@@ -403,9 +403,9 @@ bool Test()
 
 	// Test array of void
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		CBufferedOutStream bout;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 		RegisterScriptArray(engine, false);
 		r = ExecuteString(engine, "array<void> a;");
 		if( r != -1 )

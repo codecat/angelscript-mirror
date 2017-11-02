@@ -939,7 +939,7 @@ bool TestOptimize()
 			"      break;                    \n" 
 			"    }                           \n" 
 			"}                               \n";
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -967,7 +967,7 @@ bool TestOptimize()
 		const char *script = 
 			"class C {int val; C() {val = 0;}} \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -994,7 +994,7 @@ bool TestOptimize()
 			"C @&func_inner() { return c; } \n"
 			"C @func() { C @l = func_inner(); return l; } \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1017,7 +1017,7 @@ bool TestOptimize()
 			"C @func_inner() { return C(); } \n"
 			"void func() { C @l = func_inner(); } \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 //		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
 		r = mod->Build();
@@ -1040,7 +1040,7 @@ bool TestOptimize()
 			"class C {} \n"
 			"void func() { C c; C @h = c; @h = c; } \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1064,7 +1064,7 @@ bool TestOptimize()
 		const char *script = 
 			"void func() { int a = 42, b = a*2; } \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1096,7 +1096,7 @@ bool TestOptimize()
 			"} \n"
 			"void func(const string &in) {} \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1129,7 +1129,7 @@ bool TestOptimize()
 			"class C {} \n"
 			"void func(const C &in arg) { assert( arg is glob ); } \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1247,7 +1247,7 @@ bool TestOptimize()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class T {} \n"
 			"void func() { \n"

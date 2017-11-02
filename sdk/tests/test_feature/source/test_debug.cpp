@@ -139,8 +139,8 @@ void PrintVariables(asIScriptContext *ctx, asUINT stackLevel)
 	int numVars = ctx->GetVarCount(stackLevel);
 	for( int n = 0; n < numVars; n++ )
 	{
-		int typeId = ctx->GetVarTypeId(n, stackLevel); 
-		void *varPointer = ctx->GetAddressOfVar(n, stackLevel);
+		typeId = ctx->GetVarTypeId(n, stackLevel); 
+		varPointer = ctx->GetAddressOfVar(n, stackLevel);
 		if( typeId == engine->GetTypeIdByDecl("int") )
 		{
 			print(" %s = %d\n", ctx->GetVarDeclaration(n, stackLevel), *(int*)varPointer);

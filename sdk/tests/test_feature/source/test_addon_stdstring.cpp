@@ -24,6 +24,10 @@ namespace Test_Addon_StdString
 			RegisterStdString(engine);
 			engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
+			// Trivial allocation of string constant and subsequent de-allocation
+			r = ExecuteString(engine, "string a = 'hello'");
+			if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
 			// Test type conversions
 			r = ExecuteString(engine,
 				"string a = 123; assert( a == '123' ); \n"
@@ -60,6 +64,37 @@ namespace Test_Addon_StdString
 				"a.erase(2,2); \n"
 				"assert( a == 'heo' ); \n");
 			if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+			engine->ShutDownAndRelease();
+		}
+
+		// Test saving and loading bytecode with std:string
+		{
+			asIScriptEngine *engine = asCreateScriptEngine();
+			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+			RegisterStdString(engine);
+			engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+			// Trivial allocation of string constant and subsequent de-allocation
+			asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test", "string a = 'hello';");
+			r = mod->Build();
+			if (r < 0)
+				TEST_FAILED;
+
+			CBytecodeStream bcStream("bc");
+			r = mod->SaveByteCode(&bcStream);
+			if (r < 0)
+				TEST_FAILED;
+
+			mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			r = mod->LoadByteCode(&bcStream);
+			if (r < 0)
+				TEST_FAILED;
+
+			string *str = reinterpret_cast<string*>(mod->GetAddressOfGlobalVar(0));
+			if ((*str) != "hello")
+				TEST_FAILED;
 
 			engine->ShutDownAndRelease();
 		}

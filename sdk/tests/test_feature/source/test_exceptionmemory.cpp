@@ -455,14 +455,12 @@ bool Test()
 
 	// Test proper release of function pointers on exception
 	{
-		COutStream out;
-
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterGlobalFunction("void RaiseException()", asFUNCTION(RaiseException), asCALL_CDECL);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", 
 			"funcdef void func_t(); \n"
 			"void main() \n"
@@ -485,8 +483,7 @@ bool Test()
 	// Test problem reported by FDsagizi
 	// http://www.gamedev.net/topic/631801-pod-type-and-null-pointer-exception-bug-with-call-destructor/
 	{
-		COutStream out;
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterObjectType("TestLink", sizeof(CObject), asOBJ_VALUE | asOBJ_APP_CLASS_CD);	
@@ -494,7 +491,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("TestLink", asBEHAVE_CONSTRUCT, "void f(const TestLink &in)", asFUNCTION(CopyConstruct), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectBehaviour("TestLink", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Destruct), asCALL_CDECL_OBJLAST);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class Object3 \n"
 			"{ \n"
@@ -516,7 +513,7 @@ bool Test()
 		CObject_constructCount = 0;
 		CObject_destructCount = 0;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "Main()", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -559,13 +556,12 @@ bool Test()
 
 	// Test failure when allocating very large array
 	{
-		COutStream out;
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterScriptArray(engine, true);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script",
 			"class test\n"
 			"{\n"

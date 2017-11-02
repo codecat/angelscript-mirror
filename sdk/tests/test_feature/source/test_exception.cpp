@@ -188,7 +188,7 @@ bool TestException()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -221,7 +221,7 @@ bool TestException()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "Test t;", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -262,7 +262,7 @@ bool TestException()
 		if( r < 0 )
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "startGame();", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -283,7 +283,7 @@ bool TestException()
 	// Test exception handler with thiscall
 	// http://www.gamedev.net/topic/665587-angelscript-ios-x64/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
@@ -303,7 +303,7 @@ bool TestException()
 
 		ExceptionHandler handler;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		ctx->SetExceptionCallback(asMETHOD(ExceptionHandler, Callback), &handler, asCALL_THISCALL);
 		ctx->Prepare(mod->GetFunctionByName("test"));
 		r = ctx->Execute();

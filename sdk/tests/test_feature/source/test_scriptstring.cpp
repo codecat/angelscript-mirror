@@ -214,13 +214,13 @@ bool Test()
 	// Problem reported by Wracky of piko3d fame
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptString(engine);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("test", 
+		mod->AddScriptSection("test",
 			"void func() { \n"
 			"  string test = 'hello';\n"
 			"  string copy(test); \n"
@@ -234,11 +234,11 @@ bool Test()
 			"  assert( copy2 !is test ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "func()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		mod->AddScriptSection("test",
@@ -255,11 +255,11 @@ bool Test()
 			"  assert( copy !is obj.test ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "func2()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->Release();
@@ -268,256 +268,263 @@ bool Test()
 
 	fail = Test2() || fail;
 	fail = TestUTF16() || fail;
-
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	RegisterScriptArray(engine, false);
-	RegisterScriptString(engine);
-	RegisterScriptStringUtils(engine);
-
-	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void set2(string@&in)", asFUNCTION(SetString2), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("const string &getconststringref()", asFUNCTION(GetConstStringRef), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
-
-	// Test index operator for temp strings
-	r = ExecuteString(engine, "assert('abc'[0] == 97)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	bout.buffer = "";
-	r = ExecuteString(engine, "assert(string('abc')[0] == 97)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-	if( bout.buffer != "" )
 	{
-		PRINTF("%s", bout.buffer.c_str());
-		TEST_FAILED;
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		RegisterScriptArray(engine, false);
+		RegisterScriptString(engine);
+		RegisterScriptStringUtils(engine);
+
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void set(string@)", asFUNCTION(SetString), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void set2(string@&in)", asFUNCTION(SetString2), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("const string &getconststringref()", asFUNCTION(GetConstStringRef), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+
+		// Test index operator for temp strings
+		r = ExecuteString(engine, "assert('abc'[0] == 97)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		r = ExecuteString(engine, "assert(string('abc')[0] == 97)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		r = ExecuteString(engine, "string a = 'abc'; assert(a[0] == 97)");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+
+		// Test string copy constructor
+		r = ExecuteString(engine, "string tst(getconststringref()); print(tst);");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		if (printOutput != "test") TEST_FAILED;
+
+
+		printOutput = "";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("TestScriptString", script2, strlen(script2), 0);
+		mod->Build();
+
+		ExecuteString(engine, "testString()", mod);
+
+		if (printOutput != "hello Ida")
+		{
+			TEST_FAILED;
+			PRINTF("%s: Failed to print the correct string\n", "TestScriptString");
+		}
+
+		ExecuteString(engine, "string s = \"test\\\\test\\\\\"");
+
+		// Verify that it is possible to use the string in constructor parameters
+		printOutput = "";
+		ExecuteString(engine, "string a; a = 1; print(a);");
+		if (printOutput != "1") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "string a; a += 1; print(a);");
+		if (printOutput != "1") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "string a = \"a\" + 1; print(a);");
+		if (printOutput != "a1") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "string a = 1 + \"a\"; print(a);");
+		if (printOutput != "1a") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "string a = 1; print(a);");
+		if (printOutput != "1") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "print(\"a\" + 1.2)");
+		if (printOutput != "a1.2") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "print(1.2 + \"a\")");
+		if (printOutput != "1.2a")
+		{
+			PRINTF("Get '%s'\n", printOutput.c_str());
+			TEST_FAILED;
+		}
+
+		// Passing a handle to a function
+		printOutput = "";
+		ExecuteString(engine, "string a; set(@a); print(a);");
+		if (printOutput != "Handle to a string") TEST_FAILED;
+
+		// Implicit conversion to handle
+		printOutput = "";
+		ExecuteString(engine, "string a; set(a); print(a);");
+		if (printOutput != "Handle to a string") TEST_FAILED;
+
+		// Passing a reference to a handle to the function
+		printOutput = "";
+		ExecuteString(engine, "string a; set2(@a); print(a);");
+		if (printOutput != "Handle to a string") TEST_FAILED;
+
+		// Implicit conversion to reference to a handle
+		printOutput = "";
+		ExecuteString(engine, "string a; set2(a); print(a);");
+		if (printOutput != "Handle to a string") TEST_FAILED;
+
+		printOutput = "";
+		ExecuteString(engine, "string a = \" \"; a[0] = 65; print(a);");
+		if (printOutput != "A") TEST_FAILED;
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("TestScriptString", script3, strlen(script3), 0);
+		if (mod->Build() < 0)
+			TEST_FAILED;
+
+		printOutput = "";
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("TestScriptString", script4, strlen(script4), 0);
+		if (mod->Build() < 0)
+			TEST_FAILED;
+		ExecuteString(engine, "test()", mod);
+		if (printOutput != "Heredoc\\x20test\n!") TEST_FAILED;
+
+		CScriptString *a = new CScriptString("a");
+		engine->RegisterGlobalProperty("string a", a);
+		r = ExecuteString(engine, "print(a == 'a' ? 't' : 'f')");
+		if (r != asEXECUTION_FINISHED)
+		{
+			TEST_FAILED;
+			PRINTF("%s: ExecuteString() failed\n", "TestScriptString");
+		}
+		a->Release();
+
+		// test new
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("TestScriptString", script5, strlen(script5), 0);
+		if (mod->Build() < 0) TEST_FAILED;
+		r = ExecuteString(engine, "Main()", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("TestScriptString", script6, strlen(script6), 0);
+		if (mod->Build() < 0) TEST_FAILED;
+		r = ExecuteString(engine, "Main()", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+
+		// Test character literals
+		r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert(r >= 0);
+		printOutput = "";
+		r = ExecuteString(engine, "print(\"\" + 'a')");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		if (printOutput != "97") TEST_FAILED;
+
+		printOutput = "";
+		r = ExecuteString(engine, "print(\"\" + '\\'')");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		if (printOutput != "39") TEST_FAILED;
+
+		printOutput = "";
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
+		r = ExecuteString(engine, "print(\"\" + '\xFF')");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		r = ExecuteString(engine, "print(\"\" + '')");
+		if (r != -1) TEST_FAILED;
+		r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); assert(r >= 0);
+
+		// Test special characters (>127) in non unicode scripts
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
+		r = ExecuteString(engine, "string s = '\xC8'; \n assert(s.length() == 1); \n assert(s[0] == 200);");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
+
+		//-------------------------------------
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script7, strlen(script7), 0);
+		mod->Build();
+		r = ExecuteString(engine, "test()", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+		engine->RegisterObjectType("Http", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		engine->RegisterObjectMethod("Http", "bool get(const string &in,string &out)", asFUNCTION(Get), asCALL_GENERIC);
+
+		r = ExecuteString(engine, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+		r = ExecuteString(engine, "Http h; string a = 'test', b; h.get('string'+a, b); assert(b == 'output');");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+
+		// Test the string utils
+		ExecuteString(engine, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
+		ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
+		ExecuteString(engine, "string str = 'a|b||d'; array<string@>@ arr = split(str, '|'); assert(arr.length() == 4); assert(arr[1] == 'b');");
+		ExecuteString(engine, "array<string@> arr = {'a', 'b', '', 'd'}; assert(join(arr, '|') == 'a|b||d');");
+
+		engine->Release();
 	}
-
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = ExecuteString(engine, "string a = 'abc'; assert(a[0] == 97)");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
-
-
-	// Test string copy constructor
-	r = ExecuteString(engine, "string tst(getconststringref()); print(tst);");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	if( printOutput != "test" ) TEST_FAILED;
-
-
-	printOutput = "";
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("TestScriptString", script2, strlen(script2), 0);
-	mod->Build();
-
-	ExecuteString(engine, "testString()", mod);
-
-	if( printOutput != "hello Ida" )
-	{
-		TEST_FAILED;
-		PRINTF("%s: Failed to print the correct string\n", "TestScriptString");
-	}
-
-	ExecuteString(engine, "string s = \"test\\\\test\\\\\"");
-
-	// Verify that it is possible to use the string in constructor parameters
-	printOutput = "";
-	ExecuteString(engine, "string a; a = 1; print(a);");
-	if( printOutput != "1" ) TEST_FAILED;
-
-	printOutput = "";
-	ExecuteString(engine, "string a; a += 1; print(a);");
-	if( printOutput != "1" ) TEST_FAILED;
-
-	printOutput = "";
-	ExecuteString(engine, "string a = \"a\" + 1; print(a);");
-	if( printOutput != "a1" ) TEST_FAILED;
-
-	printOutput = "";
-	ExecuteString(engine, "string a = 1 + \"a\"; print(a);");
-	if( printOutput != "1a" ) TEST_FAILED;
-
-	printOutput = "";
-	ExecuteString(engine, "string a = 1; print(a);");
-	if( printOutput != "1" ) TEST_FAILED;
-
-	printOutput = "";
-	ExecuteString(engine, "print(\"a\" + 1.2)");
-	if( printOutput != "a1.2") TEST_FAILED;
-
-	printOutput = "";
-	ExecuteString(engine, "print(1.2 + \"a\")");
-	if( printOutput != "1.2a")
-	{
-		PRINTF("Get '%s'\n", printOutput.c_str());
-		TEST_FAILED;
-	}
-
-	// Passing a handle to a function
-	printOutput = "";
-	ExecuteString(engine, "string a; set(@a); print(a);");
-	if( printOutput != "Handle to a string" ) TEST_FAILED;
-
-	// Implicit conversion to handle
-	printOutput = "";
-	ExecuteString(engine, "string a; set(a); print(a);");
-	if( printOutput != "Handle to a string" ) TEST_FAILED;
-
-	// Passing a reference to a handle to the function
-	printOutput = "";
-	ExecuteString(engine, "string a; set2(@a); print(a);");
-	if( printOutput != "Handle to a string" ) TEST_FAILED;
-
-	// Implicit conversion to reference to a handle
-	printOutput = "";
-	ExecuteString(engine, "string a; set2(a); print(a);");
-	if( printOutput != "Handle to a string" ) TEST_FAILED;
-
-    printOutput = "";
-    ExecuteString(engine, "string a = \" \"; a[0] = 65; print(a);");
-    if( printOutput != "A" ) TEST_FAILED;
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("TestScriptString", script3, strlen(script3), 0);
-	if( mod->Build() < 0 )
-		TEST_FAILED;
-
-	printOutput = "";
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("TestScriptString", script4, strlen(script4), 0);
-	if( mod->Build() < 0 )
-		TEST_FAILED;
-	ExecuteString(engine, "test()", mod);
-	if( printOutput != "Heredoc\\x20test\n!" ) TEST_FAILED;
-
-	CScriptString *a = new CScriptString("a");
-	engine->RegisterGlobalProperty("string a", a);
-	r = ExecuteString(engine, "print(a == 'a' ? 't' : 'f')");
-	if( r != asEXECUTION_FINISHED )
-	{
-		TEST_FAILED;
-		PRINTF("%s: ExecuteString() failed\n", "TestScriptString");
-	}
-	a->Release();
-
-	// test new
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("TestScriptString", script5, strlen(script5), 0);
-	if( mod->Build() < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "Main()", mod);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("TestScriptString", script6, strlen(script6), 0);
-	if( mod->Build() < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "Main()", mod);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-
-
-	// Test character literals
-	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert( r >= 0 );
-	printOutput = "";
-	r = ExecuteString(engine, "print(\"\" + 'a')");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	if( printOutput != "97" ) TEST_FAILED;
-
-	printOutput = "";
-	r = ExecuteString(engine, "print(\"\" + '\\'')");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	if( printOutput != "39" ) TEST_FAILED;
-
-	printOutput = "";
-	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
-	r = ExecuteString(engine, "print(\"\" + '\xFF')");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-
-	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
-	bout.buffer = "";
-	r = ExecuteString(engine, "print(\"\" + '')");
-	if( r != -1 ) TEST_FAILED;
-	r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, false); assert( r >= 0 );
-
-	// Test special characters (>127) in non unicode scripts
-	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 0); // ASCII
-	r = ExecuteString(engine, "string s = '\xC8'; \n assert(s.length() == 1); \n assert(s[0] == 200);");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	engine->SetEngineProperty(asEP_SCRIPT_SCANNER, 1); // UTF8
-
-	//-------------------------------------
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("test", script7, strlen(script7), 0);
-	mod->Build();
-	r = ExecuteString(engine, "test()", mod);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-
-	engine->RegisterObjectType("Http", sizeof(int), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-	engine->RegisterObjectMethod("Http","bool get(const string &in,string &out)", asFUNCTION(Get),asCALL_GENERIC);
-
-	r = ExecuteString(engine, "Http h; string str; h.get('stringtest', str); assert(str == 'output');");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-
-	r = ExecuteString(engine, "Http h; string a = 'test', b; h.get('string'+a, b); assert(b == 'output');");
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-
-	// Test the string utils
-	ExecuteString(engine, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
-	ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
-	ExecuteString(engine, "string str = 'a|b||d'; array<string@>@ arr = split(str, '|'); assert(arr.length() == 4); assert(arr[1] == 'b');");
-	ExecuteString(engine, "array<string@> arr = {'a', 'b', '', 'd'}; assert(join(arr, '|') == 'a|b||d');");
-
-	engine->Release();
 
 	//---------------------------------------
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	RegisterScriptString(engine);
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
 
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("test", script8, strlen(script8), 0);
-	mod->Build();
-	r = ExecuteString(engine, "test()", mod);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script8, strlen(script8), 0);
+		mod->Build();
+		r = ExecuteString(engine, "test()", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
-	engine->Release();
+		engine->Release();
+	}
 
 	//---------------------------------------
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	RegisterScriptString(engine);
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
 
-	engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
+		engine->RegisterGlobalFunction("void TestFunc(int, string&)", asFUNCTION(TestFunc), asCALL_GENERIC);
 
-	// CHKREF was placed incorrectly
-	r = ExecuteString(engine, "TestFunc(0, 'test');");
-	if( r != asEXECUTION_FINISHED )
-		TEST_FAILED;
+		// CHKREF was placed incorrectly
+		r = ExecuteString(engine, "TestFunc(0, 'test');");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
 
-	r = ExecuteString(engine, "string @s; TestFunc(0, s);");
-	if( r != asEXECUTION_EXCEPTION )
-		TEST_FAILED;
+		r = ExecuteString(engine, "string @s; TestFunc(0, s);");
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
 
-	engine->Release();
+		engine->Release();
+	}
 
 	//----------------------------------------
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-	RegisterScriptString(engine);
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptString(engine);
 
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("test", script7, strlen(script7), 0);
-	mod->Build();
-	r = ExecuteString(engine, "test()", mod);
-	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", script7, strlen(script7), 0);
+		mod->Build();
+		r = ExecuteString(engine, "test()", mod);
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
-	engine->Release();
+		engine->Release();
+	}
 
 	//------------------------------------------
 	// Test the comparison method
@@ -601,7 +608,7 @@ bool Test()
 			"    \"\"\"); \n"
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 )

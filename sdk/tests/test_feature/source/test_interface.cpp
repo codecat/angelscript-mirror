@@ -5,69 +5,9 @@ namespace TestInterface
 
 static const char * const TESTNAME = "TestInterface";
 
-// Test implementing multiple interfaces
-// Test implicit conversion from class to interface
-// Test calling method of interface handle from script
-// Register interface from application
-static const char *script1 =
-"interface myintf                                \n"
-"{                                               \n"
-"   void test();                                 \n"
-"}                                               \n"
-"class myclass : myintf, intf2, appintf          \n"
-"{                                               \n"
-"   myclass() {this.str = \"test\";}             \n"
-"   void test() {Assert(this.str == \"test\");}  \n"
-"   int func2(const string &in i)                \n"
-"   {                                            \n"
-"      Assert(this.str == i);                    \n"
-"      return 0;                                 \n"
-"   }                                            \n"
-"   string str;                                  \n"
-"}                                               \n"
-"interface intf2                                 \n"
-"{                                               \n"
-"   int func2(const string &in);                 \n"
-"}                                               \n"
-"void test()                                     \n"
-"{                                               \n"
-"   myclass a;                                   \n"
-"   myintf@ b = a;                               \n"
-"   intf2@ c;                                    \n"
-"   @c = a;                                      \n"
-"   a.func2(\"test\");                           \n"
-"   c.func2(\"test\");                           \n"
-"   test(a);                                     \n"
-"}                                               \n"
-"void test(appintf@i)                            \n"
-"{                                               \n"
-"   i.test();                                    \n"
-"}                                               \n";
 
-// Test class that don't implement all functions of the interface.
-// Test instanciating an interface. Shouldn't work.
-// Test that classes don't implement the same interface twice
-// Try copying an interface variable to another. Shouldn't work.
-// Test implicit conversion from class to interface that is not being implemented. Should give compiler error
-// Test implicit conversion from interface to class. Should give compiler error.
-static const char *script2 = 
-"interface intf             \n"
-"{                          \n"
-"    void test();           \n"
-"}                          \n"
-"class myclass : intf, intf \n"
-"{                          \n"
-"}                          \n"
-"interface nointf {}        \n"
-"void test(intf &i)         \n"
-"{                          \n"
-"   intf a;                 \n"
-"   intf@ b, c;             \n"
-"   b = c;                  \n"
-"   myclass d;              \n"
-"   nointf@ e = d;          \n"
-"   myclass@f = b;          \n"
-"}                          \n";
+
+
 
 // TODO: Test explicit conversion from interface to class. Should give null value if not the right class.
 
@@ -108,6 +48,44 @@ bool Test()
 
 	// Test working example
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	// Test implementing multiple interfaces
+	// Test implicit conversion from class to interface
+	// Test calling method of interface handle from script
+	// Register interface from application
+	const char *script1 =
+		"interface myintf                                \n"
+		"{                                               \n"
+		"   void test();                                 \n"
+		"}                                               \n"
+		"class myclass : myintf, intf2, appintf          \n"
+		"{                                               \n"
+		"   myclass() {this.str = \"test\";}             \n"
+		"   void test() {Assert(this.str == \"test\");}  \n"
+		"   int func2(const string &in i)                \n"
+		"   {                                            \n"
+		"      Assert(this.str == i);                    \n"
+		"      return 0;                                 \n"
+		"   }                                            \n"
+		"   string str;                                  \n"
+		"}                                               \n"
+		"interface intf2                                 \n"
+		"{                                               \n"
+		"   int func2(const string &in);                 \n"
+		"}                                               \n"
+		"void test()                                     \n"
+		"{                                               \n"
+		"   myclass a;                                   \n"
+		"   myintf@ b = a;                               \n"
+		"   intf2@ c;                                    \n"
+		"   @c = a;                                      \n"
+		"   a.func2(\"test\");                           \n"
+		"   c.func2(\"test\");                           \n"
+		"   test(a);                                     \n"
+		"}                                               \n"
+		"void test(appintf@i)                            \n"
+		"{                                               \n"
+		"   i.test();                                    \n"
+		"}                                               \n";
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r < 0 ) TEST_FAILED;
@@ -157,6 +135,24 @@ bool Test()
 	// Test implicit conversion from interface to class. Should give compiler error.
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script2 =
+		"interface intf             \n"
+		"{                          \n"
+		"    void test();           \n"
+		"}                          \n"
+		"class myclass : intf, intf \n"
+		"{                          \n"
+		"}                          \n"
+		"interface nointf {}        \n"
+		"void test(intf &i)         \n"
+		"{                          \n"
+		"   intf a;                 \n"
+		"   intf@ b, c;             \n"
+		"   b = c;                  \n"
+		"   myclass d;              \n"
+		"   nointf@ e = d;          \n"
+		"   myclass@f = b;          \n"
+		"}                          \n";
 	mod->AddScriptSection(TESTNAME, script2, strlen(script2), 0);
 	r = mod->Build();
 	if( r >= 0 ) TEST_FAILED;
@@ -554,7 +550,7 @@ bool Test2()
 		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 
-		asIScriptModule *mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("A", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("A", 
 			"shared interface ielement\n"
 			"{\n"

@@ -224,7 +224,7 @@ bool Test()
 	// a new stack block is allocated to call a class method, second that when the 
 	// stack max size has been reached the stack is correctly cleaned up.
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_MAX_STACK_SIZE, 10000);
 
 		const char *script = 
@@ -244,7 +244,7 @@ bool Test()
 			"	testclass @testc = @testclass(); \n"
 			"	return a < b; \n"
 			"} \n";
-		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		int r = mod->Build();
 		if( r < 0 )

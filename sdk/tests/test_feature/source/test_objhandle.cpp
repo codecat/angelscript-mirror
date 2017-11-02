@@ -242,7 +242,7 @@ bool Test()
 		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"interface IItem {\n"
 			"}\n"
@@ -272,7 +272,7 @@ bool Test()
 		}
 		bout.buffer = "";
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "check()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 		{
@@ -399,7 +399,6 @@ bool Test()
 	//---------------------
 	// These tests are designed to make sure ambiguities with handles is avoided
 	{
-		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 

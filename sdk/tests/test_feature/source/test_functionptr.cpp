@@ -45,12 +45,11 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptContext *ctx;
 	CBufferedOutStream bout;
-	const char *script;
 
 	// Test funcdef and shared entitites
 	// http://www.gamedev.net/topic/681021-crash-on-closing-modules-with-shared-and-funcdef/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		asIScriptModule *mod1 = engine->GetModule("test1", asGM_ALWAYS_CREATE);
@@ -78,7 +77,7 @@ bool Test()
 
 	// Test passing function pointer to script function, and returning function pointer from script function
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
@@ -169,7 +168,7 @@ bool Test()
 
 	// Allow a type registered with asOBJ_NOHANDLE to register opCast methods 
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -209,7 +208,7 @@ bool Test()
 	// Test function pointers in initialization lists
 	// http://www.gamedev.net/topic/678333-access-violation-when-passing-function-to-generic-initialization-list/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
@@ -253,7 +252,7 @@ bool Test()
 	// Test returning function pointer from registered class method
 	// http://www.gamedev.net/topic/678317-incorrect-results-from-functions-returning-function-handles/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
@@ -294,7 +293,7 @@ bool Test()
 	// This caused error in asCByteCode::DebugOutput
 	// Problem reported by Phong Ba
 	{
-		asIScriptEngine *engine = asCreateScriptEngine();
+		engine = asCreateScriptEngine();
 
 		asIScriptModule *module = engine->GetModule("testCallback", asGM_ALWAYS_CREATE);
 		asIScriptContext *context = engine->CreateContext();
@@ -1840,7 +1839,7 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 
 		// Test the declaration of new function signatures
-		script = "funcdef void functype();\n"
+		const char *script = "funcdef void functype();\n"
 		// It must be possible to declare variables of the funcdef type
 				 "functype @myFunc = null;\n"
 		// It must be possible to initialize the function pointer directly
@@ -1905,7 +1904,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "CMyObj o; o.test();", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
@@ -2313,7 +2312,7 @@ bool Test()
 
 	// It must be possible calling system functions through pointers too
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		r = engine->RegisterFuncdef("bool fun(bool)");
 
@@ -2334,7 +2333,7 @@ bool Test()
 	// It should be possible to call functions through function pointers returned by an expression
 	// http://www.gamedev.net/topic/627386-bug-with-parsing-of-callable-expressions/
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterScriptArray(engine, false);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);

@@ -128,220 +128,9 @@ namespace TestScriptStruct
 
 static const char * const TESTNAME = "TestScriptStruct";
 
-// Normal structure
-static const char *script1 =
-"class Test                   \n"
-"{                            \n"
-"   int a;                    \n"
-"   bool b;                   \n"
-"};                           \n"
-"void TestStruct()            \n"
-"{                            \n"
-"   Test a;                   \n"
-"   a.a = 3;                  \n"
-"   a.b = false;              \n"
-"   Test b;                   \n"
-"   Test @c = @a;             \n"
-"   a = b;                    \n"
-"   TestStruct2(c);           \n"
-"   Test[] d(1);              \n"
-"   d[0] = a;                 \n"
-"   a = Test();               \n"
-"}                            \n"
-"void TestStruct2(Test a)     \n"
-"{                            \n"
-"}                            \n";
-
-// Do not allow const in properties
-static const char *script2 = 
-"class Test                   \n"
-"{                            \n"
-"   const int a;              \n"
-"};                           \n";
-
-// Test arrays in struct
-static const char *script3 =
-"class Test                   \n"
-"{                            \n"
-"   int[] a;                  \n"
-"};                           \n"
-"class Test2                  \n"
-"{                            \n"
-"   Test2@[][] a;             \n"
-"};                           \n"
-"void TestArrayInStruct()     \n"
-"{                            \n"
-"   Test a;                   \n"
-"   a.a.resize(10);           \n"
-"   Test2 b;                  \n"
-"   b.a.resize(1);            \n"
-"   b.a[0].resize(1);         \n"
-"   // Circular reference     \n"
-"   @b.a[0][0] = b;           \n"
-"}                            \n";
-
-// Only allow primitives (at first)
-static const char *script4 =
-"class B                      \n"
-"{                            \n"
-"   A a;                      \n"
-"   string b;                 \n"
-"   int c;                    \n"
-"};                           \n"
-"void Test()                  \n"
-"{                            \n"
-"  B a, b;                    \n"
-"  b.a.a = 5;                 \n"
-"  b.b = \"Test\";            \n"
-"  b.c = 6;                   \n"
-"  a = b;                     \n"
-"  b.a.a = 6;                 \n"
-"  b.b = \"1\";               \n"
-"  b.c = 2;                   \n"
-"  Assert(a.a.a == 5);        \n"
-"  Assert(a.b == \"Test\");   \n"
-"  Assert(a.c == 6);          \n"
-"}                            \n"
-"class A                      \n"
-"{                            \n"
-"   uint a;                   \n"
-"};                           \n";
-
-// Verify that the struct names cannot conflict with one another
-static const char *script5 = 
-"class A {};                  \n"
-"class A {};                  \n"
-"class B                      \n"
-"{                            \n"
-"  int a;                     \n"
-"  float a;                   \n"
-"};                           \n";
-
-// Verify that a structure cannot have itself as local member (directly or indirectly)
-static const char *script6 = 
-"class A                      \n"
-"{                            \n"
-"  A a;                       \n"
-"};                           \n"
-"class B                      \n"
-"{                            \n"
-"  C c;                       \n"
-"};                           \n"
-"class C                      \n"
-"{                            \n"
-"  B b;                       \n"
-"};                           \n";
-
-static const char *script7 =
-"class A                      \n"
-"{                            \n"
-"  string@ s;                 \n"
-"};                           \n"
-"void TestHandleInStruct()    \n"
-"{                            \n"
-"  A a;                       \n"
-"  Assert(@a.s == null);      \n"
-"  a = a;                     \n"
-"  @a.s = \"Test\";           \n"
-"  Assert(a.s == \"Test\");   \n"
-"}                            \n";
-
-// Verify that circular references are handled by the GC
-static const char *script8 = 
-"class A                      \n"
-"{                            \n"
-"  A@ next;                   \n"
-"};                           \n"
-"class B                      \n"
-"{                            \n"
-"  D@ next;                   \n"
-"};                           \n"
-"class C                      \n"
-"{                            \n"
-"  B b;                       \n"
-"};                           \n"
-"class D                      \n"
-"{                            \n"
-"  C c;                       \n"
-"};                           \n"
-"void TestHandleInStruct2()   \n"
-"{                            \n"
-// Simple circular reference
-"  A a;                       \n"
-"  @a.next = a;               \n"
-// More complex circular reference
-"  D d1;                      \n"
-"  D d2;                      \n"
-"  @d1.c.b.next = d2;         \n"
-"  @d2.c.b.next = d1;         \n"
-"}                            \n";
 
 
-static const char *script9 = 
-"class MyStruct               \n"
-"{                            \n"
-"  uint myBits;               \n"
-"};                           \n"
-"uint MyFunc(uint a)          \n"
-"{                            \n"
-"  return a;                  \n"
-"}                            \n"
-"void MyFunc(string@) {}      \n"
-"void Test()                  \n"
-"{                            \n"
-"  uint val = 0x0;            \n"
-"  MyStruct s;                \n"
-"  s.myBits = 0x5;            \n"
-"  val = MyFunc(s.myBits);    \n"
-"}                            \n";
 
-// Don't allow arrays of the struct type as members (unless it is handles)
-static const char *script10 = 
-"class Test2                  \n"
-"{                            \n"
-"   Test2[] a;                \n"
-"};                           \n";
-
-// Test array constness in members
-static const char *script11 = 
-"class A                      \n"
-"{                            \n"
-"   int[] a;                  \n"
-"};                           \n"
-"void Test()                  \n"
-"{                            \n"
-"   const A a;                \n"
-"   // Should not compile     \n"
-"   a.a[0] = 23;              \n"
-"}                            \n";
-
-// Test order independence with declarations
-static const char *script12 =
-"A Test()                     \n"
-"{                            \n"
-"  A a;                       \n"
-"  return a;                  \n"
-"}                            \n";
-
-static const char *script13 =
-"class A                      \n"
-"{                            \n"
-"  B b;                       \n"
-"};                           \n"
-"class B                      \n"
-"{                            \n"
-"  int val;                   \n"
-"};                           \n";
-
-static const char *script14 =
-"class A                     \n"
-"{                           \n"
-"  B @b;                     \n"
-"}                           \n"
-"class B                     \n"
-"{                           \n"
-"  int val;                  \n"
-"}                           \n";
 
 
 bool Test2();
@@ -375,7 +164,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class Base { \n"
 			" protected void func() {} \n"
@@ -415,7 +204,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class Base { \n"
 			" private void func() {} \n"
@@ -452,7 +241,7 @@ bool Test()
 
 		engine->SetEngineProperty(asEP_PRIVATE_PROP_AS_PROTECTED, true);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class Base { \n"
 			" private void func() {} \n"
@@ -486,7 +275,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"abstract class A {} \n"
 			"A a; \n"    // global variable can't instantiate the abstract class
@@ -1323,6 +1112,29 @@ bool Test()
 
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		// Normal structure
+		const char *script1 =
+			"class Test                   \n"
+			"{                            \n"
+			"   int a;                    \n"
+			"   bool b;                   \n"
+			"};                           \n"
+			"void TestStruct()            \n"
+			"{                            \n"
+			"   Test a;                   \n"
+			"   a.a = 3;                  \n"
+			"   a.b = false;              \n"
+			"   Test b;                   \n"
+			"   Test @c = @a;             \n"
+			"   a = b;                    \n"
+			"   TestStruct2(c);           \n"
+			"   Test[] d(1);              \n"
+			"   d[0] = a;                 \n"
+			"   a = Test();               \n"
+			"}                            \n"
+			"void TestStruct2(Test a)     \n"
+			"{                            \n"
+			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script1);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -1345,11 +1157,38 @@ bool Test()
 
 		bout.buffer = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		// Do not allow const in properties
+		const char *script2 =
+			"class Test                   \n"
+			"{                            \n"
+			"   const int a;              \n"
+			"};                           \n";
 		mod->AddScriptSection(TESTNAME, script2);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		r = mod->Build();
 		if( r >= 0 || bout.buffer != "TestScriptStruct (3, 4) : Error   : Class properties cannot be declared as const\n" ) TEST_FAILED;
 
+
+		// Test arrays in struct
+		const char *script3 =
+			"class Test                   \n"
+			"{                            \n"
+			"   int[] a;                  \n"
+			"};                           \n"
+			"class Test2                  \n"
+			"{                            \n"
+			"   Test2@[][] a;             \n"
+			"};                           \n"
+			"void TestArrayInStruct()     \n"
+			"{                            \n"
+			"   Test a;                   \n"
+			"   a.a.resize(10);           \n"
+			"   Test2 b;                  \n"
+			"   b.a.resize(1);            \n"
+			"   b.a[0].resize(1);         \n"
+			"   // Circular reference     \n"
+			"   @b.a[0][0] = b;           \n"
+			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script3);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = mod->Build();
@@ -1358,12 +1197,50 @@ bool Test()
 		if( r != 0 ) TEST_FAILED;
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+
+		// Only allow primitives (at first)
+		const char *script4 =
+			"class B                      \n"
+			"{                            \n"
+			"   A a;                      \n"
+			"   string b;                 \n"
+			"   int c;                    \n"
+			"};                           \n"
+			"void Test()                  \n"
+			"{                            \n"
+			"  B a, b;                    \n"
+			"  b.a.a = 5;                 \n"
+			"  b.b = \"Test\";            \n"
+			"  b.c = 6;                   \n"
+			"  a = b;                     \n"
+			"  b.a.a = 6;                 \n"
+			"  b.b = \"1\";               \n"
+			"  b.c = 2;                   \n"
+			"  Assert(a.a.a == 5);        \n"
+			"  Assert(a.b == \"Test\");   \n"
+			"  Assert(a.c == 6);          \n"
+			"}                            \n"
+			"class A                      \n"
+			"{                            \n"
+			"   uint a;                   \n"
+			"};                           \n";
 		mod->AddScriptSection(TESTNAME, script4, strlen(script4), 0);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "Test()", mod);
 		if( r != 0 ) TEST_FAILED;
 
+
+
+		// Verify that the struct names cannot conflict with one another
+		const char *script5 =
+			"class A {};                  \n"
+			"class A {};                  \n"
+			"class B                      \n"
+			"{                            \n"
+			"  int a;                     \n"
+			"  float a;                   \n"
+			"};                           \n";
 		bout.buffer = "";
 		mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
@@ -1373,12 +1250,42 @@ bool Test()
 			"TestScriptStruct (6, 9) : Error   : Name conflict. 'a' is an object property.\n" ) TEST_FAILED;
 
 		bout.buffer = "";
+
+
+		// Verify that a structure cannot have itself as local member (directly or indirectly)
+		const char *script6 =
+			"class A                      \n"
+			"{                            \n"
+			"  A a;                       \n"
+			"};                           \n"
+			"class B                      \n"
+			"{                            \n"
+			"  C c;                       \n"
+			"};                           \n"
+			"class C                      \n"
+			"{                            \n"
+			"  B b;                       \n"
+			"};                           \n";
 		mod->AddScriptSection(TESTNAME, script6, strlen(script6), 0);
 		r = mod->Build();
 		if( r >= 0 || bout.buffer !=
 			"TestScriptStruct (1, 7) : Error   : Illegal member type\n"
 			"TestScriptStruct (5, 7) : Error   : Illegal member type\n" ) TEST_FAILED;
 
+
+		const char *script7 =
+			"class A                      \n"
+			"{                            \n"
+			"  string@ s;                 \n"
+			"};                           \n"
+			"void TestHandleInStruct()    \n"
+			"{                            \n"
+			"  A a;                       \n"
+			"  Assert(@a.s == null);      \n"
+			"  a = a;                     \n"
+			"  @a.s = \"Test\";           \n"
+			"  Assert(a.s == \"Test\");   \n"
+			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = mod->Build();
@@ -1395,12 +1302,58 @@ bool Test()
 		}
 		if( ctx ) ctx->Release();
 
+		// Verify that circular references are handled by the GC
+		const char *script8 =
+			"class A                      \n"
+			"{                            \n"
+			"  A@ next;                   \n"
+			"};                           \n"
+			"class B                      \n"
+			"{                            \n"
+			"  D@ next;                   \n"
+			"};                           \n"
+			"class C                      \n"
+			"{                            \n"
+			"  B b;                       \n"
+			"};                           \n"
+			"class D                      \n"
+			"{                            \n"
+			"  C c;                       \n"
+			"};                           \n"
+			"void TestHandleInStruct2()   \n"
+			"{                            \n"
+			// Simple circular reference
+			"  A a;                       \n"
+			"  @a.next = a;               \n"
+			// More complex circular reference
+			"  D d1;                      \n"
+			"  D d2;                      \n"
+			"  @d1.c.b.next = d2;         \n"
+			"  @d2.c.b.next = d1;         \n"
+			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script8, strlen(script8), 0);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 		r = ExecuteString(engine, "TestHandleInStruct2()", mod);
 		if( r != 0 ) TEST_FAILED;
 
+		const char *script9 =
+			"class MyStruct               \n"
+			"{                            \n"
+			"  uint myBits;               \n"
+			"};                           \n"
+			"uint MyFunc(uint a)          \n"
+			"{                            \n"
+			"  return a;                  \n"
+			"}                            \n"
+			"void MyFunc(string@) {}      \n"
+			"void Test()                  \n"
+			"{                            \n"
+			"  uint val = 0x0;            \n"
+			"  MyStruct s;                \n"
+			"  s.myBits = 0x5;            \n"
+			"  val = MyFunc(s.myBits);    \n"
+			"}                            \n";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, script9, strlen(script9), 0);
 		r = mod->Build();
@@ -1410,6 +1363,12 @@ bool Test()
 
 /* TODO: Add this test again when the compiler can ask template if it will create objects
 		bout.buffer = "";
+		// Don't allow arrays of the struct type as members (unless it is handles)
+		const char *script10 =
+		"class Test2                  \n"
+		"{                            \n"
+		"   Test2[] a;                \n"
+		"};                           \n";
 		mod->AddScriptSection(TESTNAME, script10, strlen(script10), 0);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		r = mod->Build();
@@ -1419,13 +1378,42 @@ bool Test()
 
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
+		// Test array constness in members
+		const char *script11 =
+			"class A                      \n"
+			"{                            \n"
+			"   int[] a;                  \n"
+			"};                           \n"
+			"void Test()                  \n"
+			"{                            \n"
+			"   const A a;                \n"
+			"   // Should not compile     \n"
+			"   a.a[0] = 23;              \n"
+			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script11, strlen(script11), 0);
 		r = mod->Build();
 		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "TestScriptStruct (5, 1) : Info    : Compiling void Test()\n"
 						   "TestScriptStruct (9, 11) : Error   : Reference is read-only\n" ) TEST_FAILED;
 
+		// Test order independence with declarations
+		const char *script12 =
+			"A Test()                     \n"
+			"{                            \n"
+			"  A a;                       \n"
+			"  return a;                  \n"
+			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script12, strlen(script12), 0);
+
+		const char *script13 =
+			"class A                      \n"
+			"{                            \n"
+			"  B b;                       \n"
+			"};                           \n"
+			"class B                      \n"
+			"{                            \n"
+			"  int val;                   \n"
+			"};                           \n";
 		mod->AddScriptSection(TESTNAME, script13, strlen(script13), 0);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		r = mod->Build();
@@ -1436,6 +1424,15 @@ bool Test()
 		engine->GarbageCollect();
 		
 		// Make sure it is possible to copy a script class that contains an object handle
+		const char *script14 =
+			"class A                     \n"
+			"{                           \n"
+			"  B @b;                     \n"
+			"}                           \n"
+			"class B                     \n"
+			"{                           \n"
+			"  int val;                  \n"
+			"}                           \n";
 		mod->AddScriptSection(TESTNAME, script14, strlen(script14), 0);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
@@ -1624,7 +1621,7 @@ bool Test()
 			" } \n"
 			"}; \n";
 
-		asIScriptModule *mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 		mod->Build();
 
@@ -1660,7 +1657,7 @@ bool Test()
 			"  CBar d(CBar()); \n" // not ok
 			"}; \n";
 
-		asIScriptModule *mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("t", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
 
 		bout.buffer = "";

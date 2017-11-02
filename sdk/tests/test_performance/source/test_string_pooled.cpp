@@ -21,8 +21,8 @@ public:
 	CScriptString2(const std::string &s);
 	~CScriptString2();
 
-	void AddRef();
-	void Release();
+	void AddRef() const;
+	void Release() const;
 
 	CScriptString2 &operator=(const CScriptString2 &other);
 	CScriptString2 &operator+=(const CScriptString2 &other);
@@ -31,7 +31,7 @@ public:
 	std::string buffer;
 
 protected:
-	int refCount;
+	mutable int refCount;
 };
 
 static vector<CScriptString2*> pool;
@@ -59,17 +59,17 @@ CScriptString2::~CScriptString2()
 	assert( refCount == 0 );
 }
 
-void CScriptString2::AddRef()
+void CScriptString2::AddRef() const
 {
 	refCount++;
 }
 
-void CScriptString2::Release()
+void CScriptString2::Release() const
 {
 	if( --refCount == 0 )
 	{
 		// Move this to the pool
-		pool.push_back(this);
+		pool.push_back(const_cast<CScriptString2*>(this));
 	}
 }
 

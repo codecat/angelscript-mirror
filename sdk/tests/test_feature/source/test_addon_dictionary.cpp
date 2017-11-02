@@ -7,67 +7,6 @@
 namespace Test_Addon_Dictionary
 {
 
-const char *script =
-"void Test()                       \n"
-"{                                 \n"
-"  dictionary dict;                \n"
-// Test integer with the dictionary
-"  dict.set('a', 42);            \n"
-"  assert(dict.exists('a'));     \n"
-"  uint u = 0;                     \n"
-"  dict.get('a', u);             \n"
-"  assert(u == 42);                \n"
-"  dict.delete('a');             \n"
-"  assert(!dict.exists('a'));    \n"
-// Test array by handle
-"  array<string> a = {'t'};               \n"
-"  dict.set('a', @a);            \n"
-"  array<string> @b;                      \n"
-"  dict.get('a', @b);            \n"
-"  assert(b == a);             \n"
-// Test string by value
-"  dict.set('a', 't');             \n"
-"  string c;                       \n"
-"  dict.get('a', c);             \n"
-"  assert(c == 't');             \n"
-// Test int8 with the dictionary
-"  int8 q = 41;                    \n"
-"  dict.set('b', q);             \n"
-"  dict.get('b', q);             \n"
-"  assert(q == 41);                \n"
-// Test float with the dictionary
-"  float f = 300;                  \n"
-"  dict.set('c', f);             \n"
-"  dict.get('c', f);             \n"
-"  assert(f == 300);               \n"
-// Test automatic conversion between int and float in the dictionary
-"  int i;                          \n"
-"  dict.get('c', i);             \n"
-"  assert(i == 300);               \n"
-"  dict.get('b', f);             \n"
-"  assert(f == 41);                \n"
-// Test booleans with the variable type
-"  bool bl;                        \n"
-"  dict.set('true', true);       \n"
-"  dict.set('false', false);     \n"
-"  bl = false;                     \n"
-"  dict.get('true', bl);         \n"
-"  assert( bl == true );           \n"
-"  dict.get('false', bl);        \n"
-"  assert( bl == false );          \n"
-// Test circular reference with itself
-"  dict.set('self', @dict);      \n"
-// Test the keys
-"  array<string> @keys = dict.getKeys(); \n"
-"  assert( keys.find('a') != -1 ); \n"
-"  assert( keys.length == 6 ); \n"
-"}                                 \n";
-
-// Test circular reference including a script class and the dictionary
-const char *script2 = 
-"class C { dictionary dict; }                \n"
-"void f() { C c; c.dict.set(\"self\", @c); } \n"; 
-
 void Print(const std::string &i)
 {
 	PRINTF("%s", i.c_str());
@@ -97,7 +36,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class foo \n"
 			"{ \n"
@@ -136,7 +75,7 @@ bool Test()
 		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if (r != asEXECUTION_FINISHED)
 		{
@@ -160,7 +99,7 @@ bool Test()
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void main() \n"
 			"{ \n"
@@ -181,11 +120,11 @@ bool Test()
 			"    assert( bool(dict['handle']) == false ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->ShutDownAndRelease();
@@ -203,7 +142,7 @@ bool Test()
 		RegisterScriptHandle(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class T {} \n"
 			"void main() \n"
@@ -216,20 +155,20 @@ bool Test()
 			"    assert( obj is t ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
-		
-		asIScriptContext *ctx = engine->CreateContext();
+
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 		{
-			if( r == asEXECUTION_EXCEPTION )
+			if (r == asEXECUTION_EXCEPTION)
 				PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
- 		ctx->Release();
+		ctx->Release();
 
-		if( bout.buffer != "" )
+		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -253,7 +192,7 @@ bool Test()
 		RegisterScriptDictionary(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"int count = 0; \n"
 			"funcdef void CB(); \n"
@@ -272,20 +211,20 @@ bool Test()
 			"    assert( count == 1 ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
-		
-		asIScriptContext *ctx = engine->CreateContext();
+
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 		{
-			if( r == asEXECUTION_EXCEPTION )
+			if (r == asEXECUTION_EXCEPTION)
 				PRINTF("%s\n", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
 		ctx->Release();
 
-		if( bout.buffer != "" )
+		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -310,10 +249,10 @@ bool Test()
 
 		// The last comma will not be ignored since the dictValue expects exactly two values
 		r = ExecuteString(engine, "dictionary dict = {{'a',}};");
-		if( r >= 0 )
+		if (r >= 0)
 			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (1, 25) : Error   : Empty list element is not allowed\n" )
+		if (bout.buffer != "ExecuteString (1, 25) : Error   : Empty list element is not allowed\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -355,11 +294,11 @@ bool Test()
 			"  assert( string(d1['2']) == '2' );\n"
 			"}\n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "foo()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->Release();
@@ -396,11 +335,11 @@ bool Test()
 		//	"  assert( found4 ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "func()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->Release();
@@ -418,7 +357,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		r = ExecuteString(engine, "dictionary dict = {{'test', null}};");
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->Release();
@@ -436,7 +375,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		engine->RegisterEnum("MyAppDefinedEnum");
 
-		const char *script = 
+		const char *script =
 			"enum foo { a, b, c }; \n"
 			"void main() \n"
 			"{ \n"
@@ -488,14 +427,14 @@ bool Test()
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 		{
-			if( r == asEXECUTION_EXCEPTION )
+			if (r == asEXECUTION_EXCEPTION)
 				PRINTF("%s", GetExceptionInfo(ctx, true).c_str());
 			TEST_FAILED;
 		}
@@ -514,7 +453,7 @@ bool Test()
 		RegisterScriptDictionary(engine);
 
 		r = ExecuteString(engine, "dictionary a = {};");
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->Release();
@@ -522,9 +461,9 @@ bool Test()
 
 	// Test the dictionaryValue
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-		
+
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, false);
 		RegisterScriptDictionary(engine);
@@ -542,11 +481,11 @@ bool Test()
 			"  assert( string(dict['hello']) == 'hello' ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "func()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		// Exception if attempt to add entry on const dictionary
@@ -556,7 +495,7 @@ bool Test()
 			                      "d['hello']; \n", 0, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
-		if( std::string(ctx->GetExceptionString()) != "Invalid access to non-existing value" )
+		if (std::string(ctx->GetExceptionString()) != "Invalid access to non-existing value")
 		{
 			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
@@ -568,7 +507,7 @@ bool Test()
 
 	// Test the STL iterator
 	{
-		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, false);
 		RegisterScriptDictionary(engine); // Must register the dictionary so the cache is built
@@ -576,12 +515,12 @@ bool Test()
 		dict->Set("a", asINT64(1));
 		dict->Set("b", asINT64(2));
 
-		std::string keys; 
+		std::string keys;
 		asINT64 values = 0;
 #if AS_CAN_USE_CPP11
-		for( auto it : *dict )
+		for (auto it : *dict)
 #else
-		for( CScriptDictionary::CIterator it = dict->begin(); it != dict->end(); it++ )
+		for (CScriptDictionary::CIterator it = dict->begin(); it != dict->end(); it++)
 #endif
 		{
 			keys += it.GetKey();
@@ -627,14 +566,14 @@ bool Test()
 			"} \n"
 			"void func(dictionary @dict) {} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
-		asIScriptContext *ctx = engine->CreateContext();
+		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
-		if( r == asEXECUTION_EXCEPTION )
+		if (r == asEXECUTION_EXCEPTION)
 			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 
 		ctx->Release();
@@ -651,19 +590,74 @@ bool Test()
 		RegisterScriptArray(engine, true);
 		RegisterScriptDictionary(engine);
 
-		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script =
+			"void Test()                       \n"
+			"{                                 \n"
+			"  dictionary dict;                \n"
+			// Test integer with the dictionary
+			"  dict.set('a', 42);            \n"
+			"  assert(dict.exists('a'));     \n"
+			"  uint u = 0;                     \n"
+			"  dict.get('a', u);             \n"
+			"  assert(u == 42);                \n"
+			"  dict.delete('a');             \n"
+			"  assert(!dict.exists('a'));    \n"
+			// Test array by handle
+			"  array<string> a = {'t'};               \n"
+			"  dict.set('a', @a);            \n"
+			"  array<string> @b;                      \n"
+			"  dict.get('a', @b);            \n"
+			"  assert(b == a);             \n"
+			// Test string by value
+			"  dict.set('a', 't');             \n"
+			"  string c;                       \n"
+			"  dict.get('a', c);             \n"
+			"  assert(c == 't');             \n"
+			// Test int8 with the dictionary
+			"  int8 q = 41;                    \n"
+			"  dict.set('b', q);             \n"
+			"  dict.get('b', q);             \n"
+			"  assert(q == 41);                \n"
+			// Test float with the dictionary
+			"  float f = 300;                  \n"
+			"  dict.set('c', f);             \n"
+			"  dict.get('c', f);             \n"
+			"  assert(f == 300);               \n"
+			// Test automatic conversion between int and float in the dictionary
+			"  int i;                          \n"
+			"  dict.get('c', i);             \n"
+			"  assert(i == 300);               \n"
+			"  dict.get('b', f);             \n"
+			"  assert(f == 41);                \n"
+			// Test booleans with the variable type
+			"  bool bl;                        \n"
+			"  dict.set('true', true);       \n"
+			"  dict.set('false', false);     \n"
+			"  bl = false;                     \n"
+			"  dict.get('true', bl);         \n"
+			"  assert( bl == true );           \n"
+			"  dict.get('false', bl);        \n"
+			"  assert( bl == false );          \n"
+			// Test circular reference with itself
+			"  dict.set('self', @dict);      \n"
+			// Test the keys
+			"  array<string> @keys = dict.getKeys(); \n"
+			"  assert( keys.find('a') != -1 ); \n"
+			"  assert( keys.length == 6 ); \n"
+			"}                                 \n";
 		mod->AddScriptSection("script", script, strlen(script));
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "Test()", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 		{
-			if( r == asEXECUTION_EXCEPTION )
+			if (r == asEXECUTION_EXCEPTION)
 				PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
@@ -674,33 +668,36 @@ bool Test()
 		engine->GarbageCollect();
 		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-		if( gcCurrentSize != 0 || gcTotalDestroyed != 1 || gcTotalDetected != 1 )
+		if (gcCurrentSize != 0 || gcTotalDestroyed != 1 || gcTotalDetected != 1)
 			TEST_FAILED;
 
 		// Test circular references including a script class and the dictionary
+		const char *script2 =
+			"class C { dictionary dict; }                \n"
+			"void f() { C c; c.dict.set(\"self\", @c); } \n";
 		mod->AddScriptSection("script", script2, strlen(script2));
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "f()", mod);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
 		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 		engine->GarbageCollect();
 		engine->GetGCStatistics(&gcCurrentSize, &gcTotalDestroyed, &gcTotalDetected);
 
-		if( gcCurrentSize != 0 || gcTotalDestroyed != 3 || gcTotalDetected != 3  )
+		if (gcCurrentSize != 0 || gcTotalDestroyed != 3 || gcTotalDetected != 3)
 			TEST_FAILED;
 
 		// Test invalid ref cast together with the variable argument
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		r = ExecuteString(engine, "dictionary d; d.set('hello', cast<int>(4));");
-		if( r >= 0 ) 
+		if (r >= 0)
 			TEST_FAILED;
-		if( bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n" )
+		if (bout.buffer != "ExecuteString (1, 35) : Error   : Illegal target type for reference cast\n")
 		{
 			TEST_FAILED;
 			PRINTF("%s", bout.buffer.c_str());
@@ -719,10 +716,10 @@ bool Test()
 		RegisterScriptArray(engine, true);
 		RegisterScriptDictionary(engine);
 
-		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", 
+		mod->AddScriptSection("script",
 			"void main() { \n"
 			"  dictionary dict = {{'t', true}, {'a', 42}, {'b', 'test'}, {'c', }}; \n"
 			"  assert( dict.getSize() == 4 ); \n"
@@ -734,24 +731,24 @@ bool Test()
 			"  assert( b == 'test' ); \n"
 			"} \n");
 		r = mod->Build();
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		CBytecodeStream stream("test");
 		r = mod->SaveByteCode(&stream);
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
-		if( r < 0 )
+		if (r < 0)
 			TEST_FAILED;
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
-		if( r != asEXECUTION_FINISHED )
+		if (r != asEXECUTION_FINISHED)
 		{
-			if( r == asEXECUTION_EXCEPTION )
+			if (r == asEXECUTION_EXCEPTION)
 				PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
@@ -762,33 +759,90 @@ bool Test()
 
 	//-------------------------
 	// Test the generic interface as well
-	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
-	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-
-	RegisterStdString(engine);
-	RegisterScriptArray(engine, true);
-	RegisterScriptDictionary_Generic(engine);
-
-	r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-
-	mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script, strlen(script));
-	r = mod->Build();
-	if( r < 0 )
-		TEST_FAILED;
-
-	ctx = engine->CreateContext();
-	r = ExecuteString(engine, "Test()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
 	{
-		if( r == asEXECUTION_EXCEPTION )
-			PRINTF("%s", GetExceptionInfo(ctx).c_str());
-		TEST_FAILED;
-	}
-	ctx->Release();
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-	engine->Release();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary_Generic(engine);
+
+		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script =
+			"void Test()                       \n"
+			"{                                 \n"
+			"  dictionary dict;                \n"
+			// Test integer with the dictionary
+			"  dict.set('a', 42);            \n"
+			"  assert(dict.exists('a'));     \n"
+			"  uint u = 0;                     \n"
+			"  dict.get('a', u);             \n"
+			"  assert(u == 42);                \n"
+			"  dict.delete('a');             \n"
+			"  assert(!dict.exists('a'));    \n"
+			// Test array by handle
+			"  array<string> a = {'t'};               \n"
+			"  dict.set('a', @a);            \n"
+			"  array<string> @b;                      \n"
+			"  dict.get('a', @b);            \n"
+			"  assert(b == a);             \n"
+			// Test string by value
+			"  dict.set('a', 't');             \n"
+			"  string c;                       \n"
+			"  dict.get('a', c);             \n"
+			"  assert(c == 't');             \n"
+			// Test int8 with the dictionary
+			"  int8 q = 41;                    \n"
+			"  dict.set('b', q);             \n"
+			"  dict.get('b', q);             \n"
+			"  assert(q == 41);                \n"
+			// Test float with the dictionary
+			"  float f = 300;                  \n"
+			"  dict.set('c', f);             \n"
+			"  dict.get('c', f);             \n"
+			"  assert(f == 300);               \n"
+			// Test automatic conversion between int and float in the dictionary
+			"  int i;                          \n"
+			"  dict.get('c', i);             \n"
+			"  assert(i == 300);               \n"
+			"  dict.get('b', f);             \n"
+			"  assert(f == 41);                \n"
+			// Test booleans with the variable type
+			"  bool bl;                        \n"
+			"  dict.set('true', true);       \n"
+			"  dict.set('false', false);     \n"
+			"  bl = false;                     \n"
+			"  dict.get('true', bl);         \n"
+			"  assert( bl == true );           \n"
+			"  dict.get('false', bl);        \n"
+			"  assert( bl == false );          \n"
+			// Test circular reference with itself
+			"  dict.set('self', @dict);      \n"
+			// Test the keys
+			"  array<string> @keys = dict.getKeys(); \n"
+			"  assert( keys.find('a') != -1 ); \n"
+			"  assert( keys.length == 6 ); \n"
+			"}                                 \n";
+		mod->AddScriptSection("script", script, strlen(script));
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Test()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->Release();
+	}
 
 	//------------------------
 	{

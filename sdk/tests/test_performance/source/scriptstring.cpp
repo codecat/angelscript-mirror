@@ -109,6 +109,12 @@ static void AddAssignString_Generic(asIScriptGeneric *gen)
 // string opCmp string
 //-----------------
 
+// This is necessary to resolve ambiguity on GCC 4.7
+static bool StringEquals(const std::string& lhs, const std::string& rhs)
+{
+    return lhs == rhs;
+}
+
 static int StringCmp(const string &a, const string &b)
 {
 	int cmp = 0;
@@ -117,7 +123,7 @@ static int StringCmp(const string &a, const string &b)
 	return cmp;
 }
 
-static void StringCmp_Generic(asIScriptGeneric * gen) 
+static void StringCmp_Generic(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
   string * b = static_cast<string *>(gen->GetArgAddress(0));
@@ -629,59 +635,11 @@ static void StringCopyFactory_Generic(asIScriptGeneric *gen)
 	*(CScriptString**)gen->GetAddressOfReturnLocation() = StringCopyFactory(*other);
 }
 
-static void StringEqual_Generic(asIScriptGeneric *gen)
-{
-	string *a = (string*)gen->GetArgAddress(0);
-	string *b = (string*)gen->GetArgAddress(1);
-	bool r = *a == *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
-}
-
-static void StringEquals_Generic(asIScriptGeneric * gen) 
+static void StringEquals_Generic(asIScriptGeneric * gen)
 {
 	string * a = static_cast<string *>(gen->GetObject());
 	string * b = static_cast<string *>(gen->GetArgAddress(0));
 	*(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
-}
-
-static void StringNotEqual_Generic(asIScriptGeneric *gen)
-{
-	string *a = (string*)gen->GetArgAddress(0);
-	string *b = (string*)gen->GetArgAddress(1);
-	bool r = *a != *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
-}
-
-static void StringLesserOrEqual_Generic(asIScriptGeneric *gen)
-{
-	string *a = (string*)gen->GetArgAddress(0);
-	string *b = (string*)gen->GetArgAddress(1);
-	bool r = *a <= *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
-}
-
-static void StringGreaterOrEqual_Generic(asIScriptGeneric *gen)
-{
-	string *a = (string*)gen->GetArgAddress(0);
-	string *b = (string*)gen->GetArgAddress(1);
-	bool r = *a >= *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
-}
-
-static void StringLesser_Generic(asIScriptGeneric *gen)
-{
-	string *a = (string*)gen->GetArgAddress(0);
-	string *b = (string*)gen->GetArgAddress(1);
-	bool r = *a < *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
-}
-
-static void StringGreater_Generic(asIScriptGeneric *gen)
-{
-	string *a = (string*)gen->GetArgAddress(0);
-	string *b = (string*)gen->GetArgAddress(1);
-	bool r = *a > *b;
-    *(bool*)gen->GetAddressOfReturnLocation() = r;
 }
 
 static void StringLength_Generic(asIScriptGeneric *gen)
@@ -723,7 +681,7 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	// otherwise the library will not allow the use of object handles for this type
 	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(operator ==, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(StringEquals, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmp), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string@ opAdd(const string &in) const", asFUNCTIONPR(operator +, (const CScriptString &, const CScriptString &), CScriptString*), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
@@ -742,12 +700,6 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 		r = engine->RegisterObjectMethod("string", "uint64 length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
 	}
-
-    // TODO: Add factory  string(const string &in str, int repeatCount)
-
-	// TODO: Add explicit type conversion via constructor and value cast
-
-	// TODO: Add parseInt and parseDouble. Two versions, one without parameter, one with an outparm that returns the number of characters parsed.
 
 	// Automatic conversion from values
 	r = engine->RegisterObjectMethod("string", "string &opAssign(double)", asFUNCTION(AssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );

@@ -238,7 +238,7 @@ int allTests()
 	if( Test_Addon_ScriptArray::Test()   ) goto failed; else PRINTF("-- Test_Addon_ScriptArray passed\n");
 	if( Test_Addon_Dictionary::Test()    ) goto failed; else PRINTF("-- Test_Addon_Dictionary passed\n");
 	if (Test_Addon_DateTime::Test()      ) goto failed; else PRINTF("-- Test_Addon_DateTime passed\n");
-	if (Test_Addon_StdString::Test()) goto failed; else PRINTF("-- Test_Addon_StdString passed\n");
+	if (Test_Addon_StdString::Test()     ) goto failed; else PRINTF("-- Test_Addon_StdString passed\n");
 
 	if( TestPropIntegerDivision::Test() ) goto failed; else PRINTF("-- TestPropIntegerDivision passed\n");
 	if( TestThisCallMethod_ConfigErrors::Test() ) goto failed; else PRINTF("-- TestThisCallMethod_ConfigErrors passed\n");

@@ -123,17 +123,17 @@ CObject *TestReturnObjectRef()
 	return &obj;
 }
 
-void TestSysArgVal(CObject obj)
+void TestSysArgVal(CObject _obj)
 {
-	assert(obj.val == 12);
-	obj.val = 0;
+	assert(_obj.val == 12);
+	_obj.val = 0;
 }
 
-void TestSysArgRef(CObject &obj)
+void TestSysArgRef(CObject &_obj)
 {
 // We're not receiving the true object, only a reference to a place holder for the output value
-	assert(obj.val == 0);
-	obj.val = 2;
+	assert(_obj.val == 0);
+	_obj.val = 2;
 }
 
 bool Test2();

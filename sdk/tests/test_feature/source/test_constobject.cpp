@@ -5,33 +5,10 @@ namespace TestConstObject
 
 static const char * const TESTNAME = "TestConstObject";
 
-static const char *script2 = 
-"const string URL_SITE = \"http://www.sharkbaitgames.com\";                    \n"
-"const string URL_GET_HISCORES = URL_SITE + \"/get_hiscores.php\";             \n"
-"const string URL_CAN_SUBMIT_HISCORE = URL_SITE + \"/can_submit_hiscore.php\"; \n"
-"const string URL_SUBMIT_HISCORE = URL_SITE + \"/submit_hiscore.php\";         \n";
 
-static const char *script = 
-"void Test(obj@ o) { }";
 
-static const char *script3 =
-"class CTest                           \n"
-"{                                     \n"
-"	int m_Int;                         \n"
-"                                      \n"
-"	void SetInt(int iInt)              \n"
-"	{                                  \n"
-"		m_Int = iInt;                  \n"
-"	}                                  \n"
-"};                                    \n"
-"void func()                           \n"
-"{                                     \n"
-"	const CTest Test;                  \n"
-"	const CTest@ TestHandle = @Test;   \n"
-"                                      \n"
-"	TestHandle.SetInt(1);              \n"    
-"	Test.SetInt(1);                    \n"          
-"}                                     \n";
+
+
 
 class CObj
 {
@@ -53,7 +30,7 @@ public:
 	void AddRef() {refCount++;}
 	void Release() {if( --refCount == 0 ) delete this;}
 
-	void SetVal(int val) {this->val = val;}
+	void SetVal(int _val) {this->val = _val;}
 	int GetVal() const {return val;}
 
 	int &operator[](int) {return val;}
@@ -148,6 +125,11 @@ bool Test()
 
 
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script2 =
+			"const string URL_SITE = \"http://www.sharkbaitgames.com\";                    \n"
+			"const string URL_GET_HISCORES = URL_SITE + \"/get_hiscores.php\";             \n"
+			"const string URL_CAN_SUBMIT_HISCORE = URL_SITE + \"/can_submit_hiscore.php\"; \n"
+			"const string URL_SUBMIT_HISCORE = URL_SITE + \"/submit_hiscore.php\";         \n";
 		mod->AddScriptSection("script1", script2, strlen(script2), 0);
 		r = mod->Build();
 		if (r < 0) TEST_FAILED;
@@ -194,7 +176,8 @@ bool Test()
 			TEST_FAILED;
 
 		// Do not allow the script to pass a const obj@ to a parameter that is not a const obj@
-		mod->AddScriptSection("script", script, strlen(script));
+		const char *script =
+			"void Test(obj@ o) { }";		mod->AddScriptSection("script", script, strlen(script));
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		mod->Build();
 
@@ -268,6 +251,24 @@ bool Test()
 		// Handle to const must not allow call to non-const methods
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		const char *script3 =
+			"class CTest                           \n"
+			"{                                     \n"
+			"	int m_Int;                         \n"
+			"                                      \n"
+			"	void SetInt(int iInt)              \n"
+			"	{                                  \n"
+			"		m_Int = iInt;                  \n"
+			"	}                                  \n"
+			"};                                    \n"
+			"void func()                           \n"
+			"{                                     \n"
+			"	const CTest Test;                  \n"
+			"	const CTest@ TestHandle = @Test;   \n"
+			"                                      \n"
+			"	TestHandle.SetInt(1);              \n"
+			"	Test.SetInt(1);                    \n"
+			"}                                     \n";
 		mod->AddScriptSection("script", script3, strlen(script3));
 		r = mod->Build();
 		if (r >= 0) TEST_FAILED;

@@ -6,32 +6,6 @@ namespace TestUnsafeRef
 
 static const char * const TESTNAME = "TestUnsafeRef";
 
-static const char *script1 =
-"void Test()                            \n"
-"{                                      \n"
-"   int[] arr = {0};                    \n"
-"   TestRefInt(arr[0]);                 \n"
-"   Assert(arr[0] == 23);               \n"
-"   int a = 0;                          \n"
-"   TestRefInt(a);                      \n"
-"   Assert(a == 23);                    \n"
-"   string[] sa = {\"\"};               \n"
-"   TestRefString(sa[0]);               \n"
-"   Assert(sa[0] == \"ref\");           \n"
-"   string s = \"\";                    \n"
-"   TestRefString(s);                   \n"
-"   Assert(s == \"ref\");               \n"
-"}                                      \n"
-"void TestRefInt(int &ref)              \n"
-"{                                      \n"
-"   ref = 23;                           \n"
-"}                                      \n"
-"void TestRefString(string &ref)        \n"
-"{                                      \n"
-"   ref = \"ref\";                      \n"
-"}                                      \n";
-
-
 struct Str
 {
 public:
@@ -65,6 +39,30 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script1 =
+		"void Test()                            \n"
+		"{                                      \n"
+		"   int[] arr = {0};                    \n"
+		"   TestRefInt(arr[0]);                 \n"
+		"   Assert(arr[0] == 23);               \n"
+		"   int a = 0;                          \n"
+		"   TestRefInt(a);                      \n"
+		"   Assert(a == 23);                    \n"
+		"   string[] sa = {\"\"};               \n"
+		"   TestRefString(sa[0]);               \n"
+		"   Assert(sa[0] == \"ref\");           \n"
+		"   string s = \"\";                    \n"
+		"   TestRefString(s);                   \n"
+		"   Assert(s == \"ref\");               \n"
+		"}                                      \n"
+		"void TestRefInt(int &ref)              \n"
+		"{                                      \n"
+		"   ref = 23;                           \n"
+		"}                                      \n"
+		"void TestRefString(string &ref)        \n"
+		"{                                      \n"
+		"   ref = \"ref\";                      \n"
+		"}                                      \n";
 	mod->AddScriptSection(TESTNAME, script1);
 	r = mod->Build();
 	if( r < 0 )

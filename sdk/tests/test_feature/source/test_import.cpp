@@ -237,12 +237,11 @@ bool Test()
 
 	// Test import with global property accessors
 	{
-		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
 		bout.buffer = "";
-		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("t", 
 			"interface ITest {}; \n"
 			"import ITest@ get_globalAccessor() from 'any_module'; \n"
@@ -267,13 +266,12 @@ bool Test()
 	// Test import with array
 	// http://www.gamedev.net/topic/616554-bindallimportedfunctions-fail/page__gopid__4892532#entry4892532
 	{
-		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
 		bout.buffer = "";
-		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("t", 
 			"shared interface test1\n"
 			"{\n"
@@ -324,13 +322,12 @@ bool Test()
 	// Test import with default arguments
 	// http://www.gamedev.net/topic/634184-crash-on-import-default-argument/
 	{
-		CBufferedOutStream bout;
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		RegisterScriptArray(engine, true);
 
 		bout.buffer = "";
-		asIScriptModule *mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("1", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("t", 
 			"import void crashMyAS( int x = 0 ) from 'other_module';\n");
 		r = mod->Build();
