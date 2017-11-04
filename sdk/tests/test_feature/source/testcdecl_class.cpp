@@ -111,10 +111,10 @@ bool TestCDecl_Class()
 
 	if( sizeof(Class3) != 12 || sizeof(asvec3_t) != 12 )
 	{
-		PRINTF("sizeof(Class1) == %d\n", sizeof(Class1));
-		PRINTF("sizeof(Class2) == %d\n", sizeof(Class2));
-		PRINTF("sizeof(Class3) == %d\n", sizeof(Class3));
-		PRINTF("sizeof(asvec3_t) == %d\n", sizeof(asvec3_t));
+		PRINTF("sizeof(Class1) == %d\n", (int)sizeof(Class1));
+		PRINTF("sizeof(Class2) == %d\n", (int)sizeof(Class2));
+		PRINTF("sizeof(Class3) == %d\n", (int)sizeof(Class3));
+		PRINTF("sizeof(asvec3_t) == %d\n", (int)sizeof(asvec3_t));
 	}
 
 	// On 64bit Linux these types would be returned in RAX:RDX, and must be informed with asOBJ_APP_CLASS_ALLINTS

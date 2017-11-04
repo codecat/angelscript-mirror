@@ -45,72 +45,6 @@ static void SetString2(asIScriptGeneric *gen)
 	}
 }
 
-// This script tests that variables are created and destroyed in the correct order
-static const char *script2 =
-"void testString()                         \n"
-"{                                         \n"
-"  print(getString(\"I\" \"d\" \"a\"));    \n"
-"}                                         \n"
-"string getString(string &in str)          \n"
-"{                                         \n"
-"  return \"hello \" + str;                \n"
-"}                                         \n";
-
-static const char *script3 =
-"string str = 1;                \n"
-"const string str2 = \"test\";  \n"
-"void test()                    \n"
-"{                              \n"
-"   string s = str2;            \n"
-"}                              \n";
-
-static const char *script4 =
-"void test()                    \n"
-"{                              \n"
-"   string s = \"\"\"           \n"
-"Heredoc\\x20test\n"
-"            \"\"\" \"\\x21\";  \n"
-"   print(s);                   \n"
-"}                              \n";
-
-static const char *script5 =
-"void test( string @ s )         \n"
-"{                               \n"
-"   string t = s;                \n"
-"}                               \n"
-"void Main()                     \n"
-"{                               \n"
-"   test(\"this is a test\");    \n"
-"}                               \n";
-
-static const char *script6 =
-"void Main()                     \n"
-"{                               \n"
-"   test(\"this is a test\");    \n"
-"}                               \n"
-"void test( string @ s )         \n"
-"{                               \n"
-"   string t = s;                \n"
-"}                               \n";
-
-static const char *script7 =
-"void test()                    \n"
-"{                              \n"
-"   Func(\"test\");             \n"
-"}                              \n"
-"void Func(const string &in str)\n"
-"{                              \n"
-"}                              \n";
-
-static const char *script8 =
-"void test()                    \n"
-"{                              \n"
-"   Func('test');               \n"
-"}                              \n"
-"string Func(string & str)      \n"
-"{                              \n"
-"  return str;                  \n"
-"}                              \n";
 
 
 //bool Get(int * /*obj*/, const CScriptString &szURL, CScriptString &szHTML)
@@ -268,6 +202,7 @@ bool Test()
 
 	fail = Test2() || fail;
 	fail = TestUTF16() || fail;
+
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		RegisterScriptArray(engine, false);
@@ -311,8 +246,18 @@ bool Test()
 		if (printOutput != "test") TEST_FAILED;
 
 
+		// This script tests that variables are created and destroyed in the correct order
 		printOutput = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script2 =
+			"void testString()                         \n"
+			"{                                         \n"
+			"  print(getString(\"I\" \"d\" \"a\"));    \n"
+			"}                                         \n"
+			"string getString(string &in str)          \n"
+			"{                                         \n"
+			"  return \"hello \" + str;                \n"
+			"}                                         \n";
 		mod->AddScriptSection("TestScriptString", script2, strlen(script2), 0);
 		mod->Build();
 
@@ -384,12 +329,27 @@ bool Test()
 		if (printOutput != "A") TEST_FAILED;
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script3 =
+			"string str = 1;                \n"
+			"const string str2 = \"test\";  \n"
+			"void test()                    \n"
+			"{                              \n"
+			"   string s = str2;            \n"
+			"}                              \n";
 		mod->AddScriptSection("TestScriptString", script3, strlen(script3), 0);
 		if (mod->Build() < 0)
 			TEST_FAILED;
 
 		printOutput = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script4 =
+			"void test()                    \n"
+			"{                              \n"
+			"   string s = \"\"\"           \n"
+			"Heredoc\\x20test\n"
+			"            \"\"\" \"\\x21\";  \n"
+			"   print(s);                   \n"
+			"}                              \n";
 		mod->AddScriptSection("TestScriptString", script4, strlen(script4), 0);
 		if (mod->Build() < 0)
 			TEST_FAILED;
@@ -408,12 +368,30 @@ bool Test()
 
 		// test new
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script5 =
+			"void test( string @ s )         \n"
+			"{                               \n"
+			"   string t = s;                \n"
+			"}                               \n"
+			"void Main()                     \n"
+			"{                               \n"
+			"   test(\"this is a test\");    \n"
+			"}                               \n";
 		mod->AddScriptSection("TestScriptString", script5, strlen(script5), 0);
 		if (mod->Build() < 0) TEST_FAILED;
 		r = ExecuteString(engine, "Main()", mod);
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script6 =
+			"void Main()                     \n"
+			"{                               \n"
+			"   test(\"this is a test\");    \n"
+			"}                               \n"
+			"void test( string @ s )         \n"
+			"{                               \n"
+			"   string t = s;                \n"
+			"}                               \n";
 		mod->AddScriptSection("TestScriptString", script6, strlen(script6), 0);
 		if (mod->Build() < 0) TEST_FAILED;
 		r = ExecuteString(engine, "Main()", mod);
@@ -453,6 +431,14 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script7 =
+			"void test()                    \n"
+			"{                              \n"
+			"   Func(\"test\");             \n"
+			"}                              \n"
+			"void Func(const string &in str)\n"
+			"{                              \n"
+			"}                              \n";
 		mod->AddScriptSection("test", script7, strlen(script7), 0);
 		mod->Build();
 		r = ExecuteString(engine, "test()", mod);
@@ -468,10 +454,14 @@ bool Test()
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 		// Test the string utils
-		ExecuteString(engine, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
-		ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
-		ExecuteString(engine, "string str = 'a|b||d'; array<string@>@ arr = split(str, '|'); assert(arr.length() == 4); assert(arr[1] == 'b');");
-		ExecuteString(engine, "array<string@> arr = {'a', 'b', '', 'd'}; assert(join(arr, '|') == 'a|b||d');");
+		r = ExecuteString(engine, "string str = 'abcdef'; assert(findFirst(str, 'def') == 3);");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		r = ExecuteString(engine, "string str = 'abcdef'; assert(findFirstOf(str, 'feb') == 1);");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		r = ExecuteString(engine, "string str = 'a|b||d'; array<string@>@ arr = split(str, '|'); assert(arr.length() == 4); assert(arr[1] == 'b');");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
+		r = ExecuteString(engine, "array<string@> arr = {'a', 'b', '', 'd'}; assert(join(arr, '|') == 'a|b||d');");
+		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 		engine->Release();
 	}
@@ -483,6 +473,15 @@ bool Test()
 		RegisterScriptString(engine);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script8 =
+			"void test()                    \n"
+			"{                              \n"
+			"   Func('test');               \n"
+			"}                              \n"
+			"string Func(string & str)      \n"
+			"{                              \n"
+			"  return str;                  \n"
+			"}                              \n";
 		mod->AddScriptSection("test", script8, strlen(script8), 0);
 		mod->Build();
 		r = ExecuteString(engine, "test()", mod);
@@ -518,6 +517,14 @@ bool Test()
 		RegisterScriptString(engine);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script7 =
+			"void test()                    \n"
+			"{                              \n"
+			"   Func(\"test\");             \n"
+			"}                              \n"
+			"void Func(const string &in str)\n"
+			"{                              \n"
+			"}                              \n";
 		mod->AddScriptSection("test", script7, strlen(script7), 0);
 		mod->Build();
 		r = ExecuteString(engine, "test()", mod);

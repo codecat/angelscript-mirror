@@ -22,6 +22,58 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test exception handling to make sure there are no memory leaks
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+
+		r = ExecuteString(engine,
+			"dictionary dict = {{'foo', 'bar'}}; \n"
+			"dictionaryValue val = dict['foo']; \n" // get a dictionary value that contains an object
+			"int zero = 0; \n"
+			"zero = zero / zero; \n"); // provoke an exception
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test getting a value from element storing a const handle
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, true);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  array<int> foo = {1,2,3}; \n"
+			"  dictionary dict; \n"
+			"  const array<int> @foo2 = foo; \n"
+			"  @dict['foo'] = foo2; \n" // store a const handle
+			"  array<int> bar; \n"
+			"  dict.get('foo', bar); \n" // get value
+			"  assert( bar.length() == 3 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Another test for bool in dictionary
 	// Temporary variable was incorrectly being reused.
 	// Reported by Aaron Baker

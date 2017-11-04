@@ -509,6 +509,11 @@ int asCContext::Unprepare()
 	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
 		return asCONTEXT_ACTIVE;
 
+	// Set the context as active so that any clean up code can use access it if desired
+	asCThreadLocalData *tld = asPushActiveContext((asIScriptContext *)this);
+	asDWORD count = m_refCount.get();
+	UNUSED_VAR(count);
+
 	// Only clean the stack if the context was prepared but not executed until the end
 	if( m_status != asEXECUTION_UNINITIALIZED &&
 		m_status != asEXECUTION_FINISHED )
@@ -518,6 +523,11 @@ int asCContext::Unprepare()
 
 	// Release the returned object (if any)
 	CleanReturnObject();
+
+	// TODO: Unprepare is called during destruction, so nobody
+	//       must be allowed to keep an extra reference
+	asASSERT(m_refCount.get() == count);
+	asPopActiveContext(tld, this);
 
 	// Release the object if it is a script object
 	if( m_initialFunction && m_initialFunction->objectType && (m_initialFunction->objectType->flags & asOBJ_SCRIPT_OBJECT) )

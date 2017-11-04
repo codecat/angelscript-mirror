@@ -110,15 +110,16 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
-		if( bout.buffer != "" )
+
+		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-
-		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
-		if( r != asEXECUTION_FINISHED )
-			TEST_FAILED;
 	}
 
 	// Test returning reference to a class member
@@ -162,15 +163,16 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
-		if( bout.buffer != "" )
-		{
-			PRINTF("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
 
 		r = ExecuteString(engine, "A a; a.g = ''; a.Test() = '42'; assert( a.g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	// Test returning reference to a class member
@@ -188,15 +190,16 @@ bool Test()
 		mod->AddScriptSection("script", script);
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
-		if( bout.buffer != "" )
-		{
-			PRINTF("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
 
 		r = ExecuteString(engine, "A a; @a.Test() = @'42'; assert( a.g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 	}
 
 	// Test returning reference to a global variable

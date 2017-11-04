@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.0 WIP - 2017/10/29</h2>
+<h2>Version 2.32.0 WIP - 2017/11/03</h2>
 
 <ul>
 <li>Bug fixes
@@ -55,6 +55,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Saved bytecode now takes advantage of shared entities declared as external and includes less bytes
 <li>The VM now raises an exception when application performs too many nested calls (Thanks Jordan Verner)
 <li>Improved compiler error message when identifier before parenthesis doesn't evaluate to a function (Thanks Patrick Jeeves)
+<li>Objects that rely on asGetActiveContext during clean-up can now do so even during exception handling
 </ul>
 <li>Script language
 <ul>
@@ -71,6 +72,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>ScriptBuilder add-on properly handles 'external' and 'shared' keywords when parsing metadata
 <li>WriteConfigToStream now resets the namespace for the string factory (Thanks Solokiller)
 <li>Implemented sort in CScriptArray that takes as input a script function to compare two elements
+<li>Dictionary storing a const handle now allows retrieving by value
 </ul>
 </ul>
 

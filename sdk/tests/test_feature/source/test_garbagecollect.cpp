@@ -53,7 +53,7 @@ void GCLineCallback(asIScriptContext *ctx)
 	engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
 }
 
-void ExceptionCallback(asIScriptContext *ctx, int *numExceptions)
+void ExceptionCallback(asIScriptContext * /*ctx*/, int *numExceptions)
 {
 	(*numExceptions)++;
 }
@@ -157,7 +157,6 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 	}
-
 
 	// Test basic garbage collection
 	{
