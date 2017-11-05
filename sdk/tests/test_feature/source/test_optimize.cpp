@@ -1223,7 +1223,7 @@ bool TestOptimize()
 		//       Perhaps something like RegisterStringFactory("const string &safe", ...);
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
-			{	
+			{
 				asBC_SUSPEND,
 				// Call the stringfactory that returns the reference to the string
 				asBC_STR,asBC_CALLSYS,

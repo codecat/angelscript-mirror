@@ -147,7 +147,7 @@ public:
 	}
 };
 
-void DoNothing(asIScriptGeneric *gen)
+void DoNothing(asIScriptGeneric * /*gen*/)
 {
 }
 

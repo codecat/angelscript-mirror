@@ -622,7 +622,7 @@ bool Test()
 
 		engine->Release();
 	}
-	
+
 	// Compile array with default value in list
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);

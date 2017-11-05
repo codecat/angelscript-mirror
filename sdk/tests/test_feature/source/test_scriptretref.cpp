@@ -111,6 +111,16 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 
+		// Test by making a explicit copy
+		r = ExecuteString(engine, "const string s = '42'; @Test() = @string(s); assert( g == '42' );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// Test by making a explicit copy
+		r = ExecuteString(engine, "@Test() = @string('42'); assert( g == '42' );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
 		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;

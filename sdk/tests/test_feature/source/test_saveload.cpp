@@ -756,7 +756,7 @@ bool Test()
 
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
-			{	
+			{
 				asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_STR,asBC_CALLSYS,asBC_JitEntry,asBC_PshRPtr,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_PopPtr,asBC_VAR,asBC_SetV4,asBC_PshV4,asBC_GETREF,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,
 				asBC_SUSPEND,asBC_JitEntry,asBC_SetV4,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_CpyVtoR4,asBC_JMP,asBC_RET
 			};

@@ -14,21 +14,15 @@ static asBSTR NewString(int length)
 	return asBStrAlloc(length);
 }
 
-static const char *script =
-"void test(bstr a, bstr b)  \n"
-"{                          \n"
-"  assert(a == \"a\");      \n"
-"  assert(b == \"b\");      \n"
-"}                          \n";
-
 bool TestBStr()
 {
 	RET_ON_MAX_PORT
 
 	bool fail = false;
+	COutStream out;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
+	engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 	RegisterBStr(engine);
 
 	engine->RegisterGlobalFunction("bstr NewString(int)", asFUNCTION(NewString), asCALL_CDECL);
@@ -48,6 +42,12 @@ bool TestBStr()
 
 	// Test passing bstr strings to a script function
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script =
+		"void test(bstr a, bstr b)  \n"
+		"{                          \n"
+		"  assert(a == \"a\");      \n"
+		"  assert(b == \"b\");      \n"
+		"}                          \n";
 	mod->AddScriptSection("script", script);
 	r = mod->Build();
 	if( r < 0 )

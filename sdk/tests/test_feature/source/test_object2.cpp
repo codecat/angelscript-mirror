@@ -7,12 +7,6 @@ static const char * const TESTNAME = "TestObject2";
 
 
 
-static const char *script1 =
-"void TestObject2()                                                                          \n"
-"{                                                                                           \n"
-"  GuiButton@ btn = GUI.AddButton('Hello world 3!', Vector2(200, 50), Vector2(100, 50));     \n"
-"  GUI.GetButton('Test').SetName('Test2');                                                   \n"
-"}                                                                                           \n";
 
 class CGuiButton
 {
@@ -94,6 +88,12 @@ bool Test()
 	engine->RegisterGlobalProperty("Gui GUI", &GUI);
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+	const char *script1 =
+		"void TestObject2()                                                                          \n"
+		"{                                                                                           \n"
+		"  GuiButton@ btn = GUI.AddButton('Hello world 3!', Vector2(200, 50), Vector2(100, 50));     \n"
+		"  GUI.GetButton('Test').SetName('Test2');                                                   \n"
+		"}                                                                                           \n";
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r < 0 )

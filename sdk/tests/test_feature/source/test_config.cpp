@@ -80,7 +80,8 @@ bool Test()
 						   "Property (1, 1) : Error   : Identifier 'type' is not a data type in global namespace\n"
 						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'mytype' and 'type a' (Code: -10)\n"
 						   " (1, 1) : Error   : Identifier 'type' is not a data type in global namespace\n"
-						   " (0, 0) : Error   : Failed in call to function 'RegisterStringFactory' with 'type' (Code: -12)\n" )
+						   " (0, 0) : Error   : Failed in call to function 'RegisterStringFactory' with 'type' (Code: -12)\n" 
+			)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
