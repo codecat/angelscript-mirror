@@ -417,12 +417,19 @@ bool Test()
 		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection(TESTNAME, 
+		mod->AddScriptSection(TESTNAME,
 			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
 			"void startGame( ) \n"
 			"{ \n"
 			"   SetTexture('test'); \n"
-			"} \n");
+			"} \n"
+			// It must be possible to pass a const string to a function expecting a string by value
+			"void startGame2( ) \n"
+			"{ \n"
+			"   const string a = 'test'; \n"
+			"   SetTexture(a); \n"
+			"} \n"
+			);
 
 		r = mod->Build();
 		if( r < 0 )

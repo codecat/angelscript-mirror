@@ -43,6 +43,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash in compiler when compiling type conversion with invalid use of named arguments (Thanks Adrian Bibby Walther)
 <li>Fixed assert failure when compiling expression with anonymous initialization list (Thanks Patrick Jeeves)
 <li>Explicitly creating a copy of a const object to get a non-const handle would give a compiler error
+<li>Value type without opAssign but with a copy constructor can now be implicitly copied in type conversions
 </ul>
 <li>Library interface
 <ul>
