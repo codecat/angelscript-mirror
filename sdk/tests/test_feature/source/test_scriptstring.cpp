@@ -366,7 +366,7 @@ bool Test()
 		}
 		a->Release();
 
-		// test new
+		// Allow a literal string constant to be passed to a function expecting a non-constant
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		const char *script5 =
 			"void test( string @ s )         \n"
@@ -375,28 +375,37 @@ bool Test()
 			"}                               \n"
 			"void Main()                     \n"
 			"{                               \n"
-			"   test(\"this is a test\");    \n"
+			"   test('this is a test');      \n"
 			"}                               \n";
 		mod->AddScriptSection("TestScriptString", script5, strlen(script5), 0);
 		if (mod->Build() < 0) TEST_FAILED;
 		r = ExecuteString(engine, "Main()", mod);
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
+		// But do not allow a non-literal string constant to be passed
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		const char *script6 =
 			"void Main()                     \n"
 			"{                               \n"
-			"   test(\"this is a test\");    \n"
+			"   const string @str = 'this is a test'; \n"
+			"   test(str);                   \n"
 			"}                               \n"
 			"void test( string @ s )         \n"
 			"{                               \n"
 			"   string t = s;                \n"
 			"}                               \n";
 		mod->AddScriptSection("TestScriptString", script6, strlen(script6), 0);
-		if (mod->Build() < 0) TEST_FAILED;
-		r = ExecuteString(engine, "Main()", mod);
-		if (r != asEXECUTION_FINISHED) TEST_FAILED;
-
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		if (mod->Build() >= 0) TEST_FAILED;
+		if (bout.buffer != "TestScriptString (1, 1) : Info    : Compiling void Main()\n"
+						   "TestScriptString (4, 4) : Error   : No matching signatures to 'test(const string@&)'\n"
+						   "TestScriptString (4, 4) : Info    : Candidates are:\n"
+						   "TestScriptString (4, 4) : Info    : void test(string@ s)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		// Test character literals
 		r = engine->SetEngineProperty(asEP_USE_CHARACTER_LITERALS, true); assert(r >= 0);

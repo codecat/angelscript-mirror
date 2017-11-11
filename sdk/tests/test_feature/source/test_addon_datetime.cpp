@@ -18,7 +18,6 @@ bool Test()
 	int r;
 	COutStream out;
 	CBufferedOutStream bout;
-	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
 	// Test the datetime object

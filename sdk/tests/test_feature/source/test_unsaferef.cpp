@@ -29,58 +29,94 @@ bool Test()
 
 	COutStream out;
 	CBufferedOutStream bout;
+	asIScriptEngine *engine;
 
- 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-	engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	RegisterScriptArray(engine, true);
-	RegisterScriptString(engine);
-
-	r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert( r >= 0 );
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	const char *script1 =
-		"void Test()                            \n"
-		"{                                      \n"
-		"   int[] arr = {0};                    \n"
-		"   TestRefInt(arr[0]);                 \n"
-		"   Assert(arr[0] == 23);               \n"
-		"   int a = 0;                          \n"
-		"   TestRefInt(a);                      \n"
-		"   Assert(a == 23);                    \n"
-		"   string[] sa = {\"\"};               \n"
-		"   TestRefString(sa[0]);               \n"
-		"   Assert(sa[0] == \"ref\");           \n"
-		"   string s = \"\";                    \n"
-		"   TestRefString(s);                   \n"
-		"   Assert(s == \"ref\");               \n"
-		"}                                      \n"
-		"void TestRefInt(int &ref)              \n"
-		"{                                      \n"
-		"   ref = 23;                           \n"
-		"}                                      \n"
-		"void TestRefString(string &ref)        \n"
-		"{                                      \n"
-		"   ref = \"ref\";                      \n"
-		"}                                      \n";
-	mod->AddScriptSection(TESTNAME, script1);
-	r = mod->Build();
-	if( r < 0 )
+	// Basic tests
 	{
-		TEST_FAILED;
-		PRINTF("%s: Failed to compile the script\n", TESTNAME);
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptArray(engine, true);
+		RegisterScriptString(engine);
+
+		r = engine->RegisterGlobalFunction("void Assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		const char *script1 =
+			"void Test()                            \n"
+			"{                                      \n"
+			"   int[] arr = {0};                    \n"
+			"   TestRefInt(arr[0]);                 \n"
+			"   Assert(arr[0] == 23);               \n"
+			"   int a = 0;                          \n"
+			"   TestRefInt(a);                      \n"
+			"   Assert(a == 23);                    \n"
+			"   string[] sa = {\"\"};               \n"
+			"   TestRefString(sa[0]);               \n"
+			"   Assert(sa[0] == \"ref\");           \n"
+			"   string s = \"\";                    \n"
+			"   TestRefString(s);                   \n"
+			"   Assert(s == \"ref\");               \n"
+			"}                                      \n"
+			"void TestRefInt(int &ref)              \n"
+			"{                                      \n"
+			"   ref = 23;                           \n"
+			"}                                      \n"
+			"void TestRefString(string &ref)        \n"
+			"{                                      \n"
+			"   ref = \"ref\";                      \n"
+			"}                                      \n";
+		mod->AddScriptSection(TESTNAME, script1);
+		r = mod->Build();
+		if (r < 0)
+		{
+			TEST_FAILED;
+			PRINTF("%s: Failed to compile the script\n", TESTNAME);
+		}
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "Test()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			TEST_FAILED;
+			PRINTF("%s: Execution failed: %d\n", TESTNAME, r);
+		}
+
+		if (ctx) ctx->Release();
+
+		engine->Release();
 	}
-	asIScriptContext *ctx = engine->CreateContext();
-	r = ExecuteString(engine, "Test()", mod, ctx);
-	if( r != asEXECUTION_FINISHED )
+
+	// Passing a const value object to a function expecting a non-const ref
 	{
-		TEST_FAILED;
-		PRINTF("%s: Execution failed: %d\n", TESTNAME, r);
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(string &) {} \n"
+			"void main() { \n"
+			"  const string foo = 'bar'; \n"
+			"  func(foo); \n" // shouldn't be allowed since foo is const and the function expects a non-const reference
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (2, 1) : Info    : Compiling void main()\n"
+						   "test (4, 3) : Error   : No matching signatures to 'func(const string)'\n"
+						   "test (4, 3) : Info    : Candidates are:\n"
+						   "test (4, 3) : Info    : void func(string&inout)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
 	}
 
-	if( ctx ) ctx->Release();
-
-	engine->Release();
 
 	// Test bug
 	// http://www.gamedev.net/topic/657960-tempvariables-assertion-with-indexed-unsafe-reference/
@@ -141,7 +177,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 		RegisterScriptMath3D(engine);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class Good \n"
 			"{ \n"
@@ -187,7 +223,7 @@ bool Test()
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"void func(){ \n"
 			"  float a; \n"
@@ -222,7 +258,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class T { int a; } \n"
 			"void f(T@& p) { \n"
@@ -256,7 +292,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class T { T() { val = 123; } int val; } \n"
 			"T g_t; \n"
@@ -295,7 +331,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"class T { T() { val = 123; } int val; } \n"
 			"T g_t; \n"
@@ -318,7 +354,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		ctx = engine->CreateContext();
+		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "func()", mod, ctx);
 		if( r != asEXECUTION_FINISHED )
 		{
@@ -345,7 +381,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("Val", asBEHAVE_CONSTRUCT, "void f(const Val &)", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("Val", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"Val GetVal() \n"
 			"{ \n"
@@ -377,7 +413,7 @@ bool Test()
 
 		engine->RegisterGlobalFunction("void func(const int &)", asFUNCTION(0), asCALL_GENERIC);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"const int value = 42; \n"
 			"void main() { \n"
@@ -416,7 +452,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Str::StringDestruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME,
 			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
 			"void startGame( ) \n"
@@ -466,7 +502,7 @@ bool Test()
 		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &)", asMETHOD(Str, opAssign), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asMETHOD(Str, opEquals), asCALL_THISCALL);
 
-		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection(TESTNAME, 
 			"void SetTexture( string txt ) { assert( txt == 'test' ); } \n"
 			"void startGame( ) \n"

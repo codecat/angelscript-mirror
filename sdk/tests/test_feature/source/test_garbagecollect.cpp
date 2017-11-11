@@ -162,6 +162,7 @@ bool Test()
 	{
 		// Create the script engine
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		// Register Function
 		RegisterScriptString(engine);
@@ -182,10 +183,14 @@ bool Test()
 			"    Hoge hoge;"
 			"};"
 			, 0);
-		mod->Build();
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
 
 		// Context Create
 		asIScriptContext *ctx = engine->CreateContext();
+
+		buf = "";
 
 		// Loop
 		for (asUINT n = 0; n < 3; n++)
@@ -193,7 +198,9 @@ bool Test()
 			// Execute
 			//PRINTF("----- execute\n");
 			ctx->Prepare(mod->GetFunctionByDecl("void main()"));
-			ctx->Execute();
+			r = ctx->Execute();
+			if (r != asEXECUTION_FINISHED)
+				TEST_FAILED;
 
 			// GC
 			const int GC_STEP_COUNT_PER_FRAME = 100;
@@ -214,6 +221,17 @@ bool Test()
 					TEST_FAILED;
 				//PRINTF("(%lu,%lu,%lu)\n" , currentSize , totalDestroyed , totalDetected );
 			}
+		}
+
+		if (buf != "ctor\n"
+			"dtor\n"
+			"ctor\n"
+			"dtor\n"
+			"ctor\n"
+			"dtor\n")
+		{
+			PRINTF("%s", buf.c_str());
+			TEST_FAILED;
 		}
 
 		// Release 

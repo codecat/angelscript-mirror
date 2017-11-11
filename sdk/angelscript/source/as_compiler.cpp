@@ -7221,9 +7221,29 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 					ctx->type.dataType.MakeReference(IsVariableOnHeap(ctx->type.stackOffset));
 				}
 
-				// TODO: If the variable is an object allocated on the stack the following is not true as the copy may not have been made
-				// Since it is a new temporary variable it doesn't have to be const
-				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+				if (to.IsReadOnly())
+				{
+					// This doesn't cost anything
+					ctx->type.dataType.MakeReadOnly(true);
+				}
+
+				if (!to.IsReadOnly() && ctx->type.dataType.IsReadOnly())
+				{
+					// A const object can be converted to a non-const object through a copy
+					if (allowObjectConstruct || convType == asIC_EXPLICIT_VAL_CAST)
+					{
+						ctx->type.dataType.MakeReadOnly(false);
+
+						if (generateCode)
+						{
+							// Make a temporary copy of the object in order to make it non-const
+							PrepareTemporaryVariable(node, ctx);
+						}
+
+						// Add the cost for the copy
+						cost += asCC_TO_OBJECT_CONV;
+					}
+				}
 			}
 		}
 	}
@@ -10079,7 +10099,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 			asUINT cost = ImplicitConversion(&conv, dt, node->lastChild, asIC_EXPLICIT_VAL_CAST, false);
 
 			// Don't use this if the cost is 0 because it would mean that nothing
-			// is done and the scipt wants a new value to be constructed
+			// is done and the script wants a new value to be constructed
 			if( conv.type.dataType.IsEqualExceptRef(dt) && cost > 0 )
 			{
 				// Make sure the result is a reference, just as if to a local variable

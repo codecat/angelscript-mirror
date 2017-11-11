@@ -181,7 +181,7 @@ bool Test()
 		RegisterScriptDictionary(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		r = ExecuteString(engine, 
+		r = ExecuteString(engine,
 			"dictionary dict; \n"
 			"@dict['foo'] = 'bar';\n"
 			"string t; \n"

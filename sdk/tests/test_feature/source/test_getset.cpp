@@ -560,7 +560,7 @@ bool Test()
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
-		r = engine->RegisterGlobalFunction("void Log(string&, ?&)", asFUNCTIONPR(formattedPrintAS, (std::string&, void*, int), void), asCALL_CDECL);
+		r = engine->RegisterGlobalFunction("void Log(const string&, ?&)", asFUNCTIONPR(formattedPrintAS, (std::string&, void*, int), void), asCALL_CDECL);
 		r = engine->RegisterObjectType("TestClass", 0, asOBJ_REF | asOBJ_NOCOUNT); 
 		r = engine->RegisterObjectMethod("TestClass", "float get_OffsetVars(uint)", asMETHOD(TestClass, get_OffsetVars), asCALL_THISCALL);
 
