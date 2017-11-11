@@ -1176,7 +1176,7 @@ bool TestOptimize()
 			"  assert( val == 'test' ); \n" // comparison with a string constant
 			"} \n";
 
-		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", script);
 		r = mod->Build();
 		if( r < 0 )
@@ -1206,7 +1206,7 @@ bool TestOptimize()
 		RegisterStdString(engine);
 		engine->RegisterGlobalFunction("bool GetInputDown(int, const string &in)", asFUNCTION(0), asCALL_GENERIC);
 
-		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"void func() { \n"
 			"	GetInputDown(1, 'ctrl'); \n"

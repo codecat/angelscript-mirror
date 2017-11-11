@@ -4467,7 +4467,7 @@ void asCWriter::WriteTypeInfo(asCTypeInfo* ti)
 			WriteData(&ch, 1);
 			WriteString(&ti->name);
 		}
-		else if( ti->nameSpace )
+		else if( !ti->GetParentType() )
 		{
 			ch = 'o'; // object
 			WriteData(&ch, 1);

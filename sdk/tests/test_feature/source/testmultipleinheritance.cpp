@@ -234,10 +234,10 @@ public:
 	iCountable(const iCountable & obj) = delete;
 	iCountable(iCountable && obj) = delete;
 
-	iCountable & operator=(const iCountable & obj) { return *this; };
-	iCountable & operator=(iCountable && obj) { return *this; };
+	iCountable & operator=(const iCountable & /*obj*/) { return *this; };
+	iCountable & operator=(iCountable && /*obj*/) { return *this; };
 
-	bool operator==(const iCountable && obj) { return true; };
+	bool operator==(const iCountable && /*obj*/) { return true; };
 
 	void AddRef() const { ++refCount; }
 	void Release() { if (--refCount == 0) delete this; }

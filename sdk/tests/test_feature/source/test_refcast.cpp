@@ -166,7 +166,7 @@ public:
 		return 0;
 	}
 	sha512() {}
-	void update(std::string& data) {}
+	void update(std::string& /*data*/) {}
 	std::string compute() {return "";}
 	void reset() {}
 };

@@ -18,12 +18,12 @@ bool Test()
 		class Dummy
 		{
 		public:
-			static asIScriptContext* requestScriptContext(asIScriptEngine* engine, void* param)
+			static asIScriptContext* requestScriptContext(asIScriptEngine* /*engine*/, void* param)
 			{
 				return static_cast<asIScriptContext*>(param);
 			}
 
-			static void returnScriptContext(asIScriptEngine* engine, asIScriptContext* context, void* param)
+			static void returnScriptContext(asIScriptEngine* /*engine*/, asIScriptContext* /*context*/, void* /*param*/)
 			{
 				// Nothing to do...
 			}
