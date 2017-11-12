@@ -121,6 +121,12 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
+		// Implicit handle
+		r = ExecuteString(engine, "@Test() = '42'; assert( g == '42' );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// Explicit handle
 		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
@@ -201,7 +207,7 @@ bool Test()
 		r = mod->Build();
 		if( r < 0 ) TEST_FAILED;
 
-		r = ExecuteString(engine, "A a; @a.Test() = @'42'; assert( a.g == '42' );", mod);
+		r = ExecuteString(engine, "A a; @a.Test() = '42'; assert( a.g == '42' );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
 

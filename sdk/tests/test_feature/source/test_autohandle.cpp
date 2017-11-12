@@ -75,13 +75,13 @@ bool Test()
 
 	COutStream out;
 	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
-	r = ExecuteString(engine, "TestFunc(\"1\", \"2\", 1.0f, \"3\")");
+	r = ExecuteString(engine, "TestFunc('1', '2', 1.0f, '3')");
 	if( r != 0 ) TEST_FAILED;
 
-	r = ExecuteString(engine, "Assert(TestFunc2() == \"Test\")");
+	r = ExecuteString(engine, "Assert(TestFunc2() == 'Test')");
 	if( r != 0 ) TEST_FAILED;
 
-	r = ExecuteString(engine, "object obj(\"1\", \"2\", 1.0f, \"3\")");
+	r = ExecuteString(engine, "object obj('1', '2', 1.0f, '3')");
 	if( r != 0 ) TEST_FAILED;
 
 	// Test autohandle for the return value of a class method

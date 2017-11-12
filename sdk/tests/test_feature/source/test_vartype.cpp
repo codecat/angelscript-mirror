@@ -368,7 +368,7 @@ bool Test()
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "string a = \"test\"; testFuncI(a);");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
-	r = ExecuteString(engine, "string @a = @\"test\"; testFuncI(@a);");
+	r = ExecuteString(engine, "string @a = \"test\"; testFuncI(@a);");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;
 	r = ExecuteString(engine, "testFuncI(null);");
 	if( r != asEXECUTION_FINISHED ) TEST_FAILED;

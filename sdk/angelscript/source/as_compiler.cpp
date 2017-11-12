@@ -6919,11 +6919,8 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 		// reference           -> reference to handle
 		// object              -> reference to handle
 
-		// TODO: If the type is handle, then we can't use IsReadOnly to determine the constness of the basetype
-
-		// If the rvalue is a handle to a const object, then
-		// the lvalue must also be a handle to a const object
-		if( ctx->type.dataType.IsReadOnly() && !to.IsReadOnly() )
+		if( (!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly() && !to.IsHandleToConst()) ||
+			(ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst() && !to.IsHandleToConst()) )
 		{
 			if( convType != asIC_IMPLICIT_CONV )
 			{

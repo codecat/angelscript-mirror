@@ -1272,7 +1272,6 @@ bool Test()
 			"TestScriptStruct (1, 7) : Error   : Illegal member type\n"
 			"TestScriptStruct (5, 7) : Error   : Illegal member type\n" ) TEST_FAILED;
 
-
 		const char *script7 =
 			"class A                      \n"
 			"{                            \n"
@@ -1283,8 +1282,8 @@ bool Test()
 			"  A a;                       \n"
 			"  Assert(@a.s == null);      \n"
 			"  a = a;                     \n"
-			"  @a.s = \"Test\";           \n"
-			"  Assert(a.s == \"Test\");   \n"
+			"  @a.s = 'Test';             \n"
+			"  Assert(a.s == 'Test');     \n"
 			"}                            \n";
 		mod->AddScriptSection(TESTNAME, script7, strlen(script7), 0);
 		engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
