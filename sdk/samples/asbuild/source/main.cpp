@@ -88,6 +88,83 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+#ifdef AS_NEWSTRING
+
+#ifdef AS_CAN_USE_CPP11
+// The string factory doesn't need to keep a specific order in the
+// cache, so the unordered_map is faster than the ordinary map
+#include <unordered_map>  // std::unordered_map
+BEGIN_AS_NAMESPACE
+typedef unordered_map<string, int> map_t;
+END_AS_NAMESPACE
+#else
+#include <map>      // std::map
+BEGIN_AS_NAMESPACE
+typedef map<string, int> map_t;
+END_AS_NAMESPACE
+#endif
+
+// Default string factory. Removes duplicate string constants
+// This same implementation is provided in the scriptstdstring add-on
+class CStdStringFactory : public asIStringFactory
+{
+public:
+	CStdStringFactory() {}
+	~CStdStringFactory()
+	{
+		// The script engine must release each string 
+		// constant that it has requested
+		assert(stringCache.size() == 0);
+	}
+
+	const void *GetStringConstant(const char *data, asUINT length)
+	{
+		string str(data, length);
+		map_t::iterator it = stringCache.find(str);
+		if (it != stringCache.end())
+			it->second++;
+		else
+			it = stringCache.insert(map_t::value_type(str, 1)).first;
+
+		return reinterpret_cast<const void*>(&it->first);
+	}
+
+	int  ReleaseStringConstant(const void *str)
+	{
+		if (str == 0)
+			return asERROR;
+
+		map_t::iterator it = stringCache.find(*reinterpret_cast<const string*>(str));
+		if (it == stringCache.end())
+			return asERROR;
+
+		it->second--;
+		if (it->second == 0)
+			stringCache.erase(it);
+		return asSUCCESS;
+	}
+
+	int  GetRawStringData(const void *str, char *data, asUINT *length) const
+	{
+		if (str == 0)
+			return asERROR;
+
+		if (length)
+			*length = (asUINT)reinterpret_cast<const string*>(str)->length();
+
+		if (data)
+			memcpy(data, reinterpret_cast<const string*>(str)->c_str(), reinterpret_cast<const string*>(str)->length());
+
+		return asSUCCESS;
+	}
+
+	// TODO: Make sure the access to the string cache is thread safe
+	map_t stringCache;
+};
+
+CStdStringFactory stringFactory;
+#endif
+
 // This function will register the application interface, 
 // based on information read from a configuration file. 
 int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
@@ -106,7 +183,11 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 	}
 
 	// Configure the engine with the information from the file
+#ifdef AS_NEWSTRING
+	r = ConfigEngineFromStream(engine, strm, configFile, &stringFactory);
+#else
 	r = ConfigEngineFromStream(engine, strm, configFile);
+#endif
 	if( r < 0 )
 	{
 		engine->WriteMessage(configFile, 0, 0, asMSGTYPE_ERROR, "Configuration failed");

@@ -813,11 +813,13 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
+#ifndef AS_NEWSTRING
 	// Free string constants
 	for( asUINT n = 0; n < stringConstants.GetLength(); n++ )
 		asDELETE(stringConstants[n],asCString);
 	stringConstants.SetLength(0);
 	stringToIdMap.EraseAll();
+#endif
 
 	// Free the script section names
 	for( asUINT n = 0; n < scriptSectionNames.GetLength(); n++ )
@@ -3186,6 +3188,32 @@ int asCScriptEngine::GetDefaultArrayTypeId() const
 }
 
 // interface
+#ifdef AS_NEWSTRING
+int asCScriptEngine::RegisterStringFactory(const char *datatype, asIStringFactory *factory)
+{
+	if (factory == 0)
+		return ConfigError(asINVALID_ARG, "RegisterStringFactory", datatype, 0);
+
+	// Parse the data type
+	asCBuilder bld(this, 0);
+	asCDataType dt;
+	int r = bld.ParseDataType(datatype, &dt, defaultNamespace, true);
+	if (r < 0)
+		return ConfigError(asINVALID_TYPE, "RegisterStringFactory", datatype, 0);
+
+	// Validate the type. It must not be reference or handle
+	if (dt.IsReference() || dt.IsObjectHandle())
+		return ConfigError(asINVALID_TYPE, "RegisterStringFactory", datatype, 0);
+
+	// All string literals will be treated as const
+	dt.MakeReadOnly(true);
+
+	stringType = dt;
+	stringFactory = factory;
+
+	return asSUCCESS;
+}
+#else
 int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
 {
 	asSSystemFunctionInterface internal;
@@ -3253,6 +3281,7 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 	// Register function id as success
 	return func->id;
 }
+#endif
 
 // interface
 int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
@@ -3260,7 +3289,13 @@ int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 	if( stringFactory == 0 )
 		return asNO_FUNCTION;
 
+#ifdef AS_NEWSTRING
+	if( flags )
+		*flags = 0;
+	return GetTypeIdFromDataType(stringType);
+#else
 	return stringFactory->GetReturnTypeId(flags);
+#endif
 }
 
 // internal
@@ -6105,6 +6140,7 @@ bool asCScriptEngine::IsTemplateType(const char *name) const
 	return false;
 }
 
+#ifndef AS_NEWSTRING
 // internal
 int asCScriptEngine::AddConstantString(const char *str, size_t len)
 {
@@ -6141,6 +6177,7 @@ const asCString &asCScriptEngine::GetConstantString(int id)
 {
 	return *stringConstants[id];
 }
+#endif
 
 // internal
 int asCScriptEngine::GetScriptSectionNameIndex(const char *name)

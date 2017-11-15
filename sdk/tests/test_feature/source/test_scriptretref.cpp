@@ -126,16 +126,33 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
+#ifndef AS_NEWSTRING
 		// Explicit handle
 		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
+#endif
 
 		if (bout.buffer != "")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
+
+#ifdef AS_NEWSTRING
+		// Explicit handle. Once the explicit handle has been taken the string is const, so it cannot be assigned
+		bout.buffer = "";
+		r = ExecuteString(engine, "@Test() = @'42'; assert( g == '42' );", mod);
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "ExecuteString (1, 11) : Error   : Can't implicitly convert from 'const string@' to 'string@'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+#endif
+
 	}
 
 	// Test returning reference to a class member
@@ -486,12 +503,33 @@ bool Test()
 		r = mod->Build();
 		if( r >= 0 ) TEST_FAILED;
 		if( bout.buffer != "25 (1, 1) : Info    : Compiling string& SomeFunc()\n"
+#ifdef AS_NEWSTRING
+						   "25 (1, 22) : Error   : Can't implicitly convert from 'const string' to 'string&'.\n" )
+#else
 						   "25 (1, 22) : Error   : Can't return reference to local value.\n" )
+#endif
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
 	}
+
+#ifdef AS_NEWSTRING
+	// Test returning const reference to temporary object
+	// This should be allowed because the string constant is global
+	{
+		bout.buffer = "";
+		const char *script = "const string &SomeFunc() { return ''; }";
+		r = mod->AddScriptSection("25", script);
+		r = mod->Build();
+		if (r < 0) TEST_FAILED;
+		if (bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+#endif
 
 	engine->Release();
 

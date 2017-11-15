@@ -102,7 +102,11 @@ protected:
 	asCArray<asCTypeInfo*>       usedTypes;
 	asCArray<asCScriptFunction*> usedFunctions;
 	asCArray<void*>              usedGlobalProperties;
+#ifdef AS_NEWSTRING
+	asCArray<void*>              usedStringConstants;
+#else
 	asCArray<int>                usedStringConstants;
+#endif
 
 	asCArray<asCScriptFunction*>  savedFunctions;
 	asCArray<asCDataType>         savedDataTypes;
@@ -188,7 +192,11 @@ protected:
 	int FindTypeIdIdx(int typeId);
 	int FindFunctionIndex(asCScriptFunction *func);
 	int FindGlobalPropPtrIndex(void *);
+#ifdef AS_NEWSTRING
+	int FindStringConstantIndex(void *str);
+#else
 	int FindStringConstantIndex(int id);
+#endif
 	int FindObjectPropIndex(short offset, int typeId);
 
 	void CalculateAdjustmentByPos(asCScriptFunction *func);
@@ -208,13 +216,22 @@ protected:
 	asCArray<asCTypeInfo*>       usedTypes;
 	asCArray<asCScriptFunction*> usedFunctions;
 	asCArray<void*>              usedGlobalProperties;
+#ifdef AS_NEWSTRING
+	asCArray<void*>              usedStringConstants;
+	asCMap<void*, int>           stringToIndexMap;
+#else
 	asCArray<int>                usedStringConstants;
 	asCMap<int, int>             stringIdToIndexMap;
+#endif
 
 	asCArray<asCScriptFunction*>  savedFunctions;
 	asCArray<asCDataType>         savedDataTypes;
 	asCArray<asCString>           savedStrings;
+#ifdef AS_NEWSTRING
+	asCMap<asCString, int>        stringToIdMap;
+#else
 	asCMap<asCStringPointer, int> stringToIdMap;
+#endif
 	asCArray<int>                 adjustStackByPos;
 	asCArray<int>                 adjustNegativeStackByPos;
 	asCArray<int>                 bytecodeNbrByPos;

@@ -15,12 +15,40 @@ public:
 	static void StringConstruct(Str *p) { new(p) Str(); }
 	static void StringCopyConstruct(const Str &o, Str *p) { new(p) Str(o); }
 	static void StringDestruct(Str *p) { p->~Str(); }
+#ifndef AS_NEWSTRING
 	static Str StringFactory(unsigned int /*length*/, const char *s) { Str str; str.str = s; return str; }
+#endif
 	bool opEquals(const Str &o) { return str == o.str; }
 	Str &opAssign(const Str &o) { str = o.str; return *this; }
 
 	std::string str;
 };
+
+#ifdef AS_NEWSTRING
+class CStrFactory : public asIStringFactory
+{
+public:
+	const void *GetStringConstant(const char *data, asUINT length)
+	{
+		Str *str = new Str();
+		str->str.assign(data, length);
+		return str;
+	}
+	int ReleaseStringConstant(const void *str)
+	{
+		delete reinterpret_cast<const Str*>(str);
+		return 0;
+	}
+	int GetRawStringData(const void *str, char *data, asUINT *length) const
+	{
+		if (length) *length = (asUINT) reinterpret_cast<const Str*>(str)->str.length();
+		if (data) memcpy(data, reinterpret_cast<const Str*>(str)->str.c_str(), reinterpret_cast<const Str*>(str)->str.length());
+		return 0;
+	}
+};
+
+CStrFactory strFactory;
+#endif
 
 bool Test()
 {
@@ -445,7 +473,11 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		r = engine->RegisterObjectType("string", sizeof(Str), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+#ifdef AS_NEWSTRING
+		r = engine->RegisterStringFactory("string", &strFactory); assert(r >= 0);
+#else
 		r = engine->RegisterStringFactory("string", asFUNCTION(Str::StringFactory), asCALL_CDECL); assert( r >= 0 );
+#endif
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Str::StringConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		// Copy constructor takes an unsafe reference
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &)", asFUNCTION(Str::StringCopyConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -495,7 +527,11 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		r = engine->RegisterObjectType("string", sizeof(Str), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
+#ifdef AS_NEWSTRING
+		r = engine->RegisterStringFactory("string", &strFactory); assert(r >= 0);
+#else
 		r = engine->RegisterStringFactory("string", asFUNCTION(Str::StringFactory), asCALL_CDECL); assert( r >= 0 );
+#endif
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Str::StringConstruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(Str::StringDestruct), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		// Assignment operator takes an unsafe reference

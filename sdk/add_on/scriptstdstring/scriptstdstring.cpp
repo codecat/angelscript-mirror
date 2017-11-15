@@ -14,6 +14,81 @@ using namespace std;
 // Usually where the variables are only used in debug mode.
 #define UNUSED_VAR(x) (void)(x)
 
+#ifdef AS_NEWSTRING
+
+#ifdef AS_CAN_USE_CPP11
+// The string factory doesn't need to keep a specific order in the
+// cache, so the unordered_map is faster than the ordinary map
+#include <unordered_map>  // std::unordered_map
+BEGIN_AS_NAMESPACE
+typedef unordered_map<string, int> map_t;
+END_AS_NAMESPACE
+#else
+#include <map>      // std::map
+BEGIN_AS_NAMESPACE
+typedef map<string, int> map_t;
+END_AS_NAMESPACE
+#endif
+
+class CStdStringFactory : public asIStringFactory
+{
+public:
+	CStdStringFactory() {}
+	~CStdStringFactory() 
+	{
+		// The script engine must release each string 
+		// constant that it has requested
+		assert(stringCache.size() == 0);
+	}
+
+	const void *GetStringConstant(const char *data, asUINT length)
+	{
+		string str(data, length);
+		map_t::iterator it = stringCache.find(str);
+		if (it != stringCache.end())
+			it->second++;
+		else
+			it = stringCache.insert(map_t::value_type(str, 1)).first;
+
+		return reinterpret_cast<const void*>(&it->first);
+	}
+
+	int  ReleaseStringConstant(const void *str)
+	{
+		if (str == 0)
+			return asERROR;
+
+		map_t::iterator it = stringCache.find(*reinterpret_cast<const string*>(str));
+		if (it == stringCache.end())
+			return asERROR;
+
+		it->second--;
+		if (it->second == 0)
+			stringCache.erase(it);
+		return asSUCCESS;
+	}
+
+	int  GetRawStringData(const void *str, char *data, asUINT *length) const
+	{
+		if (str == 0)
+			return asERROR;
+
+		if (length)
+			*length = (asUINT)reinterpret_cast<const string*>(str)->length();
+
+		if (data)
+			memcpy(data, reinterpret_cast<const string*>(str)->c_str(), reinterpret_cast<const string*>(str)->length());
+
+		return asSUCCESS;
+	}
+
+	// TODO: Make sure the access to the string cache is thread safe
+	map_t stringCache;
+};
+
+static CStdStringFactory stringFactory;
+
+#else
 #if AS_USE_STRINGPOOL == 1
 
 #ifdef AS_CAN_USE_CPP11
@@ -130,6 +205,7 @@ static string StringFactory(asUINT length, const char *s)
 {
 	return string(s, length);
 }
+#endif
 #endif
 
 static void ConstructString(string *thisPointer)
@@ -739,6 +815,9 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 #endif
 
+#ifdef AS_NEWSTRING
+	r = engine->RegisterStringFactory("string", &stringFactory);
+#else
 #if AS_USE_STRINGPOOL == 1
 	// Register the string factory
 	r = engine->RegisterStringFactory("const string &", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
@@ -748,6 +827,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 #else
 	// Register the string factory
 	r = engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
+#endif
 #endif
 
 	// Register the object operator overloads
@@ -840,6 +920,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	// multiply/times/opMul/opMul_r - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
 }
 
+#ifndef AS_NEWSTRING
 #if AS_USE_STRINGPOOL == 1
 static void StringFactoryGeneric(asIScriptGeneric *gen)
 {
@@ -858,6 +939,7 @@ static void StringFactoryGeneric(asIScriptGeneric *gen)
 	// Return a string value
 	new (gen->GetAddressOfReturnLocation()) string(StringFactory(length, s));
 }
+#endif
 #endif
 
 static void ConstructStringGeneric(asIScriptGeneric * gen)
@@ -1288,6 +1370,9 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	// Register the string type
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 
+#ifdef AS_NEWSTRING
+	r = engine->RegisterStringFactory("string", &stringFactory);
+#else
 #if AS_USE_STRINGPOOL == 1
 	// Register the string factory
 	r = engine->RegisterStringFactory("const string &", asFUNCTION(StringFactoryGeneric), asCALL_GENERIC); assert( r >= 0 );
@@ -1297,6 +1382,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 #else
 	// Register the string factory
 	r = engine->RegisterStringFactory("string", asFUNCTION(StringFactoryGeneric), asCALL_GENERIC); assert( r >= 0 );
+#endif
 #endif
 
 	// Register the object operator overloads

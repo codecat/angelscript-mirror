@@ -1185,9 +1185,15 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-				asBC_SUSPEND, asBC_STR, asBC_CALLSYS, asBC_PshRPtr, asBC_PSF, asBC_CALLSYS,  
+#ifdef AS_NEWSTRING
+				asBC_SUSPEND, asBC_PGA, asBC_PSF, asBC_CALLSYS,
+				asBC_SUSPEND, asBC_PGA, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PSF, asBC_CALLSYS, asBC_CpyRtoV4, asBC_PSF, asBC_CALLSYS, asBC_PshV4, asBC_CALLSYS,
+				asBC_SUSPEND, asBC_PSF, asBC_CALLSYS, asBC_RET
+#else
+				asBC_SUSPEND, asBC_STR, asBC_CALLSYS, asBC_PshRPtr, asBC_PSF, asBC_CALLSYS,
 				asBC_SUSPEND, asBC_STR, asBC_CALLSYS, asBC_PshRPtr, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PSF, asBC_CALLSYS, asBC_CpyRtoV4, asBC_PSF, asBC_CALLSYS, asBC_PshV4, asBC_CALLSYS,
 				asBC_SUSPEND, asBC_PSF, asBC_CALLSYS, asBC_RET
+#endif
 			};
 		if( !ValidateByteCode(func, expect) )
 			TEST_FAILED;
@@ -1224,6 +1230,19 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
 			{
+#ifdef AS_NEWSTRING
+				asBC_SUSPEND,
+				// Push the pointer to the string constant on the stack
+				asBC_PGA,
+				// Make a copy of the string, since it is not known what the reference points to
+				// TODO: optimize: With the string constant evaluated at compile time it can be passed directly without the copy
+				asBC_PSF,asBC_CALLSYS,
+				// Call the GetInputDown function passing in a reference to the string stored locally
+				asBC_VAR,asBC_PshC4,asBC_GETREF,asBC_CALLSYS,
+				// Free the local string
+				asBC_PSF,asBC_CALLSYS,
+				asBC_SUSPEND,asBC_RET
+#else
 				asBC_SUSPEND,
 				// Call the stringfactory that returns the reference to the string
 				asBC_STR,asBC_CALLSYS,
@@ -1234,6 +1253,7 @@ bool TestOptimize()
 				// Free the local string
 				asBC_PSF,asBC_CALLSYS,
 				asBC_SUSPEND,asBC_RET
+#endif
 			};
 		if( !ValidateByteCode(func, expect) )
 			TEST_FAILED;

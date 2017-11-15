@@ -96,6 +96,13 @@ asCCompiler::~asCCompiler()
 
 		asDELETE(var,asCVariableScope);
 	}
+#ifdef AS_NEWSTRING
+	// Clean up all the string constants that were allocated. By now the script 
+	// functions that were compiled successfully already holds their own references
+	for (asUINT n = 0; n < usedStringConstants.GetLength(); n++)
+		engine->stringFactory->ReleaseStringConstant(usedStringConstants[n]);
+	usedStringConstants.SetLength(0);
+#endif
 }
 
 void asCCompiler::Reset(asCBuilder *in_builder, asCScriptCode *in_script, asCScriptFunction *in_outFunc)
@@ -1733,7 +1740,11 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			}
 
 			// Literal constants cannot be passed to inout ref arguments
-			if( !ctx->type.isVariable && ctx->type.isConstant )
+			if( !ctx->type.isVariable && ctx->type.isConstant 
+#ifdef AS_NEWSTRING
+				&& !ctx->type.dataType.IsEqualExceptRefAndConst(engine->stringType) 
+#endif
+				)
 			{
 				// Unless unsafe references are turned on and the reference is const
 				if( param.IsReadOnly() && engine->ep.allowUnsafeReferences )
@@ -6922,6 +6933,24 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 		if( (!ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsReadOnly() && !to.IsHandleToConst()) ||
 			(ctx->type.dataType.IsObjectHandle() && ctx->type.dataType.IsHandleToConst() && !to.IsHandleToConst()) )
 		{
+#ifdef AS_NEWSTRING
+			// String literals can be implicitly converted to temporary local variables in order to pass them to functions expecting non-const
+			// TODO: NEWSTRING: Should have an engine property to warn or error on this
+			if (ctx->type.isConstant && ctx->type.dataType.IsEqualExceptRefAndConst(engine->stringType))
+			{
+				if (generateCode)
+					PrepareTemporaryVariable(node, ctx);
+				else
+				{
+					ctx->type.dataType.MakeReadOnly(false);
+					ctx->type.isConstant = false;
+				}
+
+				// Add the cost for the copy
+				cost += asCC_TO_OBJECT_CONV;
+			}
+			else
+#endif
 			if( convType != asIC_IMPLICIT_CONV )
 			{
 				asASSERT(node);
@@ -7240,6 +7269,24 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 						// Add the cost for the copy
 						cost += asCC_TO_OBJECT_CONV;
 					}
+
+#ifdef AS_NEWSTRING
+					// String literals can be implicitly converted to temporary local variables in order to pass them to functions expecting non-const
+					// TODO: NEWSTRING: Should have an engine property to warn or error on this
+					if (ctx->type.isConstant && ctx->type.dataType.IsEqualExceptRefAndConst(engine->stringType))
+					{
+						if (generateCode)
+							PrepareTemporaryVariable(node, ctx);
+						else
+						{
+							ctx->type.dataType.MakeReadOnly(false);
+							ctx->type.isConstant = false;
+						}
+
+						// Add the cost for the copy
+						cost += asCC_TO_OBJECT_CONV;
+					}
+#endif
 				}
 			}
 		}
@@ -9383,6 +9430,29 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 				}
 				else
 				{
+#ifdef AS_NEWSTRING
+					void *strPtr = const_cast<void*>(engine->stringFactory->GetStringConstant(str.AddressOf(), (asUINT)str.GetLength()));
+					if (strPtr == 0)
+					{
+						// TODO: A better message is needed
+						Error(TXT_NULL_POINTER_ACCESS, vnode);
+						ctx->type.SetDummy();
+						return -1;
+					}
+
+					// Keep the pointer in the list for clean up at exit
+					usedStringConstants.PushLast(strPtr);
+
+					// Push the pointer on the stack. The string factory already guarantees that the 
+					// string object is valid throughout the lifetime of the script so no need to add
+					// reference count or make local copy.
+					ctx->bc.InstrPTR(asBC_PGA, strPtr);
+					ctx->type.Set(engine->stringType);
+
+					// Mark the string as literal constant so the compiler knows it is allowed
+					// to treat it differently than an ordinary constant string variable
+					ctx->type.isConstant = true;
+#else
 					asCScriptFunction *descr = engine->stringFactory;
 
 					// Register the constant string with the engine
@@ -9400,6 +9470,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 					}
 
 					PerformFunctionCall(descr->id, ctx, false, 0, 0, useVariable, stackOffset);
+#endif
 				}
 			}
 		}

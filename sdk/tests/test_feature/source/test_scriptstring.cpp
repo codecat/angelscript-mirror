@@ -842,10 +842,35 @@ bool Test2()
 
 using namespace std;
 
+#ifdef AS_NEWSTRING
+class CStringFactoryUTF16 : public asIStringFactory
+{
+public:
+	const void *GetStringConstant(const char *data, asUINT length)
+	{
+		vector<asWORD> *str = new vector<asWORD>((const asWORD*)data, ((const asWORD*)data) + length / 2);
+		return str;
+	}
+
+	int ReleaseStringConstant(const void *str)
+	{
+		delete reinterpret_cast<const vector<asWORD> *>(str);
+		return 0;
+	}
+
+	int GetRawStringData(const void *str, char *data, asUINT *length) const
+	{
+		if (length) *length = (asUINT)reinterpret_cast<const vector<asWORD> *>(str)->size() * 2;
+		if (data) memcpy(data, &(*reinterpret_cast<const vector<asWORD> *>(str))[0], (asUINT)reinterpret_cast<const vector<asWORD> *>(str)->size() * 2);
+		return 0;
+	}
+} stringFactoryUTF16;
+#else
 vector<asWORD> StringFactoryUTF16(unsigned int byteLength, const asWORD *data)
 {
 	return vector<asWORD>(data, data+byteLength/2);
 }
+#endif
 
 void StringConstructUTF16(vector<asWORD> *o)
 {
@@ -882,9 +907,11 @@ bool TestUTF16()
 	engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(StringConstructUTF16), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(StringDestructUTF16), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(vector<asWORD>, operator=, (const vector<asWORD> &), vector<asWORD> &), asCALL_THISCALL);
-
+#ifdef AS_NEWSTRING
+	engine->RegisterStringFactory("string", &stringFactoryUTF16);
+#else
 	engine->RegisterStringFactory("string", asFUNCTION(StringFactoryUTF16), asCALL_CDECL);
-
+#endif
 	vector<asWORD> str;
 	engine->RegisterGlobalProperty("string s", &str);
 

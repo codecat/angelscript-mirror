@@ -14,9 +14,39 @@ void    asBStrConstruct(asBSTR *s);
 void    asBStrDestruct(asBSTR *s);
 asBSTR *asBStrCopy(const asBSTR *src, asBSTR *dst);
 asBSTR *asBStrAppend(const asBSTR *other, asBSTR *self);
+#ifndef AS_NEWSTRING
 asBSTR  asBStrFactory(asUINT length, const char *s);
+#endif
 asUINT  asBStrLengthMethod(const asBSTR *s);
 asBYTE *asBStrByteAt(int index, const asBSTR *s);
+
+#ifdef AS_NEWSTRING
+class CBStrFactory : public asIStringFactory
+{
+public:
+	const void *GetStringConstant(const char *data, asUINT length)
+	{
+		asBSTR *str = new asBSTR;
+		*str = asBStrAlloc(length);
+		memcpy(*str, data, length);
+		return str;
+	}
+
+	int ReleaseStringConstant(const void *str)
+	{
+		asBStrFree(*reinterpret_cast<asBSTR*>(const_cast<void*>(str)));
+		delete reinterpret_cast<asBSTR*>(const_cast<void*>(str));
+		return 0;
+	}
+
+	int GetRawStringData(const void *str, char *data, asUINT *length) const
+	{
+		if (length) *length = asBStrLength(*reinterpret_cast<asBSTR*>(const_cast<void*>(str)));
+		if (data) memcpy(data, *reinterpret_cast<void**>(const_cast<void*>(str)), asBStrLength(*reinterpret_cast<asBSTR*>(const_cast<void*>(str))));
+		return 0;
+	}
+} bstrFactory;
+#endif
 
 void RegisterBStr(asIScriptEngine *engine)
 {
@@ -26,8 +56,11 @@ void RegisterBStr(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("bstr", sizeof(asBSTR), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 
 	// Register the bstr factory
+#ifdef AS_NEWSTRING
+	r = engine->RegisterStringFactory("bstr", &bstrFactory); assert(r >= 0);
+#else
 	r = engine->RegisterStringFactory("bstr", asFUNCTION(asBStrFactory), asCALL_CDECL); assert( r >= 0 );
-
+#endif
 	// Register the object methods
 	r = engine->RegisterObjectMethod("bstr", "uint length() const", asFUNCTION(asBStrLengthMethod), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
@@ -51,6 +84,7 @@ void RegisterBStr(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("bstr bstrFormat(double)",               asFUNCTION((asBSTR (*)(double))asBStrFormat),       asCALL_CDECL); assert( r >= 0 );
 }
 
+#ifndef AS_NEWSTRING
 asBSTR asBStrFactory(asUINT length, const char *s)
 {
 	asBSTR o = asBStrAlloc(length);
@@ -58,6 +92,7 @@ asBSTR asBStrFactory(asUINT length, const char *s)
 
 	return o;
 }
+#endif
 
 asBSTR asBStrAlloc(asUINT length)
 {

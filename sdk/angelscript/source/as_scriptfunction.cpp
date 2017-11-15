@@ -1152,7 +1152,34 @@ void asCScriptFunction::AddReferences()
 					void *gvarPtr = (void*)asBC_PTRARG(&bc[n]);
 					if( !gvarPtr ) break;
 					asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
-					if( !prop ) break;
+#ifdef AS_NEWSTRING
+					if (!prop)
+					{
+						// The pointer is a string constant. In order to make sure the correct resource
+						// management is maintained we request a new string constant here, so the compiler
+						// or bytecode loader can release its copy afterwards.
+						asCString str;
+						asUINT length;
+						int r = engine->stringFactory->GetRawStringData(gvarPtr, 0, &length);
+						if (r >= 0)
+						{
+							str.SetLength(length);
+							engine->stringFactory->GetRawStringData(gvarPtr, str.AddressOf(), &length);
+
+							// Get a new pointer (depending on the string factory implementation it may actually be the same)
+							gvarPtr = const_cast<void*>(engine->stringFactory->GetStringConstant(str.AddressOf(), length));
+							asBC_PTRARG(&bc[n]) = (asPWORD)gvarPtr;
+						}
+						
+						// If we get an error from the string factory there is not
+						// anything we can do about it, except report a message.
+						// TODO: NEWSTRING: Write a message and then exit gracefully
+						asASSERT(r >= 0);
+						break;
+					}
+#else
+					if (!prop) break;
+#endif
 
 					// Only addref the properties once
 					if( !ptrs.Exists(gvarPtr) )
@@ -1293,8 +1320,24 @@ void asCScriptFunction::ReleaseReferences()
 					void *gvarPtr = (void*)asBC_PTRARG(&bc[n]);
 					if( !gvarPtr ) break;
 					asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
-					if( !prop ) break;
+#ifdef AS_NEWSTRING
+					if (!prop)
+					{
+						// The pointer is a string constant, so it needs to be released by the string factory
+						int r = engine->stringFactory->ReleaseStringConstant(gvarPtr);
+						UNUSED_VAR(r);
 
+						// If we get an error from the string factory there is not
+						// anything we can do about it, except report a message.
+						// TODO: Write a message showing that the string couldn't be 
+						//       released. Include the first 10 characters and the length
+						//       to make it easier to identify which string it was
+						asASSERT(r >= 0);
+						break;
+					}
+#else
+					if( !prop ) break;
+#endif
 					// Only release the properties once
 					if( !ptrs.Exists(gvarPtr) )
 					{

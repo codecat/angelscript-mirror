@@ -2507,6 +2507,9 @@ void asCContext::ExecuteNext()
 
 	case asBC_STR:
 		{
+#ifdef AS_NEWSTRING
+			SetInternalException("Illegal instruction STR");
+#else
 			// Get the string id from the argument
 			asWORD w = asBC_WORDARG0(l_bc);
 			// Push the string pointer on the stack
@@ -2516,6 +2519,7 @@ void asCContext::ExecuteNext()
 			// Push the string length on the stack
 			--l_sp;
 			*l_sp = (asDWORD)b.GetLength();
+#endif
 			l_bc++;
 		}
 		break;

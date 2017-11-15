@@ -51,10 +51,43 @@ void DestroyString(std::string* ptr)
 }
 std::string& AssignString(const std::string& rhs, std::string* ptr) { return (*ptr) = rhs; }
 
+#ifdef AS_NEWSTRING
+class CStdStringFactory : public asIStringFactory
+{
+public:
+	CStdStringFactory() {}
+	~CStdStringFactory() {}
+
+	const void *GetStringConstant(const char *data, asUINT length)
+	{
+		return new std::string(data, length);
+	}
+
+	int  ReleaseStringConstant(const void *str)
+	{
+		delete reinterpret_cast<const std::string*>(str);
+		return 0;
+	}
+
+	int  GetRawStringData(const void *str, char *data, asUINT *length) const
+	{
+		if (length)
+			*length = (asUINT)reinterpret_cast<const std::string*>(str)->length();
+
+		if (data)
+			memcpy(data, reinterpret_cast<const std::string*>(str)->c_str(), reinterpret_cast<const std::string*>(str)->length());
+
+		return asSUCCESS;
+	}
+};
+
+static CStdStringFactory stringFactory;
+#else
 std::string StringFactory(unsigned int length, const char *s)
 {
 	return std::string(s,length);
 }
+#endif
 
 bool Test()
 {
@@ -115,11 +148,13 @@ bool Test()
 		"void constructor(const string&)",
 		asFUNCTION(CopyConstructString),
 		asCALL_CDECL_OBJLAST);		assert( r >=0 );
-
+#ifdef AS_NEWSTRING
+	r = engine->RegisterStringFactory("string", &stringFactory); assert(r >= 0);
+#else
 	r = engine->RegisterStringFactory("string",
 		asFUNCTION(StringFactory),
 		asCALL_CDECL);assert( r >=0 );
-
+#endif
 	r = engine->RegisterObjectMethod("Foo",
 		"string member_one(const string&)",
 		asFUNCTION(foo_member_fun_one),

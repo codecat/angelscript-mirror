@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.0 WIP - 2017/11/11</h2>
+<h2>Version 2.32.0 WIP - 2017/11/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -52,6 +52,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>RegisterFuncdef, RegisterInterface, RegisterTypedef, RegisterEnum now returns the type id on success
 <li>Added asEP_MAX_NESTED_CALLS to control the maximum number of nested calls that should be allowed
 <li>Both Read and Write in asIBinaryStream can now return an error code to signal failure
+<li>Added a new interface asIStringFactory to allow the application to hold the string constants in native format
+<li>The RegisterStringFactory now takes a pointer to asIStringFactory instead of a function callback
 </ul>
 <li>Library
 <ul>
@@ -60,6 +62,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The VM now raises an exception when application performs too many nested calls (Thanks Jordan Verner)
 <li>Improved compiler error message when identifier before parenthesis doesn't evaluate to a function (Thanks Patrick Jeeves)
 <li>Objects that rely on asGetActiveContext during clean-up can now do so even during exception handling
+<li>String constants are now evaluated at compile time and a pointer to the application native format is kept in the bytecode
+</ul>
+<li>Virtual machine
+<ul>
+<li>The asBC_STR instruction no longer has any use and will be deprecated
 </ul>
 <li>Script language
 <ul>
@@ -68,6 +75,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>shared interfaces, classes, functions, and funcdefs can also be declared as external
 <li>funcdefs can now be explicitly declared as shared
 <li>Implemented support for typeless anonymous initialization lists (Thanks Patrick Jeeves)
+<li>The compiler will implicitly convert string literals to local variables if a non-const reference is needed
 </ul>
 <li>Add-ons
 <ul>
@@ -77,6 +85,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>WriteConfigToStream now resets the namespace for the string factory (Thanks Solokiller)
 <li>Implemented sort in CScriptArray that takes as input a script function to compare two elements
 <li>Dictionary storing a const handle now allows retrieving by value
+<li>ConfigEngineFromStream takes an optional pointer to asIStringFactory
+<li>scriptstdstring add-on implements a string factory for asIStringFactory with a cache
 </ul>
 </ul>
 

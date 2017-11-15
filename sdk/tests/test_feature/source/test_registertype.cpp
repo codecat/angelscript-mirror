@@ -622,9 +622,12 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("T", asBEHAVE_FACTORY, "T @f()", asFUNCTION(0), asCALL_THISCALL_ASGLOBAL, (void*)1);
 		if( r < 0 )
 			TEST_FAILED;
+#ifndef AS_NEWSTRING
+		// TODO: NEWSTRING: This doesn't apply to new string so it should be removed
 		r = engine->RegisterStringFactory("T@", asFUNCTION(0), asCALL_THISCALL_ASGLOBAL, (void*)1);
 		if( r < 0 )
 			TEST_FAILED;
+#endif
 
 		engine->Release();
 	}
@@ -762,6 +765,8 @@ bool Test()
 	}
 	engine->Release();
 
+#ifndef AS_NEWSTRING
+	// TODO: NEWSTRING: This test doesn't apply to the new string factory so it should be removed
 	// It must be possible to register a string factory that returns a const ref
 	bout.buffer = "";
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -776,6 +781,7 @@ bool Test()
 		TEST_FAILED;
 	}
 	engine->Release();
+#endif
 
 	// A type registered with asOBJ_GC must register all gc behaviours
 	bout.buffer = "";

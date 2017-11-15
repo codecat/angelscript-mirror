@@ -393,6 +393,12 @@ protected:
 	// This array holds the indices of variables that must not be used in an allocation
 	asCArray<int>         reservedVariables;
 
+#ifdef AS_NEWSTRING
+	// This array holds the string constants that were allocated during the compilation, 
+	// so they can be released upon completion, whether the compilation was successful or not.
+	asCArray<void*>       usedStringConstants;
+#endif
+
 	bool isCompilingDefaultArg;
 	bool isProcessingDeferredParams;
 	int  noCodeOutput;

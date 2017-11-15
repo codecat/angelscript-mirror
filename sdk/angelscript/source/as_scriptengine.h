@@ -114,7 +114,11 @@ public:
 #endif
 
 	// String factory
+#ifdef AS_NEWSTRING
+	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory);
+#else
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0);
+#endif
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags) const;
 
 	// Default array type
@@ -325,10 +329,12 @@ public:
 
 	asCFuncdefType    *FindMatchingFuncdef(asCScriptFunction *func, asCModule *mod);
 
+#ifndef AS_NEWSTRING
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked
 	int              AddConstantString(const char *str, size_t length);
 	const asCString &GetConstantString(int id);
+#endif
 
 	// Global property management
 	asCGlobalProperty *AllocateGlobalProperty();
@@ -361,7 +367,12 @@ public:
 	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
 	asCArray<asCFuncdefType *>        registeredFuncDefs;      // doesn't increase ref count
 	asCArray<asCObjectType *>         registeredTemplateTypes; // doesn't increase ref count
+#ifdef AS_NEWSTRING
+	asIStringFactory                 *stringFactory;
+	asCDataType                       stringType;
+#else
 	asCScriptFunction                *stringFactory;
+#endif
 	bool configFailed;
 
 	// Stores all registered types
@@ -468,11 +479,13 @@ public:
 	// only deleted once the engine is destroyed
 	asCArray<asSNameSpace*> nameSpaces;
 
+#ifndef AS_NEWSTRING
 	// String constants
 	// These are shared between all scripts and are
 	// only deleted once the engine is destroyed
 	asCArray<asCString*>          stringConstants;
 	asCMap<asCStringPointer, int> stringToIdMap;
+#endif
 
 	// Callbacks for context pooling
 	asREQUESTCONTEXTFUNC_t  requestCtxFunc;

@@ -18,6 +18,12 @@ namespace Test_Addon_StdString
 
 		COutStream out;
 
+#ifdef AS_NEWSTRING
+		// TODO: NEWSTRING: as string constants are known at compile time, the compiler should treat
+		//                  these as safe and avoid copying them when passed to functions expecting
+		//                  const &in. Just as is done for local variables
+#endif
+
 		{
 			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

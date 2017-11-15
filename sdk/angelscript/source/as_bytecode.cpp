@@ -2199,6 +2199,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 		switch( asBCInfo[instr->op].type )
 		{
 		case asBCTYPE_W_ARG:
+#ifndef AS_NEWSTRING
 			if( instr->op == asBC_STR )
 			{
 				int id = asWORD(instr->wArg[0]);
@@ -2206,6 +2207,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 				fprintf(file, "   %-8s %d         (l:%ld s:\"%.10s\")\n", asBCInfo[instr->op].name, asWORD(instr->wArg[0]), (long int)str.GetLength(), str.AddressOf());
 			}
 			else
+#endif
 				fprintf(file, "   %-8s %d\n", asBCInfo[instr->op].name, instr->wArg[0]);
 			break;
 
