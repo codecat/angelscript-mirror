@@ -2366,58 +2366,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 		else if( behaviour == asBEHAVE_RELEASEREFS )
 			func.id = beh->gcReleaseAllReferences = AddBehaviourFunction(func, internal);
 	}
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.30.0. 2014-10-24
-	else if( behaviour == asBEHAVE_IMPLICIT_VALUE_CAST ||
-		     behaviour == asBEHAVE_VALUE_CAST )
-	{
-		// There are two allowed signatures
-		// 1. type f()
-		// 2. void f(?&out)
-
-		if( !(func.parameterTypes.GetLength() == 1 && func.parameterTypes[0].GetTokenType() == ttQuestion && func.inOutFlags[0] == asTM_OUTREF && func.returnType.GetTokenType() == ttVoid) &&
-			!(func.parameterTypes.GetLength() == 0 &&  func.returnType.GetTokenType() != ttVoid) )
-			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-
-		// It is not allowed to implement a value cast to bool
-		if( func.returnType.IsEqualExceptRefAndConst(asCDataType::CreatePrimitive(ttBool, false)) )
-			return ConfigError(asNOT_SUPPORTED, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-
-		asCString declTmp;
-		declTmp += func.returnType.Format(defaultNamespace);
-		declTmp += behaviour == asBEHAVE_VALUE_CAST ? " opConv(" : " opImplConv(";
-		if( func.parameterTypes.GetLength() )
-			declTmp += "?&out";
-		declTmp += ")";
-		func.id = RegisterMethodToObjectType(objectType, declTmp.AddressOf(), funcPointer, callConv, auxiliary);
-	}
-	// Deprecated since 2.30.0, 2014-12-30
-	else if( behaviour == asBEHAVE_REF_CAST ||
-	         behaviour == asBEHAVE_IMPLICIT_REF_CAST )
-	{
-		// There are two allowed signatures
-		//  1. obj @f()
-		//  2. void f(?&out)
-
-		if( !(func.parameterTypes.GetLength() == 0 && func.returnType.IsObjectHandle()) &&
-			!(func.parameterTypes.GetLength() == 1 && func.parameterTypes[0].GetTokenType() == ttQuestion && func.inOutFlags[0] == asTM_OUTREF && func.returnType.GetTokenType() == ttVoid) )
-			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-
-		// Currently it is not supported to register const overloads for the ref cast behaviour
-		if( func.IsReadOnly() )
-			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-
-		asCString declTmp;
-		declTmp += func.returnType.Format(defaultNamespace);
-		if( internal.returnAutoHandle )
-			declTmp += "+";
-		declTmp += behaviour == asBEHAVE_REF_CAST ? " opCast(" : " opImplCast(";
-		if( func.parameterTypes.GetLength() )
-			declTmp += "?&out";
-		declTmp += ")";
-		func.id = RegisterMethodToObjectType(objectType, declTmp.AddressOf(), funcPointer, callConv, auxiliary);
-	}
-#endif
 	else if ( behaviour == asBEHAVE_GET_WEAKREF_FLAG )
 	{
 		// This behaviour is only allowed for reference types
@@ -4788,16 +4736,6 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCTypeInfo *type)
 	RELEASEEXCLUSIVE(engineRWLock);
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.31.0, 2015-12-06
-// interface
-asITypeInfo *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
-{
-	asITypeInfo *ti = GetTypeInfoByDecl(decl);
-	return CastToObjectType(reinterpret_cast<asCTypeInfo*>(ti));
-}
-#endif
-
 // interface
 asITypeInfo *asCScriptEngine::GetTypeInfoByDecl(const char *decl) const
 {
@@ -5352,44 +5290,6 @@ void asCScriptEngine::ReleaseScriptObject(void *obj, const asITypeInfo *type)
 		}
 	}
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.30.0, 2014-11-04
-// interface
-bool asCScriptEngine::IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const
-{
-	// if equal, then it is obvious they are compatible
-	if( objTypeId == handleTypeId )
-		return true;
-
-	// Get the actual data types from the type ids
-	asCDataType objDt = GetDataTypeFromTypeId(objTypeId);
-	asCDataType hdlDt = GetDataTypeFromTypeId(handleTypeId);
-
-	// A handle to const cannot be passed to a handle that is not referencing a const object
-	if( objDt.IsHandleToConst() && !hdlDt.IsHandleToConst() )
-		return false;
-
-	if( objDt.GetTypeInfo() == hdlDt.GetTypeInfo() )
-	{
-		// The object type is equal
-		return true;
-	}
-	else if( objDt.IsScriptObject() && obj )
-	{
-		// Get the true type from the object instance
-		asITypeInfo *objType = ((asCScriptObject*)obj)->GetObjectType();
-
-		// Check if the object implements the interface, or derives from the base class
-		// This will also return true, if the requested handle type is an exact match for the object type
-		if( objType->Implements(hdlDt.GetTypeInfo()) ||
-		    objType->DerivesFrom(hdlDt.GetTypeInfo()) )
-			return true;
-	}
-
-	return false;
-}
-#endif
 
 // interface
 int asCScriptEngine::BeginConfigGroup(const char *groupName)
@@ -5988,34 +5888,6 @@ asITypeInfo *asCScriptEngine::GetEnumByIndex(asUINT index) const
 	return registeredEnums[index];
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.31.0, 2015-12-06
-// interface
-int asCScriptEngine::GetEnumValueCount(int enumTypeId) const
-{
-	asITypeInfo *ti = GetTypeInfoById(enumTypeId);
-	asCEnumType *e = CastToEnumType(reinterpret_cast<asCTypeInfo*>(ti));
-	if (e == 0)
-		return asINVALID_TYPE;
-
-	return e->GetEnumValueCount();
-}
-#endif
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.31.0, 2015-12-06
-// interface
-const char *asCScriptEngine::GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const
-{
-	asITypeInfo *ti = GetTypeInfoById(enumTypeId);
-	asCEnumType *e = CastToEnumType(reinterpret_cast<asCTypeInfo*>(ti));
-	if (e == 0)
-		return 0;
-
-	return e->GetEnumValueByIndex(index, outValue);
-}
-#endif
-
 // interface
 asUINT asCScriptEngine::GetObjectTypeCount() const
 {
@@ -6030,16 +5902,6 @@ asITypeInfo *asCScriptEngine::GetObjectTypeByIndex(asUINT index) const
 
 	return registeredObjTypes[index];
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.31.0, 2015-12-06
-// interface
-asITypeInfo *asCScriptEngine::GetObjectTypeByName(const char *name) const
-{
-	asITypeInfo *ti = GetTypeInfoByName(name);
-	return CastToObjectType(reinterpret_cast<asCTypeInfo*>(ti));
-}
-#endif
 
 // interface
 asITypeInfo *asCScriptEngine::GetTypeInfoByName(const char *name) const
@@ -6087,16 +5949,6 @@ asITypeInfo *asCScriptEngine::GetTypeInfoByName(const char *name) const
 	return 0;
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2.31.0, 2015-12-06
-// interface
-asITypeInfo *asCScriptEngine::GetObjectTypeById(int typeId) const
-{
-	asITypeInfo *ti = GetTypeInfoById(typeId);
-	return CastToObjectType(reinterpret_cast<asCTypeInfo*>(ti));
-}
-#endif
-
 // interface
 asITypeInfo *asCScriptEngine::GetTypeInfoById(int typeId) const
 {
@@ -6113,18 +5965,6 @@ asIScriptFunction *asCScriptEngine::GetFunctionById(int funcId) const
 {
 	return GetScriptFunction(funcId);
 }
-
-#ifdef AS_DEPRECATED
-// deprecated since 2.31.0, 2016-01-01
-// interface
-asIScriptFunction *asCScriptEngine::GetFuncdefFromTypeId(int typeId) const
-{
-	asCFuncdefType *t = CastToFuncdefType(GetDataTypeFromTypeId(typeId).GetTypeInfo());
-	if (t)
-		return t->funcdef;
-	return 0;
-}
-#endif
 
 // internal
 bool asCScriptEngine::IsTemplateType(const char *name) const
@@ -6295,15 +6135,6 @@ void asCScriptEngine::SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t c
 
 	RELEASEEXCLUSIVE(engineRWLock);
 }
-
-#ifdef AS_DEPRECATED
-// Deprecated since 2.31.0, 2015-12-06
-// interface
-void asCScriptEngine::SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)
-{
-	SetTypeInfoUserDataCleanupCallback(callback, type);
-}
-#endif
 
 // interface
 void asCScriptEngine::SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type)

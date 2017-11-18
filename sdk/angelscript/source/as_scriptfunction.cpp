@@ -1470,23 +1470,6 @@ int asCScriptFunction::GetParam(asUINT index, int *out_typeId, asDWORD *out_flag
 	return asSUCCESS;
 }
 
-#ifdef AS_DEPRECATED
-// Deprecated since 2014-04-06, 2.29.0
-int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
-{
-	if( index >= parameterTypes.GetLength() )
-		return asINVALID_ARG;
-
-	if( flags )
-	{
-		*flags = inOutFlags[index];
-		*flags |= parameterTypes[index].IsReadOnly() ? asTM_CONST : 0;
-	}
-
-	return engine->GetTypeIdFromDataType(parameterTypes[index]);
-}
-#endif
-
 // interface
 asIScriptEngine *asCScriptFunction::GetEngine() const
 {

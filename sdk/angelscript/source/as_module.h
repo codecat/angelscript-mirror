@@ -133,11 +133,6 @@ public:
 	// Type identification
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const;
-	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const;
-#endif
 	virtual int            GetTypeIdByDecl(const char *decl) const;
 	virtual asITypeInfo   *GetTypeInfoByName(const char *name) const;
 	virtual asITypeInfo   *GetTypeInfoByDecl(const char *decl) const;
@@ -145,11 +140,6 @@ public:
 	// Enums
 	virtual asUINT       GetEnumCount() const;
 	virtual asITypeInfo *GetEnumByIndex(asUINT index) const;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	virtual int          GetEnumValueCount(int enumTypeId) const;
-	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const;
-#endif
 
 	// Typedefs
 	virtual asUINT       GetTypedefCount() const;
