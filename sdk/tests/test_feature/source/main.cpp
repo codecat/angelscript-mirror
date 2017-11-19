@@ -155,6 +155,7 @@ namespace TestPow               { bool Test(); }
 namespace TestThisCallMethod    { bool Test(); }
 namespace TestThisCallMethod_ConfigErrors { bool Test(); }
 namespace TestPropIntegerDivision { bool Test(); }
+namespace TestComposition       { bool Test(); }
 
 namespace Test_Addon_ScriptArray   { bool Test(); }
 namespace Test_Addon_ScriptHandle  { bool Test(); }
@@ -240,6 +241,7 @@ int allTests()
 	if (Test_Addon_DateTime::Test()      ) goto failed; else PRINTF("-- Test_Addon_DateTime passed\n");
 	if (Test_Addon_StdString::Test()     ) goto failed; else PRINTF("-- Test_Addon_StdString passed\n");
 
+	if( TestComposition::Test()         ) goto failed; else PRINTF("-- TestComposition passed\n");
 	if( TestPropIntegerDivision::Test() ) goto failed; else PRINTF("-- TestPropIntegerDivision passed\n");
 	if( TestThisCallMethod_ConfigErrors::Test() ) goto failed; else PRINTF("-- TestThisCallMethod_ConfigErrors passed\n");
 	if( TestAuto::Test()                ) goto failed; else PRINTF("-- TestAuto passed\n");

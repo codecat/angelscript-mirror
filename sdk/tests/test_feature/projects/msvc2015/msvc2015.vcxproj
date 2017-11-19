@@ -458,6 +458,7 @@
     <ClCompile Include="..\..\source\test_cdecl_return.cpp" />
     <ClCompile Include="..\..\source\test_circularimport.cpp" />
     <ClCompile Include="..\..\source\test_compiler.cpp" />
+    <ClCompile Include="..\..\source\test_composition.cpp" />
     <ClCompile Include="..\..\source\test_condition.cpp" />
     <ClCompile Include="..\..\source\test_config.cpp" />
     <ClCompile Include="..\..\source\test_configaccess.cpp" />

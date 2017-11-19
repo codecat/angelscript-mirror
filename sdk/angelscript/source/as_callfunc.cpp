@@ -573,9 +573,15 @@ int CallSystemFunction(int id, asCContext *context)
 	void    *retPointer        = 0;
 	int      popSize           = sysFunc->paramSize;
 
+	// TODO: clean-up: CallSystemFunctionNative should have two arguments for object pointers
+	//                 objForThiscall is the object pointer that should be used for the thiscall
+	//                 objForArg is the object pointer that should be passed as argument when using OBJFIRST or OBJLAST
+
+	// Used to save two object pointers with THISCALL_OBJLAST or THISCALL_OBJFIRST
+	void *obj = 0;
+	void *secondObj = 0;
+
 #ifdef AS_NO_THISCALL_FUNCTOR_METHOD
-	void    *obj               = 0;
-	void    *secondObj         = 0;
 
 	if( callConv >= ICC_THISCALL )
 	{
@@ -613,13 +619,6 @@ int CallSystemFunction(int id, asCContext *context)
 		}
 	}
 #else
-	// TODO: clean-up: CallSystemFunctionNative should have two arguments for object pointers
-	//                 objForThiscall is the object pointer that should be used for the thiscall
-	//                 objForArg is the object pointer that should be passed as argument when using OBJFIRST or OBJLAST
-
-	// Used to save two object pointers with THISCALL_OBJLAST or THISCALL_OBJFIRST
-	void *obj               = 0;
-	void *secondObj         = 0;
 
 	if( callConv >= ICC_THISCALL )
 	{
@@ -687,7 +686,7 @@ int CallSystemFunction(int id, asCContext *context)
 		popSize += AS_PTR_SIZE;
 		args += AS_PTR_SIZE;
 
-		// When returning the value on the location allocated by the called 
+		// When returning the value on the location allocated by the called
 		// we shouldn't set the object type in the register
 		context->m_regs.objectType = 0;
 	}
@@ -695,6 +694,13 @@ int CallSystemFunction(int id, asCContext *context)
 	{
 		// Set the object type of the reference held in the register
 		context->m_regs.objectType = descr->returnType.GetTypeInfo();
+	}
+
+	// For composition we need to add the offset and/or dereference the pointer
+	if(obj)
+	{
+		obj = (void*) ((char*) obj + sysFunc->compositeOffset);
+		if(sysFunc->isCompositeIndirect) obj = *((void**)obj);
 	}
 
 	context->m_callingSystemFunction = descr;
