@@ -1414,7 +1414,7 @@ int asCScriptEngine::CreateContext(asIScriptContext **context, bool isInternal)
 }
 
 // interface
-int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset)
+int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, int compositeOffset, bool isCompositeIndirect)
 {
 	int r;
 	asCDataType dt;
@@ -1447,17 +1447,22 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	//       same on all platforms
 	if( byteOffset > 32767 || byteOffset < -32768 )
 		return ConfigError(asINVALID_ARG, "RegisterObjectProperty", obj, declaration);
+	// The composite offset must also obey the ADDSi restriction
+	if (compositeOffset > 32767 || compositeOffset < -32768)
+		return ConfigError(asINVALID_ARG, "RegisterObjectProperty", obj, declaration);
 
 	asCObjectProperty *prop = asNEW(asCObjectProperty);
 	if( prop == 0 )
 		return ConfigError(asOUT_OF_MEMORY, "RegisterObjectProperty", obj, declaration);
 
-	prop->name        = name;
-	prop->type        = type;
-	prop->byteOffset  = byteOffset;
-	prop->isPrivate   = false;
-	prop->isProtected = false;
-	prop->accessMask  = defaultAccessMask;
+	prop->name                = name;
+	prop->type                = type;
+	prop->byteOffset          = byteOffset;
+	prop->isPrivate           = false;
+	prop->isProtected         = false;
+	prop->compositeOffset     = compositeOffset;
+	prop->isCompositeIndirect = isCompositeIndirect;
+	prop->accessMask          = defaultAccessMask;
 
 	CastToObjectType(dt.GetTypeInfo())->properties.PushLast(prop);
 

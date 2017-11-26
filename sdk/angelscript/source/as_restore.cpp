@@ -2566,14 +2566,14 @@ void asCReader::ReadUsedObjectProps()
 		asCString name;
 		ReadString(&name);
 
-		// Find the property offset
+		// Find the property
 		bool found = false;
 		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
 		{
 			if( objType->properties[p]->name == name )
 			{
 				usedObjectProperties[n].objType = objType;
-				usedObjectProperties[n].offset = objType->properties[p]->byteOffset;
+				usedObjectProperties[n].prop = objType->properties[p];
 				found = true;
 				break;
 			}
@@ -2589,13 +2589,32 @@ void asCReader::ReadUsedObjectProps()
 
 short asCReader::FindObjectPropOffset(asWORD index)
 {
+	static asCObjectProperty *lastCompositeProp = 0;
+	if (lastCompositeProp)
+	{
+		if (index != 0)
+		{
+			Error(TXT_INVALID_BYTECODE_d);
+			return 0;
+		}
+
+		short offset = (short)lastCompositeProp->byteOffset;
+		lastCompositeProp = 0;
+		return offset;
+	}
+
 	if( index >= usedObjectProperties.GetLength() )
 	{
 		Error(TXT_INVALID_BYTECODE_d);
 		return 0;
 	}
 
-	return (short)usedObjectProperties[index].offset;
+	if (usedObjectProperties[index].prop->compositeOffset || usedObjectProperties[index].prop->isCompositeIndirect)
+	{
+		lastCompositeProp = usedObjectProperties[index].prop;
+		return (short)lastCompositeProp->compositeOffset;
+	}
+	return (short)usedObjectProperties[index].prop->byteOffset;
 }
 
 asCScriptFunction *asCReader::FindFunction(int idx)
@@ -4898,7 +4917,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			     c == asBC_LoadThisR )   // W_DW_ARG
 		{
 			// Translate property offsets into indices
-			*(((short*)tmpBC)+1) = (short)FindObjectPropIndex(*(((short*)tmpBC)+1), *(int*)(tmpBC+1));
+			*(((short*)tmpBC)+1) = (short)FindObjectPropIndex(*(((short*)tmpBC)+1), *(int*)(tmpBC+1), bc);
 
 			// Translate type ids into indices
 			*(int*)(tmpBC+1) = FindTypeIdIdx(*(int*)(tmpBC+1));
@@ -4916,8 +4935,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			else
 			{
 				// Translate property offsets into indices
-				// TODO: optimize: Pass the object type directly to the method instead of the type id
-				*(((short*)tmpBC)+2) = (short)FindObjectPropIndex(*(((short*)tmpBC)+2), *(int*)(tmpBC+2));
+				*(((short*)tmpBC)+2) = (short)FindObjectPropIndex(*(((short*)tmpBC)+2), *(int*)(tmpBC+2), bc);
 			}
 
 			// Translate type ids into indices
@@ -5535,32 +5553,86 @@ void asCWriter::WriteUsedObjectProps()
 
 	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
 	{
-		asCObjectType *objType = usedObjectProperties[n].objType;
-		WriteTypeInfo(objType);
-
-		// Find the property name
-		for( asUINT p = 0; p < objType->properties.GetLength(); p++ )
-		{
-			if( objType->properties[p]->byteOffset == usedObjectProperties[n].offset )
-			{
-				WriteString(&objType->properties[p]->name);
-				break;
-			}
-		}
+		WriteTypeInfo(usedObjectProperties[n].objType);
+		WriteString(&usedObjectProperties[n].prop->name);
 	}
 }
 
-int asCWriter::FindObjectPropIndex(short offset, int typeId)
+int asCWriter::FindObjectPropIndex(short offset, int typeId, asDWORD *bc)
 {
+	// If the last property was a composite property, then just return 0, because it won't be translated
+	static bool lastWasComposite = false;
+	if (lastWasComposite)
+	{
+		lastWasComposite = false;
+		return 0;
+	}
+	
 	asCObjectType *objType = engine->GetObjectTypeFromTypeId(typeId);
+	asCObjectProperty *objProp = 0;
+
+	// Look for composite properties first
+	for (asUINT n = 0; objProp == 0 && n < objType->properties.GetLength(); n++)
+	{
+		// TODO: Composite: Perhaps it would be better to add metadata to the bytecode instruction to give the exact property. 
+		//                  That would also allow me to remove the typeId from the bytecode instruction itself
+		//                  Or perhaps a new bytecode instruction all together for accessing composite properties
+		//                  One that would do both offsets and indirection in a single go.
+		// TODO: Composite: Need to be able to handle instructions replaced in bytecode optimizations too
+		if (objType->properties[n]->compositeOffset == offset)
+		{
+			// This is a potential composite property. Need to check the following instructions to be sure
+			objProp = objType->properties[n];
+			asDWORD *bcTemp = bc;
+			bcTemp += asBCTypeSize[asBCInfo[*(asBYTE*)bcTemp].type];
+			if (objProp->isCompositeIndirect)
+			{
+				// The next instruction would be a asBC_RDSPtr
+				if ((*(asBYTE*)bcTemp) != asBC_RDSPtr)
+				{
+					objProp = 0;
+					continue;
+				}
+				bcTemp += asBCTypeSize[asBCInfo[*(asBYTE*)bcTemp].type];
+			}
+			// The next instruction would be asBC_ADDSi
+			if ((*(asBYTE*)bcTemp) != asBC_ADDSi)
+			{
+				objProp = 0;
+				continue;
+			}
+			// Make sure the offset is the expected one
+			if (*(((short*)bcTemp) + 1) != objProp->byteOffset)
+			{
+				objProp = 0;
+				continue;
+			}
+		}
+	}
+
+	// If none of the composite properties matched, then look for ordinary property
+	for (asUINT n = 0; objProp == 0 && n < objType->properties.GetLength(); n++)
+	{
+		if (objType->properties[n]->byteOffset == offset && !(objType->properties[n]->compositeOffset || objType->properties[n]->isCompositeIndirect))
+			objProp = objType->properties[n];
+	}
+
+	asASSERT(objProp);
+
+	// Remember if this is a composite property as the next call will then be for the same property
+	if (objProp->compositeOffset || objProp->isCompositeIndirect)
+		lastWasComposite = true;
+
+	// Now check if the same property has already been accessed
 	for( asUINT n = 0; n < usedObjectProperties.GetLength(); n++ )
 	{
 		if( usedObjectProperties[n].objType == objType &&
-			usedObjectProperties[n].offset  == offset )
+			usedObjectProperties[n].prop  == objProp )
 			return n;
 	}
 
-	SObjProp prop = {objType, offset};
+	// Insert the new property
+	SObjProp prop = {objType, objProp};
 	usedObjectProperties.PushLast(prop);
 	return (int)usedObjectProperties.GetLength() - 1;
 }

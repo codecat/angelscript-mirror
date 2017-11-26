@@ -251,7 +251,7 @@ asDWORD asCTypeInfo::GetAccessMask() const
 }
 
 // interface
-int asCTypeInfo::GetProperty(asUINT index, const char **out_name, int *out_typeId, bool *out_isPrivate, bool *out_isProtected, int *out_offset, bool *out_isReference, asDWORD *out_accessMask) const
+int asCTypeInfo::GetProperty(asUINT index, const char **out_name, int *out_typeId, bool *out_isPrivate, bool *out_isProtected, int *out_offset, bool *out_isReference, asDWORD *out_accessMask, int *out_compositeOffset, bool *out_isCompositeIndirect) const
 {
 	UNUSED_VAR(index);
 	if (out_name) *out_name = 0;
@@ -261,6 +261,8 @@ int asCTypeInfo::GetProperty(asUINT index, const char **out_name, int *out_typeI
 	if (out_offset) *out_offset = 0;
 	if (out_isReference) *out_isReference = false;
 	if (out_accessMask) *out_accessMask = 0;
+	if (out_compositeOffset) *out_compositeOffset = 0;
+	if (out_isCompositeIndirect) *out_isCompositeIndirect = false;
 	return -1;
 }
 

@@ -449,7 +449,13 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 						currAccessMask = accessMask;
 					}
-					strm << "objprop \"" << typeDecl.c_str() << "\" \"" << type->GetPropertyDeclaration(m) << "\"\n";
+					strm << "objprop \"" << typeDecl.c_str() << "\" \"" << type->GetPropertyDeclaration(m) << "\"";
+
+					// Save information about composite properties
+					int compositeOffset;
+					bool isCompositeIndirect;
+					type->GetProperty(m, 0, 0, 0, 0, 0, 0, 0, &compositeOffset, &isCompositeIndirect);
+					strm << " " << compositeOffset << " " << (isCompositeIndirect ? "1" : "0") << "\n";
 				}
 			}
 		}
@@ -736,11 +742,13 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 		}
 		else if( token == "objprop" )
 		{
-			string name, decl;
+			string name, decl, compositeOffset, isCompositeIndirect;
 			in::GetToken(engine, name, config, pos);
 			name = name.substr(1, name.length() - 2);
 			in::GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
+			in::GetToken(engine, compositeOffset, config, pos);
+			in::GetToken(engine, isCompositeIndirect, config, pos);
 
 			asITypeInfo *type = engine->GetTypeInfoById(engine->GetTypeIdByDecl(name.c_str()));
 			if( type == 0 )
@@ -751,7 +759,7 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 
 			// All properties must have different offsets in order to make them
 			// distinct, so we simply register them with an incremental offset
-			r = engine->RegisterObjectProperty(name.c_str(), decl.c_str(), type->GetPropertyCount());
+			r = engine->RegisterObjectProperty(name.c_str(), decl.c_str(), type->GetPropertyCount(), compositeOffset != "0" ? type->GetPropertyCount() : 0, isCompositeIndirect != "0");
 			if( r < 0 )
 			{
 				engine->WriteMessage(configFile, in::GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register object property");

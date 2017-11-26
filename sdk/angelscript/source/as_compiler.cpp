@@ -11965,7 +11965,15 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 						Error(msg, node);
 					}
 
+					// Adjust the pointer for composite member
+					// This must always be done even if the offset is 0 because the asCWriter needs the meta data in ADDSi to identify the composite property
+					if( prop->compositeOffset || prop->isCompositeIndirect )
+						ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->compositeOffset, engine->GetTypeIdFromDataType(asCDataType::CreateType(ctx->type.dataType.GetTypeInfo(), false)));
+					if (prop->isCompositeIndirect)
+						ctx->bc.Instr(asBC_RDSPtr);
+
 					// Put the offset on the stack
+					// This must always be done even if the offset is 0 so the type info is stored
 					ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(asCDataType::CreateType(ctx->type.dataType.GetTypeInfo(), false)));
 
 					if( prop->type.IsReference() )

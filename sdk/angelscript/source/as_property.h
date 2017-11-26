@@ -53,12 +53,14 @@ struct asSNameSpace;
 class asCObjectProperty
 {
 public:
-	asCObjectProperty() {accessMask = 0xFFFFFFFF;}
-	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), accessMask(o.accessMask), isPrivate(o.isPrivate), isProtected(o.isProtected), isInherited(o.isInherited) {}
+	asCObjectProperty() : byteOffset(0), accessMask(0xFFFFFFFF), compositeOffset(0), isCompositeIndirect(false), isPrivate(false), isProtected(false), isInherited(false) {}
+	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), accessMask(o.accessMask), isPrivate(o.isPrivate), isProtected(o.isProtected), isInherited(o.isInherited), compositeOffset(o.compositeOffset), isCompositeIndirect(o.isCompositeIndirect) {}
 	asCString   name;
 	asCDataType type;
 	int         byteOffset;
 	asDWORD     accessMask;
+	int         compositeOffset;
+	bool        isCompositeIndirect;
 	bool        isPrivate;
 	bool        isProtected;
 	bool        isInherited;

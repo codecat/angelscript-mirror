@@ -117,8 +117,8 @@ protected:
 
 	struct SObjProp
 	{
-		asCObjectType *objType;
-		int            offset;
+		asCObjectType     *objType;
+		asCObjectProperty *prop;
 	};
 	asCArray<SObjProp> usedObjectProperties;
 
@@ -197,7 +197,7 @@ protected:
 #else
 	int FindStringConstantIndex(int id);
 #endif
-	int FindObjectPropIndex(short offset, int typeId);
+	int FindObjectPropIndex(short offset, int typeId, asDWORD *bc);
 
 	void CalculateAdjustmentByPos(asCScriptFunction *func);
 	int  AdjustStackPosition(int pos);
@@ -238,8 +238,8 @@ protected:
 
 	struct SObjProp
 	{
-		asCObjectType *objType;
-		int            offset;
+		asCObjectType     *objType;
+		asCObjectProperty *prop;
 	};
 	asCArray<SObjProp>           usedObjectProperties;
 
