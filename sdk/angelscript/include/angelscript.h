@@ -789,6 +789,9 @@ public:
 	virtual const void *GetStringConstant(const char *data, asUINT length) = 0;
 	virtual int         ReleaseStringConstant(const void *str) = 0;
 	virtual int         GetRawStringData(const void *str, char *data, asUINT *length) const = 0;
+
+protected:
+	virtual ~asIStringFactory() {}
 };
 #endif
 

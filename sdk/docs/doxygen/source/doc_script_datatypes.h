@@ -154,6 +154,7 @@ Arrays can also be created and initialized within expressions as \ref anonobj "a
   foo(array<int> = {1,2,3,4});
 </pre>
 
+\todo Show how to use the sort with custom compare function
 
 
 \section doc_datatypes_arrays_addon Supporting array object and functions

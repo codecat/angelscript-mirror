@@ -531,6 +531,7 @@ public:
   void SortDesc();
   void SortDesc(asUINT startAt, asUINT count);
   void Sort(asUINT startAt, asUINT count, bool asc);
+  void Sort(asIScriptFunction *less, asUINT startAt, asUINT count);
   void Reverse();
   int  Find(void *value) const;
   int  Find(asUINT startAt, void *value) const;
@@ -1864,7 +1865,7 @@ int WriteConfigToStream(asIScriptEngine *engine, std::ostream &strm);
 // Loads an interface from a text stream and configures the engine with it. This will not 
 // set the correct function pointers, so it is not possible to use this engine to execute
 // scripts, but it can be used to compile scripts and save the byte code.
-int ConfigEngineFromStream(asIScriptEngine *engine, std::istream &strm, const char *nameOfStream = "config");
+int ConfigEngineFromStream(asIScriptEngine *engine, std::istream &strm, const char *nameOfStream = "config", asIStringFactory *stringFactory = 0);
 \endcode
 
 \section doc_addon_helpers_2 Example

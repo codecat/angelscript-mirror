@@ -43,7 +43,7 @@ asIScriptEngine *engine = asCreateScriptEngine();
 int r = engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); assert( r >= 0 );
 
 // AngelScript doesn't have a built-in string type, as there is no definite standard 
-// string type for C++ applications. Every developer is free to register it's own string type.
+// string type for C++ applications. Every developer is free to register its own string type.
 // The SDK do however provide a standard add-on for registering a string type, so it's not
 // necessary to implement the registration yourself if you don't want to.
 RegisterStdString(engine);

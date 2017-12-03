@@ -4,7 +4,7 @@
 
 \image html aslogo.png 
 
-<center>Version 2.31.2</center>
+<center>Version 2.32.0</center>
 
 \ref doc_overview "AngelScript" is a \ref doc_license "free, open source", flexible, and cross-platform scripting library meant to be
 embedded in applications. The purpose is to provide an easy to use library that is powerful, but that isn't weighed 
@@ -71,6 +71,8 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_register_prop
  - \subpage doc_register_type
  - \subpage doc_advanced_api
+ 
+\todo add page to explain the string factory
 
 
 \page doc_advanced_api Advanced application interface

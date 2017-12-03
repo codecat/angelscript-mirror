@@ -63,7 +63,7 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.31.2
+//! Version 2.32.0
 #define ANGELSCRIPT_VERSION        23200
 #define ANGELSCRIPT_VERSION_STRING "2.32.0"
 
@@ -75,16 +75,12 @@ class asIScriptContext;
 class asIScriptGeneric;
 class asIScriptObject;
 class asITypeInfo;
-#ifdef AS_DEPRECATED
-// deprecated since 2.31.0 - 2015/11/18
-//! \deprecated Since 2.31.0. Use \ref asITypeInfo instead.
-typedef asITypeInfo asIObjectType;
-#endif
 class asIScriptFunction;
 class asIBinaryStream;
 class asIJITCompiler;
 class asIThreadManager;
 class asILockableSharedBool;
+class asIStringFactory;
 
 // Enumerations and constants
 
@@ -208,6 +204,8 @@ enum asEEngineProp
 	asEP_ALLOW_UNICODE_IDENTIFIERS          = 25,
 	//! Define how heredoc strings will be trimmed by the compiler: 0 - never trim, 1 - trim if multiple lines, 2 - always trim. Default: 1
 	asEP_HEREDOC_TRIM_MODE                  = 26,
+	//! Define the maximum number of nested calls the script engine will allow. Default: 100
+	asEP_MAX_NESTED_CALLS                   = 27,
 
 	asEP_LAST_PROPERTY
 };
@@ -312,6 +310,7 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
 	//! The object is declared for implicit handle. Only valid for reference types.
 	asOBJ_IMPLICIT_HANDLE            = (1<<20),
+	//! This mask shows which flags are value for RegisterObjectType
 	asOBJ_MASK_VALID_FLAGS           = 0x1FFFFF,
 	// Internal flags
 	//! The object is a script class or an interface.
@@ -322,14 +321,17 @@ enum asEObjTypeFlags
 	asOBJ_NOINHERIT                  = (1<<23),
 	//! The type is a script funcdef
 	asOBJ_FUNCDEF                    = (1<<24),
+	//! Internal type. Do not use
 	asOBJ_LIST_PATTERN               = (1<<25),
 	//! The type is an enum
 	asOBJ_ENUM                       = (1<<26),
+	//! Internal type. Do no use
 	asOBJ_TEMPLATE_SUBTYPE           = (1<<27),
 	//! The type is a typedef
 	asOBJ_TYPEDEF                    = (1<<28),
 	//! The class is abstract, i.e. cannot be instantiated
 	asOBJ_ABSTRACT                   = (1<<29),
+	//! Reserved for future use.
 	asOBJ_APP_ALIGN16                = (1<<30)
 };
 
@@ -358,18 +360,6 @@ enum asEBehaviours
 	asBEHAVE_GET_WEAKREF_FLAG,
 
 	// Object operators
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.30.0, 2014-10-24
-	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opConv" instead.
-	asBEHAVE_VALUE_CAST,
-	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opImplConv" instead.
-	asBEHAVE_IMPLICIT_VALUE_CAST,
-	// Deprecated since 2.30.0, 2014-12-30
-	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opCast" instead.
-	asBEHAVE_REF_CAST,
-	//! \deprecated Since 2.30.0. Use \ref doc_script_class_conv "opImplCast" instead.
-	asBEHAVE_IMPLICIT_REF_CAST,
-#endif
 	//! \brief Callback for validating template instances
 	asBEHAVE_TEMPLATE_CALLBACK,
 
@@ -637,11 +627,6 @@ typedef void (*asCLEANCONTEXTFUNC_t)(asIScriptContext *);
 typedef void (*asCLEANFUNCTIONFUNC_t)(asIScriptFunction *);
 //! The function signature for the type info cleanup callback function
 typedef void (*asCLEANTYPEINFOFUNC_t)(asITypeInfo *);
-#ifdef AS_DEPRECATED
-// deprecated since 2.31.0 - 2015/11/18
-//! \deprecated Since 2.31.0. Use \ref asCLEANTYPEINFOFUNC_t instead
-typedef asCLEANTYPEINFOFUNC_t asCLEANOBJECTTYPEFUNC_t;
-#endif
 //! The function signature for the script object cleanup callback function
 typedef void (*asCLEANSCRIPTOBJECTFUNC_t)(asIScriptObject *);
 //! The function signature for the request context callback
@@ -676,7 +661,7 @@ typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, voi
 // BCC v5.8 (C++Builder 2006) and earlier have a similar bug which forces us to fall back to a C-style cast.
 #define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())((r (*)p)(f)))
 #else
-#define asFUNCTIONPR(f,p,r) asFunctionPtr((void (*)())(static_cast<r (*)p>(f)))
+#define asFUNCTIONPR(f,p,r) asFunctionPtr(reinterpret_cast<void (*)()>(static_cast<r (*)p>(f)))
 #endif
 
 #ifndef AS_NO_CLASS_METHODS
@@ -1288,6 +1273,8 @@ public:
 	//! \param[in] obj The name of the type.
 	//! \param[in] declaration The property declaration in script syntax.
 	//! \param[in] byteOffset The offset into the memory block where this property is found.
+	//! \param[in] compositeOffset The offset to the composite object.
+	//! \param[in] isCompositeIndirect Set to false if the composite object is inline, and true if it is refered to by pointer.
 	//! \return A negative value on error.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asINVALID_OBJECT The \a obj does not specify an object type.
@@ -1299,17 +1286,21 @@ public:
 	//! be local to the object, i.e. not a global variable or a static member. The
 	//! easiest way to get the offset of the property is to use the asOFFSET macro.
 	//!
+	//! \todo Explain the composite object
+	//!
 	//! \code
 	//! struct MyType {float prop;};
 	//! r = engine->RegisterObjectProperty("MyType", "float prop", asOFFSET(MyType, prop)));
 	//! \endcode
-	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
+	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	//! \brief Registers a method for the object type.
 	//! \param[in] obj The name of the type.
 	//! \param[in] declaration The declaration of the method in script syntax.
 	//! \param[in] funcPointer The method or function pointer.
 	//! \param[in] callConv The calling convention for the method or function.
 	//! \param[in] auxiliary A helper object for use with some calling conventions.
+	//! \param[in] compositeOffset The offset to the composite object.
+	//! \param[in] isCompositeIndirect Set to false if the composite object is inline, and true if it is refered to by pointer.
 	//! \return A negative value on error, or the function id if successful.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asNOT_SUPPORTED The calling convention is not supported.
@@ -1328,8 +1319,10 @@ public:
 	//! The \a auxiliary pointer can optionally be used with \ref asCALL_GENERIC.
 	//! For the calling conventions \ref asCALL_THISCALL_OBJFIRST and asCALL_THISCALL_OBJLAST the \a auxiliary is required.
 	//!
+	//! \todo Explain the composite object
+	//!
 	//! \see \ref doc_register_func
-	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0) = 0;
+	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	//! \brief Registers a behaviour for the object type.
 	//! \param[in] obj The name of the type.
 	//! \param[in] behaviour One of the object behaviours from \ref asEBehaviours.
@@ -1337,6 +1330,8 @@ public:
 	//! \param[in] funcPointer The method or function pointer.
 	//! \param[in] callConv The calling convention for the method or function.
 	//! \param[in] auxiliary A helper object for use with some calling conventions.
+	//! \param[in] compositeOffset The offset to the composite object.
+	//! \param[in] isCompositeIndirect Set to false if the composite object is inline, and true if it is refered to by pointer.
 	//! \return A negative value on error, or the function id is successful.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
 	//! \retval asINVALID_ARG \a obj is not set, or a global behaviour is given in \a behaviour.
@@ -1359,8 +1354,10 @@ public:
 	//! The \a auxiliary pointer can optionally be used with \ref asCALL_GENERIC.
 	//! For the calling conventions \ref asCALL_THISCALL_ASGLOBAL, \ref asCALL_THISCALL_OBJFIRST and asCALL_THISCALL_OBJLAST the \a auxiliary is required.
 	//!
+	//! \todo Explain the composite object
+	//!
 	//! \see \ref doc_register_func, \ref doc_reg_opbeh
-	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0) = 0;
+	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	//! \brief Registers a script interface.
 	//! \param[in] name The name of the interface.
 	//! \return A negative value on error.
@@ -1394,13 +1391,6 @@ public:
 	//! \param[in] index The index of the type.
 	//! \return The registered object type interface for the type, or null if not found.
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoByName instead.
-	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
-	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoByDecl instead.
-	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
-#endif
 	//! \}
 
 	// String factory
@@ -1409,36 +1399,18 @@ public:
 
 	//! \brief Registers the string factory.
 	//! \param[in] datatype The datatype that the string factory returns
-	//! \param[in] factoryFunc The pointer to the factory function
-	//! \param[in] callConv The calling convention of the factory function
-	//! \param[in] auxiliary A helper object for use with some calling conventions.
+	//! \param[in] factory The pointer to the factory object
 	//! \return A negative value on error, or the function id if successful.
-	//! \retval asNOT_SUPPORTED The calling convention is not supported.
-	//! \retval asWRONG_CALLING_CONV The function's calling convention doesn't match \a callConv.
-	//! \retval asINVALID_TYPE The \a datatype is not a valid type.
+	//! \retval asINVALID_ARG The \a factory is null.
+	//! \retval asINVALID_TYPE The \a datatype is not a valid type, or it is a reference or handle.
 	//!
-	//! Use this function to register a string factory that will be called when the 
-	//! virtual machine finds a string constant in an expression. The string factory 
-	//! function will receive two parameters, the length of the string constant in bytes and a 
-	//! pointer to the character data. The factory should return a value to a previously 
-	//! registered type that will represent the string. Example:
+	//! Use this function to register a string factory that will be called during compilation 
+	//! to create instances of a string constant. The string factory will also be used while
+	//! saving bytecode in order to get the raw string data for serialization.
 	//!
-	//! \code
-	//! // Our string factory implementation
-	//! std::string StringFactory(unsigned int byteLength, const char *s)
-	//! {
-	//!     return std::string(s, byteLength);
-	//! }
-	//!
-	//! // Registering the string factory
-	//! int r = engine->RegisterStringFactory("string", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
-	//! \endcode
-	//!
-	//! The example assumes that the std::string type has been registered as the string type, with \ref RegisterObjectType.
-	//!
-	//! The \a auxiliary pointer can optionally be used with \ref asCALL_GENERIC.
-	//! For the calling convention \ref asCALL_THISCALL_ASGLOBAL the \a auxiliary is required.
-	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0) = 0;
+	//! The data type that represents the string type should be informed without reference or handle
+	//! token, as the script engine will assume a const reference anyway.
+	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory) = 0;
 	//! \brief Returns the type id of the type that the string factory returns.
 	//! \return The type id of the type that the string type returns, or a negative value on error.
 	//! \param[out] flags The \ref asETypeModifiers "type modifiers" for the return type
@@ -1467,14 +1439,13 @@ public:
 
 	//! \brief Registers an enum type.
 	//! \param[in] type The name of the enum type.
-	//! \return A negative value on error.
+	//! \return The type id on success, or a negative value on error.
 	//! \retval asINVALID_NAME \a type is null.
 	//! \retval asALREADY_REGISTERED Another type with this name already exists.
 	//! \retval asERROR The \a type couldn't be parsed.
 	//! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
 	//! \retval asNAME_TAKEN The type name is already taken.
 	//!
-	//! \todo Returns type id on success
 	//! This method registers an enum type in the engine. The enum values should then be registered 
 	//! with \ref RegisterEnumValue.
 	virtual int          RegisterEnum(const char *type) = 0;
@@ -1496,13 +1467,6 @@ public:
 	//! \param[in] index The index of the enum type.
 	//! \return The type info of the registered enum type, or null on error.
 	virtual asITypeInfo *GetEnumByIndex(asUINT index) const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueCount instead.
-	virtual int          GetEnumValueCount(int enumTypeId) const = 0;
-	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueByIndex instead.
-	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
-#endif
 	//! \}
 
 	// Funcdefs
@@ -1667,22 +1631,12 @@ public:
 	//!
 	//! This does not increment the reference count of the returned function interface.
 	virtual asIScriptFunction *GetFunctionById(int funcId) const = 0;
-#ifdef AS_DEPRECATED
-	// deprecated since 2.31.0, 2016-01-01
-	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoById instead.
-	virtual asIScriptFunction *GetFuncdefFromTypeId(int typeId) const = 0;
-#endif
 	//! \}
 
 	// Type identification
 	//! \name Type identification
 	//! \{
 
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::GetTypeInfoById instead.
-	virtual asITypeInfo   *GetObjectTypeById(int typeId) const = 0;
-#endif
 	//! \brief Returns a type id by declaration.
 	//! \param[in] decl The declaration of the type.
 	//! \return A negative value on error, or the type id of the type.
@@ -1847,11 +1801,6 @@ public:
 	//! and the reference counter will be incremented. If the cast is not successful,
 	//! the \a newPtr will be set to null, and the reference count left unchanged.
 	virtual int                    RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo *toType, void **newPtr, bool useOnlyImplicitCast = false) = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.30.0, 2014-11-04
-	//! \deprecated Since 2.30.0. Use \ref asIScriptEngine::RefCastObject instead
-	virtual bool                   IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) const = 0;
-#endif
 	//! \brief Returns the weak ref flag from the object.
 	//! \param[in] obj The object
 	//! \param[in] type The object type
@@ -2039,11 +1988,6 @@ public:
 	//! The function is called from within the function destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	//! \deprecated Since 2.31.0. Use \ref asIScriptEngine::SetTypeInfoUserDataCleanupCallback instead.
-	virtual void  SetObjectTypeUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
-#endif
 	//! \brief Set the function that should be called when a type info is destroyed
 	//! \param[in] callback A pointer to the function
 	//! \param[in] type An identifier specifying which user data the callback is to be used with.
@@ -2069,6 +2013,48 @@ public:
 protected:
 	virtual ~asIScriptEngine() {}
 };
+
+//! \brief The interface for the string factory
+//!
+//! This interface is used to manage the string constants that the scripts
+//! use. If string constants should be supported the application must implement
+//! this object and register it with \ref asIScriptEngine::RegisterStringFactory.
+class asIStringFactory
+{
+public:
+	//! \brief Called by engine to instantiate a string constant
+	//! \param[in] data The content of the string
+	//! \param[in] length The length in bytes of the data buffer
+	//! \return The pointer to the instantiated string constant
+	//!
+	//! The string factory can cache and return a pointer to the same instance
+	//! multiple times if the same string content is requested multiple times.
+	virtual const void *GetStringConstant(const char *data, asUINT length) = 0;
+	//! \brief Called by engine when the string constant is no longer used.
+	//! \param[in] str The same pointer returned by \ref GetStringConstant
+	//! \return A negative value on error.
+	//!
+	//! The engine will call this method for each pointer returned by \ref GetStringConstant.
+	//! If the string factory returns a pointer to the same instance multiple times, then
+	//! the string instance can only be destroyed when the last call to ReleaseStringConstant
+	//! for that pointer is made.
+	virtual int         ReleaseStringConstant(const void *str) = 0;
+	//! \brief Called by engine to get the raw string data for serialization.
+	//! \param[in] str The same pointer returned by \ref GetStringConstant
+	//! \param[out] data A pointer to the data buffer that should be filled with the content
+	//! \param[out] length A pointer to the variable that should be set with the length of the data
+	//! \return A negative value on error.
+	//!
+	//! The engine will first call this with data set to null to retrieve the size of the 
+	//! buffer that must be allocated. Then the engine will call the method once more with
+	//! the allocated data buffer to be filled with the content. The length should always be
+	//! informed in number of bytes.
+	virtual int         GetRawStringData(const void *str, char *data, asUINT *length) const = 0;
+
+protected:
+	virtual ~asIStringFactory() {}
+};
+#endif
 
 //! \brief The interface for the thread manager
 //!
@@ -2364,13 +2350,6 @@ public:
 	//!
 	//! This does not increase the reference count of the returned object.
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	//! \deprecated Since 2.31.0. Use \ref asIScriptModule::GetTypeInfoByName instead.
-	virtual asITypeInfo   *GetObjectTypeByName(const char *name) const = 0;
-	//! \deprecated Since 2.31.0. Use \ref asIScriptModule::GetTypeInfoByDecl instead.
-	virtual asITypeInfo   *GetObjectTypeByDecl(const char *decl) const = 0;
-#endif
 	//! \brief Returns a type id by declaration.
 	//! \param[in] decl The declaration of the type.
 	//! \return A negative value on error, or the type id of the type.
@@ -2419,13 +2398,6 @@ public:
 	//! \param[in] index The index of the enum type.
 	//! \return The type info of the enum type, or null on error.
 	virtual asITypeInfo *GetEnumByIndex(asUINT index) const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.31.0, 2015-12-06
-	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueCount instead.
-	virtual int          GetEnumValueCount(int enumTypeId) const = 0;
-	//! \deprecated Since 2.31.0. Use \ref asITypeInfo::GetEnumValueByIndex instead.
-	virtual const char * GetEnumValueByIndex(int enumTypeId, asUINT index, int *outValue) const = 0;
-#endif
 	//! \}
 
 	// Typedefs
@@ -3569,9 +3541,11 @@ public:
 	//! \param[out] offset The offset into the object where the property is stored
 	//! \param[out] isReference True if the property is not stored inline
 	//! \param[out] accessMask The access mask of the property
+	//! \param[out] compositeOffset The offset to composite type if used
+	//! \param[out] isCompositeIndirect Set to false if the composite type is inline
 	//! \return A negative value on error
 	//! \retval asINVALID_ARG The \a index is out of bounds
-	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProtected = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0) const = 0;
+	virtual int         GetProperty(asUINT index, const char **name, int *typeId = 0, bool *isPrivate = 0, bool *isProtected = 0, int *offset = 0, bool *isReference = 0, asDWORD *accessMask = 0, int *compositeOffset = 0, bool *isCompositeIndirect = false) const = 0;
 	//! \brief Returns the declaration of the property
 	//! \param[in] index The index of the property
 	//! \param[in] includeNamespace Set to true if the namespace should be included in the declaration.
@@ -3785,11 +3759,6 @@ public:
 	//! The parameter names are not stored for \ref asFUNC_VIRTUAL "virtual methods". If you want to know the 
 	//! name of parameters to class methods, be sure to get the actual implementation rather than the virtual method.
 	virtual int              GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const = 0;
-#ifdef AS_DEPRECATED
-	// Deprecated since 2.29.0, 2014-04-06
-	//! \deprecated Since 2.29.0. Use \ref asIScriptFunction::GetParam instead.
-	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
-#endif
 	//! \brief Returns the type id of the return type.
 	//! \param[out] flags A combination of \ref asETypeModifiers.
 	//! \return The type id of the return type.
@@ -3900,15 +3869,17 @@ public:
 	//! \brief Read size bytes from the stream into the memory pointed to by ptr.
 	//! \param[out] ptr A pointer to the buffer that will receive the data.
 	//! \param[in] size The number of bytes to read.
+	//! \return A negative value on error.
 	//!
 	//! Read \a size bytes from the data stream into the memory pointed to by \a ptr.
-	virtual void Read(void *ptr, asUINT size) = 0;
+	virtual int Read(void *ptr, asUINT size) = 0;
 	//! \brief Write size bytes to the stream from the memory pointed to by ptr.
 	//! \param[in] ptr A pointer to the buffer that the data should written from.
 	//! \param[in] size The number of bytes to write.
+	//! \return A negative value on error.
 	//!
 	//! Write \a size bytes to the data stream from the memory pointed to by \a ptr.
-	virtual void Write(const void *ptr, asUINT size) = 0;
+	virtual int Write(const void *ptr, asUINT size) = 0;
 
 public:
 	virtual ~asIBinaryStream() {}
@@ -4312,7 +4283,7 @@ enum asEBCInstr
 	asBC_PopRPtr		= 58,
 	//! \brief Push a pointer from the value register onto the stack
 	asBC_PshRPtr		= 59,
-	//! \brief Push string address and length on the stack
+	//! \brief Not used
 	asBC_STR			= 60,
 	//! \brief Call registered function. Suspend further execution if requested.
 	asBC_CALLSYS		= 61,

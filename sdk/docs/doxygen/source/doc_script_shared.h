@@ -14,6 +14,7 @@ Shared entities have a restriction in that they cannot access non-shared
 entities because the non-shared entities are exclusive to the script module 
 in which they were compiled.
 
+\todo Explain extern
 
 
 \section doc_script_shared_1 How to declare shared entities

@@ -414,7 +414,7 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 
 	case asEP_MAX_NESTED_CALLS:
 		if (value > 0xFFFFFFFF)
-			ep.maxNestedCalls = (asUINT)value;
+			ep.maxNestedCalls = 0xFFFFFFFF;
 		else
 			ep.maxNestedCalls = (asUINT)value;
 		break;
