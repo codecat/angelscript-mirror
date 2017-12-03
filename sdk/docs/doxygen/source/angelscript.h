@@ -1286,12 +1286,14 @@ public:
 	//! be local to the object, i.e. not a global variable or a static member. The
 	//! easiest way to get the offset of the property is to use the asOFFSET macro.
 	//!
-	//! \todo Explain the composite object
-	//!
 	//! \code
 	//! struct MyType {float prop;};
 	//! r = engine->RegisterObjectProperty("MyType", "float prop", asOFFSET(MyType, prop)));
 	//! \endcode
+	//! 
+	//! In case the property to be registered is part of a composite member, then the compositeOffset should be used
+	//! to give the offset to the composite member, and byteOffset should be the offset to the property in that composite member.
+	//! If the composite member is inline then set isCompositeIndirect as false, else set it to true for proper indirection.
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	//! \brief Registers a method for the object type.
 	//! \param[in] obj The name of the type.
@@ -1319,7 +1321,9 @@ public:
 	//! The \a auxiliary pointer can optionally be used with \ref asCALL_GENERIC.
 	//! For the calling conventions \ref asCALL_THISCALL_OBJFIRST and asCALL_THISCALL_OBJLAST the \a auxiliary is required.
 	//!
-	//! \todo Explain the composite object
+	//! In case the method to be registered is part of a composite member, then the compositeOffset should be used
+	//! to give the offset to the composite member, and the method pointer should be method of the composite member.
+	//! If the composite member is inline then set isCompositeIndirect as false, else set it to true for proper indirection.
 	//!
 	//! \see \ref doc_register_func
 	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
@@ -1354,13 +1358,15 @@ public:
 	//! The \a auxiliary pointer can optionally be used with \ref asCALL_GENERIC.
 	//! For the calling conventions \ref asCALL_THISCALL_ASGLOBAL, \ref asCALL_THISCALL_OBJFIRST and asCALL_THISCALL_OBJLAST the \a auxiliary is required.
 	//!
-	//! \todo Explain the composite object
+	//! In case the method to be registered is part of a composite member, then the compositeOffset should be used
+	//! to give the offset to the composite member, and the method pointer should be method of the composite member.
+	//! If the composite member is inline then set isCompositeIndirect as false, else set it to true for proper indirection.
 	//!
 	//! \see \ref doc_register_func, \ref doc_reg_opbeh
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary = 0, int compositeOffset = 0, bool isCompositeIndirect = false) = 0;
 	//! \brief Registers a script interface.
 	//! \param[in] name The name of the interface.
-	//! \return A negative value on error.
+	//! \return The type id of the interface on success, else a negative value on error.
 	//! \retval asINVALID_NAME The \a name is null, or a reserved keyword.
 	//! \retval asALREADY_REGISTERED An object type with this name already exists.
 	//! \retval asERROR The \a name is not a proper identifier.
@@ -1370,7 +1376,6 @@ public:
 	//! can register functions and methods that receives an \ref asIScriptObject and still be sure that the 
 	//! class implements certain methods needed by the application. 
 	//!
-	//! \todo Returns type id on success
 	//! \see \ref doc_use_script_class_3
 	virtual int            RegisterInterface(const char *name) = 0;
 	//! \brief Registers a script interface method.
@@ -1475,7 +1480,7 @@ public:
 
 	//! \brief Registers a function definition.
 	//! \param[in] decl The declaration of the function definition.
-	//! \return A negative value on error.
+	//! \return The type id on success, else a negative value on error.
 	//! \retval asINVALID_ARG The \a decl parameter is not given.
 	//! \retval asINVALID_DECLARATION \a decl is not a valid function definition.
 	//! \retval asNAME_TAKEN The name of the funcdef conflicts with another name.
@@ -1485,7 +1490,6 @@ public:
 	//! from scripts, it is necessary to first register the funcdef before registering
 	//! the function or property that will be used to receive it.
 	//! 
-	//! \todo Returns type id on success
 	//! Funcdefs are usually registered as global entities, but can also be registered
 	//! as a child of a class. To do this simply prefix the name of the funcdef with the 
 	//! name of the class and the scope operator to specify which class should be the owner.
@@ -1508,7 +1512,7 @@ public:
 	//! \brief Registers a typedef.
 	//! \param[in] type The name of the new typedef
 	//! \param[in] decl The datatype that the typedef represents
-	//! \return A negative value on error.
+	//! \return The type id on success, else a negative value on error.
 	//! \retval asINVALID_NAME The \a type is null.
 	//! \retval asALREADY_REGISTERED A type with the same name already exists.
 	//! \retval asINVALID_TYPE The \a decl is not a primitive type.
@@ -1517,7 +1521,6 @@ public:
 	//!
 	//! This method registers an alias for a data type.
 	//!
-	//! \todo Returns type id on success
 	//! Currently typedefs can only be registered for built-in primitive types.
 	virtual int          RegisterTypedef(const char *type, const char *decl) = 0;
 	//! \brief Returns the number of registered typedefs.

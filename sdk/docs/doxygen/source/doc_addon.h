@@ -48,20 +48,20 @@ Register the type with the <code>RegisterScriptDateTime(asIScriptEngine*)</code>
 class CDateTime
 {
 public:
-	// Constructors
-	CDateTime();
-	CDateTime(const CDateTime &other);
+  // Constructors
+  CDateTime();
+  CDateTime(const CDateTime &other);
 
-	// Copy the stored value from another any object
-	CDateTime &operator=(const CDateTime &other);
+  // Copy the stored value from another any object
+  CDateTime &operator=(const CDateTime &other);
 
-	// Accessors
-	asUINT getYear() const;
-	asUINT getMonth() const;
-	asUINT getDay() const;
-	asUINT getHour() const;
-	asUINT getMinute() const;
-	asUINT getSecond() const;
+  // Accessors
+  asUINT getYear() const;
+  asUINT getMonth() const;
+  asUINT getDay() const;
+  asUINT getHour() const;
+  asUINT getMinute() const;
+  asUINT getSecond() const;
 };
 \endcode
 
@@ -1279,7 +1279,7 @@ Reads \a length bytes into a string and returns it.
 
 <b>string readLine()</b><br>
 
-Reads until a new line character, e.g. '\n', or end-of-file and returns the string. The new line character is also returned in the string.
+Reads until a new line character, e.g. '\\n', or end-of-file and returns the string. The new line character is also returned in the string.
 
 <b>int64 readInt(uint bytes)</b><br>
 
