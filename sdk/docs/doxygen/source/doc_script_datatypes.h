@@ -147,15 +147,14 @@ When the array stores \ref doc_script_handle "handles" the elements are assigned
 
 Arrays can also be created and initialized within expressions as \ref anonobj "anonymous objects". 
 
-\todo Show that anonymous arrays can be used without explicitly giving the type
-
 <pre>
   // Call a function that expects an array of integers as input
-  foo(array<int> = {1,2,3,4});
+  foo({1,2,3,4});
+  
+  // If the function has multiple overloads supporting different types with 
+  // initialization lists it is necessary to explicitly inform the array type
+  foo2(array<int> = {1,2,3,4});
 </pre>
-
-\todo Show how to use the sort with custom compare function
-
 
 \section doc_datatypes_arrays_addon Supporting array object and functions
 
@@ -227,8 +226,21 @@ The second variant will sort only the elements starting at index \a startAt and 
 
 These does the same thing as sortAsc except sorts the elements in descending order.
 
-\todo document the sort method with callback
- 
+<b>void sort(const less &in compareFunc, uint startAt = 0, uint count = uint(-1))</b><br>
+
+This method takes as input a callback function to use for comparing two elements when sorting the array.
+
+The callback function should take as parameters two references of the same type of the array elements and it 
+should return a bool. The return value should be true if the first argument should be placed before the second 
+argument.
+
+<pre>
+  array<int> arr = {3,2,1};
+  arr.sort(function(a,b) { return a < b; });
+</pre>
+
+The example shows how to use the sort method with a callback to an \ref doc_script_anonfunc "anonymous function".
+
 <b>int  find(const T& in)</b><br>
 <b>int  find(uint startAt, const T& in)</b><br>
 
@@ -315,11 +327,14 @@ Dictionary values can also be accessed or added by using the index operator.
   
 Dictionaries can also be created and initialized within expressions as \ref anonobj "anonymous objects". 
 
-\todo Show that anonymous dictionaries can be used without explicitly giving the type
-
 <pre>
-  // Call a function that expects a dictionary as input
-  foo(dictionary = {{'a', 1},{'b', 2}});
+  // Call a function that expects a dictionary as input and no other overloads
+  // In this case it is possible to inform the initialization list without explicitly giving the type
+  foo({{'a', 1},{'b', 2}});
+  
+  // Call a function where there are multiple overloads expecting different
+  // In this case it is necessary to explicitly define the type of the initialization list
+  foo2(dictionary = {{'a', 1},{'b', 2}});
 </pre>
 
 Dictionaries of dictionaries are created using \ref anonobj "anonymous objects" as well.
