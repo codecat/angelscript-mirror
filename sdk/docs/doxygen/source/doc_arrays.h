@@ -1,6 +1,6 @@
 /**
 
-\page doc_arrays Arrays
+\page doc_arrays Custom array type
 
 Like the \ref doc_strings "string type", AngelScript doesn't have a built-in 
 dynamic array type. Instead the application developers that wishes to allow 

@@ -14,6 +14,7 @@
  - \ref asIScriptObject
  - \ref asITypeInfo
  - \ref asIScriptFunction
+ - \ref asIStringFactory
  - \ref asIJITCompiler
  
 \section doc_api_intf_3 Auxiliary interfaces

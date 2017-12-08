@@ -1415,6 +1415,8 @@ public:
 	//!
 	//! The data type that represents the string type should be informed without reference or handle
 	//! token, as the script engine will assume a const reference anyway.
+	//!
+	//! \see \ref doc_strings
 	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory) = 0;
 	//! \brief Returns the type id of the type that the string factory returns.
 	//! \return The type id of the type that the string type returns, or a negative value on error.

@@ -1,6 +1,6 @@
 /**
 
-\page doc_strings The string type
+\page doc_strings Custom string type
 
 Almost all applications have some need to manipulate text strings in one way or another. However
 most applications have very different needs, and also different ways of representing their string
@@ -10,6 +10,30 @@ would be forced to adapt to, instead AngelScript allows the application to \ref 
 This article presents the options for customizing the script language to the application's needs with regards 
 to strings. If you do not want, or do not need to have AngelScript use your own string type, then I suggest
 you use the standard add-on for \ref doc_addon_std_string "std::string registration".
+
+\section doc_string_register Registering the custom string type
+
+To make the script language support strings, the string type must first be \ref doc_register_type "registered as type" with the engine. 
+The application is free to use any valid type name, not necessarily 'string', though it is probably the most commonly used name. The 
+custom string type can also be either value type or a reference type at the preference of the application developer.
+
+Once the string type is registered, the application must also provide a string factory to allow the scripts
+to use literal string constants. The string factory must implement the \ref asIStringFactory interface, and be
+registered with the \ref asIScriptEngine::RegisterStringFactory method.
+
+The string factory must implement all 3 methods of the asIStringFactory interface. The \ref asIStringFactory::GetStringConstant 
+"GetStringConstant" method receives the raw string data by the compiler and should return a pointer to the custom string object
+that represents that string. The \ref asIStringFactory::ReleaseStringConstant "ReleaseStringConstant" is called when the engine no longer needs the 
+string constant, e.g. when discarding a module. The \ref asIStringFactory::GetRawStringData "GetRawStringData" is called by the 
+engine when the raw string data is needed, e.g. when saving bytecode or when requesting a copy of a string constant.
+
+Although not necessary, the application should preferably implement caching of the string constants, so that if two calls to
+GetStringConstant with the same raw string data is received the string factory returns the address of the same string instance
+in both calls. This will reduce the amount of memory needed to store the string constants, especially when scripts use the same
+string constants in many places. Remember, when using caching, the ReleaseStringConstant must only free the string object when 
+the last call for that same object is done.
+
+\see \ref doc_addon_std_string "The standard string add-on"
 
 \section doc_strings_1 Unicode vs ASCII
 

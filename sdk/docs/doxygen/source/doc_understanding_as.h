@@ -13,8 +13,6 @@ when passing objects between AngelScript and C++.
 
  - \subpage doc_module
  - \subpage doc_as_vs_cpp_types
- - \subpage doc_strings
- - \subpage doc_arrays
  - \subpage doc_obj_handle
  - \subpage doc_memory
  - \subpage doc_cpp_exceptions

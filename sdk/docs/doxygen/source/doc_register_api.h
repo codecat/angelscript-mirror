@@ -17,7 +17,7 @@ in C++. Instead AngelScript permits the application to register its own preferre
 a \ref asIScriptEngine::RegisterStringFactory "string factory" that the script engine will use
 to instanciate the strings. 
 
-There is also no default built-in array type as this too is something that most developers may want to have 
+There is also no default \ref doc_arrays "built-in array type" as this too is something that most developers may want to have 
 their own version of. The array type is registered as a \ref doc_adv_template "template", which is then set as the
 \ref asIScriptEngine::RegisterDefaultArrayType "default array type". A standard \ref doc_addon_array "array add-on" is 
 provided for those that do not want to implement their own array type.

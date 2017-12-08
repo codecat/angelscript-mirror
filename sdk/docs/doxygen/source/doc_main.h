@@ -72,11 +72,14 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_register_type
  - \subpage doc_advanced_api
  
-\todo add page to explain the string factory
 
+ 
+ 
 
 \page doc_advanced_api Advanced application interface
 
+ - \subpage doc_strings
+ - \subpage doc_arrays
  - \subpage doc_gc_object
  - \subpage doc_generic
  - \subpage doc_adv_generic_handle
