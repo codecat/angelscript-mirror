@@ -39,9 +39,6 @@
 #ifndef ANGELSCRIPT_H
 #define ANGELSCRIPT_H
 
-// TODO: NEWSTRING: Remove this
-#define AS_NEWSTRING
-
 #include <stddef.h>
 #ifndef _MSC_VER
 #include <stdint.h>
@@ -77,9 +74,7 @@ class asIBinaryStream;
 class asIJITCompiler;
 class asIThreadManager;
 class asILockableSharedBool;
-#ifdef AS_NEWSTRING
 class asIStringFactory;
-#endif
 
 // Enumerations and constants
 
@@ -689,11 +684,7 @@ public:
 	virtual asITypeInfo   *GetObjectTypeByIndex(asUINT index) const = 0;
 
 	// String factory
-#ifdef AS_NEWSTRING
 	virtual int RegisterStringFactory(const char *datatype, asIStringFactory *factory) = 0;
-#else
-	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *auxiliary = 0) = 0;
-#endif
 	virtual int GetStringFactoryReturnTypeId(asDWORD *flags = 0) const = 0;
 
 	// Default array type
@@ -782,7 +773,6 @@ protected:
 	virtual ~asIScriptEngine() {}
 };
 
-#ifdef AS_NEWSTRING
 class asIStringFactory
 {
 public:
@@ -793,7 +783,6 @@ public:
 protected:
 	virtual ~asIStringFactory() {}
 };
-#endif
 
 class asIThreadManager
 {

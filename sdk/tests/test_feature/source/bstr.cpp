@@ -14,13 +14,9 @@ void    asBStrConstruct(asBSTR *s);
 void    asBStrDestruct(asBSTR *s);
 asBSTR *asBStrCopy(const asBSTR *src, asBSTR *dst);
 asBSTR *asBStrAppend(const asBSTR *other, asBSTR *self);
-#ifndef AS_NEWSTRING
-asBSTR  asBStrFactory(asUINT length, const char *s);
-#endif
 asUINT  asBStrLengthMethod(const asBSTR *s);
 asBYTE *asBStrByteAt(int index, const asBSTR *s);
 
-#ifdef AS_NEWSTRING
 class CBStrFactory : public asIStringFactory
 {
 public:
@@ -46,7 +42,6 @@ public:
 		return 0;
 	}
 } bstrFactory;
-#endif
 
 void RegisterBStr(asIScriptEngine *engine)
 {
@@ -56,11 +51,8 @@ void RegisterBStr(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("bstr", sizeof(asBSTR), asOBJ_VALUE | asOBJ_APP_PRIMITIVE); assert( r >= 0 );
 
 	// Register the bstr factory
-#ifdef AS_NEWSTRING
 	r = engine->RegisterStringFactory("bstr", &bstrFactory); assert(r >= 0);
-#else
-	r = engine->RegisterStringFactory("bstr", asFUNCTION(asBStrFactory), asCALL_CDECL); assert( r >= 0 );
-#endif
+
 	// Register the object methods
 	r = engine->RegisterObjectMethod("bstr", "uint length() const", asFUNCTION(asBStrLengthMethod), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
@@ -83,16 +75,6 @@ void RegisterBStr(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("bstr bstrFormat(float)",                asFUNCTION((asBSTR (*)(float))asBStrFormat),        asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("bstr bstrFormat(double)",               asFUNCTION((asBSTR (*)(double))asBStrFormat),       asCALL_CDECL); assert( r >= 0 );
 }
-
-#ifndef AS_NEWSTRING
-asBSTR asBStrFactory(asUINT length, const char *s)
-{
-	asBSTR o = asBStrAlloc(length);
-	memcpy(o, s, length);
-
-	return o;
-}
-#endif
 
 asBSTR asBStrAlloc(asUINT length)
 {

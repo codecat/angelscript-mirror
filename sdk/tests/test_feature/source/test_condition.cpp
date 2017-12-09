@@ -37,7 +37,6 @@ static void print(asIScriptGeneric *gen)
 //	PRINTF((str + "\n").c_str());
 }
 
-#ifdef AS_NEWSTRING
 class CStringFactory : public asIStringFactory
 {
 public:
@@ -57,15 +56,6 @@ public:
 		return 0;
 	}
 } stringFactory;
-#else
-static void StringFactoryConstRefGeneric(asIScriptGeneric *gen) {
-  asUINT length = gen->GetArgDWord(0);
-  const char *s = (const char*)gen->GetArgAddress(1);
-  static string str;
-  str = string(s, length);
-  gen->SetReturnAddress(&str);
-}
-#endif
 
 static void ConstructStringGeneric(asIScriptGeneric * gen) {
   new (gen->GetObject()) string();
@@ -292,11 +282,7 @@ bool TestCondition()
 
 		// Special string class
 		r = engine->RegisterObjectType("string", sizeof(std::string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
-#ifdef AS_NEWSTRING
 		r = engine->RegisterStringFactory("string", &stringFactory);
-#else
-		r = engine->RegisterStringFactory("const string &", asFUNCTION(StringFactoryConstRefGeneric), asCALL_GENERIC); assert( r >= 0 );
-#endif
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f(const string &in)",    asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );

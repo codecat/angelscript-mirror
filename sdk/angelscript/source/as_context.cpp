@@ -2506,22 +2506,9 @@ void asCContext::ExecuteNext()
 		break;
 
 	case asBC_STR:
-		{
-#ifdef AS_NEWSTRING
-			SetInternalException("Illegal instruction STR");
-#else
-			// Get the string id from the argument
-			asWORD w = asBC_WORDARG0(l_bc);
-			// Push the string pointer on the stack
-			const asCString &b = m_engine->GetConstantString(w);
-			l_sp -= AS_PTR_SIZE;
-			*(asPWORD*)l_sp = (asPWORD)b.AddressOf();
-			// Push the string length on the stack
-			--l_sp;
-			*l_sp = (asDWORD)b.GetLength();
-#endif
-			l_bc++;
-		}
+		// TODO: NEWSTRING: Deprecate this instruction
+		asASSERT(false);
+		l_bc++;
 		break;
 
 	case asBC_CALLSYS:

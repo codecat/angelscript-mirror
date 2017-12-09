@@ -59,11 +59,7 @@ bool Test()
 	r = engine->RegisterObjectProperty("mytype", "type a", 0);
 	if( r >= 0 ) TEST_FAILED;
 
-#ifdef AS_NEWSTRING
 	r = engine->RegisterStringFactory("type", (asIStringFactory*)1);
-#else
-	r = engine->RegisterStringFactory("type", asFUNCTION(0), asCALL_GENERIC);
-#endif
 	if( r >= 0 ) TEST_FAILED;
 
 	// Verify the output messages

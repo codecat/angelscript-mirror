@@ -164,7 +164,6 @@ static const char * const g_script5 =
 "   return true;                                        \n"
 "}                                                      \n";
 
-#ifdef AS_NEWSTRING
 class CScriptStringFactory : public asIStringFactory
 {
 public:
@@ -193,7 +192,6 @@ public:
 };
 
 static CScriptStringFactory stringFactory;
-#endif
 
 bool fail = false;
 int number = 0;
@@ -588,11 +586,7 @@ bool Test()
 		else
 		{
 			asDWORD crc32 = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-#ifdef AS_NEWSTRING
 			if (crc32 != 0x4B444563)
-#else
-			if (crc32 != 0x8C888CD3)
-#endif
 			{
 				PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 				TEST_FAILED;
@@ -709,11 +703,7 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-#ifdef AS_NEWSTRING
 		if (crc != 2004935012u)
-#else
-		if (crc != 3464610553u)
-#endif
 		{
 			PRINTF("Wrong checksum. Got %u\n", crc);
 			TEST_FAILED;
@@ -796,13 +786,8 @@ bool Test()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-#ifdef AS_NEWSTRING
 				asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_PGA,                                        asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_PopPtr,asBC_VAR,asBC_SetV4,asBC_PshV4,asBC_GETREF,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,
 				asBC_SUSPEND,asBC_JitEntry,asBC_SetV4,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_CpyVtoR4,asBC_JMP,asBC_RET
-#else
-				asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_STR,asBC_CALLSYS,asBC_JitEntry,asBC_PshRPtr,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_PopPtr,asBC_VAR,asBC_SetV4,asBC_PshV4,asBC_GETREF,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,
-				asBC_SUSPEND,asBC_JitEntry,asBC_SetV4,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_CpyVtoR4,asBC_JMP,asBC_RET
-#endif
 			};
 		if( !ValidateByteCode(func, expect) )
 			TEST_FAILED;
@@ -811,11 +796,7 @@ bool Test()
 		{
 			asUINT len;
 			asDWORD *bc = func->GetByteCode(&len);
-#ifdef AS_NEWSTRING
 			if (asBC_WORDARG0(&bc[12 + sizeof(void*)/4 + 4 * asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1)
-#else
-			if( asBC_WORDARG0(&bc[15+5*asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1 )
-#endif
 				TEST_FAILED;
 		}
 
@@ -832,11 +813,7 @@ bool Test()
 		{
 			asUINT len;
 			asDWORD *bc = func->GetByteCode(&len);
-#ifdef AS_NEWSTRING
 			if (asBC_WORDARG0(&bc[12 + sizeof(void*) / 4 + 4 * asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1)
-#else
-			if (asBC_WORDARG0(&bc[15 + 5 * asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1)
-#endif
 				TEST_FAILED;
 		}
 
@@ -1213,11 +1190,7 @@ bool Test()
 		strm.seekp(0);
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
-#ifdef AS_NEWSTRING
 		ConfigEngineFromStream(engine, strm, "test", &stringFactory);
-#else
-		ConfigEngineFromStream(engine, strm);
-#endif
 
 		const char *script = 
 			"void func() { \n"
@@ -1586,46 +1559,26 @@ bool Test()
 		mod->SaveByteCode(&stream2, true);
 
 #ifndef STREAM_TO_FILE
-#ifdef AS_NEWSTRING
 		if (stream.buffer.size() != 2170)
-#else
-		if( stream.buffer.size() != 2202 )
-#endif
 			PRINTF("The saved byte code is not of the expected size. It is %d bytes\n", (int)stream.buffer.size());
 		asUINT zeroes = stream.CountZeroes();
-#ifdef AS_NEWSTRING
 		if (zeroes != 561)
-#else
-		if( zeroes != 569 )
-#endif
 		{
 			PRINTF("The saved byte code contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 			// Mac OS X PPC has more zeroes, probably due to the bool type being 4 bytes
 		}
 		asDWORD crc32 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
-#ifdef AS_NEWSTRING
 		if( crc32 != 0x9C9AB234)
-#else
-		if (crc32 != 0x5F9FE387)
-#endif
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
 		}
 
 		// Without debug info
-#ifdef AS_NEWSTRING
 		if (stream2.buffer.size() != 1813)
-#else
-		if( stream2.buffer.size() != 1845 )
-#endif
 			PRINTF("The saved byte code without debug info is not of the expected size. It is %d bytes\n", (int)stream2.buffer.size());
 		zeroes = stream2.CountZeroes();
-#ifdef AS_NEWSTRING
 		if (zeroes != 451)
-#else
-		if( zeroes != 459 )
-#endif
 			PRINTF("The saved byte code without debug info contains a different amount of zeroes than the expected. Counted %d\n", zeroes);
 #endif
 		// Test loading without releasing the engine first
@@ -2760,7 +2713,6 @@ bool Test2()
 	return fail;
 }
 
-#ifdef AS_NEWSTRING
 class CAPStringFactory : public asIStringFactory
 {
 public:
@@ -2787,12 +2739,6 @@ public:
 		return 0;
 	}
 } APStringFactory;
-#else
-const char *APStringFactory(int /*length*/, const char *s)
-{
-	return s;
-}
-#endif
 
 void APStringConstruct(const char **s)
 {
@@ -2814,20 +2760,11 @@ bool TestAndrewPrice()
 		engine->RegisterObjectType("char_ptr", sizeof(char*), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 #ifndef AS_MAX_PORTABILITY
 		engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(APStringConstruct), asCALL_CDECL_OBJLAST);
-#ifdef AS_NEWSTRING
-		engine->RegisterStringFactory("char_ptr", &APStringFactory);
-#else
-		engine->RegisterStringFactory("char_ptr", asFUNCTION(APStringFactory), asCALL_CDECL);
-#endif
 #else
 		engine->RegisterObjectBehaviour("char_ptr", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST(APStringConstruct), asCALL_GENERIC);
-#ifdef AS_NEWSTRING
+#endif
 		engine->RegisterStringFactory("char_ptr", &APStringFactory);
-#else
-		engine->RegisterStringFactory("char_ptr", WRAP_FN(APStringFactory), asCALL_GENERIC);
-#endif
-#endif
-			
+
 		asIScriptModule *mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 		char Data2[] = 
 			"const char_ptr[] STORAGE_STRINGS = {'Storage[0]','Storage[1]'}; ";

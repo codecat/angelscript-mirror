@@ -1152,7 +1152,7 @@ void asCScriptFunction::AddReferences()
 					void *gvarPtr = (void*)asBC_PTRARG(&bc[n]);
 					if( !gvarPtr ) break;
 					asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
-#ifdef AS_NEWSTRING
+
 					if (!prop)
 					{
 						// The pointer is a string constant. In order to make sure the correct resource
@@ -1177,9 +1177,6 @@ void asCScriptFunction::AddReferences()
 						asASSERT(r >= 0);
 						break;
 					}
-#else
-					if (!prop) break;
-#endif
 
 					// Only addref the properties once
 					if( !ptrs.Exists(gvarPtr) )
@@ -1320,7 +1317,7 @@ void asCScriptFunction::ReleaseReferences()
 					void *gvarPtr = (void*)asBC_PTRARG(&bc[n]);
 					if( !gvarPtr ) break;
 					asCGlobalProperty *prop = GetPropertyByGlobalVarPtr(gvarPtr);
-#ifdef AS_NEWSTRING
+
 					if (!prop)
 					{
 						// The pointer is a string constant, so it needs to be released by the string factory
@@ -1335,9 +1332,7 @@ void asCScriptFunction::ReleaseReferences()
 						asASSERT(r >= 0);
 						break;
 					}
-#else
-					if( !prop ) break;
-#endif
+
 					// Only release the properties once
 					if( !ptrs.Exists(gvarPtr) )
 					{

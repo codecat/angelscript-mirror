@@ -143,10 +143,6 @@ void asCConfigGroup::RemoveConfiguration(asCScriptEngine *engine, bool notUsed)
 		if( index >= 0 )
 			engine->registeredGlobalFuncs.Erase(index);
 		scriptFunctions[n]->ReleaseInternal();
-#ifndef AS_NEWSTRING
-		if( engine->stringFactory == scriptFunctions[n] )
-			engine->stringFactory = 0;
-#endif
 	}
 	scriptFunctions.SetLength(0);
 

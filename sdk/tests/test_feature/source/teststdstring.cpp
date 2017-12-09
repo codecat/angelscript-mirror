@@ -495,7 +495,6 @@ bool TestTwoStringTypes()
 
 //=================================================================================
 
-#ifdef AS_NEWSTRING
 class CWStringFactory : public asIStringFactory
 {
 public:
@@ -517,12 +516,6 @@ public:
 		return 0;
 	}
 } wstringFactory;
-#else
-wstring WStringFactory(asUINT length, const wchar_t *ptr)
-{
-	return wstring(ptr, length / 2);
-}
-#endif
 
 void WStringConstruct(wstring *ptr)
 {
@@ -580,11 +573,7 @@ bool TestStdWString()
 	engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(WStringCopyConstruct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(WStringDestruct), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(wstring, operator=, (const wstring &), wstring &), asCALL_THISCALL);
-#ifdef AS_NEWSTRING
 	engine->RegisterStringFactory("string", &wstringFactory);
-#else
-	engine->RegisterStringFactory("string", asFUNCTION(WStringFactory), asCALL_CDECL);
-#endif
 	engine->RegisterGlobalFunction("void SetQuestClassByRef(const string &in mod)", asFUNCTION(SetQuestClassByRef), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void SetQuestClassByVal(string mod)", asFUNCTION(SetQuestClassByVal), asCALL_CDECL);
 

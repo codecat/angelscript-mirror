@@ -813,14 +813,6 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
-#ifndef AS_NEWSTRING
-	// Free string constants
-	for( asUINT n = 0; n < stringConstants.GetLength(); n++ )
-		asDELETE(stringConstants[n],asCString);
-	stringConstants.SetLength(0);
-	stringToIdMap.EraseAll();
-#endif
-
 	// Free the script section names
 	for( asUINT n = 0; n < scriptSectionNames.GetLength(); n++ )
 		asDELETE(scriptSectionNames[n],asCString);
@@ -3151,7 +3143,6 @@ int asCScriptEngine::GetDefaultArrayTypeId() const
 }
 
 // interface
-#ifdef AS_NEWSTRING
 int asCScriptEngine::RegisterStringFactory(const char *datatype, asIStringFactory *factory)
 {
 	if (factory == 0)
@@ -3176,75 +3167,6 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, asIStringFactor
 
 	return asSUCCESS;
 }
-#else
-int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPtr &funcPointer, asDWORD callConv, void *auxiliary)
-{
-	asSSystemFunctionInterface internal;
-	int r = DetectCallingConvention(false, funcPointer, callConv, auxiliary, &internal);
-	if( r < 0 )
-		return ConfigError(r, "RegisterStringFactory", datatype, 0);
-
-#ifdef AS_MAX_PORTABILITY
-	if( callConv != asCALL_GENERIC )
-		return ConfigError(asNOT_SUPPORTED, "RegisterStringFactory", datatype, 0);
-#else
-	if( callConv != asCALL_CDECL &&
-		callConv != asCALL_STDCALL &&
-		callConv != asCALL_THISCALL_ASGLOBAL &&
-		callConv != asCALL_GENERIC )
-		return ConfigError(asNOT_SUPPORTED, "RegisterStringFactory", datatype, 0);
-#endif
-
-	// Put the system function in the list of system functions
-	asSSystemFunctionInterface *newInterface = asNEW(asSSystemFunctionInterface)(internal);
-	if( newInterface == 0 )
-		return ConfigError(asOUT_OF_MEMORY, "RegisterStringFactory", datatype, 0);
-
-	asCScriptFunction *func = asNEW(asCScriptFunction)(this, 0, asFUNC_SYSTEM);
-	if( func == 0 )
-	{
-		asDELETE(newInterface, asSSystemFunctionInterface);
-		return ConfigError(asOUT_OF_MEMORY, "RegisterStringFactory", datatype, 0);
-	}
-
-	func->name        = "$str";
-	func->sysFuncIntf = newInterface;
-
-	asCBuilder bld(this, 0);
-
-	asCDataType dt;
-	r = bld.ParseDataType(datatype, &dt, defaultNamespace, true);
-	if( r < 0 )
-	{
-		// Set as dummy before deleting
-		func->funcType = asFUNC_DUMMY;
-		asDELETE(func,asCScriptFunction);
-		return ConfigError(asINVALID_TYPE, "RegisterStringFactory", datatype, 0);
-	}
-
-	func->returnType = dt;
-	func->parameterTypes.PushLast(asCDataType::CreatePrimitive(ttInt, true));
-	func->inOutFlags.PushLast(asTM_NONE);
-	asCDataType parm1 = asCDataType::CreatePrimitive(ttUInt8, true);
-	parm1.MakeReference(true);
-	func->parameterTypes.PushLast(parm1);
-	func->inOutFlags.PushLast(asTM_INREF);
-	func->id = GetNextScriptFunctionId();
-	AddScriptFunction(func);
-
-	stringFactory = func;
-
-	if( func->returnType.GetTypeInfo() )
-	{
-		asCConfigGroup *group = FindConfigGroupForTypeInfo(func->returnType.GetTypeInfo());
-		if( group == 0 ) group = &defaultGroup;
-		group->scriptFunctions.PushLast(func);
-	}
-
-	// Register function id as success
-	return func->id;
-}
-#endif
 
 // interface
 int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
@@ -3252,13 +3174,9 @@ int asCScriptEngine::GetStringFactoryReturnTypeId(asDWORD *flags) const
 	if( stringFactory == 0 )
 		return asNO_FUNCTION;
 
-#ifdef AS_NEWSTRING
 	if( flags )
 		*flags = 0;
 	return GetTypeIdFromDataType(stringType);
-#else
-	return stringFactory->GetReturnTypeId(flags);
-#endif
 }
 
 // internal
@@ -6054,45 +5972,6 @@ bool asCScriptEngine::IsTemplateType(const char *name) const
 
 	return false;
 }
-
-#ifndef AS_NEWSTRING
-// internal
-int asCScriptEngine::AddConstantString(const char *str, size_t len)
-{
-	// This is only called when build a script module, so it is
-	// known that only one thread can enter the function at a time.
-	asASSERT( isBuilding );
-
-	// The str may contain null chars, so we cannot use strlen, or strcmp, or strcpy
-
-	// Has the string been registered before?
-	asSMapNode<asCStringPointer, int> *cursor = 0;
-	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str, len)))
-		return cursor->value;
-
-	// No match was found, add the string
-	asCString *cstr = asNEW(asCString)(str, len);
-	if( cstr )
-	{
-		stringConstants.PushLast(cstr);
-		int index = (int)stringConstants.GetLength() - 1;
-		stringToIdMap.Insert(asCStringPointer(cstr), index);
-
-		// The VM currently doesn't handle string ids larger than 65535
-		asASSERT(stringConstants.GetLength() <= 65536);
-
-		return index;
-	}
-
-	return 0;
-}
-
-// internal
-const asCString &asCScriptEngine::GetConstantString(int id)
-{
-	return *stringConstants[id];
-}
-#endif
 
 // internal
 int asCScriptEngine::GetScriptSectionNameIndex(const char *name)

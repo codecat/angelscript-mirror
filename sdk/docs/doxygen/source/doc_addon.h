@@ -1031,11 +1031,6 @@ Compile the add-on with the pre-processor define AS_USE_STLNAMES = 1 to register
 the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent ones are 
 so a port from script to C++ and vice versa might be easier if STL names are used.
 
-A string pool has been implemented to improve the performance of std strings when the 
-scripts use a lot of string literals. If for some reason you do not wish to use the 
-string pool, then it can be turned off by compiling the add-on with the pre-processor
-define AS_USE_STRINGPOOL = 0.
-
 \section doc_addon_std_string_1 Public C++ interface
 
 Refer to the <code>std::string</code> implementation for your compiler.

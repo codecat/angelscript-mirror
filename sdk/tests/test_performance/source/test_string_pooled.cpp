@@ -99,7 +99,6 @@ CScriptString2 *operator+(const CScriptString2 &a, const CScriptString2 &b)
 	return new CScriptString2(a.buffer + b.buffer);
 }
 
-#ifdef AS_NEWSTRING
 class CStringPooledFactory : public asIStringFactory
 {
 public:
@@ -137,22 +136,6 @@ public:
 };
 
 CStringPooledFactory stringPooledFactory;
-#else
-// This is the string factory that creates new strings for the script based on string literals
-static CScriptString2 *StringFactory(asUINT length, const char *s)
-{
-	if( pool.size() > 0 )
-	{
-		CScriptString2 *str = pool[pool.size()-1];
-		pool.pop_back();
-		str->buffer.assign(s, length);
-		str->AddRef();
-		return str;
-	}
-
-	return new CScriptString2(s, length);
-}
-#endif
 
 // This is the default string factory, that is responsible for creating empty string objects, e.g. when a variable is declared
 static CScriptString2 *StringDefaultFactory()
@@ -205,11 +188,7 @@ void RegisterScriptString2(asIScriptEngine *engine)
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours,
 	// otherwise the library will not allow the use of object handles for this type
-#ifdef AS_NEWSTRING
 	r = engine->RegisterStringFactory("string", &stringPooledFactory); assert(r >= 0);
-#else
-	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
-#endif
 
 	r = engine->RegisterObjectMethod("string", "string@ opAdd(const string &in) const", asFUNCTIONPR(operator +, (const CScriptString2 &, const CScriptString2 &), CScriptString2*), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 }

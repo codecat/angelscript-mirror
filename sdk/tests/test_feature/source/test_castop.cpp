@@ -188,11 +188,7 @@ bool Test()
 			"dict.get('foo', t); \n"
 			"assert( t == 'bar' ); \n"
 			"dictionaryValue val = dict['foo']; \n"
-#ifdef AS_NEWSTRING
 			"t = cast<const string>(val); \n"
-#else
-			"t = cast<string>(val); \n"
-#endif
 			"assert( t == 'bar' ); \n"
 			"t = string(val); \n"
 			"assert( t == 'bar' ); \n"
@@ -410,11 +406,7 @@ bool Test()
 	r = ExecuteString(engine, "type t; string a = \"a\" + t + \"b\";"); 
 	if( r >= 0 )
 		TEST_FAILED;
-#ifdef AS_NEWSTRING
 	if (bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'const string' and 'type' found\n")
-#else
-	if( bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'string@&' and 'type' found\n" )
-#endif
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

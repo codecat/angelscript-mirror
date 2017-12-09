@@ -597,7 +597,6 @@ static void StringCharAt_Generic(asIScriptGeneric *gen)
 // AngelScript functions
 //-----------------------
 
-#ifdef AS_NEWSTRING
 class CScriptStringFactory : public asIStringFactory
 {
 public:
@@ -626,21 +625,6 @@ public:
 };
 
 static CScriptStringFactory stringFactory;
-#else
-// This is the string factory that creates new strings for the script based on string literals
-static CScriptString *StringFactory(asUINT length, const char *s)
-{
-	return new CScriptString(s, length);
-}
-
-static void StringFactory_Generic(asIScriptGeneric *gen)
-{
-	asUINT length = gen->GetArgDWord(0);
-	const char *s = (const char*)gen->GetArgAddress(1);
-	CScriptString *str = StringFactory(length, s);
-	gen->SetReturnAddress(str);
-}
-#endif
 
 // This is the default string factory, that is responsible for creating empty string objects, e.g. when a variable is declared
 static CScriptString *StringDefaultFactory()
@@ -710,11 +694,7 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours,
 	// otherwise the library will not allow the use of object handles for this type
-#ifdef AS_NEWSTRING
 	r = engine->RegisterStringFactory("string", &stringFactory); assert( r >= 0 );
-#else
-	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
-#endif
 
 	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTIONPR(StringEquals, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmp), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
@@ -782,11 +762,7 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours,
 	// otherwise the library will not allow the use of object handles for this type
-#ifdef AS_NEWSTRING
 	r = engine->RegisterStringFactory("string", &stringFactory); assert(r >= 0);
-#else
-	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
-#endif
 
 	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTION(StringEquals_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmp_Generic), asCALL_GENERIC); assert( r >= 0 );

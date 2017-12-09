@@ -116,12 +116,10 @@ int asCReader::Read(bool *wasDebugInfoStripped)
 			*wasDebugInfoStripped = noDebugInfo;
 	}
 
-#ifdef AS_NEWSTRING
 	// Clean up the loaded string constants
 	for (asUINT n = 0; n < usedStringConstants.GetLength(); n++)
 		engine->stringFactory->ReleaseStringConstant(usedStringConstants[n]);
 	usedStringConstants.SetLength(0);
-#endif
 
 	return r;
 }
@@ -663,23 +661,17 @@ void asCReader::ReadUsedStringConstants()
 	asUINT count;
 	count = ReadEncodedUInt();
 
-#ifdef AS_NEWSTRING
 	if (count > 0 && engine->stringFactory == 0)
 	{
 		Error(TXT_STRINGS_NOT_RECOGNIZED);
 		return;
 	}
-#endif
 
 	usedStringConstants.Allocate(count, false);
 	for( asUINT i = 0; i < count; ++i )
 	{
 		ReadString(&str);
-#ifdef AS_NEWSTRING
 		usedStringConstants.PushLast(const_cast<void*>(engine->stringFactory->GetStringConstant(str.AddressOf(), (asUINT)str.GetLength())));
-#else
-		usedStringConstants.PushLast(engine->AddConstantString(str.AddressOf(), str.GetLength()));
-#endif
 	}
 }
 
@@ -841,13 +833,6 @@ void asCReader::ReadUsedFunctions()
 				{
 					// This is a special function
 
-#ifndef AS_NEWSTRING
-					// Check for string factory
-					if( func.name == "$str" && engine->stringFactory &&
-						func.IsSignatureExceptNameAndObjectTypeEqual(engine->stringFactory) )
-						usedFunctions[n] = engine->stringFactory;
-					else 
-#endif
 					if( func.name == "$beh0" && func.objectType )
 					{
 						// This is a class constructor, so we can search directly in the object type's constructors
@@ -2782,18 +2767,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		}
 		else if( c == asBC_STR )
 		{
-#ifndef AS_NEWSTRING
-			// Translate the index to the true string id
-			asWORD *arg = ((asWORD*)&bc[n])+1;
-
-			if( *arg < usedStringConstants.GetLength() )
-				*arg = (asWORD)usedStringConstants[*arg];
-			else
-#endif
-			{
-				Error(TXT_INVALID_BYTECODE_d);
-				return;
-			}
+			Error(TXT_INVALID_BYTECODE_d);
+			return;
 		}
 		else if( c == asBC_CALLBND )
 		{
@@ -2825,8 +2800,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 				 c == asBC_CpyVtoG4 ||
 				 c == asBC_SetG4    )
 		{
-#ifdef AS_NEWSTRING
-
 			// Translate the index to pointer
 			asPWORD *index = (asPWORD*)&bc[n + 1];
 			if ((*index & 1))
@@ -2852,17 +2825,6 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 					return;
 				}
 			}
-#else
-			// Translate the global var index to pointer
-			asPWORD *index = (asPWORD*)&bc[n+1];
-			if( asUINT(*index) < usedGlobalProperties.GetLength() )
-				*(void**)index = usedGlobalProperties[asUINT(*index)];
-			else
-			{
-				Error(TXT_INVALID_BYTECODE_d);
-				return;
-			}
-#endif
 		}
 		else if( c == asBC_JMP    ||
 			     c == asBC_JZ     ||
@@ -3911,7 +3873,6 @@ int asCWriter::Write()
 	return error ? asERROR : asSUCCESS;
 }
 
-#ifdef AS_NEWSTRING
 int asCWriter::FindStringConstantIndex(void *str)
 {
 	asSMapNode<void*, int> *cursor = 0;
@@ -3923,19 +3884,6 @@ int asCWriter::FindStringConstantIndex(void *str)
 	stringToIndexMap.Insert(str, index);
 	return index;
 }
-#else
-int asCWriter::FindStringConstantIndex(int id)
-{
-	asSMapNode<int,int> *cursor = 0;
-	if (stringIdToIndexMap.MoveTo(&cursor, id))
-		return cursor->value;
-
-	usedStringConstants.PushLast(id);
-	int index = int(usedStringConstants.GetLength() - 1);
-	stringIdToIndexMap.Insert(id, index);
-	return index;
-}
-#endif
 
 void asCWriter::WriteUsedStringConstants()
 {
@@ -3944,7 +3892,6 @@ void asCWriter::WriteUsedStringConstants()
 	asUINT count = (asUINT)usedStringConstants.GetLength();
 	WriteEncodedInt64(count);
 
-#ifdef AS_NEWSTRING
 	asCString str;
 	for (asUINT i = 0; i < count; ++i)
 	{
@@ -3954,10 +3901,6 @@ void asCWriter::WriteUsedStringConstants()
 		engine->stringFactory->GetRawStringData(usedStringConstants[i], str.AddressOf(), &length);
 		WriteString(&str);
 	}
-#else
-	for( asUINT i = 0; i < count; ++i )
-		WriteString(engine->stringConstants[usedStringConstants[i]]);
-#endif
 }
 
 void asCWriter::WriteUsedFunctions()
@@ -4438,13 +4381,8 @@ void asCWriter::WriteEncodedInt64(asINT64 i)
 void asCWriter::WriteString(asCString* str)
 {
 	// First check if the string hasn't been saved already
-#ifdef AS_NEWSTRING
 	asSMapNode<asCString, int> *cursor = 0;
 	if (stringToIdMap.MoveTo(&cursor, *str))
-#else
-	asSMapNode<asCStringPointer, int> *cursor = 0;
-	if (stringToIdMap.MoveTo(&cursor, asCStringPointer(str)))
-#endif
 	{
 		// Save a reference to the existing string
 		// The lowest bit is set to 1 to indicate a reference
@@ -4463,11 +4401,7 @@ void asCWriter::WriteString(asCString* str)
 		bytesWritten += len;
 
 		savedStrings.PushLast(*str);
-#ifdef AS_NEWSTRING
 		stringToIdMap.Insert(*str, int(savedStrings.GetLength()) - 1);
-#else
-		stringToIdMap.Insert(asCStringPointer(str), int(savedStrings.GetLength()) - 1);
-#endif
 	}
 }
 
@@ -4967,14 +4901,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 			// Translate the function pointer
 			*(asPWORD*)(tmpBC+1) = FindFunctionIndex(*(asCScriptFunction**)(tmpBC+1));
 		}
-		else if( c == asBC_STR ) // W_ARG
-		{
-#ifndef AS_NEWSTRING
-			// Translate the string constant id
-			asWORD *arg = ((asWORD*)tmpBC)+1;
-			*arg = (asWORD)FindStringConstantIndex(*arg);
-#endif
-		}
 		else if( c == asBC_CALLBND ) // DW_ARG
 		{
 			// Translate the function id
@@ -4997,7 +4923,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				 c == asBC_CpyVtoG4 || // rW_PTR_ARG
 				 c == asBC_SetG4    )  // PTR_DW_ARG
 		{
-#ifdef AS_NEWSTRING
 			// Check if the address is a global property or a string constant
 			void *ptr = *(void**)(tmpBC + 1);
 			if (engine->varAddressMap.MoveTo(0, ptr))
@@ -5015,10 +4940,6 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 				// Leave the first bit clear to signal string constant
 				*(asPWORD*)(tmpBC + 1) = FindStringConstantIndex(*(void**)(tmpBC + 1)) << 1;
 			}
-#else
-			// Translate global variable pointers into indices
-			*(asPWORD*)(tmpBC+1) = FindGlobalPropPtrIndex(*(void**)(tmpBC+1));
-#endif
 		}
 		else if( c == asBC_JMP    ||	// DW_ARG
 			     c == asBC_JZ     ||

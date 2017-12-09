@@ -279,9 +279,6 @@ bool TestSwitch()
 			TEST_FAILED;
 		if (bout.buffer != "script (1, 1) : Info    : Compiling void func()\n"
 						   "script (3, 11) : Error   : 'undeclaredString' is not declared\n"
-#ifndef AS_NEWSTRING
-						   "script (5, 8) : Error   : Case expressions must be constants\n"
-#endif
 						   "script (5, 8) : Error   : Switch expressions must be integral numbers\n"
 						   "script (3, 3) : Error   : Empty switch statement\n")
 		{

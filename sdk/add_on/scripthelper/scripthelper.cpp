@@ -558,11 +558,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 	return 0;
 }
 
-#ifdef AS_NEWSTRING
 int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *configFile, asIStringFactory *stringFactory)
-#else
-int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *configFile)
-#endif
 {
 	int r;
 
@@ -829,7 +825,6 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 			in::GetToken(engine, type, config, pos);
 			type = type.substr(1, type.length() - 2);
 
-#ifdef AS_NEWSTRING
 			if (stringFactory == 0)
 			{
 				engine->WriteMessage(configFile, in::GetLineNumber(config, pos), 0, asMSGTYPE_WARNING, "Cannot register string factory without the actual implementation");
@@ -844,14 +839,6 @@ int ConfigEngineFromStream(asIScriptEngine *engine, istream &strm, const char *c
 					return -1;
 				}
 			}
-#else
-			r = engine->RegisterStringFactory(type.c_str(), asFUNCTION(0), asCALL_GENERIC);
-			if( r < 0 )
-			{
-				engine->WriteMessage(configFile, in::GetLineNumber(config, pos), 0, asMSGTYPE_ERROR, "Failed to register string factory");
-				return -1;
-			}
-#endif
 		}
 		else if( token == "defarray" )
 		{

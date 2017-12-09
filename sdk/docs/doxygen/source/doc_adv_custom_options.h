@@ -37,7 +37,17 @@ runtime choices about several different behaviours in the engine.
 
 The following modify the script language in one way or the other:
 
-\todo Document asEP_DISALLOW_EMPTY_LIST_ELEMENTS
+\ref asEP_DISALLOW_EMPTY_LIST_ELEMENTS
+
+By turning on this option the compiler will no longer accept empty list elements in initialization lists. 
+The following will for example not be supported:
+
+<pre>
+  array<int> arr = {1,2,,4,5,};
+</pre>
+
+When not turned on, the compiler will leave the empty list elements with the uninitialized value, just as an 
+uninitialized variable of the same type.
 
 \ref asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
 
@@ -126,7 +136,12 @@ can be encoded in UTF-8 format and compiler normally.
 
 There are also several options in \ref asIScriptEngine::SetEngineProperty "SetEngineProperty" for modifying the way the engine behaves.
 
-\todo Document asEP_MAX_NESTED_CALLS
+\ref asEP_MAX_NESTED_CALLS
+
+This property defines how many recursive nested calls the engine should accept. In this context a nested call is when a script calls into 
+an application registered function that in turn calls another script function. The second call is then said to be a nested call.
+
+By default the engine will accept 100 nested calls.
 
 \ref asEP_OPTIMIZE_BYTECODE
 
