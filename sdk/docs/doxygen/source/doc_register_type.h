@@ -463,6 +463,27 @@ r = engine->RegisterObjectMethod("mytype", "void MethodWrapper()", asFUNCTION(My
 
 \see \ref doc_register_func for more details on how the macros work.
 
+\section doc_reg_objmeth_composite Composite members
+
+If the application class that is being registered uses composition, then it is possible to register the methods
+of the composite members like this:
+
+\code
+struct Component
+{
+  int DoSomething();
+};
+
+struct Object
+{
+  Component *comp;
+};
+
+r = engine->RegisterObjectMethod("object", "int DoSomething()", asMETHOD(Component, DoSomething), asCALL_THISCALL, 0, asOFFSET(Object, comp), true); assert( r >= 0 );
+\endcode
+
+The last parameter indicates that to reach the composite member it is necessary to dereference 
+the pointer. If the composite member is inlined, then the parameter should be set to false.
 
 
 
@@ -500,6 +521,29 @@ r = engine->RegisterObjectProperty("mytype", "othertype &a", asOFFSET(MyStruct,a
 
 Of course, the application must make sure the pointer is valid during the whole time 
 that it may be accessed from the script.
+
+\section doc_reg_objprop_composite Composite members
+
+If the application class that is being registered uses composition, then it is possible to register the properties
+of the composite members like this:
+
+\code
+struct Component
+{
+  int a;
+};
+
+struct Object
+{
+  Component *comp;
+};
+
+r = engine->RegisterObjectProperty("object", "comp_a", asOFFSET(Component, a), asOFFSET(Object, comp), true); assert( r >= 0 );
+\endcode
+
+The last parameter indicates that to reach the property of the composite member it is necessary to dereference 
+the pointer. If the composite member is inlined, then the parameter should be set to false.
+
 
 
 \section doc_reg_objprop_accessor Property accessors

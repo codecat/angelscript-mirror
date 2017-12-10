@@ -1492,7 +1492,61 @@ represents a complex number, i.e. a number with real and imaginary parts.
   double fpFromIEEE(uint64 raw);
   uint   fpToIEEE(float fp);
   uint64 fpToIEEE(double fp);
-  
+</pre>
+
+\subsection doc_addon_math_funcs Functions
+
+<b>cos, sin, tan</b>
+
+Calculates the trigonometric functions cosine, sine, and tangent. The input angle should be given in radian.
+
+<b>acos, asin, atan</b>
+
+Calculates the inverse of the trigonometric functions cosine, sine, and tangent. The returned angle is given in radian.
+
+<b>atan2</b>
+
+Calculates the inverse of the trigonometric function tangent. The input is the y and x proportions. The returned angle is given in radian.
+
+<b>cosh, sinh, tanh</b>
+
+Calculates the hyperbolic of the cosine, sine, and tangent. The input angle should be given in radian.
+
+<b>log, log10</b>
+
+Calculates the logarithm of the input value. log is the natural logarithm and log10 is the base-10 logarithm.
+
+<b>pow</b>
+
+Calculates the based raised to the power of exponent.
+
+<b>sqrt</b>
+
+Calculates the square root of the value.
+
+<b>abs</b>
+
+Returns the absolute value.
+
+<b>ceil, floor</b>
+
+ceil returns the closest integer number that is higher or equal to the input. Floor returns the closest integer number that is lower or equal to the input.
+
+<b>fraction</b>
+
+Returns the fraction of the number, i.e. what remains after taking away the integral number.
+
+<b>closeTo</b>
+
+Due to numerical errors with the binary representation of real numbers it is often difficult to do direct comparisons of two float values. The closeTo function will return true of the two values are almost equal, allowing for a small difference up to the size of the epsilon value.
+
+<b>fpFromIEEE, fpToIEEE</b>
+
+Translates the float to and from IEEE 754 representation. This can be used if one wishes to directly inspect or manipulate the floating point value in the binary representation.
+
+\subsection doc_addon_math_complex The complex type
+
+<pre>
   // This type represents a complex number with real and imaginary parts
   class complex
   {
@@ -1532,7 +1586,35 @@ represents a complex number, i.e. a number with real and imaginary parts.
   }
 </pre>
 
-\todo Document the interface
+<b>complex</b>
+
+The constructors allow for implicit construction, making a copy, implicit conversion from float, and explicit initialization from two float values.
+
+<b>=, !=</b>
+
+Compares two complex values.
+
+<b>=, +=, -=, *=, /=</b>
+
+Assign and compound assignment of complex values.
+
+<b>+, -, *, /</b>
+
+Math operators on complex values.
+
+<b>abs</b>
+
+Returns the absolute (magnitude) of the complex value.
+
+<b>r, i</b>
+
+Retrieves the real and imaginary part of the complex value.
+
+<b>ri, ir</b>
+
+Swizzle operators return a complex value with the ordering of the real and imaginary parts as indicated by the name.
+
+
 
 
 

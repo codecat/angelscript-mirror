@@ -35,8 +35,6 @@ r = engine->RegisterGlobalFunction("void globalFunc2(int)", asFUNCTIONPR(globalF
 The same goes for asMETHOD and asMETHODPR. The difference between these and asFUNCTION/asFUNCTIONPR
 is that the former take the class name as well as parameter.
 
-\todo Show how to register composite objects
-
 \code
 class Object
 {

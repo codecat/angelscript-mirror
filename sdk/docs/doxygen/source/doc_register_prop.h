@@ -18,8 +18,6 @@ to the object, etc. Unfortunately there is no way for AngelScript to validate th
 is correct, so if the wrong pointer is given, you will only detect it at runtime when seeing 
 unexpected behaviours from the application.
 
-\todo Show how to register composite objects
-
 \code
 // Variables that should be accessible through the script.
 int      g_number       = 0;
