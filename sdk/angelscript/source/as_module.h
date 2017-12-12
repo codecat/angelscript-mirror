@@ -231,12 +231,10 @@ public:
 	// This array holds the funcdefs declared in the module
 	asCArray<asCFuncdefType*>      funcDefs; // increases ref count
 
-#ifndef AS_NO_COMPILER
 	// This array holds types that have been explicitly declared with 'external'
 	asCArray<asCTypeInfo*>       externalTypes; // doesn't increase ref count
 	// This array holds functions that have been explicitly declared with 'external'
 	asCArray<asCScriptFunction*> externalFunctions; // doesn't increase ref count
-#endif
 };
 
 END_AS_NAMESPACE

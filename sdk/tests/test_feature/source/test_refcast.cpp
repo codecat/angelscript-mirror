@@ -194,6 +194,7 @@ bool Test()
 	CBufferedOutStream bout;
 
 	// Test error message when registering multiple cast operators for the same target type
+	SKIP_ON_MAX_PORT
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

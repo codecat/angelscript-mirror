@@ -39,6 +39,7 @@ namespace TestComposition
 		int r;
 
 		// Test composition without indirection
+		SKIP_ON_MAX_PORT
 		{
 			asIScriptEngine *engine = asCreateScriptEngine();
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -91,6 +92,7 @@ namespace TestComposition
 		}
 
 		// Test composition with indirection
+		SKIP_ON_MAX_PORT
 		{
 			asIScriptEngine *engine = asCreateScriptEngine();
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

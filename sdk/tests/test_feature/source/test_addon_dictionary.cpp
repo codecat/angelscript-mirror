@@ -7,8 +7,9 @@
 namespace Test_Addon_Dictionary
 {
 
-void Print(const std::string &i)
+void Print(asIScriptGeneric *gen)
 {
+	const std::string &i = *(const std::string*)gen->GetArgAddress(0);
 	PRINTF("%s", i.c_str());
 }
 
@@ -86,7 +87,7 @@ bool Test()
 		RegisterScriptDictionary(engine);
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
-		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

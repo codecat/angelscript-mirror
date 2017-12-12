@@ -58,7 +58,7 @@ void ExceptionCallback(asIScriptContext * /*ctx*/, int *numExceptions)
 	(*numExceptions)++;
 }
 
-void ExitScript()
+void ExitScript(asIScriptGeneric *)
 {
 	asGetActiveContext()->Abort();
 }
@@ -75,7 +75,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		r = engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("void exit()", asFUNCTION(ExitScript), asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void exit()", asFUNCTION(ExitScript), asCALL_GENERIC); assert(r >= 0);
 
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);

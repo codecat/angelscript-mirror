@@ -185,7 +185,11 @@ CScriptArray *CreateArrayOfStrings()
 }
 
 static std::stringstream printResult;
-static void print(void* ptr, int typeId) {
+static void print(asIScriptGeneric *gen) 
+{
+	void* ptr = *(void**)gen->GetAddressOfArg(0);
+	int typeId = gen->GetArgTypeId(0);
+
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
 	asITypeInfo* ti = engine->GetTypeInfoById(typeId);
@@ -266,7 +270,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 		RegisterScriptArray(engine, false);
 
-		engine->RegisterGlobalFunction("void print(const?&in)", asFUNCTION(print), asCALL_CDECL);
+		engine->RegisterGlobalFunction("void print(const?&in)", asFUNCTION(print), asCALL_GENERIC);
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",

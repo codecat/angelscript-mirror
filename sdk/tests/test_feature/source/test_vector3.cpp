@@ -51,6 +51,7 @@ bool TestVector3()
 
 	// Test reported bug with vector3 class that has no registered copy constructor
 	// https://www.gamedev.net/forums/topic/693832-overloaded-operator-results-in-null-pointer-exception-when-result-isnt-stored-in-variable/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
