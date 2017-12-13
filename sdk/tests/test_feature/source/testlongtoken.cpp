@@ -10,8 +10,11 @@ static const char * const TESTNAME = "TestLongToken";
 bool TestLongToken()
 {
 	bool fail = false;
+	CBufferedOutStream bout;
 
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	
 
 	std::string str;
 
@@ -22,6 +25,12 @@ bool TestLongToken()
 	ExecuteString(engine, str.c_str());
 
 	engine->Release();
+
+	if (bout.buffer != "ExecuteString (1, 1) : Error   : 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not declared\n")
+	{
+		PRINTF("%s", bout.buffer.c_str());
+		TEST_FAILED;
+	}
 
 	// Success
 	return fail;

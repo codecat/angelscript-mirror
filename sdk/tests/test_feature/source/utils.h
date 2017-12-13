@@ -92,17 +92,17 @@ public:
 		if( msg->type == 1 ) msgType = "Warning";
 		if( msg->type == 2 ) msgType = "Info   ";
 
-		char buf[256];
+		char buf[1024];
 #ifdef _MSC_VER
 #if _MSC_VER >= 1500
-		_snprintf_s(buf, 255, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+		_snprintf_s(buf, 1023, 1023, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
 #else
-		_snprintf(buf, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+		_snprintf(buf, 1023, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
 #endif
 #else
-		snprintf(buf, 255, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+		snprintf(buf, 1023, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
 #endif
-		buf[255] = '\0';
+		buf[1023] = '\0';
 
 		buffer += buf;
 	}
