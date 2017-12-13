@@ -296,7 +296,7 @@ size_t asCString::Format(const char *format, ...)
 		asCString str; // Use temporary string in case the current buffer is a parameter
 		str.Allocate(n, false);
 
-		while( (r = asVSNPRINTF(str.AddressOf(), n, format, args)) < 0 || r >= n )
+		while( (r = asVSNPRINTF(str.AddressOf(), n, format, args)) < 0 || r >= int(n) )
 		{
 			n *= 2;
 			str.Allocate(n, false);
