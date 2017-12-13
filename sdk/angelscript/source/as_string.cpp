@@ -34,8 +34,6 @@
 #include <stdlib.h>		// strtod(), strtol()
 #include <string.h>		// some compilers declare memcpy() here
 
-#include <iostream>
-
 #if !defined(AS_NO_MEMORY_H)
 #include <memory.h>
 #endif
