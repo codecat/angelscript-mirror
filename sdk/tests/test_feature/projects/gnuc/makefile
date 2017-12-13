@@ -40,6 +40,7 @@ SRCNAMES = \
   test_castop.cpp \
   test_circularimport.cpp \
   test_compiler.cpp \
+  test_composition.cpp \
   test_config.cpp \
   test_configaccess.cpp \
   test_condition.cpp \

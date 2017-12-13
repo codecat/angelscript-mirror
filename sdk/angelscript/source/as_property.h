@@ -54,7 +54,7 @@ class asCObjectProperty
 {
 public:
 	asCObjectProperty() : byteOffset(0), accessMask(0xFFFFFFFF), compositeOffset(0), isCompositeIndirect(false), isPrivate(false), isProtected(false), isInherited(false) {}
-	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), accessMask(o.accessMask), isPrivate(o.isPrivate), isProtected(o.isProtected), isInherited(o.isInherited), compositeOffset(o.compositeOffset), isCompositeIndirect(o.isCompositeIndirect) {}
+	asCObjectProperty(const asCObjectProperty &o) : name(o.name), type(o.type), byteOffset(o.byteOffset), accessMask(o.accessMask), compositeOffset(o.compositeOffset), isCompositeIndirect(o.isCompositeIndirect), isPrivate(o.isPrivate), isProtected(o.isProtected), isInherited(o.isInherited) {}
 	asCString   name;
 	asCDataType type;
 	int         byteOffset;

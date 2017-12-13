@@ -58,7 +58,7 @@ bool TestVector3()
 
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
-		engine->RegisterObjectType("vec3", sizeof(vec3), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<vec3>());
+		engine->RegisterObjectType("vec3", sizeof(vec3), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<vec3>() | asOBJ_APP_CLASS_ALLFLOATS);
 
 		engine->RegisterObjectBehaviour("vec3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(vec3::vec3Construct, (vec3*), void), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectBehaviour("vec3", asBEHAVE_CONSTRUCT, "void f(float,float,float)", asFUNCTIONPR(vec3::vec3Construct, (float,float,float,vec3*),void), asCALL_CDECL_OBJLAST);
