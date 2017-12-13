@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.0 WIP - 2017/11/26</h2>
+<h2>Version 2.32.0 WIP - 2017/12/12</h2>
 
 <ul>
 <li>Bug fixes
@@ -46,6 +46,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Value type without opAssign but with a copy constructor can now be implicitly copied in type conversions
 <li>Saved byte code with scripts that used child funcdefs couldn't be loaded (Thanks Quentin Cosendey)
 <li>Compiler was allowing to pass a const object by reference to a parameter expecting a non-const when using unsafe references
+<li>Fixed buffer overflow when formatting error message with very long tokens
 </ul>
 <li>Library interface
 <ul>

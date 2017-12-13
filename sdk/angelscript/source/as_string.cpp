@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2015 Andreas Jonsson
+   Copyright (c) 2003-2017 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -286,7 +286,7 @@ size_t asCString::Format(const char *format, ...)
 	char tmp[256];
 	int r = asVSNPRINTF(tmp, 255, format, args);
 
-	if( r > 0 )
+	if( r >= 0 && r < 256 )
 	{
 		Assign(tmp, r);
 	}
@@ -296,7 +296,7 @@ size_t asCString::Format(const char *format, ...)
 		asCString str; // Use temporary string in case the current buffer is a parameter
 		str.Allocate(n, false);
 
-		while( (r = asVSNPRINTF(str.AddressOf(), n, format, args)) < 0 )
+		while( (r = asVSNPRINTF(str.AddressOf(), n, format, args)) < 0 || r >= n )
 		{
 			n *= 2;
 			str.Allocate(n, false);
