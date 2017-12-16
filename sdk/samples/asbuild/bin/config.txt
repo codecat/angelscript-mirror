@@ -224,6 +224,6 @@ func "void createCoRoutine(coroutine@, dictionary@)"
 // Properties
 
 // String factory
-strfactory "const string&"
+strfactory "string"
 
 // Default array type
