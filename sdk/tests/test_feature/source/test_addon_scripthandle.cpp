@@ -67,6 +67,40 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test that correct type is handled on inheritance
+	// https://www.gamedev.net/forums/topic/694164-scripthandle-addon-doesnt-check-object-type/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptHandle(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("mod", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo \n"
+			"{ \n"
+			"} \n"
+			"class Bar : Foo \n"
+			"{ \n"
+			"} \n"
+			"void BugTest() \n"
+			"{ \n"
+			"	ref@ x = Foo(); \n"
+			"	Bar@ y = cast<Bar>(x); \n"
+			"   assert( y is null ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		
+		r = ExecuteString(engine, "BugTest()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		
+		engine->ShutDownAndRelease();
+	}
+
 	// Test assigning directly to out reference
 	// This also tests that derived script classes can be properly cast to
 	// http://www.gamedev.net/topic/660025-inconsistent-behavior-with-ref-type-and-out-references-to-handle-params/

@@ -4884,18 +4884,10 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 		// Down casts to derived class or from interface can only be done explicitly
 		if( !useOnlyImplicitCast )
 		{
-			if( toType->Implements(fromType) ||
-				toType->DerivesFrom(fromType) )
-			{
-				*newPtr = obj;
-				reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();
-				return asSUCCESS;
-			}
-
 			// Get the true type of the object so the explicit cast can evaluate all possibilities
 			asITypeInfo *trueType = reinterpret_cast<asCScriptObject*>(obj)->GetObjectType();
-			if( trueType->DerivesFrom(toType) ||
-				trueType->Implements(toType) )
+			if (trueType->DerivesFrom(toType) ||
+				trueType->Implements(toType))
 			{
 				*newPtr = obj;
 				reinterpret_cast<asCScriptObject*>(*newPtr)->AddRef();
