@@ -33,6 +33,8 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("filesystem", "array<string> @getDirs()", asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "array<string> @getFiles()", asMETHOD(CScriptFileSystem, GetFiles), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "bool isDir(const string &in)", asMETHOD(CScriptFileSystem, IsDir), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "bool isLink(const string &in)", asMETHOD(CScriptFileSystem, IsLink), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("filesystem", "int64 getSize(const string &in)", asMETHOD(CScriptFileSystem, GetSize), asCALL_THISCALL); assert(r >= 0);
 }
 
 void RegisterScriptFileSystem(asIScriptEngine *engine)
@@ -256,6 +258,66 @@ bool CScriptFileSystem::IsDir(const string &path) const
 #endif
 
 	return true;
+}
+
+bool CScriptFileSystem::IsLink(const string &path) const
+{
+	string search;
+	if (path.find(":") != string::npos || path.find("/") == 0 || path.find("\\") == 0)
+		search = path;
+	else
+		search = currentPath + "/" + path;
+
+#if defined(_WIN32)
+	// Windows uses UTF16 so it is necessary to convert the string
+	wchar_t bufUTF16[10000];
+	MultiByteToWideChar(CP_UTF8, 0, search.c_str(), -1, bufUTF16, 10000);
+
+	// Check if the path exists and is a link
+	DWORD attrib = GetFileAttributesW(bufUTF16);
+	if (attrib == INVALID_FILE_ATTRIBUTES ||
+		!(attrib & FILE_ATTRIBUTE_REPARSE_POINT))
+		return false;
+#else
+	// Check if the path exists and is a link
+	struct stat st;
+	if (stat(search.c_str(), &st) == -1)
+		return false;
+	if ((st.st_mode & S_IFLNK) == 0)
+		return false;
+#endif
+
+	return true;
+}
+
+asINT64 CScriptFileSystem::GetSize(const string &path) const
+{
+	string search;
+	if (path.find(":") != string::npos || path.find("/") == 0 || path.find("\\") == 0)
+		search = path;
+	else
+		search = currentPath + "/" + path;
+
+#if defined(_WIN32)
+	// Windows uses UTF16 so it is necessary to convert the string
+	wchar_t bufUTF16[10000];
+	MultiByteToWideChar(CP_UTF8, 0, search.c_str(), -1, bufUTF16, 10000);
+
+	// Get the size of the file
+	LARGE_INTEGER largeInt;
+	HANDLE file = CreateFileW(bufUTF16, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	BOOL success = GetFileSizeEx(file, &largeInt);
+	CloseHandle(file);
+	if( !success )
+		return -1;
+	return asINT64(largeInt.QuadPart);
+#else
+	// Get the size of the file
+	struct stat st;
+	if (stat(search.c_str(), &st) == -1)
+		return -1;
+	return asINT64(st.st_size);
+#endif
 }
 
 string CScriptFileSystem::GetCurrentPath() const
