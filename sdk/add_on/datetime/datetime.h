@@ -32,6 +32,23 @@ public:
 	asUINT getMinute() const;
 	asUINT getSecond() const;
 
+	// Setters
+	// Returns true if valid
+	bool setDate(asUINT year, asUINT month, asUINT day);
+	bool setTime(asUINT hour, asUINT minute, asUINT second);
+
+	// Operators
+	// Return difference in seconds
+	asINT64          operator-(const CDateTime &other) const;
+	CDateTime        operator+(asINT64 seconds) const;
+	friend CDateTime operator+(asINT64 seconds, const CDateTime &other);
+	CDateTime &      operator+=(asINT64 seconds);
+	CDateTime        operator-(asINT64 seconds) const;
+	friend CDateTime operator-(asINT64 seconds, const CDateTime &other);
+	CDateTime &      operator-=(asINT64 seconds);
+	bool             operator==(const CDateTime &other) const;
+	bool             operator<(const CDateTime &other) const;
+
 protected:
 	std::chrono::system_clock::time_point tp;
 };

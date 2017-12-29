@@ -37,6 +37,54 @@ bool Test()
 		if (r != asEXECUTION_FINISHED)
 			TEST_FAILED;
 
+		// setDate with valid values
+		r = ExecuteString(engine, "datetime dt; \n"
+			                      "assert( dt.setDate(2003,3,28) ); \n"
+			                      "assert( dt.year == 2003 && dt.month == 3 && dt.day == 28 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// setDate with invalid values
+		r = ExecuteString(engine, "datetime dt; assert( dt.setDate(2001,2,29) == false );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// setTime with value values
+		r = ExecuteString(engine, "datetime dt; assert( dt.setTime(0,0,0) ); assert( dt.hour == 0 && dt.minute == 0 && dt.second == 0 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// setTime with invalid values
+		r = ExecuteString(engine, "datetime dt; assert( dt.setTime(25,61,61) == false );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// diff
+		r = ExecuteString(engine, "datetime dt1, dt2; dt1.setDate(2000,1,1); dt1.setTime(0,0,0); dt2.setDate(2000,1,2); dt2.setTime(0,0,0); assert( dt2 - dt1 == 60*60*24 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// add seconds
+		r = ExecuteString(engine, "datetime dt1; dt1.setDate(2000,1,1); dt1.setTime(0,0,0); dt1 += 60*60; \n"
+			                      "assert( dt1.hour == 1 ); \n"
+			                      "dt1 += 24*60*60; \n"
+			                      "assert( dt1.day == 2 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// add seconds with reverse operator
+		r = ExecuteString(engine, "datetime dt1; datetime dt2(dt1); dt1 = 3600 + dt2; assert( dt1 - dt2 == 3600 );");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		// comparison
+		r = ExecuteString(engine, "datetime dt1; datetime dt2(dt1); assert( dt1 == dt2 ); \n"
+			                      "dt1 -= 1; assert( dt1 < dt2 ); \n");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+
+
 		engine->Release();
 	}
 
