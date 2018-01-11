@@ -20,6 +20,7 @@
 
 #ifdef _WIN32
 #include <Windows.h> // WriteConsoleW
+#include <TlHelp32.h> // CreateToolhelp32Snapshot, Process32First, Process32Next
 #endif
 
 #if defined(_MSC_VER)
@@ -41,6 +42,7 @@ string            GetInput();
 int               ExecSystemCmd(const string &cmd);
 CScriptArray     *GetCommandLineArgs();
 void              SetWorkDir(const string &file);
+void              WaitForUser();
 
 // The command line arguments
 CScriptArray *g_commandLineArgs = 0;
@@ -83,6 +85,8 @@ int main(int argc, char **argv)
 		cout << " -d             inform if the script should be runned with debug" << endl;
 		cout << " <script file>  is the script file that should be runned" << endl;
 		cout << " <args>         zero or more args for the script" << endl;
+
+		WaitForUser();
 		return -1;
 	}
 
@@ -114,7 +118,11 @@ int main(int argc, char **argv)
 
 	// Compile the script code
 	r = CompileScript(engine, argv[scriptArg]);
-	if( r < 0 ) return -1;
+	if (r < 0)
+	{
+		WaitForUser();
+		return -1;
+	}
 
 	// Execute the script
 	r = ExecuteScript(engine, argv[scriptArg], debug);
@@ -124,6 +132,8 @@ int main(int argc, char **argv)
 		g_commandLineArgs->Release();
 	engine->ShutDownAndRelease();
 
+	if (r < 0)
+		WaitForUser();
 	return r;
 }
 
@@ -548,5 +558,55 @@ void ReturnContextCallback(asIScriptEngine *engine, asIScriptContext *ctx, void 
 void SetWorkDir(const string &file)
 {
 	_chdir(file.c_str());
+}
+
+// This function is used to allow the user to read the output to the console before exiting 
+// when the process is initiated from the file explorer on Windows.
+void WaitForUser()
+{
+#ifdef _WIN32
+	// Check if the script is initiated directly from the file explorer in which
+	// case it is necessary to wait for some user input before exiting so the
+	// user has time to check the compiler error messages.
+	// Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ms686701(v=vs.85).aspx
+	DWORD parentPid = 0;
+	DWORD  myPid = GetCurrentProcessId();
+
+	HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	PROCESSENTRY32W procEntry;
+	procEntry.dwSize = sizeof(PROCESSENTRY32W);
+
+	// Find the pid of the parent process
+	Process32FirstW(hSnapShot, &procEntry);
+	do
+	{
+		if (myPid == procEntry.th32ProcessID)
+		{
+			parentPid = procEntry.th32ParentProcessID;
+			break;
+		}
+	} while (Process32NextW(hSnapShot, &procEntry));
+
+	// Find the name of the parent process
+	wstring name;
+	Process32FirstW(hSnapShot, &procEntry);
+	do
+	{
+		if (parentPid == procEntry.th32ProcessID)
+		{
+			name = procEntry.szExeFile;
+			break;
+		}
+	} while (Process32NextW(hSnapShot, &procEntry));
+
+	CloseHandle(hSnapShot);
+
+	if (name == L"explorer.exe")
+	{
+		//WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), name.c_str(), name.length(), 0, 0);
+		PrintString("\nPress enter to exit\n");
+		GetInput();
+	}
+#endif
 }
 
