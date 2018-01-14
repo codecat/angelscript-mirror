@@ -42,6 +42,21 @@ public:
 	// Returns a list of the directories in the current path
 	CScriptArray *GetDirs() const;
 
+	// Creates a new directory. Returns 0 on success
+	int MakeDir(const std::string &path);
+
+	// Removes a directory. Will only remove the directory if it is empty. Returns 0 on success
+	int RemoveDir(const std::string &path);
+
+	// Deletes a file. Returns 0 on success
+	int DeleteFile(const std::string &path);
+
+	// Copies a file. Returns 0 on success
+	int CopyFile(const std::string &source, const std::string &target);
+
+	// Moves or renames a file or directory. Returns 0 on success
+	int Move(const std::string &source, const std::string &target);
+
 protected:
 	~CScriptFileSystem();
 
