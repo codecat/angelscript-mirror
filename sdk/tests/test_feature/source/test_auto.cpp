@@ -1,5 +1,8 @@
 #include "utils.h"
 #include "../../add_on/scriptmath/scriptmathcomplex.h"
+#include "../../add_on/scriptstdstring/scriptstdstring.h"
+#include "../../add_on/scriptarray/scriptarray.h"
+#include "../../add_on/scriptdictionary/scriptdictionary.h"
 
 using namespace std;
 
@@ -14,6 +17,40 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
+
+	// Test auto and dictionary
+	// Before fix, this crashed due to the dictionaryValue not having any matching opEquals methods, 
+	// making the compiler attempt to find opEquals methods on the 'null' expression, which caused a 
+	// null pointer access failure.
+	// https://www.gamedev.net/forums/topic/694703-segmentation-fault-with-dictionary-retrieve-to-auto/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() { \n"
+			"  dictionary compounds; \n"
+			"  auto compoundData = compounds['name']; \n"
+			"  if( @compoundData !is null ) {} \n" // the crash happened when compiling this condition
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
+						   "test (4, 21) : Error   : No appropriate opEquals method found\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test auto when it is not possible to determine type from expression
 	// http://www.gamedev.net/topic/677273-various-unexpected-behaviors-of-angelscript-2310/

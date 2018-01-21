@@ -12704,7 +12704,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 	// Find the matching method
 	if( lctx->type.dataType.IsObject() &&
 		(!lctx->type.isExplicitHandle ||
-		 lctx->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE) )
+		 lctx->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE) &&
+		!lctx->type.IsNullConstant() )
 	{
 		asUINT n;
 
@@ -12714,7 +12715,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 		asCArray<int> funcs;
 		asCObjectType *ot = CastToObjectType(lctx->type.dataType.GetTypeInfo());
 		asASSERT(ot);
-		for( n = 0; n < ot->methods.GetLength(); n++ )
+		for( n = 0; ot && n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
 			asASSERT( func );
