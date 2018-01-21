@@ -84,7 +84,42 @@ public:
 	map_t stringCache;
 };
 
-static CStdStringFactory stringFactory;
+static CStdStringFactory *stringFactory = 0;
+
+CStdStringFactory *GetStdStringFactorySingleton()
+{
+	if( stringFactory == 0 )
+	{
+		// The following instance will be destroyed by the global 
+		// CStdStringFactoryCleaner instance upon application shutdown
+		stringFactory = new CStdStringFactory();
+	}
+	return stringFactory;
+}
+
+class CStdStringFactoryCleaner
+{
+public:
+	~CStdStringFactoryCleaner()
+	{
+		if (stringFactory)
+		{
+			// Only delete the string factory if the stringCache is empty
+			// If it is not empty, it means that someone might still attempt
+			// to release string constants, so if we delete the string factory
+			// the application might crash. Not deleting the cache would
+			// lead to a memory leak, but since this is only happens when the
+			// application is shutting down anyway, it is not important.
+			if (stringFactory->stringCache.empty())
+			{
+				delete stringFactory;
+				stringFactory = 0;
+			}
+		}
+	}
+};
+
+static CStdStringFactoryCleaner cleaner;
 
 
 static void ConstructString(string *thisPointer)
@@ -694,7 +729,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 #endif
 
-	r = engine->RegisterStringFactory("string", &stringFactory);
+	r = engine->RegisterStringFactory("string", GetStdStringFactorySingleton());
 
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -1214,7 +1249,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	// Register the string type
 	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert( r >= 0 );
 
-	r = engine->RegisterStringFactory("string", &stringFactory);
+	r = engine->RegisterStringFactory("string", GetStdStringFactorySingleton());
 
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert( r >= 0 );

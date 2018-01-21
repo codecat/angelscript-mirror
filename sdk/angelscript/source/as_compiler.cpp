@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -12713,6 +12713,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 
 		asCArray<int> funcs;
 		asCObjectType *ot = CastToObjectType(lctx->type.dataType.GetTypeInfo());
+		asASSERT(ot);
 		for( n = 0; n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
@@ -14573,7 +14574,11 @@ void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asCExprContext *
 		}
 
 		// Compiler error, don't continue
+#if AS_SIZEOF_BOOL == 1
+		ctx->type.SetConstantB(asCDataType::CreatePrimitive(ttBool, true), true);
+#else
 		ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttBool, true), true);
+#endif
 		return;
 	}
 

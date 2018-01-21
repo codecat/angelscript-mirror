@@ -72,7 +72,7 @@ int SetArgWord(int arg, asWORD value);
 on 1, and so on. <code>value</code> is the value of the argument. What method to use is 
 determined by the type of the parameter. For primitive types you can use any of these. 
 If the parameter type is a reference to a primitive type it is recommended to use the 
-SetArgDWord() method and pass the pointer as the value. For non-primitive types the 
+SetArgAddress() method and pass the pointer as the value. For non-primitive types the 
 method SetArgObject() should be used, which will be described in the next section.
 
 \code

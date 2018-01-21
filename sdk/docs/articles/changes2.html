@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.1 WIP - 2018/01/14</h2>
+<h2>Version 2.32.1 WIP - 2018/01/21</h2>
 
 <ul>
 <li>Add-ons &amp; Samples
@@ -25,6 +25,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The asrun sample now waits for user input before closing on any error when executed from file explorer on Windows
 <li>filesystem's changeCurrentPath doesn't modify anything if the new path is invalid
 <li>Implemented the methods makeDir, removeDir, deleteFile, copyFile, and move on the filesystem add-on
+<li>Changed the clean-up of the string factory in the stdstring add-on to avoid crash if the script engine is stored in global singleton (Thanks howie_007)
 </ul>
 <li>Project
 <ul>
