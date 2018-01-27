@@ -42,6 +42,8 @@ bool Test()
 		r = mod->Build();
 		if (r >= 0)
 			TEST_FAILED;
+		// TODO: The error message should inform which types are being compared to help 
+		//       the user understand why no opEquals methods are found
 		if (bout.buffer != "test (1, 1) : Info    : Compiling void main()\n"
 						   "test (4, 21) : Error   : No appropriate opEquals method found\n")
 		{

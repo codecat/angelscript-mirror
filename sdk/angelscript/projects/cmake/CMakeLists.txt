@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(angelscript)
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
+option(AS_NO_EXCEPTIONS "Disable exception handling in script context" OFF)
 
 if(APPLE)
     option(BUILD_FRAMEWORK "Build Framework bundle for OSX" OFF)
@@ -133,6 +134,10 @@ endif()
 
 target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -DANGELSCRIPT_EXPORT -D_LIB)
 
+if(AS_NO_EXCEPTIONS)
+	target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE AS_NO_EXCEPTIONS)
+endif()
+
 # Fix x64 issues on Linux
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND NOT APPLE)
     target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
@@ -180,7 +185,7 @@ install(FILES
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/Angelscript/AngelscriptConfigVersion.cmake"
-	VERSION ${Upstream_VERSION}
+	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY AnyNewerVersion
 )
 
