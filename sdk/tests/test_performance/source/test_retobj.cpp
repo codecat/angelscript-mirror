@@ -48,9 +48,10 @@ static const char *script =
 // TODO: optimize: Can the compiler be intelligent enough to see that the test object is not 
 //                 stored anywhere and thus reuse the same instance in each iteration?
 //                 Maybe if the function instead used (Obj &out)
-// TODO: optimize: VAR + GetObj -> PshV
+// TODO: optimize: VAR + GetObj -> PshV (except that GETOBJ clears the variable)
 // TODO: optimize: The test variable is local and not a handle (i.e. cannot be reassigned), so the 
-//                 compiler wouldn't have to create a handle to hold an extra reference
+//                 compiler wouldn't have to create a handle to hold an extra reference 
+//                 (except that the called function will release the handle, so for this reason it is necessary to copy it to a handle)
 "void test2() \n"
 "{ \n"
 "  for (int i = 0; i < iterations; i++) { \n"

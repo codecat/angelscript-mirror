@@ -60,10 +60,10 @@ void Get(asIScriptGeneric *gen)
 	gen->SetReturnDWord(false);
 }
 
+static CScriptString *g_test = new CScriptString("test");
 void GetConstStringRef(asIScriptGeneric *gen)
 {
-	static string test("test");
-	gen->SetReturnAddress(&test);
+	gen->SetReturnAddress(g_test);
 }
 
 // void TestFunc(int, string&)
@@ -244,6 +244,8 @@ bool Test()
 		r = ExecuteString(engine, "string tst(getconststringref()); print(tst);");
 		if (r != asEXECUTION_FINISHED) TEST_FAILED;
 		if (printOutput != "test") TEST_FAILED;
+		g_test->Release();
+		g_test = 0;
 
 
 		// This script tests that variables are created and destroyed in the correct order

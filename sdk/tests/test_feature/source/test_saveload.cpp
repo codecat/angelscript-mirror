@@ -586,7 +586,7 @@ bool Test()
 		else
 		{
 			asDWORD crc32 = ComputeCRC32(&bc.buffer[0], asUINT(bc.buffer.size()));
-			if (crc32 != 0x4B444563)
+			if (crc32 != 0xFB8C3E58)
 			{
 				PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 				TEST_FAILED;
@@ -766,7 +766,6 @@ bool Test()
 		// Register additional constructor for test
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(int, const string& in)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 
-		// TODO: runtime optimize: This code produces unoptimal bytecode with VAR, PshC4, GETREF. Should be transformed to PSF, PshC4
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"int main() \n"
@@ -786,19 +785,12 @@ bool Test()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-				asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_PGA,                                        asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_PopPtr,asBC_VAR,asBC_SetV4,asBC_PshV4,asBC_GETREF,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,
+				// TODO: runtime optimize: Repeated JitEntry, SUSPEND should be removed
+				asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_SUSPEND,asBC_JitEntry,asBC_PGA,asBC_SetV4,asBC_PshV4,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,
 				asBC_SUSPEND,asBC_JitEntry,asBC_SetV4,asBC_PSF,asBC_CALLSYS,asBC_JitEntry,asBC_CpyVtoR4,asBC_JMP,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
 			TEST_FAILED;
-
-		// Make sure the asBC_GETREF instruction has the argument == 1
-		{
-			asUINT len;
-			asDWORD *bc = func->GetByteCode(&len);
-			if (asBC_WORDARG0(&bc[12 + sizeof(void*)/4 + 4 * asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1)
-				TEST_FAILED;
-		}
 
 		mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&bcStream);
@@ -808,14 +800,6 @@ bool Test()
 		func = mod->GetFunctionByName("main");
 		if( !ValidateByteCode(func, expect) )
 			TEST_FAILED;
-
-		// Make sure the asBC_GETREF instruction has the argument == 1
-		{
-			asUINT len;
-			asDWORD *bc = func->GetByteCode(&len);
-			if (asBC_WORDARG0(&bc[12 + sizeof(void*) / 4 + 4 * asBCTypeSize[asBCInfo[asBC_JitEntry].type]]) != 1)
-				TEST_FAILED;
-		}
 
 		engine->ShutDownAndRelease();
 	}

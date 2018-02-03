@@ -435,11 +435,15 @@ bool Test()
 		asBYTE expect[] =
 		{
 			asBC_SUSPEND,
-			asBC_VAR,        // Push offset to the f arg on stack
+			asBC_PshVPtr,
+			asBC_RefCpyV, // The refcpy here is required because the function expects a ref to a handle
+			asBC_PopPtr,
+			asBC_VAR,     // TODO: optimize: The local temporary handle is safe since it cannot be modified by anyone
 			asBC_PshGPtr,
 			asBC_CHKREF,
-			asBC_GETREF,     // Put the reference to the f arg on the stack to form the @&
+			asBC_GETREF,
 			asBC_CALLSYS,
+			asBC_FREE,
 			asBC_SUSPEND,
 			asBC_RET
 		};

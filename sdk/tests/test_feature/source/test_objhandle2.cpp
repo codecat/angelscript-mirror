@@ -144,7 +144,6 @@ bool Test()
 	if( r < 0 )
 	{
 		TEST_FAILED;
-		PRINTF("%s: Failed to compile the script\n", TESTNAME);
 	}
 	asIScriptContext *ctx = engine->CreateContext();
 	r = ExecuteString(engine, "TestObjHandle()", mod, ctx);
@@ -161,7 +160,6 @@ bool Test()
 		}
 
 		TEST_FAILED;
-		PRINTF("%s: Execution failed\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
 
@@ -169,11 +167,10 @@ bool Test()
 	CBufferedOutStream bout;
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = ExecuteString(engine, "refclass @a; a = @a;");
-	if( r >= 0 || bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from 'refclass@' to 'const refclass&'.\n" ) 
+	if( r >= 0 || bout.buffer != "ExecuteString (1, 18) : Error   : Can't implicitly convert from 'refclass@const' to 'const refclass&'.\n" ) 
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());
-		PRINTF("%s: failure\n", TESTNAME);
 	}
 
 	ctx = engine->CreateContext();
@@ -181,7 +178,6 @@ bool Test()
 	if( r != asEXECUTION_EXCEPTION )
 	{
 		TEST_FAILED;
-		PRINTF("%s: No exception\n", TESTNAME);
 	}
 	if( ctx ) ctx->Release();
 

@@ -1464,7 +1464,6 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 	{
 		// Allocate a temporary variable of the same type as the argument
 		dt.MakeReference(false);
-		dt.MakeReadOnly(false);
 
 		int offset;
 		if( refType == asTM_INREF )
@@ -1518,6 +1517,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 				ctx->bc.Instr(asBC_PopPtr);
 
 				dt.MakeHandle(true);
+				dt.MakeReadOnly(false);
 				offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 				// Push the reference to the variable on the stack
@@ -1532,6 +1532,30 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 
 				if( !isMakingCopy )
 				{
+					// For parameters expecting a reference to a handle we need to make sure the argument
+					// is really a handle, and not just a reference to the object. Do this check before the
+					// implicit conversion so it can be treated correctly.
+					if (dt.IsObjectHandle() && !ctx->type.dataType.IsObjectHandle())
+					{
+						// Make a refCopy into a local handle variable
+						// Allocate a handle variable
+						dt.MakeHandle(true);
+						dt.MakeReadOnly(false);
+						offset = AllocateVariableNotIn(dt, true, false, ctx);
+
+						// Copy the handle
+						Dereference(ctx, true);
+						ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
+						if (ctx->type.dataType.IsFuncdef())
+							ctx->bc.InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
+						else
+							ctx->bc.InstrPTR(asBC_REFCPY, ctx->type.dataType.GetTypeInfo());
+						ctx->bc.Instr(asBC_PopPtr);
+						ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
+
+						ctx->type.SetVariable(dt, offset, true);
+					}
+
 					// Even though the parameter expects a reference, it is only meant to be
 					// used as input value and doesn't have to refer to the actual object, so it
 					// is OK to do an implicit conversion.
@@ -1556,7 +1580,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 
 					// If the parameter is read-only and therefore guaranteed not to be modified by the
 					// function, then it is enough that the variable is local to guarantee the lifetime.
-					if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) )
+					if( !ctx->type.isTemporary && !(param.IsReadOnly() && (ctx->type.isVariable || ctx->type.isRefSafe)) )
 					{
 						if( ctx->type.dataType.IsFuncdef() || ((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && param.IsReadOnly() && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_SCOPED)) )
 						{
@@ -1568,6 +1592,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 
 							// Allocate a handle variable
 							dt.MakeHandle(true);
+							dt.MakeReadOnly(false);
 							offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 							// Copy the handle
@@ -1594,6 +1619,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 							asASSERT(!dt.IsFuncdef());
 
 							// Allocate and initialize a temporary local object
+							dt.MakeReadOnly(false);
 							offset = AllocateVariableNotIn(dt, true, false, ctx);
 							CompileInitAsCopy(dt, offset, &ctx->bc, ctx, node, false);
 
@@ -1626,6 +1652,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 
 							// Allocate a handle variable
 							dt.MakeHandle(true);
+							dt.MakeReadOnly(false);
 							offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 							// Copy the handle
@@ -1686,6 +1713,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 					ctx->type.isExplicitHandle = true;
 
 				// Make sure the variable is not used in the expression
+				dt.MakeReadOnly(false);
 				offset = AllocateVariableNotIn(dt, true, false, ctx);
 
 				if( dt.IsPrimitive() )
@@ -1779,6 +1807,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 				dt = ctx->type.dataType;
 				dt.MakeHandle(true);
 				dt.MakeReference(false);
+				dt.MakeReadOnly(false);
 
 				offset = AllocateVariableNotIn(dt, true, false, ctx);
 
@@ -1884,9 +1913,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 	if( param.IsReference() || ((param.IsObject() || param.IsFuncdef()) && !param.IsNullHandle()) )
 	{
 		// &inout parameter may leave the reference on the stack already
-		if( refType != asTM_INOUTREF )
+		// references considered safe too, i.e. when the life time is known
+		if( refType != asTM_INOUTREF && !ctx->type.isRefSafe )
 		{
-			asASSERT( ctx->type.isVariable || ctx->type.isTemporary || isMakingCopy );
+			asASSERT( ctx->type.isVariable || ctx->type.isRefSafe || ctx->type.isTemporary || isMakingCopy );
 
 			if( ctx->type.isVariable || ctx->type.isTemporary )
 			{
@@ -1964,7 +1994,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 		{
 			if( (descr->parameterTypes[n].IsObject() || descr->parameterTypes[n].IsFuncdef()) && !descr->parameterTypes[n].IsObjectHandle() )
 			{
-				if( descr->inOutFlags[n] != asTM_INOUTREF )
+				if( descr->inOutFlags[n] != asTM_INOUTREF && !args[n]->type.isRefSafe )
 				{
 #ifdef AS_DEBUG
 					// This assert is inside AS_DEBUG because of the variable makingCopy which is only defined in debug mode
@@ -1986,46 +2016,54 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprC
 			}
 			else if( descr->inOutFlags[n] != asTM_INOUTREF )
 			{
-				if( descr->parameterTypes[n].GetTokenType() == ttQuestion &&
-					(args[n]->type.dataType.IsObject() || args[n]->type.dataType.IsFuncdef()) &&
-					!args[n]->type.dataType.IsObjectHandle() )
+				// If the argument is already known to be safe, i.e. has a guaranteed lifetime,
+				// then the address on the stack is already pointing to the correct object so no
+				// need to do anything else
+				if (!args[n]->type.isRefSafe)
 				{
-					// Send the object as a reference to the object,
-					// and not to the variable holding the object
-					if( !IsVariableOnHeap(args[n]->type.stackOffset) )
-						// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
-						//                         as the value allocated on the stack is guaranteed to be safe
-						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
-					else
-						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
-				}
-				else if (descr->parameterTypes[n].GetTokenType() == ttQuestion &&
-					args[n]->type.dataType.IsObjectHandle() && !args[n]->type.isExplicitHandle)
-				{
-					// The object handle is being passed as an object, so dereference it before
-					// the call so the reference will be to the object rather than to the handle
-					if (engine->ep.disallowValueAssignForRefType )
+					if (descr->parameterTypes[n].GetTokenType() == ttQuestion &&
+						(args[n]->type.dataType.IsObject() || args[n]->type.dataType.IsFuncdef()) &&
+						!args[n]->type.dataType.IsObjectHandle())
 					{
-						// With disallow value assign all ref type objects are always passed by handle
-						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+						// Send the object as a reference to the object,
+						// and not to the variable holding the object
+						if (!IsVariableOnHeap(args[n]->type.stackOffset))
+							// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
+							//                         as the value allocated on the stack is guaranteed to be safe
+							bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+						else
+							bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					}
+					else if (descr->parameterTypes[n].GetTokenType() == ttQuestion &&
+						args[n]->type.dataType.IsObjectHandle() && !args[n]->type.isExplicitHandle)
+					{
+						// The object handle is being passed as an object, so dereference it before
+						// the call so the reference will be to the object rather than to the handle
+						if (engine->ep.disallowValueAssignForRefType)
+						{
+							// With disallow value assign all ref type objects are always passed by handle
+							bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+						}
+						else
+							bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
 					}
 					else
-						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
-				}
-				else
-				{
-					// If the variable is really an argument of @& type, then it is necessary
-					// to use asBC_GETOBJREF so the pointer is correctly dereferenced.
-					sVariable *var = variables->GetVariableByOffset(args[n]->type.stackOffset);
-					if (var == 0 || !var->type.IsReference() || !var->type.IsObjectHandle())
-						bc->InstrWORD(asBC_GETREF, (asWORD)offset);
-					else
-						bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					{
+						// If the variable is really an argument of @& type, then it is necessary
+						// to use asBC_GETOBJREF so the pointer is correctly dereferenced.
+						sVariable *var = variables->GetVariableByOffset(args[n]->type.stackOffset);
+						if (var == 0 || !var->type.IsReference() || !var->type.IsObjectHandle())
+							bc->InstrWORD(asBC_GETREF, (asWORD)offset);
+						else
+							bc->InstrWORD(asBC_GETOBJREF, (asWORD)offset);
+					}
 				}
 			}
 		}
 		else if( descr->parameterTypes[n].IsObject() || descr->parameterTypes[n].IsFuncdef() )
 		{
+			asASSERT(!args[n]->type.isRefSafe);
+
 			// TODO: value on stack: What can we do to avoid this unnecessary allocation?
 			// The object must be allocated on the heap, because this memory will be deleted in as_callfunc_xxx
 			asASSERT(IsVariableOnHeap(args[n]->type.stackOffset));
@@ -8081,7 +8119,8 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 			MergeExprBytecode(ctx, rctx);
 			MergeExprBytecode(ctx, lctx);
 
-			ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
+			if(!rctx->type.isRefSafe)
+				ctx->bc.InstrWORD(asBC_GETOBJREF, AS_PTR_SIZE);
 
 			PerformAssignment(&lctx->type, &rctx->type, &ctx->bc, opNode);
 
@@ -8174,7 +8213,7 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 
 		if( !simpleExpr || needConversion )
 		{
-			if( (rctx->type.isVariable || rctx->type.isTemporary) )
+			if( !rctx->type.isRefSafe && (rctx->type.isVariable || rctx->type.isTemporary) )
 			{
 				if( !IsVariableOnHeap(rctx->type.stackOffset) )
 					// TODO: runtime optimize: Actually the reference can be pushed on the stack directly
@@ -8787,7 +8826,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			// Mark the object as safe for access unless it is a handle, as the
 			// life time of the object is guaranteed throughout the scope.
 			if( !v->type.IsObjectHandle() )
-				ctx->type.isHandleSafe = true;
+				ctx->type.isRefSafe = true;
 
 			// Set as lvalue unless it is a const variable
 			if (!v->type.IsReadOnly())
@@ -8810,7 +8849,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			ctx->type.isLValue = true;
 
 			// The 'this' handle is always considered safe (i.e. life time guaranteed)
-			ctx->type.isHandleSafe = true;
+			ctx->type.isRefSafe = true;
 
 			found = true;
 		}
@@ -8917,14 +8956,14 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					ctx->type.dataType.MakeReference(false);
 
 					// Objects that are members but not handles are safe as long as the parent object is safe
-					if (!objType || ctx->type.isHandleSafe)
-						ctx->type.isHandleSafe = true;
+					if (!objType || ctx->type.isRefSafe)
+						ctx->type.isRefSafe = true;
 				}
 				else if (ctx->type.dataType.IsObjectHandle())
 				{
 					// Objects accessed through handles cannot be considered safe
 					// as the handle can be cleared at any time
-					ctx->type.isHandleSafe = false;
+					ctx->type.isRefSafe = false;
 				}
 
 				// If the object reference is const, the property will also be const
@@ -9443,6 +9482,11 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 					// Mark the string as literal constant so the compiler knows it is allowed
 					// to treat it differently than an ordinary constant string variable
 					ctx->type.isConstant = true;
+
+					// Mark the reference to the string constant as safe, so the compiler can
+					// avoid making unnecessary temporary copies when passing the reference to
+					// functions.
+					ctx->type.isRefSafe = true;
 				}
 			}
 		}
@@ -11391,7 +11435,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 		ctx->property_get = getId;
 		ctx->property_set = setId;
 
-		bool isHandleSafe = ctx->type.isHandleSafe;
+		bool isRefSafe = ctx->type.isRefSafe;
 
 		if( ctx->type.dataType.IsObject() )
 		{
@@ -11426,7 +11470,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 
 		// Remember if the object is safe, so the invocation of the property
 		// accessor doesn't needlessly make a safe copy of the handle
-		ctx->type.isHandleSafe = isHandleSafe;
+		ctx->type.isRefSafe = isRefSafe;
 
 		// Store the argument for later use
 		if( arg )
@@ -11987,7 +12031,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 					{
 						// A object accessed through a handle cannot be considered safe,
 						// as it can be cleared at any time
-						ctx->type.isHandleSafe = false;
+						ctx->type.isRefSafe = false;
 					}
 
 					ctx->type.dataType.MakeReadOnly(isConst ? true : prop->type.IsReadOnly());
@@ -14738,7 +14782,7 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 	// be done for any methods that return references, and any calls on script objects.
 	// Application registered objects are assumed to know to keep themselves alive even
 	// if the method doesn't return a reference.
-	if( !ctx->type.isHandleSafe &&
+	if( !ctx->type.isRefSafe &&
 		descr->objectType &&
 		(ctx->type.dataType.IsObjectHandle() || ctx->type.dataType.SupportHandles()) &&
 		(descr->returnType.IsReference() || (ctx->type.dataType.GetTypeInfo()->GetFlags() & asOBJ_SCRIPT_OBJECT)) &&
@@ -15080,7 +15124,7 @@ asCExprValue::asCExprValue()
 	qwordValue = 0;
 	isLValue = false;
 	isRefToLocal = false;
-	isHandleSafe = false;
+	isRefSafe = false;
 }
 
 void asCExprValue::Set(const asCDataType &dt)
@@ -15095,7 +15139,7 @@ void asCExprValue::Set(const asCDataType &dt)
 	qwordValue = 0;
 	isLValue = false;
 	isRefToLocal = false;
-	isHandleSafe = false;
+	isRefSafe = false;
 }
 
 void asCExprValue::SetVariable(const asCDataType &in_dt, int in_stackOffset, bool in_isTemporary)

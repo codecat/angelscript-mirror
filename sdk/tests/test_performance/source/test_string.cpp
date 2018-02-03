@@ -28,7 +28,7 @@ static const char *script =
 "    }                                                           \n"
 "}                                                               \n";
 
-                                         
+
 void Test(double *testTime)
 {
  	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
