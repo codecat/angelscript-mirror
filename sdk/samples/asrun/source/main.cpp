@@ -33,7 +33,7 @@ using namespace std;
 int               ConfigureEngine(asIScriptEngine *engine);
 void              InitializeDebugger(asIScriptEngine *engine);
 int               CompileScript(asIScriptEngine *engine, const char *scriptFile);
-int               ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug);
+int               ExecuteScript(asIScriptEngine *engine, const char *scriptFile);
 void              MessageCallback(const asSMessageInfo *msg, void *param);
 asIScriptContext *RequestContextCallback(asIScriptEngine *engine, void *param);
 void              ReturnContextCallback(asIScriptEngine *engine, asIScriptContext *ctx, void *param);
@@ -43,6 +43,7 @@ int               ExecSystemCmd(const string &cmd);
 CScriptArray     *GetCommandLineArgs();
 void              SetWorkDir(const string &file);
 void              WaitForUser();
+int               PragmaCallback(const string &pragmaText, CScriptBuilder &builder, void *userParam);
 
 // The command line arguments
 CScriptArray *g_commandLineArgs = 0;
@@ -53,6 +54,7 @@ char        **g_argv = 0;
 CContextMgr *g_ctxMgr = 0;
 
 // The debugger is used to debug the script
+bool       g_doDebug = false;
 CDebugger *g_dbg = 0;
 
 // Context pool
@@ -104,12 +106,11 @@ int main(int argc, char **argv)
 	if( r < 0 ) return -1;
 	
 	// Check if the script is to be debugged
-	bool debug = false;
 	if( strcmp(argv[1], "-d") == 0 )
-		debug = true;
+		g_doDebug = true;
 
 	// Store the command line arguments for the script
-	int scriptArg = debug ? 2 : 1;
+	int scriptArg = g_doDebug ? 2 : 1;
 	g_argc = argc - (scriptArg + 1);
 	g_argv = argv + (scriptArg + 1);
 
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
 	}
 
 	// Execute the script
-	r = ExecuteScript(engine, argv[scriptArg], debug);
+	r = ExecuteScript(engine, argv[scriptArg]);
 	
 	// Shut down the engine
 	if( g_commandLineArgs )
@@ -295,6 +296,11 @@ int CompileScript(asIScriptEngine *engine, const char *scriptFile)
 	engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
 
 	CScriptBuilder builder;
+
+	// Set the pragma callback so we can detect if the script needs debugging
+	builder.SetPragmaCallback(PragmaCallback, 0);
+
+	// Compile the script
 	r = builder.StartNewModule(engine, "script");
 	if( r < 0 ) return -1;
 
@@ -312,7 +318,7 @@ int CompileScript(asIScriptEngine *engine, const char *scriptFile)
 }
 
 // Execute the script by calling the main() function
-int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
+int ExecuteScript(asIScriptEngine *engine, const char *scriptFile)
 {
 	asIScriptModule *mod = engine->GetModule("script", asGM_ONLY_IF_EXISTS);
 	if( !mod ) return -1;
@@ -331,7 +337,7 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 		return -1;
 	}
 
-	if( debug )
+	if(g_doDebug)
 		InitializeDebugger(engine);
 
 	// Once we have the main function, we first need to initialize the global variables
@@ -609,4 +615,38 @@ void WaitForUser()
 	}
 #endif
 }
+
+int PragmaCallback(const string &pragmaText, CScriptBuilder &builder, void * /*userParam*/)
+{
+	asIScriptEngine *engine = builder.GetEngine();
+
+	// Filter the pragmaText so only what is of interest remains 
+	// With this the user can add comments and use different whitespaces without affecting the result
+	asUINT pos = 0;
+	asUINT length = 0;
+	string cleanText;
+	while( pos < pragmaText.size() )
+	{
+		asETokenClass tokenClass = engine->ParseToken(pragmaText.c_str() + pos, 0, &length);
+		if (tokenClass == asTC_IDENTIFIER || tokenClass == asTC_KEYWORD || tokenClass == asTC_VALUE)
+		{
+			string token = pragmaText.substr(pos, length);
+			cleanText += " " + token;
+		}
+		if (tokenClass == asTC_UNKNOWN)
+			return -1;
+		pos += length;
+	}
+
+	// Interpret the result
+	if (cleanText == " debug")
+	{
+		g_doDebug = true;
+		return 0;
+	}
+
+	// The #pragma directive was not accepted
+	return -1;
+}
+
 

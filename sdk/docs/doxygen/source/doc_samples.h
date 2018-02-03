@@ -176,6 +176,12 @@ breakpoints, stepping through the code, examining variables, etc.
  - \ref asIScriptEngine::SetContextCallbacks
  - Passing commandline arguments to script
  - Executing system commands from script
+ - Implementing a \#pragma callback
+ 
+\todo Write proper user manual for asrun
+
+\todo Show how to turn on debugger (-d or \#pragma debug)
+
  
 \section doc_samples_asrun_funcs Global functions available to scripts
 
@@ -196,6 +202,8 @@ Gets the command line arguments as an array.
  - int exec(const string &in)
 
 Executes a system command.
+
+
 
 
 

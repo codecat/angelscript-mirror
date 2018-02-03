@@ -28,13 +28,22 @@ CScriptBuilder::CScriptBuilder()
 	module = 0;
 
 	includeCallback = 0;
-	callbackParam   = 0;
+	includeParam = 0;
+
+	pragmaCallback = 0;
+	pragmaParam = 0;
 }
 
 void CScriptBuilder::SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam)
 {
 	includeCallback = callback;
-	callbackParam   = userParam;
+	includeParam   = userParam;
+}
+
+void CScriptBuilder::SetPragmaCallback(PRAGMACALLBACK_t callback, void *userParam)
+{
+	pragmaCallback = callback;
+	pragmaParam = userParam;
 }
 
 int CScriptBuilder::StartNewModule(asIScriptEngine *inEngine, const char *moduleName)
@@ -49,6 +58,11 @@ int CScriptBuilder::StartNewModule(asIScriptEngine *inEngine, const char *module
 	ClearAll();
 
 	return 0;
+}
+
+asIScriptEngine *CScriptBuilder::GetEngine()
+{
+	return engine;
 }
 
 asIScriptModule *CScriptBuilder::GetModule()
@@ -457,6 +471,25 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 						OverwriteCode(start, pos-start);
 					}
 				}
+				else if (token == "pragma")
+				{
+					// Read until the end of the line
+					pos += len;
+					for (; pos < modifiedScript.size() && modifiedScript[pos] != '\n'; pos++);
+
+					// Call the pragma callback
+					string pragmaText(&modifiedScript[start + 7], pos - start - 7);
+					int r = pragmaCallback ? pragmaCallback(pragmaText, *this, pragmaParam) : -1;
+					if (r < 0)
+					{
+						// TODO: Report the correct line number
+						engine->WriteMessage(sectionname, 0, 0, asMSGTYPE_ERROR, "Invalid #pragma directive");
+						return r;
+					}
+
+					// Overwrite the pragma directive with space characters to avoid compiler error
+					OverwriteCode(start, pos - start);
+				}
 			}
 		}
 		// Don't search for metadata/includes within statement blocks or between tokens in statements
@@ -477,7 +510,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 		{
 			for( int n = 0; n < (int)includes.size(); n++ )
 			{
-				int r = includeCallback(includes[n].c_str(), sectionname, this, callbackParam);
+				int r = includeCallback(includes[n].c_str(), sectionname, this, includeParam);
 				if( r < 0 )
 					return r;
 			}

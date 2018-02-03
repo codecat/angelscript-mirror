@@ -1665,11 +1665,17 @@ public:
   // Build the added script sections
   int BuildModule();
 
+  // Returns the script engine
+  asIScriptEngine *GetEngine();
+
   // Returns the current module
   asIScriptModule *GetModule();
 
   // Register the callback for resolving include directive
   void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
+
+  // Register the callback for resolving pragma directive
+  void SetPragmaCallback(PRAGMACALLBACK_t callback, void *userParam);
 
   // Add a pre-processor define for conditional compilation
   void DefineWord(const char *word);
@@ -1704,6 +1710,16 @@ public:
 // then the function should return a negative value to abort the compilation.
 typedef int (*INCLUDECALLBACK_t)(const char *include, const char *from, CScriptBuilder *builder, void *userParam);
 \endcode
+
+\subsection doc_addon_build_1_2 The pragma callback signature
+
+\code
+// This callback will be called for each #pragma directive encountered by the builder.
+// The application can interpret the pragmaText and decide what do to based on that.
+// If the callback returns a negative value the builder will report an error and abort the compilation.
+typedef int(*PRAGMACALLBACK_t)(const std::string &pragmaText, CScriptBuilder &builder, void *userParam);
+\endcode
+
 
 \section doc_addon_build_2 Include directives
 
