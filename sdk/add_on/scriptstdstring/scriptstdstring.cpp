@@ -676,7 +676,8 @@ double parseFloat(const string &val, asUINT *byteCount)
 	// locale is ",".
 #if !defined(_WIN32_WCE) && !defined(ANDROID) && !defined(__psp2__)
 	// Set the locale to C so that we are guaranteed to parse the float value correctly
-	char *orig = setlocale(LC_NUMERIC, 0);
+	char *tmp = setlocale(LC_NUMERIC, 0);
+	string orig = tmp ? tmp : "C";
 	setlocale(LC_NUMERIC, "C");
 #endif
 
@@ -684,7 +685,7 @@ double parseFloat(const string &val, asUINT *byteCount)
 
 #if !defined(_WIN32_WCE) && !defined(ANDROID) && !defined(__psp2__)
 	// Restore the locale
-	setlocale(LC_NUMERIC, orig);
+	setlocale(LC_NUMERIC, orig.c_str());
 #endif
 
 	if( byteCount )
