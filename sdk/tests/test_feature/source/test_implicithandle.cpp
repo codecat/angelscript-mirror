@@ -121,7 +121,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'test2' (Code: -5)\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'test2' (Code: asINVALID_ARG, -5)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

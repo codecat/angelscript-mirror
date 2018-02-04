@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -317,9 +317,9 @@
 #define TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS   "Template list factory expects two reference parameters. The last is the pointer to the initialization buffer"
 #define TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM             "List factory expects only one reference parameter. The pointer to the initialization buffer will be passed in this parameter"
 #define TXT_FAILED_READ_SUBTYPE_OF_TEMPLATE_s            "Failed to read subtype of template type '%s'"
-#define TXT_FAILED_IN_FUNC_s_d                           "Failed in call to function '%s' (Code: %d)"
-#define TXT_FAILED_IN_FUNC_s_WITH_s_d                    "Failed in call to function '%s' with '%s' (Code: %d)"
-#define TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_d              "Failed in call to function '%s' with '%s' and '%s' (Code: %d)"
+#define TXT_FAILED_IN_FUNC_s_s_d                           "Failed in call to function '%s' (Code: %s, %d)"
+#define TXT_FAILED_IN_FUNC_s_WITH_s_s_d                    "Failed in call to function '%s' with '%s' (Code: %s, %d)"
+#define TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_s_d              "Failed in call to function '%s' with '%s' and '%s' (Code: %s, %d)"
 #define TXT_GC_RECEIVED_NULL_PTR                         "AddScriptObjectToGC called with null pointer"
 #define TXT_EXCEPTION_IN_NESTED_CALL                     "An exception occurred in a nested call"
 #define TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s               "Type '%s' is still used by function '%s'"
@@ -352,5 +352,40 @@
 #define TXT_EXCEPTION_CAUGHT              "Caught an exception from the application"
 #define TXT_MISMATCH_IN_VALUE_ASSIGN      "Mismatching types in value assignment"
 #define TXT_TOO_MANY_NESTED_CALLS         "Too many nested calls"
+
+// Error codes
+#define ERROR_NAME(x) #x
+static const char*const errorNames[] =
+{
+	ERROR_NAME(asSUCCESS),
+	ERROR_NAME(asERROR),
+	ERROR_NAME(asCONTEXT_ACTIVE),
+	ERROR_NAME(asCONTEXT_NOT_FINISHED),
+	ERROR_NAME(asCONTEXT_NOT_PREPARED),
+	ERROR_NAME(asINVALID_ARG),
+	ERROR_NAME(asNO_FUNCTION),
+	ERROR_NAME(asNOT_SUPPORTED),
+	ERROR_NAME(asINVALID_NAME),
+	ERROR_NAME(asNAME_TAKEN),
+	ERROR_NAME(asINVALID_DECLARATION),
+	ERROR_NAME(asINVALID_OBJECT),
+	ERROR_NAME(asINVALID_TYPE),
+	ERROR_NAME(asALREADY_REGISTERED),
+	ERROR_NAME(asMULTIPLE_FUNCTIONS),
+	ERROR_NAME(asNO_MODULE),
+	ERROR_NAME(asNO_GLOBAL_VAR),
+	ERROR_NAME(asINVALID_CONFIGURATION),
+	ERROR_NAME(asINVALID_INTERFACE),
+	ERROR_NAME(asCANT_BIND_ALL_FUNCTIONS),
+	ERROR_NAME(asLOWER_ARRAY_DIMENSION_NOT_REGISTERED),
+	ERROR_NAME(asWRONG_CONFIG_GROUP),
+	ERROR_NAME(asCONFIG_GROUP_IS_IN_USE),
+	ERROR_NAME(asILLEGAL_BEHAVIOUR_FOR_TYPE),
+	ERROR_NAME(asWRONG_CALLING_CONV),
+	ERROR_NAME(asBUILD_IN_PROGRESS),
+	ERROR_NAME(asINIT_GLOBAL_VARS_FAILED),
+	ERROR_NAME(asOUT_OF_MEMORY),
+	ERROR_NAME(asMODULE_IS_IN_USE)
+};
 
 #endif

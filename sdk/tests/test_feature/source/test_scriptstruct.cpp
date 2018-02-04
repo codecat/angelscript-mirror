@@ -422,7 +422,7 @@ bool Test()
 		if( engine->CreateScriptObject(type) )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: -6)\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: asNO_FUNCTION, -6)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

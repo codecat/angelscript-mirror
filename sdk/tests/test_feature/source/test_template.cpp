@@ -358,7 +358,7 @@ bool Test()
 		engine->RegisterObjectBehaviour("Tmpl1<T>", asBEHAVE_FACTORY, "Tmpl1<T> @f(int &in, Tmpl1<T> @+)", asFUNCTION(0), asCALL_GENERIC);
 
 		if( bout.buffer != " (0, 0) : Error   : First parameter to template factory must be a reference. This will be used to pass the object type of the template\n"
-						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'Tmpl1' and 'Tmpl1<T> @f()' (Code: -10)\n" )
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'Tmpl1' and 'Tmpl1<T> @f()' (Code: asINVALID_DECLARATION, -10)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -770,9 +770,9 @@ bool Test()
 	if( r != asALREADY_REGISTERED )
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Cannot register. The template type instance 'MyTmpl<int>' has already been generated.\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<int>' (Code: -7)\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'NoTmpl<int>' (Code: -8)\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<float>' (Code: -13)\n" )
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<int>' (Code: asNOT_SUPPORTED, -7)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'NoTmpl<int>' (Code: asINVALID_NAME, -8)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectType' with 'MyTmpl<float>' (Code: asALREADY_REGISTERED, -13)\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -789,9 +789,9 @@ bool Test()
 	r = engine->RegisterObjectProperty("MyTmpl<int>", "int p", 0);
 	if( r != asINVALID_TYPE )
 		TEST_FAILED;
-	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'MyTmpl<int>' and 'MyTmpl<int> @f()' (Code: -12)\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl<int>' and 'void f()' (Code: -12)\n"
-					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'MyTmpl<int>' and 'int p' (Code: -12)\n" )
+	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectBehaviour' with 'MyTmpl<int>' and 'MyTmpl<int> @f()' (Code: asINVALID_TYPE, -12)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl<int>' and 'void f()' (Code: asINVALID_TYPE, -12)\n"
+					   " (0, 0) : Error   : Failed in call to function 'RegisterObjectProperty' with 'MyTmpl<int>' and 'int p' (Code: asINVALID_TYPE, -12)\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -888,8 +888,8 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl' and 'void SetVal(T)' (Code: -7)\n"
-		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl' and 'T GetVal()' (Code: -7)\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl' and 'void SetVal(T)' (Code: asNOT_SUPPORTED, -7)\n"
+		                   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'MyTmpl' and 'T GetVal()' (Code: asNOT_SUPPORTED, -7)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

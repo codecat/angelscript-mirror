@@ -914,7 +914,7 @@ bool Test()
 			TEST_FAILED;
 		if (bout.buffer != "System function (1, 12) : Error   : Expected data type\n"
 						   "System function (1, 12) : Error   : Instead found '@'\n"
-						   " (0, 0) : Error   : Failed in call to function 'RegisterFuncdef' with 'void array<@>::CB()' (Code: -10)\n")
+						   " (0, 0) : Error   : Failed in call to function 'RegisterFuncdef' with 'void array<@>::CB()' (Code: asINVALID_DECLARATION, -10)\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1589,7 +1589,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'jjBEHAVIOR' and 'DifferentFunctionPointer@ opImplCast()' (Code: -5)\n" )
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'jjBEHAVIOR' and 'DifferentFunctionPointer@ opImplCast()' (Code: asINVALID_ARG, -5)\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

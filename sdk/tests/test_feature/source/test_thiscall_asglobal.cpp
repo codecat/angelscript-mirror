@@ -102,9 +102,10 @@ bool Test()
 	r = engine->RegisterGlobalFunction("void Fail()", asMETHOD(Class1, TestMe), asCALL_THISCALL_ASGLOBAL, 0);
 	if( r != asINVALID_ARG )
 		TEST_FAILED;
-	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void Fail()' (Code: -5)\n" )
+	if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void Fail()' (Code: asINVALID_ARG, -5)\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
+		TEST_FAILED;
 	}
 	engine->Release();
 
@@ -130,6 +131,7 @@ bool Test()
 		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
 		}
 
 		engine->Release();

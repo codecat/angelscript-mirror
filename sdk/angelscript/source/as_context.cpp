@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -374,7 +374,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	if( func == 0 )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", "null", asNO_FUNCTION);
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_s_d, "Prepare", "null", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asNO_FUNCTION;
 	}
@@ -382,7 +382,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", func->GetDeclaration(true, true), asCONTEXT_ACTIVE);
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_s_d, "Prepare", func->GetDeclaration(true, true), errorNames[-asCONTEXT_ACTIVE], asCONTEXT_ACTIVE);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_ACTIVE;
 	}
@@ -424,7 +424,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 		if( m_engine != func->GetEngine() )
 		{
 			asCString str;
-			str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", func->GetDeclaration(true, true), asINVALID_ARG);
+			str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_s_d, "Prepare", func->GetDeclaration(true, true), errorNames[-asINVALID_ARG], asINVALID_ARG);
 			m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 			return asINVALID_ARG;
 		}
@@ -1200,7 +1200,7 @@ int asCContext::Execute()
 	if( m_status != asEXECUTION_SUSPENDED && m_status != asEXECUTION_PREPARED )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_d, "Execute", asCONTEXT_NOT_PREPARED);
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "Execute", errorNames[-asCONTEXT_NOT_PREPARED], asCONTEXT_NOT_PREPARED);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_NOT_PREPARED;
 	}

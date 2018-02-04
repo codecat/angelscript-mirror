@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3103,12 +3103,12 @@ int asCScriptEngine::ConfigError(int err, const char *funcName, const char *arg1
 		if( arg1 )
 		{
 			if( arg2 )
-				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_d, funcName, arg1, arg2, err);
+				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_AND_s_s_d, funcName, arg1, arg2, errorNames[-err], err);
 			else
-				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, funcName, arg1, err);
+				str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_s_d, funcName, arg1, errorNames[-err], err);
 		}
 		else
-			str.Format(TXT_FAILED_IN_FUNC_s_d, funcName, err);
+			str.Format(TXT_FAILED_IN_FUNC_s_s_d, funcName, errorNames[-err], err);
 
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 	}
@@ -4912,7 +4912,7 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 	if( objType->beh.factory == 0 && (objType->flags & asOBJ_REF) )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_d, "CreateScriptObject", asNO_FUNCTION);
+		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "CreateScriptObject", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
 		WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return 0;
 	}
@@ -4966,7 +4966,7 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		if( objType->beh.construct == 0 && !(objType->flags & asOBJ_POD) )
 		{
 			asCString str;
-			str.Format(TXT_FAILED_IN_FUNC_s_d, "CreateScriptObject", asNO_FUNCTION);
+			str.Format(TXT_FAILED_IN_FUNC_s_s_d, "CreateScriptObject", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
 			WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 			return 0;
 		}
