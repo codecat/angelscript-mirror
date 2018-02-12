@@ -9533,7 +9533,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 	else if( vnode->nodeType == snFunction )
 	{
 		// This is an anonymous function
-		// Defer the evaluation of the function until it known where it
+		// Defer the evaluation of the function until it is known where it
 		// will be used, which is where the signature will be defined
 		ctx->SetLambda(vnode);
 	}

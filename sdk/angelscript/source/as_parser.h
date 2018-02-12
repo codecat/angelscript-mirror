@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -96,6 +96,7 @@ protected:
 
 	bool IsRealType(int tokenType);
 	bool IsDataType(const sToken &token);
+	bool IsType(sToken &nextToken);
 	bool IdentifierIs(const sToken &t, const char *str);
 
 #ifndef AS_NO_COMPILER

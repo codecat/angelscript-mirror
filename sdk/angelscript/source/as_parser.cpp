@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1001,6 +1001,102 @@ void asCParser::Info(const asCString &text, sToken *token)
 
 	if( builder )
 		builder->WriteInfo(script->name, text, row, col, false);
+}
+
+// nextToken is only modified if the current position can be interpreted as
+// type, in this case it is set to the next token after the type tokens
+bool asCParser::IsType(sToken &nextToken)
+{
+	// Set a rewind point
+	sToken t, t1;
+	GetToken(&t);
+
+	// A type can start with a const
+	t1 = t;
+	if (t1.type == ttConst)
+		GetToken(&t1);
+
+	sToken t2;
+	if (t1.type != ttAuto)
+	{
+		// The type may be initiated with the scope operator
+		if (t1.type == ttScope)
+			GetToken(&t1);
+
+		// The type may be preceeded with a multilevel scope
+		GetToken(&t2);
+		while (t1.type == ttIdentifier)
+		{
+			if (t2.type == ttScope)
+			{
+				GetToken(&t1);
+				GetToken(&t2);
+				continue;
+			}
+			else if (t2.type == ttLessThan)
+			{
+				// Template types can also be used as scope identifiers
+				RewindTo(&t2);
+				if (CheckTemplateType(t1))
+				{
+					sToken t3;
+					GetToken(&t3);
+					if (t3.type == ttScope)
+					{
+						GetToken(&t1);
+						GetToken(&t2);
+						continue;
+					}
+				}
+			}
+
+			break;
+		}
+		RewindTo(&t2);
+	}
+
+	// We don't validate if the identifier is an actual declared type at this moment
+	// as it may wrongly identify the statement as a non-declaration if the user typed
+	// the name incorrectly. The real type is validated in ParseDeclaration where a
+	// proper error message can be given.
+	if (!IsRealType(t1.type) && t1.type != ttIdentifier && t1.type != ttAuto)
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	if (!CheckTemplateType(t1))
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Object handles can be interleaved with the array brackets
+	// Even though declaring variables with & is invalid we'll accept
+	// it here to give an appropriate error message later
+	GetToken(&t2);
+	while (t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket)
+	{
+		if (t2.type == ttOpenBracket)
+		{
+			GetToken(&t2);
+			if (t2.type != ttCloseBracket)
+			{
+				RewindTo(&t);
+				return false;
+			}
+		}
+
+		GetToken(&t2);
+	}
+
+	// Return the next token so the caller can jump directly to it if desired
+	nextToken = t2;
+
+	// Rewind to start point
+	RewindTo(&t);
+
+	return true;
 }
 
 bool asCParser::IsRealType(int tokenType)
@@ -2558,118 +2654,52 @@ bool asCParser::IsVarDecl()
 	if( t1.type != ttPrivate && t1.type != ttProtected )
 		RewindTo(&t1);
 
-	// A variable decl can start with a const
+	// A variable decl starts with the type
+	if (!IsType(t1))
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Jump to the token after the type
+	RewindTo(&t1);
 	GetToken(&t1);
-	if( t1.type == ttConst )
-		GetToken(&t1);
-
-	sToken t2;
-	if( t1.type != ttAuto )
-	{
-		// The type may be initiated with the scope operator
-		if( t1.type == ttScope )
-			GetToken(&t1);
-
-		// The type may be preceeded with a multilevel scope
-		GetToken(&t2);
-		while( t1.type == ttIdentifier )
-		{
-			if (t2.type == ttScope)
-			{
-				GetToken(&t1);
-				GetToken(&t2);
-				continue;
-			}
-			else if(t2.type == ttLessThan)
-			{
-				// Template types can also be used as scope identifiers
-				RewindTo(&t2);
-				if (CheckTemplateType(t1))
-				{
-					sToken t3;
-					GetToken(&t3);
-					if (t3.type == ttScope)
-					{
-						GetToken(&t1);
-						GetToken(&t2);
-						continue;
-					}
-				}
-			}
-
-			break;
-		}
-		RewindTo(&t2);
-	}
-
-	// We don't validate if the identifier is an actual declared type at this moment
-	// as it may wrongly identify the statement as a non-declaration if the user typed
-	// the name incorrectly. The real type is validated in ParseDeclaration where a
-	// proper error message can be given.
-	if( !IsRealType(t1.type) && t1.type != ttIdentifier && t1.type != ttAuto )
+	
+	// The declaration needs to have a name
+	if( t1.type != ttIdentifier )
 	{
 		RewindTo(&t);
 		return false;
 	}
 
-	if( !CheckTemplateType(t1) )
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	// Object handles can be interleaved with the array brackets
-	// Even though declaring variables with & is invalid we'll accept
-	// it here to give an appropriate error message later
-	GetToken(&t2);
-	while( t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket )
-	{
-		if( t2.type == ttOpenBracket )
-		{
-			GetToken(&t2);
-			if( t2.type != ttCloseBracket )
-			{
-				RewindTo(&t);
-				return false;
-			}
-		}
-
-		GetToken(&t2);
-	}
-
-	if( t2.type != ttIdentifier )
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	GetToken(&t2);
-	if( t2.type == ttEndStatement || t2.type == ttAssignment || t2.type == ttListSeparator )
+	// It can be followed by an initialization
+	GetToken(&t1);
+	if( t1.type == ttEndStatement || t1.type == ttAssignment || t1.type == ttListSeparator )
 	{
 		RewindTo(&t);
 		return true;
 	}
-	if( t2.type == ttOpenParanthesis )
+	if( t1.type == ttOpenParanthesis )
 	{
 		// If the closing paranthesis is followed by a statement
 		// block or end-of-file, then treat it as a function. A
 		// function decl may have nested paranthesis so we need to
 		// check for this too.
 		int nest = 0;
-		while( t2.type != ttEnd )
+		while( t1.type != ttEnd )
 		{
-			if( t2.type == ttOpenParanthesis )
+			if( t1.type == ttOpenParanthesis )
 				nest++;
-			else if( t2.type == ttCloseParanthesis )
+			else if( t1.type == ttCloseParanthesis )
 			{
 				nest--;
 				if( nest == 0 )
 					break;
 			}
-			GetToken(&t2);
+			GetToken(&t1);
 		}
 
-		if (t2.type == ttEnd)
+		if (t1.type == ttEnd)
 		{
 			RewindTo(&t);
 			return false;
@@ -2703,68 +2733,27 @@ bool asCParser::IsVirtualPropertyDecl()
 	if( t1.type != ttPrivate && t1.type != ttProtected )
 		RewindTo(&t1);
 
-	// A variable decl can start with a const
+	// A variable decl starts with the type
+	if (!IsType(t1))
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Move to the token after the type
+	RewindTo(&t1);
 	GetToken(&t1);
-	if( t1.type == ttConst )
-		GetToken(&t1);
 
-	// We don't validate if the identifier is an actual declared type at this moment
-	// as it may wrongly identify the statement as a non-declaration if the user typed
-	// the name incorrectly. The real type is validated in ParseDeclaration where a
-	// proper error message can be given.
-	if( t1.type == ttScope )
-		GetToken(&t1);
-
-	if( t1.type == ttIdentifier )
-	{
-		sToken t2;
-		GetToken(&t2);
-		while( t1.type == ttIdentifier && t2.type == ttScope )
-		{
-			GetToken(&t1);
-			GetToken(&t2);
-		}
-
-		RewindTo(&t2);
-	}
-	else if( !IsRealType(t1.type) )
+	// The decl must have an identifier
+	if( t1.type != ttIdentifier )
 	{
 		RewindTo(&t);
 		return false;
 	}
 
-	if( !CheckTemplateType(t1) )
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	// Object handles can be interleaved with the array brackets
-	sToken t2;
-	GetToken(&t2);
-	while( t2.type == ttHandle || t2.type == ttOpenBracket )
-	{
-		if( t2.type == ttOpenBracket )
-		{
-			GetToken(&t2);
-			if( t2.type != ttCloseBracket )
-			{
-				RewindTo(&t);
-				return false;
-			}
-		}
-
-		GetToken(&t2);
-	}
-
-	if( t2.type != ttIdentifier )
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	GetToken(&t2);
-	if( t2.type == ttStartStatementBlock )
+	// To be a virtual property it must also have a block for the get/set functions
+	GetToken(&t1);
+	if( t1.type == ttStartStatementBlock )
 	{
 		RewindTo(&t);
 		return true;
@@ -2801,92 +2790,51 @@ bool asCParser::IsFuncDecl(bool isMethod)
 		}
 	}
 
-	// A function decl can start with a const
+	// A function decl starts with a type
 	sToken t1;
+	if (!IsType(t1))
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Move to the token after the type
+	RewindTo(&t1);
 	GetToken(&t1);
-	if( t1.type == ttConst )
-		GetToken(&t1);
-
-	// The return type can be optionally preceeded by a scope
-	if( t1.type == ttScope )
-		GetToken(&t1);
-	while( t1.type == ttIdentifier )
-	{
-		sToken t2;
-		GetToken(&t2);
-		if( t2.type == ttScope )
-			GetToken(&t1);
-		else
-		{
-			RewindTo(&t2);
-			break;
-		}
-	}
-
-	if( !IsDataType(t1) )
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	// If the type is a template type, then skip the angle brackets holding the subtype
-	if( !CheckTemplateType(t1) )
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	// Object handles can be interleaved with the array brackets
-	sToken t2;
-	GetToken(&t2);
-	while( t2.type == ttHandle || t2.type == ttOpenBracket )
-	{
-		if( t2.type == ttOpenBracket )
-		{
-			GetToken(&t2);
-			if( t2.type != ttCloseBracket )
-			{
-				RewindTo(&t);
-				return false;
-			}
-		}
-
-		GetToken(&t2);
-	}
 
 	// There can be an ampersand if the function returns a reference
-	if( t2.type == ttAmp )
+	if( t1.type == ttAmp )
 	{
 		RewindTo(&t);
 		return true;
 	}
 
-	if( t2.type != ttIdentifier )
+	if( t1.type != ttIdentifier )
 	{
 		RewindTo(&t);
 		return false;
 	}
 
-	GetToken(&t2);
-	if( t2.type == ttOpenParanthesis )
+	GetToken(&t1);
+	if( t1.type == ttOpenParanthesis )
 	{
 		// If the closing parenthesis is not followed by a
 		// statement block then it is not a function.
 		// It's possible that there are nested parenthesis due to default
 		// arguments so this should be checked for.
 		int nest = 0;
-		GetToken(&t2);
-		while( (nest || t2.type != ttCloseParanthesis) && t2.type != ttEnd )
+		GetToken(&t1);
+		while( (nest || t1.type != ttCloseParanthesis) && t1.type != ttEnd )
 		{
-			if( t2.type == ttOpenParanthesis )
+			if( t1.type == ttOpenParanthesis )
 				nest++;
-			if( t2.type == ttCloseParanthesis )
+			if( t1.type == ttCloseParanthesis )
 				nest--;
 
-			GetToken(&t2);
+			GetToken(&t1);
 		}
 
-		if( t2.type == ttEnd )
+		if( t1.type == ttEnd )
 			return false;
 		else
 		{
@@ -2900,10 +2848,10 @@ bool asCParser::IsFuncDecl(bool isMethod)
 				// A class method may also have any number of additional inheritance behavior specifiers
 				for( ; ; )
 				{
-					GetToken(&t2);
-					if( !IdentifierIs(t2, FINAL_TOKEN) && !IdentifierIs(t2, OVERRIDE_TOKEN) )
+					GetToken(&t1);
+					if( !IdentifierIs(t1, FINAL_TOKEN) && !IdentifierIs(t1, OVERRIDE_TOKEN) )
 					{
-						RewindTo(&t2);
+						RewindTo(&t1);
 						break;
 					}
 				}

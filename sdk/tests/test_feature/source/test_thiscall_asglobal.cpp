@@ -84,7 +84,7 @@ bool Test()
 
 	// Register and call a derived method
 	Base *obj = new Derived();
- 	engine->RegisterGlobalFunction("void Print()", asMETHOD(Base, Print), asCALL_THISCALL_ASGLOBAL, obj);
+	engine->RegisterGlobalFunction("void Print()", asMETHOD(Base, Print), asCALL_THISCALL_ASGLOBAL, obj);
 
 	r = ExecuteString(engine, "Print()");
 	if( r < 0 )
