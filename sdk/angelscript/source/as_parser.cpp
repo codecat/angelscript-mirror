@@ -287,7 +287,7 @@ int asCParser::ParsePropertyDeclaration(asCScriptCode *in_script)
 	return 0;
 }
 
-// BNF: SCOPE ::= ['::'] {IDENTIFIER '::'} [IDENTIFIER ['<' TYPE {',' TYPE} '>'] '::']
+// BNF:5: SCOPE         ::= ['::'] {IDENTIFIER '::'} [IDENTIFIER ['<' TYPE {',' TYPE} '>'] '::']
 void asCParser::ParseOptionalScope(asCScriptNode *node)
 {
 	asCScriptNode *scope = CreateNode(snScope);
@@ -391,7 +391,7 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	return node;
 }
 
-// BNF: TYPEMOD ::= ['&' ['in' | 'out' | 'inout']]
+// BNF:4: TYPEMOD       ::= ['&' ['in' | 'out' | 'inout']]
 asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -441,7 +441,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 	return node;
 }
 
-// BNF: TYPE ::= ['const'] SCOPE DATATYPE ['<' TYPE {',' TYPE} '>'] { ('[' ']') | '@' }
+// BNF:4: TYPE          ::= ['const'] SCOPE DATATYPE ['<' TYPE {',' TYPE} '>'] { ('[' ']') | '@' }
 asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -633,7 +633,7 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 	return node;
 }
 
-// BNF: DATATYPE ::= (IDENTIFIER | PRIMTYPE | '?' | 'auto')
+// BNF:5: DATATYPE      ::= (IDENTIFIER | PRIMTYPE | '?' | 'auto')
 asCScriptNode *asCParser::ParseDataType(bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -669,7 +669,7 @@ asCScriptNode *asCParser::ParseDataType(bool allowVariableType, bool allowAuto)
 	return node;
 }
 
-// BNF: PRIMTYPE ::= 'void' | 'int' | 'int8' | 'int16' | 'int32' | 'int64' | 'uint' | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'float' | 'double' | 'bool'
+// BNF:6: PRIMTYPE      ::= 'void' | 'int' | 'int8' | 'int16' | 'int32' | 'int64' | 'uint' | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'float' | 'double' | 'bool'
 asCScriptNode *asCParser::ParseRealType()
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -691,7 +691,7 @@ asCScriptNode *asCParser::ParseRealType()
 	return node;
 }
 
-// BNF: IDENTIFIER ::= single token:  starts with letter or _, can include any letter and digit, same as in C++
+// BNF:17: IDENTIFIER    ::= single token:  starts with letter or _, can include any letter and digit, same as in C++
 asCScriptNode *asCParser::ParseIdentifier()
 {
 	asCScriptNode *node = CreateNode(snIdentifier);
@@ -713,7 +713,7 @@ asCScriptNode *asCParser::ParseIdentifier()
 	return node;
 }
 
-// BNF: PARAMLIST ::= '(' ['void' | (TYPE TYPEMOD [IDENTIFIER] ['=' EXPR] {',' TYPE TYPEMOD [IDENTIFIER] ['=' EXPR]})] ')'
+// BNF:3: PARAMLIST     ::= '(' ['void' | (TYPE TYPEMOD [IDENTIFIER] ['=' EXPR] {',' TYPE TYPEMOD [IDENTIFIER] ['=' EXPR]})] ')'
 asCScriptNode *asCParser::ParseParameterList()
 {
 	asCScriptNode *node = CreateNode(snParameterList);
@@ -1385,7 +1385,7 @@ bool asCParser::CheckTemplateType(const sToken &t)
 	return true;
 }
 
-// BNF: CAST ::= 'cast' '<' TYPE '>' '(' ASSIGN ')'
+// BNF:12: CAST          ::= 'cast' '<' TYPE '>' '(' ASSIGN ')'
 asCScriptNode *asCParser::ParseCast()
 {
 	asCScriptNode *node = CreateNode(snCast);
@@ -1446,7 +1446,7 @@ asCScriptNode *asCParser::ParseCast()
 	return node;
 }
 
-// BNF: EXPRVALUE ::= 'void' | CONSTRUCTCALL | FUNCCALL | VARACCESS | CAST | LITERAL | '(' ASSIGN ')' | LAMBDA
+// BNF:11: EXPRVALUE     ::= 'void' | CONSTRUCTCALL | FUNCCALL | VARACCESS | CAST | LITERAL | '(' ASSIGN ')' | LAMBDA
 asCScriptNode *asCParser::ParseExprValue()
 {
 	asCScriptNode *node = CreateNode(snExprValue);
@@ -1544,10 +1544,10 @@ asCScriptNode *asCParser::ParseExprValue()
 	return node;
 }
 
-// BNF: LITERAL ::= NUMBER | STRING | BITS | 'true' | 'false' | 'null'
-// BNF: NUMBER ::= single token:  includes integers and real numbers, same as C++
-// BNF: STRING ::= single token:  single quoted ', double quoted ", or heredoc multi-line string """
-// BNF: BITS ::= single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
+// BNF:12: LITERAL       ::= NUMBER | STRING | BITS | 'true' | 'false' | 'null'
+// BNF:17: NUMBER        ::= single token:  includes integers and real numbers, same as C++
+// BNF:17: STRING        ::= single token:  single quoted ', double quoted ", or heredoc multi-line string """
+// BNF:17: BITS          ::= single token:  binary 0b or 0B, octal 0o or 0O, decimal 0d or 0D, hexadecimal 0x or 0X
 asCScriptNode *asCParser::ParseConstant()
 {
 	asCScriptNode *node = CreateNode(snConstant);
@@ -1606,7 +1606,7 @@ bool asCParser::IsLambda()
 	return isLambda;
 }
 
-// BNF: LAMBDA ::= 'function' '(' [IDENTIFIER {',' IDENTIFIER}] ')' STATBLOCK
+// BNF:12: LAMBDA        ::= 'function' '(' [[TYPE TYPEMOD] IDENTIFIER {',' [TYPE TYPEMOD] IDENTIFIER}] ')' STATBLOCK
 asCScriptNode *asCParser::ParseLambda()
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -1628,15 +1628,34 @@ asCScriptNode *asCParser::ParseLambda()
 		return node;
 	}
 
+	// Parse optional type before parameter name
+	if( IsType(t) && (t.type == ttAmp || t.type == ttIdentifier) )
+	{
+		node->AddChildLast(ParseType(true));
+		if (isSyntaxError) return node;
+		node->AddChildLast(ParseTypeMod(true));
+		if (isSyntaxError) return node;
+	}
+
 	GetToken(&t);
 	if( t.type == ttIdentifier )
 	{
 		RewindTo(&t);
 		node->AddChildLast(ParseIdentifier());
+		if (isSyntaxError) return node;
 
 		GetToken(&t);
 		while( t.type == ttListSeparator )
 		{
+			// Parse optional type before parameter name
+			if (IsType(t) && (t.type == ttAmp || t.type == ttIdentifier)) 
+			{
+				node->AddChildLast(ParseType(true));
+				if (isSyntaxError) return node;
+				node->AddChildLast(ParseTypeMod(true));
+				if (isSyntaxError) return node;
+			}
+
 			node->AddChildLast(ParseIdentifier());
 			if( isSyntaxError ) return node;
 
@@ -1677,7 +1696,7 @@ asCScriptNode *asCParser::ParseStringConstant()
 	return node;
 }
 
-// BNF: FUNCCALL ::= SCOPE IDENTIFIER ARGLIST
+// BNF:12: FUNCCALL      ::= SCOPE IDENTIFIER ARGLIST
 asCScriptNode *asCParser::ParseFunctionCall()
 {
 	asCScriptNode *node = CreateNode(snFunctionCall);
@@ -1695,7 +1714,7 @@ asCScriptNode *asCParser::ParseFunctionCall()
 	return node;
 }
 
-// BNF: VARACCESS ::= SCOPE IDENTIFIER
+// BNF:12: VARACCESS     ::= SCOPE IDENTIFIER
 asCScriptNode *asCParser::ParseVariableAccess()
 {
 	asCScriptNode *node = CreateNode(snVariableAccess);
@@ -1710,7 +1729,7 @@ asCScriptNode *asCParser::ParseVariableAccess()
 	return node;
 }
 
-// BNF: CONSTRUCTCALL ::= TYPE ARGLIST
+// BNF:11: CONSTRUCTCALL ::= TYPE ARGLIST
 asCScriptNode *asCParser::ParseConstructCall()
 {
 	asCScriptNode *node = CreateNode(snConstructCall);
@@ -1724,7 +1743,7 @@ asCScriptNode *asCParser::ParseConstructCall()
 	return node;
 }
 
-// BNF: ARGLIST ::= '(' [IDENTIFIER ':'] ASSIGN {',' [IDENTIFIER ':'] ASSIGN} ')'
+// BNF:13: ARGLIST       ::= '(' [IDENTIFIER ':'] ASSIGN {',' [IDENTIFIER ':'] ASSIGN} ')'
 asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 {
 	asCScriptNode *node = CreateNode(snArgList);
@@ -1866,7 +1885,7 @@ bool asCParser::IsFunctionCall()
 	return false;
 }
 
-// BNF: ASSIGN ::= CONDITION [ ASSIGNOP ASSIGN ]
+// BNF:13: ASSIGN        ::= CONDITION [ ASSIGNOP ASSIGN ]
 asCScriptNode *asCParser::ParseAssignment()
 {
 	asCScriptNode *node = CreateNode(snAssignment);
@@ -1891,7 +1910,7 @@ asCScriptNode *asCParser::ParseAssignment()
 	return node;
 }
 
-// BNF: CONDITION ::= EXPR ['?' ASSIGN ':' ASSIGN]
+// BNF:14: CONDITION     ::= EXPR ['?' ASSIGN ':' ASSIGN]
 asCScriptNode *asCParser::ParseCondition()
 {
 	asCScriptNode *node = CreateNode(snCondition);
@@ -1924,7 +1943,7 @@ asCScriptNode *asCParser::ParseCondition()
 	return node;
 }
 
-// BNF: EXPR ::= EXPRTERM {EXPROP EXPRTERM}
+// BNF:9: EXPR          ::= EXPRTERM {EXPROP EXPRTERM}
 asCScriptNode *asCParser::ParseExpression()
 {
 	asCScriptNode *node = CreateNode(snExpression);
@@ -1951,7 +1970,7 @@ asCScriptNode *asCParser::ParseExpression()
 	UNREACHABLE_RETURN;
 }
 
-// BNF: EXPRTERM ::= ([TYPE '='] INITLIST) | ({EXPRPREOP} EXPRVALUE {EXPRPOSTOP})
+// BNF:10: EXPRTERM      ::= ([TYPE '='] INITLIST) | ({EXPRPREOP} EXPRVALUE {EXPRPOSTOP})
 asCScriptNode *asCParser::ParseExprTerm()
 {
 	asCScriptNode *node = CreateNode(snExprTerm);
@@ -2015,7 +2034,7 @@ asCScriptNode *asCParser::ParseExprTerm()
 	UNREACHABLE_RETURN;
 }
 
-// BNF: EXPRPREOP ::= '-' | '+' | '!' | '++' | '--' | '~' | '@'
+// BNF:11: EXPRPREOP     ::= '-' | '+' | '!' | '++' | '--' | '~' | '@'
 asCScriptNode *asCParser::ParseExprPreOp()
 {
 	asCScriptNode *node = CreateNode(snExprPreOp);
@@ -2036,7 +2055,7 @@ asCScriptNode *asCParser::ParseExprPreOp()
 	return node;
 }
 
-// BNF: EXPRPOSTOP ::= ('.' (FUNCCALL | IDENTIFIER)) | ('[' [IDENTIFIER ':'] ASSIGN {',' [IDENTIFIER ':' ASSIGN} ']') | ARGLIST | '++' | '--'
+// BNF:11: EXPRPOSTOP    ::= ('.' (FUNCCALL | IDENTIFIER)) | ('[' [IDENTIFIER ':'] ASSIGN {',' [IDENTIFIER ':' ASSIGN} ']') | ARGLIST | '++' | '--'
 asCScriptNode *asCParser::ParseExprPostOp()
 {
 	asCScriptNode *node = CreateNode(snExprPostOp);
@@ -2088,11 +2107,11 @@ asCScriptNode *asCParser::ParseExprPostOp()
 	return node;
 }
 
-// BNF: EXPROP ::= MATHOP | COMPOP | LOGICOP | BITOP
-// BNF: MATHOP ::= '+' | '-' | '*' | '/' | '%' | '**'
-// BNF: COMPOP ::= '==' | '!=' | '<' | '<=' | '>' | '>=' | 'is' | '!is'
-// BNF: LOGICOP ::= '&&' | '||' | '^^' | 'and' | 'or' | 'xor'
-// BNF: BITOP ::= '&' | '|' | '^' | '<<' | '>>' | '>>>'
+// BNF:15: EXPROP        ::= MATHOP | COMPOP | LOGICOP | BITOP
+// BNF:16: MATHOP        ::= '+' | '-' | '*' | '/' | '%' | '**'
+// BNF:16: COMPOP        ::= '==' | '!=' | '<' | '<=' | '>' | '>=' | 'is' | '!is'
+// BNF:16: LOGICOP       ::= '&&' | '||' | '^^' | 'and' | 'or' | 'xor'
+// BNF:16: BITOP         ::= '&' | '|' | '^' | '<<' | '>>' | '>>>'
 asCScriptNode *asCParser::ParseExprOperator()
 {
 	asCScriptNode *node = CreateNode(snExprOperator);
@@ -2113,7 +2132,7 @@ asCScriptNode *asCParser::ParseExprOperator()
 	return node;
 }
 
-// BNF: ASSIGNOP ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>='
+// BNF:16: ASSIGNOP      ::= '=' | '+=' | '-=' | '*=' | '/=' | '|=' | '&=' | '^=' | '%=' | '**=' | '<<=' | '>>=' | '>>>='
 asCScriptNode *asCParser::ParseAssignOperator()
 {
 	asCScriptNode *node = CreateNode(snExprOperator);
@@ -2265,7 +2284,7 @@ int asCParser::ParseExpression(asCScriptCode *in_script)
 	return 0;
 }
 
-// BNF: IMPORT ::= 'import' TYPE ['&'] IDENTIFIER PARAMLIST 'from' STRING ';'
+// BNF:1: IMPORT        ::= 'import' TYPE ['&'] IDENTIFIER PARAMLIST 'from' STRING ';'
 asCScriptNode *asCParser::ParseImport()
 {
 	asCScriptNode *node = CreateNode(snImport);
@@ -2333,7 +2352,7 @@ asCScriptNode *asCParser::ParseImport()
 	return node;
 }
 
-// BNF: SCRIPT ::= {IMPORT | ENUM | TYPEDEF | CLASS | MIXIN | INTERFACE | FUNCDEF | VIRTPROP | VAR | FUNC | NAMESPACE | ';'}
+// BNF:0: SCRIPT        ::= {IMPORT | ENUM | TYPEDEF | CLASS | MIXIN | INTERFACE | FUNCDEF | VIRTPROP | VAR | FUNC | NAMESPACE | ';'}
 asCScriptNode *asCParser::ParseScript(bool inBlock)
 {
 	asCScriptNode *node = CreateNode(snScript);
@@ -2430,7 +2449,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 	UNREACHABLE_RETURN;
 }
 
-// BNF: NAMESPACE ::= 'namespace' IDENTIFIER '{' SCRIPT '}'
+// BNF:1: NAMESPACE     ::= 'namespace' IDENTIFIER '{' SCRIPT '}'
 asCScriptNode *asCParser::ParseNamespace()
 {
 	asCScriptNode *node = CreateNode(snNamespace);
@@ -2507,7 +2526,7 @@ int asCParser::ParseStatementBlock(asCScriptCode *in_script, asCScriptNode *in_b
 	return 0;
 }
 
-// BNF: ENUM ::= {'shared' | 'external'} 'enum' IDENTIFIER (';' | ('{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'))
+// BNF:1: ENUM          ::= {'shared' | 'external'} 'enum' IDENTIFIER (';' | ('{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'))
 asCScriptNode *asCParser::ParseEnumeration()
 {
 	asCScriptNode *ident;
@@ -2871,7 +2890,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 	return false;
 }
 
-// BNF: FUNCDEF ::= {'external' | 'shared'} 'funcdef' TYPE ['&'] IDENTIFIER PARAMLIST ';'
+// BNF:1: FUNCDEF       ::= {'external' | 'shared'} 'funcdef' TYPE ['&'] IDENTIFIER PARAMLIST ';'
 asCScriptNode *asCParser::ParseFuncDef()
 {
 	asCScriptNode *node = CreateNode(snFuncDef);
@@ -2923,7 +2942,7 @@ asCScriptNode *asCParser::ParseFuncDef()
 	return node;
 }
 
-// BNF: FUNC ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} (';' | STATBLOCK)
+// BNF:1: FUNC          ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} (';' | STATBLOCK)
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -3021,7 +3040,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 	return node;
 }
 
-// BNF: INTFMTHD ::= TYPE ['&'] IDENTIFIER PARAMLIST ['const'] ';'
+// BNF:2: INTFMTHD      ::= TYPE ['&'] IDENTIFIER PARAMLIST ['const'] ';'
 asCScriptNode *asCParser::ParseInterfaceMethod()
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -3059,7 +3078,7 @@ asCScriptNode *asCParser::ParseInterfaceMethod()
 	return node;
 }
 
-// BNF: VIRTPROP ::= ['private' | 'protected'] TYPE ['&'] IDENTIFIER '{' {('get' | 'set') ['const'] [('override' | 'final')] (STATBLOCK | ';')} '}'
+// BNF:1: VIRTPROP      ::= ['private' | 'protected'] TYPE ['&'] IDENTIFIER '{' {('get' | 'set') ['const'] [('override' | 'final')] (STATBLOCK | ';')} '}'
 asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterface)
 {
 	asCScriptNode *node = CreateNode(snVirtualProperty);
@@ -3164,7 +3183,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 	return node;
 }
 
-// BNF: INTERFACE ::= {'external' | 'shared'} 'interface' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'))
+// BNF:1: INTERFACE     ::= {'external' | 'shared'} 'interface' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | INTFMTHD} '}'))
 asCScriptNode *asCParser::ParseInterface()
 {
 	asCScriptNode *node = CreateNode(snInterface);
@@ -3263,7 +3282,7 @@ asCScriptNode *asCParser::ParseInterface()
 	return node;
 }
 
-// BNF: MIXIN ::= 'mixin' CLASS
+// BNF:1: MIXIN         ::= 'mixin' CLASS
 asCScriptNode *asCParser::ParseMixin()
 {
 	asCScriptNode *node = CreateNode(snMixin);
@@ -3287,7 +3306,7 @@ asCScriptNode *asCParser::ParseMixin()
 	return node;
 }
 
-// BNF: CLASS ::= {'shared' | 'abstract' | 'final' | 'external'} 'class' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR | FUNCDEF} '}'))
+// BNF:1: CLASS         ::= {'shared' | 'abstract' | 'final' | 'external'} 'class' IDENTIFIER (';' | ([':' IDENTIFIER {',' IDENTIFIER}] '{' {VIRTPROP | FUNC | VAR | FUNCDEF} '}'))
 asCScriptNode *asCParser::ParseClass()
 {
 	asCScriptNode *node = CreateNode(snClass);
@@ -3583,7 +3602,7 @@ asCScriptNode *asCParser::SuperficiallyParseStatementBlock()
 	return node;
 }
 
-// BNF: STATBLOCK ::= '{' {VAR | STATEMENT} '}'
+// BNF:2: STATBLOCK     ::= '{' {VAR | STATEMENT} '}'
 asCScriptNode *asCParser::ParseStatementBlock()
 {
 	asCScriptNode *node = CreateNode(snStatementBlock);
@@ -3666,7 +3685,7 @@ asCScriptNode *asCParser::ParseStatementBlock()
 	UNREACHABLE_RETURN;
 }
 
-// BNF: INITLIST ::= '{' [ASSIGN | INITLIST] {',' [ASSIGN | INITLIST]} '}'
+// BNF:4: INITLIST      ::= '{' [ASSIGN | INITLIST] {',' [ASSIGN | INITLIST]} '}'
 asCScriptNode *asCParser::ParseInitList()
 {
 	asCScriptNode *node = CreateNode(snInitList);
@@ -3777,7 +3796,7 @@ asCScriptNode *asCParser::ParseInitList()
 	UNREACHABLE_RETURN;
 }
 
-// BNF: VAR ::= ['private'|'protected'] TYPE IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST] {',' IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST]} ';'
+// BNF:1: VAR           ::= ['private'|'protected'] TYPE IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST] {',' IDENTIFIER [( '=' (INITLIST | EXPR)) | ARGLIST]} ';'
 asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 {
 	asCScriptNode *node = CreateNode(snDeclaration);
@@ -3863,7 +3882,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 	UNREACHABLE_RETURN;
 }
 
-// BNF: STATEMENT ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT)
+// BNF:7: STATEMENT     ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT)
 asCScriptNode *asCParser::ParseStatement()
 {
 	sToken t1;
@@ -3900,7 +3919,7 @@ asCScriptNode *asCParser::ParseStatement()
 	}
 }
 
-// BNF: EXPRSTAT ::= [ASSIGN] ';'
+// BNF:8: EXPRSTAT      ::= [ASSIGN] ';'
 asCScriptNode *asCParser::ParseExpressionStatement()
 {
 	asCScriptNode *node = CreateNode(snExpressionStatement);
@@ -3933,7 +3952,7 @@ asCScriptNode *asCParser::ParseExpressionStatement()
 	return node;
 }
 
-// BNF: SWITCH ::= 'switch' '(' ASSIGN ')' '{' {CASE} '}'
+// BNF:8: SWITCH        ::= 'switch' '(' ASSIGN ')' '{' {CASE} '}'
 asCScriptNode *asCParser::ParseSwitch()
 {
 	asCScriptNode *node = CreateNode(snSwitch);
@@ -4008,7 +4027,7 @@ asCScriptNode *asCParser::ParseSwitch()
 	return node;
 }
 
-// BNF: CASE ::= (('case' EXPR) | 'default') ':' {STATEMENT}
+// BNF:9: CASE          ::= (('case' EXPR) | 'default') ':' {STATEMENT}
 asCScriptNode *asCParser::ParseCase()
 {
 	asCScriptNode *node = CreateNode(snCase);
@@ -4064,7 +4083,7 @@ asCScriptNode *asCParser::ParseCase()
 	return node;
 }
 
-// BNF: IF ::= 'if' '(' ASSIGN ')' STATEMENT ['else' STATEMENT]
+// BNF:8: IF            ::= 'if' '(' ASSIGN ')' STATEMENT ['else' STATEMENT]
 asCScriptNode *asCParser::ParseIf()
 {
 	asCScriptNode *node = CreateNode(snIf);
@@ -4116,7 +4135,7 @@ asCScriptNode *asCParser::ParseIf()
 	return node;
 }
 
-// BNF: FOR ::= 'for' '(' (VAR | EXPRSTAT) EXPRSTAT [ASSIGN {',' ASSIGN}] ')' STATEMENT
+// BNF:8: FOR           ::= 'for' '(' (VAR | EXPRSTAT) EXPRSTAT [ASSIGN {',' ASSIGN}] ')' STATEMENT
 asCScriptNode *asCParser::ParseFor()
 {
 	asCScriptNode *node = CreateNode(snFor);
@@ -4184,7 +4203,7 @@ asCScriptNode *asCParser::ParseFor()
 	return node;
 }
 
-// BNF: WHILE ::= 'while' '(' ASSIGN ')' STATEMENT
+// BNF:8: WHILE         ::= 'while' '(' ASSIGN ')' STATEMENT
 asCScriptNode *asCParser::ParseWhile()
 {
 	asCScriptNode *node = CreateNode(snWhile);
@@ -4225,7 +4244,7 @@ asCScriptNode *asCParser::ParseWhile()
 	return node;
 }
 
-// BNF: DOWHILE ::= 'do' STATEMENT 'while' '(' ASSIGN ')' ';'
+// BNF:8: DOWHILE       ::= 'do' STATEMENT 'while' '(' ASSIGN ')' ';'
 asCScriptNode *asCParser::ParseDoWhile()
 {
 	asCScriptNode *node = CreateNode(snDoWhile);
@@ -4284,7 +4303,7 @@ asCScriptNode *asCParser::ParseDoWhile()
 	return node;
 }
 
-// BNF: RETURN ::= 'return' [ASSIGN] ';'
+// BNF:8: RETURN        ::= 'return' [ASSIGN] ';'
 asCScriptNode *asCParser::ParseReturn()
 {
 	asCScriptNode *node = CreateNode(snReturn);
@@ -4326,7 +4345,7 @@ asCScriptNode *asCParser::ParseReturn()
 	return node;
 }
 
-// BNF: BREAK ::= 'break' ';'
+// BNF:8: BREAK         ::= 'break' ';'
 asCScriptNode *asCParser::ParseBreak()
 {
 	asCScriptNode *node = CreateNode(snBreak);
@@ -4355,7 +4374,7 @@ asCScriptNode *asCParser::ParseBreak()
 	return node;
 }
 
-// BNF: CONTINUE ::= 'continue' ';'
+// BNF:8: CONTINUE      ::= 'continue' ';'
 asCScriptNode *asCParser::ParseContinue()
 {
 	asCScriptNode *node = CreateNode(snContinue);
@@ -4385,7 +4404,7 @@ asCScriptNode *asCParser::ParseContinue()
 }
 
 // TODO: typedef: Typedefs should accept complex types as well
-// BNF: TYPEDEF ::= 'typedef' PRIMTYPE IDENTIFIER ';'
+// BNF:1: TYPEDEF       ::= 'typedef' PRIMTYPE IDENTIFIER ';'
 asCScriptNode *asCParser::ParseTypedef()
 {
 	// Create the typedef node

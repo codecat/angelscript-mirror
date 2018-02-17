@@ -6276,19 +6276,37 @@ asUINT asCCompiler::ImplicitConvLambdaToFunc(asCExprContext *ctx, const asCDataT
 {
 	asASSERT( to.IsFuncdef() && ctx->IsLambda() );
 
+	asCScriptFunction *funcDef = CastToFuncdefType(to.GetTypeInfo())->funcdef;
+
 	// Check that the lambda has the correct amount of arguments
 	asUINT count = 0;
 	asCScriptNode *argNode = ctx->exprNode->firstChild;
-	while( argNode->nodeType == snIdentifier )
+	while( argNode->nodeType != snStatementBlock )
 	{
-		count++;
+		// Check if the specified parameter types match the funcdef
+		if (argNode->nodeType == snDataType)
+		{
+			asCDataType dt = builder->CreateDataTypeFromNode(argNode, script, outFunc->nameSpace, false, outFunc->objectType);
+			asETypeModifiers inOutFlag;
+			dt = builder->ModifyDataTypeFromNode(dt, argNode->next, script, &inOutFlag, 0);
+
+			if (count >= funcDef->parameterTypes.GetLength() || 
+				funcDef->parameterTypes[count] != dt || 
+				funcDef->inOutFlags[count] != inOutFlag)
+				return asCC_NO_CONV;
+
+			argNode = argNode->next;
+		}
+
+		if( argNode->nodeType == snIdentifier )
+			count++;
 		argNode = argNode->next;
 	}
-	asASSERT( argNode->nodeType == snStatementBlock );
 
-	asCScriptFunction *funcDef = CastToFuncdefType(to.GetTypeInfo())->funcdef;
-	if( funcDef->parameterTypes.GetLength() != count )
+	if (funcDef->parameterTypes.GetLength() != count)
 		return asCC_NO_CONV;
+
+	asASSERT(argNode->nodeType == snStatementBlock);
 
 	// The Lambda can be used as this funcdef
 	ctx->type.dataType = to;

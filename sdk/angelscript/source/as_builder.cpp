@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4434,12 +4434,15 @@ asCScriptFunction *asCBuilder::RegisterLambda(asCScriptNode *node, asCScriptCode
 	asCArray<asCString> parameterNames;
 	asCArray<asCString*> defaultArgs;
 	asCScriptNode *args = node->firstChild;
-	while( args && args->nodeType == snIdentifier )
+	while( args && args->nodeType != snStatementBlock )
 	{
-		asCString argName;
-		argName.Assign(&file->code[args->tokenPos], args->tokenLength);
-		parameterNames.PushLast(argName);
-		defaultArgs.PushLast(0);
+		if (args->nodeType == snIdentifier)
+		{
+			asCString argName;
+			argName.Assign(&file->code[args->tokenPos], args->tokenLength);
+			parameterNames.PushLast(argName);
+			defaultArgs.PushLast(0);
+		}
 		args = args->next;
 	}
 

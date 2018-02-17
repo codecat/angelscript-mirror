@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.1 WIP - 2018/02/04</h2>
+<h2>Version 2.32.1 WIP - 2018/02/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,6 +26,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <ul>
 <li>Changed the compiler to do less copies of objects and especially string constants
 <li>Engine error messages now include the symbol name for the error code for easier interpretation
+</ul>
+<li>Script language
+<ul>
+<li>Now it is possible to resolve ambiguity with lambda functions by explicitly specifying the parameter types (Thanks Miss)
 </ul>
 <li>Add-ons &amp; Samples
 <ul>
@@ -38,6 +42,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed incorrect use of setlocale in parseFloat (Thanks Miss)
 <li>Implemented a #pragma callback in the builder add-on
 <li>asrun can now turn on debugging with #pragma debug (works the same as -d command arg)
+<li>Fixed crash in debugger add-on when printing call stack in template function
 </ul>
 <li>Project
 <ul>

@@ -1145,6 +1145,31 @@ bool Test()
 			TEST_FAILED;
 		}
 
+		// Test multiple options for matching lambda
+		// https://www.gamedev.net/forums/topic/672780-lambda-overload-problem/
+		bout.buffer = "";
+		mod->AddScriptSection("name",
+			"funcdef void A(int); \n"
+			"funcdef void B(float); \n"
+			"void func(A@) {} \n"
+			"void func(B@) {} \n"
+			"void main() { \n"
+			"  func(function(a){}); \n"          // compiler cannot decide
+			"  func(cast<B>(function(a){})); \n" // this one is known
+			"  func(function(float a){}); \n"    // this one is also known
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "name (5, 1) : Info    : Compiling void main()\n"
+						   "name (6, 3) : Error   : Multiple matching signatures to 'func($func@const)'\n"
+						   "name (6, 3) : Info    : void func(A@)\n"
+						   "name (6, 3) : Info    : void func(B@)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
 		engine->Release();
 	}
 

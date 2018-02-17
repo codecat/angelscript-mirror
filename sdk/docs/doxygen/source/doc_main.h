@@ -140,8 +140,8 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_script_shared
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
+ - \subpage doc_script_bnf
 
-\todo Add page with the Backus-Naur form of the language
 
 
 \page doc_script_global Global entities
