@@ -6346,7 +6346,7 @@ asUINT asCCompiler::ImplicitConversion(asCExprContext *ctx, const asCDataType &t
 		if (to.GetBehaviour() && to.GetBehaviour()->listFactory)
 		{
 			if (generateCode)
-				CompilerAnonymousInitList(ctx->exprNode, ctx, to);
+				CompileAnonymousInitList(ctx->exprNode, ctx, to);
 			else
 				ctx->type.dataType = to;
 		}
@@ -8710,7 +8710,7 @@ int asCCompiler::CompilePostFixExpression(asCArray<asCScriptNode *> *postfix, as
 	return ret;
 }
 
-int asCCompiler::CompilerAnonymousInitList(asCScriptNode *node, asCExprContext *ctx, const asCDataType &dt)
+int asCCompiler::CompileAnonymousInitList(asCScriptNode *node, asCExprContext *ctx, const asCDataType &dt)
 {
 	asASSERT(node->nodeType == snInitList);
 
@@ -8737,6 +8737,10 @@ int asCCompiler::CompilerAnonymousInitList(asCScriptNode *node, asCExprContext *
 	if (IsVariableOnHeap(offset))
 		ctx->type.dataType.MakeReference(true);
 
+	// Clear the flag for anonymous initalization list as it is no
+	// longer true now that the object has been initialized.
+	ctx->isAnonymousInitList = false;
+
 	return 0;
 }
 
@@ -8753,7 +8757,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asCExprContext *ctx)
 			// Determine the type of the temporary object
 			asCDataType dt = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace);
 
-			return CompilerAnonymousInitList(node->lastChild, ctx, dt);
+			return CompileAnonymousInitList(node->lastChild, ctx, dt);
 		}
 		else if (node->firstChild->nodeType == snInitList)
 		{

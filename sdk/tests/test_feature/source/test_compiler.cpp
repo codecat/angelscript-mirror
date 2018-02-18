@@ -174,6 +174,63 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test passing object by value where the object is initialized with anonymous list
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Point2F", 1, asOBJ_VALUE);
+		engine->RegisterObjectBehaviour("Point2F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Point2F", asBEHAVE_CONSTRUCT, "void f(const Point2F &in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Point2F", asBEHAVE_LIST_CONSTRUCT, "void f(const int &in) {float, float}", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("Point2F", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("Point2F", "Point2F &opAssign(const Point2F &in)", asFUNCTION(0), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"bool setPosition(Point2F) {return true;} \n"
+			"void main() \n"
+			"{ \n"
+			"  setPosition({ 2800, 5000 }); \n"
+			"}\n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptFunction *func = mod->GetFunctionByName("main");
+		asBYTE expect[] =
+		{
+			asBC_SUSPEND,asBC_PSF,
+			// Setup the initialization list
+			asBC_AllocMem,asBC_SetV4,asBC_PshListElmnt,asBC_PopRPtr,asBC_WRTV4,asBC_SetV4,asBC_PshListElmnt,asBC_PopRPtr,asBC_WRTV4,
+			// Allocate the Point2F with the initialization list
+			asBC_PshVPtr,asBC_PSF,asBC_CALLSYS,
+			// Free the initialization list
+			asBC_FREE,
+			// Copy the Point2F to a temp Point2F allocated on the heap
+			// TODO: optimize: Avoid this copy by allocating the first object on the heap directly
+			asBC_PSF,asBC_ALLOC,
+			// Free the first Point2F
+			asBC_PSF,asBC_CALLSYS,
+			// Call setPosition with the Point2F allocated on the heap
+			asBC_VAR,asBC_GETOBJ,asBC_CALL,
+			// Exit
+			asBC_SUSPEND,asBC_RET
+		};
+		if (!ValidateByteCode(func, expect))
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test assert failure on implicit conversion of primitive types
 	// https://www.gamedev.net/forums/topic/692729-assert-failure-in-ascexprvaluegetconstantdw/
 	{
