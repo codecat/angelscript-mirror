@@ -13776,6 +13776,29 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 		op == ttBitOr  || op == ttOrAssign  ||
 		op == ttBitXor || op == ttXorAssign )
 	{
+		// Also do not permit float/double to be implicitly converted to integer in this case
+		// as the user may think the result is a bitwise operation on the float value but it's not
+		if (lctx->type.dataType.IsFloatType() || lctx->type.dataType.IsDoubleType())
+		{
+			asCString str;
+			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format(outFunc->nameSpace).AddressOf());
+			Error(str, node);
+
+			// Set an integer value and allow the compiler to continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
+			return;
+		}
+		if (rctx->type.dataType.IsFloatType() || rctx->type.dataType.IsDoubleType())
+		{
+			asCString str;
+			str.Format(TXT_ILLEGAL_OPERATION_ON_s, rctx->type.dataType.Format(outFunc->nameSpace).AddressOf());
+			Error(str, node);
+
+			// Set an integer value and allow the compiler to continue
+			ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttInt, true), 0);
+			return;
+		}
+
 		// Convert left hand operand to integer if it's not already one
 		asCDataType to;
 		if( lctx->type.dataType.GetSizeInMemoryDWords() == 2 ||
@@ -13904,7 +13927,8 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asCExprContext *lc
 			 op == ttBitShiftRightArith || op == ttShiftRightAAssign )
 	{
 		// Don't permit object to primitive conversion, since we don't know which integer type is the correct one
-		if( lctx->type.dataType.IsObject() )
+		// Also do not permit float/double to be implicitly converted to integer in this case
+		if( lctx->type.dataType.IsObject() || lctx->type.dataType.IsFloatType() || lctx->type.dataType.IsDoubleType() )
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_OPERATION_ON_s, lctx->type.dataType.Format(outFunc->nameSpace).AddressOf());
