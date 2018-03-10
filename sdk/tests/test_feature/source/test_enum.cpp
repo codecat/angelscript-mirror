@@ -53,6 +53,32 @@ static bool TestEnum()
 	int                r;
 	bool               fail = false;
 
+	// Report warning on enum values that do not fit in 32bit
+	// https://www.gamedev.net/forums/topic/687053-values-of-enum-constants/
+	{
+		engine = asCreateScriptEngine();
+		r = engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"enum VAL { a = 12345678901, b = -9223372036854775809 }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 12) : Info    : Compiling VAL a\n"
+						   "test (1, 16) : Warning : Value is too large for data type\n"
+						   "test (1, 29) : Info    : Compiling VAL b\n"
+						   "test (1, 33) : Warning : Value is too large for data type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test that enums are properly converted during function overloading
 	// http://www.gamedev.net/topic/678030-enum-type-conversion-to-int-cost-not-calculated-correctly/
 	{

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -2032,8 +2032,14 @@ public:
 	//! \param[in] length The length in bytes of the data buffer
 	//! \return The pointer to the instantiated string constant
 	//!
+	//! The contents of \a data must be copied by the string factory, as the 
+	//! engine will not keep a copy of the original data.
+	//!
 	//! The string factory can cache and return a pointer to the same instance
 	//! multiple times if the same string content is requested multiple times.
+	//! If the same instance is returned multiple times the string factory must
+	//! keep track of the number of instances as \ref ReleaseStringConstant
+	//! will be called for each of them.
 	virtual const void *GetStringConstant(const char *data, asUINT length) = 0;
 	//! \brief Called by engine when the string constant is no longer used.
 	//! \param[in] str The same pointer returned by \ref GetStringConstant
@@ -2050,7 +2056,7 @@ public:
 	//! \param[out] length A pointer to the variable that should be set with the length of the data
 	//! \return A negative value on error.
 	//!
-	//! The engine will first call this with data set to null to retrieve the size of the 
+	//! The engine will first call this with \a data set to null to retrieve the size of the 
 	//! buffer that must be allocated. Then the engine will call the method once more with
 	//! the allocated data buffer to be filled with the content. The length should always be
 	//! informed in number of bytes.

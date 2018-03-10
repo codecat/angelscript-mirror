@@ -152,8 +152,8 @@ bool Test()
 			TEST_FAILED;
 
 		// bitwise operators should maintain signed/unsigned type of left hand operand
-		CBufferedOutStream bout;
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 		r = ExecuteString(engine, "int a = 0, b = 0; bool c = (a < (b>>1));");
 		if (r < 0)
 			TEST_FAILED;
