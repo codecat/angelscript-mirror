@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2017 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -835,16 +835,50 @@ void asCReader::ReadUsedFunctions()
 
 					if( func.name == "$beh0" && func.objectType )
 					{
-						// This is a class constructor, so we can search directly in the object type's constructors
-						for( asUINT i = 0; i < func.objectType->beh.constructors.GetLength(); i++ )
+						if (func.objectType->flags & asOBJ_TEMPLATE)
 						{
-							asCScriptFunction *f = engine->scriptFunctions[func.objectType->beh.constructors[i]];
-							if( f == 0 ||
-								!func.IsSignatureExceptNameAndObjectTypeEqual(f) )
-								continue;
+							// Look for the matching constructor inside the factory stubs generated for the template instance
+							// See asCCompiler::PerformFunctionCall
+							for (asUINT i = 0; i < func.objectType->beh.constructors.GetLength(); i++)
+							{
+								asCScriptFunction *f = engine->scriptFunctions[func.objectType->beh.constructors[i]];
+								
+								// Find the id of the real constructor and not the generated stub
+								asUINT id = 0;
+								asDWORD *bc = f->scriptData->byteCode.AddressOf();
+								while (bc)
+								{
+									if ((*(asBYTE*)bc) == asBC_CALLSYS)
+									{
+										id = asBC_INTARG(bc);
+										break;
+									}
+									bc += asBCTypeSize[asBCInfo[*(asBYTE*)bc].type];
+								}
 
-							usedFunctions[n] = f;
-							break;
+								f = engine->scriptFunctions[id];
+								if (f == 0 ||
+									!func.IsSignatureExceptNameAndObjectTypeEqual(f))
+									continue;
+
+								usedFunctions[n] = f;
+								break;
+							}
+						}
+
+						if( usedFunctions[n] == 0 )
+						{
+							// This is a class constructor, so we can search directly in the object type's constructors
+							for (asUINT i = 0; i < func.objectType->beh.constructors.GetLength(); i++)
+							{
+								asCScriptFunction *f = engine->scriptFunctions[func.objectType->beh.constructors[i]];
+								if (f == 0 ||
+									!func.IsSignatureExceptNameAndObjectTypeEqual(f))
+									continue;
+
+								usedFunctions[n] = f;
+								break;
+							}
 						}
 					}
 					else if( func.name == "$fact" || func.name == "$beh3" )

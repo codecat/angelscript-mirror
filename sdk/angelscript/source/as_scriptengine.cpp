@@ -3846,7 +3846,13 @@ bool asCScriptEngine::RequireTypeReplacement(asCDataType &type, asCObjectType *t
 
 bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *ot, asCScriptFunction *func, asCScriptFunction **newFunc)
 {
+	// Due to the objectType it is always required to generate a new function, 
+	// even if none of the function arguments needs to be changed.
+/*
+	// TODO: Can we store the new function in some other optimized way to 
+	//       avoid duplicating all information just because of the different objectType member
 	bool needNewFunc = false;
+
 	if( RequireTypeReplacement(func->returnType, templateType) )
 		needNewFunc = true;
 	else
@@ -3863,6 +3869,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	if( !needNewFunc )
 		return false;
+*/
 
 	asCScriptFunction *func2 = asNEW(asCScriptFunction)(this, 0, func->funcType);
 	if( func2 == 0 )

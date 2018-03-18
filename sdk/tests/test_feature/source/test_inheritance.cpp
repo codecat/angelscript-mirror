@@ -115,6 +115,33 @@ bool Test()
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
 
+	// Test that the calling the parent's constructor through super works even when there is a get_super() property accessor
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int super { get { return 0; } } \n"
+			"class Asuper { } \n"
+			"class B : Asuper { \n"
+			"  B() { super(); } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Script class inheriting from an application class through proxy
 	// http://www.gamedev.net/topic/658925-casting-and-inheritance/
 	// http://www.gamedev.net/topic/535837-application-registered-classes/

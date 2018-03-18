@@ -439,7 +439,7 @@ bool Test()
 		engine->Release();
 	}
 
-	// Test passing templates are arguments
+	// Test passing templates as arguments
 	// http://www.gamedev.net/topic/639597-how-to-pass-arraystring-to-a-function/
 	{
 		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
@@ -686,7 +686,7 @@ bool Test()
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "const T &GetVal() const", asMETHOD(MyTmpl, GetVal), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("MyTmpl<T>", "void SetVal(const T& in)", asMETHOD(MyTmpl, SetVal), asCALL_THISCALL); assert( r >= 0 );
 
-	// Test that it is possible to instanciate the template type for different sub types
+	// Test that it is possible to instantiate the template type for different sub types
 	r = ExecuteString(engine, "MyTmpl<int> i;    \n"
 								 "MyTmpl<string> s; \n"
 								 "assert( i.GetNameOfType() == 'MyTmpl<int>' ); \n"
@@ -703,6 +703,13 @@ bool Test()
 	{
 		TEST_FAILED;
 	}
+
+	// Test that the method of the template that has no template subtype is also getting a unique function with the correct object type
+	// https://www.gamedev.net/forums/topic/695691-subtypes-not-always-resolved-in-generic-call/
+	asITypeInfo *type = engine->GetTypeInfoByDecl("MyTmpl<int>");
+	asIScriptFunction *func = type->GetMethodByDecl("string GetNameOfType()");
+	if (func->GetObjectType() != type)
+		TEST_FAILED;
 
 	// Test that the template sub type works
 	r = ExecuteString(engine, "MyTmpl<int> i; \n"

@@ -15,18 +15,20 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.1 WIP - 2018/02/24</h2>
+<h2>Version 2.32.1 WIP - 2018/03/18</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed crash when compiling is null comparison with ASHANDLE object without any opEquals operator (Thanks Boost113)
 <li>Fixed bug with anonymous initialization lists when used to initialize value type passed by value to function (Thanks Patrick Jeeves)
+<li>Loading bytecode that included use of template value types with a template type as argument crashed
 </ul>
 <li>Library
 <ul>
 <li>Changed the compiler to do less copies of objects and especially string constants
 <li>Engine error messages now include the symbol name for the error code for easier interpretation
+<li>All methods for template instances now get unique functions to show the template instance as the object type (Thanks Miss)
 </ul>
 <li>Script language
 <ul>
