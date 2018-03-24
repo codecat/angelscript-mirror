@@ -2433,8 +2433,8 @@ int asCScriptEngine::SetTemplateRestrictions(asCObjectType *templateType, asCScr
 		{
 			if (func->parameterTypes[n].GetTypeInfo() == templateType->templateSubTypes[subTypeIdx].GetTypeInfo())
 			{
-				// TODO: If unsafe references are allowed, then inout references allow value types
-				if (func->parameterTypes[n].IsObjectHandle() || (func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF))
+				if (func->parameterTypes[n].IsObjectHandle() || 
+					(!ep.allowUnsafeReferences && func->parameterTypes[n].IsReference() && func->inOutFlags[n] == asTM_INOUTREF))
 					templateType->acceptValueSubType = false;
 				else if (!func->parameterTypes[n].IsReference())
 					templateType->acceptRefSubType = false;
@@ -3849,8 +3849,8 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 	// Due to the objectType it is always required to generate a new function, 
 	// even if none of the function arguments needs to be changed.
 /*
-	// TODO: Can we store the new function in some other optimized way to 
-	//       avoid duplicating all information just because of the different objectType member
+	// TODO: Can we store the new function in some other optimized way to avoid
+	//       duplicating all information just because of the different objectType member?
 	bool needNewFunc = false;
 
 	if( RequireTypeReplacement(func->returnType, templateType) )

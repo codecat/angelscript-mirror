@@ -205,6 +205,54 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// When unsafe reference is turned on it should still be allowed to instantiate template
+	// for value subtypes even though a method takes the subtype by ref
+	// https://www.gamedev.net/forums/topic/695957-can-not-create-a-value-type-template/
+	{
+		// First without asEP_ALLOW_UNSAFE_REFERENCES
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("Template<class T>", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_TEMPLATE);
+		engine->RegisterObjectMethod("Template<T>", "void func(T&)", asFUNCTION(0), asCALL_GENERIC);
+
+		r = engine->RegisterGlobalProperty("Template<int> t", (void*)1);
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "Property (1, 10) : Error   : Attempting to instantiate invalid template type 'Template<int>'\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalProperty' with 'Template<int> t' (Code: asINVALID_DECLARATION, -10)\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+		
+		// Now with asEP_ALLOW_UNSAFE_REFERNCES
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+
+		engine->RegisterObjectType("Template<class T>", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_TEMPLATE);
+		engine->RegisterObjectMethod("Template<T>", "void func(T&)", asFUNCTION(0), asCALL_GENERIC);
+
+		r = engine->RegisterGlobalProperty("Template<int> t", (void*)1);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Template callbacks must only be invoked after the types are fully constructed
 	// http://www.gamedev.net/topic/658982-funcdef-error/
 	{
