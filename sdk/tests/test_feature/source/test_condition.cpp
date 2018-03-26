@@ -91,6 +91,82 @@ bool TestCondition()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test anonymous initialization lists in conditional operator
+	// Reported by doctorgester
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"array<int> let_the_dogs_out(bool flag) { \n"
+			"    return flag ? { 5 } : array<int>(); \n"  // compiler sets the type of list the the same as second condition
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"array<int> let_the_dogs_out(bool flag) { \n"
+			"    return flag ? array<int>() : {5}; \n"  // compiler sets the type of list the the same as second condition
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"array<int> let_the_dogs_out(bool flag) { \n"
+			"    return flag ? {5} : {0}; \n"  // error, compiler cannot know the type
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling array<int> let_the_dogs_out(bool)\n"
+						   "test (2, 19) : Error   : Unable to resolve auto type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"array<int> let_the_dogs_out(bool flag) { \n"
+			"    return flag ? array<int> = { 5 } : array<int>(); \n"  // explicitly informing the type works
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test condition with std string
 	// http://www.gamedev.net/topic/684124-weird-string-behavior-when-using/
 	{

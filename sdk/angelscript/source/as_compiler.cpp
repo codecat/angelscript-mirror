@@ -8357,6 +8357,33 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 				re.type.dataType.MakeHandleToConst(true);
 			}
 
+			// Allow an anonymous initialization list to be converted to the type in the other condition
+			if (le.IsAnonymousInitList() && re.type.dataType.GetBehaviour() && re.type.dataType.GetBehaviour()->listFactory)
+			{
+				asCDataType to = re.type.dataType;
+				to.MakeReference(false);
+				to.MakeReadOnly(false);
+				ImplicitConversion(&le, to, cexpr->next, asIC_IMPLICIT_CONV);
+			}
+			else if (re.IsAnonymousInitList() && le.type.dataType.GetBehaviour() && le.type.dataType.GetBehaviour()->listFactory)
+			{
+				asCDataType to = le.type.dataType;
+				to.MakeReference(false);
+				to.MakeReadOnly(false);
+				ImplicitConversion(&re, to, cexpr->next->next, asIC_IMPLICIT_CONV);
+			}
+			
+			if (le.IsAnonymousInitList() )
+			{
+				Error(TXT_CANNOT_RESOLVE_AUTO, cexpr->next);
+				return -1;
+			}
+			else if (re.IsAnonymousInitList())
+			{
+				Error(TXT_CANNOT_RESOLVE_AUTO, cexpr->next->next);
+				return -1;
+			}
+
 			//---------------------------------
 			// Output the byte code
 			int afterLabel = nextLabel++;

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.32.1 WIP - 2018/03/24</h2>
+<h2>Version 2.32.1 WIP - 2018/03/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash when compiling is null comparison with ASHANDLE object without any opEquals operator (Thanks Boost113)
 <li>Fixed bug with anonymous initialization lists when used to initialize value type passed by value to function (Thanks Patrick Jeeves)
 <li>Loading bytecode that included use of template value types with a template type as argument crashed
+<li>Compiler would crash on compiling ternary operator with anonymous list in one of the conditions (Thanks doctorgester)
 </ul>
 <li>Library
 <ul>

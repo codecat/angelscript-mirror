@@ -62,7 +62,7 @@
 #define TXT_CANNOT_INHERIT_FROM_MULTIPLE_CLASSES   "Can't inherit from multiple classes"
 #define TXT_CANNOT_INHERIT_FROM_SELF               "Can't inherit from itself, or another class that inherits from this class"
 #define TXT_CANNOT_PASS_CLASS_METHOD_AS_ARG        "Can't pass class method as arg directly. Use a delegate object instead"
-#define TXT_CANNOT_RESOLVE_AUTO                     "Unable to resolve auto type"
+#define TXT_CANNOT_RESOLVE_AUTO                    "Unable to resolve auto type"
 #define TXT_CANNOT_RETURN_REF_TO_LOCAL             "Can't return reference to local value."
 #define TXT_CANT_CONSTRUCT_s_USE_REF_CAST          "Can't construct handle '%s'. Use ref cast instead"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s         "Can't implicitly convert from '%s' to '%s'."
