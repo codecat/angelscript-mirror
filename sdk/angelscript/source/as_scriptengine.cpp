@@ -419,6 +419,13 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 			ep.maxNestedCalls = (asUINT)value;
 		break;
 
+	case asEP_GENERIC_CALL_MODE:
+		if (value > 1)
+			ep.genericCallMode = 1;
+		else
+			ep.genericCallMode = (asUINT)value;
+		break;
+
 	default:
 		return asINVALID_ARG;
 	}
@@ -512,6 +519,9 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 	case asEP_MAX_NESTED_CALLS:
 		return ep.maxNestedCalls;
 
+	case asEP_GENERIC_CALL_MODE:
+		return ep.genericCallMode;
+
 	default:
 		return 0;
 	}
@@ -577,6 +587,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.allowUnicodeIdentifiers       = false;
 		ep.heredocTrimMode               = 1;         // 0 = never trim, 1 = don't trim on single line, 2 = trim initial and final empty line
 		ep.maxNestedCalls                = 100;
+		ep.genericCallMode               = 0;         // 0 = old behavior, 1 = treat handles like in native call
 	}
 
 	gc.engine = this;

@@ -883,7 +883,7 @@ bool Test()
 
 		engine->ShutDownAndRelease();
 
-		if( bout.buffer != "config (52, 0) : Warning : Cannot register template callback without the actual implementation\n" )
+		if( bout.buffer != "config (53, 0) : Warning : Cannot register template callback without the actual implementation\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -944,6 +944,7 @@ bool Test()
 					"ep 25 0\n"
 					"ep 26 1\n"
 					"ep 27 100\n"
+					"ep 28 0\n"
 					"\n"
 					"// Enums\n"
 					"\n"

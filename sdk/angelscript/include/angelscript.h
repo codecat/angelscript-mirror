@@ -142,6 +142,7 @@ enum asEEngineProp
 	asEP_ALLOW_UNICODE_IDENTIFIERS          = 25,
 	asEP_HEREDOC_TRIM_MODE                  = 26,
 	asEP_MAX_NESTED_CALLS                   = 27,
+	asEP_GENERIC_CALL_MODE                  = 28,
 
 	asEP_LAST_PROPERTY
 };

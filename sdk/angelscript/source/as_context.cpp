@@ -5188,6 +5188,14 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 	m_regs.objectRegister = gen.objectRegister;
 	m_regs.objectType = descr->returnType.GetTypeInfo();
 
+	// Increase the returned handle if the function has been declared with autohandles
+	// and the engine is not set to use the old mode for the generic calling convention
+	if (sysFunc->returnAutoHandle && m_engine->ep.genericCallMode == 1 && m_regs.objectRegister)
+	{
+		asASSERT(!(descr->returnType.GetTypeInfo()->flags & asOBJ_NOCOUNT));
+		m_engine->CallObjectMethod(m_regs.objectRegister, CastToObjectType(descr->returnType.GetTypeInfo())->beh.addref);
+	}
+
 	// Clean up arguments
 	const asUINT cleanCount = sysFunc->cleanArgs.GetLength();
 	if( cleanCount )
