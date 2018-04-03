@@ -854,7 +854,7 @@ bool Test()
 		r = engine->RegisterObjectType("type", 0, asOBJ_REF|asOBJ_NOCOUNT); assert( r >= 0 );
 		RegisterScriptArray(engine, false);
 		r = engine->RegisterObjectBehaviour("type", asBEHAVE_FACTORY, "type @f()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("type", "void func(array<int> @)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("type", "void func(array<int> @+)", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 
 		stringstream s;
 		r = WriteConfigToStream(engine, s);
@@ -944,7 +944,7 @@ bool Test()
 					"ep 25 0\n"
 					"ep 26 1\n"
 					"ep 27 100\n"
-					"ep 28 0\n"
+					"ep 28 1\n"
 					"\n"
 					"// Enums\n"
 					"\n"

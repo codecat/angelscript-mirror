@@ -89,7 +89,9 @@ static CScriptAny *myAny = 0;
 void SetMyAny(asIScriptGeneric *gen)
 {
 	CScriptAny *a = (CScriptAny *)gen->GetArgObject(0);
-	a->AddRef();
+	// Only call AddRef to hold the ref if the generic calling convention is using the old mode
+	if( gen->GetEngine()->GetEngineProperty(asEP_GENERIC_CALL_MODE) == 0 )
+		a->AddRef();
 	if( myAny ) myAny->Release();
 	myAny = a;
 }

@@ -619,7 +619,7 @@ bool Test()
 		asIScriptContext *context = engine->CreateContext();
 
 		r = engine->RegisterFuncdef("int Callback()"); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("void set_TestCallback(Callback@ cb)", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void set_TestCallback(Callback@+ cb)", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("Callback@ get_TestCallback()", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
 
 		r = module->AddScriptSection("test", "void main1(){ Callback@ cb = function() {return 123;}; TestCallback = cb; }"); assert(r >= 0);

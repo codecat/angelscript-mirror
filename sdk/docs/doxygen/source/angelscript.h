@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.32.0
-#define ANGELSCRIPT_VERSION        23200
-#define ANGELSCRIPT_VERSION_STRING "2.32.0"
+//! Version 2.32.1
+#define ANGELSCRIPT_VERSION        23201
+#define ANGELSCRIPT_VERSION_STRING "2.32.1"
 
 // Data types
 
@@ -206,6 +206,8 @@ enum asEEngineProp
 	asEP_HEREDOC_TRIM_MODE                  = 26,
 	//! Define the maximum number of nested calls the script engine will allow. Default: 100
 	asEP_MAX_NESTED_CALLS                   = 27,
+	//! Define how generic calling convention treats handles: 0 - ignore auto handles, 1 - treat them the same way as native calling convention. Default: 1
+	asEP_GENERIC_CALL_MODE                  = 28,
 
 	asEP_LAST_PROPERTY
 };
@@ -549,6 +551,12 @@ enum asEFuncType
 
 
 
+//! \typedef asINT8
+//! \brief 8 bit signed integer
+
+//! \typedef asINT16
+//! \brief 16 bit signed integer
+
 //! \typedef asBYTE
 //! \brief 8 bit unsigned integer
 
@@ -577,6 +585,8 @@ enum asEFuncType
 // asQWORD = 64 bits
 // asPWORD = size of pointer
 //
+typedef signed char    asINT8;
+typedef signed short   asINT16;
 typedef unsigned char  asBYTE;
 typedef unsigned short asWORD;
 typedef unsigned int   asUINT;

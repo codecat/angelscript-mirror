@@ -809,7 +809,7 @@ bool Test()
 		bout.buffer = "";
 		engine->RegisterObjectType("MyType", 0, asOBJ_REF | asOBJ_NOCOUNT);
 		engine->RegisterFuncdef("void MyType::Callback()");
-		engine->RegisterObjectMethod("MyType", "void SetCallback(Callback @)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("MyType", "void SetCallback(Callback @+)", asFUNCTION(0), asCALL_GENERIC);
 		mod->AddScriptSection("test", "MyType::Callback @cb;\n");
 		r = mod->Build();
 		if (r < 0)

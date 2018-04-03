@@ -367,7 +367,7 @@ bool Test()
 		asIScriptContext *context = engine->CreateContext();
 
 		r = engine->RegisterFuncdef("int Callback()");assert(r >= 0);
-		r = engine->RegisterGlobalFunction("void SetCallback(Callback@ cb)", asFUNCTION(SetCallback), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void SetCallback(Callback@+ cb)", asFUNCTION(SetCallback), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("Callback@ GetCallback()", asFUNCTION(GetCallback), asCALL_GENERIC); assert(r >= 0);
 
 		r = module->AddScriptSection("test", "int main(){ \n"
@@ -448,7 +448,7 @@ bool Test()
 		r = engine->RegisterGlobalProperty("obj o", &obj);
 
 		r = engine->RegisterInterface("intf");
-		r = engine->RegisterGlobalFunction("intf @nullPtr(intf @)", asFUNCTION(nullPtr), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("intf @nullPtr(intf @+)", asFUNCTION(nullPtr), asCALL_GENERIC); assert(r >= 0);
 
 		r = engine->RegisterGlobalFunction("void functor()", asFUNCTION(Generic_Functor), asCALL_GENERIC, &extraValue); assert(r >= 0);
 

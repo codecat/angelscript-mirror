@@ -200,7 +200,13 @@ CPU can be spared.
 
 Compiler warnings can be turned off or treated as errors by setting this engine property.
 
+\ref asEP_GENERIC_CALL_MODE
 
+By default the \ref doc_generic "generic calling convention" treats the ref counts in the handles the same way that the native calling convention, i.e.
+releases any handles passed to a function if they have been marked as auto handles, and increments the returned handle if it has 
+been marked as auto handle.
+
+If the behaviour used before 2.33.0 is desired for backwards compatibility, then set this property to 0.
 
 
 

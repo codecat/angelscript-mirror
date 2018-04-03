@@ -587,7 +587,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.allowUnicodeIdentifiers       = false;
 		ep.heredocTrimMode               = 1;         // 0 = never trim, 1 = don't trim on single line, 2 = trim initial and final empty line
 		ep.maxNestedCalls                = 100;
-		ep.genericCallMode               = 0;         // 0 = old behavior, 1 = treat handles like in native call
+		ep.genericCallMode               = 1;         // 0 = old (pre 2.33.0) behavior where generic ignored auto handles, 1 = treat handles like in native call
 	}
 
 	gc.engine = this;
