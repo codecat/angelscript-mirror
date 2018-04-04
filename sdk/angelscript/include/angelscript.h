@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        23201
-#define ANGELSCRIPT_VERSION_STRING "2.32.1 WIP"
+#define ANGELSCRIPT_VERSION        23300
+#define ANGELSCRIPT_VERSION_STRING "2.33.0 WIP"
 
 // Data types
 
@@ -771,6 +771,9 @@ public:
 	virtual void  SetFunctionUserDataCleanupCallback(asCLEANFUNCTIONFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type = 0) = 0;
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
+
+	// Exception handling
+	virtual int SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv) = 0;
 
 protected:
 	virtual ~asIScriptEngine() {}

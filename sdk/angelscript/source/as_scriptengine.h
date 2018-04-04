@@ -195,6 +195,9 @@ public:
 	virtual void  SetTypeInfoUserDataCleanupCallback(asCLEANTYPEINFOFUNC_t callback, asPWORD type);
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type);
 
+	// Exception handling
+	virtual int SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv);
+
 //===========================================================
 // internal methods
 //===========================================================
@@ -496,6 +499,13 @@ public:
 		asUINT maxNestedCalls;
 		asUINT genericCallMode;
 	} ep;
+
+	// Callbacks
+#ifndef AS_NO_EXCEPTIONS
+	bool                       translateExceptionCallback;
+	asSSystemFunctionInterface translateExceptionCallbackFunc;
+	void *                     translateExceptionCallbackObj;
+#endif
 
 	// This flag is to allow a quicker shutdown when releasing the engine
 	bool shuttingDown;

@@ -89,6 +89,7 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
  - \subpage doc_adv_var_type
  - \subpage doc_adv_template
  - \subpage doc_adv_weakref
+ - \subpage doc_cpp_exceptions
 
 
 

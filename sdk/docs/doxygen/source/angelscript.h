@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.32.1
-#define ANGELSCRIPT_VERSION        23201
-#define ANGELSCRIPT_VERSION_STRING "2.32.1"
+//! Version 2.33.0
+#define ANGELSCRIPT_VERSION        23300
+#define ANGELSCRIPT_VERSION_STRING "2.33.0"
 
 // Data types
 
@@ -2023,6 +2023,34 @@ public:
 	//! The function is called from within the script object destructor, so the callback
 	//! should not be used for anything but cleaning up the user data itself.
 	virtual void  SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECTFUNC_t callback, asPWORD type = 0) = 0;
+	//! \}
+
+	// Exception handling
+	//! \name Exception handling
+	//! \{
+
+	//! \brief Register the exception translation callback.
+	//! \param[in] callback The callback function/method that should be called upon an exception.
+	//! \param[in] param A user defined parameter, or the object pointer on which the callback is called.
+	//! \param[in] callConv The calling convention of the callback function/method.
+	//! \return A negative value on error.
+	//! \retval asNOT_SUPPORTED Calling convention must not be asCALL_GENERIC, or the routine's calling convention is not supported.
+	//! \retval asINVALID_ARG   \a param must not be null for class methods.
+	//! \retval asWRONG_CALLING_CONV \a callConv isn't compatible with the routines' calling convention.
+	//!
+	//! This callback function will be called by the VM when an application exception is raised, which 
+	//! allow the application to translate the exception into a useful string to inform in \ref asIScriptContext::SetException "SetException".
+	//!
+	//! The callback function signature must be either:
+	//!
+	//! <pre>  void (*)(asIScriptContext *, void *);</pre>
+	//!
+	//! or
+	//!
+	//! <pre>  void (param::*)(asIScriptContext *);</pre>
+	//!
+	//! See \ref doc_cpp_exceptions_1 for an example on how to use this.
+	virtual int SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv) = 0;
 	//! \}
 
 protected:

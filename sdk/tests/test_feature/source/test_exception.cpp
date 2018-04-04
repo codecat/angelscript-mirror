@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <exception>
 using namespace std;
 
 static const char * const TESTNAME = "TestException";
@@ -38,140 +39,190 @@ public:
 	bool ok;
 };
 
+void TranslateException(asIScriptContext *ctx, void * /*param*/)
+{
+	try
+	{
+		// Retrow the original exception so we can catch it again
+		throw;
+	}
+	catch (const std::exception &e)
+	{
+		ctx->SetException(e.what());
+	}
+	catch (...)
+	{
+		ctx->SetException("Some exception occurred");
+	}
+}
+
+void ThrowException()
+{
+	throw std::exception();
+}
+
 bool TestException()
 {
 	bool fail = false;
 	int r;
-
-	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-
 	COutStream out;
-	engine->SetMessageCallback(asMETHOD(COutStream,Callback), &out, asCALL_THISCALL);
 
-	RegisterScriptString(engine);
-	engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
-
-
-	asIScriptContext *ctx = engine->CreateContext();
-	r = ExecuteString(engine, "int a = 0;\na = 10/a;", 0, ctx); // Throws an exception
-	if( r == asEXECUTION_EXCEPTION )
+	// Test exception translation
 	{
-		int line = ctx->GetExceptionLineNumber();
-		const char *desc = ctx->GetExceptionString();
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		const asIScriptFunction *function = ctx->GetExceptionFunction();
-		if( strcmp(function->GetName(), "ExecuteString") != 0 )
+		engine->SetTranslateAppExceptionCallback(asFUNCTION(TranslateException), 0, asCALL_CDECL);
+
+		engine->RegisterGlobalFunction("void ThrowException()", asFUNCTION(ThrowException), asCALL_CDECL);
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "ThrowException()", 0, ctx);
+		if (r != asEXECUTION_EXCEPTION)
 		{
-			PRINTF("%s: Exception function name is wrong\n", TESTNAME);
 			TEST_FAILED;
 		}
-		if( strcmp(function->GetDeclaration(), "void ExecuteString()") != 0 )
+		if (ctx->GetExceptionString() == 0 || string(ctx->GetExceptionString()) != "Unknown exception")
 		{
-			PRINTF("%s: Exception function declaration is wrong\n", TESTNAME);
+			PRINTF("Exception: '%s'\n", ctx->GetExceptionString());
 			TEST_FAILED;
 		}
-
-		if( line != 2 )
-		{
-			PRINTF("%s: Exception line number is wrong\n", TESTNAME);
-			TEST_FAILED;
-		}
-		if( strcmp(desc, "Divide by zero") != 0 )
-		{
-			PRINTF("%s: Exception string is wrong\n", TESTNAME);
-			TEST_FAILED;
-		}
-	}
-	else
-	{
-		PRINTF("%s: Failed to raise exception\n", TESTNAME);
-		TEST_FAILED;
-	}
-
-	ctx->Release();
-
-	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	mod->AddScriptSection("script", script1, strlen(script1));
-	mod->Build();
-	r = ExecuteString(engine, "A a; a.Test(\"test\");", mod);
-	if( r != asEXECUTION_EXCEPTION )
-	{
-		TEST_FAILED;
-	}
-
-	// A test to validate Unprepare without execution
-	{
-		asITypeInfo *type = mod->GetObjectTypeByIndex(0);
-		asIScriptFunction *func = type->GetMethodByDecl("void Test(string c)");
-		ctx = engine->CreateContext();
-		ctx->Prepare(func);
-		asIScriptContext *obj = (asIScriptContext*)engine->CreateScriptObject(type);
-		ctx->SetObject(obj); // Just sets the address
-		CScriptString *str = new CScriptString();
-		ctx->SetArgObject(0, str); // Makes a copy of the object
-		str->Release();
-		ctx->Unprepare(); // Must release the string argument, but not the object
 		ctx->Release();
-		obj->Release();
+
+		engine->ShutDownAndRelease();
 	}
 
-	// Another test to validate Unprepare without execution
+	// Basic tests
 	{
-		asITypeInfo *type = mod->GetObjectTypeByIndex(0);
-		// Get the real method, not the virtual method
-		asIScriptFunction *func = type->GetMethodByDecl("void Test(string c)", false);
-		ctx = engine->CreateContext();
-		ctx->Prepare(func);
-		// Don't set the object, nor the arguments
-		ctx->Unprepare();
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptString(engine);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "int a = 0;\na = 10/a;", 0, ctx); // Throws an exception
+		if (r == asEXECUTION_EXCEPTION)
+		{
+			int line = ctx->GetExceptionLineNumber();
+			const char *desc = ctx->GetExceptionString();
+
+			const asIScriptFunction *function = ctx->GetExceptionFunction();
+			if (strcmp(function->GetName(), "ExecuteString") != 0)
+			{
+				PRINTF("%s: Exception function name is wrong\n", TESTNAME);
+				TEST_FAILED;
+			}
+			if (strcmp(function->GetDeclaration(), "void ExecuteString()") != 0)
+			{
+				PRINTF("%s: Exception function declaration is wrong\n", TESTNAME);
+				TEST_FAILED;
+			}
+
+			if (line != 2)
+			{
+				PRINTF("%s: Exception line number is wrong\n", TESTNAME);
+				TEST_FAILED;
+			}
+			if (strcmp(desc, "Divide by zero") != 0)
+			{
+				PRINTF("%s: Exception string is wrong\n", TESTNAME);
+				TEST_FAILED;
+			}
+		}
+		else
+		{
+			PRINTF("%s: Failed to raise exception\n", TESTNAME);
+			TEST_FAILED;
+		}
+
 		ctx->Release();
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script", script1, strlen(script1));
+		mod->Build();
+		r = ExecuteString(engine, "A a; a.Test(\"test\");", mod);
+		if (r != asEXECUTION_EXCEPTION)
+		{
+			TEST_FAILED;
+		}
+
+		// A test to validate Unprepare without execution
+		{
+			asITypeInfo *type = mod->GetObjectTypeByIndex(0);
+			asIScriptFunction *func = type->GetMethodByDecl("void Test(string c)");
+			ctx = engine->CreateContext();
+			ctx->Prepare(func);
+			asIScriptContext *obj = (asIScriptContext*)engine->CreateScriptObject(type);
+			ctx->SetObject(obj); // Just sets the address
+			CScriptString *str = new CScriptString();
+			ctx->SetArgObject(0, str); // Makes a copy of the object
+			str->Release();
+			ctx->Unprepare(); // Must release the string argument, but not the object
+			ctx->Release();
+			obj->Release();
+		}
+
+		// Another test to validate Unprepare without execution
+		{
+			asITypeInfo *type = mod->GetObjectTypeByIndex(0);
+			// Get the real method, not the virtual method
+			asIScriptFunction *func = type->GetMethodByDecl("void Test(string c)", false);
+			ctx = engine->CreateContext();
+			ctx->Prepare(func);
+			// Don't set the object, nor the arguments
+			ctx->Unprepare();
+			ctx->Release();
+		}
+
+		// A test to verify behaviour when exception occurs in script class constructor
+		const char *script2 = "class SomeClassA \n"
+			"{ \n"
+			"	int A; \n"
+			" \n"
+			"	~SomeClassA() \n"
+			"	{ \n"
+			"		print('destruct'); \n"
+			"	} \n"
+			"} \n"
+			"class SomeClassB \n"
+			"{ \n"
+			"	SomeClassA@ nullptr; \n"
+			"	SomeClassB(SomeClassA@ aPtr) \n"
+			"	{ \n"
+			"		this.nullptr.A=100; // Null pointer access. After this class a is destroyed. \n"
+			"	} \n"
+			"} \n"
+			"void test() \n"
+			"{ \n"
+			"	SomeClassA a; \n"
+			"	SomeClassB(a); \n"
+			"} \n";
+		mod->AddScriptSection("script2", script2);
+		r = mod->Build();
+		if (r < 0) TEST_FAILED;
+		r = ExecuteString(engine, "test()", mod);
+		if (r != asEXECUTION_EXCEPTION)
+		{
+			TEST_FAILED;
+		}
+
+		engine->GarbageCollect();
+
+		engine->Release();
 	}
-
-	// A test to verify behaviour when exception occurs in script class constructor
-	const char *script2 = "class SomeClassA \n"
-	"{ \n"
-	"	int A; \n"
-	" \n"
-	"	~SomeClassA() \n"
-	"	{ \n"
-	"		print('destruct'); \n"
-	"	} \n"
-	"} \n"
-	"class SomeClassB \n"
-	"{ \n"
-	"	SomeClassA@ nullptr; \n"
-	"	SomeClassB(SomeClassA@ aPtr) \n"
-	"	{ \n"
-	"		this.nullptr.A=100; // Null pointer access. After this class a is destroyed. \n"
-	"	} \n"
-	"} \n"
-	"void test() \n"
-	"{ \n"
-	"	SomeClassA a; \n"
-	"	SomeClassB(a); \n"
-	"} \n";
-	mod->AddScriptSection("script2", script2);
-	r = mod->Build();
-	if( r < 0 ) TEST_FAILED;
-	r = ExecuteString(engine, "test()", mod);
-	if( r != asEXECUTION_EXCEPTION )
-	{
-		TEST_FAILED;
-	}
-
-	engine->GarbageCollect();
-
-	engine->Release();
 
 	// Problem reported by Philip Bennefall
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterStdString(engine);
 		RegisterScriptArray(engine, true);
 
-		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection("test",
 			"string post_score(string url, string channel, string channel_password, int score, string name, string email, string country) \n"
@@ -188,7 +239,7 @@ bool TestException()
 		if( r < 0 )
 			TEST_FAILED;
 
-		ctx = engine->CreateContext();
+		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "main()", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -203,12 +254,12 @@ bool TestException()
 
 	// Test exception within default constructor
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterStdString(engine);
 
-		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 
 		mod->AddScriptSection("test",
 			"class Test { \n"
@@ -221,7 +272,7 @@ bool TestException()
 		if( r < 0 )
 			TEST_FAILED;
 
-		ctx = engine->CreateContext();
+		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "Test t;", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -240,10 +291,10 @@ bool TestException()
 	// Test exception in for-condition
 	// http://www.gamedev.net/topic/638128-bug-with-show-code-line-after-null-pointer-exception-and-for/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class A\n"
 			"{\n"
@@ -262,7 +313,7 @@ bool TestException()
 		if( r < 0 )
 			TEST_FAILED;
 
-		ctx = engine->CreateContext();
+		asIScriptContext *ctx = engine->CreateContext();
 		r = ExecuteString(engine, "startGame();", mod, ctx);
 		if( r != asEXECUTION_EXCEPTION )
 			TEST_FAILED;
@@ -283,10 +334,10 @@ bool TestException()
 	// Test exception handler with thiscall
 	// http://www.gamedev.net/topic/665587-angelscript-ios-x64/
 	{
-		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
-		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class SomeClass \n"
 			"{ \n"
@@ -303,7 +354,7 @@ bool TestException()
 
 		ExceptionHandler handler;
 
-		ctx = engine->CreateContext();
+		asIScriptContext *ctx = engine->CreateContext();
 		ctx->SetExceptionCallback(asMETHOD(ExceptionHandler, Callback), &handler, asCALL_THISCALL);
 		ctx->Prepare(mod->GetFunctionByName("test"));
 		r = ctx->Execute();

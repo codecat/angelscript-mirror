@@ -649,6 +649,10 @@ asCScriptEngine::asCScriptEngine()
 
 	RegisterScriptObject(this);
 	RegisterScriptFunction(this);
+
+#ifndef AS_NO_EXCEPTIONS
+	translateExceptionCallback = false;
+#endif
 }
 
 void asCScriptEngine::DeleteDiscardedModules()
@@ -4954,9 +4958,9 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		}
 		catch (...)
 		{
-			asIScriptContext *ctx = asGetActiveContext();
+			asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
 			if (ctx)
-				ctx->SetException(TXT_EXCEPTION_CAUGHT);
+				ctx->HandleAppException();
 		}
 #endif
 	}
@@ -4972,9 +4976,9 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		}
 		catch(...)
 		{
-			asIScriptContext *ctx = asGetActiveContext();
+			asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
 			if( ctx )
-				ctx->SetException(TXT_EXCEPTION_CAUGHT);
+				ctx->HandleAppException();
 		}
 #endif
 	}
@@ -5010,9 +5014,9 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 				}
 				catch (...)
 				{
-					asIScriptContext *ctx = asGetActiveContext();
+					asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
 					if (ctx)
-						ctx->SetException(TXT_EXCEPTION_CAUGHT);
+						ctx->HandleAppException();
 
 					// Free the memory
 					CallFree(ptr);
@@ -5152,9 +5156,9 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asITypeInfo *
 		}
 		catch(...)
 		{
-			asIScriptContext *ctx = asGetActiveContext();
+			asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
 			if( ctx )
-				ctx->SetException(TXT_EXCEPTION_CAUGHT);
+				ctx->HandleAppException();
 
 			// Free the memory
 			CallFree(newObj);
@@ -6142,6 +6146,42 @@ void asCScriptEngine::SetScriptObjectUserDataCleanupCallback(asCLEANSCRIPTOBJECT
 	cleanScriptObjectFuncs.PushLast(soc);
 
 	RELEASEEXCLUSIVE(engineRWLock);
+}
+
+// interface
+int asCScriptEngine::SetTranslateAppExceptionCallback(asSFuncPtr callback, void *param, int callConv)
+{
+#ifdef AS_NO_EXCEPTIONS
+	return asNOT_SUPPORTED;
+#else
+	if (callback.ptr.f.func == 0)
+	{
+		// Clear the callback
+		translateExceptionCallback = false;
+		return asSUCCESS;
+	}
+
+	// Detect the new callback
+	translateExceptionCallback = true;
+	translateExceptionCallbackObj = param;
+	bool isObj = false;
+	if ((unsigned)callConv == asCALL_GENERIC || (unsigned)callConv == asCALL_THISCALL_OBJFIRST || (unsigned)callConv == asCALL_THISCALL_OBJLAST)
+		return asNOT_SUPPORTED;
+	if ((unsigned)callConv >= asCALL_THISCALL)
+	{
+		isObj = true;
+		if (param == 0)
+		{
+			translateExceptionCallback = false;
+			return asINVALID_ARG;
+		}
+	}
+	int r = DetectCallingConvention(isObj, callback, callConv, 0, &translateExceptionCallbackFunc);
+	if (r < 0) 
+		translateExceptionCallback = false;
+
+	return r;
+#endif
 }
 
 // internal

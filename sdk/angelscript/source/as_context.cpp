@@ -5114,6 +5114,26 @@ void asCContext::CallExceptionCallback()
 		m_engine->CallObjectMethod(m_exceptionCallbackObj, this, &m_exceptionCallbackFunc, 0);
 }
 
+#ifndef AS_NO_EXCEPTIONS
+// internal
+void asCContext::HandleAppException()
+{
+	// This method is called from within a catch(...) block
+	if (m_engine->translateExceptionCallback)
+	{
+		// Allow the application to translate the application exception to a proper exception string
+		if (m_engine->translateExceptionCallbackFunc.callConv < ICC_THISCALL)
+			m_engine->CallGlobalFunction(this, m_engine->translateExceptionCallbackObj, &m_engine->translateExceptionCallbackFunc, 0);
+		else
+			m_engine->CallObjectMethod(m_engine->translateExceptionCallbackObj, this, &m_engine->translateExceptionCallbackFunc, 0);
+	}
+
+	// Make sure an exception is set even if the application decides not to do any specific translation
+	if( m_status != asEXECUTION_EXCEPTION )
+		SetException(TXT_EXCEPTION_CAUGHT);
+}
+#endif
+
 // interface
 void asCContext::ClearLineCallback()
 {
@@ -5179,7 +5199,7 @@ int asCContext::CallGeneric(asCScriptFunction *descr)
 	{
 		// Convert the exception to a script exception so the VM can 
 		// properly report the error to the application and then clean up
-		SetException(TXT_EXCEPTION_CAUGHT);
+		HandleAppException();
 	}
 #endif
 	m_callingSystemFunction = 0;

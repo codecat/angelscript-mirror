@@ -735,7 +735,7 @@ int CallSystemFunction(int id, asCContext *context)
 
 		// Convert the exception to a script exception so the VM can
 		// properly report the error to the application and then clean up
-		context->SetException(TXT_EXCEPTION_CAUGHT);
+		context->HandleAppException();
 	}
 #endif
 	context->m_callingSystemFunction = 0;
