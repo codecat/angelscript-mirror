@@ -139,8 +139,8 @@ if(AS_NO_EXCEPTIONS)
 endif()
 
 # Fix x64 issues on Linux
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND NOT APPLE)
-    target_compile_definitions(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" AND UNIX AND NOT APPLE)
+    target_compile_options(${ANGELSCRIPT_LIBRARY_NAME} PRIVATE -fPIC)
 endif()
 
 # Don't override the default library output path to avoid conflicts when building for multiple target platforms
