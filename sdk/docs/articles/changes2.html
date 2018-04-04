@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/04/03</h2>
+<h2>Version 2.33.0 WIP - 2018/04/04</h2>
 
 <ul>
 <li>Bug fixes
@@ -55,6 +55,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented a #pragma callback in the builder add-on
 <li>asrun can now turn on debugging with #pragma debug (works the same as -d command arg)
 <li>Fixed crash in debugger add-on when printing call stack in template function
+<li>weakref now properly identifies different object instance when the address is the same as the previously freed object (Thanks y18a)
 </ul>
 <li>Project
 <ul>
