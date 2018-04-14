@@ -14833,19 +14833,35 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 	}
 
 	// Check if the function is private or protected
-	if( descr->IsPrivate() && descr->GetObjectType() != outFunc->GetObjectType() )
+	if (descr->IsPrivate())
 	{
-		asCString msg;
-		msg.Format(TXT_PRIVATE_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
-		Error(msg, ctx->exprNode);
+		asCObjectType *type = descr->objectType;
+		if (type == 0 && descr->traits.GetTrait(asTRAIT_CONSTRUCTOR))
+			type = CastToObjectType(descr->returnType.GetTypeInfo());
+
+		asASSERT(type);
+
+		if( (type != outFunc->GetObjectType()) )
+		{
+			asCString msg;
+			msg.Format(TXT_PRIVATE_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
+			Error(msg, ctx->exprNode);
+		}
 	}
-	else if( descr->IsProtected() &&
-		     !(descr->GetObjectType() == outFunc->GetObjectType() ||
-		       (outFunc->GetObjectType() && outFunc->GetObjectType()->DerivesFrom(descr->GetObjectType()))) )
+	else if (descr->IsProtected())
 	{
-		asCString msg;
-		msg.Format(TXT_PROTECTED_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
-		Error(msg, ctx->exprNode);
+		asCObjectType *type = descr->objectType;
+		if (type == 0 && descr->traits.GetTrait(asTRAIT_CONSTRUCTOR))
+			type = CastToObjectType(descr->returnType.GetTypeInfo());
+
+		asASSERT(type);
+
+		if (!(type == outFunc->objectType || (outFunc->objectType && outFunc->objectType->DerivesFrom(type))))
+		{
+			asCString msg;
+			msg.Format(TXT_PROTECTED_METHOD_CALL_s, descr->GetDeclarationStr().AddressOf());
+			Error(msg, ctx->exprNode);
+		}
 	}
 
 	int argSize = descr->GetSpaceNeededForArguments();

@@ -156,6 +156,54 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
+	// Test private constructors
+	// https://www.gamedev.net/forums/topic/696251-assigning-c-object-to-the-script-object-in-less-explicit-way/
+	// https://www.gamedev.net/forums/topic/696326-private-and-protected-have-no-effect-on-class-constructors/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A \n"
+			"{ \n"
+			"  private A() {} \n" // cannot be instanciated by default
+			"  A(int) {} \n"      // can be instanciated with a parameter
+			"  protected A(float) {} \n" // cannot be instanciated
+			"  A @create() { return A(); } \n" // valid. class can use the private constructor
+			"} \n"
+			"class B : A \n"
+			"{ \n"
+			"  B() { super(); } \n" // invalid. derived class cannot use private constructor of parent
+			"  A @create() { return A(); } \n" // invalid. derived class cannot use private constructor of parent
+			"  A @create2() { return A(1.4f); } \n" // valid. derived class can use protected constructor of parent
+			"} \n"
+			"void func() { \n"
+			"  A a; \n"       // invalid. constructor is private
+			"  A b(1); \n"    // valid
+			"  A c(1.4f); \n" // invalid. constructor is protected
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (10, 3) : Info    : Compiling B::B()\n"
+						   "test (10, 9) : Error   : Illegal call to private method 'A::A()'\n"
+						   "test (11, 3) : Info    : Compiling A@ B::create()\n"
+						   "test (11, 24) : Error   : Illegal call to private method 'A@ A()'\n"
+						   "test (14, 1) : Info    : Compiling void func()\n"
+						   "test (15, 5) : Error   : Illegal call to private method 'A@ A()'\n"
+						   "test (17, 6) : Error   : Illegal call to protected method 'A@ A(float)'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+
 	// Test protected members
 	// Protected members cannot be access from outside the class
 	// Protected members can be accessed by derived classes

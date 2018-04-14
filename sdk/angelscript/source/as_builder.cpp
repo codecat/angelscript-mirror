@@ -4784,7 +4784,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 					defaultArgs[n] = asNEW(asCString)(*defaultArgs[n]);
 
 			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-			module->AddScriptFunction(file->idx, engine->scriptFunctions[funcId]->scriptData->declaredAt, factoryId, name, dt, parameterTypes, parameterNames, inOutFlags, defaultArgs, false);
+			module->AddScriptFunction(file->idx, engine->scriptFunctions[funcId]->scriptData->declaredAt, factoryId, name, dt, parameterTypes, parameterNames, inOutFlags, defaultArgs, false, 0, false, funcTraits);
 
 			// If the object is shared, then the factory must also be marked as shared
 			if( objType->flags & asOBJ_SHARED )
