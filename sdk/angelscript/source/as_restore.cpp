@@ -1563,14 +1563,18 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase, bool *isExtern
 			else
 			{
 				ot->interfaces.Allocate(size, false);
-				ot->interfaceVFTOffsets.Allocate(size, false);
+				if( !ot->IsInterface() )
+					ot->interfaceVFTOffsets.Allocate(size, false);
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = CastToObjectType(ReadTypeInfo());
 					ot->interfaces.PushLast(intf);
 
-					asUINT offset = ReadEncodedUInt();
-					ot->interfaceVFTOffsets.PushLast(offset);
+					if (!ot->IsInterface())
+					{
+						asUINT offset = ReadEncodedUInt();
+						ot->interfaceVFTOffsets.PushLast(offset);
+					}
 				}
 			}
 
@@ -4280,11 +4284,12 @@ void asCWriter::WriteTypeDeclaration(asCTypeInfo *type, int phase)
 			int size = (asUINT)t->interfaces.GetLength();
 			WriteEncodedInt64(size);
 			asUINT n;
-			asASSERT( t->interfaces.GetLength() == t->interfaceVFTOffsets.GetLength() );
+			asASSERT( t->IsInterface() || t->interfaces.GetLength() == t->interfaceVFTOffsets.GetLength() );
 			for( n = 0; n < t->interfaces.GetLength(); n++ )
 			{
 				WriteTypeInfo(t->interfaces[n]);
-				WriteEncodedInt64(t->interfaceVFTOffsets[n]);
+				if( !t->IsInterface() )
+					WriteEncodedInt64(t->interfaceVFTOffsets[n]);
 			}
 
 			// behaviours
