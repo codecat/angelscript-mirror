@@ -174,6 +174,42 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test invalid code
+	// https://www.gamedev.net/forums/topic/696243-strange-code-works-normally/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A \n"
+			"{ \n"
+			"} \n"
+			"class B \n"
+			"{ \n"
+			"	B() { } \n"
+			"} \n"
+			"int main() \n"
+			"{ \n"
+			"	A a; \n"
+			"	a.B(); \n"
+			"	return 0; \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (8, 1) : Info    : Compiling int main()\n"
+						   "test (11, 4) : Error   : No matching signatures to 'A::B()'\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test passing object by value where the object is initialized with anonymous list
 	// Reported by Patrick Jeeves
 	{

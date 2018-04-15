@@ -10676,8 +10676,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		}
 	}
 
-	// If at this point no functions have been identified, then this may be a construct call
-	if (funcs.GetLength() == 0)
+	// If at this point no functions have been identified, then this may
+	// be a construct call unless we're compiling a post op expression
+	if( funcs.GetLength() == 0 && objectType == 0 )
 	{
 		bool isValid = false;
 		asCDataType dt = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace, false, 0, false, &isValid);
