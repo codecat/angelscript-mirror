@@ -4671,9 +4671,12 @@ void asCWriter::CalculateAdjustmentByPos(asCScriptFunction *func)
 		offset += asBCTypeSize[asBCInfo[*(asBYTE*)(bc+offset)].type];
 		num++;
 	}
-	// The last instruction is always a BC_RET. This make it possible to query
-	// the number of instructions by checking the last entry in bytecodeNbrByPos
-	asASSERT(*(asBYTE*)(bc+length-1) == asBC_RET);
+
+	// Store the number of instructions in the last position of bytecodeNbrByPos, 
+	// so this can be easily queried in SaveBytecode. Normally this is already done
+	// as most functions end with BC_RET, but in some cases the last instruction in 
+	// the function is not a BC_RET, e.g. when a function has a never ending loop.
+	bytecodeNbrByPos[length - 1] = num - 1;
 }
 
 int asCWriter::AdjustStackPosition(int pos)

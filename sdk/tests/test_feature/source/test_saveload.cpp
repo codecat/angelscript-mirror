@@ -396,6 +396,44 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test forever loop where the return instruction is never reached
+	// https://www.gamedev.net/forums/topic/696323-when-using-an-infinite-loop-using-for-statement-and-stopping-with-savebytecode/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"  for (;;) \n"
+			"  { \n"
+			"  } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test saving interfaces with inheritance
 	// https://www.gamedev.net/forums/topic/696191-using-interface-inheritance-i-stopped-with-savebytecode/
 	{
