@@ -11,6 +11,48 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test templates and namespaces
+	// https://www.gamedev.net/forums/topic/696071-failed-register-two-iterator-specialization-in-different-namespace/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->SetDefaultNamespace("A");
+		RegisterScriptArray(engine, false);
+		r = engine->RegisterObjectType("array<float>", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->SetDefaultNamespace("B");
+		RegisterScriptArray(engine, false);
+		r = engine->RegisterObjectType("array<float>", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"A::array<int> a; \n"
+			"B::array<int> b; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (mod->GetGlobalVarCount() < 2 || std::string(mod->GetGlobalVarDeclaration(0, true)) != "A::array<int> a")
+			TEST_FAILED;
+
+		if (mod->GetGlobalVarCount() < 2 || std::string(mod->GetGlobalVarDeclaration(1, true)) != "B::array<int> b")
+			TEST_FAILED;
+		
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Use of nested namespaces when registering types
 	// Reported by Polyák István
 	{

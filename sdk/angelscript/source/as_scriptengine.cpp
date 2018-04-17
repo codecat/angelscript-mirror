@@ -1778,16 +1778,6 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 			// This is not an irrepairable error, as it may just be that the same type is registered twice
 			return asALREADY_REGISTERED;
 
-		// TODO: clean up: Is it really necessary to check here?
-		for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
-		{
-			if( templateInstanceTypes[n] &&
-				templateInstanceTypes[n]->name == typeName &&
-				templateInstanceTypes[n]->nameSpace == defaultNamespace )
-				// This is not an irrepairable error, as it may just be that the same type is registered twice
-				return asALREADY_REGISTERED;
-		}
-
 		// Keep the most recent template generated instance type, so we know what it was before parsing the datatype
 		asCObjectType *mostRecentTemplateInstanceType = 0;
 		asUINT originalSizeOfGeneratedTemplateTypes = (asUINT)generatedTemplateTypes.GetLength();
@@ -3310,7 +3300,8 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	{
 		asCObjectType *type = templateInstanceTypes[n];
 		if( type &&
-			type->name == templateType->name &&
+			type->name == templateType->name&&
+			type->nameSpace == templateType->nameSpace &&
 			type->templateSubTypes == subTypes )
 		{
 			// If the template instance is generated, then the module should hold a reference
