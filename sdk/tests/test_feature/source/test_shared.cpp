@@ -10,6 +10,44 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Test memory clean up
+	// https://www.gamedev.net/forums/topic/696396-leak-occurs-when-shared-class-exists/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Script1", 
+			"shared class X { } \n"
+			"X@ x = X();        \n");
+		r = mod->Build();
+		if (r < 0) TEST_FAILED;
+
+		mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Script2",
+			"shared class X { };  \n"
+			"void test() {}       \n");
+		r = mod->Build();
+		if (r < 0) TEST_FAILED;
+
+		size_t currAlloc = GetAllocedMem();
+
+		// discard `Module2`
+		mod->Discard();
+
+		if (currAlloc <= GetAllocedMem())
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// external shared entities should be saved specifically as external in bytecode to avoid increase in file size
 	// TODO: as_restore should only populate externalTypes and externalFunctions if not def AS_NO_COMPILER
 	{
