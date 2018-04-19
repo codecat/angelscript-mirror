@@ -3300,7 +3300,7 @@ asCObjectType *asCScriptEngine::GetTemplateInstanceType(asCObjectType *templateT
 	{
 		asCObjectType *type = templateInstanceTypes[n];
 		if( type &&
-			type->name == templateType->name&&
+			type->name == templateType->name &&
 			type->nameSpace == templateType->nameSpace &&
 			type->templateSubTypes == subTypes )
 		{
@@ -3671,7 +3671,8 @@ asCDataType asCScriptEngine::DetermineTypeForTemplate(const asCDataType &orig, a
 			// Always find the original template type when creating a new template instance otherwise the
 			// generation will fail since it will attempt to create factory stubs when they already exists, etc
 			for( asUINT n = 0; n < registeredTemplateTypes.GetLength(); n++ )
-				if( registeredTemplateTypes[n]->name == origType->name )
+				if( registeredTemplateTypes[n]->name == origType->name &&
+					registeredTemplateTypes[n]->nameSpace == origType->nameSpace )
 				{
 					origType = registeredTemplateTypes[n];
 					break;

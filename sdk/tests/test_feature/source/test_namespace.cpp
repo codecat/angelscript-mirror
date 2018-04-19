@@ -17,6 +17,51 @@ bool Test()
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, 0);
+
+		engine->SetDefaultNamespace("A");
+		RegisterScriptArray(engine, false);
+		r = engine->RegisterObjectType("iterator<class T>", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_TEMPLATE);
+		if (r < 0)
+			TEST_FAILED;
+		r = engine->RegisterObjectMethod("array<T>", "iterator<T> @begin()", asFUNCTION(0), asCALL_GENERIC); 
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->SetDefaultNamespace("B");
+		RegisterScriptArray(engine, false);
+		r = engine->RegisterObjectType("iterator<class T>", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_TEMPLATE);
+		if (r < 0)
+			TEST_FAILED;
+		r = engine->RegisterObjectMethod("array<T>", "iterator<T> @begin()", asFUNCTION(0), asCALL_GENERIC);
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"A::array<int> a; \n"
+			"A::iterator<int> @ai = a.begin(); \n"
+			"B::array<int> b; \n"
+			"B::iterator<int> @bi = b.begin(); \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test templates and namespaces
+	// https://www.gamedev.net/forums/topic/696071-failed-register-two-iterator-specialization-in-different-namespace/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
 
 		engine->SetDefaultNamespace("A");
 		RegisterScriptArray(engine, false);
