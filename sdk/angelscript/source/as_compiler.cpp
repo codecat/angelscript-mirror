@@ -5711,9 +5711,10 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			ctx->type.Set(func->returnType);
 		}
 	}
-	else if( ops.GetLength() == 0 && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_SCRIPT_OBJECT) )
+	else if( ops.GetLength() == 0 && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_SCRIPT_OBJECT) && to.IsObjectHandle() )
 	{
 		// Check for the generic ref cast method: void opCast(?&out)
+		// This option only works if the expected type is a handle
 		for( n = 0; ot && n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
@@ -5740,8 +5741,6 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			conversionDone = true;
 			if( generateCode )
 			{
-				asASSERT(to.IsObjectHandle());
-
 				int afterLabel = 0;
 				bool doNullCheck = false;
 				asCExprContext tmp(engine);

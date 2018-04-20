@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/04/19</h2>
+<h2>Version 2.33.0 WIP - 2018/04/20</h2>
 
 <ul>
 <li>Bug fixes
@@ -29,6 +29,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed an error when compiling a class method call as post-op and the name matches a type name (Thanks y18a)
 <li>Template types are now properly identified in separate namespaces (Thanks ASBai)
 <li>Fixed memory build-up due to delayed cleanup when discarding modules with shared entities (Thanks y18a)
+<li>opImplCast with variable type won't be used for non-ref types
 </ul>
 <li>Library
 <ul>
