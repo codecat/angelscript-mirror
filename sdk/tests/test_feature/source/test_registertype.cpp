@@ -2097,6 +2097,9 @@ bool TestIrrTypes()
 
 // http://www.gamedev.net/topic/662178-odd-behavior-with-globally-declared-scoped-reference-types-is-this-normal/
 
+#if defined(_MSC_VER) && _MSC_VER >= 1913 // MSVC 2017 +
+__declspec(align(16))
+#endif
 class vec
 {
 public:
@@ -2106,7 +2109,7 @@ public:
 	vec &operator=(const vec &o) { x = o.x; y = o.y; z = o.z; w = o.w; return *this; }
 
 	union {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER < 1913 // Before MSVC 2017
 		__m128 v;
 #endif
 		struct {
@@ -2114,7 +2117,7 @@ public:
 		};
 	};
 }
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) // gnuc or clang
 __attribute__((aligned(16)))
 #endif
 ;
