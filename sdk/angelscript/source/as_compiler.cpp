@@ -5586,14 +5586,13 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 	bool conversionDone = false;
 
 	asCArray<int> ops;
-	asUINT n;
 
 	// A ref cast must not remove the constness
 	bool isConst = ctx->type.dataType.IsObjectConst();
 
 	// Find a suitable opCast or opImplCast method
 	asCObjectType *ot = CastToObjectType(ctx->type.dataType.GetTypeInfo());
-	for( n = 0; ot && n < ot->methods.GetLength(); n++ )
+	for( asUINT n = 0; ot && n < ot->methods.GetLength(); n++ )
 	{
 		asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
 		if( (isExplicit && func->name == "opCast") ||
@@ -5715,7 +5714,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 	{
 		// Check for the generic ref cast method: void opCast(?&out)
 		// This option only works if the expected type is a handle
-		for( n = 0; ot && n < ot->methods.GetLength(); n++ )
+		for( asUINT n = 0; ot && n < ot->methods.GetLength(); n++ )
 		{
 			asCScriptFunction *func = engine->scriptFunctions[ot->methods[n]];
 			if( (isExplicit && func->name == "opCast") ||
@@ -5732,9 +5731,25 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			}
 		}
 
-		// It shouldn't be possible to have more than one
+		// If there is multiple matches, then pick the most appropriate one
 		// TODO: Should be allowed to have different implementations for const and non-const references
-		asASSERT( ops.GetLength() <= 1 );
+		if (ops.GetLength() > 1)
+		{
+			// This should only happen if an explicit cast is compiled 
+			// and the type has both the opCast and opImplCast
+			asASSERT(isExplicit);
+			asASSERT(ops.GetLength() == 2);
+
+			for (asUINT n = 0; n < ops.GetLength(); n++)
+			{
+				asCScriptFunction *func = engine->scriptFunctions[ops[n]];
+				if (func->name == "opImplCast")
+				{
+					ops.RemoveIndex(n);
+					n--;
+				}
+			}
+		}
 
 		if( ops.GetLength() == 1 )
 		{
@@ -6549,8 +6564,25 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asCExprContext *ctx, const asC
 		}
 	}
 
-	// TODO: If there are multiple valid value casts, then we must choose the most appropriate one
-	asASSERT( funcs.GetLength() <= 1 );
+	// If there are multiple valid value casts, then we must choose the most appropriate one
+	// TODO: Should support const and non-const options
+	if (funcs.GetLength() > 1)
+	{
+		// This should only happen in case of explicit value cast and 
+		// the application has registered both opImplConv and opConv
+		asASSERT(convType == asIC_EXPLICIT_VAL_CAST);
+		asASSERT(funcs.GetLength() == 2);
+
+		for (asUINT n = 0; n < funcs.GetLength(); n++)
+		{
+			asCScriptFunction *func = engine->scriptFunctions[funcs[n]];
+			if (func->name == "opImplConv")
+			{
+				funcs.RemoveIndex(n);
+				n--;
+			}
+		}
+	}
 
 	if( funcs.GetLength() == 1 )
 	{
@@ -6807,8 +6839,25 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 				}
 			}
 
-			// TODO: If there are multiple valid value casts, then we must choose the most appropriate one
-			asASSERT( funcs.GetLength() <= 1 );
+			// If there are multiple valid value casts, then we must choose the most appropriate one
+			// TODO: Should support const and non-const options
+			if (funcs.GetLength() > 1)
+			{
+				// This should only happen in case of explicit value cast and 
+				// the application has registered both opImplConv and opConv
+				asASSERT(convType == asIC_EXPLICIT_VAL_CAST);
+				asASSERT(funcs.GetLength() == 2);
+
+				for (asUINT n = 0; n < funcs.GetLength(); n++)
+				{
+					asCScriptFunction *func = engine->scriptFunctions[funcs[n]];
+					if (func->name == "opImplConv")
+					{
+						funcs.RemoveIndex(n);
+						n--;
+					}
+				}
+			}
 
 			if( funcs.GetLength() == 1 )
 			{
