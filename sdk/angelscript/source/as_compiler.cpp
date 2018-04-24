@@ -5613,21 +5613,23 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 	// Filter the list by constness to remove const methods if there are matching non-const methods
 	FilterConst(ops, !isConst);
 
-	// Give an error more than one opCast methods were found
+	// If there is multiple matches, then pick the most appropriate one
 	if (ops.GetLength() > 1)
 	{
-		if (isExplicit && generateCode)
-		{
-			asCString str;
-			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, "opCast");
-			Error(str, node);
+		// This should only happen if an explicit cast is compiled 
+		// and the type has both the opCast and opImplCast
+		asASSERT(isExplicit);
+		asASSERT(ops.GetLength() == 2);
 
-			PrintMatchingFuncs(ops, node, ot);
+		for (asUINT n = 0; n < ops.GetLength(); n++)
+		{
+			asCScriptFunction *func = engine->scriptFunctions[ops[n]];
+			if (func->name == "opImplCast")
+			{
+				ops.RemoveIndex(n);
+				n--;
+			}
 		}
-		// Return that the conversion was done to avoid further complaints
-		conversionDone = true;
-		ctx->type.Set(to);
-		return conversionDone;
 	}
 
 	// Should only have one behaviour for each output type
@@ -5731,8 +5733,10 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			}
 		}
 
+		// Filter the list by constness to remove const methods if there are matching non-const methods
+		FilterConst(ops, !isConst);
+
 		// If there is multiple matches, then pick the most appropriate one
-		// TODO: Should be allowed to have different implementations for const and non-const references
 		if (ops.GetLength() > 1)
 		{
 			// This should only happen if an explicit cast is compiled 
@@ -6418,8 +6422,6 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asCExprContext *ctx, const asC
 		return asCC_NO_CONV;
 	}
 
-	// TODO: Must use the const cast behaviour if the object is read-only
-
 	// Find matching value cast behaviours
 	// Here we're only interested in those that convert the type to a primitive type
 	asCArray<int> funcs;
@@ -6460,6 +6462,8 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asCExprContext *ctx, const asC
 				funcs.PushLast(ot->methods[n]);
 		}
 	}
+
+	FilterConst(funcs, !ctx->type.dataType.IsReadOnly());
 
 	int funcId = 0;
 	if( to.IsMathType() )
@@ -6564,8 +6568,9 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asCExprContext *ctx, const asC
 		}
 	}
 
+	FilterConst(funcs, !ctx->type.dataType.IsReadOnly());
+
 	// If there are multiple valid value casts, then we must choose the most appropriate one
-	// TODO: Should support const and non-const options
 	if (funcs.GetLength() > 1)
 	{
 		// This should only happen in case of explicit value cast and 
@@ -6785,8 +6790,26 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 			}
 		}
 
-		// TODO: If there are multiple valid value casts, then we must choose the most appropriate one
-		asASSERT( funcs.GetLength() <= 1 );
+		FilterConst(funcs, !ctx->type.dataType.IsReadOnly());
+
+		// If there are multiple valid value casts, then we must choose the most appropriate one
+		if (funcs.GetLength() > 1)
+		{
+			// This should only happen in case of explicit value cast and 
+			// the application has registered both opImplConv and opConv
+			asASSERT(convType == asIC_EXPLICIT_VAL_CAST);
+			asASSERT(funcs.GetLength() == 2);
+
+			for (asUINT n = 0; n < funcs.GetLength(); n++)
+			{
+				asCScriptFunction *func = engine->scriptFunctions[funcs[n]];
+				if (func->name == "opImplConv")
+				{
+					funcs.RemoveIndex(n);
+					n--;
+				}
+			}
+		}
 
 		if( funcs.GetLength() == 1 )
 		{
@@ -6839,8 +6862,9 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 				}
 			}
 
+			FilterConst(funcs, !ctx->type.dataType.IsReadOnly());
+
 			// If there are multiple valid value casts, then we must choose the most appropriate one
-			// TODO: Should support const and non-const options
 			if (funcs.GetLength() > 1)
 			{
 				// This should only happen in case of explicit value cast and 

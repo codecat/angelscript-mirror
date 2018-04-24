@@ -144,6 +144,84 @@ bool Test()
 	//       and a related class in a class hierarchy? Should prefer calling opCast, right?
 	//       How does C++ do it?
 
+	// Test both opCast and opImplCast
+	// https://www.gamedev.net/forums/topic/696449-implicitly-assign-handle-by-overloading-opimplconv-operator/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)\n", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int op = 0; \n"
+			"class A { B @opCast() { op = 1; return null; } \n"
+			" B @opImplCast() { op = 2; return null; } \n"
+			" const B @opCast() const { op = 3; return null; } \n"
+			" const B @opImplCast() const { op = 4; return null; } } \n"
+			"class B {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A a; B @b = a; assert( op == 2 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A a; B @b = cast<B>(a); assert( op == 1 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "const A a; const B @b = cast<B>(a); assert( op == 3 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "const A a; const B @b = a; assert( op == 4 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test both opConv and opImplConv
+	// https://www.gamedev.net/forums/topic/696449-implicitly-assign-handle-by-overloading-opimplconv-operator/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)\n", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int op = 0; \n"
+			"class A { B opConv() { op = 1; return B(); } \n"
+			" B opImplConv() { op = 2; return B(); } \n"
+			" B opConv() const { op = 3; return B(); } \n"
+			" B opImplConv() const { op = 4; return B(); } } \n"
+			"class B {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A a; B b = a; assert( op == 2 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A a; B b = B(a); assert( op == 1 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "const A a; B b = B(a); assert( op == 3 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "const A a; B b = a; assert( op == 4 );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test opCast(?&out) on null handle (should be allowed)
 	// http://www.gamedev.net/topic/683804-void-opcastout-on-null-handle/
 	{
