@@ -882,13 +882,16 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &name, string &declaratio
 	asUINT len = 0;
 	asETokenClass t = asTC_WHITESPACE;
 
-	// Skip white spaces, comments, and leading 'shared', 'external', 'final', 'abstract'
+	// Skip white spaces, comments, and leading decorators
 	do
 	{
 		pos += len;
 		t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
 		token.assign(&modifiedScript[pos], len);
-	} while ( t == asTC_WHITESPACE || t == asTC_COMMENT || token == "shared" || token == "external" || token == "final" || token == "abstract" );
+	} while ( t == asTC_WHITESPACE || t == asTC_COMMENT || 
+	          token == "private" || token == "protected" || 
+	          token == "shared" || token == "external" || 
+	          token == "final" || token == "abstract" );
 
 	// We're expecting, either a class, interface, function, or variable declaration
 	if( t == asTC_KEYWORD || t == asTC_IDENTIFIER )
@@ -913,23 +916,26 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &name, string &declaratio
 		}
 		else
 		{
-			// For function declarations, store everything up to the start of the statement block
+			// For function declarations, store everything up to the start of the 
+			// statement block, except for succeeding decorators (final, override, etc)
 
 			// For variable declaration store just the name as there can only be one
 
-			// We'll only know if the declaration is a variable or function declaration when we see the statement block, or absense of a statement block.
+			// We'll only know if the declaration is a variable or function declaration
+			// when we see the statement block, or absense of a statement block.
 			bool hasParenthesis = false;
+			int nestedParenthesis = 0;
 			declaration.append(&modifiedScript[pos], len);
 			pos += len;
 			for(; pos < (int)modifiedScript.size();)
 			{
 				t = engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
-				if( t == asTC_KEYWORD )
+				token.assign(&modifiedScript[pos], len);
+				if (t == asTC_KEYWORD)
 				{
-					token.assign(&modifiedScript[pos], len);
-					if( token == "{" )
+					if (token == "{" && nestedParenthesis == 0)
 					{
-						if( hasParenthesis )
+						if (hasParenthesis)
 						{
 							// We've found the end of a function signature
 							type = MDT_FUNC;
@@ -942,12 +948,12 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &name, string &declaratio
 						}
 						return pos;
 					}
-					if( (token == "=" && !hasParenthesis) || token == ";" )
+					if ((token == "=" && !hasParenthesis) || token == ";")
 					{
 						if (hasParenthesis)
 						{
 							// The declaration is ambigous. It can be a variable with initialization, or a function prototype
-							type = MDT_FUNC_OR_VAR; 
+							type = MDT_FUNC_OR_VAR;
 						}
 						else
 						{
@@ -957,20 +963,29 @@ int CScriptBuilder::ExtractDeclaration(int pos, string &name, string &declaratio
 						}
 						return pos;
 					}
-					else if( token == "(" )
+					else if (token == "(")
 					{
+						nestedParenthesis++;
+
 						// This is the first parenthesis we encounter. If the parenthesis isn't followed
 						// by a statement block, then this is a variable declaration, in which case we
 						// should only store the type and name of the variable, not the initialization parameters.
 						hasParenthesis = true;
 					}
+					else if (token == ")")
+					{
+						nestedParenthesis--;
+					}
 				}
 				else if( t == asTC_IDENTIFIER )
 				{
-					name.assign(&modifiedScript[pos], len);
+					name = token;
 				}
 
-				declaration.append(&modifiedScript[pos], len);
+				// Skip trailing decorators
+				if( !hasParenthesis || nestedParenthesis > 0 || t != asTC_IDENTIFIER || (token != "final" && token != "override") )
+					declaration += token;
+
 				pos += len;
 			}
 		}

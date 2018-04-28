@@ -76,6 +76,37 @@ bool Test()
 
 	// TODO: Preprocessor directives should be alone on the line
 
+	// Test gathering metadata for class methods with decorators
+	// (reported by Patrick Jeeves)
+#if AS_PROCESS_METADATA == 1
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CScriptBuilder builder;
+		builder.StartNewModule(engine, 0);
+		builder.AddSectionFromMemory("test",
+			"class GameObject { \n"
+			"   [metadata] \n"
+			"   private void onActivate1(int id, GameObject@ from) {} \n"
+			"   [metadata] \n"
+			"   void onActivate2(int id, GameObject@ from) final {} \n"
+			"} \n");
+		r = builder.BuildModule();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+#endif
+
 	asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	RegisterScriptArray(engine, true);
 	{
