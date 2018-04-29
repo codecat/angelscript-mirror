@@ -396,6 +396,64 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test loading bytecode with existing shared interfaces with inheritance
+	// reported by Zakhar
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"shared interface ScriptObject {} \n"
+			"shared interface BaseEffect : ScriptObject {} \n"
+			"class A : BaseEffect {} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"shared interface ScriptObject {} \n"
+			"shared interface BaseEffect : ScriptObject {} \n"
+			"class B : BaseEffect {} \n");
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc2("test2");
+		r = mod2->SaveByteCode(&bc2); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&bc2);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test forever loop where the return instruction is never reached
 	// https://www.gamedev.net/forums/topic/696323-when-using-an-infinite-loop-using-for-statement-and-stopping-with-savebytecode/
 	{

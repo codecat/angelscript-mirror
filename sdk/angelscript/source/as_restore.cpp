@@ -1549,7 +1549,8 @@ void asCReader::ReadTypeDeclaration(asCTypeInfo *type, int phase, bool *isExtern
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = CastToObjectType(ReadTypeInfo());
-					ReadEncodedUInt();
+					if (!ot->IsInterface())
+						ReadEncodedUInt();
 
 					if( !type->Implements(intf) )
 					{
