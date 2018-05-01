@@ -2656,6 +2656,11 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asCExprContext &compiledCtx
 				}
 			}
 
+			// Implicit handle types should always be handles
+			if (newType.GetTypeInfo() && 
+				(newType.GetTypeInfo()->flags & asOBJ_IMPLICIT_HANDLE))
+				newType.MakeHandle(true);
+
 			type = newType;
 			return true;
 		}

@@ -5388,7 +5388,7 @@ void *asCContext::GetAddressOfVar(asUINT varIndex, asUINT stackLevel)
 }
 
 // interface
-// returns the typeId of the 'this' object at the given call stack level (-1 for current)
+// returns the typeId of the 'this' object at the given call stack level (0 for current)
 // returns 0 if the function call at the given stack level is not a method
 int asCContext::GetThisTypeId(asUINT stackLevel)
 {
@@ -5406,7 +5406,7 @@ int asCContext::GetThisTypeId(asUINT stackLevel)
 }
 
 // interface
-// returns the 'this' object pointer at the given call stack level (-1 for current)
+// returns the 'this' object pointer at the given call stack level (0 for current)
 // returns 0 if the function call at the given stack level is not a method
 void *asCContext::GetThisPointer(asUINT stackLevel)
 {
