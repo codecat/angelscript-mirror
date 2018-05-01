@@ -101,19 +101,19 @@ public:
 
 #if AS_PROCESS_METADATA == 1
 	// Get metadata declared for classes, interfaces, and enums
-	const char *GetMetadataStringForType(int typeId);
+	std::vector<std::string> GetMetadataForType(int typeId);
 
 	// Get metadata declared for functions
-	const char *GetMetadataStringForFunc(asIScriptFunction *func);
+	std::vector<std::string> GetMetadataForFunc(asIScriptFunction *func);
 
 	// Get metadata declared for global variables
-	const char *GetMetadataStringForVar(int varIdx);
+	std::vector<std::string> GetMetadataForVar(int varIdx);
 
 	// Get metadata declared for class variables
-	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
+	std::vector<std::string> GetMetadataForTypeProperty(int typeId, int varIdx);
 
 	// Get metadata declared for class methods
-	const char *GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
+	std::vector<std::string> GetMetadataForTypeMethod(int typeId, asIScriptFunction *method);
 #endif
 
 protected:
@@ -139,7 +139,7 @@ protected:
 	void             *pragmaParam;
 
 #if AS_PROCESS_METADATA == 1
-	int  ExtractMetadataString(int pos, std::string &outMetadata);
+	int  ExtractMetadata(int pos, std::vector<std::string> &outMetadata);
 	int  ExtractDeclaration(int pos, std::string &outName, std::string &outDeclaration, int &outType);
 
 	enum METADATATYPE
@@ -154,30 +154,30 @@ protected:
 	// Temporary structure for storing metadata and declaration
 	struct SMetadataDecl
 	{
-		SMetadataDecl(std::string m, std::string n, std::string d, int t, std::string c, std::string ns) : metadata(m), name(n), declaration(d), type(t), parentClass(c), nameSpace(ns) {}
-		std::string metadata;
-		std::string name;
-		std::string declaration;
-		int         type;
-		std::string parentClass;
-		std::string nameSpace;
+		SMetadataDecl(std::vector<std::string> m, std::string n, std::string d, int t, std::string c, std::string ns) : metadata(m), name(n), declaration(d), type(t), parentClass(c), nameSpace(ns) {}
+		std::vector<std::string> metadata;
+		std::string              name;
+		std::string              declaration;
+		int                      type;
+		std::string              parentClass;
+		std::string              nameSpace;
 	};
 	std::vector<SMetadataDecl> foundDeclarations;
 	std::string currentClass;
 	std::string currentNamespace;
 
 	// Storage of metadata for global declarations
-	std::map<int, std::string> typeMetadataMap;
-	std::map<int, std::string> funcMetadataMap;
-	std::map<int, std::string> varMetadataMap;
+	std::map<int, std::vector<std::string>> typeMetadataMap;
+	std::map<int, std::vector<std::string>> funcMetadataMap;
+	std::map<int, std::vector<std::string>> varMetadataMap;
 
 	// Storage of metadata for class member declarations
 	struct SClassMetadata
 	{
 		SClassMetadata(const std::string& aName) : className(aName) {}
 		std::string className;
-		std::map<int, std::string> funcMetadataMap;
-		std::map<int, std::string> varMetadataMap;
+		std::map<int, std::vector<std::string>> funcMetadataMap;
+		std::map<int, std::vector<std::string>> varMetadataMap;
 	};
 	std::map<int, SClassMetadata> classMetadataMap;
 
