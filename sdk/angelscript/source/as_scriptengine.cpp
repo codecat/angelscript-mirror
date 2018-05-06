@@ -1635,7 +1635,7 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 	else if( flags & asOBJ_VALUE )
 	{
 		// Cannot use reference flags
-		if( flags & (asOBJ_REF | asOBJ_GC | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE) )
+		if( flags & (asOBJ_REF | asOBJ_NOHANDLE | asOBJ_SCOPED | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE) )
 			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 
 		// Flags are exclusive
@@ -3040,20 +3040,31 @@ void asCScriptEngine::PrepareEngine()
 			// Verify that GC types have all behaviours
 			if( type->flags & asOBJ_GC )
 			{
-				if( type->beh.addref                 == 0 ||
-					type->beh.release                == 0 ||
-					type->beh.gcGetRefCount          == 0 ||
-					type->beh.gcSetFlag              == 0 ||
-					type->beh.gcGetFlag              == 0 ||
-					type->beh.gcEnumReferences       == 0 ||
-					type->beh.gcReleaseAllReferences == 0 )
+				if (type->flags & asOBJ_REF)
 				{
-					infoMsg = TXT_GC_REQUIRE_ADD_REL_GC_BEHAVIOUR;
-					missingBehaviour = true;
+					if (type->beh.addref == 0 ||
+						type->beh.release == 0 ||
+						type->beh.gcGetRefCount == 0 ||
+						type->beh.gcSetFlag == 0 ||
+						type->beh.gcGetFlag == 0 ||
+						type->beh.gcEnumReferences == 0 ||
+						type->beh.gcReleaseAllReferences == 0)
+					{
+						infoMsg = TXT_GC_REQUIRE_ADD_REL_GC_BEHAVIOUR;
+						missingBehaviour = true;
+					}
+				}
+				else
+				{
+					if (type->beh.gcEnumReferences == 0)
+					{
+						infoMsg = TXT_VALUE_GC_REQUIRE_GC_BEHAVIOUR;
+						missingBehaviour = true;
+					}
 				}
 			}
 			// Verify that scoped ref types have the release behaviour
-			else if( type->flags & asOBJ_SCOPED )
+			if( type->flags & asOBJ_SCOPED )
 			{
 				if( type->beh.release == 0 )
 				{
@@ -3062,9 +3073,10 @@ void asCScriptEngine::PrepareEngine()
 				}
 			}
 			// Verify that ref types have add ref and release behaviours
-			else if( (type->flags & asOBJ_REF) &&
-				     !(type->flags & asOBJ_NOHANDLE) &&
-					 !(type->flags & asOBJ_NOCOUNT) )
+			if( (type->flags & asOBJ_REF) &&
+				!(type->flags & asOBJ_SCOPED) &&
+				!(type->flags & asOBJ_NOHANDLE) &&
+				!(type->flags & asOBJ_NOCOUNT) )
 			{
 				if( type->beh.addref  == 0 ||
 					type->beh.release == 0 )
@@ -3074,8 +3086,8 @@ void asCScriptEngine::PrepareEngine()
 				}
 			}
 			// Verify that non-pod value types have the constructor and destructor registered
-			else if( (type->flags & asOBJ_VALUE) &&
-				     !(type->flags & asOBJ_POD) )
+			if( (type->flags & asOBJ_VALUE) &&
+				!(type->flags & asOBJ_POD) )
 			{
 				if( type->beh.constructors.GetLength() == 0 ||
 					type->beh.destruct  == 0 )

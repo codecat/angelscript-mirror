@@ -67,6 +67,34 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test circular reference involving ref
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptHandle(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test", 
+			"class A { ref @m; }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		// Create the circular reference
+		r = ExecuteString(engine, "A a; @a.m = a;", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize, totDestroy, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestroy, &totDetect);
+		if (currSize != 0 || totDestroy != 1 || totDetect != 1)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test that correct type is handled on inheritance
 	// https://www.gamedev.net/forums/topic/694164-scripthandle-addon-doesnt-check-object-type/
 	{

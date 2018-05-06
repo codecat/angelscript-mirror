@@ -764,11 +764,13 @@ bool Test()
 	engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 	r = engine->RegisterObjectType("gc", 4, asOBJ_REF | asOBJ_GC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("gc", asBEHAVE_ADDREF, "void func()", asFUNCTION(0), asCALL_GENERIC);
+	r = engine->RegisterObjectBehaviour("gc", asBEHAVE_RELEASE, "void func()", asFUNCTION(0), asCALL_GENERIC);
 	r = ExecuteString(engine, "");
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != " (0, 0) : Error   : Type 'gc' is missing behaviours\n"
-		               " (0, 0) : Info    : A garbage collected type must have the addref, release, and all gc behaviours\n"
+		               " (0, 0) : Info    : A garbage collected ref type must have the addref, release, and all gc behaviours\n"
 		               " (0, 0) : Error   : Invalid configuration. Verify the registered application interface.\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());

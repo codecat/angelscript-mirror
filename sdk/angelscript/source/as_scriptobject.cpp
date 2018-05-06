@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2016 Andreas Jonsson
+   Copyright (c) 2003-2018 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -726,14 +726,19 @@ void asCScriptObject::EnumReferences(asIScriptEngine *engine)
 	{
 		asCObjectProperty *prop = objType->properties[n];
 		void *ptr = 0;
-		if( prop->type.IsObject() )
+		if (prop->type.IsObject())
 		{
-			// TODO: gc: The members of the value type needs to be enumerated
-			//           too, since the value type may be holding a reference.
-			if( prop->type.IsReference() || (prop->type.GetTypeInfo()->flags & asOBJ_REF) )
+			if (prop->type.IsReference() || (prop->type.GetTypeInfo()->flags & asOBJ_REF))
 				ptr = *(void**)(((char*)this) + prop->byteOffset);
 			else
 				ptr = (void*)(((char*)this) + prop->byteOffset);
+
+			// The members of the value type needs to be enumerated
+			// too, since the value type may be holding a reference.
+			if ((prop->type.GetTypeInfo()->flags & asOBJ_VALUE) && (prop->type.GetTypeInfo()->flags & asOBJ_GC))
+			{
+				reinterpret_cast<asCScriptEngine*>(engine)->CallObjectMethod(ptr, engine, CastToObjectType(prop->type.GetTypeInfo())->beh.gcEnumReferences);
+			}
 		}
 		else if (prop->type.IsFuncdef())
 			ptr = *(void**)(((char*)this) + prop->byteOffset);
@@ -749,18 +754,31 @@ void asCScriptObject::ReleaseAllHandles(asIScriptEngine *engine)
 	{
 		asCObjectProperty *prop = objType->properties[n];
 
-		// TODO: gc: The members of the members needs to be released
-		//           too, since they may be holding a reference. Even
-		//           if the member is a value type.
-		if( prop->type.IsObject() && prop->type.IsObjectHandle() )
+		if (prop->type.IsObject())
 		{
-			void **ptr = (void**)(((char*)this) + prop->byteOffset);
-			if( *ptr )
+			if (prop->type.IsObjectHandle())
 			{
-				asASSERT( (prop->type.GetTypeInfo()->flags & asOBJ_NOCOUNT) || prop->type.GetBehaviour()->release );
-				if( prop->type.GetBehaviour()->release )
-					((asCScriptEngine*)engine)->CallObjectMethod(*ptr, prop->type.GetBehaviour()->release);
-				*ptr = 0;
+				void **ptr = (void**)(((char*)this) + prop->byteOffset);
+				if (*ptr)
+				{
+					asASSERT((prop->type.GetTypeInfo()->flags & asOBJ_NOCOUNT) || prop->type.GetBehaviour()->release);
+					if (prop->type.GetBehaviour()->release)
+						((asCScriptEngine*)engine)->CallObjectMethod(*ptr, prop->type.GetBehaviour()->release);
+					*ptr = 0;
+				}
+			}
+			else if ((prop->type.GetTypeInfo()->flags & asOBJ_VALUE) && (prop->type.GetTypeInfo()->flags & asOBJ_GC))
+			{
+				// The members of the members needs to be released
+				// too, since they may be holding a reference. Even
+				// if the member is a value type.
+				void *ptr = 0;
+				if (prop->type.IsReference())
+					ptr = *(void**)(((char*)this) + prop->byteOffset);
+				else
+					ptr = (void*)(((char*)this) + prop->byteOffset);
+
+				reinterpret_cast<asCScriptEngine*>(engine)->CallObjectMethod(ptr, engine, CastToObjectType(prop->type.GetTypeInfo())->beh.gcReleaseAllReferences);
 			}
 		}
 		else if (prop->type.IsFuncdef())
