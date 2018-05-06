@@ -47,6 +47,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library interface
 <ul>
 <li>Implemented a callback to allow application to translate C++ exceptions thrown by registered functions (Thanks Boost113)
+<li>Added the engine methods ForwardGCEnumReferences and ForwardGCReleaseAllReferences
 </ul>
 <li>Script language
 <ul>
@@ -71,6 +72,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>meta data is now correctly extracted for class methods with decorators (Thanks Patrick Jeeves)
 <li>CScriptBuilder now supports having multiple meta data blocks for each entity (Thanks noizex)
 <li>CScriptHandle registers the ENUMREFS and RELEASEREFS gc behaviours
+<li>CScriptArray now supports forwarding gc enum callbacks to value types with gc behaviour
 </ul>
 <li>Project
 <ul>

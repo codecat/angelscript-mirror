@@ -1784,10 +1784,26 @@ void CScriptArray::EnumReferences(asIScriptEngine *engine)
 	if( subTypeId & asTYPEID_MASK_OBJECT )
 	{
 		void **d = (void**)buffer->data;
-		for( asUINT n = 0; n < buffer->numElements; n++ )
+
+		asITypeInfo *subType = engine->GetTypeInfoById(subTypeId);
+		if ((subType->GetFlags() & asOBJ_REF))
 		{
-			if( d[n] )
-				engine->GCEnumCallback(d[n]);
+			// For reference types we need to notify the GC of each instance
+			for (asUINT n = 0; n < buffer->numElements; n++)
+			{
+				if (d[n])
+					engine->GCEnumCallback(d[n]);
+			}
+		}
+		else if ((subType->GetFlags() & asOBJ_VALUE) && (subType->GetFlags() & asOBJ_GC))
+		{
+			// For value types we need to forward the enum callback
+			// to the object so it can decide what to do
+			for (asUINT n = 0; n < buffer->numElements; n++)
+			{
+				if (d[n])
+					engine->ForwardGCEnumReferences(d[n], subType);
+			}
 		}
 	}
 }

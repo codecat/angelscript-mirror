@@ -3,6 +3,7 @@
 #include "../../../add_on/weakref/weakref.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 namespace Test_Addon_ScriptArray
 {
@@ -213,6 +214,28 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
+
+	// Test circular reference between array and ref
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptHandle(engine);
+		RegisterScriptArray(engine, false);
+
+		// Create the circular reference
+		r = ExecuteString(engine, "array<ref> a; a.resize(1); @a[0] = a;");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize, totDestroy, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestroy, &totDetect);
+		if (currSize != 0 || totDestroy != 1 || totDetect != 1)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test sort through callback
 	{

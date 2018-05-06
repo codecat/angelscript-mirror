@@ -761,6 +761,8 @@ public:
 	virtual int  NotifyGarbageCollectorOfNewObject(void *obj, asITypeInfo *type) = 0;
 	virtual int  GetObjectInGC(asUINT idx, asUINT *seqNbr = 0, void **obj = 0, asITypeInfo **type = 0) = 0;
 	virtual void GCEnumCallback(void *reference) = 0;
+	virtual void ForwardGCEnumReferences(void *ref, asITypeInfo *type) = 0;
+	virtual void ForwardGCReleaseReferences(void *ref, asITypeInfo *type) = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

@@ -4632,6 +4632,26 @@ void asCScriptEngine::GCEnumCallback(void *reference)
 	gc.GCEnumCallback(reference);
 }
 
+// interface
+void asCScriptEngine::ForwardGCEnumReferences(void *ref, asITypeInfo *type)
+{
+	asCTypeInfo *t = reinterpret_cast<asCTypeInfo*>(type);
+	if ((t->flags & asOBJ_VALUE) && (t->flags & asOBJ_GC))
+	{
+		CallObjectMethod(ref, this, CastToObjectType(t)->beh.gcEnumReferences);
+	}
+}
+
+// interface
+void asCScriptEngine::ForwardGCReleaseReferences(void *ref, asITypeInfo *type)
+{
+	asCTypeInfo *t = reinterpret_cast<asCTypeInfo*>(type);
+	if ((t->flags & asOBJ_VALUE) && (t->flags & asOBJ_GC))
+	{
+		CallObjectMethod(ref, this, CastToObjectType(t)->beh.gcReleaseAllReferences);
+	}
+}
+
 
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
