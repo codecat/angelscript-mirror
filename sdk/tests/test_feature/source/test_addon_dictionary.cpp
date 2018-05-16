@@ -23,6 +23,29 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test assigning handle to an explicit dictionaryValue
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		// This syntax was not doing a handle assign
+		r = ExecuteString(engine, "dictionary a; dictionaryValue @h = a;");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize, totDestroy, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestroy, &totDetect);
+		if (currSize != 0 || totDestroy != 1 || totDetect != 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test exception handling to make sure there are no memory leaks
 	{
 		engine = asCreateScriptEngine();

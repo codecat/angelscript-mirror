@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/05/05</h2>
+<h2>Version 2.33.0 WIP - 2018/05/15</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed compiler error when both opConv and opImplConv are implemented (Thanks Ali Gerami)
 <li>Fixed bug when loading bytecode containing shared interfaces with inheritance (Thanks Zakhar)
 <li>auto declarations now works correctly with implicit handle types (Thanks y18a)
+<li>Initializing an ASHANDLE type with overloaded opHndlAssign taking a var type as a handle wasn't done correctly
 </ul>
 <li>Library
 <ul>

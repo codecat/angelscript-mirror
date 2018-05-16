@@ -3232,7 +3232,34 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 					// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
 					if( (lexpr.type.dataType.IsObject() || lexpr.type.dataType.IsFuncdef()) && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetTypeInfo() && (lexpr.type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))) )
 					{
-						bool useHndlAssign = lexpr.type.dataType.IsHandleToAsHandleType();
+						bool useHndlAssign = false;
+						if (lexpr.type.dataType.IsHandleToAsHandleType())
+						{
+							useHndlAssign = true;
+
+							// Make sure the right hand expression is treated as a handle
+							if (!expr->type.isExplicitHandle && !expr->type.IsNullConstant())
+							{
+								// TODO: Clean-up: This code is from CompileExpressionPreOp. Create a reusable function
+								// Convert the expression to a handle
+								if (!expr->type.dataType.IsObjectHandle() && !(expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
+								{
+									asCDataType to = expr->type.dataType;
+									to.MakeHandle(true);
+									to.MakeReference(true);
+									to.MakeHandleToConst(expr->type.dataType.IsReadOnly());
+									ImplicitConversion(expr, to, node, asIC_IMPLICIT_CONV, true, false);
+
+									asASSERT(expr->type.dataType.IsObjectHandle());
+								}
+								else if (expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE)
+								{
+									// For the ASHANDLE type we'll simply set the expression as a handle
+									expr->type.dataType.MakeHandle(true);
+								}
+								expr->type.isExplicitHandle = true;
+							}
+						}
 						assigned = CompileOverloadedDualOperator(node, &lexpr, expr, false, &ctx, useHndlAssign);
 						if( assigned )
 						{
