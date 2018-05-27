@@ -1116,7 +1116,7 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 		func->SetReadOnly((b & 1) ? true : false);
 		func->SetPrivate((b & 2) ? true : false);
 		func->SetProtected((b & 4) ? true : false);
-		func->nameSpace = engine->nameSpaces[0];
+		func->nameSpace = func->objectType->nameSpace;
 	}
 	else
 	{

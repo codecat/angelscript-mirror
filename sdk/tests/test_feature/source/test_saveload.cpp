@@ -396,6 +396,72 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test external shared classes in namespaces while loading bytecode
+	// https://www.gamedev.net/forums/topic/697035-reading-bytecode-fails-when-combining-namespace-and-shared-class/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace X {"
+			"shared class A"
+			"{"
+			"  A()"
+			"    {}"
+			"}};"
+		);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"namespace X {"
+			"external shared class A;"
+			"}"
+			"namespace Y {"
+			"class Test : X::A"
+			"{"
+			"  Test() {}"
+			"}};"
+		);
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc2("test2");
+		r = mod2->SaveByteCode(&bc2); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod2->Discard();
+
+		// game loop
+		for (unsigned i = 0; i < 10; ++i) {
+			engine->GarbageCollect(); // run DeleteDiscardedModules();
+		}
+
+		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&bc2);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test loading bytecode with existing shared interfaces with inheritance
 	// reported by Zakhar
 	{
