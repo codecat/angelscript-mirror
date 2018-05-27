@@ -1053,50 +1053,56 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 		return;
 	}
 	memset(func->inOutFlags.AddressOf(), 0, sizeof(asETypeModifiers)*func->inOutFlags.GetLength());
-	count = ReadEncodedUInt();
-	if( count > func->parameterTypes.GetLength() )
+	if (func->parameterTypes.GetLength() > 0)
 	{
-		// Cannot be more than the number of arguments
-		Error(TXT_INVALID_BYTECODE_d);
-		return;
-	}
-	for( i = 0; i < count; ++i )
-	{
-		num = ReadEncodedUInt();
-		func->inOutFlags[i] = static_cast<asETypeModifiers>(num);
+		count = ReadEncodedUInt();
+		if (count > func->parameterTypes.GetLength())
+		{
+			// Cannot be more than the number of arguments
+			Error(TXT_INVALID_BYTECODE_d);
+			return;
+		}
+		for (i = 0; i < count; ++i)
+		{
+			num = ReadEncodedUInt();
+			func->inOutFlags[i] = static_cast<asETypeModifiers>(num);
+		}
 	}
 
 	func->funcType = (asEFuncType)ReadEncodedUInt();
 
 	// Read the default args, from last to first
-	count = ReadEncodedUInt();
-	if( count > func->parameterTypes.GetLength() )
+	if (func->parameterTypes.GetLength() > 0)
 	{
-		// Cannot be more than the number of arguments
-		Error(TXT_INVALID_BYTECODE_d);
-		return;
-	}
-	if( count )
-	{
-		func->defaultArgs.SetLength(func->parameterTypes.GetLength());
-		if( func->defaultArgs.GetLength() != func->parameterTypes.GetLength() )
+		count = ReadEncodedUInt();
+		if (count > func->parameterTypes.GetLength())
 		{
-			// Out of memory
-			error = true;
+			// Cannot be more than the number of arguments
+			Error(TXT_INVALID_BYTECODE_d);
 			return;
 		}
-		memset(func->defaultArgs.AddressOf(), 0, sizeof(asCString*)*func->defaultArgs.GetLength());
-		for( i = 0; i < count; i++ )
+		if (count)
 		{
-			asCString *str = asNEW(asCString);
-			if( str == 0 )
+			func->defaultArgs.SetLength(func->parameterTypes.GetLength());
+			if (func->defaultArgs.GetLength() != func->parameterTypes.GetLength())
 			{
 				// Out of memory
 				error = true;
 				return;
 			}
-			func->defaultArgs[func->defaultArgs.GetLength()-1-i] = str;
-			ReadString(str);
+			memset(func->defaultArgs.AddressOf(), 0, sizeof(asCString*)*func->defaultArgs.GetLength());
+			for (i = 0; i < count; i++)
+			{
+				asCString *str = asNEW(asCString);
+				if (str == 0)
+				{
+					// Out of memory
+					error = true;
+					return;
+				}
+				func->defaultArgs[func->defaultArgs.GetLength() - 1 - i] = str;
+				ReadString(str);
+			}
 		}
 	}
 
@@ -3996,28 +4002,36 @@ void asCWriter::WriteFunctionSignature(asCScriptFunction *func)
 		WriteDataType(&func->parameterTypes[i]);
 
 	// Only write the inout flags if any of them are set
-	count = 0;
-	for( i = asUINT(func->inOutFlags.GetLength()); i > 0; i-- )
-		if( func->inOutFlags[i-1] != asTM_NONE )
-		{
-			count = i;
-			break;
-		}
-	WriteEncodedInt64(count);
-	for( i = 0; i < count; ++i )
-		WriteEncodedInt64(func->inOutFlags[i]);
+	// If the number of parameters is 0, then no need to save this
+	if (func->parameterTypes.GetLength() > 0)
+	{
+		count = 0;
+		for (i = asUINT(func->inOutFlags.GetLength()); i > 0; i--)
+			if (func->inOutFlags[i - 1] != asTM_NONE)
+			{
+				count = i;
+				break;
+			}
+		WriteEncodedInt64(count);
+		for (i = 0; i < count; ++i)
+			WriteEncodedInt64(func->inOutFlags[i]);
+	}
 
 	WriteEncodedInt64(func->funcType);
 
 	// Write the default args, from last to first
-	count = 0;
-	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
-		if( func->defaultArgs[i] )
-			count++;
-	WriteEncodedInt64(count);
-	for( i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
-		if( func->defaultArgs[i] )
-			WriteString(func->defaultArgs[i]);
+	// If the number of parameters is 0, then no need to save this
+	if (func->parameterTypes.GetLength() > 0)
+	{
+		count = 0;
+		for (i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
+			if (func->defaultArgs[i])
+				count++;
+		WriteEncodedInt64(count);
+		for (i = (asUINT)func->defaultArgs.GetLength(); i-- > 0; )
+			if (func->defaultArgs[i])
+				WriteString(func->defaultArgs[i]);
+	}
 
 	WriteTypeInfo(func->objectType);
 
