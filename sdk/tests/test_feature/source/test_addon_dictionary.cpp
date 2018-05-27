@@ -23,6 +23,53 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test circular reference with dictionary and ref
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptHandle(engine);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		// Create the circular reference
+		r = ExecuteString(engine, "dictionary a; ref @h = a; a['foo'] = h;");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize, totDestroy, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestroy, &totDetect);
+		if (currSize != 0 || totDestroy != 1 || totDetect != 1)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test circular reference with dictionary and explicit dictionaryValue
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		// Create the circular reference
+		r = ExecuteString(engine, "dictionary a; dictionaryValue @h = @a; @a['foo'] = h;");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize, totDestroy, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestroy, &totDetect);
+		if (currSize != 0 || totDestroy != 1 || totDetect != 1)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test assigning handle to an explicit dictionaryValue
 	{
 		engine = asCreateScriptEngine();

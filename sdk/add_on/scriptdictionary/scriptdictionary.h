@@ -94,6 +94,9 @@ public:
 	// Free the stored value
 	void FreeValue(asIScriptEngine *engine);
 
+	// GC callback
+	void EnumReferences(asIScriptEngine *engine);
+
 protected:
 	friend class CScriptDictionary;
 
