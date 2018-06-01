@@ -462,6 +462,91 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
+	// Test lambda in shared class
+	// https://www.gamedev.net/forums/topic/696953-using-lambda-function-in-shared-class-fails-to-read-bytecode/
+	// Don't save bytecode for inherited methods, especially if the base class is declared as external
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"shared funcdef void TestFunc(); \n"
+			"shared class TestBase \n"
+			"{ \n"
+			"  void callfn(TestFunc@ fn) \n"
+			"    { \n"
+			"       fn(); \n"
+			"    } \n"
+			"  void test() \n"
+			"    { \n"
+			"      callfn( function() { called = 42; } ); \n"
+			"    } \n"
+			"}; \n"
+			"int called = 0; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptModule *mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod2->AddScriptSection("test",
+			"external shared funcdef void TestFunc(); \n"
+			"external shared class TestBase; \n"
+			"class Test : TestBase \n"
+			"{ \n"
+			"}; \n");
+		r = mod2->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Test t; t.test();", mod2);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if( *reinterpret_cast<int*>(mod->GetAddressOfGlobalVar(0)) != 42 )
+			TEST_FAILED;
+
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc2("test2");
+		r = mod2->SaveByteCode(&bc2); assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&bc2);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		r = ExecuteString(engine, "Test t; t.test();", mod2);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (*reinterpret_cast<int*>(mod->GetAddressOfGlobalVar(0)) != 42)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test loading bytecode with existing shared interfaces with inheritance
 	// reported by Zakhar
 	{
