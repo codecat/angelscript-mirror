@@ -1219,13 +1219,15 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 				if (func->IsSignatureEqual(func2))
 				{
 					func->DestroyHalfCreated();
-					func = func2;
 
 					// as this is an existing function it shouldn't be translated as if just loaded
 					dontTranslate.Insert(func2, true);
 
+					// update the saved functions for future references
+					savedFunctions[savedFunctions.GetLength() - 1] = func2;
+
 					// As it is an existing function it shouldn't be added to the module or the engine
-					return func;
+					return func2;
 				}
 			}
 		}

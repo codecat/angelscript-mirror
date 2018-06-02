@@ -495,6 +495,9 @@ bool Test()
 			"external shared class TestBase; \n"
 			"class Test : TestBase \n"
 			"{ \n"
+			"}; \n"
+			"class Test2 : TestBase \n" // The second class shares the same base, thus must also work
+			"{ \n"
 			"}; \n");
 		r = mod2->Build();
 		if (r < 0)
