@@ -3795,6 +3795,7 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 		return asOUT_OF_MEMORY;
 
 	vf->name             = func->name;
+	vf->nameSpace        = func->nameSpace;
 	vf->returnType       = func->returnType;
 	vf->parameterTypes   = func->parameterTypes;
 	vf->inOutFlags       = func->inOutFlags;
