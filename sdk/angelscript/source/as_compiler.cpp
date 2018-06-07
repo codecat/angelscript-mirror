@@ -5794,6 +5794,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			{
 				int afterLabel = 0;
 				bool doNullCheck = false;
+				bool releaseTempVariable = false;
 				asCExprContext tmp(engine);
 				if ((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_NOHANDLE))
 				{
@@ -5808,6 +5809,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 					{
 						Dereference(&tmp, true);
 						ConvertToVariable(&tmp);
+						releaseTempVariable = true;
 					}
 
 					// The reference on the stack will not be used
@@ -5863,7 +5865,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 
 				// If a temporary variable was allocated in the tmp to convert 
 				// the input expression to a variable, it must be released here
-				if (tmp.type.isTemporary)
+				if (releaseTempVariable && tmp.type.isTemporary)
 					ReleaseTemporaryVariable(tmp.type.stackOffset, &ctx->bc);
 
 				// Use the reference to the variable as the result of the expression

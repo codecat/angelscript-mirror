@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
+#include "../../../add_on/scriptany/scriptany.h"
 
 namespace TestCastOp
 {
@@ -165,6 +166,30 @@ bool Test()
 	// TODO: What should the compiler do when the class has both a valid opCast method 
 	//       and a related class in a class hierarchy? Should prefer calling opCast, right?
 	//       How does C++ do it?
+
+	// Test opCast(?&out) with CScriptAny
+	// https://www.gamedev.net/forums/topic/697067-refcounting-in-opcast/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
+		RegisterScriptAny(engine);
+		r = engine->RegisterObjectMethod("any", "void opCast(?&out)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("any@ GetA()", asFUNCTION(0), asCALL_GENERIC);
+		
+		asIScriptModule *mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"shared class A {}"
+			"A@ a = cast<A>(GetA());"
+		);
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test void opCast(?&out) in complex expression
 	// https://www.gamedev.net/forums/topic/697067-refcounting-in-opcast/
