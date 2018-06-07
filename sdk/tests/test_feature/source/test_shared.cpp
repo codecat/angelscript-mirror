@@ -31,7 +31,7 @@ bool Test()
 		r = mod->Build();
 		if (r < 0) TEST_FAILED;
 
-		size_t currAlloc = GetAllocedMem();
+		int currAlloc = GetAllocedMem();
 
 		// discard `Module2`
 		mod->Discard();

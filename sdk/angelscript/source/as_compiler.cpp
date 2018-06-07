@@ -5861,6 +5861,11 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 					ctx->bc.Label((short)endLabel);
 				}
 
+				// If a temporary variable was allocated in the tmp to convert 
+				// the input expression to a variable, it must be released here
+				if (tmp.type.isTemporary)
+					ReleaseTemporaryVariable(tmp.type.stackOffset, &ctx->bc);
+
 				// Use the reference to the variable as the result of the expression
 				// Now we can mark the variable as temporary
 				ctx->type.SetVariable(toRef, stackOffset, true);

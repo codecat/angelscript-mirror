@@ -131,6 +131,28 @@ void addListener(EventSource* source, int /*mask*/)
 //	PRINTF("\n");
 }
 
+class base
+{
+public:
+	base() { refCount = 1; }
+	static void *factory() { return new base(); }
+	void addref() { /*printf("addref\n");*/ refCount++; }
+	void release() { /*printf("release\n");*/ if (--refCount == 0) delete this; }
+	void opCast(void **ref, int typeId) {
+		*ref = 0; 
+		asIScriptContext *ctx = asGetActiveContext();
+		asIScriptEngine *engine = ctx->GetEngine();
+		asITypeInfo *type = engine->GetTypeInfoById(typeId);
+		if (std::string(type->GetName()) == "CControlBase")
+		{
+			addref();
+			*ref = this;
+		}
+	}
+
+	int refCount;
+};
+
 bool Test()
 {
 	bool fail = false;
@@ -143,6 +165,49 @@ bool Test()
 	// TODO: What should the compiler do when the class has both a valid opCast method 
 	//       and a related class in a class hierarchy? Should prefer calling opCast, right?
 	//       How does C++ do it?
+
+	// Test void opCast(?&out) in complex expression
+	// https://www.gamedev.net/forums/topic/697067-refcounting-in-opcast/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)\n", asFUNCTION(Assert), asCALL_GENERIC);
+
+		engine->RegisterObjectType("base", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("base", asBEHAVE_FACTORY, "base @f()", asFUNCTION(base::factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("base", asBEHAVE_ADDREF, "void f()", asMETHOD(base, addref), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("base", asBEHAVE_RELEASE, "void f()", asMETHOD(base, release), asCALL_THISCALL);
+		engine->RegisterObjectMethod("base", "void opCast(?&out)", asMETHOD(base, opCast), asCALL_THISCALL);
+
+		engine->RegisterObjectType("CControlBase", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("CControlBase", asBEHAVE_ADDREF, "void f()", asMETHOD(base, addref), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("CControlBase", asBEHAVE_RELEASE, "void f()", asMETHOD(base, release), asCALL_THISCALL);
+
+		RegisterScriptArray(engine, false);
+		
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class scene { \n"
+			"  array<base@> Mobils = { base() }; \n"
+			"} \n"
+			"scene g_scene; \n"
+			"void test() { \n"
+			"  auto b = cast<CControlBase>(g_scene.Mobils[0]); \n"
+			//"  auto a = g_scene.Mobils[0]; \n"
+			//"  auto b = cast<CControlBase>(a); \n"
+			"  assert( b !is null ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "test()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test both opCast and opImplCast
 	// https://www.gamedev.net/forums/topic/696449-implicitly-assign-handle-by-overloading-opimplconv-operator/
