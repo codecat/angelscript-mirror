@@ -10233,7 +10233,8 @@ void asCCompiler::ProcessDeferredParams(asCExprContext *ctx)
 					ctx->bc.Instr(asBC_PopPtr);
 
 				// Give an error, except if the argument is void, null or 0 which indicate the argument is explicitly to be ignored
-				if( !expr->IsVoidExpression() && !expr->type.IsNullConstant() && !(expr->type.isConstant && expr->type.GetConstantData() == 0) )
+				if( !expr->IsVoidExpression() && !expr->type.IsNullConstant() &&
+					!(expr->type.isConstant && expr->type.dataType.IsPrimitive() && expr->type.GetConstantData() == 0) )
 					Error(TXT_ARG_NOT_LVALUE, outParam.argNode);
 
 				ReleaseTemporaryVariable(outParam.argType, &ctx->bc);

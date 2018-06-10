@@ -17,7 +17,37 @@ namespace Test_Addon_StdString
 		int r;
 
 		COutStream out;
+		CBufferedOutStream bout;
 
+		// Test sending a string literal to a function expecting &out
+		// Problem reported by Jordan Verner
+		{
+			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+			engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+			RegisterStdString(engine);
+			bout.buffer = "";
+
+			asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("test",
+				"void handleString(string &out t) {} \n"
+				"void test() { \n"
+				"  handleString('hello'); \n"
+				"} \n");
+			r = mod->Build();
+			if (r >= 0)
+				TEST_FAILED;
+
+			if (bout.buffer != "test (2, 1) : Info    : Compiling void test()\n"
+							   "test (3, 16) : Error   : Output argument expression is not assignable\n")
+			{
+				PRINTF("%s", bout.buffer.c_str());
+				TEST_FAILED;
+			}
+
+			engine->ShutDownAndRelease();
+		}
+
+		// Basic tests
 		{
 			asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

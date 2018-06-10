@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/06/06</h2>
+<h2>Version 2.33.0 WIP - 2018/06/10</h2>
 
 <ul>
 <li>Bug fixes
@@ -38,6 +38,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The bytecode for external shared entities is no longer saved in the module when inherited from (Thanks y18a)
 <li>Bytecode with external shared classes with virtual methods failed to load from bytecode (Thanks y18a)
 <li>Fixed assert failure on call to opCast(?&out) with a non-variable expression (Thanks Miss)
+<li>Passing a string literal to function expecting &out will now give compiler error (Thanks Jordan Verner)
 </ul>
 <li>Library
 <ul>
