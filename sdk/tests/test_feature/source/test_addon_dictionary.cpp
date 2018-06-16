@@ -23,6 +23,47 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test initialization lists with asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
+	// https://www.gamedev.net/forums/topic/697187-initialization-list-may-not-function-properly/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, 1);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"  dictionary d2 = { { 'a', dictionary = { { 'aa', 1 },{ 'ab', 2 } } }, \n"
+			"                    { 'b', dictionary = { { 'ba', 1 },{ 'bb', 2 } } } }; \n"
+			"  assert( d2.getSize() == 2 ); \n"
+			"  auto d2a = cast<dictionary>(d2['a']); \n"
+			"  assert( d2a.getSize() == 2 ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test circular reference with dictionary and ref
 	{
 		engine = asCreateScriptEngine();

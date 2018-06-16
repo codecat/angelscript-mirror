@@ -5236,8 +5236,13 @@ int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asITyp
 	const asCObjectType *objType = reinterpret_cast<const asCObjectType*>(type);
 
 	// If value assign for ref types has been disabled, then don't do anything if the type is a ref type
-	if( ep.disallowValueAssignForRefType && (objType->flags & asOBJ_REF) && !(objType->flags & asOBJ_SCOPED) )
+	if (ep.disallowValueAssignForRefType && (objType->flags & asOBJ_REF) && !(objType->flags & asOBJ_SCOPED))
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if (ctx)
+			ctx->SetException("Cannot do value assignment");
 		return asNOT_SUPPORTED;
+	}
 
 	// Must not copy if the opAssign is not available and the object is not a POD object
 	if( objType->beh.copy )

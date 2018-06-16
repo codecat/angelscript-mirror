@@ -3665,6 +3665,10 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 					if( bufferSize & 0x3 )
 						bufferSize += 4 - (bufferSize & 0x3);
 
+					// When value assignment for reference types us disabled, make sure all ref types are passed in as handles
+					if (engine->ep.disallowValueAssignForRefType && dt.SupportHandles())
+						dt.MakeHandle(true);
+
 					// Place the type id in the buffer
 					bcInit.InstrSHORT_DW_DW(asBC_SetListType, bufferVar, bufferSize, engine->GetTypeIdFromDataType(dt));
 					bufferSize += 4;
