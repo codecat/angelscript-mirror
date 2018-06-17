@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/06/16</h2>
+<h2>Version 2.33.0 WIP - 2018/06/17</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Bytecode with external shared classes with virtual methods failed to load from bytecode (Thanks y18a)
 <li>Fixed assert failure on call to opCast(?&out) with a non-variable expression (Thanks Miss)
 <li>Passing a string literal to function expecting &out will now give compiler error (Thanks Jordan Verner)
+<li>Fixed problem in compiler that didn't release a temporary variable when passing anonymous object to function expecting ?&in (Thanks y18a)
 </ul>
 <li>Library
 <ul>

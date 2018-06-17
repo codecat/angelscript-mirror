@@ -1553,6 +1553,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 						ctx->bc.Instr(asBC_PopPtr);
 						ctx->bc.InstrWORD(asBC_PSF, (asWORD)offset);
 
+						// Release the original temporary variable
+						if( ctx->type.isTemporary )
+							ReleaseTemporaryVariable(ctx->type.stackOffset, &ctx->bc);
+
 						ctx->type.SetVariable(dt, offset, true);
 					}
 

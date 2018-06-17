@@ -23,6 +23,48 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test anonymous object with asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
+	// https://www.gamedev.net/forums/topic/697187-initialization-list-may-not-function-properly/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->SetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE, 1);
+
+		RegisterStdString(engine);
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"  dictionary d1; \n"
+			"  d1.set('a', dictionary = { { 'aa', 1 },{ 'ab', 2 } }); \n"
+			"  auto d1a = cast<dictionary>(d1['a']); \n"
+			"  assert( d1a.getSize() == 2 ); \n"
+			"} \n");
+		// TODO: optimize: This code appears to generate an unnecessary refcpy 
+		//                 of the anonymous dictionary before calling the set()
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test initialization lists with asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
 	// https://www.gamedev.net/forums/topic/697187-initialization-list-may-not-function-properly/
 	{
