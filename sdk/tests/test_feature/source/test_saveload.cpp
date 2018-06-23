@@ -396,6 +396,46 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test same function in different namespaces
+	// https://www.gamedev.net/forums/topic/697445-loadbytecode-fails-when-there-is-a-function-with-the-same-name-in-the-namespace/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection(
+			"test",
+			"namespace X { shared float A()  {return 0.f;} }"
+			"namespace Y { shared float A()  {return 0.f;} }"
+			"void test() {"
+			"	float v;"
+			"	v = Y::A();"
+			"}");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1);
+		assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "") 
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test external shared classes in namespaces with virtual methods while loading bytecode
 	// https://www.gamedev.net/forums/topic/697083-loading-bytecode-fails-when-combining-namespace-and-shared-virtual-method/
 	{

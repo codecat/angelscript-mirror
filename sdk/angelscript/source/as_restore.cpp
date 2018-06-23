@@ -458,6 +458,7 @@ int asCReader::ReadInner()
 				if( realFunc &&
 					realFunc != func &&
 					realFunc->IsShared() &&
+					realFunc->nameSpace == func->nameSpace &&
 					realFunc->IsSignatureEqual(func) )
 				{
 					// Replace the recently created function with the pre-existing function
