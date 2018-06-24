@@ -186,6 +186,7 @@ public:
 	virtual void GCEnumCallback(void *reference);
 	virtual void ForwardGCEnumReferences(void *ref, asITypeInfo *type);
 	virtual void ForwardGCReleaseReferences(void *ref, asITypeInfo *type);
+	virtual void SetCircularRefDetectedCallback(asCIRCULARREFFUNC_t callback, void *param = 0);
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type);

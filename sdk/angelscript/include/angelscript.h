@@ -400,6 +400,7 @@ typedef void (*asCLEANTYPEINFOFUNC_t)(asITypeInfo *);
 typedef void (*asCLEANSCRIPTOBJECTFUNC_t)(asIScriptObject *);
 typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
+typedef void (*asCIRCULARREFFUNC_t)(asITypeInfo *, const void *, void *);
 
 // Check if the compiler can use C++11 features
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
@@ -763,6 +764,7 @@ public:
 	virtual void GCEnumCallback(void *reference) = 0;
 	virtual void ForwardGCEnumReferences(void *ref, asITypeInfo *type) = 0;
 	virtual void ForwardGCReleaseReferences(void *ref, asITypeInfo *type) = 0;
+	virtual void SetCircularRefDetectedCallback(asCIRCULARREFFUNC_t callback, void *param = 0) = 0;
 
 	// User data
 	virtual void *SetUserData(void *data, asPWORD type = 0) = 0;

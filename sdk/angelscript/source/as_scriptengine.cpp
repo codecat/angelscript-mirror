@@ -4652,6 +4652,12 @@ void asCScriptEngine::ForwardGCReleaseReferences(void *ref, asITypeInfo *type)
 	}
 }
 
+// interface
+void asCScriptEngine::SetCircularRefDetectedCallback(asCIRCULARREFFUNC_t callback, void *param)
+{
+	gc.circularRefDetectCallbackFunc  = callback;
+	gc.circularRefDetectCallbackParam = param;
+}
 
 int asCScriptEngine::GetTypeIdFromDataType(const asCDataType &dtIn) const
 {
