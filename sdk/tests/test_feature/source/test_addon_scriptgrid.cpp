@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "../../../add_on/scriptgrid/scriptgrid.h"
 #include "../../../add_on/scriptany/scriptany.h"
+#include "../../../add_on/scripthandle/scripthandle.h"
 
 namespace Test_Addon_ScriptGrid
 {
@@ -16,6 +17,28 @@ bool Test()
 //	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 //	asIScriptModule *mod;
+
+	// Test circular reference between grid and ref
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptHandle(engine);
+		RegisterScriptGrid(engine);
+
+		// Create the circular reference
+		r = ExecuteString(engine, "grid<ref> a; a.resize(1,1); @a[0,0] = a;");
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->GarbageCollect();
+
+		asUINT currSize, totDestroy, totDetect;
+		engine->GetGCStatistics(&currSize, &totDestroy, &totDetect);
+		if (currSize != 0 || totDestroy != 1 || totDetect != 1)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test empty initialization list
 	// http://www.gamedev.net/topic/658849-empty-array-initialization/
