@@ -5161,10 +5161,10 @@ int asCCompiler::AllocateVariableNotIn(const asCDataType &type, bool isTemporary
 	return var;
 }
 
-int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap)
+int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap, bool asReference)
 {
 	asCDataType t(type);
-	t.MakeReference(false);
+	t.MakeReference(asReference);
 
 	if( t.IsPrimitive() && t.GetSizeOnStackDWords() == 1 )
 		t.SetTokenType(ttInt);
@@ -12994,9 +12994,31 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 					l = int(reservedVariables.GetLength());
 					rctx->bc.GetVarsUsed(reservedVariables);
 
-					if (lctx->type.dataType.SupportHandles())
-						lctx->type.dataType.MakeHandle(true);
-					PrepareTemporaryVariable(node, lctx);
+					if (engine->ep.allowUnsafeReferences && lctx->type.dataType.IsObject() && (lctx->type.dataType.GetTypeInfo()->flags & asOBJ_VALUE))
+					{
+						// If the application allows unsafe references, then it is not necessary to 
+						// make a copy of the object, just store the reference as a local variable
+
+						// Allocate a temporary variable as reference to the type
+						asCDataType dt = lctx->type.dataType;
+						dt.MakeReference(true);
+						int offset = AllocateVariable(dt, true, false, true);
+
+						// Copy the pointer to the temporary variable
+						lctx->bc.InstrSHORT(asBC_PSF, (short)offset);
+						if (lctx->type.dataType.IsFuncdef())
+							lctx->bc.InstrPTR(asBC_REFCPY, &engine->functionBehaviours);
+						else
+							lctx->bc.InstrPTR(asBC_REFCPY, lctx->type.dataType.GetTypeInfo());
+
+						lctx->type.SetVariable(dt, offset, true);
+					}
+					else
+					{
+						if (lctx->type.dataType.SupportHandles())
+							lctx->type.dataType.MakeHandle(true);
+						PrepareTemporaryVariable(node, lctx);
+					}
 
 					reservedVariables.SetLength(l);
 				}

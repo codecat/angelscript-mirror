@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/07/07</h2>
+<h2>Version 2.33.0 WIP - 2018/07/08</h2>
 
 <ul>
 <li>Bug fixes
@@ -68,6 +68,11 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Class constructors can now be declared with private and protected too (Thanks noizex)
 <li>The correct resolution is now done for types implementing both opCast and opImplConv and the const overloads. The same for opConv and opImplConv
 <li>Initialization lists will implicitly assume objects by handle if asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE is used (Thanks y18a)
+<li>When unsafe references is allowed the stream operator (&lt;&lt;) can now be implemented on value types with correct behaviour for chained expressions (Thanks ASBai)
+</ul>
+<li>Virtual machine
+<ul>
+<li>The asBC_REFCPY and asBC_RefCpyV instructions can now be used with value types too
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

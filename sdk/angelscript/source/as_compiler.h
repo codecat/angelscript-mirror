@@ -363,7 +363,7 @@ protected:
 	asCArray<int> breakLabels;
 	asCArray<int> continueLabels;
 
-	int AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap = false);
+	int AllocateVariable(const asCDataType &type, bool isTemporary, bool forceOnHeap = false, bool asReference = false);
 	int AllocateVariableNotIn(const asCDataType &type, bool isTemporary, bool forceOnHeap, asCExprContext *ctx);
 	int GetVariableOffset(int varIndex);
 	int GetVariableSlot(int varOffset);

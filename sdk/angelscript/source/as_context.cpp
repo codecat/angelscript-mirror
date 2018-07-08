@@ -2850,10 +2850,10 @@ void asCContext::ExecuteNext()
 			if( !(objType->flags & asOBJ_NOCOUNT) )
 			{
 				// Release previous object held by destination pointer
-				if( *d != 0 )
+				if( *d != 0 && beh->release )
 					m_engine->CallObjectMethod(*d, beh->release);
 				// Increase ref counter of wanted object
-				if( s != 0 )
+				if( s != 0 && beh->addref )
 					m_engine->CallObjectMethod(s, beh->addref);
 			}
 
@@ -4109,10 +4109,10 @@ void asCContext::ExecuteNext()
 			if( !(objType->flags & asOBJ_NOCOUNT) )
 			{
 				// Release previous object held by destination pointer
-				if( *d != 0 )
+				if( *d != 0 && beh->release )
 					m_engine->CallObjectMethod(*d, beh->release);
 				// Increase ref counter of wanted object
-				if( s != 0 )
+				if( s != 0 && beh->addref )
 					m_engine->CallObjectMethod(s, beh->addref);
 			}
 
