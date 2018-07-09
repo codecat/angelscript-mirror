@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "scriptmath3d.h"
 
+void RegisterStdString_Generic(asIScriptEngine *engine);
+
 namespace TestUnsafeRef
 {
 
@@ -56,6 +58,32 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
+
+	// Test chained operations with global variables and with unsafe ref turned on
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, 1);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterStdString_Generic(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"const string \n"
+			"  sep_g = ';', \n"
+			"  row2_g = sep_g + sep_g + sep_g + sep_g; \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "assert( row2_g == ';;;;' );", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test stream operator on value type with unsafe ref turned on
 	// Observe, without unsafe references, the stream operator won't work due to the need to make copies of the value for each expression in order to guarantee safe references

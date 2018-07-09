@@ -13004,6 +13004,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 						dt.MakeReference(true);
 						int offset = AllocateVariable(dt, true, false, true);
 
+						Dereference(lctx, true);
+
 						// Copy the pointer to the temporary variable
 						lctx->bc.InstrSHORT(asBC_PSF, (short)offset);
 						if (lctx->type.dataType.IsFuncdef())
