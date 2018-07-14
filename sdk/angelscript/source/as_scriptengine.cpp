@@ -5172,8 +5172,30 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asITypeInfo *
 	void *newObj = 0;
 
 	const asCObjectType *ot = reinterpret_cast<const asCObjectType*>(type);
-	// TODO: runtime optimize: Should call copy factory for ref types too
-	if( ot->beh.copyconstruct )
+	if ((ot->flags & asOBJ_SCRIPT_OBJECT) && ot->beh.copyfactory)
+	{
+		// Call the script class' default factory with a context
+		newObj = ScriptObjectCopyFactory(ot, origObj, this);
+	}
+	else if (ot->beh.copyfactory)
+	{
+		// Call the copy factory which will allocate the memory then copy the original object
+#ifdef AS_NO_EXCEPTIONS
+		newObj = CallGlobalFunctionRetPtr(ot->beh.copyfactory, origObj);
+#else
+		try
+		{
+			newObj = CallGlobalFunctionRetPtr(ot->beh.copyfactory, origObj);
+		}
+		catch (...)
+		{
+			asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
+			if (ctx)
+				ctx->HandleAppException();
+		}
+#endif
+	}
+	else if( ot->beh.copyconstruct )
 	{
 		// Manually allocate the memory, then call the copy constructor
 		newObj = CallAlloc(ot);

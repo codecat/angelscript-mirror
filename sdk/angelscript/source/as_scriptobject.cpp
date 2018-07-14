@@ -121,6 +121,92 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	return ptr;
 }
 
+// This helper function will call the copy factory, that is a script function
+asIScriptObject *ScriptObjectCopyFactory(const asCObjectType *objType, void *origObj, asCScriptEngine *engine)
+{
+	asIScriptContext *ctx = 0;
+	int r = 0;
+	bool isNested = false;
+
+	// Use nested call in the context if there is an active context
+	ctx = asGetActiveContext();
+	if (ctx)
+	{
+		// It may not always be possible to reuse the current context, 
+		// in which case we'll have to create a new one any way.
+		if (ctx->GetEngine() == objType->GetEngine() && ctx->PushState() == asSUCCESS)
+			isNested = true;
+		else
+			ctx = 0;
+	}
+
+	if (ctx == 0)
+	{
+		// Request a context from the engine
+		ctx = engine->RequestContext();
+		if (ctx == 0)
+		{
+			// TODO: How to best report this failure?
+			return 0;
+		}
+	}
+
+	r = ctx->Prepare(engine->scriptFunctions[objType->beh.copyfactory]);
+	if (r < 0)
+	{
+		if (isNested)
+			ctx->PopState();
+		else
+			engine->ReturnContext(ctx);
+		return 0;
+	}
+
+	ctx->SetArgAddress(0, origObj);
+
+	for (;;)
+	{
+		r = ctx->Execute();
+
+		// We can't allow this execution to be suspended 
+		// so resume the execution immediately
+		if (r != asEXECUTION_SUSPENDED)
+			break;
+	}
+
+	if (r != asEXECUTION_FINISHED)
+	{
+		if (isNested)
+		{
+			ctx->PopState();
+
+			// If the execution was aborted or an exception occurred,
+			// then we should forward that to the outer execution.
+			if (r == asEXECUTION_EXCEPTION)
+			{
+				// TODO: How to improve this exception
+				ctx->SetException(TXT_EXCEPTION_IN_NESTED_CALL);
+			}
+			else if (r == asEXECUTION_ABORTED)
+				ctx->Abort();
+		}
+		else
+			engine->ReturnContext(ctx);
+		return 0;
+	}
+
+	asIScriptObject *ptr = (asIScriptObject*)ctx->GetReturnAddress();
+
+	// Increase the reference, because the context will release its pointer
+	ptr->AddRef();
+
+	if (isNested)
+		ctx->PopState();
+	else
+		engine->ReturnContext(ctx);
+
+	return ptr;
+}
+
 #ifdef AS_MAX_PORTABILITY
 
 static void ScriptObject_AddRef_Generic(asIScriptGeneric *gen)

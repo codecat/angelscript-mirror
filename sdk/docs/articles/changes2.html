@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/07/08</h2>
+<h2>Version 2.33.0 WIP - 2018/07/14</h2>
 
 <ul>
 <li>Bug fixes
@@ -54,6 +54,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Registered value types can now register GC behaviours to solve circular references involving these types
 <li>Reduced the size of the saved byte code, especially when there are lots of functions without parameters
 <li>AssignScriptObject will now set a script exception for ref types if asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE is used
+<li>The copy constructor of script classes are now used properly by the compiler (Thanks MrFloat)
 </ul>
 <li>Library interface
 <ul>

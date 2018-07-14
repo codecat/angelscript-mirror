@@ -156,6 +156,64 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
+	// Test copy constructors for script classes
+	// https://www.gamedev.net/forums/topic/697718-angelscript-no-copy-construction-for-script-classes/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int copyConstructCount = 0; \n"
+			"void Main() \n"
+			"{ \n"
+			"	TestClass arg; \n"
+			"	TestClass result = copyTest(arg); \n"
+			"} \n"
+			"class TestClass \n"
+			"{ \n"
+			"	TestClass() {} \n"
+			"	TestClass(const TestClass &in other) \n"
+			"	{ \n"
+			"		copyConstructCount++; \n"
+			"	} \n"
+			"} \n"
+			"TestClass copyTest(TestClass a) \n"
+			"{ \n"
+			"	return a; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "Main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		int *count = reinterpret_cast<int*>(mod->GetAddressOfGlobalVar(0));
+		if (*count != 3)
+			TEST_FAILED;
+
+		*count = 0;
+		asITypeInfo *type = mod->GetTypeInfoByName("TestClass");
+		asIScriptObject *obj1 = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObject(type));
+		// TODO: optimize: CreateScriptObjectCopy should use copy constructor
+		asIScriptObject *obj2 = reinterpret_cast<asIScriptObject*>(engine->CreateScriptObjectCopy(obj1, type));
+		if (*count != 1)
+			TEST_FAILED;
+		obj1->Release();
+		obj2->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test private constructors
 	// https://www.gamedev.net/forums/topic/696251-assigning-c-object-to-the-script-object-in-less-explicit-way/
 	// https://www.gamedev.net/forums/topic/696326-private-and-protected-have-no-effect-on-class-constructors/

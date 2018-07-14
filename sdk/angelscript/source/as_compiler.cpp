@@ -1362,7 +1362,8 @@ void asCCompiler::CompileInitAsCopy(asCDataType &dt, int offset, asCByteCode *bc
 	bool isObjectOnHeap = derefDestination ? false : IsVariableOnHeap(offset);
 
 	// Use copy constructor if available.
-	if(CastToObjectType(dt.GetTypeInfo()) && CastToObjectType(dt.GetTypeInfo())->beh.copyconstruct )
+	asCObjectType *ot = CastToObjectType(dt.GetTypeInfo());
+	if(!dt.IsObjectHandle() && ot && (ot->beh.copyconstruct || ot->beh.copyfactory))
 	{
 		PrepareForAssignment(&dt, arg, node, true);
 		int r = CallCopyConstructor(dt, offset, isObjectOnHeap, bc, arg, node, 0, derefDestination);
@@ -15243,23 +15244,27 @@ void asCCompiler::PerformFunctionCall(int funcId, asCExprContext *ctx, bool isCo
 	}
 	else
 	{
-		asASSERT(useVariable == false);
-
 		asCExprValue tmpExpr = ctx->type;
 
 		if( descr->returnType.GetSizeInMemoryBytes() )
 		{
-			// Allocate a temporary variable to hold the value, but make sure
-			// the temporary variable isn't used in any of the deferred arguments
-			int l = int(reservedVariables.GetLength());
-			for( asUINT n = 0; args && n < args->GetLength(); n++ )
+			int offset;
+			if (useVariable)
+				offset = varOffset;
+			else
 			{
-				asCExprContext *expr = (*args)[n]->origExpr;
-				if( expr )
-					expr->bc.GetVarsUsed(reservedVariables);
+				// Allocate a temporary variable to hold the value, but make sure
+				// the temporary variable isn't used in any of the deferred arguments
+				int l = int(reservedVariables.GetLength());
+				for (asUINT n = 0; args && n < args->GetLength(); n++)
+				{
+					asCExprContext *expr = (*args)[n]->origExpr;
+					if (expr)
+						expr->bc.GetVarsUsed(reservedVariables);
+				}
+				offset = AllocateVariable(descr->returnType, true);
+				reservedVariables.SetLength(l);
 			}
-			int offset = AllocateVariable(descr->returnType, true);
-			reservedVariables.SetLength(l);
 
 			ctx->type.SetVariable(descr->returnType, offset, true);
 

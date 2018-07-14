@@ -4773,6 +4773,19 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			}
 			else
 			{
+				// The copy constructor needs to be marked for easy finding
+				if (parameterTypes.GetLength() == 1 && parameterTypes[0].GetTypeInfo() == objType)
+				{
+					// Verify that there are not multiple options matching the copy constructor
+					// TODO: Need a better message, since the parameters can be slightly different, e.g. & vs @
+					if( objType->beh.copyconstruct )
+						WriteError(TXT_FUNCTION_ALREADY_EXIST, file, node);
+
+					objType->beh.copyconstruct = funcId;
+					objType->beh.copyfactory = factoryId;
+				}
+
+				// Register as a normal constructor
 				objType->beh.constructors.PushLast(funcId);
 
 				// Register the factory as well
