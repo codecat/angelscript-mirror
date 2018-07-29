@@ -770,7 +770,7 @@ bool Test2()
 	// TODO: The error message should explain that it is not possible to call super 
 	//       because the class doesn't derived from another class
 	if( bout.buffer != "script (1, 11) : Info    : Compiling A::A()\n"
-					   "script (1, 17) : Error   : No matching signatures to 'super()'\n" )
+					   "script (1, 17) : Error   : No matching symbol 'super'\n" )
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());
@@ -850,7 +850,7 @@ bool Test2()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 26) : Info    : Compiling void B::mthd()\n"
-					   "script (1, 40) : Error   : No matching signatures to 'super()'\n" )
+					   "script (1, 40) : Error   : No matching symbol 'super'\n" )
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());
@@ -878,7 +878,7 @@ bool Test2()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 27) : Info    : Compiling B::B()\n"
-					   "script (1, 33) : Error   : No matching signatures to 'super()'\n" )
+					   "script (1, 33) : Error   : No matching symbol '::super'\n" )
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());
@@ -892,14 +892,14 @@ bool Test2()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 11) : Info    : Compiling void A::method()\n"
-					   "script (1, 27) : Error   : Namespace 'B' doesn't exist.\n"
+					   "script (1, 27) : Error   : No matching symbol 'B::test'\n"
 					   "script (1, 38) : Error   : No matching signatures to 'A::method(const int)'\n"
 					   "script (1, 38) : Info    : Candidates are:\n"
 					   "script (1, 38) : Info    : void A::method()\n"
 					   "script (1, 65) : Error   : No matching signatures to 'A::method(const double)'\n"
 					   "script (1, 65) : Info    : Candidates are:\n"
 					   "script (1, 65) : Info    : void A::method()\n"
-					   "script (1, 79) : Error   : Namespace 'B::A' doesn't exist.\n" )
+					   "script (1, 79) : Error   : No matching symbol 'B::A::a'\n" )
 	{
 		TEST_FAILED;
 		PRINTF("%s", bout.buffer.c_str());

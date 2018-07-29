@@ -96,18 +96,18 @@ bool Test()
 
 		// The type B is not really garbage collected
 		asITypeInfo *t = mod->GetTypeInfoByDecl("B");
-		if( t->GetFlags() & asOBJ_GC )
+		if( t == 0 || (t->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
 
 		// grid<B> is not garbage collected since B is not
 		t = mod->GetTypeInfoByDecl("grid<B>");
-		if( (t->GetFlags() & asOBJ_GC) )
+		if( t == 0 || (t->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
 
 		// grid<B@> is however garbage collected because it is not possible to know 
 		// that no class derived from B can't form a circular reference with it.
 		t = mod->GetTypeInfoByDecl("grid<B@>");
-		if( !(t->GetFlags() & asOBJ_GC) )
+		if( t == 0 || !(t->GetFlags() & asOBJ_GC) )
 			TEST_FAILED;
 
 		r = ExecuteString(engine, "main()", mod);

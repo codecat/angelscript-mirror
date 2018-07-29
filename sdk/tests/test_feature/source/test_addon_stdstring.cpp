@@ -187,7 +187,7 @@ namespace Test_Addon_StdString
 				"  assert( parseFloat('123.456') == 123.456 ); \n"
 				"  assert( parseUInt('-1') == 0 ); \n"
 				"  assert( parseUInt('ABC', 16) == 0xABC ); \n"
-				"  assert( '12345'.length == 5 ); \n");
+				"  assert( '12345'.size == 5 ); \n");
 			if (r != asEXECUTION_FINISHED)
 				TEST_FAILED;
 

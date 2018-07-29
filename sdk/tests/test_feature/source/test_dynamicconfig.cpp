@@ -270,8 +270,9 @@ bool Test()
 	mod->AddScriptSection(TESTNAME, script1, strlen(script1), 0);
 	r = mod->Build();
 	if( r >= 0 || bout.buffer != "TestDynamicConfig (1, 1) : Info    : Compiling void Test()\n"
-                                 "TestDynamicConfig (3, 3) : Error   : No matching signatures to 'MyFunc()'\n" )
+                                 "TestDynamicConfig (3, 3) : Error   : No matching symbol 'MyFunc'\n" )
 	{
+		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
 	}
 

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/07/14</h2>
+<h2>Version 2.33.0 WIP - 2018/07/28</h2>
 
 <ul>
 <li>Bug fixes
@@ -55,6 +55,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Reduced the size of the saved byte code, especially when there are lots of functions without parameters
 <li>AssignScriptObject will now set a script exception for ref types if asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE is used
 <li>The copy constructor of script classes are now used properly by the compiler (Thanks MrFloat)
+<li>Refactored how he compiler does symbol lookups to better handle namespace hierarchies and child types. (Thanks y18a)
 </ul>
 <li>Library interface
 <ul>
@@ -92,6 +93,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>CScriptBuilder now supports having multiple meta data blocks for each entity (Thanks noizex)
 <li>CScriptHandle registers the ENUMREFS and RELEASEREFS gc behaviours
 <li>CScriptArray, CScriptDictionary, CScriptGrid, and CScriptAny now support forwarding gc enum callbacks to value types with gc behaviour
+<li>The array's and string's length property accessor has been renamed to 'size' to avoid conflict with the length() method
 </ul>
 <li>Project
 <ul>

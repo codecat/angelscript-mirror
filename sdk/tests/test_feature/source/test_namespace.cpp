@@ -419,9 +419,8 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		// TODO: The error message should be better, something like: Cannot call non-static member of class ns2::Base
 		if( bout.buffer != "test (11, 5) : Info    : Compiling void Derived::Setup()\n"
-						   "test (11, 20) : Error   : Namespace 'ns2::Base' doesn't exist.\n" )
+						   "test (11, 20) : Error   : Method 'ns2::Base::Setup' is not part of object 'Derived'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

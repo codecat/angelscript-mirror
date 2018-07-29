@@ -315,6 +315,29 @@ protected:
 	asSNameSpace *DetermineNameSpace(const asCString &scope);
 	int  SetupParametersAndReturnVariable(asCArray<asCString> &parameterNames, asCScriptNode *func);
 
+	enum SYMBOLTYPE
+	{
+		SL_NOMATCH,
+		SL_LOCALCONST,
+		SL_LOCALVAR,
+		SL_THISPTR,
+		SL_CLASSPROPACCESS,
+		SL_CLASSPROP,
+		SL_CLASSMETHOD,
+		SL_CLASSTYPE,
+		SL_GLOBALPROPACCESS,
+		SL_GLOBALCONST,
+		SL_GLOBALVAR,
+		SL_GLOBALFUNC,
+		SL_GLOBALTYPE,
+		SL_ENUMVAL,
+		SL_ERROR = -1
+	};
+
+	SYMBOLTYPE SymbolLookup(const asCString &name, const asCString &scope, asCObjectType *objType, asCExprContext *outResult);
+	SYMBOLTYPE SymbolLookupLocalVar(const asCString &name, asCExprContext *outResult);
+	SYMBOLTYPE SymbolLookupMember(const asCString &name, asCObjectType *objType, asCExprContext *outResult);
+
 	void DetermineSingleFunc(asCExprContext *ctx, asCScriptNode *node);
 
 	// Returns the cost of the conversion (the sum of the EConvCost performed)

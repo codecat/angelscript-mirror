@@ -8948,6 +8948,329 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asCExprContext *ctx)
 	return 0;
 }
 
+// returns:
+//  SL_LOCALCONST = local constant
+//  SL_LOCALVAR   = local variable
+//  SL_NOMATCH    = no match
+asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookupLocalVar(const asCString &name, asCExprContext *outResult)
+{
+	sVariable *v = 0;
+	if (variables)
+		v = variables->GetVariable(name.AddressOf());
+	if (v)
+	{
+		if (v->isPureConstant)
+		{
+			outResult->type.SetConstantData(v->type, v->constantValue);
+			return SL_LOCALCONST;
+		}
+
+		outResult->type.SetVariable(v->type, v->stackOffset, false);
+		return SL_LOCALVAR;
+	}
+
+	return SL_NOMATCH;
+}
+
+// returns:
+//  SL_CLASSPROPACCESS = class property accessor
+//  SL_CLASSPROP       = class property
+//  SL_CLASSMETHOD     = class method
+//  SL_CLASSTYPE       = class child type
+//  SL_NOMATCH         = no match
+//  SL_ERROR           = error
+asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookupMember(const asCString &name, asCObjectType *objType, asCExprContext *outResult)
+{
+	// See if there are any matching property accessors
+	asCExprContext access(engine);
+	access.type.Set(asCDataType::CreateType(objType, false));
+	access.type.dataType.MakeReference(true);
+	int r = 0;
+	if (r == 0)
+	{
+		// Normal property access
+		r = FindPropertyAccessor(name, &access, 0, 0, true);
+	}
+	if (r < 0) return SL_ERROR;
+	if (access.property_get || access.property_set)
+	{
+		MergeExprBytecodeAndType(outResult, &access);
+		outResult->type.dataType.SetTypeInfo(objType);
+		return SL_CLASSPROPACCESS;
+	}
+
+	// Look for matching properties
+	asCDataType dt;
+	dt = asCDataType::CreateType(objType, false);
+	asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
+	if (prop)
+	{
+		outResult->type.dataType.SetTypeInfo(objType);
+		return SL_CLASSPROP;
+	}
+
+	// If it is not a property, it may still be the name of a method
+	asCObjectType *ot = objType;
+	for (asUINT n = 0; n < ot->methods.GetLength(); n++)
+	{
+		asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+		if (f->name == name &&
+			(builder->module->accessMask & f->accessMask))
+		{
+			outResult->type.dataType.SetTypeInfo(objType);
+			return SL_CLASSMETHOD;
+		}
+	}
+
+	// If it is not a method, then it can still be a child type
+	for (asUINT n = 0; n < ot->childFuncDefs.GetLength(); n++)
+	{
+		if (ot->childFuncDefs[n]->name == name)
+		{
+			outResult->type.dataType.SetTypeInfo(objType);
+			return SL_CLASSTYPE;
+		}
+	}
+
+	return SL_NOMATCH;
+}
+
+// The purpose of this function is to find the entity that matches the symbol name respecting the scope and visibility hierarchy
+// The 'outResult' will be used to return info on what was identified, but no code will be produced by this function
+// input:
+//  name         = the name of the symbol to look for
+//  scope        = explicit scope informed
+//  objType      = used to look for symbols within object type (e.g. when compiling post op), in this case no local or global symbols will be looked up
+// returns:
+//  SL_NOMATCH          = no matching symbol
+//  SL_LOCALCONST       = local constant
+//  SL_LOCALVAR         = local variable
+//  SL_THISPTR          = this pointer
+//  SL_CLASSPROPACCESS  = class property accessor, lookupResult->dataType holds the object type in which the member was found
+//  SL_CLASSPROP        = class property, lookupResult->dataType holds the object type in which the member was found
+//  SL_CLASSMETHOD      = class method, lookupResult->dataType holds the object type in which the member was found
+//  SL_CLASSTYPE        = class child type, lookupResult->dataType holds the object type in which the member was found
+//  SL_GLOBALPROPACCESS = global property accessor
+//  SL_GLOBALCONST      = global constant
+//  SL_GLOBALVAR        = global variable
+//  SL_GLOBALFUNC       = global function
+//  SL_GLOBALTYPE       = type
+//  SL_ENUMVAL          = enum value
+//  SL_ERROR            = error
+asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const asCString &scope, asCObjectType *objType, asCExprContext *outResult)
+{
+	asASSERT(outResult);
+
+	// TODO: CompileVariableAccess should call SymbolLookup to identify the correct variable
+
+	// It is a local variable or parameter?
+	// This is not accessible by default arg expressions
+	if (!isCompilingDefaultArg && scope == "" && !objType )
+	{
+		SYMBOLTYPE r = SymbolLookupLocalVar(name, outResult);
+		if (r != 0)
+			return r;
+	}
+
+	// Is it a class member?
+	// This is not accessible by default arg expressions
+	if (!isCompilingDefaultArg && scope == "" && ((objType) || (outFunc && outFunc->objectType)))
+	{
+		if (name == THIS_TOKEN && !objType)
+		{
+			asCDataType dt = asCDataType::CreateType(outFunc->objectType, outFunc->IsReadOnly());
+
+			// The object pointer is located at stack position 0
+			outResult->type.SetVariable(dt, 0, false);
+			return SL_THISPTR;
+		}
+
+		if (m_isConstructor && name == SUPER_TOKEN && !objType)
+		{
+			// If the class is derived from another class, then super can be used to call the base' class constructor
+			if (outFunc && outFunc->objectType->derivedFrom)
+			{
+				outResult->type.dataType.SetTypeInfo(outFunc->objectType->derivedFrom);
+				return SL_CLASSMETHOD;
+			}
+		}
+
+		// Look for members in the type
+		SYMBOLTYPE r = SymbolLookupMember(name, objType ? objType : outFunc->objectType, outResult);
+		if (r != 0)
+			return r;
+	}
+
+	// Recursively search parent namespaces for global entities
+	asCString currScope = scope;
+
+	while( !objType )
+	{
+		// If the scope contains ::identifier, then use the last identifier as the class name and the rest of it as the namespace
+		// TODO: child funcdef: A scope can include a template type, e.g. array<ns::type>
+		int n = currScope.FindLast("::");
+		asCString typeName = n >= 0 ? currScope.SubString(n + 2) : currScope;
+		asCString nsName = n >= 0 ? currScope.SubString(0, n) : "::";
+		if (nsName == "")
+			nsName = "::";
+
+		// Get the namespace for this scope
+		asSNameSpace *ns = DetermineNameSpace(nsName);
+		if (ns)
+		{
+			// Is there a type with typeName in the namespace?
+			asCTypeInfo *scopeType = builder->GetType(typeName.AddressOf(), ns, 0);
+
+			// Check if the symbol is a member of that type
+			if (scopeType)
+			{
+				// Is it an object type?
+				if (CastToObjectType(scopeType))
+				{
+					SYMBOLTYPE r = SymbolLookupMember(name, CastToObjectType(scopeType), outResult);
+					if (r != 0)
+						return r;
+				}
+
+				// Is it an enum type?
+				if (CastToEnumType(scopeType))
+				{
+					asDWORD value = 0;
+					asCDataType dt;
+					if (builder->GetEnumValueFromType(CastToEnumType(scopeType), name.AddressOf(), dt, value))
+					{
+						// an enum value was resolved
+						outResult->type.SetConstantDW(dt, value);
+						return SL_ENUMVAL;
+					}
+				}
+			}
+		}
+
+		// Get the namespace for this scope. This may return null if the scope is an enum
+		ns = DetermineNameSpace(currScope);
+		if (ns && currScope != "::")
+			currScope = ns->name;
+
+		// Is it a global property?
+		if (ns)
+		{
+			// See if there are any matching global property accessors
+			asCExprContext access(engine);
+			int r = 0;
+			if (r == 0)
+			{
+				// Normal property access
+				r = FindPropertyAccessor(name, &access, 0, ns);
+			}
+			if (r < 0) return SL_ERROR;
+			if (access.property_get || access.property_set)
+			{
+				MergeExprBytecodeAndType(outResult, &access);
+				return SL_GLOBALPROPACCESS;
+			}
+
+			// See if there is any matching global property
+			bool isCompiled = true;
+			bool isPureConstant = false;
+			bool isAppProp = false;
+			asQWORD constantValue = 0;
+			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
+			if (prop)
+			{
+				// If the global property is a pure constant
+				// we can allow the compiler to optimize it. Pure
+				// constants are global constant variables that were
+				// initialized by literal constants.
+				if (isPureConstant)
+				{
+					outResult->type.SetConstantData(prop->type, constantValue);
+					return SL_GLOBALCONST;
+				}
+				else
+				{
+					outResult->type.Set(prop->type);
+					return SL_GLOBALVAR;
+				}
+			}
+		}
+
+		// Is it the name of a global function?
+		if (ns)
+		{
+			asCArray<int> funcs;
+
+			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+
+			if (funcs.GetLength() > 0)
+			{
+				// Defer the evaluation of which function until it is actually used
+				// Store the namespace and name of the function for later
+				outResult->type.SetUndefinedFuncHandle(engine);
+				outResult->methodName = ns ? ns->name + "::" + name : name;
+				return SL_GLOBALFUNC;
+			}
+		}
+
+		// Check for type names
+		if (ns)
+		{
+			asCTypeInfo *type = builder->GetType(name.AddressOf(), ns, 0);
+			if (type)
+			{
+				outResult->type.dataType = asCDataType::CreateType(type, false);
+				return SL_GLOBALTYPE;
+			}
+		}
+
+		// Is it an enum value?
+		if (!engine->ep.requireEnumScope)
+		{
+			// Look for the enum value without explicitly informing the enum type
+			asDWORD value = 0;
+			asCDataType dt;
+			asSNameSpace *nsEnum = DetermineNameSpace(currScope);
+			int e = 0;
+			if (nsEnum)
+				e = builder->GetEnumValue(name.AddressOf(), dt, value, nsEnum);
+			if (e)
+			{
+				if (e == 2)
+				{
+					// Ambiguous enum value: Save the name for resolution later.
+					// The ambiguity could be resolved now, but I hesitate
+					// to store too much information in the context.
+					outResult->enumValue = name.AddressOf();
+
+					// We cannot set a dummy value because it will pass through
+					// cleanly as an integer.
+					outResult->type.SetConstantDW(asCDataType::CreatePrimitive(ttIdentifier, true), 0);
+					return SL_ENUMVAL;
+				}
+				else
+				{
+					// an enum value was resolved
+					outResult->type.SetConstantDW(dt, value);
+					return SL_ENUMVAL;
+				}
+			}
+		}
+
+		if (currScope == "" || currScope == "::")
+			break;
+
+		// Move up to parent namespace
+		int pos = currScope.FindLast("::");
+		if (pos >= 0)
+			currScope = currScope.SubString(0, pos);
+		else
+			currScope = "::";
+	}
+
+	// The name doesn't match any symbol
+	return SL_NOMATCH;
+}
+
 int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asCExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, bool noGlobal, asCObjectType *objType)
 {
 	bool found = false;
@@ -10613,161 +10936,57 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 	asCScriptNode *nm = node->lastChild->prev;
 	asCString name(&script->code[nm->tokenPos], nm->tokenLength);
 
-	// First check for a local variable as it would take precedence
-	// Must not allow function names, nor global variables to be returned in this instance
+	// Find the matching entities
 	// If objectType is set then this is a post op expression and we shouldn't look for local variables
-	if( objectType == 0 )
+	asCExprContext lookupResult(engine);
+	SYMBOLTYPE symbolType = SymbolLookup(name, scope, objectType, &lookupResult);
+	if (symbolType < 0)
+		return -1;
+	if (symbolType == SL_NOMATCH)
 	{
-		localVar = CompileVariableAccess(name, scope, &funcExpr, node, true, true, true);
-		if( localVar >= 0 &&
-			!(funcExpr.type.dataType.IsFuncdef() || funcExpr.type.dataType.IsObject()) &&
-			funcExpr.methodName == "" )
+		// No matching symbol
+		asCString msg;
+		asCString smbl;
+		if (scope == "::")
+			smbl = scope;
+		else if (scope != "")
+			smbl = scope + "::";
+		smbl += name;
+		msg.Format(TXT_NO_MATCHING_SYMBOL_s, smbl.AddressOf());
+		Error(msg, node);
+		return -1;
+	}
+
+	// Is the symbol matching a variable/property?
+	if (symbolType == SL_LOCALCONST || symbolType == SL_LOCALVAR ||
+		symbolType == SL_THISPTR || symbolType == SL_CLASSPROPACCESS || symbolType == SL_CLASSPROP ||
+		symbolType == SL_GLOBALPROPACCESS || symbolType == SL_GLOBALCONST || symbolType == SL_GLOBALVAR || symbolType == SL_ENUMVAL)
+	{
+		// Variables/properties can be used as functions if they have the opCall
+		if (!(lookupResult.type.dataType.IsFuncdef() || lookupResult.type.dataType.IsObject()))
 		{
 			// The variable is not a function or object with opCall
 			asCString msg;
-			msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), funcExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
+			msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), lookupResult.type.dataType.Format(outFunc->nameSpace).AddressOf());
 			Error(msg, node);
 			return -1;
 		}
 
-		// If the name matches a method name, then reset the indicator that nothing was found
-		if( funcExpr.methodName != "" )
-			localVar = -1;
-	}
+		// Compile the variable
+		// TODO: Take advantage of the known symbol, so it doesn't have to be looked up again
+		localVar = CompileVariableAccess(name, scope, &funcExpr, node, false, true, false, objectType);
+		asASSERT(localVar >= 0);
 
-	if( localVar < 0 )
-	{
-		// If this is an expression post op, or if a class method is
-		// being compiled, then we should look for matching class methods
-		if( objectType || (outFunc && outFunc->objectType && scope != "::") )
-		{
-			// If we're compiling a constructor and the name of the function is super then
-			// the constructor of the base class is being called.
-			// super cannot be prefixed with a scope operator
-			if( scope == "" && m_isConstructor && name == SUPER_TOKEN )
-			{
-				// If the class is not derived from anyone else, calling super should give an error
-				if( outFunc && outFunc->objectType->derivedFrom )
-					funcs = outFunc->objectType->derivedFrom->beh.constructors;
-
-				// Must not allow calling base class' constructor multiple times
-				if( continueLabels.GetLength() > 0 )
-				{
-					// If a continue label is set we are in a loop
-					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS, node);
-				}
-				else if( breakLabels.GetLength() > 0 )
-				{
-					// TODO: inheritance: Should eventually allow constructors in switch statements
-					// If a break label is set we are either in a loop or a switch statements
-					Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH, node);
-				}
-				else if( m_isConstructorCalled )
-				{
-					Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, node);
-				}
-				m_isConstructorCalled = true;
-
-				// We need to initialize the class members, but only after all the deferred arguments have been completed
-				initializeMembers = true;
-			}
-			else
-			{
-				// The scope can be used to specify the base class
-				builder->GetObjectMethodDescriptions(name.AddressOf(), objectType ? objectType : outFunc->objectType, funcs, objIsConst, scope, node, script);
-			}
-
-			// It is still possible that there is a class member of a function type or a type with opCall methods
-			if( funcs.GetLength() == 0 )
-			{
-				int r = CompileVariableAccess(name, scope, &funcExpr, node, true, true, true, objectType);
-				if( r >= 0 &&
-					!(funcExpr.type.dataType.IsFuncdef() || funcExpr.type.dataType.IsObject()) &&
-					funcExpr.methodName == "" )
-				{
-					// The variable is not a function
-					asCString msg;
-					msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), funcExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
-					Error(msg, node);
-					return -1;
-				}
-
-				// If the name is an access property, make sure the original value isn't
-				// dereferenced when calling the access property as part a dot post operator
-				if( objectType && (funcExpr.property_get || funcExpr.property_set) && !ctx->type.dataType.IsReference() )
-					funcExpr.property_ref = false;
-			}
-
-			// If a class method is being called implicitly, then add the this pointer for the call
-			if( funcs.GetLength() && !objectType )
-			{
-				objectType = outFunc->objectType;
-
-				asCDataType dt = asCDataType::CreateType(objectType, false);
-
-				// The object pointer is located at stack position 0
-				ctx->bc.InstrSHORT(asBC_PSF, 0);
-				ctx->type.SetVariable(dt, 0, false);
-				ctx->type.dataType.MakeReference(true);
-
-				Dereference(ctx, true);
-			}
-		}
-
-		// If it is not a class method or member function pointer,
-		// then look for global functions or global function pointers,
-		// unless this is an expression post op, incase only member
-		// functions are expected
-		if( objectType == 0 && funcs.GetLength() == 0 && (!funcExpr.type.dataType.IsFuncdef() || funcExpr.type.dataType.IsObject()) )
-		{
-			// The scope is used to define the namespace
-			asSNameSpace *ns = DetermineNameSpace(scope);
-			if( ns )
-			{
-				// Search recursively in parent namespaces
-				while( ns && funcs.GetLength() == 0 && !funcExpr.type.dataType.IsFuncdef() )
-				{
-					builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
-					if( funcs.GetLength() == 0 )
-					{
-						int r = CompileVariableAccess(name, scope, &funcExpr, node, true, true);
-						if( r >= 0 &&
-							!(funcExpr.type.dataType.IsFuncdef() || funcExpr.type.dataType.IsObject()) &&
-							funcExpr.methodName == "" )
-						{
-							// The variable is not a function
-							asCString msg;
-							msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), funcExpr.type.dataType.Format(outFunc->nameSpace).AddressOf());
-							Error(msg, node);
-							return -1;
-						}
-					}
-
-					ns = engine->GetParentNameSpace(ns);
-				}
-			}
-			else
-			{
-				asCString msg;
-				msg.Format(TXT_NAMESPACE_s_DOESNT_EXIST, scope.AddressOf());
-				Error(msg, node);
-				return -1;
-			}
-		}
-	}
-
-	if( funcs.GetLength() == 0 )
-	{
-		if( funcExpr.type.dataType.IsFuncdef() )
+		if (funcExpr.type.dataType.IsFuncdef())
 		{
 			funcs.PushLast(CastToFuncdefType(funcExpr.type.dataType.GetTypeInfo())->funcdef->id);
 		}
-		else if( funcExpr.type.dataType.IsObject() )
+		else if (funcExpr.type.dataType.IsObject())
 		{
 			// Keep information about temporary variables as deferred expression so it can be properly cleaned up after the call
-			if( ctx->type.isTemporary )
+			if (ctx->type.isTemporary)
 			{
-				asASSERT( objectType );
+				asASSERT(objectType);
 
 				asSDeferredParam deferred;
 				deferred.origExpr = 0;
@@ -10777,10 +10996,16 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 
 				ctx->deferredParams.PushLast(deferred);
 			}
-			if( funcExpr.property_get == 0 )
+			if (funcExpr.property_get == 0)
 				Dereference(ctx, true);
 
 			// Add the bytecode for accessing the object on which opCall will be called
+			if (ctx->type.dataType.IsObject())
+			{
+				// Make sure the ProcessPropertyGetAccess knows whether or not to
+				// dereference the original object before calling the get accessor
+				funcExpr.property_ref = ctx->type.dataType.IsReference();
+			}
 			MergeExprBytecodeAndType(ctx, &funcExpr);
 			ProcessPropertyGetAccessor(ctx, node);
 			Dereference(ctx, true);
@@ -10788,7 +11013,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 			objectType = CastToObjectType(funcExpr.type.dataType.GetTypeInfo());
 
 			// Get the opCall methods from the object type
-			if( funcExpr.type.dataType.IsObjectHandle() )
+			if (funcExpr.type.dataType.IsObjectHandle())
 				objIsConst = funcExpr.type.dataType.IsHandleToConst();
 			else
 				objIsConst = funcExpr.type.dataType.IsReadOnly();
@@ -10797,9 +11022,90 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		}
 	}
 
-	// If at this point no functions have been identified, then this may
-	// be a construct call unless we're compiling a post op expression
-	if( funcs.GetLength() == 0 && objectType == 0 )
+	// Is the symbol matching a class method?
+	if (symbolType == SL_CLASSMETHOD)
+	{
+		// If we're compiling a constructor and the name of the function is super then
+		// the constructor of the base class is being called.
+		// super cannot be prefixed with a scope operator
+		if (scope == "" && m_isConstructor && name == SUPER_TOKEN)
+		{
+			// If the class is not derived from anyone else, calling super should give an error
+			if (outFunc && outFunc->objectType->derivedFrom)
+				funcs = outFunc->objectType->derivedFrom->beh.constructors;
+
+			// Must not allow calling base class' constructor multiple times
+			if (continueLabels.GetLength() > 0)
+			{
+				// If a continue label is set we are in a loop
+				Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS, node);
+			}
+			else if (breakLabels.GetLength() > 0)
+			{
+				// TODO: inheritance: Should eventually allow constructors in switch statements
+				// If a break label is set we are either in a loop or a switch statements
+				Error(TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH, node);
+			}
+			else if (m_isConstructorCalled)
+			{
+				Error(TXT_CANNOT_CALL_CONSTRUCTOR_TWICE, node);
+			}
+			m_isConstructorCalled = true;
+
+			// We need to initialize the class members, but only after all the deferred arguments have been completed
+			initializeMembers = true;
+		}
+		else
+		{
+			// The scope can be used to specify the base class
+			builder->GetObjectMethodDescriptions(name.AddressOf(), CastToObjectType(lookupResult.type.dataType.GetTypeInfo()), funcs, objIsConst, scope, node, script);
+		}
+
+		// If a class method is being called implicitly, then add the this pointer for the call
+		if (funcs.GetLength() && !objectType)
+		{
+			// Verify that the identified function is actually part of the class hierarchy
+			if (!outFunc->objectType->DerivesFrom(lookupResult.type.dataType.GetTypeInfo()))
+			{
+				asCString msg;
+				asCString mthd;
+				if (scope == "")
+					mthd = name;
+				else if (scope == "::")
+					mthd = scope + name;
+				else
+					mthd = scope + "::" + name;
+
+				msg.Format(TXT_METHOD_s_NOT_PART_OF_OBJECT_s, mthd.AddressOf(), outFunc->objectType->name.AddressOf());
+				Error(msg, node);
+				return -1;
+			}
+			
+			objectType = outFunc->objectType;
+
+			asCDataType dt = asCDataType::CreateType(objectType, false);
+
+			// The object pointer is located at stack position 0
+			ctx->bc.InstrSHORT(asBC_PSF, 0);
+			ctx->type.SetVariable(dt, 0, false);
+			ctx->type.dataType.MakeReference(true);
+
+			Dereference(ctx, true);
+		}
+	}
+	
+	// Is it a global function?
+	if (symbolType == SL_GLOBALFUNC)
+	{
+		// The symbol lookup identified the namespace to use
+		int n = lookupResult.methodName.FindLast("::");
+		asSNameSpace *ns = engine->FindNameSpace(lookupResult.methodName.SubString(0, n).AddressOf());
+
+		builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+	}
+
+	// Is it a type?
+	if (symbolType == SL_CLASSTYPE || symbolType == SL_GLOBALTYPE)
 	{
 		bool isValid = false;
 		asCDataType dt = builder->CreateDataTypeFromNode(node->firstChild, script, outFunc->nameSpace, false, 0, false, &isValid);
@@ -11498,11 +11804,14 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 
 		if( multipleGetFuncs.GetLength() > 1 )
 		{
-			asCString str;
-			str.Format(TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s, name.AddressOf());
-			Error(str, node);
+			if (node)
+			{
+				asCString str;
+				str.Format(TXT_MULTIPLE_PROP_GET_ACCESSOR_FOR_s, name.AddressOf());
+				Error(str, node);
 
-			PrintMatchingFuncs(multipleGetFuncs, node);
+				PrintMatchingFuncs(multipleGetFuncs, node);
+			}
 
 			return -1;
 		}
@@ -11520,11 +11829,14 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 
 		if( multipleSetFuncs.GetLength() > 1 )
 		{
-			asCString str;
-			str.Format(TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s, name.AddressOf());
-			Error(str, node);
+			if (node)
+			{
+				asCString str;
+				str.Format(TXT_MULTIPLE_PROP_SET_ACCESSOR_FOR_s, name.AddressOf());
+				Error(str, node);
 
-			PrintMatchingFuncs(multipleSetFuncs, node);
+				PrintMatchingFuncs(multipleSetFuncs, node);
+			}
 
 			return -1;
 		}
@@ -11547,15 +11859,18 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 			!((getFunc->returnType.IsObjectHandle() && !setFunc->parameterTypes[idx].IsObjectHandle()) &&
 			  (getFunc->returnType.GetTypeInfo() == setFunc->parameterTypes[idx].GetTypeInfo())) )
 		{
-			asCString str;
-			str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.AddressOf());
-			Error(str, node);
+			if (node)
+			{
+				asCString str;
+				str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.AddressOf());
+				Error(str, node);
 
-			asCArray<int> funcs;
-			funcs.PushLast(getId);
-			funcs.PushLast(setId);
+				asCArray<int> funcs;
+				funcs.PushLast(getId);
+				funcs.PushLast(setId);
 
-			PrintMatchingFuncs(funcs, node);
+				PrintMatchingFuncs(funcs, node);
+			}
 
 			return -1;
 		}
@@ -11909,7 +12224,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode 
 		// Setup the context with the original type so the method call gets built correctly
 		ctx->type.dataType = asCDataType::CreateType(func->objectType, ctx->property_const);
 		if( ctx->property_handle ) ctx->type.dataType.MakeHandle(true);
-		if( ctx->property_ref )	ctx->type.dataType.MakeReference(true);
+		if( ctx->property_ref ) ctx->type.dataType.MakeReference(true);
 
 		// Don't allow the call if the object is read-only and the property accessor is not const
 		if( ctx->property_const && !func->IsReadOnly() )

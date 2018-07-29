@@ -122,6 +122,7 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 }
 
 // This helper function will call the copy factory, that is a script function
+// TODO: Clean up: This function is almost identical to ScriptObjectFactory. Should make better use of the identical code.
 asIScriptObject *ScriptObjectCopyFactory(const asCObjectType *objType, void *origObj, asCScriptEngine *engine)
 {
 	asIScriptContext *ctx = 0;

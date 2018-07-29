@@ -780,7 +780,7 @@ bool Test()
 			"  string hello = 'hello'; \n"
 			"  int a = Func(); \n"
 			"  string str = 'again'; \n"
-			"  int Func() { return str.length; } \n"
+			"  int Func() { return str.size; } \n"
 			"}");
 		r = mod->Build();
 		if( r < 0 )
@@ -1018,7 +1018,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "test2 (1, 7) : Info    : Compiling T::T()\n"
-		                   "test (2, 11) : Error   : No matching signatures to 'func()'\n" )
+		                   "test (2, 11) : Error   : No matching symbol 'func'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

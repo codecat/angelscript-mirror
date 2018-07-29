@@ -334,6 +334,7 @@ asDWORD ComputeCRC32(const asBYTE *buf, asUINT length)
 
 bool ValidateByteCode(asIScriptFunction *func, asBYTE *expect)
 {
+	if (func == 0) return false;
 	asUINT len;
 	asDWORD *bc = func->GetByteCode(&len);
 	for( asUINT n = 0, i = 0; n < len; )

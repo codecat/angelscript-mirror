@@ -18,6 +18,43 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test auto and namespace
+	// https://www.gamedev.net/forums/topic/696791-namespaces-can-not-be-resolved-well-in-some-cases/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace A \n"
+			"{ \n"
+			"  class X \n"
+			"  { \n"
+			"    X() { } \n"
+			"  } \n"
+			"} \n"
+			"void X() \n"
+			"{ \n"
+			"  auto test = A::X(); \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  X(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test auto and dictionary
 	// Before fix, this crashed due to the dictionaryValue not having any matching opEquals methods, 
 	// making the compiler attempt to find opEquals methods on the 'null' expression, which caused a 

@@ -201,7 +201,7 @@ bool Test()
 			TEST_FAILED;
 
 		if (bout.buffer != "test (8, 1) : Info    : Compiling int main()\n"
-						   "test (11, 4) : Error   : No matching signatures to 'A::B()'\n")
+						   "test (11, 4) : Error   : No matching symbol 'B'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -2521,7 +2521,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (3, 3) : Info    : Compiling void Test::Do()\n"
-		                   "test (4, 14) : Error   : No matching signatures to 'Test::DoFail()'\n" )
+		                   "test (4, 14) : Error   : No matching symbol 'DoFail'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3372,6 +3372,7 @@ bool Test()
 		bout.buffer = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		const char *script8 =
+			"void Print(const string &in) {} \n"
 			"float calc(float x, float y) { Print(\"GOT THESE NUMBERS: \" + x + \", \" + y + \"\n\"); return x*y; }";
 		mod->AddScriptSection("script", script8, strlen(script8));
 		r = mod->Build();
@@ -3379,9 +3380,8 @@ bool Test()
 		{
 			TEST_FAILED;
 		}
-		if (bout.buffer != "script (1, 1) : Info    : Compiling float calc(float, float)\n"
-			"script (1, 77) : Error   : Multiline strings are not allowed in this application\n"
-			"script (1, 32) : Error   : No matching signatures to 'Print(string)'\n")
+		if (bout.buffer != "script (2, 1) : Info    : Compiling float calc(float, float)\n"
+			"script (2, 77) : Error   : Multiline strings are not allowed in this application\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3563,7 +3563,7 @@ bool Test()
 		r = mod->Build();
 		if (r >= 0) TEST_FAILED;
 		if (bout.buffer != "script20 (2, 1) : Info    : Compiling void test()\n"
-			"script20 (3, 22) : Error   : No matching signatures to 'A::GetClient()'\n")
+			"script20 (3, 22) : Error   : No matching symbol 'GetClient'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4245,7 +4245,7 @@ bool Test()
 			"x=new_x; \n"
 			"} \n"
 			"} \n"
-			"  \n"
+			"void alert(const string &in) {}\n"
 			"void main() \n"
 			"{ \n"
 			"alert('Result', '' + bad.x + ''); \n"
@@ -4256,7 +4256,6 @@ bool Test()
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		RegisterScriptString(engine);
-
 
 		bout.buffer = "";
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
