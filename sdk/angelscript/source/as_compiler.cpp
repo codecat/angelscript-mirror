@@ -8986,6 +8986,9 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookupMember(const asCString &name, a
 	access.type.Set(asCDataType::CreateType(objType, false));
 	access.type.dataType.MakeReference(true);
 	int r = 0;
+	// Indexed property access
+	asCExprContext dummyArg(engine);
+	r = FindPropertyAccessor(name, &access, &dummyArg, 0, 0, true);
 	if (r == 0)
 	{
 		// Normal property access
@@ -9050,18 +9053,16 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookupMember(const asCString &name, a
 //  SL_CLASSPROP        = class property, lookupResult->dataType holds the object type in which the member was found
 //  SL_CLASSMETHOD      = class method, lookupResult->dataType holds the object type in which the member was found
 //  SL_CLASSTYPE        = class child type, lookupResult->dataType holds the object type in which the member was found
-//  SL_GLOBALPROPACCESS = global property accessor
-//  SL_GLOBALCONST      = global constant
-//  SL_GLOBALVAR        = global variable
-//  SL_GLOBALFUNC       = global function
-//  SL_GLOBALTYPE       = type
-//  SL_ENUMVAL          = enum value
+//  SL_GLOBALPROPACCESS = global property accessor, lookupResult->symbolNamespace holds the namespace where the symbol was identified
+//  SL_GLOBALCONST      = global constant, lookupResult->symbolNamespace holds the namespace where the symbol was identified
+//  SL_GLOBALVAR        = global variable, lookupResult->symbolNamespace holds the namespace where the symbol was identified
+//  SL_GLOBALFUNC       = global function, lookupResult->symbolNamespace holds the namespace where the symbol was identified
+//  SL_GLOBALTYPE       = type, lookupResult->dataType holds the type
+//  SL_ENUMVAL          = enum value, lookupResult->dataType holds the enum type, unless ambigious. lookupResult->symbolNamespace holds the namespace where the symbol was identified
 //  SL_ERROR            = error
 asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const asCString &scope, asCObjectType *objType, asCExprContext *outResult)
 {
 	asASSERT(outResult);
-
-	// TODO: CompileVariableAccess should call SymbolLookup to identify the correct variable
 
 	// It is a local variable or parameter?
 	// This is not accessible by default arg expressions
@@ -9102,20 +9103,33 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 	}
 
 	// Recursively search parent namespaces for global entities
-	asCString currScope = scope;
-
-	while( !objType )
+	asSNameSpace *currNamespace = DetermineNameSpace("");
+	while( !objType && currNamespace )
 	{
+		asCString currScope = scope;
+
 		// If the scope contains ::identifier, then use the last identifier as the class name and the rest of it as the namespace
 		// TODO: child funcdef: A scope can include a template type, e.g. array<ns::type>
 		int n = currScope.FindLast("::");
 		asCString typeName = n >= 0 ? currScope.SubString(n + 2) : currScope;
-		asCString nsName = n >= 0 ? currScope.SubString(0, n) : "::";
-		if (nsName == "")
-			nsName = "::";
+		asCString nsName = n >= 0 ? currScope.SubString(0, n) : "";
+
+		// If the scope starts with :: then search from the global scope
+		if (currScope.GetLength() < 2 || currScope[0] != ':')
+		{
+			if (nsName != "")
+			{
+				if (currNamespace->name != "")
+					nsName = currNamespace->name + "::" + nsName;
+			}
+			else
+				nsName = currNamespace->name;
+		}
+		else
+			nsName = nsName.SubString(2);
 
 		// Get the namespace for this scope
-		asSNameSpace *ns = DetermineNameSpace(nsName);
+		asSNameSpace *ns = engine->FindNameSpace(nsName.AddressOf());
 		if (ns)
 		{
 			// Is there a type with typeName in the namespace?
@@ -9141,6 +9155,7 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 					{
 						// an enum value was resolved
 						outResult->type.SetConstantDW(dt, value);
+						outResult->symbolNamespace = ns;
 						return SL_ENUMVAL;
 					}
 				}
@@ -9148,9 +9163,23 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 		}
 
 		// Get the namespace for this scope. This may return null if the scope is an enum
-		ns = DetermineNameSpace(currScope);
-		if (ns && currScope != "::")
-			currScope = ns->name;
+		nsName = currScope;
+
+		// If the scope starts with :: then search from the global scope
+		if (currScope.GetLength() < 2 || currScope[0] != ':')
+		{
+			if (nsName != "")
+			{
+				if (currNamespace->name != "")
+					nsName = currNamespace->name + "::" + nsName;
+			}
+			else
+				nsName = currNamespace->name;
+		}
+		else
+			nsName = nsName.SubString(2);
+
+		ns = engine->FindNameSpace(nsName.AddressOf());
 
 		// Is it a global property?
 		if (ns)
@@ -9158,6 +9187,9 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 			// See if there are any matching global property accessors
 			asCExprContext access(engine);
 			int r = 0;
+			// Indexed property access
+			asCExprContext dummyArg(engine);
+			r = FindPropertyAccessor(name, &access, &dummyArg, 0, ns);
 			if (r == 0)
 			{
 				// Normal property access
@@ -9167,6 +9199,7 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 			if (access.property_get || access.property_set)
 			{
 				MergeExprBytecodeAndType(outResult, &access);
+				outResult->symbolNamespace = ns;
 				return SL_GLOBALPROPACCESS;
 			}
 
@@ -9185,11 +9218,13 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 				if (isPureConstant)
 				{
 					outResult->type.SetConstantData(prop->type, constantValue);
+					outResult->symbolNamespace = ns;
 					return SL_GLOBALCONST;
 				}
 				else
 				{
 					outResult->type.Set(prop->type);
+					outResult->symbolNamespace = ns;
 					return SL_GLOBALVAR;
 				}
 			}
@@ -9208,6 +9243,7 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 				// Store the namespace and name of the function for later
 				outResult->type.SetUndefinedFuncHandle(engine);
 				outResult->methodName = ns ? ns->name + "::" + name : name;
+				outResult->symbolNamespace = ns;
 				return SL_GLOBALFUNC;
 			}
 		}
@@ -9224,15 +9260,12 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 		}
 
 		// Is it an enum value?
-		if (!engine->ep.requireEnumScope)
+		if (ns && !engine->ep.requireEnumScope)
 		{
 			// Look for the enum value without explicitly informing the enum type
 			asDWORD value = 0;
 			asCDataType dt;
-			asSNameSpace *nsEnum = DetermineNameSpace(currScope);
-			int e = 0;
-			if (nsEnum)
-				e = builder->GetEnumValue(name.AddressOf(), dt, value, nsEnum);
+			int e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
 			if (e)
 			{
 				if (e == 2)
@@ -9245,44 +9278,71 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 					// We cannot set a dummy value because it will pass through
 					// cleanly as an integer.
 					outResult->type.SetConstantDW(asCDataType::CreatePrimitive(ttIdentifier, true), 0);
+					outResult->symbolNamespace = ns;
 					return SL_ENUMVAL;
 				}
 				else
 				{
 					// an enum value was resolved
 					outResult->type.SetConstantDW(dt, value);
+					outResult->symbolNamespace = ns;
 					return SL_ENUMVAL;
 				}
 			}
 		}
 
-		if (currScope == "" || currScope == "::")
+		// If the given scope starts with '::' then the search starts from global scope
+		if (scope.GetLength() >= 2 && scope[0] == ':')
 			break;
 
 		// Move up to parent namespace
-		int pos = currScope.FindLast("::");
-		if (pos >= 0)
-			currScope = currScope.SubString(0, pos);
-		else
-			currScope = "::";
+		currNamespace = engine->GetParentNameSpace(currNamespace);
 	}
 
 	// The name doesn't match any symbol
 	return SL_NOMATCH;
 }
 
-int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asCExprContext *ctx, asCScriptNode *errNode, bool isOptional, bool noFunction, bool noGlobal, asCObjectType *objType)
+int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &scope, asCExprContext *ctx, asCScriptNode *errNode, bool isOptional, asCObjectType *objType)
 {
-	bool found = false;
+	asCExprContext lookupResult(engine);
+	SYMBOLTYPE symbolType = SymbolLookup(name, scope, objType, &lookupResult);
+	if (symbolType < 0)
+	{
+		// Give dummy value
+		ctx->type.SetDummy();
+
+		return -1;
+	}
+	if (symbolType == SL_NOMATCH)
+	{
+		// Give dummy value
+		ctx->type.SetDummy();
+
+		if (!isOptional)
+		{
+			// No matching symbol
+			asCString msg;
+			asCString smbl;
+			if (scope == "::")
+				smbl = scope;
+			else if (scope != "")
+				smbl = scope + "::";
+			smbl += name;
+			msg.Format(TXT_NO_MATCHING_SYMBOL_s, smbl.AddressOf());
+			Error(msg, errNode);
+		}
+		return -1;
+	}
 
 	// It is a local variable or parameter?
-	// This is not accessible by default arg expressions
-	sVariable *v = 0;
-	if( !isCompilingDefaultArg && scope == "" && !objType && variables )
-		v = variables->GetVariable(name.AddressOf());
-	if( v )
+	if( symbolType == SL_LOCALCONST || symbolType == SL_LOCALVAR )
 	{
-		found = true;
+		// This is not accessible by default arg expressions
+		asASSERT(!isCompilingDefaultArg && scope == "" && !objType && variables);
+
+		sVariable *v = variables->GetVariable(name.AddressOf());
+		asASSERT(v);
 
 		if( v->isPureConstant )
 			ctx->type.SetConstantData(v->type, v->constantValue);
@@ -9324,14 +9384,19 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			if (!v->type.IsReadOnly())
 				ctx->type.isLValue = true;
 		}
+
+		return 0;
 	}
 
 	// Is it a class member?
-	// This is not accessible by default arg expressions
-	if( !isCompilingDefaultArg && !found && ((objType) || (outFunc && outFunc->objectType && scope == "")) )
+	if (symbolType == SL_CLASSPROPACCESS || symbolType == SL_CLASSPROP || symbolType == SL_CLASSMETHOD || symbolType == SL_THISPTR)
 	{
-		if( name == THIS_TOKEN && !objType )
+		// This is not accessible by default arg expressions
+		asASSERT(!isCompilingDefaultArg);
+
+		if (symbolType == SL_THISPTR)
 		{
+			asASSERT(name == THIS_TOKEN && !objType && scope == "");
 			asCDataType dt = asCDataType::CreateType(outFunc->objectType, outFunc->IsReadOnly());
 
 			// The object pointer is located at stack position 0
@@ -9343,436 +9408,367 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			// The 'this' handle is always considered safe (i.e. life time guaranteed)
 			ctx->type.isRefSafe = true;
 
-			found = true;
+			return 0;
 		}
 
-		if( !found )
+		if (symbolType == SL_CLASSPROPACCESS)
 		{
+			asASSERT(scope == "");
 			// See if there are any matching property accessors
 			asCExprContext access(engine);
-			if( objType )
+			if (objType)
 				access.type.Set(asCDataType::CreateType(objType, false));
 			else
 				access.type.Set(asCDataType::CreateType(outFunc->objectType, outFunc->IsReadOnly()));
 			access.type.dataType.MakeReference(true);
 			int r = 0;
-			if( errNode->next && errNode->next->tokenType == ttOpenBracket )
+			if (errNode->next && errNode->next->tokenType == ttOpenBracket)
 			{
 				// This is an index access, check if there is a property accessor that takes an index arg
 				asCExprContext dummyArg(engine);
 				r = FindPropertyAccessor(name, &access, &dummyArg, errNode, 0, true);
 			}
-			if( r == 0 )
+			if (r == 0)
 			{
 				// Normal property access
 				r = FindPropertyAccessor(name, &access, errNode, 0, true);
 			}
-			if( r < 0 ) return -1;
-			if( access.property_get || access.property_set )
-			{
-				if( !objType )
-				{
-					// Prepare the bytecode for the member access
-					// This is only done when accessing through the implicit this pointer
-					ctx->bc.InstrSHORT(asBC_PSF, 0);
-				}
-				MergeExprBytecodeAndType(ctx, &access);
+			if (r < 0) return -1;
 
-				found = true;
+			if (access.property_get == 0 && access.property_set == 0)
+			{
+				// Even though the symbol was identified in SymbolLookup, it doesn't match the arguments
+				asCString msg;
+				if (errNode->next && errNode->next->tokenType == ttOpenBracket)
+					msg.Format(TXT_PROP_ACCESS_s_DOES_NOT_EXPECT_INDEX, name.AddressOf());
+				else
+					msg.Format(TXT_PROP_ACCESS_s_EXPECTS_INDEX, name.AddressOf());
+				Error(msg, errNode);
+				return -1;
 			}
+
+			if (!objType)
+			{
+				// Prepare the bytecode for the member access
+				// This is only done when accessing through the implicit this pointer
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+			}
+			MergeExprBytecodeAndType(ctx, &access);
+
+			return 0;
 		}
 
-		if( !found )
+		if (symbolType == SL_CLASSPROP)
 		{
+			if (scope != "")
+			{
+				// Cannot access non-static members like this
+				asCString msg;
+				msg.Format(TXT_CANNOT_ACCESS_NON_STATIC_MEMBER_s, name.AddressOf());
+				Error(msg, errNode);
+				return -1;
+			}
+
 			asCDataType dt;
-			if( objType )
+			if (objType)
 				dt = asCDataType::CreateType(objType, false);
 			else
 				dt = asCDataType::CreateType(outFunc->objectType, false);
 			asCObjectProperty *prop = builder->GetObjectProperty(dt, name.AddressOf());
-			if( prop )
+			asASSERT(prop);
+
+			// Is the property access allowed?
+			if (prop->isPrivate && prop->isInherited)
 			{
-				// Is the property access allowed?
-				if( prop->isPrivate && prop->isInherited )
+				if (engine->ep.privatePropAsProtected)
 				{
-					if( engine->ep.privatePropAsProtected )
-					{
-						// The application is allowing inherited classes to access private properties of the parent
-						// class. This option is allowed to provide backwards compatibility with pre-2.30.0 versions
-						// as it was how the compiler behaved earlier.
-						asCString msg;
-						msg.Format(TXT_ACCESSING_PRIVATE_PROP_s, name.AddressOf());
-						Warning(msg, errNode);
-					}
-					else
-					{
-						asCString msg;
-						msg.Format(TXT_INHERITED_PRIVATE_PROP_ACCESS_s, name.AddressOf());
-						Error(msg, errNode);
-					}
+					// The application is allowing inherited classes to access private properties of the parent
+					// class. This option is allowed to provide backwards compatibility with pre-2.30.0 versions
+					// as it was how the compiler behaved earlier.
+					asCString msg;
+					msg.Format(TXT_ACCESSING_PRIVATE_PROP_s, name.AddressOf());
+					Warning(msg, errNode);
 				}
-
-				if( !objType )
+				else
 				{
-					// The object pointer is located at stack position 0
-					// This is only done when accessing through the implicit this pointer
-					ctx->bc.InstrSHORT(asBC_PSF, 0);
-					ctx->type.SetVariable(dt, 0, false);
-					ctx->type.dataType.MakeReference(true);
-					Dereference(ctx, true);
+					asCString msg;
+					msg.Format(TXT_INHERITED_PRIVATE_PROP_ACCESS_s, name.AddressOf());
+					Error(msg, errNode);
 				}
+			}
 
-				// TODO: This is the same as what is in CompileExpressionPostOp
-				// Put the offset on the stack
-				ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(dt));
-
-				if( prop->type.IsReference() )
-					ctx->bc.Instr(asBC_RDSPtr);
-
-				// Reference to primitive must be stored in the temp register
-				if( prop->type.IsPrimitive() )
-				{
-					// TODO: runtime optimize: The ADD offset command should store the reference in the register directly
-					ctx->bc.Instr(asBC_PopRPtr);
-				}
-
-				// Set the new type (keeping info about temp variable)
-				ctx->type.dataType = prop->type;
+			if (!objType)
+			{
+				// The object pointer is located at stack position 0
+				// This is only done when accessing through the implicit this pointer
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->type.SetVariable(dt, 0, false);
 				ctx->type.dataType.MakeReference(true);
-				ctx->type.isVariable = false;
-				ctx->type.isLValue = true;
-
-				if( ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle() )
-				{
-					// Objects that are members are not references
-					ctx->type.dataType.MakeReference(false);
-
-					// Objects that are members but not handles are safe as long as the parent object is safe
-					if (!objType || ctx->type.isRefSafe)
-						ctx->type.isRefSafe = true;
-				}
-				else if (ctx->type.dataType.IsObjectHandle())
-				{
-					// Objects accessed through handles cannot be considered safe
-					// as the handle can be cleared at any time
-					ctx->type.isRefSafe = false;
-				}
-
-				// If the object reference is const, the property will also be const
-				ctx->type.dataType.MakeReadOnly(outFunc->IsReadOnly());
-
-				found = true;
+				Dereference(ctx, true);
 			}
-			else if( outFunc->objectType )
+
+			// TODO: This is the same as what is in CompileExpressionPostOp
+			// Put the offset on the stack
+			ctx->bc.InstrSHORT_DW(asBC_ADDSi, (short)prop->byteOffset, engine->GetTypeIdFromDataType(dt));
+
+			if (prop->type.IsReference())
+				ctx->bc.Instr(asBC_RDSPtr);
+
+			// Reference to primitive must be stored in the temp register
+			if (prop->type.IsPrimitive())
 			{
-				// If it is not a property, it may still be the name of a method which can be used to create delegates
-				asCObjectType *ot = outFunc->objectType;
-				asCScriptFunction *func = 0;
-				for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
+				// TODO: runtime optimize: The ADD offset command should store the reference in the register directly
+				ctx->bc.Instr(asBC_PopRPtr);
+			}
+
+			// Set the new type (keeping info about temp variable)
+			ctx->type.dataType = prop->type;
+			ctx->type.dataType.MakeReference(true);
+			ctx->type.isVariable = false;
+			ctx->type.isLValue = true;
+
+			if (ctx->type.dataType.IsObject() && !ctx->type.dataType.IsObjectHandle())
+			{
+				// Objects that are members are not references
+				ctx->type.dataType.MakeReference(false);
+
+				// Objects that are members but not handles are safe as long as the parent object is safe
+				if (!objType || ctx->type.isRefSafe)
+					ctx->type.isRefSafe = true;
+			}
+			else if (ctx->type.dataType.IsObjectHandle())
+			{
+				// Objects accessed through handles cannot be considered safe
+				// as the handle can be cleared at any time
+				ctx->type.isRefSafe = false;
+			}
+
+			// If the object reference is const, the property will also be const
+			ctx->type.dataType.MakeReadOnly(outFunc->IsReadOnly());
+
+			return 0;
+		}
+
+		if (symbolType == SL_CLASSMETHOD)
+		{
+			asASSERT(objType || outFunc->objectType);
+
+			// If it is not a property, it may still be the name of a method which can be used to create delegates
+			asCObjectType *ot = outFunc->objectType;
+			asCScriptFunction *func = 0;
+			for (asUINT n = 0; n < ot->methods.GetLength(); n++)
+			{
+				asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+				if (f->name == name &&
+					(builder->module->accessMask & f->accessMask))
 				{
-					asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
-					if( f->name == name &&
-					    (builder->module->accessMask & f->accessMask) )
-					{
-						func = f;
-						break;
-					}
-				}
-
-				if( func )
-				{
-					// An object method was found. Keep the name of the method in the expression, but
-					// don't actually modify the bytecode at this point since it is not yet known what
-					// the method will be used for, or even what overloaded method should be used.
-					ctx->methodName = name;
-
-					// Place the object pointer on the stack, as if the expression was this.func
-					if( !objType )
-					{
-						// The object pointer is located at stack position 0
-						// This is only done when accessing through the implicit this pointer
-						ctx->bc.InstrSHORT(asBC_PSF, 0);
-						ctx->type.SetVariable(asCDataType::CreateType(outFunc->objectType, false), 0, false);
-						ctx->type.dataType.MakeReference(true);
-						Dereference(ctx, true);
-					}
-
-					found = true;
+					func = f;
+					break;
 				}
 			}
+
+			asASSERT(func);
+
+			// An object method was found. Keep the name of the method in the expression, but
+			// don't actually modify the bytecode at this point since it is not yet known what
+			// the method will be used for, or even what overloaded method should be used.
+			ctx->methodName = name;
+
+			// Place the object pointer on the stack, as if the expression was this.func
+			if (!objType)
+			{
+				// The object pointer is located at stack position 0
+				// This is only done when accessing through the implicit this pointer
+				ctx->bc.InstrSHORT(asBC_PSF, 0);
+				ctx->type.SetVariable(asCDataType::CreateType(outFunc->objectType, false), 0, false);
+				ctx->type.dataType.MakeReference(true);
+				Dereference(ctx, true);
+			}
+
+			return 0;
 		}
 	}
 
-	// Recursively search parent namespaces for global entities
-	asCString currScope = scope;
-
-	// Get the namespace for this scope. This may return null if the scope is an enum
-	asSNameSpace *ns = DetermineNameSpace(currScope);
-	if( ns && currScope != "::" )
-		currScope = ns->name;
-
-	while( !found && !noGlobal && !objType )
+	if (symbolType == SL_GLOBALCONST || symbolType == SL_GLOBALPROPACCESS || symbolType == SL_GLOBALVAR || symbolType == SL_GLOBALFUNC || symbolType == SL_ENUMVAL)
 	{
-		// Is it a global property?
-		if( !found && ns )
+		// Get the namespace from SymbolLookup
+		asSNameSpace *ns = lookupResult.symbolNamespace;
+
+		if (symbolType == SL_GLOBALPROPACCESS)
 		{
 			// See if there are any matching global property accessors
 			asCExprContext access(engine);
 			int r = 0;
-			if( errNode->next && errNode->next->tokenType == ttOpenBracket )
+			if (errNode->next && errNode->next->tokenType == ttOpenBracket)
 			{
 				// This is an index access, check if there is a property accessor that takes an index arg
 				asCExprContext dummyArg(engine);
 				r = FindPropertyAccessor(name, &access, &dummyArg, errNode, ns);
 			}
-			if( r == 0 )
+			if (r == 0)
 			{
 				// Normal property access
 				r = FindPropertyAccessor(name, &access, errNode, ns);
 			}
-			if( r < 0 ) return -1;
-			if( access.property_get || access.property_set )
-			{
-				// Prepare the bytecode for the function call
-				MergeExprBytecodeAndType(ctx, &access);
+			if (r < 0) return -1;
 
-				found = true;
+			if (access.property_get == 0 && access.property_set == 0)
+			{
+				// Even though the symbol was identified in SymbolLookup, it doesn't match the arguments
+				asCString msg;
+				if (errNode->next && errNode->next->tokenType == ttOpenBracket)
+					msg.Format(TXT_PROP_ACCESS_s_DOES_NOT_EXPECT_INDEX, name.AddressOf());
+				else
+					msg.Format(TXT_PROP_ACCESS_s_EXPECTS_INDEX, name.AddressOf());
+				Error(msg, errNode);
+				return -1;
+			}
+			
+			// Prepare the bytecode for the function call
+			MergeExprBytecodeAndType(ctx, &access);
+
+			return 0;
+		}
+
+		if (symbolType == SL_GLOBALCONST || symbolType == SL_GLOBALVAR)
+		{
+			bool isCompiled = true;
+			bool isPureConstant = false;
+			bool isAppProp = false;
+			asQWORD constantValue = 0;
+			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
+			asASSERT(prop);
+		
+			// Verify that the global property has been compiled already
+			if (!isCompiled)
+			{
+				asCString str;
+				str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
+				Error(str, errNode);
+				return -1;
 			}
 
-			// See if there is any matching global property
-			if( !found )
+			// If the global property is a pure constant
+			// we can allow the compiler to optimize it. Pure
+			// constants are global constant variables that were
+			// initialized by literal constants.
+			if (isPureConstant)
+				ctx->type.SetConstantData(prop->type, constantValue);
+			else
 			{
-				bool isCompiled = true;
-				bool isPureConstant = false;
-				bool isAppProp = false;
-				asQWORD constantValue = 0;
-				asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
-				if( prop )
+				// A shared type must not access global vars, unless they
+				// too are shared, e.g. application registered vars
+				if (outFunc->IsShared())
 				{
-					found = true;
-
-					// Verify that the global property has been compiled already
-					if( isCompiled )
+					if (!isAppProp)
 					{
-						if( ctx->type.dataType.GetTypeInfo() && (ctx->type.dataType.GetTypeInfo()->flags & asOBJ_IMPLICIT_HANDLE) )
-						{
-							ctx->type.dataType.MakeHandle(true);
-							ctx->type.isExplicitHandle = true;
-						}
+						asCString str;
+						str.Format(TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s, prop->name.AddressOf());
+						Error(str, errNode);
 
-						// If the global property is a pure constant
-						// we can allow the compiler to optimize it. Pure
-						// constants are global constant variables that were
-						// initialized by literal constants.
-						if (isPureConstant)
-							ctx->type.SetConstantData(prop->type, constantValue);
-						else
-						{
-							// A shared type must not access global vars, unless they
-							// too are shared, e.g. application registered vars
-							if( outFunc->IsShared() )
-							{
-								if( !isAppProp )
-								{
-									asCString str;
-									str.Format(TXT_SHARED_CANNOT_ACCESS_NON_SHARED_VAR_s, prop->name.AddressOf());
-									Error(str, errNode);
+						// Allow the compilation to continue to catch other problems
+					}
+				}
 
-									// Allow the compilation to continue to catch other problems
-								}
-							}
+				ctx->type.Set(prop->type);
+				ctx->type.isLValue = true;
 
-							ctx->type.Set(prop->type);
-							ctx->type.isLValue = true;
+				if (ctx->type.dataType.IsPrimitive())
+				{
+					// Load the address of the variable into the register
+					ctx->bc.InstrPTR(asBC_LDG, prop->GetAddressOfValue());
 
-							if( ctx->type.dataType.IsPrimitive() )
-							{
-								// Load the address of the variable into the register
-								ctx->bc.InstrPTR(asBC_LDG, prop->GetAddressOfValue());
+					ctx->type.dataType.MakeReference(true);
+				}
+				else
+				{
+					// Push the address of the variable on the stack
+					ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
 
-								ctx->type.dataType.MakeReference(true);
-							}
-							else
-							{
-								// Push the address of the variable on the stack
-								ctx->bc.InstrPTR(asBC_PGA, prop->GetAddressOfValue());
+					// If the object is a value type or a non-handle variable to a reference type,
+					// then we must validate the existance as it could potentially be accessed
+					// before it is initialized.
+					// This check is not needed for application registered properties, since they
+					// are guaranteed to be valid by the application itself.
+					if (!isAppProp &&
+						((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_VALUE) ||
+							!ctx->type.dataType.IsObjectHandle()))
+					{
+						ctx->bc.Instr(asBC_ChkRefS);
+					}
 
-								// If the object is a value type or a non-handle variable to a reference type,
-								// then we must validate the existance as it could potentially be accessed
-								// before it is initialized.
-								// This check is not needed for application registered properties, since they
-								// are guaranteed to be valid by the application itself.
-								if( !isAppProp &&
-									((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_VALUE) ||
-									 !ctx->type.dataType.IsObjectHandle()) )
-								{
-									ctx->bc.Instr(asBC_ChkRefS);
-								}
-
-								// If the address pushed on the stack is to a value type or an object
-								// handle, then mark the expression as a reference. Addresses to a reference
-								// type aren't marked as references to get correct behaviour
-								if( (ctx->type.dataType.GetTypeInfo()->flags & asOBJ_VALUE) ||
-									ctx->type.dataType.IsObjectHandle() )
-								{
-									ctx->type.dataType.MakeReference(true);
-								}
-								else
-								{
-									asASSERT( (ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !ctx->type.dataType.IsObjectHandle() );
-
-									// It's necessary to dereference the pointer so the pointer on the stack will point to the actual object
-									ctx->bc.Instr(asBC_RDSPtr);
-								}
-							}
-						}
+					// If the address pushed on the stack is to a value type or an object
+					// handle, then mark the expression as a reference. Addresses to a reference
+					// type aren't marked as references to get correct behaviour
+					if ((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_VALUE) ||
+						ctx->type.dataType.IsObjectHandle())
+					{
+						ctx->type.dataType.MakeReference(true);
 					}
 					else
 					{
-						asCString str;
-						str.Format(TXT_UNINITIALIZED_GLOBAL_VAR_s, prop->name.AddressOf());
-						Error(str, errNode);
-						return -1;
+						asASSERT((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !ctx->type.dataType.IsObjectHandle());
+
+						// It's necessary to dereference the pointer so the pointer on the stack will point to the actual object
+						ctx->bc.Instr(asBC_RDSPtr);
 					}
 				}
 			}
+
+			return 0;
 		}
 
-		// Is it the name of a global function?
-		if( !noFunction && !found && ns )
+		if (symbolType == SL_GLOBALFUNC)
 		{
 			asCArray<int> funcs;
 
 			builder->GetFunctionDescriptions(name.AddressOf(), funcs, ns);
+			asASSERT(funcs.GetLength() > 0);
 
-			if( funcs.GetLength() > 0 )
+			if (funcs.GetLength() > 0)
 			{
-				found = true;
-
 				// Defer the evaluation of which function until it is actually used
 				// Store the namespace and name of the function for later
 				ctx->type.SetUndefinedFuncHandle(engine);
 				ctx->methodName = ns ? ns->name + "::" + name : name;
 			}
+
+			return 0;
 		}
 
-		// Is it an enum value?
-		if( !found )
+		if (symbolType == SL_ENUMVAL)
 		{
-			// The enum type may be declared in a namespace too
-			asCTypeInfo *scopeType = 0;
-			if( currScope != "" && currScope != "::" )
+			// The enum type and namespace must be returned from SymbolLookup
+			asCDataType dt = lookupResult.type.dataType;
+			if (!dt.IsEnumType())
 			{
-				builder->GetNameSpaceByString(currScope, outFunc->objectType ? outFunc->objectType->nameSpace : outFunc->nameSpace, errNode, script, &scopeType, false);
-				if (CastToEnumType(scopeType) == 0)
-					scopeType = 0;
+				asASSERT(!engine->ep.requireEnumScope);
+
+				// It is an ambigious enum value. The evaluation needs to be deferred for when the type is known
+				ctx->enumValue = name.AddressOf();
+				ctx->symbolNamespace = lookupResult.symbolNamespace;
+
+				// We cannot set a dummy value because it will pass through
+				// cleanly as an integer.
+				ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttIdentifier, true), 0);
+				return 0;
 			}
 
 			asDWORD value = 0;
-			asCDataType dt;
-			if( scopeType && builder->GetEnumValueFromType(CastToEnumType(scopeType), name.AddressOf(), dt, value) )
-			{
-				// scoped enum value found
-				found = true;
-			}
-			else if( !engine->ep.requireEnumScope )
-			{
-				// Look for the enum value without explicitly informing the enum type
-				asSNameSpace *nsEnum = DetermineNameSpace(currScope);
-				int e = 0;
-				if(nsEnum)
-					e = builder->GetEnumValue(name.AddressOf(), dt, value, nsEnum);
-				if( e )
-				{
-					found = true;
-					if( e == 2 )
-					{
-						// Ambiguous enum value: Save the name for resolution later.
-						// The ambiguity could be resolved now, but I hesitate
-						// to store too much information in the context.
-						ctx->enumValue = name.AddressOf();
+			int r = builder->GetEnumValueFromType(CastToEnumType(lookupResult.type.dataType.GetTypeInfo()), name.AddressOf(), dt, value);
+			asASSERT(r > 0);
 
-						// We cannot set a dummy value because it will pass through
-						// cleanly as an integer.
-						ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttIdentifier, true), 0);
-						return 0;
-					}
-				}
-			}
+			// Even if the enum type is not shared, and we're compiling a shared object,
+			// the use of the values are still allowed, since they are treated as constants.
 
-			if( found )
-			{
-				// Even if the enum type is not shared, and we're compiling a shared object,
-				// the use of the values are still allowed, since they are treated as constants.
-
-				// an enum value was resolved
-				ctx->type.SetConstantDW(dt, value);
-			}
-			else
-			{
-				// If nothing was found because the scope doesn't match a namespace or an enum
-				// then this should be reported as an error and the search interrupted
-				if( !ns && !scopeType )
-				{
-					ctx->type.SetDummy();
-					asCString str;
-					str.Format(TXT_UNKNOWN_SCOPE_s, scope.AddressOf());
-					Error(str, errNode);
-					return -1;
-				}
-			}
-		}
-
-		if( !found )
-		{
-			if( currScope == "" || currScope == "::" )
-				break;
-
-			// Move up to parent namespace
-			int pos = currScope.FindLast("::");
-			if( pos >= 0 )
-				currScope = currScope.SubString(0, pos);
-			else
-				currScope = "::";
-
-			if( ns )
-				ns = engine->GetParentNameSpace(ns);
+			// an enum value was resolved
+			ctx->type.SetConstantDW(dt, value);
+			return 0;
 		}
 	}
 
-	// The name doesn't match any variable
-	if( !found )
-	{
-		// Give dummy value
-		ctx->type.SetDummy();
-
-		if( !isOptional )
-		{
-			// Prepend the scope to the name for the error message
-			asCString ename;
-			if( scope != "" && scope != "::" )
-				ename = scope + "::";
-			else
-				ename = scope;
-			ename += name;
-
-			asCString str;
-			str.Format(TXT_s_NOT_DECLARED, ename.AddressOf());
-			Error(str, errNode);
-
-			// Declare the variable now so that it will not be reported again
-			variables->DeclareVariable(name.AddressOf(), asCDataType::CreatePrimitive(ttInt, false), 0x7FFF, true);
-
-			// Mark the variable as initialized so that the user will not be bother by it again
-			v = variables->GetVariable(name.AddressOf());
-			asASSERT(v);
-			if( v ) v->isInitialized = true;
-		}
-
-		// Return -1 to signal that the variable wasn't found
-		return -1;
-	}
-
+	// The result must have been identified above
+	asASSERT(false);
 	return 0;
 }
 
@@ -10974,7 +10970,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 
 		// Compile the variable
 		// TODO: Take advantage of the known symbol, so it doesn't have to be looked up again
-		localVar = CompileVariableAccess(name, scope, &funcExpr, node, false, true, false, objectType);
+		localVar = CompileVariableAccess(name, scope, &funcExpr, node, false, objectType);
 		asASSERT(localVar >= 0);
 
 		if (funcExpr.type.dataType.IsFuncdef())
@@ -15955,6 +15951,7 @@ void asCExprContext::Clear()
 	property_ref = false;
 	methodName = "";
 	enumValue = "";
+	symbolNamespace = 0;
 	isVoidExpression = false;
 	isCleanArg = false;
 	isAnonymousInitList = false;

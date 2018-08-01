@@ -261,18 +261,18 @@ bool Test()
 		if( r < 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "" )
-		{
-			PRINTF("%s", bout.buffer.c_str());
-			TEST_FAILED;
-		}
-
 		r = ExecuteString(engine, "_obj.prop += 1; \n"         // direct access
 			                      "get_Objs(0).prop += 1; \n"  // returned from function
 			                      "Objs[0].prop += 1; \n"      // returned from indexed get accessor
 			                      "assert( _obj._prop == 3 );", mod);
 		if( r != asEXECUTION_FINISHED )
 			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		engine->ShutDownAndRelease();
 	}
@@ -1763,10 +1763,10 @@ bool Test()
 		const char *script = 
 			"class CTest \n"
 			"{ \n"
-			"  CTest() { arr.resize(5); } \n"
-			"  int get_arr(int i) { return arr[i]; } \n"
-			"  void set_arr(int i, int v) { arr[i] = v; } \n"
-			"  private array<int> arr; \n"
+			"  CTest() { _arr.resize(5); } \n"
+			"  int get_arr(int i) { return _arr[i]; } \n"
+			"  void set_arr(int i, int v) { _arr[i] = v; } \n"
+			"  private array<int> _arr; \n"
 			"  void test() \n"
 			"  { \n"
 			"    arr[0] = 42; \n"

@@ -225,7 +225,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (8, 2) : Info    : Compiling void monster::act()\n"
-						   "default arg (1, 1) : Error   : 'this' is not declared\n"
+						   "default arg (1, 1) : Error   : No matching symbol 'this'\n"
 						   "test (10, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void monster::calculate_necessary_experience(int = this . level)'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -540,7 +540,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void main()\n"
-		                   "default arg (1, 1) : Error   : 'n' is not declared\n"
+		                   "default arg (1, 1) : Error   : No matching symbol 'n'\n"
 		                   "script (5, 3) : Error   : Failed while compiling default arg for parameter 0 in function 'void func(int = n)'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

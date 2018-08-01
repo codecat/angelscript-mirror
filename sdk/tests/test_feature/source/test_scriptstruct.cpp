@@ -563,7 +563,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (8, 7) : Info    : Compiling B::B()\n"
-                           "test (10, 26) : Error   : 'en_B' is not declared\n" )
+                           "test (10, 26) : Error   : No matching symbol 'en_B'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

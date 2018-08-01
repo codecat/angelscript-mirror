@@ -319,7 +319,7 @@ static bool TestEnum()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "error (1, 17) : Info    : Compiling TEST_ERR ERR1\n"
-			"error (1, 24) : Error   : 'ERR2' is not declared\n"
+			"error (1, 24) : Error   : No matching symbol 'ERR2'\n"
 			"error (1, 30) : Info    : Compiling TEST_ERR ERR2\n"
 			"error (1, 30) : Error   : Use of uninitialized global variable 'ERR1'.\n")
 		{
@@ -491,7 +491,7 @@ static bool TestEnum()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
-			"error (1, 18) : Error   : Unknown scope 'UNKNOWN_ENUM'\n")
+			"error (1, 18) : Error   : No matching symbol 'UNKNOWN_ENUM::ENUM1'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -512,7 +512,7 @@ static bool TestEnum()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "error (5, 1) : Info    : Compiling void f()\n"
-			"error (5, 18) : Error   : Unknown scope 'SomeClass'\n")
+			"error (5, 18) : Error   : Cannot access non-static member 'SOMEVALUE' like this\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -532,7 +532,7 @@ static bool TestEnum()
 		if (r >= 0)
 			TEST_FAILED;
 		if (bout.buffer != "error (1, 1) : Info    : Compiling void f()\n"
-			"error (1, 18) : Error   : 'ENUM1' is not declared\n")
+			"error (1, 18) : Error   : No matching symbol 'ENUM1'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -691,7 +691,7 @@ static bool TestEnum()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "script (6, 8) : Info    : Compiling ENUM_1 g_e2\n"
-		                   "script (6, 15) : Error   : 'E2_VAL1' is not declared\n" )
+		                   "script (6, 15) : Error   : No matching symbol 'E2_VAL1'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

@@ -3585,7 +3585,7 @@ bool Test()
 		r = mod->Build();
 		if (r >= 0) TEST_FAILED;
 		if (bout.buffer != "script21 (2, 1) : Info    : Compiling void main()\n"
-			"script21 (4, 28) : Error   : 'SomethingUndefined' is not declared\n")
+			"script21 (4, 28) : Error   : No matching symbol 'SomethingUndefined'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3622,7 +3622,7 @@ bool Test()
 
 		r = ExecuteString(engine, script23);
 		if (r >= 0) TEST_FAILED;
-		if (bout.buffer != "ExecuteString (1, 1) : Error   : 'openHandle' is not declared\n")
+		if (bout.buffer != "ExecuteString (1, 1) : Error   : No matching symbol 'openHandle'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3650,7 +3650,7 @@ bool Test()
 		r = mod->Build();
 		if (r >= 0) TEST_FAILED;
 		if (bout.buffer != "26 (1, 1) : Info    : Compiling void main()\n"
-			"26 (1, 20) : Error   : 'anyWord' is not declared\n")
+			"26 (1, 20) : Error   : No matching symbol 'anyWord'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3756,7 +3756,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "s (1, 1) : Info    : Compiling void main()\n"
-						   "s (3, 21) : Error   : 'ti' is not declared\n" )
+						   "s (3, 21) : Error   : No matching symbol 'ti'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3881,7 +3881,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "scriptMain (1, 1) : Info    : Compiling void error()\n"
-						   "scriptMain (1, 20) : Error   : 'a' is not declared\n" )
+						   "scriptMain (1, 20) : Error   : No matching symbol 'a'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4069,7 +4069,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (1, 1) : Info    : Compiling void my_method()\n"
-		                   "script (4, 12) : Error   : 'unexisting_var' is not declared\n" )
+		                   "script (4, 12) : Error   : No matching symbol 'unexisting_var'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4245,7 +4245,7 @@ bool Test()
 			"x=new_x; \n"
 			"} \n"
 			"} \n"
-			"void alert(const string &in) {}\n"
+			"void alert(const string &in, const string &in) {}\n"
 			"void main() \n"
 			"{ \n"
 			"alert('Result', '' + bad.x + ''); \n"
@@ -4265,9 +4265,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (10, 1) : Info    : Compiling void main()\n"
-		                   "script (12, 22) : Error   : 'bad' is not declared\n"
-		                   "script (13, 7) : Error   : 'bad' is already declared\n"
-		                   "script (14, 25) : Error   : 'x' is not a member of 'int'\n" )
+		                   "script (12, 22) : Error   : No matching symbol 'bad'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4713,7 +4711,7 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (2, 1) : Info    : Compiling void func()\n"
-		                   "script (4, 19) : Error   : 'typo' is not declared\n" )
+		                   "script (4, 19) : Error   : No matching symbol 'typo'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -5188,8 +5186,8 @@ bool Test6()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (4, 15) : Info    : Compiling const MyClass foo\n"
-					   "script (4, 28) : Error   : 'bar' is not declared\n"
-					   "script (4, 24) : Error   : 'a' is not declared\n" )
+					   "script (4, 28) : Error   : No matching symbol 'bar'\n"
+					   "script (4, 24) : Error   : No matching symbol 'a'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -5208,7 +5206,7 @@ bool Test6()
 	if( r >= 0 )
 		TEST_FAILED;
 	if( bout.buffer != "script (1, 1) : Info    : Compiling void main()\n"
-					   "script (2, 9) : Error   : 'i' is not declared\n" )
+					   "script (2, 9) : Error   : No matching symbol 'i'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
@@ -5325,7 +5323,7 @@ bool Test9()
 		TEST_FAILED;
 
 	if( bout.buffer != "sc (1, 1) : Info    : Compiling void Func()\n"
-					   "sc (3, 3) : Error   : 'aaa' is not declared\n" )
+					   "sc (3, 3) : Error   : No matching symbol 'aaa'\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

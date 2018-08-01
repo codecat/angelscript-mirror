@@ -63,6 +63,7 @@
 #define TXT_CANNOT_INHERIT_FROM_SELF               "Can't inherit from itself, or another class that inherits from this class"
 #define TXT_CANNOT_PASS_CLASS_METHOD_AS_ARG        "Can't pass class method as arg directly. Use a delegate object instead"
 #define TXT_CANNOT_RESOLVE_AUTO                    "Unable to resolve auto type"
+#define TXT_CANNOT_ACCESS_NON_STATIC_MEMBER_s      "Cannot access non-static member '%s' like this"
 #define TXT_CANNOT_RETURN_REF_TO_LOCAL             "Can't return reference to local value."
 #define TXT_CANT_CONSTRUCT_s_USE_REF_CAST          "Can't construct handle '%s'. Use ref cast instead"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s         "Can't implicitly convert from '%s' to '%s'."
@@ -73,6 +74,8 @@
 #define TXT_COMPOUND_ASGN_ON_VALUE_TYPE            "Compound assignments with property accessors on value types are not supported"
 #define TXT_COMPOUND_ASGN_WITH_IDX_PROP            "Compound assignments with indexed property accessors are not supported"
 #define TXT_COMPOUND_ASGN_REQUIRE_GET_SET          "Compound assignments with property accessors require both get and set accessors"
+#define TXT_PROP_ACCESS_s_DOES_NOT_EXPECT_INDEX    "Implemented property accessor '%s' does not expect index argument"
+#define TXT_PROP_ACCESS_s_EXPECTS_INDEX            "Implemented property accessor '%s' expects index argument"
 
 #define TXT_DATA_TYPE_CANT_BE_s                     "Data type can't be '%s'"
 #define TXT_DECL_IN_SWITCH                          "Variables cannot be declared in switch cases, except inside statement blocks"

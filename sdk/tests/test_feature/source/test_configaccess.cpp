@@ -88,7 +88,7 @@ bool Test()
 	if( r >= 0 )
 		TEST_FAILED;
 
-	if( bout.buffer != "ExecuteString (1, 1) : Error   : 'val' is not declared\n")
+	if( bout.buffer != "ExecuteString (1, 1) : Error   : No matching symbol 'val'\n")
 		TEST_FAILED;
 
 	// Make sure the default access can be overridden

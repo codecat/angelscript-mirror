@@ -938,7 +938,7 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "ExecuteString (1, 9) : Error   : 'A::VALUE' is not declared\n"
+		if( bout.buffer != "ExecuteString (1, 9) : Error   : No matching symbol 'A::VALUE'\n"
 		                   "ExecuteString (1, 28) : Warning : 'a' is not initialized.\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
@@ -1212,7 +1212,7 @@ bool Test()
 			"void test() { \n"
 			"  assert( foo == 42 ); \n"      // ok
 			"  assert( ::foo == 42 ); \n"    // ok
-			"  assert( nm::foo == 42 ); \n"  // ok. foo is declared in parent namespace
+			"  assert( nm::foo == 42 ); \n"  // should fail to compile
 			"  assert( nm::foo2 == 42 ); \n" // ok
 			"  assert( foo2 == 42 ); \n"     // should fail to compile
 			"} \n"
@@ -1220,7 +1220,7 @@ bool Test()
 			"void test2() { \n"
 			"  ::assert( foo == 42 ); \n"      // ok. foo is declared in parent namespace
 			"  ::assert( ::foo == 42 ); \n"    // ok
-			"  ::assert( nm::foo == 42 ); \n"  // ok. foo is declared in parent namespace
+			"  ::assert( nm::foo == 42 ); \n"  // should fail to compile
 			"  ::assert( nm::foo2 == 42 ); \n" // ok
 			"  ::assert( foo2 == 42 ); \n"     // ok
 			"} \n"
@@ -1234,7 +1234,10 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
-						   "test (8, 11) : Error   : 'foo2' is not declared\n" )
+						   "test (6, 11) : Error   : No matching symbol 'nm::foo'\n"
+						   "test (8, 11) : Error   : No matching symbol 'foo2'\n"
+						   "test (11, 1) : Info    : Compiling void test2()\n"
+						   "test (14, 13) : Error   : No matching symbol 'nm::foo'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1247,7 +1250,7 @@ bool Test()
 			"void test() { \n"
 			"  assert( foo[0] == 42 ); \n"      // ok
 			"  assert( ::foo[0] == 42 ); \n"    // ok
-			"  assert( nm::foo[0] == 42 ); \n"  // ok. foo is declared in parent namespace
+			"  assert( nm::foo[0] == 42 ); \n"  // should fail to compile
 			"  assert( nm::foo2[0] == 42 ); \n" // ok
 			"  assert( foo2[0] == 42 ); \n"     // should fail to compile
 			"} \n"
@@ -1255,7 +1258,7 @@ bool Test()
 			"void test2() { \n"
 			"  ::assert( foo[0] == 42 ); \n"      // ok. foo is declared in parent namespace
 			"  ::assert( ::foo[0] == 42 ); \n"    // ok
-			"  ::assert( nm::foo[0] == 42 ); \n"  // ok. foo is declared in parent namespace
+			"  ::assert( nm::foo[0] == 42 ); \n"  // should fail to compile
 			"  ::assert( nm::foo2[0] == 42 ); \n" // ok
 			"  ::assert( foo2[0] == 42 ); \n"     // ok
 			"} \n"
@@ -1269,7 +1272,10 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (3, 1) : Info    : Compiling void test()\n"
-						   "test (8, 11) : Error   : 'foo2' is not declared\n" )
+						   "test (6, 11) : Error   : No matching symbol 'nm::foo'\n"
+						   "test (8, 11) : Error   : No matching symbol 'foo2'\n"
+						   "test (11, 1) : Info    : Compiling void test2()\n"
+						   "test (14, 13) : Error   : No matching symbol 'nm::foo'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

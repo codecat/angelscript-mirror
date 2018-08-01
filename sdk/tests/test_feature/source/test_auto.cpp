@@ -344,9 +344,9 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (1, 6) : Info    : Compiling <auto> x\n"
-						   "test (1, 10) : Error   : 'y' is not declared\n"
+						   "test (1, 10) : Error   : No matching symbol 'y'\n"
 						   "test (1, 17) : Info    : Compiling <auto> y\n"
-						   "test (1, 21) : Error   : 'x' is not declared\n" )
+						   "test (1, 21) : Error   : No matching symbol 'x'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
