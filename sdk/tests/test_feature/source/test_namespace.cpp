@@ -11,6 +11,41 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Accessing parent class method when from different namespace
+	// https://www.gamedev.net/forums/topic/696791-namespaces-can-not-be-resolved-well-in-some-cases/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace X { \n"
+			"	class A { \n"
+			"		void test() { \n"
+			"		} \n"
+			"	}; \n"
+			"} \n"
+			"namespace Y { \n"
+			"	class B : X::A { \n"
+			"		void test() { \n"
+			"			A::test(); \n"
+			"		} \n"
+			"	}; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test templates and namespaces
 	// https://www.gamedev.net/forums/topic/696071-failed-register-two-iterator-specialization-in-different-namespace/
 	{

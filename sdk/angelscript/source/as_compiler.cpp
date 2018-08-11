@@ -9114,6 +9114,24 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 		asCString typeName = n >= 0 ? currScope.SubString(n + 2) : currScope;
 		asCString nsName = n >= 0 ? currScope.SubString(0, n) : "";
 
+		// If the scope represents a type that the current class inherits
+		// from then that should be used instead of going through the namespaces
+		if (nsName == "" && (outFunc && outFunc->objectType))
+		{
+			asCObjectType *ot = outFunc->objectType;
+			while (ot)
+			{
+				if (ot->name == typeName)
+				{
+					SYMBOLTYPE r = SymbolLookupMember(name, ot, outResult);
+					if (r != 0)
+						return r;
+				}
+
+				ot = ot->derivedFrom;
+			}
+		}
+
 		// If the scope starts with :: then search from the global scope
 		if (currScope.GetLength() < 2 || currScope[0] != ':')
 		{
