@@ -85,7 +85,7 @@
 #define TXT_DUPLICATE_NAMED_ARG                     "Duplicate named argument"
 #define TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s "The method in the derived class must have the same return type as in the base class: '%s'"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM            "The destructor must not have any parameters"
-#define TXT_DESTRUCTOR_s_s_NAME_ERROR              "The name of the destructor '%s::~%s' must be the same as the class"
+#define TXT_DESTRUCTOR_s_s_NAME_ERROR               "The name of the destructor '%s::~%s' must be the same as the class"
 #define TXT_DISALLOW_ASSIGN_ON_REF_TYPE             "Value assignment on reference types is not allowed. Did you mean to do a handle assignment?"
 #define TXT_DISALLOW_COMPOUND_ASSIGN_ON_REF_TYPE    "Compound assignment on reference types is not allowed"
 #define TXT_DUPLICATE_SWITCH_CASE                   "Duplicate switch case"
@@ -108,6 +108,7 @@
 #define TXT_EXPECTED_STRING                   "Expected string"
 #define TXT_EXPR_DOESNT_EVAL_TO_FUNC          "Expression doesn't evaluate to a function"
 #define TXT_EXPR_MUST_BE_BOOL                 "Expression must be of boolean type"
+#define TXT_EXPR_s_IS_DATA_TYPE               "Expression '%s' is a data type"
 #define TXT_EXTERNAL_SHARED_s_NOT_FOUND       "External shared entity '%s' not found"
 #define TXT_EXTERNAL_SHARED_s_CANNOT_REDEF    "External shared entity '%s' cannot redefine the original entity"
 
@@ -126,11 +127,11 @@
 #define TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED      "Handle to handle is not allowed"
 #define TXT_s_HIDES_VAR_IN_OUTER_SCOPE           "Variable '%s' hides another variable of same name in outer scope"
 
-#define TXT_IDENTIFIER_s_NOT_DATA_TYPE             "Identifier '%s' is not a data type"
+#define TXT_IDENTIFIER_s_NOT_DATA_TYPE              "Identifier '%s' is not a data type"
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS "Identifier '%s' is not a data type in global namespace"
-#define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s     "Identifier '%s' is not a data type in namespace '%s' or parent"
-#define TXT_IF_WITH_EMPTY_STATEMENT                "If with empty statement"
-#define TXT_ILLEGAL_MEMBER_TYPE                    "Illegal member type"
+#define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_NS_s      "Identifier '%s' is not a data type in namespace '%s' or parent"
+#define TXT_IF_WITH_EMPTY_STATEMENT                 "If with empty statement"
+#define TXT_ILLEGAL_MEMBER_TYPE                     "Illegal member type"
 // TODO: Should be TXT_ILLEGAL_OPERATION_ON_s
 #define TXT_ILLEGAL_OPERATION                      "Illegal operation on this datatype"
 #define TXT_ILLEGAL_OPERATION_ON_s                 "Illegal operation on '%s'"

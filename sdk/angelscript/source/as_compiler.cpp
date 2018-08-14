@@ -3937,6 +3937,8 @@ void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, as
 		CompileReturnStatement(statement, bc);
 		*hasReturn = true;
 	}
+	else
+		asASSERT(false);
 }
 
 void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCode *bc)
@@ -9786,6 +9788,25 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 	}
 
 	// The result must have been identified above
+	if (symbolType == SL_GLOBALTYPE || symbolType == SL_CLASSTYPE)
+	{
+		// Give dummy value
+		ctx->type.SetDummy();
+
+		// The symbol matches a type
+		asCString msg;
+		asCString smbl;
+		if (scope == "::")
+			smbl = scope;
+		else if (scope != "")
+			smbl = scope + "::";
+		smbl += name;
+		msg.Format(TXT_EXPR_s_IS_DATA_TYPE, smbl.AddressOf());
+		Error(msg, errNode);
+		return -1;
+	}
+
+	// Should not come here
 	asASSERT(false);
 	return 0;
 }

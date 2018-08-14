@@ -11,6 +11,46 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test correct symbol lookup when type and variable has same name in different namespaces
+	// https://www.gamedev.net/forums/topic/696791-namespaces-can-not-be-resolved-well-in-some-cases/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace X { \n"
+			"	class A { \n"
+			"		void test() \n"
+			"		{ \n"
+			"		} \n"
+			"	}; \n"
+			"} \n"
+			"X::A A; \n"
+			"namespace X { \n"
+			"	class Test { \n"
+			"		void test() \n"
+			"		{ \n"
+			"			A.test(); \n"   // A refers to X::A so this should fail
+			"			::A.test(); \n" // explicitly identify the global variable
+			"		} \n"
+			"	} \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (11, 3) : Info    : Compiling void Test::test()\n"
+						   "test (13, 4) : Error   : Expression 'A' is a data type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Accessing parent class method when from different namespace
 	// https://www.gamedev.net/forums/topic/696791-namespaces-can-not-be-resolved-well-in-some-cases/
 	{
