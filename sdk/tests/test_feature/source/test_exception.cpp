@@ -2,18 +2,8 @@
 #include <exception>
 using namespace std;
 
-static const char * const TESTNAME = "TestException";
-
-// This script will cause an exception inside a class method
-const char *script1 =
-"class A               \n"
-"{                     \n"
-"  void Test(string c) \n"
-"  {                   \n"
-"    int a = 0, b = 0; \n"
-"    a = a/b;          \n"
-"  }                   \n"
-"}                     \n";
+namespace TestException
+{
 
 static void print(asIScriptGeneric *gen)
 {
@@ -61,11 +51,97 @@ void ThrowException()
 	throw std::exception();
 }
 
-bool TestException()
+bool Test()
 {
 	bool fail = false;
 	int r;
 	COutStream out;
+	CBufferedOutStream bout;
+
+	// Test catching an exception
+	// TODO: Test getting the exception info
+	// TODO: Test rethrowing exception in catch block
+	// TODO: Test return in try or catch block to verify that the compiler detects all valid paths as returning
+	// TODO: Test use of try/catch in constructor to call base class' constructor
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"bool exceptionCaught = false;  \n"
+			"void Test()                    \n"
+			"{                              \n"
+			"  int a = 0, b = 0;            \n"
+			"  try {                        \n"
+			"   string test = 'hello';      \n" // this shouldn't be cleaned up by exception
+			"   try {                       \n"
+			"    string cleanup = 'clean';  \n" // this must be cleaned up
+			"    a = a/b;                   \n" // an exception is thrown here
+			"    test = 'blah';             \n" // this is never executed
+			"   } catch {                   \n"
+			"    exceptionCaught = true;    \n" // signal that the exception was caught
+			"    assert( test == 'hello' ); \n" // original value
+			"   }                           \n"
+			"  }                            \n"
+			"  catch {                      \n"
+			"    assert( false );           \n" // never executed
+			"  }                            \n"
+			"}                              \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ctx->Prepare(mod->GetFunctionByName("Test"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		if (*(bool*)mod->GetAddressOfGlobalVar(0) != true)
+			TEST_FAILED;
+		
+		// Test again after saving/loading the bytecode
+		bout.buffer = "";
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1);
+		assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ctx = engine->CreateContext();
+		r = ctx->Prepare(mod->GetFunctionByName("Test"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		if (*(bool*)mod->GetAddressOfGlobalVar(0) != true)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test exception translation
 	{
@@ -112,36 +188,45 @@ bool TestException()
 			const asIScriptFunction *function = ctx->GetExceptionFunction();
 			if (strcmp(function->GetName(), "ExecuteString") != 0)
 			{
-				PRINTF("%s: Exception function name is wrong\n", TESTNAME);
+				PRINTF("Exception function name is wrong\n");
 				TEST_FAILED;
 			}
 			if (strcmp(function->GetDeclaration(), "void ExecuteString()") != 0)
 			{
-				PRINTF("%s: Exception function declaration is wrong\n", TESTNAME);
+				PRINTF("Exception function declaration is wrong\n");
 				TEST_FAILED;
 			}
 
 			if (line != 2)
 			{
-				PRINTF("%s: Exception line number is wrong\n", TESTNAME);
+				PRINTF("Exception line number is wrong\n");
 				TEST_FAILED;
 			}
 			if (strcmp(desc, "Divide by zero") != 0)
 			{
-				PRINTF("%s: Exception string is wrong\n", TESTNAME);
+				PRINTF("Exception string is wrong\n");
 				TEST_FAILED;
 			}
 		}
 		else
 		{
-			PRINTF("%s: Failed to raise exception\n", TESTNAME);
+			PRINTF("Failed to raise exception\n");
 			TEST_FAILED;
 		}
 
 		ctx->Release();
 
+		// This script will cause an exception inside a class method
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-		mod->AddScriptSection("script", script1, strlen(script1));
+		mod->AddScriptSection("script", 
+			"class A               \n"
+			"{                     \n"
+			"  void Test(string c) \n"
+			"  {                   \n"
+			"    int a = 0, b = 0; \n"
+			"    a = a/b;          \n"
+			"  }                   \n"
+			"}                     \n");
 		mod->Build();
 		r = ExecuteString(engine, "A a; a.Test(\"test\");", mod);
 		if (r != asEXECUTION_EXCEPTION)
@@ -370,4 +455,6 @@ bool TestException()
 
 	// Success
 	return fail;
+}
+
 }

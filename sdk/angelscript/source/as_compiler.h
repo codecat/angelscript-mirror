@@ -239,6 +239,7 @@ protected:
 	void CompileContinueStatement(asCScriptNode *node, asCByteCode *bc);
 	void CompileReturnStatement(asCScriptNode *node, asCByteCode *bc);
 	void CompileExpressionStatement(asCScriptNode *node, asCByteCode *bc);
+	void CompileTryCatch(asCScriptNode *node, bool *hasReturn, asCByteCode *bc);
 
 	// Expressions
 	int  CompileAssignment(asCScriptNode *expr, asCExprContext *out);

@@ -3882,7 +3882,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 	UNREACHABLE_RETURN;
 }
 
-// BNF:7: STATEMENT     ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT)
+// BNF:7: STATEMENT     ::= (IF | FOR | WHILE | RETURN | STATBLOCK | BREAK | CONTINUE | DOWHILE | SWITCH | EXPRSTAT | TRY)
 asCScriptNode *asCParser::ParseStatement()
 {
 	sToken t1;
@@ -3890,24 +3890,26 @@ asCScriptNode *asCParser::ParseStatement()
 	GetToken(&t1);
 	RewindTo(&t1);
 
-	if( t1.type == ttIf )
+	if (t1.type == ttIf)
 		return ParseIf();
-	else if( t1.type == ttFor )
+	else if (t1.type == ttFor)
 		return ParseFor();
-	else if( t1.type == ttWhile )
+	else if (t1.type == ttWhile)
 		return ParseWhile();
-	else if( t1.type == ttReturn )
+	else if (t1.type == ttReturn)
 		return ParseReturn();
-	else if( t1.type == ttStartStatementBlock )
+	else if (t1.type == ttStartStatementBlock)
 		return ParseStatementBlock();
-	else if( t1.type == ttBreak )
+	else if (t1.type == ttBreak)
 		return ParseBreak();
-	else if( t1.type == ttContinue )
+	else if (t1.type == ttContinue)
 		return ParseContinue();
-	else if( t1.type == ttDo )
+	else if (t1.type == ttDo)
 		return ParseDoWhile();
-	else if( t1.type == ttSwitch )
+	else if (t1.type == ttSwitch)
 		return ParseSwitch();
+	else if (t1.type == ttTry)
+		return ParseTryCatch();
 	else
 	{
 		if( IsVarDecl() )
@@ -4131,6 +4133,40 @@ asCScriptNode *asCParser::ParseIf()
 	}
 
 	node->AddChildLast(ParseStatement());
+
+	return node;
+}
+
+// BNF:8: TRY           ::= 'try' STATBLOCK 'catch' STATBLOCK
+asCScriptNode *asCParser::ParseTryCatch()
+{
+	asCScriptNode *node = CreateNode(snTryCatch);
+	if (node == 0) return 0;
+
+	sToken t;
+	GetToken(&t);
+	if (t.type != ttTry)
+	{
+		Error(ExpectedToken("try"), &t);
+		Error(InsteadFound(t), &t);
+		return node;
+	}
+
+	node->UpdateSourcePos(t.pos, t.length);
+
+	node->AddChildLast(ParseStatementBlock());
+	if (isSyntaxError) return node;
+
+	GetToken(&t);
+	if (t.type != ttCatch)
+	{
+		Error(ExpectedToken("catch"), &t);
+		Error(InsteadFound(t), &t);
+		return node;
+	}
+
+	node->AddChildLast(ParseStatementBlock());
+	if (isSyntaxError) return node;
 
 	return node;
 }

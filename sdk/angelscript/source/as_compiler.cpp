@@ -271,6 +271,8 @@ void asCCompiler::FinalizeFunction()
 
 	byteCode.ExtractObjectVariableInfo(outFunc);
 
+	byteCode.ExtractTryCatchInfo(outFunc);
+
 	// Compile the list of object variables for the exception handler
 	// Start with the variables allocated on the heap, and then the ones allocated on the stack
 	for( n = 0; n < variableAllocations.GetLength(); n++ )
@@ -3914,25 +3916,27 @@ void asCCompiler::CompileStatement(asCScriptNode *statement, bool *hasReturn, as
 	if( statement->nodeType != snExpressionStatement || statement->firstChild )
 		*hasReturn = false;
 
-	if( statement->nodeType == snStatementBlock )
+	if (statement->nodeType == snStatementBlock)
 		CompileStatementBlock(statement, true, hasReturn, bc);
-	else if( statement->nodeType == snIf )
+	else if (statement->nodeType == snIf)
 		CompileIfStatement(statement, hasReturn, bc);
-	else if( statement->nodeType == snFor )
+	else if (statement->nodeType == snFor)
 		CompileForStatement(statement, bc);
-	else if( statement->nodeType == snWhile )
+	else if (statement->nodeType == snWhile)
 		CompileWhileStatement(statement, bc);
-	else if( statement->nodeType == snDoWhile )
+	else if (statement->nodeType == snDoWhile)
 		CompileDoWhileStatement(statement, bc);
-	else if( statement->nodeType == snExpressionStatement )
+	else if (statement->nodeType == snExpressionStatement)
 		CompileExpressionStatement(statement, bc);
-	else if( statement->nodeType == snBreak )
+	else if (statement->nodeType == snBreak)
 		CompileBreakStatement(statement, bc);
-	else if( statement->nodeType == snContinue )
+	else if (statement->nodeType == snContinue)
 		CompileContinueStatement(statement, bc);
-	else if( statement->nodeType == snSwitch )
+	else if (statement->nodeType == snSwitch)
 		CompileSwitchStatement(statement, hasReturn, bc);
-	else if( statement->nodeType == snReturn )
+	else if (statement->nodeType == snTryCatch)
+		CompileTryCatch(statement, hasReturn, bc);
+	else if (statement->nodeType == snReturn)
 	{
 		CompileReturnStatement(statement, bc);
 		*hasReturn = true;
@@ -4266,6 +4270,48 @@ void asCCompiler::CompileCase(asCScriptNode *node, asCByteCode *bc)
 
 		node = node->next;
 	}
+}
+
+void asCCompiler::CompileTryCatch(asCScriptNode *node, bool *hasReturn, asCByteCode *bc)
+{
+	// We will use one label before and another after the catch statement
+	int beforeCatchLabel = nextLabel++;
+	int afterCatchLabel = nextLabel++;
+
+	// Compile the try block
+	bool hasReturnTry;
+	asCByteCode tryBC(engine);
+	CompileStatement(node->firstChild, &hasReturnTry, &tryBC);
+
+	// Add marker to unwind exception until here, then jump to catch block
+	bc->TryBlock((short)beforeCatchLabel);
+
+	// Add the byte code 
+	LineInstr(bc, node->firstChild->tokenPos);
+	bc->AddCode(&tryBC);
+
+	// Add jump to after catch
+	bc->InstrINT(asBC_JMP, afterCatchLabel);
+
+	// Compile the catch block
+	bool hasReturnCatch;
+	asCByteCode catchBC(engine);
+	CompileStatement(node->firstChild->next, &hasReturnCatch, &catchBC);
+
+	// Add marker to tell bytecode optimizer that this is a catch
+	// block so the code is not removed as unreachable code
+	bc->Label((short)beforeCatchLabel);
+
+	// Add the byte code
+	LineInstr(bc, node->firstChild->next->tokenPos);
+	bc->AddCode(&catchBC);
+
+	// Add the label after catch
+	bc->Label((short)afterCatchLabel);
+
+	// The try/catch statement only has return (i.e. no code after the try/catch block will be executed)
+	// if both blocks have
+	*hasReturn = hasReturnTry && hasReturnCatch;
 }
 
 void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCByteCode *bc)

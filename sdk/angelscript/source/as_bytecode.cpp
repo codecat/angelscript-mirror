@@ -1559,6 +1559,27 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 	asASSERT( blockLevel == 0 );
 }
 
+void asCByteCode::ExtractTryCatchInfo(asCScriptFunction *outFunc)
+{
+	asASSERT(outFunc->scriptData);
+
+	unsigned int pos = 0;
+	asCByteInstruction *instr = first;
+	while (instr)
+	{
+		if (instr->op == asBC_TryBlock)
+		{
+			asSTryCatchInfo info;
+			info.tryPos    = pos;
+			info.catchPos  = *ARG_DW(instr->arg);
+			outFunc->scriptData->tryCatchInfo.PushLast(info);
+		}
+
+		pos += instr->size;
+		instr = instr->next;
+	}
+}
+
 int asCByteCode::GetSize()
 {
 	int size = 0;
@@ -1776,6 +1797,17 @@ void asCByteCode::Block(bool start)
 	last->wArg[0]  = start ? 1 : 0;
 }
 
+void asCByteCode::TryBlock(short catchLabel)
+{
+	if (AddInstruction() < 0)
+		return;
+
+	last->op = asBC_TryBlock;
+	last->size = 0;
+	last->stackInc = 0;
+	*ARG_DW(last->arg) = catchLabel;
+}
+
 void asCByteCode::VarDecl(int varDeclIdx)
 {
 	if( AddInstruction() < 0 )
@@ -1843,6 +1875,8 @@ int asCByteCode::ResolveJumpAddresses()
 {
 	TimeIt("asCByteCode::ResolveJumpAddresses");
 
+	UINT currPos = 0;
+
 	asCByteInstruction *instr = first;
 	while( instr )
 	{
@@ -1860,7 +1894,21 @@ int asCByteCode::ResolveJumpAddresses()
 			else
 				return -1;
 		}
+		else if (instr->op == asBC_TryBlock)
+		{
+			int label = *((int*)ARG_DW(instr->arg));
+			int labelPosOffset;
+			int r = FindLabel(label, instr, 0, &labelPosOffset);
+			if (r == 0)
+			{
+				// Should store the absolute address so the exception handler doesn't need to figure it out
+				*((int*)ARG_DW(instr->arg)) = currPos + labelPosOffset;
+			}
+			else
+				return -1;
+		}
 
+		currPos += instr->GetSize();
 		instr = instr->next;
 	}
 
@@ -2006,10 +2054,11 @@ void asCByteCode::PostProcess()
 				AddPath(paths, dest, stackSize);
 				break;
 			}
-			else if( instr->op == asBC_JZ    || instr->op == asBC_JNZ ||
+			else if( instr->op == asBC_JZ    || instr->op == asBC_JNZ    ||
 					 instr->op == asBC_JLowZ || instr->op == asBC_JLowNZ ||
-					 instr->op == asBC_JS    || instr->op == asBC_JNS ||
-					 instr->op == asBC_JP    || instr->op == asBC_JNP )
+					 instr->op == asBC_JS    || instr->op == asBC_JNS    ||
+					 instr->op == asBC_JP    || instr->op == asBC_JNP    ||
+					 instr->op == asBC_TryBlock )
 			{
 				// Find the label that is being jumped to
 				int label = *((int*) ARG_DW(instr->arg));

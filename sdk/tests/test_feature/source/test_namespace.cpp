@@ -1,4 +1,4 @@
-#include "utils.h"
+ï»¿#include "utils.h"
 
 namespace TestNamespace
 {
@@ -174,7 +174,7 @@ bool Test()
 	}
 
 	// Use of nested namespaces when registering types
-	// Reported by Polyák István
+	// Reported by PolyÃ¡k IstvÃ¡n
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

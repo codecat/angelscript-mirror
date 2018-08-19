@@ -43,7 +43,7 @@ void Assert(asIScriptGeneric *gen)
 				PRINTF("sect: %s\n", function->GetScriptSectionName());
 			}
 			PRINTF("line: %d\n", ctx->GetLineNumber());
-			ctx->SetException("Assert failed");
+			ctx->SetException("Assert failed", false);
 			PRINTF("---------------------\n");
 		}
 	}

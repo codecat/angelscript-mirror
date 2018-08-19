@@ -919,10 +919,11 @@ public:
 	virtual void   *GetAddressOfReturnValue() = 0;
 
 	// Exception handling
-	virtual int                SetException(const char *string) = 0;
+	virtual int                SetException(const char *string, bool allowCatch = true) = 0;
 	virtual int                GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	virtual asIScriptFunction *GetExceptionFunction() = 0;
 	virtual const char *       GetExceptionString() = 0;
+	virtual bool               WillExceptionBeCaught() = 0;
 	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	virtual void               ClearExceptionCallback() = 0;
 
@@ -1581,6 +1582,7 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 201,
 
 	// Temporary tokens. Can't be output to the final program
+	asBC_TryBlock		= 250,
 	asBC_VarDecl		= 251,
 	asBC_Block			= 252,
 	asBC_ObjInfo		= 253,
@@ -1923,8 +1925,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(247),
 	asBCINFO_DUMMY(248),
 	asBCINFO_DUMMY(249),
-	asBCINFO_DUMMY(250),
 
+	asBCINFO(TryBlock,		DW_ARG,			0),
 	asBCINFO(VarDecl,		W_ARG,			0),
 	asBCINFO(Block,			INFO,			0),
 	asBCINFO(ObjInfo,		rW_DW_ARG,		0),

@@ -115,6 +115,7 @@ protected:
 	asCScriptNode *ParseReturn();
 	asCScriptNode *ParseBreak();
 	asCScriptNode *ParseContinue();
+	asCScriptNode *ParseTryCatch();
 
 	// Declarations
 	asCScriptNode *ParseDeclaration(bool isClassProp = false, bool isGlobalVar = false);

@@ -34,7 +34,6 @@ bool TestGlobalVar();
 bool TestBStr();
 bool TestSwitch();
 bool TestNegateOperator();
-bool TestException();
 bool TestCDecl_Class();
 bool TestCDecl_ClassA();
 bool TestCDecl_ClassC();
@@ -60,6 +59,7 @@ bool TestOptimize();
 bool TestNotInitialized();
 bool TestVector3();
 
+namespace TestException         { bool Test(); }
 namespace TestCDeclReturn       { bool Test(); }
 namespace TestCustomMem         { bool Test(); }
 namespace TestGeneric           { bool Test(); }
@@ -294,7 +294,7 @@ int allTests()
 	if( TestArrayHandle::Test()         ) goto failed; else PRINTF("-- TestArrayHandle passed\n");
 	if( TestDict::Test()                ) goto failed; else PRINTF("-- TestDict passed\n");
 	if( TestMultiAssign::Test()         ) goto failed; else PRINTF("-- TestMultiAssign passed\n");
-	if( TestException()                 ) goto failed; else PRINTF("-- TestException passed\n");
+	if( TestException::Test()           ) goto failed; else PRINTF("-- TestException passed\n");
 	if( TestInt8::Test()                ) goto failed; else PRINTF("-- TestInt8 passed\n");
 	if( TestGeneric::Test()             ) goto failed; else PRINTF("-- TestGeneric passed\n");
 	if( TestBStr()                      ) goto failed; else PRINTF("-- TestBStr passed\n");

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/08/01</h2>
+<h2>Version 2.33.0 WIP - 2018/08/19</h2>
 
 <ul>
 <li>Bug fixes
@@ -62,6 +62,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented a callback to allow application to translate C++ exceptions thrown by registered functions (Thanks Boost113)
 <li>Added the engine methods ForwardGCEnumReferences and ForwardGCReleaseAllReferences
 <li>Included SetCircularRefDetectedCallback to allow application developers to easier identify the origin of circular references (Thanks baiyang)
+<li>SetException now has an optional argument to allow exception to be caught or not
+<li>Added WillExceptionBeCaught that the exception callback can use while inspecting the exception
 </ul>
 <li>Script language
 <ul>
@@ -72,6 +74,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Initialization lists will implicitly assume objects by handle if asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE is used (Thanks y18a)
 <li>When unsafe references is allowed the stream operator (&lt;&lt;) can now be implemented on value types with correct behaviour for chained expressions (Thanks ASBai)
 <li>Virtual property accessors must not have the same name as real property or function in the same scope
+<li>Added support for try/catch statements
 </ul>
 <li>Virtual machine
 <ul>
