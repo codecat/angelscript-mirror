@@ -321,8 +321,6 @@ public:
 //===========================================================
 	asCMemoryMgr memoryMgr;
 
-	asUINT initialContextStackSize;
-
 	asCObjectType   *defaultArrayObjectType;
 	asCObjectType    scriptTypeBehaviours;
 	asCObjectType    functionBehaviours;
@@ -475,6 +473,7 @@ public:
 		bool   optimizeByteCode;
 		bool   copyScriptSections;
 		asUINT maximumContextStackSize;
+		asUINT initContextStackSize;
 		bool   useCharacterLiterals;
 		bool   allowMultilineStrings;
 		bool   allowImplicitHandleTypes;

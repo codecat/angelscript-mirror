@@ -143,6 +143,7 @@ enum asEEngineProp
 	asEP_HEREDOC_TRIM_MODE                  = 26,
 	asEP_MAX_NESTED_CALLS                   = 27,
 	asEP_GENERIC_CALL_MODE                  = 28,
+	asEP_INIT_STACK_SIZE                    = 29,
 
 	asEP_LAST_PROPERTY
 };

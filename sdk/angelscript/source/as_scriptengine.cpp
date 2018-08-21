@@ -291,18 +291,24 @@ int asCScriptEngine::SetEngineProperty(asEEngineProp property, asPWORD value)
 		{
 			// Restore default: no limit and initially size 4KB
 			ep.maximumContextStackSize = 0;
-			initialContextStackSize    = 1024;
 		}
 		else
 		{
 			// The size is given in bytes, but we only store dwords
 			ep.maximumContextStackSize = (asUINT)value/4;
-			if( initialContextStackSize > ep.maximumContextStackSize )
-			{
-				initialContextStackSize = ep.maximumContextStackSize;
-				if( initialContextStackSize == 0 )
-					initialContextStackSize = 1;
-			}
+		}
+		break;
+
+	case asEP_INIT_STACK_SIZE:
+		if (value < 4)
+		{
+			// At least one dword
+			ep.initContextStackSize = 1;
+		}
+		else
+		{
+			// The size is given in bytes, but we only store dwords
+			ep.initContextStackSize = (asUINT)value / 4;
 		}
 		break;
 
@@ -448,7 +454,10 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 		return ep.copyScriptSections;
 
 	case asEP_MAX_STACK_SIZE:
-		return ep.maximumContextStackSize*4;
+		return ep.maximumContextStackSize * 4;
+
+	case asEP_INIT_STACK_SIZE:
+		return ep.initContextStackSize * 4;
 
 	case asEP_USE_CHARACTER_LITERALS:
 		return ep.useCharacterLiterals;
@@ -561,6 +570,7 @@ asCScriptEngine::asCScriptEngine()
 		ep.optimizeByteCode              = true;
 		ep.copyScriptSections            = true;
 		ep.maximumContextStackSize       = 0;         // no limit
+		ep.initContextStackSize          = 1024;      // 4KB default init stack size
 		ep.useCharacterLiterals          = false;
 		ep.allowMultilineStrings         = false;
 		ep.allowImplicitHandleTypes      = false;
@@ -600,10 +610,6 @@ asCScriptEngine::asCScriptEngine()
 	isBuilding = false;
 	deferValidationOfTemplateTypes = false;
 	lastModule = 0;
-
-
-	initialContextStackSize = 1024;      // 4 KB (1024 * sizeof(asDWORD)
-
 
 	typeIdSeqNbr      = 0;
 	currentGroup      = &defaultGroup;

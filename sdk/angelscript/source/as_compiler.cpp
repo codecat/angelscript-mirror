@@ -4309,8 +4309,8 @@ void asCCompiler::CompileTryCatch(asCScriptNode *node, bool *hasReturn, asCByteC
 	// Add the label after catch
 	bc->Label((short)afterCatchLabel);
 
-	// The try/catch statement only has return (i.e. no code after the try/catch block will be executed)
-	// if both blocks have
+	// The try/catch statement only has return (i.e. no code after
+	// the try/catch block will be executed) if both blocks have
 	*hasReturn = hasReturnTry && hasReturnCatch;
 }
 

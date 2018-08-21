@@ -58,10 +58,40 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test that the compiler can identify that both try and catch block returns so nothing afterwards can be executed
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"void Test()                    \n"
+			"{                              \n"
+			"  try {                        \n"
+			"   return;                     \n"
+			"  } catch {                    \n"
+			"   return;                     \n"
+			"  }                            \n"
+			"  int a;                       \n" // this cannot be reached
+			"}                              \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "script (1, 1) : Info    : Compiling void Test()\n"
+						   "script (8, 3) : Warning : Unreachable code\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test catching an exception
 	// TODO: Test getting the exception info
 	// TODO: Test rethrowing exception in catch block
-	// TODO: Test return in try or catch block to verify that the compiler detects all valid paths as returning
 	// TODO: Test use of try/catch in constructor to call base class' constructor
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();

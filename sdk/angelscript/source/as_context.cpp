@@ -1610,7 +1610,7 @@ bool asCContext::ReserveStackSpace(asUINT size)
 	// Make sure the first stack block is allocated
 	if( m_stackBlocks.GetLength() == 0 )
 	{
-		m_stackBlockSize = m_engine->initialContextStackSize;
+		m_stackBlockSize = m_engine->ep.initContextStackSize;
 		asASSERT( m_stackBlockSize > 0 );
 
 #ifndef WIP_16BYTE_ALIGN
@@ -1647,8 +1647,8 @@ bool asCContext::ReserveStackSpace(asUINT size)
 		// Make sure we don't allocate more space than allowed
 		if( m_engine->ep.maximumContextStackSize )
 		{
-			// This test will only stop growth once it has already crossed the limit
-			if( m_stackBlockSize * ((1 << (m_stackIndex+1)) - 1) > m_engine->ep.maximumContextStackSize )
+			// This test will only stop growth once it is on or already crossed the limit
+			if( m_stackBlockSize * ((1 << (m_stackIndex+1)) - 1) >= m_engine->ep.maximumContextStackSize )
 			{
 				m_isStackMemoryNotAllocated = true;
 
