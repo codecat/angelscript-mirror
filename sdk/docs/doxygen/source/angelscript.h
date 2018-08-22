@@ -2716,7 +2716,8 @@ public:
 	virtual asEContextState GetState() const = 0;
 	//! \brief Backups the current state to prepare the context for a nested call.
 	//! \return A negative value on error.
-	//! \retval asERROR The state couldn't be pushed.
+	//! \retval asERROR The current context is not active.
+	//! \retval asOUT_OF_MEMORY Couldn't allocate memory to store state.
 	//!
 	//! This method can be invoked on an active context in order
 	//! to reuse the context for a nested call, e.g. when a function
@@ -2725,11 +2726,15 @@ public:
 	//! shall be invoked to prepare the new execution.
 	//!
 	//! By reusing an active context the application can avoid creating a 
-	//! temporary context, and thus improve the run time performance.
+	//! temporary context, and thus improve the run-time performance.
 	//!
 	//! For each successful call to PushState() the method \ref PopState() must
 	//! be called to return the state in order to resume the previous script 
 	//! execution.
+	//!
+	//! If PushState() fails, the context was not modified, so the application
+	//! can just create a different context instead, and when it is done with it
+	//! the original context can be resumed normally.
 	virtual int             PushState() = 0;
 	//! \brief Restores the state to resume previous script execution
 	//! \return A negative value on error.

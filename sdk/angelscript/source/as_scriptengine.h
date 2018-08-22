@@ -500,6 +500,8 @@ public:
 		int    heredocTrimMode;
 		asUINT maxNestedCalls;
 		asUINT genericCallMode;
+		asUINT initCallStackSize;
+		asUINT maxCallStackSize;
 	} ep;
 
 	// Callbacks

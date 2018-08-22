@@ -467,6 +467,10 @@ int asCContext::Prepare(asIScriptFunction *func)
 		// Make sure there is enough space on the stack for the arguments and return value
 		if( !ReserveStackSpace(stackSize) )
 			return asOUT_OF_MEMORY;
+
+		// Set up the call stack too
+		if (m_callStack.GetCapacity() < m_engine->ep.initCallStackSize)
+			m_callStack.AllocateNoConstruct(m_engine->ep.initCallStackSize * CALLSTACK_FRAME_SIZE, true);
 	}
 
 	// Reset state
@@ -1390,16 +1394,26 @@ int asCContext::PushState()
 		return asERROR;
 	}
 
+	// Allocate space on the callstack for at least two states
+	if (m_callStack.GetLength() >= m_callStack.GetCapacity() - 2*CALLSTACK_FRAME_SIZE)
+	{
+		if (m_engine->ep.maxCallStackSize > 0 && m_callStack.GetLength() >= m_engine->ep.maxCallStackSize*CALLSTACK_FRAME_SIZE)
+		{
+			// The call stack is too big to grow further
+			// If an error occurs, no change to the context should be done
+			return asOUT_OF_MEMORY;
+		}
+
+		// Allocate space for 10 call states at a time to save time
+		m_callStack.AllocateNoConstruct(m_callStack.GetLength() + 10 * CALLSTACK_FRAME_SIZE, true);
+	}
+
 	// Push the current script function that is calling the system function
+	// This cannot fail, since the memory was already allocated above
 	PushCallState();
 
 	// Push the system function too, which will serve both as a marker and
 	// informing which system function that created the nested call
-	if( m_callStack.GetLength() == m_callStack.GetCapacity() )
-	{
-		// Allocate space for 10 call states at a time to save time
-		m_callStack.AllocateNoConstruct(m_callStack.GetLength() + 10*CALLSTACK_FRAME_SIZE, true);
-	}
 	m_callStack.SetLengthNoConstruct(m_callStack.GetLength() + CALLSTACK_FRAME_SIZE);
 
 	// Need to push m_initialFunction as it must be restored later
@@ -1475,10 +1489,17 @@ int asCContext::PopState()
 	return asSUCCESS;
 }
 
-void asCContext::PushCallState()
+int asCContext::PushCallState()
 {
 	if( m_callStack.GetLength() == m_callStack.GetCapacity() )
 	{
+		if (m_engine->ep.maxCallStackSize > 0 && m_callStack.GetLength() >= m_engine->ep.maxCallStackSize*CALLSTACK_FRAME_SIZE)
+		{
+			// The call stack is too big to grow further
+			SetInternalException(TXT_STACK_OVERFLOW);
+			return asERROR;
+		}
+
 		// Allocate space for 10 call states at a time to save time
 		m_callStack.AllocateNoConstruct(m_callStack.GetLength() + 10*CALLSTACK_FRAME_SIZE, true);
 	}
@@ -1504,6 +1525,8 @@ void asCContext::PushCallState()
 	tmp[2] = s[2];
 	tmp[3] = s[3];
 	tmp[4] = s[4];
+
+	return asSUCCESS;
 }
 
 void asCContext::PopCallState()
@@ -1713,7 +1736,8 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	asASSERT( func->scriptData );
 
 	// Push the framepointer, function id and programCounter on the stack
-	PushCallState();
+	if (PushCallState() < 0)
+		return;
 
 	// Update the current function and program position before increasing the stack
 	// so the exception handler will know what to do if there is a stack overflow

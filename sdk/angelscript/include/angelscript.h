@@ -144,6 +144,8 @@ enum asEEngineProp
 	asEP_MAX_NESTED_CALLS                   = 27,
 	asEP_GENERIC_CALL_MODE                  = 28,
 	asEP_INIT_STACK_SIZE                    = 29,
+	asEP_INIT_CALL_STACK_SIZE               = 30,
+	asEP_MAX_CALL_STACK_SIZE                = 31,
 
 	asEP_LAST_PROPERTY
 };

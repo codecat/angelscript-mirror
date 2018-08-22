@@ -57,6 +57,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The copy constructor of script classes are now used properly by the compiler (Thanks MrFloat)
 <li>Refactored how he compiler does symbol lookups to better handle namespace hierarchies and child types. (Thanks y18a)
 <li>Added engine property asEP_INIT_STACK_SIZE to set the initial data stack size for contexts (Thanks Karoly Pinter)
+<li>Added engine properties asEP_INIT_CALL_STACK_SIZE and asEP_MAX_CALL_STACK_SIZE to set initial and max call stack size for nested calls (Thanks Karoly Pinter)
+<li>asIScriptContext::PushState will return an error if the call stack is already too big
 </ul>
 <li>Library interface
 <ul>
