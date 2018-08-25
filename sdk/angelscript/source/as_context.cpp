@@ -5140,7 +5140,8 @@ bool asCContext::CleanStackFrame(bool catchException)
 // interface
 int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 {
-	if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
+	// Return the last exception even if the context is no longer in the exception state
+	// if( GetState() != asEXECUTION_EXCEPTION ) return asERROR;
 
 	if( column ) *column = m_exceptionColumn;
 
@@ -5159,7 +5160,8 @@ int asCContext::GetExceptionLineNumber(int *column, const char **sectionName)
 // interface
 asIScriptFunction *asCContext::GetExceptionFunction()
 {
-	if( GetState() != asEXECUTION_EXCEPTION ) return 0;
+	// Return the last exception even if the context is no longer in the exception state
+	// if( GetState() != asEXECUTION_EXCEPTION ) return 0;
 
 	return m_engine->scriptFunctions[m_exceptionFunction];
 }
@@ -5167,7 +5169,8 @@ asIScriptFunction *asCContext::GetExceptionFunction()
 // interface
 const char *asCContext::GetExceptionString()
 {
-	if( GetState() != asEXECUTION_EXCEPTION ) return 0;
+	// Return the last exception even if the context is no longer in the exception state
+	// if( GetState() != asEXECUTION_EXCEPTION ) return 0;
 
 	return m_exceptionString.AddressOf();
 }

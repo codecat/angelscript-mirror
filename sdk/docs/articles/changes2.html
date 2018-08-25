@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/08/21</h2>
+<h2>Version 2.33.0 WIP - 2018/08/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -59,6 +59,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine property asEP_INIT_STACK_SIZE to set the initial data stack size for contexts (Thanks Karoly Pinter)
 <li>Added engine properties asEP_INIT_CALL_STACK_SIZE and asEP_MAX_CALL_STACK_SIZE to set initial and max call stack size for nested calls (Thanks Karoly Pinter)
 <li>asIScriptContext::PushState will return an error if the call stack is already too big
+<li>context's GetExceptionString, GetExceptionFunction, GetExceptionLineNumber will now return the last exception even if it has been caught
 </ul>
 <li>Library interface
 <ul>
@@ -101,6 +102,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>CScriptHandle registers the ENUMREFS and RELEASEREFS gc behaviours
 <li>CScriptArray, CScriptDictionary, CScriptGrid, and CScriptAny now support forwarding gc enum callbacks to value types with gc behaviour
 <li>The array's and string's length property accessor has been renamed to 'size' to avoid conflict with the length() method
+<li>Implemented the functions throw() and getExceptionInfo() that can be registered with RegisterExceptionRoutines
 </ul>
 <li>Project
 <ul>

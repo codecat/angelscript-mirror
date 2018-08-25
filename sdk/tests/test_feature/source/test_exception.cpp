@@ -98,6 +98,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 		RegisterStdString(engine);
+		RegisterExceptionRoutines(engine);
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -105,14 +106,14 @@ bool Test()
 			"bool exceptionCaught = false;  \n"
 			"void Test()                    \n"
 			"{                              \n"
-			"  int a = 0, b = 0;            \n"
 			"  try {                        \n"
 			"   string test = 'hello';      \n" // this shouldn't be cleaned up by exception
 			"   try {                       \n"
 			"    string cleanup = 'clean';  \n" // this must be cleaned up
-			"    a = a/b;                   \n" // an exception is thrown here
+			"    throw('test');             \n" // an exception is thrown here
 			"    test = 'blah';             \n" // this is never executed
 			"   } catch {                   \n"
+			"    assert( getExceptionInfo() == 'test' ); \n"
 			"    exceptionCaught = true;    \n" // signal that the exception was caught
 			"    assert( test == 'hello' ); \n" // original value
 			"   }                           \n"

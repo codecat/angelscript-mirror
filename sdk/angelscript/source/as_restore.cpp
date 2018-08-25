@@ -3100,6 +3100,12 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		func->scriptData->objVariableInfo[n].variableOffset = AdjustStackPosition(func->scriptData->objVariableInfo[n].variableOffset);
 	}
 
+	for (n = 0; n < func->scriptData->tryCatchInfo.GetLength(); n++)
+	{
+		func->scriptData->tryCatchInfo[n].tryPos = instructionNbrToPos[func->scriptData->tryCatchInfo[n].tryPos];
+		func->scriptData->tryCatchInfo[n].catchPos = instructionNbrToPos[func->scriptData->tryCatchInfo[n].catchPos];
+	}
+
 	// The program position (every even number) needs to be adjusted
 	// for the line numbers to be in number of dwords instead of number of instructions
 	for( n = 0; n < func->scriptData->lineNumbers.GetLength(); n += 2 )

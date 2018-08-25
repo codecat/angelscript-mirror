@@ -166,6 +166,7 @@ int ConfigureEngine(asIScriptEngine *engine)
 	RegisterScriptFile(engine);
 	RegisterScriptFileSystem(engine);
 	RegisterScriptDateTime(engine);
+	RegisterExceptionRoutines(engine);
 
 	// Register a couple of extra functions for the scripts
 	r = engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
