@@ -53,6 +53,7 @@
 #define TEXT_BASE_DOESNT_HAVE_DEF_CONSTR          "Base class doesn't have default constructor. Make explicit call to base constructor"
 
 #define TXT_CANDIDATES_ARE                         "Candidates are:"
+#define TXT_CANNOT_CALL_METHOD_DIRECTLY_WITHOUT_OBJ "Cannot call a method directly without the object instance"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_LOOPS       "Can't call a constructor in loops"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_IN_SWITCH      "Can't call a constructor in switch"
 #define TXT_CANNOT_CALL_CONSTRUCTOR_TWICE          "Can't call a constructor multiple times"

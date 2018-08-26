@@ -5149,9 +5149,10 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 				methods.PushLast(engine->scriptFunctions[objectType->methods[n]]->id);
 			else
 			{
-				asCScriptFunction *virtFunc = engine->scriptFunctions[objectType->methods[n]];
-				asCScriptFunction *realFunc = objectType->virtualFunctionTable[virtFunc->vfTableIdx];
-				methods.PushLast(realFunc->id);
+				asCScriptFunction *f = engine->scriptFunctions[objectType->methods[n]];
+				if( f && f->funcType == asFUNC_VIRTUAL )
+					f = objectType->virtualFunctionTable[f->vfTableIdx];
+				methods.PushLast(f->id);
 			}
 		}
 	}

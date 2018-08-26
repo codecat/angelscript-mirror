@@ -11,6 +11,34 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test error when trying to call class method directly without the object
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int test() { \n"
+			"  return string::length(); \n"  // wrong usage, should report error
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling int test()\n"
+						   "test (2, 10) : Error   : Cannot call a method directly without the object instance\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test correct symbol lookup when type and variable has same name in different namespaces
 	// https://www.gamedev.net/forums/topic/696791-namespaces-can-not-be-resolved-well-in-some-cases/
 	{

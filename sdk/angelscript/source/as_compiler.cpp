@@ -11143,7 +11143,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		}
 
 		// If a class method is being called implicitly, then add the this pointer for the call
-		if (funcs.GetLength() && !objectType)
+		if (funcs.GetLength() && !objectType && outFunc->objectType)
 		{
 			// Verify that the identified function is actually part of the class hierarchy
 			if (!outFunc->objectType->DerivesFrom(lookupResult.type.dataType.GetTypeInfo()))
@@ -11172,6 +11172,12 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 			ctx->type.dataType.MakeReference(true);
 
 			Dereference(ctx, true);
+		}
+		else if (funcs.GetLength() && !objectType && !outFunc->objectType)
+		{
+			// Cannot call class methods directly without the object
+			Error(TXT_CANNOT_CALL_METHOD_DIRECTLY_WITHOUT_OBJ, node);
+			return -1;
 		}
 	}
 	

@@ -90,7 +90,6 @@ bool Test()
 	}
 
 	// Test catching an exception
-	// TODO: Test getting the exception info
 	// TODO: Test rethrowing exception in catch block
 	// TODO: Test use of try/catch in constructor to call base class' constructor
 	{
