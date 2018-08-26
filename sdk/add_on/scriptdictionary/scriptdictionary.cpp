@@ -22,6 +22,7 @@ struct SDictionaryCache
 {
 	asITypeInfo *dictType;
 	asITypeInfo *arrayType;
+	asITypeInfo *keyType;
 
 	// This is called from RegisterScriptDictionary
 	static void Setup(asIScriptEngine *engine)
@@ -35,6 +36,7 @@ struct SDictionaryCache
 
 			cache->dictType = engine->GetTypeInfoByName("dictionary");
 			cache->arrayType = engine->GetTypeInfoByDecl("array<string>");
+			cache->keyType = engine->GetTypeInfoByDecl("string");
 		}
 	}
 
@@ -95,6 +97,10 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 	// so we can get the engine from the active context
 	asIScriptContext *ctx = asGetActiveContext();
 	Init(ctx->GetEngine());
+	
+	// Determine if the dictionary key type is registered as reference type or value type
+	SDictionaryCache& cache = *reinterpret_cast<SDictionaryCache*>(engine->GetUserData(DICTIONARY_CACHE));
+	bool keyAsRef = cache.keyType->GetFlags() & asOBJ_REF ? true : false;
 
 	// Initialize the dictionary from the buffer
 	asUINT length = *(asUINT*)buffer;
@@ -108,8 +114,17 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 			buffer += 4 - (asPWORD(buffer) & 0x3);
 
 		// Get the name value pair from the buffer and insert it in the dictionary
-		dictKey_t name = *(dictKey_t*)buffer;
-		buffer += sizeof(dictKey_t);
+		dictKey_t name;
+		if (keyAsRef)
+		{
+			name = **(dictKey_t**)buffer;
+			buffer += sizeof(dictKey_t*);
+		}
+		else
+		{
+			name = *(dictKey_t*)buffer;
+			buffer += sizeof(dictKey_t);
+		}
 
 		// Get the type id of the value
 		int typeId = *(int*)buffer;

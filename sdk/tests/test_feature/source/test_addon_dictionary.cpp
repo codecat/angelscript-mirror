@@ -23,6 +23,43 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test script dictionary with string type registered as reference type
+	// Reported by wracky
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+
+		RegisterScriptString(engine); // Register string type as ref type
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"  dictionary d1 =  { { 'aa', 1 },{ 'ab', 2 } }; \n"
+			"  assert( d1.getSize() == 2 ); \n"
+			"  assert( d1.getKeys()[0] == 'aa' ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test anonymous object with asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE
 	// https://www.gamedev.net/forums/topic/697187-initialization-list-may-not-function-properly/
 	{

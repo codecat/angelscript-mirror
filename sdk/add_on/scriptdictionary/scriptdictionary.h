@@ -12,10 +12,7 @@
 
 // By default the CScriptDictionary use the std::string for the keys.
 // If the application uses a custom string type, then this typedef
-// can be changed accordingly. Remember, if the application uses
-// a ref counted string type, then further changes will be needed,
-// for example in the code for GetKeys() and the constructor that
-// takes an initialization list.
+// can be changed accordingly.
 #include <string>
 typedef std::string dictKey_t;
 
