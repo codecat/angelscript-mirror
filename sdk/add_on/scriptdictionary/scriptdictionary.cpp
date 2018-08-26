@@ -788,6 +788,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 				// The stored type is an object
 				// TODO: Check if the object has a conversion operator to a primitive value
 				*(double*)value = 0;
+				return false;
 			}
 			return true;
 		}
@@ -814,6 +815,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 				// The stored type is an object
 				// TODO: Check if the object has a conversion operator to a primitive value
 				*(asINT64*)value = 0;
+				return false;
 			}
 			return true;
 		}
@@ -843,7 +845,9 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 				// The stored type is an object
 				// TODO: Check if the object has a conversion operator to a primitive value
 				*(int*)value = 0;
+				return false;
 			}
+			return true;
 		}
 		else if( typeId == asTYPEID_BOOL )
 		{
@@ -864,6 +868,7 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 				int size = engine->GetSizeOfPrimitiveType(m_typeId);
 				*(bool*)value = memcmp(&m_valueInt, &zero, size) == 0 ? false : true;
 			}
+			return true;
 		}
 	}
 
