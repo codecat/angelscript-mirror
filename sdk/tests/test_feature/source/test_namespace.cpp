@@ -11,6 +11,62 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test error when trying to access virtual class property directly without the object
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int test() { \n"
+			"  return string::size; \n"  // wrong usage, should report error
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling int test()\n"
+						   "test (2, 10) : Error   : Cannot access non-static member 'size' like this\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test error when trying to access class method for pointer without the object
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"int test() { \n"
+			"  return string::erase; \n"  // wrong usage, should report error
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling int test()\n"
+						   "test (2, 10) : Error   : Cannot access non-static member 'erase' like this\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test error when trying to call class method directly without the object
 	// Reported by Phong Ba
 	{
@@ -30,7 +86,7 @@ bool Test()
 			TEST_FAILED;
 
 		if (bout.buffer != "test (1, 1) : Info    : Compiling int test()\n"
-						   "test (2, 10) : Error   : Cannot call a method directly without the object instance\n")
+						   "test (2, 10) : Error   : Cannot access non-static member 'length' like this\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

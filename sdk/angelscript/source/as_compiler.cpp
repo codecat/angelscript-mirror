@@ -9479,7 +9479,15 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 		if (symbolType == SL_CLASSPROPACCESS)
 		{
-			asASSERT(scope == "");
+			if (scope != "")
+			{
+				// Cannot access non-static members like this
+				asCString msg;
+				msg.Format(TXT_CANNOT_ACCESS_NON_STATIC_MEMBER_s, name.AddressOf());
+				Error(msg, errNode);
+				return -1;
+			}
+
 			// See if there are any matching property accessors
 			asCExprContext access(engine);
 			if (objType)
@@ -9617,7 +9625,14 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 
 		if (symbolType == SL_CLASSMETHOD)
 		{
-			asASSERT(objType || outFunc->objectType);
+			if (scope != "")
+			{
+				// Cannot access non-static members like this
+				asCString msg;
+				msg.Format(TXT_CANNOT_ACCESS_NON_STATIC_MEMBER_s, name.AddressOf());
+				Error(msg, errNode);
+				return -1;
+			}
 
 			// If it is not a property, it may still be the name of a method which can be used to create delegates
 			asCObjectType *ot = outFunc->objectType;
@@ -11176,7 +11191,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		else if (funcs.GetLength() && !objectType && !outFunc->objectType)
 		{
 			// Cannot call class methods directly without the object
-			Error(TXT_CANNOT_CALL_METHOD_DIRECTLY_WITHOUT_OBJ, node);
+			asCString msg;
+			msg.Format(TXT_CANNOT_ACCESS_NON_STATIC_MEMBER_s, name.AddressOf());
+			Error(msg, node);
 			return -1;
 		}
 	}
