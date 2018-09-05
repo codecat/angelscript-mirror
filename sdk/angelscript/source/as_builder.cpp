@@ -1485,7 +1485,8 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	{
 		for (asUINT n = 0; n < engine->registeredGlobalFuncs.GetSize(); n++)
 		{
-			if (engine->registeredGlobalFuncs.Get(n)->name == name)
+			if (engine->registeredGlobalFuncs.Get(n)->name == name &&
+				engine->registeredGlobalFuncs.Get(n)->nameSpace == ns)
 			{
 				if (code)
 				{
@@ -1590,7 +1591,10 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	{
 		for (n = 0; n < functions.GetLength(); n++)
 		{
-			if (functions[n] && functions[n]->name == name)
+			if (functions[n] && 
+				functions[n]->objType == 0 && 
+				functions[n]->name == name &&
+				engine->scriptFunctions[functions[n]->funcId]->nameSpace == ns )
 			{
 				if (code)
 				{

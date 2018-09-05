@@ -11,6 +11,37 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test a false error in compiler
+	// Reported by Phong Ba
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class B { \n"
+			"  int get_Number() { return 0; } \n"
+			"} \n"
+			"class A { \n"
+			"  int get_Number() { return 0; } \n"
+			"} \n"
+			"namespace A \n"
+			"{\n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test when class and namespace has the name name
 	// Reported by Phong Ba
 	// TODO: Once it is possible to declare static members, the code should
