@@ -11,6 +11,57 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test correct declaration from GetDeclaration when returning class method using types from different namespace
+	// https://www.gamedev.net/forums/topic/698616-version-2330-wip-vs-version-2321-wip/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"namespace A { class B { } }\n"
+			"class C { A::B @func() { return null; } } \n"
+			"namespace A { class D { B @func() { return null; } } } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asITypeInfo *t = mod->GetTypeInfoByName("C");
+		asIScriptFunction *f = t->GetMethodByName("func");
+		if (std::string(f->GetDeclaration()) != "A::B@ C::func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(true, false)) != "A::B@ C::func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(false, false)) != "A::B@ func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(true, true)) != "A::B@ C::func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(false, true)) != "A::B@ func()")
+			TEST_FAILED;
+
+		t = mod->GetTypeInfoByDecl("A::D");
+		f = t->GetMethodByName("func");
+		if (std::string(f->GetDeclaration()) != "B@ D::func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(true, false)) != "B@ D::func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(false, false)) != "B@ func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(true, true)) != "A::B@ A::D::func()")
+			TEST_FAILED;
+		if (std::string(f->GetDeclaration(false, true)) != "A::B@ func()")
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test a false error in compiler
 	// Reported by Phong Ba
 	{
