@@ -11,6 +11,33 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test when class and namespace has the name name
+	// Reported by Phong Ba
+	// TODO: Once it is possible to declare static members, the code should
+	//       change to prohibit namespace with the same name as types
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { int B; void C() {} } \n"
+			"namespace A { int B; void C() {} } \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 18) : Error   : Name conflict. 'A::C' is a global function.\n"
+						   "test (1, 15) : Error   : Name conflict. 'A::B' is a global property.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test error when trying to access virtual class property directly without the object
 	// Reported by Phong Ba
 	{
@@ -765,7 +792,7 @@ bool Test()
 
 		// Fully specify the namespace to get the correct object
 		asITypeInfo *type = mod->GetTypeInfoByDecl("net::room::kernel");
-		std::string str = engine->GetTypeDeclaration(type->GetTypeId(), true);
+		std::string str = type ? engine->GetTypeDeclaration(type->GetTypeId(), true) : "";
 		if( str != "net::room::kernel" )
 		{
 			PRINTF("%s", str.c_str());

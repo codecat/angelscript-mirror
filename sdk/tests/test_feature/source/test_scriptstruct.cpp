@@ -246,13 +246,13 @@ bool Test()
 		if (r >= 0)
 			TEST_FAILED;
 
-		if (bout.buffer != "test (10, 3) : Info    : Compiling B::B()\n"
+		if (bout.buffer != "test (14, 1) : Info    : Compiling void func()\n"
+						   "test (15, 5) : Error   : Illegal call to private method 'A@ A()'\n"
+						   "test (17, 6) : Error   : Illegal call to protected method 'A@ A(float)'\n"
+						   "test (10, 3) : Info    : Compiling B::B()\n"
 						   "test (10, 9) : Error   : Illegal call to private method 'A::A()'\n"
 						   "test (11, 3) : Info    : Compiling A@ B::create()\n"
-						   "test (11, 24) : Error   : Illegal call to private method 'A@ A()'\n"
-						   "test (14, 1) : Info    : Compiling void func()\n"
-						   "test (15, 5) : Error   : Illegal call to private method 'A@ A()'\n"
-						   "test (17, 6) : Error   : Illegal call to protected method 'A@ A(float)'\n")
+						   "test (11, 24) : Error   : Illegal call to private method 'A@ A()'\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -468,11 +468,11 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 
-		if( bout.buffer != "test (9, 5) : Info    : Compiling ssNode_Float::ssNode_Float(string)\n"
-						   "test (9, 33) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n"
-						   "test (11, 1) : Info    : Compiling ssNode ssCreateNode(string)\n"
+		if( bout.buffer != "test (11, 1) : Info    : Compiling ssNode ssCreateNode(string)\n"
 						   "test (14, 12) : Error   : No default constructor for object of type 'ssNode'.\n"
-						   "test (14, 12) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" )
+						   "test (14, 12) : Error   : Previous error occurred while attempting to create a temporary copy of object\n" 
+						   "test (9, 5) : Info    : Compiling ssNode_Float::ssNode_Float(string)\n"
+						   "test (9, 33) : Error   : Base class doesn't have default constructor. Make explicit call to base constructor\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

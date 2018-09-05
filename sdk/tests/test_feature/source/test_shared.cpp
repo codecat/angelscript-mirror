@@ -87,7 +87,7 @@ bool Test()
 			TEST_FAILED;
 
 		asDWORD crc32 = ComputeCRC32(&bc1.buffer[0], asUINT(bc1.buffer.size()));
-		if (crc32 != 0xE0994F88)
+		if (crc32 != 0x433EF007)
 		{
 			PRINTF("The saved byte code has different checksum than the expected. Got 0x%X\n", crc32);
 			TEST_FAILED;
@@ -716,6 +716,8 @@ bool Test()
 		if( bout.buffer != "a (3, 25) : Error   : Shared type cannot implement non-shared interface 'badIntf'\n"
 						   "a (32, 3) : Error   : Shared code cannot use non-shared type 'badIntf'\n"
 						   "a (35, 3) : Error   : Shared code cannot use non-shared type 'ENOTSHARED'\n"
+						   "a (43, 1) : Info    : Compiling void sfunc()\n"
+						   "a (45, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
 						   "a (5, 3) : Info    : Compiling void T::test()\n"
 						   "a (7, 5) : Error   : Shared code cannot access non-shared global variable 'var'\n"
 						   "a (8, 5) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n"
@@ -726,9 +728,7 @@ bool Test()
 						   "a (18, 5) : Error   : Shared code cannot use non-shared type 'nonShared'\n"
 						   "a (19, 5) : Error   : Shared code cannot call non-shared function 'void impfunc()'\n"
 						   "a (28, 3) : Info    : Compiling T::T(int)\n"
-						   "a (30, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n"
-						   "a (43, 1) : Info    : Compiling void sfunc()\n"
-						   "a (45, 3) : Error   : Shared code cannot call non-shared function 'void gfunc()'\n" )
+						   "a (30, 6) : Error   : Shared code cannot access non-shared global variable 'var'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
