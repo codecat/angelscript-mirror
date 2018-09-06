@@ -3773,12 +3773,14 @@ public:
 	virtual const char      *GetNamespace() const = 0;
 	//! \brief Returns the function declaration
 	//! \param[in] includeObjectName Indicate whether the object name should be prepended to the function name
-	//! \param[in] includeNamespace Indicates whether the namespace should be prepended to the function name
+	//! \param[in] includeNamespace Indicates whether the namespace should be prepended to the function name and types
 	//! \param[in] includeParamNames Indicates whether parameter names should be added to the declaration
 	//! \return A null terminated string with the function declaration. 
 	//!
 	//! The parameter names are not stored for \ref asFUNC_VIRTUAL "virtual methods". If you want to know the 
 	//! name of parameters to class methods, be sure to get the actual implementation rather than the virtual method.
+	//!
+	//! The namespace will always be included for types that are declared in a different namespace than the function itself.
 	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const = 0;
 	//! \brief Returns true if the class method is read-only
 	//! \return True if the class method is read-only

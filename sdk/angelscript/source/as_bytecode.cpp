@@ -1875,7 +1875,7 @@ int asCByteCode::ResolveJumpAddresses()
 {
 	TimeIt("asCByteCode::ResolveJumpAddresses");
 
-	UINT currPos = 0;
+	asUINT currPos = 0;
 
 	asCByteInstruction *instr = first;
 	while( instr )
