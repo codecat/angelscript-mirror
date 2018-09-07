@@ -4911,11 +4911,10 @@ int asCScriptEngine::RefCastObject(void *obj, asITypeInfo *fromType, asITypeInfo
 					AddRefScriptObject(*newPtr, toType);
 				return asSUCCESS;
 			}
-			else
+			else if( func->returnType.GetTokenType() == ttVoid &&
+					 func->parameterTypes.GetLength() == 1 &&
+					 func->parameterTypes[0].GetTokenType() == ttQuestion )
 			{
-				asASSERT( func->returnType.GetTokenType() == ttVoid &&
-						  func->parameterTypes.GetLength() == 1 &&
-						  func->parameterTypes[0].GetTokenType() == ttQuestion );
 				universalCastFunc = func;
 			}
 		}
