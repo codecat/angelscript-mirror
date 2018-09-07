@@ -67,6 +67,34 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test passing null to ref
+	// https://www.gamedev.net/forums/topic/698628-cscripthandle-null/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		RegisterScriptHandle(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A {  }");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A@ obj; \n"
+								  "ref x(@obj); \n"
+								  "ref y(null); \n", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "A@ obj; \n"
+			"ref x(obj); \n", mod);   // causes null pointer exception as it tries to do a value copy of obj
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test circular reference involving ref
 	{
 		engine = asCreateScriptEngine();

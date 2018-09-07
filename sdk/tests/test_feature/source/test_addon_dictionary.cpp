@@ -889,7 +889,7 @@ bool Test()
 			// Test the keys
 			"  array<string> @keys = dict.getKeys(); \n"
 			"  assert( keys.find('a') != -1 ); \n"
-			"  assert( keys.size == 6 ); \n"
+			"  assert( keys.length() == 6 ); \n"
 			"}                                 \n";
 		mod->AddScriptSection("script", script, strlen(script));
 		r = mod->Build();
@@ -1067,7 +1067,7 @@ bool Test()
 			// Test the keys
 			"  array<string> @keys = dict.getKeys(); \n"
 			"  assert( keys.find('a') != -1 ); \n"
-			"  assert( keys.size == 6 ); \n"
+			"  assert( keys.length() == 6 ); \n"
 			"}                                 \n";
 		mod->AddScriptSection("script", script, strlen(script));
 		r = mod->Build();

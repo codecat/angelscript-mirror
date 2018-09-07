@@ -131,15 +131,16 @@ bool Test()
 
 		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
+			"class A { int size { get { return 0; } } } \n"
 			"int test() { \n"
-			"  return string::size; \n"  // wrong usage, should report error
+			"  return A::size; \n"  // wrong usage, should report error
 			"} \n");
 		r = mod->Build();
 		if (r >= 0)
 			TEST_FAILED;
 
-		if (bout.buffer != "test (1, 1) : Info    : Compiling int test()\n"
-						   "test (2, 10) : Error   : Cannot access non-static member 'size' like this\n")
+		if (bout.buffer != "test (2, 1) : Info    : Compiling int test()\n"
+						   "test (3, 10) : Error   : Cannot access non-static member 'size' like this\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

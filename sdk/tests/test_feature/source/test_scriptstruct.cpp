@@ -780,7 +780,7 @@ bool Test()
 			"  string hello = 'hello'; \n"
 			"  int a = Func(); \n"
 			"  string str = 'again'; \n"
-			"  int Func() { return str.size; } \n"
+			"  int Func() { return str.length(); } \n"
 			"}");
 		r = mod->Build();
 		if( r < 0 )
