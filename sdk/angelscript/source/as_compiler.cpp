@@ -3245,11 +3245,11 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 							useHndlAssign = true;
 
 							// Make sure the right hand expression is treated as a handle
-							if (!expr->type.isExplicitHandle && !expr->type.IsNullConstant())
+							if (!expr->type.isExplicitHandle && !expr->type.IsNullConstant() )
 							{
 								// TODO: Clean-up: This code is from CompileExpressionPreOp. Create a reusable function
 								// Convert the expression to a handle
-								if (!expr->type.dataType.IsObjectHandle() && !(expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
+								if (!expr->type.dataType.IsObjectHandle() && expr->type.dataType.GetTypeInfo() && !(expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE))
 								{
 									asCDataType to = expr->type.dataType;
 									to.MakeHandle(true);
@@ -3259,10 +3259,15 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 
 									asASSERT(expr->type.dataType.IsObjectHandle());
 								}
-								else if (expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE)
+								else if (expr->type.dataType.GetTypeInfo() && expr->type.dataType.GetTypeInfo()->flags & asOBJ_ASHANDLE)
 								{
 									// For the ASHANDLE type we'll simply set the expression as a handle
 									expr->type.dataType.MakeHandle(true);
+								}
+								
+								if( !expr->type.dataType.IsObjectHandle() && !expr->type.dataType.SupportHandles())
+								{
+									Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
 								}
 								expr->type.isExplicitHandle = true;
 							}
@@ -8268,6 +8273,12 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 						Error(str, rexpr);
 						return -1;
 					}
+				}
+
+				if (!rctx->type.dataType.IsObjectHandle() && !rctx->type.dataType.SupportHandles())
+				{
+					Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, rexpr);
+					return -1;
 				}
 
 				// Mark the right hand expression as explicit handle even if the user didn't do it, otherwise

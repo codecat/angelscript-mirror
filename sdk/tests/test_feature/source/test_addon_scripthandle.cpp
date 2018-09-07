@@ -67,6 +67,35 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test compiler error with ref
+	// https://www.gamedev.net/forums/topic/698645-version-2330-wip-crash-fix-included/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		RegisterScriptHandle(engine);
+		bout.buffer = "";
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func() { int j=0; \n"
+			"ref@ myRef = j; \n"
+			"@myRef = j; } \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (1, 1) : Info    : Compiling void func()\n"
+						   "test (2, 14) : Error   : Object handle is not supported for this type\n"
+						   "test (3, 10) : Error   : Object handle is not supported for this type\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+
+	}
+
 	// Test passing null to ref
 	// https://www.gamedev.net/forums/topic/698628-cscripthandle-null/
 	{
