@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/09/07</h2>
+<h2>Version 2.33.0 WIP - 2018/09/09</h2>
 
 <ul>
 <li>Bug fixes
@@ -72,6 +72,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Included SetCircularRefDetectedCallback to allow application developers to easier identify the origin of circular references (Thanks baiyang)
 <li>SetException now has an optional argument to allow exception to be caught or not
 <li>Added WillExceptionBeCaught that the exception callback can use while inspecting the exception
+<li>Added IsExplicit to asIScriptFunction
 </ul>
 <li>Script language
 <ul>
@@ -84,6 +85,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Virtual property accessors must not have the same name as real property or function in the same scope
 <li>Namespace and class with the same name must not have name conflicts between members as it would cause ambiguity in the symbol lookup (Thanks Phong Ba)
 <li>Added support for try/catch statements
+<li>Implemented support for flagging constructors as explicit
+<li>Factories for ref types with only one argument can now be used for type conversion too
 </ul>
 <li>Virtual machine
 <ul>

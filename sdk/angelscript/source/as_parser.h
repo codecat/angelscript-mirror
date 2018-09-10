@@ -132,7 +132,7 @@ protected:
 	asCScriptNode *ParseVirtualPropertyDecl(bool isMethod, bool isInterface);
 	asCScriptNode *ParseEnumeration();
 	asCScriptNode *ParseTypedef();
-	void ParseMethodOverrideBehaviors(asCScriptNode *funcNode);
+	void ParseMethodAttributes(asCScriptNode *funcNode);
 	bool IsVarDecl();
 	bool IsVirtualPropertyDecl();
 	bool IsFuncDecl(bool isMethod);

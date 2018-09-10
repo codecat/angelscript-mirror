@@ -1683,7 +1683,7 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 	objForDelegate = 0;
 }
 
-// internal
+// interface
 bool asCScriptFunction::IsShared() const
 {
 	// All system functions are shared
@@ -1700,16 +1700,22 @@ bool asCScriptFunction::IsShared() const
 	return traits.GetTrait(asTRAIT_SHARED);
 }
 
-// internal
+// interface
 bool asCScriptFunction::IsFinal() const
 {
 	return traits.GetTrait(asTRAIT_FINAL);
 }
 
-// internal
+// interface
 bool asCScriptFunction::IsOverride() const
 {
 	return traits.GetTrait(asTRAIT_OVERRIDE);
+}
+
+// interface
+bool asCScriptFunction::IsExplicit() const
+{
+	return traits.GetTrait(asTRAIT_EXPLICIT);
 }
 
 END_AS_NAMESPACE

@@ -381,12 +381,15 @@ asCScriptNode *asCParser::ParseFunctionDefinition()
 	node->AddChildLast(ParseParameterList());
 	if( isSyntaxError ) return node;
 
-	// Parse an optional const after the function definition (used for object methods)
+	// Parse an optional 'const' after the function definition (used for object methods)
 	sToken t1;
 	GetToken(&t1);
 	RewindTo(&t1);
 	if( t1.type == ttConst )
 		node->AddChildLast(ParseToken(ttConst));
+
+	// Parse an optional 'explicit'
+	ParseMethodAttributes(node);
 
 	return node;
 }
@@ -2868,7 +2871,9 @@ bool asCParser::IsFuncDecl(bool isMethod)
 				for( ; ; )
 				{
 					GetToken(&t1);
-					if( !IdentifierIs(t1, FINAL_TOKEN) && !IdentifierIs(t1, OVERRIDE_TOKEN) )
+					if( !IdentifierIs(t1, FINAL_TOKEN) && 
+						!IdentifierIs(t1, OVERRIDE_TOKEN) &&
+						!IdentifierIs(t1, EXPLICIT_TOKEN) )
 					{
 						RewindTo(&t1);
 						break;
@@ -2942,7 +2947,7 @@ asCScriptNode *asCParser::ParseFuncDef()
 	return node;
 }
 
-// BNF:1: FUNC          ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final'} (';' | STATBLOCK)
+// BNF:1: FUNC          ::= {'shared' | 'external'} ['private' | 'protected'] [((TYPE ['&']) | '~')] IDENTIFIER PARAMLIST ['const'] {'override' | 'final' | 'explicit'} (';' | STATBLOCK)
 asCScriptNode *asCParser::ParseFunction(bool isMethod)
 {
 	asCScriptNode *node = CreateNode(snFunction);
@@ -3020,7 +3025,7 @@ asCScriptNode *asCParser::ParseFunction(bool isMethod)
 			node->AddChildLast(ParseToken(ttConst));
 
 		// TODO: Should support abstract methods, in which case no statement block should be provided
-		ParseMethodOverrideBehaviors(node);
+		ParseMethodAttributes(node);
 		if( isSyntaxError ) return node;
 	}
 
@@ -3137,7 +3142,7 @@ asCScriptNode *asCParser::ParseVirtualPropertyDecl(bool isMethod, bool isInterfa
 
 				if( !isInterface )
 				{
-					ParseMethodOverrideBehaviors(accessorNode);
+					ParseMethodAttributes(accessorNode);
 					if( isSyntaxError ) return node;
 				}
 			}
@@ -4488,7 +4493,7 @@ asCScriptNode *asCParser::ParseTypedef()
 	return node;
 }
 
-void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
+void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
 {
 	sToken t1;
 
@@ -4497,7 +4502,9 @@ void asCParser::ParseMethodOverrideBehaviors(asCScriptNode *funcNode)
 		GetToken(&t1);
 		RewindTo(&t1);
 
-		if( IdentifierIs(t1, FINAL_TOKEN) || IdentifierIs(t1, OVERRIDE_TOKEN) )
+		if( IdentifierIs(t1, FINAL_TOKEN) || 
+			IdentifierIs(t1, OVERRIDE_TOKEN) || 
+			IdentifierIs(t1, EXPLICIT_TOKEN) )
 			funcNode->AddChildLast(ParseIdentifier());
 		else
 			break;

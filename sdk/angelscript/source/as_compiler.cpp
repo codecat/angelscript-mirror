@@ -1938,7 +1938,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 	return 0;
 }
 
-void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asCExprContext *> &args)
+int asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asCExprContext *> &args)
 {
 	// When a match has been found, compile the final byte code using correct parameter types
 	asCScriptFunction *descr = builder->GetFunctionDescription(funcId);
@@ -1964,11 +1964,16 @@ void asCCompiler::PrepareFunctionCall(int funcId, asCByteCode *bc, asCArray<asCE
 		for( int m = n; m >= 0; m-- )
 			args[m]->bc.GetVarsUsed(reservedVariables);
 
-		PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n], makingCopy);
+		int r = PrepareArgument2(&e, args[n], &descr->parameterTypes[n], true, descr->inOutFlags[n], makingCopy);
 		reservedVariables.SetLength(l);
+
+		if (r < 0)
+			return r;
 	}
 
 	bc->AddCode(&e.bc);
+
+	return 0;
 }
 
 void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asCExprContext *> &args, bool addOneToOffset)
@@ -5679,7 +5684,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 {
 	bool conversionDone = false;
 
-	asCArray<int> ops;
+	asCArray<int> ops; 
 
 	// A ref cast must not remove the constness
 	bool isConst = ctx->type.dataType.IsObjectConst();
@@ -7516,25 +7521,42 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 	return cost;
 }
 
-asUINT asCCompiler::ImplicitConvPrimitiveToObject(asCExprContext *ctx, const asCDataType &to, asCScriptNode * /*node*/, EImplicitConv /*isExplicit*/, bool generateCode, bool /*allowObjectConstruct*/)
+asUINT asCCompiler::ImplicitConvPrimitiveToObject(asCExprContext *ctx, const asCDataType &to, asCScriptNode *node, EImplicitConv isExplicit, bool generateCode, bool allowObjectConstruct)
 {
-	// Reference types currently don't allow implicit conversion from primitive to object
-	// TODO: Allow implicit conversion to scoped reference types as they are supposed to appear like ordinary value types
 	asCObjectType *objType = CastToObjectType(to.GetTypeInfo());
 	asASSERT( objType || CastToFuncdefType(to.GetTypeInfo()) );
-	if( !objType || (objType->flags & asOBJ_REF) )
+	if( !objType )
 		return asCC_NO_CONV;
 
-	// For value types the object must have a constructor that takes a single primitive argument either by value or as input reference
 	asCArray<int> funcs;
-	for( asUINT n = 0; n < objType->beh.constructors.GetLength(); n++ )
+	if (objType->flags & asOBJ_VALUE)
 	{
-		asCScriptFunction *func = engine->scriptFunctions[objType->beh.constructors[n]];
-		if( func->parameterTypes.GetLength() == 1 &&
-			func->parameterTypes[0].IsPrimitive() &&
-			!(func->inOutFlags[0] & asTM_OUTREF) )
+		// For value types the object must have a constructor that takes a single primitive argument either by value or as input reference
+		for (asUINT n = 0; n < objType->beh.constructors.GetLength(); n++)
 		{
-			funcs.PushLast(func->id);
+			asCScriptFunction *func = engine->scriptFunctions[objType->beh.constructors[n]];
+			if (func->parameterTypes.GetLength() == 1 &&
+				func->parameterTypes[0].IsPrimitive() &&
+				!(func->inOutFlags[0] & asTM_OUTREF) &&
+				(isExplicit == asIC_EXPLICIT_VAL_CAST || !func->IsExplicit()) )
+			{
+				funcs.PushLast(func->id);
+			}
+		}
+	}
+	else if (objType->flags & asOBJ_REF)
+	{
+		// For ref types the object must have a factory that takes a single primitive argument either by value or as input reference
+		for (asUINT n = 0; n < objType->beh.factories.GetLength(); n++)
+		{
+			asCScriptFunction *func = engine->scriptFunctions[objType->beh.factories[n]];
+			if (func->parameterTypes.GetLength() == 1 &&
+				func->parameterTypes[0].IsPrimitive() &&
+				!(func->inOutFlags[0] & asTM_OUTREF) &&
+				(isExplicit == asIC_EXPLICIT_VAL_CAST || !func->IsExplicit()))
+			{
+				funcs.PushLast(func->id);
+			}
 		}
 	}
 
@@ -7564,17 +7586,22 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asCExprContext *ctx, const asC
 
 	// Value types and script types are allocated through the constructor
 	asCExprValue tempObj;
-	tempObj.dataType = to;
-	tempObj.stackOffset = (short)AllocateVariable(to, true);
-	tempObj.dataType.MakeReference(true);
-	tempObj.isTemporary = true;
-	tempObj.isVariable = true;
+	bool onHeap = false;
 
-	bool onHeap = IsVariableOnHeap(tempObj.stackOffset);
+	if (!(objType->flags & asOBJ_REF))
+	{
+		tempObj.dataType = to;
+		tempObj.stackOffset = (short)AllocateVariable(to, true);
+		tempObj.dataType.MakeReference(true);
+		tempObj.isTemporary = true;
+		tempObj.isVariable = true;
 
-	// Push the address of the object on the stack
-	if( onHeap )
-		ctx->bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
+		onHeap = IsVariableOnHeap(tempObj.stackOffset);
+
+		// Push the address of the object on the stack
+		if (onHeap)
+			ctx->bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
+	}
 
 	PrepareFunctionCall(funcs[0], &ctx->bc, args);
 	MoveArgsToStack(funcs[0], &ctx->bc, args, false);
@@ -7611,10 +7638,11 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asCExprContext *ctx, const asC
 	}
 	else
 	{
-		asASSERT( objType->flags & asOBJ_SCOPED );
-
 		// Call the factory to create the reference type
 		PerformFunctionCall(funcs[0], ctx, false, &args);
+
+		// Make another pass to make sure the result has the correct handle and reference settings
+		ImplicitConversion(ctx, to, node, isExplicit, generateCode, allowObjectConstruct);
 	}
 
 	return cost;
@@ -13091,7 +13119,7 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 	return -1;
 }
 
-void asCCompiler::PrepareArgument2(asCExprContext *ctx, asCExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)
+int asCCompiler::PrepareArgument2(asCExprContext *ctx, asCExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)
 {
 	// Reference parameters whose value won't be used don't evaluate the expression
 	// Clean arguments (i.e. default value) will be passed in directly as there is nothing to protect
@@ -13102,16 +13130,20 @@ void asCCompiler::PrepareArgument2(asCExprContext *ctx, asCExprContext *arg, asC
 		if( orig == 0 )
 		{
 			// Out of memory
-			return;
+			return -1;
 		}
 		MergeExprBytecodeAndType(orig, arg);
 		arg->origExpr = orig;
 	}
 
-	PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType, isMakingCopy);
+	int r = PrepareArgument(paramType, arg, arg->exprNode, isFunction, refType, isMakingCopy);
+	if (r < 0)
+		return r;
 
 	// arg still holds the original expression for output parameters
 	ctx->bc.AddCode(&arg->bc);
+
+	return 0;
 }
 
 bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, bool leftToRight, asCExprContext *ctx, bool isHandle, eTokenType token)
@@ -13541,7 +13573,9 @@ void asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectTyp
 	asCByteCode objBC(engine);
 	objBC.AddCode(&ctx->bc);
 
-	PrepareFunctionCall(funcId, &ctx->bc, args);
+	int r = PrepareFunctionCall(funcId, &ctx->bc, args);
+	if (r < 0)
+		return;
 
 	// Verify if any of the args variable offsets are used in the other code.
 	// If they are exchange the offset for a new one

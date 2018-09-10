@@ -1304,6 +1304,15 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	else
 		func->SetReadOnly(false);
 
+	// Check for additional function traits
+	while (n && n->nodeType == snIdentifier)
+	{
+		if (source.TokenEquals(n->tokenPos, n->tokenLength, EXPLICIT_TOKEN))
+			func->SetExplicit(true);
+
+		n = n->next;
+	}
+
 	// If the caller expects a list pattern, check for the existence, else report an error if not
 	if( listPattern )
 	{
@@ -4374,6 +4383,7 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	funcTraits.SetTrait(asTRAIT_CONST, false);
 	funcTraits.SetTrait(asTRAIT_FINAL, false);
 	funcTraits.SetTrait(asTRAIT_OVERRIDE, false);
+	funcTraits.SetTrait(asTRAIT_EXPLICIT, false);
 
 	if( objType && n->next->next )
 	{
@@ -4388,10 +4398,12 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 
 		while( decorator )
 		{
-			if( decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, FINAL_TOKEN) )
+			if (decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, FINAL_TOKEN))
 				funcTraits.SetTrait(asTRAIT_FINAL, true);
-			else if( decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, OVERRIDE_TOKEN) )
+			else if (decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, OVERRIDE_TOKEN))
 				funcTraits.SetTrait(asTRAIT_OVERRIDE, true);
+			else if (decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, EXPLICIT_TOKEN))
+				funcTraits.SetTrait(asTRAIT_EXPLICIT, true);
 
 			decorator = decorator->next;
 		}

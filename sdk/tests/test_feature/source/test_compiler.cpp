@@ -3677,7 +3677,6 @@ bool Test()
 		mod->AddScriptSection("test", "derp wtf = 32;");
 		r = mod->Build();
 		if( r >= 0 || bout.buffer != "test (1, 6) : Info    : Compiling derp wtf\n"
-		                             "test (1, 12) : Error   : Can't implicitly convert from 'const int' to 'derp&'.\n"
 		                             "test (1, 6) : Error   : No appropriate opAssign method found in 'derp' for value assignment\n" )
 		{
 			PRINTF("%s", bout.buffer.c_str());

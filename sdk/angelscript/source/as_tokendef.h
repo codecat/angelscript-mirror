@@ -318,6 +318,7 @@ const char * const ABSTRACT_TOKEN  = "abstract";
 const char * const FUNCTION_TOKEN  = "function";
 const char * const IF_HANDLE_TOKEN = "if_handle_then_const";
 const char * const EXTERNAL_TOKEN  = "external";
+const char * const EXPLICIT_TOKEN  = "explicit";
 
 END_AS_NAMESPACE
 

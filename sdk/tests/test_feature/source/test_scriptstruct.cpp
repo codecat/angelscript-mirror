@@ -156,6 +156,46 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
+	// Test classes with explicit and implicit conversion constructors
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { \n"
+			"  A(int a) { v = a; } \n"
+			"  A() { v = 0; } \n"
+			"  A(const A&in a) { v = a.v; } \n"
+			"  int v; \n"
+			"} \n"
+			"class B { \n"
+			"  B(int a) explicit { v = a; } \n"
+			"  B() { v = 0; } \n"
+			"  B(const B&in b) { v = b.v; } \n"
+			"  int v; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	A a = 42; \n"  // ok, the conversion constructor is implicit
+			"   B b = 42; \n"  // fail, the conversion constructor is explicit
+			"   B b2 = B(42); \n"  // ok. the conversion constructor can be called explicitly
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (13, 1) : Info    : Compiling void main()\n"
+						   "test (16, 10) : Error   : Can't implicitly convert from 'const int' to 'B&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test copy constructors for script classes
 	// https://www.gamedev.net/forums/topic/697718-angelscript-no-copy-construction-for-script-classes/
 	{

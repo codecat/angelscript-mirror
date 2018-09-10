@@ -2519,6 +2519,7 @@ int asCScriptEngine::AddBehaviourFunction(asCScriptFunction &func, asSSystemFunc
 	f->parameterTypes = func.parameterTypes;
 	f->parameterNames = func.parameterNames;
 	f->inOutFlags     = func.inOutFlags;
+	f->traits         = func.traits;
 	for( n = 0; n < func.defaultArgs.GetLength(); n++ )
 		if( func.defaultArgs[n] )
 			f->defaultArgs.PushLast(asNEW(asCString)(*func.defaultArgs[n]));
@@ -3768,6 +3769,7 @@ asCScriptFunction *asCScriptEngine::GenerateTemplateFactoryStub(asCObjectType *t
 	func->id = GetNextScriptFunctionId();
 	AddScriptFunction(func);
 
+	func->traits = factory->traits;
 	func->SetShared(true);
 	if( templateType->flags & asOBJ_REF )
 	{
@@ -3939,6 +3941,7 @@ bool asCScriptEngine::GenerateNewTemplateFunction(asCObjectType *templateType, a
 
 	func2->parameterNames = func->parameterNames;
 	func2->inOutFlags = func->inOutFlags;
+	func2->traits = func->traits;
 	func2->SetReadOnly(func->IsReadOnly());
 	func2->objectType = ot;
 	func2->objectType->AddRefInternal();

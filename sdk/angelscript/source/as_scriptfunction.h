@@ -107,7 +107,8 @@ enum asEFuncTrait
 	asTRAIT_FINAL       = 32,
 	asTRAIT_OVERRIDE    = 64,
 	asTRAIT_SHARED      = 128,
-	asTRAIT_EXTERNAL    = 256
+	asTRAIT_EXTERNAL    = 256,
+	asTRAIT_EXPLICIT    = 512
 };
 
 struct asSFunctionTraits
@@ -172,6 +173,7 @@ public:
 	bool                 IsFinal() const;
 	bool                 IsOverride() const;
 	bool                 IsShared() const;
+	bool                 IsExplicit() const;
 	asUINT               GetParamCount() const;
 	int                  GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const;
 	int                  GetReturnTypeId(asDWORD *flags = 0) const;
@@ -202,10 +204,11 @@ public:
 	//-----------------------------------
 	// Internal methods
 
-	void SetShared(bool set) {traits.SetTrait(asTRAIT_SHARED, set);}
+	void SetShared(bool set) { traits.SetTrait(asTRAIT_SHARED, set); }
 	void SetReadOnly(bool set) { traits.SetTrait(asTRAIT_CONST, set); }
 	void SetFinal(bool set) { traits.SetTrait(asTRAIT_FINAL, set); }
 	void SetOverride(bool set) { traits.SetTrait(asTRAIT_OVERRIDE, set); }
+	void SetExplicit(bool set) { traits.SetTrait(asTRAIT_EXPLICIT, set); }
 	void SetProtected(bool set) { traits.SetTrait(asTRAIT_PROTECTED, set); }
 	void SetPrivate(bool set) { traits.SetTrait(asTRAIT_PRIVATE, set); }
 
