@@ -156,9 +156,47 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
-	// Test classes with explicit and implicit conversion constructors from other objects
 	// TODO: Test explicit with save/load
 	// TODO: Document the keyword 'explicit'
+	// TODO: Convert the asIScriptFunction methods IsShared/IsPrivate/IsExplicit, etc to GetFuncTraits() with an enum
+
+	// Test to make sure constructor with default arg isn't used as conversion constructor
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A \n"
+			"{ \n"
+			"	A() {} \n"
+			"	A(string s, int i = 0) {} \n" // if no default parameter, no problem
+			"	A(const A &in) {} \n"
+		"} \n"
+			"void f() \n"
+			"{ \n"
+			"	string x; \n"   // if x is primitive type, no problem
+			"	A(x/*,i*/); \n" // if i is excplicit, no problem
+			"	A a = x; \n"    // not a conversion constructor
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (7, 1) : Info    : Compiling void f()\n"
+						   "test (11, 8) : Error   : Can't implicitly convert from 'string' to 'A&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test classes with explicit and implicit conversion constructors from other objects
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

@@ -7042,14 +7042,11 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 					funcs = CastToObjectType(to.GetTypeInfo())->beh.constructors;
 
 				// If not explicit cast, remove any explicit conversion constructors
-				if (convType != asIC_EXPLICIT_VAL_CAST)
+				for (asUINT n = 0; n < funcs.GetLength(); n++)
 				{
-					for (asUINT n = 0; n < funcs.GetLength(); n++)
-					{
-						asIScriptFunction *f = engine->scriptFunctions[funcs[n]];
-						if (f == 0 || f->IsExplicit())
-							funcs.RemoveIndex(n--);
-					}
+					asCScriptFunction *f = engine->scriptFunctions[funcs[n]];
+					if( f == 0 || f->parameterTypes.GetLength() != 1 || (convType != asIC_EXPLICIT_VAL_CAST && f->IsExplicit()) )
+						funcs.RemoveIndex(n--);
 				}
 
 				asCArray<asCExprContext *> args;
