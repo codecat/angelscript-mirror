@@ -568,13 +568,13 @@ bool Test()
 	if( r < 0 )
 		TEST_FAILED;
 		
-	// Use of constructor is not permitted to implicitly cast to a reference type 
+	// Since the constructor is not 'explicit' it can be used implicitly too
 	engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	bout.buffer = "";
 	r = ExecuteString(engine, "type t; string a = \"a\" + t + \"b\";"); 
-	if( r >= 0 )
+	if( r < 0 )
 		TEST_FAILED;
-	if (bout.buffer != "ExecuteString (1, 24) : Error   : No matching operator that takes the types 'const string' and 'type' found\n")
+	if (bout.buffer != "")
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;

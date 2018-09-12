@@ -156,7 +156,49 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
-	// Test classes with explicit and implicit conversion constructors
+	// Test classes with explicit and implicit conversion constructors from other objects
+	// TODO: Test explicit with save/load
+	// TODO: Document the keyword 'explicit'
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A { \n"
+			"  A(const B @b) { v = b.v; } \n"
+			"  A() { v = 0; } \n"
+			"  A(const A&in a) { v = a.v; } \n"
+			"  int v; \n"
+			"} \n"
+			"class B { \n"
+			"  B(const A @a) explicit { v = a.v; } \n"
+			"  B() { v = 0; } \n"
+			"  B(const B&in b) { v = b.v; } \n"
+			"  int v; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	A a = B(); \n"  // ok, the conversion constructor is implicit
+			"   B b = A(); \n"  // fail, the conversion constructor is explicit
+			"   B b2 = B(A()); \n"  // ok. the conversion constructor can be called explicitly
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (13, 1) : Info    : Compiling void main()\n"
+			"test (16, 10) : Error   : Can't implicitly convert from 'A@&' to 'B&'.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test classes with explicit and implicit conversion constructors from primitives
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

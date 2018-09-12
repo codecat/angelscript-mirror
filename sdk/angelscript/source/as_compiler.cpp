@@ -7033,6 +7033,101 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 					ctx->type.Set(to);
 				}
 			}
+			else if( CastToObjectType(to.GetTypeInfo()) )
+			{
+				// If no opConv/opImplConv methods were found on the object, then try to find a conversion constructor on the target type
+				if( to.GetTypeInfo()->flags & asOBJ_REF )
+					funcs = CastToObjectType(to.GetTypeInfo())->beh.factories;
+				else
+					funcs = CastToObjectType(to.GetTypeInfo())->beh.constructors;
+
+				// If not explicit cast, remove any explicit conversion constructors
+				if (convType != asIC_EXPLICIT_VAL_CAST)
+				{
+					for (asUINT n = 0; n < funcs.GetLength(); n++)
+					{
+						asIScriptFunction *f = engine->scriptFunctions[funcs[n]];
+						if (f == 0 || f->IsExplicit())
+							funcs.RemoveIndex(n--);
+					}
+				}
+
+				asCArray<asCExprContext *> args;
+				args.PushLast(ctx);
+
+				cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, node, 0, 0, 0, false, true, false);
+
+				// Did we find a matching constructor?
+				if (funcs.GetLength() == 1)
+				{
+					if (generateCode)
+					{
+						// TODO: This should really reuse the code from CompileConstructCall
+
+						// Allocate the new object
+						asCExprValue tempObj;
+						asCExprContext e(engine);
+						bool onHeap = false;
+						if (to.GetTypeInfo()->flags & asOBJ_VALUE)
+						{
+							tempObj.dataType = to;
+							tempObj.dataType.MakeReference(false);
+							tempObj.stackOffset = (short)AllocateVariable(tempObj.dataType, true);
+							tempObj.dataType.MakeReference(true);
+							tempObj.isTemporary = true;
+							tempObj.isVariable = true;
+
+							onHeap = IsVariableOnHeap(tempObj.stackOffset);
+
+							// Push the address of the object on the stack
+							if (onHeap)
+								e.bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
+						}
+
+						PrepareFunctionCall(funcs[0], &e.bc, args);
+						MoveArgsToStack(funcs[0], &e.bc, args, false);
+
+						if (to.GetTypeInfo()->flags & asOBJ_VALUE)
+						{
+							// If the object is allocated on the stack, then call the constructor as a normal function
+							if (onHeap)
+							{
+								int offset = 0;
+								asCScriptFunction *descr = builder->GetFunctionDescription(funcs[0]);
+								offset = descr->parameterTypes[0].GetSizeOnStackDWords();
+
+								e.bc.InstrWORD(asBC_GETREF, (asWORD)offset);
+							}
+							else
+								e.bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
+						}
+
+						PerformFunctionCall(funcs[0], &e, onHeap, &args, CastToObjectType(tempObj.dataType.GetTypeInfo()));
+
+						if (to.GetTypeInfo()->flags & asOBJ_VALUE)
+						{
+							// Add tag that the object has been initialized
+							e.bc.ObjInfo(tempObj.stackOffset, asOBJ_INIT);
+
+							// The constructor doesn't return anything,
+							// so we have to manually inform the type of
+							// the return value
+							e.type = tempObj;
+							if (!onHeap)
+								e.type.dataType.MakeReference(false);
+
+							// Push the address of the object on the stack again
+							e.bc.InstrSHORT(asBC_PSF, tempObj.stackOffset);
+						}
+
+						MergeExprBytecodeAndType(ctx, &e);
+					}
+					else
+					{
+						ctx->type.Set(asCDataType::CreateType(to.GetTypeInfo(), false));
+					}
+				}
+			}
 		}
 	}
 
