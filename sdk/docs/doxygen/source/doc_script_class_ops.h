@@ -173,15 +173,26 @@ When the expression <tt>type(expr)</tt> is compiled and type doesn't have a cons
 the type of the expression, the compiler will try to rewrite it as <tt>expr.opConv()</tt>. The compiler will then chose
 the opConv that returns the desired type. 
 
-By implementing the opImplConv instead of opConv, the compiler will be able to use this
-for implicit conversions too, e.g. when compiling an assignment or a function argument.
+For implicit conversions, the compiler will look for a constructor of the target type that take a 
+matching argument, and isn't flagged as explicit. If it doesn't find one, it will try to call the 
+opImplConv on the source type that returns the target type.
 
 <pre>
   class MyObj
   {
     double myValue;
+
+    // Allow MyObj to be implicitly created from double
+    MyObj(double v)            { myValue = v; }
+
+    // Allow MyObj to be implicitly converted to double
     double opImplConv() const  { return myValue; }
-    int    opConv() const      { return int(myValue); }
+
+    // Allow MyObj to be created from int, but only explicitly
+    MyObj(int v) explicit      { myValue = v; }
+
+    // Allow MyObj to be converted to int, but only explicitly
+    int opConv() const         { return int(myValue); }
   }
 </pre>
 

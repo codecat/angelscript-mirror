@@ -1237,6 +1237,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			char bits;
 			ReadData(&bits, 1);
 			func->SetShared((bits & 1) ? true : false);
+			func->SetExplicit((bits & 32) ? true : false);
 			func->dontCleanUpOnException = (bits & 2) ? true : false;
 			if ((bits & 4) && isExternal)
 				*isExternal = true;
@@ -4169,6 +4170,7 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			bits += 8;
 		if (func->scriptData->tryCatchInfo.GetLength())
 			bits += 16;
+		bits += func->IsExplicit() ? 32 : 0;
 		WriteData(&bits, 1);
 
 		// For external shared functions the rest is not needed

@@ -21,11 +21,12 @@ const<br>
 continue<br>
 default<br>
 do<br>
+double<br>
 </code></td>
 <td width=100 valign=top><code>
-double<br>
 else<br>
 enum<br>
+explicit*<br>
 external*<br>
 false<br>
 final*<br>

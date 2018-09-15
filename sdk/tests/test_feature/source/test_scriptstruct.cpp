@@ -156,9 +156,60 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
-	// TODO: Test explicit with save/load
-	// TODO: Document the keyword 'explicit'
 	// TODO: Convert the asIScriptFunction methods IsShared/IsPrivate/IsExplicit, etc to GetFuncTraits() with an enum
+
+	// Test explicit with save/load
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("module", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class A \n"
+			"{ \n"
+			"	A(int s) explicit {} \n"
+			"	A(float s) {} \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asITypeInfo *t = mod->GetTypeInfoByName("A");
+		asIScriptFunction *f = t->GetFactoryByIndex(0);
+		if (!f->IsExplicit())
+			TEST_FAILED;
+		f = t->GetFactoryByIndex(1);
+		if (f->IsExplicit())
+			TEST_FAILED;
+
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		t = mod->GetTypeInfoByName("A");
+		f = t->GetFactoryByIndex(0);
+		if (!f->IsExplicit())
+			TEST_FAILED;
+		f = t->GetFactoryByIndex(1);
+		if (f->IsExplicit())
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+
+	}
 
 	// Test to make sure constructor with default arg isn't used as conversion constructor
 	{
