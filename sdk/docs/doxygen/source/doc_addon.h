@@ -29,6 +29,7 @@ This page gives a brief description of the add-ons that you'll find in the /sdk/
  - \subpage doc_addon_math
  - \subpage doc_addon_grid
  - \subpage doc_addon_datetime
+ - \subpage doc_addon_helpers_try
 
 
 
@@ -1906,13 +1907,30 @@ to direct this to a file.
 
 
 
+\page doc_addon_helpers_try Exception routines
+
+<b>Path:</b> /sdk/add_on/scripthelper/
+
+The \ref try "throw and getExceptionInfo" routines are registered by the application 
+with a call to RegisterExceptionRoutines.
+
+\section doc_addon_helpers_try_1 Public C++ interface
+
+\code
+// Register the exception routines.
+//  'void throw(const string &msg)'
+//  'string getExceptionInfo()'
+void RegisterExceptionRoutines(asIScriptEngine *engine);
+\endcode
+
+
 
 
 \page doc_addon_helpers Helper functions
 
 <b>Path:</b> /sdk/add_on/scripthelper/
 
-These helper functions simplify the implemention of common tasks. They can be used as is
+These helper functions simplify the implementation of common tasks. They can be used as is
 or can serve as the starting point for your own framework.
 
 \section doc_addon_helpers_1 Public C++ interface

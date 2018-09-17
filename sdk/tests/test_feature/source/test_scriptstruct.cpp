@@ -156,8 +156,6 @@ bool Test()
 	// object while the asCSriptObject destructor is cleaning up the members
 	fail = ProjectClover::Test_main();
 
-	// TODO: Convert the asIScriptFunction methods IsShared/IsPrivate/IsExplicit, etc to GetFuncTraits() with an enum
-
 	// Test explicit with save/load
 	{
 		engine = asCreateScriptEngine();

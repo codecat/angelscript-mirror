@@ -9,6 +9,7 @@
  - \ref break
  - \ref return
  - \ref block
+ - \ref try
 
 
 
@@ -246,6 +247,39 @@ visibility, so variables declared within a statement block are not visible outsi
 
 
 
+\section try Try-catch blocks
+
+<pre>
+ {
+   try
+   {
+     DoSomethingThatMightThrowException();
+  
+     // This is not executed if an exception was thrown
+   }
+   catch
+   {
+     // This is executed if an exception was thrown
+   }
+  }
+</pre>
+
+A try-catch block can be used if you're executing some code that might throw an exception 
+and you want to catch that exception and continue with the exception rather than just abort 
+the script.
+
+\subsection try_func Functions
+
+\note The standard <tt>throw</tt> and <tt>getExceptionInfo</tt> are only 
+provided if the application \ref doc_addon_helpers_try "registers them". 
+
+<b>void throw(const string &in exception)</b>
+
+Explicitly throw an exception. The string should identify the type of exception, for logging or treating.
+
+<b>string getExceptionInfo()</b>
+
+Get the exception string for the last exception thrown.
 
 
 
