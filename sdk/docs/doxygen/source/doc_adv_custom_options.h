@@ -153,14 +153,21 @@ it may be of interest to turn off the bytecode optimization pass by setting this
 If you want to spare some dynamic memory and the script sections passed to the engine is already stored somewhere in memory then you
 can turn off this options. If you do you'll need to be careful not to modify or deallocate the script sections until module has been built.
  
-\ref asEP_MAX_STACK_SIZE
+\ref asEP_MAX_STACK_SIZE, \ref asEP_INIT_STACK_SIZE, \ref asEP_MAX_CALL_STACK_SIZE, \ref asEP_INIT_CALL_STACK_SIZE
 
-The script context's stack grows dynamically as needed during executions. By default there is no limit to how large it may grow, but
-if you wish to set this limit you can do with this option. The limit is given in bytes, but it is only an approximate limit. Setting the 
+The script context's data stack grows dynamically as needed during executions. By default there is no limit to how large it may grow, but
+if you wish to set this limit you can do with the asEP_MAX_STACK_SIZE option. The limit is given in bytes, but it is only an approximate limit. Setting the 
 limit to 1MB doesn't mean the stack will grow exactly to 1MB, but you can be certain that it will not grow much beyond that.
 
 Whenever a context attempts to grow the stack more than it is allowed, it will abort the execution and return a 'stack overflow' script 
 exception.
+
+Similarly the call stack also grows dynamically as needed during executions. The default here is also no limit, with the ability to limit
+maximum size by setting the asEP_MAX_CALL_STACK_SIZE. This limit is set in number of function calls. 
+
+In some cases it may be useful to set the initial stack size too, e.g. if you know beforehand that a large stack is needed, or 
+if you wish to avoid any runtime memory allocations during an execution. In this case you can use the asEP_INIT_STACK_SIZE for the 
+data stack, and asEP_INIT_CALL_STACK_SIZE for the call stack.
  
 \ref asEP_BUILD_WITHOUT_LINE_CUES
  

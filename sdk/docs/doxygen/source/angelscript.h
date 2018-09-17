@@ -208,6 +208,12 @@ enum asEEngineProp
 	asEP_MAX_NESTED_CALLS                   = 27,
 	//! Define how generic calling convention treats handles: 0 - ignore auto handles, 1 - treat them the same way as native calling convention. Default: 1
 	asEP_GENERIC_CALL_MODE                  = 28,
+	//! Initial stack size in bytes for script contexts. Default: 4096
+	asEP_INIT_STACK_SIZE                    = 29,
+	//! Initial call stack size for script contexts. Default: 10
+	asEP_INIT_CALL_STACK_SIZE               = 30,
+	//! Maximum call stack size for script contexts. Default: 0 (no limit)
+	asEP_MAX_CALL_STACK_SIZE                = 31,
 
 	asEP_LAST_PROPERTY
 };
@@ -643,6 +649,8 @@ typedef void (*asCLEANSCRIPTOBJECTFUNC_t)(asIScriptObject *);
 typedef asIScriptContext *(*asREQUESTCONTEXTFUNC_t)(asIScriptEngine *, void *);
 //! The function signature for the return context callback
 typedef void (*asRETURNCONTEXTFUNC_t)(asIScriptEngine *, asIScriptContext *, void *);
+//! The function signature for the callback used when detecting a circular reference in garbage
+typedef void (*asCIRCULARREFFUNC_t)(asITypeInfo *, const void *, void *);
 
 // Check if the compiler can use C++11 features
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
@@ -2913,7 +2921,8 @@ public:
 	//! \{
 
 	//! \brief Sets an exception, which aborts the execution.
-	//! \param[in] string A string that describes the exception that occurred.
+	//! \param[in] info A string that describes the exception that occurred.
+	//! \param[in] allowCatch Set to false if the script shouldn't be allowed to catch the exception.
 	//! \return A negative value on error.
 	//! \retval asERROR The context isn't currently calling an application registered function.
 	//!
@@ -2923,7 +2932,7 @@ public:
 	//!
 	//! Note that if your system function sets an exception, it should not return any 
 	//! object references because the engine will not release the returned reference.
-	virtual int                SetException(const char *string) = 0;
+	virtual int                SetException(const char *info, bool allowCatch = true) = 0;
 	//! \brief Returns the line number where the exception occurred.
 	//! \param[out] column The variable will receive the column number.
 	//! \param[out] sectionName The variable will receive the name of the script section.
@@ -3800,6 +3809,9 @@ public:
 	//! \brief Returns true if the function is shared.
 	//! \return True if the function is shared.
 	virtual bool             IsShared() const = 0;
+	//! \brief Returns true if the function is declared as explicit.
+	//! \return True if the function is explicit.
+	virtual bool             IsExplicit() const = 0;
 	//! \brief Returns the number of parameters for this function.
 	//! \return The number of parameters.
 	virtual asUINT           GetParamCount() const = 0;
@@ -4625,6 +4637,7 @@ enum asEBCInstr
 	asBC_MAXBYTECODE	= 201,
 
 	// Temporary tokens. Can't be output to the final program
+	asBC_TryBlock		= 250,
 	asBC_VarDecl		= 251,
 	asBC_Block			= 252,
 	asBC_ObjInfo		= 253,
@@ -5003,8 +5016,8 @@ const asSBCInfo asBCInfo[256] =
 	asBCINFO_DUMMY(247),
 	asBCINFO_DUMMY(248),
 	asBCINFO_DUMMY(249),
-	asBCINFO_DUMMY(250),
 
+	asBCINFO(TryBlock,		DW_ARG,			0),
 	asBCINFO(VarDecl,		W_ARG,			0),
 	asBCINFO(Block,			INFO,			0),
 	asBCINFO(ObjInfo,		rW_DW_ARG,		0),

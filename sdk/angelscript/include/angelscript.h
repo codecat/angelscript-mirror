@@ -922,7 +922,7 @@ public:
 	virtual void   *GetAddressOfReturnValue() = 0;
 
 	// Exception handling
-	virtual int                SetException(const char *string, bool allowCatch = true) = 0;
+	virtual int                SetException(const char *info, bool allowCatch = true) = 0;
 	virtual int                GetExceptionLineNumber(int *column = 0, const char **sectionName = 0) = 0;
 	virtual asIScriptFunction *GetExceptionFunction() = 0;
 	virtual const char *       GetExceptionString() = 0;
