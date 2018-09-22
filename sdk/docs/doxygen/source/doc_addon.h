@@ -45,6 +45,8 @@ Register the type with the <code>RegisterScriptDateTime(asIScriptEngine*)</code>
 
 \section doc_addon_array_1 Public C++ interface
 
+\todo document setDate, setTime + operators
+
 \code
 class CDateTime
 {
@@ -469,6 +471,8 @@ parameter should be set to true if you wish to allow the syntax form <code>type[
 Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register the methods with the same names as used by C++ STL where 
 the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent once are 
 so a port from script to C++ and vice versa might be easier if STL names are used.
+
+\todo Document AS_USE_ACCESSORS
 
 \section doc_addon_array_1 Public C++ interface
 
@@ -1032,6 +1036,8 @@ Compile the add-on with the pre-processor define AS_USE_STLNAMES = 1 to register
 the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent ones are 
 so a port from script to C++ and vice versa might be easier if STL names are used.
 
+\todo Document AS_USE_ACCESSORS
+
 \section doc_addon_std_string_1 Public C++ interface
 
 Refer to the <code>std::string</code> implementation for your compiler.
@@ -1366,6 +1372,8 @@ This object provides support for inspecting directories on the filesystem.
 Register with <code>RegisterScriptFileSystem(asIScriptEngine*)</code>.
 
 \section doc_addon_filesystem_1 Public C++ interface
+
+\todo document isLink, getSize, makeDir, removeDir, deleteFile, copyFile, and move
 
 \code
 class CScriptFileSystem

@@ -1950,6 +1950,15 @@ public:
 	//!
 	//! \see \ref doc_gc_object
 	virtual void GCEnumCallback(void *reference) = 0;
+	//! \brief Used to forward GC callback to held references
+	//! \todo document this
+	virtual void ForwardGCEnumReferences(void *ref, asITypeInfo *type) = 0;
+	//! \brief Used to forward GC callback to held references
+	//! \todo document this
+	virtual void ForwardGCReleaseReferences(void *ref, asITypeInfo *type) = 0;
+	//! \brief Set a callback for capturing more info on circular reference for debugging
+	//! \todo document this
+	virtual void SetCircularRefDetectedCallback(asCIRCULARREFFUNC_t callback, void *param = 0) = 0;
 	//! \}
 
 	// User data
@@ -2950,6 +2959,9 @@ public:
 	//! \brief Returns the exception string text.
 	//! \return A null terminated string describing the exception that occurred.
 	virtual const char *       GetExceptionString() = 0;
+	//! \brief Determine if the current exception will be caught by the script
+	//! \todo Document this
+	virtual bool               WillExceptionBeCaught() = 0;
 	//! \brief Sets an exception callback function. The function will be called if a script exception occurs.
 	//! \param[in] callback The callback function/method that should be called upon an exception.
 	//! \param[in] obj The object pointer on which the callback is called.
@@ -2965,7 +2977,7 @@ public:
 	//!
 	//! See \ref SetLineCallback for details on the calling convention.
 	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
-	//! \brief Removes a previously registered callback.
+	//! \brief Removes the registered callback.
 	//!
 	//! Removes a previously registered callback.
 	virtual void               ClearExceptionCallback() = 0;
@@ -3004,7 +3016,7 @@ public:
 	//!
 	//! \see \ref doc_debug
 	virtual int                SetLineCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
-	//! \brief Removes a previously registered callback.
+	//! \brief Removes the registered callback.
 	//!
 	//! Removes a previously registered callback.
 	virtual void               ClearLineCallback() = 0;

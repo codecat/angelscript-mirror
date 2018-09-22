@@ -2,6 +2,8 @@
 
 \page doc_gc_object Garbage collected objects
 
+\todo document value types with GC behaviours
+
 Reference counting as memory management has a drawback in that it is
 difficult to detect circular references when determining dead objects.
 AngelScript allows the application to register types with special behaviours
