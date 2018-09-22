@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/09/09</h2>
+<h2>Version 2.33.0 WIP - 2018/09/22</h2>
 
 <ul>
 <li>Bug fixes
@@ -79,7 +79,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Now it is possible to resolve ambiguity with lambda functions by explicitly specifying the parameter types (Thanks Miss)
 <li>The compiler will now give an error on bitwise operator with floats instead of silently converting to integer (Thanks Jason Goepel)
 <li>Class constructors can now be declared with private and protected too (Thanks noizex)
-<li>The correct resolution is now done for types implementing both opCast and opImplConv and the const overloads. The same for opConv and opImplConv
+<li>The correct resolution is now done for types implementing both opCast and opImplCast and the const overloads. The same for opConv and opImplConv
 <li>Initialization lists will implicitly assume objects by handle if asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE is used (Thanks y18a)
 <li>When unsafe references is allowed the stream operator (&lt;&lt;) can now be implemented on value types with correct behaviour for chained expressions (Thanks ASBai)
 <li>Virtual property accessors must not have the same name as real property or function in the same scope
@@ -113,6 +113,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented the functions throw() and getExceptionInfo() that can be registered with RegisterExceptionRoutines
 <li>dictionary add-on is better prepared to work with string type registered as reference type (Thanks Wracky)
 <li>dictionary get method didn't always return true/false to indicate success or failure (Thanks Miss)
+<li>Fixed a problem in filesystem's CopyFile on non-Windows platforms (Thanks cvet)
 </ul>
 <li>Project
 <ul>

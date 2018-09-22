@@ -5282,7 +5282,6 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asITypeInfo *type)
 {
 	// TODO: Warn about invalid call in message stream
-	// TODO: Should a script exception be set in case a context is active?
 	if( type == 0 || dstObj == 0 || srcObj == 0 ) return asINVALID_ARG;
 
 	const asCObjectType *objType = reinterpret_cast<const asCObjectType*>(type);
