@@ -1945,19 +1945,40 @@ public:
 	//! \brief Used by the garbage collector to enumerate all references held by an object.
 	//! \param[in] reference A pointer to the referenced object.
 	//!
-	//! When processing the EnumReferences call the called object should call GCEnumCallback 
-	//! for each of the references it holds to other objects.
+	//! When processing the \ref asBEHAVE_ENUMREFS call the called object should call GCEnumCallback 
+	//! for each of the references it holds to other objects. If the object holds a value type
+	//! that may contain references, then use the \ref ForwardGCEnumReferences.
 	//!
 	//! \see \ref doc_gc_object
 	virtual void GCEnumCallback(void *reference) = 0;
-	//! \brief Used to forward GC callback to held references
-	//! \todo document this
+	//! \brief Used to forward GC callback to held value types that may contain references
+	//! \param[in] ref The object pointer
+	//! \param[in] type The type of the object
+	//!
+	//! This should be used by reference types that implement the \ref asBEHAVE_ENUMREFS
+	//! behaviour when the object holds a value type that can in turn contain references.
+	//!
+	//! \see \ref doc_gc_object
 	virtual void ForwardGCEnumReferences(void *ref, asITypeInfo *type) = 0;
-	//! \brief Used to forward GC callback to held references
-	//! \todo document this
+	//! \brief Used to forward GC callback to held value types that may contain references
+	//! \param[in] ref The object pointer
+	//! \param[in] type The type of the object
+	//!
+	//! This should be used by reference types that implement the \ref asBEHAVE_RELEASEREFS
+	//! behaviour when the object holds a value type that can in turn contain references.
+	//!
+	//! \see \ref doc_gc_object
 	virtual void ForwardGCReleaseReferences(void *ref, asITypeInfo *type) = 0;
 	//! \brief Set a callback for capturing more info on circular reference for debugging
-	//! \todo document this
+	//! \param[in] callback The callback function
+	//! \param[in] param Optional parameter that will be passed back to the callback function
+	//!
+	//! This callback is meant to be used during development to help identify scripts that are
+	//! creating circular references. As the callback will be invoked when the objects in the circular
+	//! reference are detected, but before they are destroyed, the application can investigate their
+	//! content to get hints where the objects are created from.
+	//!
+	//! \see \ref doc_gc
 	virtual void SetCircularRefDetectedCallback(asCIRCULARREFFUNC_t callback, void *param = 0) = 0;
 	//! \}
 
@@ -2960,7 +2981,11 @@ public:
 	//! \return A null terminated string describing the exception that occurred.
 	virtual const char *       GetExceptionString() = 0;
 	//! \brief Determine if the current exception will be caught by the script
-	//! \todo Document this
+	//! \return True if the exception will be caught by the script.
+	//!
+	//! This method is intended to be used from the \ref SetExceptionCallback "exception callback", 
+	//! where the application can potentially make a different decision depending on whether the 
+	//! script will catch the exception or not.
 	virtual bool               WillExceptionBeCaught() = 0;
 	//! \brief Sets an exception callback function. The function will be called if a script exception occurs.
 	//! \param[in] callback The callback function/method that should be called upon an exception.
