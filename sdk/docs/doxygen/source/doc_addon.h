@@ -45,8 +45,6 @@ Register the type with the <code>RegisterScriptDateTime(asIScriptEngine*)</code>
 
 \section doc_addon_array_1 Public C++ interface
 
-\todo document setDate, setTime + operators
-
 \code
 class CDateTime
 {
@@ -65,6 +63,23 @@ public:
   asUINT getHour() const;
   asUINT getMinute() const;
   asUINT getSecond() const;
+  
+  // Setters
+  // Returns true if valid
+  bool setDate(asUINT year, asUINT month, asUINT day);
+  bool setTime(asUINT hour, asUINT minute, asUINT second);
+  
+  // Operators
+  // Return difference in seconds
+  asINT64          operator-(const CDateTime &other) const;
+  CDateTime        operator+(asINT64 seconds) const;
+  friend CDateTime operator+(asINT64 seconds, const CDateTime &other);
+  CDateTime &      operator+=(asINT64 seconds);
+  CDateTime        operator-(asINT64 seconds) const;
+  friend CDateTime operator-(asINT64 seconds, const CDateTime &other);
+  CDateTime &      operator-=(asINT64 seconds);
+  bool             operator==(const CDateTime &other) const;
+  bool             operator<(const CDateTime &other) const;
 };
 \endcode
 
@@ -84,19 +99,32 @@ public:
     uint get_hour() const;
     uint get_minute() const;
     uint get_second() const;
+    
+    bool setDate(uint year, uint month, uint day);
+    bool setTime(uint hour, uint minute, uint second);
+
+    int64     opSub(const datetime &in) const;
+    datetime  opAdd(int64 seconds) const;
+    datetime  opAdd_r(int64 seconds) const;
+    datetime &opAddAssign(int64 seconds);
+    datetime  opSub(int64 seconds) const;
+    datetime  opSub_r(int64 seconds) const;
+    datetime &opSubAssign(int64 seconds);
+    bool      opEquals(const datetime &in) const;
+    int       opCmp(const datetime &in) const;
   }
 </pre>
 
-<b>datetime()</b><br>
+\subsection doc_addon_array_2_construct Constructors
+
+<b>datetime()</b><br><br>
 <b>datetime(const datetime &in other)</b>
  
 The default constructor initializes the object with the current system time.
 
 The copy constructor copíes the content of the other object.
 
-<b>datetime &opAssign(const datetime &in other)</b>
- 
-The assignment operator copies the content of the other object.
+\subsection doc_addon_array_2_methods Methods
 
 <b>uint get_year() const</b>
 
@@ -122,6 +150,32 @@ Returns the minute of the time stored in the object. The range is 0 to 59.
  
 Returns the second of the time stored in the object. The range is 0 to 59.
 
+<b>bool setDate(uint year, uint month, uint day)</b><br>
+<b>bool setTime(uint hour, uint minute, uint second)</b>
+
+Sets the date or time. Returns true if the specified date or time is valid. Does not modify the object if not valid.
+
+\subsection doc_addon_array_2_ops Operators
+
+<b>= assignment</b>
+ 
+The assignment operator copies the content of the other object.
+
+<b>- difference</b>
+
+When subtracting one datetime object from another the result is the number of seconds between them.
+
+<b>+ add</b><br>
+<b>- subtract</b><br>
+<b>+= add assign</b><br>
+<b>-= subtract assign</b>
+
+The datetime object can be added or subtracted with seconds to form a new datetime object.
+
+<b>==, != equality</b><br>
+<b><, <=, >=, > comparison</b>
+
+The datetime object can be compared for equality or relativity.
 
 
 
