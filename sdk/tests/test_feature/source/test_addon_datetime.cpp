@@ -20,6 +20,33 @@ bool Test()
 	CBufferedOutStream bout;
 	asIScriptEngine *engine;
 
+	// Test returning the datetime object from script function
+	SKIP_ON_MAX_PORT
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		RegisterScriptDateTime(engine);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"datetime getDate() { \n"
+			"  datetime dt; \n"
+			"  dt.setDate(2018, 10, 14); \n"
+			"  return dt; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		r = ExecuteString(engine, "datetime dt = getDate(); assert(dt.year == 2018 && dt.month == 10 && dt.day == 14);", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		engine->Release();
+	}
+
 	// Test the datetime object
 	SKIP_ON_MAX_PORT
 	{
