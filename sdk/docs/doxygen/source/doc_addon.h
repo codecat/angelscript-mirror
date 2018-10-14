@@ -1427,8 +1427,6 @@ Register with <code>RegisterScriptFileSystem(asIScriptEngine*)</code>.
 
 \section doc_addon_filesystem_1 Public C++ interface
 
-\todo document isLink, getSize, makeDir, removeDir, deleteFile, copyFile, and move
-
 \code
 class CScriptFileSystem
 {
@@ -1443,14 +1441,36 @@ public:
   bool ChangeCurrentPath(const std::string &path);
   std::string GetCurrentPath() const;
 
-  // Returns true if the path is a directory. Input can be either a full path or a relative path
+  // Returns true if the path is a directory. Input can be either a full path or a relative path.
+  // This method does not return the dirs '.' and '..'
   bool IsDir(const std::string &path) const;
 
+  // Returns true if the path is a link. Input can be either a full path or a relative path
+  bool IsLink(const std::string &path) const;
+
+  // Returns the size of file. Input can be either a full path or a relative path
+  asINT64 GetSize(const std::string &path) const;
+  
   // Returns a list of the files in the current path
   CScriptArray *GetFiles() const;
 
   // Returns a list of the directories in the current path
   CScriptArray *GetDirs() const;
+  
+  // Creates a new directory. Returns 0 on success
+  int MakeDir(const std::string &path);
+
+  // Removes a directory. Will only remove the directory if it is empty. Returns 0 on success
+  int RemoveDir(const std::string &path);
+
+  // Deletes a file. Returns 0 on success
+  int DeleteFile(const std::string &path);
+
+  // Copies a file. Returns 0 on success
+  int CopyFile(const std::string &source, const std::string &target);
+
+  // Moves or renames a file or directory. Returns 0 on success
+  int Move(const std::string &source, const std::string &target);
 };
 \endcode
 
@@ -1464,6 +1484,13 @@ public:
     array<string> \@getDirs();
     array<string> \@getFiles();
     bool           isDir(const string &in);
+    bool           isLink(const string &in) const;
+    int64          getSize(const string &in) const;
+    int            makeDir(const string &in);
+    int            removeDir(const string &in);
+    int            deleteFile(const string &in);
+    int            copyFile(const string &in, const string &in);
+    int            move(const string &in, const string &in);
   }
 </pre>
 
@@ -1489,6 +1516,33 @@ Returns a list with the names of all files in the current path.
 
 Returns true if the given path is a directory.
 
+<b>bool isLink(const string &in path)</b>
+
+Returns true if the given path is a link.
+
+<b>int64 getSize(const string &in) const</b>
+
+Returns the size of a file.
+
+<b>int makeDir(const string &in)</b>
+
+Creates a new directory. Returns 0 on success.
+
+<b>int removeDir(const string &in)</b>
+
+Removes a directory. Will only remove the directory if it is empty. Returns 0 on success.
+
+<b>int deleteFile(const string &in)</b>
+
+Deletes a file. Returns 0 on success.
+
+<b>int copyFile(const string &in, const string &in)</b>
+
+Copies a file. Returns 0 on success.
+
+<b>int move(const string &in, const string &in)</b>
+
+Moves or renames a file or directory. Returns 0 on success.
 
 
 

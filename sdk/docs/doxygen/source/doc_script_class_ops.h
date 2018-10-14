@@ -46,6 +46,8 @@ When the expression <tt>a <i>op</i></tt> is compiled, the compiler will rewrite 
 <tr><td>&lt;=</td>         <td>opCmp</td>   </tr>
 <tr><td>&gt;</td>          <td>opCmp</td>   </tr>
 <tr><td>&gt;=</td>         <td>opCmp</td>   </tr>
+<tr><td>is</td>            <td>opEquals</td></tr>
+<tr><td>!is</td>           <td>opEquals</td></tr>
 </table>
 
 The <tt>a == b</tt> expression will be rewritten as <tt>a.opEquals(b)</tt> and <tt>b.opEquals(a)</tt> and 
@@ -60,6 +62,10 @@ should return a negative value. If they are supposed to be equal the return valu
 If an equality check is made and the opEquals method is not available the compiler looks for the opCmp method 
 instead. So if the opCmp method is available it is really not necesary to implement the opEquals method, except
 for optimization reasons.
+
+The identity operator, <tt>is</tt>, expects opEquals to take a handle, <tt>\@</tt>, so the addresses can be
+compared to be able to return if it is the same object, in contrast two different objects that have
+the same value.
 
 
 \section doc_script_class_assign_ops Assignment operators
