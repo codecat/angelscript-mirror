@@ -188,7 +188,9 @@ bool Test()
 		{
 			TEST_FAILED;
 		}
-		if (ctx->GetExceptionString() == 0 || string(ctx->GetExceptionString()) != "Unknown exception")
+		if (ctx->GetExceptionString() == 0 || 
+			(string(ctx->GetExceptionString()) != "Unknown exception" && // msvc
+			 string(ctx->GetExceptionString()) != "std::exception"))      // gnuc
 		{
 			PRINTF("Exception: '%s'\n", ctx->GetExceptionString());
 			TEST_FAILED;

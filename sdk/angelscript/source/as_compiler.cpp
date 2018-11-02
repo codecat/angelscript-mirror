@@ -97,7 +97,7 @@ asCCompiler::~asCCompiler()
 		asDELETE(var,asCVariableScope);
 	}
 
-	// Clean up all the string constants that were allocated. By now the script 
+	// Clean up all the string constants that were allocated. By now the script
 	// functions that were compiled successfully already holds their own references
 	for (asUINT n = 0; n < usedStringConstants.GetLength(); n++)
 		engine->stringFactory->ReleaseStringConstant(usedStringConstants[n]);
@@ -1714,7 +1714,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			}
 			else
 			{
-				// Null handles and void expressions must be marked as explicit 
+				// Null handles and void expressions must be marked as explicit
 				// handles for correct treatement in MoveArgsToStack
 				if (dt.IsNullHandle())
 					ctx->type.isExplicitHandle = true;
@@ -1774,7 +1774,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 			}
 
 			// Literal constants cannot be passed to inout ref arguments
-			if( !ctx->type.isVariable && 
+			if( !ctx->type.isVariable &&
 				ctx->type.isConstant &&
 				!ctx->type.dataType.IsEqualExceptRefAndConst(engine->stringType) )
 			{
@@ -2669,7 +2669,7 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asCExprContext &compiledCtx
 			}
 
 			// Implicit handle types should always be handles
-			if (newType.GetTypeInfo() && 
+			if (newType.GetTypeInfo() &&
 				(newType.GetTypeInfo()->flags & asOBJ_IMPLICIT_HANDLE))
 				newType.MakeHandle(true);
 
@@ -3269,7 +3269,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, co
 									// For the ASHANDLE type we'll simply set the expression as a handle
 									expr->type.dataType.MakeHandle(true);
 								}
-								
+
 								if( !expr->type.dataType.IsObjectHandle() && !expr->type.dataType.SupportHandles())
 								{
 									Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
@@ -4296,7 +4296,7 @@ void asCCompiler::CompileTryCatch(asCScriptNode *node, bool *hasReturn, asCByteC
 	// Add marker to unwind exception until here, then jump to catch block
 	bc->TryBlock((short)beforeCatchLabel);
 
-	// Add the byte code 
+	// Add the byte code
 	LineInstr(bc, node->firstChild->tokenPos);
 	bc->AddCode(&tryBC);
 
@@ -5684,7 +5684,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 {
 	bool conversionDone = false;
 
-	asCArray<int> ops; 
+	asCArray<int> ops;
 
 	// A ref cast must not remove the constness
 	bool isConst = ctx->type.dataType.IsObjectConst();
@@ -5715,7 +5715,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 	// If there is multiple matches, then pick the most appropriate one
 	if (ops.GetLength() > 1)
 	{
-		// This should only happen if an explicit cast is compiled 
+		// This should only happen if an explicit cast is compiled
 		// and the type has both the opCast and opImplCast
 		asASSERT(isExplicit);
 		asASSERT(ops.GetLength() == 2);
@@ -5838,7 +5838,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 		// If there is multiple matches, then pick the most appropriate one
 		if (ops.GetLength() > 1)
 		{
-			// This should only happen if an explicit cast is compiled 
+			// This should only happen if an explicit cast is compiled
 			// and the type has both the opCast and opImplCast
 			asASSERT(isExplicit);
 			asASSERT(ops.GetLength() == 2);
@@ -5930,7 +5930,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 					ctx->bc.Label((short)endLabel);
 				}
 
-				// If a temporary variable was allocated in the tmp to convert 
+				// If a temporary variable was allocated in the tmp to convert
 				// the input expression to a variable, it must be released here
 				if (releaseTempVariable && tmp.type.isTemporary)
 					ReleaseTemporaryVariable(tmp.type.stackOffset, &ctx->bc);
@@ -6414,8 +6414,8 @@ asUINT asCCompiler::ImplicitConvLambdaToFunc(asCExprContext *ctx, const asCDataT
 			asETypeModifiers inOutFlag;
 			dt = builder->ModifyDataTypeFromNode(dt, argNode->next, script, &inOutFlag, 0);
 
-			if (count >= funcDef->parameterTypes.GetLength() || 
-				funcDef->parameterTypes[count] != dt || 
+			if (count >= funcDef->parameterTypes.GetLength() ||
+				funcDef->parameterTypes[count] != dt ||
 				funcDef->inOutFlags[count] != inOutFlag)
 				return asCC_NO_CONV;
 
@@ -6679,7 +6679,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asCExprContext *ctx, const asC
 	// If there are multiple valid value casts, then we must choose the most appropriate one
 	if (funcs.GetLength() > 1)
 	{
-		// This should only happen in case of explicit value cast and 
+		// This should only happen in case of explicit value cast and
 		// the application has registered both opImplConv and opConv
 		asASSERT(convType == asIC_EXPLICIT_VAL_CAST);
 		asASSERT(funcs.GetLength() == 2);
@@ -6901,7 +6901,7 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 		// If there are multiple valid value casts, then we must choose the most appropriate one
 		if (funcs.GetLength() > 1)
 		{
-			// This should only happen in case of explicit value cast and 
+			// This should only happen in case of explicit value cast and
 			// the application has registered both opImplConv and opConv
 			asASSERT(convType == asIC_EXPLICIT_VAL_CAST);
 			asASSERT(funcs.GetLength() == 2);
@@ -6973,7 +6973,7 @@ asUINT asCCompiler::ImplicitConvObjectValue(asCExprContext *ctx, const asCDataTy
 			// If there are multiple valid value casts, then we must choose the most appropriate one
 			if (funcs.GetLength() > 1)
 			{
-				// This should only happen in case of explicit value cast and 
+				// This should only happen in case of explicit value cast and
 				// the application has registered both opImplConv and opConv
 				asASSERT(convType == asIC_EXPLICIT_VAL_CAST);
 				asASSERT(funcs.GetLength() == 2);
@@ -8671,7 +8671,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 				to.MakeReadOnly(false);
 				ImplicitConversion(&re, to, cexpr->next->next, asIC_IMPLICIT_CONV);
 			}
-			
+
 			if (le.IsAnonymousInitList() )
 			{
 				Error(TXT_CANNOT_RESOLVE_AUTO, cexpr->next);
@@ -9765,6 +9765,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				return -1;
 			}
 
+#if AS_DEBUG
 			// If it is not a property, it may still be the name of a method which can be used to create delegates
 			asCObjectType *ot = outFunc->objectType;
 			asCScriptFunction *func = 0;
@@ -9780,7 +9781,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			}
 
 			asASSERT(func);
-
+#endif
 			// An object method was found. Keep the name of the method in the expression, but
 			// don't actually modify the bytecode at this point since it is not yet known what
 			// the method will be used for, or even what overloaded method should be used.
@@ -9835,7 +9836,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				Error(msg, errNode);
 				return -1;
 			}
-			
+
 			// Prepare the bytecode for the function call
 			MergeExprBytecodeAndType(ctx, &access);
 
@@ -9850,7 +9851,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			asQWORD constantValue = 0;
 			asCGlobalProperty *prop = builder->GetGlobalProperty(name.AddressOf(), ns, &isCompiled, &isPureConstant, &constantValue, &isAppProp);
 			asASSERT(prop);
-		
+
 			// Verify that the global property has been compiled already
 			if (!isCompiled)
 			{
@@ -9967,8 +9968,7 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 			}
 
 			asDWORD value = 0;
-			int r = builder->GetEnumValueFromType(CastToEnumType(lookupResult.type.dataType.GetTypeInfo()), name.AddressOf(), dt, value);
-			asASSERT(r > 0);
+			builder->GetEnumValueFromType(CastToEnumType(lookupResult.type.dataType.GetTypeInfo()), name.AddressOf(), dt, value);
 
 			// Even if the enum type is not shared, and we're compiling a shared object,
 			// the use of the values are still allowed, since they are treated as constants.
@@ -10192,7 +10192,7 @@ int asCCompiler::CompileExpressionValue(asCScriptNode *node, asCExprContext *ctx
 					// Keep the pointer in the list for clean up at exit
 					usedStringConstants.PushLast(strPtr);
 
-					// Push the pointer on the stack. The string factory already guarantees that the 
+					// Push the pointer on the stack. The string factory already guarantees that the
 					// string object is valid throughout the lifetime of the script so no need to add
 					// reference count or make local copy.
 					ctx->bc.InstrPTR(asBC_PGA, strPtr);
@@ -10539,7 +10539,7 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 			expr.type.SetDummy();
 			anyErrors = true;
 		}
-		else if (node->lastChild->firstChild && 
+		else if (node->lastChild->firstChild &&
 			node->lastChild->firstChild->nodeType == snNamedArgument)
 		{
 			Error(TXT_INVALID_USE_OF_NAMED_ARGS, node->lastChild);
@@ -11203,6 +11203,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		// TODO: Take advantage of the known symbol, so it doesn't have to be looked up again
 		localVar = CompileVariableAccess(name, scope, &funcExpr, node, false, objectType);
 		asASSERT(localVar >= 0);
+		if( localVar < 0 )
+			return -1;
 
 		if (funcExpr.type.dataType.IsFuncdef())
 		{
@@ -11307,7 +11309,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 				Error(msg, node);
 				return -1;
 			}
-			
+
 			objectType = outFunc->objectType;
 
 			asCDataType dt = asCDataType::CreateType(objectType, false);
@@ -11328,7 +11330,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 			return -1;
 		}
 	}
-	
+
 	// Is it a global function?
 	if (symbolType == SL_GLOBALFUNC)
 	{
@@ -13551,7 +13553,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 
 					if (engine->ep.allowUnsafeReferences && lctx->type.dataType.IsObject() && (lctx->type.dataType.GetTypeInfo()->flags & asOBJ_VALUE))
 					{
-						// If the application allows unsafe references, then it is not necessary to 
+						// If the application allows unsafe references, then it is not necessary to
 						// make a copy of the object, just store the reference as a local variable
 
 						// Allocate a temporary variable as reference to the type

@@ -79,7 +79,7 @@ namespace Test_Addon_StdString
 				"assert( a.findFirstNotOf('The') == 3); \n"
 				"assert( a.findLast('fox') == 31); \n"
 				"assert( a.findLastOf('fjq') == 31); \n"
-				"assert( a.findLastNotOf('fox') == 33); \n");
+				"assert( a.findLastNotOf('fox') == 30); \n");
 			if (r != asEXECUTION_FINISHED) TEST_FAILED;
 
 			if( strstr(asGetLibraryOptions(), "AS_NO_EXCEPTIONS") )

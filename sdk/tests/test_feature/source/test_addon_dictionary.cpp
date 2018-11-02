@@ -41,7 +41,8 @@ bool Test()
 			"{ \n"
 			"  dictionary d1 =  { { 'aa', 1 },{ 'ab', 2 } }; \n"
 			"  assert( d1.getSize() == 2 ); \n"
-			"  assert( d1.getKeys()[0] == 'aa' ); \n"
+			"  assert( d1.getKeys()[0] == 'aa' || d1.getKeys()[1] == 'aa' ); \n" // getKeys is unordered
+			"  assert( d1.getKeys()[0] == 'ab' || d1.getKeys()[1] == 'ab' ); \n"
 			"} \n");
 		r = mod->Build();
 		if (r < 0)
