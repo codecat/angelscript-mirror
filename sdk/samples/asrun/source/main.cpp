@@ -82,6 +82,7 @@ int main(int argc, char **argv)
 
 	if( !argsValid )
 	{
+		cout << "AngelScript command line runner. Version " << ANGELSCRIPT_VERSION_STRING << endl << endl;
 		cout << "Usage: " << endl;
 		cout << "asrun [-d] <script file> [<args>]" << endl;
 		cout << " -d             inform if the script should be runned with debug" << endl;

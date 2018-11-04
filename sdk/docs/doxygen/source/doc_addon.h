@@ -43,7 +43,7 @@ Register the type with the <code>RegisterScriptDateTime(asIScriptEngine*)</code>
 
 \note This class requires C++11 or later to compile.
 
-\section doc_addon_array_1 Public C++ interface
+\section doc_addon_datetime_1 Public C++ interface
 
 \code
 class CDateTime
@@ -84,7 +84,7 @@ public:
 };
 \endcode
 
-\section doc_addon_array_2 Public script interface
+\section doc_addon_datetime_2 Public script interface
 
 <pre>
   class datetime
@@ -117,7 +117,7 @@ public:
   }
 </pre>
 
-\subsection doc_addon_array_2_construct Constructors
+\subsection doc_addon_datetime_2_construct Constructors
 
 <b>datetime()</b><br>
 <b>datetime(const datetime &in other)</b><br>
@@ -129,7 +129,7 @@ The copy constructor copíes the content of the other object.
 
 The set constructor initializes the object with the given date and time.
 
-\subsection doc_addon_array_2_methods Methods
+\subsection doc_addon_datetime_2_methods Methods
 
 <b>uint get_year() const</b>
 
@@ -160,7 +160,7 @@ Returns the second of the time stored in the object. The range is 0 to 59.
 
 Sets the date or time. Returns true if the specified date or time is valid. Does not modify the object if not valid.
 
-\subsection doc_addon_array_2_ops Operators
+\subsection doc_addon_datetime_2_ops Operators
 
 <b>= assignment</b>
  
@@ -531,7 +531,7 @@ Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register t
 the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent once are 
 so a port from script to C++ and vice versa might be easier if STL names are used.
 
-\todo Document AS_USE_ACCESSORS
+Compile the add-on with the pre-processor define AS_USE_ACCESSORS=1 to register length as a virtual property instead of the method length().
 
 \section doc_addon_array_1 Public C++ interface
 
@@ -1091,11 +1091,11 @@ Register the type with <code>RegisterStdString(asIScriptEngine*)</code>. Registe
 split method and global join function with <code>RegisterStdStringUtils(asIScriptEngine*)</code>. 
 The optional functions require that the \ref doc_addon_array has been registered first.
 
-Compile the add-on with the pre-processor define AS_USE_STLNAMES = 1 to register the methods with the same names as used by C++ STL where 
+Compile the add-on with the pre-processor define AS_USE_STLNAMES=1 to register the methods with the same names as used by C++ STL where 
 the methods have the same significance. Not all methods from STL is implemented in the add-on, but many of the most frequent ones are 
 so a port from script to C++ and vice versa might be easier if STL names are used.
 
-\todo Document AS_USE_ACCESSORS
+Compile the add-on with the pre-processor define AS_USE_ACCESSORS=1 to register length as a virtual property instead of the method length().
 
 \section doc_addon_std_string_1 Public C++ interface
 
