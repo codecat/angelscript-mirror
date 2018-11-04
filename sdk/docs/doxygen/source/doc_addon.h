@@ -52,6 +52,7 @@ public:
   // Constructors
   CDateTime();
   CDateTime(const CDateTime &other);
+  CDateTime(asUINT year, asUINT month, asUINT day, asUINT hour, asUINT minute, asUINT second);
 
   // Copy the stored value from another any object
   CDateTime &operator=(const CDateTime &other);
@@ -90,6 +91,7 @@ public:
   {
     datetime();
     datetime(const datetime &in other);
+    datetime(uint y, uint m, uint d, uint h = 0, uint mi = 0, uint s = 0);
 
     datetime &opAssign(const datetime &in other);
 
@@ -117,12 +119,15 @@ public:
 
 \subsection doc_addon_array_2_construct Constructors
 
-<b>datetime()</b><br><br>
-<b>datetime(const datetime &in other)</b>
+<b>datetime()</b><br>
+<b>datetime(const datetime &in other)</b><br>
+<b>datetime(uint y, uint m, uint d, uint h = 0, uint mi = 0, uint s = 0)</b><br>
  
 The default constructor initializes the object with the current system time.
 
 The copy constructor copíes the content of the other object.
+
+The set constructor initializes the object with the given date and time.
 
 \subsection doc_addon_array_2_methods Methods
 

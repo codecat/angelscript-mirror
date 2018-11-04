@@ -20,6 +20,7 @@ public:
 	// Constructors
 	CDateTime();
 	CDateTime(const CDateTime &other);
+	CDateTime(asUINT year, asUINT month, asUINT day, asUINT hour, asUINT minute, asUINT second);
 
 	// Copy the stored value from another any object
 	CDateTime &operator=(const CDateTime &other);

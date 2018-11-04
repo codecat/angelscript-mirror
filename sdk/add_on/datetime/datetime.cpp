@@ -115,6 +115,22 @@ bool CDateTime::setTime(asUINT hour, asUINT minute, asUINT second)
 	return tm_to_time_point(local, tp);
 }
 
+CDateTime::CDateTime(asUINT year, asUINT month, asUINT day, asUINT hour, asUINT minute, asUINT second)
+{
+	tm local;
+	local.tm_year = int(year) - 1900;
+	local.tm_mon = month - 1;
+	local.tm_mday = day;
+	local.tm_hour = hour;
+	local.tm_min = minute;
+	local.tm_sec = second;
+	if (!tm_to_time_point(local, tp))
+	{
+		// TODO: How should the user know the input was wrong? Throw exception or have a flag? Set to epoch?
+		tp = std::chrono::system_clock::now();
+	}
+}
+
 asINT64 CDateTime::operator-(const CDateTime &dt) const
 {
 	return (tp - dt.tp).count() / std::chrono::system_clock::period::den * std::chrono::system_clock::period::num;
@@ -180,6 +196,11 @@ static void ConstructCopy(CDateTime *mem, const CDateTime &o)
 	new(mem) CDateTime(o);
 }
 
+static void ConstructSet(CDateTime *mem, asUINT year, asUINT month, asUINT day, asUINT hour, asUINT minute, asUINT second)
+{
+	new(mem) CDateTime(year, month, day, hour, minute, second);
+}
+
 void RegisterScriptDateTime(asIScriptEngine *engine)
 {
 	// TODO: Add support for generic calling convention
@@ -189,6 +210,7 @@ void RegisterScriptDateTime(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectBehaviour("datetime", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Construct), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("datetime", asBEHAVE_CONSTRUCT, "void f(const datetime &in)", asFUNCTION(ConstructCopy), asCALL_CDECL_OBJFIRST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("datetime", asBEHAVE_CONSTRUCT, "void f(uint, uint, uint, uint = 0, uint = 0, uint = 0)", asFUNCTION(ConstructSet), asCALL_CDECL_OBJFIRST); assert(r >= 0);
 	r = engine->RegisterObjectMethod("datetime", "datetime &opAssign(const datetime &in)", asMETHOD(CDateTime, operator=), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("datetime", "uint get_year() const", asMETHOD(CDateTime, getYear), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("datetime", "uint get_month() const", asMETHOD(CDateTime, getMonth), asCALL_THISCALL); assert(r >= 0);
