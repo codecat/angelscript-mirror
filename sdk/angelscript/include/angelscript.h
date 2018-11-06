@@ -418,7 +418,7 @@ typedef void (*asCIRCULARREFFUNC_t)(asITypeInfo *, const void *, void *);
 
 // This macro does basically the same thing as offsetof defined in stddef.h, but
 // GNUC should not complain about the usage as I'm not using 0 as the base pointer.
-#define asOFFSET(s,m) ((int)(&reinterpret_cast<s*>(100000)->m)-100000)
+#define asOFFSET(s,m) ((int)(size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
 
 #define asFUNCTION(f) asFunctionPtr(f)
 #if (defined(_MSC_VER) && _MSC_VER <= 1200) || (defined(__BORLANDC__) && __BORLANDC__ < 0x590)
