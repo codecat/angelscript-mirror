@@ -23,6 +23,155 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
+	// Test setting dictionary element with class that doesn't have default constructor
+	// https://www.gamedev.net/forums/topic/699620-error-when-assigning-script-object-to-dictionary/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptString(engine); // Register string type as ref type
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Organelle{ \n"
+			"	Organelle(const string &in name, int cost) \n"
+			"	{ \n"
+			"		this.cost = cost; \n"
+			"		this.name = name; \n"
+			"	} \n"
+			"	int cost; \n"
+			"	string name; \n"
+			"} \n"
+			"class PlacedOrganelle { \n"
+			// Default constructor doesn't help
+			// PlacedOrganelle(){}
+			"	PlacedOrganelle(Organelle@ organelle, int q, int r, int rotation) \n"
+			"	{ \n"
+			"		@this._organelle = organelle; \n"
+			"		this.q = q; \n"
+			"		this.r = r; \n"
+			"		this.rotation = rotation; \n"
+			"	} \n"
+			"	PlacedOrganelle(PlacedOrganelle@ typefromother, int q, int r, int rotation) \n"
+			"	{ \n"
+			"		@this._organelle = typefromother._organelle; \n"
+			"		this.q = q; \n"
+			"		this.r = r; \n"
+			"		this.rotation = rotation; \n"
+			"	} \n"
+			"	PlacedOrganelle(PlacedOrganelle@ other) \n"
+			"	{ \n"
+			"		@this._organelle = other._organelle; \n"
+			"		this.q = other.q; \n"
+			"		this.r = other.r; \n"
+			"		this.rotation = other.rotation; \n"
+					// _commonConstructor();
+			"	} \n"
+			"	~PlacedOrganelle() \n"
+			"	{ \n"
+			"	} \n"
+			"	int q; \n"
+			"	int r; \n"
+			"	int rotation; \n"
+			"	const Organelle@ organelle{ \n"
+			"		get const{ \n"
+			"		return _organelle; \n"
+			"	} \n"
+			"	} \n"
+			"	private Organelle@ _organelle; \n"
+			"} \n"
+			"void RunTest() \n"
+			"{ \n"
+			"	PlacedOrganelle@ organelle = PlacedOrganelle(Organelle('cytoplasm', 10), 1, 1, 0); \n"
+			"	dictionary data; \n"
+			"	data['organelle'] = organelle; \n"
+			"	PlacedOrganelle@ organelle2 = cast<PlacedOrganelle>(data['organelle']); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "RunTest()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test setting dictionary element with class that doesn't have default constructor
+	// https://www.gamedev.net/forums/topic/699620-error-when-assigning-script-object-to-dictionary/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptString(engine); // Register string type as ref type
+		RegisterScriptArray(engine, false);
+		RegisterScriptDictionary(engine);
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Organelle{ \n"
+			"} \n"
+			"class PlacedOrganelle { \n"
+			"	PlacedOrganelle(Organelle@ organelle) \n"
+			"	{ \n"
+			"		@this.organelle = organelle; \n"
+			"	} \n"
+			"	Organelle@ organelle; \n"
+			"} \n"
+			"void RunTest() \n"
+			"{ \n"
+			"	PlacedOrganelle@ organelle = PlacedOrganelle(Organelle()); \n"
+			"	dictionary data; \n"
+				// This alternative works
+				// @data["organelle"] = organelle;
+				// This causes errors
+			"	data['organelle'] = organelle; \n"
+			"	PlacedOrganelle@ organelle2 = cast<PlacedOrganelle>(data['organelle']); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		ctx = engine->CreateContext();
+		r = ExecuteString(engine, "RunTest()", mod, ctx);
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+			TEST_FAILED;
+		}
+		ctx->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test script dictionary with string type registered as reference type
 	// Reported by wracky
 	{
