@@ -679,6 +679,12 @@ void CScriptDictValue::Set(asIScriptEngine *engine, void *value, int typeId)
 	{
 		// Create a copy of the object
 		m_valueObj = engine->CreateScriptObjectCopy(value, engine->GetTypeInfoById(typeId));
+		if( m_valueObj == 0 )
+		{
+			asIScriptContext *ctx = asGetActiveContext();
+			if( ctx )
+				ctx->SetException("Cannot create copy of object");
+		}
 	}
 	else
 	{

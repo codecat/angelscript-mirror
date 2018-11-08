@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/11/04</h2>
+<h2>Version 2.33.0 WIP - 2018/11/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -46,6 +46,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure in asIScriptEngine::RefCastObject when object has multiple opCast methods (Thanks gjl)
 <li>Compiler no longer accepts primitives in the right hand expression for handle assignments (Thanks gjl)
 <li>Fixed compiler warning with use of asOFFSET on 64bit platforms (Thanks Miss)
+<li>Fixed crash caused by CreateScriptObjectCopy when script class' constructor takes argument by handle (Thanks Boost113)
 </ul>
 <li>Library
 <ul>
@@ -64,6 +65,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Added engine properties asEP_INIT_CALL_STACK_SIZE and asEP_MAX_CALL_STACK_SIZE to set initial and max call stack size for nested calls (Thanks Karoly Pinter)
 <li>asIScriptContext::PushState will return an error if the call stack is already too big
 <li>context's GetExceptionString, GetExceptionFunction, GetExceptionLineNumber will now return the last exception even if it has been caught
+<li>CreateScriptObject no longer writes to the message callback if the object type doesn't have constructor/factory
 </ul>
 <li>Library interface
 <ul>
@@ -116,6 +118,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed a problem in filesystem's CopyFile on non-Windows platforms (Thanks cvet)
 <li>Fixed string's findLastNotOf
 <li>The datetime add-on now has a constructor to initialize date and time directly
+<li>dictionary raises script exception if it cannot create a copy of a value being assigned
 </ul>
 <li>Project
 <ul>

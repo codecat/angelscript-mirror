@@ -78,7 +78,10 @@ public:
 		// This code writes out some statistics for the VM.
 		// It's useful for determining what needs to be optimized.
 
+#ifndef __MINGW32__
+		// _mkdir is broken on mingw
 		_mkdir("AS_DEBUG");
+#endif
 		#if _MSC_VER >= 1500 && !defined(AS_MARMALADE)
 			FILE *f;
 			fopen_s(&f, "AS_DEBUG/stats.txt", "wt");

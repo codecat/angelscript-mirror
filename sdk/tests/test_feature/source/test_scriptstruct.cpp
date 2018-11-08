@@ -681,6 +681,8 @@ bool Test()
 	}
 
 	// CreateScriptObject should give proper error when attempting call for class without default constructor
+	// TODO: The message callback must be optional, so that CreateScriptObject can be called without having to 
+	//       worry about a crash or message for invalid objects
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -697,7 +699,8 @@ bool Test()
 		if( engine->CreateScriptObject(type) )
 			TEST_FAILED;
 
-		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: asNO_FUNCTION, -6)\n" )
+//		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'CreateScriptObject' (Code: asNO_FUNCTION, -6)\n" )
+		if( bout.buffer != "" )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

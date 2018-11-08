@@ -4987,9 +4987,11 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 	// Check that there is a default factory for ref types
 	if( objType->beh.factory == 0 && (objType->flags & asOBJ_REF) )
 	{
-		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "CreateScriptObject", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
-		WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+		// TODO: How to report the reason the object couldn't be created, without writing to the message callback? optional argument with return code?
+		// TODO: Warn about the invalid call to message callback. Make it an optional, so the warning can be turned off
+//		asCString str;
+//		str.Format(TXT_FAILED_IN_FUNC_s_s_d, "CreateScriptObject", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
+//		WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return 0;
 	}
 
@@ -5041,9 +5043,11 @@ void *asCScriptEngine::CreateScriptObject(const asITypeInfo *type)
 		// Make sure there is a default constructor or that it is a POD type
 		if( objType->beh.construct == 0 && !(objType->flags & asOBJ_POD) )
 		{
-			asCString str;
-			str.Format(TXT_FAILED_IN_FUNC_s_s_d, "CreateScriptObject", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
-			WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			// TODO: How to report the reason the object couldn't be created, without writing to the message callback? optional argument with return code?
+			// TODO: Warn about the invalid call to message callback. Make it an optional, so the warning can be turned off
+//			asCString str;
+//			str.Format(TXT_FAILED_IN_FUNC_s_s_d, "CreateScriptObject", errorNames[-asNO_FUNCTION], asNO_FUNCTION);
+//			WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 			return 0;
 		}
 
@@ -5281,7 +5285,7 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 // interface
 int asCScriptEngine::AssignScriptObject(void *dstObj, void *srcObj, const asITypeInfo *type)
 {
-	// TODO: Warn about invalid call in message stream
+	// TODO: Warn about invalid call in message stream (make it optional)
 	if( type == 0 || dstObj == 0 || srcObj == 0 ) return asINVALID_ARG;
 
 	const asCObjectType *objType = reinterpret_cast<const asCObjectType*>(type);

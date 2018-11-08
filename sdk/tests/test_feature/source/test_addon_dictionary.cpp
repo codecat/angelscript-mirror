@@ -23,14 +23,14 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptModule *mod;
 
-	// Test setting dictionary element with class that doesn't have default constructor
+	// Test setting dictionary element with class that doesn't have default constructor, but has a copy constructor taking a handle
 	// https://www.gamedev.net/forums/topic/699620-error-when-assigning-script-object-to-dictionary/
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		RegisterScriptString(engine); // Register string type as ref type
+		RegisterStdString(engine); // Register string type as ref type
 		RegisterScriptArray(engine, false);
 		RegisterScriptDictionary(engine);
 
@@ -64,6 +64,7 @@ bool Test()
 			"		this.r = r; \n"
 			"		this.rotation = rotation; \n"
 			"	} \n"
+			// Copy constructor taking handle
 			"	PlacedOrganelle(PlacedOrganelle@ other) \n"
 			"	{ \n"
 			"		@this._organelle = other._organelle; \n"
@@ -115,14 +116,14 @@ bool Test()
 		engine->ShutDownAndRelease();
 	}
 
-	// Test setting dictionary element with class that doesn't have default constructor
+	// Test setting dictionary element with class that doesn't have default constructor, or copy constructor
 	// https://www.gamedev.net/forums/topic/699620-error-when-assigning-script-object-to-dictionary/
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		bout.buffer = "";
 
-		RegisterScriptString(engine); // Register string type as ref type
+		RegisterStdString(engine); // Register string type as ref type
 		RegisterScriptArray(engine, false);
 		RegisterScriptDictionary(engine);
 
@@ -155,10 +156,15 @@ bool Test()
 
 		ctx = engine->CreateContext();
 		r = ExecuteString(engine, "RunTest()", mod, ctx);
-		if (r != asEXECUTION_FINISHED)
-		{
-			if (r == asEXECUTION_EXCEPTION)
-				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+		if (r != asEXECUTION_EXCEPTION)
+			TEST_FAILED;
+		if( GetExceptionInfo(ctx) != "func: void RunTest()\n"
+									 "modl: test\n"
+									 "sect: test\n"
+									 "line: 14\n"
+									 "desc: Cannot create copy of object\n" )
+		{ 
+			PRINTF("%s", GetExceptionInfo(ctx).c_str());
 			TEST_FAILED;
 		}
 		ctx->Release();

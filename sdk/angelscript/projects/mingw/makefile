@@ -3,7 +3,9 @@
 
 CXX ?= g++
 AR ?= ar
-CXXFLAGS = -ggdb
+# Debug flags: -ggdb -DAS_DEBUG
+# Release flags: -O2
+CXXFLAGS = -O2
 SRCDIR = ../../source
 OBJDIR = obj
 SRCNAMES = \
