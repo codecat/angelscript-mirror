@@ -285,6 +285,7 @@
 #define TXT_VOID_CANT_BE_OPERAND          "Void cannot be an operand in expressions"
 
 #define TXT_WARNINGS_TREATED_AS_ERROR     "Warnings are treated as errors by the application"
+#define TXT_WHERE_s_IS_s                  "Where '%s' is '%s'"
 #define TXT_WHILE_PARSING_ARG_LIST        "While parsing argument list"
 #define TXT_WHILE_PARSING_EXPRESSION      "While parsing expression"
 #define TXT_WHILE_PARSING_INIT_LIST       "While parsing initialization list"

@@ -241,6 +241,21 @@ argument.
 
 The example shows how to use the sort method with a callback to an \ref doc_script_anonfunc "anonymous function".
 
+Here's another example where the callback function is declared explicitly:
+
+<pre>
+  bool lessForInt(const int &in a, const int &in b)
+  {
+    return a < b;
+  }
+  bool lessForHandle(const obj \@&in a, const obj \@&in b)
+  {
+    return a < b;
+  }
+  void sortArrayOfInts(array<int> \@arr) { arr.sort(lessForInt); }
+  void sortArrayOfHandles(array<obj\@> \@arr) { arr.sort(lessForHandle); }
+</pre>
+
 <b>int  find(const T& in)</b><br>
 <b>int  find(uint startAt, const T& in)</b><br>
 
