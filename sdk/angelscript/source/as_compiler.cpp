@@ -2240,9 +2240,8 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 
 		// Parse the default arg string
 		asCParser parser(builder);
-		asCScriptCode code;
-		code.SetCode("default arg", func->defaultArgs[n]->AddressOf(), false);
-		int r = parser.ParseExpression(&code);
+		asCScriptCode *code = builder->FindOrAddCode("default arg", func->defaultArgs[n]->AddressOf());
+		int r = parser.ParseExpression(code);
 		if( r < 0 )
 		{
 			asCString msg;
@@ -2256,7 +2255,7 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 
 		// Temporarily set the script code to the default arg expression
 		asCScriptCode *origScript = script;
-		script = &code;
+		script = code;
 
 		// Don't allow the expression to access local variables
 		isCompilingDefaultArg = true;
@@ -9066,6 +9065,11 @@ int asCCompiler::CompileAnonymousInitList(asCScriptNode *node, asCExprContext *c
 		Error(msg, node);
 	}
 
+	// If this is compiled from a default arg, then use the script code for the default arg
+	asCScriptCode *origCode = script;
+	if (ctx->origCode)
+		script = ctx->origCode;
+
 	// Allocate and initialize the temporary object
 	int offset = AllocateVariable(dt, true);
 	CompileInitialization(node, &ctx->bc, dt, node, offset, 0, 0);
@@ -9083,6 +9087,9 @@ int asCCompiler::CompileAnonymousInitList(asCScriptNode *node, asCExprContext *c
 	// Clear the flag for anonymous initalization list as it is no
 	// longer true now that the object has been initialized.
 	ctx->isAnonymousInitList = false;
+	ctx->origCode = 0;
+
+	script = origCode;
 
 	return 0;
 }
@@ -9106,7 +9113,7 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asCExprContext *ctx)
 		{
 			// As the type is not yet known, the init list will be compiled at a
 			// later time when the type can be determined from the destination
-			ctx->SetAnonymousInitList(node->firstChild);
+			ctx->SetAnonymousInitList(node->firstChild, script);
 			return 0;
 		}
 	}
@@ -16219,6 +16226,7 @@ void asCExprContext::Clear()
 	isVoidExpression = false;
 	isCleanArg = false;
 	isAnonymousInitList = false;
+	origCode = 0;
 }
 
 bool asCExprContext::IsClassMethod() const
@@ -16272,10 +16280,11 @@ bool asCExprContext::IsVoidExpression() const
 	return false;
 }
 
-void asCExprContext::SetAnonymousInitList(asCScriptNode *initList)
+void asCExprContext::SetAnonymousInitList(asCScriptNode *initList, asCScriptCode *script)
 {
 	Clear();
 	exprNode = initList;
+	origCode = script;
 	isAnonymousInitList = true;
 }
 
@@ -16302,6 +16311,7 @@ void asCExprContext::Merge(asCExprContext *after)
 	isVoidExpression = after->isVoidExpression;
 	isCleanArg = after->isCleanArg;
 	isAnonymousInitList = after->isAnonymousInitList;
+	origCode = after->origCode;
 
 	after->property_arg = 0;
 

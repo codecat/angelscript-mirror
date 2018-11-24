@@ -226,6 +226,28 @@ int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int 
 	return 0;
 }
 
+asCScriptCode *asCBuilder::FindOrAddCode(const char *name, const char *code)
+{
+	for (asUINT n = 0; n < scripts.GetLength(); n++)
+		if( scripts[n]->name == name && strcmp(scripts[n]->code, code) == 0 )
+			return scripts[n];
+
+	asCScriptCode *script = asNEW(asCScriptCode);
+	if (script == 0)
+		return 0;
+
+	int r = script->SetCode(name, code, 0, true);
+	if (r < 0)
+	{
+		asDELETE(script, asCScriptCode);
+		return 0;
+	}
+
+	script->idx = engine->GetScriptSectionNameIndex(name);
+	scripts.PushLast(script);
+	return script;
+}
+
 void asCBuilder::EvaluateTemplateInstances(asUINT startIdx, bool keepSilent)
 {
 	// Backup the original message stream

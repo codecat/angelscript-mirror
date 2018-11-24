@@ -215,6 +215,39 @@ bool Test()
 	asIScriptContext *ctx;
 	asIScriptEngine *engine;
 
+	// Test initialization of array as default arg
+	// https://www.gamedev.net/forums/topic/699878-array-argument-getting-wrong-default-value/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		RegisterScriptArray(engine, false);
+
+		asIScriptModule *mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void f(array<int> a = {9}) { \n"
+			"  assert(a[0] == 9); \n"
+			"}﻿ \n"
+			"void main() { f(); } \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		
+		r = ExecuteString(engine, "main()", mod);
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test circular reference between array and ref
 	{
 		engine = asCreateScriptEngine();

@@ -149,7 +149,7 @@ struct asCExprContext
 	void SetVoidExpression();
 	bool IsVoidExpression() const;
 	void Merge(asCExprContext *after);
-	void SetAnonymousInitList(asCScriptNode *initList);
+	void SetAnonymousInitList(asCScriptNode *initList, asCScriptCode *script);
 	bool IsAnonymousInitList() const;
 
 	asCByteCode bc;
@@ -165,6 +165,7 @@ struct asCExprContext
 	asCArray<asSDeferredParam> deferredParams;
 	asCScriptNode  *exprNode;
 	asCExprContext *origExpr;
+	asCScriptCode *origCode;
 	// TODO: cleanup: use ambiguousName and an enum to say if it is a method, global func, or enum value
 	asCString methodName;
 	asCString enumValue;

@@ -147,6 +147,7 @@ public:
 
 #ifndef AS_NO_COMPILER
 	int AddCode(const char *name, const char *code, int codeLength, int lineOffset, int sectionIdx, bool makeCopy);
+	asCScriptCode *FindOrAddCode(const char *name, const char *code);
 	int Build();
 
 	int CompileFunction(const char *sectionName, const char *code, int lineOffset, asDWORD compileFlags, asCScriptFunction **outFunc);
