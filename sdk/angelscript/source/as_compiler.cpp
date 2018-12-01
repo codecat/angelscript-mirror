@@ -13163,7 +13163,7 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 	if (argExpr->IsAnonymousInitList())
 	{
 		if ((desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] != asTM_INREF) ||
-			desc->parameterTypes[paramNum].GetTypeInfo() == 0 ||
+			desc->parameterTypes[paramNum].GetBehaviour() == 0 ||
 			desc->parameterTypes[paramNum].GetBehaviour()->listFactory == 0)
 		{
 			return -1;

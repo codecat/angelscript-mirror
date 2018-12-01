@@ -174,6 +174,36 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test to make sure no crash occurs when anonymous list is matched against function taking funcdef
+	// https://www.gamedev.net/forums/topic/699951-crash-in-argument-matching/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+		
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"funcdef void cb(); \n"
+			"void f(cb @t) {} \n"
+			"void f(array<int> a) {} \n"
+			"void main() { \n"
+			"	f({1}); \n"    // this crashed the compiler before the fix
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();		
+	}
+	
 	// Test invalid code
 	// https://www.gamedev.net/forums/topic/696243-strange-code-works-normally/
 	{
