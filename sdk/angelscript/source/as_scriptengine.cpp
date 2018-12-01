@@ -924,6 +924,8 @@ asCModule *asCScriptEngine::FindNewOwnerForSharedType(asCTypeInfo *in_type, asCM
 			foundIdx = mod->typeDefs.IndexOf(CastToTypedefType(in_type));
 		else if (in_type->flags & asOBJ_FUNCDEF)
 			foundIdx = mod->funcDefs.IndexOf(CastToFuncdefType(in_type));
+		else if (in_type->flags & asOBJ_TEMPLATE)
+			foundIdx = mod->templateInstances.IndexOf(CastToObjectType(in_type));
 		else
 			foundIdx = mod->classTypes.IndexOf(CastToObjectType(in_type));
 

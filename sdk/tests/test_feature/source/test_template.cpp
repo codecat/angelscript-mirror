@@ -205,6 +205,46 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test template bug when using multiple modules
+	// https://www.gamedev.net/forums/topic/699909-template-factory-return-type-bug/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int&in)", asFUNCTIONPR(MyTmpl_factory, (asITypeInfo*), MyTmpl*), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL);
+
+		asIScriptModule *mod1 = engine->GetModule("m1", asGM_ALWAYS_CREATE);
+		asIScriptModule *mod2 = engine->GetModule("m2", asGM_ALWAYS_CREATE);	
+
+		const char* script_text = "void main() { MyTmpl<int> s; }";
+
+		mod1->AddScriptSection("test1", script_text);
+		mod1->Build();
+
+		mod2->AddScriptSection("test2", script_text);
+		mod2->Build();
+
+		mod1->Discard(); // this must not release the MyTmpl<int> type as it is still used by the other module
+
+		asIScriptContext *ctx = engine->CreateContext();
+		asIScriptFunction *func = mod2->GetFunctionByDecl("void main()");
+		ctx->Prepare(func);
+		ctx->Execute();
+		ctx->Release();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->Release();		
+	}
+	
 	// When unsafe reference is turned on it should still be allowed to instantiate template
 	// for value subtypes even though a method takes the subtype by ref
 	// https://www.gamedev.net/forums/topic/695957-can-not-create-a-value-type-template/

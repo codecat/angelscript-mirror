@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.0 WIP - 2018/11/24</h2>
+<h2>Version 2.33.0 WIP - 2018/11/30</h2>
 
 <ul>
 <li>Bug fixes
@@ -49,6 +49,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed crash caused by CreateScriptObjectCopy when script class' constructor takes argument by handle (Thanks Boost113)
 <li>Child funcdefs in templates will no longer convert parameter types to @const& (Thanks Dinkleberg)
 <li>Fixed problem when compiling anonymous initialization list from default arg (Thanks Dinkleberg)
+<li>Ownership of shared template instances wasn't correctly transferred when discarding modules (Thanks Jason Goepel)
 </ul>
 <li>Library
 <ul>
