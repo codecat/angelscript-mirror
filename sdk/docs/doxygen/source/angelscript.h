@@ -3000,7 +3000,20 @@ public:
 	//! allow the application to examine the callstack and generate a detailed report before the 
 	//! callstack is cleaned up.
 	//!
-	//! See \ref SetLineCallback for details on the calling convention.
+	//! The callback function can be either a global function or a class method. For a global function 
+	//! the VM will pass two parameters, first the context pointer and then the object pointer specified 
+	//! by the application. For a class method, the VM will call the method using the object pointer 
+	//! as the owner.
+	//!
+	//! \code
+	//! void Callback(asIScriptContext *ctx, void *obj);
+	//! void Object::Callback(asIScriptContext *ctx);
+	//! \endcode
+	//!
+	//! The global function can use either \ref asCALL_CDECL or \ref asCALL_STDCALL, and the class method can use either 
+	//! \ref asCALL_THISCALL, \ref asCALL_CDECL_OBJLAST, or \ref asCALL_CDECL_OBJFIRST.
+	//! 
+	//! \see \ref doc_call_script_4
 	virtual int                SetExceptionCallback(asSFuncPtr callback, void *obj, int callConv) = 0;
 	//! \brief Removes the registered callback.
 	//!

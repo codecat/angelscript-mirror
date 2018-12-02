@@ -33,7 +33,7 @@ asIScriptEngine::GarbageCollect "GarbageCollect"(\ref asGC_FULL_CYCLE).
 Should the automatic garbage collections not be desired, e.g. in critical inner loops where maximum performance is
 needed, it can easily be turned off with a call to \ref asIScriptEngine::SetEngineProperty "SetEngineProperty"(\ref asEP_AUTO_GARBAGE_COLLECT, false).
 
-\todo document SetCircularRefDetectedCallback, ForwardGCReleaseReferences, ForwardGCEnumReferences, WillExceptionBeCaught, exception callback
+\todo document SetCircularRefDetectedCallback
 
 \see \ref doc_memory
 
