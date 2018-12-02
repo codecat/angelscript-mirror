@@ -33,9 +33,19 @@ asIScriptEngine::GarbageCollect "GarbageCollect"(\ref asGC_FULL_CYCLE).
 Should the automatic garbage collections not be desired, e.g. in critical inner loops where maximum performance is
 needed, it can easily be turned off with a call to \ref asIScriptEngine::SetEngineProperty "SetEngineProperty"(\ref asEP_AUTO_GARBAGE_COLLECT, false).
 
-\todo document SetCircularRefDetectedCallback
-
 \see \ref doc_memory
+
+\section doc_gc_circcallback Callback for detected circular references
+
+During the testing phase of your project it is wise to try to identify situations that create circular references as 
+these have a potential of significantly impacting the performance. While the \ref asIScriptEngine::GetGCStatistics "GetGCStatistics"
+will tell you if circular references have been detected and destroyed, it will not tell you much about the actual objects involved in 
+the circular references. To aid in this the application can set a callback for when circular references is detected with
+\ref asIScriptEngine::SetCircularRefDetectedCallback "SetCircularRefDetectedCallback". 
+
+When this callback is invoked the objects in the circular reference have not yet been destroyed, so the application can inspect 
+the content to get valuable hints on where and when they were created. The application must not however try to modify the 
+objects at this time as would lead to undefined behaviour, and possibly even application crashes.
 
 \section doc_gc_threads Garbage collection and multi-threading
 
