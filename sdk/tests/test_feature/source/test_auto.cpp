@@ -17,6 +17,52 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
+	
+	// Test auto for classes without copy constructor or default constructor + assignment
+	// https://www.gamedev.net/forums/topic/699952-auto-keyword-behavior-was-changed/
+	{
+		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		
+		RegisterStdString(engine);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void main() \n"
+			"{ \n"
+			"	auto f = Foo(Resources::GetSValue('something.sval')); \n"
+			"	auto i = Foo(Resources::GetSValueI('something.sval')); \n"
+			"	Foo@ f2 = Foo(Resources::GetSValue('something.sval')); \n"
+			"	Foo@ i2 = Foo(Resources::GetSValueI('something.sval')); \n"
+			"	auto@ f3 = Foo(Resources::GetSValue('something.sval')); \n"
+			"	auto@ i3 = Foo(Resources::GetSValueI('something.sval')); \n"
+			"} \n"
+			"class Foo \n"
+			"{ \n"
+			"	Foo(SValue @) {} \n"
+			"	Foo(int) {} \n"
+			"} \n"
+			"class SValue \n"
+			"{ \n"
+			"} \n"
+			"namespace Resources \n"
+			"{ \n"
+			"	SValue @GetSValue(const string &in v) { return null; } \n"
+			"	int     GetSValueI(const string &in v) { return 0; } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 
 	// Test auto and namespace
 	// https://www.gamedev.net/forums/topic/696791-namespaces-can-not-be-resolved-well-in-some-cases/
@@ -268,12 +314,12 @@ bool Test()
 			"Object& getReferenceOf() { return obj; }\n"
 			"Object getValueOf() { return obj; }\n"
 			"void test() {\n"
-			"  auto copy = obj; assert(copy !is obj);\n"
+			"  auto copy = obj; assert(copy is obj);\n" // auto will prefer handle when possible
 			"  auto@ handle = obj; assert(handle is obj);\n"
 			"  auto handleReturn = getHandleOf(); assert(handleReturn is obj);\n"
 			"  auto@ explicitHandle = getHandleOf(); assert(explicitHandle is obj);\n"
-			"  auto copyReturn = getReferenceOf(); assert(copyReturn !is obj);\n"
-			"  auto valueReturn = getValueOf(); assert(valueReturn !is obj);\n"
+			"  auto copyReturn = getReferenceOf(); assert(copyReturn is obj);\n" // auto will prefer handle when possible
+			"  auto valueReturn = getValueOf(); assert(valueReturn !is obj);\n" // the variable is still a handle, but the copy happened inside getValueOf
 			"  auto@ handleToReference = getReferenceOf(); assert(handleToReference is obj);\n"
 			"  auto@ handleToCopy = getValueOf(); assert(handleToCopy !is obj);\n"
 			"}\n"

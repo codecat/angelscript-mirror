@@ -970,40 +970,28 @@ It is possible to use 'auto' as the data type of an assignment-style variable de
 The appropriate type for the variable(s) will be automatically determined.
 
 <pre>
-auto i = 18;         // i will be an integer
-auto f = 18 + 5.f;   // the type of f resolves to float
-auto anObject = getLongObjectTypeNameById(id); // avoids redundancy for long type names
+  auto i = 18;         // i will be an integer
+  auto f = 18 + 5.f;   // the type of f resolves to float
+  auto o = getLongObjectTypeNameById(id); // avoids redundancy for long type names
 </pre>
+
 
 Auto can be qualified with const to force a constant value:
 
 <pre>
-const auto i = 2;  // i will be typed as 'const int'
+  const auto i = 2;  // i will be typed as 'const int'
 </pre>
 
 
-If receiving object references or objects by value, auto will make
-a local object copy by default. To force a handle type, add '@'.
+For types that support handles, auto will always become a handle as it is more efficient
+than doing a value assignment. If the variable must not be a handle for some reason, then 
+do not use the 'auto' keyword.
 
 <pre>
-obj getObject() {
-    return obj();
-}
-
-auto value = getObject();    // auto is typed 'obj', and makes a local copy
-auto@ handle = getObject();  // auto is typed 'obj@', and refers to the returned obj
+  auto  a = getObject();  // auto is typed 'obj@'
+  auto@ b = getObject();  // this is still allowed if you want to be more explicit
 </pre>
 
-The '@' specifier is not necessary if the value already resolves to a handle:
-
-<pre>
-obj@ getObject() {
-    return obj();
-}
-
-auto value = getObject();   // auto is already typed 'obj@', because of the return type of getObject()
-auto@ value = getObject();  // this is still allowed if you want to be more explicit, but not needed
-</pre>
 
 Auto handles can not be used to declare class members, since their resolution is dependent on the constructor.
 

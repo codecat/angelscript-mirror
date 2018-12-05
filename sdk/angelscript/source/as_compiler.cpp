@@ -2671,6 +2671,12 @@ bool asCCompiler::CompileAutoType(asCDataType &type, asCExprContext &compiledCtx
 			if (newType.GetTypeInfo() &&
 				(newType.GetTypeInfo()->flags & asOBJ_IMPLICIT_HANDLE))
 				newType.MakeHandle(true);
+				
+			// For types that support handles auto should prefer handle 
+			// as it is more efficient than making a copy
+			// TODO: 'auto a = ...;' and 'auto @a = ...;' works the same in this case. Is this what we want?
+			if( newType.SupportHandles() )
+				newType.MakeHandle(true);
 
 			type = newType;
 			return true;
@@ -10920,7 +10926,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 	if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 	{
 		// Check for a value cast behaviour
-		if( args.GetLength() == 1 && args[0]->type.dataType.GetTypeInfo() )
+		if( args.GetLength() == 1 )
 		{
 			asCExprContext conv(engine);
 			conv.type = args[0]->type;
