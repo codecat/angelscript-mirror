@@ -10,6 +10,51 @@ bool Test()
 	asIScriptEngine *engine;
 	int r;
 
+	// Test external shared interface with inheritance
+	// https://www.gamedev.net/forums/topic/700203-asccontextcallscriptfunction-called-with-null/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		asIScriptModule *mod = engine->GetModule("Module1", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Script1", 
+			"shared interface Interface1 \n"
+			"{ \n"
+			"    void test(); \n"
+			"} \n"
+			"shared interface Interface2 : Interface1 \n"
+			"{ \n"
+			"} \n"
+			"class Object : Interface2 \n"
+			"{ \n"
+			"    void test() \n"
+			"    { \n"
+			"    } \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"    Object@ object = Object(); \n"
+			"    object.test(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0) TEST_FAILED;
+
+		mod = engine->GetModule("Module2", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("Script2",
+			"external shared interface Interface2; \n");
+		r = mod->Build();
+		if (r < 0) TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();		
+	}
+	
 	// Test memory clean up
 	// https://www.gamedev.net/forums/topic/696396-leak-occurs-when-shared-class-exists/
 	{
