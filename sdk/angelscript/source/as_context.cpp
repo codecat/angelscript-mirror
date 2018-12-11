@@ -4799,7 +4799,7 @@ void asCContext::DetermineLiveObjects(asCArray<int> &liveObjects, asUINT stackLe
 					break;
 				case asBLOCK_BEGIN: // Start block
 					// We should ignore start blocks, since it just means the
-					// program was within the block when the exception ocurred
+					// program was within the block when the exception occurred
 					break;
 				case asBLOCK_END: // End block
 					// We need to skip the entire block, as the objects created
@@ -5020,21 +5020,36 @@ bool asCContext::CleanStackFrame(bool catchException)
 			// If the exception was caught, then only clean up objects within the try block
 			if (exceptionCaught)
 			{
-				// Find the corresponding objectVariableInfo so we can identify were in the code this object was initialized
-				bool skipClean = false;
+				// Find out where the variable was declared, and skip cleaning of those that were declared before the try catch
+				// Multiple variables in different scopes may occupy the same slot on the stack so it is necessary to search
+				// the entire list to determine which variable occupies the slot now. 
+				int skipClean = 0;
 				for( asUINT p = 0; p < m_currentFunction->scriptData->objVariableInfo.GetLength(); p++ )
 				{
-					if (m_currentFunction->scriptData->objVariableInfo[p].variableOffset == pos)
+					asSObjectVariableInfo &info = m_currentFunction->scriptData->objVariableInfo[p];
+					if (info.variableOffset == pos &&
+						info.option == asOBJ_VARDECL )
 					{
-						asUINT progPos = m_currentFunction->scriptData->objVariableInfo[p].programPos;
-						if (progPos < tryCatchInfo->tryPos || progPos >= tryCatchInfo->catchPos)
+						asUINT progPos = info.programPos;
+						if (progPos < tryCatchInfo->tryPos )
 						{
-							skipClean = true;
+							if( skipClean >= 0 )
+								skipClean = 1;
+							break;
+						}
+						else if( progPos < tryCatchInfo->catchPos )
+						{
+							skipClean = -1;
 							break;
 						}
 					}
 				}
-				if (skipClean)
+				
+				// Skip only variables that have been declared before the try block. Variables declared 
+				// within the try block and variables whose declaration was not identified (temporary objects)
+				// will not be skipped.
+				// TODO: What if a temporary variable reuses a slot from a declared variable that is no longer in scope?
+				if (skipClean > 0)
 					continue;
 			}
 

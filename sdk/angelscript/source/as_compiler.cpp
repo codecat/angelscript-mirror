@@ -269,9 +269,11 @@ void asCCompiler::FinalizeFunction()
 	// Finalize the bytecode
 	byteCode.Finalize(tempVariableOffsets);
 
-	byteCode.ExtractObjectVariableInfo(outFunc);
-
+	// extract the try/catch info before object variable info, as 
+	// some variable info is not needed if there are no try/catch blocks
 	byteCode.ExtractTryCatchInfo(outFunc);
+
+	byteCode.ExtractObjectVariableInfo(outFunc);
 
 	// Compile the list of object variables for the exception handler
 	// Start with the variables allocated on the heap, and then the ones allocated on the stack

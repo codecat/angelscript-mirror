@@ -1549,7 +1549,20 @@ void asCByteCode::ExtractObjectVariableInfo(asCScriptFunction *outFunc)
 		}
 		else if( instr->op == asBC_VarDecl )
 		{
+			// Record the position for debug info
 			outFunc->scriptData->variables[instr->wArg[0]]->declaredAtProgramPos = pos;
+			
+			// Record declaration of object variables for try/catch handling
+			// This is used for identifying if handles and objects on the heap should be cleared upon catching an exception
+			// Only extract this info if there is a try/catch block in the function, so we don't use up unnecessary space
+			if( outFunc->scriptData->tryCatchInfo.GetLength() && outFunc->scriptData->variables[instr->wArg[0]]->type.GetTypeInfo() )
+			{
+				asSObjectVariableInfo info;
+				info.programPos     = pos;
+				info.variableOffset = outFunc->scriptData->variables[instr->wArg[0]]->stackOffset;
+				info.option         = asOBJ_VARDECL;
+				outFunc->scriptData->objVariableInfo.PushLast(info);
+			}
 		}
 		else
 			pos += instr->size;

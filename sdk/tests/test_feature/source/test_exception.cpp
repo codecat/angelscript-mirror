@@ -5,10 +5,11 @@ using namespace std;
 namespace TestException
 {
 
+std::string printOutput;
 static void print(asIScriptGeneric *gen)
 {
 	std::string *s = (std::string*)gen->GetArgAddress(0);
-	UNUSED_VAR(s);
+	printOutput += *s;
 }
 
 class ExceptionHandler
@@ -58,6 +59,116 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test to make sure stack unwind to catch block doesn't clean-up objects created before the try block
+	// Identified by Polyak Istvan
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterStdString(engine);
+		RegisterExceptionRoutines(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		printOutput = "";
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"class C \n"
+			"{ \n"
+			"    C (const string &in t) \n"
+			"    { \n"
+			"        t_ = t; \n"
+			"        print('C: ' + t_ + '\\n'); \n"
+			"    } \n"
+			"    ~C () \n"
+			"    { \n"
+			"        print('~C: ' + t_ + '\\n'); \n"
+			"    } \n"
+			"    string t_; \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"    C c1('1'); \n"
+			"    print('before try\\n'); \n"
+			"	try \n"
+			"	{ \n"
+			"		C c2('2'); \n"
+			"		throw('exception'); \n"
+			"	} \n"
+			"	catch \n"
+			"	{ \n"
+			"		print('Caught \\'' + getExceptionInfo() + '\\'\\n'); \n"
+			"	} \n"
+			"    print('after catch\\n'); \n"
+			"	print('Still here: ' + c1.t_ + '\\n'); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		// Test again after saving/loading the bytecode
+		bout.buffer = "";
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1);
+		assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ctx = engine->CreateContext();
+		r = ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+		
+		if( printOutput != "C: 1\n"  // first test
+						   "before try\n"
+						   "C: 2\n"
+						   "~C: 2\n"
+						   "Caught 'exception'\n"
+						   "after catch\n"
+						   "Still here: 1\n"
+						   "~C: 1\n"
+						   "C: 1\n"  // second test
+						   "before try\n"
+						   "C: 2\n"
+						   "~C: 2\n"
+						   "Caught 'exception'\n"
+						   "after catch\n"
+						   "Still here: 1\n"
+						   "~C: 1\n" )
+		{
+			PRINTF("%s", printOutput.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test that the compiler can identify that both try and catch block returns so nothing afterwards can be executed
 	{
 		asIScriptEngine *engine = asCreateScriptEngine();
@@ -207,6 +318,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 
 		RegisterScriptString(engine);
+		printOutput = "";
 		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
 
 

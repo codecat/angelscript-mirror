@@ -91,10 +91,11 @@ struct asSListPatternDataTypeNode : public asSListPatternNode
 
 enum asEObjVarInfoOption
 {
-	asOBJ_UNINIT,
-	asOBJ_INIT,
-	asBLOCK_BEGIN,
-	asBLOCK_END
+	asOBJ_UNINIT,	// object is uninitialized/destroyed
+	asOBJ_INIT,		// object is initialized
+	asBLOCK_BEGIN,	// scope block begins
+	asBLOCK_END,	// scope block ends
+	asOBJ_VARDECL	// object variable is declared (but not necessarily initialized)
 };
 
 enum asEFuncTrait
@@ -326,7 +327,7 @@ public:
 		// These hold information on objects and function pointers, including temporary
 		// variables used by exception handler and when saving bytecode
 		asCArray<asCTypeInfo*>          objVariableTypes;
-		asCArray<int>                   objVariablePos;
+		asCArray<int>                   objVariablePos; // offset on stackframe
 
 		// The first variables in above array are allocated on the heap, the rest on the stack.
 		// This variable shows how many are on the heap.
