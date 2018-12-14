@@ -193,6 +193,7 @@ bool Test()
 
 	// Test void opCast(?&out) in complex expression
 	// https://www.gamedev.net/forums/topic/697067-refcounting-in-opcast/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);

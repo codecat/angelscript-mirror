@@ -88,6 +88,7 @@ bool Test()
 	// Test stream operator on value type with unsafe ref turned on
 	// Observe, without unsafe references, the stream operator won't work due to the need to make copies of the value for each expression in order to guarantee safe references
 	// https://www.gamedev.net/forums/topic/685927-tepm-object-on-multiple-sub-expression/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);

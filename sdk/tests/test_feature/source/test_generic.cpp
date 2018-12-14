@@ -238,6 +238,7 @@ bool Test()
 	CBufferedOutStream bout;
 
 	// Comparing generic to native functions
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);

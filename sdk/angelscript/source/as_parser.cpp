@@ -1006,102 +1006,6 @@ void asCParser::Info(const asCString &text, sToken *token)
 		builder->WriteInfo(script->name, text, row, col, false);
 }
 
-// nextToken is only modified if the current position can be interpreted as
-// type, in this case it is set to the next token after the type tokens
-bool asCParser::IsType(sToken &nextToken)
-{
-	// Set a rewind point
-	sToken t, t1;
-	GetToken(&t);
-
-	// A type can start with a const
-	t1 = t;
-	if (t1.type == ttConst)
-		GetToken(&t1);
-
-	sToken t2;
-	if (t1.type != ttAuto)
-	{
-		// The type may be initiated with the scope operator
-		if (t1.type == ttScope)
-			GetToken(&t1);
-
-		// The type may be preceeded with a multilevel scope
-		GetToken(&t2);
-		while (t1.type == ttIdentifier)
-		{
-			if (t2.type == ttScope)
-			{
-				GetToken(&t1);
-				GetToken(&t2);
-				continue;
-			}
-			else if (t2.type == ttLessThan)
-			{
-				// Template types can also be used as scope identifiers
-				RewindTo(&t2);
-				if (CheckTemplateType(t1))
-				{
-					sToken t3;
-					GetToken(&t3);
-					if (t3.type == ttScope)
-					{
-						GetToken(&t1);
-						GetToken(&t2);
-						continue;
-					}
-				}
-			}
-
-			break;
-		}
-		RewindTo(&t2);
-	}
-
-	// We don't validate if the identifier is an actual declared type at this moment
-	// as it may wrongly identify the statement as a non-declaration if the user typed
-	// the name incorrectly. The real type is validated in ParseDeclaration where a
-	// proper error message can be given.
-	if (!IsRealType(t1.type) && t1.type != ttIdentifier && t1.type != ttAuto)
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	if (!CheckTemplateType(t1))
-	{
-		RewindTo(&t);
-		return false;
-	}
-
-	// Object handles can be interleaved with the array brackets
-	// Even though declaring variables with & is invalid we'll accept
-	// it here to give an appropriate error message later
-	GetToken(&t2);
-	while (t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket)
-	{
-		if (t2.type == ttOpenBracket)
-		{
-			GetToken(&t2);
-			if (t2.type != ttCloseBracket)
-			{
-				RewindTo(&t);
-				return false;
-			}
-		}
-
-		GetToken(&t2);
-	}
-
-	// Return the next token so the caller can jump directly to it if desired
-	nextToken = t2;
-
-	// Rewind to start point
-	RewindTo(&t);
-
-	return true;
-}
-
 bool asCParser::IsRealType(int tokenType)
 {
 	if( tokenType == ttVoid ||
@@ -1306,7 +1210,121 @@ bool asCParser::IdentifierIs(const sToken &t, const char *str)
 	return script->TokenEquals(t.pos, t.length, str);
 }
 
+void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
+{
+	sToken t1;
+
+	for(;;)
+	{
+		GetToken(&t1);
+		RewindTo(&t1);
+
+		if( IdentifierIs(t1, FINAL_TOKEN) || 
+			IdentifierIs(t1, OVERRIDE_TOKEN) || 
+			IdentifierIs(t1, EXPLICIT_TOKEN) )
+			funcNode->AddChildLast(ParseIdentifier());
+		else
+			break;
+	}
+}
+
 #ifndef AS_NO_COMPILER
+
+// nextToken is only modified if the current position can be interpreted as
+// type, in this case it is set to the next token after the type tokens
+bool asCParser::IsType(sToken &nextToken)
+{
+	// Set a rewind point
+	sToken t, t1;
+	GetToken(&t);
+
+	// A type can start with a const
+	t1 = t;
+	if (t1.type == ttConst)
+		GetToken(&t1);
+
+	sToken t2;
+	if (t1.type != ttAuto)
+	{
+		// The type may be initiated with the scope operator
+		if (t1.type == ttScope)
+			GetToken(&t1);
+
+		// The type may be preceeded with a multilevel scope
+		GetToken(&t2);
+		while (t1.type == ttIdentifier)
+		{
+			if (t2.type == ttScope)
+			{
+				GetToken(&t1);
+				GetToken(&t2);
+				continue;
+			}
+			else if (t2.type == ttLessThan)
+			{
+				// Template types can also be used as scope identifiers
+				RewindTo(&t2);
+				if (CheckTemplateType(t1))
+				{
+					sToken t3;
+					GetToken(&t3);
+					if (t3.type == ttScope)
+					{
+						GetToken(&t1);
+						GetToken(&t2);
+						continue;
+					}
+				}
+			}
+
+			break;
+		}
+		RewindTo(&t2);
+	}
+
+	// We don't validate if the identifier is an actual declared type at this moment
+	// as it may wrongly identify the statement as a non-declaration if the user typed
+	// the name incorrectly. The real type is validated in ParseDeclaration where a
+	// proper error message can be given.
+	if (!IsRealType(t1.type) && t1.type != ttIdentifier && t1.type != ttAuto)
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	if (!CheckTemplateType(t1))
+	{
+		RewindTo(&t);
+		return false;
+	}
+
+	// Object handles can be interleaved with the array brackets
+	// Even though declaring variables with & is invalid we'll accept
+	// it here to give an appropriate error message later
+	GetToken(&t2);
+	while (t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket)
+	{
+		if (t2.type == ttOpenBracket)
+		{
+			GetToken(&t2);
+			if (t2.type != ttCloseBracket)
+			{
+				RewindTo(&t);
+				return false;
+			}
+		}
+
+		GetToken(&t2);
+	}
+
+	// Return the next token so the caller can jump directly to it if desired
+	nextToken = t2;
+
+	// Rewind to start point
+	RewindTo(&t);
+
+	return true;
+}
 
 // This function will return true if the current token is not a template, or if it is and
 // the following has a valid syntax for a template type. The source position will be left
@@ -4493,23 +4511,6 @@ asCScriptNode *asCParser::ParseTypedef()
 	return node;
 }
 
-void asCParser::ParseMethodAttributes(asCScriptNode *funcNode)
-{
-	sToken t1;
-
-	for(;;)
-	{
-		GetToken(&t1);
-		RewindTo(&t1);
-
-		if( IdentifierIs(t1, FINAL_TOKEN) || 
-			IdentifierIs(t1, OVERRIDE_TOKEN) || 
-			IdentifierIs(t1, EXPLICIT_TOKEN) )
-			funcNode->AddChildLast(ParseIdentifier());
-		else
-			break;
-	}
-}
 #endif
 
 END_AS_NAMESPACE
