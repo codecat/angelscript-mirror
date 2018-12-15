@@ -1164,7 +1164,7 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("dictionaryValue", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(CScriptDictValue_FreeValue_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(const dictionaryValue &in)", asFUNCTION(CScriptDictValue_opCopyAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opHndlAssign(const ?&in)", asFUNCTION(CScriptDictValue_opAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opHndlAssign(const dictionaryValue &in)", asFUNCTION(CScriptDictValue_opAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opHndlAssign(const dictionaryValue &in)", asFUNCTION(CScriptDictValue_opCopyAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(const ?&in)", asFUNCTION(CScriptDictValue_opAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(double)", asFUNCTION(CScriptDictValue_opAssign_double_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionaryValue", "dictionaryValue &opAssign(int64)", asFUNCTION(CScriptDictValue_opAssign_int64_Generic), asCALL_GENERIC); assert( r >= 0 );
