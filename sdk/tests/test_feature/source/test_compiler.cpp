@@ -5531,11 +5531,8 @@ bool TestRetRef()
 		TEST_FAILED;
 	}
 
-	engine->Release();
-#ifndef AS_MAX_PORTABILITY
-	// When using the generic calling convention, the returned handle is not incremented
+	engine->ShutDownAndRelease();
 	g_node->Release();
-#endif
 
 	return fail;
 }
