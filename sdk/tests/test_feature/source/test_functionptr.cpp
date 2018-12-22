@@ -604,7 +604,7 @@ bool Test()
 			TEST_FAILED;
 		if (bout.buffer != "test (6, 11) : Error   : Name conflict. 'a' is a funcdef.\n"
 			"test (4, 3) : Error   : Name conflict. 'b' is a funcdef.\n"
-			"test (3, 7) : Error   : Name conflict. 'a' is a funcdef.\n")
+		/*	"test (3, 7) : Error   : Name conflict. 'a' is a funcdef.\n"*/)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

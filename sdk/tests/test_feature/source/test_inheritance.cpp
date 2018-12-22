@@ -467,8 +467,8 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "test (8, 13) : Error   : Can't inherit from class 'CFin1' marked as final\n"
-						   "test (9, 7) : Error   : Method 'void CBase::finalFunc()' declared as final and cannot be overridden\n"
-						   "test (9, 7) : Error   : Method 'void CD2::overrideFunc(int)' marked as override but does not replace any base class or interface method\n" )
+					/*	   "test (9, 7) : Error   : Method 'void CBase::finalFunc()' declared as final and cannot be overridden\n"
+						   "test (9, 7) : Error   : Method 'void CD2::overrideFunc(int)' marked as override but does not replace any base class or interface method\n" */)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

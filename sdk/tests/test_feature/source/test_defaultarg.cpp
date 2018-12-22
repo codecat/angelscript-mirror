@@ -642,10 +642,10 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "script (1, 1) : Error   : All subsequent parameters after the first default value must have default values in function 'void myFunc(float, int = 0, int)'\n"
-						   "script (2, 1) : Info    : Compiling void main()\n"
+					/*	   "script (2, 1) : Info    : Compiling void main()\n"
 						   "script (5, 3) : Error   : No matching signatures to 'myFunc(const double, const int)'\n"
 						   "script (5, 3) : Info    : Candidates are:\n"
-						   "script (5, 3) : Info    : void myFunc(float f, int a = 0, int b)\n" )
+						   "script (5, 3) : Info    : void myFunc(float f, int a = 0, int b)\n" */)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

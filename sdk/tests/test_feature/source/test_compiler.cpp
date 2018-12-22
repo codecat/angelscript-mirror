@@ -174,6 +174,47 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Proper error handling on duplicate class methods
+	// https://www.gamedev.net/forums/topic/700394-compiler-crash-on-double-function-compiler-error/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class Foo \n"
+			"{ \n"
+			"	void a() {} \n"
+			"	void a() {} \n"
+			"} \n"
+			"class Bar : Foo \n"
+			"{ \n"
+			"	void a() override {} \n"
+			"} \n"
+			"class FooBar : Bar \n"
+			"{ \n"
+			"} \n"
+			"void Test() \n"
+			"{ \n"
+			"	FooBar@ b = FooBar(); \n"
+			"	b.a(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "test (4, 2) : Error   : A function with the same name and parameters already exists\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
 	// Test to make sure no crash occurs when anonymous list is matched against function taking funcdef
 	// https://www.gamedev.net/forums/topic/699951-crash-in-argument-matching/
 	{
@@ -201,7 +242,7 @@ bool Test()
 			TEST_FAILED;
 		}
 
-		engine->ShutDownAndRelease();		
+		engine->ShutDownAndRelease();
 	}
 	
 	// Test invalid code
@@ -663,10 +704,10 @@ bool Test()
 						   "test (2, 17) : Error   : Type 'void' cannot be a reference\n"
 						   "test (2, 25) : Error   : Type 'void' cannot be a reference\n"
 						   "test (2, 35) : Error   : Type 'void' cannot be a reference\n"
-						   "test (2, 1) : Info    : Compiling void func2(void, void, void)\n"
+						/*   "test (2, 1) : Info    : Compiling void func2(void, void, void)\n"
 						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n"
 						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n"
-						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n")
+						   "test (2, 1) : Error   : Parameter type can't be 'void', because the type cannot be instantiated.\n" */)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3080,9 +3121,9 @@ bool Test()
 		if( r >= 0 )
 			TEST_FAILED;
 		if( bout.buffer != "TestCompiler (3, 3) : Error   : Identifier 'Car' is not a data type in global namespace\n"
-						   "TestCompiler (4, 3) : Info    : Compiling void AAA::Update()\n"
+						/*   "TestCompiler (4, 3) : Info    : Compiling void AAA::Update()\n"
 						   "TestCompiler (6, 13) : Error   : Both operands must be handles when comparing identity\n"
-						   "TestCompiler (7, 10) : Error   : Illegal operation on 'int&'\n" )
+						   "TestCompiler (7, 10) : Error   : Illegal operation on 'int&'\n" */ )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3390,8 +3431,8 @@ bool Test()
 			TEST_FAILED;
 		}
 		if (bout.buffer != "script (3, 2) : Error   : Identifier 'Sprite' is not a data type in global namespace\n"
-			"script (5, 2) : Info    : Compiling string Ship::GetName()\n"
-			"script (6, 17) : Error   : Illegal operation on 'int&'\n")
+			/*"script (5, 2) : Info    : Compiling string Ship::GetName()\n"
+			"script (6, 17) : Error   : Illegal operation on 'int&'\n"*/)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3480,8 +3521,8 @@ bool Test()
 			TEST_FAILED;
 		}
 		if (bout.buffer != "script (3, 3) : Error   : Identifier 'object' is not a data type in global namespace\n"
-			"script (4, 3) : Info    : Compiling void c::func()\n"
-			"script (5, 18) : Error   : Illegal operation on 'int&'\n")
+			/*"script (4, 3) : Info    : Compiling void c::func()\n"
+			"script (5, 18) : Error   : Illegal operation on 'int&'\n"*/)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3754,10 +3795,10 @@ bool Test()
 			TEST_FAILED;
 
 		if( bout.buffer != "s (2, 1) : Error   : A function with the same name and parameters already exists\n"
-		                   "s (3, 1) : Info    : Compiling void main()\n"
+		                 /*  "s (3, 1) : Info    : Compiling void main()\n"
 		                   "s (3, 15) : Error   : Multiple matching signatures to 'func()'\n"
 		                   "s (3, 15) : Info    : int func()\n"
-		                   "s (3, 15) : Info    : float func()\n" )
+		                   "s (3, 15) : Info    : float func()\n" */)
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

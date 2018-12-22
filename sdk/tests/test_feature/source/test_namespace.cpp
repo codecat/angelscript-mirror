@@ -111,7 +111,7 @@ bool Test()
 			TEST_FAILED;
 
 		if (bout.buffer != "test (1, 18) : Error   : Name conflict. 'A::C' is a global function.\n"
-						   "test (1, 15) : Error   : Name conflict. 'A::B' is a global property.\n")
+						 /*  "test (1, 15) : Error   : Name conflict. 'A::B' is a global property.\n" */ )
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

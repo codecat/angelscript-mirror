@@ -1513,19 +1513,33 @@ bool Test()
 		// Verify that the struct names cannot conflict with one another
 		const char *script5 =
 			"class A {};                  \n"
-			"class A {};                  \n"
-			"class B                      \n"
-			"{                            \n"
-			"  int a;                     \n"
-			"  float a;                   \n"
-			"};                           \n";
+			"class A {};                  \n";
 		bout.buffer = "";
 		mod->AddScriptSection(TESTNAME, script5, strlen(script5), 0);
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream,Callback), &bout, asCALL_THISCALL);
 		r = mod->Build();
-		if( r >= 0 || bout.buffer != 
-			"TestScriptStruct (2, 7) : Error   : Name conflict. 'A' is a class.\n"
-			"TestScriptStruct (6, 9) : Error   : Name conflict. 'a' is an object property.\n" ) TEST_FAILED;
+		if (r >= 0 || bout.buffer !=
+			"TestScriptStruct (2, 7) : Error   : Name conflict. 'A' is a class.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		bout.buffer = "";
+		mod->AddScriptSection(TESTNAME, 
+			"class B                      \n"
+			"{                            \n"
+			"  int a;                     \n"
+			"  float a;                   \n"
+			"};                           \n");
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		r = mod->Build();
+		if (r >= 0 || bout.buffer !=
+			"TestScriptStruct (4, 9) : Error   : Name conflict. 'a' is an object property.\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
 
 		bout.buffer = "";
 

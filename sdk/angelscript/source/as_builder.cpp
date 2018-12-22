@@ -107,6 +107,7 @@ asCBuilder::~asCBuilder()
 	}
 
 	// Free all global variables
+	CleanupEnumValues();
 	asCSymbolTable<sGlobalVariableDescription>::iterator it = globVariables.List();
 	while( it )
 	{
@@ -310,6 +311,8 @@ int asCBuilder::Build()
 	asUINT numTempl = (asUINT)engine->templateInstanceTypes.GetLength();
 
 	ParseScripts();
+	if (numErrors > 0)
+		return asERROR;
 
 	// Compile the types first
 	CompileInterfaces();
@@ -319,6 +322,8 @@ int asCBuilder::Build()
 	// all classes have been fully built and it is known which ones will need garbage collection.
 	EvaluateTemplateInstances(numTempl, false);
 	engine->deferValidationOfTemplateTypes = false;
+	if (numErrors > 0)
+		return asERROR;
 
 	// Then the global variables. Here the variables declared with auto
 	// will be resolved, so they can be accessed properly in the functions
@@ -2564,28 +2569,33 @@ void asCBuilder::CompileGlobalVariables()
 			module->scriptGlobals.SwapWith(initOrder);
 	}
 
+	CleanupEnumValues();
+}
+
+void asCBuilder::CleanupEnumValues()
+{
 	// Delete the enum expressions
 	asCSymbolTableIterator<sGlobalVariableDescription> it = globVariables.List();
-	while( it )
+	while (it)
 	{
 		sGlobalVariableDescription *gvar = *it;
-		if( gvar->isEnumValue )
+		if (gvar->isEnumValue)
 		{
 			// Remove from symboltable. This has to be done prior to freeing the memeory
 			globVariables.Erase(it.GetIndex());
 
 			// Destroy the gvar property
-			if( gvar->declaredAtNode )
+			if (gvar->declaredAtNode)
 			{
 				gvar->declaredAtNode->Destroy(engine);
 				gvar->declaredAtNode = 0;
 			}
-			if( gvar->initializationNode )
+			if (gvar->initializationNode)
 			{
 				gvar->initializationNode->Destroy(engine);
 				gvar->initializationNode = 0;
 			}
-			if( gvar->property )
+			if (gvar->property)
 			{
 				asDELETE(gvar->property, asCGlobalProperty);
 				gvar->property = 0;
@@ -3040,7 +3050,6 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 {
 	asUINT n;
 	asCArray<sClassDeclaration*> toValidate((int)classDeclarations.GetLength());
-
 
 	// Order class declarations so that base classes are compiled before derived classes.
 	// This will allow the derived classes to copy properties and methods in the next step.
