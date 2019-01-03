@@ -109,6 +109,38 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test bool property accessor returned as reference in condition
+	// https://www.gamedev.net/forums/topic/700454-failed-assertion-when-compiling-if-statement-checking-get_x-wo-existing-set_x/
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+	
+		r = engine->RegisterObjectType("Foo", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Foo", "bool &get_HasSucceeded()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterGlobalProperty("Foo g_serverDisplayNameTask", (void*)1); assert( r >= 0 );
+	
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("test",
+			"void test() \n"
+			"{ \n"
+			"  if( g_serverDisplayNameTask.HasSucceeded ) {} \n"
+			"  while( g_serverDisplayNameTask.HasSucceeded ) {} \n"
+			"  for( ; g_serverDisplayNameTask.HasSucceeded; ) {} \n"
+			"  do {} while( g_serverDisplayNameTask.HasSucceeded ); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+			
+		r = engine->ShutDownAndRelease();
+	}
+	
 	// Test complex expression with get property accessor and temporary variables
 	// Reported by Phong Ba
 	{

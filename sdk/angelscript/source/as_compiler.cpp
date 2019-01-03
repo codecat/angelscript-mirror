@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2018 Andreas Jonsson
+   Copyright (c) 2003-2019 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -4350,14 +4350,11 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 			Error(TXT_EXPR_MUST_BE_BOOL, inode->firstChild);
 		else
 		{
-			if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-			ProcessDeferredParams(&expr);
-
 			if( !expr.type.isConstant )
 			{
 				ProcessPropertyGetAccessor(&expr, inode);
-
 				ConvertToVariable(&expr);
+				ProcessDeferredParams(&expr);
 
 				// Add a test
 				expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
@@ -4507,13 +4504,11 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				Error(TXT_EXPR_MUST_BE_BOOL, second);
 			else
 			{
-				if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
+				ProcessPropertyGetAccessor(&expr, second);
+				ConvertToVariable(&expr);
 				ProcessDeferredParams(&expr);
 
-				ProcessPropertyGetAccessor(&expr, second);
-
 				// If expression is false exit the loop
-				ConvertToVariable(&expr);
 				expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
 				expr.bc.Instr(asBC_ClrHi);
 				expr.bc.InstrDWORD(asBC_JNZ, insideLabel);
@@ -4621,13 +4616,9 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 			Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
 		else
 		{
-			if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-			ProcessDeferredParams(&expr);
-
 			ProcessPropertyGetAccessor(&expr, wnode);
-
-			// Add byte code for the expression
 			ConvertToVariable(&expr);
+			ProcessDeferredParams(&expr);
 
 			// Jump to end of statement if expression is false
 			expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
@@ -4714,14 +4705,10 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
 	else
 	{
-		if( expr.type.dataType.IsReference() ) ConvertToVariable(&expr);
-		ProcessDeferredParams(&expr);
-
 		ProcessPropertyGetAccessor(&expr, wnode);
-
-		// Add byte code for the expression
 		ConvertToVariable(&expr);
-
+		ProcessDeferredParams(&expr);
+		
 		// Jump to next iteration if expression is true
 		expr.bc.InstrSHORT(asBC_CpyVtoR4, expr.type.stackOffset);
 		expr.bc.Instr(asBC_ClrHi);
