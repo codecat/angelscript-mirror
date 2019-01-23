@@ -59,6 +59,86 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Test to make sure catching two exceptions in a row works
+	// https://www.gamedev.net/forums/topic/700622-catching-two-in-a-row/
+	SKIP_ON_MAX_PORT
+	{
+		asIScriptEngine *engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		RegisterStdString(engine);
+		RegisterExceptionRoutines(engine);
+		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
+		printOutput = "";
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(print), asCALL_GENERIC);
+
+		asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("script",
+			"void main() { \n"
+			"    try { throw ('1'); } \n"
+			"    catch { print ('Exception 1\\n'); } \n"
+			"    try { throw ('2'); } \n"
+			"    catch { print ('Exception 2\\n'); } \n"
+			"    try { throw ('3'); } \n"
+			"    catch { print ('Exception 3\\n'); } \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+
+		// Test again after saving/loading the bytecode
+		bout.buffer = "";
+		CBytecodeStream bc1("test");
+		r = mod->SaveByteCode(&bc1);
+		assert(r >= 0);
+		if (r < 0)
+			TEST_FAILED;
+
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
+		r = mod->LoadByteCode(&bc1);
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		ctx = engine->CreateContext();
+		r = ctx->Prepare(mod->GetFunctionByName("main"));
+		r = ctx->Execute();
+		if (r != asEXECUTION_FINISHED)
+			TEST_FAILED;
+		ctx->Release();
+		
+		if( printOutput != "Exception 1\n"  // first test
+						   "Exception 2\n"
+						   "Exception 3\n"
+						   "Exception 1\n"  // second test
+						   "Exception 2\n"
+						   "Exception 3\n" )
+		{
+			PRINTF("%s", printOutput.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test to make sure stack unwind to catch block doesn't clean-up objects created before the try block
 	// Identified by Polyak Istvan
 	SKIP_ON_MAX_PORT
