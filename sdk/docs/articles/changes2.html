@@ -15,13 +15,18 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.1 WIP - 2019/01/22</h2>
+<h2>Version 2.33.1 WIP - 2019/05/02</h2>
 
 <ul>
 <li>Bug fixes
 <ul>
 <li>Fixed problem in compiler with bool property returned as reference in conditions (Thanks Miss)
 <li>Fixed problem with catching exceptions in functions with multiple try-catch blocks (Thanks johannesg)
+<li>Fixed read from unallocated memory in compiler when compiling default args (Thanks Patrick Jeeves)
+</ul>
+<li>Add-ons
+<ul>
+<li>Removed an invalid assert() statement in ExecuteString (Thanks Pto)
 </ul>
 </ul>
 

@@ -189,8 +189,8 @@ int ExecuteString(asIScriptEngine *engine, const char *code, void *ref, int refT
 			}
 			else if (refTypeId & asTYPEID_MASK_OBJECT)
 			{
-				// Expect the pointer to point to a valid object
-				assert(*reinterpret_cast<void**>(ref) != 0);
+				// Use the registered assignment operator to do a value assign. 
+				// This assumes that the ref is pointing to a valid object instance.
 				engine->AssignScriptObject(ref, execCtx->GetAddressOfReturnValue(), engine->GetTypeInfoById(refTypeId));
 			}
 			else

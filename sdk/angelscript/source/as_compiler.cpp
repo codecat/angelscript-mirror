@@ -2242,7 +2242,7 @@ int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asCExp
 
 		// Parse the default arg string
 		asCParser parser(builder);
-		asCScriptCode *code = builder->FindOrAddCode("default arg", func->defaultArgs[n]->AddressOf());
+		asCScriptCode *code = builder->FindOrAddCode("default arg", func->defaultArgs[n]->AddressOf(), func->defaultArgs[n]->GetLength());
 		int r = parser.ParseExpression(code);
 		if( r < 0 )
 		{

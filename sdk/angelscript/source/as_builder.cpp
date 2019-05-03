@@ -227,10 +227,10 @@ int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int 
 	return 0;
 }
 
-asCScriptCode *asCBuilder::FindOrAddCode(const char *name, const char *code)
+asCScriptCode *asCBuilder::FindOrAddCode(const char *name, const char *code, asUINT length)
 {
 	for (asUINT n = 0; n < scripts.GetLength(); n++)
-		if( scripts[n]->name == name && strcmp(scripts[n]->code, code) == 0 )
+		if( scripts[n]->name == name && scripts[n]->codeLength == length && memcmp(scripts[n]->code, code, length) == 0 )
 			return scripts[n];
 
 	asCScriptCode *script = asNEW(asCScriptCode);
