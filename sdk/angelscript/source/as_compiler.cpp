@@ -8515,7 +8515,9 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 		{
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(true);
-			dt.MakeReadOnly(true);
+			// A funcdef can be accessed by ref, but only as read-only
+			if( dt.IsFuncdef() && !dt.IsObjectHandle() )
+				dt.MakeReadOnly(true);
 			int r = PrepareArgument(&dt, rctx, rexpr, true, 1, !needConversion);
 			if( r < 0 )
 				return -1;
