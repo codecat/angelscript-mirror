@@ -328,7 +328,7 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 
 	case 'n':
 		m_action = STEP_OVER;
-		m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 0;
+		m_lastCommandAtStackLevel = ctx ? ctx->GetCallstackSize() : 1;
 		break;
 
 	case 'o':

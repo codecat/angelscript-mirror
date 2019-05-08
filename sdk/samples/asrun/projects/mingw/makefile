@@ -1,7 +1,7 @@
 # asrun MingW makefile
 
 CXX = g++
-CXXFLAGS = -ggdb -I../../../../angelscript/include
+CXXFLAGS = -O2 -I../../../../angelscript/include
 SRCDIR = ../../source
 OBJDIR = obj
 
