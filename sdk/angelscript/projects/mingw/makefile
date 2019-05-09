@@ -7,7 +7,7 @@ AR ?= ar
 # Release flags: -O2
 #  to exclude the script compiler: -DAS_NO_COMPILER
 #  to use only generic calling convention: -DAS_MAX_PORTABILITY
-CXXFLAGS = -O2
+CXXFLAGS ?= -O2
 SRCDIR = ../../source
 OBJDIR = obj
 SRCNAMES = \

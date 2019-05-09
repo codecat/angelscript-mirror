@@ -109,6 +109,48 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test crash with symbol lookup when there are multiple set_ accessors for the same property
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+	
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("test",
+			"int current_value() \n"
+			"{ \n"
+			"  return 0; \n"
+			"} \n"
+			"void set_current_value(int x) \n"
+			"{ \n"
+			"  string str=''+x; \n"
+			"  set_current_value(str); \n"
+			"} \n"
+			"void set_current_value(string x) \n"
+			"{ \n"
+			"//  alert('hello!', x); \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  set_current_value(35); \n"
+			"  set_current_value('I will kill you!'); \n"
+			"  current_value(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+			
+		r = engine->ShutDownAndRelease();
+	}
+	
 	// Test bool property accessor returned as reference in condition
 	// https://www.gamedev.net/forums/topic/700454-failed-assertion-when-compiling-if-statement-checking-get_x-wo-existing-set_x/
 	{
