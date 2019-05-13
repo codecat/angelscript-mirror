@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.1 WIP - 2019/05/09</h2>
+<h2>Version 2.33.1 WIP - 2019/05/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -31,6 +31,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Removed an invalid assert() statement in ExecuteString (Thanks Pto)
 <li>Debugger commands 'n' and 'o' no longer prints 'No script is running' when used as first command
 <li>Debugger command 'p' prints 'Invalid expression. No matching symbol' when the symbol doesn't exist in the current context
+<li>Fixed missing check for failed memory allocation in CScriptArray::Precache (Thanks Zelerin)
 </ul>
 </ul>
 

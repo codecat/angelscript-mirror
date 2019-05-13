@@ -1692,6 +1692,14 @@ void CScriptArray::Precache()
 
 	// Create the cache
 	cache = reinterpret_cast<SArrayCache*>(userAlloc(sizeof(SArrayCache)));
+	if( !cache )
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx )
+			ctx->SetException("Out of memory");
+		asReleaseExclusiveLock();
+		return;
+	}
 	memset(cache, 0, sizeof(SArrayCache));
 
 	// If the sub type is a handle to const, then the methods must be const too
