@@ -164,6 +164,11 @@ void DoNothing(asIScriptGeneric * /*gen*/)
 {
 }
 
+void *NullFactory()
+{
+	return 0;
+}
+
 bool Test()
 {
 	bool fail = false;
@@ -174,6 +179,31 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test what happens when a registered factory return null without raising an exception
+	// This is an undefined behaviour, and it is invalid for a factory function to do this
+	// https://www.gamedev.net/forums/topic/701081-question-about-nullptrs/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		engine->RegisterObjectType("foo", 0, asOBJ_REF | asOBJ_NOCOUNT);
+		engine->RegisterObjectBehaviour("foo", asBEHAVE_FACTORY, "foo @f()", asFUNCTION(NullFactory), asCALL_CDECL);
+		
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "foo f(); foo @f2 = f;", 0, ctx);
+		if( r != 0 )
+		{
+			TEST_FAILED;
+			if( r == asEXECUTION_EXCEPTION && strcmp(ctx->GetExceptionString(), "Null pointer access") != 0 )
+				PRINTF("exception caught: %s\n", ctx->GetExceptionString());
+		}
+		ctx->Release();
+		
+		engine->ShutDownAndRelease();
+	}
+	
+	
 	// Proper error handling on duplicate class methods
 	// https://www.gamedev.net/forums/topic/700394-compiler-crash-on-double-function-compiler-error/
 	{

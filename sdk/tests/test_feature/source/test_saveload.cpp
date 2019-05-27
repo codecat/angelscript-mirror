@@ -396,6 +396,83 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test crash with mismatched shared classes
+	// Reported by Julius Narvilas/MrFloat
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+	
+		CBytecodeStream stream1("a");
+		CBytecodeStream stream2("b");	
+		
+		// Compile script 2
+		{
+			const char* file2 = ""
+				"shared class Test1 { \n"
+				//mismatching functions
+				"	int function2() { return 0; } \n"
+				""
+				"}\n";
+
+			asIScriptModule* mod = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+			r = mod->AddScriptSection("test2", file2, strlen(file2));
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			r = mod->SaveByteCode(&stream2);
+			mod->Discard();
+		}
+		
+		// Compile script 1
+		{
+				const char* file1 = ""
+				"shared class Test1 { \n"
+				//mismatching functions
+				"	int function1() { return 0; } \n"
+				""
+				"}\n";
+
+			asIScriptModule* mod = engine->GetModule("test1", asGM_ALWAYS_CREATE);
+			r = mod->AddScriptSection("test1", file1, strlen(file1));
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+			r = mod->SaveByteCode(&stream1);
+			mod->Discard();
+		}
+		
+		// Load the previously saved bytecode over the first module
+		asIScriptModule* mod2 = engine->GetModule("test2", asGM_ALWAYS_CREATE);
+		r = mod2->LoadByteCode(&stream2);
+		if( r < 0 )
+			TEST_FAILED;
+
+		//invalid bytecode with outdated shared class into a new module
+		asIScriptModule* mod1_1 = engine->GetModule("test1_1", asGM_ALWAYS_CREATE);
+		r = mod1_1->LoadByteCode(&stream1);
+		if( r >= 0 )
+			TEST_FAILED;
+
+		//just need another compilation to trigger "engine->signatureIds" array search
+		asIScriptModule* mod1_2 = engine->GetModule("test1_2", asGM_ALWAYS_CREATE);
+		stream1.Restart();
+		r = mod1_2->LoadByteCode(&stream1);
+		if( r >= 0 )
+			TEST_FAILED;
+		
+		if (bout.buffer != " (0, 0) : Error   : Shared type 'Test1' doesn't match the original declaration in other module\n"
+						   " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 90\n"
+						   " (0, 0) : Error   : Shared type 'Test1' doesn't match the original declaration in other module\n"
+						   " (0, 0) : Error   : LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: 90\n") 
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test same function in different namespaces
 	// https://www.gamedev.net/forums/topic/697445-loadbytecode-fails-when-there-is-a-function-with-the-same-name-in-the-namespace/
 	{
