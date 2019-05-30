@@ -10920,7 +10920,7 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 		if( args.GetLength() == 1 )
 		{
 			asCExprContext conv(engine);
-			conv.type = args[0]->type;
+			conv.Copy(args[0]);
 			asUINT cost = ImplicitConversion(&conv, dt, node->lastChild, asIC_EXPLICIT_VAL_CAST, false);
 
 			// Don't use this if the cost is 0 because it would mean that nothing
@@ -16293,26 +16293,34 @@ bool asCExprContext::IsAnonymousInitList() const
 	return false;
 }
 
+void asCExprContext::Copy(asCExprContext *other)
+{
+	type                = other->type;
+	property_get        = other->property_get;
+	property_set        = other->property_set;
+	property_const      = other->property_const;
+	property_handle     = other->property_handle;
+	property_ref        = other->property_ref;
+	property_arg        = other->property_arg;
+	exprNode            = other->exprNode;
+	methodName          = other->methodName;
+	enumValue           = other->enumValue;
+	isVoidExpression    = other->isVoidExpression;
+	isCleanArg          = other->isCleanArg;
+	isAnonymousInitList = other->isAnonymousInitList;
+	origCode            = other->origCode;
+
+	// Do not copy the origExpr member	
+}
+
 void asCExprContext::Merge(asCExprContext *after)
 {
-	type = after->type;
-	property_get = after->property_get;
-	property_set = after->property_set;
-	property_const = after->property_const;
-	property_handle = after->property_handle;
-	property_ref = after->property_ref;
-	property_arg = after->property_arg;
-	exprNode = after->exprNode;
-	methodName = after->methodName;
-	enumValue = after->enumValue;
-	isVoidExpression = after->isVoidExpression;
-	isCleanArg = after->isCleanArg;
-	isAnonymousInitList = after->isAnonymousInitList;
-	origCode = after->origCode;
+	// Overwrite properties with the expression that comes after
+	Copy(after);
 
+	// Clean the properties in 'after' that have now moved into 
+	// this structure so they are not cleaned up accidentally
 	after->property_arg = 0;
-
-	// Do not copy the origExpr member
 }
 
 

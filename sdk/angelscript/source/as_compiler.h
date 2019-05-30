@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2018 Andreas Jonsson
+   Copyright (c) 2003-2019 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -149,6 +149,7 @@ struct asCExprContext
 	void SetVoidExpression();
 	bool IsVoidExpression() const;
 	void Merge(asCExprContext *after);
+	void Copy(asCExprContext *other);
 	void SetAnonymousInitList(asCScriptNode *initList, asCScriptCode *script);
 	bool IsAnonymousInitList() const;
 
@@ -169,7 +170,7 @@ struct asCExprContext
 	// TODO: cleanup: use ambiguousName and an enum to say if it is a method, global func, or enum value
 	asCString methodName;
 	asCString enumValue;
-	asSNameSpace *symbolNamespace; // The namespace in which the ambigious symbol was found
+	asSNameSpace *symbolNamespace; // The namespace in which the ambiguous symbol was found
 	bool isAnonymousInitList; // Set to true if the expression is an init list for which the type has not yet been determined
 };
 

@@ -179,6 +179,42 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test problem with class having a single contructor taking 1 argument
+	// https://www.gamedev.net/forums/topic/702543-object-handle-and-constructor-with-array-argument-triggers-assert/
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+		
+		RegisterScriptArray(engine, false);
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class TestClass\n"
+			"{\n"
+			"  TestClass(array<int> arr)\n"
+			"  {\n"
+			"    this.arr = arr;\n"
+			"  }\n"
+			"  private array<int> arr;\n"
+			"}\n"
+			"void main()\n"
+			"{\n"
+			"  TestClass @t = TestClass({});\n"
+			"}\n");
+		r = mod->Build();
+		if( r < 0 )
+			TEST_FAILED;
+		
+		if( bout.buffer != "" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test what happens when a registered factory return null without raising an exception
 	// This is an undefined behaviour, and it is invalid for a factory function to do this
 	// https://www.gamedev.net/forums/topic/701081-question-about-nullptrs/
