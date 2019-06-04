@@ -115,6 +115,66 @@ bool Test()
 	CBufferedOutStream bout;
  	asIScriptEngine *engine = 0;
 
+	// Test default value assignment operator for derived classes
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class foo \n"
+			"{ \n"
+			"	int type; \n"
+			"	foo() \n"
+			"	{ \n"
+			"		type=0; \n"
+			"	} \n"
+			"} \n"
+			"class bar:foo \n"
+			"{ \n"
+			"	bar() \n"
+			"	{ \n"
+			"		type=1; \n"
+			"	} \n"
+			"} \n"
+			"foo@ make_foo(int type) \n"
+			"{ \n"
+			"	if(type==0) \n"
+			"		return foo(); \n"
+			"	else \n"
+			"		return bar(); \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	foo@ a = make_foo(1); \n"
+			"	foo@ copy = make_foo(a.type); \n"
+			"	copy = a; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		asIScriptContext *ctx = engine->CreateContext();
+		r = ExecuteString(engine, "main()", mod, ctx);
+		if( r != asEXECUTION_FINISHED )
+		{
+			TEST_FAILED;
+			if( r == asEXECUTION_EXCEPTION )
+				PRINTF("%s", GetExceptionInfo(ctx).c_str());
+		}		
+		ctx->Release();
+
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test that the calling the parent's constructor through super works even when there is a get_super() property accessor
 	// Reported by Patrick Jeeves
 	{

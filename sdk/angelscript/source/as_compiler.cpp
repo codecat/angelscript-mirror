@@ -8510,9 +8510,20 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 		bool needConversion = false;
 		if( !lctx->type.dataType.IsEqualExceptRefAndConst(rctx->type.dataType) )
 			needConversion = true;
-
+		
 		if( !simpleExpr || needConversion )
 		{
+			if( rctx->type.dataType.IsObjectHandle() && !rctx->type.isExplicitHandle && 
+			    !lctx->type.dataType.IsObjectHandle() && rctx->type.dataType.GetTypeInfo() == lctx->type.dataType.GetTypeInfo() )
+			{
+				// Make the conversion from handle to non-handle without creating 
+				// a copy of the object (otherwise done by PrepareArgument)
+				asCDataType dt = rctx->type.dataType;
+				dt.MakeHandle(false);
+				ImplicitConversion(rctx, dt, rexpr, asIC_IMPLICIT_CONV);
+				needConversion = false;
+			}
+			
 			asCDataType dt = lctx->type.dataType;
 			dt.MakeReference(true);
 			// A funcdef can be accessed by ref, but only as read-only

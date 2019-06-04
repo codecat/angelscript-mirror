@@ -722,8 +722,8 @@ public:
     uint height() const;
     void resize(uint w, uint h);
     
-    T &opIndex(uint, uint);
-    const T &opIndex(uint, uint) const;
+    T &opIndex(uint x, uint y);
+    const T &opIndex(uint x, uint y) const;
   }
 </pre>
 

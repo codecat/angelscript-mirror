@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2018 Andreas Jonsson
+   Copyright (c) 2003-2019 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -227,7 +227,7 @@ int asCBuilder::AddCode(const char *name, const char *code, int codeLength, int 
 	return 0;
 }
 
-asCScriptCode *asCBuilder::FindOrAddCode(const char *name, const char *code, asUINT length)
+asCScriptCode *asCBuilder::FindOrAddCode(const char *name, const char *code, size_t length)
 {
 	for (asUINT n = 0; n < scripts.GetLength(); n++)
 		if( scripts[n]->name == name && scripts[n]->codeLength == length && memcmp(scripts[n]->code, code, length) == 0 )
@@ -237,7 +237,7 @@ asCScriptCode *asCBuilder::FindOrAddCode(const char *name, const char *code, asU
 	if (script == 0)
 		return 0;
 
-	int r = script->SetCode(name, code, 0, true);
+	int r = script->SetCode(name, code, length, true);
 	if (r < 0)
 	{
 		asDELETE(script, asCScriptCode);
