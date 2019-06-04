@@ -79,6 +79,11 @@ The factory function must be registered as a global function, but can be
 implemented as a static class method, common global function, or a global
 function following the generic calling convention.
 
+Even though a factory function returns an object handle, it must not return a null handle 
+unless it also sets an exception to signal that the instantiation of the object failed. 
+
+The behaviour is undefined if a factory function returns null without setting an exception.
+
 See also \ref doc_reg_basicref_4.
 
 \section doc_reg_basicref_2 Addref and release behaviours
