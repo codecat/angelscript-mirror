@@ -9205,9 +9205,10 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookupMember(const asCString &name, a
 		// Normal property access
 		r = FindPropertyAccessor(name, &access, 0, 0, true);
 	}
-	if (r < 0) return SL_ERROR;
-	if (access.property_get || access.property_set)
+	if (r <= -3) return SL_ERROR;
+	if (r != 0)
 	{
+		// The symbol matches getters/setters (though not necessarily a compilable match)
 		MergeExprBytecodeAndType(outResult, &access);
 		outResult->type.dataType.SetTypeInfo(objType);
 		return SL_CLASSPROPACCESS;
@@ -9424,9 +9425,10 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 				// Normal property access
 				r = FindPropertyAccessor(name, &access, 0, ns);
 			}
-			if (r < 0) return SL_ERROR;
-			if (access.property_get || access.property_set)
+			if (r <= -3) return SL_ERROR;
+			if (r != 0)
 			{
+				// The symbol matches getters/setters (though not necessarily a compilable match)
 				MergeExprBytecodeAndType(outResult, &access);
 				outResult->symbolNamespace = ns;
 				return SL_GLOBALPROPACCESS;
@@ -11222,19 +11224,10 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 		symbolType == SL_GLOBALPROPACCESS || symbolType == SL_GLOBALCONST || symbolType == SL_GLOBALVAR || symbolType == SL_ENUMVAL)
 	{
 		// Variables/properties can be used as functions if they have the opCall
-		if (!(lookupResult.type.dataType.IsFuncdef() || lookupResult.type.dataType.IsObject()))
-		{
-			// The variable is not a function or object with opCall
-			asCString msg;
-			msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), lookupResult.type.dataType.Format(outFunc->nameSpace).AddressOf());
-			Error(msg, node);
-			return -1;
-		}
-
+	
 		// Compile the variable
 		// TODO: Take advantage of the known symbol, so it doesn't have to be looked up again
 		localVar = CompileVariableAccess(name, scope, &funcExpr, node, false, objectType);
-		asASSERT(localVar >= 0);
 		if( localVar < 0 )
 			return -1;
 
@@ -11280,6 +11273,14 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 				objIsConst = funcExpr.type.dataType.IsReadOnly();
 
 			builder->GetObjectMethodDescriptions("opCall", CastToObjectType(funcExpr.type.dataType.GetTypeInfo()), funcs, objIsConst);
+		}
+		else
+		{
+			// The variable is not a function or object with opCall
+			asCString msg;
+			msg.Format(TXT_NOT_A_FUNC_s_IS_TYPE_s, name.AddressOf(), lookupResult.type.dataType.Format(outFunc->nameSpace).AddressOf());
+			Error(msg, node);
+			return -1;
 		}
 	}
 
@@ -11960,6 +11961,12 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 	return FindPropertyAccessor(name, ctx, 0, node, ns, isThisAccess);
 }
 
+// Returns:
+//   1 = a valid match was found
+//   0 = no matching symbols (or feature disabled)
+//  -1 = ambiguous getters or setters, i.e. multiple methods match symbol name and signature
+//  -2 = mismatching type for getter and setter
+//  -3 = processing error, e.g. out of memory
 int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx, asCExprContext *arg, asCScriptNode *node, asSNameSpace *ns, bool isThisAccess)
 {
 	if( engine->ep.propertyAccessorMode == 0 )
@@ -12141,7 +12148,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 				PrintMatchingFuncs(funcs, node);
 			}
 
-			return -1;
+			return -2;
 		}
 	}
 
@@ -12234,7 +12241,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 			if( ctx->property_arg == 0 )
 			{
 				// Out of memory
-				return -1;
+				return -3;
 			}
 
 			MergeExprBytecodeAndType(ctx->property_arg, arg);

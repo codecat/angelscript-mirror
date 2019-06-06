@@ -120,8 +120,10 @@ bool Test()
 	
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
 		r = mod->AddScriptSection("test",
+			"int g_current_value_cnt = 0; \n"
 			"int current_value() \n"
 			"{ \n"
+			"  g_current_value_cnt++; \n"
 			"  return 0; \n"
 			"} \n"
 			"void set_current_value(int x) \n"
@@ -139,15 +141,26 @@ bool Test()
 			"  set_current_value('I will kill you!'); \n"
 			"  current_value(); \n"
 			"} \n");
-		r = mod->Build();
-		if (r < 0)
+		r = mod->Build(); // TODO: Symbol lookup should identify current_value as a property accessor, even though there are multiple ones. asCCompiler::FindPropertyAccessor needs to have separate error codes for different situations, so SymbolLookup can properly interpret the result.
+		if (r >= 0)
 			TEST_FAILED;
-		if (bout.buffer != "")
+		if (bout.buffer != "test (16, 1) : Info    : Compiling void main()\n"
+						   "test (20, 3) : Error   : Found multiple set accessors for property 'current_value'\n"
+						   "test (20, 3) : Info    : void set_current_value(int x)\n"
+						   "test (20, 3) : Info    : void set_current_value(string x)\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-			
+/*		
+		r = ExecuteString(engine, "main()", mod);
+		if( r != asEXECUTION_FINISHED )
+			TEST_FAILED;
+		
+		int *cnt = (int*)mod->GetAddressOfGlobalVar(0);
+		if( cnt == 0 || *cnt != 1 )
+			TEST_FAILED;
+	*/		
 		r = engine->ShutDownAndRelease();
 	}
 	
