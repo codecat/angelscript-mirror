@@ -1807,19 +1807,24 @@ public:
   string       GetSectionName(unsigned int idx) const;
   
   // Get metadata declared for classes, interfaces, and enums
-  const char *GetMetadataStringForType(int typeId);
+  // Each metadata block, i.e. [...], is returned as a separate string
+  std::vector<std::string> GetMetadataStringForType(int typeId);
 
   // Get metadata declared for functions
-  const char *GetMetadataStringForFunc(asIScriptFunction *func);
+  // Each metadata block, i.e. [...], is returned as a separate string
+  std::vector<std::string> GetMetadataStringForFunc(asIScriptFunction *func);
 
   // Get metadata declared for global variables
-  const char *GetMetadataStringForVar(int varIdx);
+  // Each metadata block, i.e. [...], is returned as a separate string
+  std::vector<std::string> GetMetadataStringForVar(int varIdx);
 
   // Get metadata declared for a class method
-  const char *GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
+  // Each metadata block, i.e. [...], is returned as a separate string
+  std::vector<std::string> GetMetadataStringForTypeMethod(int typeId, asIScriptFunction *method);
 
   // Get metadata declared for a class property
-  const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
+  // Each metadata block, i.e. [...], is returned as a separate string
+  std::vector<std::string> GetMetadataStringForTypeProperty(int typeId, int varIdx);
 };
 \endcode
 
@@ -1903,7 +1908,7 @@ for post build lookup by the type id, function id, or variable index.
 Exactly what the metadata looks like is up to the application. The builder class doesn't
 impose any rules, except that the metadata should be added between brackets []. After 
 the script has been built the application can obtain the metadata strings and interpret
-them as it sees fit.
+them as it sees fit. Multiple metadata blocks, i.e. [], can be defined for each entity. 
 
 Example script with metadata:
 
@@ -1914,7 +1919,8 @@ Example script with metadata:
     [editable] 
     vector3 myPosition;
     
-    [editable [10, 100]]
+    [editable]
+	[range [10, 100]]
     int     myStrength;
   }
   
@@ -1941,12 +1947,15 @@ if( r >= 0 )
   int count = mod->GetGlobalVarCount();
   for( int n = 0; n < count; n++ )
   {
-    string metadata = builder.GetMetadataStringForVar(n);
-    if( metadata == "editable" )
-    {
-      // Show the global variable in a GUI
-      ...
-    }
+    vector<string> metadata = builder.GetMetadataStringForVar(n);
+	for( int m = 0; m < metadata.size(); m++ )
+	{
+      if( metadata[m] == "editable" )
+      {
+        // Show the global variable in a GUI
+        ...
+      }
+	}
   }
 }
 \endcode
