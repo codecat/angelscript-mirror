@@ -205,6 +205,36 @@ bool Test()
 	COutStream out;
 	CBufferedOutStream bout;
 
+	// Template specialization with child funcdef
+	// https://www.gamedev.net/forums/topic/701578-problem-with-child-funcdef-registration/
+	{
+		asIScriptEngine *engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		// register template with child funcdef
+		engine->RegisterObjectType("MyTmpl<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE);
+		engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_FACTORY, "MyTmpl<T> @f(int&in)", asFUNCTIONPR(MyTmpl_factory, (asITypeInfo*), MyTmpl*), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_ADDREF, "void f()", asMETHOD(MyTmpl, AddRef), asCALL_THISCALL);
+		engine->RegisterObjectBehaviour("MyTmpl<T>", asBEHAVE_RELEASE, "void f()", asMETHOD(MyTmpl, Release), asCALL_THISCALL);
+		engine->RegisterFuncdef("void MyTmpl<T>::Func(const T&in if_handle_then_const param)");
+
+		// register template specialization
+		engine->RegisterObjectType("MyTmpl<void>", 0, asOBJ_REF);
+		engine->RegisterObjectBehaviour("MyTmpl<void>", asBEHAVE_FACTORY, "MyTmpl<void> @f(int&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("MyTmpl<void>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("MyTmpl<void>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterFuncdef("void MyTmpl<void>::Func(void)");
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->Release();	
+	}
+	
 	// Test template bug when using multiple modules
 	// https://www.gamedev.net/forums/topic/699909-template-factory-return-type-bug/
 	{

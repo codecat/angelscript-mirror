@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2018 Andreas Jonsson
+   Copyright (c) 2003-2019 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -738,10 +738,10 @@ asCScriptEngine::~asCScriptEngine()
 	}
 
 	// Delete the functions for generated template types that may references object types
-	for( asUINT n = 0; n < templateInstanceTypes.GetLength(); n++ )
+	for( asUINT n = 0; n < generatedTemplateTypes.GetLength(); n++ )
 	{
-		asCObjectType *templateType = templateInstanceTypes[n];
-		if( templateInstanceTypes[n] )
+		asCObjectType *templateType = generatedTemplateTypes[n];
+		if( templateType )
 			templateType->DestroyInternal();
 	}
 	for( asUINT n = 0; n < listPatternTypes.GetLength(); n++ )
