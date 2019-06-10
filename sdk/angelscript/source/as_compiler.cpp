@@ -9286,10 +9286,10 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 	}
 
 	// Is it a class member?
-	// This is not accessible by default arg expressions
-	if (!isCompilingDefaultArg && scope == "" && ((objType) || (outFunc && outFunc->objectType)))
+	if (scope == "" && ((objType) || (outFunc && outFunc->objectType)))
 	{
-		if (name == THIS_TOKEN && !objType)
+		// 'this' is not accessible by default arg expressions
+		if (name == THIS_TOKEN && !objType && !isCompilingDefaultArg)
 		{
 			asCDataType dt = asCDataType::CreateType(outFunc->objectType, outFunc->IsReadOnly());
 
@@ -9298,7 +9298,8 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 			return SL_THISPTR;
 		}
 
-		if (m_isConstructor && name == SUPER_TOKEN && !objType)
+		// 'super' is not accessible by default arg expressions
+		if (m_isConstructor && name == SUPER_TOKEN && !objType && !isCompilingDefaultArg)
 		{
 			// If the class is derived from another class, then super can be used to call the base' class constructor
 			if (outFunc && outFunc->objectType->derivedFrom)
@@ -9309,9 +9310,13 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 		}
 
 		// Look for members in the type
-		SYMBOLTYPE r = SymbolLookupMember(name, objType ? objType : outFunc->objectType, outResult);
-		if (r != 0)
-			return r;
+		// class members are only accessible in default arg expressions as post op '.' 
+		if( !isCompilingDefaultArg || (isCompilingDefaultArg && objType) )
+		{
+			SYMBOLTYPE r = SymbolLookupMember(name, objType ? objType : outFunc->objectType, outResult);
+			if (r != 0)
+				return r;
+		}
 	}
 
 	// Recursively search parent namespaces for global entities

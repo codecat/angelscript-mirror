@@ -23,6 +23,43 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// default arg accessing member of global var
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class foo \n"
+			"{ \n"
+			"	int bar() \n"
+			"	{ \n"
+			"		return 5; \n"
+			"	} \n"
+			"} \n"
+			"foo f; \n"
+			"void my_func(int age=f.bar()) \n"
+			"{ \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"	my_func(); \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+	
 	// default arg with funcdef referring to global function
 	{
 		engine = asCreateScriptEngine();
