@@ -1794,7 +1794,10 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 				}
 			}
 
-			// Perform implicit ref cast if necessary, but don't allow the implicit conversion to create new objects
+			// Allow anonymous init lists to be converted to the arg type
+			if( ctx->IsAnonymousInitList() )
+				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, true);
+			
 			if( (ctx->type.dataType.IsObject() || ctx->type.dataType.IsFuncdef()) && ctx->type.dataType.GetTypeInfo() != dt.GetTypeInfo() )
 				ImplicitConversion(ctx, dt, node, asIC_IMPLICIT_CONV, true, false);
 
@@ -13182,9 +13185,9 @@ int asCCompiler::MatchArgument(asCScriptFunction *desc, const asCExprContext *ar
 	// Anonymous init lists can only match parameters that can be initialized with a list
 	if (argExpr->IsAnonymousInitList())
 	{
-		if ((desc->parameterTypes[paramNum].IsReference() && desc->inOutFlags[paramNum] != asTM_INREF) ||
+		if( (desc->parameterTypes[paramNum].IsReference() && (desc->inOutFlags[paramNum] & asTM_INREF) == 0) ||
 			desc->parameterTypes[paramNum].GetBehaviour() == 0 ||
-			desc->parameterTypes[paramNum].GetBehaviour()->listFactory == 0)
+			desc->parameterTypes[paramNum].GetBehaviour()->listFactory == 0 )
 		{
 			return -1;
 		}
