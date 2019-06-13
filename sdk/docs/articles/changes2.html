@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.1 WIP - 2019/06/11</h2>
+<h2>Version 2.33.1 WIP - 2019/06/13</h2>
 
 <ul>
 <li>Bug fixes
@@ -39,6 +39,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Debugger commands 'n' and 'o' no longer prints 'No script is running' when used as first command
 <li>Debugger command 'p' prints 'Invalid expression. No matching symbol' when the symbol doesn't exist in the current context
 <li>Fixed missing check for failed memory allocation in CScriptArray::Precache (Thanks Zelerin)
+<li>The string factory in the std::string add-on is now thread safe
 </ul>
 </ul>
 
