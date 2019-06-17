@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2018 Andreas Jonsson
+   Copyright (c) 2003-2019 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -444,7 +444,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 	return node;
 }
 
-// BNF:4: TYPE          ::= ['const'] SCOPE DATATYPE ['<' TYPE {',' TYPE} '>'] { ('[' ']') | '@' }
+// BNF:4: TYPE          ::= ['const'] SCOPE DATATYPE ['<' TYPE {',' TYPE} '>'] { ('[' ']') | ('@' ['const']) }
 asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
@@ -503,6 +503,14 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, boo
 		{
 			node->AddChildLast(ParseToken(ttHandle));
 			if( isSyntaxError ) return node;
+
+			GetToken(&t);
+			RewindTo(&t);
+			if( t.type == ttConst )
+			{
+				node->AddChildLast(ParseToken(ttConst));
+				if( isSyntaxError ) return node;
+			}
 		}
 
 		GetToken(&t);
@@ -1250,7 +1258,7 @@ bool asCParser::IsType(sToken &nextToken)
 		if (t1.type == ttScope)
 			GetToken(&t1);
 
-		// The type may be preceeded with a multilevel scope
+		// The type may be preceded with a multilevel scope
 		GetToken(&t2);
 		while (t1.type == ttIdentifier)
 		{
@@ -1304,7 +1312,15 @@ bool asCParser::IsType(sToken &nextToken)
 	GetToken(&t2);
 	while (t2.type == ttHandle || t2.type == ttAmp || t2.type == ttOpenBracket)
 	{
-		if (t2.type == ttOpenBracket)
+		if( t2.type == ttHandle )
+		{
+			// A handle can optionally be read-only
+			sToken t3;
+			GetToken(&t3);
+			if(t3.type != ttConst )
+				RewindTo(&t3);
+		}
+		else if (t2.type == ttOpenBracket)
 		{
 			GetToken(&t2);
 			if (t2.type != ttCloseBracket)
