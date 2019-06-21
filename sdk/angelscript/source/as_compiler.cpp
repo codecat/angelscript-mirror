@@ -12064,6 +12064,11 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
+
+			// Ignore script functions, if the application has disabled script defined property accessors
+			if( engine->ep.propertyAccessorMode == 1 && f->funcType == asFUNC_SCRIPT )
+				continue;
+			
 			// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
 			if( (int)f->parameterTypes.GetLength() == (arg?1:0) )
 			{
@@ -12084,6 +12089,11 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 		for( n = 0; n < funcs.GetLength(); n++ )
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
+
+			// Ignore script functions, if the application has disabled script defined property accessors
+			if( engine->ep.propertyAccessorMode == 1 && f->funcType == asFUNC_SCRIPT )
+				continue;
+			
 			// TODO: getset: If the parameter is a reference, it must not be an out reference. Should we allow inout ref?
 			if( (int)f->parameterTypes.GetLength() == (arg?2:1) )
 			{
@@ -12208,15 +12218,6 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 	{
 		getId = 0;
 		setId = 0;
-	}
-
-	// Check if the application has disabled script written property accessors
-	if( engine->ep.propertyAccessorMode == 1 )
-	{
-		if( getId && builder->GetFunctionDescription(getId)->funcType != asFUNC_SYSTEM )
-		  getId = 0;
-		if( setId && builder->GetFunctionDescription(setId)->funcType != asFUNC_SYSTEM )
-		  setId = 0;
 	}
 
 	if( getId || setId )

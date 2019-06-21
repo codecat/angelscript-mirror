@@ -108,7 +108,7 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
-
+	
 	// Test to make sure compilation is interrupted when a property has no get accessor
 	// Reported by Patrick Jeeves
 	{
@@ -190,15 +190,53 @@ bool Test()
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
 		}
-/*		
-		r = ExecuteString(engine, "main()", mod);
-		if( r != asEXECUTION_FINISHED )
+	
+		r = engine->ShutDownAndRelease();
+	}
+
+	// When script virtual properties are turned off, the global functions that would 
+	// otherwise match property accessors shouldn't cause any conflict
+	// Reported by Aaron Baker
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_PROPERTY_ACCESSOR_MODE, 1); // turn off script defined virtual property accessors
+
+		RegisterStdString(engine);
+	
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("test",
+			"int g_current_value_cnt = 0; \n"
+			"int current_value() \n"
+			"{ \n"
+			"  g_current_value_cnt++; \n"
+			"  return 0; \n"
+			"} \n"
+			"void set_current_value(int x) \n"
+			"{ \n"
+			"  string str=''+x; \n"
+			"  set_current_value(str); \n"
+			"} \n"
+			"void set_current_value(string x) \n"
+			"{ \n"
+			"//  alert('hello!', x); \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  set_current_value(35); \n"
+			"  set_current_value('I will kill you!'); \n"
+			"  current_value(); \n"
+			"} \n");
+		r = mod->Build(); // TODO: Symbol lookup should identify current_value as a property accessor, even though there are multiple ones. asCCompiler::FindPropertyAccessor needs to have separate error codes for different situations, so SymbolLookup can properly interpret the result.
+		if (r < 0)
 			TEST_FAILED;
-		
-		int *cnt = (int*)mod->GetAddressOfGlobalVar(0);
-		if( cnt == 0 || *cnt != 1 )
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
-	*/		
+		}
+
 		r = engine->ShutDownAndRelease();
 	}
 	

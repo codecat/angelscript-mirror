@@ -33,6 +33,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed asCALL_THISCALL_ASGLOBAL to function correctly with multiple inheritance (Thanks stalker#3829)
 <li>Compiler now identifies match for functions taking object as inout ref when passing anonymous init list (Thanks Max Waine)
 <li>Compiler now interrupts compilation after identifying error while compiling use of get property accessor (Thanks Patric Jeeves)
+<li>Compiler no longer identifies global script functions as property accessors when this is turned off with asEP_PROPERTY_ACCESSOR_MODE (Thanks Aaron Baker)
 </ul>
 <li>Script language
 <ul>
