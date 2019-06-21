@@ -109,6 +109,44 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 
+	// Test to make sure compilation is interrupted when a property has no get accessor
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		RegisterStdString(engine);
+	
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("test",
+			"class T \n"
+			"{ \n"
+			"  string a = ''; \n" // member is hidden by set_a
+			"  void set_a(const string &in v) { } \n"
+			"} \n"
+			"void func(const string &in v) {} \n"
+			"void main() \n"
+			"{ \n"
+			"	T t; \n"
+			"	func(t.a); \n"
+			"	if( t.a.length > 0 ) \n"
+			"	  func('blah'); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+		if (bout.buffer != "test (7, 1) : Info    : Compiling void main()\n"
+						   "test (10, 8) : Error   : The property has no get accessor\n"
+						   "test (11, 9) : Error   : The property has no get accessor\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		r = engine->ShutDownAndRelease();		
+	}
+	
 	// Test crash with symbol lookup when there are multiple set_ accessors for the same property
 	// Reported by Aaron Baker
 	{

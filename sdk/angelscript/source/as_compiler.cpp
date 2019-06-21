@@ -1473,7 +1473,8 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 		int offset;
 		if( refType == asTM_INREF )
 		{
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			// Add the type id as hidden arg if the parameter is a ? type
 			if( paramType->GetTokenType() == ttQuestion )
@@ -1760,7 +1761,8 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 		}
 		else if( refType == asTM_INOUTREF )
 		{
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			// Add the type id as hidden arg if the parameter is a ? type
 			if( paramType->GetTokenType() == ttQuestion )
@@ -1859,7 +1861,8 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 	}
 	else
 	{
-		ProcessPropertyGetAccessor(ctx, node);
+		if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+			return -1;
 
 		if( dt.IsPrimitive() )
 		{
@@ -3992,7 +3995,8 @@ void asCCompiler::CompileSwitchStatement(asCScriptNode *snode, bool *, asCByteCo
 		return;
 	}
 
-	ProcessPropertyGetAccessor(&expr, snode);
+	if( ProcessPropertyGetAccessor(&expr, snode) < 0 )
+		return;
 
 	// TODO: Need to support 64bit integers
 	// Convert the expression to a 32bit variable
@@ -4355,7 +4359,8 @@ void asCCompiler::CompileIfStatement(asCScriptNode *inode, bool *hasReturn, asCB
 		{
 			if( !expr.type.isConstant )
 			{
-				ProcessPropertyGetAccessor(&expr, inode);
+				if( ProcessPropertyGetAccessor(&expr, inode) < 0 )
+					return;
 				ConvertToVariable(&expr);
 				ProcessDeferredParams(&expr);
 
@@ -4507,7 +4512,8 @@ void asCCompiler::CompileForStatement(asCScriptNode *fnode, asCByteCode *bc)
 				Error(TXT_EXPR_MUST_BE_BOOL, second);
 			else
 			{
-				ProcessPropertyGetAccessor(&expr, second);
+				if( ProcessPropertyGetAccessor(&expr, second) < 0 )
+					return;
 				ConvertToVariable(&expr);
 				ProcessDeferredParams(&expr);
 
@@ -4619,7 +4625,8 @@ void asCCompiler::CompileWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 			Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
 		else
 		{
-			ProcessPropertyGetAccessor(&expr, wnode);
+			if( ProcessPropertyGetAccessor(&expr, wnode) < 0 )
+				return;
 			ConvertToVariable(&expr);
 			ProcessDeferredParams(&expr);
 
@@ -4708,7 +4715,8 @@ void asCCompiler::CompileDoWhileStatement(asCScriptNode *wnode, asCByteCode *bc)
 		Error(TXT_EXPR_MUST_BE_BOOL, wnode->firstChild);
 	else
 	{
-		ProcessPropertyGetAccessor(&expr, wnode);
+		if( ProcessPropertyGetAccessor(&expr, wnode) < 0 )
+			return;
 		ConvertToVariable(&expr);
 		ProcessDeferredParams(&expr);
 		
@@ -4799,7 +4807,8 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 		// accessor, then process it as a get access. Don't call if there is
 		// already a compile error, or we might report an error that is not valid
 		if( !hasCompileErrors )
-			ProcessPropertyGetAccessor(&expr, enode);
+			if( ProcessPropertyGetAccessor(&expr, enode) < 0 )
+				return;
 
 		// Pop the value from the stack
 		if( !expr.type.dataType.IsPrimitive() )
@@ -4995,7 +5004,6 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 			// be done before the expression is evaluated.
 			DestroyVariables(bc);
 
-
 			// For primitives the reference is already in the register,
 			// but for non-primitives the reference is on the stack so we
 			// need to load it into the register
@@ -5012,7 +5020,8 @@ void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
 		}
 		else // if( !v->type.IsReference() )
 		{
-			ProcessPropertyGetAccessor(&expr, rnode);
+			if( ProcessPropertyGetAccessor(&expr, rnode) < 0 )
+				return;
 
 			// Prepare the value for assignment
 			IsVariableInitialized(&expr.type, rnode->firstChild);
@@ -5501,8 +5510,8 @@ void asCCompiler::PrepareForAssignment(asCDataType *lvalue, asCExprContext *rctx
 	int l = int(reservedVariables.GetLength());
 	if( lvalueExpr ) lvalueExpr->bc.GetVarsUsed(reservedVariables);
 
-
-	ProcessPropertyGetAccessor(rctx, node);
+	if( ProcessPropertyGetAccessor(rctx, node) < 0 )
+		return;
 
 	// Make sure the rvalue is initialized if it is a variable
 	IsVariableInitialized(&rctx->type, node);
@@ -8315,7 +8324,8 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 	else if( lctx->property_get && lctx->type.dataType.IsObjectHandle() && !lctx->type.isExplicitHandle )
 	{
 		// Get the handle to the object that will be used for the value assignment
-		ProcessPropertyGetAccessor(lctx, opNode);
+		if( ProcessPropertyGetAccessor(lctx, opNode) < 0 )
+			return -1;
 	}
 
 	if( lctx->type.dataType.IsPrimitive() )
@@ -8546,7 +8556,8 @@ int asCCompiler::DoAssignment(asCExprContext *ctx, asCExprContext *lctx, asCExpr
 		else
 		{
 			// Process any property accessor first, before placing the final reference on the stack
-			ProcessPropertyGetAccessor(rctx, rexpr);
+			if( ProcessPropertyGetAccessor(rctx, rexpr) < 0 )
+				return -1;
 
 			if( rctx->type.dataType.IsReference() && (!(rctx->type.isVariable || rctx->type.isTemporary) || IsVariableOnHeap(rctx->type.stackOffset)) )
 				rctx->bc.Instr(asBC_RDSPtr);
@@ -8628,7 +8639,8 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 		}
 		ctype = e.type;
 
-		ProcessPropertyGetAccessor(&e, cexpr);
+		if( ProcessPropertyGetAccessor(&e, cexpr) < 0)
+			return -1;
 
 		if( e.type.dataType.IsReference() ) ConvertToVariable(&e);
 		ProcessDeferredParams(&e);
@@ -8656,8 +8668,10 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asCExprContext *ctx)
 				return -1;
 			}
 
-			ProcessPropertyGetAccessor(&le, cexpr->next);
-			ProcessPropertyGetAccessor(&re, cexpr->next->next);
+			if( ProcessPropertyGetAccessor(&le, cexpr->next) < 0 )
+				return -1;
+			if( ProcessPropertyGetAccessor(&re, cexpr->next->next) < 0 )
+				return -1;
 
 			bool isExplicitHandle = le.type.isExplicitHandle || re.type.isExplicitHandle;
 
@@ -10645,7 +10659,8 @@ int asCCompiler::CompileConversion(asCScriptNode *node, asCExprContext *ctx)
 		return -1;
 	}
 
-	ProcessPropertyGetAccessor(&expr, node);
+	if( ProcessPropertyGetAccessor(&expr, node) < 0 )
+		return -1;
 
 	// Don't allow any operators on expressions that take address of class method
 	if( expr.IsClassMethod() )
@@ -10952,7 +10967,8 @@ int asCCompiler::CompileConstructCall(asCScriptNode *node, asCExprContext *ctx)
 				dt.MakeReference(true);
 
 				// Make sure any property accessor is already evaluated
-				ProcessPropertyGetAccessor(args[0], args[0]->exprNode);
+				if( ProcessPropertyGetAccessor(args[0], args[0]->exprNode) < 0 )
+					return -1;
 
 				ImplicitConversion(args[0], dt, node->lastChild, asIC_EXPLICIT_VAL_CAST);
 
@@ -11269,7 +11285,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 				funcExpr.property_ref = ctx->type.dataType.IsReference();
 			}
 			MergeExprBytecodeAndType(ctx, &funcExpr);
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 			Dereference(ctx, true);
 
 			objectType = CastToObjectType(funcExpr.type.dataType.GetTypeInfo());
@@ -11440,7 +11457,8 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 
 					if( funcExpr.property_get > 0 )
 					{
-						ProcessPropertyGetAccessor(&funcExpr, node);
+						if( ProcessPropertyGetAccessor(&funcExpr, node) < 0 )
+							return -1;
 						Dereference(&funcExpr, true);
 					}
 					else
@@ -11624,7 +11642,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 		if( opName )
 		{
 			// TODO: Should convert this to something similar to CompileOverloadedDualOperator2
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			// TODO: If the value isn't const, then first try to find the non const method, and if not found try to find the const method
 
@@ -11692,7 +11711,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 		}
 
 
-		ProcessPropertyGetAccessor(ctx, node);
+		if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+			return -1;
 
 		asCDataType to = ctx->type.dataType;
 
@@ -11789,7 +11809,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 				return 0;
 			}
 
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			ConvertToTempVariable(ctx);
 			asASSERT(!ctx->type.isLValue);
@@ -11804,7 +11825,8 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 	}
 	else if( op == ttBitNot )
 	{
-		ProcessPropertyGetAccessor(ctx, node);
+		if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+			return -1;
 
 		asCDataType to = ctx->type.dataType;
 
@@ -12467,18 +12489,17 @@ int asCCompiler::ProcessPropertyGetSetAccessor(asCExprContext *ctx, asCExprConte
 	return 0;
 }
 
-void asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode *node)
+int asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode *node)
 {
 	// If no property accessor has been prepared then don't do anything
 	if( !ctx->property_get && !ctx->property_set )
-		return;
+		return 0;
 
 	if( !ctx->property_get )
 	{
 		// Raise error on missing accessor
 		Error(TXT_PROPERTY_HAS_NO_GET_ACCESSOR, node);
-		ctx->type.SetDummy();
-		return;
+		return -1;
 	}
 
 	asCExprValue objType = ctx->type;
@@ -12499,8 +12520,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode 
 			asDELETE(ctx->property_arg, asCExprContext);
 			ctx->property_arg = 0;
 		}
-		ctx->type.SetDummy();
-		return;
+		return -1;
 	}
 
 	if( func->objectType )
@@ -12517,6 +12537,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode 
 			asCArray<int> funcCandidates;
 			funcCandidates.PushLast(ctx->property_get);
 			PrintMatchingFuncs(funcCandidates, node);
+			return -1;
 		}
 	}
 
@@ -12536,6 +12557,8 @@ void asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode 
 		asDELETE(ctx->property_arg, asCExprContext);
 		ctx->property_arg = 0;
 	}
+	
+	return 0;
 }
 
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ctx)
@@ -12570,7 +12593,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 		if( opName )
 		{
 			// TODO: Should convert this to something similar to CompileOverloadedDualOperator2
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			// TODO: If the value isn't const, then first try to find the non const method, and if not found try to find the const method
 
@@ -12698,7 +12722,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 	{
 		if( node->firstChild->nodeType == snIdentifier )
 		{
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			// Get the property name
 			asCString name(&script->code[node->firstChild->tokenPos], node->firstChild->tokenLength);
@@ -12857,7 +12882,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 			}
 
 			// Process the get property accessor
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 
 			// Compile function call
 			int r = CompileFunctionCall(node->firstChild, ctx, CastToObjectType(ctx->type.dataType.GetTypeInfo()), ctx->type.dataType.IsObjectConst());
@@ -12917,7 +12943,8 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 				return -1;
 			}
 
-			ProcessPropertyGetAccessor(ctx, node);
+			if( ProcessPropertyGetAccessor(ctx, node) < 0 )
+				return -1;
 		}
 
 		// Compile the expression
@@ -13582,7 +13609,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			rctx->bc.GetVarsUsed(reservedVariables);
 
 			// Process the lctx expression as get accessor
-			ProcessPropertyGetAccessor(lctx, node);
+			if( ProcessPropertyGetAccessor(lctx, node) < 0 )
+				return -1;
 
 			reservedVariables.SetLength(l);
 
@@ -13811,8 +13839,10 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asCExprContext *lctx, asCE
 		}
 
 		// Process the property get accessors (if any)
-		ProcessPropertyGetAccessor(lctx, node);
-		ProcessPropertyGetAccessor(rctx, node);
+		if( ProcessPropertyGetAccessor(lctx, node) < 0 )
+			return -1;
+		if( ProcessPropertyGetAccessor(rctx, node) < 0 )
+			return -1;
 
 		// Make sure we have two variables or constants
 		if( lctx->type.dataType.IsReference() ) ConvertToVariableNotIn(lctx, rctx);
@@ -15386,8 +15416,10 @@ void asCCompiler::CompileBooleanOperator(asCScriptNode *node, asCExprContext *lc
 void asCCompiler::CompileOperatorOnHandles(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, asCExprContext *ctx, eTokenType opToken)
 {
 	// Process the property accessor as get
-	ProcessPropertyGetAccessor(lctx, node);
-	ProcessPropertyGetAccessor(rctx, node);
+	if( ProcessPropertyGetAccessor(lctx, node) < 0 )
+		return;
+	if( ProcessPropertyGetAccessor(rctx, node) < 0 )
+		return;
 
 	DetermineSingleFunc(lctx, node);
 	DetermineSingleFunc(rctx, node);
