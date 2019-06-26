@@ -9152,13 +9152,17 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asCExprContext *ctx)
 		vnode = vnode->next;
 
 	asCExprContext v(engine);
-	int r = CompileExpressionValue(vnode, &v); if( r < 0 ) return r;
+	int r = CompileExpressionValue(vnode, &v); 
+	if( r < 0 ) 
+		return r;
 
 	// Compile post fix operators
 	asCScriptNode *pnode = vnode->next;
 	while( pnode )
 	{
-		r = CompileExpressionPostOp(pnode, &v); if( r < 0 ) return r;
+		r = CompileExpressionPostOp(pnode, &v); 
+		if( r < 0 ) 
+			return r;
 		pnode = pnode->next;
 	}
 
@@ -9166,7 +9170,9 @@ int asCCompiler::CompileExpressionTerm(asCScriptNode *node, asCExprContext *ctx)
 	pnode = vnode->prev;
 	while( pnode )
 	{
-		r = CompileExpressionPreOp(pnode, &v); if( r < 0 ) return r;
+		r = CompileExpressionPreOp(pnode, &v); 
+		if( r < 0 ) 
+			return r;
 		pnode = pnode->prev;
 	}
 
@@ -11478,7 +11484,12 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asCExprContext *ctx, a
 					ReleaseTemporaryVariable(tmp, &ctx->bc);
 				}
 
-				MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcExpr.type.stackOffset);
+				r = MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, funcExpr.type.stackOffset);
+				if( r < 0 )
+				{
+					ctx->type.SetDummy();
+					isOK = false;
+				}
 			}
 			else
 				isOK = false;
@@ -11666,8 +11677,7 @@ int asCCompiler::CompileExpressionPreOp(asCScriptNode *node, asCExprContext *ctx
 			if( funcs.GetLength() == 1 )
 			{
 				asCArray<asCExprContext *> args;
-				MakeFunctionCall(ctx, funcs[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node);
-				return 0;
+				return MakeFunctionCall(ctx, funcs[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node);
 			}
 			else if( funcs.GetLength() == 0 )
 			{
@@ -12334,7 +12344,7 @@ int asCCompiler::ProcessPropertySetAccessor(asCExprContext *ctx, asCExprContext 
 	}
 
 	// Call the accessor
-	MakeFunctionCall(ctx, ctx->property_set, func->objectType, args, node);
+	int r = MakeFunctionCall(ctx, ctx->property_set, func->objectType, args, node);
 
 	ctx->property_get = 0;
 	ctx->property_set = 0;
@@ -12344,7 +12354,7 @@ int asCCompiler::ProcessPropertySetAccessor(asCExprContext *ctx, asCExprContext 
 		ctx->property_arg = 0;
 	}
 
-	return 0;
+	return r;
 }
 
 int asCCompiler::ProcessPropertyGetSetAccessor(asCExprContext *ctx, asCExprContext *lctx, asCExprContext *rctx, eTokenType op, asCScriptNode *errNode)
@@ -12546,7 +12556,7 @@ int asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode *
 	bool isExplicitHandle = ctx->type.isExplicitHandle;
 
 	// Call the accessor
-	MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
+	int r = MakeFunctionCall(ctx, ctx->property_get, func->objectType, args, node);
 	if( isExplicitHandle )
 		ctx->type.isExplicitHandle = true;
 
@@ -12559,7 +12569,7 @@ int asCCompiler::ProcessPropertyGetAccessor(asCExprContext *ctx, asCScriptNode *
 		ctx->property_arg = 0;
 	}
 	
-	return 0;
+	return r;
 }
 
 int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ctx)
@@ -12618,8 +12628,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 			if( funcs.GetLength() == 1 )
 			{
 				asCArray<asCExprContext *> args;
-				MakeFunctionCall(ctx, funcs[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node);
-				return 0;
+				return MakeFunctionCall(ctx, funcs[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node);
 			}
 			else if( funcs.GetLength() == 0 )
 			{
@@ -12981,9 +12990,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 						// Add the default values for arguments not explicitly supplied
 						int r = CompileDefaultAndNamedArgs(node, args, funcs[0], objectType);
 
-						if( r == 0 )
-							MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, ctx->type.stackOffset);
-						else
+						if( r < 0 )
+							isOK = false;
+						else if( MakeFunctionCall(ctx, funcs[0], objectType, args, node, false, 0, ctx->type.stackOffset) < 0 )
 							isOK = false;
 					}
 				}
@@ -13044,6 +13053,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 		}
 
 		// Compile arguments
+		bool isOK = true;
 		asCArray<asCExprContext *> args;
 		asCArray<asSNamedArgument> namedArgs;
 		if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
@@ -13092,8 +13102,12 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 						ctx->bc.Instr(asBC_PopPtr);
 					}
 
-					MakeFunctionCall(ctx, funcs[0], ctx->type.dataType.IsFuncdef() ? 0 : CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node, false, 0, ctx->type.stackOffset);
+					r = MakeFunctionCall(ctx, funcs[0], ctx->type.dataType.IsFuncdef() ? 0 : CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node, false, 0, ctx->type.stackOffset);
+					if( r < 0 )
+						isOK = false;
 				}
+				else
+					isOK = false;
 			}
 		}
 		else
@@ -13110,6 +13124,9 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asCExprContext *ct
 			{
 				asDELETE(namedArgs[n].ctx, asCExprContext);
 			}
+			
+		if( !isOK )
+			return -1;
 	}
 
 	return 0;
@@ -13703,7 +13720,8 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 			args.PushLast(rctx);
 			MergeExprBytecode(ctx, lctx);
 			ctx->type = lctx->type;
-			MakeFunctionCall(ctx, ops[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node);
+			if( MakeFunctionCall(ctx, ops[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node) < 0 )
+				return -1;
 
 			// Rearrange the bytecode so the left argument is computed first
 			if (leftToRight)
@@ -13731,7 +13749,7 @@ int asCCompiler::CompileOverloadedDualOperator2(asCScriptNode *node, const char 
 	return 0;
 }
 
-void asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asCExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset, int funcPtrVar)
+int asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asCExprContext*> &args, asCScriptNode *node, bool useVariable, int stackOffset, int funcPtrVar)
 {
 	if( objectType )
 		Dereference(ctx, true);
@@ -13745,7 +13763,7 @@ void asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectTyp
 
 	int r = PrepareFunctionCall(funcId, &ctx->bc, args);
 	if (r < 0)
-		return;
+		return r;
 
 	// Verify if any of the args variable offsets are used in the other code.
 	// If they are exchange the offset for a new one
@@ -13792,6 +13810,8 @@ void asCCompiler::MakeFunctionCall(asCExprContext *ctx, int funcId, asCObjectTyp
 	MoveArgsToStack(funcId, &ctx->bc, args, objectType ? true : false);
 
 	PerformFunctionCall(funcId, ctx, false, &args, 0, useVariable, stackOffset, funcPtrVar);
+	
+	return 0;
 }
 
 int asCCompiler::CompileOperator(asCScriptNode *node, asCExprContext *lctx, asCExprContext *rctx, asCExprContext *ctx, eTokenType op, bool leftToRight)

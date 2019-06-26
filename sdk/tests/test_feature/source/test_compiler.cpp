@@ -3,6 +3,7 @@
 #include "../../../add_on/scriptdictionary/scriptdictionary.h"
 #include "../../../add_on/scriptany/scriptany.h"
 #include "../../../add_on/scriptmath/scriptmath.h"
+#include "../../../add_on/scriptmath/scriptmathcomplex.h"
 #include <iostream>
 
 using namespace std;
@@ -179,6 +180,43 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 
+	// Test use of virtual property without get accessor causing assert failure
+	// Reported by Patrick Jeeves
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterScriptMathComplex(engine);
+		r = engine->RegisterGlobalFunction("float dot(const complex &in, const complex &in)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+	
+		r = engine->RegisterObjectType("foo", sizeof(int), asOBJ_VALUE|asOBJ_POD);
+		r = engine->RegisterObjectProperty("foo", "complex velocity", 0);
+		r = engine->RegisterObjectMethod("foo", "void set_velocity(const complex &in v)", asFUNCTION(0), asCALL_GENERIC);
+		
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class TestClass\n"
+			"{\n"
+			"  foo m; \n"
+			"  void onCollision(complex &in col) { \n"
+			"    if( dot(m.velocity, col) > 20 ) {} \n"
+			"  } \n"
+			"}\n");
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		
+		if( bout.buffer != "test (4, 3) : Info    : Compiling void TestClass::onCollision(complex&in)\n"
+						   "test (5, 14) : Error   : The property has no get accessor\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}	
+		
+		engine->ShutDownAndRelease();
+	}
+	
 	// Test problem with class having a single contructor taking 1 argument
 	// https://www.gamedev.net/forums/topic/702543-object-handle-and-constructor-with-array-argument-triggers-assert/
 	{
