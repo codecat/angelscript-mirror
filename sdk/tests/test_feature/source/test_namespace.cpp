@@ -1476,8 +1476,8 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script = 
-			"int get_foo() { return 42; } \n"
-			"namespace nm { int get_foo2() { return 42; } } \n"
+			"int get_foo() property { return 42; } \n"
+			"namespace nm { int get_foo2() property { return 42; } } \n"
 			"void test() { \n"
 			"  assert( foo == 42 ); \n"      // ok
 			"  assert( ::foo == 42 ); \n"    // ok
@@ -1514,8 +1514,8 @@ bool Test()
 
 		// Indexed property accessors
 		script = 
-			"int get_foo(uint) { return 42; } \n"
-			"namespace nm { int get_foo2(uint) { return 42; } } \n"
+			"int get_foo(uint) property { return 42; } \n"
+			"namespace nm { int get_foo2(uint) property { return 42; } } \n"
 			"void test() { \n"
 			"  assert( foo[0] == 42 ); \n"      // ok
 			"  assert( ::foo[0] == 42 ); \n"    // ok

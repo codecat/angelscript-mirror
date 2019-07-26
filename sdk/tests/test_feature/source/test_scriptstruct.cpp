@@ -769,7 +769,7 @@ bool Test()
 			"  void _BaseGuiElement(IGuiElement @e) { \n"
 			"    @parent = e; \n"
 			"  } \n"
-			"  void set_parent(IGuiElement @e) { \n"
+			"  void set_parent(IGuiElement @e) property { \n"
 			"    if( e !is null ) \n"
 			"      e.addChild(this); \n"
 			"  } \n"

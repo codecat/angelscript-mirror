@@ -1291,7 +1291,7 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_FACTORY, "dictionary<K, V>@ f(int&in)", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterObjectBehaviour("dictionary<K, V>", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("dictionary<K, V>", "int get_Count() const", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("dictionary<K, V>", "int get_Count() const property", asFUNCTION(0), asCALL_GENERIC); assert(r >= 0);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", "void main(){ dictionary<int,int> d; int cnt = d.Count; }");
@@ -1405,7 +1405,7 @@ bool Test()
 					"ep 11 1\n"
 					"ep 12 0\n"
 					"ep 13 0\n"
-					"ep 14 2\n"
+					"ep 14 2\n" // asEP_PROPERTY_ACCESSOR_MODE
 					"ep 15 0\n"
 					"ep 16 1\n"
 					"ep 17 0\n"
@@ -1500,7 +1500,7 @@ bool Test()
 			"void test2(){ @foo = bar;   }";
 
 		engine->RegisterFuncdef( "void MyVoid()" );
-		engine->RegisterGlobalFunction( "void set_foo(MyVoid@)", asFUNCTION(T::set_funcdef_var), asCALL_CDECL );
+		engine->RegisterGlobalFunction( "void set_foo(MyVoid@) property", asFUNCTION(T::set_funcdef_var), asCALL_CDECL );
 
 		asIScriptModule* module = engine->GetModule( "script", asGM_ALWAYS_CREATE );
 		module->AddScriptSection( "script", script );

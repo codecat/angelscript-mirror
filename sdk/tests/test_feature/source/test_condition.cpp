@@ -618,7 +618,7 @@ bool TestCondition()
 			PRINTF("%s: ExecuteString() failed\n", TESTNAME);
 		}
 
-		const char *script = "double get_gameTime() { return 100; } \n"
+		const char *script = "double get_gameTime() property { return 100; } \n"
 							 "void advance(bool full) { \n"
 							 "  nextThink = gameTime + ( 30.0 * (full ? 10.0 : 1.0) ); \n"
 							 "} \n"

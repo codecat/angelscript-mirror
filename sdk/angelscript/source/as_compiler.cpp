@@ -12027,13 +12027,17 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 		// Don't look for property accessors in script classes if the script
 		// property accessors have been disabled by the application
 		if( !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_SCRIPT_OBJECT) ||
-			engine->ep.propertyAccessorMode == 2 )
+			engine->ep.propertyAccessorMode >= 2 )
 		{
 			// Check if the object has any methods with the corresponding accessor name(s)
 			asCObjectType *ot = CastToObjectType(ctx->type.dataType.GetTypeInfo());
 			for( asUINT n = 0; n < ot->methods.GetLength(); n++ )
 			{
 				asCScriptFunction *f = engine->scriptFunctions[ot->methods[n]];
+				
+				if( engine->ep.propertyAccessorMode == 3 && !f->IsProperty() )
+					continue;
+				
 				// TODO: The type of the parameter should match the argument (unless the arg is a dummy)
 				if( f->name == getName && (int)f->parameterTypes.GetLength() == (arg?1:0) )
 				{
@@ -12075,6 +12079,9 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
 
+			if( engine->ep.propertyAccessorMode == 3 && !f->IsProperty() )
+				continue;
+			
 			// Ignore script functions, if the application has disabled script defined property accessors
 			if( engine->ep.propertyAccessorMode == 1 && f->funcType == asFUNC_SCRIPT )
 				continue;
@@ -12100,6 +12107,9 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 		{
 			asCScriptFunction *f = builder->GetFunctionDescription(funcs[n]);
 
+			if( engine->ep.propertyAccessorMode == 3 && !f->IsProperty() )
+				continue;
+			
 			// Ignore script functions, if the application has disabled script defined property accessors
 			if( engine->ep.propertyAccessorMode == 1 && f->funcType == asFUNC_SCRIPT )
 				continue;
@@ -12220,7 +12230,7 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 			realSetId = outFunc->objectType->virtualFunctionTable[setFunc->vfTableIdx]->id;
 	}
 
-	// Avoid recursive call, by not treating this as a property accessor call.
+	// Avoid recursive call by not treating this as a property accessor call.
 	// This will also allow having the real property with the same name as the accessors.
 	if( (isThisAccess || outFunc->objectType == 0) &&
 		((realGetId && realGetId == outFunc->id) ||

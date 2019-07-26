@@ -192,7 +192,7 @@ bool Test()
 	
 		r = engine->RegisterObjectType("foo", sizeof(int), asOBJ_VALUE|asOBJ_POD);
 		r = engine->RegisterObjectProperty("foo", "complex velocity", 0);
-		r = engine->RegisterObjectMethod("foo", "void set_velocity(const complex &in v)", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("foo", "void set_velocity(const complex &in v) property", asFUNCTION(0), asCALL_GENERIC);
 		
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
@@ -830,8 +830,8 @@ bool Test()
 		asIScriptContext *context = engine->CreateContext();
 
 		r = engine->RegisterFuncdef("int Callback()"); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("void set_TestCallback(Callback@+ cb)", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("Callback@ get_TestCallback()", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void set_TestCallback(Callback@+ cb) property", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("Callback@ get_TestCallback() property", asFUNCTION(DoNothing), asCALL_GENERIC); assert(r >= 0);
 
 		r = module->AddScriptSection("test", "void main1(){ Callback@ cb = function() {return 123;}; TestCallback = cb; }"); assert(r >= 0);
 		r = module->Build(); // <== Crash Here
@@ -2981,8 +2981,8 @@ bool Test()
 		engine->RegisterObjectMethod("Cvar", "void set(double)", asFUNCTION(0), asCALL_GENERIC);
 
 		engine->RegisterObjectType("ElementFormControl", 0, asOBJ_REF | asOBJ_NOCOUNT);
-		engine->RegisterObjectMethod("ElementFormControl", "string@ get_value() const", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectMethod("ElementFormControl", "void set_value(const string&in)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("ElementFormControl", "string@ get_value() const property", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("ElementFormControl", "void set_value(const string&in) property", asFUNCTION(0), asCALL_GENERIC);
 
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
@@ -3119,8 +3119,8 @@ bool Test()
 		r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructStringGeneric),  asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric),    asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "string get_opIndex(uint) const", asFUNCTION(String_get_opIndexGeneric), asCALL_GENERIC); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void set_opIndex(uint, const string &in)", asFUNCTION(String_set_opIndexGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "string get_opIndex(uint) const property", asFUNCTION(String_get_opIndexGeneric), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void set_opIndex(uint, const string &in) property", asFUNCTION(String_set_opIndexGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterGlobalFunction("void alert(string &in, string &in)", asFUNCTION(AlertGeneric), asCALL_GENERIC); assert( r >= 0 );
@@ -3389,8 +3389,8 @@ bool Test()
 		                     "  { \n"
 							 "    VehicleInfo = vi; \n" // script writer did a value assign by mistake
 							 "  } \n"
-							 "  TA_VehicleInfo@ get_VehicleInfo() const { return m_VehicleInfo; } \n"
-							 "  void set_VehicleInfo(TA_VehicleInfo@ info) { @m_VehicleInfo = @info; } \n"
+							 "  TA_VehicleInfo@ get_VehicleInfo() const property { return m_VehicleInfo; } \n"
+							 "  void set_VehicleInfo(TA_VehicleInfo@ info) property { @m_VehicleInfo = @info; } \n"
 							 "  private TA_VehicleInfo@ m_VehicleInfo; \n"
 	                         "}; \n";
 
@@ -4015,8 +4015,8 @@ bool Test()
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asFUNCTION(0), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectMethod("sound", "bool get_playing()", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectMethod("sound", "int get_count()", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "bool get_playing() property", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "int get_count() property", asFUNCTION(0), asCALL_GENERIC);
 
 		const char *script = "void main() \n"
 							 "{ \n"
@@ -4111,7 +4111,7 @@ bool Test()
 		const char *script =
 			"class Test \n"
 			"{ \n"
-			"  const string @get_id() \n"
+			"  const string @get_id() property \n"
 			"  { \n"
 			"    return @'test'; \n"
 			"  } \n"
@@ -4192,7 +4192,7 @@ bool Test()
 
 		mod = engine->GetModule("", asGM_ALWAYS_CREATE);
 
-		mod->AddScriptSection("test", "class C { int x; int get_x() {return x;} }\n");
+		mod->AddScriptSection("test", "class C { int x; int get_x() property {return x;} }\n");
 		r = mod->Build();
 		if( r < 0 )
 			TEST_FAILED;
@@ -4295,10 +4295,10 @@ bool Test()
 			"       // apparently the following code will make AngelScript segfault rather than throw an error\n"
 			"		command=params='NULL';\n"
 			"	}\n"
-			"	void set_command(string@[] i)   {command=i;}\n"
-			"	void set_params(string@ i)      {params=i;}\n"
-			"	string@[] get_command() {return command;    }\n"
-			"	string@ get_params()    {return params;     }\n"
+			"	void set_command(string@[] i) property  {command=i;}\n"
+			"	void set_params(string@ i) property     {params=i;}\n"
+			"	string@[] get_command() property {return command;    }\n"
+			"	string@ get_params() property    {return params;     }\n"
 			"	string@[] command;\n"
 			"	string params;\n"
 			"}\n";
@@ -4338,7 +4338,7 @@ bool Test()
 			"} \n"
 			"class tone_synth \n"
 			"{ \n"
-			"  void set_waveform_type(wf_type i) {} \n"
+			"  void set_waveform_type(wf_type i) property {} \n"
 			"} \n"
 			"void main () \n"
 			"{ \n"
@@ -4682,14 +4682,14 @@ bool Test()
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", asFUNCTIONPR(CSound::CSound_fact, (), CSound *), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHODPR(CSound, AddRef, (), void), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHODPR(CSound, Release, (), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHODPR(CSound, get_pan, () const, double), asCALL_THISCALL);
-		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", asMETHODPR(CSound, set_pan, (double &), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod("sound", "double get_pan() const property", asMETHODPR(CSound, get_pan, () const, double), asCALL_THISCALL);
+		engine->RegisterObjectMethod("sound", "void set_pan(double &in) property", asMETHODPR(CSound, set_pan, (double &), void), asCALL_THISCALL);
 #else
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound @f()", WRAP_FN_PR(CSound::CSound_fact, (), CSound *), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", WRAP_MFN_PR(CSound, AddRef, (), void), asCALL_GENERIC);
 		engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", WRAP_MFN_PR(CSound, Release, (), void), asCALL_GENERIC);
-		engine->RegisterObjectMethod("sound", "double get_pan() const", WRAP_MFN_PR(CSound, get_pan, () const, double), asCALL_GENERIC);
-		engine->RegisterObjectMethod("sound", "void set_pan(double &in)", WRAP_MFN_PR(CSound, set_pan, (double &), void), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "double get_pan() const property", WRAP_MFN_PR(CSound, get_pan, () const, double), asCALL_GENERIC);
+		engine->RegisterObjectMethod("sound", "void set_pan(double &in) property", WRAP_MFN_PR(CSound, set_pan, (double &), void), asCALL_GENERIC);
 #endif
 
 		engine->SetEngineProperty(asEP_OPTIMIZE_BYTECODE, false);
@@ -5075,8 +5075,8 @@ bool Test()
 			"  AS_Left, AS_Right, AS_Top = AS_Left, AS_Bottom = AS_Right \n"
 			"} \n"
 			"class Fault { \n"
-			"  Alignment @get_alignment() {return A;} \n"
-			"  void set_alignment(Alignment@ value) {@A = value;} \n"
+			"  Alignment @get_alignment() property {return A;} \n"
+			"  void set_alignment(Alignment@ value) property {@A = value;} \n"
 			"  Fault() { \n"
 			"    a = 3.14f; \n"
 			"    b = 1.43f; \n"
@@ -5610,7 +5610,7 @@ bool TestRetRef()
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", asMETHOD(Node, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", asMETHODPR(Node, GetAttribute, (), Variant), asCALL_THISCALL);
 
-	engine->RegisterGlobalFunction("Node@+ get_node()", asFUNCTION(GetGlobalNode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Node@+ get_node() property", asFUNCTION(GetGlobalNode), asCALL_CDECL);
 #else
 	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f()", WRAP_OBJ_LAST(ConstructVariant), asCALL_GENERIC);
 	engine->RegisterObjectBehaviour("Variant", asBEHAVE_CONSTRUCT, "void f(const Variant&in)", WRAP_OBJ_LAST(ConstructVariantCopy), asCALL_GENERIC);
@@ -5628,7 +5628,7 @@ bool TestRetRef()
 	engine->RegisterObjectBehaviour("Node", asBEHAVE_RELEASE, "void f()", WRAP_MFN(Node, Release), asCALL_GENERIC);
 	engine->RegisterObjectMethod("Node", "Variant GetAttribute() const", WRAP_MFN_PR(Node, GetAttribute, (), Variant), asCALL_GENERIC);
 
-	engine->RegisterGlobalFunction("Node@+ get_node()", WRAP_FN(GetGlobalNode), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("Node@+ get_node() property", WRAP_FN(GetGlobalNode), asCALL_GENERIC);
 #endif
 	engine->RegisterObjectProperty("Node", "VariantMap vars", asOFFSET(Node, vars));
 

@@ -1336,6 +1336,10 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 	{
 		if (source.TokenEquals(n->tokenPos, n->tokenLength, EXPLICIT_TOKEN))
 			func->SetExplicit(true);
+		else if( source.TokenEquals(n->tokenPos, n->tokenLength, PROPERTY_TOKEN))
+			func->SetProperty(true);
+		else
+			return asINVALID_DECLARATION;
 
 		n = n->next;
 	}
@@ -4423,27 +4427,36 @@ void asCBuilder::GetParsedFunctionDetails(asCScriptNode *node, asCScriptCode *fi
 	funcTraits.SetTrait(asTRAIT_FINAL, false);
 	funcTraits.SetTrait(asTRAIT_OVERRIDE, false);
 	funcTraits.SetTrait(asTRAIT_EXPLICIT, false);
+	funcTraits.SetTrait(asTRAIT_PROPERTY, false);
 
-	if( objType && n->next->next )
+	if( n->next->next )
 	{
 		asCScriptNode *decorator = n->next->next;
 
 		// Is this a const method?
-		if( decorator->tokenType == ttConst )
+		if( objType && decorator->tokenType == ttConst )
 		{
 			funcTraits.SetTrait(asTRAIT_CONST, true);
 			decorator = decorator->next;
 		}
 
-		while( decorator )
+		while( decorator && decorator->tokenType == ttIdentifier )
 		{
-			if (decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, FINAL_TOKEN))
+			if (objType && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, FINAL_TOKEN))
 				funcTraits.SetTrait(asTRAIT_FINAL, true);
-			else if (decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, OVERRIDE_TOKEN))
+			else if (objType && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, OVERRIDE_TOKEN))
 				funcTraits.SetTrait(asTRAIT_OVERRIDE, true);
-			else if (decorator->tokenType == ttIdentifier && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, EXPLICIT_TOKEN))
+			else if (objType && file->TokenEquals(decorator->tokenPos, decorator->tokenLength, EXPLICIT_TOKEN))
 				funcTraits.SetTrait(asTRAIT_EXPLICIT, true);
-
+			else if (file->TokenEquals(decorator->tokenPos, decorator->tokenLength, PROPERTY_TOKEN))
+				funcTraits.SetTrait(asTRAIT_PROPERTY, true);
+			else
+			{
+				asCString msg(&file->code[decorator->tokenPos], decorator->tokenLength);
+				msg.Format(TXT_UNEXPECTED_TOKEN_s, msg.AddressOf());
+				WriteError(msg.AddressOf(), file, decorator);
+			}			
+			
 			decorator = decorator->next;
 		}
 	}
@@ -4978,7 +4991,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 
 int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file, asCObjectType *objType, bool isInterface, bool isGlobalFunction, asSNameSpace *ns, bool isExistingShared)
 {
-	if( engine->ep.propertyAccessorMode != 2 )
+	if( engine->ep.propertyAccessorMode < 2 )
 	{
 		WriteError(TXT_PROPERTY_ACCESSOR_DISABLED, file, node);
 		node->Destroy(engine);
@@ -5037,6 +5050,9 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 
 		funcTraits.SetTrait(asTRAIT_PRIVATE, isPrivate);
 		funcTraits.SetTrait(asTRAIT_PROTECTED, isProtected);
+		
+		if( engine->ep.propertyAccessorMode == 3 )
+			funcTraits.SetTrait(asTRAIT_PROPERTY, true);
 
 		// TODO: getset: Allow private for individual property accessors
 		// TODO: getset: If the accessor uses its own name, then the property should be automatically declared
@@ -5065,6 +5081,12 @@ int asCBuilder::RegisterVirtualProperty(asCScriptNode *node, asCScriptCode *file
 					funcTraits.SetTrait(asTRAIT_FINAL, true);
 				else if (funcNode->tokenType == ttIdentifier && file->TokenEquals(funcNode->tokenPos, funcNode->tokenLength, OVERRIDE_TOKEN))
 					funcTraits.SetTrait(asTRAIT_OVERRIDE, true);
+				else
+				{
+					asCString msg(&file->code[funcNode->tokenPos], funcNode->tokenLength);;
+					msg.Format(TXT_UNEXPECTED_TOKEN_s, msg.AddressOf());
+					WriteError(msg.AddressOf(), file, node);
+				}
 
 				funcNode = funcNode->next;
 			}
@@ -5175,7 +5197,7 @@ int asCBuilder::RegisterImportedFunction(int importID, asCScriptNode *node, asCS
 	node->Destroy(engine);
 
 	// Register the function
-	module->AddImportedFunction(importID, name, returnType, parameterTypes, inOutFlags, defaultArgs, ns, moduleName);
+	module->AddImportedFunction(importID, name, returnType, parameterTypes, inOutFlags, defaultArgs, funcTraits, ns, moduleName);
 
 	return 0;
 }

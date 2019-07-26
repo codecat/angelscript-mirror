@@ -109,6 +109,19 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 	
+	// TODO: Test to make sure 'property' token is accepted even when asEP_PROPERTY_ACCESSOR_MODE is not 3
+	// TODO: Test to make sure only methods with 'property' are identified as virtual property accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
+	// TODO: Test to make sure 'type id { get; set; }' automatically flags methods as 'property' when asEP_PROPERTY_ACCESSOR_MODE is 3
+	// TODO: Test to make sure methods with 'property' checks for name conflicts with other properties when asEP_PROPERTY_ACCESSOR_MODE is 3
+	// TODO: Test to make sure methods with 'property' checks for multiple accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
+	// TODO: Test to make sure methods with 'property' checks for type mismatch between get/set accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
+	// TODO: Test asIScriptFunction::IsProperty
+	// TODO: Test setting 'property' on function without prefix 'get_' or 'set_'
+	// TODO: Test setting 'property' on function without appropriate signature
+	// TODO: Test explicitly setting 'property' on 'type id { get; set; }'
+	// TODO: Test that asIScriptFunction::GetDeclaration includes the 'property' attrib (when requested)
+	
+	
 	// Test to make sure compilation is interrupted when a property has no get accessor
 	// Reported by Patrick Jeeves
 	{
@@ -123,7 +136,7 @@ bool Test()
 			"class T \n"
 			"{ \n"
 			"  string a = ''; \n" // member is hidden by set_a
-			"  void set_a(const string &in v) { } \n"
+			"  void set_a(const string &in v) property { } \n"
 			"} \n"
 			"void func(const string &in v) {} \n"
 			"void main() \n"
@@ -153,6 +166,7 @@ bool Test()
 		engine = asCreateScriptEngine();
 		bout.buffer = "";
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_PROPERTY_ACCESSOR_MODE, 2);
 
 		RegisterStdString(engine);
 	
@@ -248,7 +262,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 	
 		r = engine->RegisterObjectType("Foo", 0, asOBJ_REF | asOBJ_NOCOUNT); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Foo", "bool &get_HasSucceeded()", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Foo", "bool &get_HasSucceeded() property", asFUNCTION(0), asCALL_GENERIC); assert( r >= 0 );
 		r = engine->RegisterGlobalProperty("Foo g_serverDisplayNameTask", (void*)1); assert( r >= 0 );
 	
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
@@ -338,7 +352,7 @@ bool Test()
 		r = engine->RegisterObjectMethod("char", "string opImplConv() const", asFUNCTION(&CharToStr), asCALL_CDECL_OBJFIRST); assert(r >= 0);
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
-		r = mod->AddScriptSection("prop", "char get_Prop(){char c = 0x41; return c;}"); assert(r >= 0);
+		r = mod->AddScriptSection("prop", "char get_Prop() property {char c = 0x41; return c;}"); assert(r >= 0);
 		r = mod->AddScriptSection("main", "void main(){string s = string(Prop); assert(s == 'A');}"); assert(r >= 0);
 		r = mod->Build();
 		if (r < 0)
@@ -413,7 +427,7 @@ bool Test()
 			"  } \n"
 			"  uint16 _prop = 0; \n"
 			"} \n"
-			"Obj @get_Objs(uint idx) { \n"
+			"Obj @get_Objs(uint idx) property { \n"
 			"  return _obj; \n"
 			"} \n"
 			"Obj @_obj = Obj(); \n";
@@ -562,8 +576,8 @@ bool Test()
 		// TODO: It could be allowed if the object is a local variable (but wouldn't it be confusing to allow it sometimes but other times not?)
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
 		engine->RegisterObjectType("type", 4, asOBJ_VALUE | asOBJ_POD);
-		engine->RegisterObjectMethod("type", "int get_prop() const", asFUNCTION(0), asCALL_GENERIC);
-		engine->RegisterObjectMethod("type", "void set_prop(int)", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("type", "int get_prop() const property", asFUNCTION(0), asCALL_GENERIC);
+		engine->RegisterObjectMethod("type", "void set_prop(int) property", asFUNCTION(0), asCALL_GENERIC);
 		bout.buffer = "";
 		r = ExecuteString(engine, "type t; t.prop += 1;");
 		if( r >= 0 )
@@ -579,8 +593,8 @@ bool Test()
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test",
 			"class T { \n"
-			"  int get_idx(int i) { return 0; } \n"
-			"  void set_idx(int i, int value) {} \n"
+			"  int get_idx(int i) property { return 0; } \n"
+			"  void set_idx(int i, int value) property {} \n"
 			"} \n"
 			"void main() { \n"
 			"  T t; t.idx[0] += 1; \n"
@@ -639,10 +653,10 @@ bool Test()
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class RayQueryResult { \n"
-			"  Drawable @get_drawable() const { return Drawable(); } \n"
+			"  Drawable @get_drawable() const property { return Drawable(); } \n"
 			"} \n"
 			"class Drawable { \n"
-			"  const string &get_typename() const { return tn; } \n"
+			"  const string &get_typename() const property { return tn; } \n"
 			"  string tn = 'AnimatedModel'; \n"
 			"} \n"
 			"void func() \n"
@@ -701,7 +715,7 @@ bool Test()
 		r = engine->RegisterObjectType ("Container_Real", 0, asOBJ_REF | asOBJ_NOHANDLE) ; assert (r > 0) ;
 		r = engine->RegisterObjectBehaviour ("Container", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour ("Container", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(0), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectMethod ("Container", "Container_Real& get_Payload()", asFUNCTION(0), asCALL_THISCALL) ; assert (r > 0) ;
+		r = engine->RegisterObjectMethod ("Container", "Container_Real& get_Payload() property", asFUNCTION(0), asCALL_THISCALL) ; assert (r > 0) ;
 		r = engine->RegisterGlobalFunction ("Container Get_Container()", asFUNCTION(0), asCALL_CDECL) ; assert (r > 0) ;
 
 		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
@@ -725,7 +739,7 @@ bool Test()
 		engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
 		r = engine->RegisterGlobalFunction("void Log(const string&, ?&)", asFUNCTIONPR(formattedPrintAS, (std::string&, void*, int), void), asCALL_CDECL);
 		r = engine->RegisterObjectType("TestClass", 0, asOBJ_REF | asOBJ_NOCOUNT); 
-		r = engine->RegisterObjectMethod("TestClass", "float get_OffsetVars(uint)", asMETHOD(TestClass, get_OffsetVars), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("TestClass", "float get_OffsetVars(uint) property", asMETHOD(TestClass, get_OffsetVars), asCALL_THISCALL);
 
 		mod = engine->GetModule("Test", asGM_ALWAYS_CREATE);
 
@@ -770,8 +784,8 @@ bool Test()
 		const char *script = 
 			"class Test \n"
 			"{ \n"
-			"  string @get_s() { return 'test'; } \n"
-			"  void set_s(const string &in) {} \n"
+			"  string @get_s() property { return 'test'; } \n"
+			"  void set_s(const string &in) property {} \n"
 			"} \n"
 			"void func() \n"
 			"{ \n"
@@ -806,8 +820,8 @@ bool Test()
 	const char *script1 = 
 		"class Test                            \n"
 		"{                                     \n"
-		"  int get_prop() { return _prop; }    \n"
-		"  void set_prop(int v) { _prop = v; } \n"
+		"  int get_prop() property { return _prop; }    \n"
+		"  void set_prop(int v) property { _prop = v; } \n"
         "  int _prop;                          \n"
 		"}                                     \n"
 		"void main1()                          \n"
@@ -853,7 +867,7 @@ bool Test()
 	const char *script2 = 
 		"class Test                            \n"
 		"{                                     \n"
-		"  void set_prop(int v) { _prop = v; } \n"
+		"  void set_prop(int v) property { _prop = v; } \n"
         "  int _prop;                          \n"
 		"}                                     \n"
 		"void main1()                          \n"
@@ -880,7 +894,7 @@ bool Test()
 	const char *script3 = 
 		"class Test                              \n"
 		"{                                       \n"
-		"  bool get_boolProp() { return true; }  \n"
+		"  bool get_boolProp() property { return true; }  \n"
 		"}                                       \n"
 		"void main1()                            \n"
 		"{                                       \n"
@@ -911,7 +925,7 @@ bool Test()
 	const char *script4 = 
 		"class Test                              \n"
 		"{                                       \n"
-		"  float get_prop() { return 1.0f; }     \n"
+		"  float get_prop() property { return 1.0f; }     \n"
 		"}                                       \n"
 		"void main1()                            \n"
 		"{                                       \n"
@@ -940,7 +954,7 @@ bool Test()
 	const char *script5 = 
 		"class Test                              \n"
 		"{                                       \n"
-		"  uint get_prop() { return 1; }         \n"
+		"  uint get_prop() property { return 1; }         \n"
 		"}                                       \n"
 		"void main1()                            \n"
 		"{                                       \n"
@@ -969,10 +983,10 @@ bool Test()
 	const char *script6 = 
 		"class Test                  \n"
 		"{                           \n"
-		"  uint get_p() {return 0;}  \n"
-		"  float get_p() {return 0;} \n"
-		"  void set_s(float) {}      \n"
-		"  void set_s(uint) {}       \n"
+		"  uint get_p() property {return 0;}  \n"
+		"  float get_p() property {return 0;} \n"
+		"  void set_s(float) property {}      \n"
+		"  void set_s(uint) property {}       \n"
 		"}                           \n"
 		"void main()                 \n"
 		"{                           \n"
@@ -1005,8 +1019,8 @@ bool Test()
 	const char *script7 = 
 		"class Test                  \n"
 		"{                           \n"
-		"  uint get_p() {return 0;}  \n"
-		"  void set_p(float) {}      \n"
+		"  uint get_p() property {return 0;}  \n"
+		"  void set_p(float) property {}      \n"
 		"}                           \n"
 		"void main()                 \n"
 		"{                           \n"
@@ -1035,8 +1049,8 @@ bool Test()
 	const char *script8 = 
 		"class Test                  \n"
 		"{                           \n"
-		"  uint get_g() {return 0;}  \n"
-		"  void set_s(float) {}      \n"
+		"  uint get_g() property {return 0;}  \n"
+		"  void set_s(float) property {}      \n"
 		"}                           \n"
 		"void main()                 \n"
 		"{                           \n"
@@ -1064,8 +1078,8 @@ bool Test()
 	const char *script9 = 
 		"class Test                  \n"
 		"{                           \n"
-		"  uint get_p() {return 0;}  \n"
-		"  void set_p(uint) {}       \n"
+		"  uint get_p() property {return 0;}  \n"
+		"  void set_p(uint) property {}       \n"
 		"}                           \n"
 		"void main()                 \n"
 		"{                           \n"
@@ -1094,8 +1108,8 @@ bool Test()
 	const char *script10 = 
 		"class Test                 \n"
 		"{                          \n"
-		"  uint get_p() {return 0;} \n"
-		"  void set_p(uint) {}      \n"
+		"  uint get_p() property {return 0;} \n"
+		"  void set_p(uint) property {}      \n"
 		"  void test()              \n"
 		"  {                        \n"
 		"    p = 0;                 \n"
@@ -1131,8 +1145,8 @@ bool Test()
 	const char *script11 = 
 		"class Test                 \n"
 		"{                          \n"
-		"  uint get_p() {return 0;} \n"
-		"  void set_p(uint) {}      \n"
+		"  uint get_p() property {return 0;} \n"
+		"  void set_p(uint) property {}      \n"
 		"}                          \n"
 		"void func()                \n"
 		"{                          \n"
@@ -1171,8 +1185,8 @@ bool Test()
 	const char *script12 = 
 		"class Test                                   \n"
 		"{                                            \n"
-		"  string get_s() {return _s;}                \n"
-		"  void set_s(const string &in n) {_s = n;}   \n"
+		"  string get_s() property {return _s;}                \n"
+		"  void set_s(const string &in n) property {_s = n;}   \n"
 		"  string _s;                                 \n"
 		"}                                            \n"
 		"void func()                \n"
@@ -1206,8 +1220,8 @@ bool Test()
 	const char *script13 = 
 		"class Test                                   \n"
 		"{                                            \n"
-		"  string@ get_s() {return _s;}               \n"
-		"  void set_s(string @n) {@_s = @n;}          \n"
+		"  string@ get_s() property {return _s;}               \n"
+		"  void set_s(string @n) property {@_s = @n;}          \n"
 		"  string@ _s;                                \n"
 		"}                          \n"
 		"void func()                \n"
@@ -1242,8 +1256,8 @@ bool Test()
 	const char *script14 = 
 		"class Test                                   \n"
 		"{                                            \n"
-		"  string get_s() {return _s;}                \n"
-		"  void set_s(string n) {_s = n;}             \n"
+		"  string get_s() property {return _s;}                \n"
+		"  void set_s(string n) property {_s = n;}             \n"
 		"  string _s;                                 \n"
 		"}                            \n"
 		"void func()                  \n"
@@ -1297,7 +1311,7 @@ bool Test()
 		"class Val { int opNeg() const { return -1; } } \n"
 		"class Test                          \n"
 		"{                                   \n"
-		"  Val get_s() const {return Val();} \n"
+		"  Val get_s() const property {return Val();} \n"
 		"}                                   \n"
 		"void func()                  \n"
 		"{                            \n"
@@ -1327,7 +1341,7 @@ bool Test()
 	const char *script16 = 
 		"class Test                          \n"
 		"{                                   \n"
-		"  int[] get_s() const { int[] a(1); a[0] = 42; return a; } \n"
+		"  int[] get_s() const property { int[] a(1); a[0] = 42; return a; } \n"
 		"}                                   \n"
 		"void func()                  \n"
 		"{                            \n"
@@ -1358,7 +1372,7 @@ bool Test()
 		"class Val { int val; } \n"
 		"class Test                          \n"
 		"{                                   \n"
-		"  Val get_s() const { Val v; v.val = 42; return v;} \n"
+		"  Val get_s() const property { Val v; v.val = 42; return v;} \n"
 		"}                                   \n"
 		"void func()                  \n"
 		"{                            \n"
@@ -1388,9 +1402,9 @@ bool Test()
 	const char *script18 = 
 		"class Test                          \n"
 		"{                                   \n"
-		"  int get_p() { return 42; }        \n"
-		"  int get_c() const { return 42; }  \n"
-		"  void set_s(int) {}                \n"
+		"  int get_p() property { return 42; }        \n"
+		"  int get_c() const property { return 42; }  \n"
+		"  void set_s(int) property {}                \n"
 		"}                                   \n"
 		"void func()                  \n"
 		"{                            \n"
@@ -1417,7 +1431,7 @@ bool Test()
 	// Test accessor with property of the same name
 	const char *script19 = 
 		"int direction; \n"
-		"void set_direction(int val) { direction = val; } \n"
+		"void set_direction(int val) property { direction = val; } \n"
 		"void test_set() \n"
 		"{ \n"
 		"  direction = 9; \n" // calls the set_direction property accessor
@@ -1441,7 +1455,7 @@ bool Test()
 	const char *script20 = 
 		"class Test { \n"
 		"  int direction; \n"
-		"  void set_direction(int val) { direction = val; } \n"
+		"  void set_direction(int val) property { direction = val; } \n"
 		"} \n";
 	mod->AddScriptSection("script", script20);
 	bout.buffer = "";
@@ -1462,8 +1476,8 @@ bool Test()
 		"class Test { \n"
 		" int a; \n"
 		" Test @member; \n"
-		" int get_a() const { return a; } \n"
-		" void set_a(int val) {a = val; if( member !is null ) member.a = val;} \n"
+		" int get_a() const property { return a; } \n"
+		" void set_a(int val) property {a = val; if( member !is null ) member.a = val;} \n"
 		"} \n";
 	mod->AddScriptSection("script", script21);
 	bout.buffer = "";
@@ -1485,10 +1499,10 @@ bool Test()
 	const char *script22 = 
 		"class Test                                       \n"
 		"{                                                \n"
-		"  int get_c() { return 41; }                     \n"
-		"  int get_c() const { return 42; }               \n"
-		"  void set_c(int v) { assert( v == 41 ); }       \n"
-		"  void set_c(int v) const { assert( v == 42 ); } \n"
+		"  int get_c() property { return 41; }                     \n"
+		"  int get_c() const property { return 42; }               \n"
+		"  void set_c(int v) property { assert( v == 41 ); }       \n"
+		"  void set_c(int v) const property { assert( v == 42 ); } \n"
 		"}                                                \n"
 		"void func()                  \n"
 		"{                            \n"
@@ -1568,7 +1582,7 @@ bool Test()
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
 		RegisterStdString(engine);
 
-		const char *script = "class Obj { void set_opacity(float v) {} }\n"
+		const char *script = "class Obj { void set_opacity(float v) property {} }\n"
 			                 "Obj @GetObject() { return @Obj(); } \n";
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -1595,8 +1609,8 @@ bool Test()
 		const char *script = 
 			"class Object { \n"
 			"  Object() {rot = 0;} \n"
-			"  void set_rotation(float r) {rot = r;} \n"
-			"  float get_rotation() const {return rot;} \n"
+			"  void set_rotation(float r) property {rot = r;} \n"
+			"  float get_rotation() const property {return rot;} \n"
 			"  float rot; } \n";
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
@@ -1624,8 +1638,8 @@ bool Test()
 
 		const char *script = 
 			"int _s = 0;  \n"
-			"int get_s() { return _s; } \n"
-			"void set_s(int v) { _s = v; } \n";
+			"int get_s() property { return _s; } \n"
+			"void set_s(int v) property { _s = v; } \n";
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
@@ -1651,7 +1665,7 @@ bool Test()
 
 		script =
 			"string _s = s; \n"
-			"string get_s() { return _s; } \n";
+			"string get_s() property { return _s; } \n";
 
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
@@ -1677,7 +1691,7 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script = 
-			"class MyObj { bool get_Active() { return true; } } \n";
+			"class MyObj { bool get_Active() property { return true; } } \n";
 			
 		mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("script", script);
@@ -1706,7 +1720,7 @@ bool Test()
 			"}; \n"
 			"class Hoge \n"
 			"{ \n"
-			"    const Vector3 get_pos() { return mPos; } \n"
+			"    const Vector3 get_pos() property { return mPos; } \n"
 			"    const Vector3 foo() { return pos;  } \n"
 			"    const Vector3 zoo() { return get_pos(); } \n"
 			"    Vector3 mPos; \n"
@@ -1741,8 +1755,8 @@ bool Test()
 		const char *script = 
 			"class sound \n"
 			"{ \n"
-			"  int get_pitch() { return 1; } \n"
-			"  void set_pitch(int p) {} \n"
+			"  int get_pitch() property { return 1; } \n"
+			"  void set_pitch(int p) property {} \n"
 			"} \n"
 			"void main() \n"
 			"{ \n"
@@ -1772,7 +1786,7 @@ bool Test()
 		const char *script = 
 			"class sound \n"
 			"{ \n"
-			"  const int &get_id() const { return i; } \n"
+			"  const int &get_id() const property { return i; } \n"
 			"  int i; \n"
 			"} \n"
 			"void main() \n"
@@ -1808,15 +1822,15 @@ bool Test()
 			"class CTest \n"
 			"{ \n"
 			"  CTest() { arr.resize(5); } \n"
-			"  int get_opIndex(int i) const { return arr[i]; } \n"
-			"  void set_opIndex(int i, int v) { arr[i] = v; } \n"
+			"  int get_opIndex(int i) const property { return arr[i]; } \n"
+			"  void set_opIndex(int i, int v) property { arr[i] = v; } \n"
 			"  array<int> arr; \n"
 			"} \n"
 			"class CTest2 \n"
 			"{ \n"
 			"  CTest2() { arr.resize(1); } \n"
-			"  CTest @get_opIndex(int i) const { return arr[i]; } \n"
-			"  void set_opIndex(int i, CTest @v) { @arr[i] = v; } \n"
+			"  CTest @get_opIndex(int i) const property { return arr[i]; } \n"
+			"  void set_opIndex(int i, CTest @v) property { @arr[i] = v; } \n"
 			"  array<CTest@> arr; \n"
 			"} \n"
 			"void main() \n"
@@ -1847,15 +1861,15 @@ bool Test()
 			"class CTest \n"
 			"{ \n"
 			"  CTest() { } \n"
-			"  int get_opIndex(int i) const { return arr[i]; } \n"
-			"  void set_opIndex(int i, int v) { arr[i] = v; } \n"
+			"  int get_opIndex(int i) const property { return arr[i]; } \n"
+			"  void set_opIndex(int i, int v) property { arr[i] = v; } \n"
 			"  array<int> arr; \n"
 			"} \n"
 			"class CTest2 \n"
 			"{ \n"
 			"  CTest2() { } \n"
-			"  CTest get_opIndex(int i) const { return arr[i]; } \n"
-			"  void set_opIndex(int i, CTest v) { @arr[i] = v; } \n"
+			"  CTest get_opIndex(int i) const property { return arr[i]; } \n"
+			"  void set_opIndex(int i, CTest v) property { @arr[i] = v; } \n"
 			"  array<CTest@> arr; \n"
 			"} \n"
 			"void main() \n"
@@ -1891,8 +1905,8 @@ bool Test()
 		engine->RegisterGlobalFunction("void assert(bool)", asFUNCTION(Assert), asCALL_GENERIC);
 
 		const char *script = 
-			"  int get_arr(int i) { arr.resize(5); return arr[i]; } \n"
-			"  void set_arr(int i, int v) { arr.resize(5); arr[i] = v; } \n"
+			"  int get_arr(int i) property { arr.resize(5); return arr[i]; } \n"
+			"  void set_arr(int i, int v) property { arr.resize(5); arr[i] = v; } \n"
 			"  array<int> arr; \n"
 			"void main() \n"
 			"{ \n"
@@ -1927,8 +1941,8 @@ bool Test()
 			"class CTest \n"
 			"{ \n"
 			"  CTest() { _arr.resize(5); } \n"
-			"  int get_arr(int i) { return _arr[i]; } \n"
-			"  void set_arr(int i, int v) { _arr[i] = v; } \n"
+			"  int get_arr(int i) property { return _arr[i]; } \n"
+			"  void set_arr(int i, int v) property { _arr[i] = v; } \n"
 			"  private array<int> _arr; \n"
 			"  void test() \n"
 			"  { \n"
@@ -1971,8 +1985,8 @@ bool Test()
 			"class CTest \n"
 			"{ \n"
 			"  double _vol; \n"
-			"  double get_vol() const { return _vol; } \n"
-			"  void set_vol(double &in v) { _vol = v; } \n"
+			"  double get_vol() const property { return _vol; } \n"
+			"  void set_vol(double &in v) property { _vol = v; } \n"
 			"} \n"
 			"CTest t; \n"
 			"void main() \n"
@@ -2002,7 +2016,7 @@ bool Test()
 
 		engine->RegisterObjectType("LevelType", sizeof(CLevel), asOBJ_VALUE | asOBJ_POD);
 		engine->RegisterObjectProperty("LevelType", "float attr", asOFFSET(CLevel, attr));
-		engine->RegisterGlobalFunction("LevelType &get_Level()", asFUNCTION(get_Level), asCALL_CDECL);
+		engine->RegisterGlobalFunction("LevelType &get_Level() property", asFUNCTION(get_Level), asCALL_CDECL);
 		
 		r = ExecuteString(engine, "Level.attr = 0.5f;");
 		if( r != asEXECUTION_FINISHED ) 
@@ -2023,8 +2037,8 @@ bool Test()
 		engine->RegisterObjectBehaviour("node", asBEHAVE_FACTORY, "node @f()", asFUNCTION(CNode::CNodeFactory), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("node", asBEHAVE_ADDREF, "void f()", asMETHOD(CNode, AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("node", asBEHAVE_RELEASE, "void f()", asMETHOD(CNode, Release), asCALL_THISCALL);
-		engine->RegisterObjectMethod("node", "node @+ get_child()", asMETHOD(CNode, GetChild), asCALL_THISCALL);
-		engine->RegisterObjectMethod("node", "void set_child(node @+)", asMETHOD(CNode, SetChild), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "node @+ get_child() property", asMETHOD(CNode, GetChild), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "void set_child(node @+) property", asMETHOD(CNode, SetChild), asCALL_THISCALL);
 		engine->RegisterObjectProperty("node", "vector3 vector", asOFFSET(CNode, vector));
 		engine->RegisterObjectProperty("node", "float x", asOFFSET(CNode, vector));
 
@@ -2048,8 +2062,8 @@ bool Test()
 		engine->RegisterObjectBehaviour("node", asBEHAVE_FACTORY, "node @f()", asFUNCTION(CNode::CNodeFactory), asCALL_CDECL);
 		engine->RegisterObjectBehaviour("node", asBEHAVE_ADDREF, "void f()", asMETHOD(CNode, AddRef), asCALL_THISCALL);
 		engine->RegisterObjectBehaviour("node", asBEHAVE_RELEASE, "void f()", asMETHOD(CNode, Release), asCALL_THISCALL);
-		engine->RegisterObjectMethod("node", "vector3 get_vector() const", asMETHOD(CNode, GetVector), asCALL_THISCALL);
-		engine->RegisterObjectMethod("node", "void set_vector(const vector3 &in)", asMETHOD(CNode, SetVector), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "vector3 get_vector() const property", asMETHOD(CNode, GetVector), asCALL_THISCALL);
+		engine->RegisterObjectMethod("node", "void set_vector(const vector3 &in) property", asMETHOD(CNode, SetVector), asCALL_THISCALL);
 
 		r = ExecuteString(engine, "node @a = node(); \n"
 								  "a.vector.x = 1; \n"              // Not OK
@@ -2117,7 +2131,7 @@ bool Test()
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"class Test {} \n"
-			"Test get_test(int a) { \n"
+			"Test get_test(int a) property { \n"
 			"    return Test(); \n"
 			"} \n"
 			"void f() { \n"
@@ -2147,7 +2161,7 @@ bool Test()
 		mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
 		mod->AddScriptSection("test", 
 			"vector3 global; \n"
-			"vector3 get_global_accessor() { return vector3(1,1,1); } \n"
+			"vector3 get_global_accessor() property { return vector3(1,1,1); } \n"
 			"void f() { \n"
 			"   global = global_accessor; \n"
 			"   assert( global.x == 1 && global.y == 1 && global.z == 1 ); \n"
@@ -2185,7 +2199,7 @@ bool Test()
 			"	} \n"
 			"}; \n"
 			"class IndexProperty { \n"
-			"	Index@ get_instance(uint i) { \n"
+			"	Index@ get_instance(uint i) property { \n"
 			"		return Index(); \n"
 			"	} \n"
 			"}; \n"
@@ -2273,7 +2287,7 @@ bool Test2()
 	engine->RegisterObjectBehaviour("CMyObj", asBEHAVE_FACTORY, "CMyObj @f()", asFUNCTION(MyObj_factory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("CMyObj", asBEHAVE_ADDREF, "void f()", asMETHOD(CMyObj, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("CMyObj", asBEHAVE_RELEASE, "void f()", asMETHOD(CMyObj, Release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("CMyObj", "void set_Text(const string &in)", asMETHOD(CMyObj, set_Text), asCALL_THISCALL);
+	engine->RegisterObjectMethod("CMyObj", "void set_Text(const string &in) property", asMETHOD(CMyObj, set_Text), asCALL_THISCALL);
 
 	const char *string = 
 		"void main() { \n"

@@ -177,7 +177,7 @@ bool Test()
 
 		mod->AddScriptSection("test",
 			"class C { \n"
-			"  string @get_member() { \n"
+			"  string @get_member() property { \n"
 			"    return test; \n"
 			"  } \n"
 			"  string test = 'hello'; \n"

@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.33.1 WIP - 2019/06/21</h2>
+<h2>Version 2.33.1 WIP - 2019/07/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -35,9 +35,19 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler now interrupts compilation after identifying error while compiling use of get property accessor (Thanks Patric Jeeves)
 <li>Compiler no longer identifies global script functions as property accessors when this is turned off with asEP_PROPERTY_ACCESSOR_MODE (Thanks Aaron Baker)
 </ul>
+<li>Library
+<ul>
+<li>asEP_PROPERTY_ACCESSOR_MODE has a new mode to require property accessors to be flagged with 'property'
+</ul>
 <li>Script language
 <ul>
 <li>Handles can now be declared read-only (Thanks Max Waine)
+<li>Functions and methods intended to be used as virtual property should now be declared with a 'property' decorator
+<li>Added non-reserved keyword 'property'
+</ul>
+<li>Library interface
+<ul>
+<li>Added asIScriptFunction::IsProperty
 </ul>
 <li>Add-ons &amp; Samples
 <ul>

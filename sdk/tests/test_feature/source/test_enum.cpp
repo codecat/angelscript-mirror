@@ -604,7 +604,7 @@ static bool TestEnum()
 										"  assert( '' + sineWave + '' == '3' ); \n"
 										"  assert( synth.waveform_type == 3 ); \n"
 										"} \n"
-										"class tone_synth { void set_waveform_type(double v) {prop = v;} double get_waveform_type() {return prop;} double prop; }\n");
+										"class tone_synth { void set_waveform_type(double v) property {prop = v;} double get_waveform_type() property {return prop;} double prop; }\n");
 
 		r = mod->Build();
 		if( r < 0 ) 
