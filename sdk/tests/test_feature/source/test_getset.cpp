@@ -109,18 +109,174 @@ bool Test()
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
 	
-	// TODO: Test to make sure 'property' token is accepted even when asEP_PROPERTY_ACCESSOR_MODE is not 3
-	// TODO: Test to make sure only methods with 'property' are identified as virtual property accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
-	// TODO: Test to make sure 'type id { get; set; }' automatically flags methods as 'property' when asEP_PROPERTY_ACCESSOR_MODE is 3
-	// TODO: Test to make sure methods with 'property' checks for name conflicts with other properties when asEP_PROPERTY_ACCESSOR_MODE is 3
-	// TODO: Test to make sure methods with 'property' checks for multiple accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
-	// TODO: Test to make sure methods with 'property' checks for type mismatch between get/set accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
-	// TODO: Test asIScriptFunction::IsProperty
-	// TODO: Test setting 'property' on function without prefix 'get_' or 'set_'
-	// TODO: Test setting 'property' on function without appropriate signature
-	// TODO: Test explicitly setting 'property' on 'type id { get; set; }'
-	// TODO: Test that asIScriptFunction::GetDeclaration includes the 'property' attrib (when requested)
+	// Test validation of global virtual properties upon registration
+	// TODO: Test in script declarations too
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		// invalid signature for property
+		r = engine->RegisterGlobalFunction("void get_f() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+		r = engine->RegisterGlobalFunction("void set_f() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+		r = engine->RegisterGlobalFunction("int get_q(int, int) property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+
+		// mismatch type between get/set
+		engine->RegisterGlobalFunction("int get_a() property", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("void set_a(float) property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+		engine->RegisterGlobalFunction("void set_b(float) property", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("int get_b() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+
+		// name conflict with global function
+		engine->RegisterGlobalFunction("void foo()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("int get_foo() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asNAME_TAKEN )
+			TEST_FAILED;
+		
+		// test name conflict with type
+		engine->RegisterObjectType("bar", 0, asOBJ_REF);
+		r = engine->RegisterGlobalFunction("int get_bar() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asNAME_TAKEN )
+			TEST_FAILED;
+
+		// name conflict with virtual property
+		engine->RegisterGlobalFunction("int get_foo2() property", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterGlobalFunction("void foo2()", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asNAME_TAKEN )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void get_f() property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void set_f() property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'int get_q(int, int) property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void set_a(float) property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'int get_b() property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'int get_foo() property' (Code: asNAME_TAKEN, -9)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'int get_bar() property' (Code: asNAME_TAKEN, -9)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterGlobalFunction' with 'void foo2()' (Code: asNAME_TAKEN, -9)\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
+
+	// Test validation of class member virtual properties upon registration
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		engine->RegisterObjectType("testprop", 0, asOBJ_REF);
+		
+		// invalid signature for property
+		r = engine->RegisterObjectMethod("testprop", "void get_f() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+		r = engine->RegisterObjectMethod("testprop", "void set_f() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+		r = engine->RegisterObjectMethod("testprop", "int get_q(int, int) property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+
+		// mismatch type between get/set
+		engine->RegisterObjectMethod("testprop", "int get_a() property", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("testprop", "void set_a(float) property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+		engine->RegisterObjectMethod("testprop", "void set_b(float) property", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("testprop", "int get_b() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asINVALID_DECLARATION )
+			TEST_FAILED;
+
+		// name conflict with object method
+		engine->RegisterObjectMethod("testprop", "void foo()", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("testprop", "int get_foo() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asNAME_TAKEN )
+			TEST_FAILED;
+		
+		// test name conflict with type
+		engine->RegisterFuncdef("void testprop::bar()");
+		r = engine->RegisterObjectMethod("testprop", "int get_bar() property", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asNAME_TAKEN )
+			TEST_FAILED;
+
+		// name conflict with virtual property
+		engine->RegisterObjectMethod("testprop", "int get_foo2() property", asFUNCTION(0), asCALL_GENERIC);
+		r = engine->RegisterObjectMethod("testprop", "void foo2()", asFUNCTION(0), asCALL_GENERIC);
+		if( r != asNAME_TAKEN )
+			TEST_FAILED;
+
+		if( bout.buffer != " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'void get_f() property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'void set_f() property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'int get_q(int, int) property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'void set_a(float) property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'int get_b() property' (Code: asINVALID_DECLARATION, -10)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'int get_foo() property' (Code: asNAME_TAKEN, -9)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'int get_bar() property' (Code: asNAME_TAKEN, -9)\n"
+						   " (0, 0) : Error   : Failed in call to function 'RegisterObjectMethod' with 'testprop' and 'void foo2()' (Code: asNAME_TAKEN, -9)\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+
+		engine->ShutDownAndRelease();
+	}
 	
+	// Test to make sure only methods with 'property' are identified as virtual property accessors when asEP_PROPERTY_ACCESSOR_MODE is 3
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		engine->SetEngineProperty(asEP_PROPERTY_ACCESSOR_MODE, 3);
+
+		RegisterStdString(engine);
+	
+		mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
+		r = mod->AddScriptSection("test",
+			"int g_current_value_cnt = 0; \n"
+			"int current_value() \n"
+			"{ \n"
+			"  g_current_value_cnt++; \n"
+			"  return 0; \n"
+			"} \n"
+			"void set_current_value(int x) \n"
+			"{ \n"
+			"  string str=''+x; \n"
+			"  set_current_value(str); \n"
+			"} \n"
+			"void set_current_value(string x) \n"
+			"{ \n"
+			"//  alert('hello!', x); \n"
+			"} \n"
+			"void main() \n"
+			"{ \n"
+			"  set_current_value(35); \n"
+			"  set_current_value('I will kill you!'); \n"
+			"  current_value(); \n" // symbol current_value doesn't match set_current_value as property since they are not flagged as such
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	
+		r = engine->ShutDownAndRelease();
+	}
 	
 	// Test to make sure compilation is interrupted when a property has no get accessor
 	// Reported by Patrick Jeeves
@@ -754,6 +910,8 @@ bool Test()
 			TEST_FAILED;
 
 		asIScriptFunction *func = mod->GetFunctionByDecl("void main( TestClass@ )");
+		if( func->IsProperty() )
+			TEST_FAILED;
 		
 		asIScriptContext *ctx = engine->CreateContext();
 		ctx->Prepare(func);
@@ -1546,6 +1704,7 @@ bool Test()
 
 
 	// Test private property accessors
+	// Test the asIScriptFunction::IsProperty 
 	{
 		engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asMETHOD(COutStream, Callback), &out, asCALL_THISCALL);
@@ -1570,7 +1729,7 @@ bool Test()
 		if( type->GetMethodCount() != 1 )
 			TEST_FAILED;
 		asIScriptFunction *func = type->GetMethodByDecl("int get_MyProp()");
-		if( func == 0 || !func->IsPrivate() )
+		if( func == 0 || !func->IsPrivate() || !func->IsProperty() )
 			TEST_FAILED;
 
 		engine->Release();

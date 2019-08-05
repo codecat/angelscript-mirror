@@ -12009,6 +12009,9 @@ int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx
 //  -3 = processing error, e.g. out of memory
 int asCCompiler::FindPropertyAccessor(const asCString &name, asCExprContext *ctx, asCExprContext *arg, asCScriptNode *node, asSNameSpace *ns, bool isThisAccess)
 {
+	// TODO: With asEP_PROPERTY_ACCESSOR_MODE == 3 this method doesn't need to validate the
+	//       getter/setter as it is done at the time of declaration. Should deprecate the other options
+	
 	if( engine->ep.propertyAccessorMode == 0 )
 	{
 		// Property accessors have been disabled by the application

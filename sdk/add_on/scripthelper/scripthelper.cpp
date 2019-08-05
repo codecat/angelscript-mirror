@@ -398,7 +398,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 						currAccessMask = accessMask;
 					}
-					strm << "intfmthd " << typeDecl.c_str() << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+					strm << "intfmthd " << typeDecl.c_str() << " \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << (func->IsProperty() ? " property" : "") << "\"\n";
 				}
 			}
 			else
@@ -438,7 +438,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 						strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 						currAccessMask = accessMask;
 					}
-					strm << "objmthd \"" << typeDecl.c_str() << "\" \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << "\"\n";
+					strm << "objmthd \"" << typeDecl.c_str() << "\" \"" << Escape::Quotes(func->GetDeclaration(false)).c_str() << (func->IsProperty() ? " property" : "") << "\"\n";
 				}
 				for( m = 0; m < type->GetPropertyCount(); m++ )
 				{
@@ -501,7 +501,7 @@ int WriteConfigToStream(asIScriptEngine *engine, ostream &strm)
 			strm << "access " << hex << (unsigned int)(accessMask) << dec << "\n";
 			currAccessMask = accessMask;
 		}
-		strm << "func \"" << Escape::Quotes(func->GetDeclaration()).c_str() << "\"\n";
+		strm << "func \"" << Escape::Quotes(func->GetDeclaration()).c_str() << (func->IsProperty() ? " property" : "") << "\"\n";
 	}
 
 	// Write global properties
