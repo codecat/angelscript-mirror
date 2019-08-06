@@ -1405,7 +1405,7 @@ bool Test()
 					"ep 11 1\n"
 					"ep 12 0\n"
 					"ep 13 0\n"
-					"ep 14 2\n" // asEP_PROPERTY_ACCESSOR_MODE
+					"ep 14 3\n" // asEP_PROPERTY_ACCESSOR_MODE
 					"ep 15 0\n"
 					"ep 16 1\n"
 					"ep 17 0\n"
