@@ -1568,7 +1568,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 						str = ns->name + "::" + name;
 					else
 						str = name;
-					str.Format(TXT_NAME_CONFLICT_s_GLOBAL_PROPERTY, str.AddressOf());
+					str.Format(TXT_NAME_CONFLICT_s_IS_VIRTPROP, str.AddressOf());
 					WriteError(str, code, node);
 				}
 
@@ -1689,7 +1689,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 	{
 		for (n = 0; n < functions.GetLength(); n++)
 		{
-			asCScriptFunction *func = engine->scriptFunctions[functions[n] && functions[n]->funcId];
+			asCScriptFunction *func = engine->scriptFunctions[functions[n] ? functions[n]->funcId : 0];
 			if (func && 
 				func->IsProperty() &&
 				func->objectType == 0 && 
@@ -1703,7 +1703,7 @@ int asCBuilder::CheckNameConflict(const char *name, asCScriptNode *node, asCScri
 						str = ns->name + "::" + name;
 					else
 						str = name;
-					str.Format(TXT_NAME_CONFLICT_s_IS_FUNCTION, str.AddressOf());
+					str.Format(TXT_NAME_CONFLICT_s_IS_VIRTPROP, str.AddressOf());
 					WriteError(str, code, node);
 				}
 
@@ -4892,6 +4892,35 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 			name = "~" + name;
 	}
 
+	// Validate virtual properties signature
+	if( funcTraits.GetTrait(asTRAIT_PROPERTY) )
+	{
+		asCScriptFunction func(engine, module, asFUNC_SCRIPT);
+		func.name           = name;
+		func.nameSpace      = ns;
+		func.objectType     = objType;
+		if( objType )
+			objType->AddRefInternal();
+		func.traits         = funcTraits;
+		func.returnType     = returnType;
+		func.parameterTypes = parameterTypes;
+		
+		int r = ValidateVirtualProperty(&func);
+		if( r < 0 )
+		{
+			asCString str;
+			if( r == -2 || r == -3 )
+				str.Format(TXT_INVALID_SIG_FOR_VIRTPROP);
+			else if( r == -4 )
+				str.Format(TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s, name.SubString(4).AddressOf());
+			else if( r == -5 )
+				str.Format(TXT_NAME_CONFLICT_s_ALREADY_USED, name.SubString(4).AddressOf());
+			WriteError(str, file, node);
+		}
+		
+		func.funcType = asFUNC_DUMMY;
+	}
+	
 	isExistingShared = false;
 	int funcId = engine->GetNextScriptFunctionId();
 	if( !isInterface )

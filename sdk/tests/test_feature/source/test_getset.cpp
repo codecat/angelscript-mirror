@@ -108,9 +108,74 @@ bool Test()
 	COutStream out;
 	asIScriptModule *mod;
 	asIScriptEngine *engine;
+
+	// Test validations of virtual properties upon declaration in scripts
+	{
+		engine = asCreateScriptEngine();
+		bout.buffer = "";
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		
+		mod = engine->GetModule("test", asGM_ALWAYS_CREATE); assert(mod != NULL);
+		mod->AddScriptSection("test",
+			"void get_f() property {} \n" // invalid, no return value
+			"void set_f() property {} \n" // invalid, no argument
+			"int get_q(int, int) property { return 0; } \n" // invalid, more than one argument
+			"int get_a() property { return 0; } \n"
+			"void set_a(float) property {} \n" // invalid, arg type doesn't match return type of get_a
+			"void set_b(float) property {} \n"
+			"int get_b() property { return 0; } \n" // invalid, return type doesn't match arg type of set_b
+			"void foo() {} \n"
+			"int get_foo() property { return 0; } \n" // invalid, name conflict with foo()
+			"class bar {} \n"
+			"int get_bar() property { return 0; } \n" // invalid, name conflict with class bar
+			"int get_foo2() property { return 0; } \n"
+			"void foo2() {} \n" // invalid, name conflict with get_foo2 property
+			"class A { \n"
+			"  void get_f() property {} \n" // invalid, no return value
+			"  void set_f() property {} \n" // invalid, no argument
+			"  int get_q(int, int) property { return 0; } \n" // invalid, more than one argument
+			"  int get_a() property { return 0; } \n"
+			"  void set_a(float) property {} \n" // invalid, arg type doesn't match return type of get_a
+			"  void set_b(float) property {} \n"
+			"  int get_b() property { return 0; } \n" // invalid, return type doesn't match arg type of set_b
+			"  void foo() {} \n"
+			"  int get_foo() property { return 0; } \n" // invalid, name conflict with foo()
+			"  funcdef void bar(); \n"
+			"  int get_bar() property { return 0; } \n" // invalid, name conflict with class bar
+			"  int get_foo2() property { return 0; } \n"
+			"  void foo2() {} \n" // invalid, name conflict with get_foo2 property
+			"} \n"
+			);
+		r = mod->Build();
+		if( r >= 0 )
+			TEST_FAILED;
+		
+		if( bout.buffer != "test (1, 1) : Error   : Invalid signature for virtual property\n"
+						   "test (2, 1) : Error   : Invalid signature for virtual property\n"
+						   "test (3, 1) : Error   : Invalid signature for virtual property\n"
+						   "test (5, 1) : Error   : The property 'a' has mismatching types for the get and set accessors\n"
+						   "test (7, 1) : Error   : The property 'b' has mismatching types for the get and set accessors\n"
+						   "test (9, 1) : Error   : Name conflict. 'foo' is already used.\n"
+						   "test (11, 1) : Error   : Name conflict. 'bar' is already used.\n"
+						   "test (13, 1) : Error   : Name conflict. 'foo2' is a virtual property.\n"
+						   "test (15, 3) : Error   : Invalid signature for virtual property\n" 
+						   "test (16, 3) : Error   : Invalid signature for virtual property\n" 
+						   "test (17, 3) : Error   : Invalid signature for virtual property\n" 
+						   "test (19, 3) : Error   : The property 'a' has mismatching types for the get and set accessors\n" 
+						   "test (21, 3) : Error   : The property 'b' has mismatching types for the get and set accessors\n" 
+						   "test (23, 3) : Error   : Name conflict. 'foo' is already used.\n" 
+						   "test (25, 3) : Error   : Name conflict. 'bar' is already used.\n" 
+						   "test (27, 3) : Error   : Name conflict. 'foo2' is an object property.\n" )
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+		
+		engine->ShutDownAndRelease();
+	}
+
 	
 	// Test validation of global virtual properties upon registration
-	// TODO: Test in script declarations too
 	{
 		engine = asCreateScriptEngine();
 		bout.buffer = "";
@@ -1193,10 +1258,7 @@ bool Test()
 		TEST_FAILED;
 		PRINTF("Failed to compile the script\n");
 	}
-	if( bout.buffer != "script (6, 1) : Info    : Compiling void main()\n"
-                       "script (9, 4) : Error   : The property 'p' has mismatching types for the get and set accessors\n"
-                       "script (9, 4) : Info    : uint Test::get_p()\n"
-                       "script (9, 4) : Info    : void Test::set_p(float)\n" )
+	if( bout.buffer != "script (4, 3) : Error   : The property 'p' has mismatching types for the get and set accessors\n" )
 	{
 		PRINTF("%s", bout.buffer.c_str());
 		TEST_FAILED;
