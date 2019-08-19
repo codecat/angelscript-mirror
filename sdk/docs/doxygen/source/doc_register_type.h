@@ -555,9 +555,9 @@ the pointer. If the composite member is inlined, then the parameter should be se
 \section doc_reg_objprop_accessor Property accessors
 
 It is also possible to expose properties through \ref doc_script_class_prop "property accessors", 
-which are a pair of class methods with prefixes get_ and set_ for getting and setting the property value. 
-These methods should be registered with \ref doc_register_func "RegisterObjectMethod". This is especially
-useful when the offset of the property cannot be determined, or if the type of the property is 
+which are a pair of class methods with prefixes 'get_' and 'set_' and the function decorator 'property' for
+getting and setting the property value. These methods should be registered with \ref doc_register_func "RegisterObjectMethod". 
+This is especially useful when the offset of the property cannot be determined, or if the type of the property is 
 not registered in the script and some translation must occur, i.e. from <tt>char*</tt> to <tt>string</tt>.
 
 If the application class contains a C++ array as a member, it may be advantageous to expose the array

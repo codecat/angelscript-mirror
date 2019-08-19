@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2018 Andreas Jonsson
+   Copyright (c) 2003-2019 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -63,9 +63,9 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-//! Version 2.33.0
-#define ANGELSCRIPT_VERSION        23300
-#define ANGELSCRIPT_VERSION_STRING "2.33.0"
+//! Version 2.33.1
+#define ANGELSCRIPT_VERSION        23301
+#define ANGELSCRIPT_VERSION_STRING "2.33.1"
 
 // Data types
 
@@ -178,7 +178,7 @@ enum asEEngineProp
 	asEP_INCLUDE_JIT_INSTRUCTIONS           = 12,
 	//! Select string encoding for literals: 0 - UTF8/ASCII, 1 - UTF16. Default: 0 (UTF8)
 	asEP_STRING_ENCODING                    = 13,
-	//! Enable or disable property accessors: 0 - no accessors, 1 - app registered accessors, 2 - app and script created accessors
+	//! Enable or disable property accessors: 0 - no accessors, 1 - app registered accessors only, property keyword optional, 2 - app and script created accessors, property keyword optional, 3 - app and script created accesors, property keyword required. Default: 3
 	asEP_PROPERTY_ACCESSOR_MODE             = 14,
 	//! Format default array in template form in messages and declarations. Default: false
 	asEP_EXPAND_DEF_ARRAY_TO_TMPL           = 15,
@@ -192,7 +192,7 @@ enum asEEngineProp
 	asEP_COMPILER_WARNINGS                  = 19,
 	//! Disallow value assignment for reference types to avoid ambiguity. Default: false
 	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
-	//! Change the script syntax for named arguments: 0 - no change, 1 - accept = but warn, 2 - accept = without warning. Default: 0
+	//! Change the script syntax for named arguments: 0 - no change, 1 - accept '=' but warn, 2 - accept '=' without warning. Default: 0
 	asEP_ALTER_SYNTAX_NAMED_ARGS            = 21,
 	//! When true, the / and /= operators will perform floating-point division (i.e. 1/2 = 0.5 instead of 0). Default: false
 	asEP_DISABLE_INTEGER_DIVISION           = 22,
@@ -667,7 +667,7 @@ typedef void (*asCIRCULARREFFUNC_t)(asITypeInfo *, const void *, void *);
 // This macro does basically the same thing as offsetof defined in stddef.h, but
 // GNUC should not complain about the usage as I'm not using 0 as the base pointer.
 //! \brief Returns the offset of an attribute in a struct
-#define asOFFSET(s,m) ((size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
+#define asOFFSET(s,m) ((int)(size_t)(&reinterpret_cast<s*>(100000)->m)-100000)
 
 //! \brief Returns an asSFuncPtr representing the function specified by the name
 #define asFUNCTION(f) asFunctionPtr(f)
@@ -3859,9 +3859,12 @@ public:
 	//! \brief Returns true if the function is shared.
 	//! \return True if the function is shared.
 	virtual bool             IsShared() const = 0;
-	//! \brief Returns true if the function is declared as explicit.
+	//! \brief Returns true if the function is declared as 'explicit'.
 	//! \return True if the function is explicit.
 	virtual bool             IsExplicit() const = 0;
+	//! \brief Returns true if the function is declared as 'property'.
+	//! \return True if the function is a property accessor.
+	virtual bool             IsProperty() const = 0;
 	//! \brief Returns the number of parameters for this function.
 	//! \return The number of parameters.
 	virtual asUINT           GetParamCount() const = 0;

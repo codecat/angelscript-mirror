@@ -83,10 +83,20 @@ operator will always perform a handle assignment.
 With this option all enum values must be prefixed with the enum type using the scope operator to qualify.
  
 \ref asEP_PROPERTY_ACCESSOR_MODE
- 
-Some application writers do not want to use \ref doc_script_class_prop "virtual property accessors", or perhaps only 
-wish to use them for registered types. By setting this engine property to 0 the use of property accessors is turned off
-completely, and setting it to 1 only registered types can be allowed to use them.  
+
+By default \ref doc_script_class_prop "virtual property accessors" when declared as individual functions need to be 
+marked as such with the keyword 'property', or else the compiler won't consider the functions as virtual properties.
+This behaviour was introduced in version 2.33.1.
+
+Before this version, the compiler would automatically identify functions with the pre-fix 'get_' or 'set_' as virtual
+property accessors if the function signature was appropriate. This led to undesired behaviour when developers would
+declare such functions without the intention of them being used as virtual properties and yet the compiler used them as such.
+
+For backwards compatibility it is still possible to configure the engine to use this behaviour by setting the engine
+property asEP_PROPERTY_ACCESSOR_MODE to 2. 
+
+If it also possible to disable virtual property accessors all together by setting the engine property to 0. Setting the 
+option to 1 only allows virtual property accessors for registered functions, but still without requiring the keyword 'property'.
  
 \ref asEP_DISALLOW_GLOBAL_VARS
 

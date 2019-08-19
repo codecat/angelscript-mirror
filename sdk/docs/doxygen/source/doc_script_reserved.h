@@ -36,9 +36,9 @@ from*<br>
 funcdef<br>
 function*<br>
 get*<br>
+if<br>
 </code></td>
 <td width=100 valign=top><code>
-if<br>
 import<br>
 in<br>
 inout<br>
@@ -50,15 +50,16 @@ int32<br>
 int64<br>
 is<br>
 mixin<br>
+namespace<br>
 </code></td>
 <td width=100 valign=top><code>
-namespace<br>
 not<br>
 null<br>
 or<br>
 out<br>
 override*<br>
 private<br>
+property*<br>
 protected<br>
 return<br>
 set*<br>
