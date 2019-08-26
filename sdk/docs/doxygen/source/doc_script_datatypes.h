@@ -855,7 +855,7 @@ If the object referred to by the weakref is already dead this operator will retu
 
 
  
-\subsection doc_datatypes_array_addon_mthd Methods
+\subsection doc_datatypes_weakref_addon_mthd Methods
 
 <b>T@ get() const</b><br>
 

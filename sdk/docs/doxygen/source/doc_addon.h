@@ -333,7 +333,7 @@ debugger can be overridden to implement custom to-string logic.
 
 \see The sample \ref doc_samples_asrun for a complete example of how to use the debugger
 
-\section doc_addon_ctxmgr_1 Public C++ interface
+\section doc_addon_debugger_1 Public C++ interface
 
 \code
 class CDebugger
@@ -380,7 +380,7 @@ public:
 };
 \endcode
 
-\section doc_addon_debugger_1 Example usage
+\section doc_addon_debugger_2 Example usage
 
 \code
 CDebugger dbg;

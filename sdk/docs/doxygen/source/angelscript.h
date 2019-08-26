@@ -1356,14 +1356,13 @@ public:
 	//! \param[in] isCompositeIndirect Set to false if the composite object is inline, and true if it is refered to by pointer.
 	//! \return A negative value on error, or the function id is successful.
 	//! \retval asWRONG_CONFIG_GROUP The object type was registered in a different configuration group.
-	//! \retval asINVALID_ARG \a obj is not set, or a global behaviour is given in \a behaviour.
+	//! \retval asINVALID_ARG \a obj is not set, or a global behaviour is given in \a behaviour, or the \a objForThiscall pointer wasn't set according to calling convention.
 	//! \retval asWRONG_CALLING_CONV The function's calling convention isn't compatible with \a callConv.
 	//! \retval asNOT_SUPPORTED The calling convention or the behaviour signature is not supported.
 	//! \retval asINVALID_TYPE The \a obj parameter is not a valid object name.
 	//! \retval asINVALID_DECLARATION The \a declaration is invalid.
 	//! \retval asILLEGAL_BEHAVIOUR_FOR_TYPE The \a behaviour is not allowed for this type.
 	//! \retval asALREADY_REGISTERED The behaviour is already registered with the same signature.
-	//! \retval asINVALID_ARG The \a objForThiscall pointer wasn't set according to calling convention.
 	//!
 	//! Use this method to register behaviour functions that will be called by
 	//! the virtual machine to perform certain operations, such as memory management,
@@ -1465,10 +1464,9 @@ public:
 	//! \brief Registers an enum type.
 	//! \param[in] type The name of the enum type.
 	//! \return The type id on success, or a negative value on error.
-	//! \retval asINVALID_NAME \a type is null.
+	//! \retval asINVALID_NAME \a type is null, not an identifier, or it is a reserved keyword.
 	//! \retval asALREADY_REGISTERED Another type with this name already exists.
 	//! \retval asERROR The \a type couldn't be parsed.
-	//! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
 	//! \retval asNAME_TAKEN The type name is already taken.
 	//!
 	//! This method registers an enum type in the engine. The enum values should then be registered 
@@ -1533,10 +1531,9 @@ public:
 	//! \param[in] type The name of the new typedef
 	//! \param[in] decl The datatype that the typedef represents
 	//! \return The type id on success, else a negative value on error.
-	//! \retval asINVALID_NAME The \a type is null.
+	//! \retval asINVALID_NAME The \a type is null, is not an identifier, or it is a reserved keyword.
 	//! \retval asALREADY_REGISTERED A type with the same name already exists.
 	//! \retval asINVALID_TYPE The \a decl is not a primitive type.
-	//! \retval asINVALID_NAME The \a type is not an identifier, or it is a reserved keyword.
 	//! \retval asNAME_TAKEN The name is already used elsewhere.
 	//!
 	//! This method registers an alias for a data type.
