@@ -142,6 +142,7 @@ This is the reference documentation for the AngelScript scripting language.
  - \subpage doc_operator_precedence
  - \subpage doc_reserved_keywords
  - \subpage doc_script_bnf
+ - \subpage doc_script_stdlib
 
 
 
