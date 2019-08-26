@@ -1,6 +1,6 @@
 /**
 
-\mainpage Manual
+\mainpage Introduction
 
 \image html aslogo.png 
 
@@ -17,12 +17,17 @@ dedicated to the continued improvement and growth of this library.
 The official site for the library is <a href="http://www.angelcode.com/angelscript" target="_blank">http://www.angelcode.com/angelscript</a>.
 
 
-\section main_topics Topics
+\page main_topics Developer manual
 
+ - \subpage doc_license
  - \subpage doc_start
- - \subpage doc_using
- - \subpage doc_script
- - \subpage doc_api 
+ - \subpage doc_understanding_as
+ - \subpage doc_register_api_topic
+ - \subpage doc_compile_script
+ - \subpage doc_call_script_func
+ - \subpage doc_use_script_class
+ - \subpage doc_callbacks
+ - \subpage doc_advanced
  - \subpage doc_samples
  - \subpage doc_addon
 
@@ -37,28 +42,10 @@ The official site for the library is <a href="http://www.angelcode.com/angelscri
 \page doc_start Getting started
 
  - \subpage doc_overview
- - \subpage doc_license
  - \subpage doc_compile_lib
  - \subpage doc_hello_world
  - \subpage doc_good_practice
- - \subpage doc_versions
 
-
-
-
-
-
-
-
-\page doc_using Using AngelScript
-
- - \subpage doc_understanding_as
- - \subpage doc_register_api_topic
- - \subpage doc_compile_script
- - \subpage doc_call_script_func
- - \subpage doc_use_script_class
- - \subpage doc_callbacks
- - \subpage doc_advanced
 
 
 
