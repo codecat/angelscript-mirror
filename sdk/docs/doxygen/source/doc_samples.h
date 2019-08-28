@@ -221,9 +221,9 @@ The following add-ons to the script language are available to the scripts run by
  - \ref doc_datatypes_dictionary "dictionary"
  - \ref doc_addon_file_2 "file"
  - \ref doc_addon_filesystem_2 "filesystem"
- - \ref doc_addon_datetime_2 "datetime"
+ - \ref doc_script_stdlib_datetime "datetime"
  - \ref doc_addon_ctxmgr_2 "co-routines"
- - \ref try_func "exception routines"
+ - \ref doc_script_stdlib_exception "exception routines"
 
 
 

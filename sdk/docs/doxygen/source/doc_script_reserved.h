@@ -16,14 +16,15 @@ bool<br>
 break<br>
 case<br>
 cast<br>
+catch<br>
 class<br>
 const<br>
 continue<br>
 default<br>
 do<br>
-double<br>
 </code></td>
 <td width=100 valign=top><code>
+double<br>
 else<br>
 enum<br>
 explicit*<br>
@@ -36,9 +37,9 @@ from*<br>
 funcdef<br>
 function*<br>
 get*<br>
-if<br>
 </code></td>
 <td width=100 valign=top><code>
+if<br>
 import<br>
 in<br>
 inout<br>
@@ -65,11 +66,12 @@ return<br>
 set*<br>
 shared*<br>
 super*<br>
+switch<br>
 </code></td>
 <td width=100 valign=top><code>
-switch<br>
 this*<br>
 true<br>
+try<br>
 typedef<br>
 uint<br>
 uint8<br>

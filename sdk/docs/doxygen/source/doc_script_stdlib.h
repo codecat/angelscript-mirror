@@ -13,7 +13,9 @@ manual for information on the API it exposes.
  - \subpage doc_datatypes_dictionary
  - \subpage doc_datatypes_ref
  - \subpage doc_datatypes_weakref
+ - \subpage doc_script_stdlib_datetime
 
+\todo Add \ref doc_addon_ctxmgr_2 "co-routines", \ref doc_addon_file_2 "file", \ref doc_addon_filesystem_2 "filesystem", 
 
 
 \page doc_script_stdlib_exception Exception handling
@@ -749,6 +751,90 @@ This does the exact same thing as the implicit cast operator. It is just a more 
 writing it.
 
  
+ 
+ 
+\page doc_script_stdlib_datetime datetime
+
+\note datetime is only available in the scripts if the application \ref doc_addon_datetime "registers support for it".
+
+The datetime type represents a calendar date and time. It can be used to do math operations with 
+dates, such as comparing two dates, determining the difference between dates, and addition/substraction 
+on dates to form new dates.
+
+It can also be used to get the current system time and thus allow measuring time for tasks, albeit with
+a rather low precision of seconds only.
+
+
+
+
+\section doc_datatype_datetime_addon Supporting datetime object
+
+\subsection doc_addon_datetime_2_construct Constructors
+
+<b>datetime()</b><br>
+<b>datetime(const datetime &in other)</b><br>
+<b>datetime(uint y, uint m, uint d, uint h = 0, uint mi = 0, uint s = 0)</b><br>
+ 
+The default constructor initializes the object with the current system time.
+
+The copy constructor copíes the content of the other object.
+
+The set constructor initializes the object with the given date and time.
+
+\subsection doc_addon_datetime_2_methods Methods
+
+<b>uint get_year() const property</b>
+
+Returns the year of the date stored in the object. 
+
+<b>uint get_month() const property</b>
+
+Returns the month of the date stored in the object. The range is 1 to 12, i.e. 1 is January, 12 is December, and so on.
+ 
+<b>uint get_day() const property</b>
+
+Returns the day of the month of the date stored in the object.
+ 
+<b>uint get_hour() const property</b>
+
+Returns the hour of the time stored in the object. The range is 0 to 23.
+ 
+<b>uint get_minute() const property</b>
+
+Returns the minute of the time stored in the object. The range is 0 to 59.
+
+<b>uint get_second() const property</b>
+ 
+Returns the second of the time stored in the object. The range is 0 to 59.
+
+<b>bool setDate(uint year, uint month, uint day)</b><br>
+<b>bool setTime(uint hour, uint minute, uint second)</b>
+
+Sets the date or time. Returns true if the specified date or time is valid. Does not modify the object if not valid.
+
+\subsection doc_addon_datetime_2_ops Operators
+
+<b>= assignment</b>
+ 
+The assignment operator copies the content of the other object.
+
+<b>- difference</b>
+
+When subtracting one datetime object from another the result is the number of seconds between them.
+
+<b>+ add</b><br>
+<b>- subtract</b><br>
+<b>+= add assign</b><br>
+<b>-= subtract assign</b>
+
+The datetime object can be added or subtracted with seconds to form a new datetime object.
+
+<b>==, != equality</b><br>
+<b><, <=, >=, > comparison</b>
+
+The datetime object can be compared for equality or relativity.
+
+
  
  
 
