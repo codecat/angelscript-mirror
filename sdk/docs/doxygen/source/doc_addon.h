@@ -989,7 +989,7 @@ Refer to the <code>std::string</code> implementation for your compiler.
 
 \section doc_addon_std_string_2 Public script interface
 
-\see \ref doc_datatypes_strings "Strings in the script language"
+\see \ref doc_script_stdlib_string "Strings in the script language"
 
 
 

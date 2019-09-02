@@ -216,7 +216,7 @@ This will then let you set up breakpoints, step through the code, inspect variab
 
 The following add-ons to the script language are available to the scripts run by the command line runner.
 
- - \ref doc_datatypes_strings "string"
+ - \ref doc_script_stdlib_string "string"
  - \ref doc_datatypes_arrays "array"
  - \ref doc_datatypes_dictionary "dictionary"
  - \ref doc_script_stdlib_file "file"

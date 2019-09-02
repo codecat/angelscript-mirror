@@ -8,7 +8,7 @@ use AngelScript may or may not expose the standard library to the scripts. Alway
 manual for information on the API it exposes.
 
  - \subpage doc_script_stdlib_exception
- - \subpage doc_datatypes_strings
+ - \subpage doc_script_stdlib_string
  - \subpage doc_datatypes_arrays
  - \subpage doc_datatypes_dictionary
  - \subpage doc_datatypes_ref
@@ -17,7 +17,7 @@ manual for information on the API it exposes.
  - \subpage doc_script_stdlib_coroutine
  - \subpage doc_script_stdlib_file
 
-\todo Add \ref doc_addon_file_2 "file", \ref doc_addon_filesystem_2 "filesystem", 
+\todo Add \ref doc_addon_filesystem_2 "filesystem"
 
 
 \page doc_script_stdlib_exception Exception handling
@@ -38,7 +38,7 @@ Get the exception string for the last exception thrown.
 
 
 
-\page doc_datatypes_arrays Arrays
+\page doc_datatypes_arrays array
 
 \note Arrays are only available in the scripts if the application \ref doc_addon_array "registers the support for them". 
 The syntax for using arrays may differ for the application you're working with so consult the application's manual
@@ -400,100 +400,13 @@ an uninitialized value of the desired type is returned.
 
 
 
-\page doc_datatypes_strings Strings
+\page doc_script_stdlib_string string
 
 \note Strings are only available in the scripts if the application \ref doc_addon_std_string "registers the support for them". 
 The syntax for using strings may differ for the application you're working with so consult the application's manual
 for more details.
 
-Strings hold an array of bytes or 16bit words depending on the application settings. 
-Normally they are used to store text but can really store any kind of binary data.
-
-There are two types of string constants supported in the AngelScript
-language, the normal quoted string, and the documentation strings,
-called heredoc strings.
-
-The normal strings are written between double quotation marks (<code>"</code>) or single quotation marks (<code>'</code>).
-Inside the constant strings some escape sequences can be used to write exact
-byte values that might not be possible to write in your normal editor.
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-<tr><td width=100 valign=top><b>sequence</b></td>
-<td valign=top width=100><b>value</b></td>
-<td valign=top><b>description</b></td></tr>
-
-<tr><td width=80 valign=top><code>\\0</code>&nbsp;  </td>
-<td valign=top width=50>0</td>
-<td valign=top>null character</td></tr>
-<tr><td width=80 valign=top><code>\\\\</code>&nbsp;  </td>
-<td valign=top width=50>92</td>
-<td valign=top>back-slash</td></tr>
-<tr><td width=80 valign=top><code>\\'</code>&nbsp;  </td>
-<td valign=top width=50>39</td>
-<td valign=top>single quotation mark (apostrophe)</td></tr>
-<tr><td width=80 valign=top><code>\\"</code>&nbsp;  </td>
-<td valign=top width=50>34</td>
-<td valign=top>double quotation mark</td></tr>
-<tr><td width=80 valign=top><code>\\n</code>&nbsp;  </td>
-<td valign=top width=50>10</td>
-<td valign=top>new line feed</td></tr>
-<tr><td width=80 valign=top><code>\\r</code>&nbsp;  </td>
-<td valign=top width=50>13</td>
-<td valign=top>carriage return</td></tr>
-<tr><td width=80 valign=top><code>\\t</code>&nbsp;  </td>
-<td valign=top width=50>9</td>
-<td valign=top>tab character</td></tr>
-<tr><td width=80 valign=top><code>\\xFFFF</code>&nbsp;</td>
-<td valign=top width=50>0xFFFF</td>
-<td valign=top>FFFF should be exchanged for a 1 to 4 digit hexadecimal number representing the value wanted. If the application uses 8bit strings then only values up to 255 is accepted.</td></tr>
-<tr><td width=80 valign=top><code>\\uFFFF</code>&nbsp;</td>
-<td valign=top width=50>0xFFFF</td>
-<td valign=top>FFFF should be exchanged for the hexadecimal number representing the unicode code point</td></tr>
-<tr><td width=80 valign=top><code>\\UFFFFFFFF</code>&nbsp;</td>
-<td valign=top width=50>0xFFFFFFFF</td>
-<td valign=top>FFFFFFFF should be exchanged for the hexadecimal number representing the unicode code point</td></tr>
-</table>
-
-
-<pre>
-  string str1 = "This is a string with \"escape sequences\" .";
-  string str2 = 'If single quotes are used then double quotes can be included without "escape sequences".';
-</pre>
-
-
-The heredoc strings are designed for inclusion of large portions of text
-without processing of escape sequences. A heredoc string is surrounded by
-triple double-quotation marks (<code>"""</code>), and can span multiple lines
-of code. If the characters following the start of the string until the first
-linebreak only contains white space, it is automatically removed by the
-compiler. Likewise if the characters following the last line break until the
-end of the string only contains white space this is also removed.
-
-
-<pre>
-  string str = """
-  This is some text without "escape sequences". This is some text.
-  This is some text. This is some text. This is some text. This is
-  some text. This is some text. This is some text. This is some
-  text. This is some text. This is some text. This is some text.
-  This is some text.
-  """;
-</pre>
-
-If more than one string constants are written in sequence with only whitespace or
-comments between them the compiler will concatenate them into one constant.
-
-<pre>
-  string str = "First line.\n"
-               "Second line.\n"
-               "Third line.\n";
-</pre>
-
-The escape sequences \\u and \\U will add the specified unicode code point as a
-UTF-8 or UTF-16 encoded sequence depending on the application settings. Only valid unicode 5.1 
-code points are accepted, i.e. code points between U+D800 and U+DFFF (reserved for surrogate pairs) 
-or above U+10FFFF are not accepted.
+\see \ref doc_datatypes_strings for information on syntax for string literals
 
 \section doc_datatypes_strings_addon Supporting string object and functions
 
