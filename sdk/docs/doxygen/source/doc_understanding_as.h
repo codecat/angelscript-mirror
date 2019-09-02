@@ -9,8 +9,6 @@ the application with as little change to the application functions
 and classes as possible, there are some care that must be taken
 when passing objects between AngelScript and C++.
 
-\section doc_understading_as_1 Topics
-
  - \subpage doc_versions
  - \subpage doc_module
  - \subpage doc_as_vs_cpp_types
