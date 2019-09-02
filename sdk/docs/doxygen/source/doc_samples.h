@@ -219,10 +219,10 @@ The following add-ons to the script language are available to the scripts run by
  - \ref doc_datatypes_strings "string"
  - \ref doc_datatypes_arrays "array"
  - \ref doc_datatypes_dictionary "dictionary"
- - \ref doc_addon_file_2 "file"
+ - \ref doc_script_stdlib_file "file"
  - \ref doc_addon_filesystem_2 "filesystem"
  - \ref doc_script_stdlib_datetime "datetime"
- - \ref doc_addon_ctxmgr_2 "co-routines"
+ - \ref doc_script_stdlib_coroutine "co-routines"
  - \ref doc_script_stdlib_exception "exception routines"
 
 

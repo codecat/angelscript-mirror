@@ -14,8 +14,10 @@ manual for information on the API it exposes.
  - \subpage doc_datatypes_ref
  - \subpage doc_datatypes_weakref
  - \subpage doc_script_stdlib_datetime
+ - \subpage doc_script_stdlib_coroutine
+ - \subpage doc_script_stdlib_file
 
-\todo Add \ref doc_addon_ctxmgr_2 "co-routines", \ref doc_addon_file_2 "file", \ref doc_addon_filesystem_2 "filesystem", 
+\todo Add \ref doc_addon_file_2 "file", \ref doc_addon_filesystem_2 "filesystem", 
 
 
 \page doc_script_stdlib_exception Exception handling
@@ -102,7 +104,7 @@ Arrays can also be created and initialized within expressions as \ref anonobj "a
   foo2(array<int> = {1,2,3,4});
 </pre>
 
-\section doc_datatypes_arrays_addon Supporting array object and functions
+\section doc_datatypes_arrays_addon Supporting array object
 
 The array object supports a number of operators and has several class methods to facilitate the manipulation of strings.
 
@@ -306,7 +308,7 @@ Dictionaries of dictionaries are created using \ref anonobj "anonymous objects" 
 </pre>
 
 
-\section doc_datatypes_dictionary_addon Supporting dictionary object and functions
+\section doc_datatypes_dictionary_addon Supporting dictionary object
 
 The dictionary object is a \ref doc_datatypes_obj "reference type", so it's possible
 to use handles to the dictionary object when passing it around to avoid costly copies.
@@ -364,7 +366,7 @@ Returns the number of keys in the dictionary.
 
 
 
-\section doc_datatypes_dictionaryValue_addon Supporting dictionaryValue object and functions
+\section doc_datatypes_dictionaryValue_addon Supporting dictionaryValue object
 
 The dictionaryValue type is how the \ref doc_datatypes_dictionary_addon "dictionary" object stores the 
 values. When accessing the values through the dictionary index operator a reference to a dictionaryValue is returned.
@@ -835,7 +837,148 @@ The datetime object can be added or subtracted with seconds to form a new dateti
 The datetime object can be compared for equality or relativity.
 
 
- 
- 
+
+\page doc_script_stdlib_coroutine Co-routines
+
+\note Support for co-routines is only available in the scripts if the application \ref doc_addon_ctxmgr "registers support for it".
+
+
+\section doc_script_stdlib_coroutine_1 Functions
+
+<b>funcdef void coroutine(dictionary@)</b><br>
+<b>void createCoRoutine(coroutine @, dictionary @)</b>
+
+This function is used to create a co-routine. The co-routine will initiate in a 
+yielded state, i.e. it will only begin execution once the control is given to it
+by the current thread. 
+
+Multiple co-routines can be created, and they will each take turn to execute in 
+round-robin fashion.
+
+<b>void yield()</b>
+
+Yields control of the execution for the next co-routine in the queue. 
+
+When a co-routine receives control it will resume execution from the last call to
+yield, or the entry point if this is the first time the co-routine is allowed to execute.
+
+
+
+
+\page doc_script_stdlib_file file
+
+\note file is only available in the scripts if the application \ref doc_addon_file "registers support for it".
+
+Script example:
+
+<pre>
+  file f;
+  // Open the file in 'read' mode
+  if( f.open("file.txt", "r") >= 0 ) 
+  {
+      // Read the whole file into the string buffer
+      string str = f.readString(f.getSize()); 
+      f.close();
+  }
+</pre>
+
+\section doc_script_stdlib_file_1 Supporting file object
+
+\subsection doc_script_stdlib_file_1_1 Methods
+
+<b>int open(const string &in filename, const string &in mode)</b><br>
+
+Opens a file. The mode can be "r" for reading, "w" for writing, or "a" for appending.
+
+If the file couldn't be opened, a negative value is returned.
+
+<b>int close()</b><br>
+
+Closes the file.
+
+If no file is open, a negative value is returned.
+
+<b>int getSize() const</b><br>
+
+Returns the size of the file, or a negative value if no file is open.
+
+<b>bool isEndOfFile() const</b><br>
+
+Returns true if the current position is at the end of the file.
+
+<b>string readString(uint length)</b><br>
+
+Reads \a length bytes into a string and returns it.
+
+<b>string readLine()</b><br>
+
+Reads until a new line character, e.g. '\\n', or end-of-file and returns the string. The new line character is also returned in the string.
+
+<b>int64 readInt(uint bytes)</b><br>
+
+Reads \a bytes as a signed integer number.
+
+<b>uint64 readUInt(uint bytes)</b><br>
+
+Reads \a bytes as an unsigned integer number.
+
+<b>float readFloat()</b><br>
+
+Reads 4 bytes as a float number.
+
+<b>double readDouble()</b><br>
+
+Reads 8 bytes as a double number.
+
+<b>int writeString(const string &in str)</b><br>
+
+Writes the bytes of the string into the file. 
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeInt(int64 value, uint bytes)</b><br>
+
+Writes \a bytes as a signed integer value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeUInt(uint64 value, uint bytes)</b><br>
+
+Writes \a bytes as an unsigned integer value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeFloat(float value)</b><br>
+
+Writes 4 bytes as a float value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int writeDouble(double value)</b><br>
+
+Writes 8 bytes as a double value.
+
+Returns the number of bytes written, or a negative value on error.
+
+<b>int getPos() const</b><br>
+
+Returns the current position in the file, or a negative value on error.
+
+<b>int setPos(int pos)</b><br>
+
+Sets the current position in the file. Returns the previous position or a negative value on error.
+
+<b>int movePos(int delta)</b><br>
+
+Moves the position \a delta bytes relative to the current position. Returns the previous position or a negative value on error.
+
+\subsection doc_script_stdlib_file_1_2 Properties
+
+<b>bool mostSignificantByteFirst</b><br>
+
+This property should be set to true if the most significant bit should be read or written first in the methods that reads/writes numbers.
+
+It is set to false by default, which is the standard on most platforms.
+
 
 */

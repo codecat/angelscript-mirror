@@ -395,28 +395,8 @@ public:
 
 \section doc_addon_ctxmgr_2 Public script interface
 
-<pre>
-  funcdef void coroutine(dictionary@);
-  void createCoRoutine(coroutine @, dictionary @);
-  void yield();
-</pre>
+\see \ref doc_script_stdlib_coroutine
 
-<b>funcdef void coroutine(dictionary@)</b><br>
-<b>void createCoRoutine(coroutine @, dictionary @)</b>
-
-This function is used to create a co-routine. The co-routine will initiate in a 
-yielded state, i.e. it will only begin execution once the control is given to it
-by the current thread. 
-
-Multiple co-routines can be created, and they will each take turn to execute in 
-round-robin fashion.
-
-<b>void yield()</b>
-
-Yields control of the execution for the next co-routine in the queue. 
-
-When a co-routine receives control it will resume execution from the last call to
-yield, or the entry point if this is the first time the co-routine is allowed to execute.
 
 
 
@@ -1195,135 +1175,8 @@ public:
 
 \section doc_addon_file_2 Public script interface
 
-<pre>
-  class file
-  {
-    int      open(const string &in filename, const string &in mode);
-    int      close();
-    int      getSize() const;
-    bool     isEndOfFile() const;
-    string   readString(uint length);
-    string   readLine();
-    int64    readInt(uint bytes);
-    uint64   readUInt(uint bytes);
-    float    readFloat();
-    double   readDouble();
-    int      writeString(const string &in str);
-    int      writeInt(int64 value, uint bytes);
-    int      writeUInt(uint64 value, uint bytes);
-    int      writeFloat(float value);
-    int      writeDouble(double value);
-    int      getPos() const;
-    int      setPos(int pos);
-    int      movePos(int delta);
-    bool     mostSignificantByteFirst;
-  }
-</pre>
+\see \ref doc_script_stdlib_file
 
-<b>int open(const string &in filename, const string &in mode)</b><br>
-
-Opens a file. The mode can be "r" for reading, "w" for writing, or "a" for appending.
-
-If the file couldn't be opened, a negative value is returned.
-
-<b>int close()</b><br>
-
-Closes the file.
-
-If no file is open, a negative value is returned.
-
-<b>int getSize() const</b><br>
-
-Returns the size of the file, or a negative value if no file is open.
-
-<b>bool isEndOfFile() const</b><br>
-
-Returns true if the current position is at the end of the file.
-
-<b>string readString(uint length)</b><br>
-
-Reads \a length bytes into a string and returns it.
-
-<b>string readLine()</b><br>
-
-Reads until a new line character, e.g. '\\n', or end-of-file and returns the string. The new line character is also returned in the string.
-
-<b>int64 readInt(uint bytes)</b><br>
-
-Reads \a bytes as a signed integer number.
-
-<b>uint64 readUInt(uint bytes)</b><br>
-
-Reads \a bytes as an unsigned integer number.
-
-<b>float readFloat()</b><br>
-
-Reads 4 bytes as a float number.
-
-<b>double readDouble()</b><br>
-
-Reads 8 bytes as a double number.
-
-<b>int writeString(const string &in str)</b><br>
-
-Writes the bytes of the string into the file. 
-
-Returns the number of bytes written, or a negative value on error.
-
-<b>int writeInt(int64 value, uint bytes)</b><br>
-
-Writes \a bytes as a signed integer value.
-
-Returns the number of bytes written, or a negative value on error.
-
-<b>int writeUInt(uint64 value, uint bytes)</b><br>
-
-Writes \a bytes as an unsigned integer value.
-
-Returns the number of bytes written, or a negative value on error.
-
-<b>int writeFloat(float value)</b><br>
-
-Writes 4 bytes as a float value.
-
-Returns the number of bytes written, or a negative value on error.
-
-<b>int writeDouble(double value)</b><br>
-
-Writes 8 bytes as a double value.
-
-Returns the number of bytes written, or a negative value on error.
-
-<b>int getPos() const</b><br>
-
-Returns the current position in the file, or a negative value on error.
-
-<b>int setPos(int pos)</b><br>
-
-Sets the current position in the file. Returns the previous position or a negative value on error.
-
-<b>int movePos(int delta)</b><br>
-
-Moves the position \a delta bytes relative to the current position. Returns the previous position or a negative value on error.
-
-<b>bool mostSignificantByteFirst</b><br>
-
-This property should be set to true if the most significant bit should be read or written first in the methods that reads/writes numbers.
-
-It is set to false by default, which is the standard on most platforms.
-
-\section doc_addon_file_3 Script example
-
-<pre>
-  file f;
-  // Open the file in 'read' mode
-  if( f.open("file.txt", "r") >= 0 ) 
-  {
-      // Read the whole file into the string buffer
-      string str = f.readString(f.getSize()); 
-      f.close();
-  }
-</pre>
 
 
 
@@ -1947,7 +1800,7 @@ to direct this to a file.
 
 <b>Path:</b> /sdk/add_on/scripthelper/
 
-The \ref try "throw and getExceptionInfo" routines are registered by the application 
+The exception handling routines are registered by the application 
 with a call to RegisterExceptionRoutines.
 
 \section doc_addon_helpers_try_1 Public C++ interface
@@ -1958,6 +1811,10 @@ with a call to RegisterExceptionRoutines.
 //  'string getExceptionInfo()'
 void RegisterExceptionRoutines(asIScriptEngine *engine);
 \endcode
+
+\section doc_add_helpers_try_2 Public script interface
+
+\see \ref doc_script_stdlib_exception
 
 
 
