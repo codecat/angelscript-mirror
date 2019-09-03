@@ -1240,73 +1240,7 @@ public:
 
 \section doc_addon_filesystem_2 Public script interface
 
-<pre>
-  class filesystem
-  {
-    bool           changeCurrentPath(const string &in);
-    string         getCurrentPath() const;
-    array<string> \@getDirs();
-    array<string> \@getFiles();
-    bool           isDir(const string &in);
-    bool           isLink(const string &in) const;
-    int64          getSize(const string &in) const;
-    int            makeDir(const string &in);
-    int            removeDir(const string &in);
-    int            deleteFile(const string &in);
-    int            copyFile(const string &in, const string &in);
-    int            move(const string &in, const string &in);
-  }
-</pre>
-
-<b>bool changeCurrentPath(const string &in path)</b>
-
-This changes the current directory used by the filesystem object. It will return true if the given path is valid.
-
-It doesn't change the application' working directory.
-
-<b>string getCurrentPath() const</b>
-
-Returns the current path used by the filesystem object.
-
-<b>array<string> \@getDirs()</b>
-
-Returns a list with the names of all directories in the current path.
-
-<b>array<string> \@getFiles()</b>
-
-Returns a list with the names of all files in the current path.
-
-<b>bool isDir(const string &in path)</b>
-
-Returns true if the given path is a directory.
-
-<b>bool isLink(const string &in path)</b>
-
-Returns true if the given path is a link.
-
-<b>int64 getSize(const string &in) const</b>
-
-Returns the size of a file.
-
-<b>int makeDir(const string &in)</b>
-
-Creates a new directory. Returns 0 on success.
-
-<b>int removeDir(const string &in)</b>
-
-Removes a directory. Will only remove the directory if it is empty. Returns 0 on success.
-
-<b>int deleteFile(const string &in)</b>
-
-Deletes a file. Returns 0 on success.
-
-<b>int copyFile(const string &in, const string &in)</b>
-
-Copies a file. Returns 0 on success.
-
-<b>int move(const string &in, const string &in)</b>
-
-Moves or renames a file or directory. Returns 0 on success.
+\see \ref doc_script_stdlib_filesystem
 
 
 

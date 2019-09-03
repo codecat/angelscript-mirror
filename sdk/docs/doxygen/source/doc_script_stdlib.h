@@ -16,8 +16,9 @@ manual for information on the API it exposes.
  - \subpage doc_script_stdlib_datetime
  - \subpage doc_script_stdlib_coroutine
  - \subpage doc_script_stdlib_file
+ - \subpage doc_script_stdlib_filesystem
+ 
 
-\todo Add \ref doc_addon_filesystem_2 "filesystem"
 
 
 \page doc_script_stdlib_exception Exception handling
@@ -893,5 +894,66 @@ This property should be set to true if the most significant bit should be read o
 
 It is set to false by default, which is the standard on most platforms.
 
+
+
+
+\page doc_script_stdlib_filesystem filesystem
+
+\note filesystem is only available in the scripts if the application \ref doc_addon_filesystem "registers support for it".
+
+
+\section doc_script_stdlib_filesystem_1 Supporting filesystem object
+
+\subsection doc_script_stdlib_filesystem_1_1 Methods
+
+<b>bool changeCurrentPath(const string &in path)</b>
+
+This changes the current directory used by the filesystem object. It will return true if the given path is valid.
+
+It doesn't change the application' working directory.
+
+<b>string getCurrentPath() const</b>
+
+Returns the current path used by the filesystem object.
+
+<b>array<string> \@getDirs()</b>
+
+Returns a list with the names of all directories in the current path.
+
+<b>array<string> \@getFiles()</b>
+
+Returns a list with the names of all files in the current path.
+
+<b>bool isDir(const string &in path)</b>
+
+Returns true if the given path is a directory.
+
+<b>bool isLink(const string &in path)</b>
+
+Returns true if the given path is a link.
+
+<b>int64 getSize(const string &in) const</b>
+
+Returns the size of a file.
+
+<b>int makeDir(const string &in)</b>
+
+Creates a new directory. Returns 0 on success.
+
+<b>int removeDir(const string &in)</b>
+
+Removes a directory. Will only remove the directory if it is empty. Returns 0 on success.
+
+<b>int deleteFile(const string &in)</b>
+
+Deletes a file. Returns 0 on success.
+
+<b>int copyFile(const string &in, const string &in)</b>
+
+Copies a file. Returns 0 on success.
+
+<b>int move(const string &in, const string &in)</b>
+
+Moves or renames a file or directory. Returns 0 on success.
 
 */
