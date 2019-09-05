@@ -21,6 +21,10 @@
 #ifdef _WIN32
 #include <Windows.h> // WriteConsoleW
 #include <TlHelp32.h> // CreateToolhelp32Snapshot, Process32First, Process32Next
+
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
 #endif
 
 #if defined(_MSC_VER)
@@ -69,6 +73,23 @@ int main(int argc, char **argv)
 	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
 
 	// Use _CrtSetBreakAlloc(n) to find a specific memory leak
+#endif
+
+#if defined(_WIN32)
+	// Turn on support for virtual terminal sequences to add support for colored text in the console
+	// Ref: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
+	// Ref: https://stackoverflow.com/questions/2048509/how-to-echo-with-different-colors-in-the-windows-command-line
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE)
+		return -1;
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode))
+		return -1;
+
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    if (!SetConsoleMode(hOut, dwMode))
+		return -1;
 #endif
 
 	int r;
@@ -611,7 +632,6 @@ void WaitForUser()
 
 	if (name == L"explorer.exe")
 	{
-		//WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), name.c_str(), name.length(), 0, 0);
 		PrintString("\nPress enter to exit\n");
 		GetInput();
 	}
