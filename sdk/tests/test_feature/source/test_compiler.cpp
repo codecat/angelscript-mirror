@@ -182,6 +182,7 @@ bool Test()
 
 	// Test use of virtual property without get accessor causing assert failure
 	// Reported by Patrick Jeeves
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
@@ -256,6 +257,7 @@ bool Test()
 	// Test what happens when a registered factory return null without raising an exception
 	// This is an undefined behaviour, and it is invalid for a factory function to do this
 	// https://www.gamedev.net/forums/topic/701081-question-about-nullptrs/
+	SKIP_ON_MAX_PORT
 	{
 		engine = asCreateScriptEngine();
 		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
